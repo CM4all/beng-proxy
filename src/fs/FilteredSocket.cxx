@@ -78,7 +78,7 @@ FilteredSocket::OnBufferedClosed() noexcept
 }
 
 bool
-FilteredSocket::OnBufferedRemaining(size_t remaining) noexcept
+FilteredSocket::OnBufferedRemaining(std::size_t remaining) noexcept
 {
 	return filter->OnRemaining(remaining);
 }
@@ -207,7 +207,7 @@ FilteredSocket::IsFull() const noexcept
 		: base.IsFull();
 }
 
-size_t
+std::size_t
 FilteredSocket::GetAvailable() const noexcept
 {
 	return filter != nullptr
@@ -224,7 +224,7 @@ FilteredSocket::ReadBuffer() const noexcept
 }
 
 void
-FilteredSocket::DisposeConsumed(size_t nbytes) noexcept
+FilteredSocket::DisposeConsumed(std::size_t nbytes) noexcept
 {
 	if (filter != nullptr)
 		filter->Consumed(nbytes);
@@ -235,17 +235,19 @@ FilteredSocket::DisposeConsumed(size_t nbytes) noexcept
 void
 FilteredSocket::AfterConsumed() noexcept
 {
-	if (filter == nullptr)
+	if (filter != nullptr)
+		filter->AfterConsumed();
+	else
 		base.AfterConsumed();
 }
 
 bool
-FilteredSocket::Read(bool expect_more) noexcept
+FilteredSocket::Read() noexcept
 {
 	if (filter != nullptr)
-		return filter->Read(expect_more);
+		return filter->Read();
 	else
-		return base.Read(expect_more);
+		return base.Read();
 }
 
 ssize_t

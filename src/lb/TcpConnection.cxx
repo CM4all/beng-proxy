@@ -87,7 +87,7 @@ LbTcpConnection::Inbound::OnBufferedData()
 
 	if (tcp.cancel_connect)
 		/* outbound is not yet connected */
-		return BufferedResult::BLOCKING;
+		return BufferedResult::OK;
 
 	if (!tcp.outbound.socket.IsValid()) {
 		tcp.OnTcpError("Send error", "Broken socket");
@@ -117,7 +117,7 @@ LbTcpConnection::Inbound::OnBufferedData()
 		return BufferedResult::CLOSED;
 
 	case WRITE_BLOCKING:
-		return BufferedResult::BLOCKING;
+		return BufferedResult::OK;
 
 	case WRITE_DESTROYED:
 		return BufferedResult::CLOSED;
@@ -156,7 +156,7 @@ LbTcpConnection::Inbound::OnBufferedWrite()
 
 	tcp.got_outbound_data = false;
 
-	if (!tcp.outbound.socket.Read(false))
+	if (!tcp.outbound.socket.Read())
 		return false;
 
 	if (!tcp.got_outbound_data)
@@ -232,7 +232,7 @@ LbTcpConnection::Outbound::OnBufferedData()
 		return BufferedResult::CLOSED;
 
 	case WRITE_BLOCKING:
-		return BufferedResult::BLOCKING;
+		return BufferedResult::OK;
 
 	case WRITE_DESTROYED:
 		return BufferedResult::CLOSED;
@@ -282,7 +282,7 @@ LbTcpConnection::Outbound::OnBufferedWrite()
 
 	tcp.got_inbound_data = false;
 
-	if (!tcp.inbound.socket->Read(false))
+	if (!tcp.inbound.socket->Read())
 		return false;
 
 	if (!tcp.got_inbound_data)
@@ -380,8 +380,8 @@ LbTcpConnection::OnSocketConnectSuccess(UniqueSocketDescriptor fd) noexcept
 	   (istream_direct_mask_to(inbound.base.base.fd_type) & FdType::FD_PIPE) != 0;
 	*/
 
-	if (inbound.socket->Read(false))
-		outbound.socket.Read(false);
+	if (inbound.socket->Read())
+		outbound.socket.Read();
 }
 
 void

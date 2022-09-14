@@ -212,12 +212,14 @@ Request::HandleTokenAuth(const TranslateResponse &response) noexcept
 	assert(response.token_auth.data() != nullptr);
 
 	/* we need to validate the session realm early */
-	ApplyTranslateRealm(response, nullptr);
+	ApplyTranslateRealm(response, {});
+
+	const AllocatorPtr alloc{pool};
 
 	const char *auth_token;
 
 	try {
-		auth_token = ExtractAuthToken(pool, dissected_uri);
+		auth_token = ExtractAuthToken(alloc, dissected_uri);
 	} catch (const std::invalid_argument &e) {
 		DispatchError(HTTP_STATUS_BAD_REQUEST, e.what());
 		return;
@@ -225,14 +227,15 @@ Request::HandleTokenAuth(const TranslateResponse &response) noexcept
 
 	had_auth_token = auth_token != nullptr;
 
-	if (auth_token == nullptr) {
-		bool is_authenticated = false;
-		{
-			auto session = GetRealmSession();
-			if (session)
-				is_authenticated = session->user != nullptr;
-		}
+	bool is_authenticated = false;
+	std::span<const std::byte> translate_realm_session{};
 
+	if (auto session = GetRealmSession()) {
+		is_authenticated = session->user != nullptr;
+		translate_realm_session = alloc.Dup(std::span(session->translate));
+	}
+
+	if (auth_token == nullptr) {
 		if (is_authenticated) {
 			/* already authenticated; we can skip the
 			   TOKEN_AUTH request */
@@ -241,24 +244,25 @@ Request::HandleTokenAuth(const TranslateResponse &response) noexcept
 		}
 	}
 
-	auto t = NewFromPool<TranslateRequest>(pool);
+	auto t = alloc.New<TranslateRequest>();
 	t->token_auth = response.token_auth;
 	t->auth_token = auth_token;
 	if (auth_token == nullptr)
 		t->recover_session = recover_session_from_cookie;
 	t->uri = auth_token != nullptr
-		? RecomposeUri(pool, dissected_uri)
+		? RecomposeUri(alloc, dissected_uri)
 		: request.uri;
 	t->listener_tag = translate.request.listener_tag;
 	t->host = translate.request.host;
 	t->session = translate.request.session;
+	t->realm_session = translate_realm_session;
 
 	translate.previous = &response;
 
 	auto *http_auth_translate_handler =
-		NewFromPool<TokenAuthTranslateHandler>(pool, *this);
+		alloc.New<TokenAuthTranslateHandler>(*this);
 
-	GetTranslationService().SendRequest(pool, *t,
+	GetTranslationService().SendRequest(alloc, *t,
 					    stopwatch,
 					    *http_auth_translate_handler,
 					    cancel_ptr);

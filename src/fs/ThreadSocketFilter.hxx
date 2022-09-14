@@ -203,12 +203,6 @@ class ThreadSocketFilter final : public SocketFilter, ThreadSocketFilterInternal
 
 	bool connected = true;
 
-	/**
-	 * Does the handler expect more data?  It announced this by
-	 * returning BUFFERED_MORE.
-	 */
-	bool expect_more = false;
-
 	bool postponed_remaining = false;
 
 	bool postponed_end = false;
@@ -287,7 +281,7 @@ private:
 	/**
 	 * @return the number of bytes appended to #plain_output
 	 */
-	size_t LockWritePlainOutput(std::span<const std::byte> src) noexcept;
+	std::size_t LockWritePlainOutput(std::span<const std::byte> src) noexcept;
 
 	void ClosedPrematurely() noexcept;
 
@@ -330,17 +324,18 @@ public:
 	BufferedResult OnData() noexcept override;
 	bool IsEmpty() const noexcept override;
 	bool IsFull() const noexcept override;
-	size_t GetAvailable() const noexcept override;
+	std::size_t GetAvailable() const noexcept override;
 	std::span<std::byte> ReadBuffer() noexcept override;
-	void Consumed(size_t nbytes) noexcept override;
-	bool Read(bool expect_more) noexcept override;
+	void Consumed(std::size_t nbytes) noexcept override;
+	void AfterConsumed() noexcept override;
+	bool Read() noexcept override;
 	ssize_t Write(std::span<const std::byte> src) noexcept override;
-	void ScheduleRead(bool expect_more) noexcept override;
+	void ScheduleRead() noexcept override;
 	void ScheduleWrite() noexcept override;
 	void UnscheduleWrite() noexcept override;
 	bool InternalWrite() noexcept override;
 	void OnClosed() noexcept override;
-	bool OnRemaining(size_t remaining) noexcept override;
+	bool OnRemaining(std::size_t remaining) noexcept override;
 	void OnEnd() noexcept override;
 	void Close() noexcept override;
 };

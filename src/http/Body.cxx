@@ -104,11 +104,6 @@ HttpBodyReader::SocketEOF(std::size_t remaining) noexcept
 		/* the socket is closed, which ends the body */
 		InvokeEof();
 		return false;
-	} else if (rest == REST_CHUNKED ||
-		   rest == REST_EOF_CHUNK) {
-		/* suppress InvokeEof() because the dechunker is responsible
-		   for that */
-		return remaining > 0;
 	} else if (rest == (off_t)remaining) {
 		if (remaining > 0)
 			/* serve the rest of the buffer, then end the body
@@ -117,6 +112,11 @@ HttpBodyReader::SocketEOF(std::size_t remaining) noexcept
 
 		InvokeEof();
 		return false;
+	} else if ((rest == REST_CHUNKED && remaining > 0) ||
+		   rest == REST_EOF_CHUNK) {
+		/* suppress InvokeEof() because the dechunker is responsible
+		   for that */
+		return true;
 	} else {
 		/* something has gone wrong: either not enough or too much
 		   data left in the buffer */

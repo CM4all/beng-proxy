@@ -207,6 +207,20 @@ Session::SetRecover(const char *_recover) noexcept
 }
 
 void
+RealmSession::SetTranslate(std::span<const std::byte> _translate) noexcept
+{
+	assert(_translate.data() != nullptr);
+
+	if (translate.data() != nullptr &&
+	    translate.size() == _translate.size() &&
+	    memcmp(translate.data(), _translate.data(), _translate.size()) == 0)
+		/* same value as before: no-op */
+		return;
+
+	translate = _translate;
+}
+
+void
 RealmSession::SetUser(const char *_user, std::chrono::seconds max_age) noexcept
 {
 	assert(_user != nullptr);

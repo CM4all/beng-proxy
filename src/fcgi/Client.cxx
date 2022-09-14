@@ -158,7 +158,7 @@ public:
 	using Istream::GetPool;
 
 	void Start() noexcept {
-		socket.ScheduleRead(true);
+		socket.ScheduleRead();
 		input.Read();
 	}
 
@@ -258,7 +258,6 @@ private:
 	/* virtual methods from class BufferedSocketHandler */
 	BufferedResult OnBufferedData() override;
 	bool OnBufferedClosed() noexcept override;
-	bool OnBufferedRemaining(std::size_t remaining) noexcept override;
 	bool OnBufferedWrite() override;
 	bool OnBufferedTimeout() noexcept override;
 	void OnBufferedError(std::exception_ptr e) noexcept override;
@@ -578,8 +577,6 @@ FcgiClient::ConsumeInput(const std::byte *data0, std::size_t length0) noexcept
 	const DestructObserver destructed(*this);
 	const std::byte *data = data0, *const end = data0 + length0;
 
-	bool consumed_some = false;
-
 	do {
 		if (content_length > 0) {
 			bool at_headers = response.read_state == Response::READ_HEADERS;
@@ -612,15 +609,12 @@ FcgiClient::ConsumeInput(const std::byte *data0, std::size_t length0) noexcept
 
 				/* the response body handler blocks, wait for it to
 				   become ready */
-				return consumed_some
-					? BufferedResult::OK
-					: BufferedResult::BLOCKING;
+				return BufferedResult::OK;
 			}
 
 			data += nbytes;
 			content_length -= nbytes;
 			socket.DisposeConsumed(nbytes);
-			consumed_some = true;
 
 			if (at_headers && response.read_state == Response::READ_BODY) {
 				/* the read_state has been switched from HEADERS to
@@ -629,7 +623,7 @@ FcgiClient::ConsumeInput(const std::byte *data0, std::size_t length0) noexcept
 				return SubmitResponse()
 					/* continue parsing the response body from the
 					   buffer */
-					? BufferedResult::AGAIN_EXPECT
+					? BufferedResult::AGAIN
 					: BufferedResult::CLOSED;
 			}
 
@@ -651,7 +645,6 @@ FcgiClient::ConsumeInput(const std::byte *data0, std::size_t length0) noexcept
 			data += nbytes;
 			skip_length -= nbytes;
 			socket.DisposeConsumed(nbytes);
-			consumed_some = true;
 
 			if (skip_length > 0)
 				return BufferedResult::MORE;
@@ -667,7 +660,6 @@ FcgiClient::ConsumeInput(const std::byte *data0, std::size_t length0) noexcept
 
 		data += sizeof(*header);
 		socket.KeepConsumed(sizeof(*header));
-		consumed_some = true;
 
 		if (!HandleHeader(*header))
 			return BufferedResult::CLOSED;
@@ -785,7 +777,7 @@ FcgiClient::_Read() noexcept
 		   continue parsing the response if possible */
 		return;
 
-	socket.Read(true);
+	socket.Read();
 }
 
 void
@@ -977,16 +969,6 @@ FcgiClient::OnBufferedClosed() noexcept
 
 	/* the rest of the response may already be in the input buffer */
 	ReleaseSocket(false);
-	return true;
-}
-
-bool
-FcgiClient::OnBufferedRemaining(gcc_unused std::size_t remaining) noexcept
-{
-	/* only READ_BODY could have blocked */
-	assert(response.read_state == Response::READ_BODY);
-
-	/* the rest of the response may already be in the input buffer */
 	return true;
 }
 

@@ -44,15 +44,19 @@ HttpServerConnection::FeedRequestBody(std::span<const std::byte> src) noexcept
 
 	std::size_t nbytes = request_body_reader->FeedBody(src);
 	if (nbytes == 0) {
-		return destructed
-			? BufferedResult::CLOSED
-			: BufferedResult::BLOCKING;
+		if (destructed)
+			return BufferedResult::CLOSED;
+
+		read_timer.Cancel();
+		return BufferedResult::OK;
 	}
 
 	request.bytes_received += nbytes;
 	socket->DisposeConsumed(nbytes);
 
-	if (request.read_state == Request::BODY && request_body_reader->IsEOF()) {
+	assert(request.read_state == Request::BODY);
+
+	if (request_body_reader->IsEOF()) {
 		request.read_state = Request::END;
 #ifndef NDEBUG
 		request.body_state = Request::BodyState::CLOSED;
@@ -68,7 +72,9 @@ HttpServerConnection::FeedRequestBody(std::span<const std::byte> src) noexcept
 		request_body_reader->DestroyEof();
 		if (destructed)
 			return BufferedResult::CLOSED;
-	}
+	} else
+		/* refresh the request body timeout */
+		ScheduleReadTimeoutTimer();
 
 	return BufferedResult::OK;
 }
@@ -127,7 +133,7 @@ HttpServerConnection::RequestBodyReader::_GetAvailable(bool partial) noexcept
 }
 
 inline void
-HttpServerConnection::ReadRequestBody(bool require_more) noexcept
+HttpServerConnection::ReadRequestBody() noexcept
 {
 	assert(IsValid());
 	assert(request.read_state == Request::BODY);
@@ -144,13 +150,13 @@ HttpServerConnection::ReadRequestBody(bool require_more) noexcept
 	if (socket->IsConnected())
 		socket->SetDirect(request_body_reader->CheckDirect(socket->GetType()));
 
-	socket->Read(require_more);
+	socket->Read();
 }
 
 void
 HttpServerConnection::RequestBodyReader::_Read() noexcept
 {
-	connection.ReadRequestBody(RequireMore());
+	connection.ReadRequestBody();
 }
 
 void

@@ -52,7 +52,6 @@
 #include "io/UniqueFileDescriptor.hxx"
 #include "co/InvokeTask.hxx"
 #include "util/Cancellable.hxx"
-#include "util/ConstBuffer.hxx"
 #include "stopwatch.hxx"
 
 #ifdef HAVE_URING
@@ -158,7 +157,7 @@ private:
 		 */
 		IntrusiveForwardList<Transformation> suffix_transformations;
 
-		ConstBuffer<void> chain = nullptr;
+		std::span<const std::byte> chain = {};
 
 		const char *chain_header = nullptr;
 
@@ -468,7 +467,7 @@ public:
 	 * Apply and verify #TRANSLATE_REALM.
 	 */
 	void ApplyTranslateRealm(const TranslateResponse &response,
-				 ConstBuffer<void> auth_base) noexcept;
+				 std::span<const std::byte> auth_base) noexcept;
 
 	/**
 	 * Copy the packets #TRANSLATE_SESSION, #TRANSLATE_USER,
@@ -617,7 +616,7 @@ public:
 
 	void CancelChainAndTransformations() noexcept {
 		CancelTransformations();
-		translate.chain = nullptr;
+		translate.chain = {};
 	}
 
 	const Transformation *PopTransformation() noexcept {
@@ -855,7 +854,7 @@ private:
 	 * @param error_document the payload of the #TRANSLATE_ERROR_DOCUMENT
 	 * translate response packet
 	 */
-	Co::Task<PendingResponse> DispatchErrdocResponse(ConstBuffer<void> error_document);
+	Co::Task<PendingResponse> DispatchErrdocResponse(std::span<const std::byte> error_document);
 
 	void OnErrdocCompletion(std::exception_ptr e) noexcept;
 

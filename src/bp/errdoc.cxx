@@ -41,7 +41,7 @@
 
 static auto
 MakeErrdocTranslateRequest(TranslateRequest r,
-			   ConstBuffer<void> error_document,
+			   std::span<const std::byte> error_document,
 			   http_status_t status) noexcept
 {
 	r.error_document = error_document;
@@ -50,9 +50,9 @@ MakeErrdocTranslateRequest(TranslateRequest r,
 }
 
 Co::Task<PendingResponse>
-Request::DispatchErrdocResponse(ConstBuffer<void> error_document)
+Request::DispatchErrdocResponse(std::span<const std::byte> error_document)
 {
-	assert(!error_document.IsNull());
+	assert(error_document.data() != nullptr);
 	assert(co_response);
 
 	const auto &t = co_await

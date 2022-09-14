@@ -52,7 +52,7 @@ void
 FilteredSocketLease::MoveSocketInput() noexcept
 {
 	// TODO: move buffers instead of copying the data
-	size_t i = 0;
+	std::size_t i = 0;
 	while (true) {
 		auto r = socket->ReadBuffer();
 		if (r.empty())
@@ -95,11 +95,11 @@ FilteredSocketLease::IsEmpty() const noexcept
 		return socket->IsEmpty();
 }
 
-size_t
+std::size_t
 FilteredSocketLease::GetAvailable() const noexcept
 {
 	if (IsReleased()) {
-		size_t result = 0;
+		std::size_t result = 0;
 		for (const auto &i : input)
 			result += i.GetAvailable();
 		return result;
@@ -116,7 +116,7 @@ FilteredSocketLease::ReadBuffer() const noexcept
 }
 
 void
-FilteredSocketLease::DisposeConsumed(size_t nbytes) noexcept
+FilteredSocketLease::DisposeConsumed(std::size_t nbytes) noexcept
 {
 	if (IsReleased()) {
 		input.front().Consume(nbytes);
@@ -136,19 +136,24 @@ bool
 FilteredSocketLease::ReadReleased() noexcept
 {
 	while (!IsReleasedEmpty()) {
+		const std::size_t remaining = input.front().GetAvailable();
+
 		switch (handler.OnBufferedData()) {
 		case BufferedResult::OK:
 			if (IsReleasedEmpty() && !handler.OnBufferedEnd())
 				return false;
+
+			if (input.front().GetAvailable() >= remaining)
+				/* no data was consumed */
+				return true;
+
 			break;
 
-		case BufferedResult::BLOCKING:
-			assert(!IsReleasedEmpty());
-			return true;
-
 		case BufferedResult::MORE:
-		case BufferedResult::AGAIN_OPTIONAL:
-		case BufferedResult::AGAIN_EXPECT:
+			handler.OnBufferedError(std::make_exception_ptr(SocketClosedPrematurelyError()));
+			return false;
+
+		case BufferedResult::AGAIN:
 			break;
 
 		case BufferedResult::CLOSED:
@@ -160,19 +165,19 @@ FilteredSocketLease::ReadReleased() noexcept
 }
 
 bool
-FilteredSocketLease::Read(bool expect_more) noexcept
+FilteredSocketLease::Read() noexcept
 {
 	if (IsReleased())
 		return ReadReleased();
 	else
-		return socket->Read(expect_more);
+		return socket->Read();
 }
 
 void
 FilteredSocketLease::MoveInput() noexcept
 {
 	auto &dest = input.front();
-	for (size_t i = 1; !dest.IsFull() && i < input.size(); ++i) {
+	for (std::size_t i = 1; !dest.IsFull() && i < input.size(); ++i) {
 		auto &src = input[i];
 		dest.MoveFromAllowBothNull(src);
 		src.FreeIfEmpty();
@@ -193,16 +198,7 @@ FilteredSocketLease::OnBufferedData()
 		/* since the BufferedSocket is gone already, we must handle
 		   the AGAIN result codes here */
 
-		if (result == BufferedResult::AGAIN_OPTIONAL && !IsEmpty())
-			continue;
-		else if (result == BufferedResult::AGAIN_EXPECT) {
-			if (IsEmpty()) {
-				handler.OnBufferedError(std::make_exception_ptr(SocketClosedPrematurelyError()));
-				break;
-			}
-
-			continue;
-		} else
+		if (result != BufferedResult::AGAIN && !IsEmpty())
 			break;
 	}
 
@@ -242,7 +238,7 @@ FilteredSocketLease::OnBufferedClosed() noexcept
 }
 
 bool
-FilteredSocketLease::OnBufferedRemaining(size_t remaining) noexcept
+FilteredSocketLease::OnBufferedRemaining(std::size_t remaining) noexcept
 {
 	auto result = handler.OnBufferedRemaining(remaining);
 	if (result && IsReleased())

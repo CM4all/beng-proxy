@@ -115,10 +115,10 @@ ThreadSocketFilter::MoveDecryptedInputAndSchedule() noexcept
 bool
 ThreadSocketFilter::SubmitDecryptedInput() noexcept
 {
-	while (true) {
-		if (unprotected_decrypted_input.empty())
-			MoveDecryptedInputAndSchedule();
+	if (unprotected_decrypted_input.empty())
+		MoveDecryptedInputAndSchedule();
 
+	while (true) {
 		if (unprotected_decrypted_input.empty())
 			return true;
 
@@ -126,21 +126,30 @@ ThreadSocketFilter::SubmitDecryptedInput() noexcept
 
 		switch (socket->InvokeData()) {
 		case BufferedResult::OK:
-			return true;
-
-		case BufferedResult::BLOCKING:
+			AfterConsumed();
 			return true;
 
 		case BufferedResult::MORE:
-			expect_more = true;
+			if (unprotected_decrypted_input.IsDefinedAndFull()) {
+				socket->InvokeError(std::make_exception_ptr(SocketBufferFullError{}));
+				return false;
+			}
+
+			{
+				const std::size_t available =
+					unprotected_decrypted_input.GetAvailable();
+				AfterConsumed();
+				if (unprotected_decrypted_input.GetAvailable() > available)
+					/* more data has just arrived from the
+					   worker thread; try again */
+					continue;
+			}
+
 			return true;
 
-		case BufferedResult::AGAIN_OPTIONAL:
-			break;
-
-		case BufferedResult::AGAIN_EXPECT:
-			expect_more = true;
-			break;
+		case BufferedResult::AGAIN:
+			AfterConsumed();
+			continue;
 
 		case BufferedResult::CLOSED:
 			return false;
@@ -157,7 +166,7 @@ ThreadSocketFilter::CheckRead(std::unique_lock<std::mutex> &lock) noexcept
 
 	read_scheduled = true;
 	lock.unlock();
-	socket->InternalScheduleRead(false);
+	socket->InternalScheduleRead();
 	lock.lock();
 
 	return true;
@@ -341,14 +350,9 @@ ThreadSocketFilter::Done() noexcept
 				lock.lock();
 			}
 
-			const size_t available = decrypted_input.GetAvailable() +
+			const std::size_t available = decrypted_input.GetAvailable() +
 				unprotected_decrypted_input.GetAvailable();
 			lock.unlock();
-
-			if (available == 0 && expect_more) {
-				ClosedPrematurely();
-				return;
-			}
 
 			postponed_remaining = false;
 
@@ -362,11 +366,6 @@ ThreadSocketFilter::Done() noexcept
 		if (decrypted_input.empty() &&
 		    unprotected_decrypted_input.empty()) {
 			lock.unlock();
-
-			if (expect_more) {
-				ClosedPrematurely();
-				return;
-			}
 
 			socket->InvokeEnd();
 			return;
@@ -386,7 +385,7 @@ ThreadSocketFilter::Done() noexcept
 		}
 
 		if (!encrypted_input.IsDefinedAndFull())
-			socket->InternalScheduleRead(expect_more);
+			socket->InternalScheduleRead();
 
 		if (!encrypted_output.empty())
 			/* be optimistic and assume the socket is
@@ -439,7 +438,7 @@ ThreadSocketFilter::OnData() noexcept
 		const std::scoped_lock lock{mutex};
 
 		if (encrypted_input.IsDefinedAndFull())
-			return BufferedResult::BLOCKING;
+			return BufferedResult::OK;
 
 		auto &src = socket->InternalGetInputBuffer();
 		assert(!src.empty());
@@ -469,7 +468,7 @@ ThreadSocketFilter::IsFull() const noexcept
 		unprotected_decrypted_input.IsDefinedAndFull();
 }
 
-size_t
+std::size_t
 ThreadSocketFilter::GetAvailable() const noexcept
 {
 	const std::scoped_lock lock{mutex};
@@ -480,14 +479,11 @@ ThreadSocketFilter::GetAvailable() const noexcept
 std::span<std::byte>
 ThreadSocketFilter::ReadBuffer() noexcept
 {
-	if (unprotected_decrypted_input.empty())
-		MoveDecryptedInputAndSchedule();
-
 	return unprotected_decrypted_input.Read();
 }
 
 void
-ThreadSocketFilter::Consumed(size_t nbytes) noexcept
+ThreadSocketFilter::Consumed(std::size_t nbytes) noexcept
 {
 	if (nbytes == 0)
 		return;
@@ -496,22 +492,24 @@ ThreadSocketFilter::Consumed(size_t nbytes) noexcept
 
 	unprotected_decrypted_input.Consume(nbytes);
 	unprotected_decrypted_input.FreeIfEmpty();
+}
 
-	MoveDecryptedInputAndSchedule();
+void
+ThreadSocketFilter::AfterConsumed() noexcept
+{
+	if (!unprotected_decrypted_input.IsDefinedAndFull())
+		MoveDecryptedInputAndSchedule();
 }
 
 bool
-ThreadSocketFilter::Read(bool _expect_more) noexcept
+ThreadSocketFilter::Read() noexcept
 {
-	if (_expect_more)
-		expect_more = true;
-
 	return SubmitDecryptedInput() &&
 		(postponed_end ||
-		 socket->InternalRead(false));
+		 socket->InternalRead());
 }
 
-inline size_t
+inline std::size_t
 ThreadSocketFilter::LockWritePlainOutput(std::span<const std::byte> src) noexcept
 {
 	const std::scoped_lock lock{mutex};
@@ -527,7 +525,7 @@ ThreadSocketFilter::Write(std::span<const std::byte> src) noexcept
 	if (src.empty())
 		return 0;
 
-	const size_t nbytes = LockWritePlainOutput(src);
+	const std::size_t nbytes = LockWritePlainOutput(src);
 
 	if (nbytes < src.size())
 		/* set the "want_write" flag but don't schedule an event to
@@ -545,11 +543,8 @@ ThreadSocketFilter::Write(std::span<const std::byte> src) noexcept
 }
 
 void
-ThreadSocketFilter::ScheduleRead(bool _expect_more) noexcept
+ThreadSocketFilter::ScheduleRead() noexcept
 {
-	if (_expect_more)
-		expect_more = true;
-
 	want_read = true;
 	read_scheduled = false;
 
@@ -613,7 +608,7 @@ ThreadSocketFilter::InternalWrite() noexcept
 
 		if (empty)
 			socket->InternalUnscheduleWrite();
-		else if (size_t(nbytes) < r.size())
+		else if (std::size_t(nbytes) < r.size())
 			/* if this was only a partial write, and this
 			   InternalWrite() was triggered by
 			   BufferedSocket::DeferWrite() (which is
@@ -663,7 +658,7 @@ ThreadSocketFilter::OnClosed() noexcept
 }
 
 bool
-ThreadSocketFilter::OnRemaining(size_t remaining) noexcept
+ThreadSocketFilter::OnRemaining(std::size_t remaining) noexcept
 {
 	assert(!connected);
 	assert(!want_write);
@@ -673,7 +668,7 @@ ThreadSocketFilter::OnRemaining(size_t remaining) noexcept
 		std::unique_lock lock{mutex};
 
 		if (!busy && !done_pending && encrypted_input.empty()) {
-			const size_t available = decrypted_input.GetAvailable() +
+			const std::size_t available = decrypted_input.GetAvailable() +
 				unprotected_decrypted_input.GetAvailable();
 			lock.unlock();
 
@@ -700,7 +695,7 @@ ThreadSocketFilter::OnEnd() noexcept
 		std::unique_lock lock{mutex};
 
 		if (!busy && !done_pending && encrypted_input.empty()) {
-			const size_t available = decrypted_input.GetAvailable() +
+			const std::size_t available = decrypted_input.GetAvailable() +
 				unprotected_decrypted_input.GetAvailable();
 			lock.unlock();
 

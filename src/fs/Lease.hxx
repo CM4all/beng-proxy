@@ -120,17 +120,17 @@ public:
 	bool IsEmpty() const noexcept;
 
 	[[gnu::pure]]
-	size_t GetAvailable() const noexcept;
+	std::size_t GetAvailable() const noexcept;
 
 	std::span<std::byte> ReadBuffer() const noexcept;
 
-	void DisposeConsumed(size_t nbytes) noexcept;
+	void DisposeConsumed(std::size_t nbytes) noexcept;
 	void AfterConsumed() noexcept;
 
-	bool Read(bool expect_more) noexcept;
+	bool Read() noexcept;
 
-	void ScheduleRead(bool expect_more) noexcept {
-		socket->ScheduleRead(expect_more);
+	void ScheduleRead() noexcept {
+		socket->ScheduleRead();
 	}
 
 	ssize_t Write(std::span<const std::byte>  src) noexcept {
@@ -195,7 +195,7 @@ private:
 				      FdType fd_type) override;
 	bool OnBufferedHangup() noexcept override;
 	bool OnBufferedClosed() noexcept override;
-	bool OnBufferedRemaining(size_t remaining) noexcept override;
+	bool OnBufferedRemaining(std::size_t remaining) noexcept override;
 	bool OnBufferedEnd() noexcept override;
 	bool OnBufferedWrite() override;
 	bool OnBufferedDrained() noexcept override;

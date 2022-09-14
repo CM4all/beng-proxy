@@ -309,7 +309,7 @@ FilteredSocketStockConnection::Release() noexcept
 	socket->Reinit(Event::Duration(-1), *this);
 	socket->UnscheduleWrite();
 
-	socket->ScheduleRead(false);
+	socket->ScheduleRead();
 	idle_timer.Schedule(std::chrono::minutes(1));
 
 	return true;

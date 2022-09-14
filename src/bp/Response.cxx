@@ -790,7 +790,7 @@ Request::DispatchResponse(http_status_t status, HttpHeaders &&headers,
 		ApplyTransformation(status, std::move(headers).ToMap(pool),
 				    std::move(response_body),
 				    *transformation);
-	} else if (!translate.chain.IsNull()) {
+	} else if (translate.chain.data() != nullptr) {
 		assert(!pending_chain_response);
 
 		pending_chain_response =
@@ -799,7 +799,8 @@ Request::DispatchResponse(http_status_t status, HttpHeaders &&headers,
 							     UnusedHoldIstreamPtr{pool, std::move(response_body)});
 
 		TranslateRequest chain_request;
-		chain_request.chain = std::exchange(translate.chain, nullptr);
+		chain_request.chain = std::exchange(translate.chain,
+						    std::span<const std::byte>{});
 		chain_request.chain_header =
 			std::exchange(translate.chain_header, nullptr);
 		chain_request.status = status;
@@ -959,7 +960,7 @@ Request::OnHttpResponse(http_status_t status, StringMap &&_headers,
 		CollectCookies(headers);
 	}
 
-	if (translate.chain != nullptr)
+	if (translate.chain.data() != nullptr)
 		/* get the X-CM4all-Chain header from the unfiltered
 		   response headers, to be sent to the translation
 		   server later when CHAIN is evaluated */

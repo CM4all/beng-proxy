@@ -254,7 +254,7 @@ public:
 	 * Returns the number of bytes in the input buffer.
 	 */
 	[[gnu::pure]]
-	size_t GetAvailable() const noexcept;
+	std::size_t GetAvailable() const noexcept;
 
 	std::span<std::byte> ReadBuffer() const noexcept;
 
@@ -262,7 +262,7 @@ public:
 	 * Dispose the specified number of bytes from the input buffer.
 	 * Call this after ReadBuffer().  It may be called repeatedly.
 	 */
-	void DisposeConsumed(size_t nbytes) noexcept;
+	void DisposeConsumed(std::size_t nbytes) noexcept;
 
 	void AfterConsumed() noexcept;
 
@@ -280,12 +280,8 @@ public:
 	 * BufferedSocketHandler::OnBufferedError() or (if there is no
 	 * data available yet) an event gets scheduled and the
 	 * function returns immediately.
-	 *
-	 * @param expect_more if true, generates an error if no more data can
-	 * be read (socket already shut down, buffer empty); if false, the
-	 * existing expect_more state is unmodified
 	 */
-	bool Read(bool expect_more) noexcept;
+	bool Read() noexcept;
 
 	ssize_t Write(std::span<const std::byte> src) noexcept;
 
@@ -313,19 +309,19 @@ public:
 	 * Wrapper for BufferedSocket::DeferRead().  This works only
 	 * for the initial read.
 	 */
-	void DeferRead(bool _expect_more) noexcept {
+	void DeferRead() noexcept {
 		/* this is only relevant if there is no filter; with a
 		   filter, reading is always scheduled (unless the
 		   buffer is full) */
 		if (filter == nullptr)
-			base.DeferRead(_expect_more);
+			base.DeferRead();
 	}
 
-	void ScheduleRead(bool expect_more) noexcept {
+	void ScheduleRead() noexcept {
 		if (filter != nullptr)
-			filter->ScheduleRead(expect_more);
+			filter->ScheduleRead();
 		else
-			base.ScheduleRead(expect_more);
+			base.ScheduleRead();
 	}
 
 
@@ -365,7 +361,7 @@ public:
 	}
 
 	[[gnu::pure]]
-	size_t InternalGetAvailable() const noexcept {
+	std::size_t InternalGetAvailable() const noexcept {
 		assert(filter != nullptr);
 
 		return base.GetAvailable();
@@ -377,10 +373,16 @@ public:
 		return base.ReadBuffer();
 	}
 
-	void InternalConsumed(size_t nbytes) noexcept {
+	void InternalConsumed(std::size_t nbytes) noexcept {
 		assert(filter != nullptr);
 
 		base.DisposeConsumed(nbytes);
+	}
+
+	void InternalAfterConsumed() noexcept {
+		assert(filter != nullptr);
+
+		base.AfterConsumed();
 	}
 
 	DefaultFifoBuffer &InternalGetInputBuffer() noexcept {
@@ -391,7 +393,7 @@ public:
 		return base.GetInputBuffer();
 	}
 
-	bool InternalRead(bool expect_more) noexcept {
+	bool InternalRead() noexcept {
 		assert(filter != nullptr);
 
 #ifndef NDEBUG
@@ -401,7 +403,7 @@ public:
 			return false;
 #endif
 
-		return base.Read(expect_more);
+		return base.Read();
 	}
 
 	ssize_t InternalDirectWrite(std::span<const std::byte> src) noexcept {
@@ -433,10 +435,10 @@ public:
 	 */
 	bool InternalDrained() noexcept;
 
-	void InternalScheduleRead(bool expect_more) noexcept {
+	void InternalScheduleRead() noexcept {
 		assert(filter != nullptr);
 
-		base.ScheduleRead(expect_more);
+		base.ScheduleRead();
 	}
 
 	void InternalScheduleWrite() noexcept {
@@ -474,7 +476,7 @@ public:
 		return handler->OnBufferedClosed();
 	}
 
-	bool InvokeRemaining(size_t remaining) noexcept {
+	bool InvokeRemaining(std::size_t remaining) noexcept {
 		assert(filter != nullptr);
 
 		return handler->OnBufferedRemaining(remaining);
@@ -516,7 +518,7 @@ private:
 	BufferedResult OnBufferedData() override;
 	bool OnBufferedHangup() noexcept override;
 	bool OnBufferedClosed() noexcept override;
-	bool OnBufferedRemaining(size_t remaining) noexcept override;
+	bool OnBufferedRemaining(std::size_t remaining) noexcept override;
 	bool OnBufferedEnd() noexcept override;
 	bool OnBufferedWrite() override;
 	bool OnBufferedTimeout() noexcept override;

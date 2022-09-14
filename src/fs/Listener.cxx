@@ -83,7 +83,7 @@ public:
 	}
 
 	void Start() noexcept {
-		socket->ScheduleRead(false);
+		socket->ScheduleRead();
 		socket->SetHandshakeCallback(BIND_THIS_METHOD(OnHandshake));
 	}
 
@@ -98,7 +98,7 @@ private:
 
 	/* virtual methods from class BufferedSocketHandler */
 	BufferedResult OnBufferedData() override {
-		return BufferedResult::BLOCKING;
+		return BufferedResult::OK;
 	}
 
 	bool OnBufferedHangup() noexcept override {

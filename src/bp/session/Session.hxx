@@ -151,6 +151,12 @@ struct RealmSession
 	 */
 	AllocatedString site;
 
+	/**
+	 * An opaque string for the translation server obtained from
+	 * TranslationCommand::REALM_SESSION.
+	 */
+	AllocatedArray<std::byte> translate;
+
 	/** the user name which is logged in (nullptr if anonymous), provided
 	    by the translation server */
 	AllocatedString user;
@@ -200,6 +206,12 @@ struct RealmSession
 		site = _site;
 	}
 
+	void SetTranslate(std::span<const std::byte> translate) noexcept;
+
+	void ClearTranslate() noexcept {
+		translate = nullptr;
+	}
+
 	/**
 	 * @param max_age 0 = expires immediately; negative = never
 	 * expires.
@@ -241,7 +253,10 @@ struct Session {
 	/** has a HTTP cookie with this session id already been received? */
 	bool cookie_received = false;
 
-	/** an opaque string for the translation server */
+	/**
+	 * An opaque string for the translation server obtained from
+	 * TranslationCommand::SESSION.
+	 */
 	AllocatedArray<std::byte> translate;
 
 	AllocatedString recover;
