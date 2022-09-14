@@ -147,6 +147,9 @@ FilteredSocketLease::ReadReleased() noexcept
 			return true;
 
 		case BufferedResult::MORE:
+			handler.OnBufferedError(std::make_exception_ptr(SocketClosedPrematurelyError()));
+			return false;
+
 		case BufferedResult::AGAIN:
 			break;
 
