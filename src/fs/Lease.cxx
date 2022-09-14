@@ -125,6 +125,13 @@ FilteredSocketLease::DisposeConsumed(size_t nbytes) noexcept
 		socket->DisposeConsumed(nbytes);
 }
 
+void
+FilteredSocketLease::AfterConsumed() noexcept
+{
+	if (!IsReleased())
+		socket->AfterConsumed();
+}
+
 bool
 FilteredSocketLease::ReadReleased() noexcept
 {

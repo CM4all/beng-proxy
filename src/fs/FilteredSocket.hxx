@@ -264,6 +264,8 @@ public:
 	 */
 	void DisposeConsumed(size_t nbytes) noexcept;
 
+	void AfterConsumed() noexcept;
+
 	void SetDirect(bool _direct) noexcept {
 		assert(!_direct || !HasFilter());
 

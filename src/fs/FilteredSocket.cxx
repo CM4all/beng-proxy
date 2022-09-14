@@ -232,6 +232,13 @@ FilteredSocket::DisposeConsumed(size_t nbytes) noexcept
 		base.DisposeConsumed(nbytes);
 }
 
+void
+FilteredSocket::AfterConsumed() noexcept
+{
+	if (filter == nullptr)
+		base.AfterConsumed();
+}
+
 bool
 FilteredSocket::Read(bool expect_more) noexcept
 {

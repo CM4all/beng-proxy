@@ -125,6 +125,7 @@ public:
 	std::span<std::byte> ReadBuffer() const noexcept;
 
 	void DisposeConsumed(size_t nbytes) noexcept;
+	void AfterConsumed() noexcept;
 
 	bool Read(bool expect_more) noexcept;
 

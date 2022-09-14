@@ -180,6 +180,7 @@ public:
 			return 0;
 
 		s.DisposeConsumed(nbytes);
+		s.AfterConsumed();
 		Consumed(nbytes);
 		return Istream::Consumed(nbytes);
 	}

@@ -939,6 +939,8 @@ FcgiClient::_ConsumeBucketList(std::size_t nbytes) noexcept
 		socket.DisposeConsumed(sizeof(header));
 	}
 
+	socket.AfterConsumed();
+
 	assert(nbytes == 0);
 
 	return Consumed(total);
