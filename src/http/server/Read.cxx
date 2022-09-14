@@ -420,26 +420,7 @@ HttpServerConnection::Feed(std::span<const std::byte> b) noexcept
 		return result;
 
 	case Request::BODY:
-		result = FeedRequestBody(b);
-		switch (result) {
-		case BufferedResult::OK:
-		case BufferedResult::MORE:
-		case BufferedResult::AGAIN:
-			/* refresh the request body timeout (if we're
-			   still reading the request body) */
-			if (request.read_state == Request::BODY)
-				ScheduleReadTimeoutTimer();
-			break;
-
-		case BufferedResult::BLOCKING:
-			read_timer.Cancel();
-			break;
-
-		case BufferedResult::CLOSED:
-			break;
-		}
-
-		return result;
+		return FeedRequestBody(b);
 
 	case Request::END:
 		/* check if the connection was closed by the client while we
