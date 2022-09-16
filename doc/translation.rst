@@ -1201,6 +1201,11 @@ described in this section.
   (absolute within the old root) and the target path (absolute within
   the new root), separated by a null byte.
 
+- ``WRITE_FILE`` write a small text file in a mount namespace.
+  Payload is the absolute path and the file contents separated by a
+  null byte.  The file can either be written to a ``tmpfs`` that was
+  already mounted, or bind-mounted over an existing read-only file.
+
 - ``PIVOT_ROOT`` depends on user namespaces. ``MOUNT_PROC``,
   ``MOUNT_HOME`` and ``MOUNT_TMP_TMPFS`` depend on ``PIVOT_ROOT``,
   user namespaces and PID namespaces.

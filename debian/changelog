@@ -1,6 +1,7 @@
 cm4all-beng-proxy (18.0.1) unstable; urgency=low
 
   * certdb: load /etc/cm4all/beng/certdb.conf
+  * translation: add packet WRITE_FILE
 
  --   
 
