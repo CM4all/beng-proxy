@@ -71,6 +71,8 @@ FilteredSocketLease::MoveSocketInput() noexcept
 		assert(n > 0);
 		socket->DisposeConsumed(n);
 	}
+
+	assert(socket->GetAvailable() == 0);
 }
 
 void
