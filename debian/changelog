@@ -2,7 +2,7 @@ cm4all-beng-proxy (17.3) unstable; urgency=low
 
   * http_client: fix assertion failure due to buffering bug (17.2 regression)
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Wed, 21 Sep 2022 14:08:18 +0200
 
 cm4all-beng-proxy (17.2) unstable; urgency=low
 
