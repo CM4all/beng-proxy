@@ -54,6 +54,17 @@ FilteredSocketLease::MoveSocketInput() noexcept
 	// TODO: move buffers instead of copying the data
 	std::size_t i = 0;
 	while (true) {
+		/* the AfterConsumed() call ensures that
+		   ThreadSocketFilter::AfterConsumed() moves the next
+		   buffer into place; its
+		   "unprotected_decrypted_input" buffer may be empty
+		   at this point because the caller of
+		   FilteredSocketLease::Release() may have consumed it
+		   already, but data in "decrypted_input" remains, but
+		   inaccessible to ReadBuffer(); only AfterConsumed()
+		   moves it and makes it accessible */
+		socket->AfterConsumed();
+
 		auto r = socket->ReadBuffer();
 		if (r.empty())
 			break;
