@@ -48,7 +48,7 @@ FilteredSocketLease::~FilteredSocketLease() noexcept
 	assert(IsReleased());
 }
 
-void
+inline void
 FilteredSocketLease::MoveSocketInput() noexcept
 {
 	// TODO: move buffers instead of copying the data
