@@ -171,6 +171,8 @@ struct Context final
 		if (WaitingForResponse())
 			event_loop.Dispatch();
 
+		assert(!WaitingForResponse());
+
 		break_response = false;
 	}
 
