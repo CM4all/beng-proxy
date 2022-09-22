@@ -58,7 +58,9 @@ author = 'Max Kellermann'
 # built documents.
 #
 # The short X.Y version.
-version = '17.4'
+with open('../meson.build') as f:
+    import re
+    version = re.match(r".*version:\s*'([^']+)'", f.readline()).group(1)
 # The full version, including alpha/beta/rc tags.
 release = version
 
