@@ -313,6 +313,7 @@ Context<Connection>::OnData(std::span<const std::byte> src) noexcept
 
 	if (data_blocking) {
 		--data_blocking;
+		event_loop.Break();
 		return 0;
 	}
 
@@ -808,7 +809,7 @@ test_data_blocking(Context<Connection> &c) noexcept
 		assert(c.HasInput());
 
 		c.ReadBody();
-		c.event_loop.LoopOnceNonBlock();
+		c.event_loop.Dispatch();
 	}
 
 	approve_control.reset();
