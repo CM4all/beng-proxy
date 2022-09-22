@@ -151,7 +151,7 @@ struct Context final : IstreamSink {
 
 	int ReadEvent() {
 		input.Read();
-		return instance.event_loop.LoopOnceNonBlock();
+		return instance.event_loop.LoopNonBlock();
 	}
 
 	void ReadExpect() {
@@ -162,9 +162,6 @@ struct Context final : IstreamSink {
 		gcc_unused
 			const auto ret = ReadEvent();
 		assert(eof || got_data || ret == 0);
-
-		/* give istream_later another chance to breathe */
-		instance.event_loop.LoopOnceNonBlock();
 	}
 
 	void DeferInject(InjectIstreamControl &inject, std::exception_ptr ep) {
@@ -616,7 +613,7 @@ TYPED_TEST_P(IstreamFilterTest, AbortInHandler)
 
 	while (!ctx.eof) {
 		ctx.ReadExpect();
-		ctx.instance.event_loop.LoopOnceNonBlock();
+		ctx.instance.event_loop.LoopNonBlock();
 	}
 
 	ASSERT_EQ(ctx.abort_istream, nullptr);
@@ -651,7 +648,7 @@ TYPED_TEST_P(IstreamFilterTest, AbortInHandlerHalf)
 
 	while (!ctx.eof) {
 		ctx.ReadExpect();
-		ctx.instance.event_loop.LoopOnceNonBlock();
+		ctx.instance.event_loop.LoopNonBlock();
 	}
 
 	ASSERT_TRUE(ctx.abort_istream == nullptr || ctx.abort_after >= 0);

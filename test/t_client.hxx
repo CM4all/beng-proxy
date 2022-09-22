@@ -173,14 +173,14 @@ struct Context final
 			assert(body_error == nullptr);
 
 			ReadBody();
-			event_loop.LoopOnceNonBlock();
+			event_loop.LoopNonBlock();
 		}
 	}
 
 	void WaitForEndOfBody() noexcept {
 		while (HasInput()) {
 			ReadBody();
-			event_loop.LoopOnceNonBlock();
+			event_loop.LoopNonBlock();
 		}
 	}
 
@@ -191,7 +191,7 @@ struct Context final
 	 */
 	void WaitReleased() noexcept {
 		if (!released)
-			event_loop.LoopOnceNonBlock();
+			event_loop.LoopNonBlock();
 	}
 
 #ifdef USE_BUCKETS
@@ -873,7 +873,7 @@ test_data_blocking2(Context<Connection> &c) noexcept
 		   wasn't released yet: try again after some delay, to give
 		   the server process another chance to send the final byte */
 		usleep(1000);
-		c.event_loop.LoopOnceNonBlock();
+		c.event_loop.LoopNonBlock();
 	}
 
 	assert(c.released);
