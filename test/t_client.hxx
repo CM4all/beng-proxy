@@ -97,6 +97,12 @@ struct Context final
 	off_t close_response_body_after = -1;
 
 	/**
+	 * Call EventLoop::Break() as soon as response headers (or a
+	 * response error) is received?
+	 */
+	bool break_response = false;
+
+	/**
 	 * Call istream_read() on the response body from inside the
 	 * response callback.
 	 */
@@ -160,8 +166,12 @@ struct Context final
 	}
 
 	void WaitForResponse() noexcept {
-		while (WaitingForResponse())
-			event_loop.LoopOnce();
+		break_response = true;
+
+		if (WaitingForResponse())
+			event_loop.Dispatch();
+
+		break_response = false;
 	}
 
 	void WaitForFirstBodyByte() noexcept {
@@ -360,6 +370,9 @@ Context<Connection>::OnHttpResponse(http_status_t _status,
 				    StringMap &&headers,
 				    UnusedIstreamPtr _body) noexcept
 {
+	if (break_response)
+		event_loop.Break();
+
 	status = _status;
 	const char *_content_length = headers.Get("content-length");
 	if (_content_length != nullptr)
@@ -423,6 +436,9 @@ template<class Connection>
 void
 Context<Connection>::OnHttpError(std::exception_ptr ep) noexcept
 {
+	if (break_response)
+		event_loop.Break();
+
 	assert(!request_error);
 	request_error = ep;
 
