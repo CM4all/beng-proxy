@@ -35,6 +35,7 @@
 #include "istream/istream.hxx"
 #include "istream/Sink.hxx"
 #include "istream/UnusedPtr.hxx"
+#include "istream/ApproveIstream.hxx"
 #include "istream/BlockIstream.hxx"
 #include "istream/ByteIstream.hxx"
 #include "istream/FourIstream.hxx"
@@ -772,10 +773,11 @@ template<class Connection>
 static void
 test_data_blocking(Context<Connection> &c) noexcept
 {
-	auto request_body =
-		istream_four_new(c.pool,
-				 istream_head_new(*c.pool, istream_zero_new(*c.pool),
-						  65536, false));
+	auto [request_body, approve_control] =
+		NewApproveIstream(*c.pool, c.event_loop,
+				  istream_head_new(*c.pool,
+						   istream_zero_new(*c.pool),
+						   65536, false));
 
 	c.data_blocking = 5;
 	c.connection = Connection::NewMirror(*c.pool, c.event_loop);
@@ -800,12 +802,16 @@ test_data_blocking(Context<Connection> &c) noexcept
 	assert(c.HasInput());
 	assert(!c.released);
 
+	approve_control->Approve(16);
+
 	while (c.data_blocking > 0) {
 		assert(c.HasInput());
 
 		c.ReadBody();
 		c.event_loop.LoopOnceNonBlock();
 	}
+
+	approve_control.reset();
 
 	assert(!c.released);
 	assert(c.HasInput());
