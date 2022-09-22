@@ -787,15 +787,9 @@ test_data_blocking(Context<Connection> &c) noexcept
 #endif
 			      c, c.cancel_ptr);
 
-	while (c.data_blocking > 0) {
-		if (c.HasInput()) {
-			c.ReadBody();
-			c.event_loop.LoopOnceNonBlock();
-		} else
-			c.event_loop.LoopOnce();
-	}
+	c.WaitForResponse();
 
-	assert(!c.released);
+	assert(!c.request_error);
 	assert(c.status == HTTP_STATUS_OK);
 	assert(c.content_length == nullptr);
 #ifdef HAVE_CHUNKED_REQUEST_BODY
@@ -803,6 +797,17 @@ test_data_blocking(Context<Connection> &c) noexcept
 #else
 	assert(c.available == HEAD_SIZE);
 #endif
+	assert(c.HasInput());
+	assert(!c.released);
+
+	while (c.data_blocking > 0) {
+		assert(c.HasInput());
+
+		c.ReadBody();
+		c.event_loop.LoopOnceNonBlock();
+	}
+
+	assert(!c.released);
 	assert(c.HasInput());
 	assert(c.body_data > 0);
 	assert(!c.body_eof);
