@@ -152,7 +152,7 @@ test_block1(EventLoop &event_loop)
 	   object and restart reading (into the second output) */
 	assert(ctx.error == nullptr && !ctx.eof);
 	ctx.CloseInput();
-	event_loop.LoopOnceNonBlock();
+	event_loop.LoopNonBlock();
 
 	assert(ctx.error == nullptr && !ctx.eof);
 	assert(strcmp(ctx.value.c_str(), "foo") == 0);

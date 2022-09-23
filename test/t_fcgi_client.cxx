@@ -276,6 +276,7 @@ fcgi_server_nop(struct pool *pool)
 {
 	FcgiRequest request;
 	read_fcgi_request(pool, &request);
+	discard_fcgi_request_body(&request);
 }
 
 struct Connection {

@@ -7,6 +7,7 @@ custom_target(
   'HTML documentation',
   output: 'html',
   input: [
+    'conf.py',
     'index.rst',
     'bp.rst',
     'lb.rst',

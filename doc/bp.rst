@@ -65,9 +65,9 @@ request body.  Both is forwarded to the “focused” widget. See
 Installation
 ============
 
-:program:`beng-proxy` requires a Debian Jessie operating system: Linux kernel
-3.16 and glibc 2.19. For compiling the source code, you need a C++11
-compiler, e.g. gcc 4.9.
+:program:`beng-proxy` requires a Debian Bullseye operating system:
+Linux kernel 5.10 glibc 2.31. For compiling the source code, you need
+a C++20 compiler, e.g. gcc 10.
 
 Install the package ``cm4all-beng-proxy`` and the translation server of
 your choice.

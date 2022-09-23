@@ -24,6 +24,7 @@ istream_basic = static_library(
   'ForwardIstream.cxx',
 
   # Istream implementations
+  'ApproveIstream.cxx',
   'BlockIstream.cxx',
   'ByteIstream.cxx',
   'ConcatIstream.cxx',
