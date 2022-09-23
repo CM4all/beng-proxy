@@ -85,6 +85,8 @@ class Server final
 
 	bool client_fs_released = false;
 
+	bool break_closed = false;
+
 public:
 	Server(struct pool &_pool, EventLoop &event_loop);
 
@@ -134,9 +136,14 @@ public:
 	}
 
 	void WaitClosed() noexcept {
-		auto &event_loop = GetEventLoop();
-		while (connection != nullptr)
-			event_loop.LoopOnce();
+		if (connection == nullptr)
+			return;
+
+		break_closed = true;
+		GetEventLoop().Dispatch();
+		break_closed = false;
+
+		assert(connection == nullptr);
 	}
 
 private:
@@ -185,6 +192,8 @@ private:
 };
 
 class Client final : HttpResponseHandler, IstreamSink {
+	EventLoop &event_loop;
+
 	CancellablePointer client_cancel_ptr;
 
 	std::exception_ptr response_error;
@@ -193,7 +202,12 @@ class Client final : HttpResponseHandler, IstreamSink {
 
 	bool response_eof = false;
 
+	bool break_done = false;
+
 public:
+	explicit Client(EventLoop &_event_loop) noexcept
+		:event_loop(_event_loop) {}
+
 	void SendRequest(Server &server,
 			 http_method_t method, const char *uri,
 			 const StringMap &headers,
@@ -207,10 +221,15 @@ public:
 		return response_error || response_eof;
 	}
 
-	void WaitDone(Server &server) {
-		auto &event_loop = server.GetEventLoop();
-		while (!IsClientDone())
-			event_loop.LoopOnce();
+	void WaitDone() noexcept {
+		if (IsClientDone())
+			return;
+
+		break_done = true;
+		event_loop.Dispatch();
+		break_done = false;
+
+		assert(IsClientDone());
 	}
 
 	void RethrowResponseError() const {
@@ -218,9 +237,9 @@ public:
 			std::rethrow_exception(response_error);
 	}
 
-	void ExpectResponse(Server &server, http_status_t expected_status,
+	void ExpectResponse(http_status_t expected_status,
 			    const char *expected_body) {
-		WaitDone(server);
+		WaitDone();
 		RethrowResponseError();
 
 		if (status != expected_status)
@@ -258,11 +277,17 @@ private:
 	void OnEof() noexcept override {
 		IstreamSink::ClearInput();
 		response_eof = true;
+
+		if (break_done)
+			event_loop.Break();
 	}
 
 	void OnError(std::exception_ptr ep) noexcept override {
 		IstreamSink::ClearInput();
 		response_error = std::move(ep);
+
+		if (break_done)
+			event_loop.Break();
 	}
 };
 
@@ -300,12 +325,18 @@ Server::HttpConnectionError(std::exception_ptr e) noexcept
 	connection = nullptr;
 
 	PrintException(e);
+
+	if (break_closed)
+		GetEventLoop().Break();
 }
 
 void
 Server::HttpConnectionClosed() noexcept
 {
 	connection = nullptr;
+
+	if (break_closed)
+		GetEventLoop().Break();
 }
 
 static void
@@ -316,11 +347,11 @@ TestSimple(Server &server)
 				     istream_string_new(request.pool, "foo"));
 	});
 
-	Client client;
+	Client client{server.GetEventLoop()};
 	client.SendRequest(server,
 			   HTTP_METHOD_GET, "/", {},
 			   nullptr);
-	client.ExpectResponse(server, HTTP_STATUS_OK, "foo");
+	client.ExpectResponse(HTTP_STATUS_OK, "foo");
 }
 
 static void
@@ -331,11 +362,11 @@ TestMirror(Server &server)
 				     std::move(request.body));
 	});
 
-	Client client;
+	Client client{server.GetEventLoop()};
 	client.SendRequest(server,
 			   HTTP_METHOD_POST, "/", {},
 			   istream_string_new(server.GetPool(), "foo"));
-	client.ExpectResponse(server, HTTP_STATUS_OK, "foo");
+	client.ExpectResponse(HTTP_STATUS_OK, "foo");
 }
 
 class BufferedMirror final : GrowingBufferSinkHandler, Cancellable {
@@ -396,20 +427,23 @@ TestBufferedMirror(Server &server)
 
 	char *data = RandomString(server.GetPool(), 65536);
 
-	Client client;
+	Client client{server.GetEventLoop()};
 	client.SendRequest(server,
 			   HTTP_METHOD_POST, "/buffered", {},
 			   istream_string_new(server.GetPool(), data));
-	client.ExpectResponse(server, HTTP_STATUS_OK, data);
+	client.ExpectResponse(HTTP_STATUS_OK, data);
 }
 
 static void
 TestAbortedRequestBody(Server &server)
 {
-	bool request_received = false;
+	bool request_received = false, break_request_received = false;
 	server.SetRequestHandler([&](IncomingHttpRequest &request, CancellablePointer &cancel_ptr) noexcept {
 		request_received = true;
 		NewFromPool<BufferedMirror>(request.pool, request, cancel_ptr);
+
+		if (break_request_received)
+			server.GetEventLoop().Break();
 	});
 
 	char *data = RandomString(server.GetPool(), 65536);
@@ -417,7 +451,7 @@ TestAbortedRequestBody(Server &server)
 	auto [inject_istream, inject_control] = istream_inject_new(server.GetPool(),
 								   istream_block_new(server.GetPool()));
 
-	Client client;
+	Client client{server.GetEventLoop()};
 	client.SendRequest(server,
 			   HTTP_METHOD_POST, "/AbortedRequestBody", {},
 			   NewConcatIstream(server.GetPool(),
@@ -426,8 +460,12 @@ TestAbortedRequestBody(Server &server)
 							     std::move(inject_istream),
 							     32768, true)));
 
-	while (!request_received)
-		server.GetEventLoop().LoopOnce();
+	if (!request_received) {
+		break_request_received = true;
+		server.GetEventLoop().Dispatch();
+		break_request_received = false;
+		assert(request_received);
+	}
 
 	inject_control.InjectFault(std::make_exception_ptr(std::runtime_error("Inject")));
 	server.WaitClosed();
@@ -442,11 +480,11 @@ TestDiscardTinyRequestBody(Server &server)
 				     istream_string_new(request.pool, "foo"));
 	});
 
-	Client client;
+	Client client{server.GetEventLoop()};
 	client.SendRequest(server,
 			   HTTP_METHOD_POST, "/", {},
 			   istream_string_new(server.GetPool(), "foo"));
-	client.ExpectResponse(server, HTTP_STATUS_OK, "foo");
+	client.ExpectResponse(HTTP_STATUS_OK, "foo");
 }
 
 /**
@@ -487,11 +525,11 @@ TestDiscardedHugeRequestBody(Server &server)
 		respond_later.Schedule(request);
 	});
 
-	Client client;
+	Client client{server.GetEventLoop()};
 	client.SendRequest(server,
 			   HTTP_METHOD_POST, "/", {},
 			   istream_zero_new(server.GetPool()));
-	client.ExpectResponse(server, HTTP_STATUS_OK, "foo");
+	client.ExpectResponse(HTTP_STATUS_OK, "foo");
 }
 
 int
