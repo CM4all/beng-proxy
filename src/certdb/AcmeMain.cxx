@@ -487,7 +487,7 @@ AcmeRenewCert(const CertDatabaseConfig &db_config, const AcmeConfig &config,
 		throw "Neither --alpn nor --challenge-directory nor --dns-txt-program specified";
 
 	const auto old_cert_key = db.GetServerCertificateKeyByHandle(handle);
-	if (old_cert_key)
+	if (!old_cert_key)
 		throw "Old certificate not found in database";
 
 	auto &old_cert = *old_cert_key.cert;

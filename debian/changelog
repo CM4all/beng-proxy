@@ -1,6 +1,6 @@
 cm4all-beng-proxy (17.4) unstable; urgency=low
 
-  * 
+  * certdb: fix "Old certificate not found in database" error
 
  --   
 
