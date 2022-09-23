@@ -109,6 +109,11 @@ struct Context final
 	bool break_data = false;
 
 	/**
+	 * Call EventLoop::Break() as soon as response body ends?
+	 */
+	bool break_eof = false;
+
+	/**
 	 * Call istream_read() on the response body from inside the
 	 * response callback.
 	 */
@@ -200,10 +205,16 @@ struct Context final
 	}
 
 	void WaitForEndOfBody() noexcept {
+		break_eof = true;
+
 		while (HasInput()) {
 			ReadBody();
-			event_loop.LoopNonBlock();
+			event_loop.Dispatch();
 		}
+
+		break_eof = false;
+
+		assert(!HasInput());
 	}
 
 	/**
@@ -356,7 +367,7 @@ template<class Connection>
 void
 Context<Connection>::OnEof() noexcept
 {
-	if (break_data)
+	if (break_data || break_eof)
 		event_loop.Break();
 
 	ClearInput();
@@ -371,7 +382,7 @@ template<class Connection>
 void
 Context<Connection>::OnError(std::exception_ptr ep) noexcept
 {
-	if (break_data)
+	if (break_data || break_eof)
 		event_loop.Break();
 
 	ClearInput();
