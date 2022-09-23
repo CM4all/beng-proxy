@@ -114,6 +114,11 @@ struct Context final
 	bool break_eof = false;
 
 	/**
+	 * Call EventLoop::Break() as soon as the lease is released?
+	 */
+	bool break_released = false;
+
+	/**
 	 * Call istream_read() on the response body from inside the
 	 * response callback.
 	 */
@@ -223,8 +228,14 @@ struct Context final
 	 * failures with the AJP client.
 	 */
 	void WaitReleased() noexcept {
-		if (!released)
-			event_loop.LoopNonBlock();
+		if (released)
+			return;
+
+		break_released = true;
+		event_loop.Dispatch();
+		break_released = false;
+
+		assert(released);
 	}
 
 #ifdef USE_BUCKETS
@@ -302,6 +313,9 @@ struct Context final
 	/* virtual methods from class Lease */
 	void ReleaseLease(bool _reuse) noexcept override {
 		assert(connection != nullptr);
+
+		if (break_released)
+			event_loop.Break();
 
 		delete connection;
 		connection = nullptr;
