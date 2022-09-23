@@ -49,6 +49,8 @@ GlueHttpClient::~GlueHttpClient()
 }
 
 class GlueHttpResponseHandler final : public CurlResponseHandler {
+	EventLoop &event_loop;
+
 	http_status_t status;
 	Curl::Headers headers;
 
@@ -59,6 +61,9 @@ class GlueHttpResponseHandler final : public CurlResponseHandler {
 	bool done = false;
 
 public:
+	explicit GlueHttpResponseHandler(EventLoop &_event_loop) noexcept
+		:event_loop(_event_loop) {}
+
 	bool IsDone() const {
 		return done;
 	}
@@ -86,11 +91,13 @@ public:
 
 	void OnEnd() override {
 		done = true;
+		event_loop.Break();
 	}
 
 	void OnError(std::exception_ptr e) noexcept override {
 		error = std::move(e);
 		done = true;
+		event_loop.Break();
 	}
 };
 
@@ -101,7 +108,7 @@ GlueHttpClient::Request(EventLoop &event_loop,
 {
 	CurlSlist header_list;
 
-	GlueHttpResponseHandler handler;
+	GlueHttpResponseHandler handler{event_loop};
 	CurlRequest request(curl_global, uri, handler);
 
 	request.SetOption(CURLOPT_VERBOSE, long(verbose));
@@ -120,7 +127,10 @@ GlueHttpClient::Request(EventLoop &event_loop,
 
 	request.Start();
 
-	while (!handler.IsDone() && event_loop.LoopOnce()) {}
+	if (!handler.IsDone())
+		event_loop.Dispatch();
+
+	assert(handler.IsDone());
 
 	handler.CheckThrowError();
 	return handler.MoveResponse();
