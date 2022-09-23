@@ -103,6 +103,12 @@ struct Context final
 	bool break_response = false;
 
 	/**
+	 * Call EventLoop::Break() as soon as response body data is
+	 * received?
+	 */
+	bool break_data = false;
+
+	/**
 	 * Call istream_read() on the response body from inside the
 	 * response callback.
 	 */
@@ -180,13 +186,17 @@ struct Context final
 		assert(status != http_status_t(0));
 		assert(!request_error);
 
-		while (body_data == 0 && HasInput()) {
-			assert(!body_eof);
-			assert(body_error == nullptr);
+		if (body_data > 0 || !HasInput())
+			return;
 
-			ReadBody();
-			event_loop.LoopNonBlock();
-		}
+		ReadBody();
+
+		if (body_data > 0 || !HasInput())
+			return;
+
+		break_data = true;
+		event_loop.Dispatch();
+		break_data = false;
 	}
 
 	void WaitForEndOfBody() noexcept {
@@ -221,6 +231,9 @@ struct Context final
 		total_buckets = list.GetTotalBufferSize();
 
 		if (total_buckets > 0) {
+			if (break_data)
+				event_loop.Break();
+
 			size_t buckets_consumed = input.ConsumeBucketList(total_buckets);
 			assert(buckets_consumed == total_buckets);
 			body_data += buckets_consumed;
@@ -311,6 +324,9 @@ template<class Connection>
 std::size_t
 Context<Connection>::OnData(std::span<const std::byte> src) noexcept
 {
+	if (break_data)
+		event_loop.Break();
+
 	body_data += src.size();
 
 	if (close_response_body_after >= 0 &&
@@ -340,6 +356,9 @@ template<class Connection>
 void
 Context<Connection>::OnEof() noexcept
 {
+	if (break_data)
+		event_loop.Break();
+
 	ClearInput();
 	body_eof = true;
 
@@ -352,6 +371,9 @@ template<class Connection>
 void
 Context<Connection>::OnError(std::exception_ptr ep) noexcept
 {
+	if (break_data)
+		event_loop.Break();
+
 	ClearInput();
 	body_abort = true;
 
