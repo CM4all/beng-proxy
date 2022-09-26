@@ -246,8 +246,6 @@ TEST(BufferedResourceLoader, CancelNext)
 			handler, cancel_ptr);
 
 	ASSERT_EQ(handler.state, RecordingHttpResponseHandler::State::WAITING);
-	instance.event_loop.LoopNonBlock();
-	ASSERT_EQ(handler.state, RecordingHttpResponseHandler::State::WAITING);
 
 	cancel_ptr.Cancel();
 

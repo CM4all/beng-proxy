@@ -873,12 +873,20 @@ test(
   ),
 )
 
-test('t_istream_tee', executable('t_istream_tee',
-  't_istream_tee.cxx',
-  '../src/istream/sink_close.cxx',
-  '../src/PInstance.cxx',
-  include_directories: inc,
-  dependencies: istream_dep))
+test(
+  't_istream_tee',
+  executable(
+    't_istream_tee',
+    't_istream_tee.cxx',
+    '../src/istream/sink_close.cxx',
+    '../src/PInstance.cxx',
+    include_directories: inc,
+    dependencies: [
+      gtest,
+      istream_dep,
+    ],
+  ),
+)
 
 test('t_growing_buffer', executable('t_growing_buffer',
   't_growing_buffer.cxx',

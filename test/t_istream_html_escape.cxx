@@ -41,7 +41,6 @@ public:
 		"test&lt;foo&amp;bar&gt;test&quot;test&apos;";
 
 	static constexpr bool call_available = true;
-	static constexpr bool got_data_assert = true;
 	static constexpr bool enable_blocking = true;
 	static constexpr bool enable_abort_istream = true;
 

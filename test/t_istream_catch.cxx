@@ -53,7 +53,6 @@ public:
 		"long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long";
 
 	static constexpr bool call_available = false;
-	static constexpr bool got_data_assert = true;
 	static constexpr bool enable_blocking = true;
 	static constexpr bool enable_abort_istream = true;
 

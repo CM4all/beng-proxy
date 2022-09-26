@@ -51,7 +51,6 @@ public:
 	static constexpr const char *expected_result = "foo";
 
 	static constexpr bool call_available = true;
-	static constexpr bool got_data_assert = true;
 	static constexpr bool enable_blocking = true;
 	static constexpr bool enable_abort_istream = true;
 
@@ -88,7 +87,6 @@ public:
 	static constexpr const char *input_text = "3\r\nfoo\r\n0\r\n\r\n ";
 
 	static constexpr bool call_available = true;
-	static constexpr bool got_data_assert = true;
 	static constexpr bool enable_blocking = true;
 	static constexpr bool enable_abort_istream = true;
 
