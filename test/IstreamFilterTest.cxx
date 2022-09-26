@@ -184,6 +184,9 @@ Context::OnDirect(FdType, FileDescriptor, off_t, std::size_t max_length) noexcep
 void
 Context::OnEof() noexcept
 {
+	if (break_eof)
+		instance.event_loop.Break();
+
 	ClearInput();
 
 	assert(test_pool);
@@ -196,6 +199,9 @@ void
 Context::OnError(std::exception_ptr) noexcept
 {
 	assert(!expected_result || !record);
+
+	if (break_eof)
+		instance.event_loop.Break();
 
 	ClearInput();
 

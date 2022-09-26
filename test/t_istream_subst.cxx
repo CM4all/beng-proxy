@@ -42,7 +42,6 @@ public:
 	static constexpr const char *expected_result = "xyz bar fo fo bar bla! fo";
 
 	static constexpr bool call_available = true;
-	static constexpr bool got_data_assert = true;
 	static constexpr bool enable_blocking = true;
 	static constexpr bool enable_abort_istream = true;
 

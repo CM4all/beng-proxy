@@ -105,7 +105,6 @@ public:
 	static constexpr const char *expected_result = "foobar";
 
 	static constexpr bool call_available = true;
-	static constexpr bool got_data_assert = false;
 	static constexpr bool enable_blocking = false;
 	static constexpr bool enable_abort_istream = false;
 

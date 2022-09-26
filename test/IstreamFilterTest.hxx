@@ -95,6 +95,11 @@ struct Context final : IstreamSink {
 	bool got_data;
 	bool eof = false;
 
+	/**
+	 * Call EventLoop::Break() as soon as the stream ends?
+	 */
+	bool break_eof = false;
+
 	int close_after = -1;
 
 	const char *const expected_result;
@@ -149,21 +154,6 @@ struct Context final : IstreamSink {
 		}
 	}
 
-	int ReadEvent() noexcept {
-		input.Read();
-		return instance.event_loop.LoopNonBlock();
-	}
-
-	void ReadExpect() noexcept {
-		assert(!eof);
-
-		got_data = false;
-
-		gcc_unused
-			const auto ret = ReadEvent();
-		assert(eof || got_data || ret == 0);
-	}
-
 	void DeferInject(InjectIstreamControl &inject,
 			 std::exception_ptr ep) noexcept {
 		assert(ep);
@@ -187,6 +177,24 @@ struct Context final : IstreamSink {
 	}
 
 	bool ReadBuckets(std::size_t limit);
+
+	void WaitForEndOfStream() noexcept {
+		assert(!break_eof);
+		break_eof = true;
+
+		while (!eof) {
+			if (HasInput())
+				input.Read();
+
+			if (!eof)
+				instance.event_loop.Dispatch();
+		}
+
+		break_eof = false;
+
+		assert(!HasInput());
+		assert(eof);
+	}
 
 	/* virtual methods from class IstreamHandler */
 	std::size_t OnData(std::span<const std::byte> src) noexcept override;
@@ -215,13 +223,7 @@ run_istream_ctx(const Traits &traits, Context &ctx) noexcept
 		gcc_unused off_t a2 = ctx.input.GetAvailable(true);
 	}
 
-	if (traits.got_data_assert) {
-		while (!ctx.eof)
-			ctx.ReadExpect();
-	} else {
-		for (int i = 0; i < 1000 && !ctx.eof; ++i)
-			ctx.ReadEvent();
-	}
+	ctx.WaitForEndOfStream();
 
 	if (ctx.expected_result && ctx.record) {
 		ASSERT_EQ(ctx.buffer.size() + ctx.skipped,
@@ -612,10 +614,7 @@ TYPED_TEST_P(IstreamFilterTest, AbortInHandler)
 	ctx.block_after = -1;
 	ctx.abort_istream = &inject.second;
 
-	while (!ctx.eof) {
-		ctx.ReadExpect();
-		ctx.instance.event_loop.LoopNonBlock();
-	}
+	ctx.WaitForEndOfStream();
 
 	ASSERT_EQ(ctx.abort_istream, nullptr);
 }
@@ -647,10 +646,7 @@ TYPED_TEST_P(IstreamFilterTest, AbortInHandlerHalf)
 	ctx.abort_after = 2;
 	ctx.abort_istream = &inject.second;
 
-	while (!ctx.eof) {
-		ctx.ReadExpect();
-		ctx.instance.event_loop.LoopNonBlock();
-	}
+	ctx.WaitForEndOfStream();
 
 	ASSERT_TRUE(ctx.abort_istream == nullptr || ctx.abort_after >= 0);
 }
