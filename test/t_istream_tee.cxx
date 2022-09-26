@@ -45,6 +45,8 @@
 #include "util/Cancellable.hxx"
 #include "util/Exception.hxx"
 
+#include <gtest/gtest.h>
+
 #include <memory>
 #include <stdexcept>
 
@@ -151,8 +153,7 @@ struct BlockContext final : Context, StatsIstreamSink {
  *
  */
 
-static void
-test_block1()
+TEST(TeeIstream, Block1)
 {
 	PInstance instance;
 	CancellablePointer cancel_ptr;
@@ -167,35 +168,34 @@ test_block1()
 	BlockContext ctx{instance.event_loop, std::move(tee1)};
 
 	auto &sink = NewStringSink(*pool, std::move(tee2), ctx, cancel_ptr);
-	assert(ctx.value.empty());
+	ASSERT_TRUE(ctx.value.empty());
 
 	/* the input (istream_delayed) blocks */
 	ReadStringSink(sink);
-	assert(ctx.value.empty());
+	ASSERT_TRUE(ctx.value.empty());
 
 	/* feed data into input */
 	delayed.second.Set(istream_string_new(*pool, "foo"));
-	assert(ctx.value.empty());
+	ASSERT_TRUE(ctx.value.empty());
 
 	/* the first output (block_istream_handler) blocks */
 	ReadStringSink(sink);
-	assert(ctx.value.empty());
+	ASSERT_TRUE(ctx.value.empty());
 
 	/* close the blocking output, this should release the "tee"
 	   object and restart reading (into the second output) */
-	assert(ctx.error == nullptr && !ctx.eof);
+	ASSERT_TRUE(ctx.error == nullptr && !ctx.eof);
 	ctx.CloseInput();
 	ctx.WaitStringSinkFinished();
 
-	assert(ctx.error == nullptr && !ctx.eof);
-	assert(strcmp(ctx.value.c_str(), "foo") == 0);
+	ASSERT_TRUE(ctx.error == nullptr && !ctx.eof);
+	ASSERT_EQ(ctx.value, "foo");
 
 	pool.reset();
 	pool_commit();
 }
 
-static void
-test_close_data()
+TEST(TeeIstream, CloseData)
 {
 	PInstance instance;
 	Context ctx{instance.event_loop};
@@ -209,14 +209,14 @@ test_close_data()
 	sink_close_new(*pool, std::move(tee1));
 
 	auto &sink = NewStringSink(*pool, std::move(tee2), ctx, cancel_ptr);
-	assert(ctx.value.empty());
+	ASSERT_TRUE(ctx.value.empty());
 
 	ReadStringSink(sink);
 
 	/* at this point, sink_close has closed itself, and istream_tee
 	   should have passed the data to the StringSink */
 
-	assert(strcmp(ctx.value.c_str(), "foo") == 0);
+	ASSERT_EQ(ctx.value, "foo");
 
 	pool_commit();
 }
@@ -226,8 +226,7 @@ test_close_data()
  * first output.  This verifies that istream_tee's "skip" attribute is
  * obeyed properly.
  */
-static void
-test_close_skipped()
+TEST(TeeIstream, CloseSkipped)
 {
 	PInstance instance;
 	Context ctx{instance.event_loop};
@@ -241,11 +240,11 @@ test_close_skipped()
 
 	sink_close_new(*pool, std::move(tee2));
 
-	assert(ctx.value.empty());
+	ASSERT_TRUE(ctx.value.empty());
 
 	ReadStringSink(sink);
 
-	assert(strcmp(ctx.value.c_str(), "foo") == 0);
+	ASSERT_EQ(ctx.value, "foo");
 
 	pool_commit();
 }
@@ -282,18 +281,38 @@ test_error(bool close_first, bool close_second,
 		second->Read();
 
 	if (!close_first) {
-		assert(first->total_data == 0);
-		assert(!first->eof);
-		assert(first->error != nullptr);
+		ASSERT_EQ(first->total_data, 0);
+		ASSERT_FALSE(first->eof);
+		ASSERT_TRUE(first->error != nullptr);
 	}
 
 	if (!close_second) {
-		assert(second->total_data == 0);
-		assert(!second->eof);
-		assert(second->error != nullptr);
+		ASSERT_EQ(second->total_data, 0);
+		ASSERT_FALSE(second->eof);
+		ASSERT_TRUE(second->error != nullptr);
 	}
 
 	pool_commit();
+}
+
+TEST(TeeIstream, Error1)
+{
+	test_error(false, false, true);
+}
+
+TEST(TeeIstream, Error2)
+{
+	test_error(false, false, false);
+}
+
+TEST(TeeIstream, Error3)
+{
+	test_error(true, false, false);
+}
+
+TEST(TeeIstream, Error4)
+{
+	test_error(false, true, true);
 }
 
 static void
@@ -326,10 +345,9 @@ test_bucket_error(bool close_second_early,
 
 	try {
 		first.FillBucketList(list);
-		assert(false);
+		ASSERT_TRUE(false);
 	} catch (...) {
-		assert(strcmp(GetFullMessage(std::current_exception()).c_str(),
-			      "error") == 0);
+		ASSERT_EQ(GetFullMessage(std::current_exception()), "error");
 	}
 
 	if (close_second_late)
@@ -337,34 +355,25 @@ test_bucket_error(bool close_second_early,
 
 	if (!close_second_early && !close_second_late) {
 		second->Read();
-		assert(second->total_data == 0);
-		assert(!second->eof);
-		assert(second->error != nullptr);
+		ASSERT_EQ(second->total_data, 0);
+		ASSERT_FALSE(second->eof);
+		ASSERT_TRUE(second->error != nullptr);
 	}
 
 	pool_commit();
 }
 
-/*
- * main
- *
- */
-
-
-int main(int argc, char **argv) {
-	(void)argc;
-	(void)argv;
-
-	/* run test suite */
-
-	test_block1();
-	test_close_data();
-	test_close_skipped();
-	test_error(false, false, true);
-	test_error(false, false, false);
-	test_error(true, false, false);
-	test_error(false, true, true);
+TEST(TeeIstream, BucketError1)
+{
 	test_bucket_error(false, false);
+}
+
+TEST(TeeIstream, BucketError2)
+{
 	test_bucket_error(true, false);
+}
+
+TEST(TeeIstream, BucketError3)
+{
 	test_bucket_error(false, true);
 }
