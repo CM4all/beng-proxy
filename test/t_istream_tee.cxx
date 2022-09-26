@@ -152,18 +152,19 @@ struct BlockContext final : Context, StatsIstreamSink {
  */
 
 static void
-test_block1(EventLoop &event_loop)
+test_block1()
 {
+	PInstance instance;
 	CancellablePointer cancel_ptr;
 
-	auto pool = pool_new_libc(nullptr, "test");
+	auto pool = pool_new_libc(instance.root_pool, "test");
 
-	auto delayed = istream_delayed_new(*pool, event_loop);
+	auto delayed = istream_delayed_new(*pool, instance.event_loop);
 	auto tee1 = NewTeeIstream(*pool, std::move(delayed.first),
-				  event_loop, false);
+				  instance.event_loop, false);
 	auto tee2 = AddTeeIstream(tee1, false);
 
-	BlockContext ctx{event_loop, std::move(tee1)};
+	BlockContext ctx{instance.event_loop, std::move(tee1)};
 
 	auto &sink = NewStringSink(*pool, std::move(tee2), ctx, cancel_ptr);
 	assert(ctx.value.empty());
@@ -194,14 +195,15 @@ test_block1(EventLoop &event_loop)
 }
 
 static void
-test_close_data(EventLoop &event_loop, struct pool *_pool)
+test_close_data()
 {
-	Context ctx{event_loop};
+	PInstance instance;
+	Context ctx{instance.event_loop};
 	CancellablePointer cancel_ptr;
 
-	auto pool = pool_new_libc(_pool, "test");
+	auto pool = pool_new_libc(instance.root_pool, "test");
 	auto tee1 = NewTeeIstream(*pool, istream_string_new(*pool, "foo"),
-				  event_loop, false);
+				  instance.event_loop, false);
 	auto tee2 = AddTeeIstream(tee1, false);
 
 	sink_close_new(*pool, std::move(tee1));
@@ -225,14 +227,15 @@ test_close_data(EventLoop &event_loop, struct pool *_pool)
  * obeyed properly.
  */
 static void
-test_close_skipped(EventLoop &event_loop, struct pool *_pool)
+test_close_skipped()
 {
-	Context ctx{event_loop};
+	PInstance instance;
+	Context ctx{instance.event_loop};
 	CancellablePointer cancel_ptr;
 
-	auto pool = pool_new_libc(_pool, "test");
+	auto pool = pool_new_libc(instance.root_pool, "test");
 	auto tee1 = NewTeeIstream(*pool, istream_string_new(*pool, "foo"),
-				  event_loop, false);
+				  instance.event_loop, false);
 	auto tee2 = AddTeeIstream(tee1, false);
 	auto &sink = NewStringSink(*pool, std::move(tee1), ctx, cancel_ptr);
 
@@ -248,15 +251,15 @@ test_close_skipped(EventLoop &event_loop, struct pool *_pool)
 }
 
 static void
-test_error(EventLoop &event_loop, struct pool *_pool,
-	   bool close_first, bool close_second,
+test_error(bool close_first, bool close_second,
 	   bool read_first)
 {
-	auto pool = pool_new_libc(_pool, "test");
+	PInstance instance;
+	auto pool = pool_new_libc(instance.root_pool, "test");
 	auto tee1 =
 		NewTeeIstream(*pool, istream_fail_new(*pool,
 						      std::make_exception_ptr(std::runtime_error("error"))),
-			      event_loop,
+			      instance.event_loop,
 			      false);
 	auto tee2 = AddTeeIstream(tee1, false);
 	pool.reset();
@@ -294,15 +297,15 @@ test_error(EventLoop &event_loop, struct pool *_pool,
 }
 
 static void
-test_bucket_error(EventLoop &event_loop, struct pool *_pool,
-		  bool close_second_early,
+test_bucket_error(bool close_second_early,
 		  bool close_second_late)
 {
-	auto pool = pool_new_libc(_pool, "test");
+	PInstance instance;
+	auto pool = pool_new_libc(instance.root_pool, "test");
 	auto tee1 =
 		NewTeeIstream(*pool, istream_fail_new(*pool,
 						      std::make_exception_ptr(std::runtime_error("error"))),
-			      event_loop,
+			      instance.event_loop,
 			      false);
 	auto tee2 = AddTeeIstream(tee1, false);
 	pool.reset();
@@ -352,18 +355,16 @@ int main(int argc, char **argv) {
 	(void)argc;
 	(void)argv;
 
-	PInstance instance;
-
 	/* run test suite */
 
-	test_block1(instance.event_loop);
-	test_close_data(instance.event_loop, instance.root_pool);
-	test_close_skipped(instance.event_loop, instance.root_pool);
-	test_error(instance.event_loop, instance.root_pool, false, false, true);
-	test_error(instance.event_loop, instance.root_pool, false, false, false);
-	test_error(instance.event_loop, instance.root_pool, true, false, false);
-	test_error(instance.event_loop, instance.root_pool, false, true, true);
-	test_bucket_error(instance.event_loop, instance.root_pool, false, false);
-	test_bucket_error(instance.event_loop, instance.root_pool, true, false);
-	test_bucket_error(instance.event_loop, instance.root_pool, false, true);
+	test_block1();
+	test_close_data();
+	test_close_skipped();
+	test_error(false, false, true);
+	test_error(false, false, false);
+	test_error(true, false, false);
+	test_error(false, true, true);
+	test_bucket_error(false, false);
+	test_bucket_error(true, false);
+	test_bucket_error(false, true);
 }
