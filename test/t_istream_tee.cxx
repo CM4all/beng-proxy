@@ -91,20 +91,52 @@ struct StatsIstreamSink : IstreamSink {
 };
 
 struct Context : StringSinkHandler {
+	EventLoop &event_loop;
+
 	std::string value;
 
+	bool string_sink_finished = false;
+
+	bool break_strink_sink_finished = false;
+
+	explicit Context(EventLoop &_event_loop) noexcept
+		:event_loop(_event_loop) {}
+
+	void WaitStringSinkFinished() noexcept {
+		if (string_sink_finished)
+			return;
+
+		break_strink_sink_finished = true;
+		event_loop.Dispatch();
+		break_strink_sink_finished = false;
+
+		assert(string_sink_finished);
+	}
+
 	void OnStringSinkSuccess(std::string &&_value) noexcept final {
+		assert(!string_sink_finished);
+		string_sink_finished = true;
+
 		value = std::move(_value);
+
+		if (break_strink_sink_finished)
+			event_loop.Break();
 	}
 
 	void OnStringSinkError(std::exception_ptr) noexcept final {
+		assert(!string_sink_finished);
+		string_sink_finished = true;
+
+		if (break_strink_sink_finished)
+			event_loop.Break();
 	}
 };
 
 struct BlockContext final : Context, StatsIstreamSink {
 	template<typename I>
-	explicit BlockContext(I &&_input) noexcept
-		:StatsIstreamSink(std::forward<I>(_input)) {}
+	BlockContext(EventLoop &_event_loop, I &&_input) noexcept
+		:Context(_event_loop),
+		 StatsIstreamSink(std::forward<I>(_input)) {}
 
 	/* istream handler */
 
@@ -131,7 +163,7 @@ test_block1(EventLoop &event_loop)
 				  event_loop, false);
 	auto tee2 = AddTeeIstream(tee1, false);
 
-	BlockContext ctx(std::move(tee1));
+	BlockContext ctx{event_loop, std::move(tee1)};
 
 	auto &sink = NewStringSink(*pool, std::move(tee2), ctx, cancel_ptr);
 	assert(ctx.value.empty());
@@ -152,7 +184,7 @@ test_block1(EventLoop &event_loop)
 	   object and restart reading (into the second output) */
 	assert(ctx.error == nullptr && !ctx.eof);
 	ctx.CloseInput();
-	event_loop.LoopNonBlock();
+	ctx.WaitStringSinkFinished();
 
 	assert(ctx.error == nullptr && !ctx.eof);
 	assert(strcmp(ctx.value.c_str(), "foo") == 0);
@@ -164,7 +196,7 @@ test_block1(EventLoop &event_loop)
 static void
 test_close_data(EventLoop &event_loop, struct pool *_pool)
 {
-	Context ctx;
+	Context ctx{event_loop};
 	CancellablePointer cancel_ptr;
 
 	auto pool = pool_new_libc(_pool, "test");
@@ -195,7 +227,7 @@ test_close_data(EventLoop &event_loop, struct pool *_pool)
 static void
 test_close_skipped(EventLoop &event_loop, struct pool *_pool)
 {
-	Context ctx;
+	Context ctx{event_loop};
 	CancellablePointer cancel_ptr;
 
 	auto pool = pool_new_libc(_pool, "test");
