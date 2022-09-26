@@ -74,7 +74,7 @@ class IstreamFilterTest : public ::testing::Test {
 	const ScopeFbPoolInit fb_pool_init;
 
 public:
-	IstreamFilterTest() {
+	IstreamFilterTest() noexcept {
 		direct_global_init();
 	}
 };
@@ -149,12 +149,12 @@ struct Context final : IstreamSink {
 		}
 	}
 
-	int ReadEvent() {
+	int ReadEvent() noexcept {
 		input.Read();
 		return instance.event_loop.LoopNonBlock();
 	}
 
-	void ReadExpect() {
+	void ReadExpect() noexcept {
 		assert(!eof);
 
 		got_data = false;
@@ -164,7 +164,8 @@ struct Context final : IstreamSink {
 		assert(eof || got_data || ret == 0);
 	}
 
-	void DeferInject(InjectIstreamControl &inject, std::exception_ptr ep) {
+	void DeferInject(InjectIstreamControl &inject,
+			 std::exception_ptr ep) noexcept {
 		assert(ep);
 		assert(defer_inject_istream == nullptr);
 		assert(!defer_inject_error);
@@ -203,7 +204,7 @@ struct Context final : IstreamSink {
 
 template<typename Traits>
 static void
-run_istream_ctx(const Traits &traits, Context &ctx)
+run_istream_ctx(const Traits &traits, Context &ctx) noexcept
 {
 	const AutoPoolCommit auto_pool_commit;
 
