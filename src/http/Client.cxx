@@ -1101,8 +1101,10 @@ HttpClient::OnBufferedHangup() noexcept
 {
 	stopwatch.RecordEvent("hup");
 
-	if (HasInput())
+	if (HasInput()) {
 		CloseInput();
+		socket.UnscheduleWrite();
+	}
 
 	return true;
 }
