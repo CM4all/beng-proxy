@@ -319,65 +319,65 @@ struct FcgiClientFactory {
 	static FcgiClientConnection *New(EventLoop &event_loop,
 					 void (*f)(struct pool *pool));
 
-	static auto *NewMirror(struct pool &, EventLoop &event_loop) {
+	auto *NewMirror(struct pool &, EventLoop &event_loop) {
 		return New(event_loop, fcgi_server_mirror);
 	}
 
-	static auto *NewNull(struct pool &, EventLoop &event_loop) {
+	auto *NewNull(struct pool &, EventLoop &event_loop) {
 		return New(event_loop, fcgi_server_null);
 	}
 
-	static auto *NewDummy(struct pool &, EventLoop &event_loop) {
+	auto *NewDummy(struct pool &, EventLoop &event_loop) {
 		return New(event_loop, fcgi_server_hello);
 	}
 
-	static auto *NewFixed(struct pool &, EventLoop &event_loop) {
+	auto *NewFixed(struct pool &, EventLoop &event_loop) {
 		return New(event_loop, fcgi_server_hello);
 	}
 
-	static auto *NewTiny(struct pool &, EventLoop &event_loop) {
+	auto *NewTiny(struct pool &, EventLoop &event_loop) {
 		return New(event_loop, fcgi_server_tiny);
 	}
 
-	static auto *NewMalformedHeaderName(struct pool &, EventLoop &event_loop) {
+	auto *NewMalformedHeaderName(struct pool &, EventLoop &event_loop) {
 		return New(event_loop, fcgi_server_malformed_header_name);
 	}
 
-	static auto *NewMalformedHeaderValue(struct pool &, EventLoop &event_loop) {
+	auto *NewMalformedHeaderValue(struct pool &, EventLoop &event_loop) {
 		return New(event_loop, fcgi_server_malformed_header_value);
 	}
 
-	static auto *NewHuge(struct pool &, EventLoop &event_loop) {
+	auto *NewHuge(struct pool &, EventLoop &event_loop) {
 		return New(event_loop, fcgi_server_huge);
 	}
 
-	static auto *NewHold(struct pool &, EventLoop &event_loop) {
+	auto *NewHold(struct pool &, EventLoop &event_loop) {
 		return New(event_loop, fcgi_server_hold);
 	}
 
-	static auto *NewBlock(struct pool &, EventLoop &event_loop) {
+	auto *NewBlock(struct pool &, EventLoop &event_loop) {
 		return New(event_loop, fcgi_server_hold);
 	}
 
-	static auto *NewPrematureCloseHeaders(struct pool &,
+	auto *NewPrematureCloseHeaders(struct pool &,
 					      EventLoop &event_loop) {
 		return New(event_loop, fcgi_server_premature_close_headers);
 	}
 
-	static auto *NewPrematureCloseBody(struct pool &,
+	auto *NewPrematureCloseBody(struct pool &,
 					   EventLoop &event_loop) {
 		return New(event_loop, fcgi_server_premature_close_body);
 	}
 
-	static auto *NewPrematureEnd(struct pool &, EventLoop &event_loop) {
+	auto *NewPrematureEnd(struct pool &, EventLoop &event_loop) {
 		return New(event_loop, fcgi_server_premature_end);
 	}
 
-	static auto *NewExcessData(struct pool &, EventLoop &event_loop) {
+	auto *NewExcessData(struct pool &, EventLoop &event_loop) {
 		return New(event_loop, fcgi_server_excess_data);
 	}
 
-	static auto *NewNop(struct pool &, EventLoop &event_loop) {
+	auto *NewNop(struct pool &, EventLoop &event_loop) {
 		return New(event_loop, fcgi_server_nop);
 	}
 };

@@ -128,80 +128,79 @@ public:
 };
 
 struct HttpClientFactory {
-	static HttpClientConnection *New(EventLoop &event_loop,
-					 const char *path,
-					 const char *mode) noexcept;
+	HttpClientConnection *New(EventLoop &event_loop,
+				  const char *path, const char *mode) noexcept;
 
-	static auto *NewWithServer(struct pool &pool,
-				   EventLoop &event_loop,
-				   DemoHttpServerConnection::Mode mode) noexcept {
+	auto *NewWithServer(struct pool &pool,
+			    EventLoop &event_loop,
+			    DemoHttpServerConnection::Mode mode) noexcept {
 		return new HttpClientConnection(event_loop,
 						Server::New(pool, event_loop, mode));
 	}
 
-	static auto *NewMirror(struct pool &pool, EventLoop &event_loop) noexcept {
+	auto *NewMirror(struct pool &pool, EventLoop &event_loop) noexcept {
 		return NewWithServer(pool, event_loop,
 				     DemoHttpServerConnection::Mode::MIRROR);
 	}
 
-	static auto *NewDeferMirror(struct pool &pool, EventLoop &event_loop) noexcept {
+	auto *NewDeferMirror(struct pool &pool, EventLoop &event_loop) noexcept {
 		return NewWithServer(pool, event_loop,
 				     DemoHttpServerConnection::Mode::DEFER_MIRROR);
 	}
 
-	static auto *NewNull(struct pool &pool, EventLoop &event_loop) noexcept {
+	auto *NewNull(struct pool &pool, EventLoop &event_loop) noexcept {
 		return NewWithServer(pool, event_loop,
 				     DemoHttpServerConnection::Mode::MODE_NULL);
 	}
 
-	static auto *NewDummy(struct pool &pool, EventLoop &event_loop) noexcept {
+	auto *NewDummy(struct pool &pool, EventLoop &event_loop) noexcept {
 		return NewWithServer(pool, event_loop,
 				     DemoHttpServerConnection::Mode::DUMMY);
 	}
 
-	static auto *NewClose(struct pool &pool, EventLoop &event_loop) noexcept {
+	auto *NewClose(struct pool &pool, EventLoop &event_loop) noexcept {
 		return NewWithServer(pool, event_loop,
 				     DemoHttpServerConnection::Mode::CLOSE);
 	}
 
-	static auto *NewFixed(struct pool &pool, EventLoop &event_loop) noexcept {
+	auto *NewFixed(struct pool &pool, EventLoop &event_loop) noexcept {
 		return NewWithServer(pool, event_loop,
 				     DemoHttpServerConnection::Mode::FIXED);
 	}
 
-	static auto *NewTiny(struct pool &p, EventLoop &event_loop) noexcept {
+	auto *NewTiny(struct pool &p, EventLoop &event_loop) noexcept {
 		return NewFixed(p, event_loop);
 	}
 
-	static auto *NewHuge(struct pool &pool, EventLoop &event_loop) noexcept {
+	auto *NewHuge(struct pool &pool, EventLoop &event_loop) noexcept {
 		return NewWithServer(pool, event_loop,
 				     DemoHttpServerConnection::Mode::HUGE_);
 	}
 
-	static auto *NewTwice100(struct pool &, EventLoop &event_loop) noexcept {
+	auto *NewTwice100(struct pool &, EventLoop &event_loop) noexcept {
 		return New(event_loop, "./test/twice_100.sh", nullptr);
 	}
 
-	static HttpClientConnection *NewClose100(struct pool &,
-						 EventLoop &event_loop) noexcept;
+	HttpClientConnection *NewClose100(struct pool &,
+					  EventLoop &event_loop) noexcept;
 
-	static auto *NewHold(struct pool &pool, EventLoop &event_loop) noexcept {
+	auto *NewHold(struct pool &pool, EventLoop &event_loop) noexcept {
 		return NewWithServer(pool, event_loop,
 				     DemoHttpServerConnection::Mode::HOLD);
 	}
 
-	static auto *NewBlock(struct pool &pool,
-			      EventLoop &event_loop) noexcept {
+	auto *NewBlock(struct pool &pool,
+		       EventLoop &event_loop) noexcept {
 		return NewWithServer(pool, event_loop,
 				     DemoHttpServerConnection::Mode::BLOCK);
 	}
 
-	static auto *NewNop(struct pool &pool, EventLoop &event_loop) noexcept {
+	auto *NewNop(struct pool &pool, EventLoop &event_loop) noexcept {
 		return NewWithServer(pool, event_loop,
 				     DemoHttpServerConnection::Mode::NOP);
 	}
 
-	static auto *NewIgnoredRequestBody(struct pool &, EventLoop &event_loop) noexcept {
+	auto *NewIgnoredRequestBody(struct pool &, EventLoop &event_loop) noexcept {
 		return New(event_loop, "./test/ignored_request_body.sh", nullptr);
 	}
 };

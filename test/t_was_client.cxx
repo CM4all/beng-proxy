@@ -423,55 +423,55 @@ private:
 };
 
 struct WasFactory {
-	static WasConnection *NewMirror(struct pool &pool, EventLoop &event_loop) {
+	auto *NewMirror(struct pool &pool, EventLoop &event_loop) {
 		return new WasConnection(pool, event_loop, RunMirror);
 	}
 
-	static WasConnection *NewNull(struct pool &pool, EventLoop &event_loop) {
+	auto *NewNull(struct pool &pool, EventLoop &event_loop) {
 		return new WasConnection(pool, event_loop, RunNull);
 	}
 
-	static WasConnection *NewDummy(struct pool &pool, EventLoop &event_loop) {
+	auto *NewDummy(struct pool &pool, EventLoop &event_loop) {
 		return new WasConnection(pool, event_loop, RunHello);
 	}
 
-	static WasConnection *NewFixed(struct pool &pool, EventLoop &event_loop) {
+	auto *NewFixed(struct pool &pool, EventLoop &event_loop) {
 		return new WasConnection(pool, event_loop, RunHello);
 	}
 
-	static WasConnection *NewTiny(struct pool &pool, EventLoop &event_loop) {
+	auto *NewTiny(struct pool &pool, EventLoop &event_loop) {
 		return new WasConnection(pool, event_loop, RunHello);
 	}
 
-	static WasConnection *NewHuge(struct pool &pool, EventLoop &event_loop) {
+	auto *NewHuge(struct pool &pool, EventLoop &event_loop) {
 		return new WasConnection(pool, event_loop, RunHuge);
 	}
 
-	static WasConnection *NewHold(struct pool &pool, EventLoop &event_loop) {
+	auto *NewHold(struct pool &pool, EventLoop &event_loop) {
 		return new WasConnection(pool, event_loop, RunHold);
 	}
 
-	static WasConnection *NewBlock(struct pool &pool, EventLoop &event_loop) {
+	auto *NewBlock(struct pool &pool, EventLoop &event_loop) {
 		return new WasConnection(pool, event_loop, RunBlock);
 	}
 
-	static WasConnection *NewNop(struct pool &pool, EventLoop &event_loop) {
+	auto *NewNop(struct pool &pool, EventLoop &event_loop) {
 		return new WasConnection(pool, event_loop, RunNop);
 	}
 
-	static WasConnection *NewMalformedHeaderName(struct pool &pool, EventLoop &event_loop) {
+	auto *NewMalformedHeaderName(struct pool &pool, EventLoop &event_loop) {
 		return new WasConnection(pool, event_loop, RunMalformedHeaderName);
 	}
 
-	static WasConnection *NewMalformedHeaderValue(struct pool &pool, EventLoop &event_loop) {
+	auto *NewMalformedHeaderValue(struct pool &pool, EventLoop &event_loop) {
 		return new WasConnection(pool, event_loop, RunMalformedHeaderValue);
 	}
 
-	static WasConnection *NewValidPremature(struct pool &pool, EventLoop &event_loop) {
+	auto *NewValidPremature(struct pool &pool, EventLoop &event_loop) {
 		return new WasConnection(pool, event_loop, RunValidPremature);
 	}
 
-	static WasConnection *NewMalformedPremature(struct pool &pool, EventLoop &event_loop) {
+	auto *NewMalformedPremature(struct pool &pool, EventLoop &event_loop) {
 		return new WasConnection(pool, event_loop,
 					 WasConnection::MalformedPremature{});
 	}
