@@ -303,7 +303,8 @@ MalformedPrematureWasServer::OnWasControlPacket(enum was_command cmd,
 	return true;
 }
 
-class WasConnection final : WasServerHandler, WasLease {
+class WasConnection final : public ClientConnection, WasServerHandler, WasLease
+{
 	EventLoop &event_loop;
 
 	WasSocket socket;
@@ -345,7 +346,7 @@ public:
 								   handler);
 	}
 
-	~WasConnection() {
+	~WasConnection() noexcept override {
 		if (server != nullptr)
 			server->Free();
 		if (server2 != nullptr)
@@ -356,14 +357,15 @@ public:
 		return event_loop;
 	}
 
-	void Request(struct pool *pool,
+	void Request(struct pool &pool,
 		     Lease &_lease,
 		     http_method_t method, const char *uri,
 		     StringMap &&headers, UnusedIstreamPtr body,
+		     [[maybe_unused]] bool expect_100,
 		     HttpResponseHandler &handler,
-		     CancellablePointer &cancel_ptr) {
+		     CancellablePointer &cancel_ptr) noexcept override {
 		lease = &_lease;
-		was_client_request(*pool, GetEventLoop(), nullptr,
+		was_client_request(pool, GetEventLoop(), nullptr,
 				   socket.control, socket.input, socket.output,
 				   *this,
 				   nullptr,
@@ -372,7 +374,7 @@ public:
 				   handler, cancel_ptr);
 	}
 
-	void InjectSocketFailure() noexcept {
+	void InjectSocketFailure() noexcept override {
 		socket.control.Shutdown();
 	}
 
@@ -475,17 +477,15 @@ private:
 	}
 };
 
-template<class Connection>
 static void
-test_malformed_header_name(Context<Connection> &c)
+test_malformed_header_name(Context &c)
 {
-	c.connection = Connection::NewMalformedHeaderName(*c.pool, c.event_loop);
+	c.connection = WasConnection::NewMalformedHeaderName(*c.pool, c.event_loop);
 	c.connection->Request(c.pool, c,
 			      HTTP_METHOD_GET, "/foo", {},
 			      nullptr,
-#ifdef HAVE_EXPECT_100
 			      false,
-#endif
+
 			      c, c.cancel_ptr);
 
 	c.event_loop.Dispatch();
@@ -495,17 +495,15 @@ test_malformed_header_name(Context<Connection> &c)
 	assert(c.released);
 }
 
-template<class Connection>
 static void
-test_malformed_header_value(Context<Connection> &c)
+test_malformed_header_value(Context &c)
 {
-	c.connection = Connection::NewMalformedHeaderValue(*c.pool, c.event_loop);
+	c.connection = WasConnection::NewMalformedHeaderValue(*c.pool, c.event_loop);
 	c.connection->Request(c.pool, c,
 			      HTTP_METHOD_GET, "/foo", {},
 			      nullptr,
-#ifdef HAVE_EXPECT_100
 			      false,
-#endif
+
 			      c, c.cancel_ptr);
 
 	c.event_loop.Dispatch();
@@ -528,6 +526,6 @@ main(int, char **)
 	const ScopeFbPoolInit fb_pool_init;
 
 	run_all_tests<WasConnection>();
-	run_test<WasConnection>(test_malformed_header_name);
-	run_test<WasConnection>(test_malformed_header_value);
+	run_test(test_malformed_header_name);
+	run_test(test_malformed_header_value);
 }

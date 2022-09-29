@@ -54,6 +54,7 @@
 #include "util/Cast.hxx"
 #include "util/Cancellable.hxx"
 #include "util/Exception.hxx"
+#include "AllocatorPtr.hxx"
 
 #ifdef USE_BUCKETS
 #include "istream/Bucket.hxx"
@@ -84,7 +85,22 @@ NewMajorPool(struct pool &parent, const char *name) noexcept
 	return pool;
 }
 
-template<class Connection>
+class ClientConnection {
+public:
+	virtual ~ClientConnection() noexcept = default;
+
+	virtual void Request(struct pool &pool,
+			     Lease &lease,
+			     http_method_t method, const char *uri,
+			     StringMap &&headers,
+			     UnusedIstreamPtr body,
+			     bool expect_100,
+			     HttpResponseHandler &handler,
+			     CancellablePointer &cancel_ptr) noexcept = 0;
+
+	virtual void InjectSocketFailure() noexcept = 0;
+};
+
 struct Context final
 	: PInstance, Cancellable, Lease, HttpResponseHandler, IstreamSink {
 
@@ -136,7 +152,7 @@ struct Context final
 	bool close_response_body_data = false;
 	bool response_body_byte = false;
 	CancellablePointer cancel_ptr;
-	Connection *connection = nullptr;
+	ClientConnection *connection = nullptr;
 	bool released = false, reuse, aborted = false;
 	http_status_t status = http_status_t(0);
 	std::exception_ptr request_error;
@@ -340,9 +356,8 @@ struct Context final
 	void OnHttpError(std::exception_ptr ep) noexcept override;
 };
 
-template<class Connection>
 void
-Context<Connection>::Cancel() noexcept
+Context::Cancel() noexcept
 {
 	assert(request_body != nullptr);
 	assert(!aborted_request_body);
@@ -356,9 +371,8 @@ Context<Connection>::Cancel() noexcept
  *
  */
 
-template<class Connection>
 std::size_t
-Context<Connection>::OnData(std::span<const std::byte> src) noexcept
+Context::OnData(std::span<const std::byte> src) noexcept
 {
 	if (break_data)
 		event_loop.Break();
@@ -388,9 +402,8 @@ Context<Connection>::OnData(std::span<const std::byte> src) noexcept
 	return src.size();
 }
 
-template<class Connection>
 void
-Context<Connection>::OnEof() noexcept
+Context::OnEof() noexcept
 {
 	if (break_data || break_eof)
 		event_loop.Break();
@@ -403,9 +416,8 @@ Context<Connection>::OnEof() noexcept
 	}
 }
 
-template<class Connection>
 void
-Context<Connection>::OnError(std::exception_ptr ep) noexcept
+Context::OnError(std::exception_ptr ep) noexcept
 {
 	if (break_data || break_eof)
 		event_loop.Break();
@@ -423,9 +435,8 @@ Context<Connection>::OnError(std::exception_ptr ep) noexcept
  *
  */
 
-template<class Connection>
 void
-Context<Connection>::OnHttpResponse(http_status_t _status,
+Context::OnHttpResponse(http_status_t _status,
 				    StringMap &&headers,
 				    UnusedIstreamPtr _body) noexcept
 {
@@ -491,9 +502,8 @@ Context<Connection>::OnHttpResponse(http_status_t _status,
 	fb_pool_compress();
 }
 
-template<class Connection>
 void
-Context<Connection>::OnHttpError(std::exception_ptr ep) noexcept
+Context::OnHttpError(std::exception_ptr ep) noexcept
 {
 	if (break_response)
 		event_loop.Break();
@@ -513,15 +523,13 @@ Context<Connection>::OnHttpError(std::exception_ptr ep) noexcept
 
 template<class Connection>
 static void
-test_empty(Context<Connection> &c) noexcept
+test_empty(Context &c) noexcept
 {
 	c.connection = Connection::NewMirror(*c.pool, c.event_loop);
 	c.connection->Request(c.pool, c,
 			      HTTP_METHOD_GET, "/foo", {},
 			      nullptr,
-#ifdef HAVE_EXPECT_100
 			      false,
-#endif
 			      c, c.cancel_ptr);
 	pool_commit();
 
@@ -540,15 +548,13 @@ test_empty(Context<Connection> &c) noexcept
 
 template<class Connection>
 static void
-test_body(Context<Connection> &c) noexcept
+test_body(Context &c) noexcept
 {
 	c.connection = Connection::NewMirror(*c.pool, c.event_loop);
 	c.connection->Request(c.pool, c,
 			      HTTP_METHOD_GET, "/foo", {},
 			      istream_string_new(*c.pool, "foobar"),
-#ifdef HAVE_EXPECT_100
 			      false,
-#endif
 			      c, c.cancel_ptr);
 
 	c.WaitForResponse();
@@ -574,16 +580,14 @@ test_body(Context<Connection> &c) noexcept
  */
 template<class Connection>
 static void
-test_read_body(Context<Connection> &c) noexcept
+test_read_body(Context &c) noexcept
 {
 	c.read_response_body = true;
 	c.connection = Connection::NewMirror(*c.pool, c.event_loop);
 	c.connection->Request(c.pool, c,
 			      HTTP_METHOD_GET, "/foo", {},
 			      istream_string_new(*c.pool, "foobar"),
-#ifdef HAVE_EXPECT_100
 			      false,
-#endif
 			      c, c.cancel_ptr);
 
 	c.event_loop.Dispatch();
@@ -606,7 +610,7 @@ test_read_body(Context<Connection> &c) noexcept
  */
 template<class Connection>
 static void
-test_huge(Context<Connection> &c) noexcept
+test_huge(Context &c) noexcept
 {
 	c.read_response_body = true;
 	c.close_response_body_data = true;
@@ -614,9 +618,7 @@ test_huge(Context<Connection> &c) noexcept
 	c.connection->Request(c.pool, c,
 			      HTTP_METHOD_GET, "/foo", {},
 			      nullptr,
-#ifdef HAVE_EXPECT_100
 			      false,
-#endif
 			      c, c.cancel_ptr);
 
 	c.event_loop.Dispatch();
@@ -634,16 +636,14 @@ test_huge(Context<Connection> &c) noexcept
 
 template<class Connection>
 static void
-test_close_response_body_early(Context<Connection> &c) noexcept
+test_close_response_body_early(Context &c) noexcept
 {
 	c.close_response_body_early = true;
 	c.connection = Connection::NewMirror(*c.pool, c.event_loop);
 	c.connection->Request(c.pool, c,
 			      HTTP_METHOD_GET, "/foo", {},
 			      istream_string_new(*c.pool, "foobar"),
-#ifdef HAVE_EXPECT_100
 			      false,
-#endif
 			      c, c.cancel_ptr);
 
 	c.event_loop.Dispatch();
@@ -661,16 +661,14 @@ test_close_response_body_early(Context<Connection> &c) noexcept
 
 template<class Connection>
 static void
-test_close_response_body_late(Context<Connection> &c) noexcept
+test_close_response_body_late(Context &c) noexcept
 {
 	c.close_response_body_late = true;
 	c.connection = Connection::NewMirror(*c.pool, c.event_loop);
 	c.connection->Request(c.pool, c,
 			      HTTP_METHOD_GET, "/foo", {},
 			      istream_string_new(*c.pool, "foobar"),
-#ifdef HAVE_EXPECT_100
 			      false,
-#endif
 			      c, c.cancel_ptr);
 
 	c.event_loop.Dispatch();
@@ -689,16 +687,14 @@ test_close_response_body_late(Context<Connection> &c) noexcept
 
 template<class Connection>
 static void
-test_close_response_body_data(Context<Connection> &c) noexcept
+test_close_response_body_data(Context &c) noexcept
 {
 	c.close_response_body_data = true;
 	c.connection = Connection::NewMirror(*c.pool, c.event_loop);
 	c.connection->Request(c.pool, c,
 			      HTTP_METHOD_GET, "/foo", {},
 			      istream_string_new(*c.pool, "foobar"),
-#ifdef HAVE_EXPECT_100
 			      false,
-#endif
 			      c, c.cancel_ptr);
 
 	c.WaitForResponse();
@@ -720,16 +716,14 @@ test_close_response_body_data(Context<Connection> &c) noexcept
 
 template<class Connection>
 static void
-test_close_response_body_after(Context<Connection> &c) noexcept
+test_close_response_body_after(Context &c) noexcept
 {
 	c.close_response_body_after = 16384;
 	c.connection = Connection::NewHuge(*c.pool, c.event_loop);
 	c.connection->Request(c.pool, c,
 			      HTTP_METHOD_GET, "/foo", {},
 			      nullptr,
-#ifdef HAVE_EXPECT_100
 			      false,
-#endif
 			      c, c.cancel_ptr);
 
 	c.WaitForResponse();
@@ -759,9 +753,8 @@ wrap_fake_request_body([[maybe_unused]] struct pool *pool, UnusedIstreamPtr i)
 	return i;
 }
 
-template<class Connection>
 static UnusedIstreamPtr
-make_delayed_request_body(Context<Connection> &c) noexcept
+make_delayed_request_body(Context &c) noexcept
 {
 	auto delayed = istream_delayed_new(*c.pool, c.event_loop);
 	delayed.second.cancel_ptr = c;
@@ -771,15 +764,13 @@ make_delayed_request_body(Context<Connection> &c) noexcept
 
 template<class Connection>
 static void
-test_close_request_body_early(Context<Connection> &c) noexcept
+test_close_request_body_early(Context &c) noexcept
 {
 	c.connection = Connection::NewMirror(*c.pool, c.event_loop);
 	c.connection->Request(c.pool, c,
 			      HTTP_METHOD_GET, "/foo", {},
 			      wrap_fake_request_body(c.pool, make_delayed_request_body(c)),
-#ifdef HAVE_EXPECT_100
 			      false,
-#endif
 			      c, c.cancel_ptr);
 
 	const std::runtime_error error("fail_request_body_early");
@@ -798,7 +789,7 @@ test_close_request_body_early(Context<Connection> &c) noexcept
 
 template<class Connection>
 static void
-test_close_request_body_fail(Context<Connection> &c) noexcept
+test_close_request_body_fail(Context &c) noexcept
 {
 	auto delayed = istream_delayed_new(*c.pool, c.event_loop);
 	auto request_body =
@@ -812,9 +803,7 @@ test_close_request_body_fail(Context<Connection> &c) noexcept
 	c.connection->Request(c.pool, c,
 			      HTTP_METHOD_GET, "/foo", {},
 			      wrap_fake_request_body(c.pool, std::move(request_body)),
-#ifdef HAVE_EXPECT_100
 			      false,
-#endif
 			      c, c.cancel_ptr);
 
 	c.event_loop.Dispatch();
@@ -842,7 +831,7 @@ test_close_request_body_fail(Context<Connection> &c) noexcept
 
 template<class Connection>
 static void
-test_data_blocking(Context<Connection> &c) noexcept
+test_data_blocking(Context &c) noexcept
 {
 	auto [request_body, approve_control] =
 		NewApproveIstream(*c.pool, c.event_loop,
@@ -855,9 +844,7 @@ test_data_blocking(Context<Connection> &c) noexcept
 	c.connection->Request(c.pool, c,
 			      HTTP_METHOD_GET, "/foo", {},
 			      wrap_fake_request_body(c.pool, std::move(request_body)),
-#ifdef HAVE_EXPECT_100
 			      false,
-#endif
 			      c, c.cancel_ptr);
 
 	c.WaitForResponse();
@@ -908,7 +895,7 @@ test_data_blocking(Context<Connection> &c) noexcept
  */
 template<class Connection>
 static void
-test_data_blocking2(Context<Connection> &c) noexcept
+test_data_blocking2(Context &c) noexcept
 {
 	StringMap request_headers;
 	request_headers.Add(*c.pool, "connection", "close");
@@ -921,9 +908,7 @@ test_data_blocking2(Context<Connection> &c) noexcept
 			      HTTP_METHOD_GET, "/foo", std::move(request_headers),
 			      istream_head_new(*c.pool, istream_zero_new(*c.pool),
 					       body_size, true),
-#ifdef HAVE_EXPECT_100
 			      false,
-#endif
 			      c, c.cancel_ptr);
 
 	c.WaitForResponse();
@@ -957,7 +942,7 @@ test_data_blocking2(Context<Connection> &c) noexcept
 
 template<class Connection>
 static void
-test_body_fail(Context<Connection> &c) noexcept
+test_body_fail(Context &c) noexcept
 {
 	c.connection = Connection::NewMirror(*c.pool, c.event_loop);
 
@@ -966,9 +951,7 @@ test_body_fail(Context<Connection> &c) noexcept
 	c.connection->Request(c.pool, c,
 			      HTTP_METHOD_GET, "/foo", {},
 			      wrap_fake_request_body(c.pool, istream_fail_new(*c.pool, std::make_exception_ptr(error))),
-#ifdef HAVE_EXPECT_100
 			      false,
-#endif
 			      c, c.cancel_ptr);
 
 	c.event_loop.Dispatch();
@@ -987,15 +970,13 @@ test_body_fail(Context<Connection> &c) noexcept
 
 template<class Connection>
 static void
-test_head(Context<Connection> &c) noexcept
+test_head(Context &c) noexcept
 {
 	c.connection = Connection::NewMirror(*c.pool, c.event_loop);
 	c.connection->Request(c.pool, c,
 			      HTTP_METHOD_HEAD, "/foo", {},
 			      istream_string_new(*c.pool, "foobar"),
-#ifdef HAVE_EXPECT_100
 			      false,
-#endif
 			      c, c.cancel_ptr);
 
 	c.event_loop.Dispatch();
@@ -1018,15 +999,13 @@ test_head(Context<Connection> &c) noexcept
  */
 template<class Connection>
 static void
-test_head_discard(Context<Connection> &c) noexcept
+test_head_discard(Context &c) noexcept
 {
 	c.connection = Connection::NewFixed(*c.pool, c.event_loop);
 	c.connection->Request(c.pool, c,
 			      HTTP_METHOD_HEAD, "/foo", {},
 			      nullptr,
-#ifdef HAVE_EXPECT_100
 			      false,
-#endif
 			      c, c.cancel_ptr);
 
 	c.event_loop.Dispatch();
@@ -1046,15 +1025,13 @@ test_head_discard(Context<Connection> &c) noexcept
  */
 template<class Connection>
 static void
-test_head_discard2(Context<Connection> &c) noexcept
+test_head_discard2(Context &c) noexcept
 {
 	c.connection = Connection::NewTiny(*c.pool, c.event_loop);
 	c.connection->Request(c.pool, c,
 			      HTTP_METHOD_HEAD, "/foo", {},
 			      nullptr,
-#ifdef HAVE_EXPECT_100
 			      false,
-#endif
 			      c, c.cancel_ptr);
 
 	c.event_loop.Dispatch();
@@ -1074,15 +1051,13 @@ test_head_discard2(Context<Connection> &c) noexcept
 
 template<class Connection>
 static void
-test_ignored_body(Context<Connection> &c) noexcept
+test_ignored_body(Context &c) noexcept
 {
 	c.connection = Connection::NewNull(*c.pool, c.event_loop);
 	c.connection->Request(c.pool, c,
 			      HTTP_METHOD_GET, "/foo", {},
 			      wrap_fake_request_body(c.pool, istream_zero_new(*c.pool)),
-#ifdef HAVE_EXPECT_100
 			      false,
-#endif
 			      c, c.cancel_ptr);
 
 	c.event_loop.Dispatch();
@@ -1105,16 +1080,14 @@ test_ignored_body(Context<Connection> &c) noexcept
  */
 template<class Connection>
 static void
-test_close_ignored_request_body(Context<Connection> &c) noexcept
+test_close_ignored_request_body(Context &c) noexcept
 {
 	c.connection = Connection::NewNull(*c.pool, c.event_loop);
 	c.close_request_body_early = true;
 	c.connection->Request(c.pool, c,
 			      HTTP_METHOD_GET, "/foo", {},
 			      wrap_fake_request_body(c.pool, make_delayed_request_body(c)),
-#ifdef HAVE_EXPECT_100
 			      false,
-#endif
 			      c, c.cancel_ptr);
 
 	c.event_loop.Dispatch();
@@ -1135,16 +1108,14 @@ test_close_ignored_request_body(Context<Connection> &c) noexcept
  */
 template<class Connection>
 static void
-test_head_close_ignored_request_body(Context<Connection> &c) noexcept
+test_head_close_ignored_request_body(Context &c) noexcept
 {
 	c.connection = Connection::NewNull(*c.pool, c.event_loop);
 	c.close_request_body_early = true;
 	c.connection->Request(c.pool, c,
 			      HTTP_METHOD_HEAD, "/foo", {},
 			      wrap_fake_request_body(c.pool, make_delayed_request_body(c)),
-#ifdef HAVE_EXPECT_100
 			      false,
-#endif
 			      c, c.cancel_ptr);
 
 	c.event_loop.Dispatch();
@@ -1164,16 +1135,14 @@ test_head_close_ignored_request_body(Context<Connection> &c) noexcept
  */
 template<class Connection>
 static void
-test_close_request_body_eor(Context<Connection> &c) noexcept
+test_close_request_body_eor(Context &c) noexcept
 {
 	c.connection = Connection::NewDummy(*c.pool, c.event_loop);
 	c.close_request_body_eof = true;
 	c.connection->Request(c.pool, c,
 			      HTTP_METHOD_GET, "/foo", {},
 			      wrap_fake_request_body(c.pool, make_delayed_request_body(c)),
-#ifdef HAVE_EXPECT_100
 			      false,
-#endif
 			      c, c.cancel_ptr);
 
 	c.event_loop.Dispatch();
@@ -1193,16 +1162,14 @@ test_close_request_body_eor(Context<Connection> &c) noexcept
  */
 template<class Connection>
 static void
-test_close_request_body_eor2(Context<Connection> &c) noexcept
+test_close_request_body_eor2(Context &c) noexcept
 {
 	c.connection = Connection::NewFixed(*c.pool, c.event_loop);
 	c.close_request_body_eof = true;
 	c.connection->Request(c.pool, c,
 			      HTTP_METHOD_GET, "/foo", {},
 			      make_delayed_request_body(c),
-#ifdef HAVE_EXPECT_100
 			      false,
-#endif
 			      c, c.cancel_ptr);
 
 	c.event_loop.Dispatch();
@@ -1227,7 +1194,7 @@ test_close_request_body_eor2(Context<Connection> &c) noexcept
  */
 template<class Connection>
 static void
-test_bogus_100(Context<Connection> &c) noexcept
+test_bogus_100(Context &c) noexcept
 {
 	c.connection = Connection::NewTwice100(*c.pool, c.event_loop);
 	c.connection->Request(c.pool, c,
@@ -1258,7 +1225,7 @@ test_bogus_100(Context<Connection> &c) noexcept
  */
 template<class Connection>
 static void
-test_twice_100(Context<Connection> &c) noexcept
+test_twice_100(Context &c) noexcept
 {
 	c.connection = Connection::NewTwice100(*c.pool, c.event_loop);
 	auto delayed = istream_delayed_new(*c.pool, c.event_loop);
@@ -1291,7 +1258,7 @@ test_twice_100(Context<Connection> &c) noexcept
  */
 template<class Connection>
 static void
-test_close_100(Context<Connection> &c) noexcept
+test_close_100(Context &c) noexcept
 {
 	auto request_body = istream_delayed_new(*c.pool, c.event_loop);
 	request_body.second.cancel_ptr = nullptr;
@@ -1324,15 +1291,13 @@ test_close_100(Context<Connection> &c) noexcept
  */
 template<class Connection>
 static void
-test_no_body_while_sending(Context<Connection> &c) noexcept
+test_no_body_while_sending(Context &c) noexcept
 {
 	c.connection = Connection::NewNull(*c.pool, c.event_loop);
 	c.connection->Request(c.pool, c,
 			      HTTP_METHOD_GET, "/foo", {},
 			      wrap_fake_request_body(c.pool, istream_block_new(*c.pool)),
-#ifdef HAVE_EXPECT_100
 			      false,
-#endif
 			      c, c.cancel_ptr);
 
 	c.event_loop.Dispatch();
@@ -1347,15 +1312,13 @@ test_no_body_while_sending(Context<Connection> &c) noexcept
 
 template<class Connection>
 static void
-test_hold(Context<Connection> &c) noexcept
+test_hold(Context &c) noexcept
 {
 	c.connection = Connection::NewHold(*c.pool, c.event_loop);
 	c.connection->Request(c.pool, c,
 			      HTTP_METHOD_GET, "/foo", {},
 			      wrap_fake_request_body(c.pool, istream_block_new(*c.pool)),
-#ifdef HAVE_EXPECT_100
 			      false,
-#endif
 			      c, c.cancel_ptr);
 
 	c.WaitForResponse();
@@ -1396,15 +1359,13 @@ test_hold(Context<Connection> &c) noexcept
  */
 template<class Connection>
 static void
-test_premature_close_headers(Context<Connection> &c) noexcept
+test_premature_close_headers(Context &c) noexcept
 {
 	c.connection = Connection::NewPrematureCloseHeaders(*c.pool, c.event_loop);
 	c.connection->Request(c.pool, c,
 			      HTTP_METHOD_GET, "/foo", {},
 			      nullptr,
-#ifdef HAVE_EXPECT_100
 			      false,
-#endif
 			      c, c.cancel_ptr);
 
 	c.event_loop.Dispatch();
@@ -1428,14 +1389,12 @@ test_premature_close_headers(Context<Connection> &c) noexcept
  */
 template<class Connection>
 static void
-test_premature_close_body(Context<Connection> &c) noexcept
+test_premature_close_body(Context &c) noexcept
 {
 	c.connection = Connection::NewPrematureCloseBody(*c.pool, c.event_loop);
 	c.connection->Request(c.pool, c,
 			      HTTP_METHOD_GET, "/foo", {}, nullptr,
-#ifdef HAVE_EXPECT_100
 			      false,
-#endif
 			      c, c.cancel_ptr);
 
 	c.event_loop.Dispatch();
@@ -1455,15 +1414,13 @@ test_premature_close_body(Context<Connection> &c) noexcept
  */
 template<class Connection>
 static void
-test_post_empty(Context<Connection> &c) noexcept
+test_post_empty(Context &c) noexcept
 {
 	c.connection = Connection::NewMirror(*c.pool, c.event_loop);
 	c.connection->Request(c.pool, c,
 			      HTTP_METHOD_POST, "/foo", {},
 			      istream_null_new(*c.pool),
-#ifdef HAVE_EXPECT_100
 			      false,
-#endif
 			      c, c.cancel_ptr);
 
 	c.WaitForResponse();
@@ -1492,7 +1449,7 @@ test_post_empty(Context<Connection> &c) noexcept
 
 template<class Connection>
 static void
-test_buckets(Context<Connection> &c) noexcept
+test_buckets(Context &c) noexcept
 {
 	c.connection = Connection::NewFixed(*c.pool, c.event_loop);
 	c.use_buckets = true;
@@ -1501,9 +1458,7 @@ test_buckets(Context<Connection> &c) noexcept
 	c.connection->Request(c.pool, c,
 			      HTTP_METHOD_GET, "/foo", {},
 			      nullptr,
-#ifdef HAVE_EXPECT_100
 			      false,
-#endif
 			      c, c.cancel_ptr);
 
 	c.event_loop.Dispatch();
@@ -1523,7 +1478,7 @@ test_buckets(Context<Connection> &c) noexcept
 
 template<class Connection>
 static void
-test_buckets_close(Context<Connection> &c) noexcept
+test_buckets_close(Context &c) noexcept
 {
 	c.connection = Connection::NewFixed(*c.pool, c.event_loop);
 	c.use_buckets = true;
@@ -1532,9 +1487,7 @@ test_buckets_close(Context<Connection> &c) noexcept
 	c.connection->Request(c.pool, c,
 			      HTTP_METHOD_GET, "/foo", {},
 			      nullptr,
-#ifdef HAVE_EXPECT_100
 			      false,
-#endif
 			      c, c.cancel_ptr);
 
 	c.event_loop.Dispatch();
@@ -1557,16 +1510,14 @@ test_buckets_close(Context<Connection> &c) noexcept
 
 template<class Connection>
 static void
-test_premature_end(Context<Connection> &c) noexcept
+test_premature_end(Context &c) noexcept
 {
 	c.connection = Connection::NewPrematureEnd(*c.pool, c.event_loop);
 
 	c.connection->Request(c.pool, c,
 			      HTTP_METHOD_GET, "/foo", {},
 			      nullptr,
-#ifdef HAVE_EXPECT_100
 			      false,
-#endif
 			      c, c.cancel_ptr);
 
 	c.event_loop.Dispatch();
@@ -1585,16 +1536,14 @@ test_premature_end(Context<Connection> &c) noexcept
 
 template<class Connection>
 static void
-test_excess_data(Context<Connection> &c) noexcept
+test_excess_data(Context &c) noexcept
 {
 	c.connection = Connection::NewExcessData(*c.pool, c.event_loop);
 
 	c.connection->Request(c.pool, c,
 			      HTTP_METHOD_GET, "/foo", {},
 			      nullptr,
-#ifdef HAVE_EXPECT_100
 			      false,
-#endif
 			      c, c.cancel_ptr);
 
 	c.event_loop.Dispatch();
@@ -1613,16 +1562,14 @@ test_excess_data(Context<Connection> &c) noexcept
 
 template<class Connection>
 static void
-TestValidPremature(Context<Connection> &c)
+TestValidPremature(Context &c)
 {
 	c.connection = Connection::NewValidPremature(*c.pool, c.event_loop);
 
 	c.connection->Request(c.pool, c,
 			      HTTP_METHOD_GET, "/foo", {},
 			      nullptr,
-#ifdef HAVE_EXPECT_100
 			      false,
-#endif
 			      c, c.cancel_ptr);
 
 	c.event_loop.Dispatch();
@@ -1640,16 +1587,14 @@ TestValidPremature(Context<Connection> &c)
 
 template<class Connection>
 static void
-TestMalformedPremature(Context<Connection> &c)
+TestMalformedPremature(Context &c)
 {
 	c.connection = Connection::NewMalformedPremature(*c.pool, c.event_loop);
 
 	c.connection->Request(c.pool, c,
 			      HTTP_METHOD_GET, "/foo", {},
 			      nullptr,
-#ifdef HAVE_EXPECT_100
 			      false,
-#endif
 			      c, c.cancel_ptr);
 
 	c.event_loop.Dispatch();
@@ -1667,15 +1612,13 @@ TestMalformedPremature(Context<Connection> &c)
 
 template<class Connection>
 static void
-TestCancelNop(Context<Connection> &c)
+TestCancelNop(Context &c)
 {
 	c.connection = Connection::NewNop(*c.pool, c.event_loop);
 	c.connection->Request(c.pool, c,
 			      HTTP_METHOD_POST, "/foo", {},
 			      istream_null_new(*c.pool),
-#ifdef HAVE_EXPECT_100
 			      false,
-#endif
 			      c, c.cancel_ptr);
 
 	c.cancel_ptr.Cancel();
@@ -1685,15 +1628,14 @@ TestCancelNop(Context<Connection> &c)
 
 template<class Connection>
 static void
-TestCancelWithFailedSocketGet(Context<Connection> &c)
+TestCancelWithFailedSocketGet(Context &c)
 {
 	c.connection = Connection::NewNop(*c.pool, c.event_loop);
 	c.connection->Request(c.pool, c,
 			      HTTP_METHOD_GET, "/foo", {},
 			      nullptr,
-#ifdef HAVE_EXPECT_100
 			      false,
-#endif
+
 			      c, c.cancel_ptr);
 
 	c.connection->InjectSocketFailure();
@@ -1704,15 +1646,14 @@ TestCancelWithFailedSocketGet(Context<Connection> &c)
 
 template<class Connection>
 static void
-TestCancelWithFailedSocketPost(Context<Connection> &c)
+TestCancelWithFailedSocketPost(Context &c)
 {
 	c.connection = Connection::NewNop(*c.pool, c.event_loop);
 	c.connection->Request(c.pool, c,
 			      HTTP_METHOD_POST, "/foo", {},
 			      istream_null_new(*c.pool),
-#ifdef HAVE_EXPECT_100
 			      false,
-#endif
+
 			      c, c.cancel_ptr);
 
 	c.connection->InjectSocketFailure();
@@ -1723,15 +1664,14 @@ TestCancelWithFailedSocketPost(Context<Connection> &c)
 
 template<class Connection>
 static void
-TestCloseWithFailedSocketGet(Context<Connection> &c)
+TestCloseWithFailedSocketGet(Context &c)
 {
 	c.connection = Connection::NewBlock(*c.pool, c.event_loop);
 	c.connection->Request(c.pool, c,
 			      HTTP_METHOD_GET, "/foo", {},
 			      nullptr,
-#ifdef HAVE_EXPECT_100
 			      false,
-#endif
+
 			      c, c.cancel_ptr);
 
 	c.WaitForResponse();
@@ -1751,15 +1691,14 @@ TestCloseWithFailedSocketGet(Context<Connection> &c)
 
 template<class Connection>
 static void
-TestCloseWithFailedSocketPost(Context<Connection> &c)
+TestCloseWithFailedSocketPost(Context &c)
 {
 	c.connection = Connection::NewHold(*c.pool, c.event_loop);
 	c.connection->Request(c.pool, c,
 			      HTTP_METHOD_POST, "/foo", {},
 			      istream_null_new(*c.pool),
-#ifdef HAVE_EXPECT_100
 			      false,
-#endif
+
 			      c, c.cancel_ptr);
 
 	c.WaitForResponse();
@@ -1783,21 +1722,19 @@ TestCloseWithFailedSocketPost(Context<Connection> &c)
  *
  */
 
-template<class Connection>
 static void
-run_test(void (*test)(Context<Connection> &c)) noexcept
+run_test(void (*test)(Context &c)) noexcept
 {
-	Context<Connection> c;
+	Context c;
 	test(c);
 }
 
 #ifdef USE_BUCKETS
 
-template<class Connection>
 static void
-run_bucket_test(void (*test)(Context<Connection> &c)) noexcept
+run_bucket_test(void (*test)(Context &c)) noexcept
 {
-	Context<Connection> c;
+	Context c;
 	c.use_buckets = true;
 	c.read_after_buckets = true;
 	test(c);
@@ -1805,9 +1742,8 @@ run_bucket_test(void (*test)(Context<Connection> &c)) noexcept
 
 #endif
 
-template<class Connection>
 static void
-run_test_and_buckets(void (*test)(Context<Connection> &c)) noexcept
+run_test_and_buckets(void (*test)(Context &c)) noexcept
 {
 	/* regular run */
 	run_test(test);
