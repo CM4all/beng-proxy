@@ -47,6 +47,7 @@
 #include "net/SocketAddress.hxx"
 #include "system/Error.hxx"
 #include "fs/FilteredSocket.hxx"
+#include "fs/NopSocketFilter.hxx"
 #include "memory/fb_pool.hxx"
 #include "pool/UniquePtr.hxx"
 #include "PipeLease.hxx"
@@ -482,6 +483,12 @@ struct NullSocketFilterFactory {
 	}
 };
 
+struct NopSocketFilterFactory {
+	SocketFilterPtr operator()() const noexcept {
+		return SocketFilterPtr{new NopSocketFilter()};
+	}
+};
+
 int
 main(int, char **)
 {
@@ -494,6 +501,11 @@ main(int, char **)
 
 	{
 		NullSocketFilterFactory socket_filter_factory;
+		RunHttpClientTests(instance, socket_filter_factory);
+	}
+
+	{
+		NopSocketFilterFactory socket_filter_factory;
 		RunHttpClientTests(instance, socket_filter_factory);
 	}
 }
