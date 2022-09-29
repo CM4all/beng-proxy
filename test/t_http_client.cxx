@@ -85,6 +85,7 @@ public:
 
 class HttpClientConnection final : public ClientConnection {
 	EventLoop &event_loop;
+
 	const pid_t pid = 0;
 
 	std::unique_ptr<Server> server;
@@ -92,15 +93,22 @@ class HttpClientConnection final : public ClientConnection {
 	FilteredSocket socket;
 
 public:
-	HttpClientConnection(EventLoop &_event_loop, pid_t _pid, SocketDescriptor fd)
+	HttpClientConnection(EventLoop &_event_loop, pid_t _pid,
+			     SocketDescriptor fd,
+			     SocketFilterPtr _filter) noexcept
 		:event_loop(_event_loop), pid(_pid), socket(_event_loop) {
-		socket.InitDummy(fd, FdType::FD_SOCKET);
+		socket.InitDummy(fd, FdType::FD_SOCKET,
+				 std::move(_filter));
 	}
 
-	HttpClientConnection(EventLoop &_event_loop, std::pair<std::unique_ptr<Server>, UniqueSocketDescriptor> _server)
+	HttpClientConnection(EventLoop &_event_loop,
+			     std::pair<std::unique_ptr<Server>, UniqueSocketDescriptor> _server,
+			     SocketFilterPtr _filter)
 		:event_loop(_event_loop),
 		 server(std::move(_server.first)),
-		 socket(_event_loop, std::move(_server.second), FdType::FD_SOCKET)
+		 socket(_event_loop,
+			std::move(_server.second), FdType::FD_SOCKET,
+			std::move(_filter))
 	{
 	}
 
@@ -127,7 +135,14 @@ public:
 	}
 };
 
+template<typename SocketFilterFactory>
 struct HttpClientFactory {
+	[[no_unique_address]]
+	SocketFilterFactory &socket_filter_factory;
+
+	HttpClientFactory(SocketFilterFactory &_socket_filter_factory) noexcept
+		:socket_filter_factory(_socket_filter_factory) {}
+
 	HttpClientConnection *New(EventLoop &event_loop,
 				  const char *path, const char *mode) noexcept;
 
@@ -135,7 +150,8 @@ struct HttpClientFactory {
 			    EventLoop &event_loop,
 			    DemoHttpServerConnection::Mode mode) noexcept {
 		return new HttpClientConnection(event_loop,
-						Server::New(pool, event_loop, mode));
+						Server::New(pool, event_loop, mode),
+						socket_filter_factory());
 	}
 
 	auto *NewMirror(struct pool &pool, EventLoop &event_loop) noexcept {
@@ -221,9 +237,10 @@ HttpClientConnection::~HttpClientConnection() noexcept
 	}
 }
 
+template<typename SocketFilterFactory>
 HttpClientConnection *
-HttpClientFactory::New(EventLoop &event_loop,
-			  const char *path, const char *mode) noexcept
+HttpClientFactory<SocketFilterFactory>::New(EventLoop &event_loop,
+					    const char *path, const char *mode) noexcept
 {
 	SocketDescriptor client_socket, server_socket;
 	if (!SocketDescriptor::CreateSocketPair(AF_LOCAL, SOCK_STREAM, 0,
@@ -259,11 +276,13 @@ HttpClientFactory::New(EventLoop &event_loop,
 
 	server_socket.Close();
 	client_socket.SetNonBlocking();
-	return new HttpClientConnection(event_loop, pid, client_socket);
+	return new HttpClientConnection(event_loop, pid, client_socket,
+					socket_filter_factory());
 }
 
+template<typename SocketFilterFactory>
 HttpClientConnection *
-HttpClientFactory::NewClose100(struct pool &, EventLoop &event_loop) noexcept
+HttpClientFactory<SocketFilterFactory>::NewClose100(struct pool &, EventLoop &event_loop) noexcept
 {
 	SocketDescriptor client_socket, server_socket;
 	if (!SocketDescriptor::CreateSocketPair(AF_LOCAL, SOCK_STREAM, 0,
@@ -293,7 +312,8 @@ HttpClientFactory::NewClose100(struct pool &, EventLoop &event_loop) noexcept
 
 	server_socket.Close();
 	client_socket.SetNonBlocking();
-	return new HttpClientConnection(event_loop, pid, client_socket);
+	return new HttpClientConnection(event_loop, pid, client_socket,
+					socket_filter_factory());
 }
 
 /**
@@ -445,6 +465,23 @@ test_expect_100_continue_splice(auto &factory, Context &c) noexcept
  *
  */
 
+static void
+RunHttpClientTests(Instance &instance, auto &socket_filter_factory) noexcept
+{
+	HttpClientFactory factory{socket_filter_factory};
+
+	run_all_tests(instance, factory);
+	run_test(instance, factory, test_no_keepalive);
+	run_test(instance, factory, test_ignored_request_body);
+	run_test(instance, factory, test_expect_100_continue_splice);
+}
+
+struct NullSocketFilterFactory {
+	SocketFilterPtr operator()() const noexcept {
+		return {};
+	}
+};
+
 int
 main(int, char **)
 {
@@ -454,10 +491,9 @@ main(int, char **)
 	const ScopeFbPoolInit fb_pool_init;
 
 	Instance instance;
-	HttpClientFactory factory;
 
-	run_all_tests(instance, factory);
-	run_test(instance, factory, test_no_keepalive);
-	run_test(instance, factory, test_ignored_request_body);
-	run_test(instance, factory, test_expect_100_continue_splice);
+	{
+		NullSocketFilterFactory socket_filter_factory;
+		RunHttpClientTests(instance, socket_filter_factory);
+	}
 }
