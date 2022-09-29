@@ -454,8 +454,10 @@ main(int, char **)
 	direct_global_init();
 	const ScopeFbPoolInit fb_pool_init;
 
-	run_all_tests<HttpClientFactory>();
-	run_test(test_no_keepalive);
-	run_test(test_ignored_request_body);
-	run_test(test_expect_100_continue_splice);
+	Instance instance;
+
+	run_all_tests<HttpClientFactory>(instance);
+	run_test(instance, test_no_keepalive);
+	run_test(instance, test_ignored_request_body);
+	run_test(instance, test_expect_100_continue_splice);
 }

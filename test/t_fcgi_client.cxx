@@ -480,9 +480,11 @@ main(int, char **)
 	direct_global_init();
 	const ScopeFbPoolInit fb_pool_init;
 
-	run_all_tests<FcgiClientFactory>();
-	run_test(test_malformed_header_name);
-	run_test(test_malformed_header_value);
+	Instance instance;
+
+	run_all_tests<FcgiClientFactory>(instance);
+	run_test(instance, test_malformed_header_name);
+	run_test(instance, test_malformed_header_value);
 
 	int status;
 	while (wait(&status) > 0) {

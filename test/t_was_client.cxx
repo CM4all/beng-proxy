@@ -525,7 +525,9 @@ main(int, char **)
 	direct_global_init();
 	const ScopeFbPoolInit fb_pool_init;
 
-	run_all_tests<WasFactory>();
-	run_test(test_malformed_header_name);
-	run_test(test_malformed_header_value);
+	Instance instance;
+
+	run_all_tests<WasFactory>(instance);
+	run_test(instance, test_malformed_header_name);
+	run_test(instance, test_malformed_header_value);
 }

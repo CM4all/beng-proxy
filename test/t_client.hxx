@@ -101,8 +101,13 @@ public:
 	virtual void InjectSocketFailure() noexcept = 0;
 };
 
+struct Instance final : PInstance {
+};
+
 struct Context final
-	: PInstance, Cancellable, Lease, HttpResponseHandler, IstreamSink {
+	: Cancellable, Lease, HttpResponseHandler, IstreamSink {
+
+	EventLoop &event_loop;
 
 	FineTimerEvent break_timer{event_loop, BIND_THIS_METHOD(OnBreakEvent)};
 
@@ -181,8 +186,9 @@ struct Context final
 	FineTimerEvent defer_event;
 	bool deferred = false;
 
-	Context() noexcept
-		:parent_pool(NewMajorPool(root_pool, "parent")),
+	explicit Context(Instance &instance) noexcept
+		:event_loop(instance.event_loop),
+		parent_pool(NewMajorPool(instance.root_pool, "parent")),
 		 pool(pool_new_linear(parent_pool, "test", 16384)),
 		 defer_event(event_loop, BIND_THIS_METHOD(OnDeferred)) {
 	}
@@ -1723,18 +1729,18 @@ TestCloseWithFailedSocketPost(Context &c)
  */
 
 static void
-run_test(void (*test)(Context &c)) noexcept
+run_test(Instance &instance, void (*test)(Context &c)) noexcept
 {
-	Context c;
+	Context c{instance};
 	test(c);
 }
 
 #ifdef USE_BUCKETS
 
 static void
-run_bucket_test(void (*test)(Context &c)) noexcept
+run_bucket_test(Instance &instance, void (*test)(Context &c)) noexcept
 {
-	Context c;
+	Context c{instance};
 	c.use_buckets = true;
 	c.read_after_buckets = true;
 	test(c);
@@ -1743,78 +1749,78 @@ run_bucket_test(void (*test)(Context &c)) noexcept
 #endif
 
 static void
-run_test_and_buckets(void (*test)(Context &c)) noexcept
+run_test_and_buckets(Instance &instance, void (*test)(Context &c)) noexcept
 {
 	/* regular run */
-	run_test(test);
+	run_test(instance, test);
 
 #ifdef USE_BUCKETS
-	run_bucket_test(test);
+	run_bucket_test(instance, test);
 #endif
 }
 
 template<class Factory>
 static void
-run_all_tests() noexcept
+run_all_tests(Instance &instance) noexcept
 {
-	run_test(test_empty<Factory>);
-	run_test_and_buckets(test_body<Factory>);
-	run_test(test_read_body<Factory>);
+	run_test(instance, test_empty<Factory>);
+	run_test_and_buckets(instance, test_body<Factory>);
+	run_test(instance, test_read_body<Factory>);
 #ifdef ENABLE_HUGE_BODY
-	run_test_and_buckets(test_huge<Factory>);
+	run_test_and_buckets(instance, test_huge<Factory>);
 #endif
-	run_test(TestCancelNop<Factory>);
-	run_test(test_close_response_body_early<Factory>);
-	run_test(test_close_response_body_late<Factory>);
-	run_test(test_close_response_body_data<Factory>);
-	run_test(test_close_response_body_after<Factory>);
-	run_test(test_close_request_body_early<Factory>);
-	run_test(test_close_request_body_fail<Factory>);
-	run_test(test_data_blocking<Factory>);
-	run_test(test_data_blocking2<Factory>);
-	run_test(test_body_fail<Factory>);
-	run_test(test_head<Factory>);
-	run_test(test_head_discard<Factory>);
-	run_test(test_head_discard2<Factory>);
-	run_test(test_ignored_body<Factory>);
+	run_test(instance, TestCancelNop<Factory>);
+	run_test(instance, test_close_response_body_early<Factory>);
+	run_test(instance, test_close_response_body_late<Factory>);
+	run_test(instance, test_close_response_body_data<Factory>);
+	run_test(instance, test_close_response_body_after<Factory>);
+	run_test(instance, test_close_request_body_early<Factory>);
+	run_test(instance, test_close_request_body_fail<Factory>);
+	run_test(instance, test_data_blocking<Factory>);
+	run_test(instance, test_data_blocking2<Factory>);
+	run_test(instance, test_body_fail<Factory>);
+	run_test(instance, test_head<Factory>);
+	run_test(instance, test_head_discard<Factory>);
+	run_test(instance, test_head_discard2<Factory>);
+	run_test(instance, test_ignored_body<Factory>);
 #ifdef ENABLE_CLOSE_IGNORED_REQUEST_BODY
-	run_test(test_close_ignored_request_body<Factory>);
-	run_test(test_head_close_ignored_request_body<Factory>);
-	run_test(test_close_request_body_eor<Factory>);
-	run_test(test_close_request_body_eor2<Factory>);
+	run_test(instance, test_close_ignored_request_body<Factory>);
+	run_test(instance, test_head_close_ignored_request_body<Factory>);
+	run_test(instance, test_close_request_body_eor<Factory>);
+	run_test(instance, test_close_request_body_eor2<Factory>);
 #endif
 #ifdef HAVE_EXPECT_100
-	run_test(test_bogus_100<Factory>);
-	run_test(test_twice_100<Factory>);
-	run_test(test_close_100<Factory>);
+	run_test(instance, test_bogus_100<Factory>);
+	run_test(instance, test_twice_100<Factory>);
+	run_test(instance, test_close_100<Factory>);
 #endif
-	run_test(test_no_body_while_sending<Factory>);
-	run_test(test_hold<Factory>);
+	run_test(instance, test_no_body_while_sending<Factory>);
+	run_test(instance, test_hold<Factory>);
 #ifdef ENABLE_PREMATURE_CLOSE_HEADERS
-	run_test(test_premature_close_headers<Factory>);
+	run_test(instance, test_premature_close_headers<Factory>);
 #endif
 #ifdef ENABLE_PREMATURE_CLOSE_BODY
-	run_test_and_buckets(test_premature_close_body<Factory>);
+	run_test_and_buckets(instance, test_premature_close_body<Factory>);
 #endif
 #ifdef USE_BUCKETS
-	run_test(test_buckets<Factory>);
-	run_test(test_buckets_close<Factory>);
+	run_test(instance, test_buckets<Factory>);
+	run_test(instance, test_buckets_close<Factory>);
 #endif
 #ifdef ENABLE_PREMATURE_END
-	run_test_and_buckets(test_premature_end<Factory>);
+	run_test_and_buckets(instance, test_premature_end<Factory>);
 #endif
 #ifdef ENABLE_EXCESS_DATA
-	run_test_and_buckets(test_excess_data<Factory>);
+	run_test_and_buckets(instance, test_excess_data<Factory>);
 #endif
 #ifdef ENABLE_VALID_PREMATURE
-	run_test_and_buckets(TestValidPremature<Factory>);
+	run_test_and_buckets(instance, TestValidPremature<Factory>);
 #endif
 #ifdef ENABLE_MALFORMED_PREMATURE
-	run_test_and_buckets(TestMalformedPremature<Factory>);
+	run_test_and_buckets(instance, TestMalformedPremature<Factory>);
 #endif
-	run_test(test_post_empty<Factory>);
-	run_test_and_buckets(TestCancelWithFailedSocketGet<Factory>);
-	run_test_and_buckets(TestCancelWithFailedSocketPost<Factory>);
-	run_test_and_buckets(TestCloseWithFailedSocketGet<Factory>);
-	run_test_and_buckets(TestCloseWithFailedSocketPost<Factory>);
+	run_test(instance, test_post_empty<Factory>);
+	run_test_and_buckets(instance, TestCancelWithFailedSocketGet<Factory>);
+	run_test_and_buckets(instance, TestCancelWithFailedSocketPost<Factory>);
+	run_test_and_buckets(instance, TestCloseWithFailedSocketGet<Factory>);
+	run_test_and_buckets(instance, TestCloseWithFailedSocketPost<Factory>);
 }
