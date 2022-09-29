@@ -335,7 +335,7 @@ TYPED_TEST_P(IstreamFilterTest, SmallBucket)
 /** Istream::FillBucketList() throws */
 TYPED_TEST_P(IstreamFilterTest, BucketError)
 {
-	if (std::is_base_of<SkipErrorTraits, TypeParam>::value)
+	if constexpr (std::is_base_of<SkipErrorTraits, TypeParam>::value)
 		return;
 
 	TypeParam traits;
