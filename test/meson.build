@@ -482,6 +482,7 @@ test('t_http_client', executable('t_http_client',
     http_server_dep,
     stock_dep,
     system_dep,
+    thread_pool_dep,
   ]),
   env: ['srcdir=' + meson.source_root()],
 )

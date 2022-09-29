@@ -48,6 +48,9 @@
 #include "system/Error.hxx"
 #include "fs/FilteredSocket.hxx"
 #include "fs/NopSocketFilter.hxx"
+#include "fs/NopThreadSocketFilter.hxx"
+#include "fs/ThreadSocketFilter.hxx"
+#include "thread/Pool.hxx"
 #include "memory/fb_pool.hxx"
 #include "pool/UniquePtr.hxx"
 #include "PipeLease.hxx"
@@ -495,6 +498,27 @@ struct NopSocketFilterFactory {
 	}
 };
 
+struct NopThreadSocketFilterFactory {
+	EventLoop &event_loop;
+
+	explicit NopThreadSocketFilterFactory(EventLoop &_event_loop) noexcept
+		:event_loop(_event_loop) {}
+
+	~NopThreadSocketFilterFactory() noexcept {
+		thread_pool_stop();
+		thread_pool_join();
+		thread_pool_deinit();
+	}
+
+	SocketFilterPtr operator()() const noexcept {
+		return SocketFilterPtr{
+			new ThreadSocketFilter(event_loop,
+					       thread_pool_get_queue(event_loop),
+					       nop_thread_socket_filter_new())
+		};
+	}
+};
+
 int
 main(int, char **)
 {
@@ -512,6 +536,11 @@ main(int, char **)
 
 	{
 		NopSocketFilterFactory socket_filter_factory;
+		RunHttpClientTests(instance, socket_filter_factory);
+	}
+
+	{
+		NopThreadSocketFilterFactory socket_filter_factory{instance.event_loop};
 		RunHttpClientTests(instance, socket_filter_factory);
 	}
 }
