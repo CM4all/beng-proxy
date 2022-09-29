@@ -88,6 +88,8 @@ template<class Connection>
 struct Context final
 	: PInstance, Cancellable, Lease, HttpResponseHandler, IstreamSink {
 
+	FineTimerEvent break_timer{event_loop, BIND_THIS_METHOD(OnBreakEvent)};
+
 	PoolPtr parent_pool;
 
 	PoolPtr pool;
@@ -238,6 +240,11 @@ struct Context final
 		assert(released);
 	}
 
+	void RunFor(Event::Duration duration) noexcept {
+		break_timer.Schedule(duration);
+		event_loop.Dispatch();
+	}
+
 #ifdef USE_BUCKETS
 	void DoBuckets() noexcept {
 		IstreamBucketList list;
@@ -274,6 +281,10 @@ struct Context final
 		}
 	}
 #endif
+
+	void OnBreakEvent() noexcept {
+		event_loop.Break();
+	}
 
 	void OnDeferred() noexcept {
 		if (defer_read_response_body) {
@@ -1347,14 +1358,34 @@ test_hold(Context<Connection> &c) noexcept
 #endif
 			      c, c.cancel_ptr);
 
+	c.WaitForResponse();
+
+	assert(!c.released);
+	assert(c.status == HTTP_STATUS_OK);
+	assert(c.HasInput());
+	assert(!c.body_eof);
+	assert(!c.request_error);
+	assert(!c.body_error);
+	assert(c.body_data == 0);
+
+	c.RunFor(std::chrono::milliseconds{10});
+
+	assert(!c.released);
+	assert(c.HasInput());
+	assert(!c.body_eof);
+	assert(!c.request_error);
+	assert(!c.body_error);
+	assert(c.body_data == 0);
+
+	c.CloseInput();
 	c.event_loop.Dispatch();
 
 	assert(c.released);
-	assert(c.status == HTTP_STATUS_OK);
 	assert(!c.HasInput());
 	assert(!c.body_eof);
 	assert(!c.request_error);
-	assert(c.body_error != nullptr);
+	assert(!c.body_error);
+	assert(c.body_data == 0);
 }
 
 #ifdef ENABLE_PREMATURE_CLOSE_HEADERS

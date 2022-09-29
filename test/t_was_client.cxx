@@ -304,7 +304,7 @@ MalformedPrematureWasServer::OnWasControlPacket(enum was_command cmd,
 }
 
 class WasConnection final : WasServerHandler, WasLease {
-	FineTimerEvent close_timer;
+	EventLoop &event_loop;
 
 	WasSocket socket;
 
@@ -322,9 +322,9 @@ class WasConnection final : WasServerHandler, WasLease {
 	const Callback callback;
 
 public:
-	WasConnection(struct pool &pool, EventLoop &event_loop,
+	WasConnection(struct pool &pool, EventLoop &_event_loop,
 		      Callback &&_callback)
-		:close_timer(event_loop, BIND_THIS_METHOD(OnCloseTimer)),
+		:event_loop(_event_loop),
 		 callback(std::move(_callback))
 	{
 		WasServerHandler &handler = *this;
@@ -335,9 +335,9 @@ public:
 
 	struct MalformedPremature{};
 
-	WasConnection(struct pool &pool, EventLoop &event_loop,
+	WasConnection(struct pool &pool, EventLoop &_event_loop,
 		      MalformedPremature)
-		:close_timer(event_loop, BIND_THIS_METHOD(OnCloseTimer))
+		:event_loop(_event_loop)
 	{
 		WasServerHandler &handler = *this;
 		server2 = NewFromPool<MalformedPrematureWasServer>(pool, event_loop,
@@ -353,11 +353,7 @@ public:
 	}
 
 	auto &GetEventLoop() const noexcept {
-		return close_timer.GetEventLoop();
-	}
-
-	void ScheduleClose() noexcept {
-		close_timer.Schedule(std::chrono::milliseconds(10));
+		return event_loop;
 	}
 
 	void Request(struct pool *pool,
@@ -421,9 +417,7 @@ public:
 	}
 
 	static WasConnection *NewHold(struct pool &pool, EventLoop &event_loop) {
-		auto *c = new WasConnection(pool, event_loop, RunHold);
-		c->ScheduleClose();
-		return c;
+		return new WasConnection(pool, event_loop, RunHold);
 	}
 
 	static WasConnection *NewBlock(struct pool &pool, EventLoop &event_loop) {

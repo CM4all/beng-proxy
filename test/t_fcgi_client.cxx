@@ -201,8 +201,10 @@ fcgi_server_hold(struct pool *pool)
 	write_fcgi_headers(&request, HTTP_STATUS_OK, nullptr);
 
 	/* wait until the connection gets closed */
-	struct fcgi_record_header header;
-	read_fcgi_header(&header);
+	while (true) {
+		struct fcgi_record_header header;
+		read_fcgi_header(&header);
+	}
 }
 
 static void
