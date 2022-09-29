@@ -59,7 +59,6 @@ DemoHttpServerConnection::DemoHttpServerConnection(struct pool &pool,
 					       address,
 					       true,
 					       *this, *this)),
-	 defer_event(event_loop, BIND_THIS_METHOD(OnDeferred)),
 	 response_timer(event_loop, BIND_THIS_METHOD(OnResponseTimer)),
 	 mode(_mode) {}
 
@@ -171,7 +170,6 @@ DemoHttpServerConnection::HandleHttpRequest(IncomingHttpRequest &request,
 					     std::move(delayed.first));
 		}
 
-		defer_event.ScheduleIdle();
 		break;
 
 	case Mode::BLOCK:

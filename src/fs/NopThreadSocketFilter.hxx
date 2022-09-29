@@ -32,11 +32,13 @@
 
 #pragma once
 
+#include <memory>
+
 class ThreadSocketFilterHandler;
 
 /*
  * A thread_socket_filter implementation for debugging.  It performs a
  * no-op on all data.
  */
-ThreadSocketFilterHandler *
+std::unique_ptr<ThreadSocketFilterHandler>
 nop_thread_socket_filter_new();

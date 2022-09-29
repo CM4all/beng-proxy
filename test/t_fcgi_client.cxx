@@ -201,8 +201,10 @@ fcgi_server_hold(struct pool *pool)
 	write_fcgi_headers(&request, HTTP_STATUS_OK, nullptr);
 
 	/* wait until the connection gets closed */
-	struct fcgi_record_header header;
-	read_fcgi_header(&header);
+	while (true) {
+		struct fcgi_record_header header;
+		read_fcgi_header(&header);
+	}
 }
 
 static void
@@ -279,25 +281,25 @@ fcgi_server_nop(struct pool *pool)
 	discard_fcgi_request_body(&request);
 }
 
-struct Connection {
+class FcgiClientConnection final : public ClientConnection {
 	EventLoop &event_loop;
 	const pid_t pid;
 	SocketDescriptor fd;
 
-	Connection(EventLoop &_event_loop, pid_t _pid, SocketDescriptor _fd)
+public:
+	FcgiClientConnection(EventLoop &_event_loop, pid_t _pid, SocketDescriptor _fd)
 		:event_loop(_event_loop), pid(_pid), fd(_fd) {}
-	static Connection *New(EventLoop &event_loop,
-			       void (*f)(struct pool *pool));
 
-	~Connection();
+	~FcgiClientConnection() noexcept override;
 
-	void Request(struct pool *pool,
+	void Request(struct pool &pool,
 		     Lease &lease,
 		     http_method_t method, const char *uri,
 		     StringMap &&headers, UnusedIstreamPtr body,
+		     [[maybe_unused]] bool expect_100,
 		     HttpResponseHandler &handler,
-		     CancellablePointer &cancel_ptr) {
-		fcgi_client_request(pool, event_loop, nullptr,
+		     CancellablePointer &cancel_ptr) noexcept override {
+		fcgi_client_request(&pool, event_loop, nullptr,
 				    fd, FdType::FD_SOCKET,
 				    lease,
 				    method, uri, uri, nullptr, nullptr, nullptr,
@@ -311,72 +313,77 @@ struct Connection {
 	void InjectSocketFailure() noexcept {
 		fd.Shutdown();
 	}
+};
 
-	static Connection *NewMirror(struct pool &, EventLoop &event_loop) {
+struct FcgiClientFactory {
+	static FcgiClientConnection *New(EventLoop &event_loop,
+					 void (*f)(struct pool *pool));
+
+	static auto *NewMirror(struct pool &, EventLoop &event_loop) {
 		return New(event_loop, fcgi_server_mirror);
 	}
 
-	static Connection *NewNull(struct pool &, EventLoop &event_loop) {
+	static auto *NewNull(struct pool &, EventLoop &event_loop) {
 		return New(event_loop, fcgi_server_null);
 	}
 
-	static Connection *NewDummy(struct pool &, EventLoop &event_loop) {
+	static auto *NewDummy(struct pool &, EventLoop &event_loop) {
 		return New(event_loop, fcgi_server_hello);
 	}
 
-	static Connection *NewFixed(struct pool &, EventLoop &event_loop) {
+	static auto *NewFixed(struct pool &, EventLoop &event_loop) {
 		return New(event_loop, fcgi_server_hello);
 	}
 
-	static Connection *NewTiny(struct pool &, EventLoop &event_loop) {
+	static auto *NewTiny(struct pool &, EventLoop &event_loop) {
 		return New(event_loop, fcgi_server_tiny);
 	}
 
-	static Connection *NewMalformedHeaderName(struct pool &, EventLoop &event_loop) {
+	static auto *NewMalformedHeaderName(struct pool &, EventLoop &event_loop) {
 		return New(event_loop, fcgi_server_malformed_header_name);
 	}
 
-	static Connection *NewMalformedHeaderValue(struct pool &, EventLoop &event_loop) {
+	static auto *NewMalformedHeaderValue(struct pool &, EventLoop &event_loop) {
 		return New(event_loop, fcgi_server_malformed_header_value);
 	}
 
-	static Connection *NewHuge(struct pool &, EventLoop &event_loop) {
+	static auto *NewHuge(struct pool &, EventLoop &event_loop) {
 		return New(event_loop, fcgi_server_huge);
 	}
 
-	static Connection *NewHold(struct pool &, EventLoop &event_loop) {
+	static auto *NewHold(struct pool &, EventLoop &event_loop) {
 		return New(event_loop, fcgi_server_hold);
 	}
 
-	static Connection *NewBlock(struct pool &, EventLoop &event_loop) {
+	static auto *NewBlock(struct pool &, EventLoop &event_loop) {
 		return New(event_loop, fcgi_server_hold);
 	}
 
-	static Connection *NewPrematureCloseHeaders(struct pool &,
-						    EventLoop &event_loop) {
+	static auto *NewPrematureCloseHeaders(struct pool &,
+					      EventLoop &event_loop) {
 		return New(event_loop, fcgi_server_premature_close_headers);
 	}
 
-	static Connection *NewPrematureCloseBody(struct pool &,
-						 EventLoop &event_loop) {
+	static auto *NewPrematureCloseBody(struct pool &,
+					   EventLoop &event_loop) {
 		return New(event_loop, fcgi_server_premature_close_body);
 	}
 
-	static Connection *NewPrematureEnd(struct pool &, EventLoop &event_loop) {
+	static auto *NewPrematureEnd(struct pool &, EventLoop &event_loop) {
 		return New(event_loop, fcgi_server_premature_end);
 	}
 
-	static Connection *NewExcessData(struct pool &, EventLoop &event_loop) {
+	static auto *NewExcessData(struct pool &, EventLoop &event_loop) {
 		return New(event_loop, fcgi_server_excess_data);
 	}
 
-	static Connection *NewNop(struct pool &, EventLoop &event_loop) {
+	static auto *NewNop(struct pool &, EventLoop &event_loop) {
 		return New(event_loop, fcgi_server_nop);
 	}
 };
 
-Connection *
-Connection::New(EventLoop &event_loop, void (*f)(struct pool *pool))
+FcgiClientConnection *
+FcgiClientFactory::New(EventLoop &event_loop, void (*f)(struct pool *pool))
 {
 	SocketDescriptor server_socket, client_socket;
 	if (!SocketDescriptor::CreateSocketPair(AF_LOCAL, SOCK_STREAM, 0,
@@ -406,10 +413,10 @@ Connection::New(EventLoop &event_loop, void (*f)(struct pool *pool))
 
 	server_socket.Close();
 	client_socket.SetNonBlocking();
-	return new Connection(event_loop, pid, client_socket);
+	return new FcgiClientConnection(event_loop, pid, client_socket);
 }
 
-Connection::~Connection()
+FcgiClientConnection::~FcgiClientConnection() noexcept
 {
 	assert(pid >= 1);
 	assert(fd.IsDefined());
@@ -425,17 +432,15 @@ Connection::~Connection()
 	assert(!WIFSIGNALED(status));
 }
 
-template<class Connection>
 static void
-test_malformed_header_name(Context<Connection> &c)
+test_malformed_header_name(Context &c)
 {
-	c.connection = Connection::NewMalformedHeaderName(*c.pool, c.event_loop);
+	c.connection = FcgiClientFactory::NewMalformedHeaderName(*c.pool, c.event_loop);
 	c.connection->Request(c.pool, c,
 			      HTTP_METHOD_GET, "/foo", {},
 			      nullptr,
-#ifdef HAVE_EXPECT_100
 			      false,
-#endif
+
 			      c, c.cancel_ptr);
 
 	c.event_loop.Dispatch();
@@ -445,17 +450,15 @@ test_malformed_header_name(Context<Connection> &c)
 	assert(c.released);
 }
 
-template<class Connection>
 static void
-test_malformed_header_value(Context<Connection> &c)
+test_malformed_header_value(Context &c)
 {
-	c.connection = Connection::NewMalformedHeaderValue(*c.pool, c.event_loop);
+	c.connection = FcgiClientFactory::NewMalformedHeaderValue(*c.pool, c.event_loop);
 	c.connection->Request(c.pool, c,
 			      HTTP_METHOD_GET, "/foo", {},
 			      nullptr,
-#ifdef HAVE_EXPECT_100
 			      false,
-#endif
+
 			      c, c.cancel_ptr);
 
 	c.event_loop.Dispatch();
@@ -477,9 +480,9 @@ main(int, char **)
 	direct_global_init();
 	const ScopeFbPoolInit fb_pool_init;
 
-	run_all_tests<Connection>();
-	run_test<Connection>(test_malformed_header_name);
-	run_test<Connection>(test_malformed_header_value);
+	run_all_tests<FcgiClientFactory>();
+	run_test(test_malformed_header_name);
+	run_test(test_malformed_header_value);
 
 	int status;
 	while (wait(&status) > 0) {

@@ -53,8 +53,8 @@ NopThreadSocketFilter::Run(ThreadSocketFilterInternal &f)
  *
  */
 
-ThreadSocketFilterHandler *
+std::unique_ptr<ThreadSocketFilterHandler>
 nop_thread_socket_filter_new()
 {
-	return new NopThreadSocketFilter();
+	return std::make_unique<NopThreadSocketFilter>();
 }

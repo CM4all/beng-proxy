@@ -86,8 +86,6 @@ private:
 
 	UnusedHoldIstreamPtr request_body;
 
-	DeferEvent defer_event;
-
 	DeferEvent response_timer;
 
 	const Mode mode;
@@ -103,7 +101,7 @@ public:
 	~DemoHttpServerConnection() noexcept;
 
 	auto &GetEventLoop() const noexcept {
-		return defer_event.GetEventLoop();
+		return response_timer.GetEventLoop();
 	}
 
 private:
@@ -113,7 +111,6 @@ private:
 	/* virtual methods from class Cancellable */
 	void Cancel() noexcept final {
 		request_body.Clear();
-		defer_event.Cancel();
 	}
 
 protected:

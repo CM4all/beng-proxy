@@ -303,8 +303,9 @@ MalformedPrematureWasServer::OnWasControlPacket(enum was_command cmd,
 	return true;
 }
 
-class WasConnection final : WasServerHandler, WasLease {
-	FineTimerEvent close_timer;
+class WasConnection final : public ClientConnection, WasServerHandler, WasLease
+{
+	EventLoop &event_loop;
 
 	WasSocket socket;
 
@@ -322,9 +323,9 @@ class WasConnection final : WasServerHandler, WasLease {
 	const Callback callback;
 
 public:
-	WasConnection(struct pool &pool, EventLoop &event_loop,
+	WasConnection(struct pool &pool, EventLoop &_event_loop,
 		      Callback &&_callback)
-		:close_timer(event_loop, BIND_THIS_METHOD(OnCloseTimer)),
+		:event_loop(_event_loop),
 		 callback(std::move(_callback))
 	{
 		WasServerHandler &handler = *this;
@@ -335,9 +336,9 @@ public:
 
 	struct MalformedPremature{};
 
-	WasConnection(struct pool &pool, EventLoop &event_loop,
+	WasConnection(struct pool &pool, EventLoop &_event_loop,
 		      MalformedPremature)
-		:close_timer(event_loop, BIND_THIS_METHOD(OnCloseTimer))
+		:event_loop(_event_loop)
 	{
 		WasServerHandler &handler = *this;
 		server2 = NewFromPool<MalformedPrematureWasServer>(pool, event_loop,
@@ -345,7 +346,7 @@ public:
 								   handler);
 	}
 
-	~WasConnection() {
+	~WasConnection() noexcept override {
 		if (server != nullptr)
 			server->Free();
 		if (server2 != nullptr)
@@ -353,21 +354,18 @@ public:
 	}
 
 	auto &GetEventLoop() const noexcept {
-		return close_timer.GetEventLoop();
+		return event_loop;
 	}
 
-	void ScheduleClose() noexcept {
-		close_timer.Schedule(std::chrono::milliseconds(10));
-	}
-
-	void Request(struct pool *pool,
+	void Request(struct pool &pool,
 		     Lease &_lease,
 		     http_method_t method, const char *uri,
 		     StringMap &&headers, UnusedIstreamPtr body,
+		     [[maybe_unused]] bool expect_100,
 		     HttpResponseHandler &handler,
-		     CancellablePointer &cancel_ptr) {
+		     CancellablePointer &cancel_ptr) noexcept override {
 		lease = &_lease;
-		was_client_request(*pool, GetEventLoop(), nullptr,
+		was_client_request(pool, GetEventLoop(), nullptr,
 				   socket.control, socket.input, socket.output,
 				   *this,
 				   nullptr,
@@ -376,7 +374,7 @@ public:
 				   handler, cancel_ptr);
 	}
 
-	void InjectSocketFailure() noexcept {
+	void InjectSocketFailure() noexcept override {
 		socket.control.Shutdown();
 	}
 
@@ -392,63 +390,6 @@ public:
 	void OnWasClosed() noexcept override {
 		server = nullptr;
 		server2 = nullptr;
-	}
-
-	/* constructors */
-
-	static WasConnection *NewMirror(struct pool &pool, EventLoop &event_loop) {
-		return new WasConnection(pool, event_loop, RunMirror);
-	}
-
-	static WasConnection *NewNull(struct pool &pool, EventLoop &event_loop) {
-		return new WasConnection(pool, event_loop, RunNull);
-	}
-
-	static WasConnection *NewDummy(struct pool &pool, EventLoop &event_loop) {
-		return new WasConnection(pool, event_loop, RunHello);
-	}
-
-	static WasConnection *NewFixed(struct pool &pool, EventLoop &event_loop) {
-		return new WasConnection(pool, event_loop, RunHello);
-	}
-
-	static WasConnection *NewTiny(struct pool &pool, EventLoop &event_loop) {
-		return new WasConnection(pool, event_loop, RunHello);
-	}
-
-	static WasConnection *NewHuge(struct pool &pool, EventLoop &event_loop) {
-		return new WasConnection(pool, event_loop, RunHuge);
-	}
-
-	static WasConnection *NewHold(struct pool &pool, EventLoop &event_loop) {
-		auto *c = new WasConnection(pool, event_loop, RunHold);
-		c->ScheduleClose();
-		return c;
-	}
-
-	static WasConnection *NewBlock(struct pool &pool, EventLoop &event_loop) {
-		return new WasConnection(pool, event_loop, RunBlock);
-	}
-
-	static WasConnection *NewNop(struct pool &pool, EventLoop &event_loop) {
-		return new WasConnection(pool, event_loop, RunNop);
-	}
-
-	static WasConnection *NewMalformedHeaderName(struct pool &pool, EventLoop &event_loop) {
-		return new WasConnection(pool, event_loop, RunMalformedHeaderName);
-	}
-
-	static WasConnection *NewMalformedHeaderValue(struct pool &pool, EventLoop &event_loop) {
-		return new WasConnection(pool, event_loop, RunMalformedHeaderValue);
-	}
-
-	static WasConnection *NewValidPremature(struct pool &pool, EventLoop &event_loop) {
-		return new WasConnection(pool, event_loop, RunValidPremature);
-	}
-
-	static WasConnection *NewMalformedPremature(struct pool &pool, EventLoop &event_loop) {
-		return new WasConnection(pool, event_loop,
-					 WasConnection::MalformedPremature{});
 	}
 
 private:
@@ -481,17 +422,70 @@ private:
 	}
 };
 
-template<class Connection>
+struct WasFactory {
+	static WasConnection *NewMirror(struct pool &pool, EventLoop &event_loop) {
+		return new WasConnection(pool, event_loop, RunMirror);
+	}
+
+	static WasConnection *NewNull(struct pool &pool, EventLoop &event_loop) {
+		return new WasConnection(pool, event_loop, RunNull);
+	}
+
+	static WasConnection *NewDummy(struct pool &pool, EventLoop &event_loop) {
+		return new WasConnection(pool, event_loop, RunHello);
+	}
+
+	static WasConnection *NewFixed(struct pool &pool, EventLoop &event_loop) {
+		return new WasConnection(pool, event_loop, RunHello);
+	}
+
+	static WasConnection *NewTiny(struct pool &pool, EventLoop &event_loop) {
+		return new WasConnection(pool, event_loop, RunHello);
+	}
+
+	static WasConnection *NewHuge(struct pool &pool, EventLoop &event_loop) {
+		return new WasConnection(pool, event_loop, RunHuge);
+	}
+
+	static WasConnection *NewHold(struct pool &pool, EventLoop &event_loop) {
+		return new WasConnection(pool, event_loop, RunHold);
+	}
+
+	static WasConnection *NewBlock(struct pool &pool, EventLoop &event_loop) {
+		return new WasConnection(pool, event_loop, RunBlock);
+	}
+
+	static WasConnection *NewNop(struct pool &pool, EventLoop &event_loop) {
+		return new WasConnection(pool, event_loop, RunNop);
+	}
+
+	static WasConnection *NewMalformedHeaderName(struct pool &pool, EventLoop &event_loop) {
+		return new WasConnection(pool, event_loop, RunMalformedHeaderName);
+	}
+
+	static WasConnection *NewMalformedHeaderValue(struct pool &pool, EventLoop &event_loop) {
+		return new WasConnection(pool, event_loop, RunMalformedHeaderValue);
+	}
+
+	static WasConnection *NewValidPremature(struct pool &pool, EventLoop &event_loop) {
+		return new WasConnection(pool, event_loop, RunValidPremature);
+	}
+
+	static WasConnection *NewMalformedPremature(struct pool &pool, EventLoop &event_loop) {
+		return new WasConnection(pool, event_loop,
+					 WasConnection::MalformedPremature{});
+	}
+};
+
 static void
-test_malformed_header_name(Context<Connection> &c)
+test_malformed_header_name(Context &c)
 {
-	c.connection = Connection::NewMalformedHeaderName(*c.pool, c.event_loop);
+	c.connection = WasFactory::NewMalformedHeaderName(*c.pool, c.event_loop);
 	c.connection->Request(c.pool, c,
 			      HTTP_METHOD_GET, "/foo", {},
 			      nullptr,
-#ifdef HAVE_EXPECT_100
 			      false,
-#endif
+
 			      c, c.cancel_ptr);
 
 	c.event_loop.Dispatch();
@@ -501,17 +495,15 @@ test_malformed_header_name(Context<Connection> &c)
 	assert(c.released);
 }
 
-template<class Connection>
 static void
-test_malformed_header_value(Context<Connection> &c)
+test_malformed_header_value(Context &c)
 {
-	c.connection = Connection::NewMalformedHeaderValue(*c.pool, c.event_loop);
+	c.connection = WasFactory::NewMalformedHeaderValue(*c.pool, c.event_loop);
 	c.connection->Request(c.pool, c,
 			      HTTP_METHOD_GET, "/foo", {},
 			      nullptr,
-#ifdef HAVE_EXPECT_100
 			      false,
-#endif
+
 			      c, c.cancel_ptr);
 
 	c.event_loop.Dispatch();
@@ -533,7 +525,7 @@ main(int, char **)
 	direct_global_init();
 	const ScopeFbPoolInit fb_pool_init;
 
-	run_all_tests<WasConnection>();
-	run_test<WasConnection>(test_malformed_header_name);
-	run_test<WasConnection>(test_malformed_header_value);
+	run_all_tests<WasFactory>();
+	run_test(test_malformed_header_name);
+	run_test(test_malformed_header_value);
 }
