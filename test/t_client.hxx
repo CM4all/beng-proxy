@@ -145,7 +145,7 @@ struct Context final
 	DelayedIstreamControl *delayed = nullptr;
 
 	off_t body_data = 0, consumed_body_data = 0;
-	bool body_eof = false, body_abort = false, body_closed = false;
+	bool body_eof = false, body_closed = false;
 
 	DelayedIstreamControl *request_body = nullptr;
 	bool aborted_request_body = false;
@@ -400,7 +400,6 @@ Context<Connection>::OnError(std::exception_ptr ep) noexcept
 		event_loop.Break();
 
 	ClearInput();
-	body_abort = true;
 
 	defer_event.Cancel();
 
@@ -523,7 +522,6 @@ test_empty(Context<Connection> &c) noexcept
 	assert(c.content_length == nullptr);
 	assert(!c.HasInput());
 	assert(!c.body_eof);
-	assert(!c.body_abort);
 	assert(!c.request_error);
 	assert(c.body_error == nullptr);
 	assert(c.reuse);
@@ -646,7 +644,6 @@ test_close_response_body_early(Context<Connection> &c) noexcept
 	assert(!c.HasInput());
 	assert(c.body_data == 0);
 	assert(!c.body_eof);
-	assert(!c.body_abort);
 	assert(!c.request_error);
 	assert(c.body_error == nullptr);
 }
@@ -674,7 +671,7 @@ test_close_response_body_late(Context<Connection> &c) noexcept
 	assert(!c.HasInput());
 	assert(c.body_data == 0);
 	assert(!c.body_eof);
-	assert(c.body_abort || c.body_closed);
+	assert(c.body_closed);
 	assert(!c.request_error);
 	assert(c.body_error == nullptr);
 }
@@ -706,7 +703,6 @@ test_close_response_body_data(Context<Connection> &c) noexcept
 	assert(!c.HasInput());
 	assert(c.body_data == 6);
 	assert(!c.body_eof);
-	assert(!c.body_abort);
 	assert(c.body_closed);
 	assert(c.body_error == nullptr);
 }
@@ -738,7 +734,6 @@ test_close_response_body_after(Context<Connection> &c) noexcept
 	assert(!c.HasInput());
 	assert(c.body_data >= 16384);
 	assert(!c.body_eof);
-	assert(!c.body_abort);
 	assert(c.body_closed);
 	assert(c.body_error == nullptr);
 }
@@ -785,7 +780,6 @@ test_close_request_body_early(Context<Connection> &c) noexcept
 	assert(c.status == 0);
 	assert(!c.HasInput());
 	assert(!c.body_eof);
-	assert(!c.body_abort);
 	assert(c.body_error == nullptr);
 	assert(c.request_error != nullptr);
 	assert(strstr(GetFullMessage(c.request_error).c_str(), error.what()) != nullptr);
@@ -824,9 +818,9 @@ test_close_request_body_fail(Context<Connection> &c) noexcept
 #endif
 	assert(!c.HasInput());
 	assert(!c.body_eof);
-	assert(c.body_abort);
+	assert(c.body_error);
 
-	if (c.body_error != nullptr && !c.request_error) {
+	if (!c.request_error) {
 		c.request_error = std::exchange(c.body_error, std::exception_ptr());
 	}
 
@@ -883,7 +877,6 @@ test_data_blocking(Context<Connection> &c) noexcept
 	assert(c.HasInput());
 	assert(c.body_data > 0);
 	assert(!c.body_eof);
-	assert(!c.body_abort);
 	assert(!c.request_error);
 	assert(c.body_error == nullptr);
 
@@ -891,7 +884,6 @@ test_data_blocking(Context<Connection> &c) noexcept
 
 	assert(c.released);
 	assert(!c.body_eof);
-	assert(!c.body_abort);
 	assert(!c.request_error);
 	assert(c.body_error == nullptr);
 
@@ -939,7 +931,6 @@ test_data_blocking2(Context<Connection> &c) noexcept
 	assert(c.available == body_size);
 	assert(c.HasInput());
 	assert(!c.body_eof);
-	assert(!c.body_abort);
 	assert(c.consumed_body_data < (off_t)body_size);
 	assert(c.body_error == nullptr);
 
@@ -948,7 +939,6 @@ test_data_blocking2(Context<Connection> &c) noexcept
 
 	assert(c.released);
 	assert(c.body_eof);
-	assert(!c.body_abort);
 	assert(c.consumed_body_data == body_size);
 	assert(!c.request_error);
 	assert(c.body_error == nullptr);
@@ -973,7 +963,7 @@ test_body_fail(Context<Connection> &c) noexcept
 	c.event_loop.Dispatch();
 
 	assert(c.released);
-	assert(c.aborted || c.body_abort);
+	assert(c.aborted || c.body_error);
 
 	if (c.body_error != nullptr && !c.request_error) {
 		c.request_error = std::exchange(c.body_error, std::exception_ptr());
@@ -1006,7 +996,6 @@ test_head(Context<Connection> &c) noexcept
 	assert(strcmp(c.content_length, "6") == 0);
 	assert(!c.HasInput());
 	assert(!c.body_eof);
-	assert(!c.body_abort);
 	assert(!c.request_error);
 	assert(c.body_error == nullptr);
 	assert(c.reuse);
@@ -1036,7 +1025,6 @@ test_head_discard(Context<Connection> &c) noexcept
 	assert(c.status == HTTP_STATUS_OK);
 	assert(!c.HasInput());
 	assert(!c.body_eof);
-	assert(!c.body_abort);
 	assert(!c.request_error);
 	assert(c.body_error == nullptr);
 	assert(c.reuse);
@@ -1069,7 +1057,6 @@ test_head_discard2(Context<Connection> &c) noexcept
 	assert(content_length == 5 || content_length == 256);
 	assert(!c.HasInput());
 	assert(!c.body_eof);
-	assert(!c.body_abort);
 	assert(!c.request_error);
 	assert(c.body_error == nullptr);
 }
@@ -1095,7 +1082,6 @@ test_ignored_body(Context<Connection> &c) noexcept
 	assert(c.content_length == nullptr);
 	assert(!c.HasInput());
 	assert(!c.body_eof);
-	assert(!c.body_abort);
 	assert(!c.request_error);
 	assert(c.body_error == nullptr);
 	assert(c.reuse);
@@ -1128,7 +1114,6 @@ test_close_ignored_request_body(Context<Connection> &c) noexcept
 	assert(c.content_length == nullptr);
 	assert(!c.HasInput());
 	assert(!c.body_eof);
-	assert(!c.body_abort);
 	assert(!c.request_error);
 	assert(c.body_error == nullptr);
 }
@@ -1159,7 +1144,6 @@ test_head_close_ignored_request_body(Context<Connection> &c) noexcept
 	assert(c.content_length == nullptr);
 	assert(!c.HasInput());
 	assert(!c.body_eof);
-	assert(!c.body_abort);
 	assert(!c.request_error);
 	assert(c.body_error == nullptr);
 }
@@ -1189,7 +1173,6 @@ test_close_request_body_eor(Context<Connection> &c) noexcept
 	assert(c.content_length == nullptr);
 	assert(!c.HasInput());
 	assert(c.body_eof);
-	assert(!c.body_abort);
 	assert(!c.request_error);
 	assert(c.body_error == nullptr);
 }
@@ -1219,7 +1202,6 @@ test_close_request_body_eor2(Context<Connection> &c) noexcept
 	assert(c.content_length == nullptr);
 	assert(!c.HasInput());
 	assert(c.body_eof);
-	assert(!c.body_abort);
 	assert(!c.request_error);
 	assert(c.body_error == nullptr);
 }
@@ -1348,7 +1330,6 @@ test_no_body_while_sending(Context<Connection> &c) noexcept
 	assert(c.status == HTTP_STATUS_NO_CONTENT);
 	assert(!c.HasInput());
 	assert(!c.body_eof);
-	assert(!c.body_abort);
 	assert(!c.request_error);
 	assert(c.body_error == nullptr);
 }
@@ -1372,7 +1353,6 @@ test_hold(Context<Connection> &c) noexcept
 	assert(c.status == HTTP_STATUS_OK);
 	assert(!c.HasInput());
 	assert(!c.body_eof);
-	assert(c.body_abort);
 	assert(!c.request_error);
 	assert(c.body_error != nullptr);
 }
@@ -1402,7 +1382,7 @@ test_premature_close_headers(Context<Connection> &c) noexcept
 	assert(c.status == 0);
 	assert(!c.HasInput());
 	assert(!c.body_eof);
-	assert(!c.body_abort);
+	assert(!c.body_error);
 	assert(c.request_error != nullptr);
 	assert(!c.reuse);
 }
@@ -1432,7 +1412,6 @@ test_premature_close_body(Context<Connection> &c) noexcept
 	assert(c.released);
 	assert(c.status == HTTP_STATUS_OK);
 	assert(!c.body_eof);
-	assert(c.body_abort);
 	assert(!c.request_error);
 	assert(c.body_error != nullptr);
 	assert(!c.reuse);
@@ -1473,7 +1452,6 @@ test_post_empty(Context<Connection> &c) noexcept
 	}
 
 	assert(c.released);
-	assert(!c.body_abort);
 	assert(c.body_data == 0);
 	assert(c.body_error == nullptr);
 	assert(c.reuse);
