@@ -224,8 +224,12 @@ struct HttpClientFactory {
 
 HttpClientConnection::~HttpClientConnection() noexcept
 {
-	socket.Close();
-	socket.Destroy();
+	// TODO code copied from ~FilteredSocket()
+	if (socket.IsValid()) {
+		if (socket.IsConnected())
+			socket.Close();
+		socket.Destroy();
+	}
 
 	if (pid > 0) {
 		int status;
