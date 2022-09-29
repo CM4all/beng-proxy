@@ -478,9 +478,9 @@ struct WasFactory {
 };
 
 static void
-test_malformed_header_name(Context &c)
+test_malformed_header_name(auto &factory, Context &c) noexcept
 {
-	c.connection = WasFactory::NewMalformedHeaderName(*c.pool, c.event_loop);
+	c.connection = factory.NewMalformedHeaderName(*c.pool, c.event_loop);
 	c.connection->Request(c.pool, c,
 			      HTTP_METHOD_GET, "/foo", {},
 			      nullptr,
@@ -496,9 +496,9 @@ test_malformed_header_name(Context &c)
 }
 
 static void
-test_malformed_header_value(Context &c)
+test_malformed_header_value(auto &factory, Context &c) noexcept
 {
-	c.connection = WasFactory::NewMalformedHeaderValue(*c.pool, c.event_loop);
+	c.connection = factory.NewMalformedHeaderValue(*c.pool, c.event_loop);
 	c.connection->Request(c.pool, c,
 			      HTTP_METHOD_GET, "/foo", {},
 			      nullptr,
@@ -526,8 +526,9 @@ main(int, char **)
 	const ScopeFbPoolInit fb_pool_init;
 
 	Instance instance;
+	WasFactory factory;
 
-	run_all_tests<WasFactory>(instance);
-	run_test(instance, test_malformed_header_name);
-	run_test(instance, test_malformed_header_value);
+	run_all_tests(instance, factory);
+	run_test(instance, factory, test_malformed_header_name);
+	run_test(instance, factory, test_malformed_header_value);
 }

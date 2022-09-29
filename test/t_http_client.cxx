@@ -303,9 +303,9 @@ HttpClientFactory::NewClose100(struct pool &, EventLoop &event_loop) noexcept
  * responses correctly.
  */
 static void
-test_no_keepalive(Context &c)
+test_no_keepalive(auto &factory, Context &c) noexcept
 {
-	c.connection = HttpClientFactory::NewClose(*c.pool, c.event_loop);
+	c.connection = factory.NewClose(*c.pool, c.event_loop);
 	c.connection->Request(c.pool, c,
 			      HTTP_METHOD_GET, "/foo", {},
 			      nullptr,
@@ -337,14 +337,14 @@ test_no_keepalive(Context &c)
  * forgot about the in-progress request body.
  */
 static void
-test_ignored_request_body(Context &c)
+test_ignored_request_body(auto &factory, Context &c) noexcept
 {
 	auto delayed = istream_delayed_new(*c.pool, c.event_loop);
 	AbortFlag abort_flag(delayed.second.cancel_ptr);
 	auto zero = istream_zero_new(*c.pool);
 
 	c.data_blocking = 1;
-	c.connection = HttpClientFactory::NewIgnoredRequestBody(*c.pool, c.event_loop);
+	c.connection = factory.NewIgnoredRequestBody(*c.pool, c.event_loop);
 	c.connection->Request(c.pool, c,
 			      HTTP_METHOD_GET, "/ignored-request-body", {},
 			      std::move(delayed.first),
@@ -417,11 +417,11 @@ FillPipeLeaseIstream(struct pool &pool, PipeStock *stock,
  * can be spliced.
  */
 static void
-test_expect_100_continue_splice(Context &c)
+test_expect_100_continue_splice(auto &factory, Context &c) noexcept
 {
 	constexpr std::size_t length = 4096;
 
-	c.connection = HttpClientFactory::NewDeferMirror(*c.pool, c.event_loop);
+	c.connection = factory.NewDeferMirror(*c.pool, c.event_loop);
 	c.connection->Request(c.pool, c,
 			      HTTP_METHOD_POST, "/expect_100_continue_splice",
 			      {},
@@ -455,9 +455,10 @@ main(int, char **)
 	const ScopeFbPoolInit fb_pool_init;
 
 	Instance instance;
+	HttpClientFactory factory;
 
-	run_all_tests<HttpClientFactory>(instance);
-	run_test(instance, test_no_keepalive);
-	run_test(instance, test_ignored_request_body);
-	run_test(instance, test_expect_100_continue_splice);
+	run_all_tests(instance, factory);
+	run_test(instance, factory, test_no_keepalive);
+	run_test(instance, factory, test_ignored_request_body);
+	run_test(instance, factory, test_expect_100_continue_splice);
 }
