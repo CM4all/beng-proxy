@@ -104,10 +104,6 @@ public:
 	{
 	}
 
-	static HttpClientConnection *New(EventLoop &event_loop,
-					 const char *path,
-					 const char *mode) noexcept;
-
 	~HttpClientConnection() noexcept override;
 
 	void Request(struct pool &pool,
@@ -129,6 +125,12 @@ public:
 	void InjectSocketFailure() noexcept override {
 		socket.Shutdown();
 	}
+};
+
+struct HttpClientFactory {
+	static HttpClientConnection *New(EventLoop &event_loop,
+					 const char *path,
+					 const char *mode) noexcept;
 
 	static auto *NewWithServer(struct pool &pool,
 				   EventLoop &event_loop,
@@ -221,7 +223,7 @@ HttpClientConnection::~HttpClientConnection() noexcept
 }
 
 HttpClientConnection *
-HttpClientConnection::New(EventLoop &event_loop,
+HttpClientFactory::New(EventLoop &event_loop,
 			  const char *path, const char *mode) noexcept
 {
 	SocketDescriptor client_socket, server_socket;
@@ -262,7 +264,7 @@ HttpClientConnection::New(EventLoop &event_loop,
 }
 
 HttpClientConnection *
-HttpClientConnection::NewClose100(struct pool &, EventLoop &event_loop) noexcept
+HttpClientFactory::NewClose100(struct pool &, EventLoop &event_loop) noexcept
 {
 	SocketDescriptor client_socket, server_socket;
 	if (!SocketDescriptor::CreateSocketPair(AF_LOCAL, SOCK_STREAM, 0,
@@ -303,7 +305,7 @@ HttpClientConnection::NewClose100(struct pool &, EventLoop &event_loop) noexcept
 static void
 test_no_keepalive(Context &c)
 {
-	c.connection = HttpClientConnection::NewClose(*c.pool, c.event_loop);
+	c.connection = HttpClientFactory::NewClose(*c.pool, c.event_loop);
 	c.connection->Request(c.pool, c,
 			      HTTP_METHOD_GET, "/foo", {},
 			      nullptr,
@@ -342,7 +344,7 @@ test_ignored_request_body(Context &c)
 	auto zero = istream_zero_new(*c.pool);
 
 	c.data_blocking = 1;
-	c.connection = HttpClientConnection::NewIgnoredRequestBody(*c.pool, c.event_loop);
+	c.connection = HttpClientFactory::NewIgnoredRequestBody(*c.pool, c.event_loop);
 	c.connection->Request(c.pool, c,
 			      HTTP_METHOD_GET, "/ignored-request-body", {},
 			      std::move(delayed.first),
@@ -419,7 +421,7 @@ test_expect_100_continue_splice(Context &c)
 {
 	constexpr std::size_t length = 4096;
 
-	c.connection = HttpClientConnection::NewDeferMirror(*c.pool, c.event_loop);
+	c.connection = HttpClientFactory::NewDeferMirror(*c.pool, c.event_loop);
 	c.connection->Request(c.pool, c,
 			      HTTP_METHOD_POST, "/expect_100_continue_splice",
 			      {},
@@ -452,7 +454,7 @@ main(int, char **)
 	direct_global_init();
 	const ScopeFbPoolInit fb_pool_init;
 
-	run_all_tests<HttpClientConnection>();
+	run_all_tests<HttpClientFactory>();
 	run_test(test_no_keepalive);
 	run_test(test_ignored_request_body);
 	run_test(test_expect_100_continue_splice);

@@ -289,8 +289,6 @@ class FcgiClientConnection final : public ClientConnection {
 public:
 	FcgiClientConnection(EventLoop &_event_loop, pid_t _pid, SocketDescriptor _fd)
 		:event_loop(_event_loop), pid(_pid), fd(_fd) {}
-	static FcgiClientConnection *New(EventLoop &event_loop,
-					 void (*f)(struct pool *pool));
 
 	~FcgiClientConnection() noexcept override;
 
@@ -315,6 +313,11 @@ public:
 	void InjectSocketFailure() noexcept {
 		fd.Shutdown();
 	}
+};
+
+struct FcgiClientFactory {
+	static FcgiClientConnection *New(EventLoop &event_loop,
+					 void (*f)(struct pool *pool));
 
 	static auto *NewMirror(struct pool &, EventLoop &event_loop) {
 		return New(event_loop, fcgi_server_mirror);
@@ -380,7 +383,7 @@ public:
 };
 
 FcgiClientConnection *
-FcgiClientConnection::New(EventLoop &event_loop, void (*f)(struct pool *pool))
+FcgiClientFactory::New(EventLoop &event_loop, void (*f)(struct pool *pool))
 {
 	SocketDescriptor server_socket, client_socket;
 	if (!SocketDescriptor::CreateSocketPair(AF_LOCAL, SOCK_STREAM, 0,
@@ -432,7 +435,7 @@ FcgiClientConnection::~FcgiClientConnection() noexcept
 static void
 test_malformed_header_name(Context &c)
 {
-	c.connection = FcgiClientConnection::NewMalformedHeaderName(*c.pool, c.event_loop);
+	c.connection = FcgiClientFactory::NewMalformedHeaderName(*c.pool, c.event_loop);
 	c.connection->Request(c.pool, c,
 			      HTTP_METHOD_GET, "/foo", {},
 			      nullptr,
@@ -450,7 +453,7 @@ test_malformed_header_name(Context &c)
 static void
 test_malformed_header_value(Context &c)
 {
-	c.connection = FcgiClientConnection::NewMalformedHeaderValue(*c.pool, c.event_loop);
+	c.connection = FcgiClientFactory::NewMalformedHeaderValue(*c.pool, c.event_loop);
 	c.connection->Request(c.pool, c,
 			      HTTP_METHOD_GET, "/foo", {},
 			      nullptr,
@@ -477,7 +480,7 @@ main(int, char **)
 	direct_global_init();
 	const ScopeFbPoolInit fb_pool_init;
 
-	run_all_tests<FcgiClientConnection>();
+	run_all_tests<FcgiClientFactory>();
 	run_test(test_malformed_header_name);
 	run_test(test_malformed_header_value);
 

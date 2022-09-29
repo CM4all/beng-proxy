@@ -521,11 +521,11 @@ Context::OnHttpError(std::exception_ptr ep) noexcept
  *
  */
 
-template<class Connection>
+template<class Factory>
 static void
 test_empty(Context &c) noexcept
 {
-	c.connection = Connection::NewMirror(*c.pool, c.event_loop);
+	c.connection = Factory::NewMirror(*c.pool, c.event_loop);
 	c.connection->Request(c.pool, c,
 			      HTTP_METHOD_GET, "/foo", {},
 			      nullptr,
@@ -546,11 +546,11 @@ test_empty(Context &c) noexcept
 	assert(c.reuse);
 }
 
-template<class Connection>
+template<class Factory>
 static void
 test_body(Context &c) noexcept
 {
-	c.connection = Connection::NewMirror(*c.pool, c.event_loop);
+	c.connection = Factory::NewMirror(*c.pool, c.event_loop);
 	c.connection->Request(c.pool, c,
 			      HTTP_METHOD_GET, "/foo", {},
 			      istream_string_new(*c.pool, "foobar"),
@@ -578,12 +578,12 @@ test_body(Context &c) noexcept
  * Call istream_read() on the response body from inside the response
  * callback.
  */
-template<class Connection>
+template<class Factory>
 static void
 test_read_body(Context &c) noexcept
 {
 	c.read_response_body = true;
-	c.connection = Connection::NewMirror(*c.pool, c.event_loop);
+	c.connection = Factory::NewMirror(*c.pool, c.event_loop);
 	c.connection->Request(c.pool, c,
 			      HTTP_METHOD_GET, "/foo", {},
 			      istream_string_new(*c.pool, "foobar"),
@@ -608,13 +608,13 @@ test_read_body(Context &c) noexcept
 /**
  * A huge response body with declared Content-Length.
  */
-template<class Connection>
+template<class Factory>
 static void
 test_huge(Context &c) noexcept
 {
 	c.read_response_body = true;
 	c.close_response_body_data = true;
-	c.connection = Connection::NewHuge(*c.pool, c.event_loop);
+	c.connection = Factory::NewHuge(*c.pool, c.event_loop);
 	c.connection->Request(c.pool, c,
 			      HTTP_METHOD_GET, "/foo", {},
 			      nullptr,
@@ -634,12 +634,12 @@ test_huge(Context &c) noexcept
 
 #endif
 
-template<class Connection>
+template<class Factory>
 static void
 test_close_response_body_early(Context &c) noexcept
 {
 	c.close_response_body_early = true;
-	c.connection = Connection::NewMirror(*c.pool, c.event_loop);
+	c.connection = Factory::NewMirror(*c.pool, c.event_loop);
 	c.connection->Request(c.pool, c,
 			      HTTP_METHOD_GET, "/foo", {},
 			      istream_string_new(*c.pool, "foobar"),
@@ -659,12 +659,12 @@ test_close_response_body_early(Context &c) noexcept
 	assert(c.body_error == nullptr);
 }
 
-template<class Connection>
+template<class Factory>
 static void
 test_close_response_body_late(Context &c) noexcept
 {
 	c.close_response_body_late = true;
-	c.connection = Connection::NewMirror(*c.pool, c.event_loop);
+	c.connection = Factory::NewMirror(*c.pool, c.event_loop);
 	c.connection->Request(c.pool, c,
 			      HTTP_METHOD_GET, "/foo", {},
 			      istream_string_new(*c.pool, "foobar"),
@@ -685,12 +685,12 @@ test_close_response_body_late(Context &c) noexcept
 	assert(c.body_error == nullptr);
 }
 
-template<class Connection>
+template<class Factory>
 static void
 test_close_response_body_data(Context &c) noexcept
 {
 	c.close_response_body_data = true;
-	c.connection = Connection::NewMirror(*c.pool, c.event_loop);
+	c.connection = Factory::NewMirror(*c.pool, c.event_loop);
 	c.connection->Request(c.pool, c,
 			      HTTP_METHOD_GET, "/foo", {},
 			      istream_string_new(*c.pool, "foobar"),
@@ -714,12 +714,12 @@ test_close_response_body_data(Context &c) noexcept
 	assert(c.body_error == nullptr);
 }
 
-template<class Connection>
+template<class Factory>
 static void
 test_close_response_body_after(Context &c) noexcept
 {
 	c.close_response_body_after = 16384;
-	c.connection = Connection::NewHuge(*c.pool, c.event_loop);
+	c.connection = Factory::NewHuge(*c.pool, c.event_loop);
 	c.connection->Request(c.pool, c,
 			      HTTP_METHOD_GET, "/foo", {},
 			      nullptr,
@@ -762,11 +762,11 @@ make_delayed_request_body(Context &c) noexcept
 	return std::move(delayed.first);
 }
 
-template<class Connection>
+template<class Factory>
 static void
 test_close_request_body_early(Context &c) noexcept
 {
-	c.connection = Connection::NewMirror(*c.pool, c.event_loop);
+	c.connection = Factory::NewMirror(*c.pool, c.event_loop);
 	c.connection->Request(c.pool, c,
 			      HTTP_METHOD_GET, "/foo", {},
 			      wrap_fake_request_body(c.pool, make_delayed_request_body(c)),
@@ -787,7 +787,7 @@ test_close_request_body_early(Context &c) noexcept
 	assert(strstr(GetFullMessage(c.request_error).c_str(), error.what()) != nullptr);
 }
 
-template<class Connection>
+template<class Factory>
 static void
 test_close_request_body_fail(Context &c) noexcept
 {
@@ -799,7 +799,7 @@ test_close_request_body_fail(Context &c) noexcept
 				 std::move(delayed.first));
 
 	c.delayed = &delayed.second;
-	c.connection = Connection::NewMirror(*c.pool, c.event_loop);
+	c.connection = Factory::NewMirror(*c.pool, c.event_loop);
 	c.connection->Request(c.pool, c,
 			      HTTP_METHOD_GET, "/foo", {},
 			      wrap_fake_request_body(c.pool, std::move(request_body)),
@@ -829,7 +829,7 @@ test_close_request_body_fail(Context &c) noexcept
 	assert(c.body_error == nullptr);
 }
 
-template<class Connection>
+template<class Factory>
 static void
 test_data_blocking(Context &c) noexcept
 {
@@ -840,7 +840,7 @@ test_data_blocking(Context &c) noexcept
 						   65536, false));
 
 	c.data_blocking = 5;
-	c.connection = Connection::NewMirror(*c.pool, c.event_loop);
+	c.connection = Factory::NewMirror(*c.pool, c.event_loop);
 	c.connection->Request(c.pool, c,
 			      HTTP_METHOD_GET, "/foo", {},
 			      wrap_fake_request_body(c.pool, std::move(request_body)),
@@ -893,7 +893,7 @@ test_data_blocking(Context &c) noexcept
  * This produces a closed socket while the HTTP client has data left
  * in the buffer.
  */
-template<class Connection>
+template<class Factory>
 static void
 test_data_blocking2(Context &c) noexcept
 {
@@ -903,7 +903,7 @@ test_data_blocking2(Context &c) noexcept
 	constexpr size_t body_size = 256;
 
 	c.response_body_byte = true;
-	c.connection = Connection::NewMirror(*c.pool, c.event_loop);
+	c.connection = Factory::NewMirror(*c.pool, c.event_loop);
 	c.connection->Request(c.pool, c,
 			      HTTP_METHOD_GET, "/foo", std::move(request_headers),
 			      istream_head_new(*c.pool, istream_zero_new(*c.pool),
@@ -940,11 +940,11 @@ test_data_blocking2(Context &c) noexcept
 	assert(c.body_error == nullptr);
 }
 
-template<class Connection>
+template<class Factory>
 static void
 test_body_fail(Context &c) noexcept
 {
-	c.connection = Connection::NewMirror(*c.pool, c.event_loop);
+	c.connection = Factory::NewMirror(*c.pool, c.event_loop);
 
 	const std::runtime_error error("body_fail");
 
@@ -968,11 +968,11 @@ test_body_fail(Context &c) noexcept
 	assert(c.body_error == nullptr);
 }
 
-template<class Connection>
+template<class Factory>
 static void
 test_head(Context &c) noexcept
 {
-	c.connection = Connection::NewMirror(*c.pool, c.event_loop);
+	c.connection = Factory::NewMirror(*c.pool, c.event_loop);
 	c.connection->Request(c.pool, c,
 			      HTTP_METHOD_HEAD, "/foo", {},
 			      istream_string_new(*c.pool, "foobar"),
@@ -997,11 +997,11 @@ test_head(Context &c) noexcept
  * Send a HEAD request.  The server sends a response body, and the
  * client library is supposed to discard it.
  */
-template<class Connection>
+template<class Factory>
 static void
 test_head_discard(Context &c) noexcept
 {
-	c.connection = Connection::NewFixed(*c.pool, c.event_loop);
+	c.connection = Factory::NewFixed(*c.pool, c.event_loop);
 	c.connection->Request(c.pool, c,
 			      HTTP_METHOD_HEAD, "/foo", {},
 			      nullptr,
@@ -1021,13 +1021,13 @@ test_head_discard(Context &c) noexcept
 }
 
 /**
- * Same as test_head_discard(), but uses Connection::NewTiny)(*c.pool).
+ * Same as test_head_discard(), but uses Factory::NewTiny)(*c.pool).
  */
-template<class Connection>
+template<class Factory>
 static void
 test_head_discard2(Context &c) noexcept
 {
-	c.connection = Connection::NewTiny(*c.pool, c.event_loop);
+	c.connection = Factory::NewTiny(*c.pool, c.event_loop);
 	c.connection->Request(c.pool, c,
 			      HTTP_METHOD_HEAD, "/foo", {},
 			      nullptr,
@@ -1049,11 +1049,11 @@ test_head_discard2(Context &c) noexcept
 	assert(c.body_error == nullptr);
 }
 
-template<class Connection>
+template<class Factory>
 static void
 test_ignored_body(Context &c) noexcept
 {
-	c.connection = Connection::NewNull(*c.pool, c.event_loop);
+	c.connection = Factory::NewNull(*c.pool, c.event_loop);
 	c.connection->Request(c.pool, c,
 			      HTTP_METHOD_GET, "/foo", {},
 			      wrap_fake_request_body(c.pool, istream_zero_new(*c.pool)),
@@ -1078,11 +1078,11 @@ test_ignored_body(Context &c) noexcept
 /**
  * Close request body in the response handler (with response body).
  */
-template<class Connection>
+template<class Factory>
 static void
 test_close_ignored_request_body(Context &c) noexcept
 {
-	c.connection = Connection::NewNull(*c.pool, c.event_loop);
+	c.connection = Factory::NewNull(*c.pool, c.event_loop);
 	c.close_request_body_early = true;
 	c.connection->Request(c.pool, c,
 			      HTTP_METHOD_GET, "/foo", {},
@@ -1106,11 +1106,11 @@ test_close_ignored_request_body(Context &c) noexcept
  * Close request body in the response handler, method HEAD (no
  * response body).
  */
-template<class Connection>
+template<class Factory>
 static void
 test_head_close_ignored_request_body(Context &c) noexcept
 {
-	c.connection = Connection::NewNull(*c.pool, c.event_loop);
+	c.connection = Factory::NewNull(*c.pool, c.event_loop);
 	c.close_request_body_early = true;
 	c.connection->Request(c.pool, c,
 			      HTTP_METHOD_HEAD, "/foo", {},
@@ -1133,11 +1133,11 @@ test_head_close_ignored_request_body(Context &c) noexcept
 /**
  * Close request body in the response_eof handler.
  */
-template<class Connection>
+template<class Factory>
 static void
 test_close_request_body_eor(Context &c) noexcept
 {
-	c.connection = Connection::NewDummy(*c.pool, c.event_loop);
+	c.connection = Factory::NewDummy(*c.pool, c.event_loop);
 	c.close_request_body_eof = true;
 	c.connection->Request(c.pool, c,
 			      HTTP_METHOD_GET, "/foo", {},
@@ -1160,11 +1160,11 @@ test_close_request_body_eor(Context &c) noexcept
 /**
  * Close request body in the response_eof handler.
  */
-template<class Connection>
+template<class Factory>
 static void
 test_close_request_body_eor2(Context &c) noexcept
 {
-	c.connection = Connection::NewFixed(*c.pool, c.event_loop);
+	c.connection = Factory::NewFixed(*c.pool, c.event_loop);
 	c.close_request_body_eof = true;
 	c.connection->Request(c.pool, c,
 			      HTTP_METHOD_GET, "/foo", {},
@@ -1192,11 +1192,11 @@ test_close_request_body_eor2(Context &c) noexcept
  * Check if the HTTP client handles "100 Continue" received without
  * announcing the expectation.
  */
-template<class Connection>
+template<class Factory>
 static void
 test_bogus_100(Context &c) noexcept
 {
-	c.connection = Connection::NewTwice100(*c.pool, c.event_loop);
+	c.connection = Factory::NewTwice100(*c.pool, c.event_loop);
 	c.connection->Request(c.pool, c,
 			      HTTP_METHOD_GET, "/foo", {},
 			      nullptr, false,
@@ -1223,11 +1223,11 @@ test_bogus_100(Context &c) noexcept
  * Check if the HTTP client handles "100 Continue" received twice
  * well.
  */
-template<class Connection>
+template<class Factory>
 static void
 test_twice_100(Context &c) noexcept
 {
-	c.connection = Connection::NewTwice100(*c.pool, c.event_loop);
+	c.connection = Factory::NewTwice100(*c.pool, c.event_loop);
 	auto delayed = istream_delayed_new(*c.pool, c.event_loop);
 	delayed.second.cancel_ptr = nullptr;
 	c.request_body = &delayed.second;
@@ -1256,14 +1256,14 @@ test_twice_100(Context &c) noexcept
 /**
  * The server sends "100 Continue" and closes the socket.
  */
-template<class Connection>
+template<class Factory>
 static void
 test_close_100(Context &c) noexcept
 {
 	auto request_body = istream_delayed_new(*c.pool, c.event_loop);
 	request_body.second.cancel_ptr = nullptr;
 
-	c.connection = Connection::NewClose100(*c.pool, c.event_loop);
+	c.connection = Factory::NewClose100(*c.pool, c.event_loop);
 	c.connection->Request(c.pool, c,
 			      HTTP_METHOD_POST, "/foo", {},
 			      std::move(request_body.first), true,
@@ -1289,11 +1289,11 @@ test_close_100(Context &c) noexcept
  * Receive an empty response from the server while still sending the
  * request body.
  */
-template<class Connection>
+template<class Factory>
 static void
 test_no_body_while_sending(Context &c) noexcept
 {
-	c.connection = Connection::NewNull(*c.pool, c.event_loop);
+	c.connection = Factory::NewNull(*c.pool, c.event_loop);
 	c.connection->Request(c.pool, c,
 			      HTTP_METHOD_GET, "/foo", {},
 			      wrap_fake_request_body(c.pool, istream_block_new(*c.pool)),
@@ -1310,11 +1310,11 @@ test_no_body_while_sending(Context &c) noexcept
 	assert(c.body_error == nullptr);
 }
 
-template<class Connection>
+template<class Factory>
 static void
 test_hold(Context &c) noexcept
 {
-	c.connection = Connection::NewHold(*c.pool, c.event_loop);
+	c.connection = Factory::NewHold(*c.pool, c.event_loop);
 	c.connection->Request(c.pool, c,
 			      HTTP_METHOD_GET, "/foo", {},
 			      wrap_fake_request_body(c.pool, istream_block_new(*c.pool)),
@@ -1357,11 +1357,11 @@ test_hold(Context &c) noexcept
  * The server closes the connection before it finishes sending the
  * response headers.
  */
-template<class Connection>
+template<class Factory>
 static void
 test_premature_close_headers(Context &c) noexcept
 {
-	c.connection = Connection::NewPrematureCloseHeaders(*c.pool, c.event_loop);
+	c.connection = Factory::NewPrematureCloseHeaders(*c.pool, c.event_loop);
 	c.connection->Request(c.pool, c,
 			      HTTP_METHOD_GET, "/foo", {},
 			      nullptr,
@@ -1387,11 +1387,11 @@ test_premature_close_headers(Context &c) noexcept
  * The server closes the connection before it finishes sending the
  * response body.
  */
-template<class Connection>
+template<class Factory>
 static void
 test_premature_close_body(Context &c) noexcept
 {
-	c.connection = Connection::NewPrematureCloseBody(*c.pool, c.event_loop);
+	c.connection = Factory::NewPrematureCloseBody(*c.pool, c.event_loop);
 	c.connection->Request(c.pool, c,
 			      HTTP_METHOD_GET, "/foo", {}, nullptr,
 			      false,
@@ -1412,11 +1412,11 @@ test_premature_close_body(Context &c) noexcept
 /**
  * POST with empty request body.
  */
-template<class Connection>
+template<class Factory>
 static void
 test_post_empty(Context &c) noexcept
 {
-	c.connection = Connection::NewMirror(*c.pool, c.event_loop);
+	c.connection = Factory::NewMirror(*c.pool, c.event_loop);
 	c.connection->Request(c.pool, c,
 			      HTTP_METHOD_POST, "/foo", {},
 			      istream_null_new(*c.pool),
@@ -1447,11 +1447,11 @@ test_post_empty(Context &c) noexcept
 
 #ifdef USE_BUCKETS
 
-template<class Connection>
+template<class Factory>
 static void
 test_buckets(Context &c) noexcept
 {
-	c.connection = Connection::NewFixed(*c.pool, c.event_loop);
+	c.connection = Factory::NewFixed(*c.pool, c.event_loop);
 	c.use_buckets = true;
 	c.read_after_buckets = true;
 
@@ -1476,11 +1476,11 @@ test_buckets(Context &c) noexcept
 	assert(c.reuse);
 }
 
-template<class Connection>
+template<class Factory>
 static void
 test_buckets_close(Context &c) noexcept
 {
-	c.connection = Connection::NewFixed(*c.pool, c.event_loop);
+	c.connection = Factory::NewFixed(*c.pool, c.event_loop);
 	c.use_buckets = true;
 	c.close_after_buckets = true;
 
@@ -1508,11 +1508,11 @@ test_buckets_close(Context &c) noexcept
 
 #ifdef ENABLE_PREMATURE_END
 
-template<class Connection>
+template<class Factory>
 static void
 test_premature_end(Context &c) noexcept
 {
-	c.connection = Connection::NewPrematureEnd(*c.pool, c.event_loop);
+	c.connection = Factory::NewPrematureEnd(*c.pool, c.event_loop);
 
 	c.connection->Request(c.pool, c,
 			      HTTP_METHOD_GET, "/foo", {},
@@ -1534,11 +1534,11 @@ test_premature_end(Context &c) noexcept
 
 #ifdef ENABLE_EXCESS_DATA
 
-template<class Connection>
+template<class Factory>
 static void
 test_excess_data(Context &c) noexcept
 {
-	c.connection = Connection::NewExcessData(*c.pool, c.event_loop);
+	c.connection = Factory::NewExcessData(*c.pool, c.event_loop);
 
 	c.connection->Request(c.pool, c,
 			      HTTP_METHOD_GET, "/foo", {},
@@ -1560,11 +1560,11 @@ test_excess_data(Context &c) noexcept
 
 #ifdef ENABLE_VALID_PREMATURE
 
-template<class Connection>
+template<class Factory>
 static void
 TestValidPremature(Context &c)
 {
-	c.connection = Connection::NewValidPremature(*c.pool, c.event_loop);
+	c.connection = Factory::NewValidPremature(*c.pool, c.event_loop);
 
 	c.connection->Request(c.pool, c,
 			      HTTP_METHOD_GET, "/foo", {},
@@ -1585,11 +1585,11 @@ TestValidPremature(Context &c)
 
 #ifdef ENABLE_MALFORMED_PREMATURE
 
-template<class Connection>
+template<class Factory>
 static void
 TestMalformedPremature(Context &c)
 {
-	c.connection = Connection::NewMalformedPremature(*c.pool, c.event_loop);
+	c.connection = Factory::NewMalformedPremature(*c.pool, c.event_loop);
 
 	c.connection->Request(c.pool, c,
 			      HTTP_METHOD_GET, "/foo", {},
@@ -1610,11 +1610,11 @@ TestMalformedPremature(Context &c)
 
 #endif
 
-template<class Connection>
+template<class Factory>
 static void
 TestCancelNop(Context &c)
 {
-	c.connection = Connection::NewNop(*c.pool, c.event_loop);
+	c.connection = Factory::NewNop(*c.pool, c.event_loop);
 	c.connection->Request(c.pool, c,
 			      HTTP_METHOD_POST, "/foo", {},
 			      istream_null_new(*c.pool),
@@ -1626,11 +1626,11 @@ TestCancelNop(Context &c)
 	assert(c.released);
 }
 
-template<class Connection>
+template<class Factory>
 static void
 TestCancelWithFailedSocketGet(Context &c)
 {
-	c.connection = Connection::NewNop(*c.pool, c.event_loop);
+	c.connection = Factory::NewNop(*c.pool, c.event_loop);
 	c.connection->Request(c.pool, c,
 			      HTTP_METHOD_GET, "/foo", {},
 			      nullptr,
@@ -1644,11 +1644,11 @@ TestCancelWithFailedSocketGet(Context &c)
 	assert(c.released);
 }
 
-template<class Connection>
+template<class Factory>
 static void
 TestCancelWithFailedSocketPost(Context &c)
 {
-	c.connection = Connection::NewNop(*c.pool, c.event_loop);
+	c.connection = Factory::NewNop(*c.pool, c.event_loop);
 	c.connection->Request(c.pool, c,
 			      HTTP_METHOD_POST, "/foo", {},
 			      istream_null_new(*c.pool),
@@ -1662,11 +1662,11 @@ TestCancelWithFailedSocketPost(Context &c)
 	assert(c.released);
 }
 
-template<class Connection>
+template<class Factory>
 static void
 TestCloseWithFailedSocketGet(Context &c)
 {
-	c.connection = Connection::NewBlock(*c.pool, c.event_loop);
+	c.connection = Factory::NewBlock(*c.pool, c.event_loop);
 	c.connection->Request(c.pool, c,
 			      HTTP_METHOD_GET, "/foo", {},
 			      nullptr,
@@ -1689,11 +1689,11 @@ TestCloseWithFailedSocketGet(Context &c)
 	assert(c.released);
 }
 
-template<class Connection>
+template<class Factory>
 static void
 TestCloseWithFailedSocketPost(Context &c)
 {
-	c.connection = Connection::NewHold(*c.pool, c.event_loop);
+	c.connection = Factory::NewHold(*c.pool, c.event_loop);
 	c.connection->Request(c.pool, c,
 			      HTTP_METHOD_POST, "/foo", {},
 			      istream_null_new(*c.pool),
@@ -1753,68 +1753,68 @@ run_test_and_buckets(void (*test)(Context &c)) noexcept
 #endif
 }
 
-template<class Connection>
+template<class Factory>
 static void
 run_all_tests() noexcept
 {
-	run_test(test_empty<Connection>);
-	run_test_and_buckets(test_body<Connection>);
-	run_test(test_read_body<Connection>);
+	run_test(test_empty<Factory>);
+	run_test_and_buckets(test_body<Factory>);
+	run_test(test_read_body<Factory>);
 #ifdef ENABLE_HUGE_BODY
-	run_test_and_buckets(test_huge<Connection>);
+	run_test_and_buckets(test_huge<Factory>);
 #endif
-	run_test(TestCancelNop<Connection>);
-	run_test(test_close_response_body_early<Connection>);
-	run_test(test_close_response_body_late<Connection>);
-	run_test(test_close_response_body_data<Connection>);
-	run_test(test_close_response_body_after<Connection>);
-	run_test(test_close_request_body_early<Connection>);
-	run_test(test_close_request_body_fail<Connection>);
-	run_test(test_data_blocking<Connection>);
-	run_test(test_data_blocking2<Connection>);
-	run_test(test_body_fail<Connection>);
-	run_test(test_head<Connection>);
-	run_test(test_head_discard<Connection>);
-	run_test(test_head_discard2<Connection>);
-	run_test(test_ignored_body<Connection>);
+	run_test(TestCancelNop<Factory>);
+	run_test(test_close_response_body_early<Factory>);
+	run_test(test_close_response_body_late<Factory>);
+	run_test(test_close_response_body_data<Factory>);
+	run_test(test_close_response_body_after<Factory>);
+	run_test(test_close_request_body_early<Factory>);
+	run_test(test_close_request_body_fail<Factory>);
+	run_test(test_data_blocking<Factory>);
+	run_test(test_data_blocking2<Factory>);
+	run_test(test_body_fail<Factory>);
+	run_test(test_head<Factory>);
+	run_test(test_head_discard<Factory>);
+	run_test(test_head_discard2<Factory>);
+	run_test(test_ignored_body<Factory>);
 #ifdef ENABLE_CLOSE_IGNORED_REQUEST_BODY
-	run_test(test_close_ignored_request_body<Connection>);
-	run_test(test_head_close_ignored_request_body<Connection>);
-	run_test(test_close_request_body_eor<Connection>);
-	run_test(test_close_request_body_eor2<Connection>);
+	run_test(test_close_ignored_request_body<Factory>);
+	run_test(test_head_close_ignored_request_body<Factory>);
+	run_test(test_close_request_body_eor<Factory>);
+	run_test(test_close_request_body_eor2<Factory>);
 #endif
 #ifdef HAVE_EXPECT_100
-	run_test(test_bogus_100<Connection>);
-	run_test(test_twice_100<Connection>);
-	run_test(test_close_100<Connection>);
+	run_test(test_bogus_100<Factory>);
+	run_test(test_twice_100<Factory>);
+	run_test(test_close_100<Factory>);
 #endif
-	run_test(test_no_body_while_sending<Connection>);
-	run_test(test_hold<Connection>);
+	run_test(test_no_body_while_sending<Factory>);
+	run_test(test_hold<Factory>);
 #ifdef ENABLE_PREMATURE_CLOSE_HEADERS
-	run_test(test_premature_close_headers<Connection>);
+	run_test(test_premature_close_headers<Factory>);
 #endif
 #ifdef ENABLE_PREMATURE_CLOSE_BODY
-	run_test_and_buckets(test_premature_close_body<Connection>);
+	run_test_and_buckets(test_premature_close_body<Factory>);
 #endif
 #ifdef USE_BUCKETS
-	run_test(test_buckets<Connection>);
-	run_test(test_buckets_close<Connection>);
+	run_test(test_buckets<Factory>);
+	run_test(test_buckets_close<Factory>);
 #endif
 #ifdef ENABLE_PREMATURE_END
-	run_test_and_buckets(test_premature_end<Connection>);
+	run_test_and_buckets(test_premature_end<Factory>);
 #endif
 #ifdef ENABLE_EXCESS_DATA
-	run_test_and_buckets(test_excess_data<Connection>);
+	run_test_and_buckets(test_excess_data<Factory>);
 #endif
 #ifdef ENABLE_VALID_PREMATURE
-	run_test_and_buckets(TestValidPremature<Connection>);
+	run_test_and_buckets(TestValidPremature<Factory>);
 #endif
 #ifdef ENABLE_MALFORMED_PREMATURE
-	run_test_and_buckets(TestMalformedPremature<Connection>);
+	run_test_and_buckets(TestMalformedPremature<Factory>);
 #endif
-	run_test(test_post_empty<Connection>);
-	run_test_and_buckets(TestCancelWithFailedSocketGet<Connection>);
-	run_test_and_buckets(TestCancelWithFailedSocketPost<Connection>);
-	run_test_and_buckets(TestCloseWithFailedSocketGet<Connection>);
-	run_test_and_buckets(TestCloseWithFailedSocketPost<Connection>);
+	run_test(test_post_empty<Factory>);
+	run_test_and_buckets(TestCancelWithFailedSocketGet<Factory>);
+	run_test_and_buckets(TestCancelWithFailedSocketPost<Factory>);
+	run_test_and_buckets(TestCloseWithFailedSocketGet<Factory>);
+	run_test_and_buckets(TestCloseWithFailedSocketPost<Factory>);
 }

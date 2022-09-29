@@ -392,8 +392,37 @@ public:
 		server2 = nullptr;
 	}
 
-	/* constructors */
+private:
+	WasSocket MakeWasSocket() {
+		auto s = WasSocket::CreatePair();
 
+		socket = std::move(s.first);
+		socket.input.SetNonBlocking();
+		socket.output.SetNonBlocking();
+
+		s.second.input.SetNonBlocking();
+		s.second.output.SetNonBlocking();
+		return std::move(s.second);
+	}
+
+	void OnCloseTimer() noexcept {
+		if (server != nullptr)
+			std::exchange(server, nullptr)->Free();
+		if (server2 != nullptr)
+			std::exchange(server2, nullptr)->Free();
+	}
+
+	/* virtual methods from class WasLease */
+	void ReleaseWas(bool reuse) override {
+		lease->ReleaseLease(reuse);
+	}
+
+	void ReleaseWasStop(uint64_t) override {
+		ReleaseWas(false);
+	}
+};
+
+struct WasFactory {
 	static WasConnection *NewMirror(struct pool &pool, EventLoop &event_loop) {
 		return new WasConnection(pool, event_loop, RunMirror);
 	}
@@ -446,41 +475,12 @@ public:
 		return new WasConnection(pool, event_loop,
 					 WasConnection::MalformedPremature{});
 	}
-
-private:
-	WasSocket MakeWasSocket() {
-		auto s = WasSocket::CreatePair();
-
-		socket = std::move(s.first);
-		socket.input.SetNonBlocking();
-		socket.output.SetNonBlocking();
-
-		s.second.input.SetNonBlocking();
-		s.second.output.SetNonBlocking();
-		return std::move(s.second);
-	}
-
-	void OnCloseTimer() noexcept {
-		if (server != nullptr)
-			std::exchange(server, nullptr)->Free();
-		if (server2 != nullptr)
-			std::exchange(server2, nullptr)->Free();
-	}
-
-	/* virtual methods from class WasLease */
-	void ReleaseWas(bool reuse) override {
-		lease->ReleaseLease(reuse);
-	}
-
-	void ReleaseWasStop(uint64_t) override {
-		ReleaseWas(false);
-	}
 };
 
 static void
 test_malformed_header_name(Context &c)
 {
-	c.connection = WasConnection::NewMalformedHeaderName(*c.pool, c.event_loop);
+	c.connection = WasFactory::NewMalformedHeaderName(*c.pool, c.event_loop);
 	c.connection->Request(c.pool, c,
 			      HTTP_METHOD_GET, "/foo", {},
 			      nullptr,
@@ -498,7 +498,7 @@ test_malformed_header_name(Context &c)
 static void
 test_malformed_header_value(Context &c)
 {
-	c.connection = WasConnection::NewMalformedHeaderValue(*c.pool, c.event_loop);
+	c.connection = WasFactory::NewMalformedHeaderValue(*c.pool, c.event_loop);
 	c.connection->Request(c.pool, c,
 			      HTTP_METHOD_GET, "/foo", {},
 			      nullptr,
@@ -525,7 +525,7 @@ main(int, char **)
 	direct_global_init();
 	const ScopeFbPoolInit fb_pool_init;
 
-	run_all_tests<WasConnection>();
+	run_all_tests<WasFactory>();
 	run_test(test_malformed_header_name);
 	run_test(test_malformed_header_value);
 }
