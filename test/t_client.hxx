@@ -860,8 +860,11 @@ test_data_blocking(auto &factory, Context &c) noexcept
 	while (c.data_blocking > 0) {
 		assert(c.HasInput());
 
+		const unsigned old_data_blocking = c.data_blocking;
 		c.ReadBody();
-		c.event_loop.Dispatch();
+
+		if (c.data_blocking == old_data_blocking)
+			c.event_loop.Dispatch();
 	}
 
 	approve_control.reset();
