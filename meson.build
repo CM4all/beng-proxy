@@ -241,6 +241,9 @@ system2 = static_library(
   'src/system/Isolate.cxx',
   'src/system/Capabilities.cxx',
   include_directories: inc,
+  dependencies: [
+    threads,
+  ],
 )
 system_dep = declare_dependency(
   link_with: system2,
@@ -508,6 +511,7 @@ thread_pool = static_library('thread_queue',
   dependencies: [
     event_dep,
     eutil_dep,
+    threads,
   ])
 thread_pool_dep = declare_dependency(
   link_with: thread_pool,
@@ -829,7 +833,6 @@ executable(
   'src/bp/Main.cxx',
   include_directories: inc,
   dependencies: [
-    threads,
     memory_istream_dep,
     access_log_client_dep,
     event_uring_dep,
@@ -851,7 +854,6 @@ executable(
     widget_dep,
     processor_dep,
     nfs_client_dep,
-    thread_pool_dep,
     delegate_client_dep,
     control_server_dep,
     nghttp2_dep,
@@ -927,7 +929,6 @@ executable(
 
   include_directories: inc,
   dependencies: [
-    threads,
     memory_istream_dep,
     access_log_client_dep,
     liblua,
@@ -955,7 +956,6 @@ executable(
     cookie_dep,
     control_server_dep,
     lua_dep,
-    thread_pool_dep,
     pcre_dep,
     cluster_dep,
     libcxx,

@@ -72,7 +72,6 @@ executable('run_client',
   '../src/PipeLease.cxx',
   include_directories: inc,
   dependencies: [
-    threads,
     ssl_dep,
     was_client_dep,
     http_client_dep,
@@ -94,7 +93,6 @@ executable(
   '../src/ssl/SslSocketFilterFactory.cxx',
   include_directories: inc,
   dependencies: [
-    threads,
     ssl_dep,
     was_client_dep,
     http_client_dep,
@@ -247,7 +245,6 @@ executable('run_cookie_client',
   'run_cookie_client.cxx',
   include_directories: inc,
   dependencies: [
-    threads,
     cookie_dep,
   ])
 
@@ -255,7 +252,6 @@ executable('run_cookie_server',
   'run_cookie_server.cxx',
   include_directories: inc,
   dependencies: [
-    threads,
     cookie_dep,
   ])
 
@@ -305,7 +301,6 @@ executable('run_processor',
   '../src/istream_html_escape.cxx',
   include_directories: inc,
   dependencies: [
-    threads,
     processor_dep,
     widget_dep,
     session_dep,
@@ -408,7 +403,6 @@ test('t_header_forward', executable('t_header_forward',
   include_directories: inc,
   dependencies: [
     gtest,
-    threads,
     pcre_dep,
     putil_dep,
     http_dep,
@@ -577,7 +571,6 @@ test('t_session', executable('t_session',
   include_directories: inc,
   dependencies: [
     gtest,
-    threads,
     session_dep,
   ]))
 
@@ -702,7 +695,6 @@ test('t_widget_http', executable('t_widget_http',
   include_directories: inc,
   dependencies: [
     gtest,
-    threads,
     widget_dep,
     istream_dep,
     http_util_dep,
@@ -745,7 +737,6 @@ test('t_processor', executable('t_processor',
   include_directories: inc,
   dependencies: [
     gtest,
-    threads,
     processor_dep,
     widget_dep,
     session_dep,
@@ -844,7 +835,6 @@ test('t_istream_processor', executable('t_istream_processor',
   include_directories: inc,
   dependencies: [
     gtest,
-    threads,
     processor_dep,
     widget_dep,
     session_dep,
@@ -866,7 +856,6 @@ test(
     include_directories: inc,
     dependencies: [
       gtest,
-      threads,
       processor_dep,
       widget_dep,
       session_dep,
