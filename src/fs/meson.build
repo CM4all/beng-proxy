@@ -4,6 +4,7 @@ socket = static_library(
   'Ptr.cxx',
   'NopSocketFilter.cxx',
   'NopThreadSocketFilter.cxx',
+  'ApproveThreadSocketFilter.cxx',
   'ThreadSocketFilter.cxx',
   'Listener.cxx',
   'Connect.cxx',

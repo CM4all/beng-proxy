@@ -450,6 +450,20 @@ test('t_balancer', executable('t_balancer',
     raddress_dep,
   ]))
 
+test(
+  'TestFilteredSocket',
+  executable(
+    'TestFilteredSocket',
+    'TestFilteredSocket.cxx',
+    'EchoSocket.cxx',
+    include_directories: inc,
+    dependencies: [
+      gtest,
+      socket_dep,
+    ],
+  ),
+)
+
 test('t_cgi', executable('t_cgi',
   't_cgi.cxx',
   '../src/PInstance.cxx',
