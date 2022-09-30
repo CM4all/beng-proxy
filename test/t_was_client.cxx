@@ -423,6 +423,8 @@ private:
 };
 
 struct WasFactory {
+	static constexpr bool can_cancel_request_body = true;
+
 	auto *NewMirror(struct pool &pool, EventLoop &event_loop) {
 		return new WasConnection(pool, event_loop, RunMirror);
 	}

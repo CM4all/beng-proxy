@@ -1059,7 +1059,7 @@ test_ignored_body(auto &factory, Context &c) noexcept
 	assert(!c.body_eof);
 	assert(!c.request_error);
 	assert(c.body_error == nullptr);
-	assert(c.reuse);
+	assert(!factory.can_cancel_request_body || c.reuse);
 }
 
 #ifdef ENABLE_CLOSE_IGNORED_REQUEST_BODY

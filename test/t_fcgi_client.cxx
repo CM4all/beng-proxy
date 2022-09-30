@@ -316,6 +316,8 @@ public:
 };
 
 struct FcgiClientFactory {
+	static constexpr bool can_cancel_request_body = true;
+
 	static FcgiClientConnection *New(EventLoop &event_loop,
 					 void (*f)(struct pool *pool));
 

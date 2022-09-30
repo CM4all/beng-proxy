@@ -138,6 +138,8 @@ public:
 
 template<typename SocketFilterFactory>
 struct HttpClientFactory {
+	static constexpr bool can_cancel_request_body = false;
+
 	[[no_unique_address]]
 	SocketFilterFactory &socket_filter_factory;
 
