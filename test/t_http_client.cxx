@@ -514,7 +514,7 @@ struct NopThreadSocketFilterFactory {
 		return SocketFilterPtr{
 			new ThreadSocketFilter(event_loop,
 					       thread_pool_get_queue(event_loop),
-					       nop_thread_socket_filter_new())
+					       std::make_unique<NopThreadSocketFilter>())
 		};
 	}
 };
