@@ -312,7 +312,7 @@ ThreadSocketFilter::Done() noexcept
 
 	if (connected && input_eof) {
 		/* this condition was signalled by
-		   ThreadSocketFilterHandler::run(), probably because a TLS
+		   ThreadSocketFilterHandler::Run(), probably because a TLS
 		   "close notify" alert was received */
 
 		encrypted_input.FreeIfDefined();
