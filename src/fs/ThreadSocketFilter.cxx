@@ -334,7 +334,7 @@ ThreadSocketFilter::Done() noexcept
 		lock.lock();
 	}
 
-	if (postponed_end && encrypted_input.empty()) {
+	if (postponed_end && encrypted_input.empty() && !again) {
 		if (postponed_remaining) {
 			if (!decrypted_input.empty() ||
 			    !unprotected_decrypted_input.empty()) {
@@ -356,7 +356,6 @@ ThreadSocketFilter::Done() noexcept
 
 			postponed_remaining = false;
 
-			// TODO: check if there is really no more data pending inside our handler
 			if (!socket->InvokeRemaining(available))
 				return;
 
@@ -667,13 +666,12 @@ ThreadSocketFilter::OnRemaining(std::size_t remaining) noexcept
 	if (remaining == 0) {
 		std::unique_lock lock{mutex};
 
-		if (!busy && !done_pending && encrypted_input.empty()) {
+		if (!busy && !again && !done_pending && encrypted_input.empty()) {
 			const std::size_t available = decrypted_input.GetAvailable() +
 				unprotected_decrypted_input.GetAvailable();
 			lock.unlock();
 
 			/* forward the call */
-			// TODO: check if there is really no more data pending inside our handler
 			return socket->InvokeRemaining(available);
 		}
 	}
@@ -694,13 +692,12 @@ ThreadSocketFilter::OnEnd() noexcept
 		/* see if we can commit the "remaining" call now */
 		std::unique_lock lock{mutex};
 
-		if (!busy && !done_pending && encrypted_input.empty()) {
+		if (!busy && !again && !done_pending && encrypted_input.empty()) {
 			const std::size_t available = decrypted_input.GetAvailable() +
 				unprotected_decrypted_input.GetAvailable();
 			lock.unlock();
 
 			postponed_remaining = false;
-			// TODO: check if there is really no more data pending inside our handler
 			if (!socket->InvokeRemaining(available))
 				return;
 		} else {
