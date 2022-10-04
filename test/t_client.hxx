@@ -234,13 +234,23 @@ struct Context final
 	}
 
 	void WaitForEndOfBody() noexcept {
-		break_eof = true;
+		if (!HasInput())
+			return;
 
-		while (HasInput()) {
+		while (data_blocking > 0) {
 			ReadBody();
-			event_loop.Dispatch();
+			if (!HasInput())
+				return;
 		}
 
+		do {
+			ReadBody();
+			if (!HasInput())
+				return;
+		} while (response_body_byte);
+
+		break_eof = true;
+		event_loop.Dispatch();
 		break_eof = false;
 
 		assert(!HasInput());
