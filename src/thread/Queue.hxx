@@ -123,5 +123,7 @@ private:
 		CheckDisableNotify();
 	}
 
+	void _Add(ThreadJob &job) noexcept;
+
 	void WakeupCallback() noexcept;
 };

@@ -49,9 +49,9 @@ ThreadQueue::~ThreadQueue() noexcept
 void
 ThreadQueue::WakeupCallback() noexcept
 {
-	mutex.lock();
+	std::unique_lock lock{mutex};
 
-	done.clear_and_dispose([this](auto *_job){
+	done.clear_and_dispose([this, &lock](auto *_job){
 		auto &job = *_job;
 		assert(job.state == ThreadJob::State::DONE);
 
@@ -63,15 +63,13 @@ ThreadQueue::WakeupCallback() noexcept
 			cond.notify_one();
 		} else {
 			job.state = ThreadJob::State::INITIAL;
-			mutex.unlock();
+			lock.unlock();
 			job.Done();
-			mutex.lock();
+			lock.lock();
 		}
 	});
 
 	CheckDisableNotify();
-
-	mutex.unlock();
 }
 
 void
@@ -85,10 +83,9 @@ ThreadQueue::Stop() noexcept
 	CheckDisableNotify();
 }
 
-void
-ThreadQueue::Add(ThreadJob &job) noexcept
+inline void
+ThreadQueue::_Add(ThreadJob &job) noexcept
 {
-	mutex.lock();
 	assert(alive);
 
 	if (job.state == ThreadJob::State::INITIAL) {
@@ -99,8 +96,15 @@ ThreadQueue::Add(ThreadJob &job) noexcept
 	} else if (job.state != ThreadJob::State::WAITING) {
 		job.again = true;
 	}
+}
 
-	mutex.unlock();
+void
+ThreadQueue::Add(ThreadJob &job) noexcept
+{
+	{
+		const std::scoped_lock lock{mutex};
+		_Add(job);
+	}
 
 	notify.Enable();
 }
@@ -135,13 +139,13 @@ ThreadQueue::Done(ThreadJob &job) noexcept
 {
 	assert(job.state == ThreadJob::State::BUSY);
 
-	mutex.lock();
+	{
+		const std::scoped_lock lock{mutex};
 
-	job.state = ThreadJob::State::DONE;
-	job.unlink();
-	done.push_back(job);
-
-	mutex.unlock();
+		job.state = ThreadJob::State::DONE;
+		job.unlink();
+		done.push_back(job);
+	}
 
 	notify.Signal();
 }
