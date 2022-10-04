@@ -30,36 +30,29 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#pragma once
+#include "fs/FilteredSocket.hxx"
 
-class EventLoop;
+class EchoSocket final : public BufferedSocketHandler {
+	FilteredSocket socket;
 
-/**
- * A queue that manages work for worker threads.
- */
-class ThreadQueue;
+	bool close_after_data = false;
 
-/**
- * Returns the global #thread_queue instance.  The first call to this
- * function creates the queue and starts the worker threads.  To shut
- * down, call thread_pool_stop(), thread_pool_join() and
- * thread_pool_deinit().
- *
- * @param pool a global pool that will be destructed after the
- * thread_pool_deinit() call
- */
-[[gnu::const]]
-ThreadQueue &
-thread_pool_get_queue(EventLoop &event_loop) noexcept;
+public:
+	EchoSocket(EventLoop &_event_loop,
+		   UniqueSocketDescriptor _fd, FdType _fd_type,
+		   SocketFilterPtr _filter={});
 
-void
-thread_pool_set_volatile() noexcept;
+	void Close() noexcept {
+		socket.Close();
+	}
 
-void
-thread_pool_stop() noexcept;
+	void CloseAfterData() noexcept {
+		close_after_data = true;
+	}
 
-void
-thread_pool_join() noexcept;
-
-void
-thread_pool_deinit() noexcept;
+	/* virtual methods from BufferedSocketHandler */
+	BufferedResult OnBufferedData() override;
+	bool OnBufferedClosed() noexcept override;
+	bool OnBufferedWrite() override;
+	void OnBufferedError(std::exception_ptr e) noexcept override;
+};

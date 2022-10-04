@@ -423,64 +423,66 @@ private:
 };
 
 struct WasFactory {
-	static WasConnection *NewMirror(struct pool &pool, EventLoop &event_loop) {
+	static constexpr bool can_cancel_request_body = true;
+
+	auto *NewMirror(struct pool &pool, EventLoop &event_loop) {
 		return new WasConnection(pool, event_loop, RunMirror);
 	}
 
-	static WasConnection *NewNull(struct pool &pool, EventLoop &event_loop) {
+	auto *NewNull(struct pool &pool, EventLoop &event_loop) {
 		return new WasConnection(pool, event_loop, RunNull);
 	}
 
-	static WasConnection *NewDummy(struct pool &pool, EventLoop &event_loop) {
+	auto *NewDummy(struct pool &pool, EventLoop &event_loop) {
 		return new WasConnection(pool, event_loop, RunHello);
 	}
 
-	static WasConnection *NewFixed(struct pool &pool, EventLoop &event_loop) {
+	auto *NewFixed(struct pool &pool, EventLoop &event_loop) {
 		return new WasConnection(pool, event_loop, RunHello);
 	}
 
-	static WasConnection *NewTiny(struct pool &pool, EventLoop &event_loop) {
+	auto *NewTiny(struct pool &pool, EventLoop &event_loop) {
 		return new WasConnection(pool, event_loop, RunHello);
 	}
 
-	static WasConnection *NewHuge(struct pool &pool, EventLoop &event_loop) {
+	auto *NewHuge(struct pool &pool, EventLoop &event_loop) {
 		return new WasConnection(pool, event_loop, RunHuge);
 	}
 
-	static WasConnection *NewHold(struct pool &pool, EventLoop &event_loop) {
+	auto *NewHold(struct pool &pool, EventLoop &event_loop) {
 		return new WasConnection(pool, event_loop, RunHold);
 	}
 
-	static WasConnection *NewBlock(struct pool &pool, EventLoop &event_loop) {
+	auto *NewBlock(struct pool &pool, EventLoop &event_loop) {
 		return new WasConnection(pool, event_loop, RunBlock);
 	}
 
-	static WasConnection *NewNop(struct pool &pool, EventLoop &event_loop) {
+	auto *NewNop(struct pool &pool, EventLoop &event_loop) {
 		return new WasConnection(pool, event_loop, RunNop);
 	}
 
-	static WasConnection *NewMalformedHeaderName(struct pool &pool, EventLoop &event_loop) {
+	auto *NewMalformedHeaderName(struct pool &pool, EventLoop &event_loop) {
 		return new WasConnection(pool, event_loop, RunMalformedHeaderName);
 	}
 
-	static WasConnection *NewMalformedHeaderValue(struct pool &pool, EventLoop &event_loop) {
+	auto *NewMalformedHeaderValue(struct pool &pool, EventLoop &event_loop) {
 		return new WasConnection(pool, event_loop, RunMalformedHeaderValue);
 	}
 
-	static WasConnection *NewValidPremature(struct pool &pool, EventLoop &event_loop) {
+	auto *NewValidPremature(struct pool &pool, EventLoop &event_loop) {
 		return new WasConnection(pool, event_loop, RunValidPremature);
 	}
 
-	static WasConnection *NewMalformedPremature(struct pool &pool, EventLoop &event_loop) {
+	auto *NewMalformedPremature(struct pool &pool, EventLoop &event_loop) {
 		return new WasConnection(pool, event_loop,
 					 WasConnection::MalformedPremature{});
 	}
 };
 
 static void
-test_malformed_header_name(Context &c)
+test_malformed_header_name(auto &factory, Context &c) noexcept
 {
-	c.connection = WasFactory::NewMalformedHeaderName(*c.pool, c.event_loop);
+	c.connection = factory.NewMalformedHeaderName(*c.pool, c.event_loop);
 	c.connection->Request(c.pool, c,
 			      HTTP_METHOD_GET, "/foo", {},
 			      nullptr,
@@ -496,9 +498,9 @@ test_malformed_header_name(Context &c)
 }
 
 static void
-test_malformed_header_value(Context &c)
+test_malformed_header_value(auto &factory, Context &c) noexcept
 {
-	c.connection = WasFactory::NewMalformedHeaderValue(*c.pool, c.event_loop);
+	c.connection = factory.NewMalformedHeaderValue(*c.pool, c.event_loop);
 	c.connection->Request(c.pool, c,
 			      HTTP_METHOD_GET, "/foo", {},
 			      nullptr,
@@ -525,7 +527,10 @@ main(int, char **)
 	direct_global_init();
 	const ScopeFbPoolInit fb_pool_init;
 
-	run_all_tests<WasFactory>();
-	run_test(test_malformed_header_name);
-	run_test(test_malformed_header_value);
+	Instance instance;
+	WasFactory factory;
+
+	run_all_tests(instance, factory);
+	run_test(instance, factory, test_malformed_header_name);
+	run_test(instance, factory, test_malformed_header_value);
 }

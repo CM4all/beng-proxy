@@ -32,13 +32,10 @@
 
 #pragma once
 
-#include <memory>
+#include "ThreadSocketFilter.hxx"
 
-class ThreadSocketFilterHandler;
-
-/*
- * A thread_socket_filter implementation for debugging.  It performs a
- * no-op on all data.
- */
-std::unique_ptr<ThreadSocketFilterHandler>
-nop_thread_socket_filter_new();
+class NopThreadSocketFilter final : public ThreadSocketFilterHandler {
+public:
+	/* virtual methods from class ThreadSocketFilterHandler */
+	void Run(ThreadSocketFilterInternal &f) override;
+};

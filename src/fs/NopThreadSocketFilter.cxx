@@ -31,30 +31,12 @@
  */
 
 #include "NopThreadSocketFilter.hxx"
-#include "ThreadSocketFilter.hxx"
-
-class NopThreadSocketFilter final : public ThreadSocketFilterHandler {
-public:
-	/* virtual methods from class ThreadSocketFilterHandler */
-	void Run(ThreadSocketFilterInternal &f) override;
-};
 
 void
 NopThreadSocketFilter::Run(ThreadSocketFilterInternal &f)
 {
 	const std::scoped_lock lock{f.mutex};
 	f.handshaking = false;
-	f.decrypted_input.MoveFrom(f.encrypted_input);
-	f.encrypted_output.MoveFrom(f.plain_output);
-}
-
-/*
- * constructor
- *
- */
-
-std::unique_ptr<ThreadSocketFilterHandler>
-nop_thread_socket_filter_new()
-{
-	return std::make_unique<NopThreadSocketFilter>();
+	f.decrypted_input.MoveFromAllowBothNull(f.encrypted_input);
+	f.encrypted_output.MoveFromAllowBothNull(f.plain_output);
 }

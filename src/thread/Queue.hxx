@@ -52,9 +52,10 @@ class ThreadQueue {
 	bool alive = true;
 
 	/**
-	 * Was the #wakeup_event triggered?  This avoids duplicate events.
+	 * Is #notify in "volatile" mode, i.e. disable it as soon as
+	 * the queue runs empty?  This mode is used during shutdown.
 	 */
-	bool pending = false;
+	bool volatile_notify = false;
 
 	using JobList = IntrusiveList<ThreadJob>;
 
@@ -66,8 +67,13 @@ public:
 	explicit ThreadQueue(EventLoop &event_loop) noexcept;
 	~ThreadQueue() noexcept;
 
-	bool IsEmpty() const noexcept {
-		return waiting.empty() && busy.empty() && done.empty();
+	/**
+	 * If this mode is enabled, then the eventfd will be
+	 * unregistered whenever the queue is empty.
+	 */
+	void SetVolatile() noexcept {
+		volatile_notify = true;
+		LockCheckDisableNotify();
 	}
 
 	/**
@@ -103,5 +109,21 @@ public:
 	bool Cancel(ThreadJob &job) noexcept;
 
 private:
+	bool IsEmpty() const noexcept {
+		return waiting.empty() && busy.empty() && done.empty();
+	}
+
+	void CheckDisableNotify() noexcept {
+		if (volatile_notify && IsEmpty())
+			notify.Disable();
+	}
+
+	void LockCheckDisableNotify() noexcept {
+		const std::scoped_lock lock{mutex};
+		CheckDisableNotify();
+	}
+
+	void _Add(ThreadJob &job) noexcept;
+
 	void WakeupCallback() noexcept;
 };

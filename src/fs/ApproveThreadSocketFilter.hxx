@@ -32,34 +32,36 @@
 
 #pragma once
 
-class EventLoop;
+#include "ThreadSocketFilter.hxx"
+
+#include <atomic>
+#include <mutex>
+#include <condition_variable>
 
 /**
- * A queue that manages work for worker threads.
+ * A #ThreadSocketFilterHandler implementation which just passes all
+ * data through as-is (like #NopThreadSocketFilter), but needs blocks
+ * until approval is given.  This is useful to reproduce race
+ * conditions in unit tests.
  */
-class ThreadQueue;
+class ApproveThreadSocketFilter final : public ThreadSocketFilterHandler {
+	SliceFifoBuffer input;
 
-/**
- * Returns the global #thread_queue instance.  The first call to this
- * function creates the queue and starts the worker threads.  To shut
- * down, call thread_pool_stop(), thread_pool_join() and
- * thread_pool_deinit().
- *
- * @param pool a global pool that will be destructed after the
- * thread_pool_deinit() call
- */
-[[gnu::const]]
-ThreadQueue &
-thread_pool_get_queue(EventLoop &event_loop) noexcept;
+	std::mutex mutex;
+	std::condition_variable cond;
 
-void
-thread_pool_set_volatile() noexcept;
+	std::atomic_size_t approved = 0;
 
-void
-thread_pool_stop() noexcept;
+	bool busy = false, cancel = false;
 
-void
-thread_pool_join() noexcept;
+public:
+	void Approve(std::size_t nbytes) noexcept;
 
-void
-thread_pool_deinit() noexcept;
+	/* virtual methods from class ThreadSocketFilterHandler */
+	void PreRun(ThreadSocketFilterInternal &) noexcept override;
+	void Run(ThreadSocketFilterInternal &f) override;
+	void CancelRun(ThreadSocketFilterInternal &) noexcept override;
+
+private:
+	std::size_t WaitForApproval() noexcept;
+};

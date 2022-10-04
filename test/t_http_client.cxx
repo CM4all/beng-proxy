@@ -47,6 +47,10 @@
 #include "net/SocketAddress.hxx"
 #include "system/Error.hxx"
 #include "fs/FilteredSocket.hxx"
+#include "fs/NopSocketFilter.hxx"
+#include "fs/NopThreadSocketFilter.hxx"
+#include "fs/ThreadSocketFilter.hxx"
+#include "thread/Pool.hxx"
 #include "memory/fb_pool.hxx"
 #include "pool/UniquePtr.hxx"
 #include "PipeLease.hxx"
@@ -85,6 +89,7 @@ public:
 
 class HttpClientConnection final : public ClientConnection {
 	EventLoop &event_loop;
+
 	const pid_t pid = 0;
 
 	std::unique_ptr<Server> server;
@@ -92,15 +97,22 @@ class HttpClientConnection final : public ClientConnection {
 	FilteredSocket socket;
 
 public:
-	HttpClientConnection(EventLoop &_event_loop, pid_t _pid, SocketDescriptor fd)
+	HttpClientConnection(EventLoop &_event_loop, pid_t _pid,
+			     SocketDescriptor fd,
+			     SocketFilterPtr _filter) noexcept
 		:event_loop(_event_loop), pid(_pid), socket(_event_loop) {
-		socket.InitDummy(fd, FdType::FD_SOCKET);
+		socket.InitDummy(fd, FdType::FD_SOCKET,
+				 std::move(_filter));
 	}
 
-	HttpClientConnection(EventLoop &_event_loop, std::pair<std::unique_ptr<Server>, UniqueSocketDescriptor> _server)
+	HttpClientConnection(EventLoop &_event_loop,
+			     std::pair<std::unique_ptr<Server>, UniqueSocketDescriptor> _server,
+			     SocketFilterPtr _filter)
 		:event_loop(_event_loop),
 		 server(std::move(_server.first)),
-		 socket(_event_loop, std::move(_server.second), FdType::FD_SOCKET)
+		 socket(_event_loop,
+			std::move(_server.second), FdType::FD_SOCKET,
+			std::move(_filter))
 	{
 	}
 
@@ -127,89 +139,102 @@ public:
 	}
 };
 
+template<typename SocketFilterFactory>
 struct HttpClientFactory {
-	static HttpClientConnection *New(EventLoop &event_loop,
-					 const char *path,
-					 const char *mode) noexcept;
+	static constexpr bool can_cancel_request_body = false;
 
-	static auto *NewWithServer(struct pool &pool,
-				   EventLoop &event_loop,
-				   DemoHttpServerConnection::Mode mode) noexcept {
+	[[no_unique_address]]
+	SocketFilterFactory &socket_filter_factory;
+
+	HttpClientFactory(SocketFilterFactory &_socket_filter_factory) noexcept
+		:socket_filter_factory(_socket_filter_factory) {}
+
+	HttpClientConnection *New(EventLoop &event_loop,
+				  const char *path, const char *mode) noexcept;
+
+	auto *NewWithServer(struct pool &pool,
+			    EventLoop &event_loop,
+			    DemoHttpServerConnection::Mode mode) noexcept {
 		return new HttpClientConnection(event_loop,
-						Server::New(pool, event_loop, mode));
+						Server::New(pool, event_loop, mode),
+						socket_filter_factory());
 	}
 
-	static auto *NewMirror(struct pool &pool, EventLoop &event_loop) noexcept {
+	auto *NewMirror(struct pool &pool, EventLoop &event_loop) noexcept {
 		return NewWithServer(pool, event_loop,
 				     DemoHttpServerConnection::Mode::MIRROR);
 	}
 
-	static auto *NewDeferMirror(struct pool &pool, EventLoop &event_loop) noexcept {
+	auto *NewDeferMirror(struct pool &pool, EventLoop &event_loop) noexcept {
 		return NewWithServer(pool, event_loop,
 				     DemoHttpServerConnection::Mode::DEFER_MIRROR);
 	}
 
-	static auto *NewNull(struct pool &pool, EventLoop &event_loop) noexcept {
+	auto *NewNull(struct pool &pool, EventLoop &event_loop) noexcept {
 		return NewWithServer(pool, event_loop,
 				     DemoHttpServerConnection::Mode::MODE_NULL);
 	}
 
-	static auto *NewDummy(struct pool &pool, EventLoop &event_loop) noexcept {
+	auto *NewDummy(struct pool &pool, EventLoop &event_loop) noexcept {
 		return NewWithServer(pool, event_loop,
 				     DemoHttpServerConnection::Mode::DUMMY);
 	}
 
-	static auto *NewClose(struct pool &pool, EventLoop &event_loop) noexcept {
+	auto *NewClose(struct pool &pool, EventLoop &event_loop) noexcept {
 		return NewWithServer(pool, event_loop,
 				     DemoHttpServerConnection::Mode::CLOSE);
 	}
 
-	static auto *NewFixed(struct pool &pool, EventLoop &event_loop) noexcept {
+	auto *NewFixed(struct pool &pool, EventLoop &event_loop) noexcept {
 		return NewWithServer(pool, event_loop,
 				     DemoHttpServerConnection::Mode::FIXED);
 	}
 
-	static auto *NewTiny(struct pool &p, EventLoop &event_loop) noexcept {
+	auto *NewTiny(struct pool &p, EventLoop &event_loop) noexcept {
 		return NewFixed(p, event_loop);
 	}
 
-	static auto *NewHuge(struct pool &pool, EventLoop &event_loop) noexcept {
+	auto *NewHuge(struct pool &pool, EventLoop &event_loop) noexcept {
 		return NewWithServer(pool, event_loop,
 				     DemoHttpServerConnection::Mode::HUGE_);
 	}
 
-	static auto *NewTwice100(struct pool &, EventLoop &event_loop) noexcept {
+	auto *NewTwice100(struct pool &, EventLoop &event_loop) noexcept {
 		return New(event_loop, "./test/twice_100.sh", nullptr);
 	}
 
-	static HttpClientConnection *NewClose100(struct pool &,
-						 EventLoop &event_loop) noexcept;
+	HttpClientConnection *NewClose100(struct pool &,
+					  EventLoop &event_loop) noexcept;
 
-	static auto *NewHold(struct pool &pool, EventLoop &event_loop) noexcept {
+	auto *NewHold(struct pool &pool, EventLoop &event_loop) noexcept {
 		return NewWithServer(pool, event_loop,
 				     DemoHttpServerConnection::Mode::HOLD);
 	}
 
-	static auto *NewBlock(struct pool &pool,
-			      EventLoop &event_loop) noexcept {
+	auto *NewBlock(struct pool &pool,
+		       EventLoop &event_loop) noexcept {
 		return NewWithServer(pool, event_loop,
 				     DemoHttpServerConnection::Mode::BLOCK);
 	}
 
-	static auto *NewNop(struct pool &pool, EventLoop &event_loop) noexcept {
+	auto *NewNop(struct pool &pool, EventLoop &event_loop) noexcept {
 		return NewWithServer(pool, event_loop,
 				     DemoHttpServerConnection::Mode::NOP);
 	}
 
-	static auto *NewIgnoredRequestBody(struct pool &, EventLoop &event_loop) noexcept {
+	auto *NewIgnoredRequestBody(struct pool &, EventLoop &event_loop) noexcept {
 		return New(event_loop, "./test/ignored_request_body.sh", nullptr);
 	}
 };
 
 HttpClientConnection::~HttpClientConnection() noexcept
 {
-	socket.Close();
-	socket.Destroy();
+	// TODO code copied from ~FilteredSocket()
+	if (socket.IsValid()) {
+		if (socket.IsConnected())
+			socket.Close();
+		socket.Destroy();
+	}
 
 	if (pid > 0) {
 		int status;
@@ -222,9 +247,10 @@ HttpClientConnection::~HttpClientConnection() noexcept
 	}
 }
 
+template<typename SocketFilterFactory>
 HttpClientConnection *
-HttpClientFactory::New(EventLoop &event_loop,
-			  const char *path, const char *mode) noexcept
+HttpClientFactory<SocketFilterFactory>::New(EventLoop &event_loop,
+					    const char *path, const char *mode) noexcept
 {
 	SocketDescriptor client_socket, server_socket;
 	if (!SocketDescriptor::CreateSocketPair(AF_LOCAL, SOCK_STREAM, 0,
@@ -260,11 +286,13 @@ HttpClientFactory::New(EventLoop &event_loop,
 
 	server_socket.Close();
 	client_socket.SetNonBlocking();
-	return new HttpClientConnection(event_loop, pid, client_socket);
+	return new HttpClientConnection(event_loop, pid, client_socket,
+					socket_filter_factory());
 }
 
+template<typename SocketFilterFactory>
 HttpClientConnection *
-HttpClientFactory::NewClose100(struct pool &, EventLoop &event_loop) noexcept
+HttpClientFactory<SocketFilterFactory>::NewClose100(struct pool &, EventLoop &event_loop) noexcept
 {
 	SocketDescriptor client_socket, server_socket;
 	if (!SocketDescriptor::CreateSocketPair(AF_LOCAL, SOCK_STREAM, 0,
@@ -294,7 +322,8 @@ HttpClientFactory::NewClose100(struct pool &, EventLoop &event_loop) noexcept
 
 	server_socket.Close();
 	client_socket.SetNonBlocking();
-	return new HttpClientConnection(event_loop, pid, client_socket);
+	return new HttpClientConnection(event_loop, pid, client_socket,
+					socket_filter_factory());
 }
 
 /**
@@ -303,9 +332,9 @@ HttpClientFactory::NewClose100(struct pool &, EventLoop &event_loop) noexcept
  * responses correctly.
  */
 static void
-test_no_keepalive(Context &c)
+test_no_keepalive(auto &factory, Context &c) noexcept
 {
-	c.connection = HttpClientFactory::NewClose(*c.pool, c.event_loop);
+	c.connection = factory.NewClose(*c.pool, c.event_loop);
 	c.connection->Request(c.pool, c,
 			      HTTP_METHOD_GET, "/foo", {},
 			      nullptr,
@@ -337,14 +366,14 @@ test_no_keepalive(Context &c)
  * forgot about the in-progress request body.
  */
 static void
-test_ignored_request_body(Context &c)
+test_ignored_request_body(auto &factory, Context &c) noexcept
 {
 	auto delayed = istream_delayed_new(*c.pool, c.event_loop);
 	AbortFlag abort_flag(delayed.second.cancel_ptr);
 	auto zero = istream_zero_new(*c.pool);
 
 	c.data_blocking = 1;
-	c.connection = HttpClientFactory::NewIgnoredRequestBody(*c.pool, c.event_loop);
+	c.connection = factory.NewIgnoredRequestBody(*c.pool, c.event_loop);
 	c.connection->Request(c.pool, c,
 			      HTTP_METHOD_GET, "/ignored-request-body", {},
 			      std::move(delayed.first),
@@ -353,8 +382,7 @@ test_ignored_request_body(Context &c)
 #endif
 			      c, c.cancel_ptr);
 
-	c.WaitForResponse();
-	c.WaitForEndOfBody();
+	c.WaitForEnd();
 
 	/* at this point, the HTTP client must have closed the request
 	   body; but if it has not due to the bug, this will trigger
@@ -417,11 +445,11 @@ FillPipeLeaseIstream(struct pool &pool, PipeStock *stock,
  * can be spliced.
  */
 static void
-test_expect_100_continue_splice(Context &c)
+test_expect_100_continue_splice(auto &factory, Context &c) noexcept
 {
 	constexpr std::size_t length = 4096;
 
-	c.connection = HttpClientFactory::NewDeferMirror(*c.pool, c.event_loop);
+	c.connection = factory.NewDeferMirror(*c.pool, c.event_loop);
 	c.connection->Request(c.pool, c,
 			      HTTP_METHOD_POST, "/expect_100_continue_splice",
 			      {},
@@ -430,8 +458,7 @@ test_expect_100_continue_splice(Context &c)
 			      true,
 			      c, c.cancel_ptr);
 
-	c.WaitForResponse();
-	c.WaitForEndOfBody();
+	c.WaitForEnd();
 
 	assert(c.released);
 	assert(c.connection == nullptr);
@@ -446,6 +473,55 @@ test_expect_100_continue_splice(Context &c)
  *
  */
 
+static void
+RunHttpClientTests(Instance &instance, auto &socket_filter_factory) noexcept
+{
+	HttpClientFactory factory{socket_filter_factory};
+
+	run_all_tests(instance, factory);
+	run_test(instance, factory, test_no_keepalive);
+	run_test(instance, factory, test_ignored_request_body);
+	run_test(instance, factory, test_expect_100_continue_splice);
+}
+
+struct NullSocketFilterFactory {
+	SocketFilterPtr operator()() const noexcept {
+		return {};
+	}
+};
+
+struct NopSocketFilterFactory {
+	SocketFilterPtr operator()() const noexcept {
+		return SocketFilterPtr{new NopSocketFilter()};
+	}
+};
+
+struct NopThreadSocketFilterFactory {
+	EventLoop &event_loop;
+
+	explicit NopThreadSocketFilterFactory(EventLoop &_event_loop) noexcept
+		:event_loop(_event_loop) {
+		/* keep the eventfd unregistered if the ThreadQueue is
+		   empty, so EventLoop::Dispatch() doesn't keep
+		   running after the HTTP request has completed */
+		thread_pool_set_volatile();
+	}
+
+	~NopThreadSocketFilterFactory() noexcept {
+		thread_pool_stop();
+		thread_pool_join();
+		thread_pool_deinit();
+	}
+
+	SocketFilterPtr operator()() const noexcept {
+		return SocketFilterPtr{
+			new ThreadSocketFilter(event_loop,
+					       thread_pool_get_queue(event_loop),
+					       std::make_unique<NopThreadSocketFilter>())
+		};
+	}
+};
+
 int
 main(int, char **)
 {
@@ -454,8 +530,20 @@ main(int, char **)
 	direct_global_init();
 	const ScopeFbPoolInit fb_pool_init;
 
-	run_all_tests<HttpClientFactory>();
-	run_test(test_no_keepalive);
-	run_test(test_ignored_request_body);
-	run_test(test_expect_100_continue_splice);
+	Instance instance;
+
+	{
+		NullSocketFilterFactory socket_filter_factory;
+		RunHttpClientTests(instance, socket_filter_factory);
+	}
+
+	{
+		NopSocketFilterFactory socket_filter_factory;
+		RunHttpClientTests(instance, socket_filter_factory);
+	}
+
+	{
+		NopThreadSocketFilterFactory socket_filter_factory{instance.event_loop};
+		RunHttpClientTests(instance, socket_filter_factory);
+	}
 }

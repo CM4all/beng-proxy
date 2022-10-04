@@ -37,8 +37,8 @@
 Notify::Notify(EventLoop &event_loop, Callback _callback) noexcept
 	:callback(_callback),
 	 event(event_loop, BIND_THIS_METHOD(EventFdCallback),
-	       CreateEventFD().Release()),
-	 pending(false) {
+	       CreateEventFD().Release())
+{
 	event.ScheduleRead();
 }
 

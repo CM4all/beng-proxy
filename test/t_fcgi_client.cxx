@@ -316,68 +316,70 @@ public:
 };
 
 struct FcgiClientFactory {
+	static constexpr bool can_cancel_request_body = true;
+
 	static FcgiClientConnection *New(EventLoop &event_loop,
 					 void (*f)(struct pool *pool));
 
-	static auto *NewMirror(struct pool &, EventLoop &event_loop) {
+	auto *NewMirror(struct pool &, EventLoop &event_loop) {
 		return New(event_loop, fcgi_server_mirror);
 	}
 
-	static auto *NewNull(struct pool &, EventLoop &event_loop) {
+	auto *NewNull(struct pool &, EventLoop &event_loop) {
 		return New(event_loop, fcgi_server_null);
 	}
 
-	static auto *NewDummy(struct pool &, EventLoop &event_loop) {
+	auto *NewDummy(struct pool &, EventLoop &event_loop) {
 		return New(event_loop, fcgi_server_hello);
 	}
 
-	static auto *NewFixed(struct pool &, EventLoop &event_loop) {
+	auto *NewFixed(struct pool &, EventLoop &event_loop) {
 		return New(event_loop, fcgi_server_hello);
 	}
 
-	static auto *NewTiny(struct pool &, EventLoop &event_loop) {
+	auto *NewTiny(struct pool &, EventLoop &event_loop) {
 		return New(event_loop, fcgi_server_tiny);
 	}
 
-	static auto *NewMalformedHeaderName(struct pool &, EventLoop &event_loop) {
+	auto *NewMalformedHeaderName(struct pool &, EventLoop &event_loop) {
 		return New(event_loop, fcgi_server_malformed_header_name);
 	}
 
-	static auto *NewMalformedHeaderValue(struct pool &, EventLoop &event_loop) {
+	auto *NewMalformedHeaderValue(struct pool &, EventLoop &event_loop) {
 		return New(event_loop, fcgi_server_malformed_header_value);
 	}
 
-	static auto *NewHuge(struct pool &, EventLoop &event_loop) {
+	auto *NewHuge(struct pool &, EventLoop &event_loop) {
 		return New(event_loop, fcgi_server_huge);
 	}
 
-	static auto *NewHold(struct pool &, EventLoop &event_loop) {
+	auto *NewHold(struct pool &, EventLoop &event_loop) {
 		return New(event_loop, fcgi_server_hold);
 	}
 
-	static auto *NewBlock(struct pool &, EventLoop &event_loop) {
+	auto *NewBlock(struct pool &, EventLoop &event_loop) {
 		return New(event_loop, fcgi_server_hold);
 	}
 
-	static auto *NewPrematureCloseHeaders(struct pool &,
+	auto *NewPrematureCloseHeaders(struct pool &,
 					      EventLoop &event_loop) {
 		return New(event_loop, fcgi_server_premature_close_headers);
 	}
 
-	static auto *NewPrematureCloseBody(struct pool &,
+	auto *NewPrematureCloseBody(struct pool &,
 					   EventLoop &event_loop) {
 		return New(event_loop, fcgi_server_premature_close_body);
 	}
 
-	static auto *NewPrematureEnd(struct pool &, EventLoop &event_loop) {
+	auto *NewPrematureEnd(struct pool &, EventLoop &event_loop) {
 		return New(event_loop, fcgi_server_premature_end);
 	}
 
-	static auto *NewExcessData(struct pool &, EventLoop &event_loop) {
+	auto *NewExcessData(struct pool &, EventLoop &event_loop) {
 		return New(event_loop, fcgi_server_excess_data);
 	}
 
-	static auto *NewNop(struct pool &, EventLoop &event_loop) {
+	auto *NewNop(struct pool &, EventLoop &event_loop) {
 		return New(event_loop, fcgi_server_nop);
 	}
 };
@@ -433,9 +435,9 @@ FcgiClientConnection::~FcgiClientConnection() noexcept
 }
 
 static void
-test_malformed_header_name(Context &c)
+test_malformed_header_name(auto &factory, Context &c) noexcept
 {
-	c.connection = FcgiClientFactory::NewMalformedHeaderName(*c.pool, c.event_loop);
+	c.connection = factory.NewMalformedHeaderName(*c.pool, c.event_loop);
 	c.connection->Request(c.pool, c,
 			      HTTP_METHOD_GET, "/foo", {},
 			      nullptr,
@@ -451,9 +453,9 @@ test_malformed_header_name(Context &c)
 }
 
 static void
-test_malformed_header_value(Context &c)
+test_malformed_header_value(auto &factory, Context &c) noexcept
 {
-	c.connection = FcgiClientFactory::NewMalformedHeaderValue(*c.pool, c.event_loop);
+	c.connection = factory.NewMalformedHeaderValue(*c.pool, c.event_loop);
 	c.connection->Request(c.pool, c,
 			      HTTP_METHOD_GET, "/foo", {},
 			      nullptr,
@@ -480,9 +482,12 @@ main(int, char **)
 	direct_global_init();
 	const ScopeFbPoolInit fb_pool_init;
 
-	run_all_tests<FcgiClientFactory>();
-	run_test(test_malformed_header_name);
-	run_test(test_malformed_header_value);
+	Instance instance;
+	FcgiClientFactory factory;
+
+	run_all_tests(instance, factory);
+	run_test(instance, factory, test_malformed_header_name);
+	run_test(instance, factory, test_malformed_header_value);
 
 	int status;
 	while (wait(&status) > 0) {

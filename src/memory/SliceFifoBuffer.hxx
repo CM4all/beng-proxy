@@ -108,15 +108,12 @@ public:
 	 * the destination buffer is empty, the buffers are swapped.  Care
 	 * is taken that neither buffer suddenly becomes nulled
 	 * afterwards, because some callers may not be prepared for this.
+	 *
+	 * Note: this method has been removed because it was not
+	 * possible to implement it to be safe against unallocated
+	 * instances.  Use MoveFromAllow*() instead.
 	 */
-	void MoveFrom(SliceFifoBuffer &src) noexcept {
-		if (empty() && !IsNull() && !src.IsNull())
-			/* optimized special case: swap buffer pointers instead of
-			   copying data */
-			swap(src);
-		else
-			ForeignFifoBuffer<std::byte>::MoveFrom(src);
-	}
+	void MoveFrom(SliceFifoBuffer &src) noexcept = delete;
 
 	/**
 	 * Like MoveFrom(), but allow the destination to be nulled.  This

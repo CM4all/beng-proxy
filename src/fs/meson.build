@@ -4,6 +4,7 @@ socket = static_library(
   'Ptr.cxx',
   'NopSocketFilter.cxx',
   'NopThreadSocketFilter.cxx',
+  'ApproveThreadSocketFilter.cxx',
   'ThreadSocketFilter.cxx',
   'Listener.cxx',
   'Connect.cxx',
@@ -18,5 +19,6 @@ socket_dep = declare_dependency(
   link_with: socket,
   dependencies: [
     event_net_dep,
+    thread_pool_dep,
   ],
 )

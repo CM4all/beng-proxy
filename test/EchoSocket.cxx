@@ -30,36 +30,74 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#pragma once
+#include "EchoSocket.hxx"
+#include "system/Error.hxx"
+#include "net/UniqueSocketDescriptor.hxx"
 
-class EventLoop;
+#include <cassert>
 
-/**
- * A queue that manages work for worker threads.
- */
-class ThreadQueue;
+EchoSocket::EchoSocket(EventLoop &_event_loop,
+		       UniqueSocketDescriptor _fd, FdType _fd_type,
+		       SocketFilterPtr _filter)
+	:socket(_event_loop)
+{
+	socket.Init(_fd.Release(), _fd_type,
+		    std::chrono::seconds{30},
+		    std::move(_filter), *this);
+	socket.ScheduleRead();
+}
 
-/**
- * Returns the global #thread_queue instance.  The first call to this
- * function creates the queue and starts the worker threads.  To shut
- * down, call thread_pool_stop(), thread_pool_join() and
- * thread_pool_deinit().
- *
- * @param pool a global pool that will be destructed after the
- * thread_pool_deinit() call
- */
-[[gnu::const]]
-ThreadQueue &
-thread_pool_get_queue(EventLoop &event_loop) noexcept;
+BufferedResult
+EchoSocket::OnBufferedData()
+{
+	auto r = socket.ReadBuffer();
+	assert(!r.empty());
+
+	auto nbytes = socket.Write(r);
+	if (nbytes >= 0) [[likely]] {
+		socket.DisposeConsumed(nbytes);
+
+		if (close_after_data) {
+			socket.Close();
+			return BufferedResult::CLOSED;
+		}
+
+		socket.ScheduleWrite();
+		return BufferedResult::OK;
+	}
+
+	switch (nbytes) {
+	case WRITE_ERRNO:
+		break;
+
+	case WRITE_BLOCKING:
+		return BufferedResult::OK;
+
+	case WRITE_DESTROYED:
+		return BufferedResult::CLOSED;
+
+	case WRITE_BROKEN:
+		return BufferedResult::OK;
+	}
+
+	throw MakeErrno("Send failed");
+}
+
+bool
+EchoSocket::OnBufferedClosed() noexcept
+{
+	socket.Close();
+	return false;
+}
+
+bool
+EchoSocket::OnBufferedWrite()
+{
+	return socket.Read();
+}
 
 void
-thread_pool_set_volatile() noexcept;
-
-void
-thread_pool_stop() noexcept;
-
-void
-thread_pool_join() noexcept;
-
-void
-thread_pool_deinit() noexcept;
+EchoSocket::OnBufferedError(std::exception_ptr) noexcept
+{
+	socket.Close();
+}
