@@ -194,6 +194,8 @@ struct Context final
 	}
 
 	~Context() noexcept {
+		assert(connection == nullptr);
+
 		free(content_length);
 		parent_pool.reset();
 	}
