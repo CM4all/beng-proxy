@@ -66,10 +66,6 @@ public:
 	explicit ThreadQueue(EventLoop &event_loop) noexcept;
 	~ThreadQueue() noexcept;
 
-	bool IsEmpty() const noexcept {
-		return waiting.empty() && busy.empty() && done.empty();
-	}
-
 	/**
 	 * Cancel all Wait() calls and refuse all further calls.
 	 * This is used to initiate shutdown of all threads connected to this
@@ -103,5 +99,9 @@ public:
 	bool Cancel(ThreadJob &job) noexcept;
 
 private:
+	bool IsEmpty() const noexcept {
+		return waiting.empty() && busy.empty() && done.empty();
+	}
+
 	void WakeupCallback() noexcept;
 };
