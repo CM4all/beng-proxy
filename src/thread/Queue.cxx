@@ -164,6 +164,7 @@ ThreadQueue::Cancel(ThreadJob &job) noexcept
 		/* cancel it */
 		job.unlink();
 		job.state = ThreadJob::State::INITIAL;
+		CheckDisableNotify();
 		return true;
 
 	case ThreadJob::State::BUSY:
