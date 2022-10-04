@@ -53,6 +53,9 @@ ThreadQueue &
 thread_pool_get_queue(EventLoop &event_loop) noexcept;
 
 void
+thread_pool_set_volatile() noexcept;
+
+void
 thread_pool_stop() noexcept;
 
 void

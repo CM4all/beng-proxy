@@ -71,12 +71,9 @@ ThreadQueue::WakeupCallback() noexcept
 		}
 	});
 
-	const bool empty = IsEmpty();
+	CheckDisableNotify();
 
 	mutex.unlock();
-
-	if (empty)
-		notify.Disable();
 }
 
 void
@@ -85,6 +82,9 @@ ThreadQueue::Stop() noexcept
 	const std::scoped_lock lock{mutex};
 	alive = false;
 	cond.notify_all();
+
+	volatile_notify = true;
+	CheckDisableNotify();
 }
 
 void

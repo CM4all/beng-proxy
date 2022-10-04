@@ -500,7 +500,12 @@ struct NopThreadSocketFilterFactory {
 	EventLoop &event_loop;
 
 	explicit NopThreadSocketFilterFactory(EventLoop &_event_loop) noexcept
-		:event_loop(_event_loop) {}
+		:event_loop(_event_loop) {
+		/* keep the eventfd unregistered if the ThreadQueue is
+		   empty, so EventLoop::Dispatch() doesn't keep
+		   running after the HTTP request has completed */
+		thread_pool_set_volatile();
+	}
 
 	~NopThreadSocketFilterFactory() noexcept {
 		thread_pool_stop();

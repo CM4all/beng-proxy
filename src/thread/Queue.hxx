@@ -56,6 +56,12 @@ class ThreadQueue {
 	 */
 	bool pending = false;
 
+	/**
+	 * Is #notify in "volatile" mode, i.e. disable it as soon as
+	 * the queue runs empty?  This mode is used during shutdown.
+	 */
+	bool volatile_notify = false;
+
 	using JobList = IntrusiveList<ThreadJob>;
 
 	JobList waiting, busy, done;
@@ -65,6 +71,15 @@ class ThreadQueue {
 public:
 	explicit ThreadQueue(EventLoop &event_loop) noexcept;
 	~ThreadQueue() noexcept;
+
+	/**
+	 * If this mode is enabled, then the eventfd will be
+	 * unregistered whenever the queue is empty.
+	 */
+	void SetVolatile() noexcept {
+		volatile_notify = true;
+		LockCheckDisableNotify();
+	}
 
 	/**
 	 * Cancel all Wait() calls and refuse all further calls.
@@ -101,6 +116,16 @@ public:
 private:
 	bool IsEmpty() const noexcept {
 		return waiting.empty() && busy.empty() && done.empty();
+	}
+
+	void CheckDisableNotify() noexcept {
+		if (volatile_notify && IsEmpty())
+			notify.Disable();
+	}
+
+	void LockCheckDisableNotify() noexcept {
+		const std::scoped_lock lock{mutex};
+		CheckDisableNotify();
 	}
 
 	void WakeupCallback() noexcept;

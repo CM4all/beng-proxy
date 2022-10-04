@@ -46,6 +46,7 @@
 #include <sys/sysinfo.h>
 
 static ThreadQueue *global_thread_queue;
+static bool global_thread_queue_volatile = false;
 static std::forward_list<ThreadWorker> worker_threads;
 
 static void
@@ -96,9 +97,21 @@ thread_pool_get_queue(EventLoop &event_loop) noexcept
 		   threads */
 		thread_pool_init(event_loop);
 		thread_pool_start();
+
+		if (global_thread_queue_volatile)
+			global_thread_queue->SetVolatile();
 	}
 
 	return *global_thread_queue;
+}
+
+void
+thread_pool_set_volatile() noexcept
+{
+	global_thread_queue_volatile = true;
+
+	if (global_thread_queue != nullptr)
+		global_thread_queue->SetVolatile();
 }
 
 void
