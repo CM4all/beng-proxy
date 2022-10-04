@@ -46,7 +46,7 @@ class Notify {
 
 	PipeEvent event;
 
-	std::atomic_bool pending;
+	std::atomic_bool pending{false};
 
 public:
 	Notify(EventLoop &event_loop, Callback _callback) noexcept;
