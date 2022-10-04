@@ -126,4 +126,5 @@ NopSocketFilter::OnEnd() noexcept
 void
 NopSocketFilter::Close() noexcept
 {
+	delete this;
 }

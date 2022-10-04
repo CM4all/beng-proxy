@@ -38,7 +38,7 @@
  * A module for #FilteredSocket that does not filter anything.  It
  * passes data as-is.  It is meant for debugging.
  */
-class NopSocketFilter : public SocketFilter {
+class NopSocketFilter final : public SocketFilter {
 	FilteredSocket *socket;
 
 public:
