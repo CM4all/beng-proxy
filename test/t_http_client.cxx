@@ -382,8 +382,7 @@ test_ignored_request_body(auto &factory, Context &c) noexcept
 #endif
 			      c, c.cancel_ptr);
 
-	c.WaitForResponse();
-	c.WaitForEndOfBody();
+	c.WaitForEnd();
 
 	/* at this point, the HTTP client must have closed the request
 	   body; but if it has not due to the bug, this will trigger
@@ -459,8 +458,7 @@ test_expect_100_continue_splice(auto &factory, Context &c) noexcept
 			      true,
 			      c, c.cancel_ptr);
 
-	c.WaitForResponse();
-	c.WaitForEndOfBody();
+	c.WaitForEnd();
 
 	assert(c.released);
 	assert(c.connection == nullptr);

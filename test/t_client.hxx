@@ -256,6 +256,11 @@ struct Context final
 		assert(!HasInput());
 	}
 
+	void WaitForEnd() noexcept {
+		WaitForResponse();
+		WaitForEndOfBody();
+	}
+
 	/**
 	 * Give the client library another chance to release the
 	 * socket/process.  This is a workaround for spurious unit test
