@@ -52,11 +52,6 @@ class ThreadQueue {
 	bool alive = true;
 
 	/**
-	 * Was the #wakeup_event triggered?  This avoids duplicate events.
-	 */
-	bool pending = false;
-
-	/**
 	 * Is #notify in "volatile" mode, i.e. disable it as soon as
 	 * the queue runs empty?  This mode is used during shutdown.
 	 */

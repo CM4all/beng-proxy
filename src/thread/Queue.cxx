@@ -51,8 +51,6 @@ ThreadQueue::WakeupCallback() noexcept
 {
 	mutex.lock();
 
-	pending = false;
-
 	done.clear_and_dispose([this](auto *_job){
 		auto &job = *_job;
 		assert(job.state == ThreadJob::State::DONE);
@@ -142,8 +140,6 @@ ThreadQueue::Done(ThreadJob &job) noexcept
 	job.state = ThreadJob::State::DONE;
 	job.unlink();
 	done.push_back(job);
-
-	pending = true;
 
 	mutex.unlock();
 
