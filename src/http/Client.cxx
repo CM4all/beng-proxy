@@ -1126,6 +1126,12 @@ HttpClient::OnBufferedClosed() noexcept
 bool
 HttpClient::OnBufferedRemaining(std::size_t remaining) noexcept
 {
+	if (remaining == 0 && response.state == Response::State::STATUS) {
+		AbortResponseHeaders(HttpClientErrorCode::REFUSED,
+				     "Server closed the socket prematurely without sending any response data");
+		return false;
+	}
+
 	if (!socket.IsReleased())
 		/* by now, the SocketFilter has processed all incoming data,
 		   and is available in the buffer; we can release the socket
@@ -1134,12 +1140,6 @@ HttpClient::OnBufferedRemaining(std::size_t remaining) noexcept
 		   the peer; this method gets called only after
 		   OnBufferedClosed() */
 		ReleaseSocket(true, false);
-
-	if (remaining == 0 && response.state == Response::State::STATUS) {
-		AbortResponseHeaders(HttpClientErrorCode::REFUSED,
-				     "Server closed the socket prematurely without sending any response data");
-		return false;
-	}
 
 	if (response.state < Response::State::BODY)
 		/* this information comes too early, we can't use it */
