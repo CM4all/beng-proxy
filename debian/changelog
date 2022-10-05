@@ -3,7 +3,7 @@ cm4all-beng-proxy (17.6) unstable; urgency=low
   * http_client: fix use-after-free bug
   * spawn: fix SIGBUS crash on ARM64 due to misaligned stack
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Wed, 05 Oct 2022 15:39:54 +0200
 
 cm4all-beng-proxy (17.5) unstable; urgency=low
 
