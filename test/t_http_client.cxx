@@ -96,6 +96,8 @@ class HttpClientConnection final : public ClientConnection {
 
 	FilteredSocket socket;
 
+	const std::string peer_name{"localhost"};
+
 public:
 	HttpClientConnection(EventLoop &_event_loop, pid_t _pid,
 			     SocketDescriptor fd,
@@ -128,7 +130,7 @@ public:
 		     CancellablePointer &cancel_ptr) noexcept override {
 		http_client_request(pool, nullptr,
 				    socket, lease,
-				    "localhost",
+				    peer_name.c_str(),
 				    method, uri, headers, {},
 				    std::move(body), expect_100,
 				    handler, cancel_ptr);
