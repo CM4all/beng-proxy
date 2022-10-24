@@ -40,8 +40,6 @@
 #include <span>
 #include <string>
 
-#include <stddef.h>
-
 struct pool;
 
 struct TranslationInvalidateRequest : TranslateRequest {
