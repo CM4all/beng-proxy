@@ -32,49 +32,53 @@
 
 #pragma once
 
+#include "Padding.hxx"
 #include "beng-proxy/Control.hxx"
-#include "translation/Protocol.hxx"
-#include "net/UniqueSocketDescriptor.hxx"
+#include "util/ByteOrder.hxx"
 #include "util/SpanCast.hxx"
 
 #include <span>
 #include <string>
-#include <string_view>
 
-class BengControlClient {
-	UniqueSocketDescriptor socket;
+class BengControlBuilder {
+	std::string data;
 
 public:
-	explicit BengControlClient(UniqueSocketDescriptor _socket) noexcept;
-	explicit BengControlClient(const char *host_and_port);
-
-	void AutoBind() const noexcept {
-		socket.AutoBind();
+	BengControlBuilder() noexcept {
+		static constexpr uint32_t magic = ToBE32(BengProxy::control_magic);
+		AppendT(magic);
 	}
 
-	void Send(BengProxy::ControlCommand cmd,
-		  std::span<const std::byte> payload={},
-		  std::span<const FileDescriptor> fds={}) const;
-
-	void Send(BengProxy::ControlCommand cmd, std::nullptr_t,
-		  std::span<const FileDescriptor> fds={}) const {
-		Send(cmd, std::span<const std::byte>{}, fds);
+	void Add(BengProxy::ControlCommand cmd,
+		 std::span<const std::byte> payload) noexcept {
+		AppendT(BengProxy::ControlHeader{ToBE16(payload.size()), ToBE16(uint16_t(cmd))});
+		AppendPadded(payload);
 	}
 
-	void Send(BengProxy::ControlCommand cmd, std::string_view payload,
-		  std::span<const FileDescriptor> fds={}) const {
-		Send(cmd, AsBytes(payload), fds);
+	void Add(BengProxy::ControlCommand cmd,
+		 std::string_view payload) noexcept {
+		Add(cmd, AsBytes(payload));
 	}
 
-	void Send(std::span<const std::byte> payload) const;
+	operator std::span<const std::byte>() const noexcept {
+		return AsBytes(data);
+	}
 
-	std::pair<BengProxy::ControlCommand, std::string> Receive() const;
+private:
+	void Append(std::string_view s) noexcept {
+		data.append(s);
+	}
 
-	static std::string MakeTcacheInvalidate(TranslationCommand cmd,
-						std::span<const std::byte> payload) noexcept;
+	void Append(std::span<const std::byte> s) noexcept {
+		Append(ToStringView(s));
+	}
 
-	static std::string MakeTcacheInvalidate(TranslationCommand cmd,
-						std::string_view value) noexcept {
-		return MakeTcacheInvalidate(cmd, AsBytes(value));
+	void AppendPadded(std::span<const std::byte> s) noexcept {
+		Append(s);
+		data.append(BengProxy::ControlPaddingSize(s.size()), '\0');
+	}
+
+	void AppendT(const auto &s) noexcept {
+		Append(std::as_bytes(std::span{&s, 1}));
 	}
 };
