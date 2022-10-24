@@ -42,6 +42,7 @@
 #include "util/Exception.hxx"
 #include "util/SpanCast.hxx"
 #include "util/StringSplit.hxx"
+#include "AllocatorPtr.hxx"
 
 #ifdef HAVE_AVAHI
 #include "lib/avahi/Publisher.hxx"
@@ -86,11 +87,12 @@ LbControl::InvalidateTranslationCache(std::span<const std::byte> payload,
 	}
 
 	const TempPoolLease tpool;
+	const AllocatorPtr alloc{tpool};
 
 	TranslationInvalidateRequest request;
 
 	try {
-		request = ParseTranslationInvalidateRequest(tpool, payload);
+		request = ParseTranslationInvalidateRequest(alloc, payload);
 	} catch (...) {
 		logger(2, "malformed TCACHE_INVALIDATE control packet: ",
 		       GetFullMessage(std::current_exception()));

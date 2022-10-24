@@ -34,7 +34,8 @@
 #include "Request.hxx"
 #include "util/ByteOrder.hxx"
 #include "util/RuntimeError.hxx"
-#include "pool/pool.hxx"
+#include "util/SpanCast.hxx"
+#include "AllocatorPtr.hxx"
 
 [[gnu::pure]]
 static std::pair<const char *, const char *>
@@ -184,7 +185,7 @@ apply_translation_packet(TranslateRequest &request,
 }
 
 TranslationInvalidateRequest
-ParseTranslationInvalidateRequest(struct pool &pool,
+ParseTranslationInvalidateRequest(AllocatorPtr alloc,
 				  std::span<const std::byte> p)
 {
 	TranslationInvalidateRequest request;
@@ -209,7 +210,7 @@ ParseTranslationInvalidateRequest(struct pool &pool,
 			throw std::runtime_error("Truncated payload");
 
 		const char *payload = payload_length > 0
-			? p_strndup(&pool, (const char *)p.data(), payload_length)
+			? alloc.DupZ(ToStringView(p.first(payload_length)))
 			: "";
 		if (command == TranslationCommand::SITE)
 			request.site = payload;

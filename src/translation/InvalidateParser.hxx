@@ -40,7 +40,7 @@
 #include <span>
 #include <string>
 
-struct pool;
+class AllocatorPtr;
 
 struct TranslationInvalidateRequest : TranslateRequest {
 	const char *site = nullptr;
@@ -54,5 +54,5 @@ struct TranslationInvalidateRequest : TranslateRequest {
  * Throws on error.
  */
 TranslationInvalidateRequest
-ParseTranslationInvalidateRequest(struct pool &pool,
+ParseTranslationInvalidateRequest(AllocatorPtr alloc,
 				  std::span<const std::byte> p);

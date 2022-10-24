@@ -46,6 +46,7 @@
 #include "net/SocketAddress.hxx"
 #include "io/Logger.hxx"
 #include "util/SpanCast.hxx"
+#include "AllocatorPtr.hxx"
 #include "stopwatch.hxx"
 
 #ifdef HAVE_AVAHI
@@ -67,11 +68,12 @@ control_tcache_invalidate(BpInstance *instance, std::span<const std::byte> paylo
 		return;
 
 	const TempPoolLease tpool;
+	const AllocatorPtr alloc{tpool};
 
 	TranslationInvalidateRequest request;
 
 	try {
-		request = ParseTranslationInvalidateRequest(*tpool, payload);
+		request = ParseTranslationInvalidateRequest(alloc, payload);
 	} catch (...) {
 		LogConcat(2, "control",
 			  "malformed TCACHE_INVALIDATE control packet: ",
