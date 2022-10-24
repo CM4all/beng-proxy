@@ -310,7 +310,7 @@ public:
 				    handler, cancel_ptr);
 	}
 
-	void InjectSocketFailure() noexcept {
+	void InjectSocketFailure() noexcept override {
 		fd.Shutdown();
 	}
 };
