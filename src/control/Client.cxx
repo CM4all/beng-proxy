@@ -139,6 +139,6 @@ std::string
 BengControlClient::MakeTcacheInvalidate(TranslationCommand cmd,
 					const char *value) noexcept
 {
-	const std::span value_span{value, strlen(value) + 1};
+	const std::span value_span{value, strlen(value)};
 	return MakeTcacheInvalidate(cmd, std::as_bytes(value_span));
 }
