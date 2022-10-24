@@ -36,11 +36,9 @@
 #include "net/SendMessage.hxx"
 #include "net/ScmRightsBuilder.hxx"
 #include "net/MsgHdr.hxx"
+#include "net/SocketError.hxx"
 #include "io/Iovec.hxx"
-#include "system/Error.hxx"
 #include "util/ByteOrder.hxx"
-
-#include <cstring>
 
 inline
 BengControlClient::BengControlClient(UniqueSocketDescriptor _socket) noexcept
@@ -82,7 +80,7 @@ BengControlClient::Receive() const
 {
 	int result = socket.WaitReadable(10000);
 	if (result < 0)
-		throw MakeErrno("poll() failed");
+		throw MakeSocketError("poll() failed");
 
 	if (result == 0)
 		throw std::runtime_error("Timeout");
@@ -99,7 +97,7 @@ BengControlClient::Receive() const
 
 	auto nbytes = recvmsg(socket.Get(), &msg, 0);
 	if (nbytes < 0)
-		throw MakeErrno("recvmsg() failed");
+		throw MakeSocketError("recvmsg() failed");
 
 	if (size_t(nbytes) < sizeof(header))
 		throw std::runtime_error("Short receive");
