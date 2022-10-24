@@ -88,8 +88,6 @@ public:
 };
 
 class HttpClientConnection final : public ClientConnection {
-	EventLoop &event_loop;
-
 	const pid_t pid = 0;
 
 	std::unique_ptr<Server> server;
@@ -102,7 +100,7 @@ public:
 	HttpClientConnection(EventLoop &_event_loop, pid_t _pid,
 			     SocketDescriptor fd,
 			     SocketFilterPtr _filter) noexcept
-		:event_loop(_event_loop), pid(_pid), socket(_event_loop) {
+		:pid(_pid), socket(_event_loop) {
 		socket.InitDummy(fd, FdType::FD_SOCKET,
 				 std::move(_filter));
 	}
@@ -110,8 +108,7 @@ public:
 	HttpClientConnection(EventLoop &_event_loop,
 			     std::pair<std::unique_ptr<Server>, UniqueSocketDescriptor> _server,
 			     SocketFilterPtr _filter)
-		:event_loop(_event_loop),
-		 server(std::move(_server.first)),
+		:server(std::move(_server.first)),
 		 socket(_event_loop,
 			std::move(_server.second), FdType::FD_SOCKET,
 			std::move(_filter))
