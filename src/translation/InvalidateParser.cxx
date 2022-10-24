@@ -32,6 +32,7 @@
 
 #include "InvalidateParser.hxx"
 #include "Request.hxx"
+#include "control/Padding.hxx"
 #include "util/ByteOrder.hxx"
 #include "util/RuntimeError.hxx"
 #include "util/SpanCast.hxx"
@@ -190,7 +191,7 @@ ParseTranslationInvalidateRequest(AllocatorPtr alloc,
 {
 	TranslationInvalidateRequest request;
 
-	if (p.size() % 4 != 0)
+	if (!BengProxy::IsControlSizePadded(p.size()))
 		/* must be padded */
 		throw std::runtime_error("Not padded");
 

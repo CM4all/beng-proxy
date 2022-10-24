@@ -32,6 +32,7 @@
 
 #include "Server.hxx"
 #include "Handler.hxx"
+#include "Padding.hxx"
 #include "net/SocketConfig.hxx"
 #include "net/SocketAddress.hxx"
 #include "net/SendMessage.hxx"
@@ -69,7 +70,7 @@ control_server_decode(ControlServer &control_server,
 	data = magic + 1;
 	length -= sizeof(*magic);
 
-	if (length % 4 != 0)
+	if (!BengProxy::IsControlSizePadded(length))
 		throw FormatRuntimeError("odd control packet (length=%zu)", length);
 
 	/* now decode all commands */
@@ -99,7 +100,7 @@ control_server_decode(ControlServer &control_server,
 					fds,
 					address, uid);
 
-		payload_length = ((payload_length + 3) | 3) - 3; /* apply padding */
+		payload_length = BengProxy::PadControlSize(payload_length);
 
 		data = payload + payload_length;
 		length -= payload_length;

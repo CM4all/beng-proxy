@@ -31,6 +31,7 @@
  */
 
 #include "Client.hxx"
+#include "Padding.hxx"
 #include "net/RConnectSocket.hxx"
 #include "net/SendMessage.hxx"
 #include "net/ScmRightsBuilder.hxx"
@@ -49,12 +50,6 @@ BengControlClient::BengControlClient(const char *host_and_port)
 	:BengControlClient(ResolveConnectDatagramSocket(host_and_port,
 							5478)) {}
 
-static constexpr size_t
-PaddingSize(size_t size) noexcept
-{
-	return (3 - ((size - 1) & 0x3));
-}
-
 void
 BengControlClient::Send(BengProxy::ControlCommand cmd,
 			std::span<const std::byte> payload,
@@ -69,7 +64,7 @@ BengControlClient::Send(BengProxy::ControlCommand cmd,
 		MakeIovecT(magic),
 		MakeIovecT(header),
 		MakeIovec(payload),
-		MakeIovec(std::span{padding, PaddingSize(payload.size())}),
+		MakeIovec(std::span{padding, BengProxy::ControlPaddingSize(payload.size())}),
 	};
 
 	MessageHeader msg{std::span{v}};
@@ -129,7 +124,7 @@ BengControlClient::MakeTcacheInvalidate(TranslationCommand cmd,
 	result.append((const char *)&h, sizeof(h));
 	if (!payload.empty()) {
 		result.append((const char *)payload.data(), payload.size());
-		result.append(PaddingSize(payload.size()), '\0');
+		result.append(BengProxy::ControlPaddingSize(payload.size()), '\0');
 	}
 
 	return result;
