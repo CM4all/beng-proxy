@@ -38,7 +38,6 @@
 #include "io/Iovec.hxx"
 #include "system/Error.hxx"
 #include "util/ByteOrder.hxx"
-#include "util/SpanCast.hxx"
 
 #include <cstring>
 
@@ -134,11 +133,4 @@ BengControlClient::MakeTcacheInvalidate(TranslationCommand cmd,
 	}
 
 	return result;
-}
-
-std::string
-BengControlClient::MakeTcacheInvalidate(TranslationCommand cmd,
-					std::string_view value) noexcept
-{
-	return MakeTcacheInvalidate(cmd, AsBytes(value));
 }
