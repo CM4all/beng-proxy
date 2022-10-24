@@ -58,7 +58,7 @@ PaddingSize(size_t size) noexcept
 void
 BengControlClient::Send(BengProxy::ControlCommand cmd,
 			std::span<const std::byte> payload,
-			std::span<const FileDescriptor> fds)
+			std::span<const FileDescriptor> fds) const
 {
 	static constexpr uint32_t magic = ToBE32(BengProxy::control_magic);
 	const BengProxy::ControlHeader header{ToBE16(payload.size()), ToBE16(uint16_t(cmd))};
@@ -83,7 +83,7 @@ BengControlClient::Send(BengProxy::ControlCommand cmd,
 }
 
 std::pair<BengProxy::ControlCommand, std::string>
-BengControlClient::Receive()
+BengControlClient::Receive() const
 {
 	int result = socket.WaitReadable(10000);
 	if (result < 0)
