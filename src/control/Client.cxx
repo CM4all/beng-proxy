@@ -38,6 +38,7 @@
 #include "io/Iovec.hxx"
 #include "system/Error.hxx"
 #include "util/ByteOrder.hxx"
+#include "util/SpanCast.hxx"
 
 #include <cstring>
 
@@ -137,8 +138,7 @@ BengControlClient::MakeTcacheInvalidate(TranslationCommand cmd,
 
 std::string
 BengControlClient::MakeTcacheInvalidate(TranslationCommand cmd,
-					const char *value) noexcept
+					std::string_view value) noexcept
 {
-	const std::span value_span{value, strlen(value)};
-	return MakeTcacheInvalidate(cmd, std::as_bytes(value_span));
+	return MakeTcacheInvalidate(cmd, AsBytes(value));
 }

@@ -72,5 +72,5 @@ public:
 						std::span<const std::byte> payload) noexcept;
 
 	static std::string MakeTcacheInvalidate(TranslationCommand cmd,
-						const char *value) noexcept;
+						std::string_view value) noexcept;
 };
