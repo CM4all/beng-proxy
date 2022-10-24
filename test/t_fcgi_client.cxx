@@ -193,6 +193,7 @@ fcgi_server_huge(struct pool *pool)
 	write_fcgi_end(&request);
 }
 
+[[noreturn]]
 static void
 fcgi_server_hold(struct pool *pool)
 {
