@@ -96,10 +96,10 @@ public:
 	struct Outbound final : BufferedSocketHandler {
 		BufferedSocket socket;
 
-		explicit Outbound(EventLoop &event_loop)
+		explicit Outbound(EventLoop &event_loop) noexcept
 			:socket(event_loop) {}
 
-		void Destroy();
+		void Destroy() noexcept;
 
 	private:
 		/* virtual methods from class BufferedSocketHandler */
@@ -112,7 +112,7 @@ public:
 		void OnBufferedError(std::exception_ptr e) noexcept override;
 	} outbound;
 
-	static constexpr LbTcpConnection &FromOutbound(Outbound &o) {
+	static constexpr LbTcpConnection &FromOutbound(Outbound &o) noexcept {
 		return ContainerCast(o, &LbTcpConnection::outbound);
 	}
 
@@ -133,37 +133,37 @@ public:
 			const LbListenerConfig &_listener,
 			LbCluster &_cluster,
 			UniquePoolPtr<FilteredSocket> &&_socket,
-			SocketAddress _client_address);
+			SocketAddress _client_address) noexcept;
 
-	~LbTcpConnection();
+	~LbTcpConnection() noexcept;
 
 	static LbTcpConnection *New(LbInstance &instance,
 				    const LbListenerConfig &listener,
 				    LbCluster &cluster,
 				    PoolPtr pool,
 				    UniquePoolPtr<FilteredSocket> socket,
-				    SocketAddress address);
+				    SocketAddress address) noexcept;
 
-	EventLoop &GetEventLoop() {
+	auto &GetEventLoop() const noexcept {
 		return outbound.socket.GetEventLoop();
 	}
 
-	void Destroy();
+	void Destroy() noexcept;
 
 protected:
 	/* virtual methods from class LoggerDomainFactory */
 	std::string MakeLoggerDomain() const noexcept override;
 
 private:
-	void ConnectOutbound();
+	void ConnectOutbound() noexcept;
 
 public:
 	void OnDeferredHandshake() noexcept;
 
-	void OnTcpEnd();
-	void OnTcpError(const char *prefix, const char *error);
-	void OnTcpErrno(const char *prefix, int error);
-	void OnTcpError(const char *prefix, std::exception_ptr ep);
+	void OnTcpEnd() noexcept;
+	void OnTcpError(const char *prefix, const char *error) noexcept;
+	void OnTcpErrno(const char *prefix, int error) noexcept;
+	void OnTcpError(const char *prefix, std::exception_ptr ep) noexcept;
 
 private:
 	/* virtual methods from class ConnectSocketHandler */

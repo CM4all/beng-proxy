@@ -317,7 +317,7 @@ LbTcpConnection::MakeLoggerDomain() const noexcept
 }
 
 void
-LbTcpConnection::Outbound::Destroy()
+LbTcpConnection::Outbound::Destroy() noexcept
 {
 	if (socket.IsConnected())
 		socket.Close();
@@ -335,27 +335,27 @@ LbTcpConnection::OnDeferredHandshake() noexcept
 }
 
 void
-LbTcpConnection::OnTcpEnd()
+LbTcpConnection::OnTcpEnd() noexcept
 {
 	Destroy();
 }
 
 void
-LbTcpConnection::OnTcpError(const char *prefix, const char *error)
+LbTcpConnection::OnTcpError(const char *prefix, const char *error) noexcept
 {
 	logger(3, prefix, ": ", error);
 	Destroy();
 }
 
 void
-LbTcpConnection::OnTcpErrno(const char *prefix, int error)
+LbTcpConnection::OnTcpErrno(const char *prefix, int error) noexcept
 {
 	logger(3, prefix, ": ", strerror(error));
 	Destroy();
 }
 
 void
-LbTcpConnection::OnTcpError(const char *prefix, std::exception_ptr ep)
+LbTcpConnection::OnTcpError(const char *prefix, std::exception_ptr ep) noexcept
 {
 	logger(3, prefix, ": ", ep);
 	Destroy();
@@ -401,7 +401,7 @@ LbTcpConnection::OnSocketConnectError(std::exception_ptr ep) noexcept
 }
 
 void
-LbTcpConnection::ConnectOutbound()
+LbTcpConnection::ConnectOutbound() noexcept
 {
 	cluster.ConnectTcp(*pool, bind_address, sticky_hash,
 			   LB_TCP_CONNECT_TIMEOUT,
@@ -431,7 +431,7 @@ LbTcpConnection::LbTcpConnection(PoolPtr &&_pool, LbInstance &_instance,
 				 const LbListenerConfig &_listener,
 				 LbCluster &_cluster,
 				 UniquePoolPtr<FilteredSocket> &&_socket,
-				 SocketAddress _client_address)
+				 SocketAddress _client_address) noexcept
 	:PoolHolder(std::move(_pool)),
 	 instance(_instance), listener(_listener), cluster(_cluster),
 	 client_address(address_to_string(pool, _client_address)),
@@ -456,7 +456,7 @@ LbTcpConnection::LbTcpConnection(PoolPtr &&_pool, LbInstance &_instance,
 	defer_connect.Schedule();
 }
 
-LbTcpConnection::~LbTcpConnection()
+LbTcpConnection::~LbTcpConnection() noexcept
 {
 	if (cancel_connect) {
 		cancel_connect.Cancel();
@@ -474,7 +474,7 @@ LbTcpConnection::New(LbInstance &instance,
 		     LbCluster &cluster,
 		     PoolPtr pool,
 		     UniquePoolPtr<FilteredSocket> socket,
-		     SocketAddress address)
+		     SocketAddress address) noexcept
 {
 	assert(listener.destination.GetProtocol() == LbProtocol::TCP);
 
@@ -485,7 +485,7 @@ LbTcpConnection::New(LbInstance &instance,
 }
 
 void
-LbTcpConnection::Destroy()
+LbTcpConnection::Destroy() noexcept
 {
 	assert(!instance.tcp_connections.empty());
 	assert(listener.destination.GetProtocol() == LbProtocol::TCP);
