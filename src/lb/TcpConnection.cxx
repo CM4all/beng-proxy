@@ -85,7 +85,7 @@ LbTcpConnection::Inbound::OnBufferedData()
 
 	tcp.got_inbound_data = true;
 
-	if (tcp.cancel_connect)
+	if (tcp.defer_connect.IsPending() || tcp.cancel_connect)
 		/* outbound is not yet connected */
 		return BufferedResult::OK;
 
