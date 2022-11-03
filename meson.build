@@ -32,7 +32,6 @@ debug = get_option('b_ndebug') != 'true'
 
 common_flags = [
   '-D_REENTRANT', '-D_GNU_SOURCE',
-  '-DCACHE_LOG',
 ]
 
 test_common_flags = [
