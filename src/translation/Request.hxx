@@ -169,8 +169,6 @@ struct TranslateRequest {
 	http_status_t status = http_status_t(0);
 #endif
 
-	bool cron = false;
-
 	/**
 	 * Returns a name for this object to identify it in diagnostic
 	 * messages.
