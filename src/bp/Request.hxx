@@ -192,6 +192,8 @@ private:
 
 		uint_least8_t n_read_file = 0;
 
+		uint_least8_t n_path_exists = 0;
+
 		/**
 		 * Number of FILE_NOT_FOUND packets followed so far.  This
 		 * variable is used for loop detection.
@@ -487,6 +489,7 @@ public:
 	bool CheckFileNotFound(const TranslateResponse &response) noexcept;
 
 	bool CheckHandleReadFile(const TranslateResponse &response) noexcept;
+	bool CheckHandlePathExists(const TranslateResponse &response) noexcept;
 	bool CheckHandleProbePathSuffixes(const TranslateResponse &response) noexcept;
 
 	[[gnu::pure]]
@@ -553,6 +556,8 @@ public:
 	void HandleFileAddress(const FileAddress &address,
 			       UniqueFileDescriptor fd,
 			       const struct statx &st) noexcept;
+
+	void HandlePathExists(const FileAddress &address) noexcept;
 
 	void HandleDelegateAddress(const DelegateAddress &address,
 				   const char *path) noexcept;

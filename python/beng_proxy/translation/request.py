@@ -72,6 +72,7 @@ class Request:
         self.status = None
         self.want = None
         self.file_not_found = None
+        self.path_exists = None
         self.directory_index = None
         self.internal_redirect = None
         self.enotdir = None
@@ -174,6 +175,8 @@ class Request:
                 self.want.frombytes(packet.payload)
         elif packet.command == TRANSLATE_FILE_NOT_FOUND:
             self.file_not_found = packet.payload
+        elif packet.command == TRANSLATE_PATH_EXISTS:
+            self.path_exists = packet.payload
         elif packet.command == TRANSLATE_DIRECTORY_INDEX:
             self.directory_index = packet.payload
         elif packet.command == TRANSLATE_INTERNAL_REDIRECT:

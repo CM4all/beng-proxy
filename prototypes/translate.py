@@ -1075,6 +1075,16 @@ class Translation(Protocol):
             same_site = uri[11:]
             response.packet(TRANSLATE_SESSION_COOKIE_SAME_SITE, same_site)
             response.message(same_site)
+        elif uri.startswith('/path-exists/'):
+            response.packet(TRANSLATE_BASE, '/path-exists/')
+            response.packet(TRANSLATE_EASY_BASE)
+            if request.path_exists is None:
+                response.packet(TRANSLATE_PATH_EXISTS)
+                response.path('/var/www/path-exists/')
+            elif request.status == 200:
+                response.path('/var/www/')
+            else:
+                response.status(request.status)
         else:
             self._handle_local_file('/var/www' + uri, response,
                                     error_document=True)

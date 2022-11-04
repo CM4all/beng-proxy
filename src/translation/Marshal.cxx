@@ -167,6 +167,10 @@ MarshalTranslateRequest(uint8_t PROTOCOL_VERSION,
 			request.read_file);
 	m.WriteOptional(TranslationCommand::USER, request.user);
 	m.WriteOptional(TranslationCommand::POOL, request.pool);
+
+	if (request.path_exists)
+		m.Write(TranslationCommand::PATH_EXISTS);
+
 	m.Write(TranslationCommand::END);
 
 	return m.Commit();

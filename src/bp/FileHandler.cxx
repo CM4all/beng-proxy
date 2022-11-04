@@ -377,3 +377,61 @@ Request::HandleFileAddress(const FileAddress &address,
 
 	DispatchFile(address.path, std::move(fd), st, file_request);
 }
+
+static bool
+PathExists(const FileAddress &address)
+{
+	// TODO: use uring
+
+	struct statx st;
+
+	if (address.base != nullptr) {
+		auto base = OpenPath(address.base);
+		return statx(base.Get(), address.path,
+			     AT_SYMLINK_NOFOLLOW|AT_STATX_SYNC_AS_STAT,
+			     0, &st) == 0;
+	} else {
+		return statx(AT_FDCWD, address.path,
+			     AT_SYMLINK_NOFOLLOW|AT_STATX_SYNC_AS_STAT,
+			     0, &st) == 0;
+	}
+}
+
+static constexpr http_status_t
+ErrnoToHttpStatus(int e) noexcept
+{
+	switch (e) {
+	case ENOENT:
+	case ENOTDIR:
+	case ELOOP: /* RESOLVE_NO_SYMLINKS failed */
+	case EXDEV: /* RESOLVE_BENEATH failed */
+		return HTTP_STATUS_NOT_FOUND;
+
+	case EACCES:
+	case EPERM:
+		return HTTP_STATUS_FORBIDDEN;
+
+	case ECONNREFUSED:
+	case ENETUNREACH:
+	case EHOSTUNREACH:
+	case ETIMEDOUT:
+		return HTTP_STATUS_BAD_GATEWAY;
+
+	default:
+		return HTTP_STATUS_INTERNAL_SERVER_ERROR;
+	}
+}
+
+void
+Request::HandlePathExists(const FileAddress &address) noexcept
+{
+	try {
+		translate.request.status = PathExists(address)
+			? HTTP_STATUS_OK
+			: ErrnoToHttpStatus(errno);
+		translate.request.path_exists = true;
+		SubmitTranslateRequest();
+	} catch (...) {
+		LogDispatchError(std::current_exception());
+	}
+}

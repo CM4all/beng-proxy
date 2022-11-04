@@ -540,6 +540,7 @@ tcache_uri_key(AllocatorPtr alloc, const char *uri, const char *host,
 	       std::span<const std::byte> directory_index,
 	       std::span<const std::byte> file_not_found,
 	       std::span<const std::byte> read_file,
+	       bool path_exists,
 	       bool want)
 {
 	PoolStringBuilder<256> b;
@@ -576,6 +577,9 @@ tcache_uri_key(AllocatorPtr alloc, const char *uri, const char *host,
 	} else {
 		assert(probe_suffix == nullptr);
 	}
+
+	if (path_exists)
+		b.push_back("|PE_");
 
 	if (want)
 		b.push_back("|W_");
@@ -699,6 +703,7 @@ tcache_request_key(AllocatorPtr alloc, const TranslateRequest &request)
 				 request.directory_index,
 				 request.file_not_found,
 				 request.read_file,
+				 request.path_exists,
 				 !request.want.empty())
 		: request.widget_type;
 }
@@ -829,6 +834,7 @@ tcache_store_response(AllocatorPtr alloc, TranslateResponse &dest,
 				 request.directory_index,
 				 request.file_not_found,
 				 request.read_file,
+				 request.path_exists,
 				 !request.want.empty())
 		/* no BASE, cache key unmodified */
 		: nullptr;

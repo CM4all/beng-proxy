@@ -142,6 +142,10 @@ Request
   ``PROBE_SUFFIX`` specifies the first existing suffix. If no
   ``PROBE_SUFFIX`` follows, then no file was found.
 
+- ``PATH_EXISTS``: This is an echo of ``PATH_EXISTS`` from the
+  previous translation response, accompanied by ``STATUS`` describing
+  whether the given file exists.
+
 - ``FILE_NOT_FOUND``: The specified file does not exist. The
   translation server is asked to provide an alternate translation. This
   is an echo of the ``FILE_NOT_FOUND`` from the previous translation
@@ -482,7 +486,8 @@ Response
   The following request packets are on “vary” implicitly:
   ``WIDGET_TYPE``, ``CONTENT_TYPE_LOOKUP``, ``URI``, ``STATUS``,
   ``CHECK``, ``WANT_FULL_URI``, ``PROBE_PATH_SUFFIXES``,
-  ``PROBE_SUFFIX``, ``FILE_NOT_FOUND``, ``DIRECTORY_INDEX``, ``WANT``.
+  ``PROBE_SUFFIX``, ``PATH_EXISTS``, ``FILE_NOT_FOUND``,
+  ``DIRECTORY_INDEX``, ``WANT``.
 
 - ``INVALIDATE``: Invalidates existing translation cache items which
   depend on some of the request values. The payload has the same format as
@@ -544,6 +549,10 @@ Response
   translation request, echoing this packet and echoing the
   ``PROBE_SUFFIX`` that was found. This packet must be followed by at
   least two ``PROBE_SUFFIX`` packets.
+
+- ``PATH_EXISTS``: Check if the given ``PATH`` exists; the translation
+  shall be repeated, echoing this packet accompanied by a ``STATUS``
+  packet describing whether the given file exists (200 or 404).
 
 - ``FILE_NOT_FOUND``: Indicates that the translation server would like
   to provide an alternate translation when the specified file does not

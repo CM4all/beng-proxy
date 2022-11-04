@@ -167,6 +167,8 @@ struct TranslateRequest {
 
 #if TRANSLATION_ENABLE_HTTP
 	http_status_t status = http_status_t(0);
+
+	bool path_exists = false;
 #endif
 
 	/**

@@ -857,6 +857,9 @@ Request::OnTranslateResponse2(const TranslateResponse &response)
 	if (CheckHandleReadFile(response))
 		return;
 
+	if (CheckHandlePathExists(response))
+		return;
+
 	if (CheckHandleProbePathSuffixes(response))
 		return;
 
@@ -902,6 +905,31 @@ Request::CheckHandleReadFile(const TranslateResponse &response) noexcept
 
 	translate.request.read_file = contents;
 	SubmitTranslateRequest();
+	return true;
+}
+
+inline bool
+Request::CheckHandlePathExists(const TranslateResponse &response) noexcept
+{
+	if (!response.path_exists)
+		return false;
+
+	if (++translate.n_path_exists > 2) {
+		LogDispatchError(HTTP_STATUS_BAD_GATEWAY,
+				 "Too many consecutive PATH_EXISTS packets",
+				 1);
+		return true;
+	}
+
+	// TODO use io_uring
+
+	if (response.address.type != ResourceAddress::Type::LOCAL) {
+		LogDispatchError(HTTP_STATUS_BAD_GATEWAY,
+				 "PATH_EXISTS without PATH", 1);
+		return true;
+	}
+
+	HandlePathExists(response.address.GetFile());
 	return true;
 }
 
