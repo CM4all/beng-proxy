@@ -43,6 +43,7 @@
 #include "util/Cancellable.hxx"
 #include "util/djbhash.h"
 #include "util/DeleteDisposer.hxx"
+#include "util/IntrusiveList.hxx"
 #include "util/StringBuilder.hxx"
 #include "AllocatorPtr.hxx"
 #include "stopwatch.hxx"
@@ -54,7 +55,7 @@
 namespace NgHttp2 {
 
 class Stock::Item final
-	: public boost::intrusive::unordered_set_base_hook<boost::intrusive::link_mode<boost::intrusive::normal_link>>,
+	: public IntrusiveHashSetHook<IntrusiveHookMode::NORMAL>,
 	  ConnectFilteredSocketHandler, ConnectionHandler
 {
 	Stock &stock;
@@ -361,10 +362,7 @@ Stock::ItemEqual::operator()(const Item &a, const Item &b) const noexcept
 	return a.GetKey() == b.GetKey();
 }
 
-Stock::Stock() noexcept
-	:items(Set::bucket_traits(buckets, N_BUCKETS))
-{
-}
+Stock::Stock() noexcept = default;
 
 Stock::~Stock() noexcept
 {
@@ -374,8 +372,7 @@ Stock::~Stock() noexcept
 void
 Stock::FadeAll() noexcept
 {
-	for (auto &i : items)
-		i.Fade();
+	items.for_each([](auto &i){ i.Fade(); });
 }
 
 void
@@ -402,13 +399,12 @@ Stock::Get(EventLoop &event_loop,
 
 	const char *key = key_buffer;
 
-	auto e = items.equal_range(key, ItemHash(), ItemEqual());
-	for (auto i = e.first; i != e.second; ++i) {
-		if (i->IsAvailable()) {
-			i->AddGetHandler(alloc, parent_stopwatch,
-					 handler, cancel_ptr);
-			return;
-		}
+	if (auto i = items.find_if(key,
+				   [](const auto &j){return j.IsAvailable();});
+	    i != items.end()) {
+		i->AddGetHandler(alloc, parent_stopwatch,
+				 handler, cancel_ptr);
+		return;
 	}
 
 	auto *item = new Item(*this, event_loop, key);
