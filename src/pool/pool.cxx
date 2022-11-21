@@ -154,7 +154,7 @@ struct PoolRef {
 #endif
 
 struct pool final
-	: IntrusiveListHook,
+	: IntrusiveListHook<IntrusiveHookMode::NORMAL>,
 	  LoggerDomainFactory {
 
 	const LazyDomainLogger logger;

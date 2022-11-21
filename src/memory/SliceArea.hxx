@@ -42,8 +42,9 @@ class SlicePool;
 /**
  * @see #SlicePool
  */
-class SliceArea : public IntrusiveListHook {
-
+class SliceArea
+	: public IntrusiveListHook<IntrusiveHookMode::NORMAL>
+{
 	SlicePool &pool;
 
 	unsigned allocated_count = 0;

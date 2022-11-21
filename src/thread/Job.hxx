@@ -39,7 +39,7 @@
 /**
  * A job that shall be executed in a worker thread.
  */
-class ThreadJob : public IntrusiveListHook {
+class ThreadJob : public IntrusiveListHook<IntrusiveHookMode::NORMAL> {
 public:
 	enum class State : uint8_t {
 		/**

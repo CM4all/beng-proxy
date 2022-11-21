@@ -47,7 +47,7 @@
 struct TeeIstream final : IstreamSink, DestructAnchor {
 
 	struct Output
-		: IntrusiveListHook,
+		: IntrusiveListHook<IntrusiveHookMode::NORMAL>,
 		  Istream, DestructAnchor
 	{
 		TeeIstream &parent;

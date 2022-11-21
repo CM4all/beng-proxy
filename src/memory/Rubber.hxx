@@ -79,7 +79,7 @@ class Rubber {
 
 	static constexpr size_t N_HOLE_THRESHOLDS = std::size(HOLE_THRESHOLDS);
 
-	struct Hole final : IntrusiveListHook {
+	struct Hole final : IntrusiveListHook<IntrusiveHookMode::NORMAL> {
 		/**
 		 * The size of this hole (including the size of this struct).
 		 */

@@ -57,7 +57,7 @@ struct LbHttpConnection final
 	: PoolHolder, HttpServerConnectionHandler, HttpServerRequestHandler,
 	  AccountedClientConnection,
 	  LoggerDomainFactory,
-	  public IntrusiveListHook
+	  public IntrusiveListHook<IntrusiveHookMode::NORMAL>
 {
 	LbInstance &instance;
 

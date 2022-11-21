@@ -63,7 +63,7 @@ static constexpr Event::Duration write_timeout = std::chrono::seconds(30);
 class ClientConnection::Request final
 	: Cancellable, MultiFifoBufferIstreamHandler,
 	  IstreamDataSourceHandler,
-	  public IntrusiveListHook
+	  public IntrusiveListHook<IntrusiveHookMode::NORMAL>
 {
 	const AllocatorPtr alloc;
 

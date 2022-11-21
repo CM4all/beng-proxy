@@ -54,7 +54,7 @@ struct LbInstance;
 
 class LbTcpConnection final
 	: PoolHolder, LoggerDomainFactory, ConnectSocketHandler,
-	  public IntrusiveListHook
+	  public IntrusiveListHook<IntrusiveHookMode::NORMAL>
 {
 	LbInstance &instance;
 

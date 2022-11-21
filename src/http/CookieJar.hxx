@@ -48,7 +48,7 @@ struct CookieData {
 		 value(std::forward<V>(_value)) {}
 };
 
-struct Cookie : IntrusiveListHook, CookieData {
+struct Cookie : IntrusiveListHook<IntrusiveHookMode::NORMAL>, CookieData {
 	/* this copy constructor is needed because the
 	   IntrusiveListHook base class is not copyable */
 	Cookie(const Cookie &src) noexcept

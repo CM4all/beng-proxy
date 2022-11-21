@@ -42,8 +42,9 @@
 #include <assert.h>
 
 class CatIstream final : public Istream, DestructAnchor {
-	struct Input final : IstreamSink, IntrusiveListHook {
-
+	struct Input final
+		: IstreamSink, IntrusiveListHook<IntrusiveHookMode::NORMAL>
+	{
 		CatIstream &cat;
 
 		Input(CatIstream &_cat, UnusedIstreamPtr &&_istream) noexcept

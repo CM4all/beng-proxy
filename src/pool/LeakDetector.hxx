@@ -42,7 +42,7 @@ class AllocatorPtr;
  * Derive from this class to verify that its destructor gets called
  * before the #pool gets destroyed.
  */
-class PoolLeakDetector : public IntrusiveListHook {
+class PoolLeakDetector : public IntrusiveListHook<IntrusiveHookMode::NORMAL> {
 	struct pool &ldp;
 
 public:

@@ -43,7 +43,7 @@
 class WidgetResolver;
 
 class WidgetResolverListener final
-	: public IntrusiveListHook,
+	: public IntrusiveListHook<IntrusiveHookMode::NORMAL>,
 	  Cancellable {
 
 	WidgetResolver &resolver;

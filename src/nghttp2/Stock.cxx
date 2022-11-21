@@ -64,7 +64,7 @@ class Stock::Item final
 	std::unique_ptr<ClientConnection> connection;
 
 	struct GetRequest final
-		: IntrusiveListHook,
+		: IntrusiveListHook<IntrusiveHookMode::NORMAL>,
 		  Cancellable
 	{
 		Item &item;

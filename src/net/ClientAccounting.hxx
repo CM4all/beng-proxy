@@ -46,7 +46,7 @@ class ClientAccountingMap;
 class AccountedClientConnection {
 	friend class PerClientAccounting;
 
-	IntrusiveListHook siblings;
+	IntrusiveListHook<IntrusiveHookMode::NORMAL> siblings;
 
 	PerClientAccounting *per_client = nullptr;
 

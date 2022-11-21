@@ -38,7 +38,9 @@
 
 class LimitedConcurrencyQueue;
 
-class LimitedConcurrencyJob final : public IntrusiveListHook {
+class LimitedConcurrencyJob final
+	: public IntrusiveListHook<IntrusiveHookMode::NORMAL>
+{
 	friend class LimitedConcurrencyQueue;
 
 	LimitedConcurrencyQueue &queue;

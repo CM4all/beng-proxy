@@ -40,7 +40,7 @@
  * beng-proxy is shut down.  The job holds a reference to an
  * #Cancellable object, which may be used to stop it.
  */
-struct BackgroundJob : IntrusiveListHook {
+struct BackgroundJob : IntrusiveListHook<IntrusiveHookMode::NORMAL> {
 	CancellablePointer cancel_ptr;
 };
 

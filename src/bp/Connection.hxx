@@ -53,7 +53,7 @@ namespace NgHttp2 { class ServerConnection; }
  */
 struct BpConnection final
 	: PoolHolder, HttpServerConnectionHandler, HttpServerRequestHandler,
-	  public IntrusiveListHook
+	  public IntrusiveListHook<IntrusiveHookMode::NORMAL>
 {
 	BpInstance &instance;
 	BPListener &listener;
