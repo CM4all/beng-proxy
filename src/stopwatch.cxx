@@ -33,9 +33,8 @@
 #include "stopwatch.hxx"
 #include "io/UniqueFileDescriptor.hxx"
 #include "util/LeakDetector.hxx"
+#include "util/StaticVector.hxx"
 #include "util/StringBuilder.hxx"
-
-#include <boost/container/static_vector.hpp>
 
 #include <chrono>
 #include <list>
@@ -71,7 +70,7 @@ class Stopwatch final : LeakDetector
 
 	std::list<std::shared_ptr<Stopwatch>> children;
 
-	boost::container::static_vector<StopwatchEvent, 16> events;
+	StaticVector<StopwatchEvent, 16> events;
 
 #if 0
 	/**
@@ -164,7 +163,7 @@ StopwatchPtr::~StopwatchPtr() noexcept = default;
 inline void
 Stopwatch::RecordEvent(const char *event_name) noexcept
 {
-	if (events.size() >= events.capacity())
+	if (events.full())
 		/* array is full, do not record any more events */
 		return;
 
