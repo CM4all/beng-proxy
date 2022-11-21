@@ -37,6 +37,8 @@
 #include "translation/Protocol.hxx"
 #include "util/StringView.hxx"
 
+#include <memory>
+
 LbTranslationCache::Vary::Vary(const TranslateResponse &response)
 	:host(response.VaryContains(TranslationCommand::HOST)),
 	 listener_tag(response.VaryContains(TranslationCommand::LISTENER_TAG)) {}

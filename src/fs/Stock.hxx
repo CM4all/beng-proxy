@@ -39,6 +39,8 @@
 #include "stock/Class.hxx"
 #include "stock/MapStock.hxx"
 
+#include <memory>
+
 class StockItem;
 class StockGetHandler;
 class CancellablePointer;
