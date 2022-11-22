@@ -33,7 +33,7 @@
 #pragma once
 
 #include "Config.hxx"
-#include "io/ConfigParser.hxx"
+#include "io/config/ConfigParser.hxx"
 
 /**
  * Configuration which describes whether and how to log HTTP requests.

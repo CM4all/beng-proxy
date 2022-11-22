@@ -216,6 +216,7 @@ subdir('libcommon/src/lib/pcre')
 subdir('libcommon/src/lib/sodium')
 subdir('libcommon/src/time')
 subdir('libcommon/src/io')
+subdir('libcommon/src/io/config')
 
 io2 = static_library(
   'io2',
@@ -837,6 +838,7 @@ executable(
     event_uring_dep,
     avahi_dep,
     pool_dep,
+    io_config_dep,
     net_dep,
     raddress_dep,
     spawn_dep,
@@ -937,6 +939,7 @@ executable(
     avahi_dep,
     pool_dep,
     io_dep,
+    io_config_dep,
     socket_dep,
     event_dep,
     net_dep,
@@ -1002,6 +1005,7 @@ if get_option('certdb')
       crypto_dep,
       pg_dep,
       curl_dep,
+      io_config_dep,
       net_dep,
       http_dep,
       io_dep,
@@ -1143,7 +1147,7 @@ subdir('test')
 subdir('libcommon/test/util')
 subdir('libcommon/test/uri')
 subdir('libcommon/test/http')
-subdir('libcommon/test/io')
+subdir('libcommon/test/io/config')
 if get_option('certdb')
   subdir('libcommon/test/pg')
 endif

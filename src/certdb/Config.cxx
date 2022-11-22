@@ -31,8 +31,8 @@
  */
 
 #include "Config.hxx"
-#include "io/ConfigParser.hxx"
-#include "io/FileLineParser.hxx"
+#include "io/config/ConfigParser.hxx"
+#include "io/config/FileLineParser.hxx"
 #include "util/HexParse.hxx"
 #include "util/StringAPI.hxx"
 

@@ -33,8 +33,8 @@
 #include "Config.hxx"
 #include "access_log/ConfigParser.hxx"
 #include "spawn/ConfigParser.hxx"
-#include "io/FileLineParser.hxx"
-#include "io/ConfigParser.hxx"
+#include "io/config/FileLineParser.hxx"
+#include "io/config/ConfigParser.hxx"
 #include "net/Parser.hxx"
 #include "util/StringAPI.hxx"
 

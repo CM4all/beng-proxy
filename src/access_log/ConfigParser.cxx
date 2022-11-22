@@ -32,7 +32,7 @@
 
 #include "ConfigParser.hxx"
 #include "net/Parser.hxx"
-#include "io/FileLineParser.hxx"
+#include "io/config/FileLineParser.hxx"
 
 #include <cstring>
 

@@ -6,6 +6,7 @@ access_log_client = static_library(
   'ConfigParser.cxx',
   include_directories: inc,
   dependencies: [
+    io_config_dep,
     net_dep,
   ],
 )
