@@ -202,7 +202,7 @@ Incoming requests can be delivered to pools based on
 administrator-specified conditions. This virtual pool is called
 ``branch``, and can be referenced by its name just like regular pools.
 That implies that pools and branches share a namespace, their names
-must be uniquie. Example::
+must be unique. Example::
 
    branch foo {
      status 418 if $remote_address in "192.168.0.0/16"
