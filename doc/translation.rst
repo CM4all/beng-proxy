@@ -1653,6 +1653,9 @@ A successful response must contain at least ``HOME`` and ``UID_GID``:
   limitation, e.g. ``sftp`` to limit ``LOGIN/SERVICE=ssh`` to
   ``SERVICE=sftp``.
 
+- ``AUTHORIZED_KEYS``: The contents of an OpenSSH
+  :file:`authorized_keys` file.
+
 .. _cron:
 
 Cron translation
