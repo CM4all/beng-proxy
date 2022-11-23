@@ -85,7 +85,7 @@ try {
 
 	UdpListener udp(event_loop, config.Create(SOCK_DGRAM), handler);
 
-	event_loop.Dispatch();
+	event_loop.Run();
 
 	return 0;
 } catch (const std::exception &e) {

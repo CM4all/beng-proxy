@@ -187,7 +187,7 @@ struct Context final : IstreamSink {
 				input.Read();
 
 			if (!eof)
-				instance.event_loop.Dispatch();
+				instance.event_loop.Run();
 		}
 
 		break_eof = false;

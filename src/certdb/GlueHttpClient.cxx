@@ -128,7 +128,7 @@ GlueHttpClient::Request(EventLoop &event_loop,
 	request.Start();
 
 	if (!handler.IsDone())
-		event_loop.Dispatch();
+		event_loop.Run();
 
 	assert(handler.IsDone());
 

@@ -72,7 +72,7 @@ struct Instance final {
 		  ThreadSocketFilter instances which are in
 		  "postponed_destroy" state */
 		// TODO manually cancel "postponed_destroy" on shutdown
-		event_loop.Dispatch();
+		event_loop.Run();
 
 		thread_pool_stop();
 		thread_pool_join();

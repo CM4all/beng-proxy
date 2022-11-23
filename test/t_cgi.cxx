@@ -245,7 +245,7 @@ test_normal(PoolPtr pool, Context *c)
 	pool.reset();
 	pool_commit();
 
-	c->event_loop.Dispatch();
+	c->event_loop.Run();
 
 	assert(c->status == HTTP_STATUS_OK);
 	assert(!c->HasInput());
@@ -271,7 +271,7 @@ test_tiny(PoolPtr pool, Context *c)
 	pool.reset();
 	pool_commit();
 
-	c->event_loop.Dispatch();
+	c->event_loop.Run();
 
 	assert(c->status == HTTP_STATUS_OK);
 	assert(!c->HasInput());
@@ -299,7 +299,7 @@ test_close_early(PoolPtr pool, Context *c)
 	pool.reset();
 	pool_commit();
 
-	c->event_loop.Dispatch();
+	c->event_loop.Run();
 
 	assert(c->status == HTTP_STATUS_OK);
 	assert(!c->HasInput());
@@ -327,7 +327,7 @@ test_close_late(PoolPtr pool, Context *c)
 	pool.reset();
 	pool_commit();
 
-	c->event_loop.Dispatch();
+	c->event_loop.Run();
 
 	assert(c->status == HTTP_STATUS_OK);
 	assert(!c->HasInput());
@@ -355,7 +355,7 @@ test_close_data(PoolPtr pool, Context *c)
 	pool.reset();
 	pool_commit();
 
-	c->event_loop.Dispatch();
+	c->event_loop.Run();
 
 	assert(c->status == HTTP_STATUS_OK);
 	assert(!c->body_eof);
@@ -385,7 +385,7 @@ test_post(PoolPtr pool, Context *c)
 	pool.reset();
 	pool_commit();
 
-	c->event_loop.Dispatch();
+	c->event_loop.Run();
 
 	assert(c->status == HTTP_STATUS_OK);
 	assert(!c->HasInput());
@@ -413,7 +413,7 @@ test_status(PoolPtr pool, Context *c)
 	pool.reset();
 	pool_commit();
 
-	c->event_loop.Dispatch();
+	c->event_loop.Run();
 
 	assert(c->status == HTTP_STATUS_CREATED);
 	assert(!c->HasInput());
@@ -441,7 +441,7 @@ test_no_content(PoolPtr pool, Context *c)
 	pool.reset();
 	pool_commit();
 
-	c->event_loop.Dispatch();
+	c->event_loop.Run();
 
 	assert(c->status == HTTP_STATUS_NO_CONTENT);
 	assert(!c->HasInput());
@@ -467,7 +467,7 @@ test_no_length(PoolPtr pool, Context *c)
 	pool.reset();
 	pool_commit();
 
-	c->event_loop.Dispatch();
+	c->event_loop.Run();
 
 	assert(c->body_available == -1);
 	assert(c->body_eof);
@@ -491,7 +491,7 @@ test_length_ok(PoolPtr pool, Context *c)
 	pool.reset();
 	pool_commit();
 
-	c->event_loop.Dispatch();
+	c->event_loop.Run();
 
 	assert(c->body_available == 4);
 	assert(c->body_eof);
@@ -517,7 +517,7 @@ test_length_ok_large(PoolPtr pool, Context *c)
 	pool.reset();
 	pool_commit();
 
-	c->event_loop.Dispatch();
+	c->event_loop.Run();
 
 	assert(c->body_available == 8192);
 	assert(c->body_eof);
@@ -541,7 +541,7 @@ test_length_too_small(PoolPtr pool, Context *c)
 	pool.reset();
 	pool_commit();
 
-	c->event_loop.Dispatch();
+	c->event_loop.Run();
 
 	assert(c->aborted);
 }
@@ -564,7 +564,7 @@ test_length_too_big(PoolPtr pool, Context *c)
 	pool.reset();
 	pool_commit();
 
-	c->event_loop.Dispatch();
+	c->event_loop.Run();
 
 	assert(!c->aborted);
 	assert(c->body_abort);
@@ -588,7 +588,7 @@ test_length_too_small_late(PoolPtr pool, Context *c)
 	pool.reset();
 	pool_commit();
 
-	c->event_loop.Dispatch();
+	c->event_loop.Run();
 
 	assert(!c->aborted);
 	assert(c->body_abort ||
@@ -619,7 +619,7 @@ test_large_header(PoolPtr pool, Context *c)
 	pool.reset();
 	pool_commit();
 
-	c->event_loop.Dispatch();
+	c->event_loop.Run();
 
 	assert(c->aborted);
 	assert(!c->body_abort);

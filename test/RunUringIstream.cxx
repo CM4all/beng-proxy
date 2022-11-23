@@ -165,7 +165,7 @@ try {
 	Context context;
 	context.Open(path);
 
-	context.event_loop.Dispatch();
+	context.event_loop.Run();
 
 	if (context.error)
 		std::rethrow_exception(context.error);

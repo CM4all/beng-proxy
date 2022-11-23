@@ -79,7 +79,7 @@ main(int, char **)
 						 std::move(socket),
 						 instance);
 
-	instance.event_loop.Dispatch();
+	instance.event_loop.Run();
 
 	instance.server->Free();
 }

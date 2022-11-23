@@ -278,7 +278,7 @@ try {
 
 	/* run test */
 
-	ctx.event_loop.Dispatch();
+	ctx.event_loop.Run();
 
 	assert(!ctx.got_response || ctx.body_eof || ctx.body_abort || ctx.aborted);
 

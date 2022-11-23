@@ -105,5 +105,5 @@ int main(int argc, char **argv)
 			    argv[1],
 			    handler, cancel_ptr);
 
-	instance.event_loop.Dispatch();
+	instance.event_loop.Run();
 }

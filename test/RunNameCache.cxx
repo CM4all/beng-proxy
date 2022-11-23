@@ -49,8 +49,8 @@ public:
 		cache.Connect();
 	}
 
-	void Dispatch() noexcept {
-		event_loop.Dispatch();
+	void Run() noexcept {
+		event_loop.Run();
 	}
 
 private:
@@ -80,7 +80,7 @@ try {
 	config.connect = argv[1];
 
 	Instance instance(config);
-	instance.Dispatch();
+	instance.Run();
 
 	return EXIT_SUCCESS;
 } catch (const std::exception &e) {

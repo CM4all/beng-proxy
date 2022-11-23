@@ -76,7 +76,7 @@ try {
 	PingClient client(instance.event_loop, handler);
 	client.Start(address);
 
-	instance.event_loop.Dispatch();
+	instance.event_loop.Run();
 
 	return success ? EXIT_SUCCESS : EXIT_FAILURE;
 } catch (const std::exception &e) {

@@ -109,7 +109,7 @@ struct Context : StringSinkHandler {
 			return;
 
 		break_strink_sink_finished = true;
-		event_loop.Dispatch();
+		event_loop.Run();
 		break_strink_sink_finished = false;
 
 		assert(string_sink_finished);

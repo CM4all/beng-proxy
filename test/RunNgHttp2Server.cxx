@@ -94,7 +94,7 @@ try {
 	Listener listener(event_loop, pool.get(), event_loop);
 	listener.ListenTCP(8000);
 
-	event_loop.Dispatch();
+	event_loop.Run();
 } catch (...) {
 	PrintException(std::current_exception());
 	return EXIT_FAILURE;

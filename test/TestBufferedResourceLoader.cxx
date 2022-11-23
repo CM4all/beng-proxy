@@ -94,7 +94,7 @@ TEST(BufferedResourceLoader, Small)
 			handler, cancel_ptr);
 
 	if (handler.IsAlive())
-		instance.event_loop.Dispatch();
+		instance.event_loop.Run();
 
 	ASSERT_EQ(handler.state, RecordingHttpResponseHandler::State::END);
 	ASSERT_EQ(handler.body, "foobar");
@@ -123,7 +123,7 @@ TEST(BufferedResourceLoader, Large)
 			handler, cancel_ptr);
 
 	if (handler.IsAlive())
-		instance.event_loop.Dispatch();
+		instance.event_loop.Run();
 
 	ASSERT_EQ(handler.state, RecordingHttpResponseHandler::State::END);
 	ASSERT_EQ(handler.body, data);
@@ -153,7 +153,7 @@ TEST(BufferedResourceLoader, LargeFail)
 			handler, cancel_ptr);
 
 	if (handler.IsAlive())
-		instance.event_loop.Dispatch();
+		instance.event_loop.Run();
 
 	ASSERT_EQ(handler.state, RecordingHttpResponseHandler::State::ERROR);
 }

@@ -490,7 +490,7 @@ test_malformed_header_name(auto &factory, Context &c) noexcept
 
 			      c, c.cancel_ptr);
 
-	c.event_loop.Dispatch();
+	c.event_loop.Run();
 
 	assert(c.status == http_status_t(0));
 	assert(c.request_error);
@@ -508,7 +508,7 @@ test_malformed_header_value(auto &factory, Context &c) noexcept
 
 			      c, c.cancel_ptr);
 
-	c.event_loop.Dispatch();
+	c.event_loop.Run();
 
 	assert(c.status == http_status_t(0));
 	assert(c.request_error);

@@ -121,7 +121,7 @@ try {
 				0, address_list, std::chrono::seconds(30),
 				ctx, cancel_ptr);
 
-	ctx.event_loop.Dispatch();
+	ctx.event_loop.Run();
 
 	assert(ctx.result != Context::NONE);
 

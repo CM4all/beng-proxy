@@ -87,7 +87,7 @@ try {
 
 	ControlServer cs(event_loop, handler, config);
 
-	event_loop.Dispatch();
+	event_loop.Run();
 
 	return 0;
 } catch (const std::exception &e) {

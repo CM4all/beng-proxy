@@ -92,7 +92,7 @@ public:
 			if (input.empty()) {
 				BreakData();
 				socket.ScheduleRead();
-				GetEventLoop().Dispatch();
+				GetEventLoop().Run();
 			}
 		}
 
@@ -103,7 +103,7 @@ public:
 		if (!remaining) {
 			BreakRemaining();
 			socket.ScheduleRead();
-			GetEventLoop().Dispatch();
+			GetEventLoop().Run();
 		}
 
 		assert(remaining);

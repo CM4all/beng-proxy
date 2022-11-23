@@ -651,7 +651,7 @@ try {
 
 	/* main loop */
 
-	instance.event_loop.Dispatch();
+	instance.event_loop.Run();
 
 	/* cleanup */
 

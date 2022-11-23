@@ -140,7 +140,7 @@ public:
 			return;
 
 		break_closed = true;
-		GetEventLoop().Dispatch();
+		GetEventLoop().Run();
 		break_closed = false;
 
 		assert(connection == nullptr);
@@ -226,7 +226,7 @@ public:
 			return;
 
 		break_done = true;
-		event_loop.Dispatch();
+		event_loop.Run();
 		break_done = false;
 
 		assert(IsClientDone());
@@ -462,7 +462,7 @@ TestAbortedRequestBody(Server &server)
 
 	if (!request_received) {
 		break_request_received = true;
-		server.GetEventLoop().Dispatch();
+		server.GetEventLoop().Run();
 		break_request_received = false;
 		assert(request_received);
 	}
@@ -551,7 +551,7 @@ try {
 		TestDiscardedHugeRequestBody(server);
 
 		server.CloseClientSocket();
-		instance.event_loop.Dispatch();
+		instance.event_loop.Run();
 	}
 
 	{
@@ -559,7 +559,7 @@ try {
 		TestAbortedRequestBody(server);
 
 		server.CloseClientSocket();
-		instance.event_loop.Dispatch();
+		instance.event_loop.Run();
 	}
 } catch (...) {
 	PrintException(std::current_exception());

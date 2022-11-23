@@ -181,7 +181,7 @@ try {
 						       instance, parsed_mode);
 	instance.listener->Listen(std::move(listen_fd));
 
-	instance.event_loop.Dispatch();
+	instance.event_loop.Run();
 
 	return EXIT_SUCCESS;
 } catch (...) {

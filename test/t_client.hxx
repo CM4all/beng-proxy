@@ -211,7 +211,7 @@ struct Context final
 		break_response = true;
 
 		if (WaitingForResponse())
-			event_loop.Dispatch();
+			event_loop.Run();
 
 		assert(!WaitingForResponse());
 
@@ -231,7 +231,7 @@ struct Context final
 			return;
 
 		break_data = true;
-		event_loop.Dispatch();
+		event_loop.Run();
 		break_data = false;
 	}
 
@@ -252,7 +252,7 @@ struct Context final
 		} while (response_body_byte);
 
 		break_eof = true;
-		event_loop.Dispatch();
+		event_loop.Run();
 		break_eof = false;
 
 		assert(!HasInput());
@@ -273,7 +273,7 @@ struct Context final
 			return;
 
 		break_released = true;
-		event_loop.Dispatch();
+		event_loop.Run();
 		break_released = false;
 
 		assert(released);
@@ -281,7 +281,7 @@ struct Context final
 
 	void RunFor(Event::Duration duration) noexcept {
 		break_timer.Schedule(duration);
-		event_loop.Dispatch();
+		event_loop.Run();
 	}
 
 #ifdef USE_BUCKETS
@@ -555,7 +555,7 @@ test_empty(auto &factory, Context &c) noexcept
 			      c, c.cancel_ptr);
 	pool_commit();
 
-	c.event_loop.Dispatch();
+	c.event_loop.Run();
 
 	assert(c.released);
 	assert(c.connection == nullptr);
@@ -610,7 +610,7 @@ test_read_body(auto &factory, Context &c) noexcept
 			      false,
 			      c, c.cancel_ptr);
 
-	c.event_loop.Dispatch();
+	c.event_loop.Run();
 
 	assert(c.released);
 	assert(c.status == HTTP_STATUS_OK);
@@ -640,7 +640,7 @@ test_huge(auto &factory, Context &c) noexcept
 			      false,
 			      c, c.cancel_ptr);
 
-	c.event_loop.Dispatch();
+	c.event_loop.Run();
 
 	assert(c.released);
 	assert(c.status == HTTP_STATUS_OK);
@@ -664,7 +664,7 @@ test_close_response_body_early(auto &factory, Context &c) noexcept
 			      false,
 			      c, c.cancel_ptr);
 
-	c.event_loop.Dispatch();
+	c.event_loop.Run();
 
 	assert(c.released);
 	assert(c.status == HTTP_STATUS_OK);
@@ -688,7 +688,7 @@ test_close_response_body_late(auto &factory, Context &c) noexcept
 			      false,
 			      c, c.cancel_ptr);
 
-	c.event_loop.Dispatch();
+	c.event_loop.Run();
 
 	assert(c.released);
 	assert(c.status == HTTP_STATUS_OK);
@@ -748,7 +748,7 @@ test_close_response_body_after(auto &factory, Context &c) noexcept
 	assert(c.content_length == nullptr);
 	assert(c.available == 524288);
 
-	c.event_loop.Dispatch();
+	c.event_loop.Run();
 
 	assert(c.released);
 	assert(!c.HasInput());
@@ -790,7 +790,7 @@ test_close_request_body_early(auto &factory, Context &c) noexcept
 	const std::runtime_error error("fail_request_body_early");
 	c.request_body->SetError(std::make_exception_ptr(error));
 
-	c.event_loop.Dispatch();
+	c.event_loop.Run();
 
 	assert(c.released);
 	assert(c.status == 0);
@@ -819,7 +819,7 @@ test_close_request_body_fail(auto &factory, Context &c) noexcept
 			      false,
 			      c, c.cancel_ptr);
 
-	c.event_loop.Dispatch();
+	c.event_loop.Run();
 
 	assert(c.released);
 	assert(c.status == 200);
@@ -881,7 +881,7 @@ test_data_blocking(auto &factory, Context &c) noexcept
 		c.ReadBody();
 
 		if (c.data_blocking == old_data_blocking)
-			c.event_loop.Dispatch();
+			c.event_loop.Run();
 	}
 
 	approve_control.reset();
@@ -901,7 +901,7 @@ test_data_blocking(auto &factory, Context &c) noexcept
 	assert(c.body_error == nullptr);
 
 	/* flush all remaining events */
-	c.event_loop.Dispatch();
+	c.event_loop.Run();
 }
 
 /**
@@ -967,7 +967,7 @@ test_body_fail(auto &factory, Context &c) noexcept
 			      false,
 			      c, c.cancel_ptr);
 
-	c.event_loop.Dispatch();
+	c.event_loop.Run();
 
 	assert(c.released);
 	assert(c.aborted || c.body_error);
@@ -991,7 +991,7 @@ test_head(auto &factory, Context &c) noexcept
 			      false,
 			      c, c.cancel_ptr);
 
-	c.event_loop.Dispatch();
+	c.event_loop.Run();
 
 	assert(c.released);
 	assert(c.connection == nullptr);
@@ -1019,7 +1019,7 @@ test_head_discard(auto &factory, Context &c) noexcept
 			      false,
 			      c, c.cancel_ptr);
 
-	c.event_loop.Dispatch();
+	c.event_loop.Run();
 
 	assert(c.released);
 	assert(c.connection == nullptr);
@@ -1044,7 +1044,7 @@ test_head_discard2(auto &factory, Context &c) noexcept
 			      false,
 			      c, c.cancel_ptr);
 
-	c.event_loop.Dispatch();
+	c.event_loop.Run();
 
 	assert(c.released);
 	assert(c.connection == nullptr);
@@ -1069,7 +1069,7 @@ test_ignored_body(auto &factory, Context &c) noexcept
 			      false,
 			      c, c.cancel_ptr);
 
-	c.event_loop.Dispatch();
+	c.event_loop.Run();
 
 	assert(c.released);
 	assert(c.connection == nullptr);
@@ -1098,7 +1098,7 @@ test_close_ignored_request_body(auto &factory, Context &c) noexcept
 			      false,
 			      c, c.cancel_ptr);
 
-	c.event_loop.Dispatch();
+	c.event_loop.Run();
 
 	assert(c.released);
 	assert(c.connection == nullptr);
@@ -1125,7 +1125,7 @@ test_head_close_ignored_request_body(auto &factory, Context &c) noexcept
 			      false,
 			      c, c.cancel_ptr);
 
-	c.event_loop.Dispatch();
+	c.event_loop.Run();
 
 	assert(c.released);
 	assert(c.connection == nullptr);
@@ -1151,7 +1151,7 @@ test_close_request_body_eor(auto &factory, Context &c) noexcept
 			      false,
 			      c, c.cancel_ptr);
 
-	c.event_loop.Dispatch();
+	c.event_loop.Run();
 
 	assert(c.released);
 	assert(c.connection == nullptr);
@@ -1177,7 +1177,7 @@ test_close_request_body_eor2(auto &factory, Context &c) noexcept
 			      false,
 			      c, c.cancel_ptr);
 
-	c.event_loop.Dispatch();
+	c.event_loop.Run();
 
 	assert(c.released);
 	assert(c.connection == nullptr);
@@ -1207,7 +1207,7 @@ test_bogus_100(auto &factory, Context &c) noexcept
 			      c, c.cancel_ptr);
 
 
-	c.event_loop.Dispatch();
+	c.event_loop.Run();
 
 	assert(c.released);
 	assert(c.aborted);
@@ -1240,7 +1240,7 @@ test_twice_100(auto &factory, Context &c) noexcept
 			      false,
 			      c, c.cancel_ptr);
 
-	c.event_loop.Dispatch();
+	c.event_loop.Run();
 
 	assert(c.released);
 	assert(c.aborted);
@@ -1271,7 +1271,7 @@ test_close_100(auto &factory, Context &c) noexcept
 			      std::move(request_body.first), true,
 			      c, c.cancel_ptr);
 
-	c.event_loop.Dispatch();
+	c.event_loop.Run();
 
 	assert(c.released);
 	assert(c.aborted);
@@ -1301,7 +1301,7 @@ test_no_body_while_sending(auto &factory, Context &c) noexcept
 			      false,
 			      c, c.cancel_ptr);
 
-	c.event_loop.Dispatch();
+	c.event_loop.Run();
 
 	assert(c.released);
 	assert(c.status == HTTP_STATUS_NO_CONTENT);
@@ -1341,7 +1341,7 @@ test_hold(auto &factory, Context &c) noexcept
 	assert(c.body_data == 0);
 
 	c.CloseInput();
-	c.event_loop.Dispatch();
+	c.event_loop.Run();
 
 	assert(c.released);
 	assert(!c.HasInput());
@@ -1367,7 +1367,7 @@ test_premature_close_headers(auto &factory, Context &c) noexcept
 			      false,
 			      c, c.cancel_ptr);
 
-	c.event_loop.Dispatch();
+	c.event_loop.Run();
 
 	assert(c.released);
 	assert(c.status == 0);
@@ -1395,7 +1395,7 @@ test_premature_close_body(auto &factory, Context &c) noexcept
 			      false,
 			      c, c.cancel_ptr);
 
-	c.event_loop.Dispatch();
+	c.event_loop.Run();
 
 	assert(c.released);
 	assert(c.status == HTTP_STATUS_OK);
@@ -1457,7 +1457,7 @@ test_buckets(auto &factory, Context &c) noexcept
 			      false,
 			      c, c.cancel_ptr);
 
-	c.event_loop.Dispatch();
+	c.event_loop.Run();
 
 	assert(c.released);
 	assert(c.status == HTTP_STATUS_OK);
@@ -1485,7 +1485,7 @@ test_buckets_close(auto &factory, Context &c) noexcept
 			      false,
 			      c, c.cancel_ptr);
 
-	c.event_loop.Dispatch();
+	c.event_loop.Run();
 
 	assert(c.released);
 	assert(c.status == HTTP_STATUS_OK);
@@ -1514,7 +1514,7 @@ test_premature_end(auto &factory, Context &c) noexcept
 			      false,
 			      c, c.cancel_ptr);
 
-	c.event_loop.Dispatch();
+	c.event_loop.Run();
 
 	assert(c.released);
 	assert(c.status == HTTP_STATUS_OK);
@@ -1539,7 +1539,7 @@ test_excess_data(auto &factory, Context &c) noexcept
 			      false,
 			      c, c.cancel_ptr);
 
-	c.event_loop.Dispatch();
+	c.event_loop.Run();
 
 	assert(c.released);
 	assert(c.status == HTTP_STATUS_OK);
@@ -1564,7 +1564,7 @@ TestValidPremature(auto &factory, Context &c) noexcept
 			      false,
 			      c, c.cancel_ptr);
 
-	c.event_loop.Dispatch();
+	c.event_loop.Run();
 
 	assert(c.released);
 	assert(c.status == HTTP_STATUS_OK);
@@ -1588,7 +1588,7 @@ TestMalformedPremature(auto &factory, Context &c) noexcept
 			      false,
 			      c, c.cancel_ptr);
 
-	c.event_loop.Dispatch();
+	c.event_loop.Run();
 
 	assert(c.released);
 	assert(c.status == HTTP_STATUS_OK);
@@ -1671,7 +1671,7 @@ TestCloseWithFailedSocketGet(auto &factory, Context &c) noexcept
 	c.CloseInput();
 	c.defer_event.Cancel();
 
-	c.event_loop.Dispatch();
+	c.event_loop.Run();
 
 	assert(c.released);
 }
@@ -1697,7 +1697,7 @@ TestCloseWithFailedSocketPost(auto &factory, Context &c) noexcept
 	c.CloseInput();
 	c.defer_event.Cancel();
 
-	c.event_loop.Dispatch();
+	c.event_loop.Run();
 
 	assert(c.released);
 }

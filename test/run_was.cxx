@@ -247,7 +247,7 @@ try {
 			   params,
 			   context, context.cancel_ptr);
 
-	context.event_loop.Dispatch();
+	context.event_loop.Run();
 
 	return context.error;
 } catch (const std::exception &e) {

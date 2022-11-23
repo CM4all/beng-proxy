@@ -185,7 +185,7 @@ try {
 	Context ctx(zeroconf_interface,
 		    MakeZeroconfServiceType(zeroconf_service, "_tcp").c_str());
 
-	ctx.event_loop.Dispatch();
+	ctx.event_loop.Run();
 
 	return EXIT_SUCCESS;
 } catch (const std::exception &e) {

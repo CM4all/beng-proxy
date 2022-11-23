@@ -261,7 +261,7 @@ run_cache_test(Instance &instance, const Request &request, bool cached)
 			   defer_handler, cancel_ptr);
 
 	if (handler.IsAlive())
-		instance.event_loop.Dispatch();
+		instance.event_loop.Run();
 
 	ASSERT_NE(instance.resource_loader.got_request, cached);
 	ASSERT_FALSE(handler.IsAlive());

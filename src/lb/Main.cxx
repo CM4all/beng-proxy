@@ -244,7 +244,7 @@ try {
 	sd_notify(0, "READY=1");
 #endif
 
-	instance.event_loop.Dispatch();
+	instance.event_loop.Run();
 
 	/* cleanup */
 

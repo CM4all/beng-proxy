@@ -349,7 +349,7 @@ test_no_keepalive(auto &factory, Context &c) noexcept
 	assert(c.request_error == nullptr);
 
 	/* receive the rest of the response body from the buffer */
-	c.event_loop.Dispatch();
+	c.event_loop.Run();
 
 	assert(c.released);
 	assert(c.body_eof);
@@ -388,7 +388,7 @@ test_ignored_request_body(auto &factory, Context &c) noexcept
 	   the assertion failure: */
 	if (!abort_flag.aborted) {
 		delayed.second.Set(std::move(zero));
-		c.event_loop.Dispatch();
+		c.event_loop.Run();
 	}
 
 	assert(abort_flag.aborted);

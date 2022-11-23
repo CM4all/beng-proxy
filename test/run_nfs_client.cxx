@@ -266,7 +266,7 @@ main(int argc, char **argv)
 
 	/* run */
 
-	ctx.event_loop.Dispatch();
+	ctx.event_loop.Run();
 
 	assert(ctx.aborted || ctx.failed || ctx.connected);
 
