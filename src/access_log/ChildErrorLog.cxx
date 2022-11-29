@@ -77,7 +77,8 @@ ChildErrorLog::EnableClient(EventLoop &event_loop, SocketDescriptor socket,
 	r.SetNonBlocking();
 
 	adapter = std::make_unique<Net::Log::PipeAdapter>(event_loop, std::move(r),
-							  socket);
+							  socket,
+							  Net::Log::Type::HTTP_ERROR);
 	if (options.rate_limit > 0)
 		adapter->SetRateLimit(options.rate_limit, options.burst);
 	return w;
