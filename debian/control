@@ -4,7 +4,7 @@ Priority: optional
 Maintainer: Max Kellermann <mk@cm4all.com>
 Build-Depends: debhelper (>= 13.3~), dh-python,
  python3,
- meson (>= 0.55),
+ meson (>= 0.56),
  g++ (>= 4:10.2),
  libc6-dev (>= 2.28),
  libsystemd-dev, libdbus-1-dev,
