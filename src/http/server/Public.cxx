@@ -58,7 +58,7 @@ HttpServerConnection::Log() noexcept
 
 	logger->LogHttpRequest(r,
 			       response.status,
-			       response.length,
+			       response.status != http_status_t{} ? response.length : -1,
 			       request.bytes_received,
 			       response.bytes_sent);
 }
