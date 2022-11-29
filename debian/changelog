@@ -3,7 +3,7 @@ cm4all-beng-proxy (17.8) unstable; urgency=low
   * http_server, nghttp2: log cancelled HTTP requests
   * nghttp2: drop response body of HEAD requests
   * access_log: support lines without HTTP status
-  * access_log: set type=HTTP_ACCESS
+  * access_log: set type=HTTP_ACCESS/HTTP_ERROR
   * access_log: print placeholder "-" if there is no length
   * access_log: fix several datagram parser crash bugs
 
