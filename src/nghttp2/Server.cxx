@@ -425,6 +425,9 @@ ServerConnection::Request::SendResponse(http_status_t status,
 			hdrs.push_back(MakeNv("content-length",
 					      content_length_string));
 		}
+
+		if (http_method_is_empty(method))
+			_response_body.Clear();
 	}
 
 	for (const auto &i : std::move(response_headers).ToMap(AllocatorPtr{pool})) {
