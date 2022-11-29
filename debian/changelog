@@ -2,6 +2,7 @@ cm4all-beng-proxy (18.0.7) unstable; urgency=low
 
   * spawn: support MOUNT_HOME inside MOUNT_EMPTY
   * translation: add packet AUTHORIZED_KEYS
+  * access_log: support lines without HTTP status
 
  --   
 
