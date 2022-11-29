@@ -149,7 +149,7 @@ public:
 			request_body_control = nullptr;
 		}
 
-		if (logger != nullptr && the_status != http_status_t{}) {
+		if (logger != nullptr) {
 			int64_t length = -1;
 			if (response_body)
 				length = response_body->GetTransmitted();

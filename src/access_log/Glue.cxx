@@ -104,7 +104,7 @@ AccessLogGlue::Log(std::chrono::system_clock::time_point now,
 		   std::chrono::steady_clock::duration duration) noexcept
 {
 	assert(http_method_is_valid(request.method));
-	assert(http_status_is_valid(status));
+	assert(status == http_status_t{} || http_status_is_valid(status));
 
 	const char *remote_host = request.remote_host;
 	std::string buffer;

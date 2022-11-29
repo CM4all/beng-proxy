@@ -372,8 +372,7 @@ HttpServerConnection::CloseRequest() noexcept
 	assert(request.read_state != Request::START);
 	assert(request.request != nullptr);
 
-	if (response.status != http_status_t(0))
-		Log();
+	Log();
 
 	auto *_request = std::exchange(request.request, nullptr);
 
