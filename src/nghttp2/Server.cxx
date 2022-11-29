@@ -118,6 +118,15 @@ public:
 			request_body_control->DestroyError(std::make_exception_ptr(std::runtime_error("Canceled")));
 		}
 
+		if (logger != nullptr && (method != HTTP_METHOD_NULL || uri != nullptr)) {
+			int64_t length = -1;
+			if (response_body)
+				length = response_body->GetTransmitted();
+
+			logger->LogHttpRequest(*this, the_status, length,
+					       /* TODO: */ 0, length);
+		}
+
 		if (cancel_ptr)
 			cancel_ptr.Cancel();
 	}
@@ -147,15 +156,6 @@ public:
 							nghttp2_http2_strerror(error_code));
 			request_body_control->DestroyError(std::make_exception_ptr(std::move(error)));
 			request_body_control = nullptr;
-		}
-
-		if (logger != nullptr) {
-			int64_t length = -1;
-			if (response_body)
-				length = response_body->GetTransmitted();
-
-			logger->LogHttpRequest(*this, the_status, length,
-					       /* TODO: */ 0, length);
 		}
 
 		Destroy();
