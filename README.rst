@@ -24,7 +24,7 @@ You need:
 - `systemd <https://www.freedesktop.org/wiki/Software/systemd/>`__
 - `OpenSSL <https://www.openssl.org/>`__
 - `libsodium <https://www.libsodium.org/>`__
-- `Meson 0.47 <http://mesonbuild.com/>`__ and `Ninja <https://ninja-build.org/>`__
+- `Meson 0.56 <http://mesonbuild.com/>`__ and `Ninja <https://ninja-build.org/>`__
 
 Optional dependencies:
 
