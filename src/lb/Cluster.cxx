@@ -145,7 +145,7 @@ LbCluster::LbCluster(const LbClusterConfig &_config,
 
 	static_members.reserve(config.members.size());
 
-	const unsigned default_port = GetDefaultPort(config.protocol);
+	const unsigned default_port = config.GetDefaultPort();
 	for (const auto &member : config.members) {
 		AllocatedSocketAddress address(member.node->address);
 		if (member.port > 0)

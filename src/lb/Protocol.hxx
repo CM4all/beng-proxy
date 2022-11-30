@@ -52,21 +52,3 @@ NeedsPort(LbProtocol protocol) noexcept
 
 	return false;
 }
-
-/**
- * Returns the default port number for the given protocol or 0 if
- * there is no sensible default.
- */
-constexpr unsigned
-GetDefaultPort(LbProtocol protocol) noexcept
-{
-	switch (protocol) {
-	case LbProtocol::HTTP:
-		return 80;
-
-	case LbProtocol::TCP:
-		break;
-	}
-
-	return 0;
-}

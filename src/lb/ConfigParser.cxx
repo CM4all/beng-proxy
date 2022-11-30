@@ -731,7 +731,7 @@ LbConfigParser::Cluster::Finish()
 	if (config.members.empty() && !config.HasZeroConf())
 		throw LineParser::Error("Pool has no members");
 
-	if (NeedsPort(config.protocol) && GetDefaultPort(config.protocol) == 0) {
+	if (NeedsPort(config.protocol) && config.GetDefaultPort() == 0) {
 		/* this protocol has no default port - all members
 		   must have a port */
 		for (const auto &i : config.members) {

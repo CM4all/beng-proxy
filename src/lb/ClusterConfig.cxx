@@ -41,7 +41,7 @@ LbClusterConfig::FillAddressList()
 
 	address_list_allocation = std::make_unique<SocketAddress[]>(members.size());
 
-	const unsigned default_port = GetDefaultPort(protocol);
+	const unsigned default_port = GetDefaultPort();
 
 	auto *p = address_list_allocation.get();
 	for (auto &member : members) {

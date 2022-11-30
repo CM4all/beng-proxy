@@ -165,6 +165,22 @@ struct LbClusterConfig {
 	[[gnu::pure]]
 	int FindJVMRoute(std::string_view jvm_route) const noexcept;
 
+	/**
+	 * Returns the default port number for this cluster based on
+	 * the configuration or 0 if there is no sensible default.
+	 */
+	unsigned GetDefaultPort() const noexcept {
+		switch (protocol) {
+		case LbProtocol::HTTP:
+			return 80;
+
+		case LbProtocol::TCP:
+			break;
+		}
+
+		return 0;
+	}
+
 	bool HasZeroConf() const noexcept {
 #ifdef HAVE_AVAHI
 		return !zeroconf_service.empty();
