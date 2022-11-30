@@ -659,7 +659,7 @@ FilterCache::FilterCache(struct pool &_pool, size_t max_size,
 	 /* leave 12.5% of the rubber allocator empty, to increase the
 	    chances that a hole can be found for a new allocation, to
 	    reduce the pressure that rubber_compress() creates */
-	 cache(_event_loop, 65521, max_size * 7 / 8),
+	 cache(_event_loop, max_size * 7 / 8),
 	 compress_timer(_event_loop, BIND_THIS_METHOD(OnCompressTimer)),
 	 resource_loader(_resource_loader) {
 	compress_timer.Schedule(fcache_compress_interval);

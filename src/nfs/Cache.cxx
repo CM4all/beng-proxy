@@ -393,7 +393,7 @@ NfsCache::NfsCache(struct pool &_pool, size_t max_size,
 	 stock(_stock),
 	 event_loop(_event_loop),
 	 rubber(max_size, "nfs_cache_rubber"),
-	 cache(event_loop, 65521, max_size * 7 / 8),
+	 cache(event_loop, max_size * 7 / 8),
 	 compress_timer(event_loop, BIND_THIS_METHOD(OnCompressTimer)) {
 	compress_timer.Schedule(nfs_cache_compress_interval);
 }

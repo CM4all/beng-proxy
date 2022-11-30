@@ -1542,7 +1542,7 @@ tcache::tcache(struct pool &_pool, EventLoop &event_loop,
 	 slice_pool(4096, 32768, "translate_cache"),
 	 per_host(PerHostSet::bucket_traits(per_host_buckets, N_BUCKETS)),
 	 per_site(PerSiteSet::bucket_traits(per_site_buckets, N_BUCKETS)),
-	 cache(event_loop, 65521, max_size),
+	 cache(event_loop, max_size),
 	 next(_next), active(handshake_cacheable)
 {
 	assert(max_size > 0);

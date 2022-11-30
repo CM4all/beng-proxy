@@ -91,7 +91,7 @@ TEST(TranslationCache, Basic)
 
 	PInstance instance;
 
-	Cache cache(instance.event_loop, 1024, 4);
+	Cache cache(instance.event_loop, 4);
 
 	/* add first item */
 

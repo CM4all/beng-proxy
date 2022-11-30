@@ -33,9 +33,8 @@
 #pragma once
 
 #include "event/CleanupTimer.hxx"
-
-#include <boost/intrusive/list.hpp>
-#include <boost/intrusive/unordered_set.hpp>
+#include "util/IntrusiveHashSet.hxx"
+#include "util/IntrusiveList.hxx"
 
 #include <chrono>
 #include <memory>
@@ -47,17 +46,12 @@ class EventLoop;
 class CacheItem {
 	friend class Cache;
 
-	using LinkMode =
-		boost::intrusive::link_mode<boost::intrusive::normal_link>;
-	using SiblingsHook = boost::intrusive::list_member_hook<LinkMode>;
-	using SetHook = boost::intrusive::unordered_set_member_hook<LinkMode>;
-
 	/**
 	 * This item's siblings, sorted by #last_accessed.
 	 */
-	SiblingsHook sorted_siblings;
+	IntrusiveListHook<IntrusiveHookMode::NORMAL> sorted_siblings;
 
-	SetHook set_hook;
+	IntrusiveHashSetHook<IntrusiveHookMode::NORMAL> set_hook;
 
 	/**
 	 * The key under which this item is stored in the hash table.
@@ -149,12 +143,23 @@ public:
 
 	struct Hash {
 		[[gnu::pure]]
+		size_t operator()(const char *_key) const noexcept {
+			return KeyHasher(_key);
+		}
+
+		[[gnu::pure]]
 		size_t operator()(const CacheItem &value) const noexcept {
 			return ValueHasher(value);
 		}
 	};
 
 	struct Equal {
+		[[gnu::pure]]
+		bool operator()(const char *a,
+				const CacheItem &b) const noexcept {
+			return KeyValueEqual(a, b);
+		}
+
 		[[gnu::pure]]
 		bool operator()(const CacheItem &a,
 				const CacheItem &b) const noexcept {
@@ -167,16 +172,9 @@ class Cache {
 	const size_t max_size;
 	size_t size = 0;
 
-	using ItemSet =
-		boost::intrusive::unordered_multiset<CacheItem,
-						     boost::intrusive::member_hook<CacheItem,
-										   CacheItem::SetHook,
-										   &CacheItem::set_hook>,
-						     boost::intrusive::hash<CacheItem::Hash>,
-						     boost::intrusive::equal<CacheItem::Equal>,
-						     boost::intrusive::constant_time_size<false>>;
-
-	std::unique_ptr<ItemSet::bucket_type[]> buckets;
+	using ItemSet = IntrusiveHashSet<CacheItem, 65521,
+					 CacheItem::Hash, CacheItem::Equal,
+					 IntrusiveHashSetMemberHookTraits<&CacheItem::set_hook>>;
 
 	ItemSet items;
 
@@ -184,17 +182,13 @@ class Cache {
 	 * A linked list of all cache items, sorted by last_accessed,
 	 * oldest first.
 	 */
-	boost::intrusive::list<CacheItem,
-			       boost::intrusive::member_hook<CacheItem,
-							     CacheItem::SiblingsHook,
-							     &CacheItem::sorted_siblings>,
-			       boost::intrusive::constant_time_size<false>> sorted_items;
+	IntrusiveList<CacheItem,
+		      IntrusiveListMemberHookTraits<&CacheItem::sorted_siblings>> sorted_items;
 
 	CleanupTimer cleanup_timer;
 
 public:
-	Cache(EventLoop &event_loop,
-	      unsigned hashtable_capacity, size_t _max_size) noexcept;
+	Cache(EventLoop &event_loop, size_t _max_size) noexcept;
 
 	~Cache() noexcept;
 

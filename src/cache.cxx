@@ -64,10 +64,8 @@ CacheItem::Release() noexcept
 }
 
 Cache::Cache(EventLoop &event_loop,
-	     unsigned hashtable_capacity, size_t _max_size) noexcept
+	     size_t _max_size) noexcept
 	:max_size(_max_size),
-	 buckets(new ItemSet::bucket_type[hashtable_capacity]),
-	 items(ItemSet::bucket_traits(buckets.get(), hashtable_capacity)),
 	 cleanup_timer(event_loop, std::chrono::minutes(1),
 		       BIND_THIS_METHOD(ExpireCallback)) {}
 
@@ -148,7 +146,7 @@ Cache::RemoveItem(CacheItem &item) noexcept
 CacheItem *
 Cache::Get(const char *key) noexcept
 {
-	auto i = items.find(key, CacheItem::KeyHasher, CacheItem::KeyValueEqual);
+	auto i = items.find(key);
 	if (i == items.end())
 		return nullptr;
 
@@ -172,24 +170,20 @@ Cache::GetMatch(const char *key,
 {
 	const auto now = SteadyNow();
 
-	const auto r = items.equal_range(key, CacheItem::KeyHasher,
-					 CacheItem::KeyValueEqual);
-	for (auto i = r.first, end = r.second; i != end;) {
-		CacheItem *item = &*i++;
+	auto i = items.expire_find_if(key, [now](const auto &item){
+		return !item.Validate(now);
+	}, [this](auto *item){
+		RemoveItem(*item);
+	}, [match, ctx](const auto &item){
+		return match(&item, ctx);
+	});
 
-		if (!item->Validate(now)) {
-			/* expired cache item: delete it, and re-start the
-			   search */
+	if (i == items.end())
+		return nullptr;
 
-			RemoveItem(*item);
-		} else if (match(item, ctx)) {
-			/* this one matches: return it to the caller */
-			RefreshItem(*item, now);
-			return item;
-		}
-	};
-
-	return nullptr;
+	/* this one matches: return it to the caller */
+	RefreshItem(*i, now);
+	return &*i;
 }
 
 void
@@ -252,8 +246,7 @@ Cache::Put(const char *key, CacheItem &item) noexcept
 
 	item.key = key;
 
-	auto i = items.find(key, CacheItem::KeyHasher,
-			    CacheItem::KeyValueEqual);
+	auto i = items.find(key);
 	if (i != items.end())
 		RemoveItem(*i);
 
@@ -286,11 +279,10 @@ Cache::PutMatch(const char *key, CacheItem &item,
 void
 Cache::Remove(const char *key) noexcept
 {
-	items.erase_and_dispose(key, CacheItem::KeyHasher,
-				CacheItem::KeyValueEqual,
-				[this](CacheItem *item){
-					ItemRemoved(item);
-				});
+	items.remove_and_dispose_if(key, [](auto &){ return true; },
+				    [this](CacheItem *item){
+					    ItemRemoved(item);
+				    });
 }
 
 void
@@ -298,14 +290,11 @@ Cache::RemoveMatch(const char *key,
 		   bool (*match)(const CacheItem *, void *),
 		   void *ctx) noexcept
 {
-	const auto r = items.equal_range(key, CacheItem::KeyHasher,
-					 CacheItem::KeyValueEqual);
-	for (auto i = r.first, end = r.second; i != end;) {
-		CacheItem &item = *i++;
-
-		if (match(&item, ctx))
-			RemoveItem(item);
-	}
+	items.remove_and_dispose_if(key, [match, ctx](const CacheItem &item){
+		return match(&item, ctx);
+	}, [this](CacheItem *item){
+		ItemRemoved(item);
+	});
 }
 
 void
