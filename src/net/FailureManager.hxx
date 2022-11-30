@@ -33,8 +33,7 @@
 #pragma once
 
 #include "FailureStatus.hxx"
-
-#include <boost/intrusive/unordered_set.hpp>
+#include "util/IntrusiveHashSet.hxx"
 
 class Expiry;
 class SocketAddress;
@@ -65,22 +64,14 @@ class FailureManager {
 				const Failure &b) const noexcept;
 	};
 
-	typedef boost::intrusive::unordered_set<Failure,
-						boost::intrusive::base_hook<boost::intrusive::unordered_set_base_hook<boost::intrusive::link_mode<boost::intrusive::normal_link>>>,
-						boost::intrusive::hash<Hash>,
-						boost::intrusive::equal<Equal>,
-						boost::intrusive::constant_time_size<false>> FailureSet;
-
 	static constexpr size_t N_BUCKETS = 97;
 
-	FailureSet::bucket_type buckets[N_BUCKETS];
+	using FailureSet = IntrusiveHashSet<Failure, N_BUCKETS, Hash, Equal>;
 
 	FailureSet failures;
 
 public:
-	FailureManager() noexcept
-		:failures(FailureSet::bucket_traits(buckets, N_BUCKETS)) {}
-
+	FailureManager() noexcept;
 	~FailureManager() noexcept;
 
 	FailureManager(const FailureManager &) = delete;

@@ -40,7 +40,7 @@
 #include <assert.h>
 
 class FailureManager::Failure final
-	: public boost::intrusive::unordered_set_base_hook<boost::intrusive::link_mode<boost::intrusive::normal_link>>,
+	: public IntrusiveHashSetHook<IntrusiveHookMode::NORMAL>,
 	  LeakDetector,
 	  public ReferencedFailureInfo {
 
@@ -88,6 +88,8 @@ FailureManager::Equal::operator()(const SocketAddress a,
 	return a == b.GetAddress();
 }
 
+FailureManager::FailureManager() noexcept = default;
+
 FailureManager::~FailureManager() noexcept
 {
 	failures.clear_and_dispose(Failure::UnrefDisposer());
@@ -98,14 +100,13 @@ FailureManager::Make(SocketAddress address) noexcept
 {
 	assert(!address.IsNull());
 
-	FailureSet::insert_commit_data hint;
-	auto result = failures.insert_check(address, Hash(), Equal(), hint);
-	if (result.second) {
+	auto [position, inserted] = failures.insert_check(address);
+	if (inserted) {
 		Failure *failure = new Failure(address);
-		failures.insert_commit(*failure, hint);
+		failures.insert(position, *failure);
 		return *failure;
 	} else {
-		return *result.first;
+		return *position;
 	}
 }
 
@@ -121,7 +122,7 @@ FailureManager::Get(const Expiry now, SocketAddress address) const noexcept
 {
 	assert(!address.IsNull());
 
-	auto i = failures.find(address, Hash(), Equal());
+	auto i = failures.find(address);
 	if (i == failures.end())
 		return FailureStatus::OK;
 
@@ -134,7 +135,7 @@ FailureManager::Check(const Expiry now, SocketAddress address,
 {
 	assert(!address.IsNull());
 
-	auto i = failures.find(address, Hash(), Equal());
+	auto i = failures.find(address);
 	if (i == failures.end())
 		return true;
 
