@@ -50,7 +50,7 @@ public:
 		:ForwardIstream(p, std::move(_input)),
 		 control(SharedPoolPtr<OptionalIstreamControl>::Make(p, *this)) {}
 
-	~OptionalIstream() noexcept {
+	~OptionalIstream() noexcept override {
 		control->optional = nullptr;
 	}
 

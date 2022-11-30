@@ -81,7 +81,7 @@ public:
 		 offset(start), remaining(end - start),
 		 buffer(nullptr) {}
 
-	~NfsIstream() noexcept {
+	~NfsIstream() noexcept override {
 		if (handle != nullptr)
 			nfs_client_close_file(*handle);
 	}

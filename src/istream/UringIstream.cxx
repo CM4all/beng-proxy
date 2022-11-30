@@ -112,7 +112,7 @@ public:
 	{
 	}
 
-	~UringIstream() noexcept;
+	~UringIstream() noexcept override;
 
 private:
 	gcc_pure

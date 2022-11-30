@@ -52,7 +52,7 @@ public:
 		 control(SharedPoolPtr<PauseIstreamControl>::Make(p, *this)),
 		 defer_read(event_loop, BIND_THIS_METHOD(DeferredRead)) {}
 
-	~PauseIstream() noexcept {
+	~PauseIstream() noexcept override {
 		control->pause = nullptr;
 	}
 

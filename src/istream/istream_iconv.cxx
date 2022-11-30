@@ -57,7 +57,7 @@ public:
 	{
 	}
 
-	~IconvIstream() noexcept {
+	~IconvIstream() noexcept override {
 		iconv_close(iconv);
 	}
 

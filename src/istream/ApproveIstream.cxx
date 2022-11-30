@@ -52,7 +52,7 @@ public:
 		 control(SharedPoolPtr<ApproveIstreamControl>::Make(p, *this)),
 		 defer_read(event_loop, BIND_THIS_METHOD(DeferredRead)) {}
 
-	~ApproveIstream() noexcept {
+	~ApproveIstream() noexcept override {
 		control->approve = nullptr;
 	}
 

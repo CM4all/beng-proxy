@@ -58,7 +58,7 @@ public:
 			 TranslationService &next,
 			 unsigned max_size, bool handshake_cacheable=true);
 
-	~TranslationCache() noexcept;
+	~TranslationCache() noexcept override;
 
 	void ForkCow(bool inherit) noexcept;
 
