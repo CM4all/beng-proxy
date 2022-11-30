@@ -36,7 +36,6 @@
 #include "event/net/ConnectSocket.hxx"
 #include "event/CoarseTimerEvent.hxx"
 #include "event/DeferEvent.hxx"
-#include "net/IPv4Address.hxx"
 #include "net/SocketAddress.hxx"
 #include "net/SocketProtocolError.hxx"
 #include "net/TimeoutError.hxx"
@@ -158,8 +157,7 @@ try {
 		throw MakeErrno("Failed to set IP_TRANSPARENT");
 
 	if (!bind_address.IsNull() && bind_address.IsDefined()) {
-		if (bind_address.GetFamily() == AF_INET &&
-		    IPv4Address::Cast(bind_address).GetPort() == 0)
+		if (bind_address.HasPort() && bind_address.GetPort() == 0)
 			/* delay port allocation to avoid running out
 			   of ports (EADDRINUSE) */
 			fd.SetBoolOption(SOL_IP, IP_BIND_ADDRESS_NO_PORT,
