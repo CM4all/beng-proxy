@@ -1,11 +1,2 @@
-.stgit*
-*~
-
-*.pyo
-*.pyc
-
 /output
 /obj-*/
-
-/.clangd/
-/compile_commands.json
