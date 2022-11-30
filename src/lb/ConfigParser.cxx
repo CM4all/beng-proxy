@@ -38,6 +38,7 @@
 #include "io/config/ConfigParser.hxx"
 #include "net/Parser.hxx"
 #include "net/AddressInfo.hxx"
+#include "util/StringAPI.hxx"
 #include "util/StringCompare.hxx"
 #include "util/CharUtil.hxx"
 #include "util/RuntimeError.hxx"
@@ -242,14 +243,14 @@ LbConfigParser::Control::ParseLine(FileLineParser &line)
 {
 	const char *word = line.ExpectWord();
 
-	if (strcmp(word, "bind") == 0) {
+	if (StringIsEqual(word, "bind")) {
 		const char *address = line.ExpectValueAndEnd();
 
 		config.bind_address = ParseSocketAddress(address, 5478, true);
-	} else if (strcmp(word, "multicast_group") == 0) {
+	} else if (StringIsEqual(word, "multicast_group")) {
 		config.multicast_group = ParseSocketAddress(line.ExpectValueAndEnd(),
 							    0, false);
-	} else if (strcmp(word, "interface") == 0) {
+	} else if (StringIsEqual(word, "interface")) {
 		config.interface = line.ExpectValueAndEnd();
 	} else
 		throw LineParser::Error("Unknown option");
@@ -292,7 +293,7 @@ LbConfigParser::CertDatabase::ParseLine(FileLineParser &line)
 	const char *word = line.ExpectWord();
 
 	if (config.ParseLine(word, line)) {
-	} else if (strcmp(word, "ca_cert") == 0) {
+	} else if (StringIsEqual(word, "ca_cert")) {
 		config.ca_certs.emplace_back(line.ExpectValueAndEnd());
 	} else
 		throw std::runtime_error("Unknown option");
@@ -325,30 +326,30 @@ LbConfigParser::Monitor::ParseLine(FileLineParser &line)
 {
 	const char *word = line.ExpectWord();
 
-	if (strcmp(word, "type") == 0) {
+	if (StringIsEqual(word, "type")) {
 		if (config.type != LbMonitorConfig::Type::NONE)
 			throw LineParser::Error("Monitor type already specified");
 
 		const char *value = line.ExpectValueAndEnd();
-		if (strcmp(value, "none") == 0)
+		if (StringIsEqual(value, "none"))
 			config.type = LbMonitorConfig::Type::NONE;
-		else if (strcmp(value, "ping") == 0)
+		else if (StringIsEqual(value, "ping"))
 			config.type = LbMonitorConfig::Type::PING;
-		else if (strcmp(value, "connect") == 0)
+		else if (StringIsEqual(value, "connect"))
 			config.type = LbMonitorConfig::Type::CONNECT;
-		else if (strcmp(value, "tcp_expect") == 0)
+		else if (StringIsEqual(value, "tcp_expect"))
 			config.type = LbMonitorConfig::Type::TCP_EXPECT;
 		else
 			throw LineParser::Error("Unknown monitor type");
-	} else if (strcmp(word, "interval") == 0) {
+	} else if (StringIsEqual(word, "interval")) {
 		config.interval = std::chrono::seconds(line.NextPositiveInteger());
-	} else if (strcmp(word, "timeout") == 0) {
+	} else if (StringIsEqual(word, "timeout")) {
 		config.timeout = std::chrono::seconds(line.NextPositiveInteger());
 	} else if (config.type == LbMonitorConfig::Type::TCP_EXPECT &&
-		   strcmp(word, "connect_timeout") == 0) {
+		   StringIsEqual(word, "connect_timeout")) {
 		config.connect_timeout = std::chrono::seconds(line.NextPositiveInteger());
 	} else if (config.type == LbMonitorConfig::Type::TCP_EXPECT &&
-		   strcmp(word, "send") == 0) {
+		   StringIsEqual(word, "send")) {
 		const char *value = line.NextUnescape();
 		if (value == nullptr)
 			throw LineParser::Error("String value expected");
@@ -357,7 +358,7 @@ LbConfigParser::Monitor::ParseLine(FileLineParser &line)
 
 		config.send = value;
 	} else if (config.type == LbMonitorConfig::Type::TCP_EXPECT &&
-		   strcmp(word, "expect") == 0) {
+		   StringIsEqual(word, "expect")) {
 		const char *value = line.NextUnescape();
 		if (value == nullptr)
 			throw LineParser::Error("String value expected");
@@ -366,7 +367,7 @@ LbConfigParser::Monitor::ParseLine(FileLineParser &line)
 
 		config.expect = value;
 	} else if (config.type == LbMonitorConfig::Type::TCP_EXPECT &&
-		   strcmp(word, "expect_graceful") == 0) {
+		   StringIsEqual(word, "expect_graceful")) {
 		const char *value = line.NextUnescape();
 		if (value == nullptr)
 			throw LineParser::Error("String value expected");
@@ -407,14 +408,14 @@ LbConfigParser::Node::ParseLine(FileLineParser &line)
 {
 	const char *word = line.ExpectWord();
 
-	if (strcmp(word, "address") == 0) {
+	if (StringIsEqual(word, "address")) {
 		if (!config.address.IsNull())
 			throw LineParser::Error("Duplicate node address");
 
 		const char *value = line.ExpectValueAndEnd();
 
 		config.address = ParseSocketAddress(value, 80, false);
-	} else if (strcmp(word, "jvm_route") == 0) {
+	} else if (StringIsEqual(word, "jvm_route")) {
 		if (!config.jvm_route.empty())
 			throw LineParser::Error("Duplicate jvm_route");
 
@@ -534,21 +535,21 @@ ValidateZeroconfSticky(StickyMode sticky) noexcept
 static StickyMode
 ParseStickyMode(const char *s)
 {
-	if (strcmp(s, "none") == 0)
+	if (StringIsEqual(s, "none"))
 		return StickyMode::NONE;
-	else if (strcmp(s, "failover") == 0)
+	else if (StringIsEqual(s, "failover"))
 		return StickyMode::FAILOVER;
-	else if (strcmp(s, "source_ip") == 0)
+	else if (StringIsEqual(s, "source_ip"))
 		return StickyMode::SOURCE_IP;
-	else if (strcmp(s, "host") == 0)
+	else if (StringIsEqual(s, "host"))
 		return StickyMode::HOST;
-	else if (strcmp(s, "xhost") == 0)
+	else if (StringIsEqual(s, "xhost"))
 		return StickyMode::XHOST;
-	else if (strcmp(s, "session_modulo") == 0)
+	else if (StringIsEqual(s, "session_modulo"))
 		return StickyMode::SESSION_MODULO;
-	else if (strcmp(s, "cookie") == 0)
+	else if (StringIsEqual(s, "cookie"))
 		return StickyMode::COOKIE;
-	else if (strcmp(s, "jvm_route") == 0)
+	else if (StringIsEqual(s, "jvm_route"))
 		return StickyMode::JVM_ROUTE;
 	else
 		throw LineParser::Error("Unknown sticky mode");
@@ -559,27 +560,27 @@ LbConfigParser::Cluster::ParseLine(FileLineParser &line)
 {
 	const char *word = line.ExpectWord();
 
-	if (strcmp(word, "name") == 0) {
+	if (StringIsEqual(word, "name")) {
 		config.name = line.ExpectValueAndEnd();
-	} else if (strcmp(word, "sticky") == 0) {
+	} else if (StringIsEqual(word, "sticky")) {
 		config.sticky_mode = ParseStickyMode(line.ExpectValueAndEnd());
-	} else if (strcmp(word, "sticky_cache") == 0) {
+	} else if (StringIsEqual(word, "sticky_cache")) {
 #ifdef HAVE_AVAHI
 		config.sticky_cache = line.NextBool();
 		line.ExpectEnd();
 #else
 		throw LineParser::Error("Zeroconf support is disabled at compile time");
 #endif
-	} else if (strcmp(word, "session_cookie") == 0) {
+	} else if (StringIsEqual(word, "session_cookie")) {
 		config.session_cookie = line.ExpectValueAndEnd();
-	} else if (strcmp(word, "monitor") == 0) {
+	} else if (StringIsEqual(word, "monitor")) {
 		if (config.monitor != nullptr)
 			throw LineParser::Error("Monitor already specified");
 
 		config.monitor = parent.config.FindMonitor(line.ExpectValueAndEnd());
 		if (config.monitor == nullptr)
 			throw LineParser::Error("No such monitor");
-	} else if (strcmp(word, "member") == 0) {
+	} else if (StringIsEqual(word, "member")) {
 #ifdef HAVE_AVAHI
 		if (!config.zeroconf_service.empty() ||
 		    !config.zeroconf_domain.empty())
@@ -621,7 +622,7 @@ LbConfigParser::Cluster::ParseLine(FileLineParser &line)
 				   name, auto-create a new node */
 				parent.AutoCreateMember(*member, name);
 		}
-	} else if (strcmp(word, "zeroconf_service") == 0) {
+	} else if (StringIsEqual(word, "zeroconf_service")) {
 #ifdef HAVE_AVAHI
 		if (!config.members.empty())
 			throw LineParser::Error("Cannot configure both hard-coded members and Zeroconf");
@@ -634,7 +635,7 @@ LbConfigParser::Cluster::ParseLine(FileLineParser &line)
 #else
 		throw LineParser::Error("Zeroconf support is disabled at compile time");
 #endif
-	} else if (strcmp(word, "zeroconf_domain") == 0) {
+	} else if (StringIsEqual(word, "zeroconf_domain")) {
 #ifdef HAVE_AVAHI
 		if (!config.members.empty())
 			throw LineParser::Error("Cannot configure both hard-coded members and Zeroconf");
@@ -646,7 +647,7 @@ LbConfigParser::Cluster::ParseLine(FileLineParser &line)
 #else
 		throw LineParser::Error("Zeroconf support is disabled at compile time");
 #endif
-	} else if (strcmp(word, "zeroconf_interface") == 0) {
+	} else if (StringIsEqual(word, "zeroconf_interface")) {
 #ifdef HAVE_AVAHI
 		if (config.zeroconf_service.empty())
 			throw LineParser::Error("zeroconf_interface without zeroconf_service");
@@ -658,31 +659,31 @@ LbConfigParser::Cluster::ParseLine(FileLineParser &line)
 #else
 		throw LineParser::Error("Zeroconf support is disabled at compile time");
 #endif
-	} else if (strcmp(word, "protocol") == 0) {
+	} else if (StringIsEqual(word, "protocol")) {
 		const char *protocol = line.ExpectValueAndEnd();
-		if (strcmp(protocol, "http") == 0)
+		if (StringIsEqual(protocol, "http"))
 			config.protocol = LbProtocol::HTTP;
-		else if (strcmp(protocol, "tcp") == 0)
+		else if (StringIsEqual(protocol, "tcp"))
 			config.protocol = LbProtocol::TCP;
 		else
 			throw LineParser::Error("Unknown protocol");
-	} else if (strcmp(word, "fair_scheduling") == 0) {
+	} else if (StringIsEqual(word, "fair_scheduling")) {
 		config.fair_scheduling = line.NextBool();
 		line.ExpectEnd();
-	} else if (strcmp(word, "tarpit") == 0) {
+	} else if (StringIsEqual(word, "tarpit")) {
 		config.tarpit = line.NextBool();
 		line.ExpectEnd();
-	} else if (strcmp(word, "source_address") == 0) {
+	} else if (StringIsEqual(word, "source_address")) {
 		const char *address = line.ExpectValueAndEnd();
 		if (strcmp(address, "transparent") != 0)
 			throw LineParser::Error("\"transparent\" expected");
 
 		config.transparent_source = true;
-	} else if (strcmp(word, "mangle_via") == 0) {
+	} else if (StringIsEqual(word, "mangle_via")) {
 		config.mangle_via = line.NextBool();
 
 		line.ExpectEnd();
-	} else if (strcmp(word, "fallback") == 0) {
+	} else if (StringIsEqual(word, "fallback")) {
 		if (config.fallback.IsDefined())
 			throw LineParser::Error("Duplicate fallback");
 
@@ -766,11 +767,11 @@ LbConfigParser::CreateCluster(FileLineParser &line)
 static LbAttributeReference
 ParseAttributeReference(const char *p)
 {
-	if (strcmp(p, "request_method") == 0) {
+	if (StringIsEqual(p, "request_method")) {
 		return LbAttributeReference::Type::METHOD;
-	} else if (strcmp(p, "request_uri") == 0) {
+	} else if (StringIsEqual(p, "request_uri")) {
 		return LbAttributeReference::Type::URI;
-	} else if (strcmp(p, "remote_address") == 0) {
+	} else if (StringIsEqual(p, "remote_address")) {
 		return LbAttributeReference::Type::REMOTE_ADDRESS;
 	} else if (auto header = StringAfterPrefix(p, "http_")) {
 		LbAttributeReference a(LbAttributeReference::Type::HEADER, header);
@@ -900,7 +901,7 @@ LbConfigParser::Branch::ParseLine(FileLineParser &line)
 {
 	const char *word = line.ExpectWord();
 
-	if (strcmp(word, "goto") == 0) {
+	if (StringIsEqual(word, "goto")) {
 		const char *name = line.ExpectValue();
 
 		LbGotoConfig destination = parent.config.FindGoto(name);
@@ -908,17 +909,17 @@ LbConfigParser::Branch::ParseLine(FileLineParser &line)
 			throw LineParser::Error("No such pool");
 
 		AddGoto(std::move(destination), line);
-	} else if (strcmp(word, "status") == 0) {
+	} else if (StringIsEqual(word, "status")) {
 		const auto status = ParseStatus(line.ExpectValue());
 		LbGotoConfig destination(status);
 
 		AddGoto(std::move(destination), line);
-	} else if (strcmp(word, "redirect") == 0) {
+	} else if (StringIsEqual(word, "redirect")) {
 		LbGotoConfig destination(HTTP_STATUS_FOUND);
 		std::get<LbSimpleHttpResponse>(destination.destination).location = line.ExpectValue();
 
 		AddGoto(std::move(destination), line);
-	} else if (strcmp(word, "redirect_https") == 0) {
+	} else if (StringIsEqual(word, "redirect_https")) {
 		const bool value = line.NextBool();
 		if (!value)
 			throw LineParser::Error("Invalid value");
@@ -961,12 +962,12 @@ LbConfigParser::LuaHandler::ParseLine(FileLineParser &line)
 {
 	const char *word = line.ExpectWord();
 
-	if (strcmp(word, "path") == 0) {
+	if (StringIsEqual(word, "path")) {
 		if (!config.path.empty())
 			throw LineParser::Error("Duplicate 'path'");
 
 		config.path = line.ExpectPathAndEnd();
-	} else if (strcmp(word, "function") == 0) {
+	} else if (StringIsEqual(word, "function")) {
 		if (!config.function.empty())
 			throw LineParser::Error("Duplicate 'function'");
 
@@ -1006,12 +1007,12 @@ LbConfigParser::TranslationHandler::ParseLine(FileLineParser &line)
 {
 	const char *word = line.ExpectWord();
 
-	if (strcmp(word, "connect") == 0) {
+	if (StringIsEqual(word, "connect")) {
 		if (!config.address.IsNull())
 			throw LineParser::Error("Duplicate 'connect'");
 
 		config.address.SetLocal(line.ExpectValueAndEnd());
-	} else if (strcmp(word, "pools") == 0) {
+	} else if (StringIsEqual(word, "pools")) {
 		while (!line.IsEnd()) {
 			const char *name = line.ExpectValue();
 			const auto destination = parent.config.FindGoto(name);
@@ -1022,7 +1023,7 @@ LbConfigParser::TranslationHandler::ParseLine(FileLineParser &line)
 				throw LineParser::Error("Only HTTP pools allowed");
 
 			assert(destination.GetName() != nullptr);
-			assert(strcmp(destination.GetName(), name) == 0);
+			assert(StringIsEqual(destination.GetName(), name));
 
 			auto i = config.destinations.emplace(destination.GetName(),
 							     std::move(destination));
@@ -1098,11 +1099,11 @@ LbConfigParser::Listener::ParseLine(FileLineParser &line)
 {
 	const char *word = line.ExpectWord();
 
-	if (strcmp(word, "bind") == 0) {
+	if (StringIsEqual(word, "bind")) {
 		const char *address = line.ExpectValueAndEnd();
 
 		config.bind_address = ParseSocketAddress(address, 80, true);
-	} else if (strcmp(word, "interface") == 0) {
+	} else if (StringIsEqual(word, "interface")) {
 		config.interface = line.ExpectValueAndEnd();
 	} else if (StringIsEqual(word, "mode")) {
 		if (config.bind_address.IsNull() ||
@@ -1119,16 +1120,16 @@ LbConfigParser::Listener::ParseLine(FileLineParser &line)
 			throw LineParser::Error("Not a valid mode");
 
 		config.mode = value;
-	} else if (strcmp(word, "tag") == 0) {
+	} else if (StringIsEqual(word, "tag")) {
 		config.tag = line.ExpectValueAndEnd();
-	} else if (strcmp(word, "zeroconf_service") == 0) {
+	} else if (StringIsEqual(word, "zeroconf_service")) {
 #ifdef HAVE_AVAHI
 		config.zeroconf_service = MakeZeroconfServiceType(line.ExpectValueAndEnd(),
 								  "_tcp");
 #else
 		throw LineParser::Error("Zeroconf support is disabled at compile time");
 #endif
-	} else if (strcmp(word, "zeroconf_interface") == 0) {
+	} else if (StringIsEqual(word, "zeroconf_interface")) {
 #ifdef HAVE_AVAHI
 		if (config.zeroconf_service.empty())
 			throw LineParser::Error("zeroconf_interface without zeroconf_service");
@@ -1140,32 +1141,32 @@ LbConfigParser::Listener::ParseLine(FileLineParser &line)
 #else
 		throw LineParser::Error("Zeroconf support is disabled at compile time");
 #endif
-	} else if (strcmp(word, "max_connections_per_ip") == 0) {
+	} else if (StringIsEqual(word, "max_connections_per_ip")) {
 		config.max_connections_per_ip = line.NextPositiveInteger();
 		line.ExpectEnd();
-	} else if (strcmp(word, "ack_timeout") == 0) {
+	} else if (StringIsEqual(word, "ack_timeout")) {
 		config.tcp_user_timeout = line.NextPositiveInteger() * 1000;
 		line.ExpectEnd();
-	} else if (strcmp(word, "keepalive") == 0) {
+	} else if (StringIsEqual(word, "keepalive")) {
 		config.keepalive = line.NextBool();
 		line.ExpectEnd();
-	} else if (strcmp(word, "v6only") == 0) {
+	} else if (StringIsEqual(word, "v6only")) {
 		config.v6only = line.NextBool();
 		line.ExpectEnd();
-	} else if (strcmp(word, "reuse_port") == 0) {
+	} else if (StringIsEqual(word, "reuse_port")) {
 		config.reuse_port = line.NextBool();
 		line.ExpectEnd();
-	} else if (strcmp(word, "free_bind") == 0) {
+	} else if (StringIsEqual(word, "free_bind")) {
 		config.free_bind = line.NextBool();
 		line.ExpectEnd();
-	} else if (strcmp(word, "pool") == 0) {
+	} else if (StringIsEqual(word, "pool")) {
 		if (config.destination.IsDefined())
 			throw LineParser::Error("Pool already configured");
 
 		config.destination = parent.config.FindGoto(line.ExpectValueAndEnd());
 		if (!config.destination.IsDefined())
 			throw LineParser::Error("No such pool");
-	} else if (strcmp(word, "redirect_https") == 0) {
+	} else if (StringIsEqual(word, "redirect_https")) {
 		const bool value = line.NextBool();
 		line.ExpectEnd();
 
@@ -1177,21 +1178,21 @@ LbConfigParser::Listener::ParseLine(FileLineParser &line)
 
 		config.destination = LbGotoConfig{HTTP_STATUS_MOVED_PERMANENTLY};
 		std::get<LbSimpleHttpResponse>(config.destination.destination).redirect_https = true;
-	} else if (strcmp(word, "verbose_response") == 0) {
+	} else if (StringIsEqual(word, "verbose_response")) {
 		bool value = line.NextBool();
 
 		line.ExpectEnd();
 
 		config.verbose_response = value;
-	} else if (strcmp(word, "force_http2") == 0) {
+	} else if (StringIsEqual(word, "force_http2")) {
 #ifdef HAVE_NGHTTP2
 		config.force_http2 = line.NextBool();
 #endif
-	} else if (strcmp(word, "alpn_http2") == 0) {
+	} else if (StringIsEqual(word, "alpn_http2")) {
 #ifdef HAVE_NGHTTP2
 		config.alpn_http2 = line.NextBool();
 #endif
-	} else if (strcmp(word, "ssl") == 0) {
+	} else if (StringIsEqual(word, "ssl")) {
 		bool value = line.NextBool();
 
 		if (config.ssl && !value)
@@ -1200,7 +1201,7 @@ LbConfigParser::Listener::ParseLine(FileLineParser &line)
 		line.ExpectEnd();
 
 		config.ssl = value;
-	} else if (strcmp(word, "ssl_cert_db") == 0) {
+	} else if (StringIsEqual(word, "ssl_cert_db")) {
 		if (!config.ssl)
 			throw LineParser::Error("SSL is not enabled");
 
@@ -1211,7 +1212,7 @@ LbConfigParser::Listener::ParseLine(FileLineParser &line)
 		config.cert_db = parent.config.FindCertDb(name);
 		if (config.cert_db == nullptr)
 			throw LineParser::Error(std::string("No such cert_db: ") + name);
-	} else if (strcmp(word, "ssl_cert") == 0) {
+	} else if (StringIsEqual(word, "ssl_cert")) {
 		if (!config.ssl)
 			throw LineParser::Error("SSL is not enabled");
 
@@ -1245,7 +1246,7 @@ LbConfigParser::Listener::ParseLine(FileLineParser &line)
 			key_path = "";
 
 		cks.emplace_back(path, key_path);
-	} else if (strcmp(word, "ssl_key") == 0) {
+	} else if (StringIsEqual(word, "ssl_key")) {
 		if (!config.ssl)
 			throw LineParser::Error("SSL is not enabled");
 
@@ -1260,7 +1261,7 @@ LbConfigParser::Listener::ParseLine(FileLineParser &line)
 		} else {
 			cks.emplace_back(std::string(), path);
 		}
-	} else if (strcmp(word, "ssl_ca_cert") == 0) {
+	} else if (StringIsEqual(word, "ssl_ca_cert")) {
 		if (!config.ssl)
 			throw LineParser::Error("SSL is not enabled");
 
@@ -1268,16 +1269,16 @@ LbConfigParser::Listener::ParseLine(FileLineParser &line)
 			throw LineParser::Error("Certificate already configured");
 
 		config.ssl_config.ca_cert_file = line.ExpectValueAndEnd();
-	} else if (strcmp(word, "ssl_verify") == 0) {
+	} else if (StringIsEqual(word, "ssl_verify")) {
 		if (!config.ssl)
 			throw LineParser::Error("SSL is not enabled");
 
 		const char *value = line.ExpectValueAndEnd();
-		if (strcmp(value, "yes") == 0)
+		if (StringIsEqual(value, "yes"))
 			config.ssl_config.verify = SslVerify::YES;
-		else if (strcmp(value, "no") == 0)
+		else if (StringIsEqual(value, "no"))
 			config.ssl_config.verify = SslVerify::NO;
-		else if (strcmp(value, "optional") == 0)
+		else if (StringIsEqual(value, "optional"))
 			config.ssl_config.verify = SslVerify::OPTIONAL;
 		else
 			throw LineParser::Error("yes/no expected");
@@ -1315,7 +1316,7 @@ LbConfigParser::GlobalHttpCheck::ParseLine(FileLineParser &line)
 {
 	const char *word = line.ExpectWord();
 
-	if (strcmp(word, "uri") == 0) {
+	if (StringIsEqual(word, "uri")) {
 		if (!config.uri.empty())
 			throw LineParser::Error("'uri' already specified");
 
@@ -1324,7 +1325,7 @@ LbConfigParser::GlobalHttpCheck::ParseLine(FileLineParser &line)
 			throw LineParser::Error("'uri' must be an absolute URI path");
 
 		config.uri = value;
-	} else if (strcmp(word, "host") == 0) {
+	} else if (StringIsEqual(word, "host")) {
 		if (!config.host.empty())
 			throw LineParser::Error("'host' already specified");
 
@@ -1333,13 +1334,13 @@ LbConfigParser::GlobalHttpCheck::ParseLine(FileLineParser &line)
 			throw LineParser::Error("'host' must not be empty");
 
 		config.host = value;
-	} else if (strcmp(word, "client") == 0) {
+	} else if (StringIsEqual(word, "client")) {
 		const char *value = line.ExpectValueAndEnd();
 		if (*value == 0)
 			throw LineParser::Error("'client' must not be empty");
 
 		config.client_addresses.emplace_front(value);
-	} else if (strcmp(word, "file_exists") == 0) {
+	} else if (StringIsEqual(word, "file_exists")) {
 		if (!config.file_exists.empty())
 			throw LineParser::Error("'file_exists' already specified");
 
@@ -1348,7 +1349,7 @@ LbConfigParser::GlobalHttpCheck::ParseLine(FileLineParser &line)
 			throw LineParser::Error("'file_exists' must be an absolute path");
 
 		config.file_exists = value;
-	} else if (strcmp(word, "success_message") == 0) {
+	} else if (StringIsEqual(word, "success_message")) {
 		if (!config.success_message.empty())
 			throw LineParser::Error("'success_message' already specified");
 
@@ -1388,29 +1389,29 @@ LbConfigParser::ParseLine2(FileLineParser &line)
 {
 	const char *word = line.ExpectWord();
 
-	if (strcmp(word, "node") == 0)
+	if (StringIsEqual(word, "node"))
 		CreateNode(line);
-	else if (strcmp(word, "pool") == 0)
+	else if (StringIsEqual(word, "pool"))
 		CreateCluster(line);
-	else if (strcmp(word, "branch") == 0)
+	else if (StringIsEqual(word, "branch"))
 		CreateBranch(line);
-	else if (strcmp(word, "lua_handler") == 0)
+	else if (StringIsEqual(word, "lua_handler"))
 		CreateLuaHandler(line);
-	else if (strcmp(word, "translation_handler") == 0)
+	else if (StringIsEqual(word, "translation_handler"))
 		CreateTranslationHandler(line);
-	else if (strcmp(word, "prometheus_exporter") == 0)
+	else if (StringIsEqual(word, "prometheus_exporter"))
 		CreatePrometheusExporter(line);
-	else if (strcmp(word, "listener") == 0)
+	else if (StringIsEqual(word, "listener"))
 		CreateListener(line);
-	else if (strcmp(word, "monitor") == 0)
+	else if (StringIsEqual(word, "monitor"))
 		CreateMonitor(line);
-	else if (strcmp(word, "cert_db") == 0)
+	else if (StringIsEqual(word, "cert_db"))
 		CreateCertDatabase(line);
-	else if (strcmp(word, "control") == 0)
+	else if (StringIsEqual(word, "control"))
 		CreateControl(line);
-	else if (strcmp(word, "global_http_check") == 0)
+	else if (StringIsEqual(word, "global_http_check"))
 		CreateGlobalHttpCheck(line);
-	else if (strcmp(word, "access_logger") == 0) {
+	else if (StringIsEqual(word, "access_logger")) {
 		if (line.SkipSymbol('{')) {
 			line.ExpectEnd();
 
