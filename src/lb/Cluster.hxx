@@ -254,6 +254,7 @@ public:
 			ConnectSocketHandler &handler,
 			CancellablePointer &cancel_ptr) noexcept;
 
+private:
 	/**
 	 * Obtain a HTTP connection to a statically configured member
 	 * (not Zeroconf).
