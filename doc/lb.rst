@@ -94,12 +94,54 @@ Example::
      member "bar:http"
    }
 
-Instead of referring to a previously defined node name, you can
-configure an IP address instead, and :program:`beng-lb` creates a new node
-implicitly.
+- ``name``: the name of the pool (can also be specified on the
+  ``pool`` line).
 
-The ``sticky`` setting specifies how a node is chosen for a request,
-see :ref:`sticky` for details.
+- ``protocol``: ``tcp`` or ``http``; see :ref:`lb_protocol`.
+
+- ``sticky``: specify how a node is chosen for a request,
+  see :ref:`sticky` for details.
+
+- ``sticky_cache``: if ``yes``, consistent hashing is disabled in
+  favor of an assignment cache. The advantage of that cache is that
+  existing clients will not be reassigned when new nodes appear. The
+  major disadvantage is that this works only with a single
+  :program:`beng-lb` instance, and the cache is lost on restart. The
+  default is ``no``.
+
+- ``session_cookie``: the name of the session cookie for
+  ``sticky session_modulo``.
+
+- ``monitor``: the name of a monitor which shall be used to check this
+  pool's members; see :ref:`monitors`.
+
+- ``member``: each ``member`` line adds a static member.  Instead of
+  referring to a previously defined node name, you can configure an IP
+  address instead, and :program:`beng-lb` creates a new node
+  implicitly.
+
+- ``zeroconf_service``, ``zeroconf_domain``, ``zeroconf_interface``:
+  automatically discover members; see :ref:`lb_zeroconf`.
+
+- ``fair_scheduling``: if ``yes``, enables fair scheduling, which
+  attempts to schedule HTTP requests for different sites in a way that
+  avoids one site blocking all backend connections.
+
+- ``tarpit``: if ``yes``, delays clients which send many consecutive
+  HTTP requests, in order to mitigate DDoS attacks.
+
+- ``source_address``: see :ref:`transparent`.
+
+- ``mangle_via``: if ``yes``, enables request header mangling: the
+  headers ``Via`` and ``X-Forwarded-For`` are updated.
+
+- ``fallback``: what to do when all pool members fail; see
+  :ref:`fallback`.
+
+.. _fallback:
+
+Fallback
+^^^^^^^^
 
 When all pool members fail, an error message is generated. You can
 override that behaviour by configuring a “fallback”::
@@ -109,7 +151,7 @@ override that behaviour by configuring a “fallback”::
      # ...
    }
 
-This would generate a “320 Found” redirect to the specified URL. Another
+This would generate a "302 Found" redirect to the specified URL. Another
 type of fallback is a custom response, you can specify a HTTP status
 code and a brief message (plain text)::
 
@@ -118,15 +160,7 @@ code and a brief message (plain text)::
      # ...
    }
 
-The option ``mangle_via yes`` enables request header mangling: the
-headers ``Via`` and ``X-Forwarded-For`` are updated.
-
-The option ``fair_schedulding`` enables fair scheduling, which
-attempts to schedule HTTP requests for different sites in a way that
-avoids one site blocking all backend connections.
-
-The option ``tarpit`` delays clients which send many consecutive HTTP
-requests, in order to mitigate DDoS attacks.
+.. _lb_zeroconf:
 
 Zeroconf
 ^^^^^^^^
@@ -157,12 +191,7 @@ If ``sticky`` is enabled on the pool, then :program:`beng-lb` uses
 <https://en.wikipedia.org/wiki/Consistent_hashing>`__ to pick a member
 (to reduce member reassignments).
 
-With option ``sticky_cache`` set to ``yes``, consistent hashing is
-disabled in favor of an assignment cache. The advantage of that cache
-is that existing clients will not be reassigned when new nodes
-appear. The major disadvantage is that this works only with a single
-:program:`beng-lb` instance, and the cache is lost on restart. The
-default is ``no``.
+.. _lb_protocol:
 
 Protocols
 ^^^^^^^^^
@@ -174,6 +203,8 @@ needed.
 The protocol ``http`` means that :program:`beng-lb` parses the HTTP/1.1
 request/response, and forwards them to the peer. This HTTP parser is
 needed for some of the advanced features, such as cookies.
+
+.. _transparent:
 
 Transparent Source IP
 ---------------------
@@ -634,6 +665,8 @@ where real data is transmitted.
 
 In Wireshark, you can specify the file in the SSL protocol settings as
 "(Pre-)Master-Secret log filename".
+
+.. _monitors:
 
 Monitors
 --------
