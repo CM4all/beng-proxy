@@ -72,7 +72,7 @@ std::shared_ptr<TranslationService>
 TranslationStockBuilder::Get(SocketAddress address,
 			     EventLoop &event_loop) noexcept
 {
-	auto e = m.emplace(address, nullptr);
+	auto e = m.try_emplace(address, nullptr);
 	if (e.second)
 		e.first->second = std::make_shared<TranslationStock>
 			(event_loop, address, limit);
@@ -128,7 +128,7 @@ std::shared_ptr<TranslationService>
 TranslationCacheBuilder::Get(SocketAddress address,
 			     EventLoop &event_loop) noexcept
 {
-	auto e = m.emplace(address, nullptr);
+	auto e = m.try_emplace(address, nullptr);
 	if (e.second)
 		e.first->second = std::make_shared<TranslationCache>
 			(pool, event_loop,

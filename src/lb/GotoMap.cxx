@@ -134,47 +134,37 @@ LbGotoMap::GetInstance(const LbClusterConfig &config)
 		? &monitors[*config.monitor]
 		: nullptr;
 
-	return clusters.emplace(std::piecewise_construct,
-				std::forward_as_tuple(&config),
-				std::forward_as_tuple(config, context,
-						      monitor_stock))
+	return clusters.try_emplace(&config,
+				    config, context, monitor_stock)
 		.first->second;
 }
 
 LbBranch &
 LbGotoMap::GetInstance(const LbBranchConfig &config)
 {
-	return branches.emplace(std::piecewise_construct,
-				std::forward_as_tuple(&config),
-				std::forward_as_tuple(*this, config))
+	return branches.try_emplace(&config, *this, config)
 		.first->second;
 }
 
 LbLuaHandler &
 LbGotoMap::GetInstance(const LbLuaHandlerConfig &config)
 {
-	return lua_handlers.emplace(std::piecewise_construct,
-				    std::forward_as_tuple(&config),
-				    std::forward_as_tuple(lua_init_hook, config))
+	return lua_handlers.try_emplace(&config, lua_init_hook, config)
 		.first->second;
 }
 
 LbTranslationHandler &
 LbGotoMap::GetInstance(const LbTranslationHandlerConfig &config)
 {
-	return translation_handlers.emplace(std::piecewise_construct,
-					    std::forward_as_tuple(&config),
-					    std::forward_as_tuple(event_loop,
-								  *this, config))
+	return translation_handlers.try_emplace(&config,
+						event_loop, *this, config)
 		.first->second;
 }
 
 LbPrometheusExporter &
 LbGotoMap::GetInstance(const LbPrometheusExporterConfig &config)
 {
-	return prometheus_exporters.emplace(std::piecewise_construct,
-					    std::forward_as_tuple(&config),
-					    std::forward_as_tuple(config))
+	return prometheus_exporters.try_emplace(&config, config)
 		.first->second;
 }
 
