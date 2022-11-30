@@ -99,6 +99,9 @@ Example::
 
 - ``protocol``: ``tcp`` or ``http``; see :ref:`lb_protocol`.
 
+- ``ssl``: use HTTPS (HTTP over SSL/TLS) instead of plain HTTP for
+  outgoing connections to members.
+
 - ``sticky``: specify how a node is chosen for a request,
   see :ref:`sticky` for details.
 

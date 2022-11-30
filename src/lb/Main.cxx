@@ -163,10 +163,11 @@ try {
 
 	LoadConfigFile(config, cmdline.config_path);
 
+	const ScopeSslGlobalInit ssl_init;
+
 	LbInstance instance(config);
 
 	if (cmdline.check) {
-		const ScopeSslGlobalInit ssl_init;
 		lb_check(instance.event_loop, config);
 		return EXIT_SUCCESS;
 	}
@@ -175,8 +176,6 @@ try {
 
 	SetupProcess();
 	capabilities_init();
-
-	const ScopeSslGlobalInit ssl_init;
 
 #if defined(HAVE_LIBSYSTEMD) || defined(HAVE_AVAHI)
 	const ODBus::ScopeInit dbus_init;

@@ -39,6 +39,7 @@
 #include "fs/Stock.hxx"
 #include "fs/Balancer.hxx"
 #include "fs/Handler.hxx"
+#include "ssl/SslSocketFilterFactory.hxx"
 #include "cluster/StickyCache.hxx"
 #include "cluster/ConnectBalancer.hxx"
 #include "cluster/RoundRobinBalancer.cxx"
@@ -114,6 +115,13 @@ LbCluster::LbCluster(const LbClusterConfig &_config,
 	 monitors(_monitors),
 	 logger("cluster " + config.name)
 {
+	if (config.ssl)
+		socket_filter_factory = std::make_unique<SslSocketFilterFactory>
+			(context.fs_stock.GetEventLoop(),
+			 context.ssl_client_factory,
+			 nullptr, // TODO
+			 nullptr);
+
 #ifdef HAVE_AVAHI
 	if (config.HasZeroConf()) {
 		AvahiIfIndex interface = AVAHI_IF_UNSPEC;
@@ -179,7 +187,6 @@ LbCluster::ConnectHttp(AllocatorPtr alloc,
 		       SocketAddress bind_address,
 		       sticky_hash_t sticky_hash,
 		       Event::Duration timeout,
-		       SocketFilterFactory *filter_factory,
 		       FilteredSocketBalancerHandler &handler,
 		       CancellablePointer &cancel_ptr) noexcept
 {
@@ -188,7 +195,7 @@ LbCluster::ConnectHttp(AllocatorPtr alloc,
 		ConnectZeroconfHttp(alloc, parent_stopwatch,
 				    fairness_hash,
 				    bind_address, sticky_hash,
-				    timeout, filter_factory,
+				    timeout,
 				    handler, cancel_ptr);
 		return;
 	}
@@ -197,7 +204,7 @@ LbCluster::ConnectHttp(AllocatorPtr alloc,
 	ConnectStaticHttp(alloc, parent_stopwatch,
 			  fairness_hash,
 			  bind_address, sticky_hash,
-			  timeout, filter_factory,
+			  timeout,
 			  handler, cancel_ptr);
 }
 
@@ -228,7 +235,6 @@ LbCluster::ConnectStaticHttp(AllocatorPtr alloc,
 			     SocketAddress bind_address,
 			     sticky_hash_t sticky_hash,
 			     Event::Duration timeout,
-			     SocketFilterFactory *filter_factory,
 			     FilteredSocketBalancerHandler &handler,
 			     CancellablePointer &cancel_ptr) noexcept
 {
@@ -241,7 +247,7 @@ LbCluster::ConnectStaticHttp(AllocatorPtr alloc,
 			sticky_hash,
 			config.address_list,
 			timeout,
-			filter_factory,
+			socket_filter_factory.get(),
 			handler, cancel_ptr);
 }
 
@@ -559,7 +565,6 @@ LbCluster::ConnectZeroconfHttp(AllocatorPtr alloc,
 			       SocketAddress bind_address,
 			       sticky_hash_t sticky_hash,
 			       Event::Duration timeout,
-			       SocketFilterFactory *filter_factory,
 			       FilteredSocketBalancerHandler &handler,
 			       CancellablePointer &cancel_ptr) noexcept
 {
@@ -569,7 +574,7 @@ LbCluster::ConnectZeroconfHttp(AllocatorPtr alloc,
 						 fairness_hash,
 						 bind_address,
 						 sticky_hash, timeout,
-						 filter_factory,
+						 socket_filter_factory.get(),
 						 handler, cancel_ptr);
 	c->Start();
 }

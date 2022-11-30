@@ -82,6 +82,8 @@ class LbCluster final
 
 	const Logger logger;
 
+	std::unique_ptr<SocketFilterFactory> socket_filter_factory;
+
 	struct StaticMember {
 		AllocatedSocketAddress address;
 
@@ -239,7 +241,6 @@ public:
 			 SocketAddress bind_address,
 			 sticky_hash_t sticky_hash,
 			 Event::Duration timeout,
-			 SocketFilterFactory *filter_factory,
 			 FilteredSocketBalancerHandler &handler,
 			 CancellablePointer &cancel_ptr) noexcept;
 
@@ -265,7 +266,6 @@ private:
 			       SocketAddress bind_address,
 			       sticky_hash_t sticky_hash,
 			       Event::Duration timeout,
-			       SocketFilterFactory *filter_factory,
 			       FilteredSocketBalancerHandler &handler,
 			       CancellablePointer &cancel_ptr) noexcept;
 
@@ -317,7 +317,6 @@ private:
 				 SocketAddress bind_address,
 				 sticky_hash_t sticky_hash,
 				 Event::Duration timeout,
-				 SocketFilterFactory *filter_factory,
 				 FilteredSocketBalancerHandler &handler,
 				 CancellablePointer &cancel_ptr) noexcept;
 

@@ -926,6 +926,8 @@ executable(
   'src/lb/Instance.cxx',
   'src/lb/Main.cxx',
 
+  'src/ssl/SslSocketFilterFactory.cxx',
+
   # the following sources are only necessary for the translation client
   'src/widget/View.cxx',
 

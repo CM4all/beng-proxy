@@ -38,6 +38,7 @@ class FailureManager;
 class BalancerMap;
 class FilteredSocketStock;
 class FilteredSocketBalancer;
+class SslClientFactory;
 class LbMonitorManager;
 namespace Avahi { class Client; class ErrorHandler; }
 
@@ -46,6 +47,7 @@ struct LbContext {
 	BalancerMap &tcp_balancer;
 	FilteredSocketStock &fs_stock;
 	FilteredSocketBalancer &fs_balancer;
+	SslClientFactory &ssl_client_factory;
 	LbMonitorManager &monitors;
 #ifdef HAVE_AVAHI
 	std::unique_ptr<Avahi::Client> &avahi_client;

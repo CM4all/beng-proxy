@@ -422,7 +422,6 @@ LbRequest::Start() noexcept
 			    MakeBindAddress(),
 			    GetStickyHash(),
 			    LB_HTTP_CONNECT_TIMEOUT,
-			    nullptr,
 			    *this, cancel_ptr);
 }
 

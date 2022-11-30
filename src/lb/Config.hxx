@@ -38,6 +38,7 @@
 #include "MonitorConfig.hxx"
 #include "PrometheusExporterConfig.hxx"
 #include "access_log/Config.hxx"
+#include "ssl/Config.hxx"
 #include "net/SocketConfig.hxx"
 #include "certdb/Config.hxx"
 
@@ -71,6 +72,9 @@ struct LbConfig {
 	AccessLogConfig access_log;
 
 	std::list<LbControlConfig> controls;
+
+	// TODO there is no ConfigParser for this yet
+	SslClientConfig ssl_client;
 
 	std::map<std::string, LbCertDatabaseConfig> cert_dbs;
 

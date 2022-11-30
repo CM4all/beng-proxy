@@ -54,6 +54,7 @@ class PipeStock;
 class BalancerMap;
 class FilteredSocketStock;
 class FilteredSocketBalancer;
+class SslClientFactory;
 struct LbConfig;
 struct LbCertDatabaseConfig;
 struct LbHttpConnection;
@@ -84,6 +85,8 @@ struct LbInstance final : PInstance, Avahi::ErrorHandler {
 
 	std::unique_ptr<FilteredSocketStock> fs_stock;
 	std::unique_ptr<FilteredSocketBalancer> fs_balancer;
+
+	std::unique_ptr<SslClientFactory> ssl_client_factory;
 
 	std::unique_ptr<PipeStock> pipe_stock;
 

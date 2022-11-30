@@ -39,6 +39,7 @@
 #include "Listener.hxx"
 #include "fs/Stock.hxx"
 #include "fs/Balancer.hxx"
+#include "ssl/Client.hxx"
 #include "cluster/BalancerMap.hxx"
 #include "memory/fb_pool.hxx"
 #include "pipe_stock.hxx"
@@ -69,11 +70,13 @@ LbInstance::LbInstance(const LbConfig &_config)
 	 fs_stock(new FilteredSocketStock(event_loop,
 					  config.tcp_stock_limit)),
 	 fs_balancer(new FilteredSocketBalancer(*fs_stock, failure_manager)),
+	 ssl_client_factory(new SslClientFactory(config.ssl_client)),
 	 pipe_stock(new PipeStock(event_loop)),
 	 monitors(event_loop, failure_manager),
 	 goto_map(config,
 		  {failure_manager,
 		   *balancer, *fs_stock, *fs_balancer,
+		   *ssl_client_factory,
 		   monitors,
 #ifdef HAVE_AVAHI
 		   avahi_client, *this,

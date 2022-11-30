@@ -98,6 +98,8 @@ struct LbClusterConfig {
 	 */
 	LbProtocol protocol = LbProtocol::HTTP;
 
+	bool ssl = false;
+
 	bool fair_scheduling = false;
 
 	bool tarpit = false;
@@ -172,7 +174,7 @@ struct LbClusterConfig {
 	unsigned GetDefaultPort() const noexcept {
 		switch (protocol) {
 		case LbProtocol::HTTP:
-			return 80;
+			return ssl ? 443 : 80;
 
 		case LbProtocol::TCP:
 			break;

@@ -667,6 +667,14 @@ LbConfigParser::Cluster::ParseLine(FileLineParser &line)
 			config.protocol = LbProtocol::TCP;
 		else
 			throw LineParser::Error("Unknown protocol");
+	} else if (StringIsEqual(word, "ssl")) {
+		const bool value = line.NextBool();
+		line.ExpectEnd();
+
+		if (config.ssl && !value)
+			throw LineParser::Error{"SSL cannot be disabled at this point"};
+
+		config.ssl = value;
 	} else if (StringIsEqual(word, "fair_scheduling")) {
 		config.fair_scheduling = line.NextBool();
 		line.ExpectEnd();
@@ -742,6 +750,9 @@ LbConfigParser::Cluster::Finish()
 
 	if (!validate_protocol_sticky(config.protocol, config.sticky_mode))
 		throw LineParser::Error("The selected sticky mode not available for this protocol");
+
+	if (config.protocol != LbProtocol::HTTP && config.ssl)
+		throw LineParser::Error{"SSL/TLS only available with HTTP"};
 
 #ifdef HAVE_AVAHI
 	if (config.HasZeroConf() &&
