@@ -33,9 +33,8 @@
 #pragma once
 
 #include "event/FarTimerEvent.hxx"
+#include "util/IntrusiveHashSet.hxx"
 #include "util/IntrusiveList.hxx"
-
-#include <boost/intrusive/unordered_set.hpp>
 
 #include <cstdint>
 
@@ -69,7 +68,7 @@ public:
 };
 
 class PerClientAccounting final
-	: public boost::intrusive::unordered_set_base_hook<boost::intrusive::link_mode<boost::intrusive::auto_unlink>>
+	: public IntrusiveHashSetHook<IntrusiveHookMode::AUTO_UNLINK>
 {
 	friend class ClientAccountingMap;
 
@@ -143,16 +142,10 @@ private:
 class ClientAccountingMap {
 	const std::size_t max_connections;
 
-	using Map =
-		boost::intrusive::unordered_set<PerClientAccounting,
-						boost::intrusive::hash<PerClientAccounting::Hash>,
-						boost::intrusive::equal<PerClientAccounting::Equal>,
-						boost::intrusive::constant_time_size<false>>;
-
-	static constexpr size_t N_BUCKETS = 3779;
-	Map::bucket_type buckets[N_BUCKETS];
-
-	Map map{Map::bucket_traits{buckets, N_BUCKETS}};
+	using Map = IntrusiveHashSet<PerClientAccounting, 3779,
+				     PerClientAccounting::Hash,
+				     PerClientAccounting::Equal>;
+	Map map;
 
 	FarTimerEvent cleanup_timer;
 

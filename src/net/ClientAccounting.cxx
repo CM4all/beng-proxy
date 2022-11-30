@@ -185,16 +185,13 @@ ClientAccountingMap::Get(SocketAddress _address) noexcept
 	if (address == 0)
 		return nullptr;
 
-	Map::insert_commit_data hint;
-	auto [i, inserted] =
-		map.insert_check(address, map.hash_function(), map.key_eq(),
-				 hint);
+	auto [i, inserted] = map.insert_check(address);
 	if (inserted) {
 		auto *per_client = new PerClientAccounting(*this, address);
-		i = map.insert_commit(*per_client, hint);
-	}
-
-	return &*i;
+		map.insert(i, *per_client);
+		return per_client;
+	} else
+		return &*i;
 
 }
 
@@ -205,20 +202,6 @@ ClientAccountingMap::ScheduleCleanup() noexcept
 		cleanup_timer.Schedule(std::chrono::minutes{1});
 }
 
-template<typename Container, typename Pred, typename Disposer>
-static void
-EraseAndDisposeIf(Container &container, Pred pred, Disposer disposer)
-{
-	for (auto i = container.begin(), end = container.end(); i != end;) {
-		const auto next = std::next(i);
-
-		if (pred(*i))
-			container.erase_and_dispose(i, disposer);
-
-		i = next;
-	}
-}
-
 void
 ClientAccountingMap::OnCleanupTimer() noexcept
 {
@@ -226,7 +209,7 @@ ClientAccountingMap::OnCleanupTimer() noexcept
 
 	const auto now = GetEventLoop().SteadyNow();
 
-	EraseAndDisposeIf(map, [&reschedule, now](const auto &i){
+	map.remove_and_dispose_if([&reschedule, now](const auto &i){
 		if (!i.connections.empty())
 			return false;
 
