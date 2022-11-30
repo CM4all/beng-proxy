@@ -38,6 +38,7 @@
 #include "io/config/ConfigParser.hxx"
 #include "net/Parser.hxx"
 #include "net/AddressInfo.hxx"
+#include "uri/Verify.hxx"
 #include "util/StringAPI.hxx"
 #include "util/StringCompare.hxx"
 #include "util/CharUtil.hxx"
@@ -562,6 +563,10 @@ LbConfigParser::Cluster::ParseLine(FileLineParser &line)
 
 	if (StringIsEqual(word, "name")) {
 		config.name = line.ExpectValueAndEnd();
+	} else if (StringIsEqual(word, "http_host")) {
+		config.http_host = line.ExpectValueAndEnd();
+		if (!VerifyDomainName(config.http_host))
+			throw LineParser::Error("Invalid domain name");
 	} else if (StringIsEqual(word, "sticky")) {
 		config.sticky_mode = ParseStickyMode(line.ExpectValueAndEnd());
 	} else if (StringIsEqual(word, "sticky_cache")) {

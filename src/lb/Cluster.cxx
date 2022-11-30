@@ -119,7 +119,7 @@ LbCluster::LbCluster(const LbClusterConfig &_config,
 		socket_filter_factory = std::make_unique<SslSocketFilterFactory>
 			(context.fs_stock.GetEventLoop(),
 			 context.ssl_client_factory,
-			 nullptr, // TODO
+			 config.http_host.empty() ? nullptr : config.http_host.c_str(),
 			 nullptr);
 
 #ifdef HAVE_AVAHI

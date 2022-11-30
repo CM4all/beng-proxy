@@ -93,6 +93,8 @@ struct LbMemberConfig {
 struct LbClusterConfig {
 	std::string name;
 
+	std::string http_host;
+
 	/**
 	 * The protocol that is spoken on this cluster.
 	 */

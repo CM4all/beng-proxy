@@ -347,6 +347,10 @@ LbRequest::OnFilteredSocketReady(Lease &lease,
 				   peer_subject, peer_issuer_subject,
 				   cluster_config.mangle_via);
 
+	if (!cluster_config.http_host.empty())
+		headers.SecureSet(pool, "host",
+				  cluster_config.http_host.c_str());
+
 	http_client_request(pool, nullptr,
 			    socket, lease, name,
 			    request.method, request.uri,

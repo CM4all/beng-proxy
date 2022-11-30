@@ -102,6 +102,10 @@ Example::
 - ``ssl``: use HTTPS (HTTP over SSL/TLS) instead of plain HTTP for
   outgoing connections to members.
 
+- ``http_host``: overrides the ``Host`` header in all forwarded HTTP
+  requests.  This also enables TLS Server Name Indication (RFC 6066
+  3).
+
 - ``sticky``: specify how a node is chosen for a request,
   see :ref:`sticky` for details.
 
