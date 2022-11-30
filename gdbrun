@@ -1,4 +1,0 @@
-handle SIGPIPE noprint nostop
-handle SIGTERM noprint nostop
-handle SIGHUP noprint nostop
-run
