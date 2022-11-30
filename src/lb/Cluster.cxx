@@ -144,10 +144,14 @@ LbCluster::LbCluster(const LbClusterConfig &_config,
 #endif
 
 	static_members.reserve(config.members.size());
+
+	const unsigned default_port = GetDefaultPort(config.protocol);
 	for (const auto &member : config.members) {
 		AllocatedSocketAddress address(member.node->address);
 		if (member.port > 0)
 			address.SetPort(member.port);
+		else if (default_port > 0 && address.GetPort() == 0)
+			address.SetPort(default_port);
 
 		auto &failure = failure_manager.Make(address);
 

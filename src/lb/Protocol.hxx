@@ -36,3 +36,37 @@ enum class LbProtocol {
 	HTTP,
 	TCP,
 };
+
+/**
+ * Does the given protocol require a port number?
+ */
+constexpr bool
+NeedsPort(LbProtocol protocol) noexcept
+{
+	/* all currently implemented protocols need a port */
+	switch (protocol) {
+	case LbProtocol::HTTP:
+	case LbProtocol::TCP:
+		return true;
+	}
+
+	return false;
+}
+
+/**
+ * Returns the default port number for the given protocol or 0 if
+ * there is no sensible default.
+ */
+constexpr unsigned
+GetDefaultPort(LbProtocol protocol) noexcept
+{
+	switch (protocol) {
+	case LbProtocol::HTTP:
+		return 80;
+
+	case LbProtocol::TCP:
+		break;
+	}
+
+	return 0;
+}

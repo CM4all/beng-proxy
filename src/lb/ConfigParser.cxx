@@ -414,7 +414,7 @@ LbConfigParser::Node::ParseLine(FileLineParser &line)
 
 		const char *value = line.ExpectValueAndEnd();
 
-		config.address = ParseSocketAddress(value, 80, false);
+		config.address = ParseSocketAddress(value, 0, false);
 	} else if (StringIsEqual(word, "jvm_route")) {
 		if (!config.jvm_route.empty())
 			throw LineParser::Error("Duplicate jvm_route");
@@ -428,7 +428,7 @@ void
 LbConfigParser::Node::Finish()
 {
 	if (config.address.IsNull())
-		config.address = ParseSocketAddress(config.name.c_str(), 80, false);
+		config.address = ParseSocketAddress(config.name.c_str(), 0, false);
 
 	auto i = parent.config.nodes.emplace(std::string(config.name),
 					     std::move(config));
@@ -450,7 +450,7 @@ LbConfigParser::CreateNode(FileLineParser &line)
 LbNodeConfig &
 LbConfigParser::AutoCreateNode(const char *name)
 {
-	auto address = ParseSocketAddress(name, 80, false);
+	auto address = ParseSocketAddress(name, 0, false);
 
 	auto i = config.nodes.insert(std::make_pair(name,
 						    LbNodeConfig(name,
@@ -730,6 +730,15 @@ LbConfigParser::Cluster::Finish()
 
 	if (config.members.empty() && !config.HasZeroConf())
 		throw LineParser::Error("Pool has no members");
+
+	if (NeedsPort(config.protocol) && GetDefaultPort(config.protocol) == 0) {
+		/* this protocol has no default port - all members
+		   must have a port */
+		for (const auto &i : config.members) {
+			if (i.IsPortMissing())
+				throw LineParser::Error{"No port on member"};
+		}
+	}
 
 	if (!validate_protocol_sticky(config.protocol, config.sticky_mode))
 		throw LineParser::Error("The selected sticky mode not available for this protocol");

@@ -66,12 +66,28 @@ struct LbNodeConfig {
 	LbNodeConfig(LbNodeConfig &&src) noexcept
 		:name(std::move(src.name)), address(std::move(src.address)),
 		 jvm_route(std::move(src.jvm_route)) {}
+
+	/**
+	 * @return true if the address requires a port, but none was
+	 * specified
+	 */
+	bool IsPortMissing() const noexcept {
+		return address.HasPort() && address.GetPort() == 0;
+	}
 };
 
 struct LbMemberConfig {
 	const struct LbNodeConfig *node = nullptr;
 
 	unsigned port = 0;
+
+	/**
+	 * @return true if the address requires a port, but none was
+	 * specified
+	 */
+	bool IsPortMissing() const noexcept {
+		return port == 0 && node->IsPortMissing();
+	}
 };
 
 struct LbClusterConfig {
