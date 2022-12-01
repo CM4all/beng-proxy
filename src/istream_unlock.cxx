@@ -47,7 +47,7 @@ public:
 		item.Lock();
 	}
 
-	virtual ~UnlockIstream() noexcept {
+	virtual ~UnlockIstream() noexcept override {
 		item.Unlock();
 	}
 
