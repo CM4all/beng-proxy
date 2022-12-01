@@ -52,9 +52,8 @@
 #include "lib/pcre/UniqueRegex.hxx"
 #include "io/Logger.hxx"
 #include "util/djbhash.h"
-
-#include <boost/intrusive/list.hpp>
-#include <boost/intrusive/unordered_set.hpp>
+#include "util/IntrusiveHashSet.hxx"
+#include "util/IntrusiveList.hxx"
 
 #include <time.h>
 #include <string.h>
@@ -76,9 +75,7 @@ struct TranslateCachePerHost;
 struct TranslateCachePerSite;
 
 struct TranslateCacheItem final : PoolHolder, CacheItem {
-	using LinkMode =
-		boost::intrusive::link_mode<boost::intrusive::normal_link>;
-	using SiblingsHook = boost::intrusive::list_member_hook<LinkMode>;
+	using SiblingsHook = IntrusiveListHook<IntrusiveHookMode::NORMAL>;
 
 	/**
 	 * A doubly linked list of cache items with the same HOST request
@@ -182,14 +179,11 @@ struct TranslateCacheItem final : PoolHolder, CacheItem {
 };
 
 struct TranslateCachePerHost
-	: boost::intrusive::unordered_set_base_hook<boost::intrusive::link_mode<boost::intrusive::normal_link>> {
-	using MemberHook =
-		boost::intrusive::member_hook<TranslateCacheItem,
-					      TranslateCacheItem::SiblingsHook,
-					      &TranslateCacheItem::per_host_siblings>;
+	: IntrusiveHashSetHook<IntrusiveHookMode::NORMAL>
+{
 	using ItemList =
-		boost::intrusive::list<TranslateCacheItem, MemberHook,
-				       boost::intrusive::constant_time_size<false>>;
+		IntrusiveList<TranslateCacheItem,
+			      IntrusiveListMemberHookTraits<&TranslateCacheItem::per_host_siblings>>;
 
 	/**
 	 * A double-linked list of #TranslateCacheItems (by its attribute
@@ -242,6 +236,11 @@ struct TranslateCachePerHost
 		size_t operator()(const TranslateCachePerHost &value) const {
 			return ValueHasher(value);
 		}
+
+		[[gnu::pure]]
+		size_t operator()(const char *key) const {
+			return KeyHasher(key);
+		}
 	};
 
 	struct Equal {
@@ -250,18 +249,21 @@ struct TranslateCachePerHost
 				const TranslateCachePerHost &b) const {
 			return KeyValueEqual(a.host.c_str(), b);
 		}
+
+		[[gnu::pure]]
+		bool operator()(const char *a,
+				const TranslateCachePerHost &b) const {
+			return KeyValueEqual(a, b);
+		}
 	};
 };
 
 struct TranslateCachePerSite
-	: boost::intrusive::unordered_set_base_hook<boost::intrusive::link_mode<boost::intrusive::normal_link>> {
-	using MemberHook =
-		boost::intrusive::member_hook<TranslateCacheItem,
-					      TranslateCacheItem::SiblingsHook,
-					      &TranslateCacheItem::per_site_siblings> ;
+	: IntrusiveHashSetHook<IntrusiveHookMode::NORMAL>
+{
 	using ItemList =
-		boost::intrusive::list<TranslateCacheItem, MemberHook,
-				       boost::intrusive::constant_time_size<false>>;
+		IntrusiveList<TranslateCacheItem,
+			      IntrusiveListMemberHookTraits<&TranslateCacheItem::per_site_siblings>>;
 
 	/**
 	 * A double-linked list of #TranslateCacheItems (by its attribute
@@ -314,6 +316,11 @@ struct TranslateCachePerSite
 		size_t operator()(const TranslateCachePerSite &value) const {
 			return ValueHasher(value);
 		}
+
+		[[gnu::pure]]
+		size_t operator()(const char *key) const {
+			return KeyHasher(key);
+		}
 	};
 
 	struct Equal {
@@ -321,6 +328,12 @@ struct TranslateCachePerSite
 		bool operator()(const TranslateCachePerSite &a,
 				const TranslateCachePerSite &b) const {
 			return KeyValueEqual(a.site.c_str(), b);
+		}
+
+		[[gnu::pure]]
+		bool operator()(const char *a,
+				const TranslateCachePerSite &b) const {
+			return KeyValueEqual(a, b);
 		}
 	};
 };
@@ -336,12 +349,7 @@ struct tcache {
 	 * #TranslateCachePerHost.  This is used to optimize the common
 	 * INVALIDATE=HOST response, to avoid traversing the whole cache.
 	 */
-	using PerHostSet =
-		boost::intrusive::unordered_set<TranslateCachePerHost,
-						boost::intrusive::hash<TranslateCachePerHost::Hash>,
-						boost::intrusive::equal<TranslateCachePerHost::Equal>,
-						boost::intrusive::constant_time_size<false>>;
-	PerHostSet::bucket_type per_host_buckets[N_BUCKETS];
+	using PerHostSet = IntrusiveHashSet<TranslateCachePerHost, N_BUCKETS>;
 	PerHostSet per_host;
 
 	/**
@@ -349,12 +357,7 @@ struct tcache {
 	 * #TranslateCachePerSite.  This is used to optimize the common
 	 * INVALIDATE=SITE response, to avoid traversing the whole cache.
 	 */
-	using PerSiteSet =
-		boost::intrusive::unordered_set<TranslateCachePerSite,
-						boost::intrusive::hash<TranslateCachePerSite::Hash>,
-						boost::intrusive::equal<TranslateCachePerSite::Equal>,
-						boost::intrusive::constant_time_size<false>>;
-	PerSiteSet::bucket_type per_site_buckets[N_BUCKETS];
+	using PerSiteSet = IntrusiveHashSet<TranslateCachePerSite, N_BUCKETS>;
 	PerSiteSet per_site;
 
 	Cache cache;
@@ -427,16 +430,12 @@ tcache::MakePerHost(const char *host)
 {
 	assert(host != nullptr);
 
-	PerHostSet::insert_commit_data commit_data;
-	auto result = per_host.insert_check(host, TranslateCachePerHost::KeyHasher,
-					    TranslateCachePerHost::KeyValueEqual,
-					    commit_data);
-	if (!result.second)
-		return *result.first;
+	auto [position, inserted] = per_host.insert_check(host);
+	if (!inserted)
+		return *position;
 
 	auto ph = new TranslateCachePerHost(*this, host);
-	per_host.insert_commit(*ph, commit_data);
-
+	per_host.insert(position, *ph);
 	return *ph;
 }
 
@@ -481,16 +480,12 @@ tcache::MakePerSite(const char *site)
 {
 	assert(site != nullptr);
 
-	PerSiteSet::insert_commit_data commit_data;
-	auto result = per_site.insert_check(site, TranslateCachePerSite::KeyHasher,
-					    TranslateCachePerSite::KeyValueEqual,
-					    commit_data);
-	if (!result.second)
-		return *result.first;
+	auto [position, inserted] = per_site.insert_check(site);
+	if (!inserted)
+		return *position;
 
 	auto ph = new TranslateCachePerSite(*this, site);
-	per_site.insert_commit(*ph, commit_data);
-
+	per_site.insert(position, *ph);
 	return *ph;
 }
 
@@ -1113,8 +1108,7 @@ tcache::InvalidateHost(const TranslateRequest &request,
 	if (host == nullptr)
 		host = "";
 
-	auto ph = per_host.find(host, TranslateCachePerHost::KeyHasher,
-				TranslateCachePerHost::KeyValueEqual);
+	auto ph = per_host.find(host);
 	if (ph == per_host.end())
 		return 0;
 
@@ -1154,8 +1148,7 @@ tcache::InvalidateSite(const TranslateRequest &request,
 {
 	assert(site != nullptr);
 
-	auto ph = per_site.find(site, TranslateCachePerSite::KeyHasher,
-				TranslateCachePerSite::KeyValueEqual);
+	auto ph = per_site.find(site);
 	if (ph == per_site.end())
 		return 0;
 
@@ -1540,8 +1533,6 @@ tcache::tcache(struct pool &_pool, EventLoop &event_loop,
 	       bool handshake_cacheable)
 	:pool(pool_new_dummy(&_pool, "translate_cache")),
 	 slice_pool(4096, 32768, "translate_cache"),
-	 per_host(PerHostSet::bucket_traits(per_host_buckets, N_BUCKETS)),
-	 per_site(PerSiteSet::bucket_traits(per_site_buckets, N_BUCKETS)),
 	 cache(event_loop, max_size),
 	 next(_next), active(handshake_cacheable)
 {
