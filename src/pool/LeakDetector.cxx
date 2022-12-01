@@ -45,11 +45,6 @@ PoolLeakDetector::PoolLeakDetector(struct pool &_pool) noexcept
 PoolLeakDetector::PoolLeakDetector(AllocatorPtr alloc) noexcept
 	:PoolLeakDetector(alloc.GetPool()) {}
 
-PoolLeakDetector::~PoolLeakDetector() noexcept
-{
-	unlink();
-}
-
 void
 PoolLeakDetector::Dummy() noexcept
 {

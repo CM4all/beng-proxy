@@ -42,7 +42,9 @@ class AllocatorPtr;
  * Derive from this class to verify that its destructor gets called
  * before the #pool gets destroyed.
  */
-class PoolLeakDetector : public IntrusiveListHook<IntrusiveHookMode::NORMAL> {
+class PoolLeakDetector
+	: public IntrusiveListHook<IntrusiveHookMode::AUTO_UNLINK>
+{
 	struct pool &ldp;
 
 protected:
@@ -50,8 +52,6 @@ protected:
 	explicit PoolLeakDetector(AllocatorPtr alloc) noexcept;
 
 	PoolLeakDetector(const PoolLeakDetector &src):PoolLeakDetector(src.ldp) {}
-
-	~PoolLeakDetector() noexcept;
 
 	/**
 	 * This is an arbitrary virtual method only to force RTTI on
