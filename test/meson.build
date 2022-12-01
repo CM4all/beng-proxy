@@ -792,6 +792,7 @@ test(
       putil_dep,
       stock_dep,
       stopwatch_dep,
+      http_dep,
     ],
   ),
 )  

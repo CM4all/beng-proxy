@@ -299,6 +299,7 @@ eutil_dep = declare_dependency(link_with: eutil,
                               dependencies: [event_dep])
 
 subdir('libcommon/src/net')
+subdir('libcommon/src/net/log')
 
 net2 = static_library(
   'net2',
@@ -317,6 +318,7 @@ net_dep = declare_dependency(
 )
 
 subdir('libcommon/src/event/net')
+subdir('libcommon/src/event/net/log')
 subdir('libcommon/src/event/uring')
 
 event_net2 = static_library(
@@ -836,6 +838,7 @@ executable(
     memory_istream_dep,
     access_log_client_dep,
     event_uring_dep,
+    event_net_log_dep,
     avahi_dep,
     pool_dep,
     io_config_dep,
@@ -945,6 +948,7 @@ executable(
     socket_dep,
     event_dep,
     net_dep,
+    net_log_dep,
     ssl_dep,
     pg_dep,
     nghttp2_dep,
@@ -1024,7 +1028,7 @@ executable(
   'src/access_log/Cat.cxx',
   include_directories: inc,
   dependencies: [
-    net_dep,
+    net_log_dep,
     http_dep,
     libcxx,
   ],
@@ -1037,7 +1041,7 @@ executable(
   'src/access_log/Json.cxx',
   include_directories: inc,
   dependencies: [
-    net_dep,
+    net_log_dep,
     http_dep,
     libcxx,
   ],
@@ -1053,7 +1057,7 @@ executable(
   dependencies: [
     lua_dep,
     spawn_dep,
-    net_dep,
+    net_log_dep,
     http_dep,
     liblua,
     libcxx,
@@ -1067,7 +1071,7 @@ executable(
   'src/access_log/Traffic.cxx',
   include_directories: inc,
   dependencies: [
-    net_dep,
+    net_log_dep,
     http_dep,
     libcxx,
   ],
@@ -1081,7 +1085,7 @@ executable(
   include_directories: inc,
   dependencies: [
     system_dep,
-    net_dep,
+    net_log_dep,
     http_dep,
     libcxx,
   ],
@@ -1093,7 +1097,7 @@ executable(
   'src/access_log/Forward.cxx',
   include_directories: inc,
   dependencies: [
-    net_dep,
+    net_log_dep,
     http_dep,
     libcxx,
   ],
@@ -1105,7 +1109,7 @@ executable(
   'src/access_log/Exec.cxx',
   include_directories: inc,
   dependencies: [
-    net_dep,
+    net_log_dep,
     libcxx,
   ],
   install: true,
@@ -1119,7 +1123,7 @@ executable(
   dependencies: [
     spawn_dep,
     system_dep,
-    net_dep,
+    net_log_dep,
     libcxx,
   ],
   install: true,
