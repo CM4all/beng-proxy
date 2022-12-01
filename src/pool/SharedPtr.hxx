@@ -46,8 +46,8 @@
  * is not thread-safe.
  */
 template<typename T>
-class SharedPoolPtr : LeakDetector {
-	struct ControlBlock : PoolLeakDetector {
+class SharedPoolPtr final : LeakDetector {
+	struct ControlBlock final : PoolLeakDetector {
 		struct pool &p;
 
 		uintptr_t ref = 1;
