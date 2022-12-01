@@ -39,6 +39,8 @@
 #include "util/ByteOrder.hxx"
 #include "util/PrintException.hxx"
 
+#include <cinttypes> // for PRId64
+
 static void
 FillIssuerCommonName(Pg::Connection &c)
 {

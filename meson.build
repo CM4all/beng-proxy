@@ -185,6 +185,7 @@ libcrypt = compiler.find_library('crypt')
 inc = include_directories('src', 'include', 'libcommon/src', '.')
 
 subdir('libcommon/src/util')
+subdir('libcommon/src/lib/fmt')
 subdir('libcommon/src/uri')
 
 util2 = static_library(

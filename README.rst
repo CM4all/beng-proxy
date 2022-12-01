@@ -17,6 +17,7 @@ You need:
 - Linux kernel 5.10 or later
 - a C++20 compliant compiler (e.g. GCC 10 or clang 10)
 - `libcap2 <https://sites.google.com/site/fullycapable/>`__
+- `libfmt <https://fmt.dev/>`__
 - `libpq <https://www.postgresql.org/>`__
 - `Boost <http://www.boost.org/>`__
 - `CURL <https://curl.haxx.se/>`__
