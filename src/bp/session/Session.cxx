@@ -37,8 +37,6 @@
 #include "util/StringAPI.hxx"
 #include "AllocatorPtr.hxx"
 
-#include <boost/intrusive/unordered_set.hpp>
-
 #include <assert.h>
 #include <string.h>
 

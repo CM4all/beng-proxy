@@ -35,8 +35,7 @@
 #include "Session.hxx"
 #include "Prng.hxx"
 #include "event/FarTimerEvent.hxx"
-
-#include <boost/intrusive/unordered_set.hpp>
+#include "util/IntrusiveHashSet.hxx"
 
 #include <chrono>
 #include <random>
@@ -103,30 +102,19 @@ class SessionManager {
 		}
 	};
 
-	using Set =
-		boost::intrusive::unordered_set<Session,
-						boost::intrusive::member_hook<Session,
-									      Session::SetHook,
-									      &Session::set_hook>,
-						boost::intrusive::hash<SessionHash>,
-						boost::intrusive::equal<SessionEqual>,
-						boost::intrusive::constant_time_size<true>>;
-
 	static constexpr unsigned N_BUCKETS = 16381;
-	Set::bucket_type buckets[N_BUCKETS];
+
+	using Set = IntrusiveHashSet<Session, N_BUCKETS,
+				     SessionHash, SessionEqual,
+				     IntrusiveHashSetMemberHookTraits<&Session::set_hook>,
+				     true>;
 
 	Set sessions;
 
-	using ByAttach =
-		boost::intrusive::unordered_set<Session,
-						boost::intrusive::member_hook<Session,
-									      Session::ByAttachHook,
-									      &Session::by_attach_hook>,
-						boost::intrusive::hash<SessionAttachHash>,
-						boost::intrusive::equal<SessionAttachEqual>,
-						boost::intrusive::constant_time_size<false>>;
-
-	ByAttach::bucket_type buckets_by_attach[N_BUCKETS];
+	using ByAttach = IntrusiveHashSet<Session, N_BUCKETS,
+					  SessionAttachHash, SessionAttachEqual,
+					  IntrusiveHashSetMemberHookTraits<&Session::by_attach_hook>,
+					  true>;
 
 	ByAttach sessions_by_attach;
 

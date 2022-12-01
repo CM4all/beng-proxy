@@ -55,20 +55,6 @@ SessionManager::SessionAttachHash::operator()(const Session &session) const noex
 	return session.id.Hash();
 }
 
-template<typename Container, typename Pred, typename Disposer>
-static void
-EraseAndDisposeIf(Container &container, Pred pred, Disposer disposer)
-{
-	for (auto i = container.begin(), end = container.end(); i != end;) {
-		const auto next = std::next(i);
-
-		if (pred(*i))
-			container.erase_and_dispose(i, disposer);
-
-		i = next;
-	}
-}
-
 void
 SessionManager::EraseAndDispose(Session &session)
 {
@@ -83,7 +69,7 @@ SessionManager::Cleanup() noexcept
 {
 	const Expiry now = Expiry::Now();
 
-	EraseAndDisposeIf(sessions, [now](const Session &session){
+	sessions.remove_and_dispose_if([now](const Session &session){
 		return session.expires.IsExpired(now);
 	}, DeleteDisposer{});
 
@@ -107,8 +93,6 @@ SessionManager::SessionManager(EventLoop &event_loop,
 	:cluster_size(_cluster_size), cluster_node(_cluster_node),
 	 idle_timeout(_idle_timeout),
 	 prng(MakeSeeded<SessionPrng>()),
-	 sessions(Set::bucket_traits(buckets, N_BUCKETS)),
-	 sessions_by_attach(ByAttach::bucket_traits(buckets_by_attach, N_BUCKETS)),
 	 cleanup_timer(event_loop, BIND_THIS_METHOD(Cleanup))
 {
 }
@@ -148,7 +132,7 @@ SessionManager::Purge() noexcept
 	StaticVector<std::reference_wrapper<Session>, 256> purge_sessions;
 	unsigned highest_score = 0;
 
-	for (auto &session : sessions) {
+	sessions.for_each([&purge_sessions, &highest_score](Session &session) {
 		unsigned score = session.GetPurgeScore();
 		if (score > highest_score) {
 			purge_sessions.clear();
@@ -157,7 +141,7 @@ SessionManager::Purge() noexcept
 
 		if (score == highest_score && !purge_sessions.full())
 			purge_sessions.emplace_back(session);
-	}
+	});
 
 	if (purge_sessions.empty())
 		return false;
@@ -209,7 +193,7 @@ SessionManager::Find(SessionId id) noexcept
 	if (!id.IsDefined())
 		return nullptr;
 
-	auto i = sessions.find(id, SessionHash(), SessionEqual());
+	auto i = sessions.find(id);
 	if (i == sessions.end())
 		return nullptr;
 
@@ -236,27 +220,22 @@ SessionManager::Attach(RealmSessionLease lease, const char *realm,
 		lease->parent.attach = nullptr;
 	}
 
-	ByAttach::insert_commit_data commit_data;
 	const auto [it, inserted] =
-		sessions_by_attach.insert_check(attach,
-						sessions_by_attach.hash_function(),
-						sessions_by_attach.key_eq(),
-						commit_data);
+		sessions_by_attach.insert_check(attach);
 	if (inserted) {
 		/* doesn't exist already */
 
 		if (lease) {
 			/* assign new "attach" value to the given session */
 			lease->parent.attach = attach;
-			sessions_by_attach.insert_commit(lease->parent,
-							 commit_data);
+			sessions_by_attach.insert(it, lease->parent);
 			return lease;
 		} else {
 			/* create new session */
 
 			auto l = CreateSession();
 			l->attach = attach;
-			sessions_by_attach.insert_commit(*l, commit_data);
+			sessions_by_attach.insert(it, *l);
 
 			return {std::move(l), realm};
 		}
@@ -289,7 +268,7 @@ SessionManager::Put(Session &session) noexcept
 void
 SessionManager::EraseAndDispose(SessionId id) noexcept
 {
-	auto i = sessions.find(id, SessionHash(), SessionEqual());
+	auto i = sessions.find(id);
 	if (i != sessions.end())
 		EraseAndDispose(*i);
 }
@@ -297,7 +276,7 @@ SessionManager::EraseAndDispose(SessionId id) noexcept
 void
 SessionManager::DiscardRealmSession(SessionId id, const char *realm_name) noexcept
 {
-	auto i = sessions.find(id, SessionHash(), SessionEqual());
+	auto i = sessions.find(id);
 	if (i == sessions.end())
 		return;
 
@@ -317,18 +296,16 @@ SessionManager::Visit(void (*callback)(const Session *session,
 {
 	const Expiry now = Expiry::Now();
 
-	for (auto &session : sessions) {
+	sessions.for_each([now, callback, ctx](const Session &session){
 		if (!session.expires.IsExpired(now))
 			callback(&session, ctx);
-	}
+	});
 }
 
 void
 SessionManager::DiscardAttachSession(std::span<const std::byte> attach) noexcept
 {
-	auto i = sessions_by_attach.find(attach,
-					 sessions_by_attach.hash_function(),
-					 sessions_by_attach.key_eq());
+	auto i = sessions_by_attach.find(attach);
 	if (i != sessions_by_attach.end())
 		EraseAndDispose(*i);
 }

@@ -43,9 +43,9 @@
 #include "util/AllocatedArray.hxx"
 #include "util/AllocatedString.hxx"
 #include "util/Expiry.hxx"
+#include "util/IntrusiveHashSet.hxx"
 
 #include <boost/intrusive/set.hpp>
-#include <boost/intrusive/unordered_set_hook.hpp>
 
 #include <chrono>
 
@@ -114,9 +114,7 @@ struct Session;
 struct RealmSession
 	: boost::intrusive::set_base_hook<boost::intrusive::link_mode<boost::intrusive::normal_link>> {
 
-	static constexpr auto link_mode = boost::intrusive::normal_link;
-	using LinkMode = boost::intrusive::link_mode<link_mode>;
-	using SetHook = boost::intrusive::unordered_set_member_hook<LinkMode>;
+	using SetHook = IntrusiveHashSetHook<IntrusiveHookMode::NORMAL>;
 	SetHook set_hook;
 
 	SetHook by_attach_hook;
@@ -228,13 +226,9 @@ struct RealmSession
 };
 
 struct Session {
-	static constexpr auto link_mode = boost::intrusive::normal_link;
-	using LinkMode = boost::intrusive::link_mode<link_mode>;
-	using SetHook = boost::intrusive::unordered_set_member_hook<LinkMode>;
-	SetHook set_hook;
+	IntrusiveHashSetHook<IntrusiveHookMode::NORMAL> set_hook;
 
-	using ByAttachHook = boost::intrusive::unordered_set_member_hook<boost::intrusive::link_mode<boost::intrusive::auto_unlink>>;
-	ByAttachHook by_attach_hook;
+	IntrusiveHashSetHook<IntrusiveHookMode::AUTO_UNLINK> by_attach_hook;
 
 	/** identification number of this session */
 	const SessionId id;
