@@ -74,7 +74,7 @@
 #include "system/SetupProcess.hxx"
 #include "system/ProcessName.hxx"
 #include "system/Capabilities.hxx"
-#include "spawn/Glue.hxx"
+#include "spawn/Launch.hxx"
 #include "spawn/Client.hxx"
 #include "net/SocketAddress.hxx"
 #include "net/StaticSocketAddress.hxx"
@@ -345,11 +345,14 @@ try {
 
 	/* initialize */
 
+	SetupProcess();
+
+	auto spawner_socket = LaunchSpawnServer(_config.spawn, nullptr);
+
 	const ScopeFbPoolInit fb_pool_init;
 
 	BpInstance instance(std::move(_config));
 
-	SetupProcess();
 	capabilities_init();
 
 	const ScopeSslGlobalInit ssl_init;
@@ -374,26 +377,11 @@ try {
 	/* note: this function call passes a temporary SpawnConfig copy,
 	   because the reference will be evaluated in the child process
 	   after ~BpInstance() has been called */
-	instance.spawn = StartSpawnServer(SpawnConfig(instance.config.spawn),
-					  instance.event_loop,
-					  nullptr,
-					  [&instance](){
-						  instance.event_loop.Reinit();
+	instance.spawn = std::make_unique<SpawnServerClient>
+		(instance.event_loop,
+		 instance.config.spawn, std::move(spawner_socket),
+		 true);
 
-						  global_control_handler_deinit(&instance);
-						  instance.listeners.clear();
-						  instance.DisableSignals();
-
-						  instance.~BpInstance();
-
-#if defined(HAVE_LIBSYSTEMD) || defined(HAVE_AVAHI)
-						  /* don't share the
-						     DBus connection
-						     with the
-						     spawner */
-						  dbus_shutdown();
-#endif
-					  });
 	instance.spawn->SetHandler(instance);
 	instance.spawn_service = instance.spawn.get();
 
