@@ -51,11 +51,14 @@ protected:
 
 	PoolLeakDetector(const PoolLeakDetector &src):PoolLeakDetector(src.ldp) {}
 
+	~PoolLeakDetector() noexcept;
+
 	/**
-	 * This destructor is virtual only to force RTTI on the derived
-	 * class, so we can use `typeid()`.
+	 * This is an arbitrary virtual method only to force RTTI on
+	 * the derived class, so we can identify the object type in a
+	 * crash dump.
 	 */
-	virtual ~PoolLeakDetector() noexcept;
+	virtual void Dummy() noexcept;
 };
 
 #else

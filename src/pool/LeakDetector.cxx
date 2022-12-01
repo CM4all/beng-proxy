@@ -50,4 +50,9 @@ PoolLeakDetector::~PoolLeakDetector() noexcept
 	unlink();
 }
 
+void
+PoolLeakDetector::Dummy() noexcept
+{
+}
+
 #endif
