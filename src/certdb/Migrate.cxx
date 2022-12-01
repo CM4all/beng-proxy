@@ -34,12 +34,12 @@
 #include "FromResult.hxx"
 #include "Config.hxx"
 #include "pg/Reflection.hxx"
+#include "lib/fmt/ExceptionFormatter.hxx"
 #include "lib/openssl/Name.hxx"
 #include "util/AllocatedString.hxx"
 #include "util/ByteOrder.hxx"
-#include "util/PrintException.hxx"
 
-#include <cinttypes> // for PRId64
+#include <fmt/format.h>
 
 static void
 FillIssuerCommonName(Pg::Connection &c)
@@ -53,9 +53,9 @@ FillIssuerCommonName(Pg::Connection &c)
 		UniqueX509 cert;
 		try {
 			cert = LoadCertificate(result, row, 1);
-		} catch (const std::runtime_error &e) {
-			fprintf(stderr, "Failed to load certificate '%" PRId64 "'\n", id);
-			PrintException(e);
+		} catch (...) {
+			fmt::print(stderr, "Failed to load certificate '{}': {}\n",
+				   id, std::current_exception());
 			continue;
 		}
 
@@ -68,7 +68,7 @@ FillIssuerCommonName(Pg::Connection &c)
 					 "WHERE id=$1 AND NOT deleted AND issuer_common_name IS NULL",
 					 id, issuer_common_name.c_str());
 		if (r.GetAffectedRows() < 1)
-			fprintf(stderr, "Certificate '%" PRId64 "' disappeared\n", id);
+			fmt::print(stderr, "Certificate '{}' disappeared\n", id);
 	}
 }
 
