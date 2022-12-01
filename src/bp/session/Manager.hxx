@@ -167,7 +167,7 @@ public:
 	/**
 	 * Invoke the callback for each session.
 	 */
-	bool Visit(bool (*callback)(const Session *session,
+	void Visit(void (*callback)(const Session *session,
 				    void *ctx), void *ctx);
 
 	[[gnu::pure]]

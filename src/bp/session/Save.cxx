@@ -47,13 +47,12 @@
 
 static const char *session_save_path;
 
-static bool
+static void
 session_save_callback(const Session *session, void *ctx)
 {
 	auto &file = *(BufferedOutputStream *)ctx;
 	session_write_magic(file, MAGIC_SESSION);
 	session_write(file, session);
-	return true;
 }
 
 static void

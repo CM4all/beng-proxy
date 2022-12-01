@@ -311,23 +311,16 @@ SessionManager::DiscardRealmSession(SessionId id, const char *realm_name) noexce
 		EraseAndDispose(*i);
 }
 
-bool
-SessionManager::Visit(bool (*callback)(const Session *session,
+void
+SessionManager::Visit(void (*callback)(const Session *session,
 				       void *ctx), void *ctx)
 {
 	const Expiry now = Expiry::Now();
 
 	for (auto &session : sessions) {
-		if (session.expires.IsExpired(now))
-			continue;
-
-		{
-			if (!callback(&session, ctx))
-				return false;
-		}
+		if (!session.expires.IsExpired(now))
+			callback(&session, ctx);
 	}
-
-	return true;
 }
 
 void
