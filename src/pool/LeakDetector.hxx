@@ -45,7 +45,7 @@ class AllocatorPtr;
 class PoolLeakDetector : public IntrusiveListHook<IntrusiveHookMode::NORMAL> {
 	struct pool &ldp;
 
-public:
+protected:
 	explicit PoolLeakDetector(struct pool &_pool) noexcept;
 	explicit PoolLeakDetector(AllocatorPtr alloc) noexcept;
 
