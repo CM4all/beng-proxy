@@ -350,6 +350,7 @@ endif
 
 libcommon_enable_was = get_option('was')
 libcommon_enable_libsystemd = get_option('systemd')
+libcommon_enable_spawn_local = false
 
 subdir('libcommon/src/was/async')
 subdir('libcommon/src/stock')
