@@ -182,7 +182,11 @@ threads = dependency('threads')
 zlib = dependency('zlib')
 libcrypt = compiler.find_library('crypt')
 
-inc = include_directories('src', 'include', 'libcommon/src', '.')
+inc = include_directories(
+  'src',
+  'libcommon/src',
+  '.',
+)
 
 subdir('libcommon/src/util')
 subdir('libcommon/src/lib/cap')
@@ -1138,12 +1142,6 @@ executable(
   ],
   install: true,
   install_dir: 'lib/cm4all/beng-proxy/delegate/bin',
-)
-
-install_headers(
-  'include/beng-proxy/Control.hxx',
-  'include/beng-proxy/Headers.hxx',
-  subdir: 'beng-proxy',
 )
 
 subdir('doc')

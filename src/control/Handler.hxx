@@ -32,7 +32,7 @@
 
 #pragma once
 
-#include "beng-proxy/Control.hxx"
+#include "net/control/Protocol.hxx"
 #include "io/UniqueFileDescriptor.hxx"
 
 #include <exception>

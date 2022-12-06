@@ -1,6 +1,6 @@
 cm4all-beng-proxy (18.0.9) unstable; urgency=low
 
-  * 
+  * include: move to libcommon (eliminates package libcm4all-beng-proxy3-dev)
 
  --   
 

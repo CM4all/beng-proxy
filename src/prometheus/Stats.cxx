@@ -31,7 +31,7 @@
  */
 
 #include "Stats.hxx"
-#include "beng-proxy/Control.hxx"
+#include "net/control/Protocol.hxx"
 #include "util/ByteOrder.hxx"
 #include "memory/GrowingBuffer.hxx"
 

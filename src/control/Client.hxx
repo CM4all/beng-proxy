@@ -32,7 +32,7 @@
 
 #pragma once
 
-#include "beng-proxy/Control.hxx"
+#include "net/control/Protocol.hxx"
 #include "translation/Protocol.hxx"
 #include "net/UniqueSocketDescriptor.hxx"
 #include "util/SpanCast.hxx"

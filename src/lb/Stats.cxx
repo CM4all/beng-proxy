@@ -36,7 +36,7 @@
 #include "memory/fb_pool.hxx"
 #include "memory/SlicePool.hxx"
 #include "stats/AllocatorStats.hxx"
-#include "beng-proxy/Control.hxx"
+#include "net/control/Protocol.hxx"
 #include "util/ByteOrder.hxx"
 
 BengProxy::ControlStats

@@ -42,7 +42,7 @@
 #include "nfs/Cache.hxx"
 #include "session/Manager.hxx"
 #include "stats/AllocatorStats.hxx"
-#include "beng-proxy/Control.hxx"
+#include "net/control/Protocol.hxx"
 #include "util/ByteOrder.hxx"
 
 BengProxy::ControlStats

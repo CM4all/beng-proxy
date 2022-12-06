@@ -33,7 +33,7 @@
 #pragma once
 
 #include "Padding.hxx"
-#include "beng-proxy/Control.hxx"
+#include "net/control/Protocol.hxx"
 #include "util/ByteOrder.hxx"
 #include "util/SpanCast.hxx"
 

@@ -37,7 +37,7 @@
 #include "Config.hxx"
 #include "prometheus/Stats.hxx"
 #include "prometheus/HttpStats.hxx"
-#include "beng-proxy/Control.hxx"
+#include "net/control/Protocol.hxx"
 #include "http/Address.hxx"
 #include "http/Headers.hxx"
 #include "http/IncomingRequest.hxx"

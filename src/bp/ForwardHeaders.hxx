@@ -36,9 +36,8 @@
 
 #pragma once
 
+#include "translation/Headers.hxx"
 #include "http/Status.h"
-
-#include <beng-proxy/Headers.hxx>
 
 class AllocatorPtr;
 
