@@ -30,7 +30,7 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "Client.hxx"
+#include "net/control/Client.hxx"
 #include "translation/Protocol.hxx"
 #include "io/UniqueFileDescriptor.hxx"
 #include "system/Error.hxx"

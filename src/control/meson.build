@@ -1,8 +1,8 @@
 control_server = static_library(
   'control_server',
-  'Server.cxx',
   'Local.cxx',
   include_directories: inc,
+  dependencies: control_server_dep,
 )
 
 control_server_dep = declare_dependency(
@@ -15,9 +15,9 @@ control_server_dep = declare_dependency(
 executable(
   'cm4all-beng-control',
   'Main.cxx',
-  'Client.cxx',
   include_directories: inc,
   dependencies: [
+    control_client_dep,
     net_dep,
     io_dep,
     util_dep,

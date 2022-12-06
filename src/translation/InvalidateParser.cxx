@@ -32,7 +32,7 @@
 
 #include "InvalidateParser.hxx"
 #include "Request.hxx"
-#include "control/Padding.hxx"
+#include "net/control/Padding.hxx"
 #include "util/ByteOrder.hxx"
 #include "util/RuntimeError.hxx"
 #include "util/SpanCast.hxx"

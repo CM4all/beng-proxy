@@ -42,7 +42,7 @@
 #include "event/FarTimerEvent.hxx"
 #include "spawn/ZombieReaper.hxx"
 #include "spawn/Handler.hxx"
-#include "control/Handler.hxx"
+#include "event/net/control/Handler.hxx"
 #include "net/FailureManager.hxx"
 #include "util/Background.hxx"
 #include "util/IntrusiveList.hxx"

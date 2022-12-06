@@ -32,8 +32,8 @@
 
 #pragma once
 
-#include "control/Handler.hxx"
-#include "control/Server.hxx"
+#include "event/net/control/Handler.hxx"
+#include "event/net/control/Server.hxx"
 #include "io/Logger.hxx"
 
 #include <string_view>

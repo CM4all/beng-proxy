@@ -34,7 +34,7 @@
 #include "Listener.hxx"
 #include "Connection.hxx"
 #include "memory/fb_pool.hxx"
-#include "control/Server.hxx"
+#include "event/net/control/Server.hxx"
 #include "control/Local.hxx"
 #include "cluster/TcpBalancer.hxx"
 #include "pipe_stock.hxx"

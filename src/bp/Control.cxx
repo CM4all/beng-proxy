@@ -36,7 +36,7 @@
 #include "fcache.hxx"
 #include "http/cache/Public.hxx"
 #include "nfs/Cache.hxx"
-#include "control/Server.hxx"
+#include "event/net/control/Server.hxx"
 #include "control/Local.hxx"
 #include "translation/Builder.hxx"
 #include "translation/Protocol.hxx"

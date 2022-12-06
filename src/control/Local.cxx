@@ -31,7 +31,7 @@
  */
 
 #include "Local.hxx"
-#include "Server.hxx"
+#include "event/net/control/Server.hxx"
 #include "net/SocketConfig.hxx"
 
 #include <sys/un.h>

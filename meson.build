@@ -305,6 +305,7 @@ eutil_dep = declare_dependency(link_with: eutil,
                               dependencies: [event_dep])
 
 subdir('libcommon/src/net')
+subdir('libcommon/src/net/control')
 subdir('libcommon/src/net/log')
 
 net2 = static_library(
@@ -324,6 +325,7 @@ net_dep = declare_dependency(
 )
 
 subdir('libcommon/src/event/net')
+subdir('libcommon/src/event/net/control')
 subdir('libcommon/src/event/net/log')
 subdir('libcommon/src/event/uring')
 
