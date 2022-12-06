@@ -69,7 +69,7 @@
 #include "access_log/Glue.hxx"
 #include "ssl/Init.hxx"
 #include "ssl/Client.hxx"
-#include "system/CapabilityGlue.hxx"
+#include "lib/cap/Glue.hxx"
 #include "system/KernelVersion.hxx"
 #include "system/SetupProcess.hxx"
 #include "system/ProcessName.hxx"
