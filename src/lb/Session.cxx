@@ -34,7 +34,7 @@
 #include "strmap.hxx"
 #include "http/CookieExtract.hxx"
 #include "util/HexParse.hxx"
-#include "util/StringView.hxx"
+#include "util/StringSplit.hxx"
 
 sticky_hash_t
 lb_session_get(const StringMap &request_headers, const char *cookie_name)
@@ -43,16 +43,16 @@ lb_session_get(const StringMap &request_headers, const char *cookie_name)
 	if (cookie == NULL)
 		return 0;
 
-	StringView session = ExtractCookieRaw(cookie, cookie_name);
-	session = session.Split('/').first;
+	auto session = ExtractCookieRaw(cookie, cookie_name);
+	session = Split(session, '/').first;
 
 	constexpr auto n_digits = sizeof(sticky_hash_t) * 2;
 
-	if (session.size < n_digits)
+	if (session.size() < n_digits)
 		return {};
 
 	/* only parse the lowest 32 bits */
-	session.skip_front(session.size - n_digits);
+	session = session.substr(session.size() - n_digits);
 
 	uint32_t hash;
 	if (!ParseLowerHexFixed(session, hash))
