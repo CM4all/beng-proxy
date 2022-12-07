@@ -712,17 +712,6 @@ class StaticArrayPrinter:
         t = get_basic_type(self.val.type)
         return "StaticArray<%s>" % t.template_argument(0)
 
-class StringViewPrinter:
-    def __init__(self, val):
-        self.val = val
-
-    def to_string(self):
-        data = self.val['data']
-        if data.address == 0:
-            return "nullptr"
-
-        return '"%s"' % data.string(length=self.val['size'])
-
 class StringMapItemPrinter:
     def __init__(self, val):
         self.val = val
@@ -958,8 +947,6 @@ def build_pretty_printer():
     pp.add_printer('boost::intrusive::list', 'boost::intrusive::s?list<', BoostIntrusiveListPrinter)
     pp.add_printer('boost::intrusive::set', 'boost::intrusive::(multi)?set<', BoostIntrusiveSetPrinter)
     pp.add_printer('boost::intrusive::unordered_set', 'boost::intrusive::unordered_(multi)?set<', BoostIntrusiveUnorderedSetPrinter)
-    pp.add_printer('StringView', '^BasicStringView<char>$', StringViewPrinter)
-    pp.add_printer('StringView', '^StringView$', StringViewPrinter)
     pp.add_printer('StringMap::Item', '^StringMap::Item$', StringMapItemPrinter)
     pp.add_printer('StringMap', '^StringMap$', StringMapPrinter)
     pp.add_printer('BoundMethod', '^BoundMethod<', BoundMethodPrinter)
