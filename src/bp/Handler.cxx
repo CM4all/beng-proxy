@@ -60,7 +60,6 @@
 #include "translation/Layout.hxx"
 #include "util/SpanCast.hxx"
 #include "util/StringCompare.hxx"
-#include "util/StringView.hxx"
 #include "HttpMessageResponse.hxx"
 #include "ResourceLoader.hxx"
 
@@ -321,9 +320,9 @@ ProbeOnePathSuffix(const char *prefix, const char *suffix) noexcept
 [[gnu::pure]]
 static const char *
 ProbePathSuffixes(const char *prefix,
-		  const ConstBuffer<const char *> suffixes) noexcept
+		  const std::span<const char *const> suffixes) noexcept
 {
-	assert(!suffixes.IsNull());
+	assert(suffixes.data() != nullptr);
 	assert(!suffixes.empty());
 
 	for (const char *current_suffix : suffixes) {
@@ -477,7 +476,7 @@ fill_translate_request_user(Request &request,
 
 [[gnu::pure]]
 static const TranslationLayoutItem *
-FindLayoutItem(ConstBuffer<TranslationLayoutItem> items,
+FindLayoutItem(std::span<const TranslationLayoutItem> items,
 	       const char *uri) noexcept
 {
 	for (const auto &i : items)
@@ -892,15 +891,14 @@ Request::CheckHandleReadFile(const TranslateResponse &response) noexcept
 		return true;
 	}
 
-	ConstBuffer<void> contents;
+	std::span<const std::byte> contents;
 
 	try {
 		contents = LoadFile(pool, response.read_file, 256);
 	} catch (...) {
 		/* special case: if the file does not exist, return an empty
 		   READ_FILE packet to the translation server */
-		contents.data = "";
-		contents.size = 0;
+		contents = AsBytes(""sv);
 	}
 
 	translate.request.read_file = contents;
