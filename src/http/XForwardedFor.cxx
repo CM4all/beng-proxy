@@ -31,7 +31,8 @@
  */
 
 #include "XForwardedFor.hxx"
-#include "util/StringView.hxx"
+#include "util/StringSplit.hxx"
+#include "util/StringStrip.hxx"
 
 bool
 XForwardedForConfig::IsTrustedHost(std::string_view host) const noexcept
@@ -39,7 +40,7 @@ XForwardedForConfig::IsTrustedHost(std::string_view host) const noexcept
 	if (trust.contains(host))
 		return true;
 
-	if (const auto [address, interface] = StringView{host}.Split('%');
+	if (const auto [address, interface] = Split(host, '%');
 	    !address.empty() && !interface.empty() &&
 	    trust_interfaces.contains(std::string_view{interface}))
 		return true;
@@ -54,19 +55,19 @@ XForwardedForConfig::IsTrustedHost(std::string_view host) const noexcept
  */
 [[gnu::pure]]
 static std::pair<std::string_view, std::string_view>
-LastListItem(StringView list) noexcept
+LastListItem(std::string_view list) noexcept
 {
-	auto [a, b] = list.SplitLast(',');
-	if (b == nullptr) {
+	auto [a, b] = SplitLast(list, ',');
+	if (b.data() == nullptr) {
 		// no comma found
-		a.Strip();
+		a = Strip(a);
 		if (a.empty())
 			return {a, b};
 
 		return {b, a};
 	}
 
-	b.Strip();
+	b = Strip(b);
 	return {a, b};
 }
 

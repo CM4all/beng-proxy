@@ -41,7 +41,6 @@
 #include "system/Error.hxx"
 #include "net/TimeoutError.hxx"
 #include "io/Iovec.hxx"
-#include "util/StringView.hxx"
 #include "util/StaticVector.hxx"
 #include "util/RuntimeError.hxx"
 
