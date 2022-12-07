@@ -35,33 +35,35 @@
 #include "translation/InvalidateParser.hxx"
 #include "translation/Response.hxx"
 #include "translation/Protocol.hxx"
-#include "util/StringView.hxx"
 
 #include <memory>
+
+using std::string_view_literals::operator""sv;
 
 LbTranslationCache::Vary::Vary(const TranslateResponse &response)
 	:host(response.VaryContains(TranslationCommand::HOST)),
 	 listener_tag(response.VaryContains(TranslationCommand::LISTENER_TAG)) {}
 
 [[gnu::pure]]
-static StringView
+static std::string_view
 WithVary(const char *value, bool vary)
 {
 	if (!vary)
-		return nullptr;
+		return {};
 
 	if (value == nullptr)
-		return "";
+		return ""sv;
 
 	return value;
 }
 
 [[gnu::pure]]
-static size_t
-CalculateKeyIteratorBufferSize(StringView host, StringView listener_tag)
+static constexpr size_t
+CalculateKeyIteratorBufferSize(std::string_view host,
+			       std::string_view listener_tag) noexcept
 {
 	/* the ones are: underscore, separator, underscore, null terminator */
-	return 1 + host.size + 1 + 1 + listener_tag.size + 1;
+	return 1 + host.size() + 1 + 1 + listener_tag.size() + 1;
 }
 
 /**
@@ -71,7 +73,7 @@ class LbTranslationCacheKeyIterator {
 	static constexpr unsigned HOST = 0x1;
 	static constexpr unsigned LISTENER_TAG = 0x2;
 
-	const StringView host, listener_tag;
+	const std::string_view host, listener_tag;
 
 	std::unique_ptr<char[]> buffer;
 
@@ -83,7 +85,7 @@ public:
 				      const char *_listener_tag)
 		:host(vary.host
 		      ? WithVary(request.headers.Get("host"), vary.host)
-		      : nullptr),
+		      : std::string_view{}),
 		 listener_tag(WithVary(_listener_tag, vary.listener_tag)),
 		 buffer(new char[CalculateKeyIteratorBufferSize(host, listener_tag)]) {}
 
@@ -103,8 +105,8 @@ public:
 	 * Generates a key for storing into the cache.
 	 */
 	const char *FullKey() const {
-		return MakeKey((!host.IsNull() * HOST) |
-			       (!listener_tag.IsNull() * LISTENER_TAG));
+		return MakeKey(((host.data() != nullptr) * HOST) |
+			       ((listener_tag.data() != nullptr) * LISTENER_TAG));
 	}
 
 private:
@@ -119,8 +121,8 @@ private:
 	bool IsInactive(int i) const {
 		assert(i < 4);
 
-		return (HasHost(i) && host.IsNull()) ||
-			(HasListenerTag(i) && listener_tag.IsNull());
+		return (HasHost(i) && host.data() == nullptr) ||
+			(HasListenerTag(i) && listener_tag.data() == nullptr);
 	}
 
 	unsigned NextIndex(unsigned i) const {
@@ -140,7 +142,7 @@ private:
 			   between "wildcard" (nothing) and "empty value"
 			   (underscore) */
 			*p++ = '_';
-			p = (char *)mempcpy(p, host.data, host.size);
+			p = (char *)mempcpy(p, host.data(), host.size());
 		}
 
 		*p++ = '|';
@@ -148,7 +150,7 @@ private:
 		if (HasListenerTag(i)) {
 			/* see above for the underscore explanation */
 			*p++ = '_';
-			p = (char *)mempcpy(p, listener_tag.data, listener_tag.size);
+			p = (char *)mempcpy(p, listener_tag.data(), listener_tag.size());
 		}
 
 		*p = 0;
@@ -196,15 +198,15 @@ LbTranslationCache::Clear()
 }
 
 static bool
-KeyVaryMatch(StringView item, const char *request)
+KeyVaryMatch(std::string_view item, const char *request)
 {
 	if (request == nullptr)
 		return true;
 
 	size_t request_size = strlen(request);
-	return item.size == 1 + request_size &&
+	return item.size() == 1 + request_size &&
 		item.front() == '_' &&
-		memcmp(item.data + 1, request, request_size) == 0;
+		memcmp(item.data() + 1, request, request_size) == 0;
 }
 
 /**
