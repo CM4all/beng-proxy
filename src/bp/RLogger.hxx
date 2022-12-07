@@ -35,6 +35,7 @@
 #include "http/Logger.hxx"
 
 #include <chrono>
+#include <string_view>
 
 #include <stdint.h>
 
@@ -68,7 +69,7 @@ struct BpRequestLogger final : IncomingHttpRequestLogger {
 	/**
 	 * From TranslationCommand::STATS_TAG
 	 */
-	const char *stats_tag = nullptr;
+	std::string_view stats_tag{};
 
 	BpRequestLogger(BpInstance &_instance,
 			TaggedHttpStats &_http_stats) noexcept;

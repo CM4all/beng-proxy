@@ -34,7 +34,6 @@
 #include "Instance.hxx"
 #include "access_log/Glue.hxx"
 #include "http/IncomingRequest.hxx"
-#include "util/StringView.hxx"
 
 BpRequestLogger::BpRequestLogger(BpInstance &_instance,
 				 TaggedHttpStats &_http_stats) noexcept
@@ -54,7 +53,7 @@ BpRequestLogger::LogHttpRequest(IncomingHttpRequest &request,
 				       bytes_received, bytes_sent,
 				       duration);
 
-	http_stats.AddRequest(StringView{stats_tag}, status,
+	http_stats.AddRequest(stats_tag, status,
 			      bytes_received, bytes_sent,
 			      duration);
 
