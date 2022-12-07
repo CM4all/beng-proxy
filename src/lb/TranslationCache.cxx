@@ -142,7 +142,7 @@ private:
 			   between "wildcard" (nothing) and "empty value"
 			   (underscore) */
 			*p++ = '_';
-			p = (char *)mempcpy(p, host.data(), host.size());
+			p = std::copy(host.begin(), host.end(), p);
 		}
 
 		*p++ = '|';
@@ -150,7 +150,7 @@ private:
 		if (HasListenerTag(i)) {
 			/* see above for the underscore explanation */
 			*p++ = '_';
-			p = (char *)mempcpy(p, listener_tag.data(), listener_tag.size());
+			p = std::copy(listener_tag.begin(), listener_tag.end(), p);
 		}
 
 		*p = 0;
