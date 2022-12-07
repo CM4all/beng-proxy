@@ -36,7 +36,6 @@
 #include "istream/UnusedPtr.hxx"
 #include "istream/New.hxx"
 #include "util/SpanCast.hxx"
-#include "util/StringView.hxx"
 #include "util/DestructObserver.hxx"
 
 #include <assert.h>
@@ -44,14 +43,13 @@
 class EscapeIstream final : public FacadeIstream, DestructAnchor {
 	const struct escape_class &cls;
 
-	StringView escaped;
+	std::string_view escaped{};
 
 public:
 	EscapeIstream(struct pool &_pool, UnusedIstreamPtr _input,
 		      const struct escape_class &_cls) noexcept
 		:FacadeIstream(_pool, std::move(_input)),
 		 cls(_cls) {
-		escaped.size = 0;
 	}
 
 	bool SendEscaped() noexcept;
@@ -60,10 +58,10 @@ public:
 
 	off_t _GetAvailable(bool partial) noexcept override {
 		if (!HasInput())
-			return escaped.size;
+			return escaped.size();
 
 		return partial
-			? escaped.size + input.GetAvailable(partial)
+			? escaped.size() + input.GetAvailable(partial)
 			: -1;
 	}
 
@@ -104,7 +102,7 @@ EscapeIstream::SendEscaped() noexcept
 	if (nbytes == 0)
 		return false;
 
-	escaped.skip_front(nbytes);
+	escaped = escaped.substr(nbytes);
 	if (!escaped.empty())
 		return false;
 
