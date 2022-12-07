@@ -34,7 +34,6 @@
 #include "strmap.hxx"
 #include "http/List.hxx"
 #include "http/Date.hxx"
-#include "util/StringView.hxx"
 
 int
 http_client_accepts_encoding(const StringMap &request_headers,

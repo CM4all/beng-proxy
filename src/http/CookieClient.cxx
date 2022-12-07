@@ -41,11 +41,11 @@
 #include "util/DeleteDisposer.hxx"
 #include "util/StringCompare.hxx"
 #include "util/StringStrip.hxx"
-#include "util/StringView.hxx"
 #include "AllocatorPtr.hxx"
 
 #include <iterator>
 #include <memory>
+#include <string_view>
 
 #include <stdlib.h>
 #include <string.h>
@@ -80,7 +80,7 @@ template<typename L>
 static void
 cookie_list_delete_match(L &list,
 			 const char *domain, const char *path,
-			 StringView name) noexcept
+			 std::string_view name) noexcept
 {
 	assert(domain != nullptr);
 
@@ -89,7 +89,7 @@ cookie_list_delete_match(L &list,
 			(cookie.path == nullptr
 			 ? path == nullptr
 			 : path_matches(cookie.path.c_str(), path)) &&
-			name.Equals(cookie.name.c_str());
+			name == cookie.name;
 	},
 		DeleteDisposer{});
 }
@@ -220,10 +220,10 @@ cookie_jar_http_header_value(const CookieJar &jar,
 		    !path_matches(path, cookie->path.c_str()))
 			continue;
 
-		const StringView name(cookie->name.c_str());
-		const StringView value(cookie->value.c_str());
+		const std::string_view name{cookie->name};
+		const std::string_view value{cookie->value};
 
-		if (buffer_size - length < name.size + 1 + 1 + value.size * 2 + 1 + 2)
+		if (buffer_size - length < name.size() + 1 + 1 + value.size() * 2 + 1 + 2)
 			break;
 
 		if (length > 0) {
@@ -231,14 +231,14 @@ cookie_jar_http_header_value(const CookieJar &jar,
 			buffer[length++] = ' ';
 		}
 
-		memcpy(buffer + length, name.data, name.size);
-		length += name.size;
+		memcpy(buffer + length, name.data(), name.size());
+		length += name.size();
 		buffer[length++] = '=';
 		if (http_must_quote_token(value))
 			length += http_quote_string(buffer + length, value);
 		else {
-			memcpy(buffer + length, value.data, value.size);
-			length += value.size;
+			memcpy(buffer + length, value.data(), value.size());
+			length += value.size();
 		}
 	}
 
