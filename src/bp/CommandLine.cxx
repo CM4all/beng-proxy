@@ -34,9 +34,10 @@
 #include "Config.hxx"
 #include "net/Parser.hxx"
 #include "io/Logger.hxx"
-#include "util/StringView.hxx"
 #include "util/IterableSplitString.hxx"
 #include "version.h"
+
+#include <string_view>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -132,14 +133,14 @@ HandleSet(BpConfig &config,
 	if (eq == p)
 		arg_error(argv0, "No name found in --set argument");
 
-	const StringView name(p, eq - p);
+	const std::string_view name{p, eq};
 	const char *const value = eq + 1;
 
 	try {
 		config.HandleSet(name, value);
 	} catch (const std::runtime_error &e) {
 		arg_error(argv0, "Error while parsing \"--set %.*s\": %s",
-			  (int)name.size, name.data, e.what());
+			  (int)name.size(), name.data(), e.what());
 	}
 }
 
