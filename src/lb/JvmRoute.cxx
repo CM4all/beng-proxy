@@ -33,8 +33,10 @@
 #include "JvmRoute.hxx"
 #include "ClusterConfig.hxx"
 #include "http/CookieExtract.hxx"
-#include "util/StringView.hxx"
+#include "util/StringSplit.hxx"
 #include "strmap.hxx"
+
+using std::string_view_literals::operator""sv;
 
 sticky_hash_t
 lb_jvm_route_get(const StringMap &request_headers,
@@ -44,9 +46,8 @@ lb_jvm_route_get(const StringMap &request_headers,
 	if (cookie == NULL)
 		return 0;
 
-	const StringView jsessionid = ExtractCookieRaw(cookie,
-						       "JSESSIONID");
-	const auto jvm_route = jsessionid.Split('.').second;
+	const auto jsessionid = ExtractCookieRaw(cookie, "JSESSIONID"sv);
+	const auto jvm_route = Split(jsessionid, '.').second;
 	if (jvm_route.empty())
 		return 0;
 
