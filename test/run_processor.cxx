@@ -43,7 +43,6 @@
 #include "istream/OpenFileIstream.hxx"
 #include "istream/istream_string.hxx"
 #include "pool/SharedPtr.hxx"
-#include "util/StringView.hxx"
 #include "util/PrintException.hxx"
 #include "stopwatch.hxx"
 

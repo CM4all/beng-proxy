@@ -31,7 +31,8 @@
  */
 
 #include "uri/Relative.hxx"
-#include "util/StringView.hxx"
+
+#include <string_view>
 
 #include <gtest/gtest.h>
 

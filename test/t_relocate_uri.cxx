@@ -32,7 +32,6 @@
 
 #include "uri/Relocate.hxx"
 #include "pool/RootPool.hxx"
-#include "util/StringView.hxx"
 #include "AllocatorPtr.hxx"
 
 #include <gtest/gtest.h>
@@ -82,9 +81,9 @@ static constexpr RelocateUriTest relocate_uri_tests[] = {
 
 static void
 CheckRelocateUri(AllocatorPtr alloc, const char *uri,
-		 const char *internal_host, StringView internal_path,
+		 const char *internal_host, std::string_view internal_path,
 		 const char *external_scheme, const char *external_host,
-		 StringView external_path, StringView base,
+		 std::string_view external_path, std::string_view base,
 		 const char *expected)
 {
 	auto *relocated = RelocateUri(alloc, uri, internal_host, internal_path,

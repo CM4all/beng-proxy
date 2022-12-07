@@ -32,7 +32,6 @@
 
 #include "escape/HTML.hxx"
 #include "escape/Static.hxx"
-#include "util/StringView.hxx"
 
 #include <stdio.h>
 #include <stdlib.h>

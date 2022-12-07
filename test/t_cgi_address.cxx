@@ -34,6 +34,8 @@
 #include "AllocatorPtr.hxx"
 #include "TestPool.hxx"
 
+#include <string_view>
+
 #include <gtest/gtest.h>
 
 using std::string_view_literals::operator""sv;
