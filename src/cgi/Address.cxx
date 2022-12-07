@@ -43,7 +43,7 @@
 #include "uri/PEdit.hxx"
 #include "uri/PEscape.hxx"
 #include "uri/PRelative.hxx"
-#include "util/StringView.hxx"
+#include "util/StringAPI.hxx"
 #include "pexpand.hxx"
 
 #include <stdexcept>
@@ -206,7 +206,8 @@ bool
 CgiAddress::IsSameBase(const CgiAddress &other) const noexcept
 {
 	return IsSameProgram(other) &&
-		StringView(script_name).Equals(other.script_name);
+		StringIsEqual(script_name != nullptr ? script_name : "",
+			      other.script_name != nullptr ? other.script_name : "");
 }
 
 void
@@ -220,8 +221,8 @@ CgiAddress::InsertQueryString(AllocatorPtr alloc,
 }
 
 void
-CgiAddress::InsertArgs(AllocatorPtr alloc, StringView new_args,
-		       StringView new_path_info) noexcept
+CgiAddress::InsertArgs(AllocatorPtr alloc, std::string_view new_args,
+		       std::string_view new_path_info) noexcept
 {
 	uri = uri_insert_args(alloc, uri, new_args, new_path_info);
 
@@ -313,7 +314,7 @@ CgiAddress::LoadBase(AllocatorPtr alloc, std::string_view suffix) const noexcept
 [[gnu::pure]]
 static const char *
 UnescapeApplyPathInfo(AllocatorPtr alloc, const char *base_path_info,
-		      StringView relative_escaped) noexcept
+		      std::string_view relative_escaped) noexcept
 {
 	if (base_path_info == nullptr)
 		base_path_info = "";
@@ -326,7 +327,7 @@ UnescapeApplyPathInfo(AllocatorPtr alloc, const char *base_path_info,
 
 	const TempPoolLease tpool;
 
-	char *unescaped = (char *)p_malloc(tpool, relative_escaped.size);
+	char *unescaped = (char *)p_malloc(tpool, relative_escaped.size());
 	char *unescaped_end = UriUnescape(unescaped, relative_escaped);
 	if (unescaped_end == nullptr)
 		return nullptr;
@@ -354,33 +355,33 @@ CgiAddress::Apply(AllocatorPtr alloc,
 	return dest;
 }
 
-StringView
+std::string_view
 CgiAddress::RelativeTo(const CgiAddress &base) const noexcept
 {
 	if (!IsSameProgram(base))
-		return nullptr;
+		return {};
 
 	if (path_info == nullptr || base.path_info == nullptr)
-		return nullptr;
+		return {};
 
 	return uri_relative(base.path_info, path_info);
 }
 
-StringView
+std::string_view
 CgiAddress::RelativeToApplied(AllocatorPtr alloc,
 			      const CgiAddress &apply_base,
-			      StringView relative) const noexcept
+			      std::string_view relative) const noexcept
 {
 	if (!IsSameProgram(apply_base))
-		return nullptr;
+		return {};
 
 	if (path_info == nullptr)
-		return nullptr;
+		return {};
 
 	const char *new_path_info =
 		UnescapeApplyPathInfo(alloc, apply_base.path_info, relative);
 	if (new_path_info == nullptr)
-		return nullptr;
+		return {};
 
 	return uri_relative(path_info, new_path_info);
 }

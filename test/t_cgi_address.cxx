@@ -31,11 +31,12 @@
  */
 
 #include "cgi/Address.hxx"
-#include "util/StringView.hxx"
 #include "AllocatorPtr.hxx"
 #include "TestPool.hxx"
 
 #include <gtest/gtest.h>
+
+using std::string_view_literals::operator""sv;
 
 [[gnu::pure]]
 static constexpr auto
@@ -132,30 +133,6 @@ TEST(CgiAddressTest, Apply)
 	ASSERT_STREQ(b->path_info, "/bar");
 }
 
-static bool
-operator==(const StringView a, const StringView b) noexcept
-{
-	if (a.IsNull() || b.IsNull())
-		return a.IsNull() && b.IsNull();
-
-	if (a.size != b.size)
-		return false;
-
-	return memcmp(a.data, b.data, a.size) == 0;
-}
-
-static bool
-operator==(const StringView a, const char *b) noexcept
-{
-	return a == StringView(b);
-}
-
-static bool
-operator==(const StringView a, std::nullptr_t b) noexcept
-{
-	return a == StringView(b);
-}
-
 TEST(CgiAddressTest, RelativeTo)
 {
 	TestPool pool;
@@ -163,13 +140,14 @@ TEST(CgiAddressTest, RelativeTo)
 
 	static constexpr auto base = MakeCgiAddress("/usr/bin/cgi", nullptr, "/test.pl", "/foo/");
 
-	ASSERT_EQ(MakeCgiAddress("/usr/bin/other-cgi", nullptr, "/test.pl", "/foo/").RelativeTo(base), nullptr);
+	ASSERT_EQ(MakeCgiAddress("/usr/bin/other-cgi", nullptr, "/test.pl", "/foo/").RelativeTo(base).data(), nullptr);
 
-	ASSERT_EQ(MakeCgiAddress("/usr/bin/cgi", nullptr, "/test.pl", nullptr).RelativeTo(base), nullptr);
-	ASSERT_EQ(MakeCgiAddress("/usr/bin/cgi", nullptr, "/test.pl", "/").RelativeTo(base), nullptr);
-	ASSERT_EQ(MakeCgiAddress("/usr/bin/cgi", nullptr, "/test.pl", "/foo").RelativeTo(base), nullptr);
-	ASSERT_EQ(MakeCgiAddress("/usr/bin/cgi", nullptr, "/test.pl", "/foo/").RelativeTo(base), "");
-	ASSERT_EQ(MakeCgiAddress("/usr/bin/cgi", nullptr, "/test.pl", "/foo/bar").RelativeTo(base), "bar");
+	ASSERT_EQ(MakeCgiAddress("/usr/bin/cgi", nullptr, "/test.pl", nullptr).RelativeTo(base).data(), nullptr);
+	ASSERT_EQ(MakeCgiAddress("/usr/bin/cgi", nullptr, "/test.pl", "/").RelativeTo(base).data(), nullptr);
+	ASSERT_EQ(MakeCgiAddress("/usr/bin/cgi", nullptr, "/test.pl", "/foo").RelativeTo(base).data(), nullptr);
+	ASSERT_NE(MakeCgiAddress("/usr/bin/cgi", nullptr, "/test.pl", "/foo/").RelativeTo(base).data(), nullptr);
+	ASSERT_EQ(MakeCgiAddress("/usr/bin/cgi", nullptr, "/test.pl", "/foo/").RelativeTo(base), ""sv);
+	ASSERT_EQ(MakeCgiAddress("/usr/bin/cgi", nullptr, "/test.pl", "/foo/bar").RelativeTo(base), "bar"sv);
 }
 
 TEST(CgiAddressTest, AutoBase)

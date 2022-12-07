@@ -38,7 +38,6 @@
 
 #include <string_view>
 
-struct StringView;
 class AllocatorPtr;
 class MatchData;
 
@@ -173,8 +172,8 @@ struct CgiAddress {
 	void InsertQueryString(AllocatorPtr alloc,
 			       const char *new_query_string) noexcept;
 
-	void InsertArgs(AllocatorPtr alloc, StringView new_args,
-			StringView new_path_info) noexcept;
+	void InsertArgs(AllocatorPtr alloc, std::string_view new_args,
+			std::string_view new_path_info) noexcept;
 
 	CgiAddress *Clone(AllocatorPtr alloc) const noexcept;
 
@@ -202,7 +201,7 @@ struct CgiAddress {
 	 * relative part.  Returns nullptr on mismatch.
 	 */
 	[[gnu::pure]]
-	StringView RelativeTo(const CgiAddress &base) const noexcept;
+	std::string_view RelativeTo(const CgiAddress &base) const noexcept;
 
 	/**
 	 * A combination of Apply() and RelativeTo(), i.e. calls
@@ -210,9 +209,9 @@ struct CgiAddress {
 	 * because it needs copy only a small part of the object.
 	 */
 	[[gnu::pure]]
-	StringView RelativeToApplied(AllocatorPtr alloc,
-				     const CgiAddress &apply_base,
-				     StringView relative) const noexcept;
+	std::string_view RelativeToApplied(AllocatorPtr alloc,
+					   const CgiAddress &apply_base,
+					   std::string_view relative) const noexcept;
 
 	/**
 	 * Does this address need to be expanded with Expand()?
