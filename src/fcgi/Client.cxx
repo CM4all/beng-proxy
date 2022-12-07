@@ -54,7 +54,6 @@
 #include "util/StringSplit.hxx"
 #include "util/StringStrip.hxx"
 #include "util/ByteOrder.hxx"
-#include "util/StringView.hxx"
 #include "util/Cancellable.hxx"
 #include "util/Exception.hxx"
 #include "AllocatorPtr.hxx"
@@ -1135,9 +1134,9 @@ fcgi_client_request(struct pool *pool, EventLoop &event_loop,
 
 	ps.Headers(headers);
 
-	for (const StringView param : params) {
-		const auto [name, value] = param.Split('=');
-		if (!name.empty() && value != nullptr)
+	for (const std::string_view param : params) {
+		const auto [name, value] = Split(param, '=');
+		if (!name.empty() && value.data() != nullptr)
 			ps(name, value);
 	}
 

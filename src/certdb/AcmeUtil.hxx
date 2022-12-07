@@ -32,18 +32,11 @@
 
 #pragma once
 
-#include "util/StringView.hxx"
-
-#include <string>
+#include <string_view>
 
 static bool
-IsAcmeInvalid(StringView s)
+IsAcmeInvalid(std::string_view s) noexcept
 {
-	return s.EndsWith(".acme.invalid");
-}
-
-static bool
-IsAcmeInvalid(const std::string &s)
-{
-	return IsAcmeInvalid(StringView(s.data(), s.length()));
+	using std::string_view_literals::operator""sv;
+	return s.ends_with(".acme.invalid"sv);
 }

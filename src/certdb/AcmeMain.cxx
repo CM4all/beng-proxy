@@ -58,6 +58,7 @@
 #include "util/AllocatedString.hxx"
 #include "util/ConstBuffer.hxx"
 #include "util/RuntimeError.hxx"
+#include "util/StringAPI.hxx"
 
 #include <map>
 #include <memory>
