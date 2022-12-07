@@ -40,7 +40,6 @@
 #include "uri/Extract.hxx"
 #include "pexpand.hxx"
 #include "spawn/Prepared.hxx"
-#include "util/StringView.hxx"
 
 #include <string.h>
 
@@ -142,8 +141,8 @@ LhttpAddress::InsertQueryString(AllocatorPtr alloc,
 
 LhttpAddress *
 LhttpAddress::InsertArgs(AllocatorPtr alloc,
-			 StringView new_args,
-			 StringView path_info) const noexcept
+			 std::string_view new_args,
+			 std::string_view path_info) const noexcept
 {
 	return alloc.New<LhttpAddress>(ShallowCopy(), *this,
 				       uri_insert_args(alloc, uri,
@@ -179,7 +178,7 @@ LhttpAddress::LoadBase(AllocatorPtr alloc, std::string_view suffix) const noexce
 gcc_pure
 static const char *
 ApplyUri(AllocatorPtr alloc, const char *base_uri,
-	 StringView relative) noexcept
+	 std::string_view relative) noexcept
 {
 	if (relative.empty())
 		return base_uri;
@@ -203,24 +202,28 @@ LhttpAddress::Apply(AllocatorPtr alloc, std::string_view relative) const noexcep
 	return alloc.New<LhttpAddress>(ShallowCopy(), *this, new_uri);
 }
 
-StringView
+std::string_view
 LhttpAddress::RelativeTo(const LhttpAddress &base) const noexcept
 {
 	if (!IsSameProgram(base))
-		return nullptr;
+		return {};
 
 	return uri_relative(base.uri, uri);
 }
 
-StringView
+std::string_view
 LhttpAddress::RelativeToApplied(AllocatorPtr alloc,
 				const LhttpAddress &apply_base,
-				StringView relative) const
+				std::string_view relative) const
 {
 	if (!IsSameProgram(apply_base))
-		return nullptr;
+		return {};
 
-	return ApplyUri(alloc, apply_base.uri, relative);
+	const char *new_uri = ApplyUri(alloc, apply_base.uri, relative);
+	if (new_uri == nullptr)
+		return {};
+
+	return new_uri;
 }
 
 void

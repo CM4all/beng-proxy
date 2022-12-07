@@ -41,7 +41,6 @@
 #include "uri/Base.hxx"
 #include "AllocatorPtr.hxx"
 #include "HttpMessageResponse.hxx"
-#include "util/StringView.hxx"
 
 ResourceAddress::ResourceAddress(AllocatorPtr alloc,
 				 const ResourceAddress &src) noexcept

@@ -36,7 +36,6 @@
 
 #include <string_view>
 
-struct StringView;
 class AllocatorPtr;
 class MatchData;
 
@@ -111,7 +110,7 @@ struct HttpAddress {
 	 * relative part.  Returns nullptr if both URIs do not match.
 	 */
 	[[gnu::pure]]
-	StringView RelativeTo(const HttpAddress &base) const;
+	std::string_view RelativeTo(const HttpAddress &base) const;
 
 	/**
 	 * Throws std::runtime_error on error.
@@ -149,7 +148,8 @@ struct HttpAddress {
 	 */
 	[[gnu::malloc]]
 	HttpAddress *InsertArgs(AllocatorPtr alloc,
-				StringView args, StringView path_info) const;
+				std::string_view args,
+				std::string_view path_info) const;
 
 	[[gnu::pure]]
 	bool IsValidBase() const;

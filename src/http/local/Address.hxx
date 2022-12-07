@@ -39,7 +39,6 @@
 #include <string_view>
 
 class AllocatorPtr;
-struct StringView;
 
 /**
  * The address of a HTTP server that is launched and managed by
@@ -158,8 +157,8 @@ struct LhttpAddress {
 	 */
 	[[gnu::malloc]]
 	LhttpAddress *InsertArgs(AllocatorPtr alloc,
-				 StringView new_args,
-				 StringView path_info) const noexcept;
+				 std::string_view new_args,
+				 std::string_view path_info) const noexcept;
 
 	[[gnu::pure]]
 	bool IsValidBase() const noexcept;
@@ -178,7 +177,7 @@ struct LhttpAddress {
 				  std::string_view relative) const noexcept;
 
 	[[gnu::pure]]
-	StringView RelativeTo(const LhttpAddress &base) const noexcept;
+	std::string_view RelativeTo(const LhttpAddress &base) const noexcept;
 
 	/**
 	 * A combination of Apply() and RelativeTo(), i.e. calls
@@ -186,9 +185,9 @@ struct LhttpAddress {
 	 * because it needs copy only a small part of the object.
 	 */
 	[[gnu::pure]]
-	StringView RelativeToApplied(AllocatorPtr alloc,
-				     const LhttpAddress &apply_base,
-				     StringView relative) const;
+	std::string_view RelativeToApplied(AllocatorPtr alloc,
+					   const LhttpAddress &apply_base,
+					   std::string_view relative) const;
 
 	/**
 	 * Does this address need to be expanded with lhttp_address_expand()?

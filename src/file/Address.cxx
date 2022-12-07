@@ -35,7 +35,6 @@
 #include "uri/Base.hxx"
 #include "uri/Compare.hxx"
 #include "uri/PEscape.hxx"
-#include "util/StringView.hxx"
 #include "pexpand.hxx"
 #include "AllocatorPtr.hxx"
 

@@ -40,7 +40,6 @@
 #include "AllocatorPtr.hxx"
 #include "pexpand.hxx"
 #include "util/StringCompare.hxx"
-#include "util/StringView.hxx"
 
 #include <stdexcept>
 
@@ -204,7 +203,8 @@ HttpAddress::InsertQueryString(AllocatorPtr alloc,
 
 HttpAddress *
 HttpAddress::InsertArgs(AllocatorPtr alloc,
-			StringView args, StringView path_info) const
+			std::string_view args,
+			std::string_view path_info) const
 {
 	return http_address_with_path(alloc, this,
 				      uri_insert_args(alloc, path,
@@ -276,7 +276,7 @@ HttpAddress::Apply(AllocatorPtr alloc,
 	return http_address_with_path(alloc, this, p);
 }
 
-StringView
+std::string_view
 HttpAddress::RelativeTo(const HttpAddress &base) const
 {
 	const char *my_host = host_and_port != nullptr ? host_and_port : "";
@@ -285,7 +285,7 @@ HttpAddress::RelativeTo(const HttpAddress &base) const
 		: "";
 
 	if (strcmp(my_host, base_host) != 0)
-		return nullptr;
+		return {};
 
 	return uri_relative(base.path, path);
 }

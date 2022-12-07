@@ -43,7 +43,6 @@
 
 class GrowingBuffer;
 class StringMap;
-struct StringView;
 
 class FcgiRecordSerializer {
 	GrowingBuffer &buffer;
