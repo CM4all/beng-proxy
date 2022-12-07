@@ -36,6 +36,8 @@
 
 #pragma once
 
+#include <string_view>
+
 #include <stdint.h>
 #include <stddef.h>
 
@@ -67,8 +69,16 @@ public:
 	FcgiParamsSerializer(GrowingBuffer &_buffer,
 			     uint16_t request_id_be) noexcept;
 
-	FcgiParamsSerializer &operator()(StringView name,
-					 StringView value) noexcept;
+	FcgiParamsSerializer &operator()(std::string_view name,
+					 std::string_view value) noexcept;
+
+	FcgiParamsSerializer &operator()(std::string_view name,
+					 const char *value) noexcept {
+		return operator()(name,
+				  value != nullptr
+				  ? std::string_view{value}
+				  : std::string_view{});
+	}
 
 	void Headers(const StringMap &headers) noexcept;
 

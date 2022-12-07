@@ -36,7 +36,6 @@
 #include "strmap.hxx"
 #include "util/CharUtil.hxx"
 #include "util/ByteOrder.hxx"
-#include "util/StringView.hxx"
 
 #include <cassert>
 #include <cstdint>
@@ -94,8 +93,8 @@ FcgiParamsSerializer::FcgiParamsSerializer(GrowingBuffer &_buffer,
 	:record(_buffer, FCGI_PARAMS, request_id_be) {}
 
 FcgiParamsSerializer &
-FcgiParamsSerializer::operator()(StringView name,
-				 StringView value) noexcept
+FcgiParamsSerializer::operator()(std::string_view name,
+				 std::string_view value) noexcept
 {
 	content_length += fcgi_serialize_pair(record.GetBuffer(), name, value);
 	return *this;
