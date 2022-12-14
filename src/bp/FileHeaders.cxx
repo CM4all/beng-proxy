@@ -164,7 +164,7 @@ DispatchNotModified(Request &request2, const TranslateResponse &tr,
 
 	write_translation_vary_header(headers2, tr);
 
-	request2.DispatchError(HTTP_STATUS_NOT_MODIFIED,
+	request2.DispatchError(HttpStatus::NOT_MODIFIED,
 			       std::move(headers), nullptr);
 }
 
@@ -176,7 +176,7 @@ Request::EvaluateFileRequest(FileDescriptor fd, const struct statx &st,
 	const auto &tr = *translate.response;
 	bool ignore_if_modified_since = false;
 
-	if (tr.status == 0 && request.method == HTTP_METHOD_GET &&
+	if (tr.status == HttpStatus{} && request.method == HTTP_METHOD_GET &&
 	    !IsTransformationEnabled()) {
 		const char *p = request_headers.Get("range");
 
@@ -188,7 +188,7 @@ Request::EvaluateFileRequest(FileDescriptor fd, const struct statx &st,
 	if (!IsTransformationEnabled()) {
 		const char *p = request_headers.Get("if-match");
 		if (p != nullptr && !CheckETagList(p, fd, st)) {
-			DispatchError(HTTP_STATUS_PRECONDITION_FAILED,
+			DispatchError(HttpStatus::PRECONDITION_FAILED,
 				      {}, nullptr);
 			return false;
 		}
@@ -227,7 +227,7 @@ Request::EvaluateFileRequest(FileDescriptor fd, const struct statx &st,
 			const auto t = http_date_parse(p);
 			if (t != std::chrono::system_clock::from_time_t(-1) &&
 			    std::chrono::system_clock::from_time_t(st.stx_mtime.tv_sec) > t) {
-				DispatchError(HTTP_STATUS_PRECONDITION_FAILED,
+				DispatchError(HttpStatus::PRECONDITION_FAILED,
 					      {}, nullptr);
 				return false;
 			}

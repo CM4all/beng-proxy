@@ -113,7 +113,7 @@ SendMessage(lua_State *L)
 
 	auto &data = CastLuaRequestData(L, 1);
 
-	http_status_t status = HTTP_STATUS_OK;
+	HttpStatus status = HttpStatus::OK;
 	const char *msg;
 
 	unsigned i = 2;
@@ -122,7 +122,7 @@ SendMessage(lua_State *L)
 		if (!lua_isnumber(L, i))
 			return luaL_argerror(L, i, "Integer status expected");
 
-		status = http_status_t(lua_tointeger(L, i));
+		status = static_cast<HttpStatus>(lua_tointeger(L, i));
 		if (!http_status_is_valid(status))
 			return luaL_argerror(L, i, "Invalid HTTP status");
 

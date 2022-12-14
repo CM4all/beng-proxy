@@ -98,7 +98,7 @@ class WasClient final
 	} request;
 
 	struct Response {
-		http_status_t status = HTTP_STATUS_OK;
+		HttpStatus status = HttpStatus::OK;
 
 		/**
 		 * Response headers being assembled.
@@ -178,7 +178,7 @@ private:
 	}
 
 	template<typename B>
-	void DestroyInvokeResponse(http_status_t status, StringMap headers,
+	void DestroyInvokeResponse(HttpStatus status, StringMap headers,
 				   B &&body) noexcept {
 		auto &_handler = handler;
 		Destroy();
@@ -504,7 +504,7 @@ WasClient::OnWasControlPacket(enum was_command cmd,
 	switch (cmd) {
 		const uint32_t *status32_r;
 		const uint16_t *status16_r;
-		http_status_t status;
+		HttpStatus status;
 		const uint64_t *length_p;
 
 	case WAS_COMMAND_NOP:
@@ -554,9 +554,9 @@ WasClient::OnWasControlPacket(enum was_command cmd,
 		status16_r = (const uint16_t *)(const void *)payload.data();
 
 		if (payload.size() == sizeof(*status32_r))
-			status = (http_status_t)*status32_r;
+			status = (HttpStatus)*status32_r;
 		else if (payload.size() == sizeof(*status16_r))
-			status = (http_status_t)*status16_r;
+			status = (HttpStatus)*status16_r;
 		else {
 			stopwatch.RecordEvent("control_error");
 			AbortResponseHeaders(std::make_exception_ptr(WasProtocolError("malformed STATUS")));

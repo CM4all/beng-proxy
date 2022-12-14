@@ -51,7 +51,7 @@ Request::OnHttpAuthTranslateResponse(const TranslateResponse &response) noexcept
 
 	user = response.user;
 	if (user == nullptr) {
-		DispatchError(HTTP_STATUS_UNAUTHORIZED, "Unauthorized");
+		DispatchError(HttpStatus::UNAUTHORIZED, "Unauthorized");
 		return;
 	}
 
@@ -61,7 +61,7 @@ Request::OnHttpAuthTranslateResponse(const TranslateResponse &response) noexcept
 inline void
 Request::OnHttpAuthTranslateError(std::exception_ptr ep) noexcept
 {
-	LogDispatchError(HTTP_STATUS_BAD_GATEWAY,
+	LogDispatchError(HttpStatus::BAD_GATEWAY,
 			 "Configuration server failed", ep, 1);
 }
 
@@ -90,7 +90,7 @@ Request::HandleHttpAuth(const TranslateResponse &response) noexcept
 	const char *authorization = request.headers.Get("authorization");
 
 	if (authorization == nullptr) {
-		DispatchError(HTTP_STATUS_UNAUTHORIZED, "Unauthorized");
+		DispatchError(HttpStatus::UNAUTHORIZED, "Unauthorized");
 		return;
 	}
 

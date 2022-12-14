@@ -32,22 +32,22 @@
 
 #pragma once
 
-#include "http/Status.h"
-
 #include <stdexcept>
+
+enum class HttpStatus : uint_least16_t;
 
 /**
  * An exception which can be thrown to indicate that a certain HTTP
  * response shall be sent to our HTTP client.
  */
 class HttpMessageResponse : public std::runtime_error {
-	http_status_t status;
+	HttpStatus status;
 
 public:
-	HttpMessageResponse(http_status_t _status, const char *_msg)
+	HttpMessageResponse(HttpStatus _status, const char *_msg) noexcept
 		:std::runtime_error(_msg), status(_status) {}
 
-	http_status_t GetStatus() const {
+	HttpStatus GetStatus() const noexcept {
 		return status;
 	}
 };

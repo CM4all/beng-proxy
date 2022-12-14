@@ -34,8 +34,8 @@
 
 #include "cluster/StickyHash.hxx"
 #include "http/Method.h"
-#include "http/Status.h"
 
+enum class HttpStatus : uint_least16_t;
 struct pool;
 class StopwatchPtr;
 class UnusedIstreamPtr;
@@ -94,7 +94,7 @@ public:
 				 const ResourceRequestParams &params,
 				 http_method_t method,
 				 const ResourceAddress &address,
-				 http_status_t status, StringMap &&headers,
+				 HttpStatus status, StringMap &&headers,
 				 UnusedIstreamPtr body, const char *body_etag,
 				 HttpResponseHandler &handler,
 				 CancellablePointer &cancel_ptr) noexcept = 0;

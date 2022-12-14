@@ -35,6 +35,7 @@
 #include "pool/tpool.hxx"
 #include "pool/Ptr.hxx"
 #include "cache.hxx"
+#include "http/Status.hxx"
 #include "http/cache/Heap.hxx"
 #include "http/cache/Info.hxx"
 #include "strmap.hxx"
@@ -86,7 +87,7 @@ put_random(HttpCacheHeap *cache)
 	response_headers->Add(*tpool, "x-bar", "foo");
 
 	cache->Put(uri, nullptr, info, *request_headers,
-		   HTTP_STATUS_OK, *response_headers,
+		   HttpStatus::OK, *response_headers,
 		   RubberAllocation(cache->GetRubber(), rubber_id), length);
 }
 

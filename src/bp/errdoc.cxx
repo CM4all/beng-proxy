@@ -42,7 +42,7 @@
 static auto
 MakeErrdocTranslateRequest(TranslateRequest r,
 			   std::span<const std::byte> error_document,
-			   http_status_t status) noexcept
+			   HttpStatus status) noexcept
 {
 	r.error_document = error_document;
 	r.status = status;
@@ -62,7 +62,7 @@ Request::DispatchErrdocResponse(std::span<const std::byte> error_document)
 						       co_response->status),
 			    stopwatch);
 
-	if ((t.status != (http_status_t)0 &&
+	if ((t.status != HttpStatus{} &&
 	     !http_status_is_success(t.status)) ||
 	    !t.address.IsDefined())
 		/* translation server did not specify an error
@@ -73,7 +73,7 @@ Request::DispatchErrdocResponse(std::span<const std::byte> error_document)
 		CoLoadResource(*instance.cached_resource_loader, pool,
 			       stopwatch, {},
 			       HTTP_METHOD_GET,
-			       t.address, HTTP_STATUS_OK,
+			       t.address, HttpStatus::OK,
 			       {}, nullptr, nullptr);
 
 	if (!http_status_is_success(response->status))

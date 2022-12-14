@@ -102,7 +102,7 @@ private:
 	}
 
 	/* virtual methods from class HttpResponseHandler */
-	void OnHttpResponse(http_status_t status, StringMap &&headers,
+	void OnHttpResponse(HttpStatus status, StringMap &&headers,
 			    UnusedIstreamPtr body) noexcept final;
 	void OnHttpError(std::exception_ptr error) noexcept final;
 };

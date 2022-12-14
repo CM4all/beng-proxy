@@ -146,7 +146,7 @@ Request::CheckFileEnotdir(const TranslateResponse &response) noexcept
 
 	const char *path = get_file_path(response);
 	if (path == nullptr) {
-		LogDispatchError(HTTP_STATUS_BAD_GATEWAY,
+		LogDispatchError(HttpStatus::BAD_GATEWAY,
 				 "Resource address not compatible with ENOTDIR",
 				 1);
 		return false;

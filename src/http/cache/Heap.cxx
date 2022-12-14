@@ -59,7 +59,7 @@ void
 HttpCacheHeap::Put(const char *url, const char *tag,
 		   const HttpCacheResponseInfo &info,
 		   const StringMap &request_headers,
-		   http_status_t status,
+		   HttpStatus status,
 		   const StringMap &response_headers,
 		   RubberAllocation &&a, size_t size) noexcept
 {

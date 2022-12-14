@@ -34,7 +34,7 @@
 
 #include "strmap.hxx"
 #include "Completion.hxx"
-#include "http/Status.h"
+#include "http/Status.hxx"
 
 #include <assert.h>
 #include <stddef.h>
@@ -59,7 +59,7 @@ template<typename T> class ForeignFifoBuffer;
  * transferring the response body
  */
 struct CGIParser {
-	http_status_t status = HTTP_STATUS_OK;
+	HttpStatus status = HttpStatus::OK;
 
 	/**
 	 * The remaining number of bytes in the response body, -1 if
@@ -93,7 +93,7 @@ struct CGIParser {
 	Completion FeedHeaders(struct pool &pool,
 			       ForeignFifoBuffer<std::byte> &buffer);
 
-	http_status_t GetStatus() const {
+	HttpStatus GetStatus() const noexcept {
 		assert(finished);
 
 		return status;

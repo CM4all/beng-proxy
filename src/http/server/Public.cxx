@@ -57,7 +57,7 @@ HttpServerConnection::Log() noexcept
 
 	logger->LogHttpRequest(r,
 			       response.status,
-			       response.status != http_status_t{} ? response.length : -1,
+			       response.status != HttpStatus{} ? response.length : -1,
 			       request.bytes_received,
 			       response.bytes_sent);
 }
@@ -69,7 +69,7 @@ http_server_request_new(HttpServerConnection *connection,
 {
 	assert(connection != nullptr);
 
-	connection->response.status = http_status_t(0);
+	connection->response.status = {};
 
 	auto pool = pool_new_linear(connection->pool,
 				    "http_server_request", 8192);

@@ -49,7 +49,7 @@ class DeferHttpResponseHandler final : public HttpResponseHandler {
 
 	HttpResponseHandler &next;
 
-	http_status_t status;
+	HttpStatus status;
 	StringMap headers;
 	UnusedHoldIstreamPtr body;
 
@@ -73,7 +73,7 @@ private:
 
 protected:
 	/* virtual methods from class HttpResponseHandler */
-	void OnHttpResponse(http_status_t _status, StringMap &&_headers,
+	void OnHttpResponse(HttpStatus _status, StringMap &&_headers,
 			    UnusedIstreamPtr _body) noexcept override {
 		status = _status;
 		headers = std::move(_headers);

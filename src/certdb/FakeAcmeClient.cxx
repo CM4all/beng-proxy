@@ -36,6 +36,7 @@
 #include "lib/openssl/Key.hxx"
 #include "lib/openssl/Error.hxx"
 #include "lib/openssl/UniqueBIO.hxx"
+#include "http/Status.hxx"
 #include "util/AllocatedArray.hxx"
 #include "util/Exception.hxx"
 
@@ -165,7 +166,7 @@ try {
 			{"content-type", "application/json"},
 		};
 
-		return GlueHttpResponse(HTTP_STATUS_CREATED,
+		return GlueHttpResponse(HttpStatus::CREATED,
 					std::move(response_headers),
 					"{"
 					"  \"status\": \"pending\","
@@ -183,25 +184,25 @@ try {
 			{"content-type", "application/json"},
 		};
 
-		return GlueHttpResponse(HTTP_STATUS_ACCEPTED,
+		return GlueHttpResponse(HttpStatus::ACCEPTED,
 					std::move(response_headers),
 					"{"
 					"  \"status\": \"valid\""
 					"}");
 	} else if (strcmp(uri, "/acme/new-cert") == 0) {
 		if (method != HTTP_METHOD_POST || body.data() == nullptr)
-			return GlueHttpResponse(HTTP_STATUS_BAD_REQUEST, {},
+			return GlueHttpResponse(HttpStatus::BAD_REQUEST, {},
 						"Bad request");
 
 		const auto req = ParseNewCertBody(body);
 
 		UniqueEVP_PKEY pkey(X509_REQ_get_pubkey(req.get()));
 		if (!pkey)
-			return GlueHttpResponse(HTTP_STATUS_BAD_REQUEST, {},
+			return GlueHttpResponse(HttpStatus::BAD_REQUEST, {},
 						"No public key");
 
 		if (X509_REQ_verify(req.get(), pkey.get()) < 0)
-			return GlueHttpResponse(HTTP_STATUS_BAD_REQUEST, {},
+			return GlueHttpResponse(HttpStatus::BAD_REQUEST, {},
 						"Request verification failed");
 
 		UniqueX509 cert(X509_new());
@@ -226,12 +227,12 @@ try {
 
 		const SslBuffer cert_buffer(*cert);
 
-		return GlueHttpResponse(HTTP_STATUS_CREATED, {},
+		return GlueHttpResponse(HttpStatus::CREATED, {},
 					std::string{ToStringView(cert_buffer.get())});
 	} else
-		return GlueHttpResponse(HTTP_STATUS_NOT_FOUND, {},
+		return GlueHttpResponse(HttpStatus::NOT_FOUND, {},
 					"Not found");
 } catch (...) {
-	return GlueHttpResponse(HTTP_STATUS_INTERNAL_SERVER_ERROR, {},
+	return GlueHttpResponse(HttpStatus::INTERNAL_SERVER_ERROR, {},
 				GetFullMessage(std::current_exception()));
 }

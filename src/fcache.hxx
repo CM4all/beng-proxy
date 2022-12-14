@@ -32,10 +32,10 @@
 
 #pragma once
 
-#include "http/Status.h"
-
+#include <cstdint>
 #include <string>
 
+enum class HttpStatus : uint_least16_t;
 struct pool;
 class StopwatchPtr;
 class UnusedIstreamPtr;
@@ -85,7 +85,7 @@ filter_cache_request(FilterCache &cache,
 		     const char *cache_tag,
 		     const ResourceAddress &address,
 		     const char *source_id,
-		     http_status_t status, StringMap &&headers,
+		     HttpStatus status, StringMap &&headers,
 		     UnusedIstreamPtr body,
 		     HttpResponseHandler &handler,
 		     CancellablePointer &cancel_ptr) noexcept;

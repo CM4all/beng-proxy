@@ -116,7 +116,7 @@ struct FilterCacheItem final : PoolHolder, CacheItem, LeakDetector {
 		IntrusiveList<FilterCacheItem,
 			      IntrusiveListMemberHookTraits<&FilterCacheItem::per_tag_siblings>>;
 
-	const http_status_t status;
+	const HttpStatus status;
 	StringMap headers;
 
 	const size_t size;
@@ -126,7 +126,7 @@ struct FilterCacheItem final : PoolHolder, CacheItem, LeakDetector {
 	FilterCacheItem(PoolPtr &&_pool,
 			std::chrono::steady_clock::time_point now,
 			std::chrono::system_clock::time_point system_now,
-			http_status_t _status, const StringMap &_headers,
+			HttpStatus _status, const StringMap &_headers,
 			size_t _size, RubberAllocation &&_body,
 			std::chrono::system_clock::time_point _expires) noexcept
 		:PoolHolder(std::move(_pool)),
@@ -155,7 +155,7 @@ class FilterCacheRequest final
 	FilterCacheInfo info;
 
 	struct {
-		http_status_t status;
+		HttpStatus status;
 		StringMap *headers;
 
 		/**
@@ -189,7 +189,7 @@ public:
 		   const StopwatchPtr &parent_stopwatch,
 		   const char *cache_tag,
 		   const ResourceAddress &address,
-		   http_status_t status, StringMap &&headers,
+		   HttpStatus status, StringMap &&headers,
 		   UnusedIstreamPtr body, const char *body_etag,
 		   CancellablePointer &caller_cancel_ptr) noexcept {
 		caller_cancel_ptr = *this;
@@ -219,7 +219,7 @@ private:
 	void Cancel() noexcept override;
 
 	/* virtual methods from class HttpResponseHandler */
-	void OnHttpResponse(http_status_t status, StringMap &&headers,
+	void OnHttpResponse(HttpStatus status, StringMap &&headers,
 			    UnusedIstreamPtr body) noexcept override;
 	void OnHttpError(std::exception_ptr ep) noexcept override;
 
@@ -287,13 +287,13 @@ public:
 		 const char *cache_tag,
 		 const ResourceAddress &address,
 		 const char *source_id,
-		 http_status_t status, StringMap &&headers,
+		 HttpStatus status, StringMap &&headers,
 		 UnusedIstreamPtr body,
 		 HttpResponseHandler &handler,
 		 CancellablePointer &cancel_ptr) noexcept;
 
 	void Put(const FilterCacheInfo &info,
-		 http_status_t status, const StringMap &headers,
+		 HttpStatus status, const StringMap &headers,
 		 RubberAllocation &&a, size_t size) noexcept;
 
 private:
@@ -301,7 +301,7 @@ private:
 		  const StopwatchPtr &parent_stopwatch,
 		  FilterCacheInfo &&info,
 		  const ResourceAddress &address,
-		  http_status_t status, StringMap &&headers,
+		  HttpStatus status, StringMap &&headers,
 		  UnusedIstreamPtr body, const char *body_etag,
 		  HttpResponseHandler &_handler,
 		  CancellablePointer &cancel_ptr) noexcept;
@@ -378,7 +378,7 @@ filter_cache_request_evaluate(AllocatorPtr alloc,
 
 void
 FilterCache::Put(const FilterCacheInfo &info,
-		 http_status_t status, const StringMap &headers,
+		 HttpStatus status, const StringMap &headers,
 		 RubberAllocation &&a, size_t size) noexcept
 {
 	LogConcat(4, "FilterCache", "put ", info.key);
@@ -417,15 +417,15 @@ parse_translate_time(const char *p,
 }
 
 static constexpr bool
-CanCacheStatus(http_status_t status) noexcept
+CanCacheStatus(HttpStatus status) noexcept
 {
-	return status == HTTP_STATUS_OK || status == HTTP_STATUS_NO_CONTENT;
+	return status == HttpStatus::OK || status == HttpStatus::NO_CONTENT;
 }
 
 /** check whether the HTTP response should be put into the cache */
 static bool
 filter_cache_response_evaluate(EventLoop &event_loop, FilterCacheInfo &info,
-			       http_status_t status, const StringMap &headers,
+			       HttpStatus status, const StringMap &headers,
 			       off_t body_available) noexcept
 {
 	const char *p;
@@ -531,7 +531,7 @@ FilterCacheRequest::Cancel() noexcept
  */
 
 void
-FilterCacheRequest::OnHttpResponse(http_status_t status, StringMap &&headers,
+FilterCacheRequest::OnHttpResponse(HttpStatus status, StringMap &&headers,
 				   UnusedIstreamPtr body) noexcept
 {
 	/* make sure the caller pool gets unreferenced upon returning */
@@ -715,7 +715,7 @@ FilterCache::Miss(struct pool &caller_pool,
 		  const StopwatchPtr &parent_stopwatch,
 		  FilterCacheInfo &&info,
 		  const ResourceAddress &address,
-		  http_status_t status, StringMap &&headers,
+		  HttpStatus status, StringMap &&headers,
 		  UnusedIstreamPtr body, const char *body_etag,
 		  HttpResponseHandler &_handler,
 		  CancellablePointer &cancel_ptr) noexcept
@@ -774,7 +774,7 @@ FilterCache::Get(struct pool &caller_pool,
 		 const char *cache_tag,
 		 const ResourceAddress &address,
 		 const char *source_id,
-		 http_status_t status, StringMap &&headers,
+		 HttpStatus status, StringMap &&headers,
 		 UnusedIstreamPtr body,
 		 HttpResponseHandler &handler,
 		 CancellablePointer &cancel_ptr) noexcept
@@ -812,7 +812,7 @@ filter_cache_request(FilterCache &cache,
 		     const char *cache_tag,
 		     const ResourceAddress &address,
 		     const char *source_id,
-		     http_status_t status, StringMap &&headers,
+		     HttpStatus status, StringMap &&headers,
 		     UnusedIstreamPtr body,
 		     HttpResponseHandler &handler,
 		     CancellablePointer &cancel_ptr) noexcept

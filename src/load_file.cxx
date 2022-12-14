@@ -36,7 +36,7 @@
 #include "io/Open.hxx"
 #include "io/UniqueFileDescriptor.hxx"
 #include "system/Error.hxx"
-#include "http/Status.h"
+#include "http/Status.hxx"
 #include "util/ConstBuffer.hxx"
 #include "util/StringFormat.hxx"
 
@@ -50,7 +50,7 @@ LoadFile(struct pool &pool, const char *path, off_t max_size)
 		throw FormatErrno("Failed to stat %s", path);
 
 	if (size > max_size)
-		throw HttpMessageResponse(HTTP_STATUS_INTERNAL_SERVER_ERROR,
+		throw HttpMessageResponse(HttpStatus::INTERNAL_SERVER_ERROR,
 					  StringFormat<256>("File is too large: %s", path));
 
 	if (size == 0)
@@ -65,7 +65,7 @@ LoadFile(struct pool &pool, const char *path, off_t max_size)
 		throw FormatErrno("Failed to read from %s", path);
 
 	if (size_t(nbytes) != size_t(size))
-		throw HttpMessageResponse(HTTP_STATUS_INTERNAL_SERVER_ERROR,
+		throw HttpMessageResponse(HttpStatus::INTERNAL_SERVER_ERROR,
 					  StringFormat<256>("Short read from: %s", path));
 
 	return { p, size_t(size) };

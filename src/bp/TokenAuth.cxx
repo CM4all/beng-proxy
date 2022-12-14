@@ -95,7 +95,7 @@ Request::OnTokenAuthTranslateResponse(const TranslateResponse &response) noexcep
 		   REDIRECT/BOUNCE/STATUS, but we still don't have a user -
 		   this should not happen; bail out, don't dare to accept the
 		   client */
-		DispatchError(HTTP_STATUS_FORBIDDEN, "Forbidden");
+		DispatchError(HttpStatus::FORBIDDEN, "Forbidden");
 		return;
 	}
 
@@ -124,13 +124,13 @@ Request::OnTokenAuthTranslateResponse(const TranslateResponse &response) noexcep
 					dissected_uri,
 					tr);
 
-	DispatchRedirect(HTTP_STATUS_SEE_OTHER, redirect_uri, nullptr);
+	DispatchRedirect(HttpStatus::SEE_OTHER, redirect_uri, nullptr);
 }
 
 inline void
 Request::OnTokenAuthTranslateError(std::exception_ptr ep) noexcept
 {
-	LogDispatchError(HTTP_STATUS_BAD_GATEWAY,
+	LogDispatchError(HttpStatus::BAD_GATEWAY,
 			 "Configuration server failed", ep, 1);
 }
 
@@ -221,7 +221,7 @@ Request::HandleTokenAuth(const TranslateResponse &response) noexcept
 	try {
 		auth_token = ExtractAuthToken(alloc, dissected_uri);
 	} catch (const std::invalid_argument &e) {
-		DispatchError(HTTP_STATUS_BAD_REQUEST, e.what());
+		DispatchError(HttpStatus::BAD_REQUEST, e.what());
 		return;
 	}
 

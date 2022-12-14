@@ -43,6 +43,7 @@
 #include "http/IncomingRequest.hxx"
 #include "http/Headers.hxx"
 #include "http/Logger.hxx"
+#include "http/Status.hxx"
 #include "istream/LengthIstream.hxx"
 #include "istream/MultiFifoBufferIstream.hxx"
 #include "istream/New.hxx"
@@ -78,7 +79,7 @@ class ServerConnection::Request final
 	 * The response body status.  This is set by SendResponse(),
 	 * and is used later for the access logger.
 	 */
-	http_status_t the_status{};
+	HttpStatus the_status{};
 
 	const char *bad_request = nullptr;
 
@@ -234,7 +235,7 @@ private:
 	void OnIstreamDataSourceReady() noexcept override;
 
 	/* virtual methods from class IncomingHttpRequest */
-	void SendResponse(http_status_t status,
+	void SendResponse(HttpStatus status,
 			  HttpHeaders &&response_headers,
 			  UnusedIstreamPtr response_body) noexcept override;
 };
@@ -348,7 +349,7 @@ int
 ServerConnection::Request::OnReceiveRequest(bool has_request_body) noexcept
 {
 	if (bad_request != nullptr) {
-		SendMessage(HTTP_STATUS_BAD_REQUEST, bad_request);
+		SendMessage(HttpStatus::BAD_REQUEST, bad_request);
 		return 0;
 	}
 
@@ -401,7 +402,7 @@ ServerConnection::Request::OnEndDataFrame() noexcept
 }
 
 void
-ServerConnection::Request::SendResponse(http_status_t status,
+ServerConnection::Request::SendResponse(HttpStatus status,
 					HttpHeaders &&response_headers,
 					UnusedIstreamPtr _response_body) noexcept
 {

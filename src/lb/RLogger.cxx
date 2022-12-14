@@ -49,7 +49,7 @@ LbRequestLogger::LbRequestLogger(LbInstance &_instance,
 
 void
 LbRequestLogger::LogHttpRequest(IncomingHttpRequest &request,
-				http_status_t status, int64_t length,
+				HttpStatus status, int64_t length,
 				uint64_t bytes_received, uint64_t bytes_sent) noexcept
 {
 	const auto duration = GetDuration(instance.event_loop.SteadyNow());

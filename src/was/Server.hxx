@@ -38,7 +38,7 @@
 #include "was/async/Socket.hxx"
 #include "pool/Ptr.hxx"
 #include "http/Method.h"
-#include "http/Status.h"
+#include "http/Status.hxx"
 
 class EventLoop;
 class UnusedIstreamPtr;
@@ -105,7 +105,7 @@ class WasServer final : Was::ControlHandler, WasOutputHandler, WasInputHandler {
 	} request;
 
 	struct {
-		http_status_t status;
+		HttpStatus status;
 
 		WasOutput *body;
 	} response;
@@ -133,7 +133,7 @@ public:
 		return control.GetEventLoop();
 	}
 
-	void SendResponse(http_status_t status,
+	void SendResponse(HttpStatus status,
 			  StringMap &&headers, UnusedIstreamPtr body) noexcept;
 
 private:

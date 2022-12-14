@@ -41,7 +41,7 @@ struct TaggedHttpStats {
 	std::map<std::string, HttpStats, std::less<>> per_tag;
 
 	void AddRequest(std::string_view tag,
-			http_status_t status,
+			HttpStatus status,
 			uint64_t bytes_received,
 			uint64_t bytes_sent,
 			std::chrono::steady_clock::duration duration) noexcept {

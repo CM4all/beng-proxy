@@ -81,7 +81,7 @@ class WidgetRequest final
 	 * ApplyFilterStatus().  Zero means the response was not generated
 	 * by a filter.
 	 */
-	http_status_t previous_status = http_status_t(0);
+	HttpStatus previous_status = {};
 
 	bool subst_alt_syntax;
 
@@ -184,30 +184,30 @@ private:
 	 * This function will be called (semi-)recursively for every
 	 * transformation in the chain.
 	 */
-	void DispatchResponse(http_status_t status, StringMap &&headers,
+	void DispatchResponse(HttpStatus status, StringMap &&headers,
 			      UnusedIstreamPtr body) noexcept;
 
 	/**
 	 * The widget response is going to be embedded into a template; check
 	 * its content type and run the processor (if applicable).
 	 */
-	void ProcessResponse(http_status_t status,
+	void ProcessResponse(HttpStatus status,
 			     StringMap &headers, UnusedIstreamPtr body,
 			     unsigned options) noexcept;
 
-	void CssProcessResponse(http_status_t status,
+	void CssProcessResponse(HttpStatus status,
 				StringMap &headers, UnusedIstreamPtr body,
 				unsigned options) noexcept;
 
-	void TextProcessResponse(http_status_t status,
+	void TextProcessResponse(HttpStatus status,
 				 StringMap &headers,
 				 UnusedIstreamPtr body) noexcept;
 
-	void FilterResponse(http_status_t status,
+	void FilterResponse(HttpStatus status,
 			    StringMap &&headers, UnusedIstreamPtr body,
 			    const FilterTransformation &filter) noexcept;
 
-	void SubstResponse(http_status_t status,
+	void SubstResponse(HttpStatus status,
 			   StringMap &&headers, UnusedIstreamPtr body,
 			   const char *prefix,
 			   const char *yaml_file,
@@ -217,7 +217,7 @@ private:
 	 * Apply a transformation to the widget response and hand it back
 	 * to our #HttpResponseHandler implementation.
 	 */
-	void TransformResponse(http_status_t status,
+	void TransformResponse(HttpStatus status,
 			       StringMap &&headers, UnusedIstreamPtr body,
 			       const Transformation &t) noexcept;
 
@@ -234,7 +234,7 @@ private:
 	}
 
 	/* virtual methods from class HttpResponseHandler */
-	void OnHttpResponse(http_status_t status, StringMap &&headers,
+	void OnHttpResponse(HttpStatus status, StringMap &&headers,
 			    UnusedIstreamPtr body) noexcept override;
 	void OnHttpError(std::exception_ptr ep) noexcept override;
 
@@ -320,7 +320,7 @@ WidgetRequest::HandleRedirect(const char *location, UnusedIstreamPtr &body) noex
 						 nullptr,
 						 ctx->site_name,
 					 },
-					 HTTP_METHOD_GET, address, HTTP_STATUS_OK,
+					 HTTP_METHOD_GET, address, HttpStatus::OK,
 					 MakeRequestHeaders(*view, *t_view,
 							    address.IsAnyHttp(),
 							    false),
@@ -346,7 +346,7 @@ WidgetRequest::DispatchError(std::exception_ptr ep) noexcept
 }
 
 void
-WidgetRequest::ProcessResponse(http_status_t status,
+WidgetRequest::ProcessResponse(HttpStatus status,
 			       StringMap &headers, UnusedIstreamPtr body,
 			       unsigned options) noexcept
 {
@@ -397,7 +397,7 @@ css_processable(const StringMap &headers) noexcept
 }
 
 void
-WidgetRequest::CssProcessResponse(http_status_t status,
+WidgetRequest::CssProcessResponse(HttpStatus status,
 				  StringMap &headers, UnusedIstreamPtr body,
 				  unsigned options) noexcept
 {
@@ -421,7 +421,7 @@ WidgetRequest::CssProcessResponse(http_status_t status,
 }
 
 void
-WidgetRequest::TextProcessResponse(http_status_t status,
+WidgetRequest::TextProcessResponse(HttpStatus status,
 				   StringMap &headers,
 				   UnusedIstreamPtr body) noexcept
 {
@@ -444,7 +444,7 @@ WidgetRequest::TextProcessResponse(http_status_t status,
 }
 
 void
-WidgetRequest::FilterResponse(http_status_t status,
+WidgetRequest::FilterResponse(HttpStatus status,
 			      StringMap &&headers, UnusedIstreamPtr body,
 			      const FilterTransformation &filter) noexcept
 {
@@ -481,7 +481,7 @@ WidgetRequest::FilterResponse(http_status_t status,
 }
 
 void
-WidgetRequest::SubstResponse(http_status_t status,
+WidgetRequest::SubstResponse(HttpStatus status,
 			     StringMap &&headers, UnusedIstreamPtr body,
 			     const char *prefix,
 			     const char *yaml_file,
@@ -508,7 +508,7 @@ WidgetRequest::SubstResponse(http_status_t status,
 }
 
 void
-WidgetRequest::TransformResponse(http_status_t status,
+WidgetRequest::TransformResponse(HttpStatus status,
 				 StringMap &&headers, UnusedIstreamPtr body,
 				 const Transformation &t) noexcept
 {
@@ -560,7 +560,7 @@ WidgetRequest::TransformResponse(http_status_t status,
 
 static bool
 widget_transformation_enabled(const Widget *widget,
-			      http_status_t status)
+			      HttpStatus status)
 {
 	assert(widget->GetTransformationView() != nullptr);
 
@@ -570,7 +570,7 @@ widget_transformation_enabled(const Widget *widget,
 }
 
 void
-WidgetRequest::DispatchResponse(http_status_t status, StringMap &&headers,
+WidgetRequest::DispatchResponse(HttpStatus status, StringMap &&headers,
 				UnusedIstreamPtr body) noexcept
 {
 	if (!transformations.empty() && widget_transformation_enabled(&widget, status)) {
@@ -648,12 +648,12 @@ WidgetRequest::UpdateView(StringMap &headers)
 }
 
 void
-WidgetRequest::OnHttpResponse(http_status_t status, StringMap &&headers,
+WidgetRequest::OnHttpResponse(HttpStatus status, StringMap &&headers,
 			      UnusedIstreamPtr body) noexcept
 {
-	if (previous_status != http_status_t(0)) {
+	if (previous_status != HttpStatus{}) {
 		status = ApplyFilterStatus(previous_status, status, !!body);
-		previous_status = http_status_t(0);
+		previous_status = HttpStatus{};
 	}
 
 	if (widget.cls->dump_headers) {
@@ -775,7 +775,7 @@ WidgetRequest::SendRequest() noexcept
 						 ctx->site_name,
 					 },
 					 widget.from_request.method,
-					 address, HTTP_STATUS_OK,
+					 address, HttpStatus::OK,
 					 std::move(headers),
 					 std::move(request_body), nullptr,
 					 *this, cancel_ptr);

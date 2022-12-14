@@ -137,7 +137,7 @@ private:
 	void ReleaseLease(bool reuse) noexcept override;
 
 	/* virtual methods from class HttpResponseHandler */
-	void OnHttpResponse(http_status_t status, StringMap &&headers,
+	void OnHttpResponse(HttpStatus status, StringMap &&headers,
 			    UnusedIstreamPtr body) noexcept override;
 	void OnHttpError(std::exception_ptr ep) noexcept override;
 };
@@ -207,7 +207,7 @@ LbResolveConnectRequest::ReleaseLease(bool _reuse) noexcept
 }
 
 void
-LbResolveConnectRequest::OnHttpResponse(http_status_t status, StringMap &&_headers,
+LbResolveConnectRequest::OnHttpResponse(HttpStatus status, StringMap &&_headers,
 					UnusedIstreamPtr response_body) noexcept
 {
 	assert(lease_state != LeaseState::NONE);

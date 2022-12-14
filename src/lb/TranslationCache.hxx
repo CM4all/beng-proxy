@@ -33,11 +33,11 @@
 #pragma once
 
 #include "io/Logger.hxx"
-#include "http/Status.h"
 #include "util/Cache.hxx"
 
 #include <string>
 
+enum class HttpStatus : uint_least16_t;
 struct IncomingHttpRequest;
 struct TranslationInvalidateRequest;
 struct TranslateResponse;
@@ -47,7 +47,7 @@ class LbTranslationCache final {
 
 public:
 	struct Item {
-		http_status_t status = http_status_t(0);
+		HttpStatus status = {};
 		uint16_t https_only = 0;
 		std::string redirect, message, pool, canonical_host, site;
 

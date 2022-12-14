@@ -35,6 +35,7 @@
 #include "pool/pool.hxx"
 #include "istream/istream_string.hxx"
 #include "http/Headers.hxx"
+#include "http/Status.hxx"
 
 IncomingHttpRequest::IncomingHttpRequest(PoolPtr &&_pool,
 					 SocketAddress _local_address,
@@ -75,11 +76,11 @@ IncomingHttpRequest::~IncomingHttpRequest() noexcept
 }
 
 void
-IncomingHttpRequest::SendSimpleResponse(http_status_t status,
+IncomingHttpRequest::SendSimpleResponse(HttpStatus status,
 					const char *location,
 					const char *msg) noexcept
 {
-	assert(unsigned(status) >= 200 && unsigned(status) < 600);
+	assert(http_status_is_valid(status));
 
 	if (http_status_is_empty(status))
 		msg = nullptr;
@@ -103,7 +104,7 @@ IncomingHttpRequest::SendSimpleResponse(http_status_t status,
 }
 
 void
-IncomingHttpRequest::SendMessage(http_status_t status, const char *msg) noexcept
+IncomingHttpRequest::SendMessage(HttpStatus status, const char *msg) noexcept
 {
 	HttpHeaders response_headers;
 	response_headers.generate_date_header = true;
@@ -115,10 +116,10 @@ IncomingHttpRequest::SendMessage(http_status_t status, const char *msg) noexcept
 }
 
 void
-IncomingHttpRequest::SendRedirect(http_status_t status, const char *location,
+IncomingHttpRequest::SendRedirect(HttpStatus status, const char *location,
 				  const char *msg) noexcept
 {
-	assert(status >= 300 && status < 400);
+	assert(http_status_is_redirect(status));
 	assert(location != nullptr);
 
 	if (http_status_is_empty(status))

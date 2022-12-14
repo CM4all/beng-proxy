@@ -97,8 +97,9 @@ MarshalTranslateRequest(uint8_t PROTOCOL_VERSION,
 	m.WriteOptional(TranslationCommand::ERROR_DOCUMENT,
 			request.error_document);
 
-	if (request.status != 0)
-		m.Write16(TranslationCommand::STATUS, request.status);
+	if (request.status != HttpStatus{})
+		m.Write16(TranslationCommand::STATUS,
+			  static_cast<uint16_t>(request.status));
 
 	m.WriteOptional(TranslationCommand::LISTENER_TAG,
 			request.listener_tag);

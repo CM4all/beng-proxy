@@ -40,12 +40,12 @@ MirrorResourceLoader::SendRequest(struct pool &,
 				  const ResourceRequestParams &,
 				  http_method_t,
 				  const ResourceAddress &,
-				  http_status_t,
+				  HttpStatus,
 				  StringMap &&headers,
 				  UnusedIstreamPtr body, const char *,
 				  HttpResponseHandler &handler,
 				  CancellablePointer &) noexcept
 {
-	handler.InvokeResponse(body ? HTTP_STATUS_OK : HTTP_STATUS_NO_CONTENT,
+	handler.InvokeResponse(body ? HttpStatus::OK : HttpStatus::NO_CONTENT,
 			       std::move(headers), std::move(body));
 }

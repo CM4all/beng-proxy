@@ -35,21 +35,21 @@
 #include "lib/curl/Global.hxx"
 #include "lib/curl/Headers.hxx"
 #include "http/Method.h"
-#include "http/Status.h"
 
 #include <span>
 #include <string>
 
+enum class HttpStatus : uint_least16_t;
 class EventLoop;
 
 struct GlueHttpResponse {
-	http_status_t status;
+	HttpStatus status;
 
 	Curl::Headers headers;
 
 	std::string body;
 
-	GlueHttpResponse(http_status_t _status,
+	GlueHttpResponse(HttpStatus _status,
 			 Curl::Headers &&_headers,
 			 std::string &&_body)
 		:status(_status), headers(std::move(_headers)), body(_body) {}

@@ -33,11 +33,12 @@
 #include "Document.hxx"
 #include "RFC.hxx"
 #include "AllocatorPtr.hxx"
+#include "http/Status.hxx"
 
 HttpCacheDocument::HttpCacheDocument(struct pool &pool,
 				     const HttpCacheResponseInfo &_info,
 				     const StringMap &request_headers,
-				     http_status_t _status,
+				     HttpStatus _status,
 				     const StringMap &_response_headers) noexcept
 	:info(pool, _info),
 	 status(_status),

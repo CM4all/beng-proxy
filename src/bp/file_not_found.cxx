@@ -120,7 +120,7 @@ Request::CheckFileNotFound(const TranslateResponse &response) noexcept
 
 	const char *path = get_file_path(response);
 	if (path == nullptr) {
-		LogDispatchError(HTTP_STATUS_BAD_GATEWAY,
+		LogDispatchError(HttpStatus::BAD_GATEWAY,
 				 "Resource address not compatible with TRANSLATE_FILE_NOT_FOUND",
 				 1);
 		return false;
@@ -130,7 +130,7 @@ Request::CheckFileNotFound(const TranslateResponse &response) noexcept
 		return true;
 
 	if (++translate.n_file_not_found > 20) {
-		LogDispatchError(HTTP_STATUS_BAD_GATEWAY,
+		LogDispatchError(HttpStatus::BAD_GATEWAY,
 				 "got too many consecutive FILE_NOT_FOUND packets",
 				 1);
 		return false;

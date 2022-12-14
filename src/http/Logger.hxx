@@ -32,10 +32,9 @@
 
 #pragma once
 
-#include "http/Status.h"
+#include <cstdint>
 
-#include <stdint.h>
-
+enum class HttpStatus : uint_least16_t;
 struct IncomingHttpRequest;
 
 class IncomingHttpRequestLogger {
@@ -53,6 +52,6 @@ public:
 	 * encoding overhead such as chunk headers)
 	 */
 	virtual void LogHttpRequest(IncomingHttpRequest &request,
-				    http_status_t status, int64_t length,
+				    HttpStatus status, int64_t length,
 				    uint64_t bytes_received, uint64_t bytes_sent) noexcept = 0;
 };

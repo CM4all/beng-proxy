@@ -67,7 +67,7 @@ RunNull(WasServer &server, struct pool &,
 {
 	body.Clear();
 
-	server.SendResponse(HTTP_STATUS_NO_CONTENT, {}, nullptr);
+	server.SendResponse(HttpStatus::NO_CONTENT, {}, nullptr);
 }
 
 static void
@@ -78,7 +78,7 @@ RunHello(WasServer &server, struct pool &pool,
 {
 	body.Clear();
 
-	server.SendResponse(HTTP_STATUS_OK, {},
+	server.SendResponse(HttpStatus::OK, {},
 			    istream_string_new(pool, "hello"));
 }
 
@@ -90,7 +90,7 @@ RunHuge(WasServer &server, struct pool &pool,
 {
 	body.Clear();
 
-	server.SendResponse(HTTP_STATUS_OK, {},
+	server.SendResponse(HttpStatus::OK, {},
 			    istream_head_new(pool,
 					     istream_zero_new(pool),
 					     524288, true));
@@ -104,7 +104,7 @@ RunHold(WasServer &server, struct pool &pool,
 {
 	body.Clear();
 
-	server.SendResponse(HTTP_STATUS_OK, {},
+	server.SendResponse(HttpStatus::OK, {},
 			    istream_block_new(pool));
 }
 
@@ -116,7 +116,7 @@ RunBlock(WasServer &server, struct pool &pool,
 {
 	body.Clear();
 
-	server.SendResponse(HTTP_STATUS_OK, {},
+	server.SendResponse(HttpStatus::OK, {},
 			    istream_block_new(pool));
 }
 
@@ -135,7 +135,7 @@ RunMirror(WasServer &server, struct pool &,
 	  UnusedIstreamPtr body)
 {
 	const bool has_body = body;
-	server.SendResponse(has_body ? HTTP_STATUS_OK : HTTP_STATUS_NO_CONTENT,
+	server.SendResponse(has_body ? HttpStatus::OK : HttpStatus::NO_CONTENT,
 			    std::move(headers), std::move(body));
 }
 
@@ -148,7 +148,7 @@ RunMalformedHeaderName(WasServer &server, struct pool &pool,
 
 	StringMap response_headers(pool, {{"header name", "foo"}});
 
-	server.SendResponse(HTTP_STATUS_NO_CONTENT,
+	server.SendResponse(HttpStatus::NO_CONTENT,
 			    std::move(response_headers), nullptr);
 }
 
@@ -161,7 +161,7 @@ RunMalformedHeaderValue(WasServer &server, struct pool &pool,
 
 	StringMap response_headers(pool, {{"name", "foo\nbar"}});
 
-	server.SendResponse(HTTP_STATUS_NO_CONTENT,
+	server.SendResponse(HttpStatus::NO_CONTENT,
 			    std::move(response_headers), nullptr);
 }
 
@@ -173,7 +173,7 @@ RunValidPremature(WasServer &server, struct pool &pool,
 {
 	body.Clear();
 
-	server.SendResponse(HTTP_STATUS_OK, {},
+	server.SendResponse(HttpStatus::OK, {},
 			    NewConcatIstream(pool,
 					     istream_head_new(pool,
 							      istream_zero_new(pool),
@@ -207,7 +207,7 @@ public:
 		ReleaseError();
 	}
 
-	void SendResponse(http_status_t status,
+	void SendResponse(HttpStatus status,
 			  StringMap &&headers, UnusedIstreamPtr body) noexcept;
 
 private:
@@ -492,7 +492,7 @@ test_malformed_header_name(auto &factory, Context &c) noexcept
 
 	c.event_loop.Run();
 
-	assert(c.status == http_status_t(0));
+	assert(c.status == HttpStatus{});
 	assert(c.request_error);
 	assert(c.released);
 }
@@ -510,7 +510,7 @@ test_malformed_header_value(auto &factory, Context &c) noexcept
 
 	c.event_loop.Run();
 
-	assert(c.status == http_status_t(0));
+	assert(c.status == HttpStatus{});
 	assert(c.request_error);
 	assert(c.released);
 }

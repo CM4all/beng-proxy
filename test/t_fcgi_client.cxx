@@ -81,9 +81,9 @@ fcgi_server_mirror(struct pool *pool)
 	FcgiRequest request;
 	read_fcgi_request(pool, &request);
 
-	http_status_t status = request.length == 0
-		? HTTP_STATUS_NO_CONTENT
-		: HTTP_STATUS_OK;
+	HttpStatus status = request.length == 0
+		? HttpStatus::NO_CONTENT
+		: HttpStatus::OK;
 
 	char buffer[32];
 	if (request.length > 0) {
@@ -121,7 +121,7 @@ fcgi_server_null(struct pool *pool)
 {
 	FcgiRequest request;
 	read_fcgi_request(pool, &request);
-	write_fcgi_headers(&request, HTTP_STATUS_NO_CONTENT, nullptr);
+	write_fcgi_headers(&request, HttpStatus::NO_CONTENT, nullptr);
 	write_fcgi_end(&request);
 	discard_fcgi_request_body(&request);
 }
@@ -132,7 +132,7 @@ fcgi_server_hello(struct pool *pool)
 	FcgiRequest request;
 	read_fcgi_request(pool, &request);
 
-	write_fcgi_headers(&request, HTTP_STATUS_OK, nullptr);
+	write_fcgi_headers(&request, HttpStatus::OK, nullptr);
 	discard_fcgi_request_body(&request);
 	write_fcgi_stdout_string(&request, "hello");
 	write_fcgi_end(&request);
@@ -199,7 +199,7 @@ fcgi_server_hold(struct pool *pool)
 {
 	FcgiRequest request;
 	read_fcgi_request(pool, &request);
-	write_fcgi_headers(&request, HTTP_STATUS_OK, nullptr);
+	write_fcgi_headers(&request, HttpStatus::OK, nullptr);
 
 	/* wait until the connection gets closed */
 	while (true) {
@@ -448,7 +448,7 @@ test_malformed_header_name(auto &factory, Context &c) noexcept
 
 	c.event_loop.Run();
 
-	assert(c.status == http_status_t(0));
+	assert(c.status == HttpStatus{});
 	assert(c.request_error);
 	assert(c.released);
 }
@@ -466,7 +466,7 @@ test_malformed_header_value(auto &factory, Context &c) noexcept
 
 	c.event_loop.Run();
 
-	assert(c.status == http_status_t(0));
+	assert(c.status == HttpStatus{});
 	assert(c.request_error);
 	assert(c.released);
 }

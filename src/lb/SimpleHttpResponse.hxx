@@ -32,14 +32,13 @@
 
 #pragma once
 
-#include "http/Status.h"
-
 #include <string>
 
+enum class HttpStatus : uint_least16_t;
 struct IncomingHttpRequest;
 
 struct LbSimpleHttpResponse {
-	http_status_t status = http_status_t(0);
+	HttpStatus status = {};
 
 	/**
 	 * The "Location" response header.
@@ -51,11 +50,11 @@ struct LbSimpleHttpResponse {
 	bool redirect_https = false;
 
 	LbSimpleHttpResponse() = default;
-	explicit LbSimpleHttpResponse(http_status_t _status) noexcept
+	explicit LbSimpleHttpResponse(HttpStatus _status) noexcept
 		:status(_status) {}
 
 	bool IsDefined() const noexcept {
-		return status != http_status_t(0);
+		return status != HttpStatus{};
 	}
 };
 

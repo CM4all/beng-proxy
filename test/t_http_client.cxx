@@ -345,7 +345,7 @@ test_no_keepalive(auto &factory, Context &c) noexcept
 
 	c.WaitForResponse();
 
-	assert(c.status == HTTP_STATUS_OK);
+	assert(c.status == HttpStatus::OK);
 	assert(c.request_error == nullptr);
 
 	/* receive the rest of the response body from the buffer */
@@ -395,7 +395,7 @@ test_ignored_request_body(auto &factory, Context &c) noexcept
 
 	assert(c.released);
 	assert(c.connection == nullptr);
-	assert(c.status == HTTP_STATUS_OK);
+	assert(c.status == HttpStatus::OK);
 	assert(c.consumed_body_data == 3);
 	assert(c.body_error == nullptr);
 	assert(!c.reuse);
@@ -461,7 +461,7 @@ test_expect_100_continue_splice(auto &factory, Context &c) noexcept
 
 	assert(c.released);
 	assert(c.connection == nullptr);
-	assert(c.status == HTTP_STATUS_OK);
+	assert(c.status == HttpStatus::OK);
 	assert(c.consumed_body_data == length);
 	assert(c.body_error == nullptr);
 	assert(c.reuse);

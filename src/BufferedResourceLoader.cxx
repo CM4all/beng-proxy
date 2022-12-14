@@ -49,7 +49,7 @@ class PostponedRequest {
 	const ResourceRequestParams params;
 	const http_method_t method;
 	const ResourceAddress &address;
-	const http_status_t status;
+	const HttpStatus status;
 	StringMap headers;
 	const char *const body_etag;
 	HttpResponseHandler &handler;
@@ -62,7 +62,7 @@ public:
 			 const ResourceRequestParams &_params,
 			 http_method_t _method,
 			 const ResourceAddress &_address,
-			 http_status_t _status, StringMap &&_headers,
+			 HttpStatus _status, StringMap &&_headers,
 			 const char *_body_etag,
 			 HttpResponseHandler &_handler,
 			 CancellablePointer &_caller_cancel_ptr) noexcept
@@ -110,7 +110,7 @@ public:
 		const StopwatchPtr &_parent_stopwatch,
 		const ResourceRequestParams &_params,
 		http_method_t _method, const ResourceAddress &_address,
-		http_status_t _status, StringMap &&_headers,
+		HttpStatus _status, StringMap &&_headers,
 		const char *_body_etag,
 		HttpResponseHandler &_handler,
 		CancellablePointer &caller_cancel_ptr) noexcept
@@ -167,7 +167,7 @@ BufferedResourceLoader::SendRequest(struct pool &pool,
 				    const ResourceRequestParams &params,
 				    http_method_t method,
 				    const ResourceAddress &address,
-				    http_status_t status, StringMap &&headers,
+				    HttpStatus status, StringMap &&headers,
 				    UnusedIstreamPtr body, const char *body_etag,
 				    HttpResponseHandler &handler,
 				    CancellablePointer &cancel_ptr) noexcept

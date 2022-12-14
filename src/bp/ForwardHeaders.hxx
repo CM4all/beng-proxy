@@ -37,15 +37,17 @@
 #pragma once
 
 #include "translation/Headers.hxx"
-#include "http/Status.h"
 
+#include <cstddef>
+
+enum class HttpStatus : uint_least16_t;
 class AllocatorPtr;
 
 struct HeaderForwardSettings {
 	using Group = BengProxy::HeaderGroup;
 	using Mode = BengProxy::HeaderForwardMode;
 
-	Mode modes[size_t(Group::MAX)];
+	Mode modes[std::size_t(Group::MAX)];
 
 	static constexpr HeaderForwardSettings AllNo() noexcept {
 		static_assert(Mode::NO == Mode(),
@@ -111,7 +113,7 @@ forward_request_headers(AllocatorPtr alloc, const StringMap &src,
 			const char *host_and_port, const char *uri) noexcept;
 
 StringMap
-forward_response_headers(AllocatorPtr alloc, http_status_t status,
+forward_response_headers(AllocatorPtr alloc, HttpStatus status,
 			 const StringMap &src,
 			 const char *local_host,
 			 const char *session_cookie,

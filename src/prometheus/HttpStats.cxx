@@ -67,7 +67,7 @@ Write(GrowingBuffer &buffer, const char *labels,
 		if (stats.n_per_status[i] > 0)
 			buffer.Format("beng_proxy_http_requests{%sstatus=\"%u\"} %" PRIu64 "\n",
 				      labels,
-				      IndexToHttpStatus(i),
+				      static_cast<unsigned>(IndexToHttpStatus(i)),
 				      stats.n_per_status[i]);
 }
 

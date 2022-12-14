@@ -34,6 +34,7 @@
 #include "TestPool.hxx"
 #include "strmap.hxx"
 #include "product.h"
+#include "http/Status.hxx"
 #include "util/StringCompare.hxx"
 #include "AllocatorPtr.hxx"
 
@@ -537,7 +538,7 @@ RelocateCallback(const char *uri, void *ctx) noexcept
 }
 
 StringMap
-forward_response_headers(AllocatorPtr alloc, http_status_t status,
+forward_response_headers(AllocatorPtr alloc, HttpStatus status,
 			 const StringMap &src,
 			 const char *(*relocate)(const char *uri, void *ctx) noexcept,
 			 void *relocate_ctx,
@@ -550,7 +551,7 @@ forward_response_headers(AllocatorPtr alloc, http_status_t status,
 }
 
 StringMap
-forward_response_headers(AllocatorPtr alloc, http_status_t status,
+forward_response_headers(AllocatorPtr alloc, HttpStatus status,
 			 const StringMap &src,
 			 const HeaderForwardSettings &settings) noexcept
 {
@@ -583,22 +584,22 @@ TEST(HeaderForwardTest, BasicResponseHeader)
 					{"retry-after", "14"},
 					{"vary", "15"},
 				}};
-	auto a = forward_response_headers(alloc, HTTP_STATUS_OK, headers, settings);
+	auto a = forward_response_headers(alloc, HttpStatus::OK, headers, settings);
 	check_strmap(a, "accept-ranges=10;age=1;allow=2;cache-control=4;content-disposition=12;content-encoding=6;content-language=7;content-md5=8;content-range=9;content-type=11;etag=3;expires=5;last-modified=13;retry-after=14;vary=15;");
 
 	std::fill_n(settings.modes, size_t(HeaderGroup::MAX),
 		    HeaderForwardMode::YES);
-	a = forward_response_headers(alloc, HTTP_STATUS_OK, headers, settings);
+	a = forward_response_headers(alloc, HttpStatus::OK, headers, settings);
 	check_strmap(a, "accept-ranges=10;age=1;allow=2;cache-control=4;content-disposition=12;content-encoding=6;content-language=7;content-md5=8;content-range=9;content-type=11;etag=3;expires=5;last-modified=13;retry-after=14;vary=15;");
 
 	std::fill_n(settings.modes, size_t(HeaderGroup::MAX),
 		    HeaderForwardMode::MANGLE);
-	a = forward_response_headers(alloc, HTTP_STATUS_OK, headers, settings);
+	a = forward_response_headers(alloc, HttpStatus::OK, headers, settings);
 	check_strmap(a, "accept-ranges=10;age=1;allow=2;cache-control=4;content-disposition=12;content-encoding=6;content-language=7;content-md5=8;content-range=9;content-type=11;etag=3;expires=5;last-modified=13;retry-after=14;vary=15;via=1.1 192.168.0.2;");
 
 	std::fill_n(settings.modes, size_t(HeaderGroup::MAX),
 		    HeaderForwardMode::BOTH);
-	a = forward_response_headers(alloc, HTTP_STATUS_OK, headers, settings);
+	a = forward_response_headers(alloc, HttpStatus::OK, headers, settings);
 	check_strmap(a, "accept-ranges=10;age=1;allow=2;cache-control=4;content-disposition=12;content-encoding=6;content-language=7;content-md5=8;content-range=9;content-type=11;etag=3;expires=5;last-modified=13;retry-after=14;vary=15;");
 }
 
@@ -613,19 +614,19 @@ TEST(HeaderForwardTest, AuthResponseHeaders)
 					{"www-authenticate", "foo"},
 					{"authentication-info", "bar"},
 				}};
-	auto a = forward_response_headers(alloc, HTTP_STATUS_OK, headers, settings);
+	auto a = forward_response_headers(alloc, HttpStatus::OK, headers, settings);
 	check_strmap(a, "");
 
 	settings[HeaderGroup::AUTH] = HeaderForwardMode::MANGLE;
-	a = forward_response_headers(alloc, HTTP_STATUS_OK, headers, settings);
+	a = forward_response_headers(alloc, HttpStatus::OK, headers, settings);
 	check_strmap(a, "");
 
 	settings[HeaderGroup::AUTH] = HeaderForwardMode::BOTH;
-	a = forward_response_headers(alloc, HTTP_STATUS_OK, headers, settings);
+	a = forward_response_headers(alloc, HttpStatus::OK, headers, settings);
 	check_strmap(a, "");
 
 	settings[HeaderGroup::AUTH] = HeaderForwardMode::YES;
-	a = forward_response_headers(alloc, HTTP_STATUS_OK, headers, settings);
+	a = forward_response_headers(alloc, HttpStatus::OK, headers, settings);
 	check_strmap(a, "authentication-info=bar;www-authenticate=foo;");
 }
 
@@ -649,7 +650,7 @@ TEST(HeaderForwardTest, ResponseHeaders)
 
 	/* response headers: nullptr */
 
-	auto out1 = forward_response_headers(alloc, HTTP_STATUS_OK,
+	auto out1 = forward_response_headers(alloc, HttpStatus::OK,
 					     {},
 					     settings);
 	ASSERT_EQ(out1.Remove("server"), nullptr);
@@ -657,7 +658,7 @@ TEST(HeaderForwardTest, ResponseHeaders)
 
 	/* response headers: basic test */
 
-	auto out2 = forward_response_headers(alloc, HTTP_STATUS_OK, headers, settings);
+	auto out2 = forward_response_headers(alloc, HttpStatus::OK, headers, settings);
 	ASSERT_EQ(out2.Get("server"), nullptr);
 	check_strmap(out2, "content-type=image/jpeg;");
 
@@ -665,14 +666,14 @@ TEST(HeaderForwardTest, ResponseHeaders)
 
 	settings[HeaderGroup::CAPABILITIES] = HeaderForwardMode::YES;
 
-	auto out3 = forward_response_headers(alloc, HTTP_STATUS_OK, headers, settings);
+	auto out3 = forward_response_headers(alloc, HttpStatus::OK, headers, settings);
 	check_strmap(out3, "content-type=image/jpeg;server=apache;");
 
 	/* response: forward via/x-forwarded-for as-is */
 
 	settings[HeaderGroup::IDENTITY] = HeaderForwardMode::YES;
 
-	auto out4 = forward_response_headers(alloc, HTTP_STATUS_OK, headers, settings);
+	auto out4 = forward_response_headers(alloc, HttpStatus::OK, headers, settings);
 	check_strmap(out4, "content-type=image/jpeg;server=apache;"
 		     "via=1.1 192.168.0.1;");
 
@@ -680,7 +681,7 @@ TEST(HeaderForwardTest, ResponseHeaders)
 
 	settings[HeaderGroup::IDENTITY] = HeaderForwardMode::MANGLE;
 
-	auto out5 = forward_response_headers(alloc, HTTP_STATUS_OK, headers, settings);
+	auto out5 = forward_response_headers(alloc, HttpStatus::OK, headers, settings);
 	check_strmap(out5, "content-type=image/jpeg;server=apache;"
 		     "via=1.1 192.168.0.1, 1.1 192.168.0.2;");
 
@@ -692,7 +693,7 @@ TEST(HeaderForwardTest, ResponseHeaders)
 
 	settings[HeaderGroup::LINK] = HeaderForwardMode::NO;
 
-	auto out5b = forward_response_headers(alloc, HTTP_STATUS_OK, headers,
+	auto out5b = forward_response_headers(alloc, HttpStatus::OK, headers,
 					      RelocateCallback, (struct pool *)pool,
 					      settings);
 	check_strmap(out5b, "content-type=image/jpeg;"
@@ -700,7 +701,7 @@ TEST(HeaderForwardTest, ResponseHeaders)
 
 	settings[HeaderGroup::LINK] = HeaderForwardMode::YES;
 
-	out5b = forward_response_headers(alloc, HTTP_STATUS_OK, headers,
+	out5b = forward_response_headers(alloc, HttpStatus::OK, headers,
 					 RelocateCallback, (struct pool *)pool,
 					 settings);
 	check_strmap(out5b, "content-type=image/jpeg;"
@@ -709,7 +710,7 @@ TEST(HeaderForwardTest, ResponseHeaders)
 
 	settings[HeaderGroup::LINK] = HeaderForwardMode::MANGLE;
 
-	out5b = forward_response_headers(alloc, HTTP_STATUS_OK, headers,
+	out5b = forward_response_headers(alloc, HttpStatus::OK, headers,
 					 RelocateCallback, (struct pool *)pool,
 					 settings);
 	check_strmap(out5b, "content-type=image/jpeg;"
@@ -722,7 +723,7 @@ TEST(HeaderForwardTest, ResponseHeaders)
 
 	settings[HeaderGroup::COOKIE] = HeaderForwardMode::YES;
 
-	auto out6 = forward_response_headers(alloc, HTTP_STATUS_OK, headers, settings);
+	auto out6 = forward_response_headers(alloc, HttpStatus::OK, headers, settings);
 	check_strmap(out6, "content-type=image/jpeg;server=apache;"
 		     "set-cookie=a=b;");
 
@@ -730,13 +731,13 @@ TEST(HeaderForwardTest, ResponseHeaders)
 
 	headers.Add(alloc, "access-control-allow-methods", "POST");
 
-	auto out7 = forward_response_headers(alloc, HTTP_STATUS_OK, headers, settings);
+	auto out7 = forward_response_headers(alloc, HttpStatus::OK, headers, settings);
 	check_strmap(out7, "content-type=image/jpeg;server=apache;"
 		     "set-cookie=a=b;");
 
 	settings[HeaderGroup::CORS] = HeaderForwardMode::YES;
 
-	auto out8 = forward_response_headers(alloc, HTTP_STATUS_OK, headers, settings);
+	auto out8 = forward_response_headers(alloc, HttpStatus::OK, headers, settings);
 	check_strmap(out8, "access-control-allow-methods=POST;"
 		     "content-type=image/jpeg;server=apache;"
 		     "set-cookie=a=b;");
@@ -745,7 +746,7 @@ TEST(HeaderForwardTest, ResponseHeaders)
 
 	settings[HeaderGroup::SECURE] = HeaderForwardMode::YES;
 
-	auto out9 = forward_response_headers(alloc, HTTP_STATUS_OK, headers, settings);
+	auto out9 = forward_response_headers(alloc, HttpStatus::OK, headers, settings);
 	check_strmap(out9, "access-control-allow-methods=POST;"
 		     "content-type=image/jpeg;server=apache;"
 		     "set-cookie=a=b;"

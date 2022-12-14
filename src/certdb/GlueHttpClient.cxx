@@ -51,7 +51,7 @@ GlueHttpClient::~GlueHttpClient()
 class GlueHttpResponseHandler final : public CurlResponseHandler {
 	EventLoop &event_loop;
 
-	http_status_t status;
+	HttpStatus status;
 	Curl::Headers headers;
 
 	std::string body_string;
@@ -81,7 +81,7 @@ public:
 	/* virtual methods from class CurlResponseHandler */
 
 	void OnHeaders(unsigned _status, Curl::Headers &&_headers) override {
-		status = http_status_t(_status);
+		status = static_cast<HttpStatus>(_status);
 		headers = std::move(_headers);
 	}
 

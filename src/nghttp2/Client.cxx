@@ -90,7 +90,7 @@ class ClientConnection::Request final
 
 	int32_t id = -1;
 
-	http_status_t status = HTTP_STATUS_OK;
+	HttpStatus status = HttpStatus::OK;
 
 	StringMap response_headers;
 
@@ -361,7 +361,7 @@ ClientConnection::Request::OnHeaderCallback(std::string_view name,
 		*std::copy(value.begin(), value.end(), buffer) = 0;
 
 		char *endptr;
-		auto _status = (http_status_t)strtoul(buffer, &endptr, 10);
+		auto _status = (HttpStatus)strtoul(buffer, &endptr, 10);
 		if (endptr != buffer + value.size() ||
 		    !http_status_is_valid(_status))
 			return 0;

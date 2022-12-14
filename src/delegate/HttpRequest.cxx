@@ -89,7 +89,7 @@ DelegateHttpRequest::OnDelegateSuccess(UniqueFileDescriptor fd)
 	}
 
 	if (!S_ISREG(st.stx_mode)) {
-		handler.InvokeResponse(pool, HTTP_STATUS_NOT_FOUND,
+		handler.InvokeResponse(pool, HttpStatus::NOT_FOUND,
 				       "Not a regular file");
 		return;
 	}
@@ -99,7 +99,7 @@ DelegateHttpRequest::OnDelegateSuccess(UniqueFileDescriptor fd)
 	auto response_headers = static_response_headers(pool, fd, st,
 							content_type);
 
-	handler.InvokeResponse(HTTP_STATUS_OK,
+	handler.InvokeResponse(HttpStatus::OK,
 			       std::move(response_headers),
 			       istream_file_fd_new(event_loop, pool, path,
 						   std::move(fd),

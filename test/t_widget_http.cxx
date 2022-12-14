@@ -76,7 +76,7 @@ struct request {
 	const char *uri;
 	const char *request_headers;
 
-	http_status_t status;
+	HttpStatus status;
 	const char *response_headers;
 	const char *response_body;
 };
@@ -171,7 +171,7 @@ public:
 			 const ResourceRequestParams &params,
 			 http_method_t method,
 			 const ResourceAddress &address,
-			 http_status_t status, StringMap &&headers,
+			 HttpStatus status, StringMap &&headers,
 			 UnusedIstreamPtr body, const char *body_etag,
 			 HttpResponseHandler &handler,
 			 CancellablePointer &cancel_ptr) noexcept override;
@@ -183,7 +183,7 @@ MyResourceLoader::SendRequest(struct pool &pool,
 			      const ResourceRequestParams &,
 			      http_method_t method,
 			      const ResourceAddress &,
-			      http_status_t,
+			      HttpStatus,
 			      StringMap &&headers,
 			      UnusedIstreamPtr body,
 			      const char *,
@@ -239,24 +239,24 @@ MyResourceLoader::SendRequest(struct pool &pool,
 		break;
 	}
 
-	handler.InvokeResponse(HTTP_STATUS_OK,
+	handler.InvokeResponse(HttpStatus::OK,
 			       std::move(response_headers),
 			       istream_null_new(pool));
 }
 
 struct Context final : HttpResponseHandler {
 	/* virtual methods from class HttpResponseHandler */
-	void OnHttpResponse(http_status_t status, StringMap &&headers,
+	void OnHttpResponse(HttpStatus status, StringMap &&headers,
 			    UnusedIstreamPtr body) noexcept override;
 	void OnHttpError(std::exception_ptr ep) noexcept override;
 };
 
 void
-Context::OnHttpResponse(http_status_t status, StringMap &&,
+Context::OnHttpResponse(HttpStatus status, StringMap &&,
 			UnusedIstreamPtr body) noexcept
 {
 	EXPECT_FALSE(got_response);
-	ASSERT_EQ(status, 200);
+	ASSERT_EQ(status, HttpStatus::OK);
 	ASSERT_TRUE(body);
 
 	got_response = true;

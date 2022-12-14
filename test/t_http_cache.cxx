@@ -67,7 +67,7 @@ struct Request final {
 	const char *uri;
 	const char *request_headers;
 
-	http_status_t status = HTTP_STATUS_OK;
+	HttpStatus status = HttpStatus::OK;
 	const char *response_headers;
 	const char *response_body;
 
@@ -152,7 +152,7 @@ public:
 			 const ResourceRequestParams &params,
 			 http_method_t method,
 			 const ResourceAddress &address,
-			 http_status_t status, StringMap &&headers,
+			 HttpStatus status, StringMap &&headers,
 			 UnusedIstreamPtr body, const char *body_etag,
 			 HttpResponseHandler &handler,
 			 CancellablePointer &cancel_ptr) noexcept override;
@@ -164,7 +164,7 @@ MyResourceLoader::SendRequest(struct pool &pool,
 			      const ResourceRequestParams &,
 			      http_method_t method,
 			      const ResourceAddress &,
-			      http_status_t,
+			      HttpStatus,
 			      StringMap &&headers,
 			      UnusedIstreamPtr body,
 			      const char *,
@@ -541,14 +541,14 @@ TEST(HttpCache, Tag)
 	/* AUTO_FLUSH_CACHE test (unsuccessful POST does not flush) */
 
 	r2.method = HTTP_METHOD_POST;
-	r2.status = HTTP_STATUS_FORBIDDEN;
+	r2.status = HttpStatus::FORBIDDEN;
 
 	run_cache_test(instance, r2, false);
 	run_cache_test(instance, request, true);
 
 	/* AUTO_FLUSH_CACHE test (successful POST flushes) */
 
-	r2.status = HTTP_STATUS_OK;
+	r2.status = HttpStatus::OK;
 
 	run_cache_test(instance, r2, false);
 	run_cache_test(instance, request, false);

@@ -444,7 +444,7 @@ WasServer::OnWasControlError(std::exception_ptr ep) noexcept
 }
 
 void
-WasServer::SendResponse(http_status_t status,
+WasServer::SendResponse(HttpStatus status,
 			StringMap &&headers, UnusedIstreamPtr body) noexcept
 {
 	assert(request.state == Request::State::SUBMITTED);

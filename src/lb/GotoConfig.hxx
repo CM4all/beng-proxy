@@ -76,7 +76,7 @@ struct LbGotoConfig {
 	explicit LbGotoConfig(const LbPrometheusExporterConfig &_exporter) noexcept
 		:destination(&_exporter) {}
 
-	explicit LbGotoConfig(http_status_t _status) noexcept
+	explicit LbGotoConfig(HttpStatus _status) noexcept
 		:destination(LbSimpleHttpResponse{_status}) {}
 
 	bool IsDefined() const noexcept {

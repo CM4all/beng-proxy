@@ -219,7 +219,7 @@ class HttpClient final : BufferedSocketHandler, IstreamSink, Cancellable, Destru
 		 */
 		bool in_handler;
 
-		http_status_t status;
+		HttpStatus status;
 		StringMap headers;
 
 		/**
@@ -689,7 +689,7 @@ HttpClient::ParseStatusLine(std::string_view line)
 				      "no HTTP status found");
 	}
 
-	response.status = (http_status_t)(((status[0] - '0') * 10 + status[1] - '0') * 10 + status[2] - '0');
+	response.status = static_cast<HttpStatus>(((status[0] - '0') * 10 + status[1] - '0') * 10 + status[2] - '0');
 	if (!http_status_is_valid(response.status)) [[unlikely]] {
 		stopwatch.RecordEvent("malformed");
 
@@ -715,10 +715,10 @@ HttpClient::HeadersFinished()
 	if (http_status_is_empty(response.status) &&
 	    /* "100 Continue" requires special handling here, because the
 	       final response following it may contain a body */
-	    response.status != HTTP_STATUS_CONTINUE)
+	    response.status != HttpStatus::CONTINUE)
 		response.no_body = true;
 
-	if (response.no_body || response.status == HTTP_STATUS_CONTINUE) {
+	if (response.no_body || response.status == HttpStatus::CONTINUE) {
 		response.state = Response::State::END;
 		return;
 	}
@@ -931,7 +931,7 @@ HttpClient::FeedHeaders(std::span<const std::byte> b)
 	assert(response.state == Response::State::BODY ||
 	       response.state == Response::State::END);
 
-	if (response.status == HTTP_STATUS_CONTINUE) {
+	if (response.status == HttpStatus::CONTINUE) {
 		assert(response.state == Response::State::END);
 
 		if (!request.pending_body || !HasInput()) {

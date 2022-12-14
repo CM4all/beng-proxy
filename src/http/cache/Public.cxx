@@ -127,7 +127,7 @@ private:
 	 * receives the response body.
 	 */
 	struct {
-		http_status_t status;
+		HttpStatus status;
 		StringMap *headers;
 	} response;
 
@@ -167,7 +167,7 @@ public:
 		next.SendRequest(GetPool(), parent_stopwatch,
 				 params,
 				 method, address,
-				 HTTP_STATUS_OK, std::move(_headers),
+				 HttpStatus::OK, std::move(_headers),
 				 nullptr, nullptr,
 				 *this, cancel_ptr);
 	}
@@ -201,7 +201,7 @@ private:
 	void Cancel() noexcept override;
 
 	/* virtual methods from class HttpResponseHandler */
-	void OnHttpResponse(http_status_t status, StringMap &&headers,
+	void OnHttpResponse(HttpStatus status, StringMap &&headers,
 			    UnusedIstreamPtr body) noexcept override;
 	void OnHttpError(std::exception_ptr ep) noexcept override;
 
@@ -252,7 +252,7 @@ public:
 		next.SendRequest(pool, parent_stopwatch,
 				 params,
 				 method, address,
-				 HTTP_STATUS_OK, std::move(_headers),
+				 HttpStatus::OK, std::move(_headers),
 				 std::move(body), nullptr,
 				 *this, cancel_ptr);
 	}
@@ -269,7 +269,7 @@ private:
 	}
 
 	/* virtual methods from class HttpResponseHandler */
-	void OnHttpResponse(http_status_t status, StringMap &&headers,
+	void OnHttpResponse(HttpStatus status, StringMap &&headers,
 			    UnusedIstreamPtr body) noexcept override;
 
 	void OnHttpError(std::exception_ptr e) noexcept override {
@@ -354,7 +354,7 @@ public:
 	void Put(const char *url, const char *tag,
 		 const HttpCacheResponseInfo &info,
 		 const StringMap &request_headers,
-		 http_status_t status,
+		 HttpStatus status,
 		 const StringMap &response_headers,
 		 RubberAllocation &&a, size_t size) noexcept {
 		LogConcat(4, "HttpCache", "put ", url);
@@ -558,7 +558,7 @@ HttpCacheRequest::RubberError(std::exception_ptr ep) noexcept
  */
 
 void
-AutoFlushHttpCacheRequest::OnHttpResponse(http_status_t status,
+AutoFlushHttpCacheRequest::OnHttpResponse(HttpStatus status,
 					  StringMap &&_headers,
 					  UnusedIstreamPtr body) noexcept
 {
@@ -574,20 +574,20 @@ AutoFlushHttpCacheRequest::OnHttpResponse(http_status_t status,
 }
 
 void
-HttpCacheRequest::OnHttpResponse(http_status_t status, StringMap &&_headers,
+HttpCacheRequest::OnHttpResponse(HttpStatus status, StringMap &&_headers,
 				 UnusedIstreamPtr body) noexcept
 {
 	const AllocatorPtr alloc{GetPool()};
 
 	HttpCacheDocument *locked_document = document;
 
-	if (document != nullptr && status == HTTP_STATUS_NOT_MODIFIED) {
+	if (document != nullptr && status == HttpStatus::NOT_MODIFIED) {
 		assert(!body);
 
 		if (auto _info = http_cache_response_evaluate(request_info,
 							      alloc,
 							      eager_cache,
-							      HTTP_STATUS_OK,
+							      HttpStatus::OK,
 							      _headers, -1);
 		    _info && _info->expires >= GetEventLoop().SystemNow()) {
 			/* copy the new "Expires" (or "max-age") value from the
@@ -873,7 +873,7 @@ HttpCache::Miss(struct pool &caller_pool,
 		CancellablePointer &cancel_ptr) noexcept
 {
 	if (info.only_if_cached) {
-		handler.InvokeResponse(HTTP_STATUS_GATEWAY_TIMEOUT,
+		handler.InvokeResponse(HttpStatus::GATEWAY_TIMEOUT,
 				       {}, UnusedIstreamPtr());
 		return;
 	}
@@ -918,7 +918,7 @@ static void
 DispatchNotModified(struct pool &pool, const HttpCacheDocument &document,
 		    HttpResponseHandler &handler) noexcept
 {
-	handler.InvokeResponse(HTTP_STATUS_NOT_MODIFIED,
+	handler.InvokeResponse(HttpStatus::NOT_MODIFIED,
 			       StringMap(pool, document.response_headers),
 			       UnusedIstreamPtr());
 }
@@ -932,7 +932,7 @@ CheckCacheRequest(struct pool &pool, const HttpCacheRequestInfo &info,
 
 	if (info.if_match != nullptr &&
 	    !CheckETagList(info.if_match, document.response_headers)) {
-		handler.InvokeResponse(HTTP_STATUS_PRECONDITION_FAILED,
+		handler.InvokeResponse(HttpStatus::PRECONDITION_FAILED,
 				       {}, UnusedIstreamPtr());
 		return false;
 	}
@@ -980,7 +980,7 @@ CheckCacheRequest(struct pool &pool, const HttpCacheRequestInfo &info,
 			if (iums != std::chrono::system_clock::from_time_t(-1) &&
 			    lm != std::chrono::system_clock::from_time_t(-1) &&
 			    lm > iums) {
-				handler.InvokeResponse(HTTP_STATUS_PRECONDITION_FAILED,
+				handler.InvokeResponse(HttpStatus::PRECONDITION_FAILED,
 						       {}, UnusedIstreamPtr());
 				return false;
 			}
@@ -1155,7 +1155,7 @@ HttpCache::Start(struct pool &caller_pool,
 		resource_loader.SendRequest(caller_pool, parent_stopwatch,
 					    params,
 					    method, address,
-					    HTTP_STATUS_OK, std::move(headers),
+					    HttpStatus::OK, std::move(headers),
 					    std::move(body), nullptr,
 					    handler, cancel_ptr);
 		return;
@@ -1193,7 +1193,7 @@ HttpCache::Start(struct pool &caller_pool,
 		resource_loader.SendRequest(caller_pool, parent_stopwatch,
 					    params,
 					    method, address,
-					    HTTP_STATUS_OK, std::move(headers),
+					    HttpStatus::OK, std::move(headers),
 					    std::move(body), nullptr,
 					    handler, cancel_ptr);
 	}

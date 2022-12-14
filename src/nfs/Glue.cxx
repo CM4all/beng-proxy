@@ -75,7 +75,7 @@ NfsRequest::OnNfsCacheResponse(NfsCacheHandle &handle,
 	headers.Add(pool, "cache-control", "max-age=60");
 
 	// TODO: handle revalidation etc.
-	handler.InvokeResponse(HTTP_STATUS_OK, std::move(headers),
+	handler.InvokeResponse(HttpStatus::OK, std::move(headers),
 			       nfs_cache_handle_open(pool, handle,
 						     0, st.stx_size));
 }

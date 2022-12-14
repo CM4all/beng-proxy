@@ -53,7 +53,7 @@ RecordingHttpResponseHandler::ReadBody() noexcept
 }
 
 void
-RecordingHttpResponseHandler::OnHttpResponse(http_status_t _status,
+RecordingHttpResponseHandler::OnHttpResponse(HttpStatus _status,
 					     StringMap &&_headers,
 					     UnusedIstreamPtr _body) noexcept
 {

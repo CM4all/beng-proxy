@@ -139,7 +139,7 @@ Request::HandleProxyAddress() noexcept
 			       tr.cache_tag,
 			       tr.site,
 		       },
-		       forward.method, address, HTTP_STATUS_OK,
+		       forward.method, address, HttpStatus::OK,
 		       std::move(forward.headers),
 		       std::move(forward.body),
 		       nullptr,

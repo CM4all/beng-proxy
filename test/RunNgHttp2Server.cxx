@@ -32,6 +32,7 @@
 
 #include "nghttp2/Server.hxx"
 #include "http/Headers.hxx"
+#include "http/Status.hxx"
 #include "http/IncomingRequest.hxx"
 #include "http/server/Handler.hxx"
 #include "fs/FilteredSocket.hxx"
@@ -65,10 +66,10 @@ public:
 		// TODO
 
 		if (request.body)
-			request.SendResponse(HTTP_STATUS_OK, {},
+			request.SendResponse(HttpStatus::OK, {},
 					     std::move(request.body));
 		else
-			request.SendMessage(HTTP_STATUS_OK, "Hello, world!\n");
+			request.SendMessage(HttpStatus::OK, "Hello, world!\n");
 	}
 
 	void HttpConnectionError(std::exception_ptr e) noexcept override {

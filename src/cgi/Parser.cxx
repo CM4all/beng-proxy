@@ -47,8 +47,8 @@ CGIParser::Finish(ForeignFifoBuffer<std::byte> &buffer)
 	const char *p = headers.Remove("status");
 	if (p != nullptr) {
 		int i = atoi(p);
-		if (http_status_is_valid((http_status_t)i))
-			status = (http_status_t)i;
+		if (http_status_is_valid((HttpStatus)i))
+			status = (HttpStatus)i;
 	}
 
 	if (http_status_is_empty(status)) {

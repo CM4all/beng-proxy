@@ -75,7 +75,7 @@ Request::OnNfsCacheResponse(NfsCacheHandle &handle,
 			      IsProcessorFirst());
 	write_translation_vary_header(headers2, tr);
 
-	http_status_t status = tr.status == 0 ? HTTP_STATUS_OK : tr.status;
+	auto status = tr.status == HttpStatus{} ? HttpStatus::OK : tr.status;
 
 	/* generate the Content-Range header */
 
@@ -88,7 +88,7 @@ Request::OnNfsCacheResponse(NfsCacheHandle &handle,
 		break;
 
 	case HttpRangeRequest::Type::VALID:
-		status = HTTP_STATUS_PARTIAL_CONTENT;
+		status = HttpStatus::PARTIAL_CONTENT;
 
 		header_write(headers2, "content-range",
 			     p_sprintf(&pool, "bytes %lu-%lu/%lu",
@@ -98,7 +98,7 @@ Request::OnNfsCacheResponse(NfsCacheHandle &handle,
 		break;
 
 	case HttpRangeRequest::Type::INVALID:
-		status = HTTP_STATUS_REQUESTED_RANGE_NOT_SATISFIABLE;
+		status = HttpStatus::REQUESTED_RANGE_NOT_SATISFIABLE;
 
 		header_write(headers2, "content-range",
 			     p_sprintf(&pool, "bytes */%lu",

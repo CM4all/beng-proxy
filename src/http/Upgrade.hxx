@@ -36,16 +36,15 @@
 
 #pragma once
 
-#include "http/Status.h"
+#include "http/Status.hxx"
 
 class StringMap;
 class HttpHeaders;
 
-[[gnu::pure]]
-static inline bool
-http_is_upgrade(http_status_t status) noexcept
+static constexpr bool
+http_is_upgrade(HttpStatus status) noexcept
 {
-	return status == HTTP_STATUS_SWITCHING_PROTOCOLS;
+	return status == HttpStatus::SWITCHING_PROTOCOLS;
 }
 
 /**
@@ -64,14 +63,14 @@ http_is_upgrade(const HttpHeaders &headers) noexcept;
 
 [[gnu::pure]]
 static inline bool
-http_is_upgrade(http_status_t status, const StringMap &headers) noexcept
+http_is_upgrade(HttpStatus status, const StringMap &headers) noexcept
 {
 	return http_is_upgrade(status) && http_is_upgrade(headers);
 }
 
 [[gnu::pure]]
 static inline bool
-http_is_upgrade(http_status_t status, const HttpHeaders &headers) noexcept
+http_is_upgrade(HttpStatus status, const HttpHeaders &headers) noexcept
 {
 	return http_is_upgrade(status) && http_is_upgrade(headers);
 }

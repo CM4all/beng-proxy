@@ -41,6 +41,7 @@
 #include "json/String.hxx"
 #include "json/ForwardList.hxx"
 #include "jwt/RS256.hxx"
+#include "http/Status.hxx"
 #include "lib/openssl/Buffer.hxx"
 #include "lib/openssl/UniqueBIO.hxx"
 #include "lib/sodium/Base64.hxx"
@@ -180,7 +181,7 @@ AcmeClient::RequestDirectory()
 							 HTTP_METHOD_GET,
 							 (server + "/directory").c_str(),
 							 {});
-		if (response.status != HTTP_STATUS_OK) {
+		if (response.status != HttpStatus::OK) {
 			if (http_status_is_server_error(response.status) &&
 			    --remaining_tries > 0)
 				/* try again, just in case it's a
@@ -225,7 +226,7 @@ AcmeClient::RequestNonce()
 							 HTTP_METHOD_HEAD,
 							 directory.new_nonce.c_str(),
 							 {});
-		if (response.status != HTTP_STATUS_OK) {
+		if (response.status != HttpStatus::OK) {
 			if (http_status_is_server_error(response.status) &&
 			    --remaining_tries > 0)
 				/* try again, just in case it's a temporary Let's
@@ -405,11 +406,11 @@ AcmeClient::NewAccount(EVP_PKEY &key, const char *email,
 					   directory.new_account.c_str(),
 					   payload);
 	if (only_return_existing) {
-		if (response.status != HTTP_STATUS_OK)
+		if (response.status != HttpStatus::OK)
 			ThrowStatusError(std::move(response),
 					 "Failed to look up account");
 	} else {
-		if (response.status == HTTP_STATUS_OK) {
+		if (response.status == HttpStatus::OK) {
 			const auto location = response.headers.find("location");
 			if (location != response.headers.end())
 				throw FormatRuntimeError("This key is already registered: %s",
@@ -418,7 +419,7 @@ AcmeClient::NewAccount(EVP_PKEY &key, const char *email,
 				throw std::runtime_error("This key is already registered");
 		}
 
-		if (response.status != HTTP_STATUS_CREATED)
+		if (response.status != HttpStatus::CREATED)
 			ThrowStatusError(std::move(response),
 					 "Failed to register account");
 	}
@@ -486,7 +487,7 @@ AcmeClient::NewOrder(EVP_PKEY &key, OrderRequest &&request)
 					   HTTP_METHOD_POST,
 					   directory.new_order.c_str(),
 					   boost::json::value_from(request));
-	if (response.status != HTTP_STATUS_CREATED)
+	if (response.status != HttpStatus::CREATED)
 		ThrowStatusError(std::move(response),
 				 "Failed to create order");
 
@@ -511,7 +512,7 @@ AcmeClient::FinalizeOrder(EVP_PKEY &key, const AcmeOrder &order,
 					   HTTP_METHOD_POST,
 					   order.finalize.c_str(),
 					   ToJson(csr));
-	if (response.status != HTTP_STATUS_OK)
+	if (response.status != HttpStatus::OK)
 		ThrowStatusError(std::move(response),
 				 "Failed to finalize order");
 
@@ -527,7 +528,7 @@ AcmeClient::DownloadCertificate(EVP_PKEY &key, const AcmeOrder &order)
 					   HTTP_METHOD_POST,
 					   order.certificate.c_str(),
 					   ""sv);
-	if (response.status != HTTP_STATUS_OK)
+	if (response.status != HttpStatus::OK)
 		ThrowStatusError(std::move(response),
 				 "Failed to download certificate");
 
@@ -589,7 +590,7 @@ AcmeClient::Authorize(EVP_PKEY &key, const char *url)
 					   HTTP_METHOD_POST,
 					   url,
 					   ""sv);
-	if (response.status != HTTP_STATUS_OK)
+	if (response.status != HttpStatus::OK)
 		ThrowStatusError(std::move(response),
 				 "Failed to request authorization");
 
@@ -605,7 +606,7 @@ AcmeClient::PollAuthorization(EVP_PKEY &key, const char *url)
 					   HTTP_METHOD_POST,
 					   url,
 					   ""sv);
-	if (response.status != HTTP_STATUS_OK)
+	if (response.status != HttpStatus::OK)
 		ThrowStatusError(std::move(response),
 				 "Failed to poll authorization");
 
@@ -621,7 +622,7 @@ AcmeClient::UpdateChallenge(EVP_PKEY &key, const AcmeChallenge &challenge)
 					   HTTP_METHOD_POST,
 					   challenge.uri.c_str(),
 					   boost::json::object{});
-	if (response.status != HTTP_STATUS_OK)
+	if (response.status != HttpStatus::OK)
 		ThrowStatusError(std::move(response),
 				 "Failed to update challenge");
 

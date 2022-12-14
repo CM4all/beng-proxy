@@ -39,6 +39,7 @@
 #include "http/Date.hxx"
 #include "http/PHeaderUtil.hxx"
 #include "http/PList.hxx"
+#include "http/Status.hxx"
 #include "util/IterableSplitString.hxx"
 #include "util/StringCompare.hxx"
 #include "util/StringStrip.hxx"
@@ -151,14 +152,14 @@ parse_translate_time(const char *p,
  * RFC 2616 13.4
  */
 static constexpr bool
-http_status_cacheable(http_status_t status) noexcept
+http_status_cacheable(HttpStatus status) noexcept
 {
-	return status == HTTP_STATUS_OK ||
-		status == HTTP_STATUS_NON_AUTHORITATIVE_INFORMATION ||
-		status == HTTP_STATUS_PARTIAL_CONTENT ||
-		status == HTTP_STATUS_MULTIPLE_CHOICES ||
-		status == HTTP_STATUS_MOVED_PERMANENTLY ||
-		status == HTTP_STATUS_GONE;
+	return status == HttpStatus::OK ||
+		status == HttpStatus::NON_AUTHORITATIVE_INFORMATION ||
+		status == HttpStatus::PARTIAL_CONTENT ||
+		status == HttpStatus::MULTIPLE_CHOICES ||
+		status == HttpStatus::MOVED_PERMANENTLY ||
+		status == HttpStatus::GONE;
 }
 
 /**
@@ -190,7 +191,7 @@ std::optional<HttpCacheResponseInfo>
 http_cache_response_evaluate(const HttpCacheRequestInfo &request_info,
 			     AllocatorPtr alloc,
 			     bool eager_cache,
-			     http_status_t status, const StringMap &headers,
+			     HttpStatus status, const StringMap &headers,
 			     off_t body_available) noexcept
 {
 	if (!http_status_cacheable(status))

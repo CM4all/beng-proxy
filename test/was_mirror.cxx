@@ -50,7 +50,7 @@ struct Instance final : PInstance, WasServerHandler {
 			  gcc_unused const char *uri, StringMap &&headers,
 			  UnusedIstreamPtr body) noexcept override {
 		const bool has_body = body;
-		server->SendResponse(has_body ? HTTP_STATUS_OK : HTTP_STATUS_NO_CONTENT,
+		server->SendResponse(has_body ? HttpStatus::OK : HttpStatus::NO_CONTENT,
 				     std::move(headers), std::move(body));
 	}
 

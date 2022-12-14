@@ -32,10 +32,10 @@
 
 #pragma once
 
-#include "http/Status.h"
-
+#include <cstdint>
 #include <span>
 
+enum class HttpStatus : uint_least16_t;
 struct pool;
 class UnusedIstreamPtr;
 class EventLoop;
@@ -58,5 +58,5 @@ pipe_filter(SpawnService &spawn_service, EventLoop &event_loop,
 	    const char *path,
 	    std::span<const char *const> args,
 	    const ChildOptions &options,
-	    http_status_t status, StringMap &&headers, UnusedIstreamPtr body,
+	    HttpStatus status, StringMap &&headers, UnusedIstreamPtr body,
 	    HttpResponseHandler &_handler);

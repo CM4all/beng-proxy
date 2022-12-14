@@ -38,7 +38,7 @@
 
 void
 HttpResponseHandler::InvokeResponse(struct pool &pool,
-				    http_status_t status,
+				    HttpStatus status,
 				    const char *msg) noexcept
 {
 	assert(http_status_is_valid(status));

@@ -95,7 +95,7 @@ pipe_filter(SpawnService &spawn_service, EventLoop &event_loop,
 	    const char *path,
 	    std::span<const char *const> args,
 	    const ChildOptions &options,
-	    http_status_t status, StringMap &&headers, UnusedIstreamPtr body,
+	    HttpStatus status, StringMap &&headers, UnusedIstreamPtr body,
 	    HttpResponseHandler &handler)
 {
 	const char *etag;

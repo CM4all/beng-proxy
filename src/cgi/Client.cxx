@@ -131,7 +131,7 @@ public:
 inline bool
 CGIClient::ReturnResponse()
 {
-	http_status_t status = parser.GetStatus();
+	const auto status = parser.GetStatus();
 	auto headers = std::move(parser).GetHeaders();
 
 	if (http_status_is_empty(status)) {

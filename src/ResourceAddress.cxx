@@ -34,6 +34,7 @@
 #include "file/Address.hxx"
 #include "http/local/Address.hxx"
 #include "http/Address.hxx"
+#include "http/Status.hxx"
 #include "cgi/Address.hxx"
 #include "nfs/Address.hxx"
 #include "uri/Extract.hxx"
@@ -333,7 +334,7 @@ ResourceAddress::CacheStore(AllocatorPtr alloc,
 		   base mismatch */
 	}
 
-	throw HttpMessageResponse(HTTP_STATUS_BAD_GATEWAY, "Base mismatch");
+	throw HttpMessageResponse(HttpStatus::BAD_GATEWAY, "Base mismatch");
 }
 
 ResourceAddress
@@ -407,7 +408,7 @@ ResourceAddress::CacheLoad(AllocatorPtr alloc, const ResourceAddress &src,
 		const char *tail = require_base_tail(uri, base);
 
 		if (!unsafe_base && !uri_path_verify_paranoid(tail - 1))
-			throw HttpMessageResponse(HTTP_STATUS_BAD_REQUEST, "Malformed URI");
+			throw HttpMessageResponse(HttpStatus::BAD_REQUEST, "Malformed URI");
 
 		if (src.type == Type::NONE) {
 			/* see code comment in tcache_store_address() */

@@ -44,6 +44,7 @@
 #include "cluster/ConnectBalancer.hxx"
 #include "cluster/RoundRobinBalancer.cxx"
 #include "stock/GetHandler.hxx"
+#include "http/Status.hxx"
 #include "system/Error.hxx"
 #include "event/Loop.hxx"
 #include "net/PConnectSocket.hxx"
@@ -503,7 +504,7 @@ LbCluster::ZeroconfHttpConnect::Start() noexcept
 	if (member == nullptr) {
 		auto &_handler = handler;
 		Destroy();
-		_handler.OnFilteredSocketError(std::make_exception_ptr(HttpMessageResponse(HTTP_STATUS_SERVICE_UNAVAILABLE,
+		_handler.OnFilteredSocketError(std::make_exception_ptr(HttpMessageResponse(HttpStatus::SERVICE_UNAVAILABLE,
 											   "Zeroconf cluster is empty")));
 		return;
 	}

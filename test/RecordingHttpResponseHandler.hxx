@@ -56,7 +56,7 @@ struct RecordingHttpResponseHandler : HttpResponseHandler, StringSinkHandler {
 	PoolPtr pool;
 	EventLoop &event_loop;
 
-	http_status_t status{};
+	HttpStatus status{};
 	std::multimap<std::string, std::string> headers;
 	std::string body;
 
@@ -87,7 +87,7 @@ struct RecordingHttpResponseHandler : HttpResponseHandler, StringSinkHandler {
 	void ReadBody() noexcept;
 
 	/* virtual methods from class HttpResponseHandler */
-	void OnHttpResponse(http_status_t _status, StringMap &&_headers,
+	void OnHttpResponse(HttpStatus _status, StringMap &&_headers,
 			    UnusedIstreamPtr) noexcept override;
 	void OnHttpError(std::exception_ptr _error) noexcept override;
 

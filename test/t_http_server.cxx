@@ -198,7 +198,7 @@ class Client final : HttpResponseHandler, IstreamSink {
 
 	std::exception_ptr response_error;
 	std::string response_body;
-	http_status_t status{};
+	HttpStatus status{};
 
 	bool response_eof = false;
 
@@ -237,7 +237,7 @@ public:
 			std::rethrow_exception(response_error);
 	}
 
-	void ExpectResponse(http_status_t expected_status,
+	void ExpectResponse(HttpStatus expected_status,
 			    const char *expected_body) {
 		WaitDone();
 		RethrowResponseError();
@@ -253,7 +253,7 @@ public:
 
 private:
 	/* virtual methods from class HttpResponseHandler */
-	void OnHttpResponse(http_status_t _status, StringMap &&headers,
+	void OnHttpResponse(HttpStatus _status, StringMap &&headers,
 			    UnusedIstreamPtr body) noexcept override {
 		status = _status;
 
@@ -343,7 +343,7 @@ static void
 TestSimple(Server &server)
 {
 	server.SetRequestHandler([](IncomingHttpRequest &request, CancellablePointer &) noexcept {
-		request.SendResponse(HTTP_STATUS_OK, {},
+		request.SendResponse(HttpStatus::OK, {},
 				     istream_string_new(request.pool, "foo"));
 	});
 
@@ -351,14 +351,14 @@ TestSimple(Server &server)
 	client.SendRequest(server,
 			   HTTP_METHOD_GET, "/", {},
 			   nullptr);
-	client.ExpectResponse(HTTP_STATUS_OK, "foo");
+	client.ExpectResponse(HttpStatus::OK, "foo");
 }
 
 static void
 TestMirror(Server &server)
 {
 	server.SetRequestHandler([](IncomingHttpRequest &request, CancellablePointer &) noexcept {
-		request.SendResponse(HTTP_STATUS_OK, {},
+		request.SendResponse(HttpStatus::OK, {},
 				     std::move(request.body));
 	});
 
@@ -366,7 +366,7 @@ TestMirror(Server &server)
 	client.SendRequest(server,
 			   HTTP_METHOD_POST, "/", {},
 			   istream_string_new(server.GetPool(), "foo"));
-	client.ExpectResponse(HTTP_STATUS_OK, "foo");
+	client.ExpectResponse(HttpStatus::OK, "foo");
 }
 
 class BufferedMirror final : GrowingBufferSinkHandler, Cancellable {
@@ -394,7 +394,7 @@ private:
 
 	/* virtual methods from class GrowingBufferSinkHandler */
 	void OnGrowingBufferSinkEof(GrowingBuffer buffer) noexcept override {
-		request.SendResponse(HTTP_STATUS_OK, {},
+		request.SendResponse(HttpStatus::OK, {},
 				     istream_gb_new(request.pool,
 						    std::move(buffer)));
 	}
@@ -403,7 +403,7 @@ private:
 		const char *msg = p_strdup(request.pool,
 					   GetFullMessage(error).c_str());
 
-		request.SendResponse(HTTP_STATUS_INTERNAL_SERVER_ERROR, {},
+		request.SendResponse(HttpStatus::INTERNAL_SERVER_ERROR, {},
 				     istream_string_new(request.pool, msg));
 	}
 };
@@ -431,7 +431,7 @@ TestBufferedMirror(Server &server)
 	client.SendRequest(server,
 			   HTTP_METHOD_POST, "/buffered", {},
 			   istream_string_new(server.GetPool(), data));
-	client.ExpectResponse(HTTP_STATUS_OK, data);
+	client.ExpectResponse(HttpStatus::OK, data);
 }
 
 static void
@@ -476,7 +476,7 @@ TestDiscardTinyRequestBody(Server &server)
 {
 	server.SetRequestHandler([](IncomingHttpRequest &request, CancellablePointer &) noexcept {
 		request.body.Clear();
-		request.SendResponse(HTTP_STATUS_OK, {},
+		request.SendResponse(HttpStatus::OK, {},
 				     istream_string_new(request.pool, "foo"));
 	});
 
@@ -484,7 +484,7 @@ TestDiscardTinyRequestBody(Server &server)
 	client.SendRequest(server,
 			   HTTP_METHOD_POST, "/", {},
 			   istream_string_new(server.GetPool(), "foo"));
-	client.ExpectResponse(HTTP_STATUS_OK, "foo");
+	client.ExpectResponse(HttpStatus::OK, "foo");
 }
 
 /**
@@ -516,7 +516,7 @@ TestDiscardedHugeRequestBody(Server &server)
 	private:
 		void OnTimer() noexcept {
 			body.Clear();
-			request->SendResponse(HTTP_STATUS_OK, {},
+			request->SendResponse(HttpStatus::OK, {},
 					      istream_string_new(request->pool, "foo"));
 		}
 	} respond_later(server.GetEventLoop());
@@ -529,7 +529,7 @@ TestDiscardedHugeRequestBody(Server &server)
 	client.SendRequest(server,
 			   HTTP_METHOD_POST, "/", {},
 			   istream_zero_new(server.GetPool()));
-	client.ExpectResponse(HTTP_STATUS_OK, "foo");
+	client.ExpectResponse(HttpStatus::OK, "foo");
 }
 
 int

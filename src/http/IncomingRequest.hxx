@@ -35,12 +35,12 @@
 #include "strmap.hxx"
 #include "net/SocketAddress.hxx"
 #include "http/Method.h"
-#include "http/Status.h"
 #include "pool/Ptr.hxx"
 #include "istream/UnusedPtr.hxx"
 
 #include <string_view>
 
+enum class HttpStatus : uint_least16_t;
 struct pool;
 class StringMap;
 class HttpHeaders;
@@ -99,7 +99,7 @@ public:
 		return body;
 	}
 
-	virtual void SendResponse(http_status_t status,
+	virtual void SendResponse(HttpStatus status,
 				  HttpHeaders &&response_headers,
 				  UnusedIstreamPtr response_body) noexcept = 0;
 
@@ -107,11 +107,11 @@ public:
 	 * Generate a "simple" response with an optional plain-text body and
 	 * an optional "Location" redirect header.
 	 */
-	void SendSimpleResponse(http_status_t status, const char *location,
+	void SendSimpleResponse(HttpStatus status, const char *location,
 				const char *msg) noexcept;
 
-	void SendMessage(http_status_t status, const char *msg) noexcept;
+	void SendMessage(HttpStatus status, const char *msg) noexcept;
 
-	void SendRedirect(http_status_t status, const char *location,
+	void SendRedirect(HttpStatus status, const char *location,
 			  const char *msg) noexcept;
 };

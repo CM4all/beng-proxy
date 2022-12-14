@@ -88,7 +88,7 @@ struct Context final
 	}
 
 	/* virtual methods from class HttpResponseHandler */
-	void OnHttpResponse(http_status_t status, StringMap &&headers,
+	void OnHttpResponse(HttpStatus status, StringMap &&headers,
 			    UnusedIstreamPtr body) noexcept override;
 	void OnHttpError(std::exception_ptr ep) noexcept override;
 
@@ -135,7 +135,7 @@ Context::OnSendError(int _error) noexcept
  */
 
 void
-Context::OnHttpResponse(http_status_t status,
+Context::OnHttpResponse(HttpStatus status,
 			gcc_unused StringMap &&headers,
 			UnusedIstreamPtr _body) noexcept
 {

@@ -36,7 +36,7 @@
 #include "Public.hxx"
 #include "http/Body.hxx"
 #include "http/Method.h"
-#include "http/Status.h"
+#include "http/Status.hxx"
 #include "fs/FilteredSocket.hxx"
 #include "net/SocketProtocolError.hxx"
 #include "net/SocketAddress.hxx"
@@ -231,7 +231,7 @@ struct HttpServerConnection final
 		 */
 		bool pending_drained = false;
 
-		http_status_t status;
+		HttpStatus status;
 		char status_buffer[64];
 		char content_length_buffer[32];
 		off_t length;
@@ -333,7 +333,7 @@ struct HttpServerConnection final
 	 */
 	bool ResponseIstreamFinished();
 
-	void SubmitResponse(http_status_t status,
+	void SubmitResponse(HttpStatus status,
 			    HttpHeaders &&headers,
 			    UnusedIstreamPtr body);
 

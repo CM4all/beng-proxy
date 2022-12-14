@@ -33,6 +33,7 @@
 #include "DemoHttpServerConnection.hxx"
 #include "http/IncomingRequest.hxx"
 #include "http/Headers.hxx"
+#include "http/Status.hxx"
 #include "http/server/Public.hxx"
 #include "fs/FilteredSocket.hxx"
 #include "istream/sink_null.hxx"
@@ -80,9 +81,9 @@ DemoHttpServerConnection::OnDeferred() noexcept
 void
 DemoHttpServerConnection::OnResponseTimer() noexcept
 {
-	const http_status_t status = request_body
-		? HTTP_STATUS_OK
-		: HTTP_STATUS_NO_CONTENT;
+	const HttpStatus status = request_body
+		? HttpStatus::OK
+		: HttpStatus::NO_CONTENT;
 
 	current_request->SendResponse(status, {}, std::move(request_body));
 }
@@ -93,20 +94,20 @@ DemoHttpServerConnection::HandleHttpRequest(IncomingHttpRequest &request,
 						   CancellablePointer &cancel_ptr) noexcept
 {
 	switch (mode) {
-		http_status_t status;
+		HttpStatus status;
 		static constexpr std::byte data[0x100]{};
 
 	case Mode::MODE_NULL:
 		if (request.body)
 			sink_null_new(request.pool, std::move(request.body));
 
-		request.SendResponse(HTTP_STATUS_NO_CONTENT, {}, nullptr);
+		request.SendResponse(HttpStatus::NO_CONTENT, {}, nullptr);
 		break;
 
 	case Mode::MIRROR:
 		status = request.body
-			? HTTP_STATUS_OK
-			: HTTP_STATUS_NO_CONTENT;
+			? HttpStatus::OK
+			: HttpStatus::NO_CONTENT;
 		request.SendResponse(status, {}, std::move(request.body));
 		break;
 
@@ -133,7 +134,7 @@ DemoHttpServerConnection::HandleHttpRequest(IncomingHttpRequest &request,
 						     256, false);
 			body = istream_byte_new(request.pool, std::move(body));
 
-			request.SendResponse(HTTP_STATUS_OK, {}, std::move(body));
+			request.SendResponse(HttpStatus::OK, {}, std::move(body));
 		}
 
 		break;
@@ -142,7 +143,7 @@ DemoHttpServerConnection::HandleHttpRequest(IncomingHttpRequest &request,
 		if (request.body)
 			sink_null_new(request.pool, std::move(request.body));
 
-		request.SendResponse(HTTP_STATUS_OK, {},
+		request.SendResponse(HttpStatus::OK, {},
 				     istream_memory_new(request.pool,
 							data));
 		break;
@@ -151,7 +152,7 @@ DemoHttpServerConnection::HandleHttpRequest(IncomingHttpRequest &request,
 		if (request.body)
 			sink_null_new(request.pool, std::move(request.body));
 
-		request.SendResponse(HTTP_STATUS_OK, {},
+		request.SendResponse(HttpStatus::OK, {},
 				     istream_head_new(request.pool,
 						      istream_zero_new(request.pool),
 						      512 * 1024, true));
@@ -166,7 +167,7 @@ DemoHttpServerConnection::HandleHttpRequest(IncomingHttpRequest &request,
 							   GetEventLoop());
 			delayed.second.cancel_ptr = *this;
 
-			request.SendResponse(HTTP_STATUS_OK, {},
+			request.SendResponse(HttpStatus::OK, {},
 					     std::move(delayed.first));
 		}
 
@@ -175,7 +176,7 @@ DemoHttpServerConnection::HandleHttpRequest(IncomingHttpRequest &request,
 	case Mode::BLOCK:
 		request_body = UnusedHoldIstreamPtr(request.pool,
 						    std::move(request.body));
-		request.SendResponse(HTTP_STATUS_OK, {},
+		request.SendResponse(HttpStatus::OK, {},
 				     istream_block_new(request.pool));
 		break;
 
@@ -186,7 +187,7 @@ DemoHttpServerConnection::HandleHttpRequest(IncomingHttpRequest &request,
 	case Mode::FAILING_KEEPALIVE:
 		if (first) {
 			first = false;
-			request.SendResponse(HTTP_STATUS_OK, {},
+			request.SendResponse(HttpStatus::OK, {},
 					     istream_memory_new(request.pool,
 								data));
 		} else {

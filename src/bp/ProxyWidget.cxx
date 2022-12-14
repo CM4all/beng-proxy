@@ -103,7 +103,7 @@ private:
 	void WidgetLookupError(std::exception_ptr ep) noexcept override;
 
 	/* virtual methods from class HttpResponseHandler */
-	void OnHttpResponse(http_status_t status, StringMap &&headers,
+	void OnHttpResponse(HttpStatus status, StringMap &&headers,
 			    UnusedIstreamPtr body) noexcept override;
 	void OnHttpError(std::exception_ptr ep) noexcept override;
 };
@@ -114,7 +114,7 @@ private:
  */
 
 void
-ProxyWidget::OnHttpResponse(http_status_t status, StringMap &&_headers,
+ProxyWidget::OnHttpResponse(HttpStatus status, StringMap &&_headers,
 			    UnusedIstreamPtr body) noexcept
 {
 	assert(widget->cls != nullptr);
@@ -218,7 +218,7 @@ ProxyWidget::Continue()
 		widget->Cancel();
 		auto &_request = request;
 		Destroy();
-		_request.DispatchError(HTTP_STATUS_NOT_FOUND, "No such view");
+		_request.DispatchError(HttpStatus::NOT_FOUND, "No such view");
 		return;
 	}
 
@@ -248,7 +248,7 @@ ProxyWidget::Continue()
 				widget->Cancel();
 				auto &_request = request;
 				Destroy();
-				_request.DispatchError(HTTP_STATUS_NOT_FOUND,
+				_request.DispatchError(HttpStatus::NOT_FOUND,
 						       "No such view");
 				return;
 			}
@@ -257,7 +257,7 @@ ProxyWidget::Continue()
 				widget->Cancel();
 				auto &_request = request;
 				Destroy();
-				_request.DispatchError(HTTP_STATUS_FORBIDDEN,
+				_request.DispatchError(HttpStatus::FORBIDDEN,
 						       "Forbidden");
 				return;
 			}
@@ -294,7 +294,7 @@ ProxyWidget::ResolverCallback() noexcept
 
 		auto &_request = request;
 		Destroy();
-		_request.LogDispatchError(HTTP_STATUS_BAD_GATEWAY,
+		_request.LogDispatchError(HttpStatus::BAD_GATEWAY,
 					  "No such widget type",
 					  log_msg);
 		return;
@@ -335,7 +335,7 @@ ProxyWidget::WidgetNotFound() noexcept
 
 	auto &_request = request;
 	Destroy();
-	_request.LogDispatchError(HTTP_STATUS_NOT_FOUND, "No such widget", log_msg);
+	_request.LogDispatchError(HttpStatus::NOT_FOUND, "No such widget", log_msg);
 }
 
 void

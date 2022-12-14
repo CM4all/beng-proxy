@@ -84,7 +84,7 @@ HttpServerConnection::MaybeSend100Continue()
 }
 
 static std::size_t
-format_status_line(char *p, http_status_t status)
+format_status_line(char *p, HttpStatus status)
 {
 	assert(http_status_is_valid(status));
 
@@ -102,7 +102,7 @@ format_status_line(char *p, http_status_t status)
 }
 
 inline void
-HttpServerConnection::SubmitResponse(http_status_t status,
+HttpServerConnection::SubmitResponse(HttpStatus status,
 				     HttpHeaders &&headers,
 				     UnusedIstreamPtr body)
 {
@@ -204,7 +204,7 @@ HttpServerConnection::SubmitResponse(http_status_t status,
 }
 
 void
-HttpServerRequest::SendResponse(http_status_t status,
+HttpServerRequest::SendResponse(HttpStatus status,
 				HttpHeaders &&response_headers,
 				UnusedIstreamPtr response_body) noexcept
 {

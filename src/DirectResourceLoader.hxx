@@ -134,7 +134,7 @@ public:
 			 const ResourceRequestParams &params,
 			 http_method_t method,
 			 const ResourceAddress &address,
-			 http_status_t status, StringMap &&headers,
+			 HttpStatus status, StringMap &&headers,
 			 UnusedIstreamPtr body, const char *body_etag,
 			 HttpResponseHandler &handler,
 			 CancellablePointer &cancel_ptr) noexcept override;

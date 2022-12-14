@@ -64,7 +64,7 @@ TestCancelBlocking()
 		}
 
 		/* virtual methods from class HttpResponseHandler */
-		void OnHttpResponse(http_status_t, StringMap &&,
+		void OnHttpResponse(HttpStatus, StringMap &&,
 				    UnusedIstreamPtr) noexcept override {
 			abort();
 		}
@@ -80,7 +80,7 @@ TestCancelBlocking()
 	auto request_pool = pool_new_linear(context.root_pool, "Request", 8192);
 	filter_cache_request(*context.fcache, request_pool, nullptr,
 			     nullptr, nullptr,
-			     "foo", HTTP_STATUS_OK, {},
+			     "foo", HttpStatus::OK, {},
 			     istream_string_new(*request_pool, "bar"),
 			     context, cancel_ptr);
 
@@ -103,7 +103,7 @@ TestNoBody()
 		}
 
 		/* virtual methods from class HttpResponseHandler */
-		void OnHttpResponse(http_status_t, StringMap &&,
+		void OnHttpResponse(HttpStatus, StringMap &&,
 				    UnusedIstreamPtr) noexcept override {
 		}
 
@@ -118,7 +118,7 @@ TestNoBody()
 	auto request_pool = pool_new_linear(context.root_pool, "Request", 8192);
 	filter_cache_request(*context.fcache, *request_pool, nullptr,
 			     nullptr, nullptr,
-			     "foo", HTTP_STATUS_OK, {},
+			     "foo", HttpStatus::OK, {},
 			     nullptr,
 			     context, cancel_ptr);
 }

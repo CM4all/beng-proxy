@@ -38,12 +38,13 @@
 #pragma once
 
 #include "http/Method.h"
-#include "http/Status.h"
 
+#include <cstdint>
 #include <optional>
 
 #include <sys/types.h> /* for off_t */
 
+enum class HttpStatus : uint_least16_t;
 class AllocatorPtr;
 class StringMap;
 struct ResourceAddress;
@@ -85,7 +86,7 @@ std::optional<HttpCacheResponseInfo>
 http_cache_response_evaluate(const HttpCacheRequestInfo &request_info,
 			     AllocatorPtr alloc,
 			     bool eager_cache,
-			     http_status_t status, const StringMap &headers,
+			     HttpStatus status, const StringMap &headers,
 			     off_t body_available) noexcept;
 
 /**

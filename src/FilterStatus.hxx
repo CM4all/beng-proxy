@@ -32,16 +32,16 @@
 
 #pragma once
 
-#include "http/Status.h"
+#include "http/Status.hxx"
 
 constexpr bool
-FilterStatusIsRecessive(http_status_t status) noexcept
+FilterStatusIsRecessive(HttpStatus status) noexcept
 {
-	return status == HTTP_STATUS_OK || status == HTTP_STATUS_NO_CONTENT;
+	return status == HttpStatus::OK || status == HttpStatus::NO_CONTENT;
 }
 
-constexpr http_status_t
-ApplyFilterStatus(http_status_t previous_status, http_status_t filter_status,
+constexpr HttpStatus
+ApplyFilterStatus(HttpStatus previous_status, HttpStatus filter_status,
 		  bool has_body) noexcept
 {
 	/* if the filter didn't specify a status (other than 200 or

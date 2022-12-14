@@ -78,7 +78,7 @@ Request::DispatchFile(const char *path, UniqueFileDescriptor fd,
 			      IsProcessorFirst());
 	write_translation_vary_header(headers2, tr);
 
-	http_status_t status = tr.status == 0 ? HTTP_STATUS_OK : tr.status;
+	auto status = tr.status == HttpStatus{} ? HttpStatus::OK : tr.status;
 
 	/* generate the Content-Range header */
 
@@ -94,7 +94,7 @@ Request::DispatchFile(const char *path, UniqueFileDescriptor fd,
 		start_offset = file_request.range.skip;
 		end_offset = file_request.range.size;
 
-		status = HTTP_STATUS_PARTIAL_CONTENT;
+		status = HttpStatus::PARTIAL_CONTENT;
 
 		header_write(headers2, "content-range",
 			     p_sprintf(&pool, "bytes %lu-%lu/%lu",
@@ -104,7 +104,7 @@ Request::DispatchFile(const char *path, UniqueFileDescriptor fd,
 		break;
 
 	case HttpRangeRequest::Type::INVALID:
-		status = HTTP_STATUS_REQUESTED_RANGE_NOT_SATISFIABLE;
+		status = HttpStatus::REQUESTED_RANGE_NOT_SATISFIABLE;
 
 		header_write(headers2, "content-range",
 			     p_sprintf(&pool, "bytes */%lu",
@@ -177,7 +177,9 @@ Request::DispatchCompressedFile(const char *path, FileDescriptor fd,
 
 	compressed = true;
 
-	http_status_t status = tr.status == 0 ? HTTP_STATUS_OK : tr.status;
+	HttpStatus status = tr.status == HttpStatus{}
+		? HttpStatus::OK
+		: tr.status;
 	DispatchResponse(status, std::move(headers),
 #ifdef HAVE_URING
 			 instance.uring
@@ -337,7 +339,7 @@ Request::HandleFileAddress(const FileAddress &address,
 
 	if (S_ISCHR(st.stx_mode)) {
 		/* allow character devices, but skip range etc. */
-		DispatchResponse(HTTP_STATUS_OK, {},
+		DispatchResponse(HttpStatus::OK, {},
 				 NewFdIstream(instance.event_loop,
 					      pool, address.path,
 					      std::move(fd),
@@ -346,7 +348,7 @@ Request::HandleFileAddress(const FileAddress &address,
 	}
 
 	if (!S_ISREG(st.stx_mode)) {
-		DispatchError(HTTP_STATUS_NOT_FOUND, "Not a regular file");
+		DispatchError(HttpStatus::NOT_FOUND, "Not a regular file");
 		return;
 	}
 
@@ -397,7 +399,7 @@ PathExists(const FileAddress &address)
 	}
 }
 
-static constexpr http_status_t
+static constexpr HttpStatus
 ErrnoToHttpStatus(int e) noexcept
 {
 	switch (e) {
@@ -405,20 +407,20 @@ ErrnoToHttpStatus(int e) noexcept
 	case ENOTDIR:
 	case ELOOP: /* RESOLVE_NO_SYMLINKS failed */
 	case EXDEV: /* RESOLVE_BENEATH failed */
-		return HTTP_STATUS_NOT_FOUND;
+		return HttpStatus::NOT_FOUND;
 
 	case EACCES:
 	case EPERM:
-		return HTTP_STATUS_FORBIDDEN;
+		return HttpStatus::FORBIDDEN;
 
 	case ECONNREFUSED:
 	case ENETUNREACH:
 	case EHOSTUNREACH:
 	case ETIMEDOUT:
-		return HTTP_STATUS_BAD_GATEWAY;
+		return HttpStatus::BAD_GATEWAY;
 
 	default:
-		return HTTP_STATUS_INTERNAL_SERVER_ERROR;
+		return HttpStatus::INTERNAL_SERVER_ERROR;
 	}
 }
 
@@ -427,7 +429,7 @@ Request::HandlePathExists(const FileAddress &address) noexcept
 {
 	try {
 		translate.request.status = PathExists(address)
-			? HTTP_STATUS_OK
+			? HttpStatus::OK
 			: ErrnoToHttpStatus(errno);
 		translate.request.path_exists = true;
 		SubmitTranslateRequest();

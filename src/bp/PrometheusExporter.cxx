@@ -56,6 +56,6 @@ BpPrometheusExporter::HandleHttpRequest(IncomingHttpRequest &request,
 	HttpHeaders headers;
 	headers.Write("content-type", "text/plain;version=0.0.4");
 
-	request.SendResponse(HTTP_STATUS_OK, std::move(headers),
+	request.SendResponse(HttpStatus::OK, std::move(headers),
 			     istream_gb_new(request.pool, std::move(buffer)));
 }

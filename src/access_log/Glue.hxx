@@ -37,13 +37,13 @@
 #pragma once
 
 #include "Config.hxx"
-#include "http/Status.h"
 
 #include <chrono>
 #include <memory>
 
 #include <stdint.h>
 
+enum class HttpStatus : uint_least16_t;
 struct UidGid;
 struct AccessLogConfig;
 namespace Net { namespace Log { struct Datagram; }}
@@ -82,7 +82,7 @@ public:
 		 const char *forwarded_to,
 		 const char *host, const char *x_forwarded_for,
 		 const char *referer, const char *user_agent,
-		 http_status_t status, int64_t length,
+		 HttpStatus status, int64_t length,
 		 uint64_t bytes_received, uint64_t bytes_sent,
 		 std::chrono::steady_clock::duration duration) noexcept;
 
@@ -90,7 +90,7 @@ public:
 		 const IncomingHttpRequest &request, const char *site,
 		 const char *forwarded_to,
 		 const char *referer, const char *user_agent,
-		 http_status_t status, int64_t length,
+		 HttpStatus status, int64_t length,
 		 uint64_t bytes_received, uint64_t bytes_sent,
 		 std::chrono::steady_clock::duration duration) noexcept;
 

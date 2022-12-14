@@ -110,8 +110,8 @@ MyHandler::OnTranslateResponse(TranslateResponse &response) noexcept
 {
 	const WidgetView *view;
 
-	if (response.status != 0)
-		printf("status=%d\n", response.status);
+	if (response.status != HttpStatus{})
+		printf("status=%u\n", static_cast<unsigned>(response.status));
 
 	print_resource_address(&response.address);
 

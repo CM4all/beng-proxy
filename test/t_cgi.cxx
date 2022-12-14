@@ -72,7 +72,7 @@ struct Context final : PInstance, HttpResponseHandler, IstreamSink {
 	bool close_response_body_data = false;
 	bool body_read = false, no_content = false;
 	bool released = false, aborted = false;
-	http_status_t status = http_status_t(0);
+	HttpStatus status = HttpStatus{};
 
 	off_t body_data = 0, body_available = 0;
 	bool body_eof = false, body_abort = false, body_closed = false;
@@ -86,7 +86,7 @@ struct Context final : PInstance, HttpResponseHandler, IstreamSink {
 	using IstreamSink::HasInput;
 
 	/* virtual methods from class HttpResponseHandler */
-	void OnHttpResponse(http_status_t status, StringMap &&headers,
+	void OnHttpResponse(HttpStatus status, StringMap &&headers,
 			    UnusedIstreamPtr body) noexcept override;
 	void OnHttpError(std::exception_ptr ep) noexcept override;
 
@@ -177,7 +177,7 @@ Context::OnError(std::exception_ptr) noexcept
  */
 
 void
-Context::OnHttpResponse(http_status_t _status, StringMap &&,
+Context::OnHttpResponse(HttpStatus _status, StringMap &&,
 			UnusedIstreamPtr _body) noexcept
 {
 	assert(!no_content || !_body);
@@ -247,7 +247,7 @@ test_normal(PoolPtr pool, Context *c)
 
 	c->event_loop.Run();
 
-	assert(c->status == HTTP_STATUS_OK);
+	assert(c->status == HttpStatus::OK);
 	assert(!c->HasInput());
 	assert(c->body_eof);
 	assert(!c->body_abort);
@@ -273,7 +273,7 @@ test_tiny(PoolPtr pool, Context *c)
 
 	c->event_loop.Run();
 
-	assert(c->status == HTTP_STATUS_OK);
+	assert(c->status == HttpStatus::OK);
 	assert(!c->HasInput());
 	assert(c->body_eof);
 	assert(!c->body_abort);
@@ -301,7 +301,7 @@ test_close_early(PoolPtr pool, Context *c)
 
 	c->event_loop.Run();
 
-	assert(c->status == HTTP_STATUS_OK);
+	assert(c->status == HttpStatus::OK);
 	assert(!c->HasInput());
 	assert(!c->body_eof);
 	assert(!c->body_abort);
@@ -329,7 +329,7 @@ test_close_late(PoolPtr pool, Context *c)
 
 	c->event_loop.Run();
 
-	assert(c->status == HTTP_STATUS_OK);
+	assert(c->status == HttpStatus::OK);
 	assert(!c->HasInput());
 	assert(!c->body_eof);
 	assert(c->body_abort || c->body_closed);
@@ -357,7 +357,7 @@ test_close_data(PoolPtr pool, Context *c)
 
 	c->event_loop.Run();
 
-	assert(c->status == HTTP_STATUS_OK);
+	assert(c->status == HttpStatus::OK);
 	assert(!c->body_eof);
 	assert(!c->body_abort);
 	assert(c->body_closed);
@@ -387,7 +387,7 @@ test_post(PoolPtr pool, Context *c)
 
 	c->event_loop.Run();
 
-	assert(c->status == HTTP_STATUS_OK);
+	assert(c->status == HttpStatus::OK);
 	assert(!c->HasInput());
 	assert(c->body_eof);
 	assert(!c->body_abort);
@@ -415,7 +415,7 @@ test_status(PoolPtr pool, Context *c)
 
 	c->event_loop.Run();
 
-	assert(c->status == HTTP_STATUS_CREATED);
+	assert(c->status == HttpStatus::CREATED);
 	assert(!c->HasInput());
 	assert(c->body_eof);
 	assert(!c->body_abort);
@@ -443,7 +443,7 @@ test_no_content(PoolPtr pool, Context *c)
 
 	c->event_loop.Run();
 
-	assert(c->status == HTTP_STATUS_NO_CONTENT);
+	assert(c->status == HttpStatus::NO_CONTENT);
 	assert(!c->HasInput());
 	assert(!c->body_eof);
 	assert(!c->body_abort);

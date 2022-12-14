@@ -80,7 +80,7 @@ struct BpRequestLogger final : IncomingHttpRequestLogger {
 
 	/* virtual methods from class IncomingHttpRequestLogger */
 	void LogHttpRequest(IncomingHttpRequest &request,
-			    http_status_t status, int64_t length,
+			    HttpStatus status, int64_t length,
 			    uint64_t bytes_received,
 			    uint64_t bytes_sent) noexcept override;
 };

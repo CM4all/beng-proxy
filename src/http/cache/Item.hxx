@@ -56,7 +56,7 @@ public:
 		      std::chrono::system_clock::time_point system_now,
 		      const HttpCacheResponseInfo &_info,
 		      const StringMap &_request_headers,
-		      http_status_t _status,
+		      HttpStatus _status,
 		      const StringMap &_response_headers,
 		      size_t _size,
 		      RubberAllocation &&_body) noexcept;

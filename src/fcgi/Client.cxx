@@ -109,7 +109,7 @@ class FcgiClient final
 		/**
 		 * Only used when read_state==READ_NO_BODY.
 		 */
-		http_status_t status;
+		HttpStatus status;
 
 		StringMap headers;
 
@@ -462,13 +462,13 @@ FcgiClient::SubmitResponse() noexcept
 {
 	assert(response.read_state == Response::READ_BODY);
 
-	http_status_t status = HTTP_STATUS_OK;
+	HttpStatus status = HttpStatus::OK;
 
 	const char *p = response.headers.Remove("status");
 	if (p != nullptr) {
 		int i = atoi(p);
-		if (http_status_is_valid((http_status_t)i))
-			status = (http_status_t)i;
+		if (http_status_is_valid(static_cast<HttpStatus>(i)))
+			status = static_cast<HttpStatus>(i);
 	}
 
 	if (http_status_is_empty(status) || response.no_body) {

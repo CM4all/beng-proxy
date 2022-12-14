@@ -42,7 +42,7 @@
 #include "io/Open.hxx"
 #include "io/UniqueFileDescriptor.hxx"
 #include "system/Error.hxx"
-#include "http/Status.h"
+#include "http/Status.hxx"
 
 #ifdef HAVE_URING
 #include "io/uring/Handler.hxx"
@@ -136,20 +136,20 @@ UringStaticFileGet::OnOpenStat(UniqueFileDescriptor fd,
 	Destroy();
 
 	if (S_ISCHR(stx.stx_mode)) {
-		_handler.InvokeResponse(HTTP_STATUS_OK, {},
+		_handler.InvokeResponse(HttpStatus::OK, {},
 					NewFdIstream(event_loop, pool, path,
 						     std::move(fd),
 						     FdType::FD_CHARDEV));
 		return;
 	} else if (!S_ISREG(stx.stx_mode)) {
-		_handler.InvokeResponse(pool, HTTP_STATUS_NOT_FOUND,
+		_handler.InvokeResponse(pool, HttpStatus::NOT_FOUND,
 					"Not a regular file");
 		return;
 	}
 
 	auto headers = static_response_headers(pool, fd, stx, _content_type);
 
-	_handler.InvokeResponse(HTTP_STATUS_OK,
+	_handler.InvokeResponse(HttpStatus::OK,
 				std::move(headers),
 				NewUringIstream(operation->GetQueue(), pool,
 						path, std::move(fd),
@@ -211,20 +211,20 @@ static_file_get(EventLoop &event_loop,
 	}
 
 	if (S_ISCHR(st.stx_mode)) {
-		handler.InvokeResponse(HTTP_STATUS_OK, {},
+		handler.InvokeResponse(HttpStatus::OK, {},
 				       NewFdIstream(event_loop, pool, path,
 						    std::move(fd),
 						    FdType::FD_CHARDEV));
 		return;
 	} else if (!S_ISREG(st.stx_mode)) {
-		handler.InvokeResponse(pool, HTTP_STATUS_NOT_FOUND,
+		handler.InvokeResponse(pool, HttpStatus::NOT_FOUND,
 				       "Not a regular file");
 		return;
 	}
 
 	auto headers = static_response_headers(pool, fd, st, content_type);
 
-	handler.InvokeResponse(HTTP_STATUS_OK,
+	handler.InvokeResponse(HttpStatus::OK,
 			       std::move(headers),
 			       istream_file_fd_new(event_loop, pool, path,
 						   std::move(fd),

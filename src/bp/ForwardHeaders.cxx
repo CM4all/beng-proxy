@@ -565,7 +565,7 @@ ClassifyResponseHeader(const char *name, const bool is_upgrade) noexcept
 }
 
 StringMap
-forward_response_headers(AllocatorPtr alloc, http_status_t status,
+forward_response_headers(AllocatorPtr alloc, HttpStatus status,
 			 const StringMap &src,
 			 const char *local_host,
 			 const char *session_cookie,

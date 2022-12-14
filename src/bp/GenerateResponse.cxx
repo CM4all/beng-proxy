@@ -44,7 +44,7 @@ Request::DispatchMethodNotAllowed(const char *allow) noexcept
 	headers.Write("content-type", "text/plain");
 	headers.Write("allow", allow);
 
-	DispatchError(HTTP_STATUS_METHOD_NOT_ALLOWED,
+	DispatchError(HttpStatus::METHOD_NOT_ALLOWED,
 		      std::move(headers),
 		      "This method is not allowed.");
 }

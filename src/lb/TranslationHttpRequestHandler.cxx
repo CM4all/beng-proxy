@@ -34,6 +34,7 @@
 #include "RLogger.hxx"
 #include "ListenerConfig.hxx"
 #include "TranslationHandler.hxx"
+#include "http/Status.hxx"
 #include "http/IncomingRequest.hxx"
 #include "translation/Handler.hxx"
 #include "translation/Response.hxx"
@@ -106,13 +107,13 @@ LbHttpRequest::OnTranslateResponse(TranslateResponse &response) noexcept
 
 		const char *host = rl.host;
 		if (host == nullptr) {
-			_request.SendMessage(HTTP_STATUS_BAD_REQUEST, "No Host header");
+			_request.SendMessage(HttpStatus::BAD_REQUEST, "No Host header");
 			return;
 		}
 
-		http_status_t status = response.status;
-		if (status == http_status_t(0))
-			status = HTTP_STATUS_MOVED_PERMANENTLY;
+		HttpStatus status = response.status;
+		if (status == HttpStatus{})
+			status = HttpStatus::MOVED_PERMANENTLY;
 
 		const char *msg = response.message;
 		if (msg == nullptr)
@@ -124,14 +125,14 @@ LbHttpRequest::OnTranslateResponse(TranslateResponse &response) noexcept
 							response.https_only,
 							_request.uri),
 				      msg);
-	} else if (response.status != http_status_t(0) ||
+	} else if (response.status != HttpStatus{} ||
 		   response.redirect != nullptr ||
 		   response.message != nullptr) {
 		Destroy();
 
 		auto status = response.status;
-		if (status == http_status_t(0))
-			status = HTTP_STATUS_SEE_OTHER;
+		if (status == HttpStatus{})
+			status = HttpStatus::SEE_OTHER;
 
 		const char *body = response.message;
 		if (body == nullptr)

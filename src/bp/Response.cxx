@@ -213,7 +213,7 @@ Request::MakeWidgetContext() noexcept
 }
 
 inline void
-Request::InvokeXmlProcessor(http_status_t status,
+Request::InvokeXmlProcessor(HttpStatus status,
 			    StringMap &response_headers,
 			    UnusedIstreamPtr response_body,
 			    const Transformation &transformation) noexcept
@@ -221,14 +221,14 @@ Request::InvokeXmlProcessor(http_status_t status,
 	assert(!response_sent);
 
 	if (!response_body) {
-		DispatchError(HTTP_STATUS_BAD_GATEWAY,
+		DispatchError(HttpStatus::BAD_GATEWAY,
 			      "Empty template cannot be processed");
 		return;
 	}
 
 	if (!processable(response_headers)) {
 		response_body.Clear();
-		DispatchError(HTTP_STATUS_BAD_GATEWAY,
+		DispatchError(HttpStatus::BAD_GATEWAY,
 			      "Invalid template content type");
 		return;
 	}
@@ -274,7 +274,7 @@ Request::InvokeXmlProcessor(http_status_t status,
 		       translate.response->untrusted, "'");
 		ctx.reset();
 		response_body.Clear();
-		DispatchError(HTTP_STATUS_FORBIDDEN, "Forbidden");
+		DispatchError(HttpStatus::FORBIDDEN, "Forbidden");
 		return;
 	}
 
@@ -336,7 +336,7 @@ css_processable(const StringMap &headers) noexcept
 }
 
 inline void
-Request::InvokeCssProcessor(http_status_t status,
+Request::InvokeCssProcessor(HttpStatus status,
 			    StringMap &response_headers,
 			    UnusedIstreamPtr response_body,
 			    const Transformation &transformation) noexcept
@@ -344,14 +344,14 @@ Request::InvokeCssProcessor(http_status_t status,
 	assert(!response_sent);
 
 	if (!response_body) {
-		DispatchError(HTTP_STATUS_BAD_GATEWAY,
+		DispatchError(HttpStatus::BAD_GATEWAY,
 			      "Empty template cannot be processed");
 		return;
 	}
 
 	if (!css_processable(response_headers)) {
 		response_body.Clear();
-		DispatchError(HTTP_STATUS_BAD_GATEWAY,
+		DispatchError(HttpStatus::BAD_GATEWAY,
 			      "Invalid template content type");
 		return;
 	}
@@ -369,7 +369,7 @@ Request::InvokeCssProcessor(http_status_t status,
 		       translate.response->untrusted, "'");
 		response_body.Clear();
 		ctx.reset();
-		DispatchError(HTTP_STATUS_FORBIDDEN, "Forbidden");
+		DispatchError(HttpStatus::FORBIDDEN, "Forbidden");
 		return;
 	}
 
@@ -385,21 +385,21 @@ Request::InvokeCssProcessor(http_status_t status,
 }
 
 inline void
-Request::InvokeTextProcessor(http_status_t status,
+Request::InvokeTextProcessor(HttpStatus status,
 			     StringMap &response_headers,
 			     UnusedIstreamPtr response_body) noexcept
 {
 	assert(!response_sent);
 
 	if (!response_body) {
-		DispatchError(HTTP_STATUS_BAD_GATEWAY,
+		DispatchError(HttpStatus::BAD_GATEWAY,
 			      "Empty template cannot be processed");
 		return;
 	}
 
 	if (!text_processor_allowed(response_headers)) {
 		response_body.Clear();
-		DispatchError(HTTP_STATUS_BAD_GATEWAY,
+		DispatchError(HttpStatus::BAD_GATEWAY,
 			      "Invalid template content type");
 		return;
 	}
@@ -417,7 +417,7 @@ Request::InvokeTextProcessor(http_status_t status,
 		       translate.response->untrusted, "'");
 		response_body.Clear();
 		ctx.reset();
-		DispatchError(HTTP_STATUS_FORBIDDEN, "Forbidden");
+		DispatchError(HttpStatus::FORBIDDEN, "Forbidden");
 		return;
 	}
 
@@ -433,7 +433,7 @@ Request::InvokeTextProcessor(http_status_t status,
 }
 
 inline void
-Request::InvokeSubst(http_status_t status,
+Request::InvokeSubst(HttpStatus status,
 		     StringMap &&response_headers,
 		     UnusedIstreamPtr response_body,
 		     bool alt_syntax,
@@ -609,7 +609,7 @@ Request::GenerateSetCookie(GrowingBuffer &headers) noexcept
  */
 
 inline void
-Request::DispatchResponseDirect(http_status_t status, HttpHeaders headers,
+Request::DispatchResponseDirect(HttpStatus status, HttpHeaders headers,
 				UnusedIstreamPtr body) noexcept
 {
 	assert(!response_sent);
@@ -618,7 +618,7 @@ Request::DispatchResponseDirect(http_status_t status, HttpHeaders headers,
 	    translate.response != nullptr &&
 	    translate.response->www_authenticate != nullptr)
 		/* default to "401 Unauthorized" */
-		status = HTTP_STATUS_UNAUTHORIZED;
+		status = HttpStatus::UNAUTHORIZED;
 
 	MoreResponseHeaders(headers);
 
@@ -634,7 +634,7 @@ Request::DispatchResponseDirect(http_status_t status, HttpHeaders headers,
 			   send requests, then this undermindes our CSRF
 			   protection; thus, enabling both CORS headers and
 			   SEND_CSRF_TOKEN is a bug */
-			DispatchError(HTTP_STATUS_BAD_GATEWAY,
+			DispatchError(HttpStatus::BAD_GATEWAY,
 				      "Conflicting CSRF/CORS configuration");
 			return;
 		}
@@ -655,7 +655,7 @@ Request::DispatchResponseDirect(http_status_t status, HttpHeaders headers,
 }
 
 inline void
-Request::ApplyFilter(http_status_t status, StringMap &&headers2,
+Request::ApplyFilter(HttpStatus status, StringMap &&headers2,
 		     UnusedIstreamPtr body,
 		     const FilterTransformation &filter) noexcept
 {
@@ -699,7 +699,7 @@ Request::ApplyFilter(http_status_t status, StringMap &&headers2,
 }
 
 void
-Request::ApplyTransformation(http_status_t status, StringMap &&headers,
+Request::ApplyTransformation(HttpStatus status, StringMap &&headers,
 			     UnusedIstreamPtr response_body,
 			     const Transformation &transformation) noexcept
 {
@@ -751,14 +751,14 @@ Request::ApplyTransformation(http_status_t status, StringMap &&headers,
 gcc_pure
 static bool
 filter_enabled(const TranslateResponse &tr,
-	       http_status_t status) noexcept
+	       HttpStatus status) noexcept
 {
 	return http_status_is_success(status) ||
 		(http_status_is_client_error(status) && tr.filter_4xx);
 }
 
 void
-Request::DispatchResponse(http_status_t status, HttpHeaders &&headers,
+Request::DispatchResponse(HttpStatus status, HttpHeaders &&headers,
 			  UnusedIstreamPtr response_body) noexcept
 {
 	assert(!response_sent);
@@ -838,7 +838,7 @@ Request::DispatchResponse(UniquePoolPtr<PendingResponse> response_ptr) noexcept
 }
 
 void
-Request::DispatchError(http_status_t status, HttpHeaders &&headers,
+Request::DispatchError(HttpStatus status, HttpHeaders &&headers,
 		       UnusedIstreamPtr response_body) noexcept
 {
 	/* error responses generated by beng-proxy shall not be
@@ -850,7 +850,7 @@ Request::DispatchError(http_status_t status, HttpHeaders &&headers,
 }
 
 void
-Request::DispatchError(http_status_t status,
+Request::DispatchError(HttpStatus status,
 		       HttpHeaders &&headers, const char *msg) noexcept
 {
 	assert(http_status_is_valid(status));
@@ -863,16 +863,16 @@ Request::DispatchError(http_status_t status,
 }
 
 void
-Request::DispatchError(http_status_t status, const char *msg) noexcept
+Request::DispatchError(HttpStatus status, const char *msg) noexcept
 {
 	DispatchError(status, {}, msg);
 }
 
 void
-Request::DispatchRedirect(http_status_t status,
+Request::DispatchRedirect(HttpStatus status,
 			  const char *location, const char *msg) noexcept
 {
-	assert(status >= 300 && status < 400);
+	assert(http_status_is_redirect(status));
 	assert(location != nullptr);
 
 	if (msg == nullptr)
@@ -922,7 +922,7 @@ Request::RelocateCallback(const char *const uri, void *ctx) noexcept
  */
 
 void
-Request::OnHttpResponse(http_status_t status, StringMap &&_headers,
+Request::OnHttpResponse(HttpStatus status, StringMap &&_headers,
 			UnusedIstreamPtr body) noexcept
 {
 	assert(!response_sent);
@@ -950,9 +950,9 @@ Request::OnHttpResponse(http_status_t status, StringMap &&_headers,
 		pending_filter_response.reset();
 	}
 
-	if (previous_status != http_status_t(0)) {
+	if (previous_status != HttpStatus(0)) {
 		status = ApplyFilterStatus(previous_status, status, !!body);
-		previous_status = http_status_t(0);
+		previous_status = HttpStatus(0);
 	}
 
 	if (collect_cookies) {
@@ -983,7 +983,7 @@ Request::OnHttpResponse(http_status_t status, StringMap &&_headers,
 					body.Clear();
 
 					logger(4, "No such view: ", view_name);
-					DispatchError(HTTP_STATUS_NOT_FOUND, "No such view");
+					DispatchError(HttpStatus::NOT_FOUND, "No such view");
 					return;
 				}
 

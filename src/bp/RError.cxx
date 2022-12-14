@@ -69,7 +69,7 @@ Request::DispatchHttpMessageResponse(std::exception_ptr e) noexcept
 }
 
 static MessageHttpResponse
-Dup(struct pool &pool, http_status_t status, const char *msg) noexcept
+Dup(struct pool &pool, HttpStatus status, const char *msg) noexcept
 {
 	return {status, p_strdup(&pool, msg)};
 }
@@ -89,25 +89,25 @@ ToResponse(struct pool &pool, std::exception_ptr ep) noexcept
 
 			case ELOOP: /* RESOLVE_NO_SYMLINKS failed */
 			case EXDEV: /* RESOLVE_BENEATH failed */
-				return {HTTP_STATUS_NOT_FOUND,
+				return {HttpStatus::NOT_FOUND,
 					"The requested file does not exist."};
 
 			case EACCES:
 			case EPERM:
-				return {HTTP_STATUS_FORBIDDEN,
+				return {HttpStatus::FORBIDDEN,
 					"Access to the requested file denied."};
 
 			case ECONNREFUSED:
-				return {HTTP_STATUS_BAD_GATEWAY,
+				return {HttpStatus::BAD_GATEWAY,
 					"Connect to upstream server failed."};
 
 			case ENETUNREACH:
 			case EHOSTUNREACH:
-				return {HTTP_STATUS_BAD_GATEWAY,
+				return {HttpStatus::BAD_GATEWAY,
 					"Upstream server is unreachable."};
 
 			case ETIMEDOUT:
-				return {HTTP_STATUS_BAD_GATEWAY,
+				return {HttpStatus::BAD_GATEWAY,
 					"Upstream server timed out"};
 			}
 		}
@@ -120,16 +120,16 @@ ToResponse(struct pool &pool, std::exception_ptr ep) noexcept
 
 		case WidgetErrorCode::WRONG_TYPE:
 		case WidgetErrorCode::UNSUPPORTED_ENCODING:
-			return {HTTP_STATUS_BAD_GATEWAY, "Malformed widget response"};
+			return {HttpStatus::BAD_GATEWAY, "Malformed widget response"};
 
 		case WidgetErrorCode::NO_SUCH_VIEW:
-			return {HTTP_STATUS_NOT_FOUND, "No such view"};
+			return {HttpStatus::NOT_FOUND, "No such view"};
 
 		case WidgetErrorCode::NOT_A_CONTAINER:
-			return Dup(pool, HTTP_STATUS_NOT_FOUND, e->what());
+			return Dup(pool, HttpStatus::NOT_FOUND, e->what());
 
 		case WidgetErrorCode::FORBIDDEN:
-			return {HTTP_STATUS_FORBIDDEN, "Forbidden"};
+			return {HttpStatus::FORBIDDEN, "Forbidden"};
 		}
 	}
 
@@ -137,37 +137,37 @@ ToResponse(struct pool &pool, std::exception_ptr ep) noexcept
 	    /* a SslError is usually a failure to connect to the next
 	       server */
 	    FindNested<SslError>(ep))
-		return {HTTP_STATUS_BAD_GATEWAY, "Upstream server failed"};
+		return {HttpStatus::BAD_GATEWAY, "Upstream server failed"};
 
 	if (FindNested<WasError>(ep) ||
 	    FindNested<FcgiClientError>(ep) ||
 	    FindNested<CgiError>(ep))
-		return {HTTP_STATUS_BAD_GATEWAY, "Script failed"};
+		return {HttpStatus::BAD_GATEWAY, "Script failed"};
 
 #ifdef HAVE_LIBNFS
 	if (const auto *e = FindNested<NfsClientError>(ep)) {
 		switch (e->GetCode()) {
 		case NFS3ERR_NOENT:
 		case NFS3ERR_NOTDIR:
-			return {HTTP_STATUS_NOT_FOUND,
+			return {HttpStatus::NOT_FOUND,
 				"The requested file does not exist."};
 		}
 	}
 #endif
 
 	if (FindNested<TimeoutError>(ep))
-		return {HTTP_STATUS_BAD_GATEWAY,
+		return {HttpStatus::BAD_GATEWAY,
 			"Upstream server timed out"};
 
 	if (FindNested<SocketProtocolError>(ep))
-		return {HTTP_STATUS_BAD_GATEWAY,
+		return {HttpStatus::BAD_GATEWAY,
 			"Upstream server failed"};
 
-	return {HTTP_STATUS_INTERNAL_SERVER_ERROR, "Internal server error"};
+	return {HttpStatus::INTERNAL_SERVER_ERROR, "Internal server error"};
 }
 
 void
-Request::LogDispatchError(http_status_t status,
+Request::LogDispatchError(HttpStatus status,
 			  const char *msg, const char *log_msg,
 			  unsigned log_level) noexcept
 {
@@ -180,7 +180,7 @@ Request::LogDispatchError(http_status_t status,
 }
 
 void
-Request::LogDispatchError(http_status_t status, const char *log_msg,
+Request::LogDispatchError(HttpStatus status, const char *log_msg,
 			  unsigned log_level) noexcept
 {
 	LogDispatchError(status, http_status_to_string(status),
@@ -199,14 +199,14 @@ Request::LogDispatchError(std::exception_ptr ep) noexcept
 	if (instance.config.verbose_response)
 		response.message = p_strdup(&pool, GetFullMessage(ep).c_str());
 
-	logger(response.status == HTTP_STATUS_INTERNAL_SERVER_ERROR ? 1 : 2,
+	logger(response.status == HttpStatus::INTERNAL_SERVER_ERROR ? 1 : 2,
 	       "error on '", request.uri, "': ", ep);
 
 	DispatchError(response.status, response.message);
 }
 
 void
-Request::LogDispatchError(http_status_t status, const char *msg,
+Request::LogDispatchError(HttpStatus status, const char *msg,
 			  std::exception_ptr ep, unsigned log_level) noexcept
 {
 	if (DispatchHttpMessageResponse(ep))

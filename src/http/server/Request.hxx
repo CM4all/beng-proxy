@@ -53,7 +53,7 @@ struct HttpServerRequest final : public IncomingHttpRequest {
 	void Destroy() noexcept;
 
 	/* virtual methods from class IncomingHttpRequest */
-	void SendResponse(http_status_t status,
+	void SendResponse(HttpStatus status,
 			  HttpHeaders &&response_headers,
 			  UnusedIstreamPtr response_body) noexcept override;
 };

@@ -91,7 +91,7 @@ public:
 	}
 
 	/* virtual methods from class HttpResponseHandler */
-	void OnHttpResponse(http_status_t status, StringMap &&headers,
+	void OnHttpResponse(HttpStatus status, StringMap &&headers,
 			    UnusedIstreamPtr body) noexcept override;
 
 	void OnHttpError(std::exception_ptr error) noexcept override {
@@ -118,7 +118,7 @@ LbPrometheusExporter::AppendRequest::Start(struct pool &pool,
 }
 
 void
-LbPrometheusExporter::AppendRequest::OnHttpResponse(http_status_t status,
+LbPrometheusExporter::AppendRequest::OnHttpResponse(HttpStatus status,
 						    StringMap &&headers,
 						    UnusedIstreamPtr body) noexcept
 try {
@@ -187,6 +187,6 @@ LbPrometheusExporter::HandleRequest(IncomingHttpRequest &request,
 						      CatchCallback, nullptr));
 	}
 
-	request.SendResponse(HTTP_STATUS_OK, std::move(headers),
+	request.SendResponse(HttpStatus::OK, std::move(headers),
 			     std::move(body));
 }

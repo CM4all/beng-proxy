@@ -209,11 +209,11 @@ write_fcgi_stdout(const FcgiRequest *r,
 }
 
 void
-write_fcgi_headers(const FcgiRequest *r, http_status_t status,
+write_fcgi_headers(const FcgiRequest *r, HttpStatus status,
 		   StringMap *headers)
 {
 	char buffer[8192], *p = buffer;
-	p += sprintf(p, "status: %u\n", status);
+	p += sprintf(p, "status: %u\n", static_cast<unsigned>(status));
 
 	if (headers != nullptr)
 		for (const auto &i : *headers)

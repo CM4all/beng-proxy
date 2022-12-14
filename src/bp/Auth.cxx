@@ -65,7 +65,7 @@ Request::OnAuthTranslateResponse(const TranslateResponse &response) noexcept
 		   REDIRECT/BOUNCE/STATUS, but we still don't have a user -
 		   this should not happen; bail out, don't dare to accept the
 		   client */
-		DispatchError(HTTP_STATUS_FORBIDDEN, "Forbidden");
+		DispatchError(HttpStatus::FORBIDDEN, "Forbidden");
 		return;
 	}
 
@@ -77,7 +77,7 @@ Request::OnAuthTranslateResponse(const TranslateResponse &response) noexcept
 inline void
 Request::OnAuthTranslateError(std::exception_ptr ep) noexcept
 {
-	LogDispatchError(HTTP_STATUS_BAD_GATEWAY,
+	LogDispatchError(HttpStatus::BAD_GATEWAY,
 			 "Configuration server failed", ep, 1);
 }
 

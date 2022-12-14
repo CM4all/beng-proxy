@@ -59,7 +59,7 @@ DispatchUnauthorized(Request &request2) noexcept
 	HttpHeaders headers;
 	headers.Write("www-authenticate",
 		      "Basic realm=\"Geschuetzter Bereich\"");
-	request2.DispatchError(HTTP_STATUS_UNAUTHORIZED, std::move(headers),
+	request2.DispatchError(HttpStatus::UNAUTHORIZED, std::move(headers),
 			       "Unauthorized");
 }
 
@@ -289,7 +289,7 @@ Request::EmulateModAuthEasy(const FileAddress &address,
 			      IsProcessorFirst());
 	write_translation_vary_header(headers2, tr);
 
-	http_status_t status = tr.status == 0 ? HTTP_STATUS_OK : tr.status;
+	auto status = tr.status == HttpStatus{} ? HttpStatus::OK : tr.status;
 
 	DispatchResponse(status, std::move(headers),
 			 istream_file_fd_new(instance.event_loop, pool,

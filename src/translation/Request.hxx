@@ -37,15 +37,12 @@
 #include "net/SocketAddress.hxx"
 #endif
 
-#if TRANSLATION_ENABLE_HTTP
-#include "http/Status.h"
-#endif
-
 #include <span>
 
 #include <stddef.h>
 #include <stdint.h>
 
+enum class HttpStatus : uint_least16_t;
 enum class TranslationCommand : uint16_t;
 struct TranslationLayoutItem;
 
@@ -166,7 +163,7 @@ struct TranslateRequest {
 	const char *pool = nullptr;
 
 #if TRANSLATION_ENABLE_HTTP
-	http_status_t status = http_status_t(0);
+	HttpStatus status = {};
 
 	bool path_exists = false;
 #endif

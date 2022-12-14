@@ -32,19 +32,22 @@
 
 #pragma once
 
-#include "http/Status.h"
 #include "http/Headers.hxx"
 #include "istream/UnusedHoldPtr.hxx"
 
+#include <cstdint>
+
+enum class HttpStatus : uint_least16_t;
+
 struct PendingResponse {
-	http_status_t status;
+	HttpStatus status;
 
 	HttpHeaders headers;
 
 	UnusedHoldIstreamPtr body;
 
 	template<typename H, typename B>
-	PendingResponse(http_status_t _status, H &&_headers, B &&_body) noexcept
+	PendingResponse(HttpStatus _status, H &&_headers, B &&_body) noexcept
 		:status(_status), headers(std::forward<H>(_headers)),
 		 body(std::forward<B>(_body)) {}
 };

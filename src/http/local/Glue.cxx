@@ -148,7 +148,7 @@ private:
 	void OnStockItemError(std::exception_ptr error) noexcept override;
 
 	/* virtual methods from class HttpResponseHandler */
-	void OnHttpResponse(http_status_t status, StringMap &&headers,
+	void OnHttpResponse(HttpStatus status, StringMap &&headers,
 			    UnusedIstreamPtr body) noexcept override;
 	void OnHttpError(std::exception_ptr ep) noexcept override;
 };
@@ -196,7 +196,7 @@ LhttpRequest::OnStockItemError(std::exception_ptr error) noexcept
 }
 
 void
-LhttpRequest::OnHttpResponse(http_status_t status, StringMap &&_headers,
+LhttpRequest::OnHttpResponse(HttpStatus status, StringMap &&_headers,
 			    UnusedIstreamPtr _body) noexcept
 {
 	auto &_handler = handler;

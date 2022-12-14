@@ -32,11 +32,11 @@
 
 #include "fcgi/Protocol.hxx"
 #include "http/Method.h"
-#include "http/Status.h"
 
 #include <sys/types.h>
 #include <string.h>
 
+enum class HttpStatus : uint_least16_t;
 struct pool;
 class StringMap;
 struct fcgi_record_header;
@@ -72,7 +72,7 @@ write_fcgi_stdout_string(const FcgiRequest *r,
 }
 
 void
-write_fcgi_headers(const FcgiRequest *r, http_status_t status,
+write_fcgi_headers(const FcgiRequest *r, HttpStatus status,
 		   StringMap *headers);
 
 void

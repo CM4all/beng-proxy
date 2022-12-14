@@ -36,6 +36,7 @@
 
 #include "JsonWriter.hxx"
 #include "Server.hxx"
+#include "http/Status.hxx"
 #include "net/ToString.hxx"
 #include "net/log/String.hxx"
 #include "time/Cast.hxx"

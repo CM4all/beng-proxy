@@ -30,16 +30,18 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef MESSAGE_HTTP_RESPONSE_HXX
-#define MESSAGE_HTTP_RESPONSE_HXX
+#pragma once
 
-#include "http/Status.h"
+#include <cstdint>
+
+enum class HttpStatus : uint_least16_t;
+
 
 /**
  * Describes a very simple HTTP response with a text/plain body.
  */
 struct MessageHttpResponse {
-	http_status_t status;
+	HttpStatus status;
 
 	/**
 	 * The response body.  This string must either be a literal or the
@@ -49,5 +51,3 @@ struct MessageHttpResponse {
 	 */
 	const char *message;
 };
-
-#endif

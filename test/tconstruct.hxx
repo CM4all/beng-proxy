@@ -82,7 +82,7 @@ struct MakeRequest : TranslateRequest {
 		return WantFullUri(AsBytes(value));
 	}
 
-	MakeRequest &&Status(http_status_t value) noexcept {
+	MakeRequest &&Status(HttpStatus value) noexcept {
 		status = value;
 		return std::move(*this);
 	}

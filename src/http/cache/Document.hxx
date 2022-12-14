@@ -34,14 +34,15 @@
 
 #include "Info.hxx"
 #include "strmap.hxx"
-#include "http/Status.h"
+
+enum class HttpStatus : uint_least16_t;
 
 struct HttpCacheDocument {
 	HttpCacheResponseInfo info;
 
 	StringMap vary;
 
-	http_status_t status;
+	HttpStatus status;
 	StringMap response_headers;
 
 	HttpCacheDocument() = default;
@@ -49,7 +50,7 @@ struct HttpCacheDocument {
 	HttpCacheDocument(struct pool &pool,
 			  const HttpCacheResponseInfo &_info,
 			  const StringMap &request_headers,
-			  http_status_t _status,
+			  HttpStatus _status,
 			  const StringMap &response_headers) noexcept;
 
 	HttpCacheDocument(const HttpCacheDocument &) = delete;

@@ -160,7 +160,7 @@ Request::ForwardRequestHeaders(const StringMap &src,
 }
 
 StringMap
-Request::ForwardResponseHeaders(http_status_t status,
+Request::ForwardResponseHeaders(HttpStatus status,
 				const StringMap &src,
 				const char *(*relocate)(const char *uri,
 							void *ctx) noexcept,

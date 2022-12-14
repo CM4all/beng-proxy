@@ -174,7 +174,7 @@ struct Context final
 	FilteredSocket fs;
 
 	bool idle, reuse, aborted, got_response = false;
-	http_status_t status;
+	HttpStatus status;
 
 	SinkFd *body = nullptr;
 	bool body_eof, body_abort;
@@ -215,7 +215,7 @@ struct Context final
 #endif
 
 	/* virtual methods from class HttpResponseHandler */
-	void OnHttpResponse(http_status_t status, StringMap &&headers,
+	void OnHttpResponse(HttpStatus status, StringMap &&headers,
 			    UnusedIstreamPtr body) noexcept override;
 	void OnHttpError(std::exception_ptr ep) noexcept override;
 
@@ -307,7 +307,7 @@ Context::OnNgHttp2ConnectionClosed() noexcept
  */
 
 void
-Context::OnHttpResponse(http_status_t _status, StringMap &&,
+Context::OnHttpResponse(HttpStatus _status, StringMap &&,
 			UnusedIstreamPtr _body) noexcept
 {
 	got_response = true;

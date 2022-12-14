@@ -90,7 +90,7 @@ WidgetRegistryLookup::OnTranslateResponse(TranslateResponse &response) noexcept
 {
 	assert(response.views != nullptr);
 
-	if (response.status != 0) {
+	if (response.status != HttpStatus{}) {
 		callback(nullptr);
 		return;
 	}

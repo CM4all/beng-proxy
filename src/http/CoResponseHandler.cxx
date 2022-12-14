@@ -34,7 +34,7 @@
 #include "bp/PendingResponse.hxx"
 
 void
-CoHttpResponseHandler::OnHttpResponse(http_status_t status,
+CoHttpResponseHandler::OnHttpResponse(HttpStatus status,
 				      StringMap &&headers,
 				      UnusedIstreamPtr body) noexcept
 {

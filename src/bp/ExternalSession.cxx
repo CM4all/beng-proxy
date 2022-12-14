@@ -66,12 +66,12 @@ public:
 	}
 
 	/* virtual methods from class HttpResponseHandler */
-	void OnHttpResponse(http_status_t status,
+	void OnHttpResponse(HttpStatus status,
 			    gcc_unused StringMap &&headers,
 			    UnusedIstreamPtr body) noexcept override {
 		body.Clear();
 
-		if (status < 200 || status >= 300)
+		if (!http_status_is_success(status))
 			LogConcat(3, "ExternalSessionManager", "Status ", int(status),
 				  " from manager '", address.path, "'");
 

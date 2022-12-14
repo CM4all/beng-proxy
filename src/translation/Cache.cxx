@@ -38,6 +38,7 @@
 #include "translation/Protocol.hxx"
 #include "HttpMessageResponse.hxx"
 #include "cache.hxx"
+#include "http/Status.hxx"
 #include "uri/Base.hxx"
 #include "uri/Verify.hxx"
 #include "uri/Escape.hxx"
@@ -524,7 +525,7 @@ TranslateCachePerSite::Erase(TranslateCacheItem &item)
 
 static const char *
 tcache_uri_key(AllocatorPtr alloc, const char *uri, const char *host,
-	       http_status_t status,
+	       HttpStatus status,
 	       std::span<const std::byte> layout,
 	       const TranslationLayoutItem *layout_item,
 	       std::span<const std::byte> check,
@@ -630,9 +631,9 @@ tcache_uri_key(AllocatorPtr alloc, const char *uri, const char *host,
 	}
 
 	char status_buffer[32];
-	if (status != 0) {
+	if (status != HttpStatus{}) {
 		snprintf(status_buffer, sizeof(status_buffer),
-			 "ERR%u_", status);
+			 "ERR%u_", static_cast<unsigned>(status));
 		b.push_back(status_buffer);
 	}
 
@@ -794,19 +795,19 @@ tcache_expand_response(AllocatorPtr alloc, TranslateResponse &response,
 	const TempPoolLease tpool;
 
 	if (response.regex_on_host_uri && strchr(host, '/') != nullptr)
-		throw HttpMessageResponse(HTTP_STATUS_BAD_REQUEST,
+		throw HttpMessageResponse(HttpStatus::BAD_REQUEST,
 					  "Malformed Host header");
 
 	uri = tcache_regex_input(AllocatorPtr{tpool}, uri, host, user, response);
 	if (uri == nullptr || (!response.unsafe_base &&
 			       !uri_path_verify_paranoid(uri)))
-		throw HttpMessageResponse(HTTP_STATUS_BAD_REQUEST,
+		throw HttpMessageResponse(HttpStatus::BAD_REQUEST,
 					  "Malformed URI");
 
 	const auto match_data = regex.Match(uri);
 	if (!match_data)
 		/* shouldn't happen, as this has already been matched */
-		throw HttpMessageResponse(HTTP_STATUS_BAD_REQUEST,
+		throw HttpMessageResponse(HttpStatus::BAD_REQUEST,
 					  "Regex mismatch");
 
 	response.Expand(alloc, match_data);
@@ -1381,7 +1382,7 @@ try {
 		const char *tail = require_base_tail(uri, response.base);
 		tail = UriWithoutQueryString(alloc, tail);
 		if (!response.unsafe_base && !uri_path_verify_paranoid(tail))
-			throw HttpMessageResponse(HTTP_STATUS_BAD_REQUEST,
+			throw HttpMessageResponse(HttpStatus::BAD_REQUEST,
 						  "Malformed URI");
 	}
 

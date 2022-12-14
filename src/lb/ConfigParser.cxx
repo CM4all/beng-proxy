@@ -38,6 +38,7 @@
 #include "io/config/ConfigParser.hxx"
 #include "net/Parser.hxx"
 #include "net/AddressInfo.hxx"
+#include "http/Status.hxx"
 #include "uri/Verify.hxx"
 #include "util/StringAPI.hxx"
 #include "util/StringCompare.hxx"
@@ -704,12 +705,12 @@ LbConfigParser::Cluster::ParseLine(FileLineParser &line)
 		if (strstr(location, "://") != nullptr) {
 			line.ExpectEnd();
 
-			config.fallback.status = HTTP_STATUS_FOUND;
+			config.fallback.status = HttpStatus::FOUND;
 			config.fallback.location = location;
 		} else {
 			char *endptr;
-			http_status_t status =
-				(http_status_t)(unsigned)strtoul(location, &endptr, 10);
+			HttpStatus status =
+				static_cast<HttpStatus>(strtoul(location, &endptr, 10));
 			if (*endptr != 0 || !http_status_is_valid(status))
 				throw LineParser::Error("Invalid HTTP status code");
 
@@ -875,7 +876,7 @@ ParseCondition(FileLineParser &line)
 		return {std::move(a), negate, string};
 }
 
-static http_status_t
+static HttpStatus
 ParseStatus(const char *s)
 {
 	char *endptr;
@@ -883,7 +884,7 @@ ParseStatus(const char *s)
 	if (endptr == s || *endptr != 0)
 		throw LineParser::Error("Failed to parse status number");
 
-	auto status = http_status_t(l);
+	auto status = static_cast<HttpStatus>(l);
 	if (l < 200 || l >= 600 || !http_status_is_valid(status))
 		throw LineParser::Error("Invalid status");
 
@@ -940,7 +941,7 @@ LbConfigParser::Branch::ParseLine(FileLineParser &line)
 
 		AddGoto(std::move(destination), line);
 	} else if (StringIsEqual(word, "redirect")) {
-		LbGotoConfig destination(HTTP_STATUS_FOUND);
+		LbGotoConfig destination(HttpStatus::FOUND);
 		std::get<LbSimpleHttpResponse>(destination.destination).location = line.ExpectValue();
 
 		AddGoto(std::move(destination), line);
@@ -949,7 +950,7 @@ LbConfigParser::Branch::ParseLine(FileLineParser &line)
 		if (!value)
 			throw LineParser::Error("Invalid value");
 
-		LbGotoConfig destination(HTTP_STATUS_MOVED_PERMANENTLY);
+		LbGotoConfig destination(HttpStatus::MOVED_PERMANENTLY);
 		std::get<LbSimpleHttpResponse>(destination.destination).redirect_https = true;
 		AddGoto(std::move(destination), line);
 	} else
@@ -1201,7 +1202,7 @@ LbConfigParser::Listener::ParseLine(FileLineParser &line)
 		if (!value)
 			return;
 
-		config.destination = LbGotoConfig{HTTP_STATUS_MOVED_PERMANENTLY};
+		config.destination = LbGotoConfig{HttpStatus::MOVED_PERMANENTLY};
 		std::get<LbSimpleHttpResponse>(config.destination.destination).redirect_https = true;
 	} else if (StringIsEqual(word, "verbose_response")) {
 		bool value = line.NextBool();

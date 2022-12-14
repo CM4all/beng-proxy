@@ -192,7 +192,7 @@ LbHttpConnection::SendError(IncomingHttpRequest &request, std::exception_ptr ep)
 		? p_strdup(request.pool, GetFullMessage(ep).c_str())
 		: "Bad gateway";
 
-	request.SendMessage(HTTP_STATUS_BAD_GATEWAY, msg);
+	request.SendMessage(HttpStatus::BAD_GATEWAY, msg);
 }
 
 void
@@ -231,18 +231,18 @@ LbHttpConnection::HandleHttpRequest(IncomingHttpRequest &request,
 {
 	if (!uri_path_verify_quick(request.uri)) {
 		request.body.Clear();
-		request.SendMessage(HTTP_STATUS_BAD_REQUEST, "Malformed request URI");
+		request.SendMessage(HttpStatus::BAD_REQUEST, "Malformed request URI");
 		return;
 	}
 
 	auto &rl = *(LbRequestLogger *)request.logger;
 	if (rl.host == nullptr) {
 		request.body.Clear();
-		request.SendMessage(HTTP_STATUS_BAD_REQUEST, "No Host header");
+		request.SendMessage(HttpStatus::BAD_REQUEST, "No Host header");
 		return;
 	} else if (!VerifyUriHostPort(rl.host)) {
 		request.body.Clear();
-		request.SendMessage(HTTP_STATUS_BAD_REQUEST, "Malformed Host header");
+		request.SendMessage(HttpStatus::BAD_REQUEST, "Malformed Host header");
 		return;
 	}
 
@@ -252,10 +252,10 @@ LbHttpConnection::HandleHttpRequest(IncomingHttpRequest &request,
 		request.body.Clear();
 
 		if (instance.config.global_http_check->Check())
-			request.SendMessage(HTTP_STATUS_OK,
+			request.SendMessage(HttpStatus::OK,
 					    instance.config.global_http_check->success_message.c_str());
 		else
-			request.SendSimpleResponse(HTTP_STATUS_NOT_FOUND,
+			request.SendSimpleResponse(HttpStatus::NOT_FOUND,
 						   nullptr, nullptr);
 
 		return;

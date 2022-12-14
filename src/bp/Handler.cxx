@@ -137,7 +137,7 @@ Request::HandleTranslatedRequest2(const TranslateResponse &response) noexcept
 
 	translate.chain = response.chain;
 	if (translate.chain.data() != nullptr && ++translate.n_chain > 4) {
-		LogDispatchError(HTTP_STATUS_BAD_GATEWAY,
+		LogDispatchError(HttpStatus::BAD_GATEWAY,
 				 "Too many consecutive CHAIN packets", 1);
 		return;
 	}
@@ -192,12 +192,12 @@ Request::HandleTranslatedRequest2(const TranslateResponse &response) noexcept
 		   /* disable the deprecated HTTP-auth if the new
 		      HTTP_AUTH is enabled: */
 		   response.http_auth.data() == nullptr) {
-		DispatchError(HTTP_STATUS_UNAUTHORIZED, "Unauthorized");
+		DispatchError(HttpStatus::UNAUTHORIZED, "Unauthorized");
 	} else if (response.break_chain) {
-		LogDispatchError(HTTP_STATUS_BAD_GATEWAY,
+		LogDispatchError(HttpStatus::BAD_GATEWAY,
 				 "BREAK_CHAIN without CHAIN", 1);
 	} else {
-		LogDispatchError(HTTP_STATUS_BAD_GATEWAY,
+		LogDispatchError(HttpStatus::BAD_GATEWAY,
 				 "Empty response from configuration server", 1);
 	}
 }
@@ -242,11 +242,11 @@ UniquePoolPtr<PendingResponse>
 Request::CheckRedirectBounceStatus(const TranslateResponse &response) noexcept
 {
 	if (response.redirect == nullptr && response.bounce == nullptr &&
-	    response.status == http_status_t(0) && !response.tiny_image &&
+	    response.status == HttpStatus{} && !response.tiny_image &&
 	    response.message == nullptr)
 		return nullptr;
 
-	http_status_t status = response.status;
+	HttpStatus status = response.status;
 	HttpHeaders headers;
 	UnusedIstreamPtr body;
 
@@ -264,8 +264,8 @@ Request::CheckRedirectBounceStatus(const TranslateResponse &response) noexcept
 	if (redirect_uri == nullptr)
 		redirect_uri = CheckBounceUri(response);
 	if (redirect_uri != nullptr) {
-		if (status == http_status_t(0))
-			status = HTTP_STATUS_SEE_OTHER;
+		if (status == HttpStatus{})
+			status = HttpStatus::SEE_OTHER;
 
 		headers.Write("location", redirect_uri);
 
@@ -278,8 +278,8 @@ Request::CheckRedirectBounceStatus(const TranslateResponse &response) noexcept
 		body = istream_string_new(pool, message);
 	}
 
-	if (status == http_status_t(0))
-		status = body ? HTTP_STATUS_OK : HTTP_STATUS_NO_CONTENT;
+	if (status == HttpStatus{})
+		status = body ? HttpStatus::OK : HttpStatus::NO_CONTENT;
 
 	return UniquePoolPtr<PendingResponse>::Make
 		(pool, status, std::move(headers), UnusedHoldIstreamPtr{pool, std::move(body)});
@@ -340,7 +340,7 @@ Request::CheckHandleProbePathSuffixes(const TranslateResponse &response) noexcep
 		return false;
 
 	if (++translate.n_probe_path_suffixes > 2) {
-		LogDispatchError(HTTP_STATUS_BAD_GATEWAY,
+		LogDispatchError(HttpStatus::BAD_GATEWAY,
 				 "Too many consecutive PROBE_PATH_SUFFIXES packets",
 				 1);
 		return true;
@@ -370,7 +370,7 @@ Request::OnSuffixRegistrySuccess(const char *content_type,
 void
 Request::OnSuffixRegistryError(std::exception_ptr ep) noexcept
 {
-	LogDispatchError(HTTP_STATUS_BAD_GATEWAY,
+	LogDispatchError(HttpStatus::BAD_GATEWAY,
 			 "Configuration server failed",
 			 ep, 1);
 }
@@ -495,7 +495,7 @@ Request::RepeatTranslation(const TranslateResponse &response) noexcept
 		/* repeat request with LAYOUT mirrored */
 
 		if (++translate.n_layout > 4) {
-			LogDispatchError(HTTP_STATUS_BAD_GATEWAY,
+			LogDispatchError(HttpStatus::BAD_GATEWAY,
 					 "Too many consecutive LAYOUT packets",
 					 1);
 			return;
@@ -505,7 +505,7 @@ Request::RepeatTranslation(const TranslateResponse &response) noexcept
 		if (response.regex_tail && response.base != nullptr) {
 			uri = StringAfterPrefix(uri, response.base);
 			if (uri == nullptr) {
-				LogDispatchError(HTTP_STATUS_BAD_GATEWAY,
+				LogDispatchError(HttpStatus::BAD_GATEWAY,
 						 "Base mismatch", 1);
 				return;
 			}
@@ -520,7 +520,7 @@ Request::RepeatTranslation(const TranslateResponse &response) noexcept
 		/* repeat request with CHECK set */
 
 		if (++translate.n_checks > 4) {
-			LogDispatchError(HTTP_STATUS_BAD_GATEWAY,
+			LogDispatchError(HttpStatus::BAD_GATEWAY,
 					 "Too many consecutive CHECK packets",
 					 1);
 			return;
@@ -549,7 +549,7 @@ Request::RepeatTranslation(const TranslateResponse &response) noexcept
 		assert(response.want_full_uri.data() == nullptr);
 
 		if (++translate.n_internal_redirects > 4) {
-			LogDispatchError(HTTP_STATUS_BAD_GATEWAY,
+			LogDispatchError(HttpStatus::BAD_GATEWAY,
 					 "Too many consecutive INTERNAL_REDIRECT packets",
 					 1);
 			return;
@@ -575,7 +575,7 @@ Request::RepeatTranslation(const TranslateResponse &response) noexcept
 		/* repeat request with the given HOST */
 
 		if (++translate.n_like_host > 4) {
-			LogDispatchError(HTTP_STATUS_BAD_GATEWAY,
+			LogDispatchError(HttpStatus::BAD_GATEWAY,
 					 "Too many consecutive LIKE_HOST packets",
 					 1);
 			return;
@@ -590,7 +590,7 @@ Request::RepeatTranslation(const TranslateResponse &response) noexcept
 		translate.request.want = response.want;
 
 	if (response.Wants(TranslationCommand::LISTENER_TAG)) {
-		LogDispatchError(HTTP_STATUS_BAD_GATEWAY,
+		LogDispatchError(HttpStatus::BAD_GATEWAY,
 				 "Translation protocol 2 doesn't allow WANT/LISTENER_TAG",
 				 1);
 		return;
@@ -674,7 +674,7 @@ Request::HandleChainResponse(const TranslateResponse &response) noexcept
 		return;
 
 	if (!response.address.IsDefined()) {
-		LogDispatchError(HTTP_STATUS_BAD_GATEWAY,
+		LogDispatchError(HttpStatus::BAD_GATEWAY,
 				 "Empty CHAIN response", 1);
 		return;
 	}
@@ -686,7 +686,7 @@ Request::HandleChainResponse(const TranslateResponse &response) noexcept
 
 	translate.chain = response.chain;
 	if (translate.chain.data() != nullptr && ++translate.n_chain > 4) {
-		LogDispatchError(HTTP_STATUS_BAD_GATEWAY,
+		LogDispatchError(HttpStatus::BAD_GATEWAY,
 				 "Too many consecutive CHAIN packets", 1);
 		return;
 	}
@@ -726,7 +726,7 @@ void
 Request::OnTranslateResponse(TranslateResponse &response) noexcept
 {
 	if (response.protocol_version < 2) {
-		LogDispatchError(HTTP_STATUS_BAD_GATEWAY,
+		LogDispatchError(HttpStatus::BAD_GATEWAY,
 				 "Unsupported configuration server",
 				 "Unsupported translation protocol version",
 				 1);
@@ -737,7 +737,7 @@ Request::OnTranslateResponse(TranslateResponse &response) noexcept
 		translate.request.listener_tag = response.listener_tag;
 
 	if (response.defer) {
-		LogDispatchError(HTTP_STATUS_BAD_GATEWAY,
+		LogDispatchError(HttpStatus::BAD_GATEWAY,
 				 "Unexpected DEFER", 1);
 		return;
 	}
@@ -753,11 +753,11 @@ Request::OnTranslateResponse(TranslateResponse &response) noexcept
 
 		const char *host = request.headers.Get("host");
 		if (host == nullptr) {
-			DispatchError(HTTP_STATUS_BAD_REQUEST, "No Host header");
+			DispatchError(HttpStatus::BAD_REQUEST, "No Host header");
 			return;
 		}
 
-		DispatchRedirect(HTTP_STATUS_MOVED_PERMANENTLY,
+		DispatchRedirect(HttpStatus::MOVED_PERMANENTLY,
 				 MakeHttpsRedirect(pool, host,
 						   response.https_only,
 						   request.uri),
@@ -836,7 +836,7 @@ Request::OnTranslateResponseAfterAuth(const TranslateResponse &response)
 
 	if (response.previous) {
 		if (translate.previous == nullptr) {
-			LogDispatchError(HTTP_STATUS_BAD_GATEWAY,
+			LogDispatchError(HttpStatus::BAD_GATEWAY,
 					 "No previous translation response", 1);
 			return;
 		}
@@ -886,7 +886,7 @@ Request::CheckHandleReadFile(const TranslateResponse &response) noexcept
 		return false;
 
 	if (++translate.n_read_file > 2) {
-		LogDispatchError(HTTP_STATUS_BAD_GATEWAY,
+		LogDispatchError(HttpStatus::BAD_GATEWAY,
 				 "Too many consecutive READ_FILE packets", 1);
 		return true;
 	}
@@ -913,7 +913,7 @@ Request::CheckHandlePathExists(const TranslateResponse &response) noexcept
 		return false;
 
 	if (++translate.n_path_exists > 2) {
-		LogDispatchError(HTTP_STATUS_BAD_GATEWAY,
+		LogDispatchError(HttpStatus::BAD_GATEWAY,
 				 "Too many consecutive PATH_EXISTS packets",
 				 1);
 		return true;
@@ -922,7 +922,7 @@ Request::CheckHandlePathExists(const TranslateResponse &response) noexcept
 	// TODO use io_uring
 
 	if (response.address.type != ResourceAddress::Type::LOCAL) {
-		LogDispatchError(HTTP_STATUS_BAD_GATEWAY,
+		LogDispatchError(HttpStatus::BAD_GATEWAY,
 				 "PATH_EXISTS without PATH", 1);
 		return true;
 	}
@@ -934,7 +934,7 @@ Request::CheckHandlePathExists(const TranslateResponse &response) noexcept
 void
 Request::OnTranslateError(std::exception_ptr ep) noexcept
 {
-	LogDispatchError(HTTP_STATUS_BAD_GATEWAY,
+	LogDispatchError(HttpStatus::BAD_GATEWAY,
 			 "Configuration server failed", ep, 1);
 }
 
@@ -953,7 +953,7 @@ Request::ParseRequestUri() noexcept
 {
 	if (!uri_path_verify_quick(request.uri) ||
 	    !dissected_uri.Parse(request.uri)) {
-		DispatchError(HTTP_STATUS_BAD_REQUEST, "Malformed URI");
+		DispatchError(HttpStatus::BAD_REQUEST, "Malformed URI");
 		return false;
 	}
 
@@ -994,10 +994,10 @@ Request::HandleHttpRequest(CancellablePointer &caller_cancel_ptr) noexcept
 			       connection.listener.GetTag());
 
 	if (translate.request.host == nullptr) {
-		DispatchError(HTTP_STATUS_BAD_REQUEST, "No Host header");
+		DispatchError(HttpStatus::BAD_REQUEST, "No Host header");
 		return;
 	} else if (!VerifyUriHostPort(translate.request.host)) {
-		DispatchError(HTTP_STATUS_BAD_REQUEST, "Malformed Host header");
+		DispatchError(HttpStatus::BAD_REQUEST, "Malformed Host header");
 		return;
 	}
 

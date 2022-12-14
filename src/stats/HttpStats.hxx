@@ -47,7 +47,7 @@ struct HttpStats {
 
 	std::array<uint64_t, valid_http_status_array.size()> n_per_status{};
 
-	void AddRequest(http_status_t status,
+	void AddRequest(HttpStatus status,
 			uint64_t bytes_received,
 			uint64_t bytes_sent,
 			std::chrono::steady_clock::duration duration) noexcept {

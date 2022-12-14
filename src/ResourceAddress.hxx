@@ -325,7 +325,7 @@ public:
 	/**
 	 * Copies data from #src for storing in the translation cache.
 	 *
-	 * Throws HttpMessageResponse(HTTP_STATUS_BAD_REQUEST) on base
+	 * Throws HttpMessageResponse(HttpStatus::BAD_REQUEST) on base
 	 * mismatch.
 	 */
 	void CacheStore(AllocatorPtr alloc, const ResourceAddress &src,

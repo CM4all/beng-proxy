@@ -33,6 +33,7 @@
 #include "SimpleHttpResponse.hxx"
 #include "http/IncomingRequest.hxx"
 #include "uri/RedirectHttps.hxx"
+#include "http/Status.hxx"
 #include "AllocatorPtr.hxx"
 
 void
@@ -49,7 +50,7 @@ SendResponse(IncomingHttpRequest &request,
 	if (response.redirect_https) {
 		const char *host = request.headers.Get("host");
 		if (host == nullptr) {
-			request.SendSimpleResponse(HTTP_STATUS_BAD_REQUEST,
+			request.SendSimpleResponse(HttpStatus::BAD_REQUEST,
 						   nullptr,
 						   "No Host header");
 			return;

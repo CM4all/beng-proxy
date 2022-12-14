@@ -35,7 +35,6 @@
 #include "Item.hxx"
 #include "memory/SlicePool.hxx"
 #include "memory/Rubber.hxx"
-#include "http/Status.h"
 #include "util/IntrusiveList.hxx"
 #include "cache.hxx"
 
@@ -44,6 +43,7 @@
 
 #include <stddef.h>
 
+enum class HttpStatus : uint_least16_t;
 struct pool;
 class UnusedIstreamPtr;
 class EventLoop;
@@ -92,7 +92,7 @@ public:
 	void Put(const char *url, const char *tag,
 		 const HttpCacheResponseInfo &info,
 		 const StringMap &request_headers,
-		 http_status_t status,
+		 HttpStatus status,
 		 const StringMap &response_headers,
 		 RubberAllocation &&a, size_t size) noexcept;
 

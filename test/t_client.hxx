@@ -159,7 +159,7 @@ struct Context final
 	CancellablePointer cancel_ptr;
 	ClientConnection *connection = nullptr;
 	bool released = false, reuse, aborted = false;
-	http_status_t status = http_status_t(0);
+	HttpStatus status = HttpStatus{};
 	std::exception_ptr request_error;
 
 	char *content_length = nullptr;
@@ -204,7 +204,7 @@ struct Context final
 	using IstreamSink::CloseInput;
 
 	bool WaitingForResponse() const noexcept {
-		return status == http_status_t(0) && !request_error;
+		return status == HttpStatus{} && !request_error;
 	}
 
 	void WaitForResponse() noexcept {
@@ -219,7 +219,7 @@ struct Context final
 	}
 
 	void WaitForFirstBodyByte() noexcept {
-		assert(status != http_status_t(0));
+		assert(status != HttpStatus{});
 		assert(!request_error);
 
 		if (body_data > 0 || !HasInput())
@@ -374,7 +374,7 @@ struct Context final
 	}
 
 	/* virtual methods from class HttpResponseHandler */
-	void OnHttpResponse(http_status_t status, StringMap &&headers,
+	void OnHttpResponse(HttpStatus status, StringMap &&headers,
 			    UnusedIstreamPtr body) noexcept override;
 	void OnHttpError(std::exception_ptr ep) noexcept override;
 };
@@ -459,9 +459,8 @@ Context::OnError(std::exception_ptr ep) noexcept
  */
 
 void
-Context::OnHttpResponse(http_status_t _status,
-				    StringMap &&headers,
-				    UnusedIstreamPtr _body) noexcept
+Context::OnHttpResponse(HttpStatus _status, StringMap &&headers,
+			UnusedIstreamPtr _body) noexcept
 {
 	if (break_response)
 		event_loop.Break();
@@ -559,7 +558,7 @@ test_empty(auto &factory, Context &c) noexcept
 
 	assert(c.released);
 	assert(c.connection == nullptr);
-	assert(c.status == HTTP_STATUS_NO_CONTENT);
+	assert(c.status == HttpStatus::NO_CONTENT);
 	assert(c.content_length == nullptr);
 	assert(!c.HasInput());
 	assert(!c.body_eof);
@@ -580,7 +579,7 @@ test_body(auto &factory, Context &c) noexcept
 
 	c.WaitForResponse();
 
-	assert(c.status == HTTP_STATUS_OK);
+	assert(c.status == HttpStatus::OK);
 	assert(!c.request_error);
 	assert(c.content_length == nullptr);
 	assert(c.available == 6);
@@ -613,7 +612,7 @@ test_read_body(auto &factory, Context &c) noexcept
 	c.event_loop.Run();
 
 	assert(c.released);
-	assert(c.status == HTTP_STATUS_OK);
+	assert(c.status == HttpStatus::OK);
 	assert(c.content_length == nullptr);
 	assert(c.available == 6);
 	assert(c.body_eof);
@@ -643,7 +642,7 @@ test_huge(auto &factory, Context &c) noexcept
 	c.event_loop.Run();
 
 	assert(c.released);
-	assert(c.status == HTTP_STATUS_OK);
+	assert(c.status == HttpStatus::OK);
 	assert(c.available >= 65536);
 	assert(!c.body_eof);
 	assert(c.body_data > 0);
@@ -667,7 +666,7 @@ test_close_response_body_early(auto &factory, Context &c) noexcept
 	c.event_loop.Run();
 
 	assert(c.released);
-	assert(c.status == HTTP_STATUS_OK);
+	assert(c.status == HttpStatus::OK);
 	assert(c.content_length == nullptr);
 	assert(c.available == 6);
 	assert(!c.HasInput());
@@ -691,7 +690,7 @@ test_close_response_body_late(auto &factory, Context &c) noexcept
 	c.event_loop.Run();
 
 	assert(c.released);
-	assert(c.status == HTTP_STATUS_OK);
+	assert(c.status == HttpStatus::OK);
 	assert(c.content_length == nullptr);
 	assert(c.available == 6);
 	assert(!c.HasInput());
@@ -715,7 +714,7 @@ test_close_response_body_data(auto &factory, Context &c) noexcept
 
 	c.WaitForResponse();
 
-	assert(c.status == HTTP_STATUS_OK);
+	assert(c.status == HttpStatus::OK);
 	assert(!c.request_error);
 	assert(c.content_length == nullptr);
 	assert(c.available == 6);
@@ -743,7 +742,7 @@ test_close_response_body_after(auto &factory, Context &c) noexcept
 
 	c.WaitForResponse();
 
-	assert(c.status == HTTP_STATUS_OK);
+	assert(c.status == HttpStatus::OK);
 	assert(!c.request_error);
 	assert(c.content_length == nullptr);
 	assert(c.available == 524288);
@@ -793,7 +792,7 @@ test_close_request_body_early(auto &factory, Context &c) noexcept
 	c.event_loop.Run();
 
 	assert(c.released);
-	assert(c.status == 0);
+	assert(c.status == HttpStatus{});
 	assert(!c.HasInput());
 	assert(!c.body_eof);
 	assert(c.body_error == nullptr);
@@ -822,7 +821,7 @@ test_close_request_body_fail(auto &factory, Context &c) noexcept
 	c.event_loop.Run();
 
 	assert(c.released);
-	assert(c.status == 200);
+	assert(c.status == HttpStatus::OK);
 	assert(c.content_length == nullptr);
 #ifdef HAVE_CHUNKED_REQUEST_BODY
 	assert(c.available == -1);
@@ -862,7 +861,7 @@ test_data_blocking(auto &factory, Context &c) noexcept
 	c.WaitForResponse();
 
 	assert(!c.request_error);
-	assert(c.status == HTTP_STATUS_OK);
+	assert(c.status == HttpStatus::OK);
 	assert(c.content_length == nullptr);
 #ifdef HAVE_CHUNKED_REQUEST_BODY
 	assert(c.available == -1);
@@ -927,7 +926,7 @@ test_data_blocking2(auto &factory, Context &c) noexcept
 
 	c.WaitForResponse();
 
-	assert(c.status == HTTP_STATUS_OK);
+	assert(c.status == HttpStatus::OK);
 	assert(!c.request_error);
 
 	c.WaitForFirstBodyByte();
@@ -995,7 +994,7 @@ test_head(auto &factory, Context &c) noexcept
 
 	assert(c.released);
 	assert(c.connection == nullptr);
-	assert(c.status == HTTP_STATUS_OK);
+	assert(c.status == HttpStatus::OK);
 	assert(c.content_length != nullptr);
 	assert(strcmp(c.content_length, "6") == 0);
 	assert(!c.HasInput());
@@ -1023,7 +1022,7 @@ test_head_discard(auto &factory, Context &c) noexcept
 
 	assert(c.released);
 	assert(c.connection == nullptr);
-	assert(c.status == HTTP_STATUS_OK);
+	assert(c.status == HttpStatus::OK);
 	assert(!c.HasInput());
 	assert(!c.body_eof);
 	assert(!c.request_error);
@@ -1048,7 +1047,7 @@ test_head_discard2(auto &factory, Context &c) noexcept
 
 	assert(c.released);
 	assert(c.connection == nullptr);
-	assert(c.status == HTTP_STATUS_OK);
+	assert(c.status == HttpStatus::OK);
 	assert(c.content_length != nullptr);
 	[[maybe_unused]]
 		unsigned long content_length = strtoul(c.content_length, nullptr, 10);
@@ -1073,7 +1072,7 @@ test_ignored_body(auto &factory, Context &c) noexcept
 
 	assert(c.released);
 	assert(c.connection == nullptr);
-	assert(c.status == HTTP_STATUS_NO_CONTENT);
+	assert(c.status == HttpStatus::NO_CONTENT);
 	assert(c.content_length == nullptr);
 	assert(!c.HasInput());
 	assert(!c.body_eof);
@@ -1102,7 +1101,7 @@ test_close_ignored_request_body(auto &factory, Context &c) noexcept
 
 	assert(c.released);
 	assert(c.connection == nullptr);
-	assert(c.status == HTTP_STATUS_NO_CONTENT);
+	assert(c.status == HttpStatus::NO_CONTENT);
 	assert(c.content_length == nullptr);
 	assert(!c.HasInput());
 	assert(!c.body_eof);
@@ -1129,7 +1128,7 @@ test_head_close_ignored_request_body(auto &factory, Context &c) noexcept
 
 	assert(c.released);
 	assert(c.connection == nullptr);
-	assert(c.status == HTTP_STATUS_NO_CONTENT);
+	assert(c.status == HttpStatus::NO_CONTENT);
 	assert(c.content_length == nullptr);
 	assert(!c.HasInput());
 	assert(!c.body_eof);
@@ -1155,7 +1154,7 @@ test_close_request_body_eor(auto &factory, Context &c) noexcept
 
 	assert(c.released);
 	assert(c.connection == nullptr);
-	assert(c.status == HTTP_STATUS_OK);
+	assert(c.status == HttpStatus::OK);
 	assert(c.content_length == nullptr);
 	assert(!c.HasInput());
 	assert(c.body_eof);
@@ -1181,7 +1180,7 @@ test_close_request_body_eor2(auto &factory, Context &c) noexcept
 
 	assert(c.released);
 	assert(c.connection == nullptr);
-	assert(c.status == HTTP_STATUS_OK);
+	assert(c.status == HttpStatus::OK);
 	assert(c.content_length == nullptr);
 	assert(!c.HasInput());
 	assert(c.body_eof);
@@ -1304,7 +1303,7 @@ test_no_body_while_sending(auto &factory, Context &c) noexcept
 	c.event_loop.Run();
 
 	assert(c.released);
-	assert(c.status == HTTP_STATUS_NO_CONTENT);
+	assert(c.status == HttpStatus::NO_CONTENT);
 	assert(!c.HasInput());
 	assert(!c.body_eof);
 	assert(!c.request_error);
@@ -1324,7 +1323,7 @@ test_hold(auto &factory, Context &c) noexcept
 	c.WaitForResponse();
 
 	assert(!c.released);
-	assert(c.status == HTTP_STATUS_OK);
+	assert(c.status == HttpStatus::OK);
 	assert(c.HasInput());
 	assert(!c.body_eof);
 	assert(!c.request_error);
@@ -1370,7 +1369,7 @@ test_premature_close_headers(auto &factory, Context &c) noexcept
 	c.event_loop.Run();
 
 	assert(c.released);
-	assert(c.status == 0);
+	assert(c.status == HttpStatus{});
 	assert(!c.HasInput());
 	assert(!c.body_eof);
 	assert(!c.body_error);
@@ -1398,7 +1397,7 @@ test_premature_close_body(auto &factory, Context &c) noexcept
 	c.event_loop.Run();
 
 	assert(c.released);
-	assert(c.status == HTTP_STATUS_OK);
+	assert(c.status == HttpStatus::OK);
 	assert(!c.body_eof);
 	assert(!c.request_error);
 	assert(c.body_error != nullptr);
@@ -1423,8 +1422,8 @@ test_post_empty(auto &factory, Context &c) noexcept
 	c.WaitForResponse();
 
 	assert(!c.request_error);
-	assert(c.status == HTTP_STATUS_OK ||
-	       c.status == HTTP_STATUS_NO_CONTENT);
+	assert(c.status == HttpStatus::OK ||
+	       c.status == HttpStatus::NO_CONTENT);
 	assert(c.content_length == nullptr ||
 	       strcmp(c.content_length, "0") == 0);
 
@@ -1460,7 +1459,7 @@ test_buckets(auto &factory, Context &c) noexcept
 	c.event_loop.Run();
 
 	assert(c.released);
-	assert(c.status == HTTP_STATUS_OK);
+	assert(c.status == HttpStatus::OK);
 	assert(c.content_length == nullptr);
 	assert(c.available > 0);
 	assert(c.body_eof);
@@ -1488,7 +1487,7 @@ test_buckets_close(auto &factory, Context &c) noexcept
 	c.event_loop.Run();
 
 	assert(c.released);
-	assert(c.status == HTTP_STATUS_OK);
+	assert(c.status == HttpStatus::OK);
 	assert(c.content_length == nullptr);
 	assert(c.available > 0);
 	assert(!c.body_eof);
@@ -1517,7 +1516,7 @@ test_premature_end(auto &factory, Context &c) noexcept
 	c.event_loop.Run();
 
 	assert(c.released);
-	assert(c.status == HTTP_STATUS_OK);
+	assert(c.status == HttpStatus::OK);
 	assert(c.content_length == nullptr);
 	assert(c.available > 0);
 	assert(!c.body_eof);
@@ -1542,7 +1541,7 @@ test_excess_data(auto &factory, Context &c) noexcept
 	c.event_loop.Run();
 
 	assert(c.released);
-	assert(c.status == HTTP_STATUS_OK);
+	assert(c.status == HttpStatus::OK);
 	assert(c.content_length == nullptr);
 	assert(c.available > 0);
 	assert(!c.body_eof);
@@ -1567,7 +1566,7 @@ TestValidPremature(auto &factory, Context &c) noexcept
 	c.event_loop.Run();
 
 	assert(c.released);
-	assert(c.status == HTTP_STATUS_OK);
+	assert(c.status == HttpStatus::OK);
 	assert(!c.body_eof);
 	assert(c.body_error != nullptr);
 	assert(c.reuse);
@@ -1591,7 +1590,7 @@ TestMalformedPremature(auto &factory, Context &c) noexcept
 	c.event_loop.Run();
 
 	assert(c.released);
-	assert(c.status == HTTP_STATUS_OK);
+	assert(c.status == HttpStatus::OK);
 	assert(c.available == 1024);
 	assert(c.body_data == 0);
 	assert(!c.body_eof);
@@ -1664,7 +1663,7 @@ TestCloseWithFailedSocketGet(auto &factory, Context &c) noexcept
 	c.WaitForResponse();
 
 	assert(!c.released);
-	assert(c.status == HTTP_STATUS_OK);
+	assert(c.status == HttpStatus::OK);
 	assert(c.HasInput());
 
 	c.connection->InjectSocketFailure();
@@ -1690,7 +1689,7 @@ TestCloseWithFailedSocketPost(auto &factory, Context &c) noexcept
 	c.WaitForResponse();
 
 	assert(!c.released);
-	assert(c.status == HTTP_STATUS_OK);
+	assert(c.status == HttpStatus::OK);
 	assert(c.HasInput());
 
 	c.connection->InjectSocketFailure();

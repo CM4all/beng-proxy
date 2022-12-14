@@ -32,7 +32,7 @@
 
 #pragma once
 
-#include "http/Status.h"
+#include "http/Status.hxx"
 
 #include <utility>
 #include <exception>
@@ -48,14 +48,14 @@ class UnusedIstreamPtr;
  */
 class HttpResponseHandler {
 protected:
-	virtual void OnHttpResponse(http_status_t status, StringMap &&headers,
+	virtual void OnHttpResponse(HttpStatus status, StringMap &&headers,
 				    UnusedIstreamPtr body) noexcept = 0;
 
 	virtual void OnHttpError(std::exception_ptr ep) noexcept = 0;
 
 public:
 	template<typename B>
-	void InvokeResponse(http_status_t status, StringMap &&headers,
+	void InvokeResponse(HttpStatus status, StringMap &&headers,
 			    B &&body) noexcept {
 		assert(http_status_is_valid(status));
 		assert(!http_status_is_empty(status) || !body);
@@ -67,7 +67,7 @@ public:
 	 * Sends a plain-text message.
 	 */
 	void InvokeResponse(struct pool &pool,
-			    http_status_t status, const char *msg) noexcept;
+			    HttpStatus status, const char *msg) noexcept;
 
 	void InvokeError(std::exception_ptr ep) noexcept {
 		assert(ep);

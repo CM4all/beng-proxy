@@ -37,6 +37,7 @@
 #include "net/log/Datagram.hxx"
 #include "net/log/OneLine.hxx"
 #include "http/IncomingRequest.hxx"
+#include "http/Status.hxx"
 
 #include <assert.h>
 #include <string.h>
@@ -84,7 +85,7 @@ AccessLogGlue::Log(const Net::Log::Datagram &d) noexcept
 	    d.http_uri == config.ignore_localhost_200 &&
 	    d.host != nullptr &&
 	    strcmp(d.host, "localhost") == 0 &&
-	    d.http_status == HTTP_STATUS_OK)
+	    d.http_status == HttpStatus::OK)
 		return;
 
 	if (client != nullptr)
@@ -99,12 +100,12 @@ AccessLogGlue::Log(std::chrono::system_clock::time_point now,
 		   const char *forwarded_to,
 		   const char *host, const char *x_forwarded_for,
 		   const char *referer, const char *user_agent,
-		   http_status_t status, int64_t content_length,
+		   HttpStatus status, int64_t content_length,
 		   uint64_t bytes_received, uint64_t bytes_sent,
 		   std::chrono::steady_clock::duration duration) noexcept
 {
 	assert(http_method_is_valid(request.method));
-	assert(status == http_status_t{} || http_status_is_valid(status));
+	assert(status == HttpStatus{} || http_status_is_valid(status));
 
 	const char *remote_host = request.remote_host;
 	std::string buffer;
@@ -137,7 +138,7 @@ AccessLogGlue::Log(std::chrono::system_clock::time_point now,
 		   const IncomingHttpRequest &request, const char *site,
 		   const char *forwarded_to,
 		   const char *referer, const char *user_agent,
-		   http_status_t status, int64_t content_length,
+		   HttpStatus status, int64_t content_length,
 		   uint64_t bytes_received, uint64_t bytes_sent,
 		   std::chrono::steady_clock::duration duration) noexcept
 {
