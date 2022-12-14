@@ -35,9 +35,9 @@
 #include "Handler.hxx"
 #include "io/Logger.hxx"
 #include "util/Cancellable.hxx"
+#include "util/IntrusiveList.hxx"
 #include "AllocatorPtr.hxx"
 
-#include <boost/intrusive/list.hpp>
 #include <boost/intrusive/set.hpp>
 
 #include <string>
@@ -45,7 +45,7 @@
 struct NfsStockConnection;
 
 struct NfsStockRequest final
-	: boost::intrusive::list_base_hook<boost::intrusive::link_mode<boost::intrusive::normal_link>>,
+	: IntrusiveListHook<IntrusiveHookMode::NORMAL>,
 	  Cancellable {
 	NfsStockConnection &connection;
 
@@ -79,8 +79,7 @@ struct NfsStockConnection final
 
 	CancellablePointer cancel_ptr;
 
-	boost::intrusive::list<NfsStockRequest,
-			       boost::intrusive::constant_time_size<false>> requests;
+	IntrusiveList<NfsStockRequest> requests;
 
 	NfsStockConnection(NfsStock &_stock, const char *_key) noexcept
 		:stock(_stock), key(_key), client(nullptr) {}

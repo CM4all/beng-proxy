@@ -40,13 +40,13 @@
 #include "event/CoarseTimerEvent.hxx"
 #include "util/Cancellable.hxx"
 #include "util/Compiler.h"
+#include "util/IntrusiveList.hxx"
 #include "util/LeakDetector.hxx"
 
 extern "C" {
 #include <nfsc/libnfs.h>
 }
 
-#include <boost/intrusive/list.hpp>
 #include <boost/intrusive/set.hpp>
 
 #include <iterator>
@@ -64,7 +64,7 @@ class NfsFile;
  * (inside #NfsFile) is needed.
  */
 class NfsFileHandle final
-	: public boost::intrusive::list_base_hook<boost::intrusive::link_mode<boost::intrusive::normal_link>>,
+	: public IntrusiveListHook<IntrusiveHookMode::NORMAL>,
 	  Cancellable {
 
 	NfsFile &file;
@@ -169,7 +169,7 @@ public:
  * accept any more callers; a new one will be created on demand.
  */
 class NfsFile final
-	: public boost::intrusive::list_base_hook<boost::intrusive::link_mode<boost::intrusive::normal_link>>,
+	: public IntrusiveListHook<IntrusiveHookMode::NORMAL>,
 	  public boost::intrusive::set_base_hook<boost::intrusive::link_mode<boost::intrusive::normal_link>> {
 
 	NfsClient &client;
@@ -205,8 +205,7 @@ class NfsFile final
 	/**
 	 * An unordered list of #NfsFileHandle objects.
 	 */
-	boost::intrusive::list<NfsFileHandle,
-			       boost::intrusive::constant_time_size<false>> handles;
+	IntrusiveList<NfsFileHandle> handles;
 
 	/**
 	 * Keep track of active handles.  A #NfsFileHandle is "inactive"
@@ -360,8 +359,7 @@ class NfsClient final : Cancellable, LeakDetector {
 	 * An unordered list of all #NfsFile objects.  This includes all
 	 * file handles that may have expired already.
 	 */
-	boost::intrusive::list<NfsFile,
-			       boost::intrusive::constant_time_size<false>> file_list;
+	IntrusiveList<NfsFile> file_list;
 
 	/**
 	 * Map path names to #NfsFile.  This excludes expired files.

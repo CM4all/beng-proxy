@@ -52,9 +52,8 @@
 #include "event/Loop.hxx"
 #include "io/Logger.hxx"
 #include "util/Cancellable.hxx"
+#include "util/IntrusiveList.hxx"
 #include "util/LeakDetector.hxx"
-
-#include <boost/intrusive/list.hpp>
 
 #include <sys/stat.h>
 
@@ -65,7 +64,7 @@ struct NfsCacheItem;
 
 struct NfsCacheStore final
 	: PoolHolder,
-	  public boost::intrusive::list_base_hook<boost::intrusive::link_mode<boost::intrusive::auto_unlink>>,
+	  public IntrusiveListHook<IntrusiveHookMode::AUTO_UNLINK>,
 	  RubberSinkHandler, LeakDetector {
 
 	NfsCache &cache;
@@ -128,8 +127,7 @@ class NfsCache {
 	 * A list of requests that are currently saving their contents to
 	 * the cache.
 	 */
-	boost::intrusive::list<NfsCacheStore,
-			       boost::intrusive::constant_time_size<false>> requests;
+	IntrusiveList<NfsCacheStore> requests;
 
 public:
 	NfsCache(struct pool &_pool, size_t max_size, NfsStock &_stock,
