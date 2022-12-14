@@ -42,8 +42,6 @@
 #include "util/Sanitizer.hxx"
 #include "util/Valgrind.hxx"
 
-#include <boost/intrusive/list.hpp>
-
 #ifdef VALGRIND
 #include <valgrind/memcheck.h>
 #endif
@@ -78,8 +76,7 @@ static constexpr unsigned RECYCLER_MAX_LINEAR_AREAS = 256;
 
 #ifndef NDEBUG
 struct allocation_info {
-	typedef boost::intrusive::list_member_hook<boost::intrusive::link_mode<boost::intrusive::normal_link>> SiblingsHook;
-	SiblingsHook siblings;
+	IntrusiveListHook<IntrusiveHookMode::NORMAL> siblings;
 
 	size_t size;
 
@@ -103,8 +100,7 @@ enum pool_type {
 };
 
 struct libc_pool_chunk {
-	typedef boost::intrusive::list_member_hook<boost::intrusive::link_mode<boost::intrusive::normal_link>> SiblingsHook;
-	SiblingsHook siblings;
+	IntrusiveListHook<IntrusiveHookMode::NORMAL> siblings;
 
 #ifdef POISON
 	size_t size;
@@ -180,11 +176,8 @@ struct pool final
 	const char *const name;
 
 	union CurrentArea {
-		boost::intrusive::list<struct libc_pool_chunk,
-				       boost::intrusive::member_hook<struct libc_pool_chunk,
-								     libc_pool_chunk::SiblingsHook,
-								     &libc_pool_chunk::siblings>,
-				       boost::intrusive::constant_time_size<false>> libc;
+		IntrusiveList<struct libc_pool_chunk,
+			      IntrusiveListMemberHookTraits<&libc_pool_chunk::siblings>> libc;
 
 		struct linear_pool_area *linear;
 
@@ -193,11 +186,8 @@ struct pool final
 	} current_area;
 
 #ifndef NDEBUG
-	boost::intrusive::list<struct allocation_info,
-			       boost::intrusive::member_hook<struct allocation_info,
-							     allocation_info::SiblingsHook,
-							     &allocation_info::siblings>,
-			       boost::intrusive::constant_time_size<false>> allocations;
+	IntrusiveList<struct allocation_info,
+		      IntrusiveListMemberHookTraits<&allocation_info::siblings>> allocations;
 
 	IntrusiveList<PoolLeakDetector> leaks;
 #endif
