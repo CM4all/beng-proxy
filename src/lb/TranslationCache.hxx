@@ -84,7 +84,7 @@ public:
 	};
 
 private:
-	typedef ::Cache<std::string, Item, 32768, 4093> Cache;
+	typedef ::Cache<std::string, Item, 65536, 131071> Cache;
 	Cache cache;
 
 	Vary seen_vary;

@@ -342,7 +342,7 @@ struct tcache {
 	const PoolPtr pool;
 	SlicePool slice_pool;
 
-	static constexpr size_t N_BUCKETS = 65521;
+	static constexpr size_t N_BUCKETS = 131071;
 
 	/**
 	 * This hash table maps each host name to a
