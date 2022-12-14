@@ -36,9 +36,8 @@
 #include "memory/SlicePool.hxx"
 #include "memory/Rubber.hxx"
 #include "http/Status.h"
+#include "util/IntrusiveList.hxx"
 #include "cache.hxx"
-
-#include <boost/intrusive/list.hpp>
 
 #include <unordered_map>
 #include <string>
@@ -65,13 +64,8 @@ class HttpCacheHeap {
 
 	Cache cache;
 
-	using PerTagHook =
-		boost::intrusive::member_hook<HttpCacheItem,
-					      HttpCacheItem::PerTagHook,
-					      &HttpCacheItem::per_tag_siblings>;
-	using PerTagList =
-		boost::intrusive::list<HttpCacheItem, PerTagHook,
-				       boost::intrusive::constant_time_size<false>>;
+	using PerTagList = IntrusiveList<HttpCacheItem,
+					 IntrusiveListMemberHookTraits<&HttpCacheItem::per_tag_siblings>>;
 
 	/**
 	 * Lookup table to speed up FlushTag().

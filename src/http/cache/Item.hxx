@@ -36,8 +36,7 @@
 #include "pool/Holder.hxx"
 #include "cache.hxx"
 #include "memory/Rubber.hxx"
-
-#include <boost/intrusive/list_hook.hpp>
+#include "util/IntrusiveList.hxx"
 
 class UnusedIstreamPtr;
 
@@ -47,14 +46,10 @@ class HttpCacheItem final : PoolHolder, public HttpCacheDocument, public CacheIt
 	const RubberAllocation body;
 
 public:
-	using AutoUnlink =
-		boost::intrusive::link_mode<boost::intrusive::auto_unlink>;
-	using PerTagHook = boost::intrusive::list_member_hook<AutoUnlink>;
-
 	/**
 	 * A doubly linked list of cache items with the same cache tag.
 	 */
-	PerTagHook per_tag_siblings;
+	IntrusiveListHook<IntrusiveHookMode::AUTO_UNLINK> per_tag_siblings;
 
 	HttpCacheItem(PoolPtr &&_pool,
 		      std::chrono::steady_clock::time_point now,

@@ -53,9 +53,8 @@
 #include "io/Logger.hxx"
 #include "util/Cancellable.hxx"
 #include "util/Exception.hxx"
+#include "util/IntrusiveList.hxx"
 #include "util/RuntimeError.hxx"
-
-#include <boost/intrusive/list.hpp>
 
 #include <functional>
 
@@ -87,10 +86,7 @@ class HttpCacheRequest final : PoolHolder,
 			       RubberSinkHandler,
 			       Cancellable {
 public:
-	static constexpr auto link_mode = boost::intrusive::normal_link;
-	typedef boost::intrusive::link_mode<link_mode> LinkMode;
-	typedef boost::intrusive::list_member_hook<LinkMode> SiblingsHook;
-	SiblingsHook siblings;
+	IntrusiveListHook<IntrusiveHookMode::NORMAL> siblings;
 
 private:
 	PoolPtr caller_pool;
@@ -298,11 +294,8 @@ class HttpCache {
 	 * A list of requests that are currently saving their contents to
 	 * the cache.
 	 */
-	boost::intrusive::list<HttpCacheRequest,
-			       boost::intrusive::member_hook<HttpCacheRequest,
-							     HttpCacheRequest::SiblingsHook,
-							     &HttpCacheRequest::siblings>,
-			       boost::intrusive::constant_time_size<false>> requests;
+	IntrusiveList<HttpCacheRequest,
+		      IntrusiveListMemberHookTraits<&HttpCacheRequest::siblings>> requests;
 
 	const bool obey_no_cache;
 
