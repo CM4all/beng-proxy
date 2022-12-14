@@ -64,7 +64,7 @@ class FailureManager {
 				const Failure &b) const noexcept;
 	};
 
-	static constexpr size_t N_BUCKETS = 97;
+	static constexpr size_t N_BUCKETS = 3779;
 
 	using FailureSet = IntrusiveHashSet<Failure, N_BUCKETS, Hash, Equal>;
 

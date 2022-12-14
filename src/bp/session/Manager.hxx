@@ -102,7 +102,7 @@ class SessionManager {
 		}
 	};
 
-	static constexpr unsigned N_BUCKETS = 16381;
+	static constexpr unsigned N_BUCKETS = 65521;
 
 	using Set = IntrusiveHashSet<Session, N_BUCKETS,
 				     SessionHash, SessionEqual,

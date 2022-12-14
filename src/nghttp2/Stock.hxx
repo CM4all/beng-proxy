@@ -87,7 +87,7 @@ class Stock {
 		bool operator()(const Item &a, const Item &b) const noexcept;
 	};
 
-	using Set = IntrusiveHashSet<Item, 251, ItemHash, ItemEqual>;
+	using Set = IntrusiveHashSet<Item, 3779, ItemHash, ItemEqual>;
 	Set items;
 
 public:
