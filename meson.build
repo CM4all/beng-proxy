@@ -22,12 +22,6 @@ configure_file(output: 'lb_features.h', configuration: lb_features_config)
 compiler = meson.get_compiler('cpp')
 c_compiler = meson.get_compiler('c')
 
-pkg_mod = import('pkgconfig')
-pkg_mod.generate(version: meson.project_version(),
-                 name: 'libcm4all-beng-proxy3',
-                 description: 'CM4all BENG proxy library',
-                 install_dir: join_paths(get_option('datadir'), 'pkgconfig'))
-
 debug = get_option('b_ndebug') != 'true'
 
 common_flags = [
