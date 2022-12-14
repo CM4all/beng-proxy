@@ -80,8 +80,8 @@ public:
 public:
 	/* virtual methods from class CurlResponseHandler */
 
-	void OnHeaders(unsigned _status, Curl::Headers &&_headers) override {
-		status = static_cast<HttpStatus>(_status);
+	void OnHeaders(HttpStatus _status, Curl::Headers &&_headers) override {
+		status = _status;
 		headers = std::move(_headers);
 	}
 
