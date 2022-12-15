@@ -825,6 +825,7 @@ test(
     't_istream_replace.cxx',
     't_istream_subst.cxx',
     'TestAutoPipeIstream.cxx',
+    'TestBrotliEncoderIstream.cxx',
     'TestBufferedIstream.cxx',
     '../src/pipe_stock.cxx',
     '../src/PipeLease.cxx',

@@ -3,6 +3,7 @@
 
 MESON_OPTIONS = \
 	-Ddocumentation=enabled \
+	-Dbrotli=enabled \
 	-Dhttp2=enabled \
 	-Dnfs=enabled \
 	-Dsystemd=true \

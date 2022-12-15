@@ -60,6 +60,7 @@
 #include "TextProcessor.hxx"
 #include "istream/istream_deflate.hxx"
 #include "istream/AutoPipeIstream.hxx"
+#include "istream/BrotliEncoderIstream.hxx"
 #include "istream/YamlSubstIstream.hxx"
 #include "istream/istream_string.hxx"
 #include "AllocatorPtr.hxx"
@@ -147,6 +148,18 @@ Request::AutoDeflate(HttpHeaders &response_headers,
 			response_body = istream_deflate_new(pool, std::move(response_body),
 							    instance.event_loop);
 		}
+#ifdef HAVE_BROTLI
+	} else if (response_body &&
+		   translate.response->auto_brotli &&
+		   http_client_accepts_encoding(request.headers, "br") &&
+		   response_headers.Get("content-encoding") == nullptr) {
+		auto available = response_body.GetAvailable(false);
+		if (available < 0 || available >= 512) {
+			compressed = true;
+			response_headers.Write("content-encoding", "br");
+			response_body = NewBrotliEncoderIstream(pool, std::move(response_body));
+		}
+#endif
 	} else if (response_body &&
 		   translate.response->auto_gzip &&
 		   http_client_accepts_encoding(request.headers, "gzip") &&

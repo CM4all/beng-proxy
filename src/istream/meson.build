@@ -65,6 +65,13 @@ if uring_dep.found()
   istream_sources += 'UringIstream.cxx'
 endif
 
+libbrotlienc = dependency('libbrotlienc',
+                          required: get_option('brotli'))
+if libbrotlienc.found()
+  istream_compile_args += '-DHAVE_BROTLI'
+  istream_sources += 'BrotliEncoderIstream.cxx'
+endif
+
 libyamlcpp = dependency('yaml-cpp',
                         fallback: ['yaml-cpp', 'libyamlcpp_dep'],
                         required: get_option('yaml'))
@@ -111,6 +118,7 @@ istream = static_library(
   include_directories: inc,
   dependencies: [
     zlib,
+    libbrotlienc,
     libyamlcpp,
   ],
 )

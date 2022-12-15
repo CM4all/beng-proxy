@@ -275,6 +275,7 @@ class Translation(Protocol):
             response.packet(TRANSLATE_ACTION, '/usr/bin/php-cgi')
             response.packet(TRANSLATE_FILE_NOT_FOUND, '404')
             response.packet(TRANSLATE_ENOTDIR, 'foo')
+            response.packet(TRANSLATE_AUTO_BROTLI)
         elif uri[-3:] == '.py':
             # run Python-CGI
             response.packet(TRANSLATE_EASY_BASE)

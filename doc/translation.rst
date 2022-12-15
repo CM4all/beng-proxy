@@ -777,6 +777,10 @@ served.  The following packets are available:
   the ``gzip`` encoding. This consumes a lot of CPU and should only be
   used for dynamic responses which can be compressed well.
 
+- ``AUTO_BROTLI``: Compress the response on-the-fly if the client
+  accepts the ``br`` encoding.  This consumes a lot of CPU and should
+  only be used for dynamic responses which can be compressed well.
+
 - ``CONTENT_TYPE``: MIME type of the file (optional)
 
 - ``EXPIRES_RELATIVE``: Generate an ``Expires`` response header. The
