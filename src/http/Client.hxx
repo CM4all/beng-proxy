@@ -36,10 +36,10 @@
 
 #pragma once
 
-#include "http/Method.h"
-
+#include <cstdint>
 #include <stdexcept>
 
+enum class HttpMethod : uint_least8_t;
 struct pool;
 class StopwatchPtr;
 class UnusedIstreamPtr;
@@ -126,7 +126,7 @@ http_client_request(struct pool &pool,
 		    StopwatchPtr stopwatch,
 		    FilteredSocket &socket, Lease &lease,
 		    const char *peer_name,
-		    http_method_t method, const char *uri,
+		    HttpMethod method, const char *uri,
 		    const StringMap &headers,
 		    GrowingBuffer &&more_headers,
 		    UnusedIstreamPtr body, bool expect_100,

@@ -32,12 +32,15 @@
 
 #pragma once
 
-#include "http/Method.h"
 #include "istream/UnusedHoldPtr.hxx"
 #include "strmap.hxx"
 
+#include <cstdint>
+
+enum class HttpMethod : uint_least8_t;
+
 struct PendingHttpRequest {
-	http_method_t method;
+	HttpMethod method;
 
 	const char *uri;
 
@@ -47,7 +50,7 @@ struct PendingHttpRequest {
 
 	template<typename H, typename B>
 	PendingHttpRequest(struct pool &pool,
-			   http_method_t _method, const char *_uri,
+			   HttpMethod _method, const char *_uri,
 			   H &&_headers, B &&_body) noexcept
 		:method(_method), uri(_uri),
 		 headers(std::forward<H>(_headers)),

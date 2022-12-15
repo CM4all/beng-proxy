@@ -32,8 +32,9 @@
 
 #pragma once
 
-#include "http/Method.h"
+#include <cstdint>
 
+#include "http/Method.hxx"
 struct pool;
 class EventLoop;
 class StopwatchPtr;
@@ -53,7 +54,7 @@ lhttp_request(struct pool &pool, EventLoop &event_loop,
 	      const StopwatchPtr &parent_stopwatch,
 	      const char *site_name,
 	      const LhttpAddress &address,
-	      http_method_t method,
+	      HttpMethod method,
 	      StringMap &&headers, UnusedIstreamPtr body,
 	      HttpResponseHandler &handler,
 	      CancellablePointer &cancel_ptr) noexcept;

@@ -61,7 +61,7 @@
 
 static void
 RunNull(WasServer &server, struct pool &,
-	http_method_t,
+	HttpMethod,
 	const char *, StringMap &&,
 	UnusedIstreamPtr body)
 {
@@ -72,7 +72,7 @@ RunNull(WasServer &server, struct pool &,
 
 static void
 RunHello(WasServer &server, struct pool &pool,
-	 http_method_t,
+	 HttpMethod,
 	 const char *, StringMap &&,
 	 UnusedIstreamPtr body)
 {
@@ -84,7 +84,7 @@ RunHello(WasServer &server, struct pool &pool,
 
 static void
 RunHuge(WasServer &server, struct pool &pool,
-	http_method_t ,
+	HttpMethod ,
 	const char *, StringMap &&,
 	UnusedIstreamPtr body)
 {
@@ -98,7 +98,7 @@ RunHuge(WasServer &server, struct pool &pool,
 
 static void
 RunHold(WasServer &server, struct pool &pool,
-	http_method_t,
+	HttpMethod,
 	const char *, StringMap &&,
 	UnusedIstreamPtr body)
 {
@@ -110,7 +110,7 @@ RunHold(WasServer &server, struct pool &pool,
 
 static void
 RunBlock(WasServer &server, struct pool &pool,
-	http_method_t,
+	HttpMethod,
 	const char *, StringMap &&,
 	UnusedIstreamPtr body)
 {
@@ -122,7 +122,7 @@ RunBlock(WasServer &server, struct pool &pool,
 
 static void
 RunNop(WasServer &, struct pool &,
-       http_method_t ,
+       HttpMethod ,
        const char *, StringMap &&,
        UnusedIstreamPtr) noexcept
 {
@@ -130,7 +130,7 @@ RunNop(WasServer &, struct pool &,
 
 static void
 RunMirror(WasServer &server, struct pool &,
-	  http_method_t,
+	  HttpMethod,
 	  const char *, StringMap &&headers,
 	  UnusedIstreamPtr body)
 {
@@ -141,7 +141,7 @@ RunMirror(WasServer &server, struct pool &,
 
 static void
 RunMalformedHeaderName(WasServer &server, struct pool &pool,
-		       http_method_t, const char *, StringMap &&,
+		       HttpMethod, const char *, StringMap &&,
 		       UnusedIstreamPtr body)
 {
 	body.Clear();
@@ -154,7 +154,7 @@ RunMalformedHeaderName(WasServer &server, struct pool &pool,
 
 static void
 RunMalformedHeaderValue(WasServer &server, struct pool &pool,
-			http_method_t, const char *, StringMap &&,
+			HttpMethod, const char *, StringMap &&,
 			UnusedIstreamPtr body)
 {
 	body.Clear();
@@ -167,7 +167,7 @@ RunMalformedHeaderValue(WasServer &server, struct pool &pool,
 
 static void
 RunValidPremature(WasServer &server, struct pool &pool,
-		  http_method_t,
+		  HttpMethod,
 		  const char *, StringMap &&,
 		  UnusedIstreamPtr body)
 {
@@ -316,7 +316,7 @@ class WasConnection final : public ClientConnection, WasServerHandler, WasLease
 	Lease *lease;
 
 	typedef std::function<void(WasServer &server, struct pool &pool,
-				   http_method_t method,
+				   HttpMethod method,
 				   const char *uri, StringMap &&headers,
 				   UnusedIstreamPtr body)> Callback;
 
@@ -359,7 +359,7 @@ public:
 
 	void Request(struct pool &pool,
 		     Lease &_lease,
-		     http_method_t method, const char *uri,
+		     HttpMethod method, const char *uri,
 		     StringMap &&headers, UnusedIstreamPtr body,
 		     [[maybe_unused]] bool expect_100,
 		     HttpResponseHandler &handler,
@@ -380,7 +380,7 @@ public:
 
 	/* virtual methods from class WasServerHandler */
 
-	void OnWasRequest(struct pool &pool, http_method_t method,
+	void OnWasRequest(struct pool &pool, HttpMethod method,
 			  const char *uri, StringMap &&headers,
 			  UnusedIstreamPtr body) noexcept override {
 		callback(*server, pool, method, uri,
@@ -484,7 +484,7 @@ test_malformed_header_name(auto &factory, Context &c) noexcept
 {
 	c.connection = factory.NewMalformedHeaderName(*c.pool, c.event_loop);
 	c.connection->Request(c.pool, c,
-			      HTTP_METHOD_GET, "/foo", {},
+			      HttpMethod::GET, "/foo", {},
 			      nullptr,
 			      false,
 
@@ -502,7 +502,7 @@ test_malformed_header_value(auto &factory, Context &c) noexcept
 {
 	c.connection = factory.NewMalformedHeaderValue(*c.pool, c.event_loop);
 	c.connection->Request(c.pool, c,
-			      HTTP_METHOD_GET, "/foo", {},
+			      HttpMethod::GET, "/foo", {},
 			      nullptr,
 			      false,
 

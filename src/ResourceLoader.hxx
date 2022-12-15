@@ -33,8 +33,10 @@
 #pragma once
 
 #include "cluster/StickyHash.hxx"
-#include "http/Method.h"
 
+#include <cstdint>
+
+enum class HttpMethod : uint_least8_t;
 enum class HttpStatus : uint_least16_t;
 struct pool;
 class StopwatchPtr;
@@ -92,7 +94,7 @@ public:
 	virtual void SendRequest(struct pool &pool,
 				 const StopwatchPtr &parent_stopwatch,
 				 const ResourceRequestParams &params,
-				 http_method_t method,
+				 HttpMethod method,
 				 const ResourceAddress &address,
 				 HttpStatus status, StringMap &&headers,
 				 UnusedIstreamPtr body, const char *body_etag,

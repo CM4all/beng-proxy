@@ -31,11 +31,13 @@
  */
 
 #include "fcgi/Protocol.hxx"
-#include "http/Method.h"
+
+#include <cstdint>
 
 #include <sys/types.h>
 #include <string.h>
 
+enum class HttpMethod : uint_least8_t;
 enum class HttpStatus : uint_least16_t;
 struct pool;
 class StringMap;
@@ -44,7 +46,7 @@ struct fcgi_record_header;
 struct FcgiRequest {
 	uint16_t id;
 
-	http_method_t method;
+	HttpMethod method;
 	const char *uri;
 	StringMap *headers;
 

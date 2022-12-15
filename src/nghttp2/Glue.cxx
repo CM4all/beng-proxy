@@ -62,7 +62,7 @@ public:
 		    HttpResponseHandler &_handler,
 		    const StopwatchPtr &parent_stopwatch,
 		    SocketFilterFactory *_filter_factory,
-		    http_method_t _method,
+		    HttpMethod _method,
 		    const HttpAddress &_address,
 		    StringMap &&_headers, UnusedIstreamPtr _body,
 		    CancellablePointer &_caller_cancel_ptr) noexcept
@@ -151,7 +151,7 @@ void
 SendRequest(AllocatorPtr alloc, EventLoop &event_loop, Stock &stock,
 	    const StopwatchPtr &parent_stopwatch,
 	    SocketFilterFactory *filter_factory,
-	    http_method_t method,
+	    HttpMethod method,
 	    const HttpAddress &address,
 	    StringMap &&headers, UnusedIstreamPtr body,
 	    AlpnHandler *alpn_handler,

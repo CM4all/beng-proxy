@@ -32,10 +32,10 @@
 
 #pragma once
 
-#include "http/Method.h"
-
+#include <cstdint>
 #include <memory>
 
+enum class HttpMethod : uint_least8_t;
 struct HttpAddress;
 struct PendingHttpRequest;
 class AllocatorPtr;
@@ -88,7 +88,7 @@ void
 SendRequest(AllocatorPtr alloc, EventLoop &event_loop, Stock &stock,
 	    const StopwatchPtr &parent_stopwatch,
 	    SocketFilterFactory *filter_factory,
-	    http_method_t method,
+	    HttpMethod method,
 	    const HttpAddress &address,
 	    StringMap &&headers, UnusedIstreamPtr body,
 	    AlpnHandler *alpn_handler,

@@ -49,6 +49,7 @@
 #include "io/Logger.hxx"
 #include "io/SpliceSupport.hxx"
 #include "http/HeaderName.hxx"
+#include "http/Method.hxx"
 #include "util/ConstBuffer.hxx"
 #include "util/Cancellable.hxx"
 #include "util/PrintException.hxx"
@@ -239,7 +240,7 @@ try {
 			   context.process.output,
 			   context,
 			   nullptr,
-			   HTTP_METHOD_GET, uri,
+			   HttpMethod::GET, uri,
 			   nullptr,
 			   nullptr, nullptr,
 			   headers,

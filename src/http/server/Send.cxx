@@ -33,6 +33,7 @@
 #include "Internal.hxx"
 #include "Request.hxx"
 #include "http/Headers.hxx"
+#include "http/Method.hxx"
 #include "http/Upgrade.hxx"
 #include "memory/GrowingBuffer.hxx"
 #include "memory/istream_gb.hxx"

@@ -36,6 +36,7 @@
 #include "Ref.hxx"
 #include "uri/PRelative.hxx"
 #include "util/StringSplit.hxx"
+#include "http/Method.hxx"
 #include "AllocatorPtr.hxx"
 
 #include <string.h>
@@ -71,7 +72,7 @@ Widget::CopyFromRequest()
 	assert(from_request.path_info == nullptr);
 	assert(from_request.query_string.empty());
 	assert(from_request.focus_ref == nullptr);
-	assert(from_request.method == HTTP_METHOD_GET);
+	assert(from_request.method == HttpMethod::GET);
 	assert(!from_request.body);
 
 	if (id == nullptr)
@@ -116,7 +117,7 @@ Widget::CopyFromRedirectLocation(std::string_view location,
 {
 	assert(cls != nullptr);
 
-	from_request.method = HTTP_METHOD_GET;
+	from_request.method = HttpMethod::GET;
 	from_request.body = nullptr;
 
 	const auto [_path_info, _query_string] = Split(location, '?');

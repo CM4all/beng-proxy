@@ -38,7 +38,7 @@ void
 MirrorResourceLoader::SendRequest(struct pool &,
 				  const StopwatchPtr &,
 				  const ResourceRequestParams &,
-				  http_method_t,
+				  HttpMethod,
 				  const ResourceAddress &,
 				  HttpStatus,
 				  StringMap &&headers,

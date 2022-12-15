@@ -78,7 +78,7 @@ void
 DirectResourceLoader::SendRequest(struct pool &pool,
 				  const StopwatchPtr &parent_stopwatch,
 				  const ResourceRequestParams &params,
-				  http_method_t method,
+				  HttpMethod method,
 				  const ResourceAddress &address,
 				  HttpStatus status, StringMap &&headers,
 				  UnusedIstreamPtr body,

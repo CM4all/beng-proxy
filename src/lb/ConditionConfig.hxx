@@ -32,6 +32,7 @@
 
 #pragma once
 
+#include "http/Method.hxx"
 #include "lib/pcre/UniqueRegex.hxx"
 #include "net/MaskedSocketAddress.hxx"
 #include "util/Compiler.h"

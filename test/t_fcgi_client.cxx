@@ -93,7 +93,7 @@ fcgi_server_mirror(struct pool *pool)
 
 	write_fcgi_headers(&request, status, request.headers);
 
-	if (request.method == HTTP_METHOD_HEAD)
+	if (request.method == HttpMethod::HEAD)
 		discard_fcgi_request_body(&request);
 	else {
 		while (true) {
@@ -295,7 +295,7 @@ public:
 
 	void Request(struct pool &pool,
 		     Lease &lease,
-		     http_method_t method, const char *uri,
+		     HttpMethod method, const char *uri,
 		     StringMap &&headers, UnusedIstreamPtr body,
 		     [[maybe_unused]] bool expect_100,
 		     HttpResponseHandler &handler,
@@ -440,7 +440,7 @@ test_malformed_header_name(auto &factory, Context &c) noexcept
 {
 	c.connection = factory.NewMalformedHeaderName(*c.pool, c.event_loop);
 	c.connection->Request(c.pool, c,
-			      HTTP_METHOD_GET, "/foo", {},
+			      HttpMethod::GET, "/foo", {},
 			      nullptr,
 			      false,
 
@@ -458,7 +458,7 @@ test_malformed_header_value(auto &factory, Context &c) noexcept
 {
 	c.connection = factory.NewMalformedHeaderValue(*c.pool, c.event_loop);
 	c.connection->Request(c.pool, c,
-			      HTTP_METHOD_GET, "/foo", {},
+			      HttpMethod::GET, "/foo", {},
 			      nullptr,
 			      false,
 

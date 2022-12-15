@@ -34,12 +34,12 @@
 
 #include "strmap.hxx"
 #include "net/SocketAddress.hxx"
-#include "http/Method.h"
 #include "pool/Ptr.hxx"
 #include "istream/UnusedPtr.hxx"
 
 #include <string_view>
 
+enum class HttpMethod : uint_least8_t;
 enum class HttpStatus : uint_least16_t;
 struct pool;
 class StringMap;
@@ -62,7 +62,7 @@ struct IncomingHttpRequest {
 	const char *const remote_host;
 
 	/* request metadata */
-	http_method_t method;
+	HttpMethod method;
 	const char *uri;
 	StringMap headers;
 
@@ -86,7 +86,7 @@ protected:
 			    SocketAddress _remote_address,
 			    const char *_local_host_and_port,
 			    const char *_remote_host,
-			    http_method_t _method,
+			    HttpMethod _method,
 			    std::string_view _uri) noexcept;
 
 	~IncomingHttpRequest() noexcept;

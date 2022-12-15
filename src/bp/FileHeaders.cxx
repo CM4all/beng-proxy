@@ -40,6 +40,7 @@
 #include "translation/Vary.hxx"
 #include "http/List.hxx"
 #include "http/Date.hxx"
+#include "http/Method.hxx"
 #include "event/Loop.hxx"
 #include "io/FileDescriptor.hxx"
 
@@ -176,7 +177,7 @@ Request::EvaluateFileRequest(FileDescriptor fd, const struct statx &st,
 	const auto &tr = *translate.response;
 	bool ignore_if_modified_since = false;
 
-	if (tr.status == HttpStatus{} && request.method == HTTP_METHOD_GET &&
+	if (tr.status == HttpStatus{} && request.method == HttpMethod::GET &&
 	    !IsTransformationEnabled()) {
 		const char *p = request_headers.Get("range");
 

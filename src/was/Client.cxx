@@ -47,6 +47,7 @@
 #include "io/FileDescriptor.hxx"
 #include "event/FineTimerEvent.hxx"
 #include "http/HeaderName.hxx"
+#include "http/Method.hxx"
 #include "util/Cancellable.hxx"
 #include "util/DestructObserver.hxx"
 #include "util/Exception.hxx"
@@ -161,12 +162,12 @@ public:
 		  SocketDescriptor control_fd,
 		  FileDescriptor input_fd, FileDescriptor output_fd,
 		  WasLease &_lease,
-		  http_method_t method, UnusedIstreamPtr body,
+		  HttpMethod method, UnusedIstreamPtr body,
 		  HttpResponseHandler &_handler,
 		  CancellablePointer &cancel_ptr);
 
 	void SendRequest(const char *remote_host,
-			 http_method_t method, const char *uri,
+			 HttpMethod method, const char *uri,
 			 const char *script_name, const char *path_info,
 			 const char *query_string,
 			 const StringMap &headers,
@@ -853,7 +854,7 @@ WasClient::WasClient(struct pool &_pool, struct pool &_caller_pool,
 		     SocketDescriptor control_fd,
 		     FileDescriptor input_fd, FileDescriptor output_fd,
 		     WasLease &_lease,
-		     http_method_t method, UnusedIstreamPtr body,
+		     HttpMethod method, UnusedIstreamPtr body,
 		     HttpResponseHandler &_handler,
 		     CancellablePointer &cancel_ptr)
 	:PoolLeakDetector(_pool),
@@ -878,7 +879,7 @@ WasClient::WasClient(struct pool &_pool, struct pool &_caller_pool,
 static bool
 SendRequest(Was::Control &control,
 	    const char *remote_host,
-	    http_method_t method, const char *uri,
+	    HttpMethod method, const char *uri,
 	    const char *script_name, const char *path_info,
 	    const char *query_string,
 	    const StringMap &headers, WasOutput *request_body,
@@ -887,7 +888,7 @@ SendRequest(Was::Control &control,
 	const uint32_t method32 = (uint32_t)method;
 
 	return control.SendEmpty(WAS_COMMAND_REQUEST) &&
-		(method == HTTP_METHOD_GET ||
+		(method == HttpMethod::GET ||
 		 control.Send(WAS_COMMAND_METHOD, &method32, sizeof(method32))) &&
 		control.SendString(WAS_COMMAND_URI, uri) &&
 		(script_name == nullptr ||
@@ -908,7 +909,7 @@ SendRequest(Was::Control &control,
 
 inline void
 WasClient::SendRequest(const char *remote_host,
-		       http_method_t method, const char *uri,
+		       HttpMethod method, const char *uri,
 		       const char *script_name, const char *path_info,
 		       const char *query_string,
 		       const StringMap &headers,
@@ -928,7 +929,7 @@ was_client_request(struct pool &caller_pool, EventLoop &event_loop,
 		   FileDescriptor input_fd, FileDescriptor output_fd,
 		   WasLease &lease,
 		   const char *remote_host,
-		   http_method_t method, const char *uri,
+		   HttpMethod method, const char *uri,
 		   const char *script_name, const char *path_info,
 		   const char *query_string,
 		   const StringMap &headers, UnusedIstreamPtr body,

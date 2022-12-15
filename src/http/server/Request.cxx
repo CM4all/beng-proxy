@@ -43,7 +43,7 @@ HttpServerRequest::HttpServerRequest(PoolPtr &&_pool,
 				     SocketAddress _remote_address,
 				     const char *_local_host_and_port,
 				     const char *_remote_host,
-				     http_method_t _method,
+				     HttpMethod _method,
 				     std::string_view _uri) noexcept
 	:IncomingHttpRequest(std::move(_pool),
 			     _local_address, _remote_address,

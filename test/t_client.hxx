@@ -30,6 +30,7 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "http/Method.hxx"
 #include "http/ResponseHandler.hxx"
 #include "lease.hxx"
 #include "istream/istream.hxx"
@@ -64,8 +65,6 @@
 #include "http/Client.hxx"
 #endif
 
-#include "http/Method.h"
-
 #include <stdexcept>
 
 #include <stdlib.h>
@@ -91,7 +90,7 @@ public:
 
 	virtual void Request(struct pool &pool,
 			     Lease &lease,
-			     http_method_t method, const char *uri,
+			     HttpMethod method, const char *uri,
 			     StringMap &&headers,
 			     UnusedIstreamPtr body,
 			     bool expect_100,
@@ -548,7 +547,7 @@ test_empty(auto &factory, Context &c) noexcept
 {
 	c.connection = factory.NewMirror(*c.pool, c.event_loop);
 	c.connection->Request(c.pool, c,
-			      HTTP_METHOD_GET, "/foo", {},
+			      HttpMethod::GET, "/foo", {},
 			      nullptr,
 			      false,
 			      c, c.cancel_ptr);
@@ -572,7 +571,7 @@ test_body(auto &factory, Context &c) noexcept
 {
 	c.connection = factory.NewMirror(*c.pool, c.event_loop);
 	c.connection->Request(c.pool, c,
-			      HTTP_METHOD_GET, "/foo", {},
+			      HttpMethod::GET, "/foo", {},
 			      istream_string_new(*c.pool, "foobar"),
 			      false,
 			      c, c.cancel_ptr);
@@ -604,7 +603,7 @@ test_read_body(auto &factory, Context &c) noexcept
 	c.read_response_body = true;
 	c.connection = factory.NewMirror(*c.pool, c.event_loop);
 	c.connection->Request(c.pool, c,
-			      HTTP_METHOD_GET, "/foo", {},
+			      HttpMethod::GET, "/foo", {},
 			      istream_string_new(*c.pool, "foobar"),
 			      false,
 			      c, c.cancel_ptr);
@@ -634,7 +633,7 @@ test_huge(auto &factory, Context &c) noexcept
 	c.close_response_body_data = true;
 	c.connection = factory.NewHuge(*c.pool, c.event_loop);
 	c.connection->Request(c.pool, c,
-			      HTTP_METHOD_GET, "/foo", {},
+			      HttpMethod::GET, "/foo", {},
 			      nullptr,
 			      false,
 			      c, c.cancel_ptr);
@@ -658,7 +657,7 @@ test_close_response_body_early(auto &factory, Context &c) noexcept
 	c.close_response_body_early = true;
 	c.connection = factory.NewMirror(*c.pool, c.event_loop);
 	c.connection->Request(c.pool, c,
-			      HTTP_METHOD_GET, "/foo", {},
+			      HttpMethod::GET, "/foo", {},
 			      istream_string_new(*c.pool, "foobar"),
 			      false,
 			      c, c.cancel_ptr);
@@ -682,7 +681,7 @@ test_close_response_body_late(auto &factory, Context &c) noexcept
 	c.close_response_body_late = true;
 	c.connection = factory.NewMirror(*c.pool, c.event_loop);
 	c.connection->Request(c.pool, c,
-			      HTTP_METHOD_GET, "/foo", {},
+			      HttpMethod::GET, "/foo", {},
 			      istream_string_new(*c.pool, "foobar"),
 			      false,
 			      c, c.cancel_ptr);
@@ -707,7 +706,7 @@ test_close_response_body_data(auto &factory, Context &c) noexcept
 	c.close_response_body_data = true;
 	c.connection = factory.NewMirror(*c.pool, c.event_loop);
 	c.connection->Request(c.pool, c,
-			      HTTP_METHOD_GET, "/foo", {},
+			      HttpMethod::GET, "/foo", {},
 			      istream_string_new(*c.pool, "foobar"),
 			      false,
 			      c, c.cancel_ptr);
@@ -735,7 +734,7 @@ test_close_response_body_after(auto &factory, Context &c) noexcept
 	c.close_response_body_after = 16384;
 	c.connection = factory.NewHuge(*c.pool, c.event_loop);
 	c.connection->Request(c.pool, c,
-			      HTTP_METHOD_GET, "/foo", {},
+			      HttpMethod::GET, "/foo", {},
 			      nullptr,
 			      false,
 			      c, c.cancel_ptr);
@@ -781,7 +780,7 @@ test_close_request_body_early(auto &factory, Context &c) noexcept
 {
 	c.connection = factory.NewMirror(*c.pool, c.event_loop);
 	c.connection->Request(c.pool, c,
-			      HTTP_METHOD_GET, "/foo", {},
+			      HttpMethod::GET, "/foo", {},
 			      wrap_fake_request_body(c.pool, make_delayed_request_body(c)),
 			      false,
 			      c, c.cancel_ptr);
@@ -813,7 +812,7 @@ test_close_request_body_fail(auto &factory, Context &c) noexcept
 	c.delayed = &delayed.second;
 	c.connection = factory.NewMirror(*c.pool, c.event_loop);
 	c.connection->Request(c.pool, c,
-			      HTTP_METHOD_GET, "/foo", {},
+			      HttpMethod::GET, "/foo", {},
 			      wrap_fake_request_body(c.pool, std::move(request_body)),
 			      false,
 			      c, c.cancel_ptr);
@@ -853,7 +852,7 @@ test_data_blocking(auto &factory, Context &c) noexcept
 	c.data_blocking = 5;
 	c.connection = factory.NewMirror(*c.pool, c.event_loop);
 	c.connection->Request(c.pool, c,
-			      HTTP_METHOD_GET, "/foo", {},
+			      HttpMethod::GET, "/foo", {},
 			      wrap_fake_request_body(c.pool, std::move(request_body)),
 			      false,
 			      c, c.cancel_ptr);
@@ -918,7 +917,7 @@ test_data_blocking2(auto &factory, Context &c) noexcept
 	c.response_body_byte = true;
 	c.connection = factory.NewMirror(*c.pool, c.event_loop);
 	c.connection->Request(c.pool, c,
-			      HTTP_METHOD_GET, "/foo", std::move(request_headers),
+			      HttpMethod::GET, "/foo", std::move(request_headers),
 			      istream_head_new(*c.pool, istream_zero_new(*c.pool),
 					       body_size, true),
 			      false,
@@ -961,7 +960,7 @@ test_body_fail(auto &factory, Context &c) noexcept
 	const std::runtime_error error("body_fail");
 
 	c.connection->Request(c.pool, c,
-			      HTTP_METHOD_GET, "/foo", {},
+			      HttpMethod::GET, "/foo", {},
 			      wrap_fake_request_body(c.pool, istream_fail_new(*c.pool, std::make_exception_ptr(error))),
 			      false,
 			      c, c.cancel_ptr);
@@ -985,7 +984,7 @@ test_head(auto &factory, Context &c) noexcept
 {
 	c.connection = factory.NewMirror(*c.pool, c.event_loop);
 	c.connection->Request(c.pool, c,
-			      HTTP_METHOD_HEAD, "/foo", {},
+			      HttpMethod::HEAD, "/foo", {},
 			      istream_string_new(*c.pool, "foobar"),
 			      false,
 			      c, c.cancel_ptr);
@@ -1013,7 +1012,7 @@ test_head_discard(auto &factory, Context &c) noexcept
 {
 	c.connection = factory.NewFixed(*c.pool, c.event_loop);
 	c.connection->Request(c.pool, c,
-			      HTTP_METHOD_HEAD, "/foo", {},
+			      HttpMethod::HEAD, "/foo", {},
 			      nullptr,
 			      false,
 			      c, c.cancel_ptr);
@@ -1038,7 +1037,7 @@ test_head_discard2(auto &factory, Context &c) noexcept
 {
 	c.connection = factory.NewTiny(*c.pool, c.event_loop);
 	c.connection->Request(c.pool, c,
-			      HTTP_METHOD_HEAD, "/foo", {},
+			      HttpMethod::HEAD, "/foo", {},
 			      nullptr,
 			      false,
 			      c, c.cancel_ptr);
@@ -1063,7 +1062,7 @@ test_ignored_body(auto &factory, Context &c) noexcept
 {
 	c.connection = factory.NewNull(*c.pool, c.event_loop);
 	c.connection->Request(c.pool, c,
-			      HTTP_METHOD_GET, "/foo", {},
+			      HttpMethod::GET, "/foo", {},
 			      wrap_fake_request_body(c.pool, istream_zero_new(*c.pool)),
 			      false,
 			      c, c.cancel_ptr);
@@ -1092,7 +1091,7 @@ test_close_ignored_request_body(auto &factory, Context &c) noexcept
 	c.connection = factory.NewNull(*c.pool, c.event_loop);
 	c.close_request_body_early = true;
 	c.connection->Request(c.pool, c,
-			      HTTP_METHOD_GET, "/foo", {},
+			      HttpMethod::GET, "/foo", {},
 			      wrap_fake_request_body(c.pool, make_delayed_request_body(c)),
 			      false,
 			      c, c.cancel_ptr);
@@ -1119,7 +1118,7 @@ test_head_close_ignored_request_body(auto &factory, Context &c) noexcept
 	c.connection = factory.NewNull(*c.pool, c.event_loop);
 	c.close_request_body_early = true;
 	c.connection->Request(c.pool, c,
-			      HTTP_METHOD_HEAD, "/foo", {},
+			      HttpMethod::HEAD, "/foo", {},
 			      wrap_fake_request_body(c.pool, make_delayed_request_body(c)),
 			      false,
 			      c, c.cancel_ptr);
@@ -1145,7 +1144,7 @@ test_close_request_body_eor(auto &factory, Context &c) noexcept
 	c.connection = factory.NewDummy(*c.pool, c.event_loop);
 	c.close_request_body_eof = true;
 	c.connection->Request(c.pool, c,
-			      HTTP_METHOD_GET, "/foo", {},
+			      HttpMethod::GET, "/foo", {},
 			      wrap_fake_request_body(c.pool, make_delayed_request_body(c)),
 			      false,
 			      c, c.cancel_ptr);
@@ -1171,7 +1170,7 @@ test_close_request_body_eor2(auto &factory, Context &c) noexcept
 	c.connection = factory.NewFixed(*c.pool, c.event_loop);
 	c.close_request_body_eof = true;
 	c.connection->Request(c.pool, c,
-			      HTTP_METHOD_GET, "/foo", {},
+			      HttpMethod::GET, "/foo", {},
 			      make_delayed_request_body(c),
 			      false,
 			      c, c.cancel_ptr);
@@ -1201,7 +1200,7 @@ test_bogus_100(auto &factory, Context &c) noexcept
 {
 	c.connection = factory.NewTwice100(*c.pool, c.event_loop);
 	c.connection->Request(c.pool, c,
-			      HTTP_METHOD_GET, "/foo", {},
+			      HttpMethod::GET, "/foo", {},
 			      nullptr, false,
 			      c, c.cancel_ptr);
 
@@ -1234,7 +1233,7 @@ test_twice_100(auto &factory, Context &c) noexcept
 	delayed.second.cancel_ptr = nullptr;
 	c.request_body = &delayed.second;
 	c.connection->Request(c.pool, c,
-			      HTTP_METHOD_GET, "/foo", {},
+			      HttpMethod::GET, "/foo", {},
 			      std::move(delayed.first),
 			      false,
 			      c, c.cancel_ptr);
@@ -1266,7 +1265,7 @@ test_close_100(auto &factory, Context &c) noexcept
 
 	c.connection = factory.NewClose100(*c.pool, c.event_loop);
 	c.connection->Request(c.pool, c,
-			      HTTP_METHOD_POST, "/foo", {},
+			      HttpMethod::POST, "/foo", {},
 			      std::move(request_body.first), true,
 			      c, c.cancel_ptr);
 
@@ -1295,7 +1294,7 @@ test_no_body_while_sending(auto &factory, Context &c) noexcept
 {
 	c.connection = factory.NewNull(*c.pool, c.event_loop);
 	c.connection->Request(c.pool, c,
-			      HTTP_METHOD_GET, "/foo", {},
+			      HttpMethod::GET, "/foo", {},
 			      wrap_fake_request_body(c.pool, istream_block_new(*c.pool)),
 			      false,
 			      c, c.cancel_ptr);
@@ -1315,7 +1314,7 @@ test_hold(auto &factory, Context &c) noexcept
 {
 	c.connection = factory.NewHold(*c.pool, c.event_loop);
 	c.connection->Request(c.pool, c,
-			      HTTP_METHOD_GET, "/foo", {},
+			      HttpMethod::GET, "/foo", {},
 			      wrap_fake_request_body(c.pool, istream_block_new(*c.pool)),
 			      false,
 			      c, c.cancel_ptr);
@@ -1361,7 +1360,7 @@ test_premature_close_headers(auto &factory, Context &c) noexcept
 {
 	c.connection = factory.NewPrematureCloseHeaders(*c.pool, c.event_loop);
 	c.connection->Request(c.pool, c,
-			      HTTP_METHOD_GET, "/foo", {},
+			      HttpMethod::GET, "/foo", {},
 			      nullptr,
 			      false,
 			      c, c.cancel_ptr);
@@ -1390,7 +1389,7 @@ test_premature_close_body(auto &factory, Context &c) noexcept
 {
 	c.connection = factory.NewPrematureCloseBody(*c.pool, c.event_loop);
 	c.connection->Request(c.pool, c,
-			      HTTP_METHOD_GET, "/foo", {}, nullptr,
+			      HttpMethod::GET, "/foo", {}, nullptr,
 			      false,
 			      c, c.cancel_ptr);
 
@@ -1414,7 +1413,7 @@ test_post_empty(auto &factory, Context &c) noexcept
 {
 	c.connection = factory.NewMirror(*c.pool, c.event_loop);
 	c.connection->Request(c.pool, c,
-			      HTTP_METHOD_POST, "/foo", {},
+			      HttpMethod::POST, "/foo", {},
 			      istream_null_new(*c.pool),
 			      false,
 			      c, c.cancel_ptr);
@@ -1451,7 +1450,7 @@ test_buckets(auto &factory, Context &c) noexcept
 	c.read_after_buckets = true;
 
 	c.connection->Request(c.pool, c,
-			      HTTP_METHOD_GET, "/foo", {},
+			      HttpMethod::GET, "/foo", {},
 			      nullptr,
 			      false,
 			      c, c.cancel_ptr);
@@ -1479,7 +1478,7 @@ test_buckets_close(auto &factory, Context &c) noexcept
 	c.close_after_buckets = true;
 
 	c.connection->Request(c.pool, c,
-			      HTTP_METHOD_GET, "/foo", {},
+			      HttpMethod::GET, "/foo", {},
 			      nullptr,
 			      false,
 			      c, c.cancel_ptr);
@@ -1508,7 +1507,7 @@ test_premature_end(auto &factory, Context &c) noexcept
 	c.connection = factory.NewPrematureEnd(*c.pool, c.event_loop);
 
 	c.connection->Request(c.pool, c,
-			      HTTP_METHOD_GET, "/foo", {},
+			      HttpMethod::GET, "/foo", {},
 			      nullptr,
 			      false,
 			      c, c.cancel_ptr);
@@ -1533,7 +1532,7 @@ test_excess_data(auto &factory, Context &c) noexcept
 	c.connection = factory.NewExcessData(*c.pool, c.event_loop);
 
 	c.connection->Request(c.pool, c,
-			      HTTP_METHOD_GET, "/foo", {},
+			      HttpMethod::GET, "/foo", {},
 			      nullptr,
 			      false,
 			      c, c.cancel_ptr);
@@ -1558,7 +1557,7 @@ TestValidPremature(auto &factory, Context &c) noexcept
 	c.connection = factory.NewValidPremature(*c.pool, c.event_loop);
 
 	c.connection->Request(c.pool, c,
-			      HTTP_METHOD_GET, "/foo", {},
+			      HttpMethod::GET, "/foo", {},
 			      nullptr,
 			      false,
 			      c, c.cancel_ptr);
@@ -1582,7 +1581,7 @@ TestMalformedPremature(auto &factory, Context &c) noexcept
 	c.connection = factory.NewMalformedPremature(*c.pool, c.event_loop);
 
 	c.connection->Request(c.pool, c,
-			      HTTP_METHOD_GET, "/foo", {},
+			      HttpMethod::GET, "/foo", {},
 			      nullptr,
 			      false,
 			      c, c.cancel_ptr);
@@ -1605,7 +1604,7 @@ TestCancelNop(auto &factory, Context &c) noexcept
 {
 	c.connection = factory.NewNop(*c.pool, c.event_loop);
 	c.connection->Request(c.pool, c,
-			      HTTP_METHOD_POST, "/foo", {},
+			      HttpMethod::POST, "/foo", {},
 			      istream_null_new(*c.pool),
 			      false,
 			      c, c.cancel_ptr);
@@ -1620,7 +1619,7 @@ TestCancelWithFailedSocketGet(auto &factory, Context &c) noexcept
 {
 	c.connection = factory.NewNop(*c.pool, c.event_loop);
 	c.connection->Request(c.pool, c,
-			      HTTP_METHOD_GET, "/foo", {},
+			      HttpMethod::GET, "/foo", {},
 			      nullptr,
 			      false,
 
@@ -1637,7 +1636,7 @@ TestCancelWithFailedSocketPost(auto &factory, Context &c) noexcept
 {
 	c.connection = factory.NewNop(*c.pool, c.event_loop);
 	c.connection->Request(c.pool, c,
-			      HTTP_METHOD_POST, "/foo", {},
+			      HttpMethod::POST, "/foo", {},
 			      istream_null_new(*c.pool),
 			      false,
 
@@ -1654,7 +1653,7 @@ TestCloseWithFailedSocketGet(auto &factory, Context &c) noexcept
 {
 	c.connection = factory.NewBlock(*c.pool, c.event_loop);
 	c.connection->Request(c.pool, c,
-			      HTTP_METHOD_GET, "/foo", {},
+			      HttpMethod::GET, "/foo", {},
 			      nullptr,
 			      false,
 
@@ -1680,7 +1679,7 @@ TestCloseWithFailedSocketPost(auto &factory, Context &c) noexcept
 {
 	c.connection = factory.NewHold(*c.pool, c.event_loop);
 	c.connection->Request(c.pool, c,
-			      HTTP_METHOD_POST, "/foo", {},
+			      HttpMethod::POST, "/foo", {},
 			      istream_null_new(*c.pool),
 			      false,
 

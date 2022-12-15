@@ -35,6 +35,7 @@
 #include "PendingResponse.hxx"
 #include "Instance.hxx"
 #include "http/IncomingRequest.hxx"
+#include "http/Method.hxx"
 #include "translation/CoTranslate.hxx"
 #include "co/Task.hxx"
 #include "io/Logger.hxx"
@@ -72,7 +73,7 @@ Request::DispatchErrdocResponse(std::span<const std::byte> error_document)
 	const auto response = co_await
 		CoLoadResource(*instance.cached_resource_loader, pool,
 			       stopwatch, {},
-			       HTTP_METHOD_GET,
+			       HttpMethod::GET,
 			       t.address, HttpStatus::OK,
 			       {}, nullptr, nullptr);
 

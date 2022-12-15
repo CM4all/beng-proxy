@@ -33,6 +33,7 @@
 #include "FilterResourceLoader.hxx"
 #include "fcache.hxx"
 #include "istream/UnusedPtr.hxx"
+#include "http/Method.hxx"
 
 #include <utility>
 
@@ -40,7 +41,7 @@ void
 FilterResourceLoader::SendRequest(struct pool &pool,
 				  const StopwatchPtr &parent_stopwatch,
 				  const ResourceRequestParams &params,
-				  [[maybe_unused]] http_method_t method,
+				  [[maybe_unused]] HttpMethod method,
 				  const ResourceAddress &address,
 				  HttpStatus status,
 				  StringMap &&headers,
@@ -49,7 +50,7 @@ FilterResourceLoader::SendRequest(struct pool &pool,
 				  HttpResponseHandler &handler,
 				  CancellablePointer &cancel_ptr) noexcept
 {
-	assert(method == HTTP_METHOD_POST);
+	assert(method == HttpMethod::POST);
 
 	filter_cache_request(cache, pool, parent_stopwatch, params.cache_tag,
 			     address, body_etag,

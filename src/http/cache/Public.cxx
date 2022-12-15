@@ -43,6 +43,7 @@
 #include "stats/AllocatorStats.hxx"
 #include "http/Date.hxx"
 #include "http/List.hxx"
+#include "http/Method.hxx"
 #include "istream/UnusedPtr.hxx"
 #include "istream/TeeIstream.hxx"
 #include "istream/RefIstream.hxx"
@@ -64,16 +65,16 @@
 static constexpr Event::Duration http_cache_compress_interval = std::chrono::minutes(10);
 
 static constexpr bool
-IsModifyingMethod(http_method_t method) noexcept
+IsModifyingMethod(HttpMethod method) noexcept
 {
 	// TODO: code copied from MethodNeedsCsrfProtection()
 	switch (method) {
-	case HTTP_METHOD_HEAD:
-	case HTTP_METHOD_GET:
-	case HTTP_METHOD_OPTIONS:
-	case HTTP_METHOD_TRACE:
-	case HTTP_METHOD_PROPFIND:
-	case HTTP_METHOD_REPORT:
+	case HttpMethod::HEAD:
+	case HttpMethod::GET:
+	case HttpMethod::OPTIONS:
+	case HttpMethod::TRACE:
+	case HttpMethod::PROPFIND:
+	case HttpMethod::REPORT:
 		return false;
 
 	default:
@@ -158,7 +159,7 @@ public:
 	void Start(ResourceLoader &next,
 		   const StopwatchPtr &parent_stopwatch,
 		   const ResourceRequestParams &params,
-		   http_method_t method,
+		   HttpMethod method,
 		   const ResourceAddress &address,
 		   StringMap &&_headers,
 		   CancellablePointer &_cancel_ptr) noexcept {
@@ -243,7 +244,7 @@ public:
 	void Start(ResourceLoader &next, struct pool &pool,
 		   const StopwatchPtr &parent_stopwatch,
 		   const ResourceRequestParams &params,
-		   http_method_t method,
+		   HttpMethod method,
 		   const ResourceAddress &address,
 		   StringMap &&_headers, UnusedIstreamPtr body,
 		   CancellablePointer &_cancel_ptr) noexcept {
@@ -345,7 +346,7 @@ public:
 	void Start(struct pool &caller_pool,
 		   const StopwatchPtr &parent_stopwatch,
 		   const ResourceRequestParams &params,
-		   http_method_t method,
+		   HttpMethod method,
 		   const ResourceAddress &address,
 		   StringMap &&headers, UnusedIstreamPtr body,
 		   HttpResponseHandler &handler,
@@ -389,7 +390,7 @@ public:
 	void Use(struct pool &caller_pool,
 		 const StopwatchPtr &parent_stopwatch,
 		 const ResourceRequestParams &params,
-		 http_method_t method,
+		 HttpMethod method,
 		 const ResourceAddress &address,
 		 StringMap &&headers,
 		 const HttpCacheRequestInfo &info,
@@ -416,7 +417,7 @@ private:
 		  const StopwatchPtr &parent_stopwatch,
 		  const ResourceRequestParams &params,
 		  const HttpCacheRequestInfo &info,
-		  http_method_t method,
+		  HttpMethod method,
 		  const ResourceAddress &address,
 		  StringMap &&headers,
 		  HttpResponseHandler &handler,
@@ -432,7 +433,7 @@ private:
 			const ResourceRequestParams &params,
 			const HttpCacheRequestInfo &info,
 			HttpCacheDocument &document,
-			http_method_t method,
+			HttpMethod method,
 			const ResourceAddress &address,
 			StringMap &&headers,
 			HttpResponseHandler &handler,
@@ -450,7 +451,7 @@ private:
 		   struct pool &caller_pool,
 		   const StopwatchPtr &parent_stopwatch,
 		   const ResourceRequestParams &params,
-		   http_method_t method,
+		   HttpMethod method,
 		   const ResourceAddress &address,
 		   StringMap &&headers,
 		   HttpResponseHandler &handler,
@@ -866,7 +867,7 @@ HttpCache::Miss(struct pool &caller_pool,
 		const StopwatchPtr &parent_stopwatch,
 		const ResourceRequestParams &params,
 		const HttpCacheRequestInfo &info,
-		http_method_t method,
+		HttpMethod method,
 		const ResourceAddress &address,
 		StringMap &&headers,
 		HttpResponseHandler &handler,
@@ -1034,7 +1035,7 @@ HttpCache::Revalidate(struct pool &caller_pool,
 		      const ResourceRequestParams &params,
 		      const HttpCacheRequestInfo &info,
 		      HttpCacheDocument &document,
-		      http_method_t method,
+		      HttpMethod method,
 		      const ResourceAddress &address,
 		      StringMap &&headers,
 		      HttpResponseHandler &handler,
@@ -1088,7 +1089,7 @@ HttpCache::Found(const HttpCacheRequestInfo &info,
 		 struct pool &caller_pool,
 		 const StopwatchPtr &parent_stopwatch,
 		 const ResourceRequestParams &params,
-		 http_method_t method,
+		 HttpMethod method,
 		 const ResourceAddress &address,
 		 StringMap &&headers,
 		 HttpResponseHandler &handler,
@@ -1113,7 +1114,7 @@ void
 HttpCache::Use(struct pool &caller_pool,
 	       const StopwatchPtr &parent_stopwatch,
 	       const ResourceRequestParams &params,
-	       http_method_t method,
+	       HttpMethod method,
 	       const ResourceAddress &address,
 	       StringMap &&headers,
 	       const HttpCacheRequestInfo &info,
@@ -1138,7 +1139,7 @@ inline void
 HttpCache::Start(struct pool &caller_pool,
 		 const StopwatchPtr &parent_stopwatch,
 		 const ResourceRequestParams &params,
-		 http_method_t method,
+		 HttpMethod method,
 		 const ResourceAddress &address,
 		 StringMap &&headers, UnusedIstreamPtr body,
 		 HttpResponseHandler &handler,
@@ -1204,7 +1205,7 @@ http_cache_request(HttpCache &cache,
 		   struct pool &pool,
 		   const StopwatchPtr &parent_stopwatch,
 		   const ResourceRequestParams &params,
-		   http_method_t method,
+		   HttpMethod method,
 		   const ResourceAddress &address,
 		   StringMap &&headers, UnusedIstreamPtr body,
 		   HttpResponseHandler &handler,

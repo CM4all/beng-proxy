@@ -36,6 +36,7 @@
 #include "http/Address.hxx"
 #include "http/GlueClient.hxx"
 #include "http/ResponseHandler.hxx"
+#include "http/Method.hxx"
 #include "istream/UnusedPtr.hxx"
 #include "AllocatorPtr.hxx"
 #include "pool/Holder.hxx"
@@ -60,7 +61,7 @@ public:
 			     nullptr,
 			     session_id.GetClusterHash(),
 			     nullptr,
-			     HTTP_METHOD_GET, address,
+			     HttpMethod::GET, address,
 			     {}, nullptr,
 			     *this, cancel_ptr);
 	}

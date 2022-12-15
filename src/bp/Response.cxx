@@ -279,12 +279,12 @@ Request::InvokeXmlProcessor(HttpStatus status,
 	}
 
 	if (focus_ref != nullptr) {
-		http_method_t method = request.method;
+		auto method = request.method;
 		if (http_method_is_empty(method) && HasTransformations())
 			/* the following transformation may need the processed
 			   document to generate its headers, so we should not pass
 			   HEAD to the processor */
-			method = HTTP_METHOD_GET;
+			method = HttpMethod::GET;
 
 		auto &for_focused = *NewFromPool<Widget::ForFocused>(pool, method,
 								     args.Remove("path"),
@@ -692,7 +692,7 @@ Request::ApplyFilter(HttpStatus status, StringMap &&headers2,
 				      filter.cache_tag,
 				      translate.response->site,
 			      },
-			      HTTP_METHOD_POST, filter.address,
+			      HttpMethod::POST, filter.address,
 			      status, std::move(headers2),
 			      std::move(body), source_tag,
 			      *this, cancel_ptr);
@@ -1005,7 +1005,7 @@ Request::OnHttpResponse(HttpStatus status, StringMap &&_headers,
 
 	HttpHeaders headers2(std::move(new_headers));
 
-	if (request.method == HTTP_METHOD_HEAD)
+	if (request.method == HttpMethod::HEAD)
 		/* pass Content-Length, even though there is no response body
 		   (RFC 2616 14.13) */
 		headers2.CopyToBuffer(headers, "content-length");

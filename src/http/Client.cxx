@@ -37,6 +37,7 @@
 #include "HeaderParser.hxx"
 #include "HeaderWriter.hxx"
 #include "http/List.hxx"
+#include "http/Method.hxx"
 #include "istream/Bucket.hxx"
 #include "istream/Sink.hxx"
 #include "istream/UnusedPtr.hxx"
@@ -239,7 +240,7 @@ public:
 		   StopwatchPtr &&_stopwatch,
 		   FilteredSocket &_socket, Lease &lease,
 		   const char *_peer_name,
-		   http_method_t method, const char *uri,
+		   HttpMethod method, const char *uri,
 		   const StringMap &headers,
 		   GrowingBuffer &&more_headers,
 		   UnusedIstreamPtr body, bool expect_100,
@@ -1349,7 +1350,7 @@ HttpClient::HttpClient(struct pool &_pool, struct pool &_caller_pool,
 		       StopwatchPtr &&_stopwatch,
 		       FilteredSocket &_socket, Lease &lease,
 		       const char *_peer_name,
-		       http_method_t method, const char *uri,
+		       HttpMethod method, const char *uri,
 		       const StringMap &headers,
 		       GrowingBuffer &&headers2,
 		       UnusedIstreamPtr body, bool expect_100,
@@ -1441,7 +1442,7 @@ http_client_request(struct pool &caller_pool,
 		    StopwatchPtr stopwatch,
 		    FilteredSocket &socket, Lease &lease,
 		    const char *peer_name,
-		    http_method_t method, const char *uri,
+		    HttpMethod method, const char *uri,
 		    const StringMap &headers,
 		    GrowingBuffer &&more_headers,
 		    UnusedIstreamPtr body, bool expect_100,

@@ -33,6 +33,7 @@
 #include "cluster/AddressListBuilder.hxx"
 #include "http/Address.hxx"
 #include "http/AnyClient.hxx"
+#include "http/Method.hxx"
 #include "http/ResponseHandler.hxx"
 #include "istream/OpenFileIstream.hxx"
 #include "istream/AutoPipeIstream.hxx"
@@ -260,11 +261,11 @@ try {
 
 	/* open request body */
 
-	http_method_t method = HTTP_METHOD_GET;
+	HttpMethod method = HttpMethod::GET;
 	UnusedIstreamPtr request_body;
 
 	if (argc >= 3) {
-		method = HTTP_METHOD_POST;
+		method = HttpMethod::POST;
 		request_body = OpenFileIstream(ctx.event_loop, ctx.pool,
 					       argv[2]);
 	}

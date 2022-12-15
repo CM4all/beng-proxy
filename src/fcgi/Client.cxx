@@ -42,6 +42,7 @@
 #include "istream/UnusedPtr.hxx"
 #include "istream/ConcatIstream.hxx"
 #include "istream/Bucket.hxx"
+#include "http/Method.hxx"
 #include "http/HeaderParser.hxx"
 #include "strmap.hxx"
 #include "product.h"
@@ -147,7 +148,7 @@ public:
 		   StopwatchPtr &&_stopwatch,
 		   SocketDescriptor fd, FdType fd_type, Lease &lease,
 		   UniqueFileDescriptor &&_stderr_fd,
-		   uint16_t _id, http_method_t method,
+		   uint16_t _id, HttpMethod method,
 		   UnusedIstreamPtr &&request_istream,
 		   HttpResponseHandler &_handler,
 		   CancellablePointer &cancel_ptr) noexcept;
@@ -1036,7 +1037,7 @@ FcgiClient::FcgiClient(struct pool &_pool, EventLoop &event_loop,
 		       StopwatchPtr &&_stopwatch,
 		       SocketDescriptor fd, FdType fd_type, Lease &lease,
 		       UniqueFileDescriptor &&_stderr_fd,
-		       uint16_t _id, http_method_t method,
+		       uint16_t _id, HttpMethod method,
 		       UnusedIstreamPtr &&request_istream,
 		       HttpResponseHandler &_handler,
 		       CancellablePointer &cancel_ptr) noexcept
@@ -1061,7 +1062,7 @@ void
 fcgi_client_request(struct pool *pool, EventLoop &event_loop,
 		    StopwatchPtr stopwatch,
 		    SocketDescriptor fd, FdType fd_type, Lease &lease,
-		    http_method_t method, const char *uri,
+		    HttpMethod method, const char *uri,
 		    const char *script_filename,
 		    const char *script_name, const char *path_info,
 		    const char *query_string,

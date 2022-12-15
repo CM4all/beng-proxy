@@ -43,6 +43,7 @@
 #include "http/IncomingRequest.hxx"
 #include "http/Headers.hxx"
 #include "http/Logger.hxx"
+#include "http/Method.hxx"
 #include "http/Status.hxx"
 #include "istream/LengthIstream.hxx"
 #include "istream/MultiFifoBufferIstream.hxx"
@@ -119,7 +120,7 @@ public:
 			request_body_control->DestroyError(std::make_exception_ptr(std::runtime_error("Canceled")));
 		}
 
-		if (logger != nullptr && (method != HTTP_METHOD_NULL || uri != nullptr)) {
+		if (logger != nullptr && (method != HttpMethod{} || uri != nullptr)) {
 			int64_t length = -1;
 			if (response_body)
 				length = response_body->GetTransmitted();
@@ -240,16 +241,17 @@ private:
 			  UnusedIstreamPtr response_body) noexcept override;
 };
 
-static http_method_t
+[[gnu::pure]]
+static HttpMethod
 ParseHttpMethod(std::string_view s) noexcept
 {
-	for (size_t i = 0; i < size_t(HTTP_METHOD_INVALID); ++i) {
+	for (size_t i = 0; i < size_t(HttpMethod::INVALID); ++i) {
 		const char *name = http_method_to_string_data[i];
 		if (name != nullptr && s == name)
-			return http_method_t(i);
+			return static_cast<HttpMethod>(i);
 	}
 
-	return HTTP_METHOD_NULL;
+	return {};
 }
 
 inline int
@@ -260,7 +262,7 @@ ServerConnection::Request::OnHeaderCallback(std::string_view name,
 
 	if (name == ":method"sv) {
 		method = ParseHttpMethod(value);
-		if (method == HTTP_METHOD_NULL)
+		if (method == HttpMethod{})
 			bad_request = "Unsupported request method\n";
 	} else if (name == ":path"sv)
 		uri = alloc.DupZ(value);
@@ -353,7 +355,7 @@ ServerConnection::Request::OnReceiveRequest(bool has_request_body) noexcept
 		return 0;
 	}
 
-	if (method == HTTP_METHOD_NULL || uri == nullptr) {
+	if (method == HttpMethod{} || uri == nullptr) {
 		/* no method and no URI - refuse to handle this
 		   request */
 		nghttp2_submit_rst_stream(connection.session.get(),

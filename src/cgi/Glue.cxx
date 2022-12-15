@@ -43,7 +43,7 @@ void
 cgi_new(SpawnService &spawn_service, EventLoop &event_loop,
 	struct pool *pool,
 	const StopwatchPtr &parent_stopwatch,
-	http_method_t method,
+	HttpMethod method,
 	const CgiAddress *address,
 	const char *remote_addr,
 	const StringMap &headers, UnusedIstreamPtr body,

@@ -41,6 +41,7 @@
 #include "lua/RunFile.hxx"
 #include "lua/Error.hxx"
 #include "lua/Util.hxx"
+#include "http/Method.hxx"
 #include "net/ToString.hxx"
 #include "net/UniqueSocketDescriptor.hxx"
 #include "net/log/String.hxx"

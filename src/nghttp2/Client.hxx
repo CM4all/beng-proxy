@@ -35,11 +35,12 @@
 #include "Session.hxx"
 #include "event/net/BufferedSocket.hxx"
 #include "event/DeferEvent.hxx"
-#include "http/Method.h"
 #include "util/IntrusiveList.hxx"
 
+#include <cstdint>
 #include <memory>
 
+enum class HttpMethod : uint_least8_t;
 class AllocatorPtr;
 class StringMap;
 class StopwatchPtr;
@@ -108,7 +109,7 @@ public:
 
 	void SendRequest(AllocatorPtr alloc,
 			 StopwatchPtr stopwatch,
-			 http_method_t method, const char *uri,
+			 HttpMethod method, const char *uri,
 			 StringMap &&headers,
 			 UnusedIstreamPtr body,
 			 HttpResponseHandler &handler,

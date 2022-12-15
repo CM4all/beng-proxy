@@ -35,6 +35,7 @@
 #include "PInstance.hxx"
 #include "memory/fb_pool.hxx"
 #include "pool/pool.hxx"
+#include "http/Status.hxx"
 #include "net/SocketDescriptor.hxx"
 #include "io/Logger.hxx"
 #include "io/SpliceSupport.hxx"
@@ -46,7 +47,7 @@ struct Instance final : PInstance, WasServerHandler {
 	WasServer *server;
 
 	void OnWasRequest(gcc_unused struct pool &pool,
-			  gcc_unused http_method_t method,
+			  gcc_unused HttpMethod method,
 			  gcc_unused const char *uri, StringMap &&headers,
 			  UnusedIstreamPtr body) noexcept override {
 		const bool has_body = body;

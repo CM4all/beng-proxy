@@ -37,6 +37,7 @@
 #include "net/log/Datagram.hxx"
 #include "net/log/OneLine.hxx"
 #include "http/IncomingRequest.hxx"
+#include "http/Method.hxx"
 #include "http/Status.hxx"
 
 #include <assert.h>

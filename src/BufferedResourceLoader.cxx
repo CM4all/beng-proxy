@@ -47,7 +47,7 @@ class PostponedRequest {
 	ResourceLoader &next;
 	const StopwatchPtr parent_stopwatch;
 	const ResourceRequestParams params;
-	const http_method_t method;
+	const HttpMethod method;
 	const ResourceAddress &address;
 	const HttpStatus status;
 	StringMap headers;
@@ -60,7 +60,7 @@ public:
 	PostponedRequest(struct pool &_pool, ResourceLoader &_next,
 			 const StopwatchPtr &_parent_stopwatch,
 			 const ResourceRequestParams &_params,
-			 http_method_t _method,
+			 HttpMethod _method,
 			 const ResourceAddress &_address,
 			 HttpStatus _status, StringMap &&_headers,
 			 const char *_body_etag,
@@ -109,7 +109,7 @@ public:
 	Request(struct pool &_pool, ResourceLoader &_next,
 		const StopwatchPtr &_parent_stopwatch,
 		const ResourceRequestParams &_params,
-		http_method_t _method, const ResourceAddress &_address,
+		HttpMethod _method, const ResourceAddress &_address,
 		HttpStatus _status, StringMap &&_headers,
 		const char *_body_etag,
 		HttpResponseHandler &_handler,
@@ -165,7 +165,7 @@ void
 BufferedResourceLoader::SendRequest(struct pool &pool,
 				    const StopwatchPtr &parent_stopwatch,
 				    const ResourceRequestParams &params,
-				    http_method_t method,
+				    HttpMethod method,
 				    const ResourceAddress &address,
 				    HttpStatus status, StringMap &&headers,
 				    UnusedIstreamPtr body, const char *body_etag,

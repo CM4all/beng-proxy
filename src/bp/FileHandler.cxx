@@ -37,6 +37,7 @@
 #include "http/HeaderWriter.hxx"
 #include "http/PHeaderUtil.hxx"
 #include "http/Headers.hxx"
+#include "http/Method.hxx"
 #include "http/IncomingRequest.hxx"
 #include "istream/FileIstream.hxx"
 #include "istream/FdIstream.hxx"
@@ -277,8 +278,8 @@ Request::HandleFileAddress(const FileAddress &address) noexcept
 
 	/* check request */
 
-	if (request.method != HTTP_METHOD_HEAD &&
-	    request.method != HTTP_METHOD_GET &&
+	if (request.method != HttpMethod::HEAD &&
+	    request.method != HttpMethod::GET &&
 	    !processor_focus) {
 		DispatchMethodNotAllowed("GET, HEAD");
 		return;

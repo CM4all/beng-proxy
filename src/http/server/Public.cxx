@@ -64,7 +64,7 @@ HttpServerConnection::Log() noexcept
 
 HttpServerRequest *
 http_server_request_new(HttpServerConnection *connection,
-			http_method_t method,
+			HttpMethod method,
 			std::string_view uri) noexcept
 {
 	assert(connection != nullptr);

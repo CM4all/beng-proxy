@@ -32,10 +32,10 @@
 
 #pragma once
 
-#include "http/Method.h"
-
+#include <cstdint>
 #include <span>
 
+enum class HttpMethod : uint_least8_t;
 struct pool;
 class EventLoop;
 class UnusedIstreamPtr;
@@ -62,7 +62,7 @@ fcgi_request(struct pool *pool, EventLoop &event_loop,
 	     const char *path,
 	     std::span<const char *const> args,
 	     unsigned parallelism,
-	     http_method_t method, const char *uri,
+	     HttpMethod method, const char *uri,
 	     const char *script_name, const char *path_info,
 	     const char *query_string,
 	     const char *document_root,

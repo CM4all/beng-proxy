@@ -142,44 +142,44 @@ private:
 	 */
 	void EnsureDirectory();
 
-	GlueHttpResponse FakeRequest(http_method_t method, const char *uri,
+	GlueHttpResponse FakeRequest(HttpMethod method, const char *uri,
 				     std::span<const std::byte> body);
 
-	GlueHttpResponse Request(http_method_t method, const char *uri,
+	GlueHttpResponse Request(HttpMethod method, const char *uri,
 				 std::span<const std::byte> body);
 
-	GlueHttpResponse Request(http_method_t method, const char *uri,
+	GlueHttpResponse Request(HttpMethod method, const char *uri,
 				 std::nullptr_t=nullptr) {
 		return Request(method, uri, std::span<const std::byte>{});
 	}
 
-	GlueHttpResponse Request(http_method_t method, const char *uri,
+	GlueHttpResponse Request(HttpMethod method, const char *uri,
 				 const std::string_view body) {
 		return Request(method, uri,
 			       std::as_bytes(std::span<const char>{body}));
 	}
 
-	GlueHttpResponse Request(http_method_t method, const char *uri,
+	GlueHttpResponse Request(HttpMethod method, const char *uri,
 				 const boost::json::value &body);
 
 	GlueHttpResponse SignedRequest(EVP_PKEY &key,
-				       http_method_t method, const char *uri,
+				       HttpMethod method, const char *uri,
 				       std::span<const std::byte> payload);
 
 	GlueHttpResponse SignedRequest(EVP_PKEY &key,
-				       http_method_t method, const char *uri,
+				       HttpMethod method, const char *uri,
 				       const std::string_view body) {
 		return SignedRequest(key, method, uri,
 				     std::as_bytes(std::span<const char>{body}));
 	}
 
 	GlueHttpResponse SignedRequest(EVP_PKEY &key,
-				       http_method_t method, const char *uri,
+				       HttpMethod method, const char *uri,
 				       const boost::json::value &payload);
 
 	template<typename P>
 	GlueHttpResponse SignedRequestRetry(EVP_PKEY &key,
-					    http_method_t method, const char *uri,
+					    HttpMethod method, const char *uri,
 					    P payload) {
 		constexpr unsigned max_attempts = 3;
 		for (unsigned remaining_attempts = max_attempts;;) {

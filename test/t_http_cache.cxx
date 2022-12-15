@@ -39,6 +39,7 @@
 #include "http/Address.hxx"
 #include "memory/GrowingBuffer.hxx"
 #include "http/HeaderParser.hxx"
+#include "http/Method.hxx"
 #include "strmap.hxx"
 #include "http/ResponseHandler.hxx"
 #include "PInstance.hxx"
@@ -63,7 +64,7 @@
 struct Request final {
 	const char *tag = nullptr;
 
-	http_method_t method = HTTP_METHOD_GET;
+	HttpMethod method = HttpMethod::GET;
 	const char *uri;
 	const char *request_headers;
 
@@ -150,7 +151,7 @@ public:
 	void SendRequest(struct pool &pool,
 			 const StopwatchPtr &parent_stopwatch,
 			 const ResourceRequestParams &params,
-			 http_method_t method,
+			 HttpMethod method,
 			 const ResourceAddress &address,
 			 HttpStatus status, StringMap &&headers,
 			 UnusedIstreamPtr body, const char *body_etag,
@@ -162,7 +163,7 @@ void
 MyResourceLoader::SendRequest(struct pool &pool,
 			      const StopwatchPtr &,
 			      const ResourceRequestParams &,
-			      http_method_t method,
+			      HttpMethod method,
 			      const ResourceAddress &,
 			      HttpStatus,
 			      StringMap &&headers,
@@ -540,7 +541,7 @@ TEST(HttpCache, Tag)
 
 	/* AUTO_FLUSH_CACHE test (unsuccessful POST does not flush) */
 
-	r2.method = HTTP_METHOD_POST;
+	r2.method = HttpMethod::POST;
 	r2.status = HttpStatus::FORBIDDEN;
 
 	run_cache_test(instance, r2, false);

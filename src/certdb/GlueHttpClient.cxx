@@ -31,6 +31,7 @@
  */
 
 #include "GlueHttpClient.hxx"
+#include "http/Method.hxx"
 #include "event/Loop.hxx"
 #include "lib/curl/Request.hxx"
 #include "lib/curl/Handler.hxx"
@@ -103,7 +104,7 @@ public:
 
 GlueHttpResponse
 GlueHttpClient::Request(EventLoop &event_loop,
-			http_method_t method, const char *uri,
+			HttpMethod method, const char *uri,
 			std::span<const std::byte> body)
 {
 	CurlSlist header_list;
@@ -113,9 +114,9 @@ GlueHttpClient::Request(EventLoop &event_loop,
 
 	request.SetOption(CURLOPT_VERBOSE, long(verbose));
 
-	if (method == HTTP_METHOD_HEAD)
+	if (method == HttpMethod::HEAD)
 		request.SetNoBody();
-	else if (method == HTTP_METHOD_POST)
+	else if (method == HttpMethod::POST)
 		request.SetPost();
 
 	if (body.data() != nullptr) {

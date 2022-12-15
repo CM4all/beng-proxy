@@ -34,6 +34,7 @@
 #include "Request.hxx"
 #include "Connection.hxx"
 #include "http/IncomingRequest.hxx"
+#include "http/Method.hxx"
 
 ForwardRequest
 Request::ForwardRequest(const HeaderForwardSettings &header_forward,
@@ -41,7 +42,7 @@ Request::ForwardRequest(const HeaderForwardSettings &header_forward,
 {
 	assert(!request.HasBody() || request_body);
 
-	http_method_t method;
+	HttpMethod method;
 	UnusedIstreamPtr body;
 
 	/* send a request body? */
@@ -50,7 +51,7 @@ Request::ForwardRequest(const HeaderForwardSettings &header_forward,
 		/* reserve method+body for the processor, and
 		   convert this request to a GET */
 
-		method = HTTP_METHOD_GET;
+		method = HttpMethod::GET;
 	} else {
 		/* forward body (if any) to the real server */
 

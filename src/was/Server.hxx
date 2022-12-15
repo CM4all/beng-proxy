@@ -37,16 +37,16 @@
 #include "was/async/Control.hxx"
 #include "was/async/Socket.hxx"
 #include "pool/Ptr.hxx"
-#include "http/Method.h"
-#include "http/Status.hxx"
 
+enum class HttpMethod : uint_least8_t;
+enum class HttpStatus : uint_least16_t;
 class EventLoop;
 class UnusedIstreamPtr;
 class StringMap;
 
 class WasServerHandler {
 public:
-	virtual void OnWasRequest(struct pool &pool, http_method_t method,
+	virtual void OnWasRequest(struct pool &pool, HttpMethod method,
 				  const char *uri, StringMap &&headers,
 				  UnusedIstreamPtr body) noexcept = 0;
 
@@ -65,7 +65,7 @@ class WasServer final : Was::ControlHandler, WasOutputHandler, WasInputHandler {
 	struct Request {
 		PoolPtr pool;
 
-		http_method_t method;
+		HttpMethod method;
 
 		const char *uri;
 

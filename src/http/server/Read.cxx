@@ -33,6 +33,7 @@
 #include "Internal.hxx"
 #include "Request.hxx"
 #include "Handler.hxx"
+#include "http/Method.hxx"
 #include "http/Upgrade.hxx"
 #include "pool/pool.hxx"
 #include "strmap.hxx"
@@ -67,19 +68,19 @@ HttpServerConnection::ParseRequestLine(const char *line,
 
 	const char *eol = line + length;
 
-	http_method_t method = HTTP_METHOD_NULL;
+	HttpMethod method{};
 	switch (line[0]) {
 	case 'D':
 		if (gcc_likely(line[1] == 'E' && line[2] == 'L' && line[3] == 'E' &&
 			       line[4] == 'T' && line[5] == 'E' && line[6] == ' ')) {
-			method = HTTP_METHOD_DELETE;
+			method = HttpMethod::DELETE;
 			line += 7;
 		}
 		break;
 
 	case 'G':
 		if (gcc_likely(line[1] == 'E' && line[2] == 'T' && line[3] == ' ')) {
-			method = HTTP_METHOD_GET;
+			method = HttpMethod::GET;
 			line += 4;
 		}
 		break;
@@ -87,19 +88,19 @@ HttpServerConnection::ParseRequestLine(const char *line,
 	case 'P':
 		if (gcc_likely(line[1] == 'O' && line[2] == 'S' && line[3] == 'T' &&
 			       line[4] == ' ')) {
-			method = HTTP_METHOD_POST;
+			method = HttpMethod::POST;
 			line += 5;
 		} else if (line[1] == 'U' && line[2] == 'T' && line[3] == ' ') {
-			method = HTTP_METHOD_PUT;
+			method = HttpMethod::PUT;
 			line += 4;
 		} else if (auto patch = StringAfterPrefix(line + 1, "ATCH ")) {
-			method = HTTP_METHOD_PATCH;
+			method = HttpMethod::PATCH;
 			line = patch;
 		} else if (auto propfind = StringAfterPrefix(line + 1, "ROPFIND ")) {
-			method = HTTP_METHOD_PROPFIND;
+			method = HttpMethod::PROPFIND;
 			line = propfind;
 		} else if (auto proppatch = StringAfterPrefix(line + 1, "ROPPATCH ")) {
-			method = HTTP_METHOD_PROPPATCH;
+			method = HttpMethod::PROPPATCH;
 			line = proppatch;
 		}
 
@@ -107,7 +108,7 @@ HttpServerConnection::ParseRequestLine(const char *line,
 
 	case 'R':
 		if (auto report = StringAfterPrefix(line + 1, "EPORT ")) {
-			method = HTTP_METHOD_REPORT;
+			method = HttpMethod::REPORT;
 			line = report;
 		}
 
@@ -116,58 +117,58 @@ HttpServerConnection::ParseRequestLine(const char *line,
 	case 'H':
 		if (gcc_likely(line[1] == 'E' && line[2] == 'A' && line[3] == 'D' &&
 			       line[4] == ' ')) {
-			method = HTTP_METHOD_HEAD;
+			method = HttpMethod::HEAD;
 			line += 5;
 		}
 		break;
 
 	case 'O':
 		if (auto options = StringAfterPrefix(line + 1, "PTIONS ")) {
-			method = HTTP_METHOD_OPTIONS;
+			method = HttpMethod::OPTIONS;
 			line = options;
 		}
 		break;
 
 	case 'T':
 		if (auto trace = StringAfterPrefix(line + 1, "RACE ")) {
-			method = HTTP_METHOD_TRACE;
+			method = HttpMethod::TRACE;
 			line = trace;
 		}
 		break;
 
 	case 'M':
 		if (auto mkcol = StringAfterPrefix(line + 1, "KCOL ")) {
-			method = HTTP_METHOD_MKCOL;
+			method = HttpMethod::MKCOL;
 			line = mkcol;
 		} else if (auto move = StringAfterPrefix(line + 1, "OVE ")) {
-			method = HTTP_METHOD_MOVE;
+			method = HttpMethod::MOVE;
 			line = move;
 		}
 		break;
 
 	case 'C':
 		if (auto copy = StringAfterPrefix(line + 1, "OPY ")) {
-			method = HTTP_METHOD_COPY;
+			method = HttpMethod::COPY;
 			line = copy;
 		}
 		break;
 
 	case 'L':
 		if (auto lock = StringAfterPrefix(line + 1, "OCK ")) {
-			method = HTTP_METHOD_LOCK;
+			method = HttpMethod::LOCK;
 			line = lock;
 		}
 		break;
 
 	case 'U':
 		if (auto unlock = StringAfterPrefix(line + 1, "NLOCK ")) {
-			method = HTTP_METHOD_UNLOCK;
+			method = HttpMethod::UNLOCK;
 			line = unlock;
 		}
 		break;
 	}
 
-	if (method == HTTP_METHOD_NULL) {
+	if (method == HttpMethod{}) {
 		/* invalid request method */
 
 		ProtocolError("unrecognized request method");

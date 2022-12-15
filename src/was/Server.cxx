@@ -36,6 +36,8 @@
 #include "istream/UnusedPtr.hxx"
 #include "istream/istream_null.hxx"
 #include "strmap.hxx"
+#include "http/Method.hxx"
+#include "http/Status.hxx"
 #include "pool/pool.hxx"
 #include "util/SpanCast.hxx"
 #include "util/StringFormat.hxx"
@@ -238,7 +240,7 @@ WasServer::OnWasControlPacket(enum was_command cmd,
 {
 	switch (cmd) {
 		const uint64_t *length_p;
-		http_method_t method;
+		HttpMethod method;
 
 	case WAS_COMMAND_NOP:
 		break;
@@ -250,7 +252,7 @@ WasServer::OnWasControlPacket(enum was_command cmd,
 		}
 
 		request.pool = pool_new_linear(&pool, "was_server_request", 32768);
-		request.method = HTTP_METHOD_GET;
+		request.method = HttpMethod::GET;
 		request.uri = nullptr;
 		request.headers = strmap_new(request.pool);
 		request.body = nullptr;
@@ -264,13 +266,13 @@ WasServer::OnWasControlPacket(enum was_command cmd,
 			return false;
 		}
 
-		if (payload.size() != sizeof(method)) {
+		if (payload.size() != sizeof(uint32_t)) {
 			AbortProtocolError("malformed METHOD packet");
 			return false;
 		}
 
-		method = *(const http_method_t *)(const void *)payload.data();
-		if (request.method != HTTP_METHOD_GET &&
+		method = static_cast<HttpMethod>(*(const uint32_t *)(const void *)payload.data());
+		if (request.method != HttpMethod::GET &&
 		    method != request.method) {
 			/* sending that packet twice is illegal */
 			AbortProtocolError("misplaced METHOD packet");
@@ -456,7 +458,7 @@ WasServer::SendResponse(HttpStatus status,
 		return;
 
 	if (body && http_method_is_empty(request.method)) {
-		if (request.method == HTTP_METHOD_HEAD) {
+		if (request.method == HttpMethod::HEAD) {
 			off_t available = body.GetAvailable(false);
 			if (available >= 0)
 				headers.Add(AllocatorPtr{request.pool},

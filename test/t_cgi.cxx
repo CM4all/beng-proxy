@@ -33,6 +33,7 @@
 #include "tconstruct.hxx"
 #include "cgi/Glue.hxx"
 #include "cgi/Address.hxx"
+#include "http/Method.hxx"
 #include "http/ResponseHandler.hxx"
 #include "strmap.hxx"
 #include "istream/OpenFileIstream.hxx"
@@ -238,7 +239,7 @@ test_normal(PoolPtr pool, Context *c)
 		.DocumentRoot("/var/www");
 
 	cgi_new(c->spawn_service, c->event_loop,
-		pool, nullptr, HTTP_METHOD_GET, &address,
+		pool, nullptr, HttpMethod::GET, &address,
 		nullptr, {}, nullptr,
 		*c, c->cancel_ptr);
 
@@ -264,7 +265,7 @@ test_tiny(PoolPtr pool, Context *c)
 		.DocumentRoot("/var/www");
 
 	cgi_new(c->spawn_service, c->event_loop,
-		pool, nullptr, HTTP_METHOD_GET, &address,
+		pool, nullptr, HttpMethod::GET, &address,
 		nullptr, {}, nullptr,
 		*c, c->cancel_ptr);
 
@@ -292,7 +293,7 @@ test_close_early(PoolPtr pool, Context *c)
 		.DocumentRoot("/var/www");
 
 	cgi_new(c->spawn_service, c->event_loop,
-		pool, nullptr, HTTP_METHOD_GET, &address,
+		pool, nullptr, HttpMethod::GET, &address,
 		nullptr, {}, nullptr,
 		*c, c->cancel_ptr);
 
@@ -320,7 +321,7 @@ test_close_late(PoolPtr pool, Context *c)
 		.DocumentRoot("/var/www");
 
 	cgi_new(c->spawn_service, c->event_loop,
-		pool, nullptr, HTTP_METHOD_GET, &address,
+		pool, nullptr, HttpMethod::GET, &address,
 		nullptr, {}, nullptr,
 		*c, c->cancel_ptr);
 
@@ -348,7 +349,7 @@ test_close_data(PoolPtr pool, Context *c)
 		.DocumentRoot("/var/www");
 
 	cgi_new(c->spawn_service, c->event_loop,
-		pool, nullptr, HTTP_METHOD_GET, &address,
+		pool, nullptr, HttpMethod::GET, &address,
 		nullptr, {}, nullptr,
 		*c, c->cancel_ptr);
 
@@ -376,7 +377,7 @@ test_post(PoolPtr pool, Context *c)
 		.DocumentRoot("/var/www");
 
 	cgi_new(c->spawn_service, c->event_loop,
-		pool, nullptr, HTTP_METHOD_POST, &address,
+		pool, nullptr, HttpMethod::POST, &address,
 		nullptr, {},
 		UnusedIstreamPtr(OpenFileIstream(c->event_loop, *pool,
 						 "build.ninja")),
@@ -406,7 +407,7 @@ test_status(PoolPtr pool, Context *c)
 		.DocumentRoot("/var/www");
 
 	cgi_new(c->spawn_service, c->event_loop,
-		pool, nullptr, HTTP_METHOD_GET, &address,
+		pool, nullptr, HttpMethod::GET, &address,
 		nullptr, {}, nullptr,
 		*c, c->cancel_ptr);
 
@@ -434,7 +435,7 @@ test_no_content(PoolPtr pool, Context *c)
 		.DocumentRoot("/var/www");
 
 	cgi_new(c->spawn_service, c->event_loop,
-		pool, nullptr, HTTP_METHOD_GET, &address,
+		pool, nullptr, HttpMethod::GET, &address,
 		nullptr, {}, nullptr,
 		*c, c->cancel_ptr);
 
@@ -460,7 +461,7 @@ test_no_length(PoolPtr pool, Context *c)
 		.DocumentRoot("/var/www");
 
 	cgi_new(c->spawn_service, c->event_loop,
-		pool, nullptr, HTTP_METHOD_GET, &address,
+		pool, nullptr, HttpMethod::GET, &address,
 		nullptr, {}, nullptr,
 		*c, c->cancel_ptr);
 
@@ -484,7 +485,7 @@ test_length_ok(PoolPtr pool, Context *c)
 		.DocumentRoot("/var/www");
 
 	cgi_new(c->spawn_service, c->event_loop,
-		pool, nullptr, HTTP_METHOD_GET, &address,
+		pool, nullptr, HttpMethod::GET, &address,
 		nullptr, {}, nullptr,
 		*c, c->cancel_ptr);
 
@@ -510,7 +511,7 @@ test_length_ok_large(PoolPtr pool, Context *c)
 		.DocumentRoot("/var/www");
 
 	cgi_new(c->spawn_service, c->event_loop,
-		pool, nullptr, HTTP_METHOD_GET, &address,
+		pool, nullptr, HttpMethod::GET, &address,
 		nullptr, {}, nullptr,
 		*c, c->cancel_ptr);
 
@@ -534,7 +535,7 @@ test_length_too_small(PoolPtr pool, Context *c)
 		.DocumentRoot("/var/www");
 
 	cgi_new(c->spawn_service, c->event_loop,
-		pool, nullptr, HTTP_METHOD_GET, &address,
+		pool, nullptr, HttpMethod::GET, &address,
 		nullptr, {}, nullptr,
 		*c, c->cancel_ptr);
 
@@ -557,7 +558,7 @@ test_length_too_big(PoolPtr pool, Context *c)
 		.DocumentRoot("/var/www");
 
 	cgi_new(c->spawn_service, c->event_loop,
-		pool, nullptr, HTTP_METHOD_GET, &address,
+		pool, nullptr, HttpMethod::GET, &address,
 		nullptr, {}, nullptr,
 		*c, c->cancel_ptr);
 
@@ -581,7 +582,7 @@ test_length_too_small_late(PoolPtr pool, Context *c)
 		.DocumentRoot("/var/www");
 
 	cgi_new(c->spawn_service, c->event_loop,
-		pool, nullptr, HTTP_METHOD_GET, &address,
+		pool, nullptr, HttpMethod::GET, &address,
 		nullptr, {}, nullptr,
 		*c, c->cancel_ptr);
 
@@ -612,7 +613,7 @@ test_large_header(PoolPtr pool, Context *c)
 		.DocumentRoot("/var/www");
 
 	cgi_new(c->spawn_service, c->event_loop,
-		pool, nullptr, HTTP_METHOD_GET, &address,
+		pool, nullptr, HttpMethod::GET, &address,
 		nullptr, {}, nullptr,
 		*c, c->cancel_ptr);
 

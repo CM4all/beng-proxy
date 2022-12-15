@@ -41,6 +41,7 @@
 #include "http/Address.hxx"
 #include "http/Headers.hxx"
 #include "http/IncomingRequest.hxx"
+#include "http/Method.hxx"
 #include "http/ResponseHandler.hxx"
 #include "http/GlueClient.hxx"
 #include "util/Cancellable.hxx"
@@ -113,7 +114,7 @@ LbPrometheusExporter::AppendRequest::Start(struct pool &pool,
 	http_request(pool, _instance.event_loop,
 		     *_instance.fs_balancer, {}, {},
 		     nullptr,
-		     HTTP_METHOD_GET, address, {}, nullptr,
+		     HttpMethod::GET, address, {}, nullptr,
 		     *this, cancel_ptr);
 }
 

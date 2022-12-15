@@ -33,6 +33,7 @@
 #include "strmap.hxx"
 #include "http/Client.hxx"
 #include "http/Headers.hxx"
+#include "http/Method.hxx"
 #include "http/ResponseHandler.hxx"
 #include "lease.hxx"
 #include "istream/OpenFileIstream.hxx"
@@ -167,7 +168,7 @@ struct Context final
 
 	CancellablePointer cancel_ptr;
 
-	http_method_t method;
+	HttpMethod method;
 	UnusedIstreamPtr request_body;
 
 	UniqueSocketDescriptor fd;
@@ -463,12 +464,12 @@ try {
 	/* open request body */
 
 	if (argc >= 3) {
-		ctx.method = HTTP_METHOD_POST;
+		ctx.method = HttpMethod::POST;
 
 		ctx.request_body = OpenFileIstream(ctx.event_loop, ctx.pool,
 						   argv[2]);
 	} else {
-		ctx.method = HTTP_METHOD_GET;
+		ctx.method = HttpMethod::GET;
 	}
 
 	/* connect */

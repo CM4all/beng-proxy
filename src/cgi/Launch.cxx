@@ -37,6 +37,7 @@
 #include "product.h"
 #include "spawn/IstreamSpawn.hxx"
 #include "spawn/Prepared.hxx"
+#include "http/Method.hxx"
 #include "util/CharUtil.hxx"
 #include "AllocatorPtr.hxx"
 
@@ -68,7 +69,7 @@ StringFallback(const char *value, const char *fallback)
  */
 static void
 PrepareCgi(struct pool &pool, PreparedChildProcess &p,
-	   http_method_t method,
+	   HttpMethod method,
 	   const CgiAddress &address,
 	   const char *remote_addr,
 	   const StringMap &headers,
@@ -160,7 +161,7 @@ PrepareCgi(struct pool &pool, PreparedChildProcess &p,
 
 UnusedIstreamPtr
 cgi_launch(EventLoop &event_loop, struct pool *pool,
-	   http_method_t method,
+	   HttpMethod method,
 	   const CgiAddress *address,
 	   const char *remote_addr,
 	   const StringMap &headers, UnusedIstreamPtr body,

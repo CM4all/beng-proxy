@@ -32,8 +32,9 @@
 
 #pragma once
 
-#include "http/Method.h"
+#include <cstdint>
 
+enum class HttpMethod : uint_least8_t;
 struct pool;
 class EventLoop;
 class UnusedIstreamPtr;
@@ -47,7 +48,7 @@ class StringMap;
  * Throws std::runtime_error on error.
  */
 UnusedIstreamPtr
-cgi_launch(EventLoop &event_loop, struct pool *pool, http_method_t method,
+cgi_launch(EventLoop &event_loop, struct pool *pool, HttpMethod method,
 	   const CgiAddress *address,
 	   const char *remote_addr,
 	   const StringMap &headers, UnusedIstreamPtr body,

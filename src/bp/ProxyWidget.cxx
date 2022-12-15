@@ -130,7 +130,7 @@ ProxyWidget::OnHttpResponse(HttpStatus status, StringMap &&_headers,
 
 	HttpHeaders headers2(std::move(headers));
 
-	if (request.request.method == HTTP_METHOD_HEAD)
+	if (request.request.method == HttpMethod::HEAD)
 		/* pass Content-Length, even though there is no response body
 		   (RFC 2616 14.13) */
 		headers2.CopyToBuffer(_headers, "content-length");

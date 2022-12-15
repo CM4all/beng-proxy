@@ -39,6 +39,7 @@
 #include "bp/Instance.hxx"
 #include "http/Headers.hxx"
 #include "http/IncomingRequest.hxx"
+#include "http/Method.hxx"
 #include "pool/pool.hxx"
 
 #include <assert.h>
@@ -139,8 +140,8 @@ Request::HandleNfsAddress() noexcept
 
 	/* check request */
 
-	if (request.method != HTTP_METHOD_HEAD &&
-	    request.method != HTTP_METHOD_GET &&
+	if (request.method != HttpMethod::HEAD &&
+	    request.method != HttpMethod::GET &&
 	    !processor_focus) {
 		DispatchMethodNotAllowed("GET, HEAD");
 		return;

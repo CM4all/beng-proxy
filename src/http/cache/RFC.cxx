@@ -39,6 +39,7 @@
 #include "http/Date.hxx"
 #include "http/PHeaderUtil.hxx"
 #include "http/PList.hxx"
+#include "http/Method.hxx"
 #include "http/Status.hxx"
 #include "util/IterableSplitString.hxx"
 #include "util/StringCompare.hxx"
@@ -51,13 +52,13 @@ using std::string_view_literals::operator""sv;
 
 /* check whether the request could produce a cacheable response */
 std::optional<HttpCacheRequestInfo>
-http_cache_request_evaluate(http_method_t method,
+http_cache_request_evaluate(HttpMethod method,
 			    const ResourceAddress &address,
 			    const StringMap &headers,
 			    bool obey_no_cache,
 			    bool has_request_body) noexcept
 {
-	if (method != HTTP_METHOD_GET || has_request_body)
+	if (method != HttpMethod::GET || has_request_body)
 		/* RFC 2616 13.11 "Write-Through Mandatory" */
 		return std::nullopt;
 
@@ -126,11 +127,11 @@ http_cache_vary_fits(const StringMap *vary, const StringMap &headers) noexcept
 }
 
 bool
-http_cache_request_invalidate(http_method_t method) noexcept
+http_cache_request_invalidate(HttpMethod method) noexcept
 {
 	/* RFC 2616 13.10 "Invalidation After Updates or Deletions" */
-	return method == HTTP_METHOD_PUT || method == HTTP_METHOD_DELETE ||
-		method == HTTP_METHOD_POST;
+	return method == HttpMethod::PUT || method == HttpMethod::DELETE ||
+		method == HttpMethod::POST;
 }
 
 [[gnu::pure]]

@@ -45,6 +45,7 @@
 #include "util/Cancellable.hxx"
 #include "util/RuntimeError.hxx"
 #include "util/StaticVector.hxx"
+#include "http/Method.hxx"
 #include "http/ResponseHandler.hxx"
 #include "stopwatch.hxx"
 #include "strmap.hxx"
@@ -141,7 +142,7 @@ public:
 		connection.DeferWrite();
 	}
 
-	void SendRequest(http_method_t method, const char *uri,
+	void SendRequest(HttpMethod method, const char *uri,
 			 StringMap &&headers,
 			 UnusedIstreamPtr body) noexcept;
 
@@ -288,7 +289,7 @@ ClientConnection::Request::AbortError(std::exception_ptr e) noexcept
 }
 
 inline void
-ClientConnection::Request::SendRequest(http_method_t method, const char *uri,
+ClientConnection::Request::SendRequest(HttpMethod method, const char *uri,
 				       StringMap &&headers,
 				       UnusedIstreamPtr body) noexcept
 {
@@ -508,7 +509,7 @@ ClientConnection::~ClientConnection() noexcept
 void
 ClientConnection::SendRequest(AllocatorPtr alloc,
 			      StopwatchPtr stopwatch,
-			      http_method_t method, const char *uri,
+			      HttpMethod method, const char *uri,
 			      StringMap &&headers,
 			      UnusedIstreamPtr body,
 			      HttpResponseHandler &_handler,

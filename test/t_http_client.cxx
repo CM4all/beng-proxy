@@ -119,7 +119,7 @@ public:
 
 	void Request(struct pool &pool,
 		     Lease &lease,
-		     http_method_t method, const char *uri,
+		     HttpMethod method, const char *uri,
 		     StringMap &&headers,
 		     UnusedIstreamPtr body,
 		     bool expect_100,
@@ -335,7 +335,7 @@ test_no_keepalive(auto &factory, Context &c) noexcept
 {
 	c.connection = factory.NewClose(*c.pool, c.event_loop);
 	c.connection->Request(c.pool, c,
-			      HTTP_METHOD_GET, "/foo", {},
+			      HttpMethod::GET, "/foo", {},
 			      nullptr,
 #ifdef HAVE_EXPECT_100
 			      false,
@@ -374,7 +374,7 @@ test_ignored_request_body(auto &factory, Context &c) noexcept
 	c.data_blocking = 1;
 	c.connection = factory.NewIgnoredRequestBody(*c.pool, c.event_loop);
 	c.connection->Request(c.pool, c,
-			      HTTP_METHOD_GET, "/ignored-request-body", {},
+			      HttpMethod::GET, "/ignored-request-body", {},
 			      std::move(delayed.first),
 #ifdef HAVE_EXPECT_100
 			      false,
@@ -450,7 +450,7 @@ test_expect_100_continue_splice(auto &factory, Context &c) noexcept
 
 	c.connection = factory.NewDeferMirror(*c.pool, c.event_loop);
 	c.connection->Request(c.pool, c,
-			      HTTP_METHOD_POST, "/expect_100_continue_splice",
+			      HttpMethod::POST, "/expect_100_continue_splice",
 			      {},
 			      NewIstreamPtr<DeferReadIstream>(*c.pool, c.event_loop,
 							      FillPipeLeaseIstream(*c.pool, nullptr, length)),

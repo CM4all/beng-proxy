@@ -72,7 +72,7 @@
 
 struct request {
 	bool cached;
-	http_method_t method;
+	HttpMethod method;
 	const char *uri;
 	const char *request_headers;
 
@@ -169,7 +169,7 @@ public:
 	void SendRequest(struct pool &pool,
 			 const StopwatchPtr &parent_stopwatch,
 			 const ResourceRequestParams &params,
-			 http_method_t method,
+			 HttpMethod method,
 			 const ResourceAddress &address,
 			 HttpStatus status, StringMap &&headers,
 			 UnusedIstreamPtr body, const char *body_etag,
@@ -181,7 +181,7 @@ void
 MyResourceLoader::SendRequest(struct pool &pool,
 			      const StopwatchPtr &,
 			      const ResourceRequestParams &,
-			      http_method_t method,
+			      HttpMethod method,
 			      const ResourceAddress &,
 			      HttpStatus,
 			      StringMap &&headers,
@@ -194,7 +194,7 @@ MyResourceLoader::SendRequest(struct pool &pool,
 	const char *p;
 
 	EXPECT_FALSE(got_request);
-	ASSERT_EQ(method, HTTP_METHOD_GET);
+	ASSERT_EQ(method, HttpMethod::GET);
 	EXPECT_FALSE(body);
 
 	got_request = true;

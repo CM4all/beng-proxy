@@ -32,18 +32,18 @@
 
 #pragma once
 
-#include "http/Method.h"
+#include "http/Method.hxx"
 
 constexpr bool
-MethodNeedsCsrfProtection(http_method_t method) noexcept
+MethodNeedsCsrfProtection(HttpMethod method) noexcept
 {
 	switch (method) {
-	case HTTP_METHOD_HEAD:
-	case HTTP_METHOD_GET:
-	case HTTP_METHOD_OPTIONS:
-	case HTTP_METHOD_TRACE:
-	case HTTP_METHOD_PROPFIND:
-	case HTTP_METHOD_REPORT:
+	case HttpMethod::HEAD:
+	case HttpMethod::GET:
+	case HttpMethod::OPTIONS:
+	case HttpMethod::TRACE:
+	case HttpMethod::PROPFIND:
+	case HttpMethod::REPORT:
 		return false;
 
 	default:

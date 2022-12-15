@@ -35,6 +35,7 @@
 #include "pool/pool.hxx"
 #include "istream/istream_string.hxx"
 #include "http/Headers.hxx"
+#include "http/Method.hxx"
 #include "http/Status.hxx"
 
 IncomingHttpRequest::IncomingHttpRequest(PoolPtr &&_pool,
@@ -47,7 +48,7 @@ IncomingHttpRequest::IncomingHttpRequest(PoolPtr &&_pool,
 	 remote_address(_remote_address),
 	 local_host_and_port(_local_host_and_port),
 	 remote_host(_remote_host),
-	 method(HTTP_METHOD_NULL),
+	 method(HttpMethod::UNDEFINED),
 	 uri(nullptr)
 {
 }
@@ -57,7 +58,7 @@ IncomingHttpRequest::IncomingHttpRequest(PoolPtr &&_pool,
 					 SocketAddress _remote_address,
 					 const char *_local_host_and_port,
 					 const char *_remote_host,
-					 http_method_t _method,
+					 HttpMethod _method,
 					 std::string_view _uri) noexcept
 	:pool(std::move(_pool)),
 	 local_address(_local_address),

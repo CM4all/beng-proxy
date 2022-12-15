@@ -35,7 +35,6 @@
 #include "Error.hxx"
 #include "Public.hxx"
 #include "http/Body.hxx"
-#include "http/Method.h"
 #include "http/Status.hxx"
 #include "fs/FilteredSocket.hxx"
 #include "net/SocketProtocolError.hxx"
@@ -50,6 +49,7 @@
 #include <cassert>
 #include <string_view>
 
+enum class HttpMethod : uint_least8_t;
 struct HttpServerRequest;
 class HttpHeaders;
 
@@ -433,5 +433,5 @@ struct HttpServerConnection final
 
 HttpServerRequest *
 http_server_request_new(HttpServerConnection *connection,
-			http_method_t method,
+			HttpMethod method,
 			std::string_view uri) noexcept;

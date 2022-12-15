@@ -35,6 +35,7 @@
 #include "GotoConfig.hxx"
 #include "Goto.hxx"
 #include "http/IncomingRequest.hxx"
+#include "http/Method.hxx"
 #include "http/ResponseHandler.hxx"
 #include "pool/pool.hxx"
 #include "lua/RunFile.hxx"

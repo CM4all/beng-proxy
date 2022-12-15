@@ -41,6 +41,7 @@
 #include "json/String.hxx"
 #include "json/ForwardList.hxx"
 #include "jwt/RS256.hxx"
+#include "http/Method.hxx"
 #include "http/Status.hxx"
 #include "lib/openssl/Buffer.hxx"
 #include "lib/openssl/UniqueBIO.hxx"
@@ -178,7 +179,7 @@ AcmeClient::RequestDirectory()
 	unsigned remaining_tries = 3;
 	while (true) {
 		auto response = glue_http_client.Request(event_loop,
-							 HTTP_METHOD_GET,
+							 HttpMethod::GET,
 							 (server + "/directory").c_str(),
 							 {});
 		if (response.status != HttpStatus::OK) {
@@ -223,7 +224,7 @@ AcmeClient::RequestNonce()
 	unsigned remaining_tries = 3;
 	while (true) {
 		auto response = glue_http_client.Request(event_loop,
-							 HTTP_METHOD_HEAD,
+							 HttpMethod::HEAD,
 							 directory.new_nonce.c_str(),
 							 {});
 		if (response.status != HttpStatus::OK) {
@@ -275,7 +276,7 @@ MakeHeader(EVP_PKEY &key, const char *url, const char *kid,
 }
 
 GlueHttpResponse
-AcmeClient::Request(http_method_t method, const char *uri,
+AcmeClient::Request(HttpMethod method, const char *uri,
 		    std::span<const std::byte> body)
 {
 	auto response = fake
@@ -292,7 +293,7 @@ AcmeClient::Request(http_method_t method, const char *uri,
 }
 
 GlueHttpResponse
-AcmeClient::Request(http_method_t method, const char *uri,
+AcmeClient::Request(HttpMethod method, const char *uri,
 		    const boost::json::value &body)
 {
 	return Request(method, uri, boost::json::serialize(body));
@@ -300,7 +301,7 @@ AcmeClient::Request(http_method_t method, const char *uri,
 
 GlueHttpResponse
 AcmeClient::SignedRequest(EVP_PKEY &key,
-			  http_method_t method, const char *uri,
+			  HttpMethod method, const char *uri,
 			  std::span<const std::byte> payload)
 {
 	const auto payload_b64 = UrlSafeBase64(payload);
@@ -327,7 +328,7 @@ AcmeClient::SignedRequest(EVP_PKEY &key,
 
 GlueHttpResponse
 AcmeClient::SignedRequest(EVP_PKEY &key,
-			  http_method_t method, const char *uri,
+			  HttpMethod method, const char *uri,
 			  const boost::json::value &payload)
 {
 	return SignedRequest(key, method, uri,
@@ -402,7 +403,7 @@ AcmeClient::NewAccount(EVP_PKEY &key, const char *email,
 	const auto payload = MakeNewAccountRequest(email, only_return_existing);
 
 	auto response = SignedRequestRetry(key,
-					   HTTP_METHOD_POST,
+					   HttpMethod::POST,
 					   directory.new_account.c_str(),
 					   payload);
 	if (only_return_existing) {
@@ -484,7 +485,7 @@ AcmeClient::NewOrder(EVP_PKEY &key, OrderRequest &&request)
 		throw std::runtime_error("No newOrder in directory");
 
 	auto response = SignedRequestRetry(key,
-					   HTTP_METHOD_POST,
+					   HttpMethod::POST,
 					   directory.new_order.c_str(),
 					   boost::json::value_from(request));
 	if (response.status != HttpStatus::CREATED)
@@ -509,7 +510,7 @@ AcmeClient::FinalizeOrder(EVP_PKEY &key, const AcmeOrder &order,
 			  X509_REQ &csr)
 {
 	auto response = SignedRequestRetry(key,
-					   HTTP_METHOD_POST,
+					   HttpMethod::POST,
 					   order.finalize.c_str(),
 					   ToJson(csr));
 	if (response.status != HttpStatus::OK)
@@ -525,7 +526,7 @@ UniqueX509
 AcmeClient::DownloadCertificate(EVP_PKEY &key, const AcmeOrder &order)
 {
 	auto response = SignedRequestRetry(key,
-					   HTTP_METHOD_POST,
+					   HttpMethod::POST,
 					   order.certificate.c_str(),
 					   ""sv);
 	if (response.status != HttpStatus::OK)
@@ -587,7 +588,7 @@ AcmeAuthorization
 AcmeClient::Authorize(EVP_PKEY &key, const char *url)
 {
 	auto response = SignedRequestRetry(key,
-					   HTTP_METHOD_POST,
+					   HttpMethod::POST,
 					   url,
 					   ""sv);
 	if (response.status != HttpStatus::OK)
@@ -603,7 +604,7 @@ AcmeAuthorization
 AcmeClient::PollAuthorization(EVP_PKEY &key, const char *url)
 {
 	auto response = SignedRequestRetry(key,
-					   HTTP_METHOD_POST,
+					   HttpMethod::POST,
 					   url,
 					   ""sv);
 	if (response.status != HttpStatus::OK)
@@ -619,7 +620,7 @@ AcmeChallenge
 AcmeClient::UpdateChallenge(EVP_PKEY &key, const AcmeChallenge &challenge)
 {
 	auto response = SignedRequestRetry(key,
-					   HTTP_METHOD_POST,
+					   HttpMethod::POST,
 					   challenge.uri.c_str(),
 					   boost::json::object{});
 	if (response.status != HttpStatus::OK)

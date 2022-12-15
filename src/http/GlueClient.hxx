@@ -33,8 +33,10 @@
 #pragma once
 
 #include "cluster/StickyHash.hxx"
-#include "http/Method.h"
 
+#include <cstdint>
+
+enum class HttpMethod : uint_least8_t;
 struct pool;
 class EventLoop;
 class StopwatchPtr;
@@ -58,7 +60,7 @@ http_request(struct pool &pool, EventLoop &event_loop,
 	     const StopwatchPtr &parent_stopwatch,
 	     sticky_hash_t sticky_hash,
 	     SocketFilterFactory *filter_factory,
-	     http_method_t method,
+	     HttpMethod method,
 	     const HttpAddress &address,
 	     StringMap &&headers, UnusedIstreamPtr body,
 	     HttpResponseHandler &handler,

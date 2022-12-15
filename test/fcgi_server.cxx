@@ -32,6 +32,7 @@
 
 #include "fcgi_server.hxx"
 #include "pool/pool.hxx"
+#include "http/Method.hxx"
 #include "strmap.hxx"
 #include "tio.hxx"
 #include "util/CharUtil.hxx"
@@ -82,9 +83,9 @@ handle_fcgi_param(struct pool *pool, FcgiRequest *r,
 {
 	if (strcmp(name, "REQUEST_METHOD") == 0) {
 		if (strcmp(value, "HEAD") == 0)
-			r->method = HTTP_METHOD_HEAD;
+			r->method = HttpMethod::HEAD;
 		else if (strcmp(value, "POST") == 0)
-			r->method = HTTP_METHOD_POST;
+			r->method = HttpMethod::POST;
 	} else if (strcmp(name, "REQUEST_URI") == 0) {
 		r->uri = p_strdup(pool, value);
 	} else if (memcmp(name, "HTTP_", 5) == 0 && name[5] != 0) {
@@ -104,7 +105,7 @@ handle_fcgi_param(struct pool *pool, FcgiRequest *r,
 static void
 read_fcgi_params(struct pool *pool, FcgiRequest *r)
 {
-	r->method = HTTP_METHOD_GET;
+	r->method = HttpMethod::GET;
 	r->uri = nullptr;
 	r->headers = strmap_new(pool);
 

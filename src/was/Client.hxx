@@ -32,10 +32,10 @@
 
 #pragma once
 
-#include "http/Method.h"
-
+#include <cstdint>
 #include <span>
 
+enum class HttpMethod : uint_least8_t;
 struct pool;
 class StopwatchPtr;
 class FileDescriptor;
@@ -77,7 +77,7 @@ was_client_request(struct pool &pool, EventLoop &event_loop,
 		   FileDescriptor input_fd, FileDescriptor output_fd,
 		   WasLease &lease,
 		   const char *remote_host,
-		   http_method_t method, const char *uri,
+		   HttpMethod method, const char *uri,
 		   const char *script_name, const char *path_info,
 		   const char *query_string,
 		   const StringMap &headers, UnusedIstreamPtr body,

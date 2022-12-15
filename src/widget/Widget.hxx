@@ -35,7 +35,7 @@
 #include "istream/UnusedHoldPtr.hxx"
 #include "pool/LeakDetector.hxx"
 #include "io/Logger.hxx"
-#include "http/Method.h"
+#include "http/Method.hxx"
 #include "util/IntrusiveForwardList.hxx"
 
 #include <cstdint>
@@ -216,9 +216,9 @@ public:
 
 		/**
 		 * The request's HTTP method if the widget is focused.  Falls
-		 * back to HTTP_METHOD_GET if the widget is not focused.
+		 * back to HttpMethod::GET if the widget is not focused.
 		 */
-		http_method_t method = HTTP_METHOD_GET;
+		HttpMethod method = HttpMethod::GET;
 
 		/**
 		 * Is this the "top frame" widget requested by the client?
@@ -258,9 +258,9 @@ public:
 		/**
 		 * The HTTP method to be invoked on the focused widget.
 		 */
-		const http_method_t method;
+		const HttpMethod method;
 
-		ForFocused(http_method_t _method, const char *_path_info,
+		ForFocused(HttpMethod _method, const char *_path_info,
 			   std::string_view _query_string,
 			   UnusedHoldIstreamPtr &&_body) noexcept
 			:path_info(_path_info), query_string(_query_string),

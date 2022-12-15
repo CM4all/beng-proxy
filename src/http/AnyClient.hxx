@@ -33,13 +33,15 @@
 #pragma once
 
 #include "cluster/StickyHash.hxx"
-#include "http/Method.h"
+
+#include <cstdint>
 
 #ifdef HAVE_NGHTTP2
 #include <string>
 #include <map>
 #endif
 
+enum class HttpMethod : uint_least8_t;
 struct pool;
 class EventLoop;
 class StopwatchPtr;
@@ -90,7 +92,7 @@ public:
 	void SendRequest(struct pool &pool,
 			 const StopwatchPtr &parent_stopwatch,
 			 sticky_hash_t sticky_hash,
-			 http_method_t method,
+			 HttpMethod method,
 			 const HttpAddress &address,
 			 StringMap &&headers, UnusedIstreamPtr body,
 			 HttpResponseHandler &handler,
@@ -101,7 +103,7 @@ private:
 			const StopwatchPtr &parent_stopwatch,
 			sticky_hash_t sticky_hash,
 			SocketFilterFactory &filter_factory,
-			http_method_t method,
+			HttpMethod method,
 			const HttpAddress &address,
 			StringMap &&headers, UnusedIstreamPtr body,
 			HttpResponseHandler &handler,

@@ -45,6 +45,7 @@
 #include "util/Cancellable.hxx"
 #include "memory/fb_pool.hxx"
 #include "pool/pool.hxx"
+#include "http/Method.hxx"
 #include "http/ResponseHandler.hxx"
 #include "PInstance.hxx"
 #include "stopwatch.hxx"
@@ -65,7 +66,7 @@ TEST(BufferedResourceLoader, Empty)
 					     instance.event_loop);
 	CancellablePointer cancel_ptr;
 	brl.SendRequest(handler.pool, nullptr, {},
-			HTTP_METHOD_POST, nullptr,
+			HttpMethod::POST, nullptr,
 			HttpStatus::OK, {},
 			nullptr, nullptr,
 			handler, cancel_ptr);
@@ -85,7 +86,7 @@ TEST(BufferedResourceLoader, Small)
 					     instance.event_loop);
 	CancellablePointer cancel_ptr;
 	brl.SendRequest(handler.pool, nullptr, {},
-			HTTP_METHOD_POST, nullptr,
+			HttpMethod::POST, nullptr,
 			HttpStatus::OK, {},
 			NewConcatIstream(handler.pool,
 					 istream_string_new(handler.pool, "foo"),
@@ -116,7 +117,7 @@ TEST(BufferedResourceLoader, Large)
 					     instance.event_loop);
 	CancellablePointer cancel_ptr;
 	brl.SendRequest(handler.pool, nullptr, {},
-			HTTP_METHOD_POST, nullptr,
+			HttpMethod::POST, nullptr,
 			HttpStatus::OK, {},
 			istream_string_new(handler.pool, data),
 			nullptr,
@@ -146,7 +147,7 @@ TEST(BufferedResourceLoader, LargeFail)
 
 	CancellablePointer cancel_ptr;
 	brl.SendRequest(handler.pool, nullptr, {},
-			HTTP_METHOD_POST, nullptr,
+			HttpMethod::POST, nullptr,
 			HttpStatus::OK, {},
 			istream_string_new(handler.pool, data),
 			nullptr,
@@ -172,7 +173,7 @@ TEST(BufferedResourceLoader, EarlyRequestError)
 					 istream_block_new(handler.pool));
 
 	brl.SendRequest(handler.pool, nullptr, {},
-			HTTP_METHOD_GET, nullptr,
+			HttpMethod::GET, nullptr,
 			HttpStatus::OK, {}, std::move(inject.first), nullptr,
 			handler, cancel_ptr);
 
@@ -194,7 +195,7 @@ TEST(BufferedResourceLoader, EarlyResponseError)
 					     instance.event_loop);
 	CancellablePointer cancel_ptr;
 	brl.SendRequest(handler.pool, nullptr, {},
-			HTTP_METHOD_GET, nullptr,
+			HttpMethod::GET, nullptr,
 			HttpStatus::OK, {}, nullptr, nullptr,
 			handler, cancel_ptr);
 
@@ -212,7 +213,7 @@ TEST(BufferedResourceLoader, CancelEarly)
 					     instance.event_loop);
 	CancellablePointer cancel_ptr;
 	brl.SendRequest(handler.pool, nullptr, {},
-			HTTP_METHOD_POST, nullptr,
+			HttpMethod::POST, nullptr,
 			HttpStatus::OK, {},
 			istream_block_new(handler.pool), nullptr,
 			handler, cancel_ptr);
@@ -239,7 +240,7 @@ TEST(BufferedResourceLoader, CancelNext)
 					     instance.event_loop);
 	CancellablePointer cancel_ptr;
 	brl.SendRequest(handler.pool, nullptr, {},
-			HTTP_METHOD_POST, nullptr,
+			HttpMethod::POST, nullptr,
 			HttpStatus::OK, {},
 			istream_string_new(handler.pool, data),
 			nullptr,

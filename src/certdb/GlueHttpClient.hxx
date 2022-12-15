@@ -34,11 +34,12 @@
 
 #include "lib/curl/Global.hxx"
 #include "lib/curl/Headers.hxx"
-#include "http/Method.h"
 
+#include <cstdint>
 #include <span>
 #include <string>
 
+enum class HttpMethod : uint_least8_t;
 enum class HttpStatus : uint_least16_t;
 class EventLoop;
 
@@ -72,6 +73,6 @@ public:
 	}
 
 	GlueHttpResponse Request(EventLoop &event_loop,
-				 http_method_t method, const char *uri,
+				 HttpMethod method, const char *uri,
 				 std::span<const std::byte> body);
 };

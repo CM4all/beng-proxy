@@ -35,6 +35,7 @@
 #include "http/IncomingRequest.hxx"
 #include "http/Client.hxx"
 #include "http/Headers.hxx"
+#include "http/Method.hxx"
 #include "http/ResponseHandler.hxx"
 #include "lease.hxx"
 #include "PInstance.hxx"
@@ -116,7 +117,7 @@ public:
 			CloseConnection();
 	}
 
-	void SendRequest(http_method_t method, const char *uri,
+	void SendRequest(HttpMethod method, const char *uri,
 			 const StringMap &headers,
 			 UnusedIstreamPtr body, bool expect_100,
 			 HttpResponseHandler &handler,
@@ -209,7 +210,7 @@ public:
 		:event_loop(_event_loop) {}
 
 	void SendRequest(Server &server,
-			 http_method_t method, const char *uri,
+			 HttpMethod method, const char *uri,
 			 const StringMap &headers,
 			 UnusedIstreamPtr body, bool expect_100=false) noexcept {
 		server.SendRequest(method, uri, headers,
@@ -349,7 +350,7 @@ TestSimple(Server &server)
 
 	Client client{server.GetEventLoop()};
 	client.SendRequest(server,
-			   HTTP_METHOD_GET, "/", {},
+			   HttpMethod::GET, "/", {},
 			   nullptr);
 	client.ExpectResponse(HttpStatus::OK, "foo");
 }
@@ -364,7 +365,7 @@ TestMirror(Server &server)
 
 	Client client{server.GetEventLoop()};
 	client.SendRequest(server,
-			   HTTP_METHOD_POST, "/", {},
+			   HttpMethod::POST, "/", {},
 			   istream_string_new(server.GetPool(), "foo"));
 	client.ExpectResponse(HttpStatus::OK, "foo");
 }
@@ -429,7 +430,7 @@ TestBufferedMirror(Server &server)
 
 	Client client{server.GetEventLoop()};
 	client.SendRequest(server,
-			   HTTP_METHOD_POST, "/buffered", {},
+			   HttpMethod::POST, "/buffered", {},
 			   istream_string_new(server.GetPool(), data));
 	client.ExpectResponse(HttpStatus::OK, data);
 }
@@ -453,7 +454,7 @@ TestAbortedRequestBody(Server &server)
 
 	Client client{server.GetEventLoop()};
 	client.SendRequest(server,
-			   HTTP_METHOD_POST, "/AbortedRequestBody", {},
+			   HttpMethod::POST, "/AbortedRequestBody", {},
 			   NewConcatIstream(server.GetPool(),
 					    istream_string_new(server.GetPool(), data),
 					    istream_head_new(server.GetPool(),
@@ -482,7 +483,7 @@ TestDiscardTinyRequestBody(Server &server)
 
 	Client client{server.GetEventLoop()};
 	client.SendRequest(server,
-			   HTTP_METHOD_POST, "/", {},
+			   HttpMethod::POST, "/", {},
 			   istream_string_new(server.GetPool(), "foo"));
 	client.ExpectResponse(HttpStatus::OK, "foo");
 }
@@ -527,7 +528,7 @@ TestDiscardedHugeRequestBody(Server &server)
 
 	Client client{server.GetEventLoop()};
 	client.SendRequest(server,
-			   HTTP_METHOD_POST, "/", {},
+			   HttpMethod::POST, "/", {},
 			   istream_zero_new(server.GetPool()));
 	client.ExpectResponse(HttpStatus::OK, "foo");
 }

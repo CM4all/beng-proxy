@@ -37,6 +37,7 @@
 #include "lib/openssl/Error.hxx"
 #include "lib/openssl/UniqueBIO.hxx"
 #include "http/Status.hxx"
+#include "http/Method.hxx"
 #include "util/AllocatedArray.hxx"
 #include "util/Exception.hxx"
 
@@ -155,7 +156,7 @@ CopyExtensions(X509 &dest, X509_REQ &src)
 }
 
 GlueHttpResponse
-AcmeClient::FakeRequest(http_method_t method, const char *uri,
+AcmeClient::FakeRequest(HttpMethod method, const char *uri,
 			std::span<const std::byte> body)
 try {
 	(void)method;
@@ -190,7 +191,7 @@ try {
 					"  \"status\": \"valid\""
 					"}");
 	} else if (strcmp(uri, "/acme/new-cert") == 0) {
-		if (method != HTTP_METHOD_POST || body.data() == nullptr)
+		if (method != HttpMethod::POST || body.data() == nullptr)
 			return GlueHttpResponse(HttpStatus::BAD_REQUEST, {},
 						"Bad request");
 

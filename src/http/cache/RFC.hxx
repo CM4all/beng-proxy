@@ -37,13 +37,12 @@
 
 #pragma once
 
-#include "http/Method.h"
-
 #include <cstdint>
 #include <optional>
 
 #include <sys/types.h> /* for off_t */
 
+enum class HttpMethod : uint_least8_t;
 enum class HttpStatus : uint_least16_t;
 class AllocatorPtr;
 class StringMap;
@@ -58,7 +57,7 @@ struct HttpCacheResponseInfo;
  */
 [[gnu::pure]]
 std::optional<HttpCacheRequestInfo>
-http_cache_request_evaluate(http_method_t method,
+http_cache_request_evaluate(HttpMethod method,
 			    const ResourceAddress &address,
 			    const StringMap &headers,
 			    bool obey_no_cache,
@@ -76,7 +75,7 @@ http_cache_vary_fits(const StringMap *vary, const StringMap &headers) noexcept;
  * Check whether the request should invalidate the existing cache.
  */
 bool
-http_cache_request_invalidate(http_method_t method) noexcept;
+http_cache_request_invalidate(HttpMethod method) noexcept;
 
 /**
  * Check whether the HTTP response should be put into the cache.

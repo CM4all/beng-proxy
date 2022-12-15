@@ -56,6 +56,7 @@
 #include "io/Logger.hxx"
 #include "http/List.hxx"
 #include "http/Date.hxx"
+#include "http/Method.hxx"
 #include "util/Cancellable.hxx"
 #include "util/Exception.hxx"
 #include "util/IntrusiveList.hxx"
@@ -195,7 +196,7 @@ public:
 		caller_cancel_ptr = *this;
 		resource_loader.SendRequest(pool, parent_stopwatch,
 					    {0, false, false, cache_tag, nullptr},
-					    HTTP_METHOD_POST, address,
+					    HttpMethod::POST, address,
 					    status, std::move(headers),
 					    std::move(body), body_etag,
 					    *this,
@@ -798,7 +799,7 @@ FilterCache::Get(struct pool &caller_pool,
 	} else {
 		resource_loader.SendRequest(caller_pool, parent_stopwatch,
 					    {0, false, false, cache_tag, nullptr},
-					    HTTP_METHOD_POST, address,
+					    HttpMethod::POST, address,
 					    status, std::move(headers),
 					    std::move(body), source_id,
 					    handler, cancel_ptr);

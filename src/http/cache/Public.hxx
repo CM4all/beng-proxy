@@ -32,12 +32,11 @@
 
 #pragma once
 
-#include "http/Method.h"
-
+#include <cstdint>
+#include <cstddef>
 #include <string>
 
-#include <stddef.h>
-
+enum class HttpMethod : uint_least8_t;
 struct pool;
 class StopwatchPtr;
 struct ResourceRequestParams;
@@ -81,7 +80,7 @@ http_cache_request(HttpCache &cache,
 		   struct pool &pool,
 		   const StopwatchPtr &parent_stopwatch,
 		   const ResourceRequestParams &params,
-		   http_method_t method,
+		   HttpMethod method,
 		   const ResourceAddress &address,
 		   StringMap &&headers, UnusedIstreamPtr body,
 		   HttpResponseHandler &handler,

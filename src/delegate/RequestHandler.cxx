@@ -35,6 +35,7 @@
 #include "Glue.hxx"
 #include "bp/FileHeaders.hxx"
 #include "bp/Instance.hxx"
+#include "http/Method.hxx"
 #include "http/IncomingRequest.hxx"
 #include "AllocatorPtr.hxx"
 
@@ -96,8 +97,8 @@ Request::HandleDelegateAddress(const DelegateAddress &address,
 
 	/* check request */
 
-	if (request.method != HTTP_METHOD_HEAD &&
-	    request.method != HTTP_METHOD_GET &&
+	if (request.method != HttpMethod::HEAD &&
+	    request.method != HttpMethod::GET &&
 	    !processor_focus) {
 		DispatchMethodNotAllowed("GET, HEAD");
 		return;

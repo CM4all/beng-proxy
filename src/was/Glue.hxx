@@ -32,10 +32,10 @@
 
 #pragma once
 
-#include "http/Method.h"
-
+#include <cstdint>
 #include <span>
 
+enum class HttpMethod : uint_least8_t;
 struct pool;
 class StopwatchPtr;
 class UnusedIstreamPtr;
@@ -60,7 +60,7 @@ was_request(struct pool &pool, WasStock &was_stock,
 	    std::span<const char *const> args,
 	    unsigned parallelism,
 	    const char *remote_host,
-	    http_method_t method, const char *uri,
+	    HttpMethod method, const char *uri,
 	    const char *script_name, const char *path_info,
 	    const char *query_string,
 	    StringMap &&headers, UnusedIstreamPtr body,
