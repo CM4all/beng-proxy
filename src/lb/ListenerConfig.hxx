@@ -72,6 +72,7 @@ struct LbListenerConfig : SocketConfig {
 		:name(_name)
 	{
 		listen = 64;
+		tcp_no_delay = true;
 	}
 
 #ifdef HAVE_AVAHI
