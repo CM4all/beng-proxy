@@ -37,6 +37,7 @@
 
 #include <array>
 #include <algorithm>
+#include <cstdint>
 
 #include <assert.h>
 #include <stddef.h>
