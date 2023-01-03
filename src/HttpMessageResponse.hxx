@@ -32,6 +32,7 @@
 
 #pragma once
 
+#include <cstdint>
 #include <stdexcept>
 
 enum class HttpStatus : uint_least16_t;
