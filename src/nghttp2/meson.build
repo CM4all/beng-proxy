@@ -24,5 +24,6 @@ nghttp2_dep = declare_dependency(
     istream_dep,
     socket_dep,
     stopwatch_dep,
+    fmt_dep,
   ],
 )

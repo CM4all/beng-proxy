@@ -59,6 +59,8 @@
 
 #include <nghttp2/nghttp2.h>
 
+#include <fmt/format.h>
+
 #include <assert.h>
 
 using std::string_view_literals::operator""sv;
@@ -412,11 +414,10 @@ ServerConnection::Request::SendResponse(HttpStatus status,
 
 	the_status = status;
 
-	char status_string[16];
-	sprintf(status_string, "%u", unsigned(status));
-
 	StaticVector<nghttp2_nv, 256> hdrs;
-	hdrs.push_back(MakeNv(":status", status_string));
+
+	const fmt::format_int status_string{static_cast<unsigned>(status)};
+	hdrs.push_back(MakeNv(":status", status_string.c_str()));
 
 	char content_length_string[32];
 	if (_response_body) {
