@@ -149,22 +149,19 @@ ParseHttpMethod(const char *s) noexcept
 }
 
 inline bool
-HttpServerConnection::ParseRequestLine(const char *line,
-				       std::size_t length) noexcept
+HttpServerConnection::ParseRequestLine(std::string_view line) noexcept
 {
 	assert(request.read_state == Request::START);
 	assert(request.request == nullptr);
 	assert(!response.pending_drained);
 
-	if (gcc_unlikely(length < 5)) {
+	if (line.size() < 5) [[unlikely]] {
 		ProtocolError("malformed request line");
 		return false;
 	}
 
-	const char *eol = line + length;
-
-	const auto [method, rest] = ParseHttpMethod(line);
-	line = rest;
+	const auto [method, rest] = ParseHttpMethod(line.data());
+	line.remove_prefix(rest - line.data());
 
 	if (method == HttpMethod{}) {
 		/* invalid request method */
@@ -173,9 +170,9 @@ HttpServerConnection::ParseRequestLine(const char *line,
 		return false;
 	}
 
-	const char *space = (const char *)memchr(line, ' ', eol - line);
-	if (gcc_unlikely(space == nullptr || space + 6 > line + length ||
-			 memcmp(space + 1, "HTTP/", 5) != 0)) {
+	const auto space = line.find(' ');
+	if (space == line.npos || space + 6 > line.size() ||
+	    memcmp(line.data() + space + 1, "HTTP/", 5) != 0) [[unlikely]] {
 		/* refuse HTTP 0.9 requests */
 		static constexpr auto msg =
 			"This server requires HTTP 1.1."sv;
@@ -186,7 +183,9 @@ HttpServerConnection::ParseRequestLine(const char *line,
 		return false;
 	}
 
-	request.request = http_server_request_new(this, method, {line, space});
+	const auto uri = line.substr(0, space);
+
+	request.request = http_server_request_new(this, method, uri);
 	request.read_state = Request::HEADERS;
 
 	return true;
@@ -302,7 +301,7 @@ HttpServerConnection::HandleLine(std::string_view line) noexcept
 	if (gcc_unlikely(request.read_state == Request::START)) {
 		assert(request.request == nullptr);
 
-		return ParseRequestLine(line.data(), line.size());
+		return ParseRequestLine(line);
 	} else if (gcc_likely(!line.empty())) {
 		assert(request.read_state == Request::HEADERS);
 		assert(request.request != nullptr);

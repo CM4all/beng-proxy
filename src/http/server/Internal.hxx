@@ -279,7 +279,7 @@ struct HttpServerConnection final
 	/**
 	 * @return false if the connection has been closed
 	 */
-	bool ParseRequestLine(const char *line, std::size_t length) noexcept;
+	bool ParseRequestLine(std::string_view line) noexcept;
 
 	/**
 	 * @return false if the connection has been closed
