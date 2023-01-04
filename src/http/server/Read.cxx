@@ -53,6 +53,101 @@
 
 using std::string_view_literals::operator""sv;
 
+/**
+ * Parse the HTTP request method at the beginning of the given string
+ * and return it, together with a pointer to the first character after
+ * the space after the method.
+ *
+ * Returns HttpMethod{} if the method was not recognized.
+ */
+[[gnu::pure]]
+static std::pair<HttpMethod, const char *>
+ParseHttpMethod(const char *s) noexcept
+{
+	switch (s[0]) {
+	case 'D':
+		if (gcc_likely(s[1] == 'E' && s[2] == 'L' && s[3] == 'E' &&
+			       s[4] == 'T' && s[5] == 'E' && s[6] == ' '))
+			return {HttpMethod::DELETE, s + 7};
+
+		break;
+
+	case 'G':
+		if (gcc_likely(s[1] == 'E' && s[2] == 'T' && s[3] == ' '))
+			return {HttpMethod::GET, s + 4};
+
+		break;
+
+	case 'P':
+		if (gcc_likely(s[1] == 'O' && s[2] == 'S' && s[3] == 'T' &&
+			       s[4] == ' '))
+			return {HttpMethod::POST, s + 5};
+		else if (s[1] == 'U' && s[2] == 'T' && s[3] == ' ')
+			return {HttpMethod::PUT, s + 4};
+		else if (auto patch = StringAfterPrefix(s + 1, "ATCH "))
+			return {HttpMethod::PATCH, patch};
+		else if (auto propfind = StringAfterPrefix(s + 1, "ROPFIND "))
+			return {HttpMethod::PROPFIND, propfind};
+		else if (auto proppatch = StringAfterPrefix(s + 1, "ROPPATCH "))
+			return {HttpMethod::PROPPATCH, proppatch};
+
+		break;
+
+	case 'R':
+		if (auto report = StringAfterPrefix(s + 1, "EPORT "))
+			return {HttpMethod::REPORT, report};
+
+		break;
+
+	case 'H':
+		if (gcc_likely(s[1] == 'E' && s[2] == 'A' && s[3] == 'D' &&
+			       s[4] == ' '))
+			return {HttpMethod::HEAD, s + 5};
+
+		break;
+
+	case 'O':
+		if (auto options = StringAfterPrefix(s + 1, "PTIONS "))
+			return {HttpMethod::OPTIONS, options};
+
+		break;
+
+	case 'T':
+		if (auto trace = StringAfterPrefix(s + 1, "RACE "))
+			return {HttpMethod::TRACE, trace};
+
+		break;
+
+	case 'M':
+		if (auto mkcol = StringAfterPrefix(s + 1, "KCOL "))
+			return {HttpMethod::MKCOL, mkcol};
+		else if (auto move = StringAfterPrefix(s + 1, "OVE "))
+			return {HttpMethod::MOVE, move};
+
+		break;
+
+	case 'C':
+		if (auto copy = StringAfterPrefix(s + 1, "OPY "))
+			return {HttpMethod::COPY, copy};
+
+		break;
+
+	case 'L':
+		if (auto lock = StringAfterPrefix(s + 1, "OCK "))
+			return {HttpMethod::LOCK, lock};
+
+		break;
+
+	case 'U':
+		if (auto unlock = StringAfterPrefix(s + 1, "NLOCK "))
+			return {HttpMethod::UNLOCK, unlock};
+
+		break;
+	}
+
+	return {};
+}
+
 inline bool
 HttpServerConnection::ParseRequestLine(const char *line,
 				       std::size_t length) noexcept
@@ -68,105 +163,8 @@ HttpServerConnection::ParseRequestLine(const char *line,
 
 	const char *eol = line + length;
 
-	HttpMethod method{};
-	switch (line[0]) {
-	case 'D':
-		if (gcc_likely(line[1] == 'E' && line[2] == 'L' && line[3] == 'E' &&
-			       line[4] == 'T' && line[5] == 'E' && line[6] == ' ')) {
-			method = HttpMethod::DELETE;
-			line += 7;
-		}
-		break;
-
-	case 'G':
-		if (gcc_likely(line[1] == 'E' && line[2] == 'T' && line[3] == ' ')) {
-			method = HttpMethod::GET;
-			line += 4;
-		}
-		break;
-
-	case 'P':
-		if (gcc_likely(line[1] == 'O' && line[2] == 'S' && line[3] == 'T' &&
-			       line[4] == ' ')) {
-			method = HttpMethod::POST;
-			line += 5;
-		} else if (line[1] == 'U' && line[2] == 'T' && line[3] == ' ') {
-			method = HttpMethod::PUT;
-			line += 4;
-		} else if (auto patch = StringAfterPrefix(line + 1, "ATCH ")) {
-			method = HttpMethod::PATCH;
-			line = patch;
-		} else if (auto propfind = StringAfterPrefix(line + 1, "ROPFIND ")) {
-			method = HttpMethod::PROPFIND;
-			line = propfind;
-		} else if (auto proppatch = StringAfterPrefix(line + 1, "ROPPATCH ")) {
-			method = HttpMethod::PROPPATCH;
-			line = proppatch;
-		}
-
-		break;
-
-	case 'R':
-		if (auto report = StringAfterPrefix(line + 1, "EPORT ")) {
-			method = HttpMethod::REPORT;
-			line = report;
-		}
-
-		break;
-
-	case 'H':
-		if (gcc_likely(line[1] == 'E' && line[2] == 'A' && line[3] == 'D' &&
-			       line[4] == ' ')) {
-			method = HttpMethod::HEAD;
-			line += 5;
-		}
-		break;
-
-	case 'O':
-		if (auto options = StringAfterPrefix(line + 1, "PTIONS ")) {
-			method = HttpMethod::OPTIONS;
-			line = options;
-		}
-		break;
-
-	case 'T':
-		if (auto trace = StringAfterPrefix(line + 1, "RACE ")) {
-			method = HttpMethod::TRACE;
-			line = trace;
-		}
-		break;
-
-	case 'M':
-		if (auto mkcol = StringAfterPrefix(line + 1, "KCOL ")) {
-			method = HttpMethod::MKCOL;
-			line = mkcol;
-		} else if (auto move = StringAfterPrefix(line + 1, "OVE ")) {
-			method = HttpMethod::MOVE;
-			line = move;
-		}
-		break;
-
-	case 'C':
-		if (auto copy = StringAfterPrefix(line + 1, "OPY ")) {
-			method = HttpMethod::COPY;
-			line = copy;
-		}
-		break;
-
-	case 'L':
-		if (auto lock = StringAfterPrefix(line + 1, "OCK ")) {
-			method = HttpMethod::LOCK;
-			line = lock;
-		}
-		break;
-
-	case 'U':
-		if (auto unlock = StringAfterPrefix(line + 1, "NLOCK ")) {
-			method = HttpMethod::UNLOCK;
-			line = unlock;
-		}
-		break;
-	}
+	const auto [method, rest] = ParseHttpMethod(line);
+	line = rest;
 
 	if (method == HttpMethod{}) {
 		/* invalid request method */
