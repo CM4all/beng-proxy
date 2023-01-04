@@ -153,7 +153,7 @@ struct HttpServerConnection final
 
 	/* request */
 	struct Request {
-		enum {
+		enum : uint_least8_t {
 			/** there is no request (yet); waiting for the request
 			    line */
 			START,
@@ -169,7 +169,7 @@ struct HttpServerConnection final
 		} read_state = START;
 
 #ifndef NDEBUG
-		enum class BodyState {
+		enum class BodyState : uint_least8_t {
 			START,
 			NONE,
 			EMPTY,
