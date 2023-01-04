@@ -4,7 +4,7 @@ cm4all-beng-proxy (18.0.10) unstable; urgency=low
   * nghttp2/server: put a limit on the length of reject request URIs/headers
   * disable Nagle's algorithm on incoming connections
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Wed, 04 Jan 2023 22:33:14 +0100
 
 cm4all-beng-proxy (18.0.9) unstable; urgency=low
 
