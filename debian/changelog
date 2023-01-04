@@ -1,5 +1,6 @@
 cm4all-beng-proxy (18.0.10) unstable; urgency=low
 
+  * http_server: generate status 431 instead of closing connection
   * disable Nagle's algorithm on incoming connections
 
  --   
