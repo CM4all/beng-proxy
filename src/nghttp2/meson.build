@@ -13,6 +13,9 @@ nghttp2 = static_library('nghttp2',
   'Glue.cxx',
   'IstreamDataSource.cxx',
   include_directories: inc,
+  dependencies: [
+    fmt_dep,
+  ],
 )
 nghttp2_dep = declare_dependency(
   compile_args: '-DHAVE_NGHTTP2',
@@ -24,6 +27,5 @@ nghttp2_dep = declare_dependency(
     istream_dep,
     socket_dep,
     stopwatch_dep,
-    fmt_dep,
   ],
 )
