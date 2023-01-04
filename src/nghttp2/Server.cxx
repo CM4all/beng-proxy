@@ -84,15 +84,25 @@ class ServerConnection::Request final
 	 */
 	HttpStatus the_status{};
 
-	const char *bad_request = nullptr;
-
 	CancellablePointer cancel_ptr;
 
 	MultiFifoBufferIstream *request_body_control = nullptr;
 
+	/**
+	 * The response body if #error_status is set.
+	 */
+	const char *error_message;
+
 	std::unique_ptr<IstreamDataSource> response_body;
 
 	RootStopwatchPtr stopwatch;
+
+	/**
+	 * If this is set, the this library rejects the request with
+	 * this HTTP status instead of letting the caller handle it.
+	 * The field #error_message specifies the response body.
+	 */
+	HttpStatus error_status{};
 
 	/**
 	 * This is set to true after at least one byte of the request
@@ -264,8 +274,10 @@ ServerConnection::Request::OnHeaderCallback(std::string_view name,
 
 	if (name == ":method"sv) {
 		method = ParseHttpMethod(value);
-		if (method == HttpMethod{})
-			bad_request = "Unsupported request method\n";
+		if (method == HttpMethod{}) {
+			error_status = HttpStatus::BAD_REQUEST;
+			error_message = "Unsupported request method\n";
+		}
 	} else if (name == ":path"sv)
 		uri = alloc.DupZ(value);
 	else if (name == ":authority"sv)
@@ -352,8 +364,8 @@ ServerConnection::Request::OnDataChunkReceivedCallback(std::span<const std::byte
 int
 ServerConnection::Request::OnReceiveRequest(bool has_request_body) noexcept
 {
-	if (bad_request != nullptr) {
-		SendMessage(HttpStatus::BAD_REQUEST, bad_request);
+	if (error_status != HttpStatus{}) {
+		SendMessage(error_status, error_message);
 		return 0;
 	}
 
