@@ -43,7 +43,7 @@
 class PoolPtr {
 	struct pool *value = nullptr;
 
-#ifdef TRACE
+#ifdef ENABLE_TRACE
 	const char *file = nullptr;
 	unsigned line = 0;
 #endif
@@ -83,7 +83,7 @@ public:
 	PoolPtr &operator=(PoolPtr &&src) noexcept {
 		using std::swap;
 		swap(value, src.value);
-#ifdef TRACE
+#ifdef ENABLE_TRACE
 		file = src.file;
 		line = src.line;
 #endif

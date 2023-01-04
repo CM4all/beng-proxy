@@ -135,7 +135,7 @@ add_project_arguments(compiler.get_supported_arguments(test_cxxflags), language:
 add_project_arguments(c_compiler.get_supported_arguments(test_cflags), language: 'c')
 
 if debug
-  debug_flags = ['-DPOISON', '-DTRACE']
+  debug_flags = ['-DPOISON', '-DENABLE_TRACE']
   debug_flags += ['-DDEBUG_POOL_REF']
 else
   debug_flags = []

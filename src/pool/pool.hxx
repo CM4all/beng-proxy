@@ -144,7 +144,7 @@ pool_dump_tree(const struct pool &pool) noexcept;
 class ScopePoolRef {
 	struct pool &pool;
 
-#ifdef TRACE
+#ifdef ENABLE_TRACE
 	const char *const file;
 	const unsigned line;
 #endif

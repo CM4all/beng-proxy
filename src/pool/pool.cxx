@@ -82,7 +82,7 @@ struct allocation_info {
 
 	const char *type;
 
-#ifdef TRACE
+#ifdef ENABLE_TRACE
 	const char *file;
 	unsigned line;
 #endif
@@ -140,7 +140,7 @@ static const size_t LINEAR_POOL_AREA_HEADER =
 
 #ifdef DEBUG_POOL_REF
 struct PoolRef {
-#ifdef TRACE
+#ifdef ENABLE_TRACE
 	const char *file;
 	unsigned line;
 #endif
@@ -617,7 +617,7 @@ static void
 pool_increment_ref(gcc_unused struct pool *pool,
 		   std::forward_list<PoolRef> &list TRACE_ARGS_DECL) noexcept
 {
-#ifdef TRACE
+#ifdef ENABLE_TRACE
 	for (auto &ref : list) {
 		if (ref.line == line && strcmp(ref.file, file) == 0) {
 			++ref.count;
@@ -628,7 +628,7 @@ pool_increment_ref(gcc_unused struct pool *pool,
 
 	list.emplace_front();
 
-#ifdef TRACE
+#ifdef ENABLE_TRACE
 	auto &ref = list.front();
 	ref.file = file;
 	ref.line = line;
@@ -643,7 +643,7 @@ pool_dump_refs(const struct pool &pool) noexcept
 	pool.logger.Format(0, "pool[%p](%u) REF:",
 			   (const void *)&pool, pool.ref);
 
-#ifdef TRACE
+#ifdef ENABLE_TRACE
 	for (auto &ref : pool.refs)
 		pool.logger.Format(0, " %s:%u %u", ref.file, ref.line, ref.count);
 
@@ -918,7 +918,7 @@ p_malloc_libc(struct pool *pool, size_t size TYPE_ARG_DECL TRACE_ARGS_DECL) noex
 #ifndef NDEBUG
 	pool->allocations.push_back(chunk->info);
 	chunk->info.type = type;
-#ifdef TRACE
+#ifdef ENABLE_TRACE
 	chunk->info.file = file;
 	chunk->info.line = line;
 #endif
@@ -1007,7 +1007,7 @@ p_malloc_linear(struct pool *pool, const size_t original_size
 #ifndef NDEBUG
 	struct allocation_info *info = (struct allocation_info *)p;
 	info->type = type;
-#ifdef TRACE
+#ifdef ENABLE_TRACE
 	info->file = file;
 	info->line = line;
 #endif

@@ -34,10 +34,9 @@
  * Trace parameters for functions.
  */
 
-#ifndef __BENG_TRACE_H
-#define __BENG_TRACE_H
+#pragma once
 
-#ifdef TRACE
+#ifdef ENABLE_TRACE
 
 #define TRACE_ARGS_DECL , const char *file, unsigned line
 #define TRACE_ARGS_DECL_ , const char *_file, unsigned _line
@@ -58,7 +57,5 @@
 #define TRACE_ARGS_IGNORE
 #define TRACE_ARGS_INIT
 #define TRACE_ARGS_INIT_FROM(src)
-
-#endif
 
 #endif

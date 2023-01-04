@@ -63,7 +63,7 @@ PoolPtr::operator=(const PoolPtr &src) noexcept
 	if (value != nullptr)
 		pool_ref(value);
 
-#ifdef TRACE
+#ifdef ENABLE_TRACE
 	file = src.file;
 	line = src.line;
 #endif
