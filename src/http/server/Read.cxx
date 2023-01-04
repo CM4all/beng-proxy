@@ -183,7 +183,16 @@ HttpServerConnection::ParseRequestLine(std::string_view line) noexcept
 		return false;
 	}
 
-	const auto uri = line.substr(0, space);
+	auto uri = line.substr(0, space);
+
+	if (uri.size() >= 8192) {
+		request.SetError(HttpStatus::REQUEST_URI_TOO_LONG,
+				 "Request URI is too long\n");
+		request.ignore_headers = true;
+
+		/* truncate the URI so it doesn't hog the logs */
+		uri = uri.substr(0, 1024);
+	}
 
 	request.request = http_server_request_new(this, method, uri);
 	request.read_state = Request::HEADERS;
@@ -292,12 +301,6 @@ HttpServerConnection::HandleLine(std::string_view line) noexcept
 	assert(request.read_state == Request::START ||
 	       request.read_state == Request::HEADERS);
 
-	if (line.size() >= 8192) {
-		ProtocolError(StringFormat<64>("Request header is too large (%zu)",
-					       line.size()));
-		return false;
-	}
-
 	if (gcc_unlikely(request.read_state == Request::START)) {
 		assert(request.request == nullptr);
 
@@ -305,6 +308,16 @@ HttpServerConnection::HandleLine(std::string_view line) noexcept
 	} else if (gcc_likely(!line.empty())) {
 		assert(request.read_state == Request::HEADERS);
 		assert(request.request != nullptr);
+
+		if (request.ignore_headers)
+			return true;
+
+		if (line.size() >= 8192) {
+			request.SetError(HttpStatus::REQUEST_HEADER_FIELDS_TOO_LARGE,
+					 "Request header is too large\n");
+			request.ignore_headers = true;
+			return true;
+		}
 
 		header_parse_line(*request.request->pool,
 				  request.request->headers,

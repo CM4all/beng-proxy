@@ -187,6 +187,14 @@ struct HttpServerConnection final
 #endif
 
 		/**
+		 * Ignore all further headers (and don't pay attention
+		 * to malformed header lines); in this case,
+		 * #error_status is usually set and the whole request
+		 * will fail.
+		 */
+		bool ignore_headers = false;
+
+		/**
 		 * This flag is true if we are currently calling the HTTP
 		 * request handler.  During this period,
 		 * http_server_request_stream_read() does nothing, to prevent
@@ -219,6 +227,7 @@ struct HttpServerConnection final
 #ifndef NDEBUG
 			body_state = BodyState::START;
 #endif
+			ignore_headers = false;
 			bytes_received = 0;
 		}
 
