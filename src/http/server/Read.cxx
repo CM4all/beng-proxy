@@ -211,8 +211,8 @@ HttpServerConnection::HeadersFinished() noexcept
 	const char *value = r.headers.Get("expect");
 	request.expect_100_continue = value != nullptr &&
 		StringIsEqual(value, "100-continue");
-	request.expect_failed = value != nullptr &&
-		!StringIsEqual(value, "100-continue");
+	if (value != nullptr && !StringIsEqual(value, "100-continue"))
+		request.SetError(HttpStatus::EXPECTATION_FAILED, "Unrecognized expectation\n");
 
 	value = r.headers.Get("connection");
 	keep_alive = value == nullptr || !http_list_contains_i(value, "close");
@@ -360,10 +360,9 @@ HttpServerConnection::SubmitRequest()
 {
 	const DestructObserver destructed(*this);
 
-	if (request.expect_failed) {
+	if (request.error_status != HttpStatus{}) {
 		request.request->body.Clear();
-		request.request->SendMessage(HttpStatus::EXPECTATION_FAILED,
-					     "Unrecognized expectation");
+		request.request->SendMessage(request.error_status, request.error_message);
 		if (destructed)
 			return false;
 	} else {

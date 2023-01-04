@@ -153,6 +153,14 @@ struct HttpServerConnection final
 
 	/* request */
 	struct Request {
+		/**
+		 * If this is set, the this library rejects the
+		 * request with this HTTP status instead of letting
+		 * the caller handle it.  The field #error_message
+		 * specifies the response body.
+		 */
+		HttpStatus error_status{};
+
 		enum : uint_least8_t {
 			/** there is no request (yet); waiting for the request
 			    line */
@@ -194,8 +202,10 @@ struct HttpServerConnection final
 		/** did the client send an "Expect: 100-continue" header? */
 		bool expect_100_continue;
 
-		/** send a "417 Expectation Failed" response? */
-		bool expect_failed;
+		/**
+		 * The response body if #error_status is set.
+		 */
+		const char *error_message;
 
 		HttpServerRequest *request = nullptr;
 
@@ -204,11 +214,21 @@ struct HttpServerConnection final
 		uint64_t bytes_received = 0;
 
 		void Reset() noexcept {
+			error_status = {};
 			read_state = START;
 #ifndef NDEBUG
 			body_state = BodyState::START;
 #endif
 			bytes_received = 0;
+		}
+
+		void SetError(HttpStatus _status, const char *_msg) noexcept {
+			if (error_status != HttpStatus::UNDEFINED)
+				/* use only the first error */
+				return;
+
+			error_status = _status;
+			error_message = _msg;
 		}
 
 		bool ShouldEnableReadTimeout() const noexcept {
