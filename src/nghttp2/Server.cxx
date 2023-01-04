@@ -230,6 +230,15 @@ public:
 	}
 
 private:
+	void SetError(HttpStatus _status, const char *_msg) noexcept {
+		if (error_status != HttpStatus::UNDEFINED)
+			/* use only the first error */
+			return;
+
+		error_status = _status;
+		error_message = _msg;
+	}
+
 	void DeferWrite() noexcept {
 		connection.DeferWrite();
 	}
@@ -274,10 +283,9 @@ ServerConnection::Request::OnHeaderCallback(std::string_view name,
 
 	if (name == ":method"sv) {
 		method = ParseHttpMethod(value);
-		if (method == HttpMethod{}) {
-			error_status = HttpStatus::BAD_REQUEST;
-			error_message = "Unsupported request method\n";
-		}
+		if (method == HttpMethod{})
+			SetError(HttpStatus::BAD_REQUEST,
+				 "Unsupported request method\n");
 	} else if (name == ":path"sv)
 		uri = alloc.DupZ(value);
 	else if (name == ":authority"sv)
