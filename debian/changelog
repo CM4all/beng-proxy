@@ -1,6 +1,7 @@
 cm4all-beng-proxy (18.0.10) unstable; urgency=low
 
   * http_server: generate status 414/431 instead of closing connection
+  * nghttp2/server: put a limit on the length of reject request URIs/headers
   * disable Nagle's algorithm on incoming connections
 
  --   

@@ -286,11 +286,29 @@ ServerConnection::Request::OnHeaderCallback(std::string_view name,
 		if (method == HttpMethod{})
 			SetError(HttpStatus::BAD_REQUEST,
 				 "Unsupported request method\n");
-	} else if (name == ":path"sv)
+	} else if (name == ":path"sv) {
+		if (value.size() >= 8192) {
+			SetError(HttpStatus::REQUEST_URI_TOO_LONG,
+				 "Request URI is too long\n");
+			return 0;
+		}
+
 		uri = alloc.DupZ(value);
-	else if (name == ":authority"sv)
+	} else if (name == ":authority"sv) {
+		if (value.size() >= 1024) {
+			SetError(HttpStatus::REQUEST_HEADER_FIELDS_TOO_LARGE,
+				 "Host header is too long\n");
+			return 0;
+		}
+
 		headers.Add(alloc, "host", alloc.DupZ(value));
-	else if (name.size() >= 2 && name.front() != ':') {
+	} else if (name.size() >= 2 && name.front() != ':') {
+		if (value.size() >= 8192) {
+			SetError(HttpStatus::REQUEST_HEADER_FIELDS_TOO_LARGE,
+				 "Request header is too long\n");
+			return 0;
+		}
+
 		const char *allocated_name = alloc.DupToLower(name);
 		const char *allocated_value;
 

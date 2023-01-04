@@ -314,7 +314,7 @@ HttpServerConnection::HandleLine(std::string_view line) noexcept
 
 		if (line.size() >= 8192) {
 			request.SetError(HttpStatus::REQUEST_HEADER_FIELDS_TOO_LARGE,
-					 "Request header is too large\n");
+					 "Request header is too long\n");
 			request.ignore_headers = true;
 			return true;
 		}
