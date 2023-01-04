@@ -203,6 +203,14 @@ struct HttpServerConnection final
 
 		uint64_t bytes_received = 0;
 
+		void Reset() noexcept {
+			read_state = START;
+#ifndef NDEBUG
+			body_state = BodyState::START;
+#endif
+			bytes_received = 0;
+		}
+
 		bool ShouldEnableReadTimeout() const noexcept {
 			/* "Upgrade" requests have no request body
 			   timeout, because an arbitrary protocol may

@@ -208,13 +208,9 @@ HttpServerConnection::ResponseIstreamFinished()
 	request.request->stopwatch.RecordEvent("response_end");
 	request.request->Destroy();
 	request.request = nullptr;
-	request.bytes_received = 0;
 	response.bytes_sent = 0;
 
-	request.read_state = Request::START;
-#ifndef NDEBUG
-	request.body_state = Request::BodyState::START;
-#endif
+	request.Reset();
 
 	if (keep_alive) {
 		/* handle pipelined request (if any), or set up events for
