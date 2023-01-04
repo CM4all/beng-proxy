@@ -210,9 +210,9 @@ HttpServerConnection::HeadersFinished() noexcept
 
 	const char *value = r.headers.Get("expect");
 	request.expect_100_continue = value != nullptr &&
-		strcmp(value, "100-continue") == 0;
+		StringIsEqual(value, "100-continue");
 	request.expect_failed = value != nullptr &&
-		strcmp(value, "100-continue") != 0;
+		!StringIsEqual(value, "100-continue");
 
 	value = r.headers.Get("connection");
 	keep_alive = value == nullptr || !http_list_contains_i(value, "close");
@@ -222,7 +222,7 @@ HttpServerConnection::HeadersFinished() noexcept
 	value = r.headers.Get("transfer-encoding");
 
 	off_t content_length = -1;
-	const bool chunked = value != nullptr && strcasecmp(value, "chunked") == 0;
+	const bool chunked = value != nullptr && StringIsEqualIgnoreCase(value, "chunked");
 	if (!chunked) {
 		value = r.headers.Get("content-length");
 
