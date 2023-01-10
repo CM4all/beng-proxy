@@ -101,7 +101,7 @@ struct MakeResponse : TranslateResponse {
 		     const TranslateResponse &src) noexcept
 		:alloc(_alloc)
 	{
-		FullCopyFrom(src);
+		FullCopyFrom(alloc, src);
 	}
 
 	explicit MakeResponse(AllocatorPtr _alloc,
@@ -111,14 +111,6 @@ struct MakeResponse : TranslateResponse {
 	{
 		address = {ShallowCopy(), _address};
 		base = _base;
-	}
-
-	MakeResponse &&FullCopyFrom(const TranslateResponse &src) noexcept {
-		CopyFrom(alloc, src);
-		max_age = src.max_age;
-		address.CopyFrom(alloc, src.address);
-		user = src.user;
-		return std::move(*this);
 	}
 
 	MakeResponse &&Layout(std::string_view value,
