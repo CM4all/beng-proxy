@@ -124,7 +124,7 @@ struct TranslateCacheItem final : PoolHolder, CacheItem {
 
 	TranslateCacheItem(PoolPtr &&_pool,
 			   std::chrono::steady_clock::time_point now,
-			   std::chrono::seconds max_age)
+			   std::chrono::seconds max_age) noexcept
 		:PoolHolder(std::move(_pool)),
 		 CacheItem(now, max_age, 1) {}
 
@@ -133,7 +133,7 @@ struct TranslateCacheItem final : PoolHolder, CacheItem {
 	using PoolHolder::GetPool;
 
 	[[gnu::pure]]
-	bool MatchSite(const char *_site) const {
+	bool MatchSite(const char *_site) const noexcept {
 		assert(_site != nullptr);
 
 		return response.site != nullptr &&
@@ -143,11 +143,11 @@ struct TranslateCacheItem final : PoolHolder, CacheItem {
 	[[gnu::pure]]
 	bool VaryMatch(const TranslateRequest &request,
 		       TranslationCommand command,
-		       bool strict) const;
+		       bool strict) const noexcept;
 
 	[[gnu::pure]]
 	bool VaryMatch(std::span<const TranslationCommand> vary,
-		       const TranslateRequest &other_request, bool strict) const {
+		       const TranslateRequest &other_request, bool strict) const noexcept {
 		for (auto i : vary)
 			if (!VaryMatch(other_request, i, strict))
 				return false;
@@ -156,20 +156,20 @@ struct TranslateCacheItem final : PoolHolder, CacheItem {
 	}
 
 	[[gnu::pure]]
-	bool VaryMatch(const TranslateRequest &other_request, bool strict) const {
+	bool VaryMatch(const TranslateRequest &other_request, bool strict) const noexcept {
 		return VaryMatch(response.vary, other_request, strict);
 	}
 
 	[[gnu::pure]]
 	bool InvalidateMatch(std::span<const TranslationCommand> vary,
-			     const TranslateRequest &other_request) const {
+			     const TranslateRequest &other_request) const noexcept {
 		return VaryMatch(vary, other_request, true);
 	}
 
 	[[gnu::pure]]
 	bool InvalidateMatch(std::span<const TranslationCommand> vary,
 			     const TranslateRequest &other_request,
-			     const char *other_site) const {
+			     const char *other_site) const noexcept {
 		return (other_site == nullptr || MatchSite(other_site)) &&
 			InvalidateMatch(vary, other_request);
 	}
@@ -201,17 +201,17 @@ struct TranslateCachePerHost
 	 */
 	const std::string host;
 
-	TranslateCachePerHost(struct tcache &_tcache, const char *_host)
+	TranslateCachePerHost(struct tcache &_tcache, const char *_host) noexcept
 		:tcache(_tcache), host(_host) {
 	}
 
 	TranslateCachePerHost(const TranslateCachePerHost &) = delete;
 
-	void Dispose();
-	void Erase(TranslateCacheItem &item);
+	void Dispose() noexcept;
+	void Erase(TranslateCacheItem &item) noexcept;
 
 	unsigned Invalidate(const TranslateRequest &request,
-			    std::span<const TranslationCommand> vary);
+			    std::span<const TranslationCommand> vary) noexcept;
 
 	[[gnu::pure]]
 	static std::size_t KeyHasher(const char *key) noexcept {
@@ -226,7 +226,7 @@ struct TranslateCachePerHost
 	}
 
 	[[gnu::pure]]
-	static bool KeyValueEqual(const char *a, const TranslateCachePerHost &b) {
+	static bool KeyValueEqual(const char *a, const TranslateCachePerHost &b) noexcept {
 		assert(a != nullptr);
 
 		return a == b.host;
@@ -247,13 +247,13 @@ struct TranslateCachePerHost
 	struct Equal {
 		[[gnu::pure]]
 		bool operator()(const TranslateCachePerHost &a,
-				const TranslateCachePerHost &b) const {
+				const TranslateCachePerHost &b) const noexcept {
 			return KeyValueEqual(a.host.c_str(), b);
 		}
 
 		[[gnu::pure]]
 		bool operator()(const char *a,
-				const TranslateCachePerHost &b) const {
+				const TranslateCachePerHost &b) const noexcept {
 			return KeyValueEqual(a, b);
 		}
 	};
@@ -281,17 +281,17 @@ struct TranslateCachePerSite
 	 */
 	const std::string site;
 
-	TranslateCachePerSite(struct tcache &_tcache, const char *_site)
+	TranslateCachePerSite(struct tcache &_tcache, const char *_site) noexcept
 		:tcache(_tcache), site(_site) {
 	}
 
 	TranslateCachePerSite(const TranslateCachePerSite &) = delete;
 
-	void Dispose();
-	void Erase(TranslateCacheItem &item);
+	void Dispose() noexcept;
+	void Erase(TranslateCacheItem &item) noexcept;
 
 	unsigned Invalidate(const TranslateRequest &request,
-			    std::span<const TranslationCommand> vary);
+			    std::span<const TranslationCommand> vary) noexcept;
 
 	[[gnu::pure]]
 	static std::size_t KeyHasher(const char *key) noexcept {
@@ -306,7 +306,7 @@ struct TranslateCachePerSite
 	}
 
 	[[gnu::pure]]
-	static bool KeyValueEqual(const char *a, const TranslateCachePerSite &b) {
+	static bool KeyValueEqual(const char *a, const TranslateCachePerSite &b) noexcept {
 		assert(a != nullptr);
 
 		return a == b.site;
@@ -327,13 +327,13 @@ struct TranslateCachePerSite
 	struct Equal {
 		[[gnu::pure]]
 		bool operator()(const TranslateCachePerSite &a,
-				const TranslateCachePerSite &b) const {
+				const TranslateCachePerSite &b) const noexcept {
 			return KeyValueEqual(a.site.c_str(), b);
 		}
 
 		[[gnu::pure]]
 		bool operator()(const char *a,
-				const TranslateCachePerSite &b) const {
+				const TranslateCachePerSite &b) const noexcept {
 			return KeyValueEqual(a, b);
 		}
 	};
@@ -377,17 +377,17 @@ struct tcache {
 	       bool handshake_cacheable);
 	tcache(struct tcache &) = delete;
 
-	~tcache() = default;
+	~tcache() noexcept = default;
 
-	TranslateCachePerHost &MakePerHost(const char *host);
-	TranslateCachePerSite &MakePerSite(const char *site);
+	TranslateCachePerHost &MakePerHost(const char *host) noexcept;
+	TranslateCachePerSite &MakePerSite(const char *site) noexcept;
 
 	unsigned InvalidateHost(const TranslateRequest &request,
-				std::span<const TranslationCommand> vary);
+				std::span<const TranslationCommand> vary) noexcept;
 
 	unsigned InvalidateSite(const TranslateRequest &request,
 				std::span<const TranslationCommand> vary,
-				const char *site);
+				const char *site) noexcept;
 
 	void Invalidate(const TranslateRequest &request,
 			std::span<const TranslationCommand> vary,
@@ -413,7 +413,7 @@ struct TranslateCacheRequest final : TranslateHandler {
 	TranslateCacheRequest(AllocatorPtr _alloc, struct tcache &_tcache,
 			      const TranslateRequest &_request, const char *_key,
 			      bool _cacheable,
-			      TranslateHandler &_handler)
+			      TranslateHandler &_handler) noexcept
 		:alloc(_alloc), tcache(&_tcache), request(_request),
 		 cacheable(_cacheable),
 		 find_base(false), key(_key),
@@ -427,7 +427,7 @@ struct TranslateCacheRequest final : TranslateHandler {
 };
 
 inline TranslateCachePerHost &
-tcache::MakePerHost(const char *host)
+tcache::MakePerHost(const char *host) noexcept
 {
 	assert(host != nullptr);
 
@@ -441,7 +441,7 @@ tcache::MakePerHost(const char *host)
 }
 
 static void
-tcache_add_per_host(struct tcache &tcache, TranslateCacheItem *item)
+tcache_add_per_host(struct tcache &tcache, TranslateCacheItem *item) noexcept
 {
 	assert(item->response.VaryContains(TranslationCommand::HOST));
 
@@ -455,7 +455,7 @@ tcache_add_per_host(struct tcache &tcache, TranslateCacheItem *item)
 }
 
 void
-TranslateCachePerHost::Dispose()
+TranslateCachePerHost::Dispose() noexcept
 {
 	assert(items.empty());
 
@@ -465,7 +465,7 @@ TranslateCachePerHost::Dispose()
 }
 
 void
-TranslateCachePerHost::Erase(TranslateCacheItem &item)
+TranslateCachePerHost::Erase(TranslateCacheItem &item) noexcept
 {
 	assert(item.per_host == this);
 	assert(item.response.VaryContains(TranslationCommand::HOST));
@@ -477,7 +477,7 @@ TranslateCachePerHost::Erase(TranslateCacheItem &item)
 }
 
 inline TranslateCachePerSite &
-tcache::MakePerSite(const char *site)
+tcache::MakePerSite(const char *site) noexcept
 {
 	assert(site != nullptr);
 
@@ -491,7 +491,7 @@ tcache::MakePerSite(const char *site)
 }
 
 static void
-tcache_add_per_site(struct tcache &tcache, TranslateCacheItem *item)
+tcache_add_per_site(struct tcache &tcache, TranslateCacheItem *item) noexcept
 {
 	const char *site = item->response.site;
 	assert(site != nullptr);
@@ -502,7 +502,7 @@ tcache_add_per_site(struct tcache &tcache, TranslateCacheItem *item)
 }
 
 void
-TranslateCachePerSite::Dispose()
+TranslateCachePerSite::Dispose() noexcept
 {
 	assert(items.empty());
 
@@ -512,7 +512,7 @@ TranslateCachePerSite::Dispose()
 }
 
 void
-TranslateCachePerSite::Erase(TranslateCacheItem &item)
+TranslateCachePerSite::Erase(TranslateCacheItem &item) noexcept
 {
 	assert(item.per_site == this);
 	assert(item.response.site != nullptr);
@@ -537,7 +537,7 @@ tcache_uri_key(AllocatorPtr alloc, const char *uri, const char *host,
 	       std::span<const std::byte> file_not_found,
 	       std::span<const std::byte> read_file,
 	       bool path_exists,
-	       bool want)
+	       bool want) noexcept
 {
 	PoolStringBuilder<256> b;
 
@@ -642,14 +642,16 @@ tcache_uri_key(AllocatorPtr alloc, const char *uri, const char *host,
 	return b(alloc);
 }
 
+[[gnu::pure]]
 static bool
-tcache_is_content_type_lookup(const TranslateRequest &request)
+tcache_is_content_type_lookup(const TranslateRequest &request) noexcept
 {
 	return request.content_type_lookup.data() != nullptr &&
 		request.content_type_lookup.size() <= MAX_CONTENT_TYPE_LOOKUP &&
 		request.suffix != nullptr;
 }
 
+[[gnu::pure]]
 static const char *
 tcache_content_type_lookup_key(AllocatorPtr alloc,
 			       const TranslateRequest &request) noexcept
@@ -680,8 +682,9 @@ tcache_chain_key(AllocatorPtr alloc, const TranslateRequest &request) noexcept
 			    status_buffer);
 }
 
+[[gnu::pure]]
 static const char *
-tcache_request_key(AllocatorPtr alloc, const TranslateRequest &request)
+tcache_request_key(AllocatorPtr alloc, const TranslateRequest &request) noexcept
 {
 	if (tcache_is_content_type_lookup(request))
 		return tcache_content_type_lookup_key(alloc, request);
@@ -705,8 +708,9 @@ tcache_request_key(AllocatorPtr alloc, const TranslateRequest &request)
 }
 
 /* check whether the request could produce a cacheable response */
+[[gnu::pure]]
 static bool
-tcache_request_evaluate(const TranslateRequest &request)
+tcache_request_evaluate(const TranslateRequest &request) noexcept
 {
 	return (request.uri != nullptr || request.widget_type != nullptr ||
 		request.chain.data() != nullptr ||
@@ -726,8 +730,9 @@ tcache_request_evaluate(const TranslateRequest &request)
 }
 
 /* check whether the response is cacheable */
+[[gnu::pure]]
 static bool
-tcache_response_evaluate(const TranslateResponse &response)
+tcache_response_evaluate(const TranslateResponse &response) noexcept
 {
 	return response.max_age != std::chrono::seconds::zero() &&
 		response.www_authenticate == nullptr &&
@@ -850,7 +855,7 @@ template<typename T>
 static std::span<const T>
 tcache_vary_copy(AllocatorPtr alloc, std::span<const T> value,
 		 const TranslateResponse &response,
-		 TranslationCommand command)
+		 TranslationCommand command) noexcept
 {
 	return value.data() != nullptr && response.VaryContains(command)
 		? alloc.Dup(value)
@@ -863,7 +868,7 @@ tcache_vary_copy(AllocatorPtr alloc, std::span<const T> value,
 static bool
 tcache_buffer_match(const void *a, std::size_t a_length,
 		    const void *b, std::size_t b_length,
-		    bool strict)
+		    bool strict) noexcept
 {
 	assert((a == nullptr) == (a_length == 0));
 	assert((b == nullptr) == (b_length == 0));
@@ -881,7 +886,7 @@ tcache_buffer_match(const void *a, std::size_t a_length,
  * @param strict in strict mode, nullptr values are a mismatch
  */
 static bool
-tcache_string_match(const char *a, const char *b, bool strict)
+tcache_string_match(const char *a, const char *b, bool strict) noexcept
 {
 	if (a == nullptr || b == nullptr)
 		return !strict && a == b;
@@ -905,7 +910,7 @@ tcache_buffer_match(std::span<const std::byte> a, std::span<const std::byte> b,
 }
 
 static bool
-tcache_address_match(SocketAddress a, SocketAddress b, bool strict)
+tcache_address_match(SocketAddress a, SocketAddress b, bool strict) noexcept
 {
 	return tcache_buffer_match(a.GetAddress(), a.GetSize(),
 				   b.GetAddress(), b.GetSize(),
@@ -916,7 +921,7 @@ tcache_address_match(SocketAddress a, SocketAddress b, bool strict)
  * @param strict in strict mode, nullptr values are a mismatch
  */
 static bool
-tcache_uri_match(const char *a, const char *b, bool strict)
+tcache_uri_match(const char *a, const char *b, bool strict) noexcept
 {
 	if (a == nullptr || b == nullptr)
 		return !strict && a == b;
@@ -934,7 +939,7 @@ tcache_uri_match(const char *a, const char *b, bool strict)
 bool
 TranslateCacheItem::VaryMatch(const TranslateRequest &other_request,
 			      TranslationCommand command,
-			      bool strict) const
+			      bool strict) const noexcept
 {
 	switch (command) {
 	case TranslationCommand::URI:
@@ -1006,7 +1011,7 @@ struct TranslateCacheMatchContext {
 };
 
 static bool
-tcache_item_match(const CacheItem *_item, void *ctx)
+tcache_item_match(const CacheItem *_item, void *ctx) noexcept
 {
 	auto &item = *(const TranslateCacheItem *)_item;
 	auto &tcr = *(TranslateCacheMatchContext *)ctx;
@@ -1041,7 +1046,7 @@ tcache_item_match(const CacheItem *_item, void *ctx)
 
 static TranslateCacheItem *
 tcache_get(struct tcache &tcache, const TranslateRequest &request,
-	   const char *key, bool find_base)
+	   const char *key, bool find_base) noexcept
 {
 	TranslateCacheMatchContext match_ctx{request, find_base};
 
@@ -1093,7 +1098,7 @@ struct TranslationCacheInvalidate {
 };
 
 static bool
-tcache_invalidate_match(const CacheItem *_item, void *ctx)
+tcache_invalidate_match(const CacheItem *_item, void *ctx) noexcept
 {
 	const TranslateCacheItem &item = *(const TranslateCacheItem *)_item;
 	const auto &data = *(const TranslationCacheInvalidate *)ctx;
@@ -1103,7 +1108,7 @@ tcache_invalidate_match(const CacheItem *_item, void *ctx)
 
 inline unsigned
 tcache::InvalidateHost(const TranslateRequest &request,
-		       std::span<const TranslationCommand> vary)
+		       std::span<const TranslationCommand> vary) noexcept
 {
 	const char *host = request.host;
 	if (host == nullptr)
@@ -1121,7 +1126,7 @@ tcache::InvalidateHost(const TranslateRequest &request,
 
 inline unsigned
 TranslateCachePerHost::Invalidate(const TranslateRequest &request,
-				  std::span<const TranslationCommand> vary)
+				  std::span<const TranslationCommand> vary) noexcept
 {
 	unsigned n_removed = 0;
 
@@ -1145,7 +1150,7 @@ TranslateCachePerHost::Invalidate(const TranslateRequest &request,
 inline unsigned
 tcache::InvalidateSite(const TranslateRequest &request,
 		       std::span<const TranslationCommand> vary,
-		       const char *site)
+		       const char *site) noexcept
 {
 	assert(site != nullptr);
 
@@ -1161,7 +1166,7 @@ tcache::InvalidateSite(const TranslateRequest &request,
 
 inline unsigned
 TranslateCachePerSite::Invalidate(const TranslateRequest &request,
-				  std::span<const TranslationCommand> vary)
+				  std::span<const TranslationCommand> vary) noexcept
 {
 	unsigned n_removed = 0;
 
@@ -1404,7 +1409,7 @@ tcache_hit(AllocatorPtr alloc,
 	   const char *uri, const char *host, const char *user,
 	   gcc_unused const char *key,
 	   const TranslateCacheItem &item,
-	   TranslateHandler &handler)
+	   TranslateHandler &handler) noexcept
 {
 	auto response = alloc.New<TranslateResponse>();
 
@@ -1436,7 +1441,7 @@ tcache_miss(AllocatorPtr alloc, struct tcache &tcache,
 	    bool cacheable,
 	    const StopwatchPtr &parent_stopwatch,
 	    TranslateHandler &handler,
-	    CancellablePointer &cancel_ptr)
+	    CancellablePointer &cancel_ptr) noexcept
 {
 	auto tcr = alloc.New<TranslateCacheRequest>(alloc, tcache,
 						    request, key,
@@ -1453,7 +1458,7 @@ tcache_miss(AllocatorPtr alloc, struct tcache &tcache,
 [[gnu::pure]]
 static bool
 tcache_validate_mtime(const TranslateResponse &response,
-		      gcc_unused const char *key)
+		      gcc_unused const char *key) noexcept
 {
 	if (response.validate_mtime.path == nullptr)
 		return true;
