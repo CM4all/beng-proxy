@@ -38,7 +38,7 @@
 struct RecordingTranslateHandler final : TranslateHandler {
 	PoolPtr pool;
 
-	TranslateResponse *response = nullptr;
+	UniquePoolPtr<TranslateResponse> response;
 
 	std::exception_ptr error;
 
@@ -47,6 +47,6 @@ struct RecordingTranslateHandler final : TranslateHandler {
 	explicit RecordingTranslateHandler(struct pool &parent_pool) noexcept;
 
 	/* virtual methods from TranslateHandler */
-	void OnTranslateResponse(TranslateResponse &response) noexcept override;
+	void OnTranslateResponse(UniquePoolPtr<TranslateResponse> response) noexcept override;
 	void OnTranslateError(std::exception_ptr error) noexcept override;
 };

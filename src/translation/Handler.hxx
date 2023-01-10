@@ -32,12 +32,14 @@
 
 #pragma once
 
+#include "pool/UniquePtr.hxx"
+
 #include <exception>
 
 struct TranslateResponse;
 
 class TranslateHandler {
 public:
-	virtual void OnTranslateResponse(TranslateResponse &response) noexcept = 0;
+	virtual void OnTranslateResponse(UniquePoolPtr<TranslateResponse> response) noexcept = 0;
 	virtual void OnTranslateError(std::exception_ptr error) noexcept = 0;
 };

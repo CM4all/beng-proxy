@@ -81,13 +81,15 @@ public:
 
 private:
 	/* virtual methods from TranslateHandler */
-	void OnTranslateResponse(TranslateResponse &response) noexcept override;
+	void OnTranslateResponse(UniquePoolPtr<TranslateResponse> response) noexcept override;
 	void OnTranslateError(std::exception_ptr error) noexcept override;
 };
 
 void
-WidgetRegistryLookup::OnTranslateResponse(TranslateResponse &response) noexcept
+WidgetRegistryLookup::OnTranslateResponse(UniquePoolPtr<TranslateResponse> _response) noexcept
 {
+	auto &response = *_response;
+
 	assert(response.views != nullptr);
 
 	if (response.status != HttpStatus{}) {

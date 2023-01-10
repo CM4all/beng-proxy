@@ -135,7 +135,7 @@ inline UnusedIstreamPtr
 Request::AutoDeflate(HttpHeaders &response_headers,
 		     UnusedIstreamPtr response_body) noexcept
 {
-	if (compressed || translate.response == nullptr) {
+	if (compressed || !translate.response) {
 		/* already compressed */
 	} else if (response_body &&
 		   translate.response->auto_deflate &&
@@ -511,7 +511,7 @@ Request::MoreResponseHeaders(HttpHeaders &headers) const noexcept
 		headers.generate_date_header = true;
 #endif
 
-	if (translate.response != nullptr)
+	if (translate.response)
 		translation_response_headers(headers, *translate.response);
 }
 
@@ -521,7 +521,7 @@ Request::GenerateSetCookie(GrowingBuffer &headers) noexcept
 	assert(!stateless);
 	assert(session_cookie != nullptr);
 
-	if (translate.response == nullptr)
+	if (!translate.response)
 		/* no cookies if the translation response was not yet
 		   finalized */
 		return;
@@ -628,7 +628,7 @@ Request::DispatchResponseDirect(HttpStatus status, HttpHeaders headers,
 	assert(!response_sent);
 
 	if (http_status_is_success(status) &&
-	    translate.response != nullptr &&
+	    translate.response &&
 	    translate.response->www_authenticate != nullptr)
 		/* default to "401 Unauthorized" */
 		status = HttpStatus::UNAUTHORIZED;
@@ -640,7 +640,7 @@ Request::DispatchResponseDirect(HttpStatus status, HttpHeaders headers,
 	if (!stateless)
 		GenerateSetCookie(headers.GetBuffer());
 
-	if (translate.response != nullptr &&
+	if (translate.response &&
 	    translate.response->send_csrf_token) {
 		if (headers.Get("access-control-allow-origin") != nullptr) {
 			/* if this CORS header indicates that other origins may
@@ -777,7 +777,7 @@ Request::DispatchResponse(HttpStatus status, HttpHeaders &&headers,
 	assert(!response_sent);
 
 	if (http_status_is_error(status) && !transformed &&
-	    translate.response != nullptr &&
+	    translate.response &&
 	    translate.response->error_document.data() != nullptr) {
 		transformed = true;
 

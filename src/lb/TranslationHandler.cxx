@@ -115,15 +115,15 @@ struct LbTranslateHandlerRequest final : TranslateHandler {
 	}
 
 	/* virtual methods from TranslateHandler */
-	void OnTranslateResponse(TranslateResponse &response) noexcept override;
+	void OnTranslateResponse(UniquePoolPtr<TranslateResponse> response) noexcept override;
 	void OnTranslateError(std::exception_ptr error) noexcept override;
 };
 
 void
-LbTranslateHandlerRequest::OnTranslateResponse(TranslateResponse &response) noexcept
+LbTranslateHandlerRequest::OnTranslateResponse(UniquePoolPtr<TranslateResponse> response) noexcept
 {
-	th.PutCache(http_request, listener_tag, response);
-	handler.OnTranslateResponse(response);
+	th.PutCache(http_request, listener_tag, *response);
+	handler.OnTranslateResponse(std::move(response));
 }
 
 void
@@ -143,7 +143,8 @@ LbTranslationHandler::Pick(struct pool &pool, const IncomingHttpRequest &request
 		if (item != nullptr) {
 			/* cache hit */
 
-			TranslateResponse response;
+			auto _response = UniquePoolPtr<TranslateResponse>::Make(pool);
+			auto &response = *_response;
 			response.Clear();
 			response.status = item->status;
 			response.https_only = item->https_only;
@@ -153,7 +154,7 @@ LbTranslationHandler::Pick(struct pool &pool, const IncomingHttpRequest &request
 			response.pool = item->pool.empty() ? nullptr : item->pool.c_str();
 			response.canonical_host = item->canonical_host.empty() ? nullptr : item->canonical_host.c_str();
 
-			handler.OnTranslateResponse(response);
+			handler.OnTranslateResponse(std::move(_response));
 			return;
 		}
 	}

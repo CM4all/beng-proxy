@@ -86,8 +86,9 @@ MyTranslationService::SendRequest(AllocatorPtr alloc,
 				  gcc_unused CancellablePointer &cancel_ptr) noexcept
 {
 	if (next_response != nullptr) {
-		auto response = alloc.New<MakeResponse>(alloc, *next_response);
-		handler.OnTranslateResponse(*response);
+		auto response = UniquePoolPtr<TranslateResponse>::Make(alloc.GetPool());
+		response->FullCopyFrom(alloc, *next_response);
+		handler.OnTranslateResponse(std::move(response));
 	} else
 		handler.OnTranslateError(std::make_exception_ptr(std::runtime_error("Error")));
 }
@@ -309,7 +310,7 @@ ExpectResponse(const RecordingTranslateHandler &handler,
 {
 	EXPECT_TRUE(handler.finished);
 	EXPECT_TRUE(!handler.error);
-	ASSERT_NE(handler.response, nullptr);
+	ASSERT_TRUE(handler.response);
 	EXPECT_EQ(*handler.response, expected);
 }
 
@@ -317,7 +318,7 @@ static void
 ExpectError(const RecordingTranslateHandler &handler) noexcept
 {
 	EXPECT_TRUE(handler.finished);
-	EXPECT_EQ(handler.response, nullptr);
+	EXPECT_FALSE(handler.response);
 	EXPECT_TRUE(!!handler.error);
 }
 

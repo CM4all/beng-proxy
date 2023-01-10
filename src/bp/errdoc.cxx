@@ -56,12 +56,13 @@ Request::DispatchErrdocResponse(std::span<const std::byte> error_document)
 	assert(error_document.data() != nullptr);
 	assert(co_response);
 
-	const auto &t = co_await
+	const auto tp = co_await
 		CoTranslate(GetTranslationService(), pool,
 			    MakeErrdocTranslateRequest(translate.request,
 						       error_document,
 						       co_response->status),
 			    stopwatch);
+	const auto &t = *tp;
 
 	if ((t.status != HttpStatus{} &&
 	     !http_status_is_success(t.status)) ||

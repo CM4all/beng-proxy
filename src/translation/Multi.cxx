@@ -82,7 +82,7 @@ private:
 	}
 
 	/* virtual methods from TranslateHandler */
-	void OnTranslateResponse(TranslateResponse &response) noexcept override;
+	void OnTranslateResponse(UniquePoolPtr<TranslateResponse> response) noexcept override;
 
 	void OnTranslateError(std::exception_ptr error) noexcept override {
 		auto &_handler = handler;
@@ -92,16 +92,16 @@ private:
 };
 
 void
-MultiTranslationService::Request::OnTranslateResponse(TranslateResponse &response) noexcept
+MultiTranslationService::Request::OnTranslateResponse(UniquePoolPtr<TranslateResponse> response) noexcept
 {
-	if (response.defer && ++i != end) {
+	if (response->defer && ++i != end) {
 		/* consult the next translation server (if there is
 		   one) */
 		Start();
 	} else {
 		auto &_handler = handler;
 		Destroy();
-		_handler.OnTranslateResponse(response);
+		_handler.OnTranslateResponse(std::move(response));
 	}
 }
 

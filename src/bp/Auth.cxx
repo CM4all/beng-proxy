@@ -71,7 +71,7 @@ Request::OnAuthTranslateResponse(const TranslateResponse &response) noexcept
 
 	translate.user_modified = response.user != nullptr;
 
-	OnTranslateResponseAfterAuth(*translate.previous);
+	OnTranslateResponseAfterAuth(std::move(translate.previous));
 }
 
 inline void
@@ -89,8 +89,8 @@ public:
 		:request(_request) {}
 
 	/* virtual methods from TranslateHandler */
-	void OnTranslateResponse(TranslateResponse &response) noexcept override {
-		request.OnAuthTranslateResponse(response);
+	void OnTranslateResponse(UniquePoolPtr<TranslateResponse> response) noexcept override {
+		request.OnAuthTranslateResponse(*response);
 	}
 
 	void OnTranslateError(std::exception_ptr error) noexcept override {
@@ -99,8 +99,10 @@ public:
 };
 
 void
-Request::HandleAuth(const TranslateResponse &response)
+Request::HandleAuth(UniquePoolPtr<TranslateResponse> _response)
 {
+	const auto &response = *_response;
+
 	assert(response.protocol_version >= 2);
 	assert(response.HasAuth());
 
@@ -140,7 +142,7 @@ Request::HandleAuth(const TranslateResponse &response)
 
 	if (is_authenticated) {
 		/* already authenticated; we can skip the AUTH request */
-		OnTranslateResponseAfterAuth(response);
+		OnTranslateResponseAfterAuth(std::move(_response));
 		return;
 	}
 
@@ -154,7 +156,7 @@ Request::HandleAuth(const TranslateResponse &response)
 	if (connection.listener.GetAuthAltHost())
 		t->alt_host = request.headers.Get("x-cm4all-althost");
 
-	translate.previous = &response;
+	translate.previous = std::move(_response);
 
 	auto *auth_translate_handler =
 		NewFromPool<AuthTranslateHandler>(pool, *this);

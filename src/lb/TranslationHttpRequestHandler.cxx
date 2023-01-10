@@ -88,13 +88,14 @@ private:
 	}
 
 	/* virtual methods from TranslateHandler */
-	void OnTranslateResponse(TranslateResponse &response) noexcept override;
+	void OnTranslateResponse(UniquePoolPtr<TranslateResponse> response) noexcept override;
 	void OnTranslateError(std::exception_ptr error) noexcept override;
 };
 
 void
-LbHttpRequest::OnTranslateResponse(TranslateResponse &response) noexcept
+LbHttpRequest::OnTranslateResponse(UniquePoolPtr<TranslateResponse> _response) noexcept
 {
+	const auto &response = *_response;
 	auto &_request = request;
 	auto &c = connection;
 	auto &rl = *(LbRequestLogger *)request.logger;

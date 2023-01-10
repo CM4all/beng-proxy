@@ -97,11 +97,11 @@ MyTranslationService::SendRequest(AllocatorPtr alloc,
 	assert(request.param == NULL);
 
 	if (strcmp(request.widget_type, "sync") == 0) {
-		auto response = alloc.New<TranslateResponse>();
+		auto response = UniquePoolPtr<TranslateResponse>::Make(alloc.GetPool());
 		response->address = *http_address_parse(alloc, "http://foo/");
 		response->views = alloc.New<WidgetView>(nullptr);
 		response->views->address = {ShallowCopy(), response->address};
-		handler.OnTranslateResponse(*response);
+		handler.OnTranslateResponse(std::move(response));
 	} else if (strcmp(request.widget_type, "block") == 0) {
 		cancel_ptr = *this;
 	} else

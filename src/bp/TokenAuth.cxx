@@ -73,7 +73,7 @@ GetTokenAuthRedirectUri(AllocatorPtr alloc,
 inline void
 Request::OnTokenAuthTranslateResponse(const TranslateResponse &response) noexcept
 {
-	assert(translate.previous != nullptr);
+	assert(translate.previous);
 
 	if (response.discard_session)
 		DiscardSession();
@@ -102,7 +102,7 @@ Request::OnTokenAuthTranslateResponse(const TranslateResponse &response) noexcep
 	translate.user_modified = response.user != nullptr;
 
 	if (!had_auth_token) {
-		OnTranslateResponseAfterAuth(*translate.previous);
+		OnTranslateResponseAfterAuth(std::move(translate.previous));
 		return;
 	}
 
@@ -112,7 +112,7 @@ Request::OnTokenAuthTranslateResponse(const TranslateResponse &response) noexcep
 
 	/* promote the "previous" response to the final response, so
 	   GenerateSetCookie() uses its settings */
-	translate.response = &tr;
+	translate.response = std::move(translate.previous);
 
 	/* don't call OnTranslateResponseAfterAuth() here, instead
 	   redirect to the URI with auth_token removed */
@@ -142,8 +142,8 @@ public:
 		:request(_request) {}
 
 	/* virtual methods from TranslateHandler */
-	void OnTranslateResponse(TranslateResponse &response) noexcept override {
-		request.OnTokenAuthTranslateResponse(response);
+	void OnTranslateResponse(UniquePoolPtr<TranslateResponse> response) noexcept override {
+		request.OnTokenAuthTranslateResponse(*response);
 	}
 
 	void OnTranslateError(std::exception_ptr error) noexcept override {
@@ -207,8 +207,10 @@ ExtractAuthToken(AllocatorPtr alloc, DissectedUri &dissected_uri)
 }
 
 void
-Request::HandleTokenAuth(const TranslateResponse &response) noexcept
+Request::HandleTokenAuth(UniquePoolPtr<TranslateResponse> _response) noexcept
 {
+	const auto &response = *_response;
+
 	assert(response.token_auth.data() != nullptr);
 
 	/* we need to validate the session realm early */
@@ -239,7 +241,7 @@ Request::HandleTokenAuth(const TranslateResponse &response) noexcept
 		if (is_authenticated) {
 			/* already authenticated; we can skip the
 			   TOKEN_AUTH request */
-			OnTranslateResponseAfterAuth(response);
+			OnTranslateResponseAfterAuth(std::move(_response));
 			return;
 		}
 	}
@@ -257,7 +259,7 @@ Request::HandleTokenAuth(const TranslateResponse &response) noexcept
 	t->session = translate.request.session;
 	t->realm_session = translate_realm_session;
 
-	translate.previous = &response;
+	translate.previous = std::move(_response);
 
 	auto *http_auth_translate_handler =
 		alloc.New<TokenAuthTranslateHandler>(*this);

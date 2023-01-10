@@ -422,7 +422,7 @@ struct TranslateCacheRequest final : TranslateHandler {
 	TranslateCacheRequest(TranslateCacheRequest &) = delete;
 
 	/* virtual methods from TranslateHandler */
-	void OnTranslateResponse(TranslateResponse &response) noexcept override;
+	void OnTranslateResponse(UniquePoolPtr<TranslateResponse> response) noexcept override;
 	void OnTranslateError(std::exception_ptr error) noexcept override;
 };
 
@@ -1355,9 +1355,11 @@ UriWithoutQueryString(AllocatorPtr alloc, const char *uri) noexcept
  */
 
 void
-TranslateCacheRequest::OnTranslateResponse(TranslateResponse &response) noexcept
+TranslateCacheRequest::OnTranslateResponse(UniquePoolPtr<TranslateResponse> _response) noexcept
 try {
 	tcache->active = true;
+
+	auto &response = *_response;
 
 	if (!response.invalidate.empty())
 		tcache->Invalidate(request,
@@ -1391,7 +1393,7 @@ try {
 						  "Malformed URI");
 	}
 
-	handler->OnTranslateResponse(response);
+	handler->OnTranslateResponse(std::move(_response));
 } catch (...) {
 	handler->OnTranslateError(std::current_exception());
 }
@@ -1411,7 +1413,7 @@ tcache_hit(AllocatorPtr alloc,
 	   const TranslateCacheItem &item,
 	   TranslateHandler &handler) noexcept
 {
-	auto response = alloc.New<TranslateResponse>();
+	auto response = UniquePoolPtr<TranslateResponse>::Make(alloc.GetPool());
 
 	LogConcat(4, "TranslationCache", "hit ", key);
 
@@ -1432,7 +1434,7 @@ tcache_hit(AllocatorPtr alloc,
 		}
 	}
 
-	handler.OnTranslateResponse(*response);
+	handler.OnTranslateResponse(std::move(response));
 }
 
 static void

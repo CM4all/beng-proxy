@@ -43,7 +43,7 @@ class TranslationService;
 class StopwatchPtr;
 
 class CoTranslate final : TranslateHandler {
-	TranslateResponse *response;
+	UniquePoolPtr<TranslateResponse> response;
 	std::exception_ptr error;
 
 	CancellablePointer cancel_ptr;
@@ -77,7 +77,7 @@ public:
 				return std::noop_coroutine();
 			}
 
-			const TranslateResponse &await_resume() const {
+			UniquePoolPtr<TranslateResponse> await_resume() const {
 				return request.AwaitResume();
 			}
 		};
@@ -90,14 +90,14 @@ private:
 		return !cancel_ptr;
 	}
 
-	const TranslateResponse &AwaitResume() const {
+	UniquePoolPtr<TranslateResponse> AwaitResume() {
 		if (error)
 			std::rethrow_exception(std::move(error));
 
-		return *response;
+		return std::move(response);
 	}
 
 	/* virtual methods from TranslateHandler */
-	void OnTranslateResponse(TranslateResponse &_response) noexcept override;
+	void OnTranslateResponse(UniquePoolPtr<TranslateResponse> _response) noexcept override;
 	void OnTranslateError(std::exception_ptr _error) noexcept override;
 };

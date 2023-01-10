@@ -141,7 +141,7 @@ private:
 
 	struct {
 		TranslateRequest request;
-		const TranslateResponse *response = nullptr;
+		UniquePoolPtr<TranslateResponse> response;
 
 		ResourceAddress address;
 
@@ -174,7 +174,7 @@ private:
 		 * only if beng-proxy sends a second translate request with a
 		 * CHECK packet.
 		 */
-		const TranslateResponse *previous = nullptr;
+		UniquePoolPtr<TranslateResponse> previous;
 
 		/**
 		 * Number of LIKE_HOST packets followed so far.  This
@@ -430,7 +430,7 @@ public:
 private:
 	void ParseArgs() noexcept;
 
-	void RepeatTranslation(const TranslateResponse &response) noexcept;
+	void RepeatTranslation(UniquePoolPtr<TranslateResponse> response) noexcept;
 
 public:
 	/**
@@ -442,8 +442,8 @@ private:
 	bool ParseRequestUri() noexcept;
 
 public:
-	void OnTranslateResponseAfterAuth(const TranslateResponse &response);
-	void OnTranslateResponse2(const TranslateResponse &response);
+	void OnTranslateResponseAfterAuth(UniquePoolPtr<TranslateResponse> response) noexcept;
+	void OnTranslateResponse2(UniquePoolPtr<TranslateResponse> response) noexcept;
 
 	/**
 	 * Enable the "stateless" flag, which disables session management
@@ -515,14 +515,14 @@ public:
 	/**
 	 * Handle #TRANSLATE_AUTH.
 	 */
-	void HandleAuth(const TranslateResponse &response);
+	void HandleAuth(UniquePoolPtr<TranslateResponse> response);
 
 	/**
 	 * Handle #TranslationCommand::TOKEN_AUTH.
 	 */
-	void HandleHttpAuth(const TranslateResponse &response) noexcept;
+	void HandleHttpAuth(UniquePoolPtr<TranslateResponse> response) noexcept;
 
-	void HandleTokenAuth(const TranslateResponse &response) noexcept;
+	void HandleTokenAuth(UniquePoolPtr<TranslateResponse> response) noexcept;
 
 	bool EvaluateFileRequest(FileDescriptor fd, const struct statx &st,
 				 struct file_request &file_request) noexcept;
@@ -589,9 +589,9 @@ public:
 	 */
 	void HandleTranslatedRequest2(const TranslateResponse &response) noexcept;
 
-	void HandleTranslatedRequest(const TranslateResponse &response) noexcept;
+	void HandleTranslatedRequest(UniquePoolPtr<TranslateResponse> response) noexcept;
 
-	void HandleChainResponse(const TranslateResponse &response) noexcept;
+	void HandleChainResponse(UniquePoolPtr<TranslateResponse> response) noexcept;
 
 	bool IsTransformationEnabled() const noexcept {
 		return !translate.response->views->transformations.empty();
@@ -908,7 +908,7 @@ private:
 	}
 
 	/* virtual methods from TranslateHandler */
-	void OnTranslateResponse(TranslateResponse &response) noexcept override;
+	void OnTranslateResponse(UniquePoolPtr<TranslateResponse> response) noexcept override;
 	void OnTranslateError(std::exception_ptr error) noexcept override;
 
 	/* virtual methods from class HttpResponseHandler */

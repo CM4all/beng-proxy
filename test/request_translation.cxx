@@ -101,13 +101,14 @@ print_resource_address(const ResourceAddress *address)
 class MyHandler final : public TranslateHandler {
 public:
 	/* virtual methods from TranslateHandler */
-	void OnTranslateResponse(TranslateResponse &response) noexcept override;
+	void OnTranslateResponse(UniquePoolPtr<TranslateResponse> response) noexcept override;
 	void OnTranslateError(std::exception_ptr error) noexcept override;
 };
 
 void
-MyHandler::OnTranslateResponse(TranslateResponse &response) noexcept
+MyHandler::OnTranslateResponse(UniquePoolPtr<TranslateResponse> _response) noexcept
 {
+	const auto &response = *_response;
 	const WidgetView *view;
 
 	if (response.status != HttpStatus{})

@@ -44,9 +44,9 @@ CoTranslate::CoTranslate(TranslationService &service,
 }
 
 void
-CoTranslate::OnTranslateResponse(TranslateResponse &_response) noexcept
+CoTranslate::OnTranslateResponse(UniquePoolPtr<TranslateResponse> _response) noexcept
 {
-	response = &_response;
+	response = std::move(_response);
 	cancel_ptr = nullptr;
 
 	if (continuation)

@@ -44,15 +44,15 @@ RecordingTranslateHandler::RecordingTranslateHandler(struct pool &parent_pool) n
 }
 
 void
-RecordingTranslateHandler::OnTranslateResponse(TranslateResponse &_response) noexcept
+RecordingTranslateHandler::OnTranslateResponse(UniquePoolPtr<TranslateResponse> _response) noexcept
 {
 	assert(!finished);
 
 	AllocatorPtr alloc(pool);
 
-	response = alloc.New<TranslateResponse>();
-	response->CopyFrom(alloc, _response);
-	response->address.CopyFrom(alloc, _response.address);
+	response = UniquePoolPtr<TranslateResponse>::Make(pool);
+	response->CopyFrom(alloc, *_response);
+	response->address.CopyFrom(alloc, _response->address);
 	finished = true;
 }
 

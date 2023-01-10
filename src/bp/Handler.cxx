@@ -387,9 +387,10 @@ Request::DoContentTypeLookup(const ResourceAddress &address) noexcept
 }
 
 void
-Request::HandleTranslatedRequest(const TranslateResponse &response) noexcept
+Request::HandleTranslatedRequest(UniquePoolPtr<TranslateResponse> _response) noexcept
 {
-	translate.response = &response;
+	translate.response = std::move(_response);
+	const auto &response = *translate.response;
 	translate.address = {ShallowCopy(), response.address};
 	translate.transformations.clear();
 
@@ -488,9 +489,11 @@ FindLayoutItem(std::span<const TranslationLayoutItem> items,
 }
 
 inline void
-Request::RepeatTranslation(const TranslateResponse &response) noexcept
+Request::RepeatTranslation(UniquePoolPtr<TranslateResponse> _response) noexcept
 {
 	const AllocatorPtr alloc(pool);
+
+	const auto &response = *_response;
 
 	if (response.layout.data() != nullptr) {
 		/* repeat request with LAYOUT mirrored */
@@ -517,6 +520,8 @@ Request::RepeatTranslation(const TranslateResponse &response) noexcept
 							       uri);
 	}
 
+	bool save_previous = false;
+
 	if (response.check.data() != nullptr) {
 		/* repeat request with CHECK set */
 
@@ -527,7 +532,7 @@ Request::RepeatTranslation(const TranslateResponse &response) noexcept
 			return;
 		}
 
-		translate.previous = &response;
+		save_previous = true;
 		translate.request.check = response.check;
 
 		if (response.check_header != nullptr) {
@@ -556,7 +561,7 @@ Request::RepeatTranslation(const TranslateResponse &response) noexcept
 			return;
 		}
 
-		translate.previous = &response;
+		save_previous = true;
 		translate.request.internal_redirect = response.internal_redirect;
 
 		/* reset "layout" because we're now serving a
@@ -651,13 +656,18 @@ Request::RepeatTranslation(const TranslateResponse &response) noexcept
 
 	/* resend the modified request */
 
+	if (save_previous)
+		translate.previous = std::move(_response);
+
 	SubmitTranslateRequest();
 }
 
 inline void
-Request::HandleChainResponse(const TranslateResponse &response) noexcept
+Request::HandleChainResponse(UniquePoolPtr<TranslateResponse> _response) noexcept
 {
 	assert(pending_chain_response);
+
+	const auto &response = *_response;
 
 	if (response.break_chain) {
 		DispatchResponse(std::move(pending_chain_response));
@@ -666,7 +676,7 @@ Request::HandleChainResponse(const TranslateResponse &response) noexcept
 
 	if (response.internal_redirect.data() != nullptr) {
 		pending_chain_response.reset();
-		RepeatTranslation(response);
+		RepeatTranslation(std::move(_response));
 		return;
 	}
 
@@ -724,8 +734,10 @@ Request::HandleChainResponse(const TranslateResponse &response) noexcept
 }
 
 void
-Request::OnTranslateResponse(TranslateResponse &response) noexcept
+Request::OnTranslateResponse(UniquePoolPtr<TranslateResponse> _response) noexcept
 {
+	const auto &response = *_response;
+
 	if (response.protocol_version < 2) {
 		LogDispatchError(HttpStatus::BAD_GATEWAY,
 				 "Unsupported configuration server",
@@ -745,7 +757,7 @@ Request::OnTranslateResponse(TranslateResponse &response) noexcept
 
 	if (pending_chain_response) {
 		/* this is the response for a CHAIN request */
-		HandleChainResponse(response);
+		HandleChainResponse(std::move(_response));
 		return;
 	}
 
@@ -792,23 +804,25 @@ Request::OnTranslateResponse(TranslateResponse &response) noexcept
 		translation_protocol_version = response.protocol_version;
 
 	if (response.HasAuth())
-		HandleAuth(response);
+		HandleAuth(std::move(_response));
 	else if (response.http_auth.data() != nullptr &&
 		 /* allow combining HTTP_AUTH and TOKEN_AUTH; in that
 		    case, use HTTP_AUTH only if an "Authorization"
 		    header was received */
 		 (request.headers.Get("authorization") != nullptr ||
 		  response.token_auth.data() == nullptr))
-		HandleHttpAuth(response);
+		HandleHttpAuth(std::move(_response));
 	else if (response.token_auth.data() != nullptr)
-		HandleTokenAuth(response);
+		HandleTokenAuth(std::move(_response));
 	else
-		OnTranslateResponseAfterAuth(response);
+		OnTranslateResponseAfterAuth(std::move(_response));
 }
 
 void
-Request::OnTranslateResponseAfterAuth(const TranslateResponse &response)
+Request::OnTranslateResponseAfterAuth(UniquePoolPtr<TranslateResponse> _response) noexcept
 {
+	const auto &response = *_response;
+
 	if (response.check.data() != nullptr ||
 	    response.layout.data() != nullptr ||
 	    response.internal_redirect.data() != nullptr||
@@ -823,7 +837,7 @@ Request::OnTranslateResponseAfterAuth(const TranslateResponse &response)
 		   once */
 		translate.user_modified = false;
 
-		RepeatTranslation(response);
+		RepeatTranslation(std::move(_response));
 		return;
 	}
 
@@ -836,7 +850,7 @@ Request::OnTranslateResponseAfterAuth(const TranslateResponse &response)
 	translate.n_internal_redirects = 0;
 
 	if (response.previous) {
-		if (translate.previous == nullptr) {
+		if (!translate.previous) {
 			LogDispatchError(HttpStatus::BAD_GATEWAY,
 					 "No previous translation response", 1);
 			return;
@@ -846,14 +860,17 @@ Request::OnTranslateResponseAfterAuth(const TranslateResponse &response)
 		   "previous" response */
 		ApplyTranslateResponseSession(response);
 
-		OnTranslateResponse2(*translate.previous);
-	} else
-		OnTranslateResponse2(response);
+		_response = std::move(translate.previous);
+	}
+
+	OnTranslateResponse2(std::move(_response));
 }
 
 void
-Request::OnTranslateResponse2(const TranslateResponse &response)
+Request::OnTranslateResponse2(UniquePoolPtr<TranslateResponse> _response) noexcept
 {
+	const auto &response = *_response;
+
 	if (CheckHandleReadFile(response))
 		return;
 
@@ -877,7 +894,7 @@ Request::OnTranslateResponse2(const TranslateResponse &response)
 	    !CheckDirectoryIndex(response))
 		return;
 
-	HandleTranslatedRequest(response);
+	HandleTranslatedRequest(std::move(_response));
 }
 
 inline bool

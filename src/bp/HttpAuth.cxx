@@ -55,7 +55,7 @@ Request::OnHttpAuthTranslateResponse(const TranslateResponse &response) noexcept
 		return;
 	}
 
-	OnTranslateResponseAfterAuth(*translate.previous);
+	OnTranslateResponseAfterAuth(std::move(translate.previous));
 }
 
 inline void
@@ -73,8 +73,8 @@ public:
 		:request(_request) {}
 
 	/* virtual methods from TranslateHandler */
-	void OnTranslateResponse(TranslateResponse &response) noexcept override {
-		request.OnHttpAuthTranslateResponse(response);
+	void OnTranslateResponse(UniquePoolPtr<TranslateResponse> response) noexcept override {
+		request.OnHttpAuthTranslateResponse(*response);
 	}
 
 	void OnTranslateError(std::exception_ptr error) noexcept override {
@@ -83,8 +83,10 @@ public:
 };
 
 void
-Request::HandleHttpAuth(const TranslateResponse &response) noexcept
+Request::HandleHttpAuth(UniquePoolPtr<TranslateResponse> _response) noexcept
 {
+	const auto &response = *_response;
+
 	assert(response.http_auth.data() != nullptr);
 
 	const char *authorization = request.headers.Get("authorization");
@@ -100,7 +102,7 @@ Request::HandleHttpAuth(const TranslateResponse &response) noexcept
 	t->listener_tag = translate.request.listener_tag;
 	t->host = translate.request.host;
 
-	translate.previous = &response;
+	translate.previous = std::move(_response);
 
 	auto *http_auth_translate_handler =
 		NewFromPool<HttpAuthTranslateHandler>(pool, *this);

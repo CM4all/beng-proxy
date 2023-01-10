@@ -69,6 +69,8 @@ class TranslateClient final : BufferedSocketHandler, Cancellable {
 
 	TranslateHandler &handler;
 
+	UniquePoolPtr<TranslateResponse> response;
+
 	TranslateParser parser;
 
 public:
@@ -179,9 +181,9 @@ try {
 
 			{
 				auto &_handler = handler;
-				auto &response = parser.GetResponse();
+				auto _response = std::move(response);
 				Destroy();
-				_handler.OnTranslateResponse(response);
+				_handler.OnTranslateResponse(std::move(_response));
 			}
 
 			return BufferedResult::CLOSED;
@@ -248,7 +250,8 @@ TranslateClient::TranslateClient(AllocatorPtr alloc, EventLoop &event_loop,
 	 read_timer(event_loop, BIND_THIS_METHOD(OnReadTimeout)),
 	 request(std::move(_request)),
 	 handler(_handler),
-	 parser(alloc, request2, *alloc.New<TranslateResponse>())
+	 response(UniquePoolPtr<TranslateResponse>::Make(alloc.GetPool())),
+	 parser(alloc, request2, *response)
 {
 	socket.Init(fd, FdType::FD_SOCKET, write_timeout, *this);
 

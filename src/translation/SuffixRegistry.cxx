@@ -52,13 +52,15 @@ struct SuffixRegistryLookup final : TranslateHandler {
 	}
 
 	/* virtual methods from TranslateHandler */
-	void OnTranslateResponse(TranslateResponse &response) noexcept override;
+	void OnTranslateResponse(UniquePoolPtr<TranslateResponse> response) noexcept override;
 	void OnTranslateError(std::exception_ptr error) noexcept override;
 };
 
 void
-SuffixRegistryLookup::OnTranslateResponse(TranslateResponse &response) noexcept
+SuffixRegistryLookup::OnTranslateResponse(UniquePoolPtr<TranslateResponse> _response) noexcept
 {
+	const auto &response = *_response;
+
 	handler.OnSuffixRegistrySuccess(response.content_type,
 					response.views != nullptr
 					? IntrusiveForwardList<Transformation>{ShallowCopy{}, response.views->transformations}
