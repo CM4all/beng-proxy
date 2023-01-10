@@ -34,8 +34,6 @@
 
 #include <string>
 
-class AllocatorPtr;
-
 /**
  * An item in a URI layout.
  *
@@ -53,8 +51,6 @@ struct TranslationLayoutItem {
 
 	constexpr TranslationLayoutItem(Type _type, const char *_value) noexcept
 		:type(_type), value(_value) {}
-
-	TranslationLayoutItem(AllocatorPtr alloc, const TranslationLayoutItem &src) noexcept;
 
 	[[gnu::pure]]
 	bool Match(const char *uri) const noexcept;

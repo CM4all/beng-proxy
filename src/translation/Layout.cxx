@@ -31,16 +31,9 @@
  */
 
 #include "Layout.hxx"
-#include "AllocatorPtr.hxx"
 #include "lib/pcre/UniqueRegex.hxx"
 #include "util/Compiler.h"
 #include "util/StringCompare.hxx"
-
-TranslationLayoutItem::TranslationLayoutItem(AllocatorPtr alloc,
-					     const TranslationLayoutItem &src) noexcept
-	:type(src.type), value(alloc.Dup(src.value))
-{
-}
 
 bool
 TranslationLayoutItem::Match(const char *uri) const noexcept
