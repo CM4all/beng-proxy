@@ -35,6 +35,7 @@
 #include "memory/GrowingBuffer.hxx"
 
 #include <span>
+#include <string_view>
 #include <utility>
 
 #include <stdint.h>
@@ -57,7 +58,7 @@ public:
 	}
 
 	void Write(TranslationCommand command,
-		   const char *payload);
+		   std::string_view payload);
 
 	template<typename T>
 	void WriteOptional(TranslationCommand command,

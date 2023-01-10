@@ -58,7 +58,7 @@ TranslationMarshaller::Write(TranslationCommand command,
 
 void
 TranslationMarshaller::Write(TranslationCommand command,
-			     const char *payload)
+			     std::string_view payload)
 {
 	Write(command, AsBytes(payload));
 }
