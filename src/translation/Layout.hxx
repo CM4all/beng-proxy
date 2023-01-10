@@ -54,12 +54,12 @@ struct TranslationLayoutItem {
 	TranslationLayoutItem() = default;
 
 	struct Base {};
-	TranslationLayoutItem(Base, const char *_value) noexcept
+	TranslationLayoutItem(Base, std::string_view _value) noexcept
 		:value(_value) {}
 
 	struct Regex {};
-	TranslationLayoutItem(Regex, const char *_value) noexcept
-		:value(_value), regex(_value, true, false) {}
+	TranslationLayoutItem(Regex, std::string_view _value) noexcept
+		:value(_value), regex(value.c_str(), true, false) {}
 
 	Type GetType() const noexcept {
 		return regex.IsDefined() ? Type::REGEX : Type::BASE;
