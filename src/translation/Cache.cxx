@@ -65,12 +65,12 @@
 static constexpr std::size_t MAX_CACHE_LAYOUT = 256;
 static constexpr std::size_t MAX_CACHE_CHECK = 256;
 static constexpr std::size_t MAX_CACHE_WFU = 256;
-static constexpr size_t MAX_CONTENT_TYPE_LOOKUP = 256;
-static constexpr size_t MAX_CHAIN = 256;
-static constexpr size_t MAX_PROBE_PATH_SUFFIXES = 256;
-static constexpr size_t MAX_FILE_NOT_FOUND = 256;
-static constexpr size_t MAX_DIRECTORY_INDEX = 256;
-static constexpr size_t MAX_READ_FILE = 256;
+static constexpr std::size_t MAX_CONTENT_TYPE_LOOKUP = 256;
+static constexpr std::size_t MAX_CHAIN = 256;
+static constexpr std::size_t MAX_PROBE_PATH_SUFFIXES = 256;
+static constexpr std::size_t MAX_FILE_NOT_FOUND = 256;
+static constexpr std::size_t MAX_DIRECTORY_INDEX = 256;
+static constexpr std::size_t MAX_READ_FILE = 256;
 
 struct TranslateCachePerHost;
 struct TranslateCachePerSite;
@@ -214,14 +214,14 @@ struct TranslateCachePerHost
 			    std::span<const TranslationCommand> vary);
 
 	[[gnu::pure]]
-	static size_t KeyHasher(const char *key) {
+	static std::size_t KeyHasher(const char *key) noexcept {
 		assert(key != nullptr);
 
 		return djb_hash_string(key);
 	}
 
 	[[gnu::pure]]
-	static size_t ValueHasher(const TranslateCachePerHost &value) {
+	static std::size_t ValueHasher(const TranslateCachePerHost &value) noexcept {
 		return KeyHasher(value.host.c_str());
 	}
 
@@ -234,12 +234,12 @@ struct TranslateCachePerHost
 
 	struct Hash {
 		[[gnu::pure]]
-		size_t operator()(const TranslateCachePerHost &value) const {
+		std::size_t operator()(const TranslateCachePerHost &value) const noexcept {
 			return ValueHasher(value);
 		}
 
 		[[gnu::pure]]
-		size_t operator()(const char *key) const {
+		std::size_t operator()(const char *key) const noexcept {
 			return KeyHasher(key);
 		}
 	};
@@ -294,14 +294,14 @@ struct TranslateCachePerSite
 			    std::span<const TranslationCommand> vary);
 
 	[[gnu::pure]]
-	static size_t KeyHasher(const char *key) {
+	static std::size_t KeyHasher(const char *key) noexcept {
 		assert(key != nullptr);
 
 		return djb_hash_string(key);
 	}
 
 	[[gnu::pure]]
-	static size_t ValueHasher(const TranslateCachePerSite &value) {
+	static std::size_t ValueHasher(const TranslateCachePerSite &value) noexcept {
 		return KeyHasher(value.site.c_str());
 	}
 
@@ -314,12 +314,12 @@ struct TranslateCachePerSite
 
 	struct Hash {
 		[[gnu::pure]]
-		size_t operator()(const TranslateCachePerSite &value) const {
+		std::size_t operator()(const TranslateCachePerSite &value) const noexcept {
 			return ValueHasher(value);
 		}
 
 		[[gnu::pure]]
-		size_t operator()(const char *key) const {
+		std::size_t operator()(const char *key) const noexcept {
 			return KeyHasher(key);
 		}
 	};
@@ -343,7 +343,7 @@ struct tcache {
 	const PoolPtr pool;
 	SlicePool slice_pool;
 
-	static constexpr size_t N_BUCKETS = 131071;
+	static constexpr std::size_t N_BUCKETS = 131071;
 
 	/**
 	 * This hash table maps each host name to a
@@ -655,7 +655,7 @@ tcache_content_type_lookup_key(AllocatorPtr alloc,
 			       const TranslateRequest &request) noexcept
 {
 	char buffer[MAX_CONTENT_TYPE_LOOKUP * 3];
-	size_t length = UriEscape(buffer, request.content_type_lookup);
+	std::size_t length = UriEscape(buffer, request.content_type_lookup);
 	return alloc.Concat("CTL|",
 			    std::string_view{buffer, length},
 			    '|',
@@ -666,7 +666,7 @@ static const char *
 tcache_chain_key(AllocatorPtr alloc, const TranslateRequest &request) noexcept
 {
 	char buffer[MAX_CHAIN * 3];
-	size_t length = UriEscape(buffer, request.chain);
+	std::size_t length = UriEscape(buffer, request.chain);
 
 	char status_buffer[32];
 	if (unsigned(request.status) != 0)
@@ -861,8 +861,8 @@ tcache_vary_copy(AllocatorPtr alloc, std::span<const T> value,
  * @param strict in strict mode, nullptr values are a mismatch
  */
 static bool
-tcache_buffer_match(const void *a, size_t a_length,
-		    const void *b, size_t b_length,
+tcache_buffer_match(const void *a, std::size_t a_length,
+		    const void *b, std::size_t b_length,
 		    bool strict)
 {
 	assert((a == nullptr) == (a_length == 0));
