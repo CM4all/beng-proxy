@@ -63,8 +63,8 @@
 #include <errno.h>
 
 static constexpr std::size_t MAX_CACHE_LAYOUT = 256;
-#define MAX_CACHE_CHECK 256
-#define MAX_CACHE_WFU 256
+static constexpr std::size_t MAX_CACHE_CHECK = 256;
+static constexpr std::size_t MAX_CACHE_WFU = 256;
 static constexpr size_t MAX_CONTENT_TYPE_LOOKUP = 256;
 static constexpr size_t MAX_CHAIN = 256;
 static constexpr size_t MAX_PROBE_PATH_SUFFIXES = 256;
