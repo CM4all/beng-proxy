@@ -51,7 +51,7 @@ TranslationLayoutItem::Match(const char *uri) const noexcept
 
 	case Type::REGEX:
 		try {
-			return UniqueRegex{value, true, false}.Match(uri);
+			return UniqueRegex{value.c_str(), true, false}.Match(uri);
 		} catch (...) {
 			// TODO: what to do?  We should reject this
 			// translation response

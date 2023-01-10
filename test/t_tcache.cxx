@@ -145,6 +145,16 @@ AllEquals(const T &a, const T &b) noexcept
 	return i == end(a);
 }
 
+template<typename T>
+static bool
+AllEquals(const std::shared_ptr<T> &a, const std::shared_ptr<T> &b) noexcept
+{
+	if (!a || !b)
+		return (!a) == (!b);
+
+	return AllEquals(*a, *b);
+}
+
 static bool
 operator==(const MountNamespaceOptions &a,
 	   const MountNamespaceOptions &b) noexcept
@@ -281,7 +291,7 @@ AllEquals(WidgetView *a, WidgetView *b) noexcept
 static bool
 operator==(const TranslationLayoutItem &a, const TranslationLayoutItem &b) noexcept
 {
-	return a.type == b.type && StringIsEqual(a.value, b.value);
+	return a.type == b.type && a.value == b.value;
 }
 
 static bool

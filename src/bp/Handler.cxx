@@ -497,6 +497,7 @@ Request::RepeatTranslation(UniquePoolPtr<TranslateResponse> _response) noexcept
 
 	if (response.layout.data() != nullptr) {
 		/* repeat request with LAYOUT mirrored */
+		assert(response.layout_items);
 
 		if (++translate.n_layout > 4) {
 			LogDispatchError(HttpStatus::BAD_GATEWAY,
@@ -516,7 +517,7 @@ Request::RepeatTranslation(UniquePoolPtr<TranslateResponse> _response) noexcept
 		}
 
 		translate.request.layout = response.layout;
-		translate.request.layout_item = FindLayoutItem(response.layout_items,
+		translate.request.layout_item = FindLayoutItem(*response.layout_items,
 							       uri);
 	}
 

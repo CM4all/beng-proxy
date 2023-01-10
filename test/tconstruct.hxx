@@ -116,12 +116,11 @@ struct MakeResponse : TranslateResponse {
 	MakeResponse &&Layout(std::string_view value,
 			      std::initializer_list<const char *> items) && noexcept {
 		layout = AsBytes(value);
+		layout_items = std::make_shared<std::vector<TranslationLayoutItem>>();
 
-		auto *li = alloc.NewArray<TranslationLayoutItem>(items.size());
-		for (auto *dest = li; const char *src : items)
-			*dest++ = {TranslationLayoutItem::Type::BASE, src};
+		for (const char *src : items)
+			layout_items->emplace_back(TranslationLayoutItem::Type::BASE, src);
 
-		layout_items = {li, items.size()};
 		return std::move(*this);
 	}
 

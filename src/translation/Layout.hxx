@@ -32,6 +32,8 @@
 
 #pragma once
 
+#include <string>
+
 class AllocatorPtr;
 
 /**
@@ -45,7 +47,7 @@ struct TranslationLayoutItem {
 		REGEX,
 	} type;
 
-	const char *value;
+	std::string value;
 
 	TranslationLayoutItem() = default;
 
