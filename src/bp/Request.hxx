@@ -177,6 +177,13 @@ private:
 		UniquePoolPtr<TranslateResponse> previous;
 
 		/**
+		 * This field holds a reference to the
+		 * TranslateResponse::layout_items that
+		 * request.layout_item points into.
+		 */
+		std::shared_ptr<std::vector<TranslationLayoutItem>> layout_items;
+
+		/**
 		 * Number of LIKE_HOST packets followed so far.  This
 		 * variable is used for loop detection.
 		 */

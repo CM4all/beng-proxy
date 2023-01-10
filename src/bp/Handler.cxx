@@ -517,6 +517,7 @@ Request::RepeatTranslation(UniquePoolPtr<TranslateResponse> _response) noexcept
 		}
 
 		translate.request.layout = response.layout;
+		translate.layout_items = response.layout_items;
 		translate.request.layout_item = FindLayoutItem(*response.layout_items,
 							       uri);
 	}
