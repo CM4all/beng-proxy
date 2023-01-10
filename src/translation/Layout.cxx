@@ -31,26 +31,13 @@
  */
 
 #include "Layout.hxx"
-#include "lib/pcre/UniqueRegex.hxx"
-#include "util/Compiler.h"
 #include "util/StringCompare.hxx"
 
 bool
 TranslationLayoutItem::Match(const char *uri) const noexcept
 {
-	switch (type) {
-	case Type::BASE:
-		return StringStartsWith(uri, value);
+	if (regex.IsDefined())
+		return regex.Match(uri);
 
-	case Type::REGEX:
-		try {
-			return UniqueRegex{value.c_str(), true, false}.Match(uri);
-		} catch (...) {
-			// TODO: what to do?  We should reject this
-			// translation response
-			return false;
-		}
-	}
-
-	gcc_unreachable();
+	return StringStartsWith(uri, value);
 }

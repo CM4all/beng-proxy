@@ -32,6 +32,8 @@
 
 #pragma once
 
+#include "lib/pcre/UniqueRegex.hxx"
+
 #include <string>
 
 /**
@@ -43,14 +45,25 @@ struct TranslationLayoutItem {
 	enum class Type {
 		BASE,
 		REGEX,
-	} type;
+	};
 
 	std::string value;
 
+	UniqueRegex regex;
+
 	TranslationLayoutItem() = default;
 
-	constexpr TranslationLayoutItem(Type _type, const char *_value) noexcept
-		:type(_type), value(_value) {}
+	struct Base {};
+	TranslationLayoutItem(Base, const char *_value) noexcept
+		:value(_value) {}
+
+	struct Regex {};
+	TranslationLayoutItem(Regex, const char *_value) noexcept
+		:value(_value), regex(_value, true, false) {}
+
+	Type GetType() const noexcept {
+		return regex.IsDefined() ? Type::REGEX : Type::BASE;
+	}
 
 	[[gnu::pure]]
 	bool Match(const char *uri) const noexcept;

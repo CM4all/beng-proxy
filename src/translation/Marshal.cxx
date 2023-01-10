@@ -125,7 +125,7 @@ MarshalTranslateRequest(uint8_t PROTOCOL_VERSION,
 	m.WriteOptional(TranslationCommand::LAYOUT, request.layout);
 
 	if (request.layout_item != nullptr) {
-		switch (request.layout_item->type) {
+		switch (request.layout_item->GetType()) {
 		case TranslationLayoutItem::Type::BASE:
 			m.Write(TranslationCommand::BASE,
 				request.layout_item->value);

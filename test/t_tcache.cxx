@@ -291,7 +291,7 @@ AllEquals(WidgetView *a, WidgetView *b) noexcept
 static bool
 operator==(const TranslationLayoutItem &a, const TranslationLayoutItem &b) noexcept
 {
-	return a.type == b.type && a.value == b.value;
+	return a.GetType() == b.GetType() && a.value == b.value;
 }
 
 static bool
