@@ -42,6 +42,10 @@
 #include "net/SocketConfig.hxx"
 #include "certdb/Config.hxx"
 
+#ifdef HAVE_AVAHI
+#include "PrometheusDiscoveryConfig.hxx"
+#endif
+
 #include <map>
 #include <list>
 #include <string>
@@ -87,6 +91,10 @@ struct LbConfig {
 	std::map<std::string, LbLuaHandlerConfig> lua_handlers;
 	std::map<std::string, LbTranslationHandlerConfig> translation_handlers;
 	std::map<std::string, LbPrometheusExporterConfig> prometheus_exporters;
+
+#ifdef HAVE_AVAHI
+	std::map<std::string, LbPrometheusDiscoveryConfig> prometheus_discoveries;
+#endif
 
 	std::list<LbListenerConfig> listeners;
 
@@ -155,6 +163,11 @@ struct LbConfig {
 		if (const auto *e = FindPrometheusExporter(t))
 			return LbGotoConfig(*e);
 
+#ifdef HAVE_AVAHI
+		if (const auto *d = FindPrometheusDiscovery(t))
+			return LbGotoConfig(*d);
+#endif // HAVE_AVAHI
+
 		return {};
 	}
 
@@ -193,6 +206,17 @@ struct LbConfig {
 			? &i->second
 			: nullptr;
 	}
+
+#ifdef HAVE_AVAHI
+	template<typename T>
+	[[gnu::pure]]
+	const LbPrometheusDiscoveryConfig *FindPrometheusDiscovery(T &&t) const noexcept {
+		const auto i = prometheus_discoveries.find(std::forward<T>(t));
+		return i != prometheus_discoveries.end()
+			? &i->second
+			: nullptr;
+	}
+#endif
 
 	template<typename T>
 	[[gnu::pure]]

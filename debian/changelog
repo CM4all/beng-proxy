@@ -3,6 +3,7 @@ cm4all-beng-proxy (18.0.11) unstable; urgency=low
   * translation: add packet AUTO_BROTLI
   * translation: precompile LAYOUT/REGEX
   * lb: add setting "zeroconf_protocol"
+  * lb: add Prometheus HTTP Service Discovery via Zeroconf
 
  --   
 

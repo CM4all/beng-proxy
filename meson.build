@@ -896,8 +896,14 @@ lb_config_dep = declare_dependency(
   ],
 )
 
+lb_sources = []
+if avahi_dep.found()
+  lb_sources += 'src/lb/PrometheusDiscovery.cxx'
+endif
+
 executable(
   'cm4all-beng-lb',
+  lb_sources,
   'src/tcp_stock.cxx',
   'src/pipe_stock.cxx',
   'src/address_string.cxx',

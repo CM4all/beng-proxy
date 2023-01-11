@@ -35,6 +35,7 @@
 #include "PrometheusExporterConfig.hxx"
 
 #ifdef HAVE_AVAHI
+#include "PrometheusDiscoveryConfig.hxx"
 
 bool
 LbBranchConfig::HasZeroConf() const noexcept
@@ -82,6 +83,12 @@ LbGotoConfig::GetProtocol() const noexcept
 			return LbProtocol::HTTP;
 		}
 
+#ifdef HAVE_AVAHI
+		LbProtocol operator()(const LbPrometheusDiscoveryConfig *) const noexcept {
+			return LbProtocol::HTTP;
+		}
+#endif // HAVE_AVAHI
+
 		LbProtocol operator()(const LbSimpleHttpResponse &) const noexcept {
 			return LbProtocol::HTTP;
 		}
@@ -121,6 +128,12 @@ LbGotoConfig::GetName() const noexcept
 			return exporter->name.c_str();
 		}
 
+#ifdef HAVE_AVAHI
+		const char *operator()(const LbPrometheusDiscoveryConfig *discovery) const noexcept {
+			return discovery->name.c_str();
+		}
+#endif // HAVE_AVAHI
+
 		const char *operator()(const LbSimpleHttpResponse &) const noexcept {
 			return "response";
 		}
@@ -158,6 +171,12 @@ LbGotoConfig::HasZeroConf() const noexcept
 		bool operator()(const LbPrometheusExporterConfig *) const noexcept {
 			return false;
 		}
+
+#ifdef HAVE_AVAHI
+		bool operator()(const LbPrometheusDiscoveryConfig *) const noexcept {
+			return true;
+		}
+#endif // HAVE_AVAHI
 
 		bool operator()(const LbSimpleHttpResponse &) const noexcept {
 			return false;

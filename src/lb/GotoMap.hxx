@@ -45,6 +45,7 @@ struct LbClusterConfig;
 struct LbBranchConfig;
 struct LbTranslationHandlerConfig;
 struct LbPrometheusExporterConfig;
+struct LbPrometheusDiscoveryConfig;
 struct LbLuaHandlerConfig;
 struct TranslationInvalidateRequest;
 class EventLoop;
@@ -52,6 +53,7 @@ class LbCluster;
 class LbBranch;
 class LbTranslationHandler;
 class LbPrometheusExporter;
+class LbPrometheusDiscovery;
 class LbLuaHandler;
 struct LbInstance;
 
@@ -67,6 +69,10 @@ class LbGotoMap final : LbContext {
 		 LbTranslationHandler> translation_handlers;
 	std::map<const LbPrometheusExporterConfig *,
 		 LbPrometheusExporter> prometheus_exporters;
+#ifdef HAVE_AVAHI
+	std::map<const LbPrometheusDiscoveryConfig *,
+		 LbPrometheusDiscovery> prometheus_discoveries;
+#endif
 	std::map<const LbLuaHandlerConfig *,
 		 LbLuaHandler> lua_handlers;
 
@@ -100,4 +106,7 @@ private:
 	LbLuaHandler &GetInstance(const LbLuaHandlerConfig &config);
 	LbTranslationHandler &GetInstance(const LbTranslationHandlerConfig &config);
 	LbPrometheusExporter &GetInstance(const LbPrometheusExporterConfig &config);
+#ifdef HAVE_AVAHI
+	LbPrometheusDiscovery &GetInstance(const LbPrometheusDiscoveryConfig &config);
+#endif
 };

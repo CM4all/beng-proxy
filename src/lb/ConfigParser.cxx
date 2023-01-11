@@ -185,6 +185,22 @@ class LbConfigParser final : public NestedConfigParser {
 		void Finish() override;
 	};
 
+#ifdef HAVE_AVAHI
+	class PrometheusDiscovery final : public ConfigParser {
+		LbConfigParser &parent;
+		LbPrometheusDiscoveryConfig config;
+
+	public:
+		PrometheusDiscovery(LbConfigParser &_parent, const char *_name)
+			:parent(_parent), config(_name) {}
+
+	protected:
+		/* virtual methods from class ConfigParser */
+		void ParseLine(FileLineParser &line) override;
+		void Finish() override;
+	};
+#endif // HAVE_AVAHI
+
 	class Listener final : public ConfigParser {
 		LbConfigParser &parent;
 		LbListenerConfig config;
@@ -236,6 +252,7 @@ private:
 	void CreateLuaHandler(FileLineParser &line);
 	void CreateTranslationHandler(FileLineParser &line);
 	void CreatePrometheusExporter(FileLineParser &line);
+	void CreatePrometheusDiscovery(FileLineParser &line);
 	void CreateListener(FileLineParser &line);
 	void CreateGlobalHttpCheck(FileLineParser &line);
 };
@@ -1069,21 +1086,64 @@ LbConfigParser::PrometheusExporter::Finish()
 }
 
 inline void
-LbConfigParser::CreateTranslationHandler(FileLineParser &line)
-{
-	const char *name = line.ExpectValue();
-	line.ExpectSymbolAndEol('{');
-
-	SetChild(std::make_unique<TranslationHandler>(*this, name));
-}
-
-inline void
 LbConfigParser::CreatePrometheusExporter(FileLineParser &line)
 {
 	const char *name = line.ExpectValue();
 	line.ExpectSymbolAndEol('{');
 
 	SetChild(std::make_unique<PrometheusExporter>(*this, name));
+}
+
+#ifdef HAVE_AVAHI
+
+void
+LbConfigParser::PrometheusDiscovery::ParseLine(FileLineParser &line)
+{
+	const char *word = line.ExpectWord();
+
+	if (!config.zeroconf.ParseLine(word, line))
+		throw LineParser::Error("Unknown option");
+}
+
+void
+LbConfigParser::PrometheusDiscovery::Finish()
+{
+	if (!config.zeroconf.IsEnabled())
+		throw LineParser::Error("Missing zeroconf_service");
+
+	config.zeroconf.Check();
+
+	auto i = parent.config.prometheus_discoveries.emplace(std::string(config.name),
+							      std::move(config));
+	if (!i.second)
+		throw LineParser::Error("Duplicate prometheus_discovery name");
+
+	ConfigParser::Finish();
+}
+
+#endif // HAVE_AVAHI
+
+inline void
+LbConfigParser::CreatePrometheusDiscovery(FileLineParser &line)
+{
+#ifdef HAVE_AVAHI
+	const char *name = line.ExpectValue();
+	line.ExpectSymbolAndEol('{');
+
+	SetChild(std::make_unique<PrometheusDiscovery>(*this, name));
+#else // HAVE_AVAHI
+	(void)line;
+	throw LineParser::Error("Zeroconf support is disabled at compile time");
+#endif // HAVE_AVAHI
+}
+
+inline void
+LbConfigParser::CreateTranslationHandler(FileLineParser &line)
+{
+	const char *name = line.ExpectValue();
+	line.ExpectSymbolAndEol('{');
+
+	SetChild(std::make_unique<TranslationHandler>(*this, name));
 }
 
 void
@@ -1393,6 +1453,10 @@ LbConfigParser::ParseLine2(FileLineParser &line)
 		CreateTranslationHandler(line);
 	else if (StringIsEqual(word, "prometheus_exporter"))
 		CreatePrometheusExporter(line);
+#ifdef HAVE_AVAHI
+	else if (StringIsEqual(word, "prometheus_discovery"))
+		CreatePrometheusDiscovery(line);
+#endif // HAVE_AVAHI
 	else if (StringIsEqual(word, "listener"))
 		CreateListener(line);
 	else if (StringIsEqual(word, "monitor"))

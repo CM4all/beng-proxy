@@ -400,6 +400,21 @@ The following options are available:
   abstract socket prefixed by ``@``), send HTTP request and append the
   response.
 
+Prometheus HTTP Service Discovery
+---------------------------------
+
+The ``prometheus_discovery`` section translates services discovered
+via Zeroconf to a `Prometheus HTTP Service Discovery
+<https://prometheus.io/docs/prometheus/latest/http_sd/>`__ JSON
+response.
+
+  prometheus_discovery "pd" {
+    zeroconf_service "prometheus"
+    zeroconf_protocol "inet"
+  }
+
+See :ref:`lb_zeroconf` for a list of available options.
+
 Listener
 --------
 

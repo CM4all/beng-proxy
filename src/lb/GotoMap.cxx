@@ -40,6 +40,10 @@
 #include "Config.hxx"
 #include "MonitorManager.hxx"
 
+#ifdef HAVE_AVAHI
+#include "PrometheusDiscovery.hxx"
+#endif
+
 LbGotoMap::LbGotoMap(const LbConfig &_config,
 		     LbContext _context,
 		     EventLoop &_event_loop) noexcept
@@ -55,6 +59,9 @@ LbGotoMap::Clear() noexcept
 {
 	translation_handlers.clear();
 	prometheus_exporters.clear();
+#ifdef HAVE_AVAHI
+	prometheus_discoveries.clear();
+#endif
 	clusters.clear();
 }
 
@@ -117,6 +124,12 @@ LbGotoMap::GetInstance(const LbGotoConfig &config)
 			return map.GetInstance(*exporter);
 		}
 
+#ifdef HAVE_AVAHI
+		LbGoto operator()(const LbPrometheusDiscoveryConfig *discovery) const {
+			return map.GetInstance(*discovery);
+		}
+#endif // HAVE_AVAHI
+
 		LbGoto operator()(const LbSimpleHttpResponse &response) const noexcept {
 			return response;
 		}
@@ -167,6 +180,19 @@ LbGotoMap::GetInstance(const LbPrometheusExporterConfig &config)
 	return prometheus_exporters.try_emplace(&config, config)
 		.first->second;
 }
+
+#ifdef HAVE_AVAHI
+
+LbPrometheusDiscovery &
+LbGotoMap::GetInstance(const LbPrometheusDiscoveryConfig &config)
+{
+	const LbContext &context = *this;
+
+	return prometheus_discoveries.try_emplace(&config, config, context)
+		.first->second;
+}
+
+#endif
 
 void
 LbGotoMap::SetInstance(LbInstance &instance) noexcept
