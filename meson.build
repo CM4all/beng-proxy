@@ -884,6 +884,7 @@ lb_config = static_library(
   include_directories: inc,
   dependencies: [
     avahi_dep,
+    nghttp2_dep, # only for the HAVE_NGHTTP2 macro
     io_config_dep,
     libpcre,
   ],
