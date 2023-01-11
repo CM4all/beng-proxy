@@ -406,7 +406,7 @@ Prometheus HTTP Service Discovery
 The ``prometheus_discovery`` section translates services discovered
 via Zeroconf to a `Prometheus HTTP Service Discovery
 <https://prometheus.io/docs/prometheus/latest/http_sd/>`__ JSON
-response.
+response.  Example configuration::
 
   prometheus_discovery "pd" {
     zeroconf_service "prometheus"
