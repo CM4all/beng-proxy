@@ -588,8 +588,7 @@ LbConfigParser::Cluster::ParseLine(FileLineParser &line)
 			throw LineParser::Error("No such monitor");
 	} else if (StringIsEqual(word, "member")) {
 #ifdef HAVE_AVAHI
-		if (!config.zeroconf_service.empty() ||
-		    !config.zeroconf_domain.empty())
+		if (config.zeroconf.IsEnabled())
 			throw LineParser::Error("Cannot configure both hard-coded members and Zeroconf");
 #endif
 
@@ -628,41 +627,12 @@ LbConfigParser::Cluster::ParseLine(FileLineParser &line)
 				   name, auto-create a new node */
 				parent.AutoCreateMember(*member, name);
 		}
-	} else if (StringIsEqual(word, "zeroconf_service")) {
 #ifdef HAVE_AVAHI
+	} else if (config.zeroconf.ParseLine(word, line)) {
 		if (!config.members.empty())
 			throw LineParser::Error("Cannot configure both hard-coded members and Zeroconf");
-
-		if (!config.zeroconf_service.empty())
-			throw LineParser::Error("Duplicate zeroconf_service");
-
-		config.zeroconf_service = MakeZeroconfServiceType(line.ExpectValueAndEnd(),
-								  "_tcp");
 #else
-		throw LineParser::Error("Zeroconf support is disabled at compile time");
-#endif
-	} else if (StringIsEqual(word, "zeroconf_domain")) {
-#ifdef HAVE_AVAHI
-		if (!config.members.empty())
-			throw LineParser::Error("Cannot configure both hard-coded members and Zeroconf");
-
-		if (!config.zeroconf_domain.empty())
-			throw LineParser::Error("Duplicate zeroconf_domain");
-
-		config.zeroconf_domain = line.ExpectValueAndEnd();
-#else
-		throw LineParser::Error("Zeroconf support is disabled at compile time");
-#endif
-	} else if (StringIsEqual(word, "zeroconf_interface")) {
-#ifdef HAVE_AVAHI
-		if (config.zeroconf_service.empty())
-			throw LineParser::Error("zeroconf_interface without zeroconf_service");
-
-		if (!config.zeroconf_interface.empty())
-			throw LineParser::Error("Duplicate zeroconf_interface");
-
-		config.zeroconf_interface = line.ExpectValueAndEnd();
-#else
+	} else if (StringStartsWith(word, "zeroconf_")) {
 		throw LineParser::Error("Zeroconf support is disabled at compile time");
 #endif
 	} else if (StringIsEqual(word, "protocol")) {
@@ -737,9 +707,7 @@ LbConfigParser::Cluster::Finish()
 		config.monitor = nullptr;
 
 #ifdef HAVE_AVAHI
-	if (!config.zeroconf_domain.empty() &&
-	    config.zeroconf_service.empty())
-		throw LineParser::Error("zeroconf_service missing");
+	config.zeroconf.Check();
 #endif
 
 	if (config.members.empty() && !config.HasZeroConf())

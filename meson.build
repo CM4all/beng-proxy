@@ -869,8 +869,14 @@ executable(
   install_dir: 'sbin',
 )
 
+lb_config_sources = []
+if avahi_dep.found()
+  lb_config_sources += 'src/lb/ZeroconfDiscoveryConfig.cxx'
+endif
+
 lb_config = static_library(
   'lb_config',
+  lb_config_sources,
   'src/lb/Config.cxx',
   'src/lb/ConfigParser.cxx',
   'src/lb/GotoConfig.cxx',

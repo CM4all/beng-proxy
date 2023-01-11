@@ -60,8 +60,6 @@
 
 #ifdef HAVE_AVAHI
 #include "lib/avahi/Explorer.hxx"
-
-#include <net/if.h>
 #endif
 
 #ifdef HAVE_AVAHI
@@ -123,28 +121,9 @@ LbCluster::LbCluster(const LbClusterConfig &_config,
 			 nullptr);
 
 #ifdef HAVE_AVAHI
-	if (config.HasZeroConf()) {
-		AvahiIfIndex interface = AVAHI_IF_UNSPEC;
-
-		if (!config.zeroconf_interface.empty()) {
-			int i = if_nametoindex(config.zeroconf_interface.c_str());
-			if (i == 0)
-				throw FormatErrno("Failed to find interface '%s'",
-						  config.zeroconf_interface.c_str());
-
-			interface = AvahiIfIndex(i);
-		}
-
-		explorer.reset(new Avahi::ServiceExplorer(context.GetAvahiClient(),
-							  *this,
-							  interface,
-							  AVAHI_PROTO_UNSPEC,
-							  config.zeroconf_service.c_str(),
-							  config.zeroconf_domain.empty()
-							  ? nullptr
-							  : config.zeroconf_domain.c_str(),
-							  context.avahi_error_handler));
-	}
+	if (config.HasZeroConf())
+		explorer = config.zeroconf.Create(context.GetAvahiClient(),
+						  *this, context.avahi_error_handler);
 #endif
 
 	static_members.reserve(config.members.size());

@@ -38,6 +38,10 @@
 #include "cluster/StickyMode.hxx"
 #include "net/AllocatedSocketAddress.hxx"
 
+#ifdef HAVE_AVAHI
+#include "ZeroconfDiscoveryConfig.hxx"
+#endif
+
 #include <memory>
 #include <string>
 #include <vector>
@@ -134,8 +138,7 @@ struct LbClusterConfig {
 	std::vector<LbMemberConfig> members;
 
 #ifdef HAVE_AVAHI
-	std::string zeroconf_service, zeroconf_domain;
-	std::string zeroconf_interface;
+	ZeroconfDiscoveryConfig zeroconf;
 #endif
 
 	std::unique_ptr<SocketAddress[]> address_list_allocation;
@@ -187,7 +190,7 @@ struct LbClusterConfig {
 
 	bool HasZeroConf() const noexcept {
 #ifdef HAVE_AVAHI
-		return !zeroconf_service.empty();
+		return zeroconf.IsEnabled();
 #else
 		return false;
 #endif
