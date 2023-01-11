@@ -44,6 +44,7 @@
 #include "util/Cancellable.hxx"
 #include "util/LeakDetector.hxx"
 #include "AllocatorPtr.hxx"
+#include "stopwatch.hxx"
 
 /*
  * TranslateHandler
@@ -159,7 +160,7 @@ LbHttpRequest::OnTranslateResponse(UniquePoolPtr<TranslateResponse> _response) n
 		auto &_caller_cancel_ptr = caller_cancel_ptr;
 		Destroy();
 
-		c.HandleHttpRequest(*destination, _request, _caller_cancel_ptr);
+		c.HandleHttpRequest(*destination, _request, {}, _caller_cancel_ptr);
 	} else {
 		Destroy();
 

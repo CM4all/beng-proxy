@@ -87,6 +87,7 @@ LbLuaResponseHandler::OnHttpError(std::exception_ptr ep) noexcept
 void
 LbHttpConnection::InvokeLua(LbLuaHandler &handler,
 			    IncomingHttpRequest &request,
+			    const StopwatchPtr &parent_stopwatch,
 			    CancellablePointer &cancel_ptr)
 {
 	LbLuaResponseHandler response_handler(*this, request);
@@ -112,6 +113,6 @@ LbHttpConnection::InvokeLua(LbLuaHandler &handler,
 		return;
 	}
 
-	HandleHttpRequest(*g, request, cancel_ptr);
+	HandleHttpRequest(*g, request, parent_stopwatch, cancel_ptr);
 	return;
 }

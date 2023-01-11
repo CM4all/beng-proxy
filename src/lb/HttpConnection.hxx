@@ -121,6 +121,7 @@ struct LbHttpConnection final
 public:
 	void HandleHttpRequest(const LbGoto &destination,
 			       IncomingHttpRequest &request,
+			       const StopwatchPtr &parent_stopwatch,
 			       CancellablePointer &cancel_ptr);
 
 private:
@@ -130,6 +131,7 @@ private:
 
 	void InvokeLua(LbLuaHandler &handler,
 		       IncomingHttpRequest &request,
+		       const StopwatchPtr &parent_stopwatch,
 		       CancellablePointer &cancel_ptr);
 
 	void AskTranslationServer(LbTranslationHandler &handler,

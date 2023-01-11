@@ -36,7 +36,7 @@ class LbCluster;
 class LbBranch;
 class LbLuaHandler;
 class LbTranslationHandler;
-class LbPrometheusExporter;
+class HttpServerRequestHandler;
 struct LbSimpleHttpResponse;
 
 struct LbGoto {
@@ -44,7 +44,7 @@ struct LbGoto {
 	LbBranch *branch = nullptr;
 	LbLuaHandler *lua = nullptr;
 	LbTranslationHandler *translation = nullptr;
-	LbPrometheusExporter *exporter = nullptr;
+	HttpServerRequestHandler *handler = nullptr;
 	const LbSimpleHttpResponse *response = nullptr;
 
 	/**
@@ -58,13 +58,13 @@ struct LbGoto {
 	LbGoto(LbBranch &_branch) noexcept:branch(&_branch) {}
 	LbGoto(LbLuaHandler &_lua) noexcept:lua(&_lua) {}
 	LbGoto(LbTranslationHandler &_translation) noexcept:translation(&_translation) {}
-	LbGoto(LbPrometheusExporter &_exporter) noexcept:exporter(&_exporter) {}
+	LbGoto(HttpServerRequestHandler &_handler) noexcept:handler(&_handler) {}
 	LbGoto(const LbSimpleHttpResponse &_response) noexcept:response(&_response) {}
 
 	bool IsDefined() const noexcept {
 		return cluster != nullptr || branch != nullptr ||
 			lua != nullptr || translation != nullptr ||
-			exporter != nullptr ||
+			handler != nullptr ||
 			response != nullptr || resolve_connect != nullptr;
 	}
 

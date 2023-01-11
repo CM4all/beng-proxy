@@ -158,8 +158,9 @@ WriteStats(GrowingBuffer &buffer, const LbInstance &instance) noexcept
 }
 
 void
-LbPrometheusExporter::HandleRequest(IncomingHttpRequest &request,
-				    CancellablePointer &) noexcept
+LbPrometheusExporter::HandleHttpRequest(IncomingHttpRequest &request,
+					const StopwatchPtr &,
+					CancellablePointer &) noexcept
 {
 	auto &pool = request.pool;
 

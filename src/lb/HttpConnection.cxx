@@ -40,7 +40,6 @@
 #include "Goto.txx"
 #include "ForwardHttpRequest.hxx"
 #include "DelayForwardHttpRequest.hxx"
-#include "PrometheusExporter.hxx"
 #include "Instance.hxx"
 #include "Listener.hxx"
 #include "http/IncomingRequest.hxx"
@@ -226,7 +225,7 @@ LbHttpConnection::ResponseFinished() noexcept
 
 void
 LbHttpConnection::HandleHttpRequest(IncomingHttpRequest &request,
-				    const StopwatchPtr &,
+				    const StopwatchPtr &parent_stopwatch,
 				    CancellablePointer &cancel_ptr) noexcept
 {
 	if (!uri_path_verify_quick(request.uri)) {
@@ -261,12 +260,13 @@ LbHttpConnection::HandleHttpRequest(IncomingHttpRequest &request,
 		return;
 	}
 
-	HandleHttpRequest(initial_destination, request, cancel_ptr);
+	HandleHttpRequest(initial_destination, request, parent_stopwatch, cancel_ptr);
 }
 
 void
 LbHttpConnection::HandleHttpRequest(const LbGoto &destination,
 				    IncomingHttpRequest &request,
+				    const StopwatchPtr &parent_stopwatch,
 				    CancellablePointer &cancel_ptr)
 {
 	const auto &goto_ = destination.FindRequestLeaf(request);
@@ -277,7 +277,7 @@ LbHttpConnection::HandleHttpRequest(const LbGoto &destination,
 	}
 
 	if (goto_.lua != nullptr) {
-		InvokeLua(*goto_.lua, request, cancel_ptr);
+		InvokeLua(*goto_.lua, request, parent_stopwatch, cancel_ptr);
 		return;
 	}
 
@@ -286,8 +286,8 @@ LbHttpConnection::HandleHttpRequest(const LbGoto &destination,
 		return;
 	}
 
-	if (goto_.exporter != nullptr) {
-		goto_.exporter->HandleRequest(request, cancel_ptr);
+	if (goto_.handler != nullptr) {
+		goto_.handler->HandleHttpRequest(request, parent_stopwatch, cancel_ptr);
 		return;
 	}
 

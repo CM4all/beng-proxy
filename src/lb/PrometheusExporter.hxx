@@ -32,12 +32,12 @@
 
 #pragma once
 
-struct LbPrometheusExporterConfig;
-struct IncomingHttpRequest;
-struct LbInstance;
-class CancellablePointer;
+#include "http/server/Handler.hxx"
 
-class LbPrometheusExporter {
+struct LbPrometheusExporterConfig;
+struct LbInstance;
+
+class LbPrometheusExporter final : public HttpServerRequestHandler {
 	const LbPrometheusExporterConfig &config;
 
 	LbInstance *instance = nullptr;
@@ -52,6 +52,8 @@ public:
 		instance = &_instance;
 	}
 
-	void HandleRequest(IncomingHttpRequest &request,
-			   CancellablePointer &cancel_ptr) noexcept;
+	/* virtual methods from class HttpServerRequestHandler */
+	void HandleHttpRequest(IncomingHttpRequest &request,
+			       const StopwatchPtr &parent_stopwatch,
+			       CancellablePointer &cancel_ptr) noexcept override;
 };
