@@ -869,6 +869,27 @@ executable(
   install_dir: 'sbin',
 )
 
+lb_config = static_library(
+  'lb_config',
+  'src/lb/Config.cxx',
+  'src/lb/ConfigParser.cxx',
+  'src/lb/GotoConfig.cxx',
+  'src/lb/ClusterConfig.cxx',
+  include_directories: inc,
+  dependencies: [
+    avahi_dep,
+    io_config_dep,
+    libpcre,
+  ],
+)
+
+lb_config_dep = declare_dependency(
+  link_with: lb_config,
+  dependencies: [
+    libpcre,
+  ],
+)
+
 executable(
   'cm4all-beng-lb',
   'src/tcp_stock.cxx',
@@ -904,18 +925,14 @@ executable(
   'src/lb/Cookie.cxx',
   'src/lb/CommandLine.cxx',
   'src/lb/ConditionConfig.cxx',
-  'src/lb/Config.cxx',
-  'src/lb/ConfigParser.cxx',
   'src/lb/lb_check.cxx',
   'src/lb/Setup.cxx',
   'src/lb/GotoMap.cxx',
   'src/lb/Branch.cxx',
   'src/lb/MemberHash.cxx',
   'src/lb/Cluster.cxx',
-  'src/lb/ClusterConfig.cxx',
   'src/lb/TranslationHandler.cxx',
   'src/lb/TranslationCache.cxx',
-  'src/lb/GotoConfig.cxx',
   'src/lb/MonitorController.cxx',
   'src/lb/MonitorRef.cxx',
   'src/lb/MonitorStock.cxx',
@@ -934,6 +951,7 @@ executable(
 
   include_directories: inc,
   dependencies: [
+    lb_config_dep,
     memory_istream_dep,
     access_log_client_dep,
     liblua,
@@ -974,10 +992,6 @@ executable(
 if get_option('certdb')
   executable(
     'cm4all-certdb',
-    'src/lb/Config.cxx',
-    'src/lb/ConfigParser.cxx',
-    'src/lb/GotoConfig.cxx',
-    'src/lb/ClusterConfig.cxx',
     'src/certdb/Config.cxx',
     'src/certdb/Progress.cxx',
     'src/certdb/WrapKey.cxx',
@@ -1002,9 +1016,9 @@ if get_option('certdb')
     'src/access_log/ConfigParser.cxx',
     include_directories: inc,
     dependencies: [
+    lb_config_dep,
       boost_json_dep,
       pcre_dep,
-      avahi_dep,
       sodium_dep,
       crypto_dep,
       pg_dep,
