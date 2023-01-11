@@ -144,6 +144,7 @@ if libnghttp2.found()
     '../src/nghttp2/Server.cxx',
     include_directories: inc,
     dependencies: [
+      fmt_dep,
       nghttp2_dep,
       putil_dep,
     ],
