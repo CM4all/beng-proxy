@@ -127,8 +127,9 @@ Example::
   address instead, and :program:`beng-lb` creates a new node
   implicitly.
 
-- ``zeroconf_service``, ``zeroconf_domain``, ``zeroconf_interface``:
-  automatically discover members; see :ref:`lb_zeroconf`.
+- ``zeroconf_service``, ``zeroconf_domain``, ``zeroconf_interface``,
+  ``zeroconf_protocol``: automatically discover members; see
+  :ref:`lb_zeroconf`.
 
 - ``fair_scheduling``: if ``yes``, enables fair scheduling, which
   attempts to schedule HTTP requests for different sites in a way that
@@ -189,6 +190,10 @@ To limit the search to a certain network interface, specify a
       zeroconf_service "widgetserver"
       zeroconf_interface "eth1"
    }
+
+By default, both IPv4 and IPv6 is used.  To limit the protocol,
+configure either ``zeroconf_protocol inet`` or ``zeroconf_protocol
+inet6``.
 
 This requires ``avahi-daemon`` to be installed and running. And, of
 course, it requires the pool members to publish their service.

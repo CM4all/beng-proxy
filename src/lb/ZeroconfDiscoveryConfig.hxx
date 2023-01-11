@@ -32,6 +32,9 @@
 
 #pragma once
 
+#include <avahi-common/address.h>
+
+
 #include <memory>
 #include <string>
 
@@ -46,6 +49,8 @@ class ServiceExplorerListener;
 
 struct ZeroconfDiscoveryConfig {
 	std::string service, domain, interface;
+
+	AvahiProtocol protocol = AVAHI_PROTO_UNSPEC;
 
 	bool IsEnabled() const noexcept {
 		return !service.empty();

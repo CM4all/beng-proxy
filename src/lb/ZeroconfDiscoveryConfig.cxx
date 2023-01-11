@@ -65,6 +65,22 @@ ZeroconfDiscoveryConfig::ParseLine(const char *word, FileLineParser &line)
 
 		interface = line.ExpectValueAndEnd();
 		return true;
+	} else if (StringIsEqual(word, "zeroconf_protocol")) {
+		if (service.empty())
+			throw LineParser::Error("zeroconf_protocol without zeroconf_service");
+
+		if (protocol != AVAHI_PROTO_UNSPEC)
+			throw LineParser::Error("Duplicate zeroconf_protocol");
+
+		const char *value = line.ExpectValueAndEnd();
+		if (StringIsEqual(value, "inet"))
+			protocol = AVAHI_PROTO_INET;
+		else if (StringIsEqual(value, "inet6"))
+			protocol = AVAHI_PROTO_INET6;
+		else
+			throw LineParser::Error("Unrecognized zeroconf_protocol");
+
+		return true;
 	} else
 		return false;
 }
@@ -101,7 +117,7 @@ ZeroconfDiscoveryConfig::Create(Avahi::Client &client,
 
 	return std::make_unique<Avahi::ServiceExplorer>(client, listener,
 							interface_,
-							AVAHI_PROTO_UNSPEC,
+							protocol,
 							service.c_str(),
 							domain.empty() ? nullptr : domain.c_str(),
 							error_handler);
