@@ -30,30 +30,21 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#pragma once
+#include "Context.hxx"
 
-#include <memory>
-
-class FailureManager;
-class BalancerMap;
-class FilteredSocketStock;
-class FilteredSocketBalancer;
-class SslClientFactory;
-class LbMonitorManager;
-namespace Avahi { class Client; class ErrorHandler; }
-
-struct LbContext {
-	FailureManager &failure_manager;
-	BalancerMap &tcp_balancer;
-	FilteredSocketStock &fs_stock;
-	FilteredSocketBalancer &fs_balancer;
-	SslClientFactory &ssl_client_factory;
-	LbMonitorManager &monitors;
 #ifdef HAVE_AVAHI
-	std::unique_ptr<Avahi::Client> &avahi_client;
-	Avahi::ErrorHandler &avahi_error_handler;
 
-	[[gnu::const]]
-	Avahi::Client &GetAvahiClient() const noexcept;
+#include "fs/Stock.hxx"
+#include "lib/avahi/Client.hxx"
+
+Avahi::Client &
+LbContext::GetAvahiClient() const noexcept
+{
+	if (!avahi_client)
+		avahi_client = std::make_unique<Avahi::Client>(fs_stock.GetEventLoop(),
+							       avahi_error_handler);
+
+	return *avahi_client;
+}
+
 #endif
-};

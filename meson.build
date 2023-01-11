@@ -903,6 +903,7 @@ executable(
   'src/http/ResponseHandler.cxx',
   'src/PInstance.cxx',
   'src/certdb/Config.cxx',
+  'src/lb/Context.cxx',
   'src/lb/Listener.cxx',
   'src/lb/SimpleHttpResponse.cxx',
   'src/lb/HttpConnection.cxx',
