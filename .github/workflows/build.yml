@@ -55,6 +55,7 @@ jobs:
             libattr1-dev \
             libavahi-client-dev \
             libboost-dev \
+            libbrotli-dev \
             libc-ares-dev \
             libcap-dev \
             libcurl4-openssl-dev \
@@ -75,12 +76,12 @@ jobs:
         uses: BSFishy/meson-build@v1.0.3
         with:
           action: build
-          setup-options: -Ddocumentation=disabled -Dstatic_libcxx=true -Dcertdb=true -Dhttp2=enabled -Dnfs=enabled -Dwas=enabled -Dyaml=enabled -Dzeroconf=enabled --force-fallback-for=libcm4all-was-protocol
+          setup-options: -Ddocumentation=disabled -Dstatic_libcxx=true -Dcertdb=true -Dhttp2=enabled -Dnfs=enabled -Dwas=enabled -Dyaml=enabled -Dzeroconf=enabled -Dbrotli=enabled --force-fallback-for=libcm4all-was-protocol
           meson-version: 0.56.0
 
       - name: Unit Tests
         uses: BSFishy/meson-build@v1.0.3
         with:
           action: test
-          setup-options: -Ddocumentation=disabled -Dstatic_libcxx=true -Dcertdb=true -Dhttp2=enabled -Dnfs=enabled -Dwas=enabled -Dyaml=enabled -Dzeroconf=enabled --force-fallback-for=libcm4all-was-protocol
+          setup-options: -Ddocumentation=disabled -Dstatic_libcxx=true -Dcertdb=true -Dhttp2=enabled -Dnfs=enabled -Dwas=enabled -Dyaml=enabled -Dzeroconf=enabled -Dbrotli=enabled --force-fallback-for=libcm4all-was-protocol
           meson-version: 0.56.0
