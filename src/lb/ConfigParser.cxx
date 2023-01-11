@@ -1082,9 +1082,7 @@ LbConfigParser::PrometheusExporter::ParseLine(FileLineParser &line)
 {
 	const char *word = line.ExpectWord();
 
-	if (StringIsEqual(word, "instance")) {
-		config.instance = line.ExpectValueAndEnd();
-	} else if (StringIsEqual(word, "load_from_local")) {
+	if (StringIsEqual(word, "load_from_local")) {
 		config.load_from_local.emplace_front(ParseSocketAddress(line.ExpectValueAndEnd(),
 									80, false));
 	} else
