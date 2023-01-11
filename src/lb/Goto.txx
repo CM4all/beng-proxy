@@ -9,7 +9,7 @@
 
 template<typename R>
 const LbGoto &
-LbGoto::FindRequestLeaf(const R &request) const
+LbGoto::FindRequestLeaf(const R &request) const noexcept
 {
 	if (branch != nullptr)
 		return branch->FindRequestLeaf(request);

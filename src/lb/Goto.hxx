@@ -53,15 +53,15 @@ struct LbGoto {
 	 */
 	const char *resolve_connect = nullptr;
 
-	LbGoto() = default;
-	LbGoto(LbCluster &_cluster):cluster(&_cluster) {}
-	LbGoto(LbBranch &_branch):branch(&_branch) {}
-	LbGoto(LbLuaHandler &_lua):lua(&_lua) {}
-	LbGoto(LbTranslationHandler &_translation):translation(&_translation) {}
-	LbGoto(LbPrometheusExporter &_exporter):exporter(&_exporter) {}
-	LbGoto(const LbSimpleHttpResponse &_response):response(&_response) {}
+	LbGoto() noexcept = default;
+	LbGoto(LbCluster &_cluster) noexcept:cluster(&_cluster) {}
+	LbGoto(LbBranch &_branch) noexcept:branch(&_branch) {}
+	LbGoto(LbLuaHandler &_lua) noexcept:lua(&_lua) {}
+	LbGoto(LbTranslationHandler &_translation) noexcept:translation(&_translation) {}
+	LbGoto(LbPrometheusExporter &_exporter) noexcept:exporter(&_exporter) {}
+	LbGoto(const LbSimpleHttpResponse &_response) noexcept:response(&_response) {}
 
-	bool IsDefined() const {
+	bool IsDefined() const noexcept {
 		return cluster != nullptr || branch != nullptr ||
 			lua != nullptr || translation != nullptr ||
 			exporter != nullptr ||
@@ -70,5 +70,5 @@ struct LbGoto {
 
 	template<typename R>
 	[[gnu::pure]]
-	const LbGoto &FindRequestLeaf(const R &request) const;
+	const LbGoto &FindRequestLeaf(const R &request) const noexcept;
 };

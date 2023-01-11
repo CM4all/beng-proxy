@@ -49,17 +49,17 @@ class LbGotoIf {
 public:
 	LbGotoIf(LbGotoMap &goto_map, const LbGotoIfConfig &_config);
 
-	const LbGotoIfConfig &GetConfig() const {
+	const LbGotoIfConfig &GetConfig() const noexcept {
 		return config;
 	}
 
 	template<typename R>
 	[[gnu::pure]]
-	bool MatchRequest(const R &request) const {
+	bool MatchRequest(const R &request) const noexcept {
 		return config.condition.MatchRequest(request);
 	}
 
-	const LbGoto &GetDestination() const {
+	const LbGoto &GetDestination() const noexcept {
 		return destination;
 	}
 };
@@ -74,13 +74,13 @@ class LbBranch {
 public:
 	LbBranch(LbGotoMap &goto_map, const LbBranchConfig &_config);
 
-	const LbBranchConfig &GetConfig() const {
+	const LbBranchConfig &GetConfig() const noexcept {
 		return config;
 	}
 
 	template<typename R>
 	[[gnu::pure]]
-	const LbGoto &FindRequestLeaf(const R &request) const {
+	const LbGoto &FindRequestLeaf(const R &request) const noexcept {
 		for (const auto &i : conditions)
 			if (i.MatchRequest(request))
 				return i.GetDestination().FindRequestLeaf(request);
