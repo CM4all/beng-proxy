@@ -54,7 +54,7 @@
 #include "istream/istream_memory.hxx"
 #include "istream/istream_string.hxx"
 #include "pool/pool.hxx"
-#include "util/RuntimeError.hxx"
+#include "lib/fmt/RuntimeError.hxx"
 #include "util/StringCompare.hxx"
 #include "util/StringSplit.hxx"
 #include "stopwatch.hxx"
@@ -952,12 +952,12 @@ XmlProcessor::PrepareEmbedWidget(WidgetPtr child_widget)
 	const bool self_container =
 		(options & PROCESSOR_SELF_CONTAINER) != 0;
 	if (!child_widget->InitApproval(self_container))
-		throw FormatRuntimeError("widget is not allowed to embed widget '%s'",
-					 child_widget->GetLogName());
+		throw FmtRuntimeError("widget is not allowed to embed widget '{}'",
+				      child_widget->GetLogName());
 
 	if (widget_check_recursion(child_widget->parent))
-		throw FormatRuntimeError("maximum widget depth exceeded for widget '%s'",
-					 child_widget->GetLogName());
+		throw FmtRuntimeError("maximum widget depth exceeded for widget '{}'",
+				      child_widget->GetLogName());
 
 	if (!widget.params.IsEmpty())
 		child_widget->from_template.query_string =

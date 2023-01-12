@@ -44,7 +44,7 @@
 #include "istream/UringIstream.hxx"
 #include "pool/pool.hxx"
 #include "translation/Vary.hxx"
-#include "system/Error.hxx"
+#include "lib/fmt/SystemError.hxx"
 #include "io/Open.hxx"
 #include "util/StringCompare.hxx"
 
@@ -322,7 +322,7 @@ Request::HandleFileAddress(const FileAddress &address) noexcept
 		if (statx(fd.Get(), "", AT_EMPTY_PATH,
 			  STATX_TYPE|STATX_MTIME|STATX_INO|STATX_SIZE,
 			  &st) < 0)
-			throw FormatErrno("Failed to stat %s", path);
+			throw FmtErrno("Failed to stat {}", path);
 	} catch (...) {
 		LogDispatchError(std::current_exception());
 		return;

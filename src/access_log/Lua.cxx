@@ -41,6 +41,7 @@
 #include "lua/RunFile.hxx"
 #include "lua/Error.hxx"
 #include "lua/Util.hxx"
+#include "lib/fmt/RuntimeError.hxx"
 #include "http/Method.hxx"
 #include "net/ToString.hxx"
 #include "net/UniqueSocketDescriptor.hxx"
@@ -48,7 +49,6 @@
 #include "system/Error.hxx"
 #include "time/Cast.hxx"
 #include "util/PrintException.hxx"
-#include "util/RuntimeError.hxx"
 #include "util/ScopeExit.hxx"
 #include "util/ConstBuffer.hxx"
 
@@ -73,11 +73,11 @@ LookupFunction(Lua::Value &dest, const char *path, const char *name)
 
 	if (!lua_isfunction(L, -1)) {
 		if (lua_isnil(L, -1))
-			throw FormatRuntimeError("No such function: '%s' in %s",
-						 name, path);
+			throw FmtRuntimeError("No such function: '{}' in {}",
+					      name, path);
 		else
-			throw FormatRuntimeError("Not a function: '%s' in %s",
-						 name, path);
+			throw FmtRuntimeError("Not a function: '{}' in {}",
+					      name, path);
 	}
 
 	dest.Set(RelativeStackIndex{-1});

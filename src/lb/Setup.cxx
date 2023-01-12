@@ -34,7 +34,7 @@
 #include "Config.hxx"
 #include "Listener.hxx"
 #include "Control.hxx"
-#include "util/RuntimeError.hxx"
+#include "lib/fmt/RuntimeError.hxx"
 #include "lb_features.h"
 
 #ifdef HAVE_AVAHI
@@ -54,8 +54,8 @@ LbInstance::InitAllListeners()
 		try {
 			listeners.emplace_front(*this, i);
 		} catch (...) {
-			std::throw_with_nested(FormatRuntimeError("Failed to set up listener '%s'",
-								  i.name.c_str()));
+			std::throw_with_nested(FmtRuntimeError("Failed to set up listener '{}'",
+							       i.name));
 		}
 
 #ifdef HAVE_AVAHI

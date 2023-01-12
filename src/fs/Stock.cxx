@@ -36,6 +36,7 @@
 #include "FilteredSocket.hxx"
 #include "AllocatorPtr.hxx"
 #include "pool/DisposablePointer.hxx"
+#include "lib/fmt/RuntimeError.hxx"
 #include "stock/Stock.hxx"
 #include "stock/GetHandler.hxx"
 #include "stock/LoggerDomain.hxx"
@@ -44,7 +45,6 @@
 #include "net/AllocatedSocketAddress.hxx"
 #include "io/Logger.hxx"
 #include "util/Cancellable.hxx"
-#include "util/RuntimeError.hxx"
 #include "util/StringBuilder.hxx"
 #include "util/Exception.hxx"
 #include "stopwatch.hxx"
@@ -259,8 +259,8 @@ FilteredSocketStockConnection::OnConnectFilteredSocketError(std::exception_ptr e
 	cancel_ptr = nullptr;
 
 	ep = NestException(ep,
-			   FormatRuntimeError("Failed to connect to '%s'",
-					      GetStockName()));
+			   FmtRuntimeError("Failed to connect to '{}'",
+					   GetStockName()));
 	InvokeCreateError(*handler, std::move(ep));
 }
 

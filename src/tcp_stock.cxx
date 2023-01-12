@@ -33,6 +33,7 @@
 #include "tcp_stock.hxx"
 #include "AllocatorPtr.hxx"
 #include "pool/DisposablePointer.hxx"
+#include "lib/fmt/RuntimeError.hxx"
 #include "stock/Stock.hxx"
 #include "stock/Item.hxx"
 #include "stock/LoggerDomain.hxx"
@@ -44,7 +45,6 @@
 #include "net/UniqueSocketDescriptor.hxx"
 #include "net/ToString.hxx"
 #include "util/Cancellable.hxx"
-#include "util/RuntimeError.hxx"
 #include "util/Exception.hxx"
 #include "stopwatch.hxx"
 
@@ -191,8 +191,8 @@ TcpStockConnection::OnSocketConnectError(std::exception_ptr ep) noexcept
 	cancel_ptr = nullptr;
 
 	ep = NestException(ep,
-			   FormatRuntimeError("Failed to connect to '%s'",
-					      GetStockName()));
+			   FmtRuntimeError("Failed to connect to '{}'",
+					   GetStockName()));
 	InvokeCreateError(handler, ep);
 }
 

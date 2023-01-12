@@ -34,14 +34,14 @@
 #include "istream.hxx"
 #include "New.hxx"
 #include "Result.hxx"
+#include "lib/fmt/RuntimeError.hxx"
+#include "lib/fmt/SystemError.hxx"
 #include "io/Buffered.hxx"
 #include "io/UniqueFileDescriptor.hxx"
 #include "pool/pool.hxx"
 #include "memory/fb_pool.hxx"
 #include "memory/SliceFifoBuffer.hxx"
-#include "system/Error.hxx"
 #include "event/FineTimerEvent.hxx"
-#include "util/RuntimeError.hxx"
 
 #include <assert.h>
 #include <sys/types.h>
@@ -169,10 +169,9 @@ FileIstream::TryData()
 
 	ssize_t nbytes = pread(fd.Get(), w.data(), w.size(), offset);
 	if (nbytes == 0) {
-		throw FormatRuntimeError("premature end of file in '%s'",
-					 path);
+		throw FmtRuntimeError("premature end of file in '{}'", path);
 	} else if (nbytes == -1) {
-		throw FormatErrno("Failed to read from '%s'", path);
+		throw FmtErrno("Failed to read from '{}'", path);
 	} else if (nbytes > 0) {
 		buffer.Append(nbytes);
 		offset += nbytes;
@@ -207,7 +206,7 @@ FileIstream::TryDirect()
 		break;
 
 	case IstreamDirectResult::END:
-		throw FormatRuntimeError("premature end of file in '%s'", path);
+		throw FmtRuntimeError("premature end of file in '{}'", path);
 
 	case IstreamDirectResult::ERRNO:
 		if (errno == EAGAIN) {
@@ -220,7 +219,7 @@ FileIstream::TryDirect()
 			retry_event.Schedule(file_retry_timeout);
 		} else {
 			/* XXX */
-			throw FormatErrno("Failed to read from '%s'", path);
+			throw FmtErrno("Failed to read from '{}'", path);
 		}
 
 		break;

@@ -43,12 +43,12 @@
 #include "jwt/RS256.hxx"
 #include "http/Method.hxx"
 #include "http/Status.hxx"
+#include "lib/fmt/RuntimeError.hxx"
 #include "lib/openssl/Buffer.hxx"
 #include "lib/openssl/UniqueBIO.hxx"
 #include "lib/sodium/Base64.hxx"
 #include "util/AllocatedString.hxx"
 #include "util/Exception.hxx"
-#include "util/RuntimeError.hxx"
 
 #include <boost/json.hpp>
 
@@ -189,8 +189,8 @@ AcmeClient::RequestDirectory()
 				   temporary Let's Encrypt hiccup */
 				continue;
 
-			throw FormatRuntimeError("Unexpected response status %d",
-						 response.status);
+			throw FmtRuntimeError("Unexpected response status {}",
+					      (unsigned)response.status);
 		}
 
 		if (!IsJson(response))
@@ -234,8 +234,8 @@ AcmeClient::RequestNonce()
 				   Encrypt hiccup */
 				continue;
 
-			throw FormatRuntimeError("Unexpected response status %d",
-						 response.status);
+			throw FmtRuntimeError("Unexpected response status {}",
+					      (unsigned)response.status);
 		}
 
 		if (IsJson(response))
@@ -414,8 +414,8 @@ AcmeClient::NewAccount(EVP_PKEY &key, const char *email,
 		if (response.status == HttpStatus::OK) {
 			const auto location = response.headers.find("location");
 			if (location != response.headers.end())
-				throw FormatRuntimeError("This key is already registered: %s",
-							 location->second.c_str());
+				throw FmtRuntimeError("This key is already registered: {}",
+						      location->second);
 			else
 				throw std::runtime_error("This key is already registered");
 		}

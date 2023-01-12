@@ -53,6 +53,7 @@
 #include "event/CoarseTimerEvent.hxx"
 #include "event/FarTimerEvent.hxx"
 #include "event/Loop.hxx"
+#include "lib/fmt/RuntimeError.hxx"
 #include "io/Logger.hxx"
 #include "http/List.hxx"
 #include "http/Date.hxx"
@@ -60,7 +61,6 @@
 #include "util/Cancellable.hxx"
 #include "util/Exception.hxx"
 #include "util/IntrusiveList.hxx"
-#include "util/RuntimeError.hxx"
 #include "util/LeakDetector.hxx"
 
 #include <unordered_map>
@@ -627,7 +627,7 @@ FilterCacheRequest::OnHttpResponse(HttpStatus status, StringMap &&headers,
 void
 FilterCacheRequest::OnHttpError(std::exception_ptr ep) noexcept
 {
-	ep = NestException(ep, FormatRuntimeError("fcache %s", info.key));
+	ep = NestException(ep, FmtRuntimeError("fcache {}", info.key));
 
 	handler.InvokeError(ep);
 	Destroy();

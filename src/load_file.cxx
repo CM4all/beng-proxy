@@ -33,12 +33,13 @@
 #include "load_file.hxx"
 #include "HttpMessageResponse.hxx"
 #include "pool/pool.hxx"
+#include "lib/fmt/SystemError.hxx"
+#include "lib/fmt/ToBuffer.hxx"
 #include "io/Open.hxx"
 #include "io/UniqueFileDescriptor.hxx"
 #include "system/Error.hxx"
 #include "http/Status.hxx"
 #include "util/ConstBuffer.hxx"
-#include "util/StringFormat.hxx"
 
 std::span<const std::byte>
 LoadFile(struct pool &pool, const char *path, off_t max_size)
@@ -47,11 +48,11 @@ LoadFile(struct pool &pool, const char *path, off_t max_size)
 
 	off_t size = fd.GetSize();
 	if (size < 0)
-		throw FormatErrno("Failed to stat %s", path);
+		throw FmtErrno("Failed to stat '{}'", path);
 
 	if (size > max_size)
 		throw HttpMessageResponse(HttpStatus::INTERNAL_SERVER_ERROR,
-					  StringFormat<256>("File is too large: %s", path));
+					  FmtBuffer<256>("File is too large: {}", path));
 
 	if (size == 0)
 		return { (const std::byte *)"", 0 };
@@ -62,11 +63,11 @@ LoadFile(struct pool &pool, const char *path, off_t max_size)
 
 	ssize_t nbytes = fd.Read(p, size);
 	if (nbytes < 0)
-		throw FormatErrno("Failed to read from %s", path);
+		throw FmtErrno("Failed to read from '{}'", path);
 
 	if (size_t(nbytes) != size_t(size))
 		throw HttpMessageResponse(HttpStatus::INTERNAL_SERVER_ERROR,
-					  StringFormat<256>("Short read from: %s", path));
+					  FmtBuffer<256>("Short read from: {}", path));
 
 	return { p, size_t(size) };
 }

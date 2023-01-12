@@ -39,7 +39,7 @@
 #include "lease.hxx"
 #include "pool/pool.hxx"
 #include "pool/LeakDetector.hxx"
-#include "system/Error.hxx"
+#include "lib/fmt/SystemError.hxx"
 #include "net/UniqueSocketDescriptor.hxx"
 #include "net/ToString.hxx"
 #include "event/SocketEvent.hxx"
@@ -62,7 +62,7 @@ CreateConnectStreamSocket(const SocketAddress address)
 		const int e = errno;
 		char buffer[256];
 		ToString(buffer, sizeof(buffer), address);
-		throw FormatErrno(e, "Failed to connect to %s", buffer);
+		throw FmtErrno(e, "Failed to connect to {}", buffer);
 	}
 
 	return fd;

@@ -31,7 +31,7 @@
  */
 
 #include "AcmeAccount.hxx"
-#include "util/RuntimeError.hxx"
+#include "lib/fmt/RuntimeError.hxx"
 #include "util/StringCompare.hxx"
 
 const char *
@@ -60,8 +60,7 @@ AcmeAccount::ParseStatus(const std::string_view s)
 		if (s == acme_account_status_strings[i])
 			return Status(i);
 
-	throw FormatRuntimeError("Invalid account status: %.*s",
-				 int(s.size()), s.data());
+	throw FmtRuntimeError("Invalid account status: {}", s);
 }
 
 const char *

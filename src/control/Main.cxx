@@ -32,12 +32,12 @@
 
 #include "net/control/Client.hxx"
 #include "translation/Protocol.hxx"
+#include "lib/fmt/RuntimeError.hxx"
 #include "io/UniqueFileDescriptor.hxx"
 #include "system/Error.hxx"
 #include "util/ByteOrder.hxx"
 #include "util/ConstBuffer.hxx"
 #include "util/PrintException.hxx"
-#include "util/RuntimeError.hxx"
 #include "util/StringCompare.hxx"
 
 #include <inttypes.h>
@@ -90,8 +90,7 @@ ParseTcacheInvalidate(std::string_view name, const char *value)
 		if (name == i.name)
 			return BengControlClient::MakeTcacheInvalidate(i.cmd, value);
 
-	throw FormatRuntimeError("Unrecognized key: '%.*s'",
-				 int(name.size()), name.data());
+	throw FmtRuntimeError("Unrecognized key: '{}'", name);
 }
 
 static std::string
@@ -99,10 +98,10 @@ ParseTcacheInvalidate(const char *s)
 {
 	const char *eq = strchr(s, '=');
 	if (eq == nullptr)
-		throw FormatRuntimeError("Missing '=': %s", s);
+		throw FmtRuntimeError("Missing '=': {}", s);
 
 	if (eq == s)
-		throw FormatRuntimeError("Missing name: %s", s);
+		throw FmtRuntimeError("Missing name: {}", s);
 
 	return ParseTcacheInvalidate({s, eq}, eq + 1);
 }

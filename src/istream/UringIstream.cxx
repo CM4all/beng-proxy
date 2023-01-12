@@ -33,14 +33,14 @@
 #include "UringIstream.hxx"
 #include "istream.hxx"
 #include "New.hxx"
+#include "lib/fmt/RuntimeError.hxx"
+#include "lib/fmt/SystemError.hxx"
 #include "io/Iovec.hxx"
 #include "io/UniqueFileDescriptor.hxx"
 #include "io/uring/Operation.hxx"
 #include "io/uring/Queue.hxx"
 #include "memory/fb_pool.hxx"
 #include "memory/SliceFifoBuffer.hxx"
-#include "system/Error.hxx"
-#include "util/RuntimeError.hxx"
 
 #include <memory>
 
@@ -185,7 +185,7 @@ try {
 		break;
 
 	case IstreamDirectResult::END:
-		throw FormatRuntimeError("premature end of file in '%s'", path);
+		throw FmtRuntimeError("premature end of file in '{}'", path);
 
 	case IstreamDirectResult::ERRNO:
 		if (errno == EAGAIN) {
@@ -196,7 +196,7 @@ try {
 			StartRead();
 		} else {
 			/* XXX */
-			throw FormatErrno("Failed to read from '%s'", path);
+			throw FmtErrno("Failed to read from '{}'", path);
 		}
 
 		break;
@@ -239,10 +239,10 @@ void
 UringIstream::OnUringCompletion(int res) noexcept
 try {
 	if (res < 0)
-		throw FormatErrno(-res, "Failed to read from %s", path);
+		throw FmtErrno(-res, "Failed to read from '{}'", path);
 
 	if (res == 0)
-		throw FormatRuntimeError("Premature end of file in '%s'", path);
+		throw FmtRuntimeError("Premature end of file in '{}'", path);
 
 	buffer.Append(res);
 	offset += res;

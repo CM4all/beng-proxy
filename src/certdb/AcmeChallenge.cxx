@@ -31,7 +31,7 @@
  */
 
 #include "AcmeChallenge.hxx"
-#include "util/RuntimeError.hxx"
+#include "lib/fmt/RuntimeError.hxx"
 
 static constexpr const char *acme_challenge_status_strings[] = {
 	"pending",
@@ -48,8 +48,7 @@ AcmeChallenge::ParseStatus(const std::string_view s)
 		if (s == acme_challenge_status_strings[i])
 			return Status(i);
 
-	throw FormatRuntimeError("Invalid challenge status: %.*s",
-				 int(s.size()), s.data());
+	throw FmtRuntimeError("Invalid challenge status: {}", s);
 }
 
 const char *
@@ -71,7 +70,7 @@ AcmeChallenge::Check() const
 		break;
 
 	case Status::INVALID:
-		throw FormatRuntimeError("Challenge status is '%s'",
-					 AcmeChallenge::FormatStatus(status));
+		throw FmtRuntimeError("Challenge status is '{}'",
+				      AcmeChallenge::FormatStatus(status));
 	}
 }

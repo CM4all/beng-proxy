@@ -35,13 +35,13 @@
 #include "Filter.hxx"
 #include "AlpnProtos.hxx"
 #include "Basic.hxx"
+#include "lib/fmt/RuntimeError.hxx"
 #include "lib/openssl/LoadFile.hxx"
 #include "lib/openssl/Error.hxx"
 #include "lib/openssl/UniqueCertKey.hxx"
 #include "io/Logger.hxx"
 #include "fs/ThreadSocketFilter.hxx"
 #include "thread/Pool.hxx"
-#include "util/RuntimeError.hxx"
 
 #include <map>
 
@@ -113,8 +113,8 @@ SslClientCerts::SslClientCerts(const std::vector<NamedSslCertKeyConfig> &config)
 							 std::forward_as_tuple(i.name),
 							 std::forward_as_tuple(UpRef(ck)));
 				if (!j.second)
-					throw FormatRuntimeError("Duplicate certificate name '%s'",
-								 i.name.c_str());
+					throw FmtRuntimeError("Duplicate certificate name '{}'",
+							      i.name);
 			}
 
 			X509_NAME *issuer = X509_get_issuer_name(ck.cert.get());
@@ -125,9 +125,8 @@ SslClientCerts::SslClientCerts(const std::vector<NamedSslCertKeyConfig> &config)
 							  std::move(ck));
 			}
 		} catch (...) {
-			std::throw_with_nested(FormatRuntimeError("Failed to load certificate '%s'/'%s'",
-								  i.cert_file.c_str(),
-								  i.key_file.c_str()));
+			std::throw_with_nested(FmtRuntimeError("Failed to load certificate '{}'/'{}'",
+							       i.cert_file, i.key_file));
 		}
 	}
 }

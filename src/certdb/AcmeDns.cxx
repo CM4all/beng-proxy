@@ -33,10 +33,10 @@
 #include "AcmeDns.hxx"
 #include "AcmeConfig.hxx"
 #include "AcmeHttp.hxx"
+#include "lib/fmt/RuntimeError.hxx"
 #include "lib/sodium/UrlSafeBase64SHA256.hxx"
 #include "system/Error.hxx"
 #include "util/PrintException.hxx"
-#include "util/RuntimeError.hxx"
 
 #include <sys/wait.h>
 #include <unistd.h>
@@ -77,16 +77,16 @@ SetDnsTxt(const AcmeConfig &config, const char *host,
 		throw MakeErrno("waitpid() failed");
 
 	if (WIFSIGNALED(status))
-		throw FormatRuntimeError("%s was killed by signal %d",
-					 args[0], WTERMSIG(status));
+		throw FmtRuntimeError("{} was killed by signal {}",
+				      args[0], WTERMSIG(status));
 
 	if (!WIFEXITED(status))
-		throw FormatRuntimeError("%s did not exit", args[0]);
+		throw FmtRuntimeError("{} did not exit", args[0]);
 
 	status = WEXITSTATUS(status);
 	if (status != 0)
-		throw FormatRuntimeError("%s exited with status %d",
-					 args[0], status);
+		throw FmtRuntimeError("{} exited with status {}",
+				      args[0], status);
 }
 
 Dns01ChallengeRecord::~Dns01ChallengeRecord() noexcept
@@ -97,8 +97,7 @@ Dns01ChallengeRecord::~Dns01ChallengeRecord() noexcept
 	try {
 		SetDnsTxt(config, host.c_str(), {});
 	} catch (...) {
-		fprintf(stderr, "Failed to remove TXT record of '%s': ",
-			host.c_str());
+		fmt::print(stderr, "Failed to remove TXT record of '{}': ", host);
 		PrintException(std::current_exception());
 	}
 }

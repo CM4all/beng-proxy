@@ -551,6 +551,7 @@ translation2 = static_library(
   include_directories: inc,
   dependencies: [
     coroutines_dep,
+    fmt_dep,
     pcre_dep,
   ],
 )
@@ -1031,8 +1032,9 @@ if get_option('certdb')
     'src/access_log/ConfigParser.cxx',
     include_directories: inc,
     dependencies: [
-    lb_config_dep,
+      lb_config_dep,
       boost_json_dep,
+      fmt_dep,
       pcre_dep,
       sodium_dep,
       crypto_dep,
@@ -1083,6 +1085,7 @@ executable(
   include_directories: inc,
   dependencies: [
     lua_dep,
+    fmt_dep,
     spawn_dep,
     net_log_dep,
     http_dep,

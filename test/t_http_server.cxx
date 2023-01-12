@@ -57,6 +57,7 @@
 #include "memory/SinkGrowingBuffer.hxx"
 #include "memory/istream_gb.hxx"
 #include "fs/FilteredSocket.hxx"
+#include "lib/fmt/RuntimeError.hxx"
 #include "event/FineTimerEvent.hxx"
 #include "net/UniqueSocketDescriptor.hxx"
 #include "system/Error.hxx"
@@ -64,7 +65,6 @@
 #include "util/Cancellable.hxx"
 #include "util/Exception.hxx"
 #include "util/PrintException.hxx"
-#include "util/RuntimeError.hxx"
 #include "stopwatch.hxx"
 
 #include <functional>
@@ -244,12 +244,12 @@ public:
 		RethrowResponseError();
 
 		if (status != expected_status)
-			throw FormatRuntimeError("Got status %d, expected %d\n",
-						 int(status), int(expected_status));
+			throw FmtRuntimeError("Got status {}, expected {}\n",
+					      int(status), int(expected_status));
 
 		if (response_body != expected_body)
-			throw FormatRuntimeError("Got response body '%s', expected '%s'\n",
-						 response_body.c_str(), expected_body);
+			throw FmtRuntimeError("Got response body '{}', expected '{}'",
+					      response_body, expected_body);
 	}
 
 private:

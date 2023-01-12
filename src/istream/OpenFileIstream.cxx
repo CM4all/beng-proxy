@@ -34,9 +34,9 @@
 #include "FileIstream.hxx"
 #include "FdIstream.hxx"
 #include "UnusedPtr.hxx"
+#include "lib/fmt/SystemError.hxx"
 #include "io/Open.hxx"
 #include "io/UniqueFileDescriptor.hxx"
-#include "system/Error.hxx"
 
 #include <utility>
 
@@ -50,7 +50,7 @@ OpenFileIstream(EventLoop &event_loop, struct pool &pool, const char *path)
 
 	struct stat st;
 	if (fstat(fd.Get(), &st) < 0)
-		throw FormatErrno("Failed to stat %s", path);
+		throw FmtErrno("Failed to stat '{}'", path);
 
 	if (!S_ISREG(st.st_mode)) {
 		FdType fd_type = FdType::FD_NONE;

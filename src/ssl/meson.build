@@ -13,6 +13,7 @@ ssl2 = static_library(
   ssl2_sources,
   include_directories: inc,
   dependencies: [
+    fmt_dep,
     ssl_dep,
     pg_dep,
   ],

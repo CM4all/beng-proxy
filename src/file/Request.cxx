@@ -39,9 +39,9 @@
 #include "istream/FdIstream.hxx"
 #include "istream/UringIstream.hxx"
 #include "pool/pool.hxx"
+#include "lib/fmt/SystemError.hxx"
 #include "io/Open.hxx"
 #include "io/UniqueFileDescriptor.hxx"
-#include "system/Error.hxx"
 #include "http/Status.hxx"
 
 #ifdef HAVE_URING
@@ -204,7 +204,7 @@ static_file_get(EventLoop &event_loop,
 		if (statx(fd.Get(), "", AT_EMPTY_PATH,
 			  STATX_TYPE|STATX_MTIME|STATX_INO|STATX_SIZE,
 			  &st) < 0)
-			throw FormatErrno("Failed to stat %s", path);
+			throw FmtErrno("Failed to stat {}", path);
 	} catch (...) {
 		handler.InvokeError(std::current_exception());
 		return;

@@ -114,6 +114,7 @@ istream = static_library(
 
   include_directories: inc,
   dependencies: [
+    fmt_dep,
     zlib,
     libbrotlienc,
     libyamlcpp,

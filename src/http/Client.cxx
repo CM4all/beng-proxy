@@ -54,6 +54,7 @@
 #include "strmap.hxx"
 #include "fs/Lease.hxx"
 #include "AllocatorPtr.hxx"
+#include "lib/fmt/RuntimeError.hxx"
 #include "system/Error.hxx"
 #include "io/Iovec.hxx"
 #include "io/Logger.hxx"
@@ -68,7 +69,6 @@
 #include "util/StringStrip.hxx"
 #include "util/StringFormat.hxx"
 #include "util/StaticVector.hxx"
-#include "util/RuntimeError.hxx"
 #include "util/Exception.hxx"
 #include "util/Compiler.h"
 
@@ -323,8 +323,8 @@ private:
 
 	std::exception_ptr PrefixError(std::exception_ptr ep) const noexcept {
 		return NestException(ep,
-				     FormatRuntimeError("error on HTTP connection to '%s'",
-							peer_name));
+				     FmtRuntimeError("error on HTTP connection to '{}'",
+						     peer_name));
 	}
 
 	void AbortResponseHeaders(std::exception_ptr ep) noexcept;

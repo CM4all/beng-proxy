@@ -40,8 +40,8 @@
 #include "widget/Error.hxx"
 #include "istream/Sink.hxx"
 #include "pool/pool.hxx"
+#include "lib/fmt/RuntimeError.hxx"
 #include "util/DestructObserver.hxx"
-#include "util/RuntimeError.hxx"
 #include "util/Cancellable.hxx"
 #include "util/ScopeExit.hxx"
 #include "util/StringAPI.hxx"
@@ -203,12 +203,12 @@ WidgetLookupProcessor::PrepareEmbedWidget(WidgetPtr &&child_widget)
 	const bool self_container =
 		(options & PROCESSOR_SELF_CONTAINER) != 0;
 	if (!child_widget->InitApproval(self_container))
-		throw FormatRuntimeError("widget is not allowed to embed widget '%s'",
-					 child_widget->GetLogName());
+		throw FmtRuntimeError("widget is not allowed to embed widget '{}'",
+				      child_widget->GetLogName());
 
 	if (widget_check_recursion(child_widget->parent))
-		throw FormatRuntimeError("maximum widget depth exceeded for widget '%s'",
-					 child_widget->GetLogName());
+		throw FmtRuntimeError("maximum widget depth exceeded for widget '{}'",
+				      child_widget->GetLogName());
 
 	if (!widget.params.IsEmpty())
 		child_widget->from_template.query_string =

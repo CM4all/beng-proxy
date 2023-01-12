@@ -47,6 +47,7 @@
 #include "Config.hxx"
 #include "CertDatabase.hxx"
 #include "WrapKey.hxx"
+#include "lib/fmt/RuntimeError.hxx"
 #include "lib/openssl/Edit.hxx"
 #include "lib/openssl/Key.hxx"
 #include "lib/openssl/AltName.hxx"
@@ -57,7 +58,6 @@
 #include "lib/openssl/Error.hxx"
 #include "util/AllocatedString.hxx"
 #include "util/ConstBuffer.hxx"
-#include "util/RuntimeError.hxx"
 #include "util/StringAPI.hxx"
 
 #include <map>
@@ -301,8 +301,8 @@ CollectPendingAuthorizations(const CertDatabaseConfig &db_config,
 	for (const auto &i : authorizations) {
 		auto ar = client.Authorize(account_key, i.c_str());
 		if (!ValidateIdentifier(ar, identifiers))
-			throw FormatRuntimeError("Invalid identifier received: '%s'",
-						 ar.identifier.c_str());
+			throw FmtRuntimeError("Invalid identifier received: '{}'",
+					      ar.identifier);
 
 		if (config.debug) {
 			fprintf(stderr, "ACME authorization: %s\n", ar.identifier.c_str());
@@ -389,8 +389,8 @@ AcmeAuthorize(const CertDatabaseConfig &db_config, const AcmeConfig &config,
 			case AcmeAuthorization::Status::DEACTIVATED:
 			case AcmeAuthorization::Status::EXPIRED:
 			case AcmeAuthorization::Status::REVOKED:
-				throw FormatRuntimeError("Authorization has turned '%s'",
-							 AcmeAuthorization::FormatStatus(authorization.status));
+				throw FmtRuntimeError("Authorization has turned '{}'",
+						      AcmeAuthorization::FormatStatus(authorization.status));
 			}
 
 			++prev;

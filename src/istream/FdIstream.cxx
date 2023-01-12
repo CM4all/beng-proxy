@@ -35,11 +35,11 @@
 #include "Handler.hxx"
 #include "New.hxx"
 #include "Result.hxx"
+#include "lib/fmt/SystemError.hxx"
 #include "io/Buffered.hxx"
 #include "io/UniqueFileDescriptor.hxx"
 #include "memory/fb_pool.hxx"
 #include "memory/SliceFifoBuffer.hxx"
-#include "system/Error.hxx"
 #include "event/FineTimerEvent.hxx"
 
 #include <assert.h>
@@ -146,7 +146,7 @@ FdIstream::TryData()
 			DestroyEof();
 		return;
 	} else if (nbytes == -1) {
-		throw FormatErrno("Failed to read from '%s'", path);
+		throw FmtErrno("Failed to read from '{}'", path);
 	}
 
 	assert(!buffer.empty());
@@ -183,7 +183,7 @@ FdIstream::TryDirect()
 			retry_event.Schedule(file_retry_timeout);
 		} else {
 			/* XXX */
-			throw FormatErrno("Failed to read from '%s'", path);
+			throw FmtErrno("Failed to read from '{}'", path);
 		}
 
 		break;

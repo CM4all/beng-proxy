@@ -34,8 +34,8 @@
 #include "Request.hxx"
 #include "Layout.hxx"
 #include "translation/Protocol.hxx"
+#include "lib/fmt/RuntimeError.hxx"
 #include "net/ToString.hxx"
-#include "util/RuntimeError.hxx"
 #include "util/SpanCast.hxx"
 
 void
@@ -43,8 +43,8 @@ TranslationMarshaller::Write(TranslationCommand command,
 			     std::span<const std::byte> payload)
 {
 	if (payload.size() >= 0xffff)
-		throw FormatRuntimeError("payload for translate command %u too large",
-					 command);
+		throw FmtRuntimeError("payload for translate command {} too large",
+				      (unsigned)command);
 
 	TranslationHeader header;
 	header.length = (uint16_t)payload.size();

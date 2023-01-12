@@ -33,8 +33,8 @@
 #include "ZeroconfDiscoveryConfig.hxx"
 #include "lib/avahi/Check.hxx"
 #include "lib/avahi/Explorer.hxx"
+#include "lib/fmt/SystemError.hxx"
 #include "io/config/FileLineParser.hxx"
-#include "system/Error.hxx"
 #include "util/StringAPI.hxx"
 
 #include <cassert>
@@ -109,8 +109,7 @@ ZeroconfDiscoveryConfig::Create(Avahi::Client &client,
 	if (!interface.empty()) {
 		int i = if_nametoindex(interface.c_str());
 		if (i == 0)
-			throw FormatErrno("Failed to find interface '%s'",
-					  interface.c_str());
+			throw FmtErrno("Failed to find interface '{}'", interface);
 
 		interface_ = static_cast<AvahiIfIndex>(i);
 	}

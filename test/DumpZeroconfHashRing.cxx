@@ -49,9 +49,9 @@
 #include "lib/avahi/ErrorHandler.hxx"
 #include "lib/avahi/Explorer.hxx"
 #include "lib/avahi/ExplorerListener.hxx"
+#include "lib/fmt/SystemError.hxx"
 #include "event/ShutdownListener.hxx"
 #include "event/CoarseTimerEvent.hxx"
-#include "system/Error.hxx"
 #include "net/AllocatedSocketAddress.hxx"
 #include "net/ToString.hxx"
 #include "util/PrintException.hxx"
@@ -164,7 +164,7 @@ ParseInterfaceName(const char *name)
 {
 	int i = if_nametoindex(name);
 	if (i == 0)
-		throw FormatErrno("Failed to find interface '%s'", name);
+		throw FmtErrno("Failed to find interface '{}'", name);
 
 	return AvahiIfIndex(i);
 }

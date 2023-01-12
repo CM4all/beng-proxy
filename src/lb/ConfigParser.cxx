@@ -34,6 +34,7 @@
 #include "PrometheusExporterConfig.hxx"
 #include "Check.hxx"
 #include "access_log/ConfigParser.hxx"
+#include "lib/fmt/RuntimeError.hxx"
 #include "io/config/FileLineParser.hxx"
 #include "io/config/ConfigParser.hxx"
 #include "net/Parser.hxx"
@@ -43,7 +44,6 @@
 #include "util/StringAPI.hxx"
 #include "util/StringCompare.hxx"
 #include "util/CharUtil.hxx"
-#include "util/RuntimeError.hxx"
 
 #ifdef HAVE_AVAHI
 #include "lib/avahi/Check.hxx"
@@ -1028,7 +1028,7 @@ LbConfigParser::TranslationHandler::ParseLine(FileLineParser &line)
 			const char *name = line.ExpectValue();
 			const auto destination = parent.config.FindGoto(name);
 			if (!destination.IsDefined())
-				throw FormatRuntimeError("No such pool: %s", name);
+				throw FmtRuntimeError("No such pool: {}", name);
 
 			if (destination.GetProtocol() != LbProtocol::HTTP)
 				throw LineParser::Error("Only HTTP pools allowed");
@@ -1039,7 +1039,7 @@ LbConfigParser::TranslationHandler::ParseLine(FileLineParser &line)
 			auto i = config.destinations.emplace(destination.GetName(),
 							     std::move(destination));
 			if (!i.second)
-				throw FormatRuntimeError("Duplicate pool: %s", name);
+				throw FmtRuntimeError("Duplicate pool: {}", name);
 		}
 	} else
 		throw LineParser::Error("Unknown option");

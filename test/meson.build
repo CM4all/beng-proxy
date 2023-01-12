@@ -334,6 +334,7 @@ if avahi_dep.found()
       avahi_dep,
       net_dep,
       sodium_dep,
+      fmt_dep,
     ],
   )
 endif

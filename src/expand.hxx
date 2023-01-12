@@ -33,8 +33,6 @@
 #ifndef BENG_PROXY_EXPAND_HXX
 #define BENG_PROXY_EXPAND_HXX
 
-#include "util/RuntimeError.hxx"
-
 #include <stdexcept>
 
 #include <assert.h>
@@ -73,7 +71,7 @@ ExpandString(Result &result, const char *src, MatchData &&match_data)
 			if (auto c = match_data[i]; !c.empty())
 				result.AppendValue(c.data(), c.size());
 		} else {
-			throw FormatRuntimeError("Invalid backslash escape (0x%02x)", ch);
+			throw std::runtime_error{"Invalid backslash escape"};
 		}
 	}
 }

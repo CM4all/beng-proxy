@@ -44,7 +44,7 @@
 #include "lua/Class.hxx"
 #include "lua/Error.hxx"
 #include "lua/InitHook.hxx"
-#include "util/RuntimeError.hxx"
+#include "lib/fmt/RuntimeError.hxx"
 #include "util/ScopeExit.hxx"
 
 extern "C" {
@@ -226,13 +226,13 @@ LbLuaHandler::LbLuaHandler(LuaInitHook &init_hook,
 
 	if (!lua_isfunction(L, -1)) {
 		if (lua_isnil(L, -1))
-			throw FormatRuntimeError("No such function: '%s' in %s",
-						 config.function.c_str(),
-						 config.path.c_str());
+			throw FmtRuntimeError("No such function: '{}' in {}",
+					      config.function,
+					      config.path.c_str());
 		else
-			throw FormatRuntimeError("Not a function: '%s' in %s",
-						 config.function.c_str(),
-						 config.path.c_str());
+			throw FmtRuntimeError("Not a function: '{}' in {}",
+					      config.function,
+					      config.path.c_str());
 	}
 
 	function.Set(Lua::StackIndex(-2));

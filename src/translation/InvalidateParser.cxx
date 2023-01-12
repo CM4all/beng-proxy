@@ -32,9 +32,9 @@
 
 #include "InvalidateParser.hxx"
 #include "Request.hxx"
+#include "lib/fmt/RuntimeError.hxx"
 #include "net/control/Padding.hxx"
 #include "util/ByteOrder.hxx"
-#include "util/RuntimeError.hxx"
 #include "util/SpanCast.hxx"
 #include "AllocatorPtr.hxx"
 
@@ -181,7 +181,7 @@ apply_translation_packet(TranslateRequest &request,
 
 	default:
 		/* unsupported */
-		throw FormatRuntimeError("Unsupported packet: %u", unsigned(command));
+		throw FmtRuntimeError("Unsupported packet: {}", unsigned(command));
 	}
 }
 

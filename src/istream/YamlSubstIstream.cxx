@@ -34,8 +34,8 @@
 #include "SubstIstream.hxx"
 #include "UnusedPtr.hxx"
 #include "pool/pool.hxx"
+#include "lib/fmt/RuntimeError.hxx"
 #include "util/IterableSplitString.hxx"
-#include "util/RuntimeError.hxx"
 
 #include <yaml-cpp/node/parse.h>
 #include <yaml-cpp/node/node.h>
@@ -52,13 +52,11 @@ ResolveYamlPathSegment(const YAML::Node &parent, std::string_view segment)
 	if (parent.IsMap()) {
 		auto result = parent[std::string{segment}.c_str()];
 		if (!result)
-			throw FormatRuntimeError("YAML path segment '%.*s' does not exist",
-						 int(segment.size()), segment.data());
+			throw FmtRuntimeError("YAML path segment '{}' does not exist", segment);
 
 		return result;
 	} else
-		throw FormatRuntimeError("Failed to resolve YAML path segment '%.*s'",
-					 int(segment.size()), segment.data());
+		throw FmtRuntimeError("Failed to resolve YAML path segment '{}'", segment);
 }
 
 static YAML::Node
@@ -81,8 +79,7 @@ ResolveYamlMap(YAML::Node node, std::string_view path)
 	if (!node.IsMap())
 		throw path.empty()
 			? std::runtime_error("Not a YAML map")
-			: FormatRuntimeError("Path '%.*s' is not a YAML map",
-					     int(path.size()), path.data());
+			: FmtRuntimeError("Path '{}' is not a YAML map", path);
 
 	return node;
 }
@@ -155,8 +152,8 @@ LoadYamlFile(struct pool &pool, bool alt_syntax,
 		return LoadYamlMap(pool, alt_syntax, prefix,
 				   ResolveYamlMap(YAML::LoadFile(file_path), map_path));
 	} catch (...) {
-		std::throw_with_nested(FormatRuntimeError("Failed to load YAML file '%s'",
-							  file_path));
+		std::throw_with_nested(FmtRuntimeError("Failed to load YAML file '{}'",
+						       file_path));
 	}
 
 UnusedIstreamPtr

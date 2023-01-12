@@ -47,7 +47,6 @@
 #include "net/UniqueSocketDescriptor.hxx"
 #include "system/Error.hxx"
 #include "util/Exception.hxx"
-#include "util/RuntimeError.hxx"
 #include "util/StringList.hxx"
 
 #include <cassert>

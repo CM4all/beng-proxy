@@ -37,6 +37,7 @@
 #include "CertDatabase.hxx"
 #include "WrapKey.hxx"
 #include "Wildcard.hxx"
+#include "lib/fmt/RuntimeError.hxx"
 #include "lib/openssl/Buffer.hxx"
 #include "lib/openssl/Dummy.hxx"
 #include "lib/openssl/Key.hxx"
@@ -53,7 +54,6 @@
 #include "util/AllocatedString.hxx"
 #include "util/ConstBuffer.hxx"
 #include "util/PrintException.hxx"
-#include "util/RuntimeError.hxx"
 #include "util/StringCompare.hxx"
 
 #include <stdexcept>
@@ -81,8 +81,7 @@ LoadCertDatabaseConfig(const char *path)
 
 	auto i = lb_config.cert_dbs.begin();
 	if (i == lb_config.cert_dbs.end())
-		throw FormatRuntimeError("No cert_db section found in %s",
-					 path);
+		throw FmtRuntimeError("No cert_db section found in {}", path);
 
 	if (std::next(i) != lb_config.cert_dbs.end())
 		fprintf(stderr, "Warning: %s contains multiple cert_db sections\n",

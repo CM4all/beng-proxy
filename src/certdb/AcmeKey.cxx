@@ -31,13 +31,13 @@
  */
 
 #include "AcmeKey.hxx"
+#include "lib/fmt/RuntimeError.hxx"
 #include "lib/openssl/LoadFile.hxx"
-#include "util/RuntimeError.hxx"
 
 AcmeKey::AcmeKey(const char *path)
 	:key(LoadKeyFile(path))
 {
 	if (EVP_PKEY_base_id(key.get()) != EVP_PKEY_RSA)
-		throw FormatRuntimeError("File '%s' does not contain an RSA file",
-					 path);
+		throw FmtRuntimeError("File '{}' does not contain an RSA file",
+				      path);
 }

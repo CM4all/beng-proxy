@@ -32,7 +32,7 @@
 
 #include "AcmeAuthorization.hxx"
 #include "AcmeChallenge.hxx"
-#include "util/RuntimeError.hxx"
+#include "lib/fmt/RuntimeError.hxx"
 
 static constexpr const char *acme_authorization_status_strings[] = {
 	"pending",
@@ -51,8 +51,7 @@ AcmeAuthorization::ParseStatus(const std::string_view s)
 		if (s == acme_authorization_status_strings[i])
 			return Status(i);
 
-	throw FormatRuntimeError("Invalid authorization status: %.*s",
-				 int(s.size()), s.data());
+	throw FmtRuntimeError("Invalid authorization status: {}", s);
 }
 
 const char *

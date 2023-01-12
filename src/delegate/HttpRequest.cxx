@@ -39,7 +39,7 @@
 #include "istream/UnusedPtr.hxx"
 #include "istream/FileIstream.hxx"
 #include "pool/pool.hxx"
-#include "system/Error.hxx"
+#include "lib/fmt/SystemError.hxx"
 #include "io/UniqueFileDescriptor.hxx"
 #include "AllocatorPtr.hxx"
 
@@ -84,7 +84,7 @@ DelegateHttpRequest::OnDelegateSuccess(UniqueFileDescriptor fd)
 	struct statx st;
 	if (statx(fd.Get(), "", AT_EMPTY_PATH,
 		  STATX_TYPE|STATX_MTIME|STATX_INO|STATX_SIZE, &st) < 0) {
-		handler.InvokeError(std::make_exception_ptr(FormatErrno("Failed to stat %s: ", path)));
+		handler.InvokeError(std::make_exception_ptr(FmtErrno("Failed to stat {}", path)));
 		return;
 	}
 

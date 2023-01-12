@@ -42,7 +42,8 @@
 #include "net/TimeoutError.hxx"
 #include "io/Iovec.hxx"
 #include "util/StaticVector.hxx"
-#include "util/RuntimeError.hxx"
+
+#include <stdexcept>
 
 #include <assert.h>
 #include <unistd.h>

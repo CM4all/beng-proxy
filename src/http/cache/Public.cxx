@@ -49,13 +49,13 @@
 #include "istream/RefIstream.hxx"
 #include "pool/Holder.hxx"
 #include "AllocatorPtr.hxx"
+#include "lib/fmt/RuntimeError.hxx"
 #include "event/FarTimerEvent.hxx"
 #include "event/Loop.hxx"
 #include "io/Logger.hxx"
 #include "util/Cancellable.hxx"
 #include "util/Exception.hxx"
 #include "util/IntrusiveList.hxx"
-#include "util/RuntimeError.hxx"
 
 #include <functional>
 
@@ -729,7 +729,7 @@ HttpCacheRequest::OnHttpResponse(HttpStatus status, StringMap &&_headers,
 void
 HttpCacheRequest::OnHttpError(std::exception_ptr ep) noexcept
 {
-	ep = NestException(ep, FormatRuntimeError("http_cache %s", key));
+	ep = NestException(ep, FmtRuntimeError("http_cache {}", key));
 
 	if (document != nullptr)
 		cache.Unlock(*document);
