@@ -51,7 +51,6 @@
 #include "fs/FilteredSocket.hxx"
 #include "net/StaticSocketAddress.hxx"
 #include "util/Cancellable.hxx"
-#include "util/RuntimeError.hxx"
 #include "util/StaticVector.hxx"
 #include "util/StringAPI.hxx"
 #include "address_string.hxx"
@@ -166,9 +165,7 @@ public:
 
 	int OnStreamCloseCallback(uint32_t error_code) noexcept {
 		if (request_body_control) {
-			auto error = FormatRuntimeError("Stream closed: %s",
-							nghttp2_http2_strerror(error_code));
-			request_body_control->DestroyError(std::make_exception_ptr(std::move(error)));
+			request_body_control->DestroyError(std::make_exception_ptr(MakeError(error_code, "Stream closed")));
 			request_body_control = nullptr;
 		}
 

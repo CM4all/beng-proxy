@@ -43,7 +43,6 @@
 #include "fs/FilteredSocket.hxx"
 #include "net/SocketProtocolError.hxx"
 #include "util/Cancellable.hxx"
-#include "util/RuntimeError.hxx"
 #include "util/StaticVector.hxx"
 #include "http/Method.hxx"
 #include "http/ResponseHandler.hxx"
@@ -331,8 +330,7 @@ ClientConnection::Request::SendRequest(HttpMethod method, const char *uri,
 				    dpp,
 				    this);
 	if (id < 0) {
-		AbortResponseHeaders(std::make_exception_ptr(FormatRuntimeError("nghttp2_submit_request() failed: %s",
-										nghttp2_strerror(id))));
+		AbortResponseHeaders(std::make_exception_ptr(MakeError(id, "nghttp2_submit_request() failed")));
 		return;
 	}
 
@@ -452,9 +450,7 @@ ClientConnection::Request::OnEndDataFrame() noexcept
 int
 ClientConnection::Request::OnStreamCloseCallback(uint32_t error_code) noexcept
 {
-	auto error = FormatRuntimeError("Stream closed: %s",
-					nghttp2_http2_strerror(error_code));
-	AbortError(std::make_exception_ptr(std::move(error)));
+	AbortError(std::make_exception_ptr(MakeError(error_code, "Stream closed")));
 	return 0;
 }
 
