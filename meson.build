@@ -408,6 +408,7 @@ if libcommon_enable_libsystemd or avahi_dep.found()
 endif
 
 subdir('src/access_log')
+subdir('src/pipe')
 subdir('src/istream')
 
 memory_istream = static_library(
@@ -788,8 +789,6 @@ executable(
   'src/http/CoResponseHandler.cxx',
   'src/bp/Stats.cxx',
   'src/bp/Control.cxx',
-  'src/PipeLease.cxx',
-  'src/pipe_stock.cxx',
   'src/pipe_filter.cxx',
   'src/bp/ProxyWidget.cxx',
   'src/bp/ForwardRequest.cxx',
@@ -909,7 +908,6 @@ executable(
   'cm4all-beng-lb',
   lb_sources,
   'src/tcp_stock.cxx',
-  'src/pipe_stock.cxx',
   'src/address_string.cxx',
   'src/cluster/AddressList.cxx',
   'src/cluster/ConnectBalancer.cxx',
@@ -969,6 +967,7 @@ executable(
   include_directories: inc,
   dependencies: [
     lb_config_dep,
+    pipe_dep,
     memory_istream_dep,
     access_log_client_dep,
     liblua,

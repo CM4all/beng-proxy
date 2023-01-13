@@ -42,7 +42,7 @@
 #include "ssl/Client.hxx"
 #include "cluster/BalancerMap.hxx"
 #include "memory/fb_pool.hxx"
-#include "pipe_stock.hxx"
+#include "pipe/Stock.hxx"
 #include "access_log/Glue.hxx"
 #include "util/PrintException.hxx"
 

@@ -41,7 +41,6 @@
 #include "istream/UnusedPtr.hxx"
 #include "istream/UnusedHoldPtr.hxx"
 #include "util/Cancellable.hxx"
-#include "PipeLease.hxx"
 
 class BufferedIstreamAdapter final : public BufferedIstreamHandler, Cancellable {
 	DelayedIstreamControl &delayed;

@@ -33,7 +33,7 @@
 #pragma once
 
 #include "istream.hxx"
-#include "PipeLease.hxx"
+#include "pipe/Lease.hxx"
 #include "memory/SliceFifoBuffer.hxx"
 
 /**

@@ -31,10 +31,10 @@
  */
 
 #include "AutoPipeIstream.hxx"
-#include "PipeLease.hxx"
 #include "New.hxx"
 #include "UnusedPtr.hxx"
 #include "ForwardIstream.hxx"
+#include "pipe/Lease.hxx"
 #include "system/Error.hxx"
 #include "io/Splice.hxx"
 #include "io/SpliceSupport.hxx"

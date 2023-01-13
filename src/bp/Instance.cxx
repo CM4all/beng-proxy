@@ -37,7 +37,7 @@
 #include "event/net/control/Server.hxx"
 #include "control/Local.hxx"
 #include "cluster/TcpBalancer.hxx"
-#include "pipe_stock.hxx"
+#include "pipe/Stock.hxx"
 #include "DirectResourceLoader.hxx"
 #include "CachedResourceLoader.hxx"
 #include "FilterResourceLoader.hxx"

@@ -30,50 +30,67 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "PipeLease.hxx"
-#include "pipe_stock.hxx"
+#include "Stock.hxx"
 #include "stock/Item.hxx"
 #include "system/Error.hxx"
+#include "io/UniqueFileDescriptor.hxx"
 
-#include <assert.h>
+struct PipeStockItem final : StockItem {
+	UniqueFileDescriptor fds[2];
+
+	explicit PipeStockItem(CreateStockItem c)
+		:StockItem(c) {
+	}
+
+	/* virtual methods from class StockItem */
+	bool Borrow() noexcept override;
+	bool Release() noexcept override;
+};
+
+/*
+ * stock class
+ *
+ */
 
 void
-PipeLease::Release(bool reuse) noexcept
+PipeStock::Create(CreateStockItem c, StockRequest,
+		  StockGetHandler &get_handler,
+		  CancellablePointer &)
 {
-	if (!IsDefined())
-		return;
+	auto *item = new PipeStockItem(c);
 
-	if (stock != nullptr) {
-		assert(item != nullptr);
-		item->Put(!reuse);
-		item = nullptr;
-
-		read_fd.SetUndefined();
-		write_fd.SetUndefined();
-	} else {
-		if (read_fd.IsDefined())
-			read_fd.Close();
-		if (write_fd.IsDefined())
-			write_fd.Close();
+	if (!UniqueFileDescriptor::CreatePipeNonBlock(item->fds[0],
+						      item->fds[1])) {
+		int e = errno;
+		delete item;
+		throw MakeErrno(e, "pipe() failed");
 	}
+
+	item->InvokeCreateSuccess(get_handler);
 }
 
-void
-PipeLease::Create()
+bool
+PipeStockItem::Borrow() noexcept
 {
-	assert(!IsDefined());
+	return true;
+}
 
-	if (stock != nullptr) {
-		assert(item == nullptr);
+bool
+PipeStockItem::Release() noexcept
+{
+	return true;
+}
 
-		item = stock->GetNow(nullptr);
+/*
+ * interface
+ *
+ */
 
-		FileDescriptor fds[2];
-		pipe_stock_item_get(item, fds);
-		read_fd = fds[0];
-		write_fd = fds[1];
-	} else {
-		if (!FileDescriptor::CreatePipeNonBlock(read_fd, write_fd))
-			throw MakeErrno("pipe() failed");
-	}
+void
+pipe_stock_item_get(StockItem *_item, FileDescriptor fds[2]) noexcept
+{
+	auto *item = (PipeStockItem *)_item;
+
+	fds[0] = item->fds[0];
+	fds[1] = item->fds[1];
 }

@@ -57,7 +57,7 @@
 #include "delegate/Stock.hxx"
 #include "fcache.hxx"
 #include "thread/Pool.hxx"
-#include "pipe_stock.hxx"
+#include "pipe/Stock.hxx"
 #include "nfs/Stock.hxx"
 #include "nfs/Cache.hxx"
 #include "DirectResourceLoader.hxx"

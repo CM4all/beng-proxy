@@ -53,7 +53,6 @@
 #include "thread/Pool.hxx"
 #include "memory/fb_pool.hxx"
 #include "pool/UniquePtr.hxx"
-#include "PipeLease.hxx"
 #include "istream/New.hxx"
 #include "istream/DeferReadIstream.hxx"
 #include "istream/PipeLeaseIstream.hxx"

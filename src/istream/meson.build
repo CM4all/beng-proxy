@@ -124,6 +124,7 @@ istream_pipe_dep = declare_dependency(
   dependencies: [
     istream_basic_dep,
     event_dep,
+    pipe_dep,
   ],
 )
 

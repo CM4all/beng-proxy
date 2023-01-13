@@ -36,7 +36,6 @@
 #include "New.hxx"
 #include "ConcatIstream.hxx"
 #include "PipeLeaseIstream.hxx"
-#include "PipeLease.hxx"
 #include "memory/fb_pool.hxx"
 #include "memory/SlicePool.hxx"
 #include "memory/SliceBuffer.hxx"
