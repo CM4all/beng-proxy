@@ -8,6 +8,9 @@ http_cache = static_library(
   'Info.cxx',
   'RFC.cxx',
   include_directories: inc,
+  dependencies: [
+    fmt_dep,
+  ],
 )
 
 http_cache_dep = declare_dependency(
