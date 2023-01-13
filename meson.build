@@ -581,11 +581,13 @@ http_common_dep = declare_dependency(link_with: http_common,
 http_client = static_library('http_client',
   'src/http/Client.cxx',
   include_directories: inc,
+  dependencies: [
+    fmt_dep,
+  ],
 )
 http_client_dep = declare_dependency(
   link_with: http_client,
   dependencies: [
-    fmt_dep,
     socket_dep,
     putil_dep,
     http_util_dep,
