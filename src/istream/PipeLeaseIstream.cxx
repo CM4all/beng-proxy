@@ -42,6 +42,11 @@
 
 #include <fcntl.h>
 
+PipeLeaseIstream::~PipeLeaseIstream() noexcept
+{
+	pipe.Release(remaining == 0);
+}
+
 bool
 PipeLeaseIstream::FeedBuffer() noexcept
 {

@@ -57,9 +57,7 @@ public:
 	PipeLeaseIstream(struct pool &p, PipeLease &&_pipe, size_t size) noexcept
 		:Istream(p), pipe(std::move(_pipe)), remaining(size) {}
 
-	~PipeLeaseIstream() noexcept override {
-		pipe.Release(remaining == 0);
-	}
+	~PipeLeaseIstream() noexcept override;
 
 	/* virtual methods from class Istream */
 
