@@ -716,6 +716,9 @@ widget = static_library('widget',
   'src/widget/Error.cxx',
   'src/uri/Args.cxx',
   include_directories: inc,
+  dependencies: [
+    fmt_dep,
+  ],
 )
 widget_dep = declare_dependency(link_with: widget,
                                 dependencies: [putil_dep, raddress_dep,
@@ -732,6 +735,9 @@ processor = static_library('processor',
   'src/bp/CssRewrite.cxx',
   'src/bp/TextProcessor.cxx',
   include_directories: inc,
+  dependencies: [
+    fmt_dep,
+  ],
 )
 processor_dep = declare_dependency(
   link_with: processor,
@@ -839,6 +845,7 @@ executable(
   'src/bp/Main.cxx',
   include_directories: inc,
   dependencies: [
+    fmt_dep,
     memory_istream_dep,
     istream_pipe_dep,
     istream_extra_dep,
@@ -892,6 +899,7 @@ lb_config = static_library(
   include_directories: inc,
   dependencies: [
     avahi_dep,
+    fmt_dep,
     nghttp2_dep, # only for the HAVE_NGHTTP2 macro
     io_config_dep,
     libpcre,
@@ -972,6 +980,7 @@ executable(
 
   include_directories: inc,
   dependencies: [
+    fmt_dep,
     lb_config_dep,
     pipe_dep,
     memory_istream_dep,
