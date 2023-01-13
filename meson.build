@@ -585,6 +585,7 @@ http_client = static_library('http_client',
 http_client_dep = declare_dependency(
   link_with: http_client,
   dependencies: [
+    fmt_dep,
     socket_dep,
     putil_dep,
     http_util_dep,
