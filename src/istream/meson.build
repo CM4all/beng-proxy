@@ -84,7 +84,6 @@ istream = static_library(
   'istream',
 
   # Istream implementations
-  'BufferedIstream.cxx',
   'ChunkedIstream.cxx',
   'DechunkIstream.cxx',
   'DelayedIstream.cxx',
@@ -94,13 +93,11 @@ istream = static_library(
   'FileIstream.cxx',
   'MultiFifoBufferIstream.cxx',
   'OpenFileIstream.cxx',
-  'PipeLeaseIstream.cxx',
   'ReplaceIstream.cxx',
   'SliceIstream.cxx',
   'TeeIstream.cxx',
   'SuspendIstream.cxx',
   'TimeoutIstream.cxx',
-  'AutoPipeIstream.cxx',
 
   'ToBucketIstream.cxx',
   'FromBucketIstream.cxx',
@@ -130,6 +127,22 @@ istream_dep = declare_dependency(
     istream_api_dep,
     istream_basic_dep,
     event_dep,
-    system_dep,
+  ],
+)
+
+# Istream implementations that depend on PipeLease
+istream_pipe = static_library(
+  'istream_pipe',
+  'BufferedIstream.cxx',
+  'PipeLeaseIstream.cxx',
+  'AutoPipeIstream.cxx',
+  include_directories: inc,
+)
+
+istream_pipe_dep = declare_dependency(
+  link_with: istream_pipe,
+  dependencies: [
+    istream_basic_dep,
+    event_dep,
   ],
 )

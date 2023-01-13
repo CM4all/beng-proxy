@@ -72,6 +72,7 @@ executable('run_client',
   '../src/PipeLease.cxx',
   include_directories: inc,
   dependencies: [
+    istream_pipe_dep,
     ssl_dep,
     was_client_dep,
     http_client_dep,
@@ -93,6 +94,7 @@ executable(
   '../src/ssl/SslSocketFilterFactory.cxx',
   include_directories: inc,
   dependencies: [
+    istream_pipe_dep,
     ssl_dep,
     was_client_dep,
     http_client_dep,
@@ -347,6 +349,7 @@ if nfs_client_dep.found()
     include_directories: inc,
     dependencies: [
       nfs_client_dep,
+      istream_pipe_dep,
       istream_dep,
       stock_dep,
       io_dep,
@@ -487,6 +490,7 @@ test('t_http_client', executable('t_http_client',
   '../src/address_string.cxx',
   include_directories: inc,
   dependencies: [
+    istream_pipe_dep,
     http_client_dep,
     http_server_dep,
     stock_dep,
@@ -790,6 +794,7 @@ test(
     dependencies: [
       gtest,
       istream_dep,
+      istream_pipe_dep,
       putil_dep,
       stock_dep,
       stopwatch_dep,
@@ -834,6 +839,7 @@ test(
     include_directories: inc,
     dependencies: [
       t_istream_filter_deps,
+      istream_pipe_dep,
       stock_dep,
     ],
   ),
