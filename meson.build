@@ -836,6 +836,7 @@ executable(
   dependencies: [
     memory_istream_dep,
     istream_pipe_dep,
+    istream_extra_dep,
     access_log_client_dep,
     event_uring_dep,
     event_net_log_dep,

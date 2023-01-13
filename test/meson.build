@@ -240,6 +240,7 @@ if libyamlcpp.found()
     include_directories: inc,
     dependencies: [
       istream_dep,
+      istream_extra_dep,
     ],
   )
 endif
@@ -841,6 +842,7 @@ test(
     dependencies: [
       t_istream_filter_deps,
       istream_pipe_dep,
+      istream_extra_dep,
       stock_dep,
     ],
   ),
