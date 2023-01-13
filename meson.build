@@ -669,6 +669,9 @@ delegate_client = static_library('delegate_client',
   'src/delegate/HttpRequest.cxx',
   'src/delegate/Stock.cxx',
   include_directories: inc,
+  dependencies: [
+    fmt_dep,
+  ],
 )
 delegate_client_dep = declare_dependency(
   link_with: delegate_client,
