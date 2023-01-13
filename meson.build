@@ -407,7 +407,6 @@ if libcommon_enable_libsystemd or avahi_dep.found()
   subdir('libcommon/src/lib/dbus')
 endif
 
-subdir('src/access_log')
 subdir('src/pipe')
 subdir('src/istream')
 
@@ -461,20 +460,8 @@ istream_spawn_dep = declare_dependency(
   ],
 )
 
-cluster = static_library(
-  'cluster',
-  'src/cluster/AddressSticky.cxx',
-  'src/cluster/BalancerMap.cxx',
-  'src/cluster/FailureManagerProxy.cxx',
-  include_directories: inc,
-  dependencies: [
-    sodium_dep,
-  ],
-)
-cluster_dep = declare_dependency(
-  link_with: cluster,
-  dependencies: [],
-)
+subdir('src/access_log')
+subdir('src/cluster')
 
 raddress = static_library('raddress',
   'src/regex.cxx',
@@ -505,27 +492,8 @@ raddress_dep = declare_dependency(
 )
 
 subdir('src/was')
+subdir('src/thread')
 subdir('src/http')
-
-thread_pool = static_library('thread_queue',
-  'src/thread/Queue.cxx',
-  'src/thread/Worker.cxx',
-  'src/thread/Pool.cxx',
-  'src/thread/Notify.cxx',
-  include_directories: inc,
-  dependencies: [
-    event_dep,
-    eutil_dep,
-    threads,
-  ])
-thread_pool_dep = declare_dependency(
-  link_with: thread_pool,
-  dependencies: [
-    event_dep,
-    eutil_dep,
-  ],
-)
-
 subdir('src/fs')
 
 subdir('libcommon/src/translation')
@@ -600,129 +568,12 @@ http_client_dep = declare_dependency(
 subdir('src/http/server')
 subdir('src/nghttp2')
 subdir('src/http/cache')
-
-cgi = static_library('cgi',
-  'src/cgi/Glue.cxx',
-  'src/cgi/Parser.cxx',
-  'src/cgi/Client.cxx',
-  'src/cgi/Launch.cxx',
-  include_directories: inc,
-)
-cgi_dep = declare_dependency(
-  link_with: cgi,
-  dependencies: [
-    stopwatch_dep,
-    istream_spawn_dep,
-    http_util_dep,
-  ],
-)
-
-fcgi_client = static_library('fcgi_client',
-  'src/fcgi/Client.cxx',
-  'src/fcgi/Remote.cxx',
-  'src/fcgi/Request.cxx',
-  'src/fcgi/Serialize.cxx',
-  'src/fcgi/Stock.cxx',
-  'src/fcgi/istream_fcgi.cxx',
-  include_directories: inc,
-)
-fcgi_client_dep = declare_dependency(
-  link_with: fcgi_client,
-  dependencies: [
-    socket_dep,
-    putil_dep,
-    istream_dep,
-    memory_istream_dep,
-    http_util_dep,
-    stopwatch_dep,
-  ],
-)
-
-libnfs = dependency('libnfs', required: get_option('nfs'))
-if libnfs.found()
-  nfs_client = static_library(
-    'nfs_client',
-    'src/nfs/Stock.cxx',
-    'src/nfs/Client.cxx',
-    'src/nfs/Error.cxx',
-    'src/nfs/Cache.cxx',
-    'src/nfs/Glue.cxx',
-    include_directories: inc,
-    dependencies: [
-      libnfs,
-    ],
-  )
-  nfs_client_dep = declare_dependency(
-    compile_args: '-DHAVE_LIBNFS',
-    link_with: nfs_client,
-    dependencies: [
-      event_dep,
-    ],
-  )
-else
-  nfs_client_dep = dependency('', required: false)
-endif
-
-delegate_client = static_library('delegate_client',
-  'src/delegate/Client.cxx',
-  'src/delegate/Glue.cxx',
-  'src/delegate/HttpRequest.cxx',
-  'src/delegate/Stock.cxx',
-  include_directories: inc,
-  dependencies: [
-    fmt_dep,
-  ],
-)
-delegate_client_dep = declare_dependency(
-  link_with: delegate_client,
-  dependencies: [
-    socket_dep,
-    putil_dep,
-    stock_dep,
-  ],
-)
-
-session = static_library('session',
-  'src/bp/session/Session.cxx',
-  'src/bp/session/Lease.cxx',
-  'src/bp/session/Id.cxx',
-  'src/bp/session/Manager.cxx',
-  'src/bp/session/Write.cxx',
-  'src/bp/session/Read.cxx',
-  'src/bp/session/Save.cxx',
-  include_directories: inc,
-)
-session_dep = declare_dependency(link_with: session,
-                                 dependencies: [event_dep,
-                                                cookie_dep,
-                                                raddress_dep])
-
-widget = static_library('widget',
-  'src/widget/Widget.cxx',
-  'src/widget/Init.cxx',
-  'src/widget/Root.cxx',
-  'src/widget/Ptr.cxx',
-  'src/widget/Cache.cxx',
-  'src/widget/Class.cxx',
-  'src/widget/Context.cxx',
-  'src/widget/ForwardHeaders.cxx',
-  'src/widget/CSession.cxx',
-  'src/widget/Untrusted.cxx',
-  'src/widget/View.cxx',
-  'src/widget/Ref.cxx',
-  'src/widget/Session.cxx',
-  'src/widget/Uri.cxx',
-  'src/widget/Approval.cxx',
-  'src/widget/Error.cxx',
-  'src/uri/Args.cxx',
-  include_directories: inc,
-  dependencies: [
-    fmt_dep,
-  ],
-)
-widget_dep = declare_dependency(link_with: widget,
-                                dependencies: [putil_dep, raddress_dep,
-                                              translation_dep])
+subdir('src/cgi')
+subdir('src/fcgi')
+subdir('src/nfs')
+subdir('src/delegate')
+subdir('src/bp/session')
+subdir('src/widget')
 
 processor = static_library('processor',
   'src/parser/XmlParser.cxx',
@@ -1065,114 +916,6 @@ if get_option('certdb')
     install: true,
   )
 endif
-
-executable(
-  'cm4all-beng-proxy-log-cat',
-  'src/access_log/Server.cxx',
-  'src/access_log/Cat.cxx',
-  include_directories: inc,
-  dependencies: [
-    net_log_dep,
-    http_dep,
-    libcxx,
-  ],
-  install: true,
-)
-
-executable(
-  'cm4all-beng-proxy-log-json',
-  'src/access_log/Server.cxx',
-  'src/access_log/Json.cxx',
-  include_directories: inc,
-  dependencies: [
-    net_log_dep,
-    http_dep,
-    libcxx,
-  ],
-  install: true,
-)
-
-executable(
-  'cm4all-beng-proxy-log-lua',
-  'src/access_log/Server.cxx',
-  'src/access_log/Lua.cxx',
-  'src/access_log/Launch.cxx',
-  include_directories: inc,
-  dependencies: [
-    lua_dep,
-    fmt_dep,
-    spawn_dep,
-    net_log_dep,
-    http_dep,
-    liblua,
-    libcxx,
-  ],
-  install: true,
-)
-
-executable(
-  'cm4all-beng-proxy-log-traffic',
-  'src/access_log/Server.cxx',
-  'src/access_log/Traffic.cxx',
-  include_directories: inc,
-  dependencies: [
-    net_log_dep,
-    http_dep,
-    libcxx,
-  ],
-  install: true,
-)
-
-executable(
-  'cm4all-beng-proxy-log-split',
-  'src/access_log/Server.cxx',
-  'src/access_log/Split.cxx',
-  include_directories: inc,
-  dependencies: [
-    system_dep,
-    net_log_dep,
-    http_dep,
-    libcxx,
-  ],
-  install: true,
-)
-
-executable(
-  'cm4all-beng-proxy-log-forward',
-  'src/access_log/Forward.cxx',
-  include_directories: inc,
-  dependencies: [
-    net_log_dep,
-    http_dep,
-    libcxx,
-  ],
-  install: true,
-)
-
-executable(
-  'cm4all-beng-proxy-log-exec',
-  'src/access_log/Exec.cxx',
-  include_directories: inc,
-  dependencies: [
-    net_log_dep,
-    libcxx,
-  ],
-  install: true,
-)
-
-executable(
-  'cm4all-beng-proxy-log-tee',
-  'src/access_log/Launch.cxx',
-  'src/access_log/Tee.cxx',
-  include_directories: inc,
-  dependencies: [
-    spawn_dep,
-    system_dep,
-    net_log_dep,
-    libcxx,
-  ],
-  install: true,
-)
 
 executable(
   'delegate-helper',
