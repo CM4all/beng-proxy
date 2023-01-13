@@ -139,7 +139,6 @@ if libnghttp2.found()
     'RunNgHttp2Server.cxx',
     '../src/address_string.cxx',
     '../src/http/IncomingRequest.cxx',
-    '../src/nghttp2/Server.cxx',
     include_directories: inc,
     dependencies: [
       fmt_dep,
