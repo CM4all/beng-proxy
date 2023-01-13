@@ -13,6 +13,9 @@ socket = static_library(
   'Key.cxx',
   'Balancer.cxx',
   include_directories: inc,
+  dependencies: [
+    fmt_dep,
+  ],
 )
 
 socket_dep = declare_dependency(
