@@ -1,6 +1,7 @@
 libwas = dependency('libcm4all-was-protocol', version: '>= 1.24', required: get_option('was'))
 if not libwas.found()
   was_client_dep = dependency('', required: false)
+  was_stock_dep = dependency('', required: false)
   subdir_done()
 endif
 
@@ -31,26 +32,39 @@ was_common_dep = declare_dependency(
 was_client = static_library(
   'was_client',
   'Client.cxx',
+  'Launch.cxx',
   'IdleConnection.cxx',
+  include_directories: inc,
+  dependencies: [
+    libwas,
+    was_common_dep,
+    spawn_dep,
+    stopwatch_dep,
+  ],
+)
+was_client_dep = declare_dependency(
+  link_with: was_client,
+)
+
+was_stock = static_library(
+  'was_stock',
   'SConnection.cxx',
   'Stock.cxx',
-  'Launch.cxx',
   'Glue.cxx',
   'MStock.cxx',
   'MGlue.cxx',
   'RStock.cxx',
   include_directories: inc,
   dependencies: [
-    libwas,
+    was_client_dep,
   ],
 )
-was_client_dep = declare_dependency(
+was_stock_dep = declare_dependency(
   compile_args: '-DHAVE_LIBWAS',
-  link_with: was_client,
+  link_with: was_stock,
   dependencies: [
     spawn_dep,
     raddress_dep,
-    was_common_dep,
     stopwatch_dep,
   ],
 )

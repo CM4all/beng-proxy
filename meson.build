@@ -714,7 +714,7 @@ executable(
     http_cache_dep,
     ssl_dep,
     translation_dep,
-    was_client_dep,
+    was_stock_dep,
     stopwatch_dep,
     cgi_dep,
     fcgi_client_dep,
