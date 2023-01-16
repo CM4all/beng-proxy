@@ -36,6 +36,7 @@
 #include "system/Error.hxx"
 #include "system/Stat.hxx"
 #include "io/FileDescriptor.hxx"
+#include "net/TimeoutError.hxx"
 #include "event/SocketEvent.hxx"
 #include "event/CoarseTimerEvent.hxx"
 #include "util/Cancellable.hxx"
@@ -866,12 +867,12 @@ NfsClient::TimeoutCallback() noexcept
 		assert(n_active_files == 0);
 
 		DestroyContext();
-		handler.OnNfsClientClosed(std::make_exception_ptr(NfsClientError("Idle timeout")));
+		handler.OnNfsClientClosed(std::make_exception_ptr(TimeoutError{"Idle timeout"}));
 		Destroy();
 	} else {
 		mount_finished = true;
 
-		MountError(std::make_exception_ptr(NfsClientError("Mount timeout")));
+		MountError(std::make_exception_ptr(TimeoutError{"Mount timeout"}));
 	}
 }
 
