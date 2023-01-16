@@ -162,9 +162,9 @@ if libwas.found()
     'run_was',
     'run_was.cxx',
     '../src/PInstance.cxx',
-    '../src/pexpand.cxx',
     include_directories: inc,
     dependencies: [
+      expand_dep,
       net_dep,
       was_client_dep,
       stopwatch_dep,
@@ -186,16 +186,14 @@ executable(
   'LaunchLocalHTTP',
   'LaunchLocalHTTP.cxx',
   '../src/PInstance.cxx',
-  '../src/pexpand.cxx',
-  '../src/regex.cxx',
   include_directories: inc,
   dependencies: [
+    expand_dep,
     event_dep,
     pool_dep,
     net_dep,
     was_client_dep,
     stopwatch_dep,
-    pcre_dep,
   ],
 )
 
