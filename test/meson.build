@@ -708,6 +708,7 @@ test('t_widget_http', executable('t_widget_http',
   include_directories: inc,
   dependencies: [
     gtest,
+    fmt_dep,
     widget_dep,
     istream_dep,
     http_util_dep,
