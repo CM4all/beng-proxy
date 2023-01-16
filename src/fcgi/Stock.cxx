@@ -42,11 +42,11 @@
 #include "spawn/ChildOptions.hxx"
 #include "pool/DisposablePointer.hxx"
 #include "pool/tpool.hxx"
+#include "lib/fmt/ToBuffer.hxx"
 #include "event/SocketEvent.hxx"
 #include "net/UniqueSocketDescriptor.hxx"
 #include "io/UniqueFileDescriptor.hxx"
 #include "io/Logger.hxx"
-#include "util/StringFormat.hxx"
 #include "util/StringList.hxx"
 
 #include <assert.h>
@@ -301,8 +301,8 @@ FcgiStock::Create(CreateStockItem c, StockRequest request,
 							 std::move(request));
 	} catch (...) {
 		delete connection;
-		std::throw_with_nested(FcgiClientError(StringFormat<256>("Failed to start FastCGI server '%s'",
-									 key)));
+		std::throw_with_nested(FcgiClientError(FmtBuffer<256>("Failed to start FastCGI server '{}'",
+								      key)));
 	}
 
 	try {
@@ -310,8 +310,8 @@ FcgiStock::Create(CreateStockItem c, StockRequest request,
 	} catch (...) {
 		connection->kill = true;
 		delete connection;
-		std::throw_with_nested(FcgiClientError(StringFormat<256>("Failed to connect to FastCGI server '%s'",
-									 key)));
+		std::throw_with_nested(FcgiClientError(FmtBuffer<256>("Failed to connect to FastCGI server '{}'",
+								      key)));
 	}
 
 	connection->event.Open(connection->fd);

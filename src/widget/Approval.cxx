@@ -33,7 +33,7 @@
 #include "Widget.hxx"
 #include "Class.hxx"
 #include "Error.hxx"
-#include "util/StringFormat.hxx"
+#include "lib/fmt/ToBuffer.hxx"
 
 #include <string.h>
 
@@ -102,6 +102,6 @@ Widget::CheckApproval()
 
 	if (approval != Approval::GIVEN)
 		throw WidgetError(*parent, WidgetErrorCode::FORBIDDEN,
-				  StringFormat<256>("not allowed to embed widget class '%s'",
-						    class_name));
+				  FmtBuffer<256>("not allowed to embed widget class '{}'",
+						 class_name));
 }

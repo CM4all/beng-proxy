@@ -7,6 +7,9 @@ fcgi_client = static_library(
   'Stock.cxx',
   'istream_fcgi.cxx',
   include_directories: inc,
+  dependencies: [
+    fmt_dep,
+  ],
 )
 
 fcgi_client_dep = declare_dependency(

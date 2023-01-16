@@ -44,6 +44,7 @@
 #include "pool/pool.hxx"
 #include "pool/LeakDetector.hxx"
 #include "stopwatch.hxx"
+#include "lib/fmt/ToBuffer.hxx"
 #include "io/FileDescriptor.hxx"
 #include "event/FineTimerEvent.hxx"
 #include "http/HeaderName.hxx"
@@ -52,7 +53,6 @@
 #include "util/DestructObserver.hxx"
 #include "util/Exception.hxx"
 #include "util/SpanCast.hxx"
-#include "util/StringFormat.hxx"
 #include "util/StringSplit.hxx"
 #include "util/ScopeExit.hxx"
 #include "AllocatorPtr.hxx"
@@ -520,7 +520,8 @@ WasClient::OnWasControlPacket(enum was_command cmd,
 	case WAS_COMMAND_PARAMETER:
 	case WAS_COMMAND_REMOTE_HOST:
 		stopwatch.RecordEvent("control_error");
-		AbortResponse(std::make_exception_ptr(WasProtocolError(StringFormat<64>("Unexpected WAS packet %d", cmd))));
+		AbortResponse(std::make_exception_ptr(WasProtocolError(FmtBuffer<64>("Unexpected WAS packet {}",
+										     static_cast<unsigned>(cmd)))));
 		return false;
 
 	case WAS_COMMAND_HEADER:

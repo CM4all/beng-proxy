@@ -37,6 +37,7 @@ was_client = static_library(
   include_directories: inc,
   dependencies: [
     libwas,
+    fmt_dep,
     was_common_dep,
     spawn_dep,
     stopwatch_dep,
@@ -57,6 +58,7 @@ was_stock = static_library(
   include_directories: inc,
   dependencies: [
     was_client_dep,
+    libwas,
   ],
 )
 was_stock_dep = declare_dependency(
@@ -76,6 +78,7 @@ was_server = static_library(
   dependencies: [
     libwas,
     was_common_dep,
+    fmt_dep,
   ],
 )
 was_server_dep = declare_dependency(

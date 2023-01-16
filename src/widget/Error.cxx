@@ -32,14 +32,14 @@
 
 #include "Error.hxx"
 #include "Widget.hxx"
+#include "lib/fmt/ToBuffer.hxx"
 #include "util/StringBuffer.hxx"
-#include "util/StringFormat.hxx"
 
 static StringBuffer<256>
 FormatWidgetError(const Widget &widget, const char *msg)
 {
-	return StringFormat<256>("Error from widget '%s': %s",
-				 widget.GetLogName(), msg);
+	return FmtBuffer<256>("Error from widget '{}': {}",
+			      widget.GetLogName(), msg);
 }
 
 WidgetError::WidgetError(const Widget &widget,

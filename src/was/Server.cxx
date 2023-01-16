@@ -36,11 +36,11 @@
 #include "istream/UnusedPtr.hxx"
 #include "istream/istream_null.hxx"
 #include "strmap.hxx"
+#include "lib/fmt/ToBuffer.hxx"
 #include "http/Method.hxx"
 #include "http/Status.hxx"
 #include "pool/pool.hxx"
 #include "util/SpanCast.hxx"
-#include "util/StringFormat.hxx"
 #include "util/StringSplit.hxx"
 #include "AllocatorPtr.hxx"
 
@@ -387,7 +387,8 @@ WasServer::OnWasControlPacket(enum was_command cmd,
 
 	case WAS_COMMAND_STOP:
 		// XXX
-		AbortProtocolError(StringFormat<64>("unexpected packet: %d", cmd));
+		AbortProtocolError(FmtBuffer<64>("unexpected packet: {}",
+						 static_cast<unsigned>(cmd)));
 		return false;
 
 	case WAS_COMMAND_PREMATURE:

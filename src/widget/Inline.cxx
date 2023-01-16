@@ -50,11 +50,11 @@
 #include "bp/session/Lease.hxx"
 #include "pool/pool.hxx"
 #include "pool/LeakDetector.hxx"
+#include "lib/fmt/ToBuffer.hxx"
 #include "event/CoarseTimerEvent.hxx"
 #include "util/Cancellable.hxx"
 #include "util/LimitedConcurrencyQueue.hxx"
 #include "util/StringCompare.hxx"
-#include "util/StringFormat.hxx"
 #include "AllocatorPtr.hxx"
 #include "stopwatch.hxx"
 
@@ -196,8 +196,8 @@ widget_response_format(struct pool &pool, const Widget &widget,
 		auto ic = istream_iconv_new(pool, std::move(body), "utf-8", charset2);
 		if (!ic)
 			throw WidgetError(widget, WidgetErrorCode::UNSUPPORTED_ENCODING,
-					  StringFormat<64>("widget sent unknown charset '%s'",
-							   charset2));
+					  FmtBuffer<64>("widget sent unknown charset '{}'",
+							charset2));
 
 		widget.logger(6, "charset conversion '", charset2, "' -> utf-8");
 		body = std::move(ic);
@@ -241,7 +241,8 @@ InlineWidget::OnHttpResponse(HttpStatus status, StringMap &&headers,
 		body.Clear();
 
 		WidgetError error(widget, WidgetErrorCode::UNSPECIFIED,
-				  StringFormat<64>("response status %d", status));
+				  FmtBuffer<64>("response status {}",
+						static_cast<unsigned>(status)));
 		Fail(std::make_exception_ptr(error));
 		return;
 	}
@@ -309,8 +310,8 @@ try {
 
 	if (!widget.HasDefaultView())
 		throw WidgetError(widget, WidgetErrorCode::NO_SUCH_VIEW,
-				  StringFormat<256>("No such view: %s",
-						    widget.from_template.view_name));
+				  FmtBuffer<256>("No such view: {}",
+						 widget.from_template.view_name));
 
 	if (widget.session_sync_pending) {
 		auto session = ctx->GetRealmSession();

@@ -60,8 +60,8 @@
 #include "pool/LeakDetector.hxx"
 #include "pool/SharedPtr.hxx"
 #include "AllocatorPtr.hxx"
+#include "lib/fmt/ToBuffer.hxx"
 #include "util/Cancellable.hxx"
-#include "util/StringFormat.hxx"
 #include "stopwatch.hxx"
 
 #include <assert.h>
@@ -625,8 +625,8 @@ WidgetRequest::UpdateView(StringMap &headers)
 			   exist, bail out */
 
 			throw WidgetError(widget, WidgetErrorCode::NO_SUCH_VIEW,
-					  StringFormat<256>("No such view: '%s'",
-							    view_name));
+					  FmtBuffer<256>("No such view: '{}'",
+							 view_name));
 		}
 
 		/* install the new view */
@@ -641,9 +641,9 @@ WidgetRequest::UpdateView(StringMap &headers)
 		   internal widget parameters */
 
 		throw WidgetError(widget, WidgetErrorCode::FORBIDDEN,
-				  StringFormat<256>("View '%s' cannot be requested "
-						    "because the response is processable",
-						    widget.GetTransformationView()->name));
+				  FmtBuffer<256>("View '{}' cannot be requested "
+						 "because the response is processable",
+						 widget.GetTransformationView()->name));
 	}
 }
 
@@ -746,8 +746,8 @@ WidgetRequest::SendRequest() noexcept
 			view_name = "[default]";
 
 		DispatchError(WidgetErrorCode::UNSPECIFIED,
-			      StringFormat<256>("View '%s' does not have an address",
-						view_name));
+			      FmtBuffer<256>("View '{}' does not have an address",
+					     view_name));
 		return;
 	}
 

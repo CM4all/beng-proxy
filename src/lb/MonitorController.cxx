@@ -35,7 +35,8 @@
 #include "MonitorClass.hxx"
 #include "event/Loop.hxx"
 #include "net/FailureManager.hxx"
-#include "util/StringFormat.hxx"
+
+#include <fmt/core.h>
 
 void
 LbMonitorController::Success()
@@ -139,8 +140,8 @@ static std::string
 MakeLoggerDomain(const char *monitor_name, const char *node_name,
 		 unsigned port) noexcept
 {
-	return StringFormat<1024>("monitor %s:[%s]:%u",
-				  monitor_name, node_name, port).c_str();
+	return fmt::format("monitor {}:[{}]:{}",
+			   monitor_name, node_name, port);
 }
 
 LbMonitorController::LbMonitorController(EventLoop &_event_loop,

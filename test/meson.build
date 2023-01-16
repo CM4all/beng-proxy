@@ -690,6 +690,7 @@ test('t_wembed', executable('t_wembed',
   '../src/bp/Global.cxx',
   include_directories: inc,
   dependencies: [
+    fmt_dep,
     widget_dep,
     istream_dep,
     http_util_dep,

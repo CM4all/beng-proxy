@@ -14,6 +14,7 @@ nfs_client = static_library(
   include_directories: inc,
   dependencies: [
     libnfs,
+    fmt_dep,
   ],
 )
 

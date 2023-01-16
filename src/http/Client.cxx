@@ -55,6 +55,7 @@
 #include "fs/Lease.hxx"
 #include "AllocatorPtr.hxx"
 #include "lib/fmt/RuntimeError.hxx"
+#include "lib/fmt/ToBuffer.hxx"
 #include "system/Error.hxx"
 #include "io/Iovec.hxx"
 #include "io/Logger.hxx"
@@ -67,7 +68,6 @@
 #include "util/StringCompare.hxx"
 #include "util/StringSplit.hxx"
 #include "util/StringStrip.hxx"
-#include "util/StringFormat.hxx"
 #include "util/StaticVector.hxx"
 #include "util/Exception.hxx"
 #include "util/Compiler.h"
@@ -613,8 +613,8 @@ HttpClient::TryWriteBuckets2()
 		const int _errno = errno;
 
 		throw HttpClientError(HttpClientErrorCode::IO,
-				      StringFormat<64>("write error (%s)",
-						       strerror(_errno)));
+				      FmtBuffer<64>("write error ({})",
+						    strerror(_errno)));
 	}
 
 	std::size_t consumed = input.ConsumeBucketList(nbytes);
@@ -695,8 +695,8 @@ HttpClient::ParseStatusLine(std::string_view line)
 		stopwatch.RecordEvent("malformed");
 
 		throw HttpClientError(HttpClientErrorCode::GARBAGE,
-				      StringFormat<64>("invalid HTTP status %d",
-						       response.status));
+				      FmtBuffer<64>("invalid HTTP status {}",
+						    static_cast<unsigned>(response.status)));
 	}
 
 	response.state = Response::State::HEADERS;
@@ -1456,7 +1456,7 @@ http_client_request(struct pool &caller_pool,
 		body.Clear();
 
 		handler.InvokeError(std::make_exception_ptr(HttpClientError(HttpClientErrorCode::UNSPECIFIED,
-									    StringFormat<256>("malformed request URI '%s'", uri))));
+									    FmtBuffer<256>("malformed request URI '{}'", uri))));
 		return;
 	}
 

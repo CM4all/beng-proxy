@@ -31,7 +31,7 @@
  */
 
 #include "Error.hxx"
-#include "util/StringFormat.hxx"
+#include "lib/fmt/ToBuffer.hxx"
 
 extern "C" {
 #include <nfsc/libnfs.h>
@@ -46,7 +46,7 @@ FormatNfsClientError(struct nfs_context *nfs, const char *msg)
 	assert(msg != nullptr);
 
 	const char *msg2 = nfs_get_error(nfs);
-	return StringFormat<256>("%s: %s", msg, msg2);
+	return FmtBuffer<256>("{}: {}", msg, msg2);
 }
 
 NfsClientError::NfsClientError(struct nfs_context *nfs, const char *msg)
@@ -67,7 +67,7 @@ FormatNfsClientError(int err, struct nfs_context *nfs, void *data,
 			msg2 = strerror(-err);
 	}
 
-	return StringFormat<256>("%s: %s", msg, msg2);
+	return FmtBuffer<256>("{}: {}", msg, msg2);
 }
 
 NfsClientError::NfsClientError(int err, struct nfs_context *nfs, void *data,

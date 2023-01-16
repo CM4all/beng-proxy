@@ -44,7 +44,6 @@
 #include "util/StringCompare.hxx"
 #include "util/StringSplit.hxx"
 #include "util/StringStrip.hxx"
-#include "util/StringFormat.hxx"
 #include "AllocatorPtr.hxx"
 
 #include <string.h>
