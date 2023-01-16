@@ -794,6 +794,10 @@ test(
 )  
 
 istream_test_sources = []
+if libbrotlienc.found()
+  istream_test_sources += 'TestBrotliEncoderIstream.cxx'
+endif
+
 if libyamlcpp.found()
   istream_test_sources += 'TestYamlSubstIstream.cxx'
   t_istream_filter_deps += libyamlcpp
@@ -821,7 +825,6 @@ test(
     't_istream_replace.cxx',
     't_istream_subst.cxx',
     'TestAutoPipeIstream.cxx',
-    'TestBrotliEncoderIstream.cxx',
     'TestBufferedIstream.cxx',
     istream_test_sources,
     include_directories: inc,
