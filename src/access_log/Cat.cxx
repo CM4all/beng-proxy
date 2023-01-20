@@ -39,8 +39,6 @@
 #include "net/log/OneLine.hxx"
 #include "io/FileDescriptor.hxx"
 
-#include <functional>
-
 #include <unistd.h>
 
 int main(int argc, char **argv)
@@ -50,7 +48,9 @@ int main(int argc, char **argv)
 
 	const FileDescriptor fd(STDOUT_FILENO);
 
-	AccessLogServer().Run(std::bind(LogOneLine, fd,
-					std::placeholders::_1, true));
+	AccessLogServer().Run([fd](const auto &d){
+		Net::Log::LogOneLine(fd, d, true);
+	});
+
 	return 0;
 }
