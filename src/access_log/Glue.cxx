@@ -92,7 +92,7 @@ AccessLogGlue::Log(const Net::Log::Datagram &d) noexcept
 	if (client != nullptr)
 		client->Send(d);
 	else
-		LogOneLine(FileDescriptor(STDOUT_FILENO), d);
+		LogOneLine(FileDescriptor(STDOUT_FILENO), d, {});
 }
 
 void

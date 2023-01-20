@@ -48,8 +48,11 @@ int main(int argc, char **argv)
 
 	const FileDescriptor fd(STDOUT_FILENO);
 
-	AccessLogServer().Run([fd](const auto &d){
-		Net::Log::LogOneLine(fd, d, true);
+	Net::Log::OneLineOptions options;
+	options.show_site = true;
+
+	AccessLogServer().Run([fd, options](const auto &d){
+		Net::Log::LogOneLine(fd, d, options);
 	});
 
 	return 0;

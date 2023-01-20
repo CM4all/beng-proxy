@@ -237,7 +237,7 @@ Dump(const char *template_path, const Net::Log::Datagram &d)
 
 	auto fd = open_log_file(path);
 	if (fd.IsDefined())
-		LogOneLine(fd, d);
+		LogOneLine(fd, d, {});
 
 	return true;
 }
