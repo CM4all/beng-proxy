@@ -718,6 +718,10 @@ Request::HandleChainResponse(UniquePoolPtr<TranslateResponse> _response) noexcep
 		pr.body = std::move(request_body);
 	}
 
+	/* promote the CHAIN response to the final response, so
+	   its filter_4xx settings etc. are used */
+	translate.response = std::move(_response);
+
 	rl.SendRequest(pool, stopwatch,
 		       {
 			       session_id.GetClusterHash(),
