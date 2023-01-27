@@ -89,6 +89,12 @@ struct CgiAddress {
 	unsigned concurrency = 0;
 
 	/**
+	 * Set for child processes which will likely be used only
+	 * once.
+	 */
+	bool disposable = false;
+
+	/**
 	 * Pass the CGI parameter "REQUEST_URI" verbatim instead of
 	 * building it from SCRIPT_NAME, PATH_INFO and QUERY_STRING.
 	 */

@@ -215,7 +215,7 @@ try {
 				    cgi->action,
 				    cgi->path,
 				    cgi->args.ToArray(pool),
-				    cgi->parallelism,
+				    cgi->parallelism, cgi->disposable,
 				    GetRemoteHost(xff, pool, headers),
 				    method, cgi->GetURI(pool),
 				    cgi->script_name,

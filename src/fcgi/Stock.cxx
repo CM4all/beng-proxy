@@ -436,7 +436,7 @@ FcgiStock::Get(const ChildOptions &options,
 
 	auto r = NewDisposablePointer<CgiChildParams>(*tpool, executable_path,
 						      args, options,
-						      parallelism, 0);
+						      parallelism, 0, false);
 	const char *key = r->GetStockKey(*tpool);
 	return hstock.GetNow(key, std::move(r));
 }

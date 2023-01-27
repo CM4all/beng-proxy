@@ -46,15 +46,19 @@ struct CgiChildParams {
 
 	unsigned parallelism, concurrency;
 
+	bool disposable;
+
 	CgiChildParams(const char *_executable_path,
 		       ConstBuffer<const char *> _args,
 		       const ChildOptions &_options,
 		       unsigned _parallelism,
-		       unsigned _concurrency) noexcept
+		       unsigned _concurrency,
+		       bool _disposable) noexcept
 		:executable_path(_executable_path), args(_args),
 		 options(_options),
 		 parallelism(_parallelism),
-		 concurrency(_concurrency) {}
+		 concurrency(_concurrency),
+		 disposable(_disposable) {}
 
 	/**
 	 * Generates a string identifying the process.  This can be

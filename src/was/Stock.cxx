@@ -65,11 +65,14 @@ class WasChild final : public WasStockConnection, ExitListener {
 
 	std::unique_ptr<ChildProcessHandle> handle;
 
+	const bool disposable;
+
 public:
 	explicit WasChild(CreateStockItem c, SpawnService &_spawn_service,
-			  std::string_view _tag) noexcept
+			  std::string_view _tag, bool _disposable) noexcept
 		:WasStockConnection(c), spawn_service(_spawn_service),
-		 tag(_tag)
+		 tag(_tag),
+		 disposable(_disposable)
 	{
 	}
 
@@ -110,6 +113,11 @@ public:
 	}
 
 private:
+	/* virtual methods from class StockItem */
+	bool Release() noexcept override {
+		return WasStockConnection::Release() && !disposable;
+	}
+
 	/* virtual methods from class ExitListener */
 	void OnChildProcessExit(gcc_unused int status) noexcept override {
 		assert(handle);
@@ -140,7 +148,7 @@ WasStock::Create(CreateStockItem c, StockRequest _request,
 
 	assert(params.executable_path != nullptr);
 
-	auto *child = new WasChild(c, spawn_service, params.options.tag);
+	auto *child = new WasChild(c, spawn_service, params.options.tag, params.disposable);
 
 	try {
 		child->Launch(params, log_socket, log_options);
@@ -168,7 +176,7 @@ WasStock::Get(struct pool &pool,
 	      const ChildOptions &options,
 	      const char *executable_path,
 	      std::span<const char *const> args,
-	      unsigned parallelism,
+	      unsigned parallelism, bool disposable,
 	      StockGetHandler &handler,
 	      CancellablePointer &cancel_ptr) noexcept
 {
@@ -177,7 +185,8 @@ WasStock::Get(struct pool &pool,
 	auto r = NewDisposablePointer<CgiChildParams>(pool, executable_path,
 						      args, options,
 						      parallelism,
-						      0);
+						      0,
+						      disposable);
 	const char *key = r->GetStockKey(*tpool);
 
 	stock.Get(key, std::move(r), handler, cancel_ptr);

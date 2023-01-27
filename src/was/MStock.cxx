@@ -232,7 +232,8 @@ MultiWasStock::Get(AllocatorPtr alloc,
 
 	auto r = NewDisposablePointer<CgiChildParams>(alloc, executable_path,
 						      args, options,
-						      parallelism, concurrency);
+						      parallelism, concurrency,
+						      false);
 	const char *key = r->GetStockKey(*tpool);
 
 	mchild_stock.Get(key, std::move(r), concurrency, handler, cancel_ptr);

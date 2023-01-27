@@ -268,6 +268,10 @@ Response
 - ``PARALLELISM``: a 16 bit integer specifying the maximum number of
   parallel child processes of this kind (FastCGI, WAS, Multi-WAS, LHTTP)
 
+- ``DISPOSABLE``: Mark the child process as "disposable", which may
+  give it a very short idle timeout (or none at all).  To be used for
+  processes that will likely only be used once.
+
 - ``NON_BLOCKING``: If present, make the socket passed to a child
   process non-blocking (LHTTP only currently). This is needed by NodeJS
   0.12.

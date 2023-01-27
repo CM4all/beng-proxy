@@ -75,11 +75,11 @@ protected:
 		connection.Open(std::move(_socket));
 	}
 
-private:
 	/* virtual methods from class StockItem */
 	bool Borrow() noexcept override;
 	bool Release() noexcept override;
 
+private:
 	/* virtual methods from class WasIdleConnectionHandler */
 	void OnWasIdleConnectionClean() noexcept override;
 	void OnWasIdleConnectionError(std::exception_ptr e) noexcept override;

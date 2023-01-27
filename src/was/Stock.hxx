@@ -90,7 +90,7 @@ public:
 		 const ChildOptions &options,
 		 const char *executable_path,
 		 std::span<const char *const> args,
-		 unsigned parallelism,
+		 unsigned parallelism, bool disposable,
 		 StockGetHandler &handler,
 		 CancellablePointer &cancel_ptr) noexcept;
 

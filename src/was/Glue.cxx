@@ -105,11 +105,11 @@ public:
 
 	void Start(WasStock &was_stock, const ChildOptions &options,
 		   const char *action, std::span<const char *const> args,
-		   unsigned parallelism) noexcept {
+		   unsigned parallelism, bool disposable) noexcept {
 		was_stock.Get(pool,
 			      options,
 			      action, args,
-			      parallelism,
+			      parallelism, disposable,
 			      *this, stock_cancel_ptr);
 	}
 
@@ -245,7 +245,7 @@ was_request(struct pool &pool, WasStock &was_stock,
 	    const char *action,
 	    const char *path,
 	    std::span<const char *const> args,
-	    unsigned parallelism,
+	    unsigned parallelism, bool disposable,
 	    const char *remote_host,
 	    HttpMethod method, const char *uri,
 	    const char *script_name, const char *path_info,
@@ -272,5 +272,5 @@ was_request(struct pool &pool, WasStock &was_stock,
 					       parameters,
 					       handler, cancel_ptr);
 	request->Start(was_stock, options, action, args,
-		       parallelism);
+		       parallelism, disposable);
 }
