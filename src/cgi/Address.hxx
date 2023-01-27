@@ -121,6 +121,7 @@ struct CgiAddress {
 		 query_string(src.query_string), document_root(src.document_root),
 		 address_list(shallow_copy, src.address_list),
 		 concurrency(src.concurrency),
+		 disposable(src.disposable),
 		 request_uri_verbatim(src.request_uri_verbatim),
 		 expand_path(src.expand_path),
 		 expand_uri(src.expand_uri),
