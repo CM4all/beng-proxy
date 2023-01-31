@@ -54,6 +54,10 @@ struct LbListenerConfig : SocketConfig {
 
 	std::size_t max_connections_per_ip = 0;
 
+	const LbCertDatabaseConfig *cert_db = nullptr;
+
+	SslConfig ssl_config;
+
 	bool verbose_response = false;
 
 #ifdef HAVE_NGHTTP2
@@ -63,10 +67,6 @@ struct LbListenerConfig : SocketConfig {
 #endif
 
 	bool ssl = false;
-
-	SslConfig ssl_config;
-
-	const LbCertDatabaseConfig *cert_db = nullptr;
 
 	explicit LbListenerConfig(const char *_name) noexcept
 		:name(_name)
