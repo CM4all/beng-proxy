@@ -187,6 +187,11 @@ HttpServerConnection::SubmitResponse(HttpStatus status,
 		/* RFC 2616 3.8: Product Tokens */
 		headers.Write("server", BRIEF_PRODUCT_TOKEN);
 
+	if (request.request->generate_hsts_header)
+		/* TODO: hard-coded to 90 days (7776000 seconds), but
+		   this should probably be configurable */
+		headers.Write("strict-transport-security", "max-age=7776000");
+
 	GrowingBuffer headers3 = headers.ToBuffer();
 	headers3.Write("\r\n"sv);
 	auto header_stream = istream_gb_new(request_pool, std::move(headers3));

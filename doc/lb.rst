@@ -479,6 +479,9 @@ Known attributes:
   the according ``https://`` URL.  This can be specified instead of
   ``pool``.
 
+- ``hsts``: ``yes`` generates a ``Strict-Transport-Security`` header
+  in the first response of each connection.
+
 - ``max_connections_per_ip``: specifies the maximum number of
   connections from each IP address.
 

@@ -1334,6 +1334,11 @@ LbConfigParser::Listener::ParseLine(FileLineParser &line)
 			config.ssl_config.verify = SslVerify::OPTIONAL;
 		else
 			throw LineParser::Error("yes/no expected");
+	} else if (StringIsEqual(word, "hsts")) {
+		const bool value = line.NextBool();
+		line.ExpectEnd();
+
+		config.hsts = value;
 	} else
 		throw LineParser::Error("Unknown option");
 }
@@ -1357,6 +1362,9 @@ LbConfigParser::Listener::Finish()
 	if (config.destination.GetProtocol() == LbProtocol::HTTP ||
 	    config.ssl)
 		config.tcp_defer_accept = 10;
+
+	if (config.hsts && config.destination.GetProtocol() != LbProtocol::HTTP)
+		throw LineParser::Error{"HSTS only available with HTTP"};
 
 	parent.config.listeners.emplace_back(std::move(config));
 

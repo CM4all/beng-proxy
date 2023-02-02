@@ -57,6 +57,7 @@
 #include "system/Error.hxx"
 #include "util/Exception.hxx"
 #include "HttpMessageResponse.hxx"
+#include "AllocatorPtr.hxx"
 
 #ifdef HAVE_NGHTTP2
 #include "nghttp2/Server.hxx"
@@ -74,7 +75,8 @@ LbHttpConnection::LbHttpConnection(PoolPtr &&_pool, LbInstance &_instance,
 	 listener_config(listener.GetConfig()),
 	 initial_destination(_destination),
 	 client_address(address_to_string(pool, _client_address)),
-	 logger(*this)
+	 logger(*this),
+	 hsts(listener_config.hsts)
 {
 	if (client_address == nullptr)
 		client_address = "unknown";
@@ -228,6 +230,10 @@ LbHttpConnection::HandleHttpRequest(IncomingHttpRequest &request,
 				    const StopwatchPtr &parent_stopwatch,
 				    CancellablePointer &cancel_ptr) noexcept
 {
+	/* send the HSTS header only on the first response on this
+	   connection to save some overhead */
+	request.generate_hsts_header = std::exchange(hsts, false);
+
 	if (!uri_path_verify_quick(request.uri)) {
 		request.body.Clear();
 		request.SendMessage(HttpStatus::BAD_REQUEST, "Malformed request URI");

@@ -68,6 +68,8 @@ struct LbListenerConfig : SocketConfig {
 
 	bool ssl = false;
 
+	bool hsts = false;
+
 	explicit LbListenerConfig(const char *_name) noexcept
 		:name(_name)
 	{

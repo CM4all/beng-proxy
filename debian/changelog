@@ -3,6 +3,7 @@ cm4all-beng-proxy (18.0.13) unstable; urgency=low
   * merge release 17.9
   * nghttp2: generate Date and Server headers
   * lb: generate Server header in error responses
+  * lb: implement HTTP Strict Transport Security
 
  --   
 

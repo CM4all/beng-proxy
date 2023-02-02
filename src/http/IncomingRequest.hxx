@@ -74,6 +74,12 @@ struct IncomingHttpRequest {
 
 	IncomingHttpRequestLogger *logger = nullptr;
 
+	/**
+	 * If true, then the response will have a
+	 * "Strict-Transport-Security" header.
+	 */
+	bool generate_hsts_header = false;
+
 protected:
 	IncomingHttpRequest(PoolPtr &&_pool,
 			    SocketAddress _local_address,

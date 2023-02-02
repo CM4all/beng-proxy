@@ -466,6 +466,11 @@ ServerConnection::Request::SendResponse(HttpStatus status,
 		/* RFC 2616 3.8: Product Tokens */
 		hdrs.push_back(MakeNv("server", BRIEF_PRODUCT_TOKEN));
 
+	if (generate_hsts_header)
+		/* TODO: hard-coded to 90 days (7776000 seconds), but
+		   this should probably be configurable */
+		hdrs.push_back(MakeNv("strict-transport-security", "max-age=7776000"));
+
 	StringBuffer<32> content_length_buffer;
 	if (_response_body) {
 		const auto content_length = _response_body.GetAvailable(false);

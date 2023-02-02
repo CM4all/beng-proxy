@@ -52,6 +52,8 @@ class LbLuaHandler;
 struct LbGoto;
 class LbTranslationHandler;
 struct LbInstance;
+class StringMap;
+class AllocatorPtr;
 
 struct LbHttpConnection final
 	: PoolHolder, HttpServerConnectionHandler, HttpServerRequestHandler,
@@ -81,6 +83,8 @@ struct LbHttpConnection final
 #ifdef HAVE_NGHTTP2
 	UniquePoolPtr<NgHttp2::ServerConnection> http2;
 #endif
+
+	bool hsts;
 
 	LbHttpConnection(PoolPtr &&_pool, LbInstance &_instance,
 			 LbListener &_listener,
