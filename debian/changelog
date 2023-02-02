@@ -1,6 +1,6 @@
 cm4all-beng-proxy (17.9) unstable; urgency=low
 
-  * 
+  * ssl: fix erroneous "socket closed prematurely" error
 
  --   
 

@@ -163,8 +163,12 @@ FilteredSocketLease::ReadReleased() noexcept
 			break;
 
 		case BufferedResult::MORE:
-			handler.OnBufferedError(std::make_exception_ptr(SocketClosedPrematurelyError()));
-			return false;
+			if (IsReleasedEmpty()) {
+				handler.OnBufferedError(std::make_exception_ptr(SocketClosedPrematurelyError{}));
+				return false;
+			}
+
+			break;
 
 		case BufferedResult::AGAIN:
 			break;
