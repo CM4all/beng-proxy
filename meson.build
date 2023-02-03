@@ -724,7 +724,8 @@ executable(
     nfs_client_dep,
     delegate_client_dep,
     control_server_dep,
-    nghttp2_dep,
+    nghttp2_client_dep,
+    nghttp2_server_dep,
     cluster_dep,
     sodium_dep,
     prometheus_dep,
@@ -751,7 +752,7 @@ lb_config = static_library(
   dependencies: [
     avahi_dep,
     fmt_dep,
-    nghttp2_dep, # only for the HAVE_NGHTTP2 macro
+    nghttp2_features_dep, # only for the HAVE_NGHTTP2 macro
     io_config_dep,
     libpcre,
   ],
@@ -849,7 +850,8 @@ executable(
     net_log_dep,
     ssl_dep,
     pg_dep,
-    nghttp2_dep,
+    nghttp2_server_dep,
+    nghttp2_client_dep,
     http_server_dep,
     http_client_dep,
     putil_dep,
