@@ -49,6 +49,7 @@
 #include "istream/MultiFifoBufferIstream.hxx"
 #include "istream/New.hxx"
 #include "fs/FilteredSocket.hxx"
+#include "lib/fmt/ToBuffer.hxx"
 #include "net/StaticSocketAddress.hxx"
 #include "util/Cancellable.hxx"
 #include "util/StaticVector.hxx"
@@ -454,15 +455,15 @@ ServerConnection::Request::SendResponse(HttpStatus status,
 	const fmt::format_int status_string{static_cast<unsigned>(status)};
 	hdrs.push_back(MakeNv(":status", status_string.c_str()));
 
-	char content_length_string[32];
+	StringBuffer<32> content_length_buffer;
 	if (_response_body) {
 		const auto content_length = _response_body.GetAvailable(false);
 		if (content_length >= 0) {
-			snprintf(content_length_string,
-				 sizeof(content_length_string),
-				 "%lu", (unsigned long)content_length);
+			/* can't use fmt::format_int because it
+			   doesn't have a default constructor */
+			content_length_buffer = FmtBuffer<32>("{}", content_length);
 			hdrs.push_back(MakeNv("content-length",
-					      content_length_string));
+					      content_length_buffer.c_str()));
 		}
 
 		if (http_method_is_empty(method))
