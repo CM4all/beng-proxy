@@ -85,14 +85,14 @@ struct LbHttpConnection final
 	LbHttpConnection(PoolPtr &&_pool, LbInstance &_instance,
 			 LbListener &_listener,
 			 const LbGoto &_destination,
-			 SocketAddress _client_address);
+			 SocketAddress _client_address) noexcept;
 
-	void Destroy();
-	void CloseAndDestroy();
+	void Destroy() noexcept;
+	void CloseAndDestroy() noexcept;
 
 	using PoolHolder::GetPool;
 
-	bool IsEncrypted() const {
+	bool IsEncrypted() const noexcept {
 		return ssl_filter != nullptr;
 	}
 
@@ -104,9 +104,9 @@ struct LbHttpConnection final
 #endif
 	}
 
-	void SendError(IncomingHttpRequest &request, std::exception_ptr ep);
+	void SendError(IncomingHttpRequest &request, std::exception_ptr ep) noexcept;
 	void LogSendError(IncomingHttpRequest &request, std::exception_ptr ep,
-			  unsigned log_level=2);
+			  unsigned log_level=2) noexcept;
 
 	/* virtual methods from class HttpServerConnectionHandler */
 	void RequestHeadersFinished(IncomingHttpRequest &request) noexcept override;
@@ -122,25 +122,25 @@ public:
 	void HandleHttpRequest(const LbGoto &destination,
 			       IncomingHttpRequest &request,
 			       const StopwatchPtr &parent_stopwatch,
-			       CancellablePointer &cancel_ptr);
+			       CancellablePointer &cancel_ptr) noexcept;
 
 private:
 	void ForwardHttpRequest(LbCluster &cluster,
 				IncomingHttpRequest &request,
-				CancellablePointer &cancel_ptr);
+				CancellablePointer &cancel_ptr) noexcept;
 
 	void InvokeLua(LbLuaHandler &handler,
 		       IncomingHttpRequest &request,
 		       const StopwatchPtr &parent_stopwatch,
-		       CancellablePointer &cancel_ptr);
+		       CancellablePointer &cancel_ptr) noexcept;
 
 	void AskTranslationServer(LbTranslationHandler &handler,
 				  IncomingHttpRequest &request,
-				  CancellablePointer &cancel_ptr);
+				  CancellablePointer &cancel_ptr) noexcept;
 
 	void ResolveConnect(const char *host,
 			    IncomingHttpRequest &request,
-			    CancellablePointer &cancel_ptr);
+			    CancellablePointer &cancel_ptr) noexcept;
 
 protected:
 	/* virtual methods from class LoggerDomainFactory */
@@ -154,4 +154,4 @@ NewLbHttpConnection(LbInstance &instance,
 		    PoolPtr pool,
 		    UniquePoolPtr<FilteredSocket> socket,
 		    const SslFilter *ssl_filter,
-		    SocketAddress address);
+		    SocketAddress address) noexcept;

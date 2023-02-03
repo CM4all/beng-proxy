@@ -189,7 +189,7 @@ LbHttpRequest::OnTranslateError(std::exception_ptr ep) noexcept
 void
 LbHttpConnection::AskTranslationServer(LbTranslationHandler &handler,
 				       IncomingHttpRequest &request,
-				       CancellablePointer &cancel_ptr)
+				       CancellablePointer &cancel_ptr) noexcept
 {
 	auto *r = NewFromPool<LbHttpRequest>(request.pool, *this, handler, request,
 					     cancel_ptr);

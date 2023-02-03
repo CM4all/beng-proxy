@@ -46,10 +46,10 @@ class LbLuaResponseHandler final : public HttpResponseHandler {
 
 public:
 	LbLuaResponseHandler(LbHttpConnection &_connection,
-			     IncomingHttpRequest &_request)
+			     IncomingHttpRequest &_request) noexcept
 		:connection(_connection), request(_request) {}
 
-	bool IsFinished() const {
+	bool IsFinished() const noexcept {
 		return finished;
 	}
 
@@ -88,7 +88,7 @@ void
 LbHttpConnection::InvokeLua(LbLuaHandler &handler,
 			    IncomingHttpRequest &request,
 			    const StopwatchPtr &parent_stopwatch,
-			    CancellablePointer &cancel_ptr)
+			    CancellablePointer &cancel_ptr) noexcept
 {
 	LbLuaResponseHandler response_handler(*this, request);
 	const LbGoto *g;

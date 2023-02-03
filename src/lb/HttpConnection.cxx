@@ -68,7 +68,7 @@ inline
 LbHttpConnection::LbHttpConnection(PoolPtr &&_pool, LbInstance &_instance,
 				   LbListener &_listener,
 				   const LbGoto &_destination,
-				   SocketAddress _client_address)
+				   SocketAddress _client_address) noexcept
 	:PoolHolder(std::move(_pool)), instance(_instance),
 	 listener(_listener),
 	 listener_config(listener.GetConfig()),
@@ -82,7 +82,7 @@ LbHttpConnection::LbHttpConnection(PoolPtr &&_pool, LbInstance &_instance,
 
 [[gnu::pure]]
 static int
-HttpServerLogLevel(std::exception_ptr e)
+HttpServerLogLevel(std::exception_ptr e) noexcept
 {
 	try {
 		FindRetrowNested<HttpServerSocketError>(e);
@@ -116,7 +116,7 @@ NewLbHttpConnection(LbInstance &instance,
 		    PoolPtr pool,
 		    UniquePoolPtr<FilteredSocket> socket,
 		    const SslFilter *ssl_filter,
-		    SocketAddress address)
+		    SocketAddress address) noexcept
 {
 	assert(listener.GetProtocol() == LbProtocol::HTTP);
 
@@ -154,7 +154,7 @@ NewLbHttpConnection(LbInstance &instance,
 }
 
 void
-LbHttpConnection::Destroy()
+LbHttpConnection::Destroy() noexcept
 {
 	assert(!instance.http_connections.empty());
 
@@ -165,7 +165,7 @@ LbHttpConnection::Destroy()
 }
 
 void
-LbHttpConnection::CloseAndDestroy()
+LbHttpConnection::CloseAndDestroy() noexcept
 {
 	assert(listener.GetProtocol() == LbProtocol::HTTP);
 #ifdef HAVE_NGHTTP2
@@ -179,7 +179,7 @@ LbHttpConnection::CloseAndDestroy()
 }
 
 void
-LbHttpConnection::SendError(IncomingHttpRequest &request, std::exception_ptr ep)
+LbHttpConnection::SendError(IncomingHttpRequest &request, std::exception_ptr ep) noexcept
 {
 	if (const auto *r = FindNested<HttpMessageResponse>(ep)) {
 		request.SendMessage(r->GetStatus(),
@@ -197,7 +197,7 @@ LbHttpConnection::SendError(IncomingHttpRequest &request, std::exception_ptr ep)
 void
 LbHttpConnection::LogSendError(IncomingHttpRequest &request,
 			       std::exception_ptr ep,
-			       unsigned log_level)
+			       unsigned log_level) noexcept
 {
 	logger(log_level, ep);
 	SendError(request, ep);
@@ -267,7 +267,7 @@ void
 LbHttpConnection::HandleHttpRequest(const LbGoto &destination,
 				    IncomingHttpRequest &request,
 				    const StopwatchPtr &parent_stopwatch,
-				    CancellablePointer &cancel_ptr)
+				    CancellablePointer &cancel_ptr) noexcept
 {
 	const auto &goto_ = destination.FindRequestLeaf(request);
 	if (goto_.response != nullptr) {
@@ -303,7 +303,7 @@ LbHttpConnection::HandleHttpRequest(const LbGoto &destination,
 void
 LbHttpConnection::ForwardHttpRequest(LbCluster &cluster,
 				     IncomingHttpRequest &request,
-				     CancellablePointer &cancel_ptr)
+				     CancellablePointer &cancel_ptr) noexcept
 {
 	if (cluster.GetConfig().tarpit) {
 		AccountedClientConnection::NoteRequest();

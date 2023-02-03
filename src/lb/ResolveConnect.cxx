@@ -91,7 +91,7 @@ public:
 		_cancel_ptr = *this;
 	}
 
-	void Start(const char *name, SocketAddress address);
+	void Start(const char *name, SocketAddress address) noexcept;
 
 private:
 	void Destroy() noexcept {
@@ -100,20 +100,20 @@ private:
 		DeleteFromPool(pool, this);
 	}
 
-	void DoRelease() {
+	void DoRelease() noexcept {
 		assert(lease_state == LeaseState::PENDING);
 
 		lease_state = LeaseState::NONE;
 		stock_item->Put(!reuse);
 	}
 
-	bool CheckRelease() {
+	bool CheckRelease() noexcept {
 		if (lease_state == LeaseState::PENDING)
 			DoRelease();
 		return lease_state == LeaseState::NONE;
 	}
 
-	void ResponseSent() {
+	void ResponseSent() noexcept {
 		assert(!response_sent);
 		response_sent = true;
 
@@ -254,7 +254,7 @@ LbResolveConnectRequest::OnHttpError(std::exception_ptr ep) noexcept
 }
 
 inline void
-LbResolveConnectRequest::Start(const char *name, SocketAddress address)
+LbResolveConnectRequest::Start(const char *name, SocketAddress address) noexcept
 {
 	connection.instance.fs_stock->Get(pool, nullptr,
 					  name, 0, false, nullptr,
@@ -268,7 +268,7 @@ LbResolveConnectRequest::Start(const char *name, SocketAddress address)
 void
 LbHttpConnection::ResolveConnect(const char *host,
 				 IncomingHttpRequest &request,
-				 CancellablePointer &cancel_ptr)
+				 CancellablePointer &cancel_ptr) noexcept
 {
 	auto &rl = *(LbRequestLogger *)request.logger;
 	rl.forwarded_to = host;
