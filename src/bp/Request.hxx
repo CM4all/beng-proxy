@@ -298,13 +298,11 @@ private:
 	 */
 	const char *product_token = nullptr;
 
-#ifndef NO_DATE_HEADER
 	/**
 	 * The "date" response header (RFC 2616 14.18) being forwarded;
 	 * nullptr if beng-proxy shall generate one.
 	 */
 	const char *date = nullptr;
-#endif
 
 	/**
 	 * An identifier for the source stream of the current

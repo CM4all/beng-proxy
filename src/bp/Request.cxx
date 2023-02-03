@@ -177,9 +177,7 @@ Request::ForwardResponseHeaders(HttpStatus status,
 
 	product_token = headers.Remove("server");
 
-#ifdef NO_DATE_HEADER
 	date = headers.Remove("date");
-#endif
 
 	return headers;
 }
