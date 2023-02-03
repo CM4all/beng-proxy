@@ -498,10 +498,10 @@ inline void
 Request::MoreResponseHeaders(HttpHeaders &headers) const noexcept
 {
 	/* RFC 2616 3.8: Product Tokens */
-	if (product_token != nullptr)
+	if (product_token != nullptr) {
 		headers.Write("server", product_token);
-	else
-		headers.generate_server_header = true;
+		headers.generate_server_header = false;
+	}
 
 	/* RFC 2616 14.18: Date */
 	if (date != nullptr) {
