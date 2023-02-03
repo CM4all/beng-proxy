@@ -40,6 +40,7 @@
 #include "pool/pool.hxx"
 #include "pool/PSocketAddress.hxx"
 #include "http/server/Handler.hxx"
+#include "http/Date.hxx"
 #include "http/IncomingRequest.hxx"
 #include "http/Headers.hxx"
 #include "http/Logger.hxx"
@@ -50,12 +51,14 @@
 #include "istream/New.hxx"
 #include "fs/FilteredSocket.hxx"
 #include "lib/fmt/ToBuffer.hxx"
+#include "event/Loop.hxx"
 #include "net/StaticSocketAddress.hxx"
 #include "util/Cancellable.hxx"
 #include "util/StaticVector.hxx"
 #include "util/StringAPI.hxx"
 #include "address_string.hxx"
 #include "stopwatch.hxx"
+#include "product.h" // for BRIEF_PRODUCT_TOKEN
 
 #include <nghttp2/nghttp2.h>
 
@@ -454,6 +457,14 @@ ServerConnection::Request::SendResponse(HttpStatus status,
 
 	const fmt::format_int status_string{static_cast<unsigned>(status)};
 	hdrs.push_back(MakeNv(":status", status_string.c_str()));
+
+	if (response_headers.generate_date_header)
+		/* RFC 2616 14.18: Date */
+		hdrs.push_back(MakeNv("date", http_date_format(connection.socket->GetEventLoop().SystemNow())));
+
+	if (response_headers.generate_server_header)
+		/* RFC 2616 3.8: Product Tokens */
+		hdrs.push_back(MakeNv("server", BRIEF_PRODUCT_TOKEN));
 
 	StringBuffer<32> content_length_buffer;
 	if (_response_body) {
