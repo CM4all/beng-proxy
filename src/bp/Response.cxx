@@ -504,10 +504,10 @@ Request::MoreResponseHeaders(HttpHeaders &headers) const noexcept
 		headers.generate_server_header = true;
 
 	/* RFC 2616 14.18: Date */
-	if (date != nullptr)
+	if (date != nullptr) {
 		headers.Write("date", date);
-	else
-		headers.generate_date_header = true;
+		headers.generate_date_header = false;
+	}
 
 	if (translate.response)
 		translation_response_headers(headers, *translate.response);

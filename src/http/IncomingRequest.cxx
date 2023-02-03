@@ -89,7 +89,6 @@ IncomingHttpRequest::SendSimpleResponse(HttpStatus status,
 		msg = http_status_to_string(status);
 
 	HttpHeaders response_headers;
-	response_headers.generate_date_header = true;
 
 	if (location != nullptr)
 		response_headers.Write("location", location);
@@ -108,7 +107,6 @@ void
 IncomingHttpRequest::SendMessage(HttpStatus status, const char *msg) noexcept
 {
 	HttpHeaders response_headers;
-	response_headers.generate_date_header = true;
 
 	response_headers.Write("content-type", "text/plain");
 
@@ -129,7 +127,6 @@ IncomingHttpRequest::SendRedirect(HttpStatus status, const char *location,
 		msg = http_status_to_string(status);
 
 	HttpHeaders response_headers;
-	response_headers.generate_date_header = true;
 
 	response_headers.Write("content-type", "text/plain");
 	response_headers.Write("location", location);

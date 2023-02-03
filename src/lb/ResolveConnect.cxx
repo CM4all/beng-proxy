@@ -215,6 +215,8 @@ LbResolveConnectRequest::OnHttpResponse(HttpStatus status, StringMap &&_headers,
 	assert(!response_sent);
 
 	HttpHeaders headers(std::move(_headers));
+	headers.generate_date_header = false;
+	headers.generate_server_header = false;
 
 	if (request.method == HttpMethod::HEAD && !connection.IsHTTP2())
 		/* pass Content-Length, even though there is no response body

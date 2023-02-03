@@ -55,7 +55,7 @@ public:
 	 *
 	 * @see RFC 2616 14.18
 	 */
-	bool generate_date_header = false;
+	bool generate_date_header = true;
 
 	/**
 	 * Shall the HTTP server library generate a "Server" response
@@ -63,7 +63,7 @@ public:
 	 *
 	 * @see RFC 2616 3.8
 	 */
-	bool generate_server_header = false;
+	bool generate_server_header = true;
 
 	HttpHeaders() = default;
 
