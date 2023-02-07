@@ -648,7 +648,7 @@ HttpClient::TryWriteBuckets() noexcept
 		stopwatch.RecordEvent("request_canceled");
 		return BucketResult::DEPLETED;
 	} catch (...) {
-		assert(!HasInput());
+		assert(HasInput());
 		stopwatch.RecordEvent("send_error");
 		AbortResponse(std::current_exception());
 		return BucketResult::DESTROYED;
