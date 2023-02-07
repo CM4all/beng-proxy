@@ -750,7 +750,7 @@ lb_config = static_library(
   'src/lb/ClusterConfig.cxx',
   include_directories: inc,
   dependencies: [
-    avahi_dep,
+    avahi_dep, # only for the HAVE_AVAHI macro
     fmt_dep,
     nghttp2_features_dep, # only for the HAVE_NGHTTP2 macro
     io_config_dep,
@@ -761,6 +761,8 @@ lb_config = static_library(
 lb_config_dep = declare_dependency(
   link_with: lb_config,
   dependencies: [
+    avahi_dep, # only for the HAVE_AVAHI macro
+    nghttp2_features_dep, # only for the HAVE_NGHTTP2 macro
     libpcre,
   ],
 )
