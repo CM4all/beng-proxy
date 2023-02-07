@@ -364,7 +364,7 @@ private:
 	 * Like TryWriteBuckets2(), but catches/handles its exceptions
 	 * and adds internal housekeeping.
 	 */
-	BucketResult TryWriteBuckets();
+	BucketResult TryWriteBuckets() noexcept;
 
 	/**
 	 * Throws on error.
@@ -393,9 +393,9 @@ private:
 
 	void ResponseBodyEOF() noexcept;
 
-	BufferedResult FeedBody(std::span<const std::byte> b);
+	BufferedResult FeedBody(std::span<const std::byte> b) noexcept;
 
-	DirectResult TryResponseDirect(SocketDescriptor fd, FdType fd_type);
+	DirectResult TryResponseDirect(SocketDescriptor fd, FdType fd_type) noexcept;
 
 	/* virtual methods from class BufferedSocketHandler */
 	BufferedResult OnBufferedData() override;
@@ -882,7 +882,7 @@ HttpClient::ResponseBodyEOF() noexcept
 }
 
 inline BufferedResult
-HttpClient::FeedBody(std::span<const std::byte> b)
+HttpClient::FeedBody(std::span<const std::byte> b) noexcept
 {
 	assert(response.state == Response::State::BODY);
 
@@ -1024,7 +1024,7 @@ HttpClient::FeedHeaders(std::span<const std::byte> b)
 }
 
 inline DirectResult
-HttpClient::TryResponseDirect(SocketDescriptor fd, FdType fd_type)
+HttpClient::TryResponseDirect(SocketDescriptor fd, FdType fd_type) noexcept
 {
 	assert(IsConnected());
 	assert(response.state == Response::State::BODY);
