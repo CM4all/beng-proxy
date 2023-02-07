@@ -637,7 +637,7 @@ HttpClient::TryWriteBuckets2()
 }
 
 HttpClient::BucketResult
-HttpClient::TryWriteBuckets()
+HttpClient::TryWriteBuckets() noexcept
 {
 	BucketResult result;
 
