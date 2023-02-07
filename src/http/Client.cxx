@@ -351,7 +351,19 @@ private:
 	int AsFD() noexcept;
 	void Close() noexcept;
 
+	/**
+	 * Try to transfer data from #input via
+	 * Istream::FillBucketList().  Does not do internal
+	 * housekeeping; see TryWriteBuckets().
+	 *
+	 * Throws on error.
+	 */
 	BucketResult TryWriteBuckets2();
+
+	/**
+	 * Like TryWriteBuckets2(), but catches/handles its exceptions
+	 * and adds internal housekeeping.
+	 */
 	BucketResult TryWriteBuckets();
 
 	/**
