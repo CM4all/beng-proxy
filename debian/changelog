@@ -1,6 +1,6 @@
 cm4all-beng-proxy (18.0.14) unstable; urgency=low
 
-  * 
+  * merge release 17.10
 
  --   
 
@@ -104,6 +104,12 @@ cm4all-beng-proxy (18.0.1) unstable; urgency=low
   * translation: add packet WRITE_FILE
 
  -- Max Kellermann <mk@cm4all.com>  Fri, 16 Sep 2022 17:25:24 +0200
+
+cm4all-beng-proxy (17.10) unstable; urgency=low
+
+  * http_client: fix assertion failure
+
+ -- Max Kellermann <mk@cm4all.com>  Tue, 07 Feb 2023 14:44:33 +0100
 
 cm4all-beng-proxy (17.9) unstable; urgency=low
 

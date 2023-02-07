@@ -352,8 +352,20 @@ private:
 	int AsFD() noexcept;
 	void Close() noexcept;
 
+	/**
+	 * Try to transfer data from #input via
+	 * Istream::FillBucketList().  Does not do internal
+	 * housekeeping; see TryWriteBuckets().
+	 *
+	 * Throws on error.
+	 */
 	BucketResult TryWriteBuckets2();
-	BucketResult TryWriteBuckets();
+
+	/**
+	 * Like TryWriteBuckets2(), but catches/handles its exceptions
+	 * and adds internal housekeeping.
+	 */
+	BucketResult TryWriteBuckets() noexcept;
 
 	/**
 	 * Throws on error.
@@ -382,9 +394,9 @@ private:
 
 	void ResponseBodyEOF() noexcept;
 
-	BufferedResult FeedBody(std::span<const std::byte> b);
+	BufferedResult FeedBody(std::span<const std::byte> b) noexcept;
 
-	DirectResult TryResponseDirect(SocketDescriptor fd, FdType fd_type);
+	DirectResult TryResponseDirect(SocketDescriptor fd, FdType fd_type) noexcept;
 
 	/* virtual methods from class BufferedSocketHandler */
 	BufferedResult OnBufferedData() override;
@@ -626,7 +638,7 @@ HttpClient::TryWriteBuckets2()
 }
 
 HttpClient::BucketResult
-HttpClient::TryWriteBuckets()
+HttpClient::TryWriteBuckets() noexcept
 {
 	BucketResult result;
 
@@ -637,7 +649,7 @@ HttpClient::TryWriteBuckets()
 		stopwatch.RecordEvent("request_canceled");
 		return BucketResult::DEPLETED;
 	} catch (...) {
-		assert(!HasInput());
+		assert(HasInput());
 		stopwatch.RecordEvent("send_error");
 		AbortResponse(std::current_exception());
 		return BucketResult::DESTROYED;
@@ -871,7 +883,7 @@ HttpClient::ResponseBodyEOF() noexcept
 }
 
 inline BufferedResult
-HttpClient::FeedBody(std::span<const std::byte> b)
+HttpClient::FeedBody(std::span<const std::byte> b) noexcept
 {
 	assert(response.state == Response::State::BODY);
 
@@ -1013,7 +1025,7 @@ HttpClient::FeedHeaders(std::span<const std::byte> b)
 }
 
 inline DirectResult
-HttpClient::TryResponseDirect(SocketDescriptor fd, FdType fd_type)
+HttpClient::TryResponseDirect(SocketDescriptor fd, FdType fd_type) noexcept
 {
 	assert(IsConnected());
 	assert(response.state == Response::State::BODY);
