@@ -84,6 +84,13 @@ lhttp_stock_get(LhttpStock *lhttp_stock,
 SocketDescriptor
 lhttp_stock_item_get_socket(const StockItem &item) noexcept;
 
+/**
+ * Abandon the socket.  Invoke this if the socket returned by
+ * lhttp_stock_item_get_socket() has been closed by its caller.
+ */
+void
+lhttp_stock_item_abandon_socket(StockItem &item) noexcept;
+
 [[gnu::pure]]
 FdType
 lhttp_stock_item_get_type(const StockItem &item) noexcept;
