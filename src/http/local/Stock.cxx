@@ -155,6 +155,7 @@ public:
 	}
 
 private:
+	void Read() noexcept;
 	void EventCallback(unsigned events) noexcept;
 
 	/* virtual methods from LoggerDomainFactory */
@@ -180,6 +181,17 @@ lhttp_stock_key(struct pool *pool, const LhttpAddress *address) noexcept
 	return address->GetServerId(AllocatorPtr(*pool));
 }
 
+inline void
+LhttpConnection::Read() noexcept
+{
+	char buffer;
+	ssize_t nbytes = GetSocket().Read(&buffer, sizeof(buffer));
+	if (nbytes < 0)
+		logger(2, "error on idle LHTTP connection: ", strerror(errno));
+	else if (nbytes > 0)
+		logger(2, "unexpected data from idle LHTTP connection");
+}
+
 /*
  * libevent callback
  *
@@ -188,13 +200,7 @@ lhttp_stock_key(struct pool *pool, const LhttpAddress *address) noexcept
 inline void
 LhttpConnection::EventCallback(unsigned) noexcept
 {
-	char buffer;
-	ssize_t nbytes = GetSocket().Read(&buffer, sizeof(buffer));
-	if (nbytes < 0)
-		logger(2, "error on idle LHTTP connection: ", strerror(errno));
-	else if (nbytes > 0)
-		logger(2, "unexpected data from idle LHTTP connection");
-
+	Read();
 	InvokeIdleDisconnect();
 }
 
