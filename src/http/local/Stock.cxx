@@ -165,6 +165,15 @@ private:
 
 	/* virtual methods from class StockItem */
 	bool Borrow() noexcept override {
+		if (event.GetReadyFlags() != 0) [[unlikely]] {
+			/* this connection was probably closed, but
+			   our SocketEvent callback hasn't been
+			   invoked yet; refuse to use this item; the
+			   caller will destroy the connection */
+			Read();
+			return false;
+		}
+
 		event.Cancel();
 		return true;
 	}
