@@ -133,6 +133,13 @@ public:
 		return event.GetSocket();
 	}
 
+	void AbandonSocket() noexcept {
+		assert(event.IsDefined());
+		assert(event.GetScheduledFlags() == 0);
+
+		event.Abandon();
+	}
+
 	gcc_pure
 	std::string_view GetTag() const noexcept {
 		return child.GetTag();
@@ -147,6 +154,7 @@ public:
 	}
 
 private:
+	void Read() noexcept;
 	void EventCallback(unsigned events) noexcept;
 
 	/* virtual methods from LoggerDomainFactory */
@@ -156,6 +164,15 @@ private:
 
 	/* virtual methods from class StockItem */
 	bool Borrow() noexcept override {
+		if (event.GetReadyFlags() != 0) [[unlikely]] {
+			/* this connection was probably closed, but
+			   our SocketEvent callback hasn't been
+			   invoked yet; refuse to use this item; the
+			   caller will destroy the connection */
+			Read();
+			return false;
+		}
+
 		event.Cancel();
 		return true;
 	}
@@ -172,6 +189,17 @@ lhttp_stock_key(struct pool *pool, const LhttpAddress *address) noexcept
 	return address->GetServerId(AllocatorPtr(*pool));
 }
 
+inline void
+LhttpConnection::Read() noexcept
+{
+	char buffer;
+	ssize_t nbytes = GetSocket().Read(&buffer, sizeof(buffer));
+	if (nbytes < 0)
+		logger(2, "error on idle LHTTP connection: ", strerror(errno));
+	else if (nbytes > 0)
+		logger(2, "unexpected data from idle LHTTP connection");
+}
+
 /*
  * libevent callback
  *
@@ -180,13 +208,7 @@ lhttp_stock_key(struct pool *pool, const LhttpAddress *address) noexcept
 inline void
 LhttpConnection::EventCallback(unsigned) noexcept
 {
-	char buffer;
-	ssize_t nbytes = GetSocket().Read(&buffer, sizeof(buffer));
-	if (nbytes < 0)
-		logger(2, "error on idle LHTTP connection: ", strerror(errno));
-	else if (nbytes > 0)
-		logger(2, "unexpected data from idle LHTTP connection");
-
+	Read();
 	InvokeIdleDisconnect();
 }
 
@@ -400,6 +422,14 @@ lhttp_stock_item_get_socket(const StockItem &item) noexcept
 	const auto *connection = (const LhttpConnection *)&item;
 
 	return connection->GetSocket();
+}
+
+void
+lhttp_stock_item_abandon_socket(StockItem &item) noexcept
+{
+	auto &connection = static_cast<LhttpConnection &>(item);
+
+	connection.AbandonSocket();
 }
 
 FdType

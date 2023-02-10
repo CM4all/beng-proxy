@@ -112,6 +112,14 @@ cm4all-beng-proxy (18.0.1) unstable; urgency=low
 
  -- Max Kellermann <mk@cm4all.com>  Fri, 16 Sep 2022 17:25:24 +0200
 
+cm4all-beng-proxy (17.11) unstable; urgency=low
+
+  * lhttp: fix double close() bug resulting in EBADF
+  * lhttp: reap processes that have exited while idle
+  * lhttp: check for closed idle connection before borrowing it
+
+ -- Max Kellermann <mk@cm4all.com>  Fri, 10 Feb 2023 10:43:41 +0100
+
 cm4all-beng-proxy (17.10) unstable; urgency=low
 
   * http_client: fix assertion failure

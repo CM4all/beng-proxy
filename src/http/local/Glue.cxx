@@ -77,6 +77,8 @@ private:
 	void ReleaseLease(bool reuse) noexcept override {
 		if (socket.IsConnected())
 			socket.Abandon();
+		else
+			lhttp_stock_item_abandon_socket(stock_item);
 
 		stock_item.Put(!reuse);
 
