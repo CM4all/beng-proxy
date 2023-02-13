@@ -369,9 +369,9 @@ Request::HandleFileAddress(const FileAddress &address,
 	    file_request.range.type == HttpRangeRequest::Type::NONE &&
 	    !IsTransformationEnabled() &&
 	    (CheckCompressedFile(address.deflated, fd, st, "deflate") ||
-	     (address.auto_brotli_path &&
+	     ((address.auto_brotli_path || translate.auto_brotli_path) &&
 	      CheckAutoCompressedFile(address.path, fd, st, "br", ".br")) ||
-	     (address.auto_gzipped &&
+	     ((address.auto_gzipped || translate.auto_gzipped) &&
 	      CheckAutoCompressedFile(address.path, fd, st, "gzip", ".gz")) ||
 	     CheckCompressedFile(address.gzipped, fd, st, "gzip")))
 		return;

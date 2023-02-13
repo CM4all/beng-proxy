@@ -240,6 +240,7 @@ private:
 
 	/* virtual methods from class SuffixRegistryHandler */
 	void OnSuffixRegistrySuccess(const char *content_type,
+				     bool auto_gzipped, bool auto_brotli_path,
 				     const IntrusiveForwardList<Transformation> &transformations) noexcept override;
 	void OnSuffixRegistryError(std::exception_ptr ep) noexcept override;
 };
@@ -783,6 +784,7 @@ WidgetRequest::SendRequest() noexcept
 
 void
 WidgetRequest::OnSuffixRegistrySuccess(const char *_content_type,
+				       bool, bool,
 				       // TODO: apply transformations
 				       gcc_unused const IntrusiveForwardList<Transformation> &_transformations) noexcept
 {

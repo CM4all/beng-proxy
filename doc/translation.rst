@@ -1474,6 +1474,10 @@ Example conversation:
 If the suffix is unknown, the translation server may omit the
 ``CONTENT_TYPE`` packet and only reply with ``BEGIN`` and ``END``.
 
+``AUTO_GZIPPED`` and ``AUTO_BROTLI_PATH`` may be specified if this
+file type is likely to have a precompressed file in the same
+directory.
+
 Additionally, the translation server may specify transformations
 (``PROCESS`` or ``FILTER``) for all files of this type. They will be
 applied before other transformations from the original translation

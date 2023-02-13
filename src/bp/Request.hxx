@@ -244,6 +244,8 @@ private:
 		 * anymore.
 		 */
 		bool had_internal_redirect = false;
+
+		bool auto_gzipped = false, auto_brotli_path = false;
 	} translate;
 
 	/**
@@ -941,6 +943,7 @@ private:
 
 	/* virtual methods from class SuffixRegistryHandler */
 	void OnSuffixRegistrySuccess(const char *content_type,
+				     bool auto_gzipped, bool auto_brotli_path,
 				     const IntrusiveForwardList<Transformation> &transformations) noexcept override;
 	void OnSuffixRegistryError(std::exception_ptr ep) noexcept override;
 };

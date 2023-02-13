@@ -100,6 +100,9 @@ class Translation(Protocol):
 
         if suffix in content_types:
             response.packet(TRANSLATE_CONTENT_TYPE, content_types[suffix])
+            if content_types[suffix].startswith('text/'):
+                response.packet(TRANSLATE_AUTO_GZIPPED)
+                response.packet(TRANSLATE_AUTO_BROTLI_PATH)
         return response
 
     def _handle_login(self, user, password, service, listener_tag):
