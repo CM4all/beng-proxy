@@ -19,10 +19,10 @@ public:
 
 private:
 	bool Check() {
-		if (gcc_likely(HasInput()))
+		if (HasInput()) [[likely]]
 			return true;
 
-		if (gcc_unlikely(input_error))
+		if (input_error) [[unlikely]]
 			DestroyError(input_error);
 		else
 			DestroyEof();
@@ -38,32 +38,32 @@ public:
 	}
 
 	off_t _GetAvailable(bool partial) noexcept override {
-		if (gcc_likely(HasInput()))
+		if (HasInput()) [[likely]]
 			return ForwardIstream::_GetAvailable(partial);
 
 		return input_error ? -1 : 0;
 	}
 
 	off_t _Skip(off_t length) noexcept override {
-		return gcc_likely(HasInput())
+		return HasInput()
 			? ForwardIstream::_Skip(length)
 			: -1;
 	}
 
 	void _Read() noexcept override {
-		if (gcc_likely(Check()))
+		if (Check()) [[likely]]
 			ForwardIstream::_Read();
 	}
 
 	void _FillBucketList(IstreamBucketList &list) override {
-		if (gcc_likely(HasInput())) {
+		if (HasInput()) [[likely]] {
 			try {
 				input.FillBucketList(list);
 			} catch (...) {
 				Destroy();
 				throw;
 			}
-		} else if (gcc_unlikely(input_error)) {
+		} else if (input_error) [[unlikely]] {
 			auto copy = input_error;
 			Destroy();
 			std::rethrow_exception(copy);
@@ -73,7 +73,7 @@ public:
 	std::size_t _ConsumeBucketList(std::size_t nbytes) noexcept override {
 		assert(!input_error);
 
-		if (gcc_likely(HasInput()))
+		if (HasInput()) [[likely]]
 			return ForwardIstream::_ConsumeBucketList(nbytes);
 		else
 			return 0;
@@ -86,7 +86,7 @@ public:
 	}
 
 	void _Close() noexcept override {
-		if (gcc_likely(HasInput()))
+		if (HasInput()) [[likely]]
 			/* the input object is still there */
 			ForwardIstream::_Close();
 		else

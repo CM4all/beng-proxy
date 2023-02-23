@@ -282,7 +282,7 @@ WasOutput::OnData(const std::span<const std::byte> src) noexcept
 	got_data = true;
 
 	ssize_t nbytes = GetPipe().Write(src.data(), src.size());
-	if (gcc_likely(nbytes > 0)) {
+	if (nbytes > 0) [[likely]] {
 		sent += nbytes;
 
 		if (IsEof()) {
@@ -306,7 +306,7 @@ WasOutput::OnData(const std::span<const std::byte> src) noexcept
 }
 
 IstreamDirectResult
-WasOutput::OnDirect(gcc_unused FdType type, FileDescriptor source_fd,
+WasOutput::OnDirect(FdType, FileDescriptor source_fd,
 		    off_t source_offset,
 		    std::size_t max_length) noexcept
 {

@@ -10,6 +10,7 @@
 #include "system/Error.hxx"
 #include "io/Splice.hxx"
 #include "io/SpliceSupport.hxx"
+#include "util/Compiler.h"
 
 #include <assert.h>
 #include <errno.h>
@@ -244,7 +245,7 @@ AutoPipeIstream::_SetDirect(FdTypeMask mask) noexcept
 off_t
 AutoPipeIstream::_GetAvailable(bool partial) noexcept
 {
-	if (gcc_likely(input.IsDefined())) {
+	if (input.IsDefined()) [[likely]] {
 		off_t available = input.GetAvailable(partial);
 		if (piped > 0) {
 			if (available != -1)

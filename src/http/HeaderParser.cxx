@@ -40,9 +40,9 @@ header_parse_line(AllocatorPtr alloc, StringMap &headers,
 {
 	auto [name, value] = Split(line, ':');
 
-	if (gcc_unlikely(value.data() == nullptr ||
-			 !http_header_name_valid(name) ||
-			 !IsValidHeaderValue(value)))
+	if (value.data() == nullptr ||
+	    !http_header_name_valid(name) ||
+	    !IsValidHeaderValue(value)) [[unlikely]]
 		return false;
 
 	value = StripLeft(value);

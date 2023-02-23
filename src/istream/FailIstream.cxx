@@ -20,7 +20,7 @@ public:
 		DestroyError(error);
 	}
 
-	void _FillBucketList(gcc_unused IstreamBucketList &list) override {
+	void _FillBucketList(IstreamBucketList &) override {
 		auto copy = error;
 		Destroy();
 		std::rethrow_exception(copy);
