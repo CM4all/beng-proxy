@@ -602,7 +602,10 @@ sources = [
 ]
 
 if uring_dep.found()
-  sources += 'src/io/UringOpenStat.cxx'
+  sources += [
+    'src/io/UringOpenStat.cxx',
+    'src/io/CoStatAt.cxx',
+  ]
 endif
 
 if nfs_client_dep.found()
