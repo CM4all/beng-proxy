@@ -238,7 +238,7 @@ WidgetContainerParser::OnXmlAttributeFinished(const XmlParserAttribute &attr) no
 	}
 }
 
-gcc_pure
+[[gnu::pure]]
 static bool
 header_name_valid(const char *name, size_t length) noexcept
 {

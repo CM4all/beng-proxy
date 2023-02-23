@@ -303,7 +303,7 @@ private:
  * @param rewrite_empty rewrite empty URIs?  This is not always
  * necessary, but definitely is for form actions.
  */
-gcc_pure
+[[gnu::pure]]
 static bool
 CanRewriteUri(std::string_view uri, bool rewrite_empty) noexcept
 {

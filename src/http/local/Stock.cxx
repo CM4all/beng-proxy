@@ -140,7 +140,7 @@ public:
 		event.Abandon();
 	}
 
-	gcc_pure
+	[[gnu::pure]]
 	std::string_view GetTag() const noexcept {
 		return child.GetTag();
 	}

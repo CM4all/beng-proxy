@@ -108,7 +108,7 @@ public:
 private:
 	void Abort(std::exception_ptr ep) noexcept;
 
-	gcc_pure
+	[[gnu::pure]]
 	bool IsEofPending() const noexcept {
 		return defer_eof_event.IsPending();
 	}

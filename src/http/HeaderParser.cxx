@@ -51,7 +51,7 @@ IsValidHeaderValueChar(char ch) noexcept
 	return ch != '\0' && ch != '\n' && ch != '\r';
 }
 
-gcc_pure
+[[gnu::pure]]
 static bool
 IsValidHeaderValue(std::string_view value) noexcept
 {

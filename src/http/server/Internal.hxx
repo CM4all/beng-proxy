@@ -295,7 +295,7 @@ struct HttpServerConnection final
 		return idle_timer.GetEventLoop();
 	}
 
-	gcc_pure
+	[[gnu::pure]]
 	bool IsValid() const {
 		return socket->IsValid() && socket->IsConnected();
 	}

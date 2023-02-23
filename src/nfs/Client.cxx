@@ -988,7 +988,7 @@ NfsFile::OpenCallback(int status, struct nfs_context *nfs, void *data) noexcept
 }
 
 static void
-nfs_open_cb(int status, gcc_unused struct nfs_context *nfs,
+nfs_open_cb(int status, struct nfs_context *nfs,
 	    void *data, void *private_data) noexcept
 {
 	NfsFile *const file = (NfsFile *)private_data;

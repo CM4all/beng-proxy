@@ -339,7 +339,7 @@ Request::InvokeXmlProcessor(HttpStatus status,
 	}
 }
 
-gcc_pure
+[[gnu::pure]]
 static bool
 css_processable(const StringMap &headers) noexcept
 {
@@ -759,7 +759,7 @@ Request::ApplyTransformation(HttpStatus status, StringMap &&headers,
 	}
 }
 
-gcc_pure
+[[gnu::pure]]
 static bool
 filter_enabled(const TranslateResponse &tr,
 	       HttpStatus status) noexcept

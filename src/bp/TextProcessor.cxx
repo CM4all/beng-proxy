@@ -66,7 +66,7 @@ text_processor_allowed(const StringMap &headers) noexcept
 		text_processor_allowed_content_type(content_type);
 }
 
-gcc_pure
+[[gnu::pure]]
 static const char *
 base_uri(struct pool *pool, const char *absolute_uri) noexcept
 {

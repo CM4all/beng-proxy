@@ -49,7 +49,7 @@
  * Return a copy of the URI for forwarding to the next server.  This
  * omits the beng-proxy request "arguments".
  */
-gcc_pure
+[[gnu::pure]]
 static const char *
 ForwardURI(AllocatorPtr alloc, DissectedUri uri) noexcept
 {

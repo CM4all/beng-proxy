@@ -46,7 +46,7 @@
 #include <sys/stat.h>
 #include <errno.h>
 
-gcc_pure
+[[gnu::pure]]
 static bool
 IsEnotdir(const char *base, const char *path) noexcept
 {
@@ -55,7 +55,7 @@ IsEnotdir(const char *base, const char *path) noexcept
 		errno == ENOTDIR;
 }
 
-gcc_pure
+[[gnu::pure]]
 static const char *
 get_file_path(const TranslateResponse &response)
 {
@@ -88,7 +88,7 @@ get_file_path(const TranslateResponse &response)
 	gcc_unreachable();
 }
 
-gcc_pure
+[[gnu::pure]]
 static const char *
 get_file_base(const TranslateResponse &response) noexcept
 {

@@ -39,7 +39,7 @@
 #include <fcntl.h>
 #include <sys/stat.h>
 
-gcc_pure
+[[gnu::pure]]
 static bool
 IsDirectory(const char *base, const char *path) noexcept
 {
@@ -48,7 +48,7 @@ IsDirectory(const char *base, const char *path) noexcept
 		S_ISDIR(st.stx_mode);
 }
 
-gcc_pure
+[[gnu::pure]]
 static bool
 IsDirectory(const FileAddress &address) noexcept
 {

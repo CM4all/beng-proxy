@@ -115,7 +115,7 @@ public:
 	~UringIstream() noexcept override;
 
 private:
-	gcc_pure
+	[[gnu::pure]]
 	size_t GetMaxRead() const noexcept {
 		return std::min(end_offset - offset, off_t(INT_MAX));
 	}

@@ -175,7 +175,7 @@ LhttpAddress::LoadBase(AllocatorPtr alloc, std::string_view suffix) const noexce
 	return DupWithUri(alloc, alloc.Concat(uri, suffix));
 }
 
-gcc_pure
+[[gnu::pure]]
 static const char *
 ApplyUri(AllocatorPtr alloc, const char *base_uri,
 	 std::string_view relative) noexcept

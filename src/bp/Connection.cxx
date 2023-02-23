@@ -104,7 +104,7 @@ close_connection(BpConnection *connection) noexcept
 				      BpConnection::Disposer());
 }
 
-gcc_pure
+[[gnu::pure]]
 static int
 HttpServerLogLevel(std::exception_ptr e) noexcept
 {

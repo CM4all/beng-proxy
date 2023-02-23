@@ -74,7 +74,7 @@ Dup(struct pool &pool, HttpStatus status, const char *msg) noexcept
 	return {status, p_strdup(&pool, msg)};
 }
 
-gcc_pure
+[[gnu::pure]]
 static MessageHttpResponse
 ToResponse(struct pool &pool, std::exception_ptr ep) noexcept
 {

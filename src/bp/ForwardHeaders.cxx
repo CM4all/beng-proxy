@@ -49,7 +49,7 @@
 
 using namespace BengProxy;
 
-gcc_pure
+[[gnu::pure]]
 static bool
 IsIfCacheHeader(const char *name) noexcept
 {
@@ -68,7 +68,7 @@ IsIfCacheHeader(const char *name) noexcept
  * (to be forwarded/handled by special code); or one of the "real"
  * HeaderGroup values for the given group
  */
-gcc_pure
+[[gnu::pure]]
 static HeaderGroup
 ClassifyRequestHeader(const char *name, const bool with_body,
 		      const bool is_upgrade) noexcept
@@ -264,7 +264,7 @@ forward_identity(AllocatorPtr alloc,
 	forward_xff(alloc, dest, src, remote_host, mangle);
 }
 
-gcc_pure
+[[gnu::pure]]
 static bool
 compare_set_cookie_name(const char *set_cookie, const char *name) noexcept
 {
@@ -424,7 +424,7 @@ forward_request_headers(AllocatorPtr alloc, const StringMap &src,
  * (to be forwarded/handled by special code); or one of the "real"
  * HeaderGroup values for the given group
  */
-gcc_pure
+[[gnu::pure]]
 static HeaderGroup
 ClassifyResponseHeader(const char *name, const bool is_upgrade) noexcept
 {

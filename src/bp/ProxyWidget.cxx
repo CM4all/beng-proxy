@@ -162,7 +162,7 @@ ProxyWidget::OnHttpError(std::exception_ptr ep) noexcept
 /**
  * Is the client allow to select the specified view?
  */
-gcc_pure
+[[gnu::pure]]
 static bool
 widget_view_allowed(Widget &widget, const WidgetView &view)
 {

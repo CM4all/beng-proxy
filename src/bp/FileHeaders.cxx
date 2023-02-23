@@ -50,7 +50,7 @@
 #include <stdlib.h>
 #include <sys/stat.h>
 
-gcc_pure
+[[gnu::pure]]
 static std::chrono::seconds
 read_xattr_max_age(FileDescriptor fd)
 {
@@ -88,7 +88,7 @@ generate_expires(GrowingBuffer &headers,
 		     http_date_format(now + max_age));
 }
 
-gcc_pure
+[[gnu::pure]]
 static bool
 CheckETagList(const char *list, FileDescriptor fd,
 	      const struct statx &st) noexcept
