@@ -9,6 +9,7 @@
 #include "was/async/Control.hxx"
 #include "was/async/Socket.hxx"
 #include "pool/Ptr.hxx"
+#include "util/StringBuffer.hxx"
 
 enum class HttpMethod : uint_least8_t;
 enum class HttpStatus : uint_least16_t;
@@ -78,6 +79,8 @@ class WasServer final : Was::ControlHandler, WasOutputHandler, WasInputHandler {
 
 	struct {
 		HttpStatus status;
+
+		StringBuffer<32> content_length_buffer;
 
 		WasOutput *body;
 	} response;

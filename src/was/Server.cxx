@@ -436,8 +436,8 @@ WasServer::SendResponse(HttpStatus status,
 			if (available >= 0)
 				headers.Add(AllocatorPtr{request.pool},
 					    "content-length",
-					    p_sprintf(request.pool, "%lu",
-						      (unsigned long)available));
+					    FmtToBuffer(response.content_length_buffer,
+							 "{}", available));
 		}
 
 		body.Clear();
