@@ -8,6 +8,7 @@
 #include "New.hxx"
 #include "Bucket.hxx"
 #include "pool/pool.hxx"
+#include "util/Compiler.h"
 #include "util/DestructObserver.hxx"
 #include "util/SpanCast.hxx"
 #include "util/StringSplit.hxx"

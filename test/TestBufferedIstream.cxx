@@ -13,6 +13,7 @@
 #include "istream/UnusedPtr.hxx"
 #include "istream/UnusedHoldPtr.hxx"
 #include "util/Cancellable.hxx"
+#include "util/Compiler.h"
 
 class BufferedIstreamAdapter final : public BufferedIstreamHandler, Cancellable {
 	DelayedIstreamControl &delayed;

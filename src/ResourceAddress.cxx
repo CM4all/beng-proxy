@@ -12,6 +12,7 @@
 #include "uri/Extract.hxx"
 #include "uri/Verify.hxx"
 #include "uri/Base.hxx"
+#include "util/Compiler.h"
 #include "AllocatorPtr.hxx"
 #include "HttpMessageResponse.hxx"
 

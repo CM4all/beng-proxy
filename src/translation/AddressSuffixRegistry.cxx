@@ -8,6 +8,7 @@
 #include "file/Address.hxx"
 #include "nfs/Address.hxx"
 #include "util/CharUtil.hxx"
+#include "util/Compiler.h"
 #include "AllocatorPtr.hxx"
 
 #include <span>

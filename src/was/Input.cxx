@@ -17,6 +17,7 @@
 #include "io/Buffered.hxx"
 #include "io/SpliceSupport.hxx"
 #include "system/Error.hxx"
+#include "util/Compiler.h"
 #include "util/ScopeExit.hxx"
 #include "util/Exception.hxx"
 
