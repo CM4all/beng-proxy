@@ -449,7 +449,7 @@ ServerConnection::Request::SendResponse(HttpStatus status,
 		if (content_length >= 0) {
 			/* can't use fmt::format_int because it
 			   doesn't have a default constructor */
-			content_length_buffer = FmtBuffer<32>("{}", content_length);
+			FmtToBuffer<32>(content_length_buffer, "{}", content_length);
 			hdrs.push_back(MakeNv("content-length",
 					      content_length_buffer.c_str()));
 		}
