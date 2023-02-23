@@ -10,7 +10,6 @@
 
 #include "Type.hxx"
 #include "trace.h"
-#include "util/Compiler.h"
 
 #include <cstddef>
 #include <new>
@@ -226,10 +225,6 @@ p_strndup(struct pool *pool, const char *src, size_t length
 	  TRACE_ARGS_DEFAULT) noexcept;
 
 #define p_strndup_fwd(pool, src, length) p_strndup(pool, src, length TRACE_ARGS_FWD)
-
-[[gnu::malloc]] [[gnu::returns_nonnull]] gcc_printf(2, 3)
-char *
-p_sprintf(struct pool *pool, const char *fmt, ...) noexcept;
 
 template<typename T>
 [[gnu::malloc]] [[gnu::returns_nonnull]]

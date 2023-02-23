@@ -10,7 +10,6 @@
 #include <assert.h>
 #include <string.h>
 #include <stdarg.h>
-#include <stdio.h>
 
 static char *
 Copy(char *dest, const char *src, size_t n) noexcept
@@ -63,23 +62,4 @@ p_strdup_lower(struct pool &pool, std::string_view src TRACE_ARGS_DECL) noexcept
 	char *dest = (char *)p_malloc_fwd(&pool, src.size() + 1);
 	*CopyLower(dest, src.data(), src.size()) = 0;
 	return dest;
-}
-
-char * gcc_malloc
-p_sprintf(struct pool *pool, const char *fmt, ...) noexcept
-{
-	va_list ap;
-	va_start(ap, fmt);
-	size_t length = (size_t)vsnprintf(nullptr, 0, fmt, ap) + 1;
-	va_end(ap);
-
-	char *p = (char *)p_malloc(pool, length);
-
-	va_start(ap, fmt);
-	gcc_unused int length2 = vsnprintf(p, length, fmt, ap);
-	va_end(ap);
-
-	assert((size_t)length2 + 1 == length);
-
-	return p;
 }
