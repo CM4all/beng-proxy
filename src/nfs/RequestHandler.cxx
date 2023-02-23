@@ -17,6 +17,8 @@
 #include <assert.h>
 #include <sys/stat.h>
 
+using std::string_view_literals::operator""sv;
+
 /*
  * nfs_cache_handler
  *
@@ -63,19 +65,20 @@ Request::OnNfsCacheResponse(NfsCacheHandle &handle,
 	case HttpRangeRequest::Type::VALID:
 		status = HttpStatus::PARTIAL_CONTENT;
 
-		header_write(headers2, "content-range",
-			     p_sprintf(&pool, "bytes %lu-%lu/%lu",
-				       (unsigned long)file_request.range.skip,
-				       (unsigned long)(file_request.range.size - 1),
-				       (unsigned long)st.stx_size));
+		header_write_begin(headers2, "content-range"sv);
+		headers2.Fmt("bytes {}-{}/{}",
+			     file_request.range.skip,
+			     file_request.range.size - 1,
+			     st.stx_size);
+		header_write_finish(headers2);
 		break;
 
 	case HttpRangeRequest::Type::INVALID:
 		status = HttpStatus::REQUESTED_RANGE_NOT_SATISFIABLE;
 
-		header_write(headers2, "content-range",
-			     p_sprintf(&pool, "bytes */%lu",
-				       (unsigned long)st.stx_size));
+		header_write_begin(headers2, "content-range"sv);
+		headers2.Fmt("bytes */{}", st.stx_size);
+		header_write_finish(headers2);
 
 		no_body = true;
 		break;
