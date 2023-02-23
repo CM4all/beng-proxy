@@ -70,6 +70,7 @@ jobs:
             libsodium-dev \
             libssl-dev \
             libsystemd-dev \
+            liburing-dev \
             libyaml-cpp-dev
 
       - name: Build
