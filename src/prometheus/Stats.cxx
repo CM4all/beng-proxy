@@ -7,15 +7,13 @@
 #include "util/ByteOrder.hxx"
 #include "memory/GrowingBuffer.hxx"
 
-#include <inttypes.h>
-
 namespace Prometheus {
 
 void
 Write(GrowingBuffer &buffer, const char *process,
       const BengProxy::ControlStats &stats) noexcept
 {
-	buffer.Format(
+	buffer.Fmt(
 	       R"(
 # HELP beng_proxy_connections Number of connections
 # TYPE beng_proxy_connections gauge
@@ -33,20 +31,20 @@ Write(GrowingBuffer &buffer, const char *process,
 # TYPE beng_proxy_buffer_size gauge
 
 )"
-	       "beng_proxy_connections{process=\"%s\",direction=\"in\"} %" PRIu32 "\n"
-	       "beng_proxy_connections{process=\"%s\",direction=\"out\"} %" PRIu32 "\n"
-	       "beng_proxy_children{process=\"%s\"} %" PRIu32 "\n"
-	       "beng_proxy_sessions{process=\"%s\"} %" PRIu32 "\n"
-	       "beng_proxy_cache_size{process=\"%s\",type=\"translation\",metric=\"netto\"} %" PRIu64 "\n"
-	       "beng_proxy_cache_size{process=\"%s\",type=\"translation\",metric=\"brutto\"} %" PRIu64 "\n"
-	       "beng_proxy_cache_size{process=\"%s\",type=\"http\",metric=\"netto\"} %" PRIu64 "\n"
-	       "beng_proxy_cache_size{process=\"%s\",type=\"http\",metric=\"brutto\"} %" PRIu64 "\n"
-	       "beng_proxy_cache_size{process=\"%s\",type=\"filter\",metric=\"netto\"} %" PRIu64 "\n"
-	       "beng_proxy_cache_size{process=\"%s\",type=\"filter\",metric=\"brutto\"} %" PRIu64 "\n"
-	       "beng_proxy_cache_size{process=\"%s\",type=\"nfs\",metric=\"netto\"} %" PRIu64 "\n"
-	       "beng_proxy_cache_size{process=\"%s\",type=\"nfs\",metric=\"brutto\"} %" PRIu64 "\n"
-	       "beng_proxy_buffer_size{process=\"%s\",type=\"io\",metric=\"netto\"} %" PRIu64 "\n"
-	       "beng_proxy_buffer_size{process=\"%s\",type=\"io\",metric=\"brutto\"} %" PRIu64 "\n",
+	       "beng_proxy_connections{{process=\"{}\",direction=\"in\"}} {}\n"
+	       "beng_proxy_connections{{process=\"{}\",direction=\"out\"}} {}\n"
+	       "beng_proxy_children{{process=\"{}\"}} {}\n"
+	       "beng_proxy_sessions{{process=\"{}\"}} {}\n"
+	       "beng_proxy_cache_size{{process=\"{}\",type=\"translation\",metric=\"netto\"}} {}\n"
+	       "beng_proxy_cache_size{{process=\"{}\",type=\"translation\",metric=\"brutto\"}} {}\n"
+	       "beng_proxy_cache_size{{process=\"{}\",type=\"http\",metric=\"netto\"}} {}\n"
+	       "beng_proxy_cache_size{{process=\"{}\",type=\"http\",metric=\"brutto\"}} {}\n"
+	       "beng_proxy_cache_size{{process=\"{}\",type=\"filter\",metric=\"netto\"}} {}\n"
+	       "beng_proxy_cache_size{{process=\"{}\",type=\"filter\",metric=\"brutto\"}} {}\n"
+	       "beng_proxy_cache_size{{process=\"{}\",type=\"nfs\",metric=\"netto\"}} {}\n"
+	       "beng_proxy_cache_size{{process=\"{}\",type=\"nfs\",metric=\"brutto\"}} {}\n"
+	       "beng_proxy_buffer_size{{process=\"{}\",type=\"io\",metric=\"netto\"}} {}\n"
+	       "beng_proxy_buffer_size{{process=\"{}\",type=\"io\",metric=\"brutto\"}} {}\n",
 	       process, FromBE32(stats.incoming_connections),
 	       process, FromBE32(stats.outgoing_connections),
 	       process, FromBE32(stats.children),

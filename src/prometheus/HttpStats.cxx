@@ -6,9 +6,7 @@
 #include "stats/HttpStats.hxx"
 #include "stats/TaggedHttpStats.hxx"
 #include "memory/GrowingBuffer.hxx"
-
-#include <inttypes.h>
-#include <stdio.h>
+#include "lib/fmt/ToBuffer.hxx"
 
 namespace Prometheus {
 
@@ -16,7 +14,7 @@ static void
 Write(GrowingBuffer &buffer, const char *labels,
       const HttpStats &stats) noexcept
 {
-	buffer.Format(
+	buffer.Fmt(
 	       R"(
 # HELP beng_proxy_http_requests Number of HTTP requests
 # TYPE beng_proxy_http_requests counter
@@ -28,29 +26,27 @@ Write(GrowingBuffer &buffer, const char *labels,
 # TYPE beng_proxy_http_traffic counter
 
 )"
-	       "beng_proxy_http_total_duration{%s} %e\n"
-	       "beng_proxy_http_traffic{%sdirection=\"in\"} %" PRIu64 "\n"
-	       "beng_proxy_http_traffic{%sdirection=\"out\"} %" PRIu64 "\n",
+	       "beng_proxy_http_total_duration{{{}}} {:e}\n"
+	       "beng_proxy_http_traffic{{{}direction=\"in\"}} {}\n"
+	       "beng_proxy_http_traffic{{{}direction=\"out\"}} {}\n",
 	       labels, std::chrono::duration_cast<std::chrono::duration<double>>(stats.total_duration).count(),
 	       labels, stats.traffic_received,
 	       labels, stats.traffic_sent);
 
 	for (std::size_t i = 0; i < stats.n_per_status.size(); ++i)
 		if (stats.n_per_status[i] > 0)
-			buffer.Format("beng_proxy_http_requests{%sstatus=\"%u\"} %" PRIu64 "\n",
-				      labels,
-				      static_cast<unsigned>(IndexToHttpStatus(i)),
-				      stats.n_per_status[i]);
+			buffer.Fmt("beng_proxy_http_requests{{{}status=\"{}\"}} {}\n",
+				   labels,
+				   static_cast<unsigned>(IndexToHttpStatus(i)),
+				   stats.n_per_status[i]);
 }
 
 void
 Write(GrowingBuffer &buffer, const char *process, const char *listener,
       const HttpStats &stats) noexcept
 {
-	char labels[256];
-	snprintf(labels, sizeof(labels),
-		 "process=\"%s\",listener=\"%s\",",
-		 process, listener);
+	const auto labels = FmtBuffer<256>("process=\"{}\",listener=\"{}\",",
+					   process, listener);
 
 	Write(buffer, labels, stats);
 }
@@ -60,10 +56,8 @@ Write(GrowingBuffer &buffer, const char *process, const char *listener,
       const TaggedHttpStats &tagged_stats) noexcept
 {
 	for (const auto &[tag, stats] : tagged_stats.per_tag) {
-		char labels[256];
-		snprintf(labels, sizeof(labels),
-			 "process=\"%s\",listener=\"%s\",tag=\"%s\",",
-			 process, listener, tag.c_str());
+		const auto labels = FmtBuffer<256>("process=\"{}\",listener=\"{}\",tag=\"{}\",",
+						   process, listener, tag);
 
 		Write(buffer, labels, stats);
 	}
