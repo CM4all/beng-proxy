@@ -875,8 +875,8 @@ Request::OnTranslateResponseAfterAuth(UniquePoolPtr<TranslateResponse> _response
 	OnTranslateResponse2(std::move(_response));
 }
 
-void
-Request::OnTranslateResponse2(UniquePoolPtr<TranslateResponse> _response) noexcept
+inline void
+Request::OnTranslateResponse2(UniquePoolPtr<TranslateResponse> &&_response) noexcept
 {
 	const auto &response = *_response;
 

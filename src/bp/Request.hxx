@@ -450,7 +450,7 @@ private:
 
 public:
 	void OnTranslateResponseAfterAuth(UniquePoolPtr<TranslateResponse> response) noexcept;
-	void OnTranslateResponse2(UniquePoolPtr<TranslateResponse> response) noexcept;
+	void OnTranslateResponse2(UniquePoolPtr<TranslateResponse> &&response) noexcept;
 
 	/**
 	 * Enable the "stateless" flag, which disables session management
