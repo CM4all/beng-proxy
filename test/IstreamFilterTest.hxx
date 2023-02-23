@@ -191,8 +191,8 @@ run_istream_ctx(const Traits &traits, Context &ctx) noexcept
 	ctx.eof = false;
 
 	if (traits.call_available) {
-		gcc_unused off_t a1 = ctx.input.GetAvailable(false);
-		gcc_unused off_t a2 = ctx.input.GetAvailable(true);
+		[[maybe_unused]] off_t a1 = ctx.input.GetAvailable(false);
+		[[maybe_unused]] off_t a2 = ctx.input.GetAvailable(true);
 	}
 
 	ctx.WaitForEndOfStream();

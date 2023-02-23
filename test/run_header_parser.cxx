@@ -12,7 +12,7 @@
 #include <stdio.h>
 
 int
-main(int argc gcc_unused, char **argv gcc_unused)
+main(int, char **) noexcept
 {
 	std::byte buffer[16];
 	ssize_t nbytes;

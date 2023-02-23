@@ -54,7 +54,7 @@ DirectResourceLoader::SendRequest(struct pool &pool,
 				  const ResourceAddress &address,
 				  HttpStatus status, StringMap &&headers,
 				  UnusedIstreamPtr body,
-				  gcc_unused const char *body_etag,
+				  [[maybe_unused]] const char *body_etag,
 				  HttpResponseHandler &handler,
 				  CancellablePointer &cancel_ptr) noexcept
 try {

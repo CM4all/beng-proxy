@@ -21,7 +21,7 @@ tpool_init(struct pool *parent) noexcept
 void
 tpool_deinit() noexcept
 {
-	gcc_unused unsigned ref;
+	[[maybe_unused]] unsigned ref;
 	ref = pool_unref(tpool_singleton);
 	assert(ref == 0);
 	tpool_singleton = nullptr;

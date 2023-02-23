@@ -37,7 +37,7 @@ public:
 
 	/* virtual methods from class Istream */
 
-	off_t _GetAvailable(gcc_unused bool partial) noexcept override {
+	off_t _GetAvailable(bool) noexcept override {
 		return end - position;
 	}
 

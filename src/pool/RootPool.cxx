@@ -17,7 +17,7 @@ RootPool::RootPool()
 
 RootPool::~RootPool()
 {
-	gcc_unused auto ref = pool_unref(&p);
+	[[maybe_unused]] auto ref = pool_unref(&p);
 	assert(ref == 0);
 
 	tpool_deinit();

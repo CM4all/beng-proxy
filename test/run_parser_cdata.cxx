@@ -32,7 +32,7 @@ public:
 	}
 
 	/* virtual methods from class XmlParserHandler */
-	bool OnXmlTagStart(gcc_unused const XmlParserTag &tag) noexcept override {
+	bool OnXmlTagStart(const XmlParserTag &) noexcept override {
 		return false;
 	}
 
@@ -40,10 +40,10 @@ public:
 		return true;
 	}
 
-	void OnXmlAttributeFinished(gcc_unused const XmlParserAttribute &attr) noexcept override {}
+	void OnXmlAttributeFinished(const XmlParserAttribute &) noexcept override {}
 
-	size_t OnXmlCdata(std::string_view text, gcc_unused bool escaped,
-			  gcc_unused off_t start) noexcept override {
+	size_t OnXmlCdata(std::string_view text, [[maybe_unused]] bool escaped,
+			  [[maybe_unused]] off_t start) noexcept override {
 		(void)write(STDOUT_FILENO, text.data(), text.size());
 		return text.size();
 	}

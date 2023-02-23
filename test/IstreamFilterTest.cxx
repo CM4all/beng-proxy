@@ -50,7 +50,7 @@ Context::ReadBuckets(std::size_t limit)
 			break;
 	}
 
-	gcc_unused std::size_t consumed2 = input.ConsumeBucketList(consumed);
+	[[maybe_unused]] std::size_t consumed2 = input.ConsumeBucketList(consumed);
 	assert(consumed2 == consumed);
 
 	if (result && !list.HasMore()) {

@@ -11,7 +11,7 @@
 #include <stdio.h>
 
 static std::exception_ptr
-catch_callback(std::exception_ptr ep, gcc_unused void *ctx)
+catch_callback(std::exception_ptr ep, void *)
 {
 	fprintf(stderr, "caught: %s\n", GetFullMessage(ep).c_str());
 	return {};

@@ -42,7 +42,8 @@ my_parser_xml_id(const CssParserValue *id, void *ctx) noexcept
 
 static void
 my_parser_property_keyword(const char *name, std::string_view value,
-			   gcc_unused off_t start, gcc_unused off_t end,
+			   [[maybe_unused]] off_t start,
+			   [[maybe_unused]] off_t end,
 			   void *ctx) noexcept
 {
 	(void)ctx;

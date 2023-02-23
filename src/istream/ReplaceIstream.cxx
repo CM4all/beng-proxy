@@ -592,7 +592,7 @@ ReplaceIstream::GetLastSubstitution() noexcept
 }
 
 void
-ReplaceIstream::Extend(gcc_unused off_t start, off_t end) noexcept
+ReplaceIstream::Extend([[maybe_unused]] off_t start, off_t end) noexcept
 {
 	assert(!finished);
 
