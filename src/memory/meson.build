@@ -11,9 +11,15 @@ memory = static_library(
   'GrowingBuffer.cxx',
   'Rubber.cxx',
   include_directories: inc,
+  dependencies: [
+    fmt_dep,
+  ]
 )
 
 memory_dep = declare_dependency(
   link_with: memory,
-  dependencies: [system_dep],
+  dependencies: [
+    system_dep,
+    fmt_dep,
+  ],
 )

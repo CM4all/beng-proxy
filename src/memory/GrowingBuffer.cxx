@@ -172,6 +172,21 @@ GrowingBuffer::Format(const char *fmt, ...) noexcept
 }
 
 void
+GrowingBuffer::VFmt(fmt::string_view format_str, fmt::format_args args) noexcept
+{
+	auto w = BeginWrite();
+
+	const std::size_t size =
+		fmt::vformat_to_n((char *)w.data(), w.size(),
+				  format_str, args).size;
+
+	if (size > w.size())
+		fmt::vformat_to((char *)BeginWrite(size), format_str, args);
+
+	CommitWrite(size);
+}
+
+void
 GrowingBuffer::AppendMoveFrom(GrowingBuffer &&src) noexcept
 {
 	if (src.IsEmpty())
