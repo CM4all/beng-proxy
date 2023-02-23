@@ -169,7 +169,7 @@ strmap_new(struct pool *pool) noexcept
 	return NewFromPool<StringMap>(*pool);
 }
 
-StringMap *gcc_malloc
+StringMap *
 strmap_dup(struct pool *pool, const StringMap *src) noexcept
 {
 	return NewFromPool<StringMap>(*pool, *pool, *src);
