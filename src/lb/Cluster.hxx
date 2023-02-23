@@ -146,7 +146,7 @@ class LbCluster final
 		ZeroconfMember(const ZeroconfMember &) = delete;
 		ZeroconfMember &operator=(const ZeroconfMember &) = delete;
 
-		const std::string &GetKey() const noexcept {
+		std::string_view GetKey() const noexcept {
 			return key;
 		}
 
