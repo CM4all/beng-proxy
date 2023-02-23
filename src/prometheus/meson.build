@@ -3,6 +3,9 @@ prometheus = static_library(
   'Stats.cxx',
   'HttpStats.cxx',
   include_directories: inc,
+  dependencies: [
+    memory_dep,
+  ],
 )
 
 prometheus_dep = declare_dependency(
