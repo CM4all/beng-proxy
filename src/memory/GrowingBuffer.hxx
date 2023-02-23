@@ -5,7 +5,6 @@
 #pragma once
 
 #include "DefaultChunkAllocator.hxx"
-#include "util/Compiler.h"
 #include "util/SpanCast.hxx"
 
 #include <fmt/core.h>
@@ -188,9 +187,6 @@ public:
 	void Write(std::string_view s) noexcept {
 		Write(AsBytes(s));
 	}
-
-	gcc_printf(2, 3)
-	void Format(const char *fmt, ...) noexcept;
 
 	void VFmt(fmt::string_view format_str, fmt::format_args args) noexcept;
 

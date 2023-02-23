@@ -10,7 +10,6 @@
 #include <cstdarg>
 
 #include <assert.h>
-#include <stdio.h>
 #include <string.h>
 
 GrowingBuffer::Buffer &
@@ -148,27 +147,6 @@ GrowingBuffer::Write(std::span<const std::byte> src) noexcept
 		size_type nbytes = WriteSome(src);
 		src = src.subspan(nbytes);
 	}
-}
-
-void
-GrowingBuffer::Format(const char *fmt, ...) noexcept
-{
-	va_list ap;
-	va_start(ap, fmt);
-	const auto reserve_size = (std::size_t)
-		vsnprintf(nullptr, 0, fmt, ap) + 1;
-	va_end(ap);
-
-	char *p = (char *)BeginWrite(reserve_size);
-
-	va_start(ap, fmt);
-	const auto length = (std::size_t)
-		vsnprintf(p, reserve_size, fmt, ap);
-	va_end(ap);
-
-	assert(length + 1 == reserve_size);
-
-	CommitWrite(length);
 }
 
 void
