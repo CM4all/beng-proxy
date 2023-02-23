@@ -50,15 +50,15 @@ class LbMonitorManager {
 
 public:
 	LbMonitorManager(EventLoop &_event_loop,
-			 FailureManager &_failure_manager);
+			 FailureManager &_failure_manager) noexcept;
 
-	~LbMonitorManager();
+	~LbMonitorManager() noexcept;
 
 	LbMonitorManager(const LbMonitorManager &) = delete;
 	LbMonitorManager &operator=(const LbMonitorManager &) = delete;
 
-	void clear();
+	void clear() noexcept;
 
 	[[gnu::pure]]
-	LbMonitorStock &operator[](const LbMonitorConfig &monitor_config);
+	LbMonitorStock &operator[](const LbMonitorConfig &monitor_config) noexcept;
 };
