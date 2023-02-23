@@ -232,6 +232,7 @@ io_dep = declare_dependency(
   ],
 )
 
+libcommon_require_uring = true
 subdir('libcommon/src/io/uring')
 subdir('libcommon/src/system')
 
@@ -389,8 +390,6 @@ endif
 
 subdir('src/ssl')
 subdir('src/control')
-
-libcommon_require_uring = true
 
 libcommon_require_avahi = get_option('zeroconf')
 subdir('libcommon/src/lib/avahi')
