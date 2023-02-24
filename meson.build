@@ -416,6 +416,10 @@ memory_istream = static_library(
   'src/memory/istream_rubber.cxx',
   'src/memory/sink_rubber.cxx',
   include_directories: inc,
+  dependencies: [
+    memory_dep,
+    istream_api_dep,
+  ],
 )
 
 memory_istream_dep = declare_dependency(
