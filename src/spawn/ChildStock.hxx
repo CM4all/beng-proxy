@@ -112,8 +112,10 @@ public:
 
 	/**
 	 * Kill the oldest idle child process across all stocks.
+	 *
+	 * @return false if no child process is idle
 	 */
-	void DiscardOldestIdle() noexcept;
+	bool DiscardOldestIdle() noexcept;
 
 private:
 	/* virtual methods from class StockClass */

@@ -80,15 +80,17 @@ ChildStock::AddIdle(ChildStockItem &item) noexcept
 	idle.push_back(item);
 }
 
-void
+bool
 ChildStock::DiscardOldestIdle() noexcept
 {
 	if (idle.empty())
-		return;
+		return false;
 
 	/* the list front is the oldest item (the one that hasn't been
 	   used for the longest time) */
 	auto &item = idle.front();
 	assert(item.is_idle);
 	item.InvokeIdleDisconnect();
+
+	return true;
 }
