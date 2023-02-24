@@ -719,7 +719,7 @@ executable(
     was_stock_dep,
     stopwatch_dep,
     cgi_dep,
-    fcgi_client_dep,
+    fcgi_stock_dep,
     session_dep,
     widget_dep,
     processor_dep,
