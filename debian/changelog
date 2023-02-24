@@ -2,6 +2,7 @@ cm4all-beng-proxy (18.0.15) unstable; urgency=low
 
   * merge release 17.11
   * translation: support AUTO_{GZIPPED,BROTLI_PATH} in CONTENT_TYPE_LOOKUP
+  * spawn: given the spawner the highest possible CPU and I/O weight
   * spawn: combine multiple KILL commands on one datagram
   * spawn: drop support for cgroup1
 
