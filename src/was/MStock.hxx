@@ -34,7 +34,7 @@ public:
 
 		/* first close idle connections, hopefully turning
 		   child processes idle */
-		mchild_stock.DiscardUnused();
+		mchild_stock.DiscardOldestIdle();
 
 		/* try again */
 		child_stock.DiscardOldestIdle();
