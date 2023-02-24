@@ -5,6 +5,7 @@ cm4all-beng-proxy (18.0.15) unstable; urgency=low
   * spawn: given the spawner the highest possible CPU and I/O weight
   * spawn: combine multiple KILL commands on one datagram
   * spawn: drop support for cgroup1
+  * http/local, was: kill fewer processes on memory warning
 
  --   
 

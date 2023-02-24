@@ -35,11 +35,15 @@ public:
 		   const ChildErrorLogOptions &log_options) noexcept;
 
 	void DiscardSome() noexcept {
+		/* kill the oldest child process if there is one */
+		if (child_stock.DiscardOldestIdle())
+			return;
+
 		/* first close idle connections, hopefully turning
 		   child processes idle */
 		mchild_stock.DiscardUnused();
 
-		/* kill the oldest child process */
+		/* try again */
 		child_stock.DiscardOldestIdle();
 	}
 
