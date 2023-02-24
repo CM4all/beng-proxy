@@ -6,8 +6,9 @@
 #include "event/net/control/Server.hxx"
 #include "net/SocketConfig.hxx"
 
+#include <fmt/core.h>
+
 #include <sys/un.h>
-#include <stdio.h>
 
 void
 LocalControl::OnControlPacket(ControlServer &control_server,
@@ -39,7 +40,7 @@ LocalControl::Open(EventLoop &event_loop)
 	struct sockaddr_un sa;
 	sa.sun_family = AF_LOCAL;
 	sa.sun_path[0] = '\0';
-	sprintf(sa.sun_path + 1, "%s%d", prefix, (int)getpid());
+	fmt::format_to(sa.sun_path + 1, "{}{}", prefix, getpid());
 
 	SocketConfig config;
 	config.bind_address = SocketAddress((const struct sockaddr *)&sa,

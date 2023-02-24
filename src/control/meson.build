@@ -2,7 +2,10 @@ control_server = static_library(
   'control_server',
   'Local.cxx',
   include_directories: inc,
-  dependencies: control_server_dep,
+  dependencies: [
+    control_server_dep,
+    fmt_dep,
+  ]
 )
 
 control_server_dep = declare_dependency(
