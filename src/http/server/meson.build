@@ -7,6 +7,9 @@ http_server = static_library('http_server',
   'Read.cxx',
   'Response.cxx',
   include_directories: inc,
+  dependencies: [
+    memory_dep,
+  ],
 )
 
 http_server_dep = declare_dependency(
