@@ -11,6 +11,9 @@ http_util = static_library(
   'HeaderWriter.cxx',
   'XForwardedFor.cxx',
   include_directories: inc,
+  dependencies: [
+    memory_dep,
+  ],
 )
 
 http_util_dep = declare_dependency(
