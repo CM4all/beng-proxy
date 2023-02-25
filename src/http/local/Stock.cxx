@@ -35,9 +35,7 @@ public:
 		   const ChildErrorLogOptions &log_options) noexcept;
 
 	void DiscardSome() noexcept {
-		for (unsigned i = 0; i < 64; ++i)
-			if (!mchild_stock.DiscardOldestIdle())
-				break;
+		mchild_stock.DiscardOldestIdle(64);
 	}
 
 	void FadeAll() noexcept {
