@@ -112,7 +112,7 @@ ChildStockItem::Release() noexcept
 }
 
 void
-ChildStockItem::OnChildProcessExit(gcc_unused int status) noexcept
+ChildStockItem::OnChildProcessExit(int) noexcept
 {
 	assert(handle);
 	handle.reset();

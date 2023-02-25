@@ -52,10 +52,10 @@ const TranslateResponse *next_response;
 
 void
 MyTranslationService::SendRequest(AllocatorPtr alloc,
-				  gcc_unused const TranslateRequest &request,
+				  const TranslateRequest &,
 				  const StopwatchPtr &,
 				  TranslateHandler &handler,
-				  gcc_unused CancellablePointer &cancel_ptr) noexcept
+				  CancellablePointer &) noexcept
 {
 	if (next_response != nullptr) {
 		auto response = UniquePoolPtr<TranslateResponse>::Make(alloc.GetPool());
