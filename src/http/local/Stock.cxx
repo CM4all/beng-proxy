@@ -34,19 +34,9 @@ public:
 		   SocketDescriptor log_socket,
 		   const ChildErrorLogOptions &log_options) noexcept;
 
-	bool DiscardOldestIdle() noexcept {
-		/* kill the oldest child process if there is one */
-		return child_stock.DiscardOldestIdle() ||
-			/* first close idle connections, hopefully
-			   turning child processes idle */
-			mchild_stock.DiscardOldestIdle() ||
-			/* try again */
-			child_stock.DiscardOldestIdle();
-	}
-
 	void DiscardSome() noexcept {
 		for (unsigned i = 0; i < 64; ++i)
-			if (!DiscardOldestIdle())
+			if (!mchild_stock.DiscardOldestIdle())
 				break;
 	}
 
