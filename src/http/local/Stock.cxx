@@ -309,14 +309,16 @@ LhttpConnection::~LhttpConnection() noexcept
  */
 
 inline
-LhttpStock::LhttpStock(unsigned limit, unsigned max_idle,
+LhttpStock::LhttpStock(unsigned limit, [[maybe_unused]] unsigned max_idle,
 		       EventLoop &event_loop, SpawnService &spawn_service,
 		       SocketDescriptor log_socket,
 		       const ChildErrorLogOptions &log_options) noexcept
 	:child_stock(spawn_service, *this,
 		     log_socket, log_options),
 	 mchild_stock(event_loop, child_stock,
-		      limit, max_idle, *this)
+		      limit,
+		      // TODO max_idle,
+		      *this)
 {
 }
 

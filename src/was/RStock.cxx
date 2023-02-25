@@ -108,10 +108,12 @@ RemoteWasStock::MultiClientStockClass::Create(CreateStockItem c,
 	connection->InvokeCreateSuccess(handler);
 }
 
-RemoteWasStock::RemoteWasStock(unsigned limit, unsigned max_idle,
+RemoteWasStock::RemoteWasStock(unsigned limit, [[maybe_unused]] unsigned max_idle,
 			       EventLoop &event_loop) noexcept
 	:multi_stock(event_loop, multi_client_stock_class,
-		     limit, max_idle, *this) {}
+		     limit,
+		     // TODO max_idle,
+		     *this) {}
 
 std::size_t
 RemoteWasStock::GetLimit(const void *request,

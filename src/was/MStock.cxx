@@ -103,7 +103,7 @@ public:
 	}
 };
 
-MultiWasStock::MultiWasStock(unsigned limit, unsigned max_idle,
+MultiWasStock::MultiWasStock(unsigned limit, [[maybe_unused]] unsigned max_idle,
 			     EventLoop &event_loop, SpawnService &spawn_service,
 			     SocketDescriptor log_socket,
 			     const ChildErrorLogOptions &log_options) noexcept
@@ -111,7 +111,8 @@ MultiWasStock::MultiWasStock(unsigned limit, unsigned max_idle,
 		     *this,
 		     log_socket, log_options),
 	 mchild_stock(event_loop, child_stock,
-		      limit, max_idle,
+		      limit,
+		      // TODO max_idle,
 		      *this) {}
 
 std::size_t
