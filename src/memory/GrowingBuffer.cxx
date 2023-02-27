@@ -6,6 +6,10 @@
 #include "pool/pool.hxx"
 #include "istream/Bucket.hxx"
 
+#if FMT_VERSION < 90000
+#include <fmt/format.h> // for the fmt::buffer::flush() implementation
+#endif
+
 #include <algorithm>
 #include <cstdarg>
 
