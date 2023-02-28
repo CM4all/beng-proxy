@@ -55,5 +55,5 @@ was_client_request(struct pool &pool, EventLoop &event_loop,
 		   const StringMap &headers, UnusedIstreamPtr body,
 		   std::span<const char *const> params,
 		   HttpResponseHandler &handler,
-		   CancellablePointer &cancel_ptr);
+		   CancellablePointer &cancel_ptr) noexcept;
 

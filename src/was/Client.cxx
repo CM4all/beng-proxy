@@ -62,9 +62,9 @@ class WasClient final
 	struct Request {
 		WasOutput *body;
 
-		explicit Request(WasOutput *_body):body(_body) {}
+		explicit Request(WasOutput *_body) noexcept:body(_body) {}
 
-		void ClearBody() {
+		void ClearBody() noexcept {
 			if (body != nullptr)
 				was_output_free_p(&body);
 		}
@@ -109,14 +109,14 @@ class WasClient final
 		 * Are we currently receiving response metadata (such as
 		 * headers)?
 		 */
-		bool IsReceivingMetadata() const {
+		bool IsReceivingMetadata() const noexcept {
 			return receiving_metadata && !pending;
 		}
 
 		/**
 		 * Has the response been submitted to the response handler?
 		 */
-		bool WasSubmitted() const {
+		bool WasSubmitted() const noexcept {
 			return !receiving_metadata;
 		}
 	} response;
@@ -136,7 +136,7 @@ public:
 		  WasLease &_lease,
 		  HttpMethod method, UnusedIstreamPtr body,
 		  HttpResponseHandler &_handler,
-		  CancellablePointer &cancel_ptr);
+		  CancellablePointer &cancel_ptr) noexcept;
 
 	void SendRequest(const char *remote_host,
 			 HttpMethod method, const char *uri,
@@ -171,7 +171,7 @@ private:
 	 *
 	 * @return false on error (OnWasControlError() has been called).
 	 */
-	bool CancelRequestBody() {
+	bool CancelRequestBody() noexcept {
 		if (request.body == nullptr)
 			return true;
 
@@ -188,7 +188,7 @@ private:
 	 * Prior to calling this method, the #WasInput and the #WasOutput
 	 * must be released already.
 	 */
-	void ReleaseControl() {
+	void ReleaseControl() noexcept {
 		assert(request.body == nullptr);
 		assert(response.body == nullptr || response.released);
 
@@ -205,7 +205,7 @@ private:
 	/**
 	 * @return false on error (OnWasControlError() has been called).
 	 */
-	bool ReleaseControlStop(uint64_t received) {
+	bool ReleaseControlStop(uint64_t received) noexcept {
 		assert(response.body == nullptr);
 
 		if (!control.IsDefined())
@@ -234,7 +234,7 @@ private:
 	 * releases the socket lease.  Assumes the response body has not
 	 * been enabled.
 	 */
-	void ClearUnused() {
+	void ClearUnused() noexcept {
 		request.ClearBody();
 
 		if (response.body != nullptr)
@@ -249,7 +249,7 @@ private:
 	/**
 	 * Abort receiving the response status/headers from the WAS server.
 	 */
-	void AbortResponseHeaders(std::exception_ptr ep) {
+	void AbortResponseHeaders(std::exception_ptr ep) noexcept {
 		assert(response.IsReceivingMetadata());
 
 		ClearUnused();
@@ -260,7 +260,7 @@ private:
 	/**
 	 * Abort receiving the response body from the WAS server.
 	 */
-	void AbortResponseBody(std::exception_ptr ep) {
+	void AbortResponseBody(std::exception_ptr ep) noexcept {
 		assert(response.WasSubmitted());
 
 		request.ClearBody();
@@ -286,7 +286,7 @@ private:
 	 * Call this when end of the response body has been seen.  It will
 	 * take care of releasing the #WasClient.
 	 */
-	void ResponseEof() {
+	void ResponseEof() noexcept {
 		assert(response.WasSubmitted());
 		assert(response.body == nullptr);
 
@@ -301,7 +301,7 @@ private:
 	 * Abort a pending response (BODY has been received, but the response
 	 * handler has not yet been invoked).
 	 */
-	void AbortPending(std::exception_ptr ep) {
+	void AbortPending(std::exception_ptr ep) noexcept {
 		assert(!response.IsReceivingMetadata() &&
 		       !response.WasSubmitted());
 
@@ -313,7 +313,7 @@ private:
 	/**
 	 * Abort receiving the response status/headers from the WAS server.
 	 */
-	void AbortResponse(std::exception_ptr ep) {
+	void AbortResponse(std::exception_ptr ep) noexcept {
 		if (response.IsReceivingMetadata())
 			AbortResponseHeaders(ep);
 		else if (response.WasSubmitted())
@@ -327,7 +327,7 @@ private:
 	 *
 	 * @return false if our #Was::Control instance has been disposed
 	 */
-	bool SubmitPendingResponse();
+	bool SubmitPendingResponse() noexcept;
 
 	void OnSubmitResponseTimer() noexcept;
 
@@ -396,7 +396,7 @@ private:
 };
 
 bool
-WasClient::SubmitPendingResponse()
+WasClient::SubmitPendingResponse() noexcept
 {
 	assert(response.pending);
 	assert(!response.WasSubmitted());
@@ -829,7 +829,7 @@ WasClient::WasClient(struct pool &_pool, struct pool &_caller_pool,
 		     WasLease &_lease,
 		     HttpMethod method, UnusedIstreamPtr body,
 		     HttpResponseHandler &_handler,
-		     CancellablePointer &cancel_ptr)
+		     CancellablePointer &cancel_ptr) noexcept
 	:PoolLeakDetector(_pool),
 	 alloc(_pool), caller_pool(_caller_pool),
 	 stopwatch(std::move(_stopwatch)),
@@ -908,7 +908,7 @@ was_client_request(struct pool &caller_pool, EventLoop &event_loop,
 		   const StringMap &headers, UnusedIstreamPtr body,
 		   std::span<const char *const> params,
 		   HttpResponseHandler &handler,
-		   CancellablePointer &cancel_ptr)
+		   CancellablePointer &cancel_ptr) noexcept
 {
 	assert(http_method_is_valid(method));
 	assert(uri != nullptr);
