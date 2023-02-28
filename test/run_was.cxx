@@ -54,7 +54,7 @@ struct Context final
 	Context():body(nullptr) {}
 
 	/* virtual methods from class WasMetricsHandler */
-	void OnWasMetric(std::string_view name, float value) noexcept {
+	void OnWasMetric(std::string_view name, float value) noexcept override {
 		fmt::print(stderr, "metric '{}'={}\n", name, value);
 	}
 
