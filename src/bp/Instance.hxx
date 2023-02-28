@@ -9,6 +9,9 @@
 #include "Config.hxx"
 #include "stats/TaggedHttpStats.hxx"
 #include "lib/avahi/ErrorHandler.hxx"
+#ifdef HAVE_LIBWAS
+#include "was/MetricsHandler.hxx"
+#endif
 #include "event/SignalEvent.hxx"
 #include "event/ShutdownListener.hxx"
 #include "event/FarTimerEvent.hxx"
@@ -22,6 +25,10 @@
 #include <forward_list>
 #include <map>
 #include <memory>
+
+#ifdef HAVE_LIBWAS
+#include <unordered_map>
+#endif
 
 class AccessLogGlue;
 class WasStock;
@@ -61,6 +68,9 @@ namespace NgHttp2 { class Stock; }
 namespace Avahi { class Client; class Publisher; struct Service; }
 
 struct BpInstance final : PInstance, ControlHandler, SpawnServerClientHandler,
+#ifdef HAVE_LIBWAS
+			  WasMetricsHandler,
+#endif
 			  Avahi::ErrorHandler {
 	const BpConfig config;
 
@@ -154,6 +164,8 @@ struct BpInstance final : PInstance, ControlHandler, SpawnServerClientHandler,
 	WasStock *was_stock = nullptr;
 	MultiWasStock *multi_was_stock = nullptr;
 	RemoteWasStock *remote_was_stock = nullptr;
+
+	std::unordered_map<std::string, float> was_metrics;
 #endif
 
 	StockMap *delegate_stock = nullptr;
@@ -231,6 +243,11 @@ struct BpInstance final : PInstance, ControlHandler, SpawnServerClientHandler,
 
 	/* virtual methods from class Avahi::ErrorHandler */
 	bool OnAvahiError(std::exception_ptr e) noexcept override;
+
+#ifdef HAVE_LIBWAS
+	/* virtual methods from class WasMetricsHandler */
+	void OnWasMetric(std::string_view name, float value) noexcept override;
+#endif
 
 private:
 	bool AllocatorCompressCallback() noexcept;

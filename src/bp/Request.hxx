@@ -218,6 +218,9 @@ private:
 		bool had_internal_redirect = false;
 
 		bool auto_gzipped = false, auto_brotli_path = false;
+
+		// TODO make configurable (via translation protocol)
+		const bool enable_metrics = true;
 	} translate;
 
 	/**

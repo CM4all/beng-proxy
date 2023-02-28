@@ -215,6 +215,7 @@ WasServer::OnWasControlPacket(enum was_command cmd,
 		HttpMethod method;
 
 	case WAS_COMMAND_NOP:
+	case WAS_COMMAND_METRIC:
 		break;
 
 	case WAS_COMMAND_REQUEST:

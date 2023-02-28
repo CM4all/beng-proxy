@@ -702,6 +702,7 @@ Request::HandleChainResponse(UniquePoolPtr<TranslateResponse> _response) noexcep
 			       session_id.GetClusterHash(),
 			       false,
 			       false,
+			       translate.enable_metrics,
 			       nullptr,
 			       nullptr,
 		       },

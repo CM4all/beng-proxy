@@ -254,6 +254,16 @@ BpInstance::OnMemoryWarning(uint64_t memory_usage,
 	// TODO: stop unused child processes
 }
 
+#ifdef HAVE_LIBWAS
+
+void
+BpInstance::OnWasMetric(std::string_view name, float value) noexcept
+{
+	was_metrics[std::string{name}] += value;
+}
+
+#endif
+
 bool
 BpInstance::OnAvahiError(std::exception_ptr e) noexcept
 {

@@ -16,6 +16,7 @@ class EventLoop;
 class UnusedIstreamPtr;
 class WasLease;
 class StringMap;
+class WasMetricsHandler;
 class HttpResponseHandler;
 class CancellablePointer;
 
@@ -39,6 +40,8 @@ class CancellablePointer;
  * @param headers the request headers (optional)
  * @param body the request body (optional)
  * @param params application specific parameters
+ * @param metrics_handler if not nullptr, then enable metrix, to be
+ * delivered to this handler
  * @param handler receives the response
  * @param cancel_ptr a handle which may be used to abort the operation
  */
@@ -54,6 +57,7 @@ was_client_request(struct pool &pool, EventLoop &event_loop,
 		   const char *query_string,
 		   const StringMap &headers, UnusedIstreamPtr body,
 		   std::span<const char *const> params,
+		   WasMetricsHandler *metrics_handler,
 		   HttpResponseHandler &handler,
 		   CancellablePointer &cancel_ptr) noexcept;
 

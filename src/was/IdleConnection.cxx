@@ -97,6 +97,7 @@ WasIdleConnection::RecoverStop()
 		case WAS_COMMAND_DATA:
 		case WAS_COMMAND_LENGTH:
 		case WAS_COMMAND_STOP:
+		case WAS_COMMAND_METRIC:
 			/* discard & ignore */
 			DiscardControl(header.length);
 			continue;

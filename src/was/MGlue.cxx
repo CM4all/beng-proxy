@@ -45,6 +45,7 @@ class MultiWasRequest final
 
 	std::span<const char *const> parameters;
 
+	WasMetricsHandler *const metrics_handler;
 	HttpResponseHandler &handler;
 	CancellablePointer &caller_cancel_ptr;
 	CancellablePointer stock_cancel_ptr;
@@ -60,6 +61,7 @@ public:
 			StringMap &&_headers,
 			UnusedIstreamPtr _body,
 			std::span<const char *const> _parameters,
+			WasMetricsHandler *_metrics_handler,
 			HttpResponseHandler &_handler,
 			CancellablePointer &_cancel_ptr) noexcept
 		:PoolLeakDetector(_pool),
@@ -72,6 +74,7 @@ public:
 		 script_name(_script_name),
 		 path_info(_path_info), query_string(_query_string),
 		 parameters(_parameters),
+		 metrics_handler(_metrics_handler),
 		 handler(_handler), caller_cancel_ptr(_cancel_ptr) {
 		caller_cancel_ptr = *this;
 	}
@@ -147,6 +150,7 @@ MultiWasRequest::OnStockItemReady(StockItem &item) noexcept
 			   pending_request.headers,
 			   std::move(pending_request.body),
 			   parameters,
+			   metrics_handler,
 			   handler, caller_cancel_ptr);
 }
 
@@ -236,6 +240,7 @@ SendMultiWasRequest(struct pool &pool, MultiWasStock &stock,
 		    StringMap &&headers, UnusedIstreamPtr body,
 		    std::span<const char *const> parameters,
 		    unsigned concurrency,
+		    WasMetricsHandler *metrics_handler,
 		    HttpResponseHandler &handler,
 		    CancellablePointer &cancel_ptr) noexcept
 {
@@ -254,6 +259,7 @@ SendMultiWasRequest(struct pool &pool, MultiWasStock &stock,
 						    std::move(headers),
 						    std::move(body),
 						    parameters,
+						    metrics_handler,
 						    handler, cancel_ptr);
 	request->Start(stock, options, action, args, parallelism, concurrency);
 }
@@ -320,6 +326,7 @@ SendRemoteWasRequest(struct pool &pool, RemoteWasStock &stock,
 		     StringMap &&headers, UnusedIstreamPtr body,
 		     std::span<const char *const> parameters,
 		     unsigned concurrency,
+		     WasMetricsHandler *metrics_handler,
 		     HttpResponseHandler &handler,
 		     CancellablePointer &cancel_ptr) noexcept
 {
@@ -335,6 +342,7 @@ SendRemoteWasRequest(struct pool &pool, RemoteWasStock &stock,
 						    std::move(headers),
 						    std::move(body),
 						    parameters,
+						    metrics_handler,
 						    handler, cancel_ptr);
 	request->Start(stock, address, parallelism, concurrency);
 }

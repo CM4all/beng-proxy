@@ -5,6 +5,7 @@
 #include "was/Client.hxx"
 #include "was/Launch.hxx"
 #include "was/Lease.hxx"
+#include "was/MetricsHandler.hxx"
 #include "stopwatch.hxx"
 #include "lease.hxx"
 #include "http/ResponseHandler.hxx"
@@ -41,7 +42,7 @@
 #include <signal.h>
 
 struct Context final
-	: PInstance, WasLease, HttpResponseHandler, SinkFdHandler {
+	: PInstance, WasLease, WasMetricsHandler, HttpResponseHandler, SinkFdHandler {
 
 	WasProcess process;
 
@@ -51,6 +52,11 @@ struct Context final
 	CancellablePointer cancel_ptr;
 
 	Context():body(nullptr) {}
+
+	/* virtual methods from class WasMetricsHandler */
+	void OnWasMetric(std::string_view name, float value) noexcept {
+		fmt::print(stderr, "metric '{}'={}\n", name, value);
+	}
 
 	/* virtual methods from class Lease */
 	void ReleaseWas(gcc_unused bool reuse) override {
@@ -220,6 +226,7 @@ try {
 			   headers,
 			   request_body(context.event_loop, context.root_pool),
 			   params,
+			   &context,
 			   context, context.cancel_ptr);
 
 	context.event_loop.Run();

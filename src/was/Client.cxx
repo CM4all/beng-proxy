@@ -3,6 +3,7 @@
 // author: Max Kellermann <mk@cm4all.com>
 
 #include "Client.hxx"
+#include "MetricsHandler.hxx"
 #include "Map.hxx"
 #include "Output.hxx"
 #include "Input.hxx"
@@ -22,6 +23,7 @@
 #include "http/HeaderName.hxx"
 #include "http/Method.hxx"
 #include "util/Cancellable.hxx"
+#include "util/CharUtil.hxx"
 #include "util/DestructObserver.hxx"
 #include "util/Exception.hxx"
 #include "util/SpanCast.hxx"
@@ -33,6 +35,7 @@
 
 #include <algorithm> // for std::all_of()
 #include <cassert>
+#include <cmath> // for std::isnormal()
 
 class WasClient final
 	: Was::ControlHandler, WasOutputHandler, WasInputHandler,
@@ -47,6 +50,8 @@ class WasClient final
 	WasLease &lease;
 
 	Was::Control control;
+
+	WasMetricsHandler *const metrics_handler;
 
 	HttpResponseHandler &handler;
 
@@ -136,6 +141,7 @@ public:
 		  FileDescriptor input_fd, FileDescriptor output_fd,
 		  WasLease &_lease,
 		  HttpMethod method, UnusedIstreamPtr body,
+		  WasMetricsHandler *_metrics_handler,
 		  HttpResponseHandler &_handler,
 		  CancellablePointer &cancel_ptr) noexcept;
 
@@ -466,6 +472,36 @@ ParseHeaderPacket(AllocatorPtr alloc, StringMap &headers,
 	headers.Add(alloc, alloc.DupToLower(name), alloc.DupZ(value));
 }
 
+static bool
+IsValidMetricName(std::string_view name) noexcept
+{
+	return !name.empty() && name.size() < 64 &&
+		std::all_of(name.begin(), name.end(), [](char ch){
+			return IsAlphaNumericASCII(ch) || ch == '_';
+		});
+}
+
+static bool
+HandleMetric(WasMetricsHandler &handler,
+	     std::span<const std::byte> payload)
+{
+	const float &value = *(const float *)payload.data();
+
+	if (payload.size() <= sizeof(value))
+		return false;
+
+	if (!std::isfinite(value))
+		return false;
+
+	const auto name = ToStringView(payload.subspan(sizeof(value)));
+	if (!IsValidMetricName(name))
+		return false;
+
+	handler.OnWasMetric(name, value);
+
+	return true;
+}
+
 bool
 WasClient::OnWasControlPacket(enum was_command cmd,
 			      std::span<const std::byte> payload) noexcept
@@ -665,6 +701,16 @@ WasClient::OnWasControlPacket(enum was_command cmd,
 		}
 
 		return false;
+
+	case WAS_COMMAND_METRIC:
+		if (metrics_handler != nullptr &&
+		    !HandleMetric(*metrics_handler, payload)) {
+			stopwatch.RecordEvent("control_error");
+			AbortResponse(std::make_exception_ptr(WasProtocolError{"Malformed METRIC packet"}));
+			return false;
+		}
+
+		return true;
 	}
 
 	return true;
@@ -824,6 +870,7 @@ WasClient::WasClient(struct pool &_pool, struct pool &_caller_pool,
 		     FileDescriptor input_fd, FileDescriptor output_fd,
 		     WasLease &_lease,
 		     HttpMethod method, UnusedIstreamPtr body,
+		     WasMetricsHandler *_metrics_handler,
 		     HttpResponseHandler &_handler,
 		     CancellablePointer &cancel_ptr) noexcept
 	:PoolLeakDetector(_pool),
@@ -831,6 +878,7 @@ WasClient::WasClient(struct pool &_pool, struct pool &_caller_pool,
 	 stopwatch(std::move(_stopwatch)),
 	 lease(_lease),
 	 control(event_loop, control_fd, *this),
+	 metrics_handler(_metrics_handler),
 	 handler(_handler),
 	 submit_response_timer(event_loop,
 			       BIND_THIS_METHOD(OnSubmitResponseTimer)),
@@ -847,6 +895,7 @@ WasClient::WasClient(struct pool &_pool, struct pool &_caller_pool,
 
 static bool
 SendRequest(Was::Control &control,
+	    bool enable_metrics,
 	    const char *remote_host,
 	    HttpMethod method, const char *uri,
 	    const char *script_name, const char *path_info,
@@ -857,6 +906,7 @@ SendRequest(Was::Control &control,
 	const uint32_t method32 = (uint32_t)method;
 
 	return control.SendEmpty(WAS_COMMAND_REQUEST) &&
+		(!enable_metrics || control.SendEmpty(WAS_COMMAND_METRIC)) &&
 		(method == HttpMethod::GET ||
 		 control.Send(WAS_COMMAND_METHOD, &method32, sizeof(method32))) &&
 		control.SendString(WAS_COMMAND_URI, uri) &&
@@ -884,7 +934,7 @@ WasClient::SendRequest(const char *remote_host,
 		       const StringMap &headers,
 		       std::span<const char *const> params) noexcept
 {
-	::SendRequest(control,
+	::SendRequest(control, metrics_handler != nullptr,
 		      remote_host,
 		      method, uri, script_name, path_info,
 		      query_string, headers, request.body,
@@ -903,6 +953,7 @@ was_client_request(struct pool &caller_pool, EventLoop &event_loop,
 		   const char *query_string,
 		   const StringMap &headers, UnusedIstreamPtr body,
 		   std::span<const char *const> params,
+		   WasMetricsHandler *metrics_handler,
 		   HttpResponseHandler &handler,
 		   CancellablePointer &cancel_ptr) noexcept
 {
@@ -913,6 +964,7 @@ was_client_request(struct pool &caller_pool, EventLoop &event_loop,
 					     event_loop, std::move(stopwatch),
 					     control_fd, input_fd, output_fd,
 					     lease, method, std::move(body),
+					     metrics_handler,
 					     handler, cancel_ptr);
 	client->SendRequest(remote_host,
 			    method, uri, script_name, path_info,

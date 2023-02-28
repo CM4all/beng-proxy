@@ -28,7 +28,7 @@ Build-Depends: debhelper (>= 13.3~), dh-python,
  libavahi-client-dev,
  liburing-dev,
  zlib1g-dev,
- libcm4all-was-protocol-dev (>= 1.21),
+ libcm4all-was-protocol-dev (>= 1.26),
  python3-sphinx,
  valgrind
 Standards-Version: 3.9.1

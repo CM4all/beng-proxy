@@ -12,6 +12,7 @@ struct pool;
 class StopwatchPtr;
 class UnusedIstreamPtr;
 class WasStock;
+class WasMetricsHandler;
 class StringMap;
 class HttpResponseHandler;
 class CancellablePointer;
@@ -37,5 +38,6 @@ was_request(struct pool &pool, WasStock &was_stock,
 	    const char *query_string,
 	    StringMap &&headers, UnusedIstreamPtr body,
 	    std::span<const char *const> params,
+	    WasMetricsHandler *metrics_handler,
 	    HttpResponseHandler &handler,
 	    CancellablePointer &cancel_ptr);

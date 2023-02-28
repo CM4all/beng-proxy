@@ -15,6 +15,7 @@ class UnusedIstreamPtr;
 class MultiWasStock;
 class RemoteWasStock;
 class StringMap;
+class WasMetricsHandler;
 class HttpResponseHandler;
 class CancellablePointer;
 struct ChildOptions;
@@ -40,6 +41,7 @@ SendMultiWasRequest(struct pool &pool, MultiWasStock &was_stock,
 		    StringMap &&headers, UnusedIstreamPtr body,
 		    std::span<const char *const> params,
 		    unsigned concurrency,
+		    WasMetricsHandler *metrics_handler,
 		    HttpResponseHandler &handler,
 		    CancellablePointer &cancel_ptr) noexcept;
 
@@ -60,5 +62,6 @@ SendRemoteWasRequest(struct pool &pool, RemoteWasStock &was_stock,
 		     StringMap &&headers, UnusedIstreamPtr body,
 		     std::span<const char *const> params,
 		     unsigned concurrency,
+		     WasMetricsHandler *metrics_handler,
 		     HttpResponseHandler &handler,
 		     CancellablePointer &cancel_ptr) noexcept;

@@ -195,6 +195,7 @@ try {
 				    cgi->query_string,
 				    std::move(headers), std::move(body),
 				    cgi->params.ToArray(pool),
+				    params.want_metrics ? metrics_handler : nullptr,
 				    handler, cancel_ptr);
 		else if (!cgi->address_list.empty())
 			SendRemoteWasRequest(pool, *remote_was_stock,
@@ -209,6 +210,7 @@ try {
 					     std::move(headers), std::move(body),
 					     cgi->params.ToArray(pool),
 					     cgi->concurrency,
+					     params.want_metrics ? metrics_handler : nullptr,
 					     handler, cancel_ptr);
 		else
 			SendMultiWasRequest(pool, *multi_was_stock, parent_stopwatch,
@@ -226,6 +228,7 @@ try {
 					    std::move(headers), std::move(body),
 					    cgi->params.ToArray(pool),
 					    cgi->concurrency,
+					    params.want_metrics ? metrics_handler : nullptr,
 					    handler, cancel_ptr);
 		return;
 #else

@@ -506,6 +506,7 @@ try {
 					 instance.was_stock,
 					 instance.multi_was_stock,
 					 instance.remote_was_stock,
+					 &instance,
 #endif
 					 instance.delegate_stock,
 #ifdef HAVE_LIBNFS

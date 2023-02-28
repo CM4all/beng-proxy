@@ -269,6 +269,7 @@ MalformedPrematureWasServer::OnWasControlPacket(enum was_command cmd,
 
 	case WAS_COMMAND_STOP:
 	case WAS_COMMAND_PREMATURE:
+	case WAS_COMMAND_METRIC:
 		break;
 	}
 
@@ -343,6 +344,7 @@ public:
 				   nullptr,
 				   method, uri, uri, nullptr, nullptr,
 				   headers, std::move(body), {},
+				   nullptr,
 				   handler, cancel_ptr);
 	}
 
