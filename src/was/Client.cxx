@@ -485,7 +485,7 @@ static bool
 HandleMetric(WasMetricsHandler &handler,
 	     std::span<const std::byte> payload)
 {
-	const float &value = *(const float *)payload.data();
+	const float &value = *(const float *)(const void *)payload.data();
 
 	if (payload.size() <= sizeof(value))
 		return false;
