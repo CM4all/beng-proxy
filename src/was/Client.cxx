@@ -31,6 +31,7 @@
 
 #include <was/protocol.h>
 
+#include <algorithm> // for std::all_of()
 #include <cassert>
 
 class WasClient final
@@ -446,15 +447,10 @@ IsValidHeaderValueChar(char ch) noexcept
 	return ch != '\0' && ch != '\n' && ch != '\r';
 }
 
-[[gnu::pure]]
-static bool
+static constexpr bool
 IsValidHeaderValue(std::string_view value) noexcept
 {
-	for (char ch : value)
-		if (!IsValidHeaderValueChar(ch))
-			return false;
-
-	return true;
+	return std::all_of(value.begin(), value.end(), IsValidHeaderValueChar);
 }
 
 static void
