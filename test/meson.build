@@ -164,6 +164,7 @@ if libwas.found()
     '../src/PInstance.cxx',
     include_directories: inc,
     dependencies: [
+      fmt_dep,
       expand_dep,
       net_dep,
       was_client_dep,

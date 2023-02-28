@@ -31,6 +31,8 @@
 #include "util/StringStrip.hxx"
 #include "AllocatorPtr.hxx"
 
+#include <fmt/core.h>
+
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <stdio.h>
@@ -94,7 +96,7 @@ Context::OnInputError(std::exception_ptr ep) noexcept
 bool
 Context::OnSendError(int _error) noexcept
 {
-	fprintf(stderr, "%s\n", strerror(_error));
+	fmt::print(stderr, "{}\n", strerror(_error));
 
 	body = nullptr;
 	error = true;
@@ -112,7 +114,7 @@ Context::OnHttpResponse(HttpStatus status,
 			gcc_unused StringMap &&headers,
 			UnusedIstreamPtr _body) noexcept
 {
-	fprintf(stderr, "status: %s\n", http_status_to_string(status));
+	fmt::print(stderr, "status: {}\n", http_status_to_string(status));
 
 	if (_body) {
 		struct pool &pool = root_pool;
@@ -148,7 +150,7 @@ try {
 	SetLogLevel(5);
 
 	if (argc < 3) {
-		fprintf(stderr, "Usage: run_was PATH URI [--parameter a=b ...]\n");
+		fmt::print(stderr, "Usage: run_was PATH URI [--parameter a=b ...]\n");
 		return EXIT_FAILURE;
 	}
 
