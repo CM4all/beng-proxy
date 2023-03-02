@@ -2,7 +2,7 @@ cm4all-beng-proxy (18.0.16) unstable; urgency=low
 
   * was: support the METRIC packet, export to Prometheus
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Thu, 02 Mar 2023 14:39:57 +0100
 
 cm4all-beng-proxy (18.0.15) unstable; urgency=low
 
