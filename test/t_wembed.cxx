@@ -42,9 +42,9 @@ Widget::LoggerDomain::GetDomain() const noexcept
 }
 
 UnusedIstreamPtr
-istream_iconv_new(gcc_unused struct pool &pool, UnusedIstreamPtr input,
-		  gcc_unused const char *tocode,
-		  gcc_unused const char *fromcode) noexcept
+istream_iconv_new([[maybe_unused]] struct pool &pool, UnusedIstreamPtr input,
+		  [[maybe_unused]] const char *tocode,
+		  [[maybe_unused]] const char *fromcode) noexcept
 {
 	return input;
 }
@@ -76,17 +76,17 @@ RealmSessionLease::Put(SessionManager &, RealmSession &) noexcept
 }
 
 void
-Widget::LoadFromSession(gcc_unused RealmSession &session) noexcept
+Widget::LoadFromSession([[maybe_unused]] RealmSession &session) noexcept
 {
 }
 
 void
-widget_http_request(gcc_unused struct pool &pool,
-		    gcc_unused Widget &widget,
+widget_http_request([[maybe_unused]] struct pool &pool,
+		    [[maybe_unused]] Widget &widget,
 		    SharedPoolPtr<WidgetContext>,
 		    const StopwatchPtr &,
 		    HttpResponseHandler &handler,
-		    gcc_unused CancellablePointer &cancel_ptr) noexcept
+		    [[maybe_unused]] CancellablePointer &cancel_ptr) noexcept
 {
 	handler.InvokeError(std::make_exception_ptr(std::runtime_error("Test")));
 }
@@ -99,9 +99,9 @@ struct TestOperation final : Cancellable {
 
 void
 ResolveWidget(AllocatorPtr alloc,
-	      gcc_unused Widget &widget,
+	      [[maybe_unused]] Widget &widget,
 	      WidgetRegistry &,
-	      gcc_unused WidgetResolverCallback callback,
+	      [[maybe_unused]] WidgetResolverCallback callback,
 	      CancellablePointer &cancel_ptr) noexcept
 {
 	auto to = alloc.New<TestOperation>();

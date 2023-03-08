@@ -269,7 +269,7 @@ NfsCacheStore::Put(RubberAllocation &&a) noexcept
  */
 
 void
-NfsCacheStore::RubberDone(RubberAllocation &&a, gcc_unused size_t size) noexcept
+NfsCacheStore::RubberDone(RubberAllocation &&a, [[maybe_unused]] size_t size) noexcept
 {
 	assert(size == stat.stx_size);
 

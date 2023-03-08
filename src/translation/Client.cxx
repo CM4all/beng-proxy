@@ -180,8 +180,8 @@ TranslateClient::TryWrite() noexcept
 	assert(!src.empty());
 
 	ssize_t nbytes = socket.Write(src.data(), src.size());
-	if (gcc_unlikely(nbytes < 0)) {
-		if (gcc_likely(nbytes == WRITE_BLOCKING))
+	if (nbytes < 0) [[unlikely]] {
+		if (nbytes == WRITE_BLOCKING) [[likely]]
 			return true;
 
 		Fail(std::make_exception_ptr(MakeErrno("write error to translation server")));

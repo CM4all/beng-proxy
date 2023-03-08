@@ -59,12 +59,12 @@ struct Context final
 	}
 
 	/* virtual methods from class Lease */
-	void ReleaseWas(gcc_unused bool reuse) override {
+	void ReleaseWas([[maybe_unused]] bool reuse) override {
 		process.handle.reset();
 		process.Close();
 	}
 
-	void ReleaseWasStop(gcc_unused uint64_t input_received) override {
+	void ReleaseWasStop([[maybe_unused]] uint64_t input_received) override {
 		ReleaseWas(false);
 	}
 
@@ -117,7 +117,7 @@ Context::OnSendError(int _error) noexcept
 
 void
 Context::OnHttpResponse(HttpStatus status,
-			gcc_unused StringMap &&headers,
+			[[maybe_unused]] StringMap &&headers,
 			UnusedIstreamPtr _body) noexcept
 {
 	fmt::print(stderr, "status: {}\n", http_status_to_string(status));

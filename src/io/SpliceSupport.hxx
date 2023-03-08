@@ -59,7 +59,7 @@ enum {
 };
 
 static inline FdTypeMask
-istream_direct_mask_to(gcc_unused FdType type)
+istream_direct_mask_to([[maybe_unused]] FdType type)
 {
 	return 0;
 }

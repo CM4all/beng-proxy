@@ -402,7 +402,7 @@ lhttp_stock_item_abandon_socket(StockItem &item) noexcept
 }
 
 FdType
-lhttp_stock_item_get_type(gcc_unused const StockItem &item) noexcept
+lhttp_stock_item_get_type([[maybe_unused]] const StockItem &item) noexcept
 {
 	return FdType::FD_SOCKET;
 }

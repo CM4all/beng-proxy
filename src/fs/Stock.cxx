@@ -153,7 +153,7 @@ private:
 	bool OnBufferedHangup() noexcept override;
 	bool OnBufferedClosed() noexcept override;
 
-	gcc_noreturn
+	[[gnu::noreturn]]
 	bool OnBufferedWrite() override {
 		/* should never be reached because we never schedule
 		   writing */

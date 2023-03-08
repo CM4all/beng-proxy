@@ -761,7 +761,7 @@ void
 WidgetRequest::OnSuffixRegistrySuccess(const char *_content_type,
 				       bool, bool,
 				       // TODO: apply transformations
-				       gcc_unused const IntrusiveForwardList<Transformation> &_transformations) noexcept
+				       [[maybe_unused]] const IntrusiveForwardList<Transformation> &_transformations) noexcept
 {
 	content_type = _content_type;
 	SendRequest();

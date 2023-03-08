@@ -186,7 +186,7 @@ SpawnIstream::OnData(std::span<const std::byte> src) noexcept
 }
 
 IstreamDirectResult
-SpawnIstream::OnDirect(gcc_unused FdType type, FileDescriptor fd, off_t offset,
+SpawnIstream::OnDirect([[maybe_unused]] FdType type, FileDescriptor fd, off_t offset,
 		       std::size_t max_length) noexcept
 {
 	assert(input_fd.IsDefined());
@@ -375,7 +375,7 @@ SpawnIstream::_Close() noexcept
  */
 
 void
-SpawnIstream::OnChildProcessExit(gcc_unused int status) noexcept
+SpawnIstream::OnChildProcessExit([[maybe_unused]] int status) noexcept
 {
 	assert(handle);
 	handle.reset();

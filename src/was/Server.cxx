@@ -153,7 +153,7 @@ WasServer::WasOutputError(std::exception_ptr ep) noexcept
  */
 
 void
-WasServer::WasInputClose(gcc_unused uint64_t received) noexcept
+WasServer::WasInputClose([[maybe_unused]] uint64_t received) noexcept
 {
 	/* this happens when the request handler isn't interested in the
 	   request body */

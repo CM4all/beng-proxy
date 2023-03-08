@@ -96,7 +96,7 @@ HttpServerConnection::TryWriteBuckets2()
 
 	ssize_t nbytes = socket->WriteV(v);
 	if (nbytes < 0) {
-		if (gcc_likely(nbytes == WRITE_BLOCKING))
+		if (nbytes == WRITE_BLOCKING) [[likely]]
 			return BucketResult::BLOCKING;
 
 		if (nbytes == WRITE_DESTROYED)

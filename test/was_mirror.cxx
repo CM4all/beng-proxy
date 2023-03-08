@@ -18,9 +18,9 @@
 struct Instance final : PInstance, WasServerHandler {
 	WasServer *server;
 
-	void OnWasRequest(gcc_unused struct pool &pool,
-			  gcc_unused HttpMethod method,
-			  gcc_unused const char *uri, StringMap &&headers,
+	void OnWasRequest([[maybe_unused]] struct pool &pool,
+			  [[maybe_unused]] HttpMethod method,
+			  [[maybe_unused]] const char *uri, StringMap &&headers,
 			  UnusedIstreamPtr body) noexcept override {
 		const bool has_body = body;
 		server->SendResponse(has_body ? HttpStatus::OK : HttpStatus::NO_CONTENT,

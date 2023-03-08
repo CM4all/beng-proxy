@@ -6,6 +6,7 @@
 #include "Request.hxx"
 #include "Handler.hxx"
 #include "io/SpliceSupport.hxx"
+#include "util/Compiler.h"
 #include "util/Exception.hxx"
 
 #include <errno.h>
@@ -44,14 +45,14 @@ HttpServerConnection::OnData(std::span<const std::byte> src) noexcept
 
 	ssize_t nbytes = socket->Write(src);
 
-	if (gcc_likely(nbytes >= 0)) {
+	if (nbytes >= 0) [[likely]] {
 		response.bytes_sent += nbytes;
 		response.length += (off_t)nbytes;
 		ScheduleWrite();
 		return (std::size_t)nbytes;
 	}
 
-	if (gcc_likely(nbytes == WRITE_BLOCKING)) {
+	if (nbytes == WRITE_BLOCKING) [[likely]] {
 		response.want_write = true;
 		return 0;
 	}
@@ -76,7 +77,7 @@ HttpServerConnection::OnDirect(FdType type, FileDescriptor fd, off_t offset,
 
 	ssize_t nbytes = socket->WriteFrom(fd, type, ToOffsetPointer(offset),
 					   max_length);
-	if (gcc_likely(nbytes > 0)) {
+	if (nbytes > 0) [[likely]] {
 		input.ConsumeDirect(nbytes);
 		response.bytes_sent += nbytes;
 		response.length += (off_t)nbytes;

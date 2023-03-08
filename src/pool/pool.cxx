@@ -8,6 +8,7 @@
 #include "memory/SlicePool.hxx"
 #include "stats/AllocatorStats.hxx"
 #include "io/Logger.hxx"
+#include "util/Compiler.h"
 #include "util/IntrusiveList.hxx"
 #include "util/Recycler.hxx"
 #include "util/Poison.hxx"
@@ -201,11 +202,12 @@ static struct {
 	struct linear_pool_area *linear_areas;
 } recycler;
 
-static void * gcc_malloc
+[[gnu::malloc]]
+static void *
 xmalloc(size_t size) noexcept
 {
 	void *p = malloc(size);
-	if (gcc_unlikely(p == nullptr)) {
+	if (p == nullptr) [[unlikely]] {
 		fputs("Out of memory\n", stderr);
 		abort();
 	}
@@ -330,7 +332,7 @@ pool_add_child(struct pool *pool, struct pool *child) noexcept
 }
 
 static inline void
-pool_remove_child(gcc_unused struct pool *pool, struct pool *child) noexcept
+pool_remove_child([[maybe_unused]] struct pool *pool, struct pool *child) noexcept
 {
 	assert(child->parent == pool);
 
@@ -338,7 +340,8 @@ pool_remove_child(gcc_unused struct pool *pool, struct pool *child) noexcept
 	child->parent = nullptr;
 }
 
-static struct pool *gcc_malloc
+[[gnu::malloc]]
+static struct pool *
 pool_new(struct pool *parent, const char *name) noexcept
 {
 	auto *pool = recycler.pools.Get(name);
@@ -373,7 +376,7 @@ pool_new_libc(struct pool *parent, const char *name) noexcept
 	return PoolPtr(PoolPtr::donate, *pool);
 }
 
-gcc_malloc
+[[gnu::malloc]]
 static struct linear_pool_area *
 pool_new_slice_area(SlicePool *slice_pool,
 		    struct linear_pool_area *prev) noexcept
@@ -393,7 +396,8 @@ pool_new_slice_area(SlicePool *slice_pool,
 	return area;
 }
 
-static struct linear_pool_area * gcc_malloc
+[[gnu::malloc]]
+static struct linear_pool_area *
 pool_new_linear_area(struct linear_pool_area *prev, size_t size) noexcept
 {
 	struct linear_pool_area *area = (struct linear_pool_area *)
@@ -524,8 +528,7 @@ pool_check_leaks(const struct pool &pool) noexcept
 }
 
 static void
-pool_destroy(struct pool *pool, gcc_unused struct pool *parent,
-	     struct pool *reparent_to) noexcept
+pool_destroy(struct pool *pool, struct pool *reparent_to) noexcept
 {
 	assert(pool->ref == 0);
 	assert(pool->parent == nullptr);
@@ -586,8 +589,7 @@ pool_destroy(struct pool *pool, gcc_unused struct pool *parent,
 
 #ifdef DEBUG_POOL_REF
 static void
-pool_increment_ref(gcc_unused struct pool *pool,
-		   std::forward_list<PoolRef> &list TRACE_ARGS_DECL) noexcept
+pool_increment_ref(std::forward_list<PoolRef> &list TRACE_ARGS_DECL) noexcept
 {
 #ifdef ENABLE_TRACE
 	for (auto &ref : list) {
@@ -637,7 +639,7 @@ pool_ref(struct pool *pool TRACE_ARGS_DECL) noexcept
 #endif
 
 #ifdef DEBUG_POOL_REF
-	pool_increment_ref(pool, pool->refs TRACE_ARGS_FWD);
+	pool_increment_ref(pool->refs TRACE_ARGS_FWD);
 #endif
 }
 
@@ -652,10 +654,10 @@ pool_unref(struct pool *pool TRACE_ARGS_DECL) noexcept
 #endif
 
 #ifdef DEBUG_POOL_REF
-	pool_increment_ref(pool, pool->unrefs TRACE_ARGS_FWD);
+	pool_increment_ref(pool->unrefs TRACE_ARGS_FWD);
 #endif
 
-	if (gcc_unlikely(pool->ref == 0)) {
+	if (pool->ref == 0) [[unlikely]] {
 		struct pool *parent = pool->parent;
 #ifdef NDEBUG
 		struct pool *reparent_to = nullptr;
@@ -667,7 +669,7 @@ pool_unref(struct pool *pool TRACE_ARGS_DECL) noexcept
 #ifdef DUMP_POOL_UNREF
 		pool_dump_refs(*pool);
 #endif
-		pool_destroy(pool, parent, reparent_to);
+		pool_destroy(pool, reparent_to);
 		return 0;
 	}
 
@@ -929,7 +931,7 @@ p_malloc_linear(struct pool *pool, const size_t original_size
 	size_t size = align_size(original_size);
 	size += LINEAR_PREFIX;
 
-	if (gcc_unlikely(size > pool->area_size)) {
+	if (size > pool->area_size) [[unlikely]] {
 		/* this allocation is larger than the standard area size;
 		   obtain a new area just for this allocation, and keep on
 		   using the last area */
@@ -952,7 +954,7 @@ p_malloc_linear(struct pool *pool, const size_t original_size
 			area = pool_new_linear_area(area->prev, size);
 			pool->current_area.linear->prev = area;
 		}
-	} else if (gcc_unlikely(area == nullptr || area->used + size > area->size)) {
+	} else if (area == nullptr || area->used + size > area->size) [[unlikely]] {
 		if (area != nullptr) {
 			logger.Format(5, "growing linear pool '%s'", pool->name);
 #ifdef DEBUG_POOL_GROW
@@ -997,7 +999,7 @@ internal_malloc(struct pool *pool, size_t size TYPE_ARG_DECL TRACE_ARGS_DECL) no
 
 	pool->netto_size += size;
 
-	if (gcc_likely(pool->type == POOL_LINEAR))
+	if (pool->type == POOL_LINEAR) [[likely]]
 		return p_malloc_linear(pool, size TYPE_ARG_FWD TRACE_ARGS_FWD);
 
 	assert(pool->type == POOL_LIBC);

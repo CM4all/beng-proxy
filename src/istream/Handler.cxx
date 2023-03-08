@@ -6,7 +6,7 @@
 #include "io/FileDescriptor.hxx"
 #include "util/Compiler.h"
 
-gcc_noreturn
+[[gnu::noreturn]]
 IstreamDirectResult
 IstreamHandler::OnDirect([[maybe_unused]] FdType type,
 			 [[maybe_unused]] FileDescriptor fd,

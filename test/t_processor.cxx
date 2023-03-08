@@ -40,7 +40,7 @@ UnusedIstreamPtr
 embed_inline_widget(struct pool &pool,
 		    SharedPoolPtr<WidgetContext>,
 		    const StopwatchPtr &,
-		    gcc_unused bool plain_text,
+		    [[maybe_unused]] bool plain_text,
 		    Widget &widget) noexcept
 {
 	const char *s = widget.GetIdPath();
@@ -57,14 +57,14 @@ parse_uri_mode(std::string_view) noexcept
 }
 
 UnusedIstreamPtr
-rewrite_widget_uri(gcc_unused struct pool &pool,
+rewrite_widget_uri([[maybe_unused]] struct pool &pool,
 		   SharedPoolPtr<WidgetContext> , const StopwatchPtr &,
-		   gcc_unused Widget &widget,
-		   gcc_unused std::string_view value,
-		   gcc_unused RewriteUriMode mode,
-		   gcc_unused bool stateful,
-		   gcc_unused const char *view,
-		   gcc_unused const struct escape_class *escape) noexcept
+		   [[maybe_unused]] Widget &widget,
+		   [[maybe_unused]] std::string_view value,
+		   [[maybe_unused]] RewriteUriMode mode,
+		   [[maybe_unused]] bool stateful,
+		   [[maybe_unused]] const char *view,
+		   [[maybe_unused]] const struct escape_class *escape) noexcept
 {
 	return nullptr;
 }
@@ -77,7 +77,7 @@ rewrite_widget_uri(gcc_unused struct pool &pool,
 class MyWidgetLookupHandler final : public WidgetLookupHandler {
 public:
 	/* virtual methods from class WidgetLookupHandler */
-	void WidgetFound(gcc_unused Widget &widget) noexcept override {
+	void WidgetFound([[maybe_unused]] Widget &widget) noexcept override {
 		fprintf(stderr, "widget found\n");
 	}
 

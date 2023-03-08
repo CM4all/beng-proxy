@@ -68,14 +68,14 @@ SessionManager::Put(Session &) noexcept
 }
 
 void
-Widget::LoadFromSession(gcc_unused RealmSession &session) noexcept
+Widget::LoadFromSession([[maybe_unused]] RealmSession &session) noexcept
 {
 }
 
 UnusedIstreamPtr
 embed_inline_widget(struct pool &pool, SharedPoolPtr<WidgetContext>,
 		    const StopwatchPtr &,
-		    gcc_unused bool plain_text,
+		    [[maybe_unused]] bool plain_text,
 		    Widget &widget) noexcept
 {
 	return istream_string_new(pool, widget.class_name);
@@ -91,7 +91,7 @@ ResolveWidget(AllocatorPtr,
 	      Widget &widget,
 	      WidgetRegistry &,
 	      WidgetResolverCallback callback,
-	      gcc_unused CancellablePointer &cancel_ptr) noexcept
+	      [[maybe_unused]] CancellablePointer &cancel_ptr) noexcept
 {
 
 	if (strcmp(widget.class_name, "1") == 0) {

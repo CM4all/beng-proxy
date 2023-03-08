@@ -29,7 +29,7 @@ UnusedIstreamPtr
 embed_inline_widget(struct pool &pool,
 		    SharedPoolPtr<WidgetContext>,
 		    const StopwatchPtr &,
-		    gcc_unused bool plain_text,
+		    [[maybe_unused]] bool plain_text,
 		    Widget &widget) noexcept
 {
 	const char *s = widget.GetIdPath();
@@ -46,14 +46,14 @@ parse_uri_mode(std::string_view) noexcept
 }
 
 UnusedIstreamPtr
-rewrite_widget_uri(gcc_unused struct pool &pool,
+rewrite_widget_uri([[maybe_unused]] struct pool &pool,
 		   SharedPoolPtr<WidgetContext>, const StopwatchPtr &,
-		   gcc_unused Widget &widget,
+		   [[maybe_unused]] Widget &widget,
 		   std::string_view,
-		   gcc_unused RewriteUriMode mode,
-		   gcc_unused bool stateful,
-		   gcc_unused const char *view,
-		   gcc_unused const struct escape_class *escape) noexcept
+		   [[maybe_unused]] RewriteUriMode mode,
+		   [[maybe_unused]] bool stateful,
+		   [[maybe_unused]] const char *view,
+		   [[maybe_unused]] const struct escape_class *escape) noexcept
 {
 	return nullptr;
 }

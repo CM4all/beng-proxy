@@ -20,7 +20,7 @@ Istream::_FillBucketList(IstreamBucketList &list)
 	list.SetMore();
 }
 
-gcc_noreturn
+[[gnu::noreturn]]
 std::size_t
 Istream::_ConsumeBucketList(std::size_t) noexcept
 {
@@ -28,7 +28,7 @@ Istream::_ConsumeBucketList(std::size_t) noexcept
 	gcc_unreachable();
 }
 
-gcc_noreturn
+[[gnu::noreturn]]
 void
 Istream::_ConsumeDirect(std::size_t) noexcept
 {

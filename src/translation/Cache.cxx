@@ -1164,8 +1164,8 @@ tcache::Invalidate(const TranslateRequest &request,
 {
 	TranslationCacheInvalidate data{&request, vary, site};
 
-	gcc_unused
-		unsigned removed = site != nullptr
+	[[maybe_unused]]
+	unsigned removed = site != nullptr
 		? InvalidateSite(request, vary, site)
 		: (std::find(vary.begin(), vary.end(), TranslationCommand::HOST) != vary.end()
 		   ? InvalidateHost(request, vary)
@@ -1379,7 +1379,7 @@ TranslateCacheRequest::OnTranslateError(std::exception_ptr ep) noexcept
 static void
 tcache_hit(AllocatorPtr alloc,
 	   const char *uri, const char *host, const char *user,
-	   gcc_unused const char *key,
+	   const char *key,
 	   const TranslateCacheItem &item,
 	   TranslateHandler &handler) noexcept
 {
@@ -1430,7 +1430,7 @@ tcache_miss(AllocatorPtr alloc, struct tcache &tcache,
 [[gnu::pure]]
 static bool
 tcache_validate_mtime(const TranslateResponse &response,
-		      gcc_unused const char *key) noexcept
+		      const char *key) noexcept
 {
 	if (response.validate_mtime.path == nullptr)
 		return true;

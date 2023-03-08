@@ -151,7 +151,7 @@ private:
 		return false;
 	}
 
-	gcc_noreturn
+	[[gnu::noreturn]]
 	bool OnBufferedWrite() override {
 		/* should never be reached because we never schedule
 		   writing */

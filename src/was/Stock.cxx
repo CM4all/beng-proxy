@@ -91,7 +91,7 @@ private:
 	}
 
 	/* virtual methods from class ExitListener */
-	void OnChildProcessExit(gcc_unused int status) noexcept override {
+	void OnChildProcessExit([[maybe_unused]] int status) noexcept override {
 		assert(handle);
 		handle.reset();
 	}

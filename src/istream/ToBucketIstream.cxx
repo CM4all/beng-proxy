@@ -16,7 +16,7 @@ ToBucketIstream::ToBucketIstream(struct pool &_pool,
 	:FacadeIstream(_pool, std::move(_input)),
 	 defer_read(_event_loop, BIND_THIS_METHOD(DeferredRead)) {}
 
-gcc_noreturn
+[[gnu::noreturn]]
 void
 ToBucketIstream::_Read() noexcept
 {

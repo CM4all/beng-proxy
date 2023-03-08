@@ -62,7 +62,7 @@ WidgetRegistry::LookupWidgetClass(struct pool &,
 UnusedIstreamPtr
 embed_inline_widget(struct pool &pool, SharedPoolPtr<WidgetContext> ctx,
 		    const StopwatchPtr &stopwatch,
-		    gcc_unused bool plain_text,
+		    [[maybe_unused]] bool plain_text,
 		    Widget &widget) noexcept
 {
 	widget.cls = MakeWidgetClass(widget.pool, widget.class_name);

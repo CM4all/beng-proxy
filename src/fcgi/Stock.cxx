@@ -425,7 +425,7 @@ fcgi_stock_get(FcgiStock *fcgi_stock,
 }
 
 int
-fcgi_stock_item_get_domain(gcc_unused const StockItem &item) noexcept
+fcgi_stock_item_get_domain([[maybe_unused]] const StockItem &item) noexcept
 {
 	return AF_LOCAL;
 }

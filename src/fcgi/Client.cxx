@@ -656,7 +656,7 @@ FcgiClient::OnData(std::span<const std::byte> src) noexcept
 	ssize_t nbytes = socket.Write(src.data(), src.size());
 	if (nbytes > 0)
 		socket.ScheduleWrite();
-	else if (gcc_likely(nbytes == WRITE_BLOCKING || nbytes == WRITE_DESTROYED))
+	else if (nbytes == WRITE_BLOCKING || nbytes == WRITE_DESTROYED) [[likely]]
 		return 0;
 	else if (nbytes < 0) {
 		AbortResponse(NestException(std::make_exception_ptr(MakeErrno("Write error")),
@@ -677,7 +677,7 @@ FcgiClient::OnDirect(FdType type, FileDescriptor fd, off_t offset,
 
 	ssize_t nbytes = socket.WriteFrom(fd, type, ToOffsetPointer(offset),
 					  max_length);
-	if (gcc_likely(nbytes > 0)) {
+	if (nbytes > 0) [[likely]] {
 		input.ConsumeDirect(nbytes);
 		socket.ScheduleWrite();
 		return IstreamDirectResult::OK;

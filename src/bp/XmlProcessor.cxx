@@ -1045,7 +1045,7 @@ XmlProcessor::OnXmlTagFinished(const XmlParserTag &xml_tag) noexcept
 
 size_t
 XmlProcessor::OnXmlCdata(std::string_view text,
-			 gcc_unused bool escaped, off_t start) noexcept
+			 [[maybe_unused]] bool escaped, off_t start) noexcept
 {
 	had_input = true;
 

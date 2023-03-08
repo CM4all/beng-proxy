@@ -12,6 +12,7 @@
 #include "http/HeaderParser.hxx"
 #include "istream/istream_null.hxx"
 #include "http/List.hxx"
+#include "util/Compiler.h"
 #include "util/SpanCast.hxx"
 #include "util/StringCompare.hxx"
 #include "util/StringSplit.hxx"
@@ -37,21 +38,21 @@ ParseHttpMethod(const char *s) noexcept
 {
 	switch (s[0]) {
 	case 'D':
-		if (gcc_likely(s[1] == 'E' && s[2] == 'L' && s[3] == 'E' &&
-			       s[4] == 'T' && s[5] == 'E' && s[6] == ' '))
+		if (s[1] == 'E' && s[2] == 'L' && s[3] == 'E' &&
+		    s[4] == 'T' && s[5] == 'E' && s[6] == ' ') [[likely]]
 			return {HttpMethod::DELETE, s + 7};
 
 		break;
 
 	case 'G':
-		if (gcc_likely(s[1] == 'E' && s[2] == 'T' && s[3] == ' '))
+		if (s[1] == 'E' && s[2] == 'T' && s[3] == ' ') [[likely]]
 			return {HttpMethod::GET, s + 4};
 
 		break;
 
 	case 'P':
-		if (gcc_likely(s[1] == 'O' && s[2] == 'S' && s[3] == 'T' &&
-			       s[4] == ' '))
+		if (s[1] == 'O' && s[2] == 'S' && s[3] == 'T' &&
+		    s[4] == ' ') [[likely]]
 			return {HttpMethod::POST, s + 5};
 		else if (s[1] == 'U' && s[2] == 'T' && s[3] == ' ')
 			return {HttpMethod::PUT, s + 4};
@@ -71,8 +72,8 @@ ParseHttpMethod(const char *s) noexcept
 		break;
 
 	case 'H':
-		if (gcc_likely(s[1] == 'E' && s[2] == 'A' && s[3] == 'D' &&
-			       s[4] == ' '))
+		if (s[1] == 'E' && s[2] == 'A' && s[3] == 'D' &&
+		    s[4] == ' ') [[likely]]
 			return {HttpMethod::HEAD, s + 5};
 
 		break;
@@ -228,7 +229,7 @@ HttpServerConnection::HeadersFinished() noexcept
 			char *endptr;
 
 			content_length = strtoul(value, &endptr, 10);
-			if (gcc_unlikely(*endptr != 0 || content_length < 0)) {
+			if (*endptr != 0 || content_length < 0) [[unlikely]] {
 				ProtocolError("invalid Content-Length header in HTTP request");
 				return false;
 			}
@@ -272,11 +273,11 @@ HttpServerConnection::HandleLine(std::string_view line) noexcept
 	assert(request.read_state == Request::START ||
 	       request.read_state == Request::HEADERS);
 
-	if (gcc_unlikely(request.read_state == Request::START)) {
+	if (request.read_state == Request::START) [[unlikely]] {
 		assert(request.request == nullptr);
 
 		return ParseRequestLine(line);
-	} else if (gcc_likely(!line.empty())) {
+	} else if (!line.empty()) [[likely]] {
 		assert(request.read_state == Request::HEADERS);
 		assert(request.request != nullptr);
 

@@ -44,7 +44,7 @@ WidgetRegistry::LookupWidgetClass(struct pool &,
 UnusedIstreamPtr
 embed_inline_widget(struct pool &pool, SharedPoolPtr<WidgetContext>,
 		    const StopwatchPtr &,
-		    gcc_unused bool plain_text,
+		    [[maybe_unused]] bool plain_text,
 		    Widget &widget) noexcept
 {
 	return istream_string_new(pool, p_strdup(&pool, widget.class_name));

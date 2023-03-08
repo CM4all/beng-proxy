@@ -40,7 +40,7 @@ public:
 
 	/* virtual methods from class HttpResponseHandler */
 	void OnHttpResponse(HttpStatus status,
-			    gcc_unused StringMap &&headers,
+			    StringMap &&,
 			    UnusedIstreamPtr body) noexcept override {
 		body.Clear();
 
