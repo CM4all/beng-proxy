@@ -34,13 +34,6 @@ gtest = declare_dependency(
   compile_args: gtest_compile_args,
 )
 
-executable('dump_udp',
-  'dump_udp.cxx',
-  include_directories: inc,
-  dependencies: [
-    event_net_dep,
-  ])
-
 executable('dump_control',
   'dump_control.cxx',
   include_directories: inc,
