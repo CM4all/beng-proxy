@@ -1,6 +1,7 @@
 cm4all-beng-proxy (17.12) unstable; urgency=low
 
-  * 
+  * spawn: workaround for stuck spawner if execve() is delayed by shrinker
+  * control: fix assertion failure
 
  --   
 
