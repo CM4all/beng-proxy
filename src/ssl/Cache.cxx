@@ -316,8 +316,6 @@ CertCache::Add(UniqueCertKey &&ck, const char *special)
 inline std::optional<UniqueCertKey>
 CertCache::GetNoWildCardCached(const char *host, const char *_special) noexcept
 {
-	const std::scoped_lock lock{mutex};
-
 	const std::string_view special{
 		_special != nullptr
 		? std::string_view{_special}
@@ -383,19 +381,13 @@ CertCache::ScheduleQuery(SSL &ssl, const char *host,
 		return;
 	}
 
-	bool was_empty;
+	const bool was_empty = queries.empty();
 
-	{
-		const std::scoped_lock lock{mutex};
+	const char *_special = special != nullptr ? special : "";
+	auto &query = queries.try_emplace(std::move(key),
+					  *this, host, _special).first->second;
 
-		was_empty = queries.empty();
-
-		const char *_special = special != nullptr ? special : "";
-		auto &query = queries.try_emplace(std::move(key),
-						  *this, host, _special).first->second;
-
-		query.AddRequest(*request);
-	}
+	query.AddRequest(*request);
 
 	if (was_empty)
 		query_added_notify.Signal();
@@ -466,6 +458,13 @@ CertCache::Apply(SSL &ssl, const char *host,
 	case State::ERROR:
 		return LookupCertResult::ERROR;
 	}
+
+	/* this mutex not only protects #map and #queries, but also
+	   ensures that completed queries aren't finalized between
+	   GetNoWildCardCached() and ScheduleQuery(), so this request
+	   won't be added to a query that is currently being finalized
+	   by the main thread */
+	const std::scoped_lock lock{mutex};
 
 	if (auto item = GetNoWildCardCached(host, special))
 		return ApplyAndSetState(ssl, *item);
