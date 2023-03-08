@@ -153,12 +153,18 @@ private:
 	UniqueCertKey Add(UniqueCertKey &&ck,
 			  const char *special);
 
+	/**
+	 * Caller must lock #mutex.
+	 */
 	[[gnu::pure]]
 	std::optional<UniqueCertKey> GetNoWildCardCached(const char *host,
 							 const char *special) noexcept;
 
 	void StartQuery() noexcept;
 
+	/**
+	 * Caller must lock #mutex.
+	 */
 	void ScheduleQuery(SSL &ssl, const char *host,
 			   const char *special) noexcept;
 

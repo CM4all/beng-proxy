@@ -20,15 +20,17 @@
 
 #include <set>
 
-struct CertCache::Request final : AutoUnlinkIntrusiveListHook, Cancellable {
+struct CertCache::Request final : IntrusiveListHook<>, Cancellable {
+	CertCache &cache;
+
 	SSL &ssl;
 
 	/**
 	 * Throws #SslCompletionHandler::AlreadyCancelled if the #SSL
 	 * was already cancelled.
 	 */
-	explicit Request(SSL &_ssl)
-		:ssl(_ssl)
+	Request(CertCache &_cache, SSL &_ssl)
+		:cache(_cache), ssl(_ssl)
 	{
 		auto &handler = GetSslCompletionHandler(ssl);
 		handler.SetCancellable(*this);
@@ -36,6 +38,11 @@ struct CertCache::Request final : AutoUnlinkIntrusiveListHook, Cancellable {
 
 	/* virtual methods from class Cancellable */
 	void Cancel() noexcept override {
+		{
+			const std::scoped_lock lock{cache.mutex};
+			unlink();
+		}
+
 		delete this;
 	}
 };
@@ -119,6 +126,33 @@ CoGetServerCertificateKeyMaybeWildcard(Pg::AsyncConnection &connection,
 	co_return cert_key;
 }
 
+template<typename T>
+static T *
+LockPopFront(std::mutex &mutex, IntrusiveList<T> &list)
+{
+	const std::scoped_lock lock{mutex};
+
+	if (list.empty())
+		return nullptr;
+
+	auto *item = &list.front();
+	list.pop_front();
+	return item;
+}
+
+/**
+ * Like IntrusiveList::clear_and_dispose(), but lock the given mutex
+ * for all list accesses.
+ */
+template<typename T>
+static void
+LockClearAndDispose(std::mutex &mutex, IntrusiveList<T> &list,
+		    Disposer<T> auto disposer)
+{
+	while (auto *item = LockPopFront(mutex, list))
+		disposer(item);
+}
+
 Co::InvokeTask
 CertCache::Query::Run()
 {
@@ -139,7 +173,7 @@ CertCache::Query::Run()
 	cert_key = cache.Add(std::move(cert_key),
 			     _special);
 
-	requests.clear_and_dispose([this, &cert_key](Request *request){
+	LockClearAndDispose(cache.mutex, requests, [this, &cert_key](Request *request){
 		try {
 			cache.Apply(request->ssl, cert_key);
 			cache.state_idx.Set(request->ssl, State::COMPLETE);
@@ -166,7 +200,7 @@ CertCache::Query::OnCompletion(std::exception_ptr error) noexcept
 	/* invoke all remaining SslCompletionHandlers; this is
 	   only relevant if Run() has not finished
 	   sucessfully */
-	requests.clear_and_dispose([this, new_state](Request *request){
+	LockClearAndDispose(cache.mutex, requests, [this, new_state](Request *request){
 		cache.state_idx.Set(request->ssl, new_state);
 		InvokeSslCompletionHandler(request->ssl);
 		delete request;
@@ -288,8 +322,6 @@ CertCache::Add(UniqueCertKey &&ck, const char *special)
 inline std::optional<UniqueCertKey>
 CertCache::GetNoWildCardCached(const char *host, const char *_special) noexcept
 {
-	const std::scoped_lock lock{mutex};
-
 	const std::string_view special{
 		_special != nullptr
 		? std::string_view{_special}
@@ -347,7 +379,7 @@ CertCache::ScheduleQuery(SSL &ssl, const char *host,
 	Request *request;
 
 	try {
-		request = new Request(ssl);
+		request = new Request(*this, ssl);
 	} catch (SslCompletionHandler::AlreadyCancelled) {
 		/* the main thread has cancelled the SSL object (via
 		   SslFilter::CancelRun()) while the worker thread has
@@ -355,19 +387,13 @@ CertCache::ScheduleQuery(SSL &ssl, const char *host,
 		return;
 	}
 
-	bool was_empty;
+	const bool was_empty = queries.empty();
 
-	{
-		const std::scoped_lock lock{mutex};
+	const char *_special = special != nullptr ? special : "";
+	auto &query = queries.try_emplace(std::move(key),
+					  *this, host, _special).first->second;
 
-		was_empty = queries.empty();
-
-		const char *_special = special != nullptr ? special : "";
-		auto &query = queries.try_emplace(std::move(key),
-						  *this, host, _special).first->second;
-
-		query.AddRequest(*request);
-	}
+	query.AddRequest(*request);
 
 	if (was_empty)
 		query_added_notify.Signal();
@@ -438,6 +464,13 @@ CertCache::Apply(SSL &ssl, const char *host,
 	case State::ERROR:
 		return LookupCertResult::ERROR;
 	}
+
+	/* this mutex not only protects #map and #queries, but also
+	   ensures that completed queries aren't finalized between
+	   GetNoWildCardCached() and ScheduleQuery(), so this request
+	   won't be added to a query that is currently being finalized
+	   by the main thread */
+	const std::scoped_lock lock{mutex};
 
 	if (auto item = GetNoWildCardCached(host, special))
 		return ApplyAndSetState(ssl, *item);
