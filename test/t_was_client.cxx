@@ -297,6 +297,7 @@ MalformedPrematureWasServer::OnWasControlPacket(enum was_command cmd,
 
 	case WAS_COMMAND_STOP:
 	case WAS_COMMAND_PREMATURE:
+	case WAS_COMMAND_METRIC:
 		break;
 	}
 

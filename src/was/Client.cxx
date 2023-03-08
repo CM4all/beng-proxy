@@ -695,6 +695,10 @@ WasClient::OnWasControlPacket(enum was_command cmd,
 		}
 
 		return false;
+
+	case WAS_COMMAND_METRIC:
+		// not implemented
+		break;
 	}
 
 	return true;
