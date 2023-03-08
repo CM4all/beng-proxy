@@ -48,15 +48,17 @@
 
 #include <set>
 
-struct CertCache::Request final : AutoUnlinkIntrusiveListHook, Cancellable {
+struct CertCache::Request final : IntrusiveListHook, Cancellable {
+	CertCache &cache;
+
 	SSL &ssl;
 
 	/**
 	 * Throws #SslCompletionHandler::AlreadyCancelled if the #SSL
 	 * was already cancelled.
 	 */
-	explicit Request(SSL &_ssl)
-		:ssl(_ssl)
+	Request(CertCache &_cache, SSL &_ssl)
+		:cache(_cache), ssl(_ssl)
 	{
 		auto &handler = GetSslCompletionHandler(ssl);
 		handler.SetCancellable(*this);
@@ -64,6 +66,11 @@ struct CertCache::Request final : AutoUnlinkIntrusiveListHook, Cancellable {
 
 	/* virtual methods from class Cancellable */
 	void Cancel() noexcept override {
+		{
+			const std::scoped_lock lock{cache.mutex};
+			unlink();
+		}
+
 		delete this;
 	}
 };
@@ -147,6 +154,32 @@ CoGetServerCertificateKeyMaybeWildcard(Pg::AsyncConnection &connection,
 	co_return cert_key;
 }
 
+template<typename T>
+static T *
+LockPopFront(std::mutex &mutex, IntrusiveList<T> &list)
+{
+	const std::scoped_lock lock{mutex};
+
+	if (list.empty())
+		return nullptr;
+
+	auto *item = &list.front();
+	list.pop_front();
+	return item;
+}
+
+/**
+ * Like IntrusiveList::clear_and_dispose(), but lock the given mutex
+ * for all list accesses.
+ */
+template<typename T, typename D>
+static void
+LockClearAndDispose(std::mutex &mutex, IntrusiveList<T> &list, D &&disposer)
+{
+	while (auto *item = LockPopFront(mutex, list))
+		disposer(item);
+}
+
 Co::InvokeTask
 CertCache::Query::Run()
 {
@@ -167,7 +200,7 @@ CertCache::Query::Run()
 	cert_key = cache.Add(std::move(cert_key),
 			     _special);
 
-	requests.clear_and_dispose([this, &cert_key](Request *request){
+	LockClearAndDispose(cache.mutex, requests, [this, &cert_key](Request *request){
 		try {
 			cache.Apply(request->ssl, cert_key);
 			cache.state_idx.Set(request->ssl, State::COMPLETE);
@@ -194,7 +227,7 @@ CertCache::Query::OnCompletion(std::exception_ptr error) noexcept
 	/* invoke all remaining SslCompletionHandlers; this is
 	   only relevant if Run() has not finished
 	   sucessfully */
-	requests.clear_and_dispose([this, new_state](Request *request){
+	LockClearAndDispose(cache.mutex, requests, [this, new_state](Request *request){
 		cache.state_idx.Set(request->ssl, new_state);
 		InvokeSslCompletionHandler(request->ssl);
 		delete request;
@@ -373,7 +406,7 @@ CertCache::ScheduleQuery(SSL &ssl, const char *host,
 	Request *request;
 
 	try {
-		request = new Request(ssl);
+		request = new Request(*this, ssl);
 	} catch (SslCompletionHandler::AlreadyCancelled) {
 		/* the main thread has cancelled the SSL object (via
 		   SslFilter::CancelRun()) while the worker thread has
