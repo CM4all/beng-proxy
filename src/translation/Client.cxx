@@ -14,6 +14,7 @@
 #include "pool/pool.hxx"
 #include "system/Error.hxx"
 #include "net/TimeoutError.hxx"
+#include "net/SocketProtocolError.hxx"
 #include "util/Cancellable.hxx"
 #include "util/Exception.hxx"
 #include "lease.hxx"
@@ -81,7 +82,8 @@ private:
 
 	bool OnBufferedClosed() noexcept override {
 		ReleaseSocket(false);
-		return true;
+		OnBufferedError(std::make_exception_ptr(SocketClosedPrematurelyError()));
+		return false;
 	}
 
 	bool OnBufferedWrite() override {
