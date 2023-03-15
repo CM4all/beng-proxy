@@ -228,6 +228,11 @@ struct LbConfig {
 		return false;
 	}
 
+	[[gnu::pure]]
+	bool HasPrometheusExporter() const noexcept {
+		return !prometheus_exporters.empty();
+	}
+
 	void HandleSet(std::string_view name, const char *value);
 };
 

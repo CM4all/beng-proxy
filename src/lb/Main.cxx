@@ -178,7 +178,8 @@ try {
 	   to PostgreSQL eventually */
 	// TODO: bind-mount the PostgreSQL socket into the new rootfs
 	if (!config.HasCertDatabase())
-		isolate_from_filesystem(config.HasZeroConf());
+		isolate_from_filesystem(config.HasZeroConf(),
+					config.HasPrometheusExporter());
 
 	if (config.HasTransparentSource()) {
 		static constexpr cap_value_t cap_keep_list[] = {

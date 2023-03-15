@@ -11,8 +11,12 @@
  *
  * @param allow_dbus bind-mount /run/dbus into the new mount
  * namespace?
+ *
+ * @param allow_prometheus_exporters bind-mount
+ * /run/cm4all/prometheus-exporters into the new mount namespace?
  */
 void
-isolate_from_filesystem(bool allow_dbus);
+isolate_from_filesystem(bool allow_dbus,
+			bool allow_prometheus_exporters);
 
 #endif

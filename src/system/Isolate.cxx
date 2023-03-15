@@ -46,7 +46,8 @@ deny_setgroups()
 }
 
 void
-isolate_from_filesystem(bool allow_dbus)
+isolate_from_filesystem(bool allow_dbus,
+			bool allow_prometheus_exporters)
 {
 	const int uid = geteuid(), gid = getegid();
 
@@ -97,6 +98,19 @@ isolate_from_filesystem(bool allow_dbus)
 		mount("/run/dbus", "run/dbus", nullptr, MS_BIND|MS_REC, nullptr);
 		mount(nullptr, "run/dbus", nullptr,
 		      MS_REMOUNT|MS_BIND|MS_NOEXEC|MS_NOSUID|MS_RDONLY, nullptr);
+	}
+
+	if (allow_prometheus_exporters) {
+		mkdir("run/cm4all", 0700);
+		mkdir("run/cm4all/prometheus-exporters", 0700);
+
+		mount("/run/cm4all/prometheus-exporters",
+		      "run/cm4all/prometheus-exporters", nullptr,
+		      MS_BIND|MS_REC, nullptr);
+		mount(nullptr, "run/cm4all/prometheus-exporters", nullptr,
+		      MS_REMOUNT|MS_BIND|MS_NOEXEC|MS_NOSUID|MS_RDONLY, nullptr);
+
+		chmod("run/cm4all", 0111);
 	}
 
 	chmod("run", 0111);
