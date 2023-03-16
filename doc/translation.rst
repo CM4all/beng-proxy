@@ -621,6 +621,10 @@ Response
 - ``EAGER_CACHE``: Enable caching for the given resource address, even
   if it is not declared to be cacheable.
 
+- ``DISCARD_QUERY_STRING``: Discard the query string from the request
+  URI.  This can be combined with ``EAGER_CACHE`` to prevent
+  cache-busting with random query strings.
+
 - ``AUTO_FLUSH_CACHE``: All (successful) modifying requests (``POST``,
   ``PUT`` ...) flush the HTTP cache of the specified ``CACHE_TAG``.
 

@@ -115,6 +115,11 @@ Request::HandleTranslatedRequest2(const TranslateResponse &response) noexcept
 		return;
 	}
 
+	if (response.discard_query_string && dissected_uri.query.data() != nullptr) {
+		dissected_uri.query = {};
+		request.uri = RecomposeUri(*request.pool, dissected_uri);
+	}
+
 	using namespace BengProxy;
 	if ((response.request_header_forward[HeaderGroup::COOKIE] != HeaderForwardMode::MANGLE &&
 	     response.request_header_forward[HeaderGroup::COOKIE] != HeaderForwardMode::BOTH) ||
