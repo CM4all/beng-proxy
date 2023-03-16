@@ -8,6 +8,12 @@ session = static_library(
   'Read.cxx',
   'Save.cxx',
   include_directories: inc,
+  dependencies: [
+    cookie_dep,
+    event_dep,
+    io_dep,
+    system_dep,
+  ],
 )
 
 session_dep = declare_dependency(
