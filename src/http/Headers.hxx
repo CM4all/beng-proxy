@@ -57,9 +57,17 @@ public:
 		return std::move(map);
 	}
 
+	/**
+	 * Does the #StringMap contain a header with the specified
+	 * name?
+	 */
 	[[gnu::pure]]
-	const char *Get(const char *key) const noexcept {
-		return map.Get(key);
+	bool MapContains(const char *key) const noexcept {
+		return map.Contains(key);
+	}
+
+	bool ContainsContentEncoding() const noexcept {
+		return MapContains("content-encoding");
 	}
 
 	GrowingBuffer &GetBuffer() noexcept {

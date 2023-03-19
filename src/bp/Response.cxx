@@ -116,7 +116,7 @@ Request::AutoDeflate(HttpHeaders &response_headers,
 		   flags for us to check */
 	} else if (translate.response->auto_deflate &&
 		   http_client_accepts_encoding(request.headers, "deflate") &&
-		   response_headers.Get("content-encoding") == nullptr) {
+		   !response_headers.ContainsContentEncoding()) {
 		auto available = response_body.GetAvailable(false);
 		if (available < 0 || available >= 512) {
 			compressed = true;
@@ -127,7 +127,7 @@ Request::AutoDeflate(HttpHeaders &response_headers,
 #ifdef HAVE_BROTLI
 	} else if (translate.response->auto_brotli &&
 		   http_client_accepts_encoding(request.headers, "br") &&
-		   response_headers.Get("content-encoding") == nullptr) {
+		   !response_headers.ContainsContentEncoding()) {
 		auto available = response_body.GetAvailable(false);
 		if (available < 0 || available >= 512) {
 			compressed = true;
@@ -137,7 +137,7 @@ Request::AutoDeflate(HttpHeaders &response_headers,
 #endif
 	} else if (translate.response->auto_gzip &&
 		   http_client_accepts_encoding(request.headers, "gzip") &&
-		   response_headers.Get("content-encoding") == nullptr) {
+		   response_headers.ContainsContentEncoding()) {
 		auto available = response_body.GetAvailable(false);
 		if (available < 0 || available >= 512) {
 			compressed = true;
@@ -614,7 +614,7 @@ Request::DispatchResponseDirect(HttpStatus status, HttpHeaders headers,
 
 	if (translate.response &&
 	    translate.response->send_csrf_token) {
-		if (headers.Get("access-control-allow-origin") != nullptr) {
+		if (headers.MapContains("access-control-allow-origin")) {
 			/* if this CORS header indicates that other origins may
 			   send requests, then this undermindes our CSRF
 			   protection; thus, enabling both CORS headers and
