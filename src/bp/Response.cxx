@@ -103,6 +103,26 @@ session_drop_widgets(RealmSession &session, const char *uri,
 	}
 }
 
+static void
+MaybeAutoCompress(HttpHeaders &response_headers,
+		  UnusedIstreamPtr &response_body,
+		  const char *encoding,
+		  auto &&factory) noexcept
+{
+	if (response_headers.ContainsContentEncoding())
+		/* already compressed */
+		return;
+
+	if (auto available = response_body.GetAvailable(false);
+	    available >= 0 && available < 512)
+		/* too small, not worth it */
+		return;
+
+	response_headers.contains_content_encoding = true;
+	response_headers.Write("content-encoding", encoding);
+	response_body = factory(std::move(response_body));
+}
+
 inline UnusedIstreamPtr
 Request::AutoDeflate(HttpHeaders &response_headers,
 		     UnusedIstreamPtr response_body) noexcept
@@ -115,34 +135,31 @@ Request::AutoDeflate(HttpHeaders &response_headers,
 	} else if (translate.response->auto_deflate &&
 		   http_client_accepts_encoding(request.headers, "deflate") &&
 		   !response_headers.ContainsContentEncoding()) {
-		auto available = response_body.GetAvailable(false);
-		if (available < 0 || available >= 512) {
-			response_headers.contains_content_encoding = true;
-			response_headers.Write("content-encoding", "deflate");
-			response_body = istream_deflate_new(pool, std::move(response_body),
-							    instance.event_loop);
-		}
+		MaybeAutoCompress(response_headers, response_body, "deflate",
+				  [this](auto &&i){
+					  return istream_deflate_new(pool,
+								     std::move(i),
+								     instance.event_loop);
+				  });
 #ifdef HAVE_BROTLI
 	} else if (translate.response->auto_brotli &&
 		   http_client_accepts_encoding(request.headers, "br") &&
 		   !response_headers.ContainsContentEncoding()) {
-		auto available = response_body.GetAvailable(false);
-		if (available < 0 || available >= 512) {
-			response_headers.contains_content_encoding = true;
-			response_headers.Write("content-encoding", "br");
-			response_body = NewBrotliEncoderIstream(pool, std::move(response_body));
-		}
+		MaybeAutoCompress(response_headers, response_body, "br",
+				  [this](auto &&i){
+					  return NewBrotliEncoderIstream(pool, std::move(i));
+				  });
 #endif
 	} else if (translate.response->auto_gzip &&
 		   http_client_accepts_encoding(request.headers, "gzip") &&
 		   response_headers.ContainsContentEncoding()) {
-		auto available = response_body.GetAvailable(false);
-		if (available < 0 || available >= 512) {
-			response_headers.contains_content_encoding = true;
-			response_headers.Write("content-encoding", "gzip");
-			response_body = istream_deflate_new(pool, std::move(response_body),
-							    instance.event_loop, true);
-		}
+		MaybeAutoCompress(response_headers, response_body, "gzip",
+				  [this](auto &&i){
+					  return istream_deflate_new(pool,
+								     std::move(i),
+								     instance.event_loop,
+								     true);
+				  });
 	}
 
 	return response_body;
