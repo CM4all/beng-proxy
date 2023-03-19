@@ -162,7 +162,8 @@ Request::AutoDeflate(HttpHeaders &response_headers,
 		/* no TranslateResponse, i.e. there are no "auto_"
 		   flags for us to check */
 #ifdef HAVE_BROTLI
-	} else if (translate.response->auto_brotli &&
+	} else if ((translate.response->auto_brotli ||
+		    translate.auto_brotli) &&
 		   http_client_accepts_encoding(request.headers, "br") &&
 		   !response_headers.ContainsContentEncoding()) {
 		MaybeAutoCompress(instance.encoding_cache.get(), pool, resource_tag,

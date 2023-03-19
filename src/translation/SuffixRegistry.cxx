@@ -42,6 +42,7 @@ SuffixRegistryLookup::OnTranslateResponse(UniquePoolPtr<TranslateResponse> _resp
 	_handler.OnSuffixRegistrySuccess(response.content_type,
 					 response.auto_gzipped,
 					 response.auto_brotli_path,
+					 response.auto_brotli,
 					 response.views != nullptr
 					 ? IntrusiveForwardList<Transformation>{ShallowCopy{}, response.views->transformations}
 					 : IntrusiveForwardList<Transformation>{});

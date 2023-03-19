@@ -337,13 +337,14 @@ Request::CheckHandleProbePathSuffixes(const TranslateResponse &response) noexcep
 
 void
 Request::OnSuffixRegistrySuccess(const char *content_type,
-				 bool auto_gzipped, bool auto_brotli_path,
+				 bool auto_gzipped, bool auto_brotli_path, bool auto_brotli,
 				 const IntrusiveForwardList<Transformation> &transformations) noexcept
 {
 	translate.content_type = content_type;
 	translate.suffix_transformations = {ShallowCopy{}, transformations};
 	translate.auto_gzipped = auto_gzipped;
 	translate.auto_brotli_path = auto_brotli_path;
+	translate.auto_brotli = auto_brotli;
 
 	HandleTranslatedRequest2(*translate.response);
 }

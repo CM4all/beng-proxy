@@ -23,7 +23,7 @@ public:
 	 * all files of this type
 	 */
 	virtual void OnSuffixRegistrySuccess(const char *content_type,
-					     bool auto_gzipped, bool auto_brotli_path,
+					     bool auto_gzipped, bool auto_brotli_path, bool auto_brotli,
 					     const IntrusiveForwardList<Transformation> &transformations) noexcept = 0;
 
 	virtual void OnSuffixRegistryError(std::exception_ptr ep) noexcept = 0;
