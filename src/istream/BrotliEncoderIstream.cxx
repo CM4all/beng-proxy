@@ -242,8 +242,14 @@ BrotliEncoderIstream::OnData(const std::span<const std::byte> src) noexcept
 
 	had_input = true;
 
-	if (state == nullptr)
+	if (state == nullptr) {
 		state = BrotliEncoderCreateInstance(nullptr, nullptr, nullptr);
+
+		/* use medium quality; doesn't use too much CPU, but
+		   compresses reasonably well */
+		BrotliEncoderSetParameter(state, BROTLI_PARAM_QUALITY,
+					  (BROTLI_MIN_QUALITY + BROTLI_MAX_QUALITY) / 2);
+	}
 
 	size_t available_in = src.size();
 	const uint8_t *next_in = reinterpret_cast<const uint8_t *>(src.data());
