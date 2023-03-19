@@ -478,7 +478,7 @@ FilterCacheRequest::RubberTooLarge() noexcept
 {
 	response.cancel_ptr = nullptr;
 
-	LogConcat(4, "FilterCache", "nocache too large %s\n", info.key);
+	LogConcat(4, "FilterCache", "nocache too large ", info.key);
 	Destroy();
 }
 
