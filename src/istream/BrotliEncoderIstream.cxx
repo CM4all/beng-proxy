@@ -249,6 +249,11 @@ BrotliEncoderIstream::OnData(const std::span<const std::byte> src) noexcept
 		   compresses reasonably well */
 		BrotliEncoderSetParameter(state, BROTLI_PARAM_QUALITY,
 					  (BROTLI_MIN_QUALITY + BROTLI_MAX_QUALITY) / 2);
+
+		if (const auto available = input.GetAvailable(false);
+		    available > 0 && available < INT_MAX)
+			BrotliEncoderSetParameter(state, BROTLI_PARAM_SIZE_HINT,
+						  static_cast<uint32_t>(available));
 	}
 
 	size_t available_in = src.size();
