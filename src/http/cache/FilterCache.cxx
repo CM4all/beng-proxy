@@ -2,7 +2,7 @@
 // Copyright CM4all GmbH
 // author: Max Kellermann <mk@cm4all.com>
 
-#include "fcache.hxx"
+#include "FilterCache.hxx"
 #include "cache.hxx"
 #include "strmap.hxx"
 #include "http/ResponseHandler.hxx"

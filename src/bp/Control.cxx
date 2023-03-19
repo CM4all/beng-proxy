@@ -5,7 +5,7 @@
 #include "Control.hxx"
 #include "Instance.hxx"
 #include "session/Manager.hxx"
-#include "fcache.hxx"
+#include "http/cache/FilterCache.hxx"
 #include "http/cache/Public.hxx"
 #include "nfs/Cache.hxx"
 #include "event/net/control/Server.hxx"

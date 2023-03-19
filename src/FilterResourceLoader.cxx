@@ -3,7 +3,7 @@
 // author: Max Kellermann <mk@cm4all.com>
 
 #include "FilterResourceLoader.hxx"
-#include "fcache.hxx"
+#include "http/cache/FilterCache.hxx"
 #include "istream/UnusedPtr.hxx"
 #include "http/Method.hxx"
 

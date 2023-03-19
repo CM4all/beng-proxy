@@ -635,7 +635,7 @@ executable(
   'src/bp/RLogger.cxx',
   'src/bp/drop.cxx',
   'src/uri/Relocate.cxx',
-  'src/fcache.cxx',
+  'src/http/cache/FilterCache.cxx',
   'src/bp/FileHeaders.cxx',
   'src/bp/FileHandler.cxx',
   'src/bp/EmulateModAuthEasy.cxx',

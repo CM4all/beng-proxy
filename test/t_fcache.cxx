@@ -4,7 +4,7 @@
 
 #include "BlockingResourceLoader.hxx"
 #include "MirrorResourceLoader.hxx"
-#include "fcache.hxx"
+#include "http/cache/FilterCache.hxx"
 #include "strmap.hxx"
 #include "http/ResponseHandler.hxx"
 #include "ResourceAddress.hxx"
