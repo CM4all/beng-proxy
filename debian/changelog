@@ -1,6 +1,7 @@
 cm4all-beng-proxy (18.0.19) unstable; urgency=low
 
   * brotli: use medium quality to reduce CPU usage
+  * bp: prefer brotli over deflate
 
  --   
 

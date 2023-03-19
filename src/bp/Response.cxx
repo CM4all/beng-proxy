@@ -132,15 +132,6 @@ Request::AutoDeflate(HttpHeaders &response_headers,
 	} else if (!translate.response) {
 		/* no TranslateResponse, i.e. there are no "auto_"
 		   flags for us to check */
-	} else if (translate.response->auto_deflate &&
-		   http_client_accepts_encoding(request.headers, "deflate") &&
-		   !response_headers.ContainsContentEncoding()) {
-		MaybeAutoCompress(response_headers, response_body, "deflate",
-				  [this](auto &&i){
-					  return istream_deflate_new(pool,
-								     std::move(i),
-								     instance.event_loop);
-				  });
 #ifdef HAVE_BROTLI
 	} else if (translate.response->auto_brotli &&
 		   http_client_accepts_encoding(request.headers, "br") &&
@@ -150,6 +141,15 @@ Request::AutoDeflate(HttpHeaders &response_headers,
 					  return NewBrotliEncoderIstream(pool, std::move(i));
 				  });
 #endif
+	} else if (translate.response->auto_deflate &&
+		   http_client_accepts_encoding(request.headers, "deflate") &&
+		   !response_headers.ContainsContentEncoding()) {
+		MaybeAutoCompress(response_headers, response_body, "deflate",
+				  [this](auto &&i){
+					  return istream_deflate_new(pool,
+								     std::move(i),
+								     instance.event_loop);
+				  });
 	} else if (translate.response->auto_gzip &&
 		   http_client_accepts_encoding(request.headers, "gzip") &&
 		   response_headers.ContainsContentEncoding()) {
