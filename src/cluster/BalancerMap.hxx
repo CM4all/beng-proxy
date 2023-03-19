@@ -8,14 +8,14 @@
 #include "PickGeneric.hxx"
 #include "StickyHash.hxx"
 #include "HashKey.hxx"
-#include "util/Cache.hxx"
+#include "util/StaticCache.hxx"
 #include "util/Expiry.hxx"
 
 /**
  * Load balancer for AddressList.
  */
 class BalancerMap {
-	Cache<HashKey, RoundRobinBalancer, 2048, 1021> cache;
+	StaticCache<HashKey, RoundRobinBalancer, 2048, 1021> cache;
 
 public:
 	RoundRobinBalancer &MakeRoundRobinBalancer(HashKey key) noexcept;

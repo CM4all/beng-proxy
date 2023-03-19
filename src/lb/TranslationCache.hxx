@@ -5,7 +5,7 @@
 #pragma once
 
 #include "io/Logger.hxx"
-#include "util/Cache.hxx"
+#include "util/StaticCache.hxx"
 
 #include <string>
 
@@ -56,7 +56,7 @@ public:
 	};
 
 private:
-	typedef ::Cache<std::string, Item, 65536, 131071> Cache;
+	using Cache = StaticCache<std::string, Item, 65536, 131071>;
 	Cache cache;
 
 	Vary seen_vary;

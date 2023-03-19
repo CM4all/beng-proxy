@@ -6,9 +6,9 @@
 #define BENG_PROXY_STICKY_CACHE_HXX
 
 #include "StickyHash.hxx"
-#include "util/Cache.hxx"
+#include "util/StaticCache.hxx"
 
-class StickyCache : public Cache<sticky_hash_t, std::string, 32768, 4093>
+class StickyCache : public StaticCache<sticky_hash_t, std::string, 32768, 4093>
 {
 };
 
