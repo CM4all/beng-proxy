@@ -7,6 +7,7 @@
 #include "AllocatorPtr.hxx"
 #include "strmap.hxx"
 #include "memory/GrowingBuffer.hxx"
+#include "util/SpanCast.hxx"
 #include "HeaderWriter.hxx"
 #include "HeaderParser.hxx"
 
@@ -82,6 +83,20 @@ public:
 
 	bool ContainsContentRange() const noexcept {
 		return contains_content_range || MapContains("content-range");
+	}
+
+	/**
+	 * Attempt to look up a header; if it is not found in the
+	 * #map, the first part of #buffer is parsed, which may not
+	 * find the header if it happens to be (partly) in a secondary
+	 * buffer.
+	 */
+	[[gnu::pure]]
+	std::string_view GetSloppy(const char *key) const noexcept {
+		if (const char *value = map.Get(key); value != nullptr)
+			return value;
+
+		return header_parse_find(ToStringView(buffer.Read()), key);
 	}
 
 	GrowingBuffer &GetBuffer() noexcept {

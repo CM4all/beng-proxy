@@ -9,6 +9,7 @@
 #include "http/HeaderName.hxx"
 #include "util/ConstBuffer.hxx"
 #include "util/StaticFifoBuffer.hxx"
+#include "util/StringCompare.hxx"
 #include "util/StringSplit.hxx"
 #include "util/StringStrip.hxx"
 #include "AllocatorPtr.hxx"
@@ -109,4 +110,33 @@ header_parse_buffer(AllocatorPtr alloc, StringMap &headers,
 
 		buffer.Consume(p - src);
 	}
+}
+
+[[gnu::pure]]
+static std::string_view
+IsHeaderLineNamed(std::string_view line, std::string_view name) noexcept
+{
+	if (!SkipPrefix(line, name))
+		return {};
+
+	line = StripLeft(line);
+	if (line.empty() || line.front() != ':')
+		return {};
+
+	return StripLeft(line.substr(1));
+}
+
+std::string_view
+header_parse_find(std::string_view haystack, std::string_view name) noexcept
+{
+	while (!haystack.empty()) {
+		auto [line, rest] = Split(haystack, '\n');
+
+		if (auto value = IsHeaderLineNamed(line, name); value.data() != nullptr)
+			return value;
+
+		haystack = rest;
+	}
+
+	return {};
 }
