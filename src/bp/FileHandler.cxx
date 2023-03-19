@@ -147,6 +147,7 @@ Request::DispatchCompressedFile(const char *path, FileDescriptor fd,
 			      IsProcessorFirst());
 	write_translation_vary_header(headers2, tr);
 
+	headers.contains_content_encoding = true;
 	header_write(headers2, "content-encoding", encoding);
 	header_write(headers2, "vary", "accept-encoding");
 

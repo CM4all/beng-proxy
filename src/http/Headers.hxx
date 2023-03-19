@@ -22,6 +22,11 @@ class HttpHeaders {
 
 public:
 	/**
+	 * Does #buffer contain "Content-Encoding"?
+	 */
+	bool contains_content_encoding = false;
+
+	/**
 	 * Shall the HTTP server library generate a "Date" response
 	 * header?
 	 *
@@ -67,7 +72,7 @@ public:
 	}
 
 	bool ContainsContentEncoding() const noexcept {
-		return MapContains("content-encoding");
+		return contains_content_encoding || MapContains("content-encoding");
 	}
 
 	GrowingBuffer &GetBuffer() noexcept {
