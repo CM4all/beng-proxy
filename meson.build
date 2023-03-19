@@ -636,6 +636,7 @@ executable(
   'src/bp/drop.cxx',
   'src/uri/Relocate.cxx',
   'src/http/cache/FilterCache.cxx',
+  'src/http/cache/EncodingCache.cxx',
   'src/bp/FileHeaders.cxx',
   'src/bp/FileHandler.cxx',
   'src/bp/EmulateModAuthEasy.cxx',

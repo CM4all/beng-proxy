@@ -46,6 +46,8 @@ BpConfig::HandleSet(std::string_view name, const char *value)
 		http_cache_obey_no_cache = ParseBool(value);
 	} else if (name == "filter_cache_size"sv) {
 		filter_cache_size = ParseSize(value);
+	} else if (name == "encoding_cache_size"sv) {
+		encoding_cache_size = ParseSize(value);
 	} else if (name == "nfs_cache_size"sv) {
 		nfs_cache_size = ParseSize(value);
 	} else if (name == "translate_cache_size"sv) {

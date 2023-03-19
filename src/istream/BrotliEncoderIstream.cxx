@@ -13,6 +13,8 @@
 #include <cassert>
 #include <stdexcept>
 
+#include <limits.h> // for INT_MAX
+
 static std::span<const std::byte>
 BrotliEncoderTakeOutput(BrotliEncoderState *state) noexcept
 {

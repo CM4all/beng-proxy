@@ -14,6 +14,7 @@
 #include "CachedResourceLoader.hxx"
 #include "FilterResourceLoader.hxx"
 #include "BufferedResourceLoader.hxx"
+#include "http/cache/EncodingCache.hxx"
 #include "http/cache/FilterCache.hxx"
 #include "http/cache/Public.hxx"
 #include "translation/Stock.hxx"
@@ -100,6 +101,8 @@ BpInstance::FreeStocksAndCaches() noexcept
 		filter_cache = nullptr;
 	}
 
+	encoding_cache.reset();
+
 	if (lhttp_stock != nullptr) {
 		lhttp_stock_free(lhttp_stock);
 		lhttp_stock = nullptr;
@@ -161,6 +164,9 @@ BpInstance::ForkCow(bool inherit) noexcept
 
 	if (filter_cache != nullptr)
 		filter_cache_fork_cow(*filter_cache, inherit);
+
+	if (encoding_cache)
+		encoding_cache->ForkCow(inherit);
 
 #ifdef HAVE_LIBNFS
 	if (nfs_cache != nullptr)

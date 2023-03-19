@@ -15,6 +15,7 @@
 #include "http/Headers.hxx"
 #include "http/PHeaderUtil.hxx"
 #include "http/HeaderWriter.hxx"
+#include "http/cache/EncodingCache.hxx"
 #include "ForwardHeaders.hxx"
 #include "widget/Widget.hxx"
 #include "widget/Ptr.hxx"
@@ -104,7 +105,32 @@ session_drop_widgets(RealmSession &session, const char *uri,
 }
 
 static void
-MaybeAutoCompress(HttpHeaders &response_headers,
+MaybeCacheEncoded(EncodingCache *cache, AllocatorPtr alloc,
+		  const char *resource_tag,
+		  const HttpHeaders &response_headers,
+		  UnusedIstreamPtr &response_body) noexcept
+{
+	if (cache == nullptr || resource_tag == nullptr)
+		return;
+
+	const auto etag = response_headers.GetSloppy("etag");
+	if (etag.data() == nullptr)
+		return;
+
+	const char *key = alloc.Concat(resource_tag, "|etag=", etag);
+
+	if (auto encoded = cache->Get(alloc.GetPool(), key)) {
+		response_body = std::move(encoded);
+		return;
+	}
+
+	response_body = cache->Put(alloc.GetPool(), key, std::move(response_body));
+}
+
+static void
+MaybeAutoCompress(EncodingCache *cache, AllocatorPtr alloc,
+		  const char *resource_tag,
+		  HttpHeaders &response_headers,
 		  UnusedIstreamPtr &response_body,
 		  const char *encoding,
 		  auto &&factory) noexcept
@@ -121,6 +147,9 @@ MaybeAutoCompress(HttpHeaders &response_headers,
 	response_headers.contains_content_encoding = true;
 	response_headers.Write("content-encoding", encoding);
 	response_body = factory(std::move(response_body));
+
+	MaybeCacheEncoded(cache, alloc, resource_tag,
+			  response_headers, response_body);
 }
 
 inline UnusedIstreamPtr
@@ -136,7 +165,8 @@ Request::AutoDeflate(HttpHeaders &response_headers,
 	} else if (translate.response->auto_brotli &&
 		   http_client_accepts_encoding(request.headers, "br") &&
 		   !response_headers.ContainsContentEncoding()) {
-		MaybeAutoCompress(response_headers, response_body, "br",
+		MaybeAutoCompress(instance.encoding_cache.get(), pool, resource_tag,
+				  response_headers, response_body, "br",
 				  [this](auto &&i){
 					  return NewBrotliEncoderIstream(pool, std::move(i));
 				  });
@@ -144,7 +174,8 @@ Request::AutoDeflate(HttpHeaders &response_headers,
 	} else if (translate.response->auto_deflate &&
 		   http_client_accepts_encoding(request.headers, "deflate") &&
 		   !response_headers.ContainsContentEncoding()) {
-		MaybeAutoCompress(response_headers, response_body, "deflate",
+		MaybeAutoCompress(instance.encoding_cache.get(), pool, resource_tag,
+				  response_headers, response_body, "deflate",
 				  [this](auto &&i){
 					  return istream_deflate_new(pool,
 								     std::move(i),
@@ -153,7 +184,8 @@ Request::AutoDeflate(HttpHeaders &response_headers,
 	} else if (translate.response->auto_gzip &&
 		   http_client_accepts_encoding(request.headers, "gzip") &&
 		   response_headers.ContainsContentEncoding()) {
-		MaybeAutoCompress(response_headers, response_body, "gzip",
+		MaybeAutoCompress(instance.encoding_cache.get(), pool, resource_tag,
+				  response_headers, response_body, "gzip",
 				  [this](auto &&i){
 					  return istream_deflate_new(pool,
 								     std::move(i),

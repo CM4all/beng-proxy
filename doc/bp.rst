@@ -388,6 +388,10 @@ The following settings are available:
 - ``filter_cache_size``: The maximum amount of memory used by the
   filter cache. Set to 0 to disable the filter cache.
 
+- ``encoding_cache_size``: The maximum amount of memory used by the
+  encoding cache (which caches compressed responses).  Set to 0 to
+  disable the encoding cache.
+
 - ``translate_cache_size``: The maximum number of cached translation
   server responses. Set to 0 to disable the translate cache.
 

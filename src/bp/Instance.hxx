@@ -60,6 +60,7 @@ class NfsStock;
 class NfsCache;
 class HttpCache;
 class FilterCache;
+class EncodingCache;
 class SessionManager;
 namespace Uring { class Manager; }
 class BPListener;
@@ -156,6 +157,8 @@ struct BpInstance final : PInstance, ControlHandler, SpawnServerClientHandler,
 	HttpCache *http_cache = nullptr;
 
 	FilterCache *filter_cache = nullptr;
+
+	std::unique_ptr<EncodingCache> encoding_cache;
 
 	LhttpStock *lhttp_stock = nullptr;
 	FcgiStock *fcgi_stock = nullptr;

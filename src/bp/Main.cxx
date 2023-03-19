@@ -20,6 +20,7 @@
 #include "fs/Stock.hxx"
 #include "fs/Balancer.hxx"
 #include "nghttp2/Stock.hxx"
+#include "http/cache/EncodingCache.hxx"
 #include "http/cache/FilterCache.hxx"
 #include "http/cache/Public.hxx"
 #include "http/local/Stock.hxx"
@@ -185,6 +186,9 @@ BpInstance::ReloadEventCallback(int) noexcept
 
 	if (filter_cache != nullptr)
 		filter_cache_flush(*filter_cache);
+
+	if (encoding_cache)
+		encoding_cache->Flush();
 
 #ifdef HAVE_LIBNFS
 	if (nfs_cache != nullptr)
@@ -538,6 +542,10 @@ try {
 			new FilterResourceLoader(*instance.filter_cache);
 	} else
 		instance.filter_resource_loader = instance.direct_resource_loader;
+
+	if (instance.config.encoding_cache_size > 0)
+		instance.encoding_cache = std::make_unique<EncodingCache>(instance.event_loop,
+									  instance.config.encoding_cache_size);
 
 	instance.buffered_filter_resource_loader =
 		new BufferedResourceLoader(instance.event_loop,
