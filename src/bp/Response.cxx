@@ -107,10 +107,14 @@ inline UnusedIstreamPtr
 Request::AutoDeflate(HttpHeaders &response_headers,
 		     UnusedIstreamPtr response_body) noexcept
 {
-	if (compressed || !translate.response) {
+	if (!response_body) {
+		/* nothing to compress */
+	} else if (compressed) {
 		/* already compressed */
-	} else if (response_body &&
-		   translate.response->auto_deflate &&
+	} else if (!translate.response) {
+		/* no TranslateResponse, i.e. there are no "auto_"
+		   flags for us to check */
+	} else if (translate.response->auto_deflate &&
 		   http_client_accepts_encoding(request.headers, "deflate") &&
 		   response_headers.Get("content-encoding") == nullptr) {
 		auto available = response_body.GetAvailable(false);
@@ -121,8 +125,7 @@ Request::AutoDeflate(HttpHeaders &response_headers,
 							    instance.event_loop);
 		}
 #ifdef HAVE_BROTLI
-	} else if (response_body &&
-		   translate.response->auto_brotli &&
+	} else if (translate.response->auto_brotli &&
 		   http_client_accepts_encoding(request.headers, "br") &&
 		   response_headers.Get("content-encoding") == nullptr) {
 		auto available = response_body.GetAvailable(false);
@@ -132,8 +135,7 @@ Request::AutoDeflate(HttpHeaders &response_headers,
 			response_body = NewBrotliEncoderIstream(pool, std::move(response_body));
 		}
 #endif
-	} else if (response_body &&
-		   translate.response->auto_gzip &&
+	} else if (translate.response->auto_gzip &&
 		   http_client_accepts_encoding(request.headers, "gzip") &&
 		   response_headers.Get("content-encoding") == nullptr) {
 		auto available = response_body.GetAvailable(false);
