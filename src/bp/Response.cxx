@@ -109,8 +109,6 @@ Request::AutoDeflate(HttpHeaders &response_headers,
 {
 	if (!response_body) {
 		/* nothing to compress */
-	} else if (compressed) {
-		/* already compressed */
 	} else if (!translate.response) {
 		/* no TranslateResponse, i.e. there are no "auto_"
 		   flags for us to check */
@@ -119,7 +117,6 @@ Request::AutoDeflate(HttpHeaders &response_headers,
 		   !response_headers.ContainsContentEncoding()) {
 		auto available = response_body.GetAvailable(false);
 		if (available < 0 || available >= 512) {
-			compressed = true;
 			response_headers.contains_content_encoding = true;
 			response_headers.Write("content-encoding", "deflate");
 			response_body = istream_deflate_new(pool, std::move(response_body),
@@ -131,7 +128,6 @@ Request::AutoDeflate(HttpHeaders &response_headers,
 		   !response_headers.ContainsContentEncoding()) {
 		auto available = response_body.GetAvailable(false);
 		if (available < 0 || available >= 512) {
-			compressed = true;
 			response_headers.contains_content_encoding = true;
 			response_headers.Write("content-encoding", "br");
 			response_body = NewBrotliEncoderIstream(pool, std::move(response_body));
@@ -142,7 +138,6 @@ Request::AutoDeflate(HttpHeaders &response_headers,
 		   response_headers.ContainsContentEncoding()) {
 		auto available = response_body.GetAvailable(false);
 		if (available < 0 || available >= 512) {
-			compressed = true;
 			response_headers.contains_content_encoding = true;
 			response_headers.Write("content-encoding", "gzip");
 			response_body = istream_deflate_new(pool, std::move(response_body),

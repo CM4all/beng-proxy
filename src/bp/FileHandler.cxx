@@ -153,8 +153,6 @@ Request::DispatchCompressedFile(const char *path, FileDescriptor fd,
 
 	/* finished, dispatch this response */
 
-	compressed = true;
-
 	HttpStatus status = tr.status == HttpStatus{}
 		? HttpStatus::OK
 		: tr.status;
@@ -342,8 +340,7 @@ Request::HandleFileAddress(const FileAddress &address,
 
 	/* precompressed? */
 
-	if (!compressed &&
-	    file_request.range.type == HttpRangeRequest::Type::NONE &&
+	if (file_request.range.type == HttpRangeRequest::Type::NONE &&
 	    !IsTransformationEnabled() &&
 	    (CheckCompressedFile(address.deflated, fd, st, "deflate") ||
 	     ((address.auto_brotli_path || translate.auto_brotli_path) &&
