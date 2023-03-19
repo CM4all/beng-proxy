@@ -65,6 +65,7 @@ Request::OnNfsCacheResponse(NfsCacheHandle &handle,
 	case HttpRangeRequest::Type::VALID:
 		status = HttpStatus::PARTIAL_CONTENT;
 
+		headers.contains_content_range = true;
 		header_write_begin(headers2, "content-range"sv);
 		headers2.Fmt("bytes {}-{}/{}",
 			     file_request.range.skip,
@@ -76,6 +77,7 @@ Request::OnNfsCacheResponse(NfsCacheHandle &handle,
 	case HttpRangeRequest::Type::INVALID:
 		status = HttpStatus::REQUESTED_RANGE_NOT_SATISFIABLE;
 
+		headers.contains_content_range = true;
 		header_write_begin(headers2, "content-range"sv);
 		headers2.Fmt("bytes */{}", st.stx_size);
 		header_write_finish(headers2);

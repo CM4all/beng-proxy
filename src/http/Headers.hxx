@@ -27,6 +27,11 @@ public:
 	bool contains_content_encoding = false;
 
 	/**
+	 * Does #buffer contain "Content-Range"?
+	 */
+	bool contains_content_range = false;
+
+	/**
 	 * Shall the HTTP server library generate a "Date" response
 	 * header?
 	 *
@@ -73,6 +78,10 @@ public:
 
 	bool ContainsContentEncoding() const noexcept {
 		return contains_content_encoding || MapContains("content-encoding");
+	}
+
+	bool ContainsContentRange() const noexcept {
+		return contains_content_range || MapContains("content-range");
 	}
 
 	GrowingBuffer &GetBuffer() noexcept {
