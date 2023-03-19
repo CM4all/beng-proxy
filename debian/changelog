@@ -5,7 +5,7 @@ cm4all-beng-proxy (18.0.19) unstable; urgency=low
   * bp: new encoding_cache caches compressed responses
   * translation: support AUTO_BROTLI in CONTENT_TYPE_LOOKUP
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Mon, 20 Mar 2023 00:41:00 +0100
 
 cm4all-beng-proxy (18.0.18) unstable; urgency=low
 
