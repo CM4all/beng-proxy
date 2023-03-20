@@ -81,7 +81,6 @@ private:
 	}
 
 	bool OnBufferedClosed() noexcept override {
-		ReleaseSocket(false);
 		OnBufferedError(std::make_exception_ptr(SocketClosedPrematurelyError()));
 		return false;
 	}

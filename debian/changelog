@@ -1,6 +1,6 @@
 cm4all-beng-proxy (18.0.20) unstable; urgency=low
 
-  * 
+  * translation: fix another crash after connection was closed prematurely
 
  --   
 
