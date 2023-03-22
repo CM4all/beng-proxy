@@ -80,6 +80,8 @@ private:
 	void ForceRead() noexcept;
 
 protected:
+	void CreateEncoder() noexcept;
+
 	/* virtual methods from class Istream */
 	void _Read() noexcept override;
 
@@ -88,6 +90,19 @@ protected:
 	void OnEof() noexcept override;
 	void OnError(std::exception_ptr ep) noexcept override;
 };
+
+void
+BrotliEncoderIstream::CreateEncoder() noexcept
+{
+	assert(state == nullptr);
+
+	state = BrotliEncoderCreateInstance(nullptr, nullptr, nullptr);
+
+	/* use medium quality; doesn't use too much CPU, but
+	   compresses reasonably well */
+	BrotliEncoderSetParameter(state, BROTLI_PARAM_QUALITY,
+				  (BROTLI_MIN_QUALITY + BROTLI_MAX_QUALITY) / 2);
+}
 
 inline BrotliEncoderIstream::WriteResult
 BrotliEncoderIstream::SubmitPending(const DestructObserver &destructed) noexcept
@@ -244,14 +259,8 @@ BrotliEncoderIstream::OnData(const std::span<const std::byte> src) noexcept
 
 	had_input = true;
 
-	if (state == nullptr) {
-		state = BrotliEncoderCreateInstance(nullptr, nullptr, nullptr);
-
-		/* use medium quality; doesn't use too much CPU, but
-		   compresses reasonably well */
-		BrotliEncoderSetParameter(state, BROTLI_PARAM_QUALITY,
-					  (BROTLI_MIN_QUALITY + BROTLI_MAX_QUALITY) / 2);
-	}
+	if (state == nullptr)
+		CreateEncoder();
 
 	size_t available_in = src.size();
 	const uint8_t *next_in = reinterpret_cast<const uint8_t *>(src.data());
@@ -314,7 +323,7 @@ BrotliEncoderIstream::OnEof() noexcept
 	ClearInput();
 
 	if (state == nullptr)
-		state = BrotliEncoderCreateInstance(nullptr, nullptr, nullptr);
+		CreateEncoder();
 
 	SubmitEncoded();
 }
