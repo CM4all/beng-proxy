@@ -251,10 +251,9 @@ Cache::PutMatch(const char *key, CacheItem &item,
 void
 Cache::Remove(const char *key) noexcept
 {
-	items.remove_and_dispose_if(key, [](auto &){ return true; },
-				    [this](CacheItem *item){
-					    ItemRemoved(item);
-				    });
+	items.remove_and_dispose(key, [this](CacheItem *item){
+		ItemRemoved(item);
+	});
 }
 
 void
