@@ -199,7 +199,7 @@ Request::AutoDeflate(HttpHeaders &response_headers,
 				  });
 	} else if (translate.response->auto_gzip &&
 		   http_client_accepts_encoding(request.headers, "gzip") &&
-		   response_headers.ContainsContentEncoding()) {
+		   !response_headers.ContainsContentEncoding()) {
 		MaybeAutoCompress(instance.encoding_cache.get(), pool, resource_tag,
 				  response_headers, response_body, "gzip",
 				  [this](auto &&i){
