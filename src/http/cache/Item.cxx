@@ -10,15 +10,15 @@
 #include "util/djbhash.h"
 
 std::size_t
-HttpCacheItem::TagHash::operator()(const char *tag) const noexcept
+HttpCacheItem::TagHash::operator()(const char *_tag) const noexcept
 {
-	return djb_hash_string(tag);
+	return djb_hash_string(_tag);
 }
 
 std::size_t
-HttpCacheItem::TagHash::operator()(std::string_view tag) const noexcept
+HttpCacheItem::TagHash::operator()(std::string_view _tag) const noexcept
 {
-	return djb_hash(tag.data(), tag.size());
+	return djb_hash(_tag.data(), _tag.size());
 }
 
 HttpCacheItem::HttpCacheItem(PoolPtr &&_pool,

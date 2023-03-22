@@ -96,13 +96,13 @@ struct FilterCacheItem final : PoolHolder, CacheItem, LeakDetector {
 
 	struct TagHash {
 		[[gnu::pure]]
-		std::size_t operator()(const char *tag) const noexcept {
-			return djb_hash_string(tag);
+		std::size_t operator()(const char *_tag) const noexcept {
+			return djb_hash_string(_tag);
 		}
 
 		[[gnu::pure]]
-		std::size_t operator()(std::string_view tag) const noexcept {
-			return djb_hash(tag.data(), tag.size());
+		std::size_t operator()(std::string_view _tag) const noexcept {
+			return djb_hash(_tag.data(), _tag.size());
 		}
 
 		[[gnu::pure]]
