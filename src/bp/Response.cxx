@@ -11,6 +11,7 @@
 #include "Connection.hxx"
 #include "PendingResponse.hxx"
 #include "Instance.hxx"
+#include "ClassifyMimeType.hxx"
 #include "http/IncomingRequest.hxx"
 #include "http/Headers.hxx"
 #include "http/PHeaderUtil.hxx"
@@ -152,6 +153,17 @@ MaybeAutoCompress(EncodingCache *cache, AllocatorPtr alloc,
 			  response_headers, response_body);
 }
 
+#ifdef HAVE_BROTLI
+
+[[gnu::pure]]
+static bool
+IsTextMimeType(const HttpHeaders &response_headers) noexcept
+{
+	return IsTextMimeType(response_headers.GetSloppy("content-type"));
+}
+
+#endif
+
 inline UnusedIstreamPtr
 Request::AutoDeflate(HttpHeaders &response_headers,
 		     UnusedIstreamPtr response_body) noexcept
@@ -168,8 +180,11 @@ Request::AutoDeflate(HttpHeaders &response_headers,
 		   !response_headers.ContainsContentEncoding()) {
 		MaybeAutoCompress(instance.encoding_cache.get(), pool, resource_tag,
 				  response_headers, response_body, "br",
-				  [this](auto &&i){
-					  return NewBrotliEncoderIstream(pool, std::move(i));
+				  [this, &response_headers](auto &&i){
+					  auto b = NewBrotliEncoderIstream(pool, std::move(i));
+					  if (IsTextMimeType(response_headers))
+						  SetBrotliModeText(b);
+					  return b;
 				  });
 #endif
 	} else if (translate.response->auto_deflate &&
