@@ -5,7 +5,7 @@
 #pragma once
 
 #include <cstdint>
-#include <string>
+#include <string_view>
 
 enum class HttpStatus : uint_least16_t;
 struct pool;
@@ -42,7 +42,7 @@ void
 filter_cache_flush(FilterCache &cache) noexcept;
 
 void
-filter_cache_flush_tag(FilterCache &cache, const std::string &tag) noexcept;
+filter_cache_flush_tag(FilterCache &cache, std::string_view tag) noexcept;
 
 /**
  * @param source_id uniquely identifies the source; NULL means disable

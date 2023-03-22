@@ -31,11 +31,11 @@
 #include "http/Date.hxx"
 #include "http/Method.hxx"
 #include "util/Cancellable.hxx"
+#include "util/djbhash.h"
 #include "util/Exception.hxx"
+#include "util/IntrusiveHashSet.hxx"
 #include "util/IntrusiveList.hxx"
 #include "util/LeakDetector.hxx"
-
-#include <unordered_map>
 
 #include <stdio.h>
 #include <unistd.h>
@@ -80,14 +80,12 @@ struct FilterCacheInfo {
 };
 
 struct FilterCacheItem final : PoolHolder, CacheItem, LeakDetector {
-	/**
-	 * A doubly linked list of cache items with the same cache tag.
-	 */
-	AutoUnlinkIntrusiveListHook per_tag_siblings;
+	const char *const tag;
 
-	using PerTagList =
-		IntrusiveList<FilterCacheItem,
-			      IntrusiveListMemberHookTraits<&FilterCacheItem::per_tag_siblings>>;
+	/**
+	 * For #FilterCache::per_tag.
+	 */
+	IntrusiveHashSetHook<IntrusiveHookMode::AUTO_UNLINK> per_tag_hook;
 
 	const HttpStatus status;
 	StringMap headers;
@@ -96,14 +94,45 @@ struct FilterCacheItem final : PoolHolder, CacheItem, LeakDetector {
 
 	const RubberAllocation body;
 
+	struct TagHash {
+		[[gnu::pure]]
+		std::size_t operator()(const char *tag) const noexcept {
+			return djb_hash_string(tag);
+		}
+
+		[[gnu::pure]]
+		std::size_t operator()(std::string_view tag) const noexcept {
+			return djb_hash(tag.data(), tag.size());
+		}
+
+		[[gnu::pure]]
+		std::size_t operator()(const FilterCacheItem &item) const noexcept {
+			return operator()(item.tag);
+		}
+	};
+
+	struct TagEqual {
+		[[gnu::pure]]
+		bool operator()(std::string_view a, std::string_view b) const noexcept {
+			return a == b;
+		}
+
+		[[gnu::pure]]
+		bool operator()(std::string_view a, const FilterCacheItem &b) const noexcept {
+			return a == b.tag;
+		}
+	};
+
 	FilterCacheItem(PoolPtr &&_pool,
 			std::chrono::steady_clock::time_point now,
 			std::chrono::system_clock::time_point system_now,
+			const char *_tag,
 			HttpStatus _status, const StringMap &_headers,
 			size_t _size, RubberAllocation &&_body,
 			std::chrono::system_clock::time_point _expires) noexcept
 		:PoolHolder(std::move(_pool)),
 		 CacheItem(now, system_now, _expires, pool_netto_size(pool) + _size),
+		 tag(_tag != nullptr ? p_strdup(GetPool(), _tag) : nullptr),
 		 status(_status), headers(pool, _headers),
 		 size(_size), body(std::move(_body)) {
 	}
@@ -211,12 +240,12 @@ class FilterCache final : LeakDetector {
 	Rubber rubber;
 	Cache cache;
 
-	using PerTagList = FilterCacheItem::PerTagList;
-
 	/**
 	 * Lookup table to speed up FlushTag().
 	 */
-	std::unordered_map<std::string, PerTagList> per_tag;
+	IntrusiveHashSet<FilterCacheItem, 65521,
+			 FilterCacheItem::TagHash, FilterCacheItem::TagEqual,
+			 IntrusiveHashSetMemberHookTraits<&FilterCacheItem::per_tag_hook>> per_tag;
 
 	FarTimerEvent compress_timer;
 
@@ -253,7 +282,7 @@ public:
 		Compress();
 	}
 
-	void FlushTag(const std::string &tag) noexcept;
+	void FlushTag(std::string_view tag) noexcept;
 
 	void Get(struct pool &caller_pool,
 		 const StopwatchPtr &parent_stopwatch,
@@ -365,12 +394,13 @@ FilterCache::Put(const FilterCacheInfo &info,
 	auto item = NewFromPool<FilterCacheItem>(pool_new_slice(pool, "FilterCacheItem", &slice_pool),
 						 cache.SteadyNow(),
 						 cache.SystemNow(),
+						 info.tag,
 						 status, headers, size,
 						 std::move(a),
 						 expires);
 
 	if (info.tag != nullptr)
-		per_tag[info.tag].push_back(*item);
+		per_tag.insert(*item);
 
 	cache.Put(p_strdup(item->GetPool(), info.key), *item);
 }
@@ -666,19 +696,15 @@ filter_cache_flush(FilterCache &cache) noexcept
 }
 
 void
-FilterCache::FlushTag(const std::string &tag) noexcept
+FilterCache::FlushTag(std::string_view tag) noexcept
 {
-	auto i = per_tag.find(tag);
-	if (i == per_tag.end())
-		return;
-
-	auto &list = i->second;
-	while (!list.empty())
-		cache.Remove(list.front());
+	per_tag.remove_and_dispose(tag, [this](auto *item){
+		cache.Remove(*item);
+	});
 }
 
 void
-filter_cache_flush_tag(FilterCache &cache, const std::string &tag) noexcept
+filter_cache_flush_tag(FilterCache &cache, std::string_view tag) noexcept
 {
 	cache.FlushTag(tag);
 }
