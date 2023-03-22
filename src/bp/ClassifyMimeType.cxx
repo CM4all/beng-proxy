@@ -15,6 +15,10 @@ IsTextMimeType(std::string_view type) noexcept
 		return true;
 	} else if (SkipPrefix(type, "application/"sv)) {
 		return type.starts_with("json"sv) ||
+			type.starts_with("jose+json"sv) ||
+			type.starts_with("problem+json"sv) ||
+			type.starts_with("xhtml"sv) ||
+			type.starts_with("xml"sv) ||
 			type.starts_with("javascript"sv);
 	} else {
 		return false;
