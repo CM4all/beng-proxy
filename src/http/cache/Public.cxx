@@ -16,6 +16,7 @@
 #include "http/Date.hxx"
 #include "http/List.hxx"
 #include "http/Method.hxx"
+#include "http/PDigestHeader.hxx"
 #include "istream/UnusedPtr.hxx"
 #include "istream/TeeIstream.hxx"
 #include "istream/RefIstream.hxx"
@@ -495,6 +496,13 @@ void
 HttpCacheRequest::RubberDone(RubberAllocation &&a, size_t size) noexcept
 {
 	RubberStoreFinished();
+
+	if (eager_cache && !response.headers->Contains("digest")) {
+		const std::span<const std::byte> src(static_cast<const std::byte *>(a.Read()),
+						     size);
+		const AllocatorPtr alloc{GetPool()};
+		response.headers->Add(alloc, "digest", GenerateDigestHeader(alloc, src));
+	}
 
 	/* the request was successful, and all of the body data has been
 	   saved: add it to the cache */

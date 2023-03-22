@@ -4,6 +4,7 @@ http_util = static_library(
   'PTokenizer.cxx',
   'Quote.cxx',
   'Upgrade.cxx',
+  'PDigestHeader.cxx',
   'PList.cxx',
   'PHeaderUtil.cxx',
   'HeaderUtil.cxx',
