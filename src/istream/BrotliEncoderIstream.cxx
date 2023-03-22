@@ -34,6 +34,8 @@ class BrotliEncoderIstream final : public FacadeIstream, DestructAnchor {
 	 */
 	std::span<const std::byte> pending{};
 
+	BrotliEncoderMode mode = BROTLI_MODE_GENERIC;
+
 	/**
 	 * Do we expect to get data from the encoder?  That is, did we
 	 * feed data into it without getting anything back yet?  This
@@ -52,6 +54,12 @@ public:
 	~BrotliEncoderIstream() noexcept override {
 		if (state != nullptr)
 			BrotliEncoderDestroyInstance(state);
+	}
+
+	void SetMode(BrotliEncoderMode _mode) noexcept {
+		assert(state == nullptr);
+
+		mode = _mode;
 	}
 
 private:
@@ -102,6 +110,8 @@ BrotliEncoderIstream::CreateEncoder() noexcept
 	   compresses reasonably well */
 	BrotliEncoderSetParameter(state, BROTLI_PARAM_QUALITY,
 				  (BROTLI_MIN_QUALITY + BROTLI_MAX_QUALITY) / 2);
+
+	BrotliEncoderSetParameter(state, BROTLI_PARAM_MODE, mode);
 }
 
 inline BrotliEncoderIstream::WriteResult
@@ -341,4 +351,11 @@ NewBrotliEncoderIstream(struct pool &pool, UnusedIstreamPtr input) noexcept
 {
 	return NewIstreamPtr<BrotliEncoderIstream>(pool, std::move(input));
 
+}
+
+void
+SetBrotliModeText(UnusedIstreamPtr &_brotli) noexcept
+{
+	auto &brotli = _brotli.StaticCast<BrotliEncoderIstream>();
+	brotli.SetMode(BROTLI_MODE_TEXT);
 }

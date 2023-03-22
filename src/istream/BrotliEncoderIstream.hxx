@@ -12,3 +12,9 @@ class UnusedIstreamPtr;
  */
 UnusedIstreamPtr
 NewBrotliEncoderIstream(struct pool &pool, UnusedIstreamPtr input) noexcept;
+
+/**
+ * Set BROTLI_MODE_TEXT.
+ */
+void
+SetBrotliModeText(UnusedIstreamPtr &brotli) noexcept;
