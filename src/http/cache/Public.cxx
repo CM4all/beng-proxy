@@ -838,7 +838,7 @@ http_cache_flush_tag(HttpCache &cache, std::string_view tag) noexcept
 	cache.FlushTag(tag);
 }
 
-void
+inline void
 HttpCache::Miss(struct pool &caller_pool,
 		const StopwatchPtr &parent_stopwatch,
 		const char *key,
@@ -968,7 +968,7 @@ CheckCacheRequest(struct pool &pool, const HttpCacheRequestInfo &info,
 	return true;
 }
 
-void
+inline void
 HttpCache::Serve(struct pool &caller_pool,
 		 HttpCacheDocument &document,
 		 const char *key,
@@ -997,7 +997,7 @@ HttpCache::Serve(struct pool &caller_pool,
  *
  * Caller pool is left unchanged.
  */
-void
+inline void
 HttpCacheRequest::Serve() noexcept
 {
 	if (!CheckCacheRequest(pool, request_info, *document, handler))
@@ -1006,7 +1006,7 @@ HttpCacheRequest::Serve() noexcept
 	cache.Serve(caller_pool, *document, key, handler);
 }
 
-void
+inline void
 HttpCache::Revalidate(struct pool &caller_pool,
 		      const StopwatchPtr &parent_stopwatch,
 		      const char *key,
@@ -1061,7 +1061,7 @@ http_cache_may_serve(EventLoop &event_loop,
 		document.info.expires >= event_loop.SystemNow();
 }
 
-void
+inline void
 HttpCache::Found(const HttpCacheRequestInfo &info,
 		 HttpCacheDocument &document,
 		 const char *key,
@@ -1088,7 +1088,7 @@ HttpCache::Found(const HttpCacheRequestInfo &info,
 			   handler, cancel_ptr);
 }
 
-void
+inline void
 HttpCache::Use(struct pool &caller_pool,
 	       const StopwatchPtr &parent_stopwatch,
 	       const char *key,
