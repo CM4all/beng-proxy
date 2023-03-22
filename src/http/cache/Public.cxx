@@ -303,7 +303,7 @@ public:
 		heap.Flush();
 	}
 
-	void FlushTag(const std::string &tag) noexcept {
+	void FlushTag(std::string_view tag) noexcept {
 		heap.FlushTag(tag);
 	}
 
@@ -829,7 +829,7 @@ http_cache_flush(HttpCache &cache) noexcept
 }
 
 void
-http_cache_flush_tag(HttpCache &cache, const std::string &tag) noexcept
+http_cache_flush_tag(HttpCache &cache, std::string_view tag) noexcept
 {
 	cache.FlushTag(tag);
 }

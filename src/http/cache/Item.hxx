@@ -8,24 +8,52 @@
 #include "pool/Holder.hxx"
 #include "cache.hxx"
 #include "memory/Rubber.hxx"
-#include "util/IntrusiveList.hxx"
+#include "util/IntrusiveHashSet.hxx"
 
 class UnusedIstreamPtr;
 
 class HttpCacheItem final : PoolHolder, public HttpCacheDocument, public CacheItem {
+	const char *const tag;
+
 	const size_t size;
 
 	const RubberAllocation body;
 
 public:
 	/**
-	 * A doubly linked list of cache items with the same cache tag.
+	 * For #HttpCacheHeap::per_tag.
 	 */
-	IntrusiveListHook<IntrusiveHookMode::AUTO_UNLINK> per_tag_siblings;
+	IntrusiveHashSetHook<IntrusiveHookMode::AUTO_UNLINK> per_tag_hook;
+
+	struct TagHash {
+		[[gnu::pure]]
+		std::size_t operator()(const char *tag) const noexcept;
+
+		[[gnu::pure]]
+		std::size_t operator()(std::string_view tag) const noexcept;
+
+		[[gnu::pure]]
+		std::size_t operator()(const HttpCacheItem &item) const noexcept {
+			return operator()(item.tag);
+		}
+	};
+
+	struct TagEqual {
+		[[gnu::pure]]
+		bool operator()(std::string_view a, std::string_view b) const noexcept {
+			return a == b;
+		}
+
+		[[gnu::pure]]
+		bool operator()(std::string_view a, const HttpCacheItem &b) const noexcept {
+			return a == b.tag;
+		}
+	};
 
 	HttpCacheItem(PoolPtr &&_pool,
 		      std::chrono::steady_clock::time_point now,
 		      std::chrono::system_clock::time_point system_now,
+		      const char *_tag,
 		      const HttpCacheResponseInfo &_info,
 		      const StringMap &_request_headers,
 		      HttpStatus _status,
@@ -37,6 +65,10 @@ public:
 	HttpCacheItem &operator=(const HttpCacheItem &) = delete;
 
 	using PoolHolder::GetPool;
+
+	const char *GetTag() const noexcept {
+		return tag;
+	}
 
 	void SetExpires(std::chrono::steady_clock::time_point steady_now,
 			std::chrono::system_clock::time_point system_now,

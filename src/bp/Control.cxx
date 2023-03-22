@@ -180,9 +180,7 @@ BpInstance::OnControlPacket(ControlServer &control_server,
 
 	case ControlCommand::FLUSH_HTTP_CACHE:
 		if (http_cache != nullptr)
-			http_cache_flush_tag(*http_cache,
-					     std::string((const char *)payload.data(),
-							 payload.size()));
+			http_cache_flush_tag(*http_cache, ToStringView(payload));
 
 		break;
 	}

@@ -7,10 +7,24 @@
 #include "memory/istream_rubber.hxx"
 #include "istream/UnusedPtr.hxx"
 #include "pool/pool.hxx"
+#include "util/djbhash.h"
+
+std::size_t
+HttpCacheItem::TagHash::operator()(const char *tag) const noexcept
+{
+	return djb_hash_string(tag);
+}
+
+std::size_t
+HttpCacheItem::TagHash::operator()(std::string_view tag) const noexcept
+{
+	return djb_hash(tag.data(), tag.size());
+}
 
 HttpCacheItem::HttpCacheItem(PoolPtr &&_pool,
 			     std::chrono::steady_clock::time_point now,
 			     std::chrono::system_clock::time_point system_now,
+			     const char *_tag,
 			     const HttpCacheResponseInfo &_info,
 			     const StringMap &_request_headers,
 			     HttpStatus _status,
@@ -22,6 +36,7 @@ HttpCacheItem::HttpCacheItem(PoolPtr &&_pool,
 			   _status, _response_headers),
 	 CacheItem(http_cache_calc_expires(now, system_now, _info.expires, vary),
 		   pool_netto_size(pool) + _size),
+	 tag(_tag != nullptr ? p_strdup(GetPool(), _tag) : nullptr),
 	 size(_size),
 	 body(std::move(_body))
 {

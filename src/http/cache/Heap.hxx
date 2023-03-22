@@ -7,10 +7,9 @@
 #include "Item.hxx"
 #include "memory/SlicePool.hxx"
 #include "memory/Rubber.hxx"
-#include "util/IntrusiveList.hxx"
+#include "util/IntrusiveHashSet.hxx"
 #include "cache.hxx"
 
-#include <unordered_map>
 #include <string>
 
 #include <stddef.h>
@@ -36,13 +35,12 @@ class HttpCacheHeap {
 
 	Cache cache;
 
-	using PerTagList = IntrusiveList<HttpCacheItem,
-					 IntrusiveListMemberHookTraits<&HttpCacheItem::per_tag_siblings>>;
-
 	/**
 	 * Lookup table to speed up FlushTag().
 	 */
-	std::unordered_map<std::string, PerTagList> per_tag;
+	IntrusiveHashSet<HttpCacheItem, 65521,
+			 HttpCacheItem::TagHash, HttpCacheItem::TagEqual,
+			 IntrusiveHashSetMemberHookTraits<&HttpCacheItem::per_tag_hook>> per_tag;
 
 public:
 	HttpCacheHeap(struct pool &pool, EventLoop &event_loop,
@@ -73,7 +71,7 @@ public:
 
 	void Compress() noexcept;
 	void Flush() noexcept;
-	void FlushTag(const std::string &tag) noexcept;
+	void FlushTag(std::string_view tag) noexcept;
 
 	static void Lock(HttpCacheDocument &document) noexcept;
 	void Unlock(HttpCacheDocument &document) noexcept;

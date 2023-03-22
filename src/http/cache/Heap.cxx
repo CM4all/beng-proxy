@@ -38,13 +38,14 @@ HttpCacheHeap::Put(const char *url, const char *tag,
 	auto item = NewFromPool<HttpCacheItem>(pool_new_slice(&pool, "http_cache_item", &slice_pool),
 					       cache.SteadyNow(),
 					       cache.SystemNow(),
+					       tag,
 					       info, request_headers,
 					       status, response_headers,
 					       size,
 					       std::move(a));
 
 	if (tag != nullptr)
-		per_tag[tag].push_back(*item);
+		per_tag.insert(*item);
 
 	cache.PutMatch(p_strdup(&item->GetPool(), url), *item,
 		       http_cache_item_match,
@@ -89,15 +90,11 @@ HttpCacheHeap::Flush() noexcept
 }
 
 void
-HttpCacheHeap::FlushTag(const std::string &tag) noexcept
+HttpCacheHeap::FlushTag(std::string_view tag) noexcept
 {
-	auto i = per_tag.find(tag);
-	if (i == per_tag.end())
-		return;
-
-	auto &list = i->second;
-	while (!list.empty())
-		cache.Remove(list.front());
+	per_tag.remove_and_dispose(tag, [this](auto *item){
+		cache.Remove(*item);
+	});
 }
 
 void

@@ -6,7 +6,7 @@
 
 #include <cstdint>
 #include <cstddef>
-#include <string>
+#include <string_view>
 
 enum class HttpMethod : uint_least8_t;
 struct pool;
@@ -45,7 +45,7 @@ void
 http_cache_flush(HttpCache &cache) noexcept;
 
 void
-http_cache_flush_tag(HttpCache &cache, const std::string &tag) noexcept;
+http_cache_flush_tag(HttpCache &cache, std::string_view tag) noexcept;
 
 void
 http_cache_request(HttpCache &cache,
