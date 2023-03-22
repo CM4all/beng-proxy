@@ -3,6 +3,7 @@
 // author: Max Kellermann <mk@cm4all.com>
 
 #include "ClassifyMimeType.hxx"
+#include "util/StringCompare.hxx"
 
 using std::string_view_literals::operator""sv;
 
@@ -10,7 +11,12 @@ using std::string_view_literals::operator""sv;
 bool
 IsTextMimeType(std::string_view type) noexcept
 {
-	return type.starts_with("text/"sv) ||
-		type.starts_with("application/json"sv) ||
-		type.starts_with("application/javascript"sv);
+	if (type.starts_with("text/"sv)) {
+		return true;
+	} else if (SkipPrefix(type, "application/"sv)) {
+		return type.starts_with("json"sv) ||
+			type.starts_with("javascript"sv);
+	} else {
+		return false;
+	}
 }
