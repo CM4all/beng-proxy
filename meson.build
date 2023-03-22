@@ -588,6 +588,7 @@ processor = static_library('processor',
   'src/bp/CssProcessor.cxx',
   'src/bp/CssRewrite.cxx',
   'src/bp/TextProcessor.cxx',
+  'src/bp/ClassifyMimeType.cxx',
   include_directories: inc,
   dependencies: [
     fmt_dep,

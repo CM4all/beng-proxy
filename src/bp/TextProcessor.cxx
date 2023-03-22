@@ -3,6 +3,7 @@
 // author: Max Kellermann <mk@cm4all.com>
 
 #include "TextProcessor.hxx"
+#include "ClassifyMimeType.hxx"
 #include "strmap.hxx"
 #include "istream/UnusedPtr.hxx"
 #include "istream/SubstIstream.hxx"
@@ -19,23 +20,11 @@
 
 using std::string_view_literals::operator""sv;
 
-[[gnu::pure]]
-static bool
-text_processor_allowed_content_type(const char *content_type) noexcept
-{
-	assert(content_type != NULL);
-
-	return StringStartsWith(content_type, "text/"sv) ||
-		StringStartsWith(content_type, "application/json"sv) ||
-		StringStartsWith(content_type, "application/javascript"sv);
-}
-
 bool
 text_processor_allowed(const StringMap &headers) noexcept
 {
 	const char *content_type = headers.Get("content-type");
-	return content_type != NULL &&
-		text_processor_allowed_content_type(content_type);
+	return content_type != nullptr && IsTextMimeType(content_type);
 }
 
 [[gnu::pure]]
