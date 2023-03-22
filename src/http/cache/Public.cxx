@@ -113,7 +113,7 @@ public:
 			 bool _eager_cache,
 			 const char *_cache_tag,
 			 HttpCache &_cache,
-			 const ResourceAddress &_address,
+			 const char *_key,
 			 const StringMap &_headers,
 			 HttpResponseHandler &_handler,
 			 const HttpCacheRequestInfo &_info,
@@ -361,6 +361,7 @@ public:
 	 */
 	void Use(struct pool &caller_pool,
 		 const StopwatchPtr &parent_stopwatch,
+		 const char *key,
 		 const ResourceRequestParams &params,
 		 HttpMethod method,
 		 const ResourceAddress &address,
@@ -387,6 +388,7 @@ private:
 	 */
 	void Miss(struct pool &caller_pool,
 		  const StopwatchPtr &parent_stopwatch,
+		  const char *key,
 		  const ResourceRequestParams &params,
 		  const HttpCacheRequestInfo &info,
 		  HttpMethod method,
@@ -402,6 +404,7 @@ private:
 	 */
 	void Revalidate(struct pool &caller_pool,
 			const StopwatchPtr &parent_stopwatch,
+			const char *key,
 			const ResourceRequestParams &params,
 			const HttpCacheRequestInfo &info,
 			HttpCacheDocument &document,
@@ -420,6 +423,7 @@ private:
 	 */
 	void Found(const HttpCacheRequestInfo &info,
 		   HttpCacheDocument &document,
+		   const char *key,
 		   struct pool &caller_pool,
 		   const StopwatchPtr &parent_stopwatch,
 		   const ResourceRequestParams &params,
@@ -736,7 +740,7 @@ HttpCacheRequest::HttpCacheRequest(PoolPtr &&_pool,
 				   bool _eager_cache,
 				   const char *_cache_tag,
 				   HttpCache &_cache,
-				   const ResourceAddress &address,
+				   const char *_key,
 				   const StringMap &_headers,
 				   HttpResponseHandler &_handler,
 				   const HttpCacheRequestInfo &_request_info,
@@ -744,7 +748,7 @@ HttpCacheRequest::HttpCacheRequest(PoolPtr &&_pool,
 	:PoolHolder(std::move(_pool)), caller_pool(_caller_pool),
 	 cache_tag(_cache_tag),
 	 cache(_cache),
-	 key(http_cache_key(pool, address)),
+	 key(p_strdup(pool, _key)),
 	 request_headers(pool, _headers),
 	 handler(_handler),
 	 request_info(_request_info),
@@ -837,6 +841,7 @@ http_cache_flush_tag(HttpCache &cache, std::string_view tag) noexcept
 void
 HttpCache::Miss(struct pool &caller_pool,
 		const StopwatchPtr &parent_stopwatch,
+		const char *key,
 		const ResourceRequestParams &params,
 		const HttpCacheRequestInfo &info,
 		HttpMethod method,
@@ -860,7 +865,7 @@ HttpCache::Miss(struct pool &caller_pool,
 					      params.eager_cache,
 					      params.cache_tag,
 					      *this,
-					      address,
+					      key,
 					      headers,
 					      handler,
 					      info, nullptr);
@@ -1004,6 +1009,7 @@ HttpCacheRequest::Serve() noexcept
 void
 HttpCache::Revalidate(struct pool &caller_pool,
 		      const StopwatchPtr &parent_stopwatch,
+		      const char *key,
 		      const ResourceRequestParams &params,
 		      const HttpCacheRequestInfo &info,
 		      HttpCacheDocument &document,
@@ -1024,7 +1030,7 @@ HttpCache::Revalidate(struct pool &caller_pool,
 					      params.eager_cache,
 					      params.cache_tag,
 					      *this,
-					      address,
+					      key,
 					      headers,
 					      handler,
 					      info, &document);
@@ -1058,6 +1064,7 @@ http_cache_may_serve(EventLoop &event_loop,
 void
 HttpCache::Found(const HttpCacheRequestInfo &info,
 		 HttpCacheDocument &document,
+		 const char *key,
 		 struct pool &caller_pool,
 		 const StopwatchPtr &parent_stopwatch,
 		 const ResourceRequestParams &params,
@@ -1071,12 +1078,11 @@ HttpCache::Found(const HttpCacheRequestInfo &info,
 		return;
 
 	if (http_cache_may_serve(GetEventLoop(), info, document))
-		Serve(caller_pool, document,
-		      http_cache_key(caller_pool, address),
+		Serve(caller_pool, document, key,
 		      handler);
 	else
 		Revalidate(caller_pool, parent_stopwatch,
-			   params,
+			   key, params,
 			   info, document,
 			   method, address, std::move(headers),
 			   handler, cancel_ptr);
@@ -1085,6 +1091,7 @@ HttpCache::Found(const HttpCacheRequestInfo &info,
 void
 HttpCache::Use(struct pool &caller_pool,
 	       const StopwatchPtr &parent_stopwatch,
+	       const char *key,
 	       const ResourceRequestParams &params,
 	       HttpMethod method,
 	       const ResourceAddress &address,
@@ -1093,15 +1100,15 @@ HttpCache::Use(struct pool &caller_pool,
 	       HttpResponseHandler &handler,
 	       CancellablePointer &cancel_ptr) noexcept
 {
-	auto *document = heap.Get(http_cache_key(caller_pool, address), headers);
+	auto *document = heap.Get(key, headers);
 
 	if (document == nullptr)
 		Miss(caller_pool, parent_stopwatch,
-		     params, info,
+		     key, params, info,
 		     method, address, std::move(headers),
 		     handler, cancel_ptr);
 	else
-		Found(info, *document, caller_pool, parent_stopwatch,
+		Found(info, *document, key, caller_pool, parent_stopwatch,
 		      params,
 		      method, address, std::move(headers),
 		      handler, cancel_ptr);
@@ -1138,7 +1145,7 @@ HttpCache::Start(struct pool &caller_pool,
 						    obey_no_cache, body)) {
 		assert(!body);
 
-		Use(caller_pool, parent_stopwatch, params,
+		Use(caller_pool, parent_stopwatch, key, params,
 		    method, address, std::move(headers), *info,
 		    handler, cancel_ptr);
 	} else if (params.auto_flush_cache && IsModifyingMethod(method)) {
