@@ -109,6 +109,7 @@ session_drop_widgets(RealmSession &session, const char *uri,
 static const char *
 GetEncodingCacheKey(AllocatorPtr alloc,
 		    const char *resource_tag,
+		    const char *encoding,
 		    const HttpHeaders &response_headers) noexcept
 {
 	if (const auto digest = response_headers.GetSloppy("digest");
@@ -119,12 +120,13 @@ GetEncodingCacheKey(AllocatorPtr alloc,
 		   if EAGER_CACHE is enabled, and this code allows
 		   putting EAGER_CACHE responses in the
 		   EncodingCache */
-		return alloc.DupZ(digest);
+		return alloc.Concat(digest, "."sv, encoding);
 
 	if (resource_tag != nullptr)
 		if (const auto etag = response_headers.GetSloppy("etag");
 		    etag.data() != nullptr)
-			return alloc.Concat(resource_tag, "|etag=", etag);
+			return alloc.Concat(resource_tag, "|etag="sv, etag,
+					    "."sv, encoding);
 
 	return nullptr;
 }
@@ -132,13 +134,15 @@ GetEncodingCacheKey(AllocatorPtr alloc,
 static void
 MaybeCacheEncoded(EncodingCache *cache, AllocatorPtr alloc,
 		  const char *resource_tag,
+		  const char *encoding,
 		  const HttpHeaders &response_headers,
 		  UnusedIstreamPtr &response_body) noexcept
 {
 	if (cache == nullptr)
 		return;
 
-	const char *key = GetEncodingCacheKey(alloc, resource_tag, response_headers);
+	const char *key = GetEncodingCacheKey(alloc, resource_tag, encoding,
+					      response_headers);
 	if (key == nullptr)
 		return;
 
@@ -171,7 +175,7 @@ MaybeAutoCompress(EncodingCache *cache, AllocatorPtr alloc,
 	response_headers.Write("content-encoding", encoding);
 	response_body = factory(std::move(response_body));
 
-	MaybeCacheEncoded(cache, alloc, resource_tag,
+	MaybeCacheEncoded(cache, alloc, resource_tag, encoding,
 			  response_headers, response_body);
 }
 
