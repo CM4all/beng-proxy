@@ -55,10 +55,6 @@
 #include "io/SpliceSupport.hxx"
 #include "util/PrintException.hxx"
 
-#ifdef HAVE_URING
-#include "event/uring/Manager.hxx"
-#endif
-
 #if defined(HAVE_LIBSYSTEMD) || defined(HAVE_AVAHI)
 #include "lib/dbus/Init.hxx"
 #include "lib/dbus/Connection.hxx"
@@ -129,10 +125,7 @@ BpInstance::DisableListeners() noexcept
 void
 BpInstance::ShutdownCallback() noexcept
 {
-#ifdef HAVE_URING
-	if (uring)
-		uring->SetVolatile();
-#endif
+	uring.SetVolatile();
 
 	DisableSignals();
 	thread_pool_stop();
@@ -333,14 +326,7 @@ try {
 
 	direct_global_init();
 
-#ifdef HAVE_URING
-	try {
-		instance.uring = std::make_unique<Uring::Manager>(instance.event_loop);
-	} catch (...) {
-		fprintf(stderr, "Failed to initialize io_uring: ");
-		PrintException(std::current_exception());
-	}
-#endif
+	instance.uring.Init(instance.event_loop);
 
 	instance.EnableSignals();
 

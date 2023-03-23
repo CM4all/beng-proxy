@@ -700,6 +700,7 @@ executable(
   'src/istream_unlock.cxx',
   'src/access_log/ChildErrorLog.cxx',
   'src/PInstance.cxx',
+  'src/bp/UringGlue.cxx',
   'src/bp/Instance.cxx',
   'src/bp/Main.cxx',
   include_directories: inc,

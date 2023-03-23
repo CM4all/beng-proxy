@@ -6,6 +6,7 @@
 
 #include "PInstance.hxx"
 #include "CommandLine.hxx"
+#include "UringGlue.hxx"
 #include "Config.hxx"
 #include "stats/TaggedHttpStats.hxx"
 #include "lib/avahi/ErrorHandler.hxx"
@@ -62,7 +63,6 @@ class HttpCache;
 class FilterCache;
 class EncodingCache;
 class SessionManager;
-namespace Uring { class Manager; }
 class BPListener;
 struct BpConnection;
 namespace NgHttp2 { class Stock; }
@@ -77,9 +77,8 @@ struct BpInstance final : PInstance, ControlHandler, SpawnServerClientHandler,
 
 	HttpStats http_stats;
 
-#ifdef HAVE_URING
-	std::unique_ptr<Uring::Manager> uring;
-#endif
+	[[no_unique_address]]
+	UringGlue uring;
 
 	std::map<std::string, TaggedHttpStats> listener_stats;
 
