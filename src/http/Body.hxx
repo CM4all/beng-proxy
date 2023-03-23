@@ -140,21 +140,21 @@ public:
 	}
 
 	template<typename Socket>
-	std::size_t ConsumeBucketList(Socket &s, std::size_t nbytes) noexcept {
+	ConsumeBucketResult ConsumeBucketList(Socket &s, std::size_t nbytes) noexcept {
 		auto b = s.ReadBuffer();
 		if (b.empty())
-			return 0;
+			return {0, IsEOF()};
 
 		std::size_t max = GetMaxRead(b.size());
 		if (nbytes > max)
 			nbytes = max;
 		if (nbytes == 0)
-			return 0;
+			return {0, IsEOF()};
 
 		s.DisposeConsumed(nbytes);
 		s.AfterConsumed();
 		Consumed(nbytes);
-		return Istream::Consumed(nbytes);
+		return {Istream::Consumed(nbytes), IsEOF()};
 	}
 
 	std::size_t FeedBody(std::span<const std::byte> src) noexcept;

@@ -55,11 +55,11 @@ class ReplaceIstream : public FacadeIstream, DestructAnchor {
 			}
 		}
 
-		size_t ConsumeBucketList(size_t nbytes) noexcept {
+		auto ConsumeBucketList(size_t nbytes) noexcept {
 			assert(IsActive());
 			return IsDefined()
 				? input.ConsumeBucketList(nbytes)
-				: 0;
+				: ConsumeBucketResult{0, true};
 		}
 
 		[[gnu::pure]]
@@ -248,6 +248,6 @@ public:
 	off_t _GetAvailable(bool partial) noexcept override;
 	void _Read() noexcept override;
 	void _FillBucketList(IstreamBucketList &list) override;
-	size_t _ConsumeBucketList(size_t nbytes) noexcept override;
+	ConsumeBucketResult _ConsumeBucketList(size_t nbytes) noexcept override;
 	void _Close() noexcept override;
 };

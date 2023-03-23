@@ -70,13 +70,13 @@ public:
 		}
 	}
 
-	std::size_t _ConsumeBucketList(std::size_t nbytes) noexcept override {
+	ConsumeBucketResult _ConsumeBucketList(std::size_t nbytes) noexcept override {
 		assert(!input_error);
 
 		if (HasInput()) [[likely]]
 			return ForwardIstream::_ConsumeBucketList(nbytes);
 		else
-			return 0;
+			return {0, false};
 	}
 
 	int _AsFd() noexcept override {

@@ -21,12 +21,12 @@ LengthIstream::_Skip(off_t length) noexcept
 	return nbytes;
 }
 
-std::size_t
+Istream::ConsumeBucketResult
 LengthIstream::_ConsumeBucketList(std::size_t nbytes) noexcept
 {
-	auto consumed = input.ConsumeBucketList(nbytes);
-	remaining -= consumed;
-	return consumed;
+	auto r = input.ConsumeBucketList(nbytes);
+	remaining -= r.consumed;
+	return r;
 }
 
 void

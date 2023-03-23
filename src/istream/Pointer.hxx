@@ -87,7 +87,7 @@ public:
 		}
 	}
 
-	std::size_t ConsumeBucketList(std::size_t nbytes) noexcept {
+	auto ConsumeBucketList(std::size_t nbytes) noexcept {
 		assert(IsDefined());
 
 		return stream->ConsumeBucketList(nbytes);

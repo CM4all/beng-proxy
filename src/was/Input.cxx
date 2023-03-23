@@ -227,7 +227,7 @@ private:
 	}
 
 	void _FillBucketList(IstreamBucketList &list) override;
-	std::size_t _ConsumeBucketList(std::size_t nbytes) noexcept override;
+	ConsumeBucketResult _ConsumeBucketList(std::size_t nbytes) noexcept override;
 	void _ConsumeDirect(std::size_t nbytes) noexcept override;
 
 	void _Close() noexcept override {
@@ -582,7 +582,7 @@ WasInput::_FillBucketList(IstreamBucketList &list)
 		list.SetMore();
 }
 
-std::size_t
+Istream::ConsumeBucketResult
 WasInput::_ConsumeBucketList(std::size_t nbytes) noexcept
 {
 	std::size_t consumed = std::min(buffer.GetAvailable(), nbytes);
@@ -590,7 +590,7 @@ WasInput::_ConsumeBucketList(std::size_t nbytes) noexcept
 	buffer.Consume(consumed);
 	buffer.FreeIfEmpty();
 
-	return Consumed(consumed);
+	return {Consumed(consumed), buffer.empty() && CanRelease()};
 }
 
 void

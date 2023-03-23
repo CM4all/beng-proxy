@@ -118,7 +118,7 @@ struct TeeIstream final : IstreamSink, DestructAnchor {
 				parent.DeferRead();
 		}
 
-		size_t _ConsumeBucketList(size_t nbytes) noexcept override {
+		ConsumeBucketResult _ConsumeBucketList(size_t nbytes) noexcept override {
 			assert(skip == 0);
 
 			/* we must not call tee.input.ConsumeBucketList() because
@@ -129,7 +129,9 @@ struct TeeIstream final : IstreamSink, DestructAnchor {
 
 			size_t consumed = std::min(nbytes, bucket_list_size);
 			skip = consumed;
-			return Istream::Consumed(consumed);
+
+			// TODO eof?
+			return {Istream::Consumed(consumed), false};
 		}
 
 		void _Close() noexcept override;

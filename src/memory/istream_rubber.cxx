@@ -79,11 +79,11 @@ public:
 			list.Push(ConstBuffer<void>(data + position, remaining));
 	}
 
-	size_t _ConsumeBucketList(size_t nbytes) noexcept override {
+	ConsumeBucketResult _ConsumeBucketList(size_t nbytes) noexcept override {
 		const size_t remaining = end - position;
 		size_t consumed = std::min(nbytes, remaining);
 		position += consumed;
-		return Consumed(consumed);
+		return {Consumed(consumed), position == end};
 	}
 };
 

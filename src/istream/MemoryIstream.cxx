@@ -38,11 +38,11 @@ MemoryIstream::_FillBucketList(IstreamBucketList &list) noexcept
 		list.Push(data);
 }
 
-size_t
+Istream::ConsumeBucketResult
 MemoryIstream::_ConsumeBucketList(size_t nbytes) noexcept
 {
 	if (nbytes > data.size())
 		nbytes = data.size();
 	data = data.subspan(nbytes);
-	return Consumed(nbytes);
+	return {Consumed(nbytes), data.empty()};
 }

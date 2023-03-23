@@ -40,8 +40,8 @@ public:
 			list.Push(std::span{zero_buffer});
 	}
 
-	size_t _ConsumeBucketList(size_t nbytes) noexcept override {
-		return Consumed(nbytes);
+	ConsumeBucketResult _ConsumeBucketList(size_t nbytes) noexcept override {
+		return {Consumed(nbytes), false};
 	}
 };
 

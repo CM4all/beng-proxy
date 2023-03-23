@@ -91,7 +91,7 @@ public:
 
 	void _Read() noexcept override;
 	void _FillBucketList(IstreamBucketList &list) override;
-	size_t _ConsumeBucketList(size_t nbytes) noexcept override;
+	ConsumeBucketResult _ConsumeBucketList(size_t nbytes) noexcept override;
 
 	/* istream handler */
 
@@ -772,10 +772,12 @@ SubstIstream::_FillBucketList(IstreamBucketList &list)
 	}
 }
 
-size_t
+Istream::ConsumeBucketResult
 SubstIstream::_ConsumeBucketList(size_t nbytes) noexcept
 {
 	assert(nbytes > 0);
+
+	// TODO return eof flag?
 
 	if (!mismatch.empty()) {
 		if (input.IsDefined()) {
@@ -783,15 +785,15 @@ SubstIstream::_ConsumeBucketList(size_t nbytes) noexcept
 
 			if (send_first) {
 				send_first = false;
-				return Consumed(1);
+				return {Consumed(1), false};
 			}
 
-			return 0;
+			return {0, false};
 		} else {
 			// WriteMismatch()
 			nbytes = std::min(nbytes, mismatch.size());
 			mismatch = mismatch.subspan(nbytes);
-			return Consumed(nbytes);
+			return {Consumed(nbytes), false};
 		}
 	} else {
 		assert(input.IsDefined());
@@ -802,7 +804,7 @@ SubstIstream::_ConsumeBucketList(size_t nbytes) noexcept
 		return Consumed(input.ConsumeBucketList(nbytes));
 
 	case State::MATCH:
-		return 0;
+		return {0, false};
 
 	case State::INSERT: {
 		// TryWriteB
@@ -823,7 +825,7 @@ SubstIstream::_ConsumeBucketList(size_t nbytes) noexcept
 		/* finished sending substitution? */
 		if (consumed == length)
 			state = State::NONE;
-		return Consumed(consumed);
+		return {Consumed(consumed), false};
 	}
 	}
 

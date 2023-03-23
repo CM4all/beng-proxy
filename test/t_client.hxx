@@ -273,7 +273,7 @@ struct Context final
 			if (break_data)
 				event_loop.Break();
 
-			size_t buckets_consumed = input.ConsumeBucketList(total_buckets);
+			size_t buckets_consumed = input.ConsumeBucketList(total_buckets).consumed;
 			assert(buckets_consumed == total_buckets);
 			body_data += buckets_consumed;
 		}

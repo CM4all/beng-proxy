@@ -32,7 +32,7 @@ public:
 		input.Read();
 	}
 
-	std::size_t _ConsumeBucketList(std::size_t nbytes) noexcept override {
+	ConsumeBucketResult _ConsumeBucketList(std::size_t nbytes) noexcept override {
 		return Consumed(input.ConsumeBucketList(nbytes));
 	}
 

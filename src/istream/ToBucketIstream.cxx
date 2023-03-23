@@ -55,7 +55,7 @@ ToBucketIstream::_FillBucketList(IstreamBucketList &list)
 	list.SpliceFrom(std::move(tmp));
 }
 
-size_t
+Istream::ConsumeBucketResult
 ToBucketIstream::_ConsumeBucketList(size_t nbytes) noexcept
 {
 	if (!buffer.empty()) {
@@ -63,13 +63,13 @@ ToBucketIstream::_ConsumeBucketList(size_t nbytes) noexcept
 		size_t consumed = std::min(nbytes, available);
 		buffer.Consume(consumed);
 		buffer.FreeIfEmpty();
-		return consumed;
+		return {consumed, buffer.empty()};
 	}
 
 	if (HasInput())
 		return input.ConsumeBucketList(nbytes);
 
-	return 0;
+	return {0, true};
 }
 
 bool

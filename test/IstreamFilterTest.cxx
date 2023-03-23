@@ -50,8 +50,9 @@ Context::ReadBuckets(std::size_t limit)
 			break;
 	}
 
-	[[maybe_unused]] std::size_t consumed2 = input.ConsumeBucketList(consumed);
-	assert(consumed2 == consumed);
+	[[maybe_unused]] const auto r = input.ConsumeBucketList(consumed);
+	assert(r.consumed == consumed);
+	// TODO check r.eof
 
 	if (result && !list.HasMore()) {
 		CloseInput();

@@ -492,7 +492,7 @@ ReplaceIstream::_FillBucketList(IstreamBucketList &list)
 	}
 }
 
-size_t
+Istream::ConsumeBucketResult
 ReplaceIstream::_ConsumeBucketList(size_t nbytes) noexcept
 {
 	size_t total = 0;
@@ -526,10 +526,11 @@ ReplaceIstream::_ConsumeBucketList(size_t nbytes) noexcept
 		if (s == nullptr)
 			break;
 
-		const size_t consumed = s->ConsumeBucketList(nbytes);
-		Consumed(consumed);
-		total += consumed;
-		nbytes -= consumed;
+		const auto r = s->ConsumeBucketList(nbytes);
+		// TODO use r.eof
+		Consumed(r.consumed);
+		total += r.consumed;
+		nbytes -= r.consumed;
 
 		if (nbytes == 0)
 			break;
@@ -540,7 +541,8 @@ ReplaceIstream::_ConsumeBucketList(size_t nbytes) noexcept
 		ToNextSubstitution(s);
 	}
 
-	return total;
+	// TODO eof?
+	return {total, false};
 }
 
 void

@@ -21,7 +21,7 @@ Istream::_FillBucketList(IstreamBucketList &list)
 }
 
 [[gnu::noreturn]]
-std::size_t
+Istream::ConsumeBucketResult
 Istream::_ConsumeBucketList(std::size_t) noexcept
 {
 	assert(false);

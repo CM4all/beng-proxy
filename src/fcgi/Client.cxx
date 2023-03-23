@@ -242,7 +242,7 @@ private:
 	off_t _GetAvailable(bool partial) noexcept override;
 	void _Read() noexcept override;
 	void _FillBucketList(IstreamBucketList &list) override;
-	std::size_t _ConsumeBucketList(std::size_t nbytes) noexcept override;
+	ConsumeBucketResult _ConsumeBucketList(std::size_t nbytes) noexcept override;
 	void _Close() noexcept override;
 
 	/* virtual methods from class IstreamHandler */
@@ -842,7 +842,7 @@ FcgiClient::_FillBucketList(IstreamBucketList &list)
 		list.SetMore();
 }
 
-std::size_t
+Istream::ConsumeBucketResult
 FcgiClient::_ConsumeBucketList(std::size_t nbytes) noexcept
 {
 	assert(response.available != 0);
@@ -907,7 +907,8 @@ FcgiClient::_ConsumeBucketList(std::size_t nbytes) noexcept
 
 	assert(nbytes == 0);
 
-	return Consumed(total);
+	// TODO eof?
+	return {Consumed(total), false};
 }
 
 /*

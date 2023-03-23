@@ -42,7 +42,7 @@ class CatIstream final : public Istream, DestructAnchor {
 			input.FillBucketList(list);
 		}
 
-		std::size_t ConsumeBucketList(std::size_t nbytes) noexcept {
+		auto ConsumeBucketList(std::size_t nbytes) noexcept {
 			return input.ConsumeBucketList(nbytes);
 		}
 
@@ -182,7 +182,7 @@ public:
 	off_t _Skip([[maybe_unused]] off_t length) noexcept override;
 	void _Read() noexcept override;
 	void _FillBucketList(IstreamBucketList &list) override;
-	std::size_t _ConsumeBucketList(std::size_t nbytes) noexcept override;
+	ConsumeBucketResult _ConsumeBucketList(std::size_t nbytes) noexcept override;
 	void _ConsumeDirect(std::size_t nbytes) noexcept override;
 	int _AsFd() noexcept override;
 	void _Close() noexcept override;
@@ -266,21 +266,27 @@ CatIstream::_FillBucketList(IstreamBucketList &list)
 	}
 }
 
-std::size_t
+Istream::ConsumeBucketResult
 CatIstream::_ConsumeBucketList(std::size_t nbytes) noexcept
 {
 	std::size_t total = 0;
 
-	for (auto &input : inputs) {
-		std::size_t consumed = input.ConsumeBucketList(nbytes);
-		Consumed(consumed);
-		total += consumed;
-		nbytes -= consumed;
+	while (nbytes > 0) {
+		auto &input = inputs.front();
+
+		const auto r = input.ConsumeBucketList(nbytes);
+		if (r.eof)
+			inputs.erase_and_dispose(inputs.iterator_to(input),
+						 Input::Disposer{});
+
+		Consumed(r.consumed);
+		total += r.consumed;
+		nbytes -= r.consumed;
 		if (nbytes == 0)
 			break;
 	}
 
-	return total;
+	return {total, inputs.empty()};
 }
 
 void

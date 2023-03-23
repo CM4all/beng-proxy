@@ -26,7 +26,7 @@ public:
 	/* virtual methods from class Istream */
 
 	off_t _GetAvailable(bool partial) noexcept override;
-	std::size_t _ConsumeBucketList(std::size_t nbytes) noexcept override;
+	ConsumeBucketResult _ConsumeBucketList(std::size_t nbytes) noexcept override;
 	void _ConsumeDirect(std::size_t nbytes) noexcept override;
 	off_t _Skip(off_t length) noexcept override;
 	void _Read() noexcept override;
@@ -94,15 +94,16 @@ HeadIstream::_FillBucketList(IstreamBucketList &list)
 		list.SetMore(false);
 }
 
-std::size_t
+Istream::ConsumeBucketResult
 HeadIstream::_ConsumeBucketList(std::size_t nbytes) noexcept
 {
 	if ((off_t)nbytes > rest)
 		nbytes = rest;
 
-	nbytes = ForwardIstream::_ConsumeBucketList(nbytes);
+	auto r = ForwardIstream::_ConsumeBucketList(nbytes);
 	rest -= nbytes;
-	return nbytes;
+	r.eof = rest == 0;
+	return r;
 }
 
 void

@@ -62,9 +62,9 @@ public:
 		reader.FillBucketList(list);
 	}
 
-	size_t _ConsumeBucketList(size_t nbytes) noexcept override {
+	ConsumeBucketResult _ConsumeBucketList(size_t nbytes) noexcept override {
 		size_t consumed = reader.ConsumeBucketList(nbytes);
-		return Consumed(consumed);
+		return {Consumed(consumed), reader.IsEOF()};
 	}
 };
 

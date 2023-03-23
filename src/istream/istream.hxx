@@ -370,6 +370,20 @@ public:
 #endif
 	}
 
+	struct ConsumeBucketResult {
+		/**
+		 * The number of bytes really consumed by this instance
+		 * (the rest will be consumed by its siblings).
+		 */
+		std::size_t consumed;
+
+		/**
+		 * Has this #Istream reached end-of-file?  If not,
+		 * then more data may (or may not) be available later.
+		 */
+		bool eof;
+	};
+
 	/**
 	 * Consume data from the #IstreamBucketList filled by
 	 * FillBucketList().
@@ -377,11 +391,8 @@ public:
 	 * @param nbytes the number of bytes to be consumed; may be more
 	 * than returned by FillBucketList(), because some of the data may
 	 * be returned by this Istream's successive siblings
-	 *
-	 * @return the number of bytes really consumed by this instance
-	 * (the rest will be consumed by its siblings)
 	 */
-	std::size_t ConsumeBucketList(std::size_t nbytes) noexcept {
+	ConsumeBucketResult ConsumeBucketList(std::size_t nbytes) noexcept {
 #ifndef NDEBUG
 		assert(!destroyed);
 		assert(!closing);
@@ -396,8 +407,10 @@ public:
 
 #ifndef NDEBUG
 		assert(!destroyed);
-		assert(result <= nbytes);
-		assert(consumed_sum == result);
+		assert(result.consumed <= nbytes);
+		assert(consumed_sum == result.consumed);
+		assert(!result.eof || available_partial == 0);
+		assert(!result.eof || !available_full_set || available_full == 0);
 #endif
 
 		return result;
@@ -485,6 +498,11 @@ public:
 	}
 
 protected:
+	ConsumeBucketResult Consumed(ConsumeBucketResult r) noexcept {
+		Consumed(r.consumed);
+		return r;
+	}
+
 	/**
 	 * This method can be implemented by subclasses to propagate
 	 * the new tag to their inputs.
@@ -503,7 +521,7 @@ protected:
 	virtual void _Read() noexcept = 0;
 
 	virtual void _FillBucketList(IstreamBucketList &list);
-	virtual std::size_t _ConsumeBucketList(std::size_t nbytes) noexcept;
+	virtual ConsumeBucketResult _ConsumeBucketList(std::size_t nbytes) noexcept;
 	virtual void _ConsumeDirect(std::size_t nbytes) noexcept;
 
 	virtual int _AsFd() noexcept {

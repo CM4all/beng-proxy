@@ -41,7 +41,7 @@ public:
 
 	void _Read() noexcept override;
 	void _FillBucketList(IstreamBucketList &list) override;
-	size_t _ConsumeBucketList(size_t nbytes) noexcept override;
+	ConsumeBucketResult _ConsumeBucketList(size_t nbytes) noexcept override;
 
 	/* virtual methods from class IstreamHandler */
 
@@ -335,7 +335,7 @@ ChunkedIstream::_FillBucketList(IstreamBucketList &list)
 	list.SetMore();
 }
 
-size_t
+Istream::ConsumeBucketResult
 ChunkedIstream::_ConsumeBucketList(size_t nbytes) noexcept
 {
 	size_t total = 0;
@@ -348,7 +348,7 @@ ChunkedIstream::_ConsumeBucketList(size_t nbytes) noexcept
 	if (size > 0) {
 		assert(input.IsDefined());
 
-		size = input.ConsumeBucketList(size);
+		size = input.ConsumeBucketList(size).consumed;
 		Consumed(size);
 		nbytes -= size;
 		total += size;
@@ -371,7 +371,8 @@ ChunkedIstream::_ConsumeBucketList(size_t nbytes) noexcept
 			CloseInput();
 	}
 
-	return total;
+	// TODO set eof?
+	return {total, false};
 }
 
 /*

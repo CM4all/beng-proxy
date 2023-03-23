@@ -64,7 +64,7 @@ MultiFifoBufferIstream::_FillBucketList(IstreamBucketList &list) noexcept
 	buffer.FillBucketList(list);
 }
 
-size_t
+Istream::ConsumeBucketResult
 MultiFifoBufferIstream::_ConsumeBucketList(size_t nbytes) noexcept
 {
 	size_t consumed = buffer.Skip(nbytes);
@@ -76,7 +76,7 @@ MultiFifoBufferIstream::_ConsumeBucketList(size_t nbytes) noexcept
 			handler.OnFifoBufferIstreamConsumed(consumed);
 	}
 
-	return consumed;
+	return {consumed, buffer.empty()};
 }
 
 void

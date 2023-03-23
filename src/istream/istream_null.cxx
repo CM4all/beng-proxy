@@ -26,8 +26,8 @@ public:
 	void _FillBucketList(IstreamBucketList &) override {
 	}
 
-	size_t _ConsumeBucketList(size_t) noexcept override {
-		return 0;
+	ConsumeBucketResult _ConsumeBucketList(size_t) noexcept override {
+		return {0, true};
 	}
 
 	int _AsFd() noexcept override {

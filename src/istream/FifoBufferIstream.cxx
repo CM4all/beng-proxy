@@ -77,7 +77,7 @@ FifoBufferIstream::_FillBucketList(IstreamBucketList &list) noexcept
 		list.SetMore();
 }
 
-size_t
+Istream::ConsumeBucketResult
 FifoBufferIstream::_ConsumeBucketList(size_t nbytes) noexcept
 {
 	size_t consumed = std::min(nbytes, buffer.GetAvailable());
@@ -93,5 +93,5 @@ FifoBufferIstream::_ConsumeBucketList(size_t nbytes) noexcept
 			buffer.Free();
 	}
 
-	return consumed;
+	return {consumed, eof && buffer.empty()};
 }

@@ -109,10 +109,11 @@ HttpServerConnection::TryWriteBuckets2()
 	response.bytes_sent += nbytes;
 	response.length += nbytes;
 
-	std::size_t consumed = input.ConsumeBucketList(nbytes);
-	assert(consumed == (std::size_t)nbytes);
+	const auto r = input.ConsumeBucketList(nbytes);
+	assert(r.consumed == (std::size_t)nbytes);
 
-	return list.IsDepleted(consumed)
+	// TODO remove the IsDepleted() check
+	return r.eof || list.IsDepleted(r.consumed)
 		? BucketResult::DEPLETED
 		: BucketResult::MORE;
 }

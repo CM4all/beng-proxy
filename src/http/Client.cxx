@@ -121,7 +121,7 @@ class HttpClient final : BufferedSocketHandler, IstreamSink, Cancellable, Destru
 			GetClient().FillBucketList(list);
 		}
 
-		std::size_t _ConsumeBucketList(std::size_t nbytes) noexcept override {
+		ConsumeBucketResult _ConsumeBucketList(std::size_t nbytes) noexcept override {
 			return GetClient().ConsumeBucketList(nbytes);
 		}
 
@@ -319,7 +319,7 @@ private:
 	void Read() noexcept;
 
 	void FillBucketList(IstreamBucketList &list) noexcept;
-	std::size_t ConsumeBucketList(std::size_t nbytes) noexcept;
+	Istream::ConsumeBucketResult ConsumeBucketList(std::size_t nbytes) noexcept;
 
 	int AsFD() noexcept;
 	void Close() noexcept;
@@ -510,7 +510,7 @@ HttpClient::FillBucketList(IstreamBucketList &list) noexcept
 	response_body_reader.FillBucketList(socket, list);
 }
 
-inline std::size_t
+inline Istream::ConsumeBucketResult
 HttpClient::ConsumeBucketList(std::size_t nbytes) noexcept
 {
 	assert(response_body_reader.IsSocketDone(socket) || !socket.HasEnded());
@@ -601,10 +601,11 @@ HttpClient::TryWriteBuckets2()
 						    strerror(_errno)));
 	}
 
-	std::size_t consumed = input.ConsumeBucketList(nbytes);
-	assert(consumed == (std::size_t)nbytes);
+	const auto r = input.ConsumeBucketList(nbytes);
+	assert(r.consumed == (std::size_t)nbytes);
 
-	return list.IsDepleted(consumed)
+	// TODO remove the IsDepleted() check
+	return r.eof || list.IsDepleted(r.consumed)
 		? BucketResult::DEPLETED
 		: BucketResult::MORE;
 }
