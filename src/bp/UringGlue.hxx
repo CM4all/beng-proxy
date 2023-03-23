@@ -6,6 +6,7 @@
 
 #ifdef HAVE_URING
 #include "event/uring/Manager.hxx"
+#include "io/uring/Close.hxx"
 
 #include <optional>
 #endif
@@ -34,4 +35,12 @@ public:
 		return *uring;
 	}
 #endif
+
+	void Close(FileDescriptor fd) noexcept {
+#ifdef HAVE_URING
+		Uring::Close(get(), fd);
+#else
+		fd.Close();
+#endif
+	}
 };
