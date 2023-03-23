@@ -4,6 +4,7 @@
 
 #include "FileIstream.hxx"
 #include "istream.hxx"
+#include "Bucket.hxx"
 #include "New.hxx"
 #include "Result.hxx"
 #include "lib/fmt/RuntimeError.hxx"
@@ -102,6 +103,9 @@ private:
 	}
 
 	void _ConsumeDirect(std::size_t nbytes) noexcept override;
+
+	void _FillBucketList(IstreamBucketList &list) noexcept override;
+	ConsumeBucketResult _ConsumeBucketList(std::size_t nbytes) noexcept override;
 
 	int _AsFd() noexcept override;
 	void _Close() noexcept override {
@@ -247,6 +251,29 @@ void
 FileIstream::_ConsumeDirect(std::size_t nbytes) noexcept
 {
 	offset += nbytes;
+}
+
+void
+FileIstream::_FillBucketList(IstreamBucketList &list) noexcept
+{
+	if (auto r = buffer.Read(); !r.empty())
+		list.Push(r);
+
+	if (offset < end_offset)
+		list.SetMore();
+}
+
+Istream::ConsumeBucketResult
+FileIstream::_ConsumeBucketList(std::size_t nbytes) noexcept
+{
+	bool is_eof = false;
+	if (const auto available = buffer.GetAvailable(); nbytes >= available) {
+		nbytes = available;
+		is_eof = offset == end_offset;
+	}
+
+	buffer.Consume(nbytes);
+	return {Consumed(nbytes), is_eof};
 }
 
 int

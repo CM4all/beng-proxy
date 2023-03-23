@@ -4,6 +4,7 @@
 
 #include "UringIstream.hxx"
 #include "istream.hxx"
+#include "Bucket.hxx"
 #include "New.hxx"
 #include "lib/fmt/RuntimeError.hxx"
 #include "lib/fmt/SystemError.hxx"
@@ -116,7 +117,8 @@ private:
 	void _Read() noexcept override;
 	void _ConsumeDirect(std::size_t nbytes) noexcept override;
 
-	// TODO: _FillBucketList, _ConsumeBucketList
+	void _FillBucketList(IstreamBucketList &list) noexcept override;
+	ConsumeBucketResult _ConsumeBucketList(std::size_t nbytes) noexcept override;
 
 	int _AsFd() noexcept override;
 	void _Close() noexcept override {
@@ -226,6 +228,9 @@ try {
 	buffer.Append(res);
 	offset += res;
 
+	if (!InvokeReady())
+		return;
+
 	// TODO free the buffer?
 	if (SendFromBuffer(buffer) > 0)
 		StartRead();
@@ -264,6 +269,29 @@ void
 UringIstream::_ConsumeDirect(std::size_t nbytes) noexcept
 {
 	offset += nbytes;
+}
+
+void
+UringIstream::_FillBucketList(IstreamBucketList &list) noexcept
+{
+	if (auto r = buffer.Read(); !r.empty())
+		list.Push(r);
+
+	if (offset < end_offset)
+		list.SetMore();
+}
+
+Istream::ConsumeBucketResult
+UringIstream::_ConsumeBucketList(std::size_t nbytes) noexcept
+{
+	bool is_eof = false;
+	if (const auto available = buffer.GetAvailable(); nbytes >= available) {
+		nbytes = available;
+		is_eof = offset == end_offset;
+	}
+
+	buffer.Consume(nbytes);
+	return {Consumed(nbytes), is_eof};
 }
 
 void
