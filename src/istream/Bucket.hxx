@@ -85,12 +85,7 @@ public:
 	}
 
 	void Push(std::span<const std::byte> buffer) noexcept {
-		if (IsFull()) {
-			SetMore();
-			return;
-		}
-
-		list.emplace_back(buffer);
+		Push(IstreamBucket{buffer});
 	}
 
 	List::const_iterator begin() const noexcept {
