@@ -6,6 +6,8 @@
 
 #ifdef HAVE_URING
 #include "util/PrintException.hxx"
+
+#include <cstdio>
 #endif
 
 void
