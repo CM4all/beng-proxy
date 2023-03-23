@@ -59,6 +59,7 @@ namespace Co { template<typename T> class Task; }
 class Request final : public HttpResponseHandler, DelegateHandler,
 		      TranslateHandler,
 #ifdef HAVE_URING
+		      Uring::OpenHandler,
 		      Uring::OpenStatHandler,
 #endif
 #ifdef HAVE_LIBNFS
@@ -529,6 +530,7 @@ public:
 				     const struct statx &st) noexcept;
 
 	void HandleFileAddress(const FileAddress &address) noexcept;
+	void HandleFileAddressAfterBase(const FileAddress &address) noexcept;
 	void HandleFileAddress(const FileAddress &address,
 			       UniqueFileDescriptor fd,
 			       const struct statx &st) noexcept;
@@ -897,6 +899,10 @@ private:
 	void OnDelegateError(std::exception_ptr ep) override;
 
 #ifdef HAVE_URING
+	/* virtual methods from class Uring::OpenHandler */
+	void OnOpen(UniqueFileDescriptor fd) noexcept override;
+	void OnOpenError(std::exception_ptr e) noexcept override;
+
 	/* virtual methods from class Uring::OpenStatHandler */
 	void OnOpenStat(UniqueFileDescriptor fd,
 			struct statx &st) noexcept override;

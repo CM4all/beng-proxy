@@ -22,6 +22,7 @@
 #include "util/StringCompare.hxx"
 
 #ifdef HAVE_URING
+#include "io/UringOpen.hxx"
 #include "io/UringOpenStat.hxx"
 #include "event/uring/Manager.hxx"
 #endif
@@ -230,6 +231,23 @@ Request::MaybeEmulateModAuthEasy(const FileAddress &address,
 #ifdef HAVE_URING
 
 void
+Request::OnOpen(UniqueFileDescriptor fd) noexcept
+{
+	const auto &address = *handler.file.address;
+
+	assert(address.base != nullptr);
+
+	handler.file.base = handler.file.base_ = std::move(fd);
+	HandleFileAddressAfterBase(address);
+}
+
+void
+Request::OnOpenError(std::exception_ptr e) noexcept
+{
+	LogDispatchError(std::move(e));
+}
+
+void
 Request::OnOpenStat(UniqueFileDescriptor fd,
 		    struct statx &st) noexcept
 {
@@ -270,7 +288,15 @@ Request::HandleFileAddress(const FileAddress &address) noexcept
 	/* open the file */
 
 	if (address.base != nullptr) {
-		// TODO: use uring
+#ifdef HAVE_URING
+		if (instance.uring) {
+			UringOpen(*instance.uring, pool,
+				  address.base, O_PATH,
+				  *this, cancel_ptr);
+			return;
+		}
+#endif
+
 		try {
 			handler.file.base =
 				handler.file.base_ = OpenPath(address.base);
@@ -280,6 +306,14 @@ Request::HandleFileAddress(const FileAddress &address) noexcept
 		}
 	} else
 		handler.file.base = FileDescriptor(AT_FDCWD);
+
+	HandleFileAddressAfterBase(address);
+}
+
+void
+Request::HandleFileAddressAfterBase(const FileAddress &address) noexcept
+{
+	const char *const path = address.path;
 
 #ifdef HAVE_URING
 	if (instance.uring) {

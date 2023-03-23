@@ -4,6 +4,7 @@ cm4all-beng-proxy (18.0.20) unstable; urgency=low
   * bp: fix AUTO_GZIP (18.0.19 regression)
   * bp: allow caching compressed EAGER_CACHE responses
   * bp: discard the "Digest" header on PIPE transformation
+  * bp: open the base directory with io_uring
   * translation: fix another crash after connection was closed prematurely
 
  --   
