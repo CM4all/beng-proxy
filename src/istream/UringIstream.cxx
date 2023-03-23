@@ -9,6 +9,7 @@
 #include "lib/fmt/SystemError.hxx"
 #include "io/Iovec.hxx"
 #include "io/UniqueFileDescriptor.hxx"
+#include "io/uring/Close.hxx"
 #include "io/uring/Operation.hxx"
 #include "io/uring/Queue.hxx"
 #include "memory/fb_pool.hxx"
@@ -131,7 +132,8 @@ UringIstream::~UringIstream() noexcept
 		auto *c = new CanceledUringIstream(std::move(iov),
 						   std::move(buffer));
 		ReplaceUring(*c);
-	}
+	} else
+		Uring::Close(&uring, fd.Release());
 }
 
 inline void
