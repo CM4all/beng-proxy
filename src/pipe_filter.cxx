@@ -144,6 +144,10 @@ pipe_filter(SpawnService &spawn_service, EventLoop &event_loop,
 		headers.Add(pool, "etag", etag);
 	}
 
+	/* contents change, digest changes: discard the header if it
+	   exists */
+	headers.Remove("digest");
+
 	response = istream_stopwatch_new(pool, std::move(response),
 					 std::move(stopwatch));
 
