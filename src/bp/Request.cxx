@@ -6,6 +6,7 @@
 #include "Connection.hxx"
 #include "Config.hxx"
 #include "Listener.hxx"
+#include "Instance.hxx"
 #include "PendingResponse.hxx"
 #include "session/Lease.hxx"
 #include "http/IncomingRequest.hxx"
@@ -30,7 +31,13 @@ Request::Request(BpConnection &_connection,
 	session_id.Clear();
 }
 
-Request::~Request() noexcept = default;
+Request::~Request() noexcept
+{
+#ifdef HAVE_URING
+	if (handler.file.base_.IsDefined())
+		instance.uring.Close(handler.file.base_.Release());
+#endif
+}
 
 TranslationService &
 Request::GetTranslationService() const noexcept
