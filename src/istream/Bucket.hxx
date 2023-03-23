@@ -6,6 +6,7 @@
 
 #include "util/StaticVector.hxx"
 
+#include <cassert>
 #include <span>
 
 class IstreamBucket {
