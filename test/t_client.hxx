@@ -20,6 +20,7 @@
 #include "istream/istream_string.hxx"
 #include "istream/ZeroIstream.hxx"
 #include "pool/pool.hxx"
+#include "event/DeferEvent.hxx"
 #include "event/FineTimerEvent.hxx"
 #include "PInstance.hxx"
 #include "strmap.hxx"
@@ -155,7 +156,7 @@ struct Context final
 #endif
 
 	FineTimerEvent read_later_event{event_loop, BIND_THIS_METHOD(OnDeferred)};
-	FineTimerEvent read_defer_event{event_loop, BIND_THIS_METHOD(OnDeferred)};
+	DeferEvent read_defer_event{event_loop, BIND_THIS_METHOD(OnDeferred)};
 	bool deferred = false;
 
 	explicit Context(Instance &instance) noexcept
@@ -478,7 +479,7 @@ Context::OnHttpResponse(HttpStatus _status, StringMap &&headers,
 		ReadBody();
 
 	if (defer_read_response_body) {
-		read_defer_event.Schedule(Event::Duration{});
+		read_defer_event.Schedule();
 		deferred = true;
 	}
 
