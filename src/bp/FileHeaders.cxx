@@ -24,7 +24,7 @@
 
 [[gnu::pure]]
 static std::chrono::seconds
-read_xattr_max_age(FileDescriptor fd)
+read_xattr_max_age(FileDescriptor fd) noexcept
 {
 	assert(fd.IsDefined());
 
@@ -47,7 +47,7 @@ read_xattr_max_age(FileDescriptor fd)
 static void
 generate_expires(GrowingBuffer &headers,
 		 std::chrono::system_clock::time_point now,
-		 std::chrono::system_clock::duration max_age)
+		 std::chrono::system_clock::duration max_age) noexcept
 {
 	constexpr std::chrono::system_clock::duration max_max_age =
 		std::chrono::hours(365 * 24);
@@ -76,7 +76,7 @@ CheckETagList(const char *list, FileDescriptor fd,
 }
 
 static void
-MakeETag(GrowingBuffer &headers, FileDescriptor fd, const struct statx &st)
+MakeETag(GrowingBuffer &headers, FileDescriptor fd, const struct statx &st) noexcept
 {
 	char buffer[512];
 	GetAnyETag(buffer, sizeof(buffer), fd, st);
@@ -88,7 +88,7 @@ static void
 file_cache_headers(GrowingBuffer &headers,
 		   const ClockCache<std::chrono::system_clock> &system_clock,
 		   FileDescriptor fd, const struct statx &st,
-		   std::chrono::seconds max_age)
+		   std::chrono::seconds max_age) noexcept
 {
 	header_write(headers, "last-modified",
 		     http_date_format(std::chrono::system_clock::from_time_t(st.stx_mtime.tv_sec)));
@@ -126,7 +126,7 @@ check_if_range(const char *if_range,
  */
 static void
 DispatchNotModified(Request &request2, const TranslateResponse &tr,
-		    FileDescriptor fd, const struct statx &st)
+		    FileDescriptor fd, const struct statx &st) noexcept
 {
 	HttpHeaders headers;
 	auto &headers2 = headers.GetBuffer();
@@ -216,7 +216,7 @@ file_response_headers(GrowingBuffer &headers,
 		      const char *override_content_type,
 		      FileDescriptor fd, const struct statx &st,
 		      std::chrono::seconds expires_relative,
-		      bool processor_first)
+		      bool processor_first) noexcept
 {
 	if (!processor_first)
 		file_cache_headers(headers, system_clock,

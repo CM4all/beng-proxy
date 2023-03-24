@@ -22,7 +22,7 @@ struct statx;
 struct file_request {
 	HttpRangeRequest range;
 
-	explicit file_request(off_t _size):range(_size) {}
+	explicit constexpr file_request(off_t _size) noexcept:range(_size) {}
 };
 
 void
@@ -31,4 +31,4 @@ file_response_headers(GrowingBuffer &headers,
 		      const char *override_content_type,
 		      FileDescriptor fd, const struct statx &st,
 		      std::chrono::seconds expires_relative,
-		      bool processor_first);
+		      bool processor_first) noexcept;
