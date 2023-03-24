@@ -89,8 +89,13 @@ public:
 
 private:
 	[[gnu::pure]]
+	off_t GetRemaining() const noexcept {
+		return end_offset - offset;
+	}
+
+	[[gnu::pure]]
 	size_t GetMaxRead() const noexcept {
-		return std::min(end_offset - offset, off_t(INT_MAX));
+		return std::min(GetRemaining(), off_t(INT_MAX));
 	}
 
 	void TryDirect() noexcept;
@@ -231,7 +236,7 @@ try {
 off_t
 UringIstream::_GetAvailable(bool) noexcept
 {
-	return (end_offset - offset) + buffer.GetAvailable();
+	return GetRemaining() + buffer.GetAvailable();
 }
 
 off_t

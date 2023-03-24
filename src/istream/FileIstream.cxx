@@ -66,8 +66,13 @@ private:
 	}
 
 	[[gnu::pure]]
+	off_t GetRemaining() const noexcept {
+		return end_offset - offset;
+	}
+
+	[[gnu::pure]]
 	size_t GetMaxRead() const noexcept {
-		return std::min(end_offset - offset, off_t(INT_MAX));
+		return std::min(GetRemaining(), off_t(INT_MAX));
 	}
 
 	void TryData();
@@ -136,8 +141,8 @@ FileIstream::TryData()
 	auto w = buffer.Write();
 	assert(!w.empty());
 
-	if (end_offset - offset < off_t(w.size()))
-		w = w.first(end_offset - offset);
+	if (GetRemaining() < off_t(w.size()))
+		w = w.first(GetRemaining());
 
 	ssize_t nbytes = pread(fd.Get(), w.data(), w.size(), offset);
 	if (nbytes == 0) {
@@ -206,7 +211,7 @@ FileIstream::TryDirect()
 off_t
 FileIstream::_GetAvailable(bool) noexcept
 {
-	return (end_offset - offset) + buffer.GetAvailable();
+	return GetRemaining() + buffer.GetAvailable();
 }
 
 off_t
@@ -227,10 +232,10 @@ FileIstream::_Skip(off_t length) noexcept
 	length -= buffer_available;
 	buffer.Clear();
 
-	if (length >= end_offset - offset) {
+	if (length >= GetRemaining()) {
 		/* skip beyond EOF */
 
-		length = end_offset - offset;
+		length = GetRemaining();
 		offset = end_offset;
 	} else {
 		/* seek the file descriptor */
