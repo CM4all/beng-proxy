@@ -119,6 +119,12 @@ private:
 		return &GetCurrent() == &input;
 	}
 
+	bool IsLast() const noexcept {
+		assert(!inputs.empty());
+
+		return std::next(inputs.begin()) == inputs.end();
+	}
+
 	bool IsEOF() const noexcept {
 		return inputs.empty();
 	}
@@ -301,7 +307,7 @@ CatIstream::_AsFd() noexcept
 	/* we can safely forward the as_fd() call to our input if it's the
 	   last one */
 
-	if (std::next(inputs.begin()) != inputs.end())
+	if (!IsLast())
 		/* not on last input */
 		return -1;
 
