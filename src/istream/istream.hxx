@@ -12,6 +12,7 @@
 
 #include <algorithm>
 #include <cassert>
+#include <concepts>
 #include <cstddef>
 #include <span>
 
@@ -82,7 +83,7 @@ protected:
 
 	using PoolHolder::GetPool;
 
-	static constexpr std::pair<std::size_t, bool> CalcMaxDirect(off_t remaining) noexcept {
+	static constexpr std::pair<std::size_t, bool> CalcMaxDirect(std::integral auto remaining) noexcept {
 		/* Linux can't splice() more than 2 GB at a time and
 		   may return EINVAL if we ask it to transfer more */
 		if (remaining > INT_MAX)
