@@ -154,14 +154,15 @@ struct Context final
 	off_t available_after_bucket, available_after_bucket_partial;
 #endif
 
-	FineTimerEvent defer_event;
+	FineTimerEvent read_later_event{event_loop, BIND_THIS_METHOD(OnDeferred)};
+	FineTimerEvent read_defer_event{event_loop, BIND_THIS_METHOD(OnDeferred)};
 	bool deferred = false;
 
 	explicit Context(Instance &instance) noexcept
 		:event_loop(instance.event_loop),
 		parent_pool(NewMajorPool(instance.root_pool, "parent")),
-		 pool(pool_new_linear(parent_pool, "test", 16384)),
-		 defer_event(event_loop, BIND_THIS_METHOD(OnDeferred)) {
+		 pool(pool_new_linear(parent_pool, "test", 16384))
+	{
 	}
 
 	~Context() noexcept {
@@ -418,7 +419,8 @@ Context::OnError(std::exception_ptr ep) noexcept
 
 	ClearInput();
 
-	defer_event.Cancel();
+	read_later_event.Cancel();
+	read_defer_event.Cancel();
 
 	assert(!body_error);
 	body_error = ep;
@@ -464,7 +466,7 @@ Context::OnHttpResponse(HttpStatus _status, StringMap &&headers,
 			DoBuckets();
 		else {
 			/* try again later */
-			defer_event.Schedule(std::chrono::milliseconds(10));
+			read_later_event.Schedule(std::chrono::milliseconds(10));
 			deferred = true;
 		}
 
@@ -476,7 +478,7 @@ Context::OnHttpResponse(HttpStatus _status, StringMap &&headers,
 		ReadBody();
 
 	if (defer_read_response_body) {
-		defer_event.Schedule(Event::Duration{});
+		read_defer_event.Schedule(Event::Duration{});
 		deferred = true;
 	}
 
@@ -1639,7 +1641,8 @@ TestCloseWithFailedSocketGet(auto &factory, Context &c) noexcept
 
 	c.connection->InjectSocketFailure();
 	c.CloseInput();
-	c.defer_event.Cancel();
+	c.read_later_event.Cancel();
+	c.read_defer_event.Cancel();
 
 	c.event_loop.Run();
 
@@ -1665,7 +1668,8 @@ TestCloseWithFailedSocketPost(auto &factory, Context &c) noexcept
 
 	c.connection->InjectSocketFailure();
 	c.CloseInput();
-	c.defer_event.Cancel();
+	c.read_later_event.Cancel();
+	c.read_defer_event.Cancel();
 
 	c.event_loop.Run();
 
