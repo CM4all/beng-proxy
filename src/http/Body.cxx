@@ -57,9 +57,13 @@ HttpBodyReader::TryDirect(SocketDescriptor fd, FdType fd_type) noexcept
 	assert(fd.IsDefined());
 	assert(CheckDirect(fd_type));
 
+	std::size_t max_size = INT_MAX;
+	if (KnownLength())
+		max_size = CalcMaxDirect(rest);
+
 	return InvokeDirect(fd_type, fd.ToFileDescriptor(),
 			    IstreamHandler::NO_OFFSET,
-			    GetMaxRead(INT_MAX));
+			    max_size);
 }
 
 bool
