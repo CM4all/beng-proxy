@@ -34,8 +34,8 @@ ReadETag(FileDescriptor fd, char *buffer, size_t size) noexcept
 	return true;
 }
 
-static void
-static_etag(char *p, const struct statx &st)
+static constexpr void
+static_etag(char *p, const struct statx &st) noexcept
 {
 	*p++ = '"';
 
@@ -85,7 +85,7 @@ load_xattr_content_type(char *buffer, size_t size, FileDescriptor fd) noexcept
 StringMap
 static_response_headers(struct pool &pool,
 			FileDescriptor fd, const struct statx &st,
-			const char *content_type)
+			const char *content_type) noexcept
 {
 	StringMap headers;
 

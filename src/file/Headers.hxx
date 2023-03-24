@@ -30,4 +30,4 @@ load_xattr_content_type(char *buffer, size_t size, FileDescriptor fd) noexcept;
 StringMap
 static_response_headers(struct pool &pool,
 			FileDescriptor fd, const struct statx &st,
-			const char *content_type);
+			const char *content_type) noexcept;
