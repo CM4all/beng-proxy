@@ -123,19 +123,16 @@ public:
 	template<typename Socket>
 	void FillBucketList(const Socket &s,
 			    IstreamBucketList &list) noexcept {
-		auto b = s.ReadBuffer();
+		const auto b = s.ReadBuffer();
 		if (b.empty()) {
 			if (!IsEOF())
 				list.SetMore();
 			return;
 		}
 
-		std::size_t max = GetMaxRead(b.size());
-		if (b.size() > max)
-			b = b.first(max);
-
-		list.Push(b);
-		if ((off_t)b.size() != rest)
+		const auto [t, then_eof] = TruncateInput(b);
+		list.Push(t);
+		if (!then_eof)
 			list.SetMore();
 	}
 
@@ -215,6 +212,26 @@ public:
 private:
 	[[gnu::pure]]
 	std::size_t GetMaxRead(std::size_t length) const noexcept;
+
+	/**
+	 * Truncate data from the input buffer to the known remaining
+	 * length.
+	 *
+	 * @return the truncated span and a flag indicating whether
+	 * the body reaches end-of-file after that
+	 */
+	[[gnu::pure]]
+	std::pair<std::span<const std::byte>, bool> TruncateInput(std::span<const std::byte> i) noexcept {
+		assert(rest != REST_EOF_CHUNK);
+
+		bool then_eof = false;
+		if (KnownLength() && rest <= static_cast<off_t>(i.size())) {
+			i = i.first(static_cast<std::size_t>(rest));
+			then_eof = true;
+		}
+
+		return {i, then_eof};
+	}
 
 	void Consumed(std::size_t nbytes) noexcept;
 

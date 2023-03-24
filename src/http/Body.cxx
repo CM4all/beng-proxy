@@ -42,8 +42,9 @@ HttpBodyReader::FeedBody(std::span<const std::byte> src) noexcept
 {
 	assert(!src.empty());
 
-	src = src.first(GetMaxRead(src.size()));
-	std::size_t consumed = InvokeData(src);
+	const auto [t, then_eof] = TruncateInput(src);
+
+	std::size_t consumed = InvokeData(t);
 	if (consumed > 0)
 		Consumed(consumed);
 
