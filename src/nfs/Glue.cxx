@@ -43,7 +43,7 @@ NfsRequest::OnNfsCacheResponse(NfsCacheHandle &handle,
 			       const struct statx &st) noexcept
 {
 	auto headers = static_response_headers(pool, FileDescriptor::Undefined(),
-					       st, content_type);
+					       st, content_type, false);
 	headers.Add(pool, "cache-control", "max-age=60");
 
 	// TODO: handle revalidation etc.

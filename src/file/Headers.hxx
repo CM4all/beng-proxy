@@ -18,7 +18,8 @@ struct statx;
 
 void
 GetAnyETag(char *buffer, size_t size,
-	   FileDescriptor fd, const struct statx &st) noexcept;
+	   FileDescriptor fd, const struct statx &st,
+	   bool use_xattr) noexcept;
 
 bool
 load_xattr_content_type(char *buffer, size_t size, FileDescriptor fd) noexcept;
@@ -30,4 +31,5 @@ load_xattr_content_type(char *buffer, size_t size, FileDescriptor fd) noexcept;
 StringMap
 static_response_headers(struct pool &pool,
 			FileDescriptor fd, const struct statx &st,
-			const char *content_type) noexcept;
+			const char *content_type,
+			bool use_xattr) noexcept;

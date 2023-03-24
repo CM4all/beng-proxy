@@ -47,7 +47,8 @@ Request::OnNfsCacheResponse(NfsCacheHandle &handle,
 			      override_content_type,
 			      FileDescriptor::Undefined(), st,
 			      tr.GetExpiresRelative(HasQueryString()),
-			      IsProcessorFirst());
+			      IsProcessorFirst(),
+			      false);
 	write_translation_vary_header(headers2, tr);
 
 	auto status = tr.status == HttpStatus{} ? HttpStatus::OK : tr.status;

@@ -24,14 +24,17 @@ class DelegateHttpRequest final : DelegateHandler {
 	const char *const path;
 	const char *const content_type;
 	HttpResponseHandler &handler;
+	const bool use_xattr;
 
 public:
 	DelegateHttpRequest(EventLoop &_event_loop, struct pool &_pool,
 			    const char *_path, const char *_content_type,
+			    bool _use_xattr,
 			    HttpResponseHandler &_handler)
 		:event_loop(_event_loop), pool(_pool),
 		 path(_path), content_type(_content_type),
-		 handler(_handler) {}
+		 handler(_handler),
+		 use_xattr(_use_xattr) {}
 
 	void Open(StockMap &stock, const char *helper,
 		  const ChildOptions &options,
@@ -69,7 +72,8 @@ DelegateHttpRequest::OnDelegateSuccess(UniqueFileDescriptor fd)
 	/* XXX handle if-modified-since, ... */
 
 	auto response_headers = static_response_headers(pool, fd, st,
-							content_type);
+							content_type,
+							use_xattr);
 
 	handler.InvokeResponse(HttpStatus::OK,
 			       std::move(response_headers),
@@ -84,11 +88,12 @@ delegate_stock_request(EventLoop &event_loop, StockMap &stock,
 		       const char *helper,
 		       const ChildOptions &options,
 		       const char *path, const char *content_type,
+		       bool use_xattr,
 		       HttpResponseHandler &handler,
 		       CancellablePointer &cancel_ptr)
 {
 	auto get = NewFromPool<DelegateHttpRequest>(pool, event_loop, pool,
-						    path, content_type,
+						    path, content_type, use_xattr,
 						    handler);
 	get->Open(stock, helper, options, cancel_ptr);
 }

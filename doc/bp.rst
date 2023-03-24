@@ -399,6 +399,10 @@ The following settings are available:
   connections to the translation server. Set to 0 to disable the limit.
   The default is 64.
 
+- ``use_xattr``: Set to ``yes`` to use extended attributes like
+  ``user.ETag`` and ``user.Content-Type``.  This feature is usually
+  not needed and only adds overhead.
+
 - ``verbose_response``: Set to ``yes`` to reveal internal error
   messages in HTTP responses.
 

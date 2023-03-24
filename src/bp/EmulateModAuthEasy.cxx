@@ -258,7 +258,8 @@ Request::EmulateModAuthEasy(const FileAddress &address,
 			      override_content_type,
 			      fd, st,
 			      tr.GetExpiresRelative(HasQueryString()),
-			      IsProcessorFirst());
+			      IsProcessorFirst(),
+			      instance.config.use_xattr);
 	write_translation_vary_header(headers2, tr);
 
 	auto status = tr.status == HttpStatus{} ? HttpStatus::OK : tr.status;

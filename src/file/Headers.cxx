@@ -60,9 +60,10 @@ static_etag(char *p, const struct statx &st) noexcept
 
 void
 GetAnyETag(char *buffer, size_t size,
-	   FileDescriptor fd, const struct statx &st) noexcept
+	   FileDescriptor fd, const struct statx &st,
+	   bool use_xattr) noexcept
 {
-	if (!fd.IsDefined() || !ReadETag(fd, buffer, size))
+	if (!use_xattr || !fd.IsDefined() || !ReadETag(fd, buffer, size))
 		static_etag(buffer, st);
 }
 
@@ -85,7 +86,8 @@ load_xattr_content_type(char *buffer, size_t size, FileDescriptor fd) noexcept
 StringMap
 static_response_headers(struct pool &pool,
 			FileDescriptor fd, const struct statx &st,
-			const char *content_type) noexcept
+			const char *content_type,
+			bool use_xattr) noexcept
 {
 	StringMap headers;
 
@@ -94,7 +96,7 @@ static_response_headers(struct pool &pool,
 
 	char buffer[256];
 
-	if (content_type == nullptr)
+	if (content_type == nullptr && use_xattr)
 		content_type = load_xattr_content_type(buffer, sizeof(buffer), fd)
 			? p_strdup(&pool, buffer)
 			: "application/octet-stream";
@@ -104,7 +106,7 @@ static_response_headers(struct pool &pool,
 	headers.Add(pool, "last-modified",
 		    p_strdup(&pool, http_date_format(std::chrono::system_clock::from_time_t(st.stx_mtime.tv_sec))));
 
-	GetAnyETag(buffer, sizeof(buffer), fd, st);
+	GetAnyETag(buffer, sizeof(buffer), fd, st, use_xattr);
 	headers.Add(pool, "etag", p_strdup(&pool, buffer));
 
 	return headers;

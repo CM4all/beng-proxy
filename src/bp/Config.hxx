@@ -139,6 +139,8 @@ struct BpConfig {
 
 	bool http_cache_obey_no_cache = true;
 
+	bool use_xattr = false;
+
 	SpawnConfig spawn;
 
 	SslClientConfig ssl_client;
