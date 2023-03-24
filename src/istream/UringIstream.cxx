@@ -147,13 +147,13 @@ try {
 	assert(buffer.empty());
 	assert(!IsUringPending());
 
-	const std::size_t max_read = GetMaxRead();
-	if (max_read == 0) {
+	if (offset >= end_offset) {
 		DestroyEof();
 		return;
 	}
 
-	switch (InvokeDirect(FdType::FD_FILE, fd, offset, max_read)) {
+	const auto max_size = CalcMaxDirect(GetRemaining());
+	switch (InvokeDirect(FdType::FD_FILE, fd, offset, max_size)) {
 	case IstreamDirectResult::CLOSED:
 	case IstreamDirectResult::BLOCKING:
 		break;

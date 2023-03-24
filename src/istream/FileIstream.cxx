@@ -21,7 +21,6 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <errno.h>
-#include <limits.h>
 
 /**
  * If EAGAIN occurs (on NFS), we try again after 100ms.  We can't
@@ -68,11 +67,6 @@ private:
 	[[gnu::pure]]
 	off_t GetRemaining() const noexcept {
 		return end_offset - offset;
-	}
-
-	[[gnu::pure]]
-	size_t GetMaxRead() const noexcept {
-		return std::min(GetRemaining(), off_t(INT_MAX));
 	}
 
 	void TryData();
@@ -172,7 +166,8 @@ FileIstream::TryDirect()
 		return;
 	}
 
-	switch (InvokeDirect(FdType::FD_FILE, fd, offset, GetMaxRead())) {
+	const auto max_size = CalcMaxDirect(GetRemaining());
+	switch (InvokeDirect(FdType::FD_FILE, fd, offset, max_size)) {
 	case IstreamDirectResult::CLOSED:
 	case IstreamDirectResult::BLOCKING:
 		break;

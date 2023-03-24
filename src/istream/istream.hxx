@@ -15,6 +15,8 @@
 #include <cstddef>
 #include <span>
 
+#include <limits.h> // for INT_MAX
+
 class FileDescriptor;
 class IstreamHandler;
 class IstreamBucketList;
@@ -79,6 +81,14 @@ protected:
 	virtual ~Istream() noexcept;
 
 	using PoolHolder::GetPool;
+
+	static constexpr std::size_t CalcMaxDirect(off_t remaining) noexcept {
+		/* Linux can't splice() more than 2 GB at a time and
+		   may return EINVAL if we ask it to transfer more */
+		return remaining <= INT_MAX
+			? static_cast<std::size_t>(remaining)
+			: INT_MAX;
+	}
 
 	std::size_t Consumed(std::size_t nbytes) noexcept {
 #ifndef NDEBUG
