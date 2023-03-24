@@ -28,7 +28,7 @@ public:
 	{
 		cancel_ptr = *this;
 
-		if (directory.IsDefined() && directory != FileDescriptor(AT_FDCWD))
+		if (directory != FileDescriptor(AT_FDCWD))
 			open_stat->StartOpenStatReadOnlyBeneath(directory, path);
 		else
 			open_stat->StartOpenStatReadOnly(directory, path);
