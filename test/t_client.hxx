@@ -407,6 +407,9 @@ Context::OnEof() noexcept
 	ClearInput();
 	body_eof = true;
 
+	read_later_event.Cancel();
+	read_defer_event.Cancel();
+
 	if (close_request_body_eof && !aborted_request_body) {
 		request_body->SetError(std::make_exception_ptr(std::runtime_error("close_request_body_eof")));
 	}
