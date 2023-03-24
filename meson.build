@@ -608,6 +608,7 @@ sources = [
 
 if uring_dep.found()
   sources += [
+    'src/io/UringOpen.cxx',
     'src/io/UringOpenStat.cxx',
     'src/io/CoStatAt.cxx',
   ]
