@@ -134,7 +134,7 @@ FdIstream::TryDirect()
 		return;
 
 	switch (InvokeDirect(fd_type, fd, IstreamHandler::NO_OFFSET,
-			     INT_MAX)) {
+			     INT_MAX, false)) {
 	case IstreamDirectResult::CLOSED:
 	case IstreamDirectResult::OK:
 	case IstreamDirectResult::BLOCKING:

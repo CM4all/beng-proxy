@@ -105,8 +105,8 @@ struct SpawnIstream final : Istream, IstreamSink, ExitListener {
 	/* virtual methods from class IstreamHandler */
 	std::size_t OnData(std::span<const std::byte> src) noexcept override;
 	IstreamDirectResult OnDirect(FdType type, FileDescriptor fd,
-				     off_t offset,
-				     std::size_t max_length) noexcept override;
+				     off_t offset, std::size_t max_length,
+				     bool then_eof) noexcept override;
 	void OnEof() noexcept override;
 	void OnError(std::exception_ptr ep) noexcept override;
 
@@ -187,7 +187,8 @@ SpawnIstream::OnData(std::span<const std::byte> src) noexcept
 
 IstreamDirectResult
 SpawnIstream::OnDirect([[maybe_unused]] FdType type, FileDescriptor fd, off_t offset,
-		       std::size_t max_length) noexcept
+		       std::size_t max_length,
+		       [[maybe_unused]] bool then_eof) noexcept
 {
 	assert(input_fd.IsDefined());
 
@@ -305,7 +306,7 @@ SpawnIstream::ReadFromOutput() noexcept
 		}
 
 		switch (InvokeDirect(FdType::FD_PIPE, output_fd, NO_OFFSET,
-				     INT_MAX)) {
+				     INT_MAX, false)) {
 		case IstreamDirectResult::BLOCKING:
 		case IstreamDirectResult::CLOSED:
 			break;

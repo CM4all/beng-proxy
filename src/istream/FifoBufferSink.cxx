@@ -73,7 +73,8 @@ FifoBufferSink::OnData(std::span<const std::byte> src) noexcept
 
 IstreamDirectResult
 FifoBufferSink::OnDirect(FdType, FileDescriptor fd, off_t offset,
-			 std::size_t max_length) noexcept
+			 std::size_t max_length,
+			 [[maybe_unused]] bool then_eof) noexcept
 {
 	buffer.AllocateIfNull(fb_pool_get());
 

@@ -79,12 +79,15 @@ public:
 	 * offset; pass #NO_OFFSET to read from the current offset or if not
 	 * applicable (e.g. pipes, sockets)
 	 * @param max_length don't read more than this number of bytes
+	 * @param then_eof if true, the end-of-file will be reached after
+	 * #max_length bytes have been transferred
 	 * @return the number of bytes consumed, or one of the
 	 * #istream_result values
 	 */
 	virtual IstreamDirectResult OnDirect(FdType type, FileDescriptor fd,
 					     off_t offset,
-					     std::size_t max_length) noexcept;
+					     std::size_t max_length,
+					     bool then_eof) noexcept;
 
 	/**
 	 * End of file encountered.

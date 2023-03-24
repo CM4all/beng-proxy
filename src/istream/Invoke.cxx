@@ -74,7 +74,7 @@ Istream::InvokeData(std::span<const std::byte> src) noexcept
 
 IstreamDirectResult
 Istream::InvokeDirect(FdType type, FileDescriptor fd, off_t offset,
-		      std::size_t max_length) noexcept
+		      std::size_t max_length, bool then_eof) noexcept
 {
 	assert(!destroyed);
 	assert(handler != nullptr);
@@ -83,13 +83,17 @@ Istream::InvokeDirect(FdType type, FileDescriptor fd, off_t offset,
 	assert(!in_data);
 	assert(!eof);
 	assert(!closing);
+	assert(!available_full_set || !then_eof ||
+	       static_cast<off_t>(max_length) == available_full);
+	assert(!then_eof ||
+	       static_cast<off_t>(max_length) >= available_partial);
 
 #ifndef NDEBUG
 	const DestructObserver destructed(*this);
 	in_data = true;
 #endif
 
-	const auto result = handler->OnDirect(type, fd, offset, max_length);
+	const auto result = handler->OnDirect(type, fd, offset, max_length, then_eof);
 	assert(result == IstreamDirectResult::CLOSED || !eof);
 
 #ifndef NDEBUG

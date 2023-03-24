@@ -316,15 +316,18 @@ WasInput::TryDirect() noexcept
 	assert(!buffer.IsDefined());
 
 	std::size_t max_length = 0x1000000;
+	bool then_eof = false;
 	if (known_length) {
 		uint64_t rest = length - received;
-		if (rest < (uint64_t)max_length)
+		if (rest < (uint64_t)max_length) {
 			max_length = rest;
+			then_eof = true;
+		}
 	}
 
 	switch (InvokeDirect(FdType::FD_PIPE, GetPipe(),
 			     IstreamHandler::NO_OFFSET,
-			     max_length)) {
+			     max_length, then_eof)) {
 	case IstreamDirectResult::BLOCKING:
 		CancelRead();
 		return false;

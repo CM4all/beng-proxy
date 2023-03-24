@@ -83,11 +83,11 @@ public:
 	}
 
 	IstreamDirectResult OnDirect(FdType type, FileDescriptor fd,
-				     off_t offset,
-				     std::size_t max_length) noexcept override {
+				     off_t offset, std::size_t max_length,
+				     bool then_eof) noexcept override {
 		return resumed
 			? ForwardIstream::OnDirect(type, fd, offset,
-						   max_length)
+						   max_length, then_eof)
 			: IstreamDirectResult::BLOCKING;
 	}
 };

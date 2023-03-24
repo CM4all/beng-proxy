@@ -386,8 +386,8 @@ private:
 	/* virtual methods from class IstreamHandler */
 	std::size_t OnData(std::span<const std::byte> src) noexcept override;
 	IstreamDirectResult OnDirect(FdType type, FileDescriptor fd,
-				     off_t offset,
-				     std::size_t max_length) noexcept override;
+				     off_t offset, std::size_t max_length,
+				     bool then_eof) noexcept override;
 	void OnEof() noexcept override;
 	void OnError(std::exception_ptr ep) noexcept override;
 };
@@ -1239,7 +1239,7 @@ HttpClient::OnData(std::span<const std::byte> src) noexcept
 
 IstreamDirectResult
 HttpClient::OnDirect(FdType type, FileDescriptor fd, off_t offset,
-		     std::size_t max_length) noexcept
+		     std::size_t max_length, bool then_eof) noexcept
 {
 	assert(IsConnected());
 
@@ -1249,6 +1249,16 @@ HttpClient::OnDirect(FdType type, FileDescriptor fd, off_t offset,
 					  max_length);
 	if (nbytes > 0) [[likely]] {
 		input.ConsumeDirect(nbytes);
+
+		if (then_eof && static_cast<std::size_t>(nbytes) == max_length) {
+			stopwatch.RecordEvent("request_end");
+
+			CloseInput();
+			socket.UnscheduleWrite();
+			socket.ScheduleRead();
+			return IstreamDirectResult::CLOSED;
+		}
+
 		ScheduleWrite();
 		return IstreamDirectResult::OK;
 	} else if (nbytes == WRITE_BLOCKING)

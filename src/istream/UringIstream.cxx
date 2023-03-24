@@ -152,8 +152,8 @@ try {
 		return;
 	}
 
-	const auto max_size = CalcMaxDirect(GetRemaining());
-	switch (InvokeDirect(FdType::FD_FILE, fd, offset, max_size)) {
+	const auto [max_size, then_eof] = CalcMaxDirect(GetRemaining());
+	switch (InvokeDirect(FdType::FD_FILE, fd, offset, max_size, then_eof)) {
 	case IstreamDirectResult::CLOSED:
 	case IstreamDirectResult::BLOCKING:
 		break;

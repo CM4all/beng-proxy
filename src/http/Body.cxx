@@ -9,6 +9,7 @@
 #include "net/SocketProtocolError.hxx"
 
 #include <stdexcept>
+#include <tuple>
 
 #include <limits.h>
 
@@ -58,12 +59,13 @@ HttpBodyReader::TryDirect(SocketDescriptor fd, FdType fd_type) noexcept
 	assert(CheckDirect(fd_type));
 
 	std::size_t max_size = INT_MAX;
+	bool then_eof = false;
 	if (KnownLength())
-		max_size = CalcMaxDirect(rest);
+		std::tie(max_size, then_eof) = CalcMaxDirect(rest);
 
 	return InvokeDirect(fd_type, fd.ToFileDescriptor(),
 			    IstreamHandler::NO_OFFSET,
-			    max_size);
+			    max_size, then_eof);
 }
 
 bool

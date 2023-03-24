@@ -58,8 +58,8 @@ private:
 	/* virtual methods from class IstreamHandler */
 	std::size_t OnData(std::span<const std::byte> src) noexcept override;
 	IstreamDirectResult OnDirect(FdType type, FileDescriptor fd,
-				     off_t offset,
-				     std::size_t max_length) noexcept override;
+				     off_t offset, std::size_t max_length,
+				     bool then_eof) noexcept override;
 	void OnEof() noexcept override;
 	void OnError(std::exception_ptr ep) noexcept override;
 };
@@ -128,7 +128,8 @@ RubberSink::OnData(std::span<const std::byte> src) noexcept
 
 IstreamDirectResult
 RubberSink::OnDirect(FdType type, FileDescriptor fd, off_t offset,
-		     std::size_t max_length) noexcept
+		     std::size_t max_length,
+		     [[maybe_unused]] bool then_eof) noexcept
 {
 	assert(position <= max_size);
 

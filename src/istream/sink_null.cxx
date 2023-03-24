@@ -28,7 +28,8 @@ public:
 	}
 
 	IstreamDirectResult OnDirect(FdType, FileDescriptor fd, off_t offset,
-				     std::size_t max_length) noexcept override
+				     std::size_t max_length,
+				     [[maybe_unused]] bool then_eof) noexcept override
 	{
 		if (HasOffset(offset)) {
 			/* if there is an offset, we can assume that

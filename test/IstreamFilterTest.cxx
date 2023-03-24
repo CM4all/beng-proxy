@@ -131,7 +131,8 @@ Context::OnData(const std::span<const std::byte> src) noexcept
 }
 
 IstreamDirectResult
-Context::OnDirect(FdType, FileDescriptor, off_t, std::size_t max_length) noexcept
+Context::OnDirect(FdType, FileDescriptor, off_t,
+		  std::size_t max_length, bool then_eof) noexcept
 {
 	got_data = true;
 
@@ -151,6 +152,19 @@ Context::OnDirect(FdType, FileDescriptor, off_t, std::size_t max_length) noexcep
 
 	offset += max_length;
 	input.ConsumeDirect(max_length);
+
+	if (then_eof) {
+		if (break_eof)
+			instance.event_loop.Break();
+
+		CloseInput();
+		assert(test_pool);
+		test_pool.reset();
+
+		eof = true;
+		return IstreamDirectResult::CLOSED;
+	}
+
 	return IstreamDirectResult::OK;
 }
 

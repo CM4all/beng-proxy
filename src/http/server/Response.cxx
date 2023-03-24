@@ -66,7 +66,7 @@ HttpServerConnection::OnData(std::span<const std::byte> src) noexcept
 
 IstreamDirectResult
 HttpServerConnection::OnDirect(FdType type, FileDescriptor fd, off_t offset,
-			       std::size_t max_length) noexcept
+			       std::size_t max_length, bool then_eof) noexcept
 {
 	assert(socket->IsConnected() || request.request == nullptr);
 	assert(HasInput());
@@ -81,8 +81,14 @@ HttpServerConnection::OnDirect(FdType type, FileDescriptor fd, off_t offset,
 		input.ConsumeDirect(nbytes);
 		response.bytes_sent += nbytes;
 		response.length += (off_t)nbytes;
-		ScheduleWrite();
 
+		if (then_eof && static_cast<std::size_t>(nbytes) == max_length) {
+			CloseInput();
+			ResponseIstreamFinished();
+			return IstreamDirectResult::CLOSED;
+		}
+
+		ScheduleWrite();
 		return IstreamDirectResult::OK;
 	} else if (nbytes == WRITE_BLOCKING) {
 		response.want_write = true;

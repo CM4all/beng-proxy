@@ -31,9 +31,9 @@ ForwardIstream::OnData(std::span<const std::byte> src) noexcept
 
 IstreamDirectResult
 ForwardIstream::OnDirect(FdType type, FileDescriptor fd, off_t offset,
-			 std::size_t max_length) noexcept
+			 std::size_t max_length, bool then_eof) noexcept
 {
-	return InvokeDirect(type, fd, offset, max_length);
+	return InvokeDirect(type, fd, offset, max_length, then_eof);
 }
 
 void

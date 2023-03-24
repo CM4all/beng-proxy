@@ -65,7 +65,7 @@ PipeLeaseIstream::_Read() noexcept
 		if (direct) {
 			switch (InvokeDirect(FD_PIPE, pipe.GetReadFd(),
 					     IstreamHandler::NO_OFFSET,
-					     remaining)) {
+					     remaining, true)) {
 			case IstreamDirectResult::CLOSED:
 			case IstreamDirectResult::BLOCKING:
 				return;

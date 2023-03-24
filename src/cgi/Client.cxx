@@ -94,8 +94,8 @@ public:
 	/* virtual methods from class IstreamHandler */
 	std::size_t OnData(std::span<const std::byte> src) noexcept override;
 	IstreamDirectResult OnDirect(FdType type, FileDescriptor fd,
-				     off_t offset,
-				     std::size_t max_length) noexcept override;
+				     off_t offset, std::size_t max_length,
+				     bool then_eof) noexcept override;
 	void OnEof() noexcept override;
 	void OnError(std::exception_ptr ep) noexcept override;
 };
@@ -284,18 +284,21 @@ CGIClient::OnData(std::span<const std::byte> src) noexcept
 
 IstreamDirectResult
 CGIClient::OnDirect(FdType type, FileDescriptor fd, off_t offset,
-		    std::size_t max_length) noexcept
+		    std::size_t max_length, bool) noexcept
 {
 	assert(parser.AreHeadersFinished());
 
 	had_input = true;
 	had_output = true;
 
+	bool then_eof = false;
 	if (parser.KnownLength() &&
-	    (off_t)max_length > parser.GetAvailable())
+	    (off_t)max_length >= parser.GetAvailable()) {
 		max_length = (std::size_t)parser.GetAvailable();
+		then_eof = true;
+	}
 
-	auto result = InvokeDirect(type, fd, offset, max_length);
+	auto result = InvokeDirect(type, fd, offset, max_length, then_eof);
 	if (result == IstreamDirectResult::OK && parser.IsEOF()) {
 		stopwatch.RecordEvent("end");
 		DestroyEof();

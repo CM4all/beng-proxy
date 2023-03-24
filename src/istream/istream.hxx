@@ -82,12 +82,13 @@ protected:
 
 	using PoolHolder::GetPool;
 
-	static constexpr std::size_t CalcMaxDirect(off_t remaining) noexcept {
+	static constexpr std::pair<std::size_t, bool> CalcMaxDirect(off_t remaining) noexcept {
 		/* Linux can't splice() more than 2 GB at a time and
 		   may return EINVAL if we ask it to transfer more */
-		return remaining <= INT_MAX
-			? static_cast<std::size_t>(remaining)
-			: INT_MAX;
+		if (remaining > INT_MAX)
+			return {INT_MAX, false};
+
+		return {static_cast<std::size_t>(remaining), true};
 	}
 
 	std::size_t Consumed(std::size_t nbytes) noexcept {
@@ -113,8 +114,8 @@ protected:
 	bool InvokeReady() noexcept;
 	std::size_t InvokeData(std::span<const std::byte> src) noexcept;
 	IstreamDirectResult InvokeDirect(FdType type, FileDescriptor fd,
-					 off_t offset,
-					 std::size_t max_length) noexcept;
+					 off_t offset, std::size_t max_length,
+					 bool then_eof) noexcept;
 	void InvokeEof() noexcept;
 	void InvokeError(std::exception_ptr ep) noexcept;
 

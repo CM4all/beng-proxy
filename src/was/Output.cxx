@@ -125,8 +125,8 @@ private:
 	bool OnIstreamReady() noexcept override;
 	std::size_t OnData(std::span<const std::byte> src) noexcept override;
 	IstreamDirectResult OnDirect(FdType type, FileDescriptor fd,
-				     off_t offset,
-				     std::size_t max_length) noexcept override;
+				     off_t offset, std::size_t max_length,
+				     bool then_eof) noexcept override;
 	void OnEof() noexcept override;
 	void OnError(std::exception_ptr ep) noexcept override;
 };
@@ -306,12 +306,18 @@ WasOutput::OnData(const std::span<const std::byte> src) noexcept
 }
 
 IstreamDirectResult
-WasOutput::OnDirect(FdType, FileDescriptor source_fd,
-		    off_t source_offset,
-		    std::size_t max_length) noexcept
+WasOutput::OnDirect(FdType, FileDescriptor source_fd, off_t source_offset,
+		    std::size_t max_length, bool then_eof) noexcept
 {
 	assert(HasPipe());
 	assert(!IsEof());
+
+	if (then_eof && !known_length) {
+		known_length = true;
+		total_length = sent + max_length;
+		if (!handler.WasOutputLength(total_length))
+			return IstreamDirectResult::CLOSED;
+	}
 
 	ssize_t nbytes = SpliceToPipe(source_fd,
 				      ToOffsetPointer(source_offset),

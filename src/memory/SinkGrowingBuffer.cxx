@@ -59,7 +59,8 @@ GrowingBufferSink::OnData(std::span<const std::byte> src) noexcept
 
 IstreamDirectResult
 GrowingBufferSink::OnDirect(FdType, FileDescriptor fd, off_t offset,
-			    std::size_t max_length) noexcept
+			    std::size_t max_length,
+			    [[maybe_unused]] bool then_eof) noexcept
 {
 	auto w = buffer.BeginWrite();
 	const std::size_t n = std::min(w.size(), max_length);

@@ -54,8 +54,8 @@ public:
 	/* handler */
 	std::size_t OnData(std::span<const std::byte> src) noexcept override;
 	IstreamDirectResult OnDirect(FdType type, FileDescriptor fd,
-				     off_t offset,
-				     std::size_t max_length) noexcept override;
+				     off_t offset, std::size_t max_length,
+				     bool then_eof) noexcept override;
 	void OnEof() noexcept override;
 	void OnError(std::exception_ptr ep) noexcept override;
 
@@ -87,7 +87,7 @@ AutoPipeIstream::Consume() noexcept
 	assert(piped > 0);
 
 	auto result = InvokeDirect(FdType::FD_PIPE, pipe.GetReadFd(),
-				   IstreamHandler::NO_OFFSET, piped);
+				   IstreamHandler::NO_OFFSET, piped, !HasInput());
 	switch (result) {
 	case IstreamDirectResult::BLOCKING:
 	case IstreamDirectResult::CLOSED:
@@ -149,7 +149,7 @@ AutoPipeIstream::OnData(std::span<const std::byte> src) noexcept
 
 inline IstreamDirectResult
 AutoPipeIstream::OnDirect(FdType type, FileDescriptor fd, off_t offset,
-			  std::size_t max_length) noexcept
+			  std::size_t max_length, bool then_eof) noexcept
 {
 	assert(HasHandler());
 
@@ -167,7 +167,7 @@ AutoPipeIstream::OnDirect(FdType type, FileDescriptor fd, off_t offset,
 	if (direct_mask & FdTypeMask(type))
 		/* already supported by handler (maybe already a pipe) - no
 		   need for wrapping it into a pipe */
-		return InvokeDirect(type, fd, offset, max_length);
+		return InvokeDirect(type, fd, offset, max_length, then_eof);
 
 	assert((type & ISTREAM_TO_PIPE) == type);
 
@@ -197,10 +197,17 @@ AutoPipeIstream::OnDirect(FdType type, FileDescriptor fd, off_t offset,
 	assert(piped == 0);
 	piped = (std::size_t)nbytes;
 
-	if (Consume() == IstreamDirectResult::CLOSED)
-		return IstreamDirectResult::CLOSED;
+	IstreamDirectResult result = IstreamDirectResult::OK;
+	if (then_eof && static_cast<std::size_t>(nbytes) == max_length) {
+		CloseInternal();
+		pipe.CloseWriteIfNotStock();
+		result = IstreamDirectResult::CLOSED;
+	}
 
-	return IstreamDirectResult::OK;
+	if (Consume() == IstreamDirectResult::CLOSED)
+		result = IstreamDirectResult::CLOSED;
+
+	return result;
 }
 
 inline void
