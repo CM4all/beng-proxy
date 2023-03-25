@@ -34,7 +34,7 @@ class FilteredSocketBalancer;
 class StickyCache;
 namespace Avahi { class ServiceExplorer; }
 class StopwatchPtr;
-class SslSocketFilterFactory;
+class SslSocketFilterParams;
 class FilteredSocketBalancerHandler;
 class ConnectSocketHandler;
 class CancellablePointer;
@@ -54,7 +54,7 @@ class LbCluster final
 
 	const Logger logger;
 
-	std::unique_ptr<SslSocketFilterFactory> socket_filter_factory;
+	std::unique_ptr<SslSocketFilterParams> socket_filter_params;
 
 	struct StaticMember {
 		AllocatedSocketAddress address;

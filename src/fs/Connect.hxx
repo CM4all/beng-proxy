@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include "fs/Ptr.hxx"
 #include "event/Chrono.hxx"
 
 #include <exception>
@@ -13,7 +14,6 @@ class FilteredSocket;
 class EventLoop;
 class StopwatchPtr;
 class SocketAddress;
-class SocketFilterFactory;
 class CancellablePointer;
 
 class ConnectFilteredSocketHandler {
@@ -29,6 +29,6 @@ ConnectFilteredSocket(EventLoop &event_loop,
 		      SocketAddress bind_address,
 		      SocketAddress address,
 		      Event::Duration timeout,
-		      SocketFilterFactory *filter_factory,
+		      SocketFilterFactoryPtr filter_factory,
 		      ConnectFilteredSocketHandler &handler,
 		      CancellablePointer &cancel_ptr) noexcept;

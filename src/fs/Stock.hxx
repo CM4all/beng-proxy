@@ -16,7 +16,7 @@
 class StockItem;
 class StockGetHandler;
 class CancellablePointer;
-class SocketFilterFactory;
+class SocketFilterParams;
 class FilteredSocket;
 class EventLoop;
 class SocketAddress;
@@ -67,7 +67,7 @@ public:
 		 SocketAddress bind_address,
 		 SocketAddress address,
 		 Event::Duration timeout,
-		 SocketFilterFactory *filter_factory,
+		 const SocketFilterParams *filter_params,
 		 StockGetHandler &handler,
 		 CancellablePointer &cancel_ptr) noexcept;
 

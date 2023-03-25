@@ -21,7 +21,7 @@ class UnusedIstreamPtr;
 class SslClientFactory;
 class FilteredSocketBalancer;
 namespace NgHttp2 { class Stock; }
-class SocketFilterFactory;
+class SocketFilterParams;
 struct HttpAddress;
 class HttpResponseHandler;
 class CancellablePointer;
@@ -74,7 +74,7 @@ private:
 	void ProbeHTTP2(struct pool &pool,
 			const StopwatchPtr &parent_stopwatch,
 			sticky_hash_t sticky_hash,
-			SocketFilterFactory &filter_factory,
+			const SocketFilterParams &filter_params,
 			HttpMethod method,
 			const HttpAddress &address,
 			StringMap &&headers, UnusedIstreamPtr body,

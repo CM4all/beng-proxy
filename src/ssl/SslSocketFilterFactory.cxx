@@ -8,5 +8,15 @@
 SocketFilterPtr
 SslSocketFilterFactory::CreateFilter()
 {
-	return ssl_client_factory.Create(event_loop, host, certificate, alpn);
+	return ssl_client_factory.Create(event_loop,
+					 host.empty() ? nullptr : host.c_str(),
+					 certificate.empty() ? nullptr : certificate.c_str(),
+					 alpn);
+}
+
+SocketFilterFactoryPtr
+SslSocketFilterParams::CreateFactory() const noexcept
+{
+	return std::make_unique<SslSocketFilterFactory>(event_loop, ssl_client_factory,
+							host, certificate, alpn);
 }

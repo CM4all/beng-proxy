@@ -12,7 +12,7 @@ class EventLoop;
 class FilteredSocketBalancerHandler;
 class CancellablePointer;
 class SocketAddress;
-class SocketFilterFactory;
+class SocketFilterParams;
 class FilteredSocketStock;
 class StopwatchPtr;
 class AllocatorPtr;
@@ -64,7 +64,7 @@ public:
 		 sticky_hash_t sticky_hash,
 		 const AddressList &address_list,
 		 Event::Duration timeout,
-		 SocketFilterFactory *filter_factory,
+		 const SocketFilterParams *filter_params,
 		 FilteredSocketBalancerHandler &handler,
 		 CancellablePointer &cancel_ptr) noexcept;
 };

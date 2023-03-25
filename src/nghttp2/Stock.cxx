@@ -7,6 +7,8 @@
 #include "fs/FilteredSocket.hxx"
 #include "fs/Connect.hxx"
 #include "fs/Key.hxx"
+#include "fs/Params.hxx"
+#include "fs/Factory.hxx"
 #include "ssl/AlpnCompare.hxx"
 #include "ssl/Filter.hxx"
 #include "event/CoarseTimerEvent.hxx"
@@ -105,7 +107,7 @@ public:
 	void Start(SocketAddress bind_address,
 		   SocketAddress address,
 		   Event::Duration timeout,
-		   SocketFilterFactory *filter_factory) noexcept;
+		   const SocketFilterParams *filter_params) noexcept;
 
 	void FinishOne(std::unique_ptr<FilteredSocket> &&_socket,
 		       StockGetHandler &handler) noexcept;
@@ -157,7 +159,7 @@ void
 Stock::Item::Start(SocketAddress bind_address,
 		   SocketAddress address,
 		   Event::Duration timeout,
-		   SocketFilterFactory *filter_factory) noexcept
+		   const SocketFilterParams *filter_params) noexcept
 {
 	assert(!get_requests.empty());
 	assert(!alpn_failure);
@@ -165,7 +167,8 @@ Stock::Item::Start(SocketAddress bind_address,
 	ConnectFilteredSocket(GetEventLoop(),
 			      get_requests.front().stopwatch,
 			      false, bind_address, address, timeout,
-			      filter_factory, *this, connect_cancel);
+			      filter_params != nullptr ? filter_params->CreateFactory() : nullptr,
+			      *this, connect_cancel);
 }
 
 inline void
@@ -354,7 +357,7 @@ Stock::Get(EventLoop &event_loop,
 	   SocketAddress bind_address,
 	   SocketAddress address,
 	   Event::Duration timeout,
-	   SocketFilterFactory *filter_factory,
+	   const SocketFilterParams *filter_params,
 	   StockGetHandler &handler,
 	   CancellablePointer &cancel_ptr) noexcept
 {
@@ -362,7 +365,7 @@ Stock::Get(EventLoop &event_loop,
 	try {
 		StringBuilder b(key_buffer);
 		MakeFilteredSocketStockKey(b, name, bind_address, address,
-					   filter_factory);
+					   filter_params);
 	} catch (StringBuilder::Overflow) {
 		/* shouldn't happen */
 		handler.OnNgHttp2StockError(std::current_exception());
@@ -382,7 +385,7 @@ Stock::Get(EventLoop &event_loop,
 	auto *item = new Item(*this, event_loop, key);
 	items.insert(*item);
 	item->AddGetHandler(alloc, parent_stopwatch, handler, cancel_ptr);
-	item->Start(bind_address, address, timeout, filter_factory);
+	item->Start(bind_address, address, timeout, filter_params);
 }
 
 void

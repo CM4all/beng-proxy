@@ -34,7 +34,7 @@ class HttpRequest final
 
 	StopwatchPtr stopwatch;
 
-	SocketFilterFactory *const filter_factory;
+	const SocketFilterParams *const filter_params;
 
 	FailurePtr failure;
 
@@ -54,17 +54,17 @@ public:
 		    FilteredSocketBalancer &_fs_balancer,
 		    const StopwatchPtr &parent_stopwatch,
 		    sticky_hash_t _sticky_hash,
-		    SocketFilterFactory *_filter_factory,
+		    const SocketFilterParams *_filter_params,
 		    HttpMethod _method,
 		    const HttpAddress &_address,
 		    StringMap &&_headers,
 		    UnusedIstreamPtr _body,
 		    HttpResponseHandler &_handler,
-		    CancellablePointer &_cancel_ptr)
+		    CancellablePointer &_cancel_ptr) noexcept
 		:PoolLeakDetector(_pool),
 		 pool(_pool), event_loop(_event_loop), fs_balancer(_fs_balancer),
 		 stopwatch(parent_stopwatch, _address.path),
-		 filter_factory(_filter_factory),
+		 filter_params(_filter_params),
 		 sticky_hash(_sticky_hash),
 		 /* can only retry if there is no request body */
 		 retries(_body ? 0 : 2),
@@ -76,13 +76,13 @@ public:
 		_cancel_ptr = *this;
 	}
 
-	void BeginConnect() {
+	void BeginConnect() noexcept {
 		fs_balancer.Get(pool, stopwatch,
 				0, false, SocketAddress::Null(),
 				sticky_hash,
 				address.addresses,
 				HTTP_CONNECT_TIMEOUT,
-				filter_factory,
+				filter_params,
 				*this, cancel_ptr);
 	}
 
@@ -91,7 +91,7 @@ private:
 		DeleteFromPool(pool, this);
 	}
 
-	void Failed(std::exception_ptr ep) {
+	void Failed(std::exception_ptr ep) noexcept {
 		pending_request.Discard();
 		auto &_handler = handler;
 		Destroy();
@@ -198,13 +198,13 @@ http_request(struct pool &pool, EventLoop &event_loop,
 	     FilteredSocketBalancer &fs_balancer,
 	     const StopwatchPtr &parent_stopwatch,
 	     sticky_hash_t sticky_hash,
-	     SocketFilterFactory *filter_factory,
+	     const SocketFilterParams *filter_params,
 	     HttpMethod method,
 	     const HttpAddress &uwa,
 	     StringMap &&headers,
 	     UnusedIstreamPtr body,
 	     HttpResponseHandler &handler,
-	     CancellablePointer &_cancel_ptr)
+	     CancellablePointer &_cancel_ptr) noexcept
 {
 	assert(uwa.host_and_port != nullptr);
 	assert(uwa.path != nullptr);
@@ -212,7 +212,7 @@ http_request(struct pool &pool, EventLoop &event_loop,
 	auto hr = NewFromPool<HttpRequest>(pool, pool, event_loop, fs_balancer,
 					   parent_stopwatch,
 					   sticky_hash,
-					   filter_factory,
+					   filter_params,
 					   method, uwa,
 					   std::move(headers), std::move(body),
 					   handler, _cancel_ptr);

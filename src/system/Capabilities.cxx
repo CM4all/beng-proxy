@@ -6,8 +6,6 @@
 #include "lib/cap/State.hxx"
 #include "system/Error.hxx"
 
-#include <sys/prctl.h>
-
 void
 capabilities_init()
 {
