@@ -55,7 +55,7 @@ public:
 		 host(_host),
 		 certificate(_certificate), alpn(_alpn) {}
 
-	const char *GetFilterId() const override {
+	const char *GetFilterId() const noexcept override {
 		return host;
 	}
 

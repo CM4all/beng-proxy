@@ -40,7 +40,8 @@ public:
 	 * Return an identifier for filters created by this factory.  This
 	 * is used to match existing connections for reuse.
 	 */
-	virtual const char *GetFilterId() const = 0;
+	[[gnu::pure]]
+	virtual const char *GetFilterId() const noexcept = 0;
 
 	/**
 	 * Throws std::runtime_error on error.
