@@ -45,7 +45,7 @@ DissectedUri::Parse(std::string_view src) noexcept
 	const auto [before_args, args_and_path_info] = Split(before_query, ';');
 	base = before_args;
 
-	if (!uri_path_verify(base))
+	if (!uri_path_verify(base) || !VerifyUriQuery(query))
 		return false;
 
 	/* TODO second semicolon for stuff being forwared? */
