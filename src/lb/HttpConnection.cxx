@@ -231,7 +231,7 @@ LbHttpConnection::HandleHttpRequest(IncomingHttpRequest &request,
 {
 	if (!uri_path_verify_quick(request.uri)) {
 		request.body.Clear();
-		request.SendMessage(HTTP_STATUS_BAD_REQUEST, "Malformed request URI");
+		request.SendMessage(HTTP_STATUS_BAD_REQUEST, "Malformed URI");
 		return;
 	}
 
