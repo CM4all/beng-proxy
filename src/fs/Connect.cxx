@@ -63,7 +63,7 @@ class ConnectFilteredSocketOperation final
 
 	ConnectSocket connect_socket;
 
-	SocketFilterFactory *const filter_factory;
+	const SocketFilterFactoryPtr filter_factory;
 
 	std::unique_ptr<FilteredSocket> socket;
 
@@ -71,7 +71,7 @@ class ConnectFilteredSocketOperation final
 
 public:
 	ConnectFilteredSocketOperation(EventLoop &event_loop,
-				       SocketFilterFactory *_filter_factory,
+				       SocketFilterFactoryPtr &&_filter_factory,
 				       StopwatchPtr &&_stopwatch,
 				       ConnectFilteredSocketHandler &_handler,
 				       CancellablePointer &caller_cancel_ptr) noexcept
@@ -80,7 +80,7 @@ public:
 		 defer_handshake_callback(event_loop,
 					  BIND_THIS_METHOD(OnDeferredHandshake)),
 		 connect_socket(event_loop, *this),
-		 filter_factory(_filter_factory)
+		 filter_factory(std::move(_filter_factory))
 	{
 		caller_cancel_ptr = *this;
 	}
@@ -284,12 +284,12 @@ ConnectFilteredSocket(EventLoop &event_loop,
 		      SocketAddress bind_address,
 		      SocketAddress address,
 		      Event::Duration timeout,
-		      SocketFilterFactory *filter_factory,
+		      SocketFilterFactoryPtr filter_factory,
 		      ConnectFilteredSocketHandler &handler,
 		      CancellablePointer &cancel_ptr) noexcept
 {
 	auto *cfs = new ConnectFilteredSocketOperation(event_loop,
-						       filter_factory,
+						       std::move(filter_factory),
 						       std::move(stopwatch),
 						       handler, cancel_ptr);
 	cfs->Start(ip_transparent, bind_address, address, timeout);

@@ -35,6 +35,7 @@
 #include <memory>
 
 class SocketFilter;
+class SocketFilterFactory;
 
 class SocketFilterDisposer {
 public:
@@ -42,3 +43,5 @@ public:
 };
 
 using SocketFilterPtr = std::unique_ptr<SocketFilter, SocketFilterDisposer>;
+
+using SocketFilterFactoryPtr = std::unique_ptr<SocketFilterFactory>;

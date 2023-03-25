@@ -43,7 +43,7 @@ class EventLoop;
 class StopwatchPtr;
 class SocketAddress;
 class FilteredSocket;
-class SocketFilterFactory;
+class SocketFilterParams;
 class StringMap;
 class UnusedIstreamPtr;
 class HttpResponseHandler;
@@ -87,7 +87,7 @@ class Stock;
 void
 SendRequest(AllocatorPtr alloc, EventLoop &event_loop, Stock &stock,
 	    const StopwatchPtr &parent_stopwatch,
-	    SocketFilterFactory *filter_factory,
+	    const SocketFilterParams *filter_params,
 	    http_method_t method,
 	    const HttpAddress &address,
 	    StringMap &&headers, UnusedIstreamPtr body,

@@ -31,6 +31,8 @@
  */
 
 #include "Stock.hxx"
+#include "Params.hxx"
+#include "Factory.hxx"
 #include "Key.hxx"
 #include "Connect.hxx"
 #include "FilteredSocket.hxx"
@@ -63,7 +65,7 @@ struct FilteredSocketStockRequest {
 
 	const Event::Duration timeout;
 
-	SocketFilterFactory *const filter_factory;
+	const SocketFilterParams *const filter_params;
 
 	FilteredSocketStockRequest(StopwatchPtr &&_stopwatch,
 				   uint_fast64_t _fairness_hash,
@@ -71,13 +73,13 @@ struct FilteredSocketStockRequest {
 				   SocketAddress _bind_address,
 				   SocketAddress _address,
 				   Event::Duration _timeout,
-				   SocketFilterFactory *_filter_factory) noexcept
+				   const SocketFilterParams *_filter_params) noexcept
 		:stopwatch(std::move(_stopwatch)),
 		 fairness_hash(_fairness_hash),
 		 ip_transparent(_ip_transparent),
 		 bind_address(_bind_address), address(_address),
 		 timeout(_timeout),
-		 filter_factory(_filter_factory) {}
+		 filter_params(_filter_params) {}
 };
 
 class FilteredSocketStockConnection final
@@ -145,7 +147,7 @@ public:
 				      request.bind_address,
 				      request.address,
 				      request.timeout,
-				      request.filter_factory,
+				      request.filter_params ? request.filter_params->CreateFactory() : nullptr,
 				      *this, cancel_ptr);
 	}
 
@@ -329,7 +331,7 @@ FilteredSocketStock::Get(AllocatorPtr alloc,
 			 SocketAddress bind_address,
 			 SocketAddress address,
 			 Event::Duration timeout,
-			 SocketFilterFactory *filter_factory,
+			 const SocketFilterParams *filter_params,
 			 StockGetHandler &handler,
 			 CancellablePointer &cancel_ptr) noexcept
 {
@@ -339,7 +341,7 @@ FilteredSocketStock::Get(AllocatorPtr alloc,
 	try {
 		StringBuilder b(key_buffer);
 		MakeFilteredSocketStockKey(b, name, bind_address, address,
-					   filter_factory);
+					   filter_params);
 	} catch (StringBuilder::Overflow) {
 		/* shouldn't happen */
 		handler.OnStockItemError(std::current_exception());
@@ -355,7 +357,7 @@ FilteredSocketStock::Get(AllocatorPtr alloc,
 								 ip_transparent,
 								 bind_address, address,
 								 timeout,
-								 filter_factory);
+								 filter_params);
 
 	stock.Get(key, std::move(request), handler, cancel_ptr);
 }

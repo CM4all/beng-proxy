@@ -53,7 +53,7 @@ class FilteredSocketBalancer::Request : public StockGetHandler, Lease {
 
 	const Event::Duration timeout;
 
-	SocketFilterFactory *const filter_factory;
+	const SocketFilterParams *const filter_params;
 
 	FilteredSocketBalancerHandler &handler;
 
@@ -66,7 +66,7 @@ public:
 		bool _ip_transparent,
 		SocketAddress _bind_address,
 		Event::Duration _timeout,
-		SocketFilterFactory *_filter_factory,
+		const SocketFilterParams *_filter_params,
 		FilteredSocketBalancerHandler &_handler) noexcept
 		:stock(_stock),
 		 parent_stopwatch(_parent_stopwatch),
@@ -74,7 +74,7 @@ public:
 		 ip_transparent(_ip_transparent),
 		 bind_address(_bind_address),
 		 timeout(_timeout),
-		 filter_factory(_filter_factory),
+		 filter_params(_filter_params),
 		 handler(_handler) {}
 
 	void Send(AllocatorPtr alloc, SocketAddress address,
@@ -101,7 +101,7 @@ FilteredSocketBalancer::Request::Send(AllocatorPtr alloc, SocketAddress address,
 		  nullptr, fairness_hash,
 		  ip_transparent, bind_address, address,
 		  timeout,
-		  filter_factory,
+		  filter_params,
 		  *this,
 		  cancel_ptr);
 }
@@ -165,7 +165,7 @@ FilteredSocketBalancer::Get(AllocatorPtr alloc,
 			    sticky_hash_t sticky_hash,
 			    const AddressList &address_list,
 			    Event::Duration timeout,
-			    SocketFilterFactory *filter_factory,
+			    const SocketFilterParams *filter_params,
 			    FilteredSocketBalancerHandler &handler,
 			    CancellablePointer &cancel_ptr) noexcept
 {
@@ -179,6 +179,6 @@ FilteredSocketBalancer::Get(AllocatorPtr alloc,
 		  fairness_hash,
 		  ip_transparent,
 		  bind_address, timeout,
-		  filter_factory,
+		  filter_params,
 		  handler);
 }

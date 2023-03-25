@@ -33,16 +33,10 @@
 #pragma once
 
 #include "Ptr.hxx"
+#include "util/LeakDetector.hxx"
 
-class SocketFilterFactory {
+class SocketFilterFactory : LeakDetector {
 public:
-	/**
-	 * Return an identifier for filters created by this factory.  This
-	 * is used to match existing connections for reuse.
-	 */
-	[[gnu::pure]]
-	virtual const char *GetFilterId() const noexcept = 0;
-
 	/**
 	 * Throws std::runtime_error on error.
 	 */

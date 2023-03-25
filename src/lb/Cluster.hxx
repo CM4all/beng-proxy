@@ -62,7 +62,7 @@ class FilteredSocketBalancer;
 class StickyCache;
 namespace Avahi { class ServiceExplorer; }
 class StopwatchPtr;
-class SocketFilterFactory;
+class SocketFilterParams;
 class FilteredSocketBalancerHandler;
 class ConnectSocketHandler;
 class CancellablePointer;
@@ -239,7 +239,7 @@ public:
 			 SocketAddress bind_address,
 			 sticky_hash_t sticky_hash,
 			 Event::Duration timeout,
-			 SocketFilterFactory *filter_factory,
+			 const SocketFilterParams *filter_params,
 			 FilteredSocketBalancerHandler &handler,
 			 CancellablePointer &cancel_ptr) noexcept;
 
@@ -264,7 +264,7 @@ public:
 			       SocketAddress bind_address,
 			       sticky_hash_t sticky_hash,
 			       Event::Duration timeout,
-			       SocketFilterFactory *filter_factory,
+			       const SocketFilterParams *filter_params,
 			       FilteredSocketBalancerHandler &handler,
 			       CancellablePointer &cancel_ptr) noexcept;
 
@@ -316,7 +316,7 @@ public:
 				 SocketAddress bind_address,
 				 sticky_hash_t sticky_hash,
 				 Event::Duration timeout,
-				 SocketFilterFactory *filter_factory,
+				 const SocketFilterParams *filter_params,
 				 FilteredSocketBalancerHandler &handler,
 				 CancellablePointer &cancel_ptr) noexcept;
 

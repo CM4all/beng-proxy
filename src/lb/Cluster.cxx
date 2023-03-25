@@ -175,7 +175,7 @@ LbCluster::ConnectHttp(AllocatorPtr alloc,
 		       SocketAddress bind_address,
 		       sticky_hash_t sticky_hash,
 		       Event::Duration timeout,
-		       SocketFilterFactory *filter_factory,
+		       const SocketFilterParams *filter_params,
 		       FilteredSocketBalancerHandler &handler,
 		       CancellablePointer &cancel_ptr) noexcept
 {
@@ -184,7 +184,7 @@ LbCluster::ConnectHttp(AllocatorPtr alloc,
 		ConnectZeroconfHttp(alloc, parent_stopwatch,
 				    fairness_hash,
 				    bind_address, sticky_hash,
-				    timeout, filter_factory,
+				    timeout, filter_params,
 				    handler, cancel_ptr);
 		return;
 	}
@@ -193,7 +193,7 @@ LbCluster::ConnectHttp(AllocatorPtr alloc,
 	ConnectStaticHttp(alloc, parent_stopwatch,
 			  fairness_hash,
 			  bind_address, sticky_hash,
-			  timeout, filter_factory,
+			  timeout, filter_params,
 			  handler, cancel_ptr);
 }
 
@@ -224,7 +224,7 @@ LbCluster::ConnectStaticHttp(AllocatorPtr alloc,
 			     SocketAddress bind_address,
 			     sticky_hash_t sticky_hash,
 			     Event::Duration timeout,
-			     SocketFilterFactory *filter_factory,
+			     const SocketFilterParams *filter_params,
 			     FilteredSocketBalancerHandler &handler,
 			     CancellablePointer &cancel_ptr) noexcept
 {
@@ -237,7 +237,7 @@ LbCluster::ConnectStaticHttp(AllocatorPtr alloc,
 			sticky_hash,
 			config.address_list,
 			timeout,
-			filter_factory,
+			filter_params,
 			handler, cancel_ptr);
 }
 
@@ -411,7 +411,7 @@ class LbCluster::ZeroconfHttpConnect final : StockGetHandler, Lease, Cancellable
 	const SocketAddress bind_address;
 	const sticky_hash_t sticky_hash;
 	const Event::Duration timeout;
-	SocketFilterFactory *const filter_factory;
+	const SocketFilterParams *const filter_params;
 
 	FilteredSocketBalancerHandler &handler;
 
@@ -433,7 +433,7 @@ public:
 			    SocketAddress _bind_address,
 			    sticky_hash_t _sticky_hash,
 			    Event::Duration _timeout,
-			    SocketFilterFactory *_filter_factory,
+			    const SocketFilterParams *_filter_params,
 			    FilteredSocketBalancerHandler &_handler,
 			    CancellablePointer &caller_cancel_ptr) noexcept
 		:cluster(_cluster), alloc(_alloc),
@@ -441,7 +441,7 @@ public:
 		 bind_address(_bind_address),
 		 sticky_hash(_sticky_hash),
 		 timeout(_timeout),
-		 filter_factory(_filter_factory),
+		 filter_params(_filter_params),
 		 handler(_handler),
 		 retries(CalculateRetries(cluster.GetZeroconfCount()))
 	{
@@ -507,7 +507,7 @@ LbCluster::ZeroconfHttpConnect::Start() noexcept
 			     cluster.config.transparent_source,
 			     bind_address,
 			     member->GetAddress(),
-			     timeout, filter_factory,
+			     timeout, filter_params,
 			     *this, cancel_ptr);
 }
 
@@ -555,7 +555,7 @@ LbCluster::ConnectZeroconfHttp(AllocatorPtr alloc,
 			       SocketAddress bind_address,
 			       sticky_hash_t sticky_hash,
 			       Event::Duration timeout,
-			       SocketFilterFactory *filter_factory,
+			       const SocketFilterParams *filter_params,
 			       FilteredSocketBalancerHandler &handler,
 			       CancellablePointer &cancel_ptr) noexcept
 {
@@ -565,7 +565,7 @@ LbCluster::ConnectZeroconfHttp(AllocatorPtr alloc,
 						 fairness_hash,
 						 bind_address,
 						 sticky_hash, timeout,
-						 filter_factory,
+						 filter_params,
 						 handler, cancel_ptr);
 	c->Start();
 }

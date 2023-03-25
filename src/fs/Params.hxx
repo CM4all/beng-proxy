@@ -32,31 +32,24 @@
 
 #pragma once
 
-#include "fs/Ptr.hxx"
-#include "event/Chrono.hxx"
+#include "Ptr.hxx"
 
-#include <exception>
-#include <memory>
-
-class FilteredSocket;
-class EventLoop;
-class StopwatchPtr;
-class SocketAddress;
-class CancellablePointer;
-
-class ConnectFilteredSocketHandler {
+/**
+ * Contains pool-allocated parameters to create a
+ * #SocketFilterFactory.
+ */
+class SocketFilterParams {
 public:
-	virtual void OnConnectFilteredSocket(std::unique_ptr<FilteredSocket> socket) noexcept = 0;
-	virtual void OnConnectFilteredSocketError(std::exception_ptr e) noexcept = 0;
-};
+	/**
+	 * Return an identifier for filters created by this factory.  This
+	 * is used to match existing connections for reuse.
+	 */
+	[[gnu::pure]]
+	virtual const char *GetFilterId() const noexcept = 0;
 
-void
-ConnectFilteredSocket(EventLoop &event_loop,
-		      StopwatchPtr stopwatch,
-		      bool ip_transparent,
-		      SocketAddress bind_address,
-		      SocketAddress address,
-		      Event::Duration timeout,
-		      SocketFilterFactoryPtr filter_factory,
-		      ConnectFilteredSocketHandler &handler,
-		      CancellablePointer &cancel_ptr) noexcept;
+	/**
+	 * Create a #SocketFilterFactory with these parameters,
+	 * copying parameters from the pool to the standard C++ heap.
+	 */
+	virtual SocketFilterFactoryPtr CreateFactory() const noexcept = 0;
+};

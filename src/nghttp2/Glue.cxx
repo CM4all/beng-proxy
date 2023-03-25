@@ -49,7 +49,7 @@ class GlueRequest final : Cancellable, StockGetHandler {
 
 	const StopwatchPtr stopwatch;
 
-	SocketFilterFactory *const filter_factory;
+	const SocketFilterParams *const filter_params;
 
 	const HttpAddress &address;
 	PendingHttpRequest pending_request;
@@ -61,14 +61,14 @@ public:
 	GlueRequest(AllocatorPtr _alloc, AlpnHandler *_alpn_handler,
 		    HttpResponseHandler &_handler,
 		    const StopwatchPtr &parent_stopwatch,
-		    SocketFilterFactory *_filter_factory,
+		    const SocketFilterParams *_filter_params,
 		    http_method_t _method,
 		    const HttpAddress &_address,
 		    StringMap &&_headers, UnusedIstreamPtr _body,
 		    CancellablePointer &_caller_cancel_ptr) noexcept
 		:alloc(_alloc), alpn_handler(_alpn_handler), handler(_handler),
 		 stopwatch(parent_stopwatch, "nghttp2_client"),
-		 filter_factory(_filter_factory),
+		 filter_params(_filter_params),
 		 address(_address),
 		 pending_request(alloc.GetPool(), _method, _address.path,
 				 std::move(_headers), std::move(_body)),
@@ -82,7 +82,7 @@ public:
 			  nullptr,
 			  *address.addresses.begin(), // TODO
 			  std::chrono::seconds(30),
-			  filter_factory,
+			  filter_params,
 			  *this, cancel_ptr);
 	}
 
@@ -150,7 +150,7 @@ GlueRequest::OnNgHttp2StockAlpn(std::unique_ptr<FilteredSocket> &&socket) noexce
 void
 SendRequest(AllocatorPtr alloc, EventLoop &event_loop, Stock &stock,
 	    const StopwatchPtr &parent_stopwatch,
-	    SocketFilterFactory *filter_factory,
+	    const SocketFilterParams *filter_params,
 	    http_method_t method,
 	    const HttpAddress &address,
 	    StringMap &&headers, UnusedIstreamPtr body,
@@ -161,7 +161,7 @@ SendRequest(AllocatorPtr alloc, EventLoop &event_loop, Stock &stock,
 	auto *request = alloc.New<GlueRequest>(alloc,
 					       alpn_handler, handler,
 					       parent_stopwatch,
-					       filter_factory,
+					       filter_params,
 					       method, address,
 					       std::move(headers),
 					       std::move(body),

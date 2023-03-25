@@ -40,7 +40,7 @@ class EventLoop;
 class StopwatchPtr;
 class UnusedIstreamPtr;
 class FilteredSocketBalancer;
-class SocketFilterFactory;
+class SocketFilterParams;
 struct HttpAddress;
 class HttpResponseHandler;
 class CancellablePointer;
@@ -57,7 +57,7 @@ http_request(struct pool &pool, EventLoop &event_loop,
 	     FilteredSocketBalancer &fs_balancer,
 	     const StopwatchPtr &parent_stopwatch,
 	     sticky_hash_t sticky_hash,
-	     SocketFilterFactory *filter_factory,
+	     const SocketFilterParams *filter_params,
 	     http_method_t method,
 	     const HttpAddress &address,
 	     StringMap &&headers, UnusedIstreamPtr body,

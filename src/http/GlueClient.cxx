@@ -62,7 +62,7 @@ class HttpRequest final
 
 	StopwatchPtr stopwatch;
 
-	SocketFilterFactory *const filter_factory;
+	const SocketFilterParams *const filter_params;
 
 	FailurePtr failure;
 
@@ -82,7 +82,7 @@ public:
 		    FilteredSocketBalancer &_fs_balancer,
 		    const StopwatchPtr &parent_stopwatch,
 		    sticky_hash_t _sticky_hash,
-		    SocketFilterFactory *_filter_factory,
+		    const SocketFilterParams *_filter_params,
 		    http_method_t _method,
 		    const HttpAddress &_address,
 		    StringMap &&_headers,
@@ -92,7 +92,7 @@ public:
 		:PoolLeakDetector(_pool),
 		 pool(_pool), event_loop(_event_loop), fs_balancer(_fs_balancer),
 		 stopwatch(parent_stopwatch, _address.path),
-		 filter_factory(_filter_factory),
+		 filter_params(_filter_params),
 		 sticky_hash(_sticky_hash),
 		 /* can only retry if there is no request body */
 		 retries(_body ? 0 : 2),
@@ -110,7 +110,7 @@ public:
 				sticky_hash,
 				address.addresses,
 				HTTP_CONNECT_TIMEOUT,
-				filter_factory,
+				filter_params,
 				*this, cancel_ptr);
 	}
 
@@ -226,7 +226,7 @@ http_request(struct pool &pool, EventLoop &event_loop,
 	     FilteredSocketBalancer &fs_balancer,
 	     const StopwatchPtr &parent_stopwatch,
 	     sticky_hash_t sticky_hash,
-	     SocketFilterFactory *filter_factory,
+	     const SocketFilterParams *filter_params,
 	     http_method_t method,
 	     const HttpAddress &uwa,
 	     StringMap &&headers,
@@ -240,7 +240,7 @@ http_request(struct pool &pool, EventLoop &event_loop,
 	auto hr = NewFromPool<HttpRequest>(pool, pool, event_loop, fs_balancer,
 					   parent_stopwatch,
 					   sticky_hash,
-					   filter_factory,
+					   filter_params,
 					   method, uwa,
 					   std::move(headers), std::move(body),
 					   handler, _cancel_ptr);

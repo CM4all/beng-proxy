@@ -66,7 +66,7 @@ struct AnyHttpClient::Request {
 
 	const sticky_hash_t sticky_hash;
 
-	SocketFilterFactory &filter_factory;
+	const SocketFilterParams &filter_params;
 
 	const HttpAddress &address;
 	PendingHttpRequest pending_request;
@@ -77,7 +77,7 @@ struct AnyHttpClient::Request {
 		HttpResponseHandler &_handler,
 		const StopwatchPtr &_parent_stopwatch,
 		sticky_hash_t _sticky_hash,
-		SocketFilterFactory &_filter_factory,
+		const SocketFilterParams &_filter_params,
 		http_method_t _method,
 		const HttpAddress &_address,
 		StringMap &&_headers, UnusedIstreamPtr _body,
@@ -85,7 +85,7 @@ struct AnyHttpClient::Request {
 		:pool(_pool), handler(_handler),
 		 parent_stopwatch(_parent_stopwatch),
 		 sticky_hash(_sticky_hash),
-		 filter_factory(_filter_factory),
+		 filter_params(_filter_params),
 		 address(_address),
 		 pending_request(pool, _method, address.path,
 				 std::move(_headers), std::move(_body)),
@@ -98,7 +98,7 @@ struct AnyHttpClient::Request {
 		http_request(pool, event_loop, _fs_balancer,
 			     parent_stopwatch,
 			     sticky_hash,
-			     &filter_factory,
+			     &filter_params,
 			     pending_request.method, address,
 			     std::move(pending_request.headers),
 			     std::move(pending_request.body),
@@ -111,7 +111,7 @@ struct AnyHttpClient::Request {
 		       CancellablePointer &cancel_ptr) noexcept {
 		NgHttp2::SendRequest(pool, event_loop, _nghttp2_stock,
 				     parent_stopwatch,
-				     &filter_factory,
+				     &filter_params,
 				     pending_request.method, address,
 				     std::move(pending_request.headers),
 				     std::move(pending_request.body),
@@ -137,14 +137,14 @@ struct AnyHttpClient::Waiting final
 		HttpResponseHandler &_handler,
 		const StopwatchPtr &_parent_stopwatch,
 		sticky_hash_t _sticky_hash,
-		SocketFilterFactory &_filter_factory,
+		const SocketFilterParams &_filter_params,
 		http_method_t _method,
 		const HttpAddress &_address,
 		StringMap &&_headers, UnusedIstreamPtr _body,
 		CancellablePointer &_caller_cancel_ptr) noexcept
 		:parent(_parent),
 		 request(_pool, _handler, _parent_stopwatch, _sticky_hash,
-			 _filter_factory, _method, _address,
+			 _filter_params, _method, _address,
 			 std::move(_headers), std::move(_body),
 			 _caller_cancel_ptr)
 	{
@@ -205,7 +205,7 @@ public:
 	void SendRequest(struct pool &pool,
 			 const StopwatchPtr &parent_stopwatch,
 			 sticky_hash_t sticky_hash,
-			 SocketFilterFactory &filter_factory,
+			 const SocketFilterParams &filter_params,
 			 http_method_t method,
 			 const HttpAddress &address,
 			 StringMap &&headers, UnusedIstreamPtr body,
@@ -254,7 +254,7 @@ inline void
 AnyHttpClient::Probe::SendRequest(struct pool &pool,
 				  const StopwatchPtr &parent_stopwatch,
 				  sticky_hash_t sticky_hash,
-				  SocketFilterFactory &filter_factory,
+				  const SocketFilterParams &filter_params,
 				  http_method_t method,
 				  const HttpAddress &address,
 				  StringMap &&headers, UnusedIstreamPtr body,
@@ -273,7 +273,7 @@ AnyHttpClient::Probe::SendRequest(struct pool &pool,
 		NgHttp2::SendRequest(pool, GetEventLoop(),
 				     parent.nghttp2_stock,
 				     parent_stopwatch,
-				     &filter_factory,
+				     &filter_params,
 				     method, address,
 				     std::move(headers),
 				     std::move(body),
@@ -285,7 +285,7 @@ AnyHttpClient::Probe::SendRequest(struct pool &pool,
 		http_request(pool, GetEventLoop(), parent.fs_balancer,
 			     parent_stopwatch,
 			     sticky_hash,
-			     &filter_factory,
+			     &filter_params,
 			     method, address,
 			     std::move(headers),
 			     std::move(body),
@@ -295,7 +295,7 @@ AnyHttpClient::Probe::SendRequest(struct pool &pool,
 
 	auto *w = NewFromPool<Waiting>(pool, *this, pool, handler,
 				       parent_stopwatch,
-				       sticky_hash, filter_factory,
+				       sticky_hash, filter_params,
 				       method, address,
 				       std::move(headers), std::move(body),
 				       cancel_ptr);
@@ -449,7 +449,7 @@ inline void
 AnyHttpClient::ProbeHTTP2(struct pool &pool,
 			  const StopwatchPtr &parent_stopwatch,
 			  sticky_hash_t sticky_hash,
-			  SocketFilterFactory &filter_factory,
+			  const SocketFilterParams &filter_params,
 			  http_method_t method,
 			  const HttpAddress &address,
 			  StringMap &&headers, UnusedIstreamPtr body,
@@ -466,7 +466,7 @@ AnyHttpClient::ProbeHTTP2(struct pool &pool,
 		MakeFilteredSocketStockKey(b, name,
 					   bind_address,
 					   *address.addresses.begin(), // TODO
-					   &filter_factory);
+					   &filter_params);
 	} catch (StringBuilder::Overflow) {
 		/* shouldn't happen */
 		handler.InvokeError(std::current_exception());
@@ -476,7 +476,7 @@ AnyHttpClient::ProbeHTTP2(struct pool &pool,
 	auto &probe = probes.try_emplace(key_buffer, *this, key_buffer)
 		.first->second;
 	probe.SendRequest(pool, parent_stopwatch, sticky_hash,
-			  filter_factory, method, address,
+			  filter_params, method, address,
 			  std::move(headers), std::move(body),
 			  handler, cancel_ptr);
 }
@@ -495,7 +495,7 @@ AnyHttpClient::SendRequest(struct pool &pool,
 {
 	auto &event_loop = GetEventLoop();
 
-	SocketFilterFactory *filter_factory = nullptr;
+	const SocketFilterParams *filter_params = nullptr;
 
 	if (address.ssl) {
 		if (ssl_client_factory == nullptr)
@@ -505,17 +505,17 @@ AnyHttpClient::SendRequest(struct pool &pool,
 			? SslClientAlpn::HTTP_2
 			: SslClientAlpn::HTTP_ANY;
 
-		filter_factory = NewFromPool<SslSocketFilterFactory>(pool,
-								     event_loop,
-								     *ssl_client_factory,
-								     GetHostWithoutPort(pool, address),
-								     address.certificate,
-								     alpn);
+		filter_params = NewFromPool<SslSocketFilterParams>(pool,
+								   event_loop,
+								   *ssl_client_factory,
+								   GetHostWithoutPort(pool, address),
+								   address.certificate,
+								   alpn);
 
 #ifdef HAVE_NGHTTP2
 		if (!address.http2) {
 			ProbeHTTP2(pool, parent_stopwatch, sticky_hash,
-				   *filter_factory,
+				   *filter_params,
 				   method, address,
 				   std::move(headers), std::move(body),
 				   handler, cancel_ptr);
@@ -528,7 +528,7 @@ AnyHttpClient::SendRequest(struct pool &pool,
 	if (address.http2)
 		NgHttp2::SendRequest(pool, event_loop, nghttp2_stock,
 				     parent_stopwatch,
-				     filter_factory,
+				     filter_params,
 				     method, address,
 				     std::move(headers),
 				     std::move(body),
@@ -539,7 +539,7 @@ AnyHttpClient::SendRequest(struct pool &pool,
 		http_request(pool, event_loop, fs_balancer,
 			     parent_stopwatch,
 			     sticky_hash,
-			     filter_factory,
+			     filter_params,
 			     method, address,
 			     std::move(headers),
 			     std::move(body),

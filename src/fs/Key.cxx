@@ -31,7 +31,7 @@
  */
 
 #include "Key.hxx"
-#include "fs/Factory.hxx"
+#include "Params.hxx"
 #include "net/SocketAddress.hxx"
 #include "net/ToString.hxx"
 #include "util/StringBuilder.hxx"
@@ -64,17 +64,17 @@ MakeKey(StringBuilder &b, SocketAddress bind_address,
 void
 MakeFilteredSocketStockKey(StringBuilder &b, const char *name,
 			   SocketAddress bind_address, SocketAddress address,
-			   const SocketFilterFactory *filter_factory)
+			   const SocketFilterParams *filter_params)
 {
 	if (name != nullptr)
 		b.Append(name);
 	else
 		MakeKey(b, bind_address, address);
 
-	if (filter_factory != nullptr) {
+	if (filter_params != nullptr) {
 		b.Append('|');
 
-		const char *id = filter_factory->GetFilterId();
+		const char *id = filter_params->GetFilterId();
 		if (id != nullptr)
 			b.Append(id);
 	}
