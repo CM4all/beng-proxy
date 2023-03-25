@@ -62,4 +62,4 @@ http_request(struct pool &pool, EventLoop &event_loop,
 	     const HttpAddress &address,
 	     StringMap &&headers, UnusedIstreamPtr body,
 	     HttpResponseHandler &handler,
-	     CancellablePointer &cancel_ptr);
+	     CancellablePointer &cancel_ptr) noexcept;

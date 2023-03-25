@@ -88,7 +88,7 @@ public:
 		    StringMap &&_headers,
 		    UnusedIstreamPtr _body,
 		    HttpResponseHandler &_handler,
-		    CancellablePointer &_cancel_ptr)
+		    CancellablePointer &_cancel_ptr) noexcept
 		:PoolLeakDetector(_pool),
 		 pool(_pool), event_loop(_event_loop), fs_balancer(_fs_balancer),
 		 stopwatch(parent_stopwatch, _address.path),
@@ -104,7 +104,7 @@ public:
 		_cancel_ptr = *this;
 	}
 
-	void BeginConnect() {
+	void BeginConnect() noexcept {
 		fs_balancer.Get(pool, stopwatch,
 				0, false, SocketAddress::Null(),
 				sticky_hash,
@@ -119,7 +119,7 @@ private:
 		DeleteFromPool(pool, this);
 	}
 
-	void Failed(std::exception_ptr ep) {
+	void Failed(std::exception_ptr ep) noexcept {
 		pending_request.Discard();
 		auto &_handler = handler;
 		Destroy();
@@ -232,7 +232,7 @@ http_request(struct pool &pool, EventLoop &event_loop,
 	     StringMap &&headers,
 	     UnusedIstreamPtr body,
 	     HttpResponseHandler &handler,
-	     CancellablePointer &_cancel_ptr)
+	     CancellablePointer &_cancel_ptr) noexcept
 {
 	assert(uwa.host_and_port != nullptr);
 	assert(uwa.path != nullptr);
