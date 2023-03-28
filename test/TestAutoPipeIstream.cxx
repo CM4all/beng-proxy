@@ -5,6 +5,7 @@
 #include "IstreamFilterTest.hxx"
 #include "istream/UnusedPtr.hxx"
 #include "istream/AutoPipeIstream.hxx"
+#include "istream/SocketPairIstream.hxx"
 #include "istream/istream_string.hxx"
 #include "istream/UnusedPtr.hxx"
 
@@ -20,8 +21,9 @@ public:
 		return istream_string_new(pool, "foo");
 	}
 
-	UnusedIstreamPtr CreateTest(EventLoop &, struct pool &pool,
+	UnusedIstreamPtr CreateTest(EventLoop &event_loop, struct pool &pool,
 				    UnusedIstreamPtr input) const noexcept {
+		input = NewSocketPairIstream(pool, event_loop, std::move(input));
 		return NewAutoPipeIstream(&pool, std::move(input), nullptr);
 	}
 };
