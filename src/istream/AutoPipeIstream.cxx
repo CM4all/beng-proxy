@@ -199,7 +199,7 @@ AutoPipeIstream::OnDirect(FdType type, FileDescriptor fd, off_t offset,
 
 	IstreamDirectResult result = IstreamDirectResult::OK;
 	if (then_eof && static_cast<std::size_t>(nbytes) == max_length) {
-		CloseInternal();
+		CloseInput();
 		pipe.CloseWriteIfNotStock();
 		result = IstreamDirectResult::CLOSED;
 	}
