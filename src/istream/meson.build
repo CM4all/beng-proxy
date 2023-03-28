@@ -79,6 +79,7 @@ istream = static_library(
   'OpenFileIstream.cxx',
   'ReplaceIstream.cxx',
   'SliceIstream.cxx',
+  'SocketPairIstream.cxx',
   'TeeIstream.cxx',
   'SuspendIstream.cxx',
   'TimeoutIstream.cxx',
@@ -98,6 +99,7 @@ istream = static_library(
   include_directories: inc,
   dependencies: [
     fmt_dep,
+    net_dep,
   ],
 )
 
