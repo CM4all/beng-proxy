@@ -9,7 +9,7 @@ cm4all-beng-proxy (18.0.20) unstable; urgency=low
   * bp: disable xattr by default (option "use_xattr")
   * translation: fix another crash after connection was closed prematurely
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Tue, 28 Mar 2023 09:24:58 +0200
 
 cm4all-beng-proxy (18.0.19) unstable; urgency=low
 
