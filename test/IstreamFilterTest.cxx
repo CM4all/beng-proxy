@@ -131,7 +131,7 @@ Context::OnData(const std::span<const std::byte> src) noexcept
 }
 
 IstreamDirectResult
-Context::OnDirect(FdType, FileDescriptor, off_t,
+Context::OnDirect(FdType, FileDescriptor fd, off_t,
 		  std::size_t max_length, bool then_eof) noexcept
 {
 	got_data = true;
@@ -140,20 +140,40 @@ Context::OnDirect(FdType, FileDescriptor, off_t,
 		DeferInject(*block_inject,
 			    std::make_exception_ptr(std::runtime_error("block_inject")));
 		block_inject = nullptr;
-		return IstreamDirectResult::END;
+		return IstreamDirectResult::BLOCKING;
 	}
 
 	if (abort_istream != nullptr) {
 		DeferInject(*abort_istream,
 			    std::make_exception_ptr(std::runtime_error("abort_istream")));
 		abort_istream = nullptr;
-		return IstreamDirectResult::END;
+		return IstreamDirectResult::BLOCKING;
 	}
 
-	offset += max_length;
-	input.ConsumeDirect(max_length);
+	std::array<std::byte, 1024> tmp;
+	const auto _nbytes = fd.Read(tmp.data(), std::min(tmp.size(), max_length));
+	if (_nbytes <= 0)
+		return _nbytes < 0
+			? IstreamDirectResult::ERRNO
+			: IstreamDirectResult::END;
 
-	if (then_eof) {
+	const std::size_t nbytes = _nbytes;
+	input.ConsumeDirect(nbytes);
+
+	const std::span<const std::byte> src = std::span{tmp}.first(nbytes);
+
+	if (expected_result && record) {
+		assert(skipped + buffer.size() == offset);
+		assert(offset + nbytes <= strlen(expected_result));
+		assert(memcmp((const char *)expected_result + skipped + buffer.size(),
+			      src.data(), src.size()) == 0);
+
+		buffer.append(ToStringView(src));
+	}
+
+	offset += nbytes;
+
+	if (then_eof && nbytes == max_length) {
 		if (break_eof)
 			instance.event_loop.Break();
 
