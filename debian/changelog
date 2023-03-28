@@ -3,7 +3,7 @@ cm4all-beng-proxy (18.0.21) unstable; urgency=low
   * bp: allow splice() from local socket to pipe
   * bp: fix assertion failure after splice()
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Tue, 28 Mar 2023 13:14:08 +0200
 
 cm4all-beng-proxy (18.0.20) unstable; urgency=low
 
