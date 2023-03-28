@@ -112,7 +112,7 @@ HeadIstream::_ConsumeDirect(std::size_t nbytes) noexcept
 	assert((off_t)nbytes <= rest);
 
 	rest -= nbytes;
-	ForwardIstream::_ConsumeBucketList(nbytes);
+	ForwardIstream::_ConsumeDirect(nbytes);
 }
 
 IstreamDirectResult
