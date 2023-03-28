@@ -180,7 +180,7 @@ AutoPipeIstream::OnDirect(FdType type, FileDescriptor fd, off_t offset,
 		}
 	}
 
-	ssize_t nbytes = Splice(fd, nullptr,
+	ssize_t nbytes = Splice(fd, ToOffsetPointer(offset),
 				pipe.GetWriteFd(), nullptr,
 				max_length);
 	/* don't check EAGAIN here (and don't return -2).  We assume that
