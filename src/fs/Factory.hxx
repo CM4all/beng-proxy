@@ -9,6 +9,8 @@
 
 class SocketFilterFactory : LeakDetector {
 public:
+	virtual ~SocketFilterFactory() noexcept = default;
+
 	/**
 	 * Throws std::runtime_error on error.
 	 */
