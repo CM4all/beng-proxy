@@ -67,14 +67,13 @@ direct_global_init()
 	}
 
 	/* check splice(AF_LOCAL, pipe) */
-	/* (unsupported in Linux 2.6.31) */
 
-	fd = socket(AF_LOCAL, SOCK_STREAM, 0);
-	if (fd >= 0) {
-		if (splice_supported(fd, a[1]))
+	if (socketpair(AF_LOCAL, SOCK_STREAM, 0, b) == 0) {
+		if (splice_supported(b[0], a[1]))
 			ISTREAM_TO_PIPE |= FdType::FD_SOCKET;
 
-		close(fd);
+		close(b[0]);
+		close(b[1]);
 	}
 
 	/* check splice(TCP, pipe) */
