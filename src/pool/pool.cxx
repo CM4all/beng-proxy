@@ -44,10 +44,6 @@
 
 #include <boost/intrusive/list.hpp>
 
-#ifdef VALGRIND
-#include <valgrind/memcheck.h>
-#endif
-
 #include <forward_list>
 #include <typeinfo>
 
