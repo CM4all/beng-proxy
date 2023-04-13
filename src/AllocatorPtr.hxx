@@ -176,7 +176,7 @@ private:
 	}
 
 	static char *ConcatCopy(char *p, std::string_view sv) noexcept {
-		return (char *)mempcpy(p, sv.data(), sv.size());
+		return std::copy(sv.begin(), sv.end(), p);
 	}
 
 	static char *ConcatCopy(char *p, std::span<const std::string_view> s) noexcept {
