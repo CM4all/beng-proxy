@@ -463,22 +463,17 @@ pool_new_slice(struct pool *parent, const char *name,
 	assert(parent != nullptr);
 	assert(slice_pool->GetSliceSize() > LINEAR_POOL_AREA_HEADER);
 
-	if (HaveAddressSanitizer() || HaveValgrind())
-		return pool_new_libc(parent, name);
-
 #ifdef POOL_LIBC_ONLY
 	(void)slice_pool;
 
 	return pool_new_libc(parent, name);
 #else
 
-#ifdef VALGRIND
-	if (RUNNING_ON_VALGRIND)
+	if (HaveAddressSanitizer() || HaveValgrind())
 		/* Valgrind cannot verify allocations and memory accesses with
 		   this library; therefore use the "libc" pool when running on
 		   valgrind */
 		return pool_new_libc(parent, name);
-#endif
 
 	struct pool *pool = pool_new(parent, name);
 	pool->type = POOL_LINEAR;
