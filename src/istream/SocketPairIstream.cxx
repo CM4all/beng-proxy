@@ -31,7 +31,7 @@ public:
 		input.SetDirect(ISTREAM_TO_SOCKET);
 	}
 
-	~SocketPairIstream() noexcept {
+	~SocketPairIstream() noexcept override {
 		r.Close();
 		w.Close();
 	}
