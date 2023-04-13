@@ -15,10 +15,6 @@
 #include "util/Sanitizer.hxx"
 #include "util/Valgrind.hxx"
 
-#ifdef VALGRIND
-#include <valgrind/memcheck.h>
-#endif
-
 #include <forward_list>
 #include <typeinfo>
 

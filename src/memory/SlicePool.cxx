@@ -37,10 +37,8 @@ HaveMemoryChecker() noexcept
 	if (HaveAddressSanitizer())
 		return true;
 
-#ifdef VALGRIND
 	if (HaveValgrind())
 		return true;
-#endif
 
 	return false;
 }

@@ -146,13 +146,9 @@ if stopwatch
   debug_flags += ['-DENABLE_STOPWATCH']
 endif
 
-if compiler.has_header('valgrind/memcheck.h')
+if debug and compiler.has_header('valgrind/memcheck.h')
   add_global_arguments('-DHAVE_VALGRIND_MEMCHECK_H', language: 'cpp')
   add_global_arguments('-DHAVE_VALGRIND_MEMCHECK_H', language: 'c')
-
-  if debug
-    debug_flags += ['-DVALGRIND']
-  endif
 endif
 
 add_global_arguments(debug_flags, language: 'c')
