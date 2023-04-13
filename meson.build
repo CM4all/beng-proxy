@@ -153,20 +153,6 @@ endif
 add_project_arguments(debug_flags, language: 'c')
 add_project_arguments(debug_flags, language: 'cpp')
 
-if get_option('static_libcxx')
-  link_args = ['-static-libstdc++']
-
-  if compiler.get_id() == 'clang'
-    # clang uses only "-lc++" when "-static-libstdc++" is used, but we
-    # also need "-lc++abi" and "-pthread"
-    link_args += ['-Wl,-Bstatic,-lc++,-lc++abi,-Bdynamic', '-pthread']
-  endif
-
-  libcxx = declare_dependency(link_args: link_args)
-else
-  libcxx = dependency('', required: false)
-endif
-
 threads = dependency('threads')
 zlib = dependency('zlib')
 libcrypt = compiler.find_library('crypt')
@@ -735,7 +721,6 @@ executable(
     sodium_dep,
     prometheus_dep,
     libcrypt,
-    libcxx,
   ],
   install: true,
   install_dir: 'sbin',
@@ -874,7 +859,6 @@ executable(
     lua_dep,
     pcre_dep,
     cluster_dep,
-    libcxx,
   ],
   install: true,
   install_dir: 'sbin',
@@ -920,7 +904,6 @@ if get_option('certdb')
       http_dep,
       io_dep,
       jwt_dep,
-      libcxx,
     ],
     install: true,
   )
@@ -933,7 +916,6 @@ executable(
   dependencies: [
     net_dep,
     util_dep,
-    libcxx,
   ],
   install: true,
   install_dir: 'lib/cm4all/beng-proxy/delegate/bin',

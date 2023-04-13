@@ -25,7 +25,6 @@ executable(
     net_dep,
     io_dep,
     util_dep,
-    libcxx,
   ],
   install: true,
 )

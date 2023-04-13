@@ -23,7 +23,6 @@ executable(
   dependencies: [
     net_log_dep,
     http_dep,
-    libcxx,
   ],
   install: true,
 )
@@ -36,7 +35,6 @@ executable(
   dependencies: [
     net_log_dep,
     http_dep,
-    libcxx,
   ],
   install: true,
 )
@@ -54,7 +52,6 @@ executable(
     net_log_dep,
     http_dep,
     liblua,
-    libcxx,
   ],
   install: true,
 )
@@ -67,7 +64,6 @@ executable(
   dependencies: [
     net_log_dep,
     http_dep,
-    libcxx,
   ],
   install: true,
 )
@@ -81,7 +77,6 @@ executable(
     system_dep,
     net_log_dep,
     http_dep,
-    libcxx,
   ],
   install: true,
 )
@@ -93,7 +88,6 @@ executable(
   dependencies: [
     net_log_dep,
     http_dep,
-    libcxx,
   ],
   install: true,
 )
@@ -104,7 +98,6 @@ executable(
   include_directories: inc,
   dependencies: [
     net_log_dep,
-    libcxx,
   ],
   install: true,
 )
@@ -118,7 +111,6 @@ executable(
     spawn_dep,
     system_dep,
     net_log_dep,
-    libcxx,
   ],
   install: true,
 )

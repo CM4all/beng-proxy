@@ -3,9 +3,6 @@ option('documentation', type: 'feature',
 
 option('certdb', type: 'boolean', value: true, description: 'Build with certdb support')
 
-option('static_libcxx', type: 'boolean', value: false,
-  description: 'Link libc++/libstdc++ statically')
-
 option('brotli', type: 'feature', description: 'Brotli support')
 option('http2', type: 'feature', description: 'HTTP2 protocol support')
 option('nfs', type: 'feature', description: 'userspace NFS client')
