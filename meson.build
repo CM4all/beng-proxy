@@ -150,8 +150,8 @@ if debug and compiler.has_header('valgrind/memcheck.h')
   debug_flags += '-DHAVE_VALGRIND_MEMCHECK_H'
 endif
 
-add_global_arguments(debug_flags, language: 'c')
-add_global_arguments(debug_flags, language: 'cpp')
+add_project_arguments(debug_flags, language: 'c')
+add_project_arguments(debug_flags, language: 'cpp')
 
 if get_option('static_libcxx')
   link_args = ['-static-libstdc++']
