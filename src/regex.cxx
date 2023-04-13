@@ -6,11 +6,8 @@
 #include "expand.hxx"
 #include "lib/pcre/MatchData.hxx"
 
-#include <assert.h>
-#include <string.h>
-
 std::size_t
-ExpandStringLength(const char *src, const MatchData &match_data)
+ExpandStringLength(std::string_view src, const MatchData &match_data)
 {
 	struct Result {
 		std::size_t result = 0;
@@ -19,18 +16,12 @@ ExpandStringLength(const char *src, const MatchData &match_data)
 			++result;
 		}
 
-		void Append(const char *p) noexcept {
-			result += strlen(p);
+		constexpr void Append(std::string_view s) noexcept {
+			result += s.size();
 		}
 
-		constexpr void Append(const char *,
-				      std::size_t length) noexcept {
-			result += length;
-		}
-
-		constexpr void AppendValue(const char *,
-					   std::size_t length) noexcept {
-			result += length;
+		constexpr void AppendValue(std::string_view s) noexcept {
+			result += s.size();
 		}
 
 		constexpr size_t Commit() const noexcept {

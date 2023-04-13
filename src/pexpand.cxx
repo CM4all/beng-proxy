@@ -9,14 +9,12 @@
 #include "uri/Unescape.hxx"
 #include "lib/pcre/MatchData.hxx"
 
-#include <assert.h>
-#include <string.h>
+#include <cassert>
 
 const char *
-expand_string(AllocatorPtr alloc, const char *src,
+expand_string(AllocatorPtr alloc, std::string_view src,
 	      const MatchData &match_data)
 {
-	assert(src != nullptr);
 	assert(match_data);
 
 	const size_t length = ExpandStringLength(src, match_data);
@@ -29,16 +27,12 @@ expand_string(AllocatorPtr alloc, const char *src,
 			*q++ = ch;
 		}
 
-		void Append(const char *p) noexcept {
-			q = stpcpy(q, p);
+		constexpr void Append(std::string_view s) noexcept {
+			q = std::copy(s.begin(), s.end(), q);
 		}
 
-		void Append(const char *p, size_t _length) noexcept {
-			q = (char *)mempcpy(q, p, _length);
-		}
-
-		void AppendValue(const char *p, size_t _length) noexcept {
-			Append(p, _length);
+		constexpr void AppendValue(std::string_view s) noexcept {
+			Append(s);
 		}
 	};
 
@@ -52,10 +46,9 @@ expand_string(AllocatorPtr alloc, const char *src,
 }
 
 const char *
-expand_string_unescaped(AllocatorPtr alloc, const char *src,
+expand_string_unescaped(AllocatorPtr alloc, std::string_view src,
 			const MatchData &match_data)
 {
-	assert(src != nullptr);
 	assert(match_data);
 
 	const size_t length = ExpandStringLength(src, match_data);
@@ -68,16 +61,12 @@ expand_string_unescaped(AllocatorPtr alloc, const char *src,
 			*q++ = ch;
 		}
 
-		void Append(const char *p) noexcept {
-			q = stpcpy(q, p);
+		constexpr void Append(std::string_view s) noexcept {
+			q = std::copy(s.begin(), s.end(), q);
 		}
 
-		void Append(const char *p, size_t _length) noexcept {
-			q = (char *)mempcpy(q, p, _length);
-		}
-
-		void AppendValue(const char *p, size_t _length) {
-			q = UriUnescape(q, {p, _length});
+		void AppendValue(std::string_view s) {
+			q = UriUnescape(q, s);
 			if (q == nullptr)
 				throw std::runtime_error("Malformed URI escape");
 		}

@@ -8,6 +8,8 @@
 
 #pragma once
 
+#include <string_view>
+
 class AllocatorPtr;
 class MatchData;
 
@@ -15,7 +17,7 @@ class MatchData;
  * Throws Pcre::Error on error.
  */
 const char *
-expand_string(AllocatorPtr alloc, const char *src,
+expand_string(AllocatorPtr alloc, std::string_view src,
 	      const MatchData &match_data);
 
 /**
@@ -25,5 +27,5 @@ expand_string(AllocatorPtr alloc, const char *src,
  * Throws Pcre::Error on error.
  */
 const char *
-expand_string_unescaped(AllocatorPtr alloc, const char *src,
+expand_string_unescaped(AllocatorPtr alloc, std::string_view src,
 			const MatchData &match_data);

@@ -9,6 +9,7 @@
 #pragma once
 
 #include <cstddef>
+#include <string_view>
 
 class MatchData;
 
@@ -20,4 +21,4 @@ class MatchData;
  * @return the length (without the null terminator)
  */
 std::size_t
-ExpandStringLength(const char *src, const MatchData &match_data);
+ExpandStringLength(std::string_view src, const MatchData &match_data);

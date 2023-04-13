@@ -2,37 +2,36 @@
 // Copyright CM4all GmbH
 // author: Max Kellermann <mk@cm4all.com>
 
-#ifndef BENG_PROXY_EXPAND_HXX
-#define BENG_PROXY_EXPAND_HXX
+#pragma once
 
+#include "util/StringSplit.hxx"
+
+#include <cassert>
 #include <stdexcept>
-
-#include <assert.h>
-#include <string.h>
+#include <string_view>
 
 /**
  * Throws std::runtime_error on error.
  */
 template<typename Result, typename MatchData>
 void
-ExpandString(Result &result, const char *src, MatchData &&match_data)
+ExpandString(Result &result, std::string_view src, MatchData &&match_data)
 {
-	assert(src != nullptr);
-
 	while (true) {
-		const char *backslash = strchr(src, '\\');
-		if (backslash == nullptr) {
-			/* append the remaining input string and return */
-			result.Append(src);
-			return;
-		}
+		const auto [a, b] = Split(src, '\\');
 
 		/* copy everything up to the backslash */
-		result.Append(src, backslash - src);
+		result.Append(a);
+
+		if (b.data() == nullptr)
+			return;
+
+		if (b.empty())
+			throw std::runtime_error{"Backslash at end of string"};
 
 		/* now evaluate the escape */
-		src = backslash + 1;
-		const char ch = *src++;
+		src = b.substr(1);
+		const char ch = b.front();
 		if (ch == '\\')
 			result.Append(ch);
 		else if (ch >= '0' && ch <= '9') {
@@ -41,11 +40,9 @@ ExpandString(Result &result, const char *src, MatchData &&match_data)
 				throw std::runtime_error("Invalid regex capture");
 
 			if (auto c = match_data[i]; !c.empty())
-				result.AppendValue(c.data(), c.size());
+				result.AppendValue(c);
 		} else {
 			throw std::runtime_error{"Invalid backslash escape"};
 		}
 	}
 }
-
-#endif
