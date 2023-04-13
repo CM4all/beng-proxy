@@ -25,26 +25,24 @@ expand_string(AllocatorPtr alloc, const char *src,
 	struct Result {
 		char *q;
 
-		explicit Result(char *_q):q(_q) {}
-
-		void Append(char ch) {
+		constexpr void Append(char ch) noexcept {
 			*q++ = ch;
 		}
 
-		void Append(const char *p) {
+		void Append(const char *p) noexcept {
 			q = stpcpy(q, p);
 		}
 
-		void Append(const char *p, size_t _length) {
+		void Append(const char *p, size_t _length) noexcept {
 			q = (char *)mempcpy(q, p, _length);
 		}
 
-		void AppendValue(const char *p, size_t _length) {
+		void AppendValue(const char *p, size_t _length) noexcept {
 			Append(p, _length);
 		}
 	};
 
-	Result result(buffer);
+	Result result{buffer};
 	ExpandString(result, src, match_data);
 
 	assert(result.q == buffer + length);
@@ -66,17 +64,15 @@ expand_string_unescaped(AllocatorPtr alloc, const char *src,
 	struct Result {
 		char *q;
 
-		explicit Result(char *_q):q(_q) {}
-
-		void Append(char ch) {
+		constexpr void Append(char ch) noexcept {
 			*q++ = ch;
 		}
 
-		void Append(const char *p) {
+		void Append(const char *p) noexcept {
 			q = stpcpy(q, p);
 		}
 
-		void Append(const char *p, size_t _length) {
+		void Append(const char *p, size_t _length) noexcept {
 			q = (char *)mempcpy(q, p, _length);
 		}
 
@@ -87,7 +83,7 @@ expand_string_unescaped(AllocatorPtr alloc, const char *src,
 		}
 	};
 
-	Result result(buffer);
+	Result result{buffer};
 	ExpandString(result, src, match_data);
 
 	assert(result.q <= buffer + length);
