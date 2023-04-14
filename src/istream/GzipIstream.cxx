@@ -170,6 +170,7 @@ GzipIstream::TryWrite() noexcept
 inline void
 GzipIstream::TryFlush() noexcept
 {
+	assert(z_initialized);
 	assert(!z_stream_end);
 
 	auto w = BufferWrite();
@@ -224,6 +225,8 @@ GzipIstream::ForceRead() noexcept
 void
 GzipIstream::TryFinish() noexcept
 {
+	assert(!HasInput());
+	assert(z_initialized);
 	assert(!z_stream_end);
 
 	auto w = BufferWrite();
