@@ -31,10 +31,7 @@ public:
 };
 
 class GzipIstream final : public FacadeIstream, DestructAnchor {
-	bool z_initialized = false, z_stream_end = false;
 	z_stream z;
-	bool had_input, had_output;
-	bool reading = false;
 	SliceFifoBuffer buffer;
 
 	/**
@@ -43,6 +40,11 @@ class GzipIstream final : public FacadeIstream, DestructAnchor {
 	 * prevent stalling the stream.
 	 */
 	DeferEvent defer;
+
+	bool z_initialized = false, z_stream_end = false;
+
+	bool had_input, had_output;
+	bool reading = false;
 
 public:
 	GzipIstream(struct pool &_pool, UnusedIstreamPtr _input,
