@@ -220,7 +220,6 @@ WasOutput::OnIstreamReady() noexcept
 
 	StaticVector<struct iovec, 64> v;
 	bool result = false;
-	std::size_t total = 0;
 
 	for (const auto &i : list) {
 		if (!i.IsBuffer()) {
@@ -234,7 +233,6 @@ WasOutput::OnIstreamReady() noexcept
 		const auto buffer = i.GetBuffer();
 
 		v.push_back(MakeIovec(buffer));
-		total += buffer.size();
 	}
 
 	if (v.empty())
