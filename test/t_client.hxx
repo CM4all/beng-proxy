@@ -272,25 +272,31 @@ struct Context final
 		more_buckets = list.HasMore();
 		total_buckets = list.GetTotalBufferSize();
 
+		bool eof;
+
 		if (total_buckets > 0) {
 			if (break_data)
 				event_loop.Break();
 
-			size_t buckets_consumed = input.ConsumeBucketList(total_buckets).consumed;
-			assert(buckets_consumed == total_buckets);
-			body_data += buckets_consumed;
-		}
+			auto result = input.ConsumeBucketList(total_buckets);
+			assert(result.consumed == total_buckets);
+			body_data += result.consumed;
+			eof = result.eof;
+		} else
+			eof = !more_buckets;
 
 		available_after_bucket = input.GetAvailable(false);
 		available_after_bucket_partial = input.GetAvailable(true);
 
 		if (read_after_buckets)
 			input.Read();
-
-		if (close_after_buckets) {
+		else if (close_after_buckets) {
 			body_closed = true;
 			CloseInput();
 			close_response_body_late = false;
+		} else if (eof) {
+			CloseInput();
+			body_eof = true;
 		}
 	}
 #endif
