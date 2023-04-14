@@ -604,8 +604,7 @@ HttpClient::TryWriteBuckets2()
 	const auto r = input.ConsumeBucketList(nbytes);
 	assert(r.consumed == (std::size_t)nbytes);
 
-	// TODO remove the IsDepleted() check
-	return r.eof || list.IsDepleted(r.consumed)
+	return r.eof
 		? BucketResult::DEPLETED
 		: BucketResult::MORE;
 }
