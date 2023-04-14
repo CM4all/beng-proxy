@@ -362,19 +362,25 @@ Request::HandleFileAddress(const FileAddress &address,
 	}
 
 	if (!S_ISREG(st.stx_mode)) {
+		instance.uring.Close(fd.Release());
 		DispatchError(HttpStatus::NOT_FOUND, "Not a regular file");
 		return;
 	}
 
-	if (MaybeEmulateModAuthEasy(address, fd, st))
+	if (MaybeEmulateModAuthEasy(address, fd, st)) {
+		if (fd.IsDefined())
+			instance.uring.Close(fd.Release());
 		return;
+	}
 
 	struct file_request file_request(st.stx_size);
 
 	/* request options */
 
-	if (!EvaluateFileRequest(fd, st, file_request))
+	if (!EvaluateFileRequest(fd, st, file_request)) {
+		instance.uring.Close(fd.Release());
 		return;
+	}
 
 	/* precompressed? */
 
@@ -385,8 +391,10 @@ Request::HandleFileAddress(const FileAddress &address,
 	      CheckAutoCompressedFile(address.path, fd, st, "br", ".br")) ||
 	     ((address.auto_gzipped || translate.auto_gzipped) &&
 	      CheckAutoCompressedFile(address.path, fd, st, "gzip", ".gz")) ||
-	     CheckCompressedFile(address.gzipped, fd, st, "gzip")))
+	     CheckCompressedFile(address.gzipped, fd, st, "gzip"))) {
+		instance.uring.Close(fd.Release());
 		return;
+	}
 
 	/* build the response */
 
