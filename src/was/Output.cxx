@@ -219,20 +219,17 @@ WasOutput::OnIstreamReady() noexcept
 	/* convert buckets to struct iovec array */
 
 	StaticVector<struct iovec, 64> v;
-	bool more = list.HasMore(), result = false;
+	bool result = false;
 	std::size_t total = 0;
 
 	for (const auto &i : list) {
 		if (!i.IsBuffer()) {
 			result = true;
-			more = true;
 			break;
 		}
 
-		if (v.full()) {
-			more = true;
+		if (v.full())
 			break;
-		}
 
 		const auto buffer = i.GetBuffer();
 
@@ -258,9 +255,9 @@ WasOutput::OnIstreamReady() noexcept
 	}
 
 	sent += nbytes;
-	input.ConsumeBucketList(nbytes);
+	const auto eof = input.ConsumeBucketList(nbytes).eof;
 
-	if (!more && std::size_t(nbytes) == total) {
+	if (eof) {
 		/* we've just reached end of our input */
 
 		CloseInput();
