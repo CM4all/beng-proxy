@@ -17,12 +17,11 @@ struct DelegateAddress;
  */
 struct FileAddress {
 	const char *path;
-	const char *deflated = nullptr;
 	const char *gzipped = nullptr;
 
 	/**
 	 * Absolute path of a directory below which the other paths
-	 * (#path, #deflated, #gzipped) are located.
+	 * (#path, #gzipped) are located.
 	 */
 	const char *base = nullptr;
 

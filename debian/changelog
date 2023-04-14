@@ -3,6 +3,7 @@ cm4all-beng-proxy (18.0.23) unstable; urgency=low
   * debian: remove the build-dependency on valgrind
   * tcache: fix corruption bug with GCC 12
   * fcgi: fix spurious unit test failures
+  * translation: deprecate DEFLATED and AUTO_DEFLATE
 
  --   
 

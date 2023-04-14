@@ -767,19 +767,11 @@ served.  The following packets are available:
 - ``AUTO_BROTLI_PATH``: Build the precompressed Brotli path by
   appending :file:`.br` to the ``PATH``.
 
-- ``DEFLATED``: Absolute path of a precompressed version of the file.
-  The file is compressed with the “deflate” algorithm, without ``gzip``
-  headers. May follow the ``PATH`` packet.
-
 - ``GZIPPED``: Absolute path of a precompressed version of the file.
   The file is compressed with ``gzip``. May follow the ``PATH`` packet.
 
 - ``AUTO_GZIPPED``: Build the precompressed path by appending “``.gz``”
   to the ``PATH``. Unlike ``GZIPPED``, this is compatible with ``BASE``.
-
-- ``AUTO_DEFLATE``: Deflate the response on-the-fly if the client
-  accepts it. This consumes a lot of CPU and should only be used for
-  dynamic responses which can be compressed well.
 
 - ``AUTO_GZIP``: Compress the response on-the-fly if the client accepts
   the ``gzip`` encoding. This consumes a lot of CPU and should only be

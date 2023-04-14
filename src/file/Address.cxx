@@ -16,7 +16,6 @@
 FileAddress::FileAddress(AllocatorPtr alloc, const FileAddress &src,
 			 const char *_path) noexcept
 	:path(_path),
-	 deflated(alloc.CheckDup(src.deflated)),
 	 gzipped(alloc.CheckDup(src.gzipped)),
 	 base(alloc.CheckDup(src.base)),
 	 content_type(alloc.CheckDup(src.content_type)),
@@ -92,8 +91,7 @@ FileAddress::SaveBase(AllocatorPtr alloc, std::string_view suffix) const noexcep
 	auto *dest = alloc.New<FileAddress>(alloc, *this, new_path);
 	dest->base = new_base;
 
-	/* BASE+DEFLATED is not supported */
-	dest->deflated = nullptr;
+	/* BASE+GZIPPED is not supported */
 	dest->gzipped = nullptr;
 
 	return dest;

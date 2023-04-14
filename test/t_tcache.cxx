@@ -175,7 +175,6 @@ operator==(const ResourceAddress &a, const ResourceAddress &b) noexcept
 		EXPECT_NE(b.GetFile().path, nullptr);
 
 		return StringEquals(a.GetFile().path, b.GetFile().path) &&
-			StringEquals(a.GetFile().deflated, b.GetFile().deflated) &&
 			StringEquals(a.GetFile().gzipped, b.GetFile().gzipped) &&
 			StringEquals(a.GetFile().base, b.GetFile().base) &&
 			StringEquals(a.GetFile().content_type, b.GetFile().content_type) &&
