@@ -3,11 +3,11 @@
 // author: Max Kellermann <mk@cm4all.com>
 
 #include "IstreamFilterTest.hxx"
-#include "istream/istream_deflate.hxx"
+#include "istream/GzipIstream.hxx"
 #include "istream/istream_string.hxx"
 #include "istream/UnusedPtr.hxx"
 
-class IstreamDeflateTestTraits {
+class GzipIstreamTestTraits {
 public:
 	static constexpr const char *expected_result = nullptr;
 
@@ -21,9 +21,9 @@ public:
 
 	UnusedIstreamPtr CreateTest(EventLoop &event_loop, struct pool &pool,
 				    UnusedIstreamPtr input) const noexcept {
-		return istream_deflate_new(pool, std::move(input), event_loop);
+		return NewGzipIstream(pool, std::move(input), event_loop);
 	}
 };
 
-INSTANTIATE_TYPED_TEST_CASE_P(Deflate, IstreamFilterTest,
-			      IstreamDeflateTestTraits);
+INSTANTIATE_TYPED_TEST_CASE_P(Gzip, IstreamFilterTest,
+			      GzipIstreamTestTraits);

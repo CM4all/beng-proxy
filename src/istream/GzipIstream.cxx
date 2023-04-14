@@ -2,7 +2,7 @@
 // Copyright CM4all GmbH
 // author: Max Kellermann <mk@cm4all.com>
 
-#include "istream_deflate.hxx"
+#include "GzipIstream.hxx"
 #include "UnusedPtr.hxx"
 #include "New.hxx"
 #include "FacadeIstream.hxx"
@@ -30,8 +30,7 @@ public:
 	}
 };
 
-class DeflateIstream final : public FacadeIstream, DestructAnchor {
-	const bool gzip;
+class GzipIstream final : public FacadeIstream, DestructAnchor {
 	bool z_initialized = false, z_stream_end = false;
 	z_stream z;
 	bool had_input, had_output;
@@ -46,15 +45,14 @@ class DeflateIstream final : public FacadeIstream, DestructAnchor {
 	DeferEvent defer;
 
 public:
-	DeflateIstream(struct pool &_pool, UnusedIstreamPtr _input,
-		       EventLoop &event_loop, bool _gzip) noexcept
+	GzipIstream(struct pool &_pool, UnusedIstreamPtr _input,
+		    EventLoop &event_loop) noexcept
 		:FacadeIstream(_pool, std::move(_input)),
-		 gzip(_gzip),
 		 defer(event_loop, BIND_THIS_METHOD(OnDeferred))
 	{
 	}
 
-	~DeflateIstream() noexcept override {
+	~GzipIstream() noexcept override {
 		if (z_initialized)
 			deflateEnd(&z);
 	}
@@ -116,7 +114,7 @@ public:
 
 private:
 	int GetWindowBits() const noexcept {
-		return MAX_WBITS + gzip * 16;
+		return MAX_WBITS + 16;
 	}
 
 	void OnDeferred() noexcept {
@@ -142,7 +140,7 @@ z_free(voidpf opaque, voidpf address) noexcept
 }
 
 bool
-DeflateIstream::InitZlib() noexcept
+GzipIstream::InitZlib() noexcept
 {
 	if (z_initialized)
 		return true;
@@ -164,7 +162,7 @@ DeflateIstream::InitZlib() noexcept
 }
 
 size_t
-DeflateIstream::TryWrite() noexcept
+GzipIstream::TryWrite() noexcept
 {
 	auto r = buffer.Read();
 	assert(!r.empty());
@@ -185,7 +183,7 @@ DeflateIstream::TryWrite() noexcept
 }
 
 inline void
-DeflateIstream::TryFlush() noexcept
+GzipIstream::TryFlush() noexcept
 {
 	assert(!z_stream_end);
 
@@ -212,7 +210,7 @@ DeflateIstream::TryFlush() noexcept
 }
 
 inline void
-DeflateIstream::ForceRead() noexcept
+GzipIstream::ForceRead() noexcept
 {
 	assert(!reading);
 
@@ -243,7 +241,7 @@ DeflateIstream::ForceRead() noexcept
 }
 
 void
-DeflateIstream::TryFinish() noexcept
+GzipIstream::TryFinish() noexcept
 {
 	assert(!z_stream_end);
 
@@ -280,7 +278,7 @@ DeflateIstream::TryFinish() noexcept
  */
 
 size_t
-DeflateIstream::OnData(const std::span<const std::byte> src) noexcept
+GzipIstream::OnData(const std::span<const std::byte> src) noexcept
 {
 	assert(HasInput());
 
@@ -339,7 +337,7 @@ DeflateIstream::OnData(const std::span<const std::byte> src) noexcept
 }
 
 void
-DeflateIstream::OnEof() noexcept
+GzipIstream::OnEof() noexcept
 {
 	ClearInput();
 	defer.Cancel();
@@ -351,7 +349,7 @@ DeflateIstream::OnEof() noexcept
 }
 
 void
-DeflateIstream::OnError(std::exception_ptr ep) noexcept
+GzipIstream::OnError(std::exception_ptr ep) noexcept
 {
 	ClearInput();
 
@@ -364,10 +362,10 @@ DeflateIstream::OnError(std::exception_ptr ep) noexcept
  */
 
 UnusedIstreamPtr
-istream_deflate_new(struct pool &pool, UnusedIstreamPtr input,
-		    EventLoop &event_loop, bool gzip) noexcept
+NewGzipIstream(struct pool &pool, UnusedIstreamPtr input,
+	       EventLoop &event_loop) noexcept
 {
-	return NewIstreamPtr<DeflateIstream>(pool, std::move(input),
-					     event_loop, gzip);
+	return NewIstreamPtr<GzipIstream>(pool, std::move(input),
+					  event_loop);
 
 }

@@ -808,7 +808,7 @@ test(
     't_istream_catch.cxx',
     't_istream_chunked.cxx',
     't_istream_dechunk.cxx',
-    't_istream_deflate.cxx',
+    'TestGzipIstream.cxx',
     't_istream_delayed.cxx',
     't_istream_fcgi.cxx',
     '../src/fcgi/istream_fcgi.cxx',

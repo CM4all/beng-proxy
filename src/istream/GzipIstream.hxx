@@ -8,9 +8,6 @@ struct pool;
 class UnusedIstreamPtr;
 class EventLoop;
 
-/**
- * @param gzip use the gzip format instead of the zlib format?
- */
 UnusedIstreamPtr
-istream_deflate_new(struct pool &pool, UnusedIstreamPtr input,
-		    EventLoop &event_loop, bool gzip=false) noexcept;
+NewGzipIstream(struct pool &pool, UnusedIstreamPtr input,
+	       EventLoop &event_loop) noexcept;

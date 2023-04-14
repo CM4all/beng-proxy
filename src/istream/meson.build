@@ -152,7 +152,7 @@ endif
 istream_extra = static_library(
   'istream_extra',
   istream_extra_sources,
-  'istream_deflate.cxx',
+  'GzipIstream.cxx',
   include_directories: inc,
   dependencies: [
     fmt_dep,

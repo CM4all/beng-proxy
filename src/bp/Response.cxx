@@ -32,7 +32,7 @@
 #include "XmlProcessor.hxx"
 #include "CssProcessor.hxx"
 #include "TextProcessor.hxx"
-#include "istream/istream_deflate.hxx"
+#include "istream/GzipIstream.hxx"
 #include "istream/AutoPipeIstream.hxx"
 #include "istream/BrotliEncoderIstream.hxx"
 #include "istream/YamlSubstIstream.hxx"
@@ -219,10 +219,8 @@ Request::AutoDeflate(HttpHeaders &response_headers,
 		MaybeAutoCompress(instance.encoding_cache.get(), pool, resource_tag,
 				  response_headers, response_body, "gzip",
 				  [this](auto &&i){
-					  return istream_deflate_new(pool,
-								     std::move(i),
-								     instance.event_loop,
-								     true);
+					  return NewGzipIstream(pool, std::move(i),
+								instance.event_loop);
 				  });
 	}
 
