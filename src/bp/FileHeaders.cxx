@@ -43,11 +43,10 @@
 #include "event/Loop.hxx"
 #include "io/FileDescriptor.hxx"
 
-#include <attr/xattr.h>
-
 #include <assert.h>
 #include <stdlib.h>
 #include <sys/stat.h>
+#include <sys/xattr.h>
 
 gcc_pure
 static std::chrono::seconds
