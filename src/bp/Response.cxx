@@ -219,8 +219,7 @@ Request::AutoDeflate(HttpHeaders &response_headers,
 		MaybeAutoCompress(instance.encoding_cache.get(), pool, resource_tag,
 				  response_headers, response_body, "gzip",
 				  [this](auto &&i){
-					  return NewGzipIstream(pool, std::move(i),
-								instance.event_loop);
+					  return NewGzipIstream(pool, std::move(i));
 				  });
 	}
 

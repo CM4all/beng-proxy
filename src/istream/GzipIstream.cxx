@@ -9,7 +9,6 @@
 #include "pool/pool.hxx"
 #include "memory/fb_pool.hxx"
 #include "memory/SliceFifoBuffer.hxx"
-#include "event/DeferEvent.hxx"
 #include "util/DestructObserver.hxx"
 
 #include <zlib.h>
@@ -34,23 +33,13 @@ class GzipIstream final : public FacadeIstream, DestructAnchor {
 	z_stream z;
 	SliceFifoBuffer buffer;
 
-	/**
-	 * This callback is used to request more data from the input if an
-	 * OnData() call did not produce any output.  This tries to
-	 * prevent stalling the stream.
-	 */
-	DeferEvent defer;
-
 	bool z_initialized = false, z_stream_end = false;
 
 	bool had_input, had_output;
-	bool reading = false;
 
 public:
-	GzipIstream(struct pool &_pool, UnusedIstreamPtr _input,
-		    EventLoop &event_loop) noexcept
-		:FacadeIstream(_pool, std::move(_input)),
-		 defer(event_loop, BIND_THIS_METHOD(OnDeferred))
+	GzipIstream(struct pool &_pool, UnusedIstreamPtr _input) noexcept
+		:FacadeIstream(_pool, std::move(_input))
 	{
 	}
 
@@ -117,12 +106,6 @@ public:
 private:
 	int GetWindowBits() const noexcept {
 		return MAX_WBITS + 16;
-	}
-
-	void OnDeferred() noexcept {
-		assert(HasInput());
-
-		ForceRead();
 	}
 };
 
@@ -214,8 +197,6 @@ GzipIstream::TryFlush() noexcept
 inline void
 GzipIstream::ForceRead() noexcept
 {
-	assert(!reading);
-
 	const DestructObserver destructed(*this);
 
 	bool had_input2 = false;
@@ -223,12 +204,10 @@ GzipIstream::ForceRead() noexcept
 
 	while (1) {
 		had_input = false;
-		reading = true;
 		input.Read();
 		if (destructed)
 			return;
 
-		reading = false;
 		if (!HasInput() || had_output)
 			return;
 
@@ -293,9 +272,6 @@ GzipIstream::OnData(const std::span<const std::byte> src) noexcept
 
 	had_input = true;
 
-	if (!reading)
-		had_output = false;
-
 	z.next_out = (Bytef *)w.data();
 	z.avail_out = (uInt)w.size();
 
@@ -329,12 +305,6 @@ GzipIstream::OnData(const std::span<const std::byte> src) noexcept
 		z.avail_out = (uInt)w.size();
 	} while (z.avail_in > 0);
 
-	if (!reading && !had_output)
-		/* we received data from our input, but we did not produce any
-		   output (and we're not looping inside ForceRead()) - to
-		   avoid stalling the stream, trigger the DeferEvent */
-		defer.Schedule();
-
 	return src.size() - (size_t)z.avail_in;
 }
 
@@ -342,7 +312,6 @@ void
 GzipIstream::OnEof() noexcept
 {
 	ClearInput();
-	defer.Cancel();
 
 	if (!InitZlib())
 		return;
@@ -364,10 +333,8 @@ GzipIstream::OnError(std::exception_ptr ep) noexcept
  */
 
 UnusedIstreamPtr
-NewGzipIstream(struct pool &pool, UnusedIstreamPtr input,
-	       EventLoop &event_loop) noexcept
+NewGzipIstream(struct pool &pool, UnusedIstreamPtr input) noexcept
 {
-	return NewIstreamPtr<GzipIstream>(pool, std::move(input),
-					  event_loop);
+	return NewIstreamPtr<GzipIstream>(pool, std::move(input));
 
 }

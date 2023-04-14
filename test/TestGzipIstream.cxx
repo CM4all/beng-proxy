@@ -19,9 +19,9 @@ public:
 		return istream_string_new(pool, "foo");
 	}
 
-	UnusedIstreamPtr CreateTest(EventLoop &event_loop, struct pool &pool,
+	UnusedIstreamPtr CreateTest(EventLoop &, struct pool &pool,
 				    UnusedIstreamPtr input) const noexcept {
-		return NewGzipIstream(pool, std::move(input), event_loop);
+		return NewGzipIstream(pool, std::move(input));
 	}
 };
 

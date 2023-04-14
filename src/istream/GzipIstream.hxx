@@ -6,8 +6,6 @@
 
 struct pool;
 class UnusedIstreamPtr;
-class EventLoop;
 
 UnusedIstreamPtr
-NewGzipIstream(struct pool &pool, UnusedIstreamPtr input,
-	       EventLoop &event_loop) noexcept;
+NewGzipIstream(struct pool &pool, UnusedIstreamPtr input) noexcept;
