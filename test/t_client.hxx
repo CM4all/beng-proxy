@@ -402,8 +402,10 @@ Context::OnData(std::span<const std::byte> src) noexcept
 		return 0;
 
 #ifdef USE_BUCKETS
-	if (buckets_after_data)
+	if (buckets_after_data) {
 		read_defer_event.Schedule();
+		return 0;
+	}
 #endif
 
 	consumed_body_data += src.size();
