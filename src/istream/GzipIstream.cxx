@@ -57,10 +57,10 @@ public:
 	/**
 	 * Submit data from the buffer to our istream handler.
 	 *
-	 * @return the number of bytes which were handled, or 0 if the
-	 * stream was closed
+	 * @return true if at least one byte was consumed, false if
+	 * the handler blocks or if the stream was closed
 	 */
-	size_t TryWrite() noexcept;
+	bool TryWrite() noexcept;
 
 	/**
 	 * Starts to write to the buffer.
@@ -71,7 +71,7 @@ public:
 	auto BufferWrite() noexcept {
 		buffer.AllocateIfNull(fb_pool_get());
 		auto w = buffer.Write();
-		if (w.empty() && TryWrite() > 0)
+		if (w.empty() && TryWrite())
 			w = buffer.Write();
 
 		return w;
@@ -146,7 +146,7 @@ GzipIstream::InitZlib() noexcept
 	return true;
 }
 
-size_t
+bool
 GzipIstream::TryWrite() noexcept
 {
 	auto r = buffer.Read();
@@ -154,17 +154,17 @@ GzipIstream::TryWrite() noexcept
 
 	size_t nbytes = InvokeData(r);
 	if (nbytes == 0)
-		return 0;
+		return false;
 
 	buffer.Consume(nbytes);
 	buffer.FreeIfEmpty();
 
 	if (nbytes == r.size() && !HasInput() && z_stream_end) {
 		DestroyEof();
-		return 0;
+		return false;
 	}
 
-	return nbytes;
+	return true;
 }
 
 inline void
