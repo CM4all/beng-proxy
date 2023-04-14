@@ -10,11 +10,10 @@
 #include "util/Base32.hxx"
 #include "AllocatorPtr.hxx"
 
-#include <attr/xattr.h>
-
 #include <assert.h>
 #include <sys/stat.h>
 #include <sys/types.h>
+#include <sys/xattr.h>
 
 static bool
 ReadETag(FileDescriptor fd, char *buffer, size_t size) noexcept
