@@ -38,10 +38,11 @@ GrowingBufferSink::OnIstreamReady() noexcept
 		nbytes += r.size();
 	}
 
-	if (nbytes > 0)
-		input.ConsumeBucketList(nbytes);
+	const bool eof =  nbytes > 0
+		? input.ConsumeBucketList(nbytes).eof
+		: !more;
 
-	if (!more) {
+	if (eof) {
 		CloseInput();
 		handler.OnGrowingBufferSinkEof(std::move(buffer));
 		return false;
