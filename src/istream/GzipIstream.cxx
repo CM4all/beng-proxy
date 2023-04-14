@@ -63,6 +63,14 @@ public:
 	bool TryWrite() noexcept;
 
 	/**
+	 * Like TryWrite(), but return true only if the handler has
+	 * consumed everything had the buffer is now empty.
+	 */
+	bool TryWriteEverything() noexcept {
+		return TryWrite() && buffer.empty();
+	}
+
+	/**
 	 * Starts to write to the buffer.
 	 *
 	 * @return a pointer to the writable buffer, or nullptr if there is no
@@ -96,9 +104,13 @@ public:
 	}
 
 	void _Read() noexcept override {
-		if (!buffer.empty())
-			TryWrite();
-		else if (HasInput())
+		if (!buffer.empty() && !TryWriteEverything())
+			/* handler wasn't able to consume everything
+			   or we were closed: stop here, don't attempt
+			   to obtain more data */
+			return;
+
+		if (HasInput())
 			ForceRead();
 		else
 			TryFinish();
