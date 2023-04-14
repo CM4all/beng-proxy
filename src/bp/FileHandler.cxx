@@ -122,12 +122,8 @@ Request::DispatchCompressedFile(const char *path, FileDescriptor fd,
 	/* open compressed file */
 
 	UniqueFileDescriptor compressed_fd;
-
-	try {
-		compressed_fd = OpenReadOnly(handler.file.base, path);
-	} catch (...) {
+	if (!compressed_fd.OpenReadOnly(handler.file.base, path))
 		return false;
-	}
 
 	struct statx st2;
 	if (statx(compressed_fd.Get(), "", AT_EMPTY_PATH,
