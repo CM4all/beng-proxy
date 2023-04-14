@@ -89,6 +89,13 @@ protected:
 	void CreateEncoder() noexcept;
 
 	/* virtual methods from class Istream */
+
+	off_t _GetAvailable(bool partial) noexcept {
+		return partial
+			? pending.size()
+			: -1;
+	}
+
 	void _Read() noexcept override;
 
 	/* virtual methods from class IstreamHandler */

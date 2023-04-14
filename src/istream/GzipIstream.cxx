@@ -89,6 +89,12 @@ public:
 
 	/* virtual methods from class Istream */
 
+	off_t _GetAvailable(bool partial) noexcept {
+		return partial || z_stream_end
+			? buffer.GetAvailable()
+			: -1;
+	}
+
 	void _Read() noexcept override {
 		if (!buffer.empty())
 			TryWrite();
