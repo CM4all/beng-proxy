@@ -90,7 +90,7 @@ protected:
 
 	/* virtual methods from class Istream */
 
-	off_t _GetAvailable(bool partial) noexcept {
+	off_t _GetAvailable(bool partial) noexcept override {
 		return partial
 			? pending.size()
 			: -1;

@@ -97,7 +97,7 @@ public:
 
 	/* virtual methods from class Istream */
 
-	off_t _GetAvailable(bool partial) noexcept {
+	off_t _GetAvailable(bool partial) noexcept override {
 		return partial || z_stream_end
 			? buffer.GetAvailable()
 			: -1;
