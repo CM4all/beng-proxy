@@ -1,4 +1,4 @@
-libnfs = dependency('libnfs', required: get_option('nfs'))
+libnfs = dependency('libnfs', version: '>= 4', required: get_option('nfs'))
 if not libnfs.found()
   nfs_client_dep = libnfs
   subdir_done()
