@@ -24,7 +24,7 @@
 #include "stats/AllocatorStats.hxx"
 #include "lib/pcre/UniqueRegex.hxx"
 #include "io/Logger.hxx"
-#include "util/djbhash.h"
+#include "util/djb_hash.hxx"
 #include "util/IntrusiveHashSet.hxx"
 #include "util/IntrusiveList.hxx"
 

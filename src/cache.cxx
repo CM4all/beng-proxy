@@ -4,7 +4,7 @@
 
 #include "cache.hxx"
 #include "event/Loop.hxx"
-#include "util/djbhash.h"
+#include "util/djb_hash.hxx"
 
 #include <assert.h>
 #include <string.h>

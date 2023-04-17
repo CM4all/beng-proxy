@@ -7,7 +7,8 @@
 #include "memory/istream_rubber.hxx"
 #include "istream/UnusedPtr.hxx"
 #include "pool/pool.hxx"
-#include "util/djbhash.h"
+#include "util/djb_hash.hxx"
+#include "util/SpanCast.hxx"
 
 std::size_t
 HttpCacheItem::TagHash::operator()(const char *_tag) const noexcept
@@ -18,7 +19,7 @@ HttpCacheItem::TagHash::operator()(const char *_tag) const noexcept
 std::size_t
 HttpCacheItem::TagHash::operator()(std::string_view _tag) const noexcept
 {
-	return djb_hash(_tag.data(), _tag.size());
+	return djb_hash(AsBytes(_tag));
 }
 
 HttpCacheItem::HttpCacheItem(PoolPtr &&_pool,

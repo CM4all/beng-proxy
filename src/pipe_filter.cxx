@@ -12,8 +12,8 @@
 #include "spawn/ChildOptions.hxx"
 #include "spawn/IstreamSpawn.hxx"
 #include "spawn/Prepared.hxx"
+#include "util/djb_hash.hxx"
 #include "util/HexFormat.hxx"
-#include "util/djbhash.h"
 
 #include <stdio.h>
 #include <string.h>

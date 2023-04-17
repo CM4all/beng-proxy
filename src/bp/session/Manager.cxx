@@ -7,8 +7,8 @@
 #include "io/Logger.hxx"
 #include "system/Seed.hxx"
 #include "util/DeleteDisposer.hxx"
+#include "util/djb_hash.hxx"
 #include "util/StaticVector.hxx"
-#include "util/djbhash.h"
 #include "util/PrintException.hxx"
 
 #include <cassert>
@@ -18,7 +18,7 @@ static constexpr unsigned MAX_SESSIONS = 65536;
 inline size_t
 SessionManager::SessionAttachHash::operator()(std::span<const std::byte> attach) const noexcept
 {
-	return djb_hash(attach.data(), attach.size());
+	return djb_hash(attach);
 }
 
 inline size_t

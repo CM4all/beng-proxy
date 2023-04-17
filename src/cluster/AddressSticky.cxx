@@ -4,7 +4,7 @@
 
 #include "AddressSticky.hxx"
 #include "net/SocketAddress.hxx"
-#include "util/djbhash.h"
+#include "util/djb_hash.hxx"
 
 sticky_hash_t
 socket_address_sticky(SocketAddress address) noexcept
@@ -13,5 +13,5 @@ socket_address_sticky(SocketAddress address) noexcept
 	if (p.empty())
 		return 0;
 
-	return djb_hash(p.data(), p.size());
+	return djb_hash(p);
 }

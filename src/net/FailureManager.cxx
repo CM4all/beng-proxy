@@ -6,7 +6,7 @@
 #include "FailureRef.hxx"
 #include "net/AllocatedSocketAddress.hxx"
 #include "net/SocketAddress.hxx"
-#include "util/djbhash.h"
+#include "util/djb_hash.hxx"
 #include "util/LeakDetector.hxx"
 
 #include <assert.h>
@@ -37,7 +37,7 @@ FailureManager::Hash::operator()(const SocketAddress a) const noexcept
 {
 	assert(!a.IsNull());
 
-	return djb_hash(a.GetAddress(), a.GetSize());
+	return djb_hash(a);
 }
 
 inline size_t
