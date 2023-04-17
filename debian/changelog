@@ -4,7 +4,7 @@ cm4all-beng-proxy (18.0.24) unstable; urgency=low
   * bp: improved handling of spawner startup errors
   * debian: remove the obsolete "-tools" package
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Mon, 17 Apr 2023 22:39:20 +0200
 
 cm4all-beng-proxy (18.0.23) unstable; urgency=low
 
