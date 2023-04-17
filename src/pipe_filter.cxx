@@ -12,8 +12,8 @@
 #include "spawn/ChildOptions.hxx"
 #include "spawn/IstreamSpawn.hxx"
 #include "spawn/Prepared.hxx"
+#include "util/Base32.hxx"
 #include "util/djb_hash.hxx"
-#include "util/HexFormat.hxx"
 
 #include <stdio.h>
 #include <string.h>
@@ -43,7 +43,7 @@ make_pipe_etag(AllocatorPtr alloc, const char *in,
 	       const A &args,
 	       const E &env)
 {
-	char suffix[10] = {'-'};
+	char suffix[32] = {'-'};
 
 	/* build hash from path and arguments */
 	unsigned hash = djb_hash_string(path);
@@ -54,7 +54,7 @@ make_pipe_etag(AllocatorPtr alloc, const char *in,
 	for (auto i : env)
 		hash ^= djb_hash_string(i);
 
-	*HexFormatUint32Fixed(suffix + 1, hash) = 0;
+	*FormatIntBase32(suffix + 1, hash) = 0;
 
 	/* append the hash to the old ETag */
 	return append_etag(alloc, in, suffix);
