@@ -15,7 +15,7 @@
 #include "istream/istream_memory.hxx"
 #include "http/Date.hxx"
 #include "event/Loop.hxx"
-#include "util/DecimalFormat.h"
+#include "util/DecimalFormat.hxx"
 #include "util/SpanCast.hxx"
 #include "product.h"
 
