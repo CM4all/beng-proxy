@@ -35,7 +35,7 @@ Vcs-Git: git://github.com/CM4all/beng-proxy
 
 Package: cm4all-beng-proxy
 Architecture: any
-Depends: ${shlibs:Depends},
+Depends: ${misc:Depends}, ${shlibs:Depends},
  cm4all-slice (>= 0.6),
  polkitd | policykit-1,
  systemd-sysv
@@ -60,7 +60,7 @@ Description: HTTP proxy server
 
 Package: cm4all-beng-proxy-logging
 Architecture: any
-Depends: ${shlibs:Depends}
+Depends: ${misc:Depends}, ${shlibs:Depends}
 Enhances: cm4all-beng-proxy
 Suggests: cm4all-beng-proxy (= ${source:Version})
 Description: Logging servers for beng-proxy
@@ -71,7 +71,7 @@ Description: Logging servers for beng-proxy
 
 Package: cm4all-beng-proxy-delegate-helper
 Architecture: any
-Depends: ${shlibs:Depends}
+Depends: ${misc:Depends}, ${shlibs:Depends}
 Enhances: cm4all-beng-proxy
 Description: HTTP proxy server, delegate helper
  BENG proxy is an HTTP proxy server which includes a HTML template
@@ -106,7 +106,7 @@ Package: python3-cm4all-beng-proxy
 Architecture: all
 Section: python
 Provides: ${python3:Provides}
-Depends: ${python3:Depends}, python3-future
+Depends: ${misc:Depends}, ${python3:Depends}, python3-future
 Recommends: cm4all-beng-proxy | cm4all-beng-lb
 Description: Python 3 bindings for beng-proxy's control channel
  BENG proxy is an HTTP proxy server which includes a HTML template
@@ -127,7 +127,7 @@ Description: Documentation for cm4all-beng-proxy
 
 Package: cm4all-beng-lb
 Architecture: any
-Depends: ${shlibs:Depends},
+Depends: ${misc:Depends}, ${shlibs:Depends},
  systemd-sysv
 Suggests: cm4all-certdb2, avahi-daemon
 Provides: httpd
@@ -138,7 +138,7 @@ Description: HTTP load balancer
 Package: cm4all-certdb2
 Architecture: any
 Enhances: cm4all-beng-lb
-Depends: ${shlibs:Depends}
+Depends: ${misc:Depends}, ${shlibs:Depends}
 Replaces: cm4all-certdb
 Conflicts: cm4all-certdb
 Description: Tools for managing the certificate database
