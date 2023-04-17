@@ -6,7 +6,7 @@ cm4all-beng-proxy (18.0.23) unstable; urgency=low
   * translation: deprecate DEFLATED and AUTO_DEFLATE
   * eliminate dependency on libattr
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Mon, 17 Apr 2023 15:01:35 +0200
 
 cm4all-beng-proxy (18.0.22) unstable; urgency=low
 
