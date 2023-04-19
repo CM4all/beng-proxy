@@ -71,7 +71,7 @@ struct HttpServerConnection final
 	 * The timeout for writing more response data (READ_BODY,
 	 * READ_END).
 	 */
-	static constexpr Event::Duration write_timeout = std::chrono::seconds{30};
+	static constexpr Event::Duration write_timeout = std::chrono::minutes{2};
 
 	enum class BucketResult {
 		/**

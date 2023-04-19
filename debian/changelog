@@ -1,6 +1,6 @@
 cm4all-beng-proxy (17.16) unstable; urgency=low
 
-  * 
+  * http: increase send timeout to 2 minutes
 
  --   
 
