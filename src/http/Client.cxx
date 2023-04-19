@@ -88,7 +88,7 @@ IsHttpClientRetryFailure(std::exception_ptr ep) noexcept
  */
 static constexpr off_t EXPECT_100_THRESHOLD = 1024;
 
-static constexpr auto http_client_timeout = std::chrono::seconds(30);
+static constexpr auto http_client_timeout = std::chrono::minutes{2};
 
 class HttpClient final : BufferedSocketHandler, IstreamSink, Cancellable, DestructAnchor, PoolLeakDetector {
 	enum class BucketResult {
