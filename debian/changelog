@@ -1,6 +1,6 @@
 cm4all-beng-proxy (18.0.26) unstable; urgency=low
 
-  * 
+  * io_uring: fix crash bug
 
  --   
 
