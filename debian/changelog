@@ -3,7 +3,7 @@ cm4all-beng-proxy (18.0.26) unstable; urgency=low
   * io_uring: fix crash bug
   * spawn: fix stack overflow crash bug
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Thu, 20 Apr 2023 14:47:19 +0200
 
 cm4all-beng-proxy (18.0.25) unstable; urgency=low
 
