@@ -1,6 +1,6 @@
 cm4all-beng-proxy (18.0.27) unstable; urgency=low
 
-  * 
+  * require Linux kernel 5.12
 
  --   
 

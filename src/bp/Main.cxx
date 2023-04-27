@@ -280,8 +280,8 @@ GetDefaultPort() noexcept
 
 int main(int argc, char **argv)
 try {
-	if (!IsKernelVersionOrNewer({5, 10}))
-		throw "Your Linux kernel is too old; this program requires at least 5.10";
+	if (!IsKernelVersionOrNewer({5, 12}))
+		throw "Your Linux kernel is too old; this program requires at least 5.12";
 
 	if (geteuid() == 0)
 		throw "Refusing to run as root";
