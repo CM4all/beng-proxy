@@ -589,7 +589,7 @@ public:
 
 	bool HasTransformations() const noexcept {
 		return !translate.transformations.empty() ||
-			translate.suffix_transformations.empty();
+			!translate.suffix_transformations.empty();
 	}
 
 	void CancelTransformations() noexcept {
