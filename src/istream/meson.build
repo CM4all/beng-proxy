@@ -61,7 +61,10 @@ istream_basic_dep = declare_dependency(
 istream_sources = []
 
 if uring_dep.found()
-  istream_sources += 'UringIstream.cxx'
+  istream_sources += [
+    'UringIstream.cxx',
+    'UringSpliceIstream.cxx',
+  ]
 endif
 
 istream = static_library(
