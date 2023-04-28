@@ -222,6 +222,23 @@ private:
 
 		// TODO make configurable (via translation protocol)
 		const bool enable_metrics = true;
+
+		bool HasAutoCompress() const noexcept {
+#ifdef HAVE_BROTLI
+			if (auto_brotli)
+				return true;
+#endif
+
+			if (!response)
+				return false;
+
+#ifdef HAVE_BROTLI
+			if (response->auto_brotli)
+				return true;
+#endif
+
+			return response->auto_gzip;
+		}
 	} translate;
 
 	/**
@@ -600,6 +617,12 @@ public:
 	void CancelChainAndTransformations() noexcept {
 		CancelTransformations();
 		translate.chain = {};
+	}
+
+	bool IsDirect() const noexcept {
+		return !HasTransformations() &&
+			translate.chain.data() == nullptr &&
+			!translate.HasAutoCompress();
 	}
 
 	const Transformation *PopTransformation() noexcept {

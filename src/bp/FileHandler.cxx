@@ -14,7 +14,6 @@
 #include "http/IncomingRequest.hxx"
 #include "istream/FileIstream.hxx"
 #include "istream/FdIstream.hxx"
-#include "istream/UringIstream.hxx"
 #include "pool/pool.hxx"
 #include "translation/Vary.hxx"
 #include "lib/fmt/SystemError.hxx"
@@ -22,6 +21,8 @@
 #include "util/StringCompare.hxx"
 
 #ifdef HAVE_URING
+#include "istream/UringIstream.hxx"
+#include "istream/UringSpliceIstream.hxx"
 #include "io/UringOpen.hxx"
 #include "io/UringOpenStat.hxx"
 #include "event/uring/Manager.hxx"
@@ -101,9 +102,18 @@ Request::DispatchFile(const char *path, UniqueFileDescriptor fd,
 	DispatchResponse(status, std::move(headers),
 #ifdef HAVE_URING
 			 instance.uring
-			 ? NewUringIstream(*instance.uring, pool, path,
-					   std::move(fd),
-					   start_offset, end_offset)
+			 ? (IsDirect()
+			    /* if this response is going to be
+			       transmitted directly, use splice() with
+			       io_uring instead of sendfile() to avoid
+			       getting blocked by slow disk (or
+			       network filesystem) I/O */
+			    ? NewUringSpliceIstream(*instance.uring, pool, path,
+						    std::move(fd),
+						    start_offset, end_offset)
+			    : NewUringIstream(*instance.uring, pool, path,
+					      std::move(fd),
+					      start_offset, end_offset))
 			 :
 #endif
 			 istream_file_fd_new(instance.event_loop, pool, path,
