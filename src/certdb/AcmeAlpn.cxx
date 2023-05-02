@@ -4,18 +4,15 @@
 
 #include "AcmeAlpn.hxx"
 #include "AcmeHttp.hxx"
-#include "AcmeChallenge.hxx"
 #include "CertDatabase.hxx"
 #include "WrapKey.hxx"
 #include "lib/openssl/Dummy.hxx"
 #include "lib/openssl/Error.hxx"
 #include "lib/openssl/Edit.hxx"
 #include "lib/openssl/Key.hxx"
-#include "lib/sodium/UrlSafeBase64SHA256.hxx"
+#include "lib/sodium/SHA256.hxx"
 #include "util/PrintException.hxx"
 #include "util/ScopeExit.hxx"
-
-#include <boost/json.hpp>
 
 [[gnu::const]]
 static int
