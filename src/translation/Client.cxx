@@ -27,7 +27,7 @@
 static const uint8_t PROTOCOL_VERSION = 3;
 
 class TranslateClient final : BufferedSocketHandler, Cancellable {
-	static constexpr Event::Duration read_timeout = std::chrono::minutes{1};
+	static constexpr Event::Duration read_timeout = std::chrono::minutes{2};
 	static constexpr Event::Duration write_timeout = std::chrono::seconds{10};
 
 	const StopwatchPtr stopwatch;
