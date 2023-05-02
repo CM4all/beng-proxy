@@ -36,7 +36,7 @@ Alpn01ChallengeRecord::Alpn01ChallengeRecord(CertDatabase &_db,
 {
 	std::string alt_name = std::string{"DNS:"} + host;
 
-	cert = MakeSelfIssuedDummyCert(host.c_str());
+	cert = MakeSelfIssuedDummyCert(host);
 	AddExt(*cert, NID_subject_alt_name, alt_name.c_str());
 }
 
