@@ -16,7 +16,7 @@ class Alpn01ChallengeRecord {
 	CertDatabase &db;
 	const std::string host, handle;
 
-	UniqueX509 cert;
+	const UniqueX509 cert;
 
 public:
 	Alpn01ChallengeRecord(CertDatabase &_db,

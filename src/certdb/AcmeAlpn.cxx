@@ -32,11 +32,11 @@ GetAcmeIdentifierObjectId() noexcept
 Alpn01ChallengeRecord::Alpn01ChallengeRecord(CertDatabase &_db,
 					     const std::string &_host)
 	:db(_db), host(_host),
-	 handle(std::string{"acme-tls-alpn-01:"} + host)
+	 handle(std::string{"acme-tls-alpn-01:"} + host),
+	 cert(MakeSelfIssuedDummyCert(host))
 {
 	std::string alt_name = std::string{"DNS:"} + host;
 
-	cert = MakeSelfIssuedDummyCert(host);
 	AddExt(*cert, NID_subject_alt_name, alt_name.c_str());
 }
 
