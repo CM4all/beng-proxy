@@ -14,6 +14,8 @@
 #include "util/PrintException.hxx"
 #include "util/ScopeExit.hxx"
 
+#include <fmt/core.h>
+
 [[gnu::const]]
 static int
 GetAcmeIdentifierObjectId() noexcept
@@ -42,8 +44,8 @@ Alpn01ChallengeRecord::~Alpn01ChallengeRecord() noexcept
 	try {
 		db.DeleteServerCertificateByHandle(handle.c_str());
 	} catch (...) {
-		fprintf(stderr, "Failed to remove certdb record of '%s': ",
-			host.c_str());
+		fmt::print("Failed to remove certdb record of '{}': ",
+			   host);
 		PrintException(std::current_exception());
 	}
 }
