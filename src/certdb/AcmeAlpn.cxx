@@ -11,6 +11,7 @@
 #include "lib/openssl/Edit.hxx"
 #include "lib/openssl/Key.hxx"
 #include "lib/sodium/SHA256.hxx"
+#include "util/HexFormat.hxx"
 #include "util/PrintException.hxx"
 #include "util/ScopeExit.hxx"
 
@@ -28,11 +29,30 @@ GetAcmeIdentifierObjectId() noexcept
 	return OBJ_create(txt, "pe-acmeIdentifier", "ACME Identifier");
 }
 
+static std::string
+MakeCommonName(std::string_view host) noexcept
+{
+	if (host.size() <= 64)
+		return std::string{host};
+
+	/* if the host name is too long for the common_name, use the
+	   (abbreviated) SHA256 digest instead; the real host name is
+	   in subjectAltName, and the common_name is meaningless for
+	   acme-alpn */
+
+	const auto sha256 = SHA256(host);
+	const auto hex = HexFormat(std::span{sha256}.first<20>());
+
+	std::string result{"acme-tls-alpn-01:"};
+	result.append(std::string_view{hex.data(), hex.size()});
+	return result;
+}
+
 Alpn01ChallengeRecord::Alpn01ChallengeRecord(CertDatabase &_db,
 					     std::string_view _host)
 	:db(_db), host(_host),
 	 handle(std::string{"acme-tls-alpn-01:"} + host),
-	 cert(MakeSelfIssuedDummyCert(host))
+	 cert(MakeSelfIssuedDummyCert(MakeCommonName(host)))
 {
 	std::string alt_name = std::string{"DNS:"} + host;
 

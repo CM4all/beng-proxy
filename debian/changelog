@@ -4,6 +4,7 @@ cm4all-beng-proxy (18.0.27) unstable; urgency=low
   * spawn: use the Linux 5.12 mount API
   * bp: use splice() with io_uring instead of sendfile()
   * translation: increase timeout to 2 minutes
+  * certdb/acme-alpn: set common_name to hash if host name is too long
 
  --   
 
