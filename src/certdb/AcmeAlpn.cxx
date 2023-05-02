@@ -29,7 +29,7 @@ GetAcmeIdentifierObjectId() noexcept
 }
 
 Alpn01ChallengeRecord::Alpn01ChallengeRecord(CertDatabase &_db,
-					     const std::string &_host)
+					     std::string_view _host)
 	:db(_db), host(_host),
 	 handle(std::string{"acme-tls-alpn-01:"} + host),
 	 cert(MakeSelfIssuedDummyCert(host))

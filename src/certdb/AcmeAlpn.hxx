@@ -20,7 +20,7 @@ class Alpn01ChallengeRecord {
 
 public:
 	Alpn01ChallengeRecord(CertDatabase &_db,
-			      const std::string &_host);
+			      std::string_view _host);
 
 	~Alpn01ChallengeRecord() noexcept;
 
