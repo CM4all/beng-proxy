@@ -1186,6 +1186,13 @@ described in this section.
   path. This is private to the namespace and is deleted when the
   process exits.
 
+- ``MOUNT_NAMED_TMPFS`` mounts a new (user-writable) ``tmpfs`` on the
+  given path that can be shared across processes.  The payload is the
+  name of the tmpfs source directory and the target directory
+  (absolute path within the new root), separated by a null byte.  The
+  ``tmpfs`` will be deleted if it is not used for a certain amount of
+  time.
+
 - ``MOUNT_EMPTY`` mounts a new (read-only) ``tmpfs`` on the given
   path. Inside this filesystem, mount points will be created
   automatically.  Other than that, it can be used to hide parts of an
