@@ -3,7 +3,7 @@ cm4all-beng-proxy (18.0.28) unstable; urgency=low
   * spawn: fix regression on Debian Bullseye
   * lb: Prometheus exporter supports gzip compression
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Thu, 18 May 2023 21:25:06 +0200
 
 cm4all-beng-proxy (18.0.27) unstable; urgency=low
 
