@@ -810,6 +810,7 @@ executable(
     fmt_dep,
     lb_config_dep,
     pipe_dep,
+    istream_extra_dep,
     memory_istream_dep,
     access_log_client_dep,
     liblua,

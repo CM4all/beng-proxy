@@ -14,12 +14,14 @@
 #include "http/Headers.hxx"
 #include "http/IncomingRequest.hxx"
 #include "http/Method.hxx"
+#include "http/PHeaderUtil.cxx"
 #include "http/ResponseHandler.hxx"
 #include "http/GlueClient.hxx"
 #include "util/Cancellable.hxx"
 #include "util/MimeType.hxx"
 #include "istream/ConcatIstream.hxx"
 #include "istream/DelayedIstream.hxx"
+#include "istream/GzipIstream.hxx"
 #include "istream/UnusedHoldPtr.hxx"
 #include "istream/istream_catch.hxx"
 #include "memory/istream_gb.hxx"
@@ -159,6 +161,11 @@ LbPrometheusExporter::HandleHttpRequest(IncomingHttpRequest &request,
 				    istream_catch_new(pool,
 						      std::move(hold),
 						      CatchCallback, nullptr));
+	}
+
+	if (http_client_accepts_encoding(request.headers, "gzip")) {
+		headers.Write("content-encoding", "gzip");
+		body = NewGzipIstream(pool, std::move(body));
 	}
 
 	request.SendResponse(HttpStatus::OK, std::move(headers),
