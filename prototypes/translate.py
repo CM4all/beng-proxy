@@ -810,7 +810,10 @@ class Translation(Protocol):
             response.response_header_forward((HEADER_GROUP_OTHER, HEADER_FORWARD_YES))
         elif uri[:5] == '/dav/':
             response.packet(TRANSLATE_BASE, "/dav/")
+            response.packet(TRANSLATE_EASY_BASE)
             response.packet(TRANSLATE_WAS, davos_plain)
+            response.packet(TRANSLATE_SCRIPT_NAME, "/dav/")
+            response.packet(TRANSLATE_PATH_INFO, "")
             response.packet(TRANSLATE_NO_NEW_PRIVS)
             response.pair('DAVOS_DOCUMENT_ROOT', '/var/www')
             response.pair('DAVOS_MOUNT', '/dav/')
