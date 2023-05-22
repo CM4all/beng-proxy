@@ -25,8 +25,8 @@ public:
 	explicit FileWriter(BufferedOutputStream &_os) noexcept
 		:os(_os) {}
 
-	void WriteBuffer(const void *buffer, size_t size) {
-		os.Write(buffer, size);
+	void WriteBuffer(std::span<const std::byte> src) {
+		os.Write(src);
 	}
 
 	template<typename T>
@@ -60,12 +60,12 @@ public:
 			return;
 		}
 
-		uint32_t length = strlen(s);
-		if (length >= UINT16_MAX)
+		const std::string_view sv{s};
+		if (sv.size() >= UINT16_MAX)
 			throw SessionSerializerError("String is too long");
 
-		Write16(length);
-		WriteBuffer(s, length);
+		Write16(sv.size());
+		WriteBuffer(AsBytes(sv));
 	}
 
 	void Write(std::span<const std::byte> buffer) {
@@ -78,7 +78,7 @@ public:
 			throw SessionSerializerError("Buffer is too long");
 
 		Write16(buffer.size());
-		WriteBuffer(buffer.data(), buffer.size());
+		WriteBuffer(buffer);
 	}
 
 	void Write(std::string_view s) {
