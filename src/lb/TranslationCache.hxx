@@ -23,8 +23,10 @@ public:
 		uint16_t https_only = 0;
 		std::string redirect, message, pool, canonical_host, site;
 
+		[[nodiscard]]
 		explicit Item(const TranslateResponse &response) noexcept;
 
+		[[gnu::pure]]
 		size_t GetAllocatedMemory() const noexcept {
 			return sizeof(*this) + redirect.length() + message.length() +
 				pool.length() + canonical_host.length() + site.length();
@@ -37,8 +39,11 @@ public:
 
 	public:
 		constexpr Vary() noexcept = default;
+
+		[[nodiscard]]
 		explicit Vary(const TranslateResponse &response) noexcept;
 
+		[[nodiscard]]
 		constexpr operator bool() const noexcept {
 			return host || listener_tag;
 		}
@@ -63,6 +68,7 @@ private:
 	Vary seen_vary;
 
 public:
+	[[nodiscard]]
 	LbTranslationCache() noexcept
 		:logger("tcache") {}
 
@@ -72,6 +78,7 @@ public:
 	void Clear() noexcept;
 	void Invalidate(const TranslationInvalidateRequest &request) noexcept;
 
+	[[nodiscard]]
 	const Item *Get(const IncomingHttpRequest &request,
 			const char *listener_tag) noexcept;
 
