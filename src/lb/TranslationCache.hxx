@@ -23,7 +23,7 @@ public:
 		uint16_t https_only = 0;
 		std::string redirect, message, pool, canonical_host, site;
 
-		explicit Item(const TranslateResponse &response);
+		explicit Item(const TranslateResponse &response) noexcept;
 
 		size_t GetAllocatedMemory() const noexcept {
 			return sizeof(*this) + redirect.length() + message.length() +
@@ -36,19 +36,19 @@ public:
 		bool listener_tag = false;
 
 	public:
-		Vary() = default;
-		explicit Vary(const TranslateResponse &response);
+		constexpr Vary() noexcept = default;
+		explicit Vary(const TranslateResponse &response) noexcept;
 
-		constexpr operator bool() const {
+		constexpr operator bool() const noexcept {
 			return host || listener_tag;
 		}
 
-		void Clear() {
+		void Clear() noexcept {
 			host = false;
 			listener_tag = false;
 		}
 
-		Vary &operator|=(const Vary other) {
+		Vary &operator|=(const Vary other) noexcept {
 			host |= other.host;
 			listener_tag |= other.listener_tag;
 			return *this;
@@ -63,19 +63,19 @@ private:
 	Vary seen_vary;
 
 public:
-	LbTranslationCache()
+	LbTranslationCache() noexcept
 		:logger("tcache") {}
 
 	[[gnu::pure]]
 	size_t GetAllocatedMemory() const noexcept;
 
-	void Clear();
-	void Invalidate(const TranslationInvalidateRequest &request);
+	void Clear() noexcept;
+	void Invalidate(const TranslationInvalidateRequest &request) noexcept;
 
 	const Item *Get(const IncomingHttpRequest &request,
-			const char *listener_tag);
+			const char *listener_tag) noexcept;
 
 	void Put(const IncomingHttpRequest &request,
 		 const char *listener_tag,
-		 const TranslateResponse &response);
+		 const TranslateResponse &response) noexcept;
 };

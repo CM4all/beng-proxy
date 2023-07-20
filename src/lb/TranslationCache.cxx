@@ -12,13 +12,13 @@
 
 using std::string_view_literals::operator""sv;
 
-LbTranslationCache::Vary::Vary(const TranslateResponse &response)
+LbTranslationCache::Vary::Vary(const TranslateResponse &response) noexcept
 	:host(response.VaryContains(TranslationCommand::HOST)),
 	 listener_tag(response.VaryContains(TranslationCommand::LISTENER_TAG)) {}
 
 [[gnu::pure]]
 static std::string_view
-WithVary(const char *value, bool vary)
+WithVary(const char *value, bool vary) noexcept
 {
 	if (!vary)
 		return {};
@@ -54,7 +54,7 @@ class LbTranslationCacheKeyIterator {
 public:
 	LbTranslationCacheKeyIterator(LbTranslationCache::Vary vary,
 				      const IncomingHttpRequest &request,
-				      const char *_listener_tag)
+				      const char *_listener_tag) noexcept
 		:host(vary.host
 		      ? WithVary(request.headers.Get("host"), vary.host)
 		      : std::string_view{}),
@@ -64,7 +64,7 @@ public:
 	/**
 	 * Generates the next key.  Call this until it returns nullptr.
 	 */
-	const char *NextKey() {
+	const char *NextKey() noexcept {
 		if (last <= 0)
 			return nullptr;
 
@@ -76,35 +76,35 @@ public:
 	/**
 	 * Generates a key for storing into the cache.
 	 */
-	const char *FullKey() const {
+	const char *FullKey() const noexcept {
 		return MakeKey(((host.data() != nullptr) * HOST) |
 			       ((listener_tag.data() != nullptr) * LISTENER_TAG));
 	}
 
 private:
-	static constexpr bool HasHost(unsigned i) {
+	static constexpr bool HasHost(unsigned i) noexcept {
 		return i & HOST;
 	}
 
-	static constexpr bool HasListenerTag(unsigned i) {
+	static constexpr bool HasListenerTag(unsigned i) noexcept {
 		return i & LISTENER_TAG;
 	}
 
-	bool IsInactive(int i) const {
+	bool IsInactive(int i) const noexcept {
 		assert(i < 4);
 
 		return (HasHost(i) && host.data() == nullptr) ||
 			(HasListenerTag(i) && listener_tag.data() == nullptr);
 	}
 
-	unsigned NextIndex(unsigned i) const {
+	unsigned NextIndex(unsigned i) const noexcept {
 		assert(i <= 4);
 
 		for (--i; IsInactive(i); --i) {}
 		return i;
 	}
 
-	const char *MakeKey(unsigned i) const {
+	const char *MakeKey(unsigned i) const noexcept {
 		assert(i < 4);
 
 		char *result = buffer.get(), *p = result;
@@ -130,7 +130,7 @@ private:
 	}
 };
 
-LbTranslationCache::Item::Item(const TranslateResponse &response)
+LbTranslationCache::Item::Item(const TranslateResponse &response) noexcept
 	:status(response.status),
 	 https_only(response.https_only)
 {
@@ -163,14 +163,14 @@ LbTranslationCache::GetAllocatedMemory() const noexcept
 }
 
 void
-LbTranslationCache::Clear()
+LbTranslationCache::Clear() noexcept
 {
 	cache.Clear();
 	seen_vary.Clear();
 }
 
 static bool
-KeyVaryMatch(std::string_view item, const char *request)
+KeyVaryMatch(std::string_view item, const char *request) noexcept
 {
 	if (request == nullptr)
 		return true;
@@ -187,7 +187,7 @@ KeyVaryMatch(std::string_view item, const char *request)
  * #TranslateRequest (for #CONTROL_TCACHE_INVALIDATE).
  */
 static bool
-MatchKey(const char *key, const TranslateRequest &request)
+MatchKey(const char *key, const TranslateRequest &request) noexcept
 {
 	const char *separator = strchr(key, '|');
 	assert(separator != nullptr);
@@ -197,20 +197,20 @@ MatchKey(const char *key, const TranslateRequest &request)
 }
 
 static bool
-MatchInvalidate(const std::string &item, const char *vary)
+MatchInvalidate(const std::string &item, const char *vary) noexcept
 {
 	return vary == nullptr || item == vary;
 }
 
 static bool
 MatchItem(const LbTranslationCache::Item &item,
-	  const TranslationInvalidateRequest &request)
+	  const TranslationInvalidateRequest &request) noexcept
 {
 	return MatchInvalidate(item.site, request.site);
 }
 
 void
-LbTranslationCache::Invalidate(const TranslationInvalidateRequest &request)
+LbTranslationCache::Invalidate(const TranslationInvalidateRequest &request) noexcept
 {
 	if ((request.host != nullptr && !seen_vary.host) ||
 	    (request.listener_tag != nullptr && !seen_vary.listener_tag))
@@ -223,7 +223,7 @@ LbTranslationCache::Invalidate(const TranslationInvalidateRequest &request)
 
 const LbTranslationCache::Item *
 LbTranslationCache::Get(const IncomingHttpRequest &request,
-			const char *listener_tag)
+			const char *listener_tag) noexcept
 {
 	LbTranslationCacheKeyIterator ki(seen_vary, request, listener_tag);
 
@@ -242,7 +242,7 @@ LbTranslationCache::Get(const IncomingHttpRequest &request,
 void
 LbTranslationCache::Put(const IncomingHttpRequest &request,
 			const char *listener_tag,
-			const TranslateResponse &response)
+			const TranslateResponse &response) noexcept
 {
 	if (response.max_age == std::chrono::seconds::zero())
 		/* not cacheable */
