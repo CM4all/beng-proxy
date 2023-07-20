@@ -228,7 +228,7 @@ LbTranslationCache::Get(const IncomingHttpRequest &request,
 	LbTranslationCacheKeyIterator ki(seen_vary, request, listener_tag);
 
 	while (const char *key = ki.NextKey()) {
-		const LbTranslationCache::Item *item = cache.Get(key);
+		const LbTranslationCache::Item *item = cache.Get(std::string_view{key});
 		if (item != nullptr) {
 			logger(4, "hit '", key, "'");
 			return item;

@@ -56,7 +56,8 @@ public:
 	};
 
 private:
-	using Cache = StaticCache<std::string, Item, 65536, 131071>;
+	using Cache = StaticCache<std::string, Item, 65536, 131071,
+		std::hash<std::string_view>, std::equal_to<std::string_view>>;
 	Cache cache;
 
 	Vary seen_vary;
