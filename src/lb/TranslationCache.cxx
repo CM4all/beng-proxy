@@ -262,5 +262,5 @@ LbTranslationCache::Put(const IncomingHttpRequest &request,
 
 	logger(4, "store '", key, "'");
 
-	cache.PutOrReplace(key, Item(response));
+	cache.PutOrReplace(std::string_view{key}, Item(response));
 }
