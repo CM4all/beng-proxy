@@ -326,15 +326,20 @@ LbCluster::PickZeroconf(const Expiry now, sticky_hash_t sticky_hash) noexcept
 	if (sticky_hash != 0) {
 		assert(config.sticky_mode != StickyMode::NONE);
 
-		if (!config.sticky_cache)
-			/* use consistent hashing */
+		switch (config.sticky_method) {
+		case LbClusterConfig::StickyMethod::CONSISTENT_HASHING:
 			return &PickZeroconfHashRing(now, sticky_hash);
 
-		if (const auto *member = PickZeroconfCache(now, sticky_hash))
-			return member;
+		case LbClusterConfig::StickyMethod::CACHE:
+			if (const auto *member = PickZeroconfCache(now,
+								   sticky_hash))
+				return member;
 
-		/* cache miss or cached node not active: fall back to
-		   round-robin and remember the new pick in the cache */
+			/* cache miss or cached node not active: fall
+			   back to round-robin and remember the new
+			   pick in the cache */
+			break;
+		}
 	}
 
 	auto &i = PickNextGoodZeroconf(now);
@@ -356,7 +361,8 @@ LbCluster::FillActive() noexcept
 	for (auto &i : zeroconf_members)
 		active_zeroconf_members.push_back(&i);
 
-	if (!config.sticky_cache) {
+	switch (config.sticky_method) {
+	case LbClusterConfig::StickyMethod::CONSISTENT_HASHING:
 		if (sticky_ring == nullptr)
 			/* lazy allocation */
 			sticky_ring = std::make_unique<StickyRing>();
@@ -365,6 +371,11 @@ LbCluster::FillActive() noexcept
 				    [](ZeroconfMemberMap::const_pointer member) noexcept {
 					    return member->GetAddress();
 				    });
+
+		break;
+
+	case LbClusterConfig::StickyMethod::CACHE:
+		break;
 	}
 }
 

@@ -109,12 +109,14 @@ Example::
 - ``sticky``: specify how a node is chosen for a request,
   see :ref:`sticky` for details.
 
-- ``sticky_cache``: if ``yes``, consistent hashing is disabled in
-  favor of an assignment cache. The advantage of that cache is that
-  existing clients will not be reassigned when new nodes appear. The
-  major disadvantage is that this works only with a single
-  :program:`beng-lb` instance, and the cache is lost on restart. The
-  default is ``no``.
+- ``sticky_method``: one of:
+
+  - ``consistent_hashing`` (the default)
+
+  - ``cache``: an assignment cache. The advantage of that cache is that
+    existing clients will not be reassigned when new nodes appear. The
+    major disadvantage is that this works only with a single
+    :program:`beng-lb` instance, and the cache is lost on restart.
 
 - ``session_cookie``: the name of the session cookie for
   ``sticky session_modulo``.

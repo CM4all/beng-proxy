@@ -546,6 +546,22 @@ ParseStickyMode(const char *s)
 		throw LineParser::Error("Unknown sticky mode");
 }
 
+#ifdef HAVE_AVAHI
+
+[[gnu::pure]]
+static LbClusterConfig::StickyMethod
+ParseStickyMethod(const char *s)
+{
+	if (StringIsEqual(s, "consistent_hashing"))
+		return LbClusterConfig::StickyMethod::CONSISTENT_HASHING;
+	else if (StringIsEqual(s, "cache"))
+		return LbClusterConfig::StickyMethod::CACHE;
+	else
+		throw LineParser::Error("Unknown sticky method");
+}
+
+#endif
+
 void
 LbConfigParser::Cluster::ParseLine(FileLineParser &line)
 {
@@ -559,9 +575,18 @@ LbConfigParser::Cluster::ParseLine(FileLineParser &line)
 			throw LineParser::Error("Invalid domain name");
 	} else if (StringIsEqual(word, "sticky")) {
 		config.sticky_mode = ParseStickyMode(line.ExpectValueAndEnd());
-	} else if (StringIsEqual(word, "sticky_cache")) {
+	} else if (StringIsEqual(word, "sticky_method")) {
 #ifdef HAVE_AVAHI
-		config.sticky_cache = line.NextBool();
+		config.sticky_method = ParseStickyMethod(line.ExpectValueAndEnd());
+#else
+		throw LineParser::Error("Zeroconf support is disabled at compile time");
+#endif
+	} else if (StringIsEqual(word, "sticky_cache")) {
+		// deprecated since 18.0.29, use "sticky_method" instead
+#ifdef HAVE_AVAHI
+		config.sticky_method = line.NextBool()
+			? LbClusterConfig::StickyMethod::CACHE
+			: LbClusterConfig::StickyMethod::CONSISTENT_HASHING;
 		line.ExpectEnd();
 #else
 		throw LineParser::Error("Zeroconf support is disabled at compile time");

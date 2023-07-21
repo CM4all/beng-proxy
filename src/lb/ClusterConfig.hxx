@@ -92,11 +92,14 @@ struct LbClusterConfig {
 	bool mangle_via = false;
 
 #ifdef HAVE_AVAHI
-	/**
-	 * Enable the #StickyCache for Zeroconf?  By default, consistent
-	 * hashing using #HashRing is used.
-	 */
-	bool sticky_cache = false;
+	enum class StickyMethod : uint_least8_t {
+		CONSISTENT_HASHING,
+
+		/**
+		 * Enable the #StickyCache for Zeroconf?
+		 */
+		CACHE,
+	} sticky_method = StickyMethod::CONSISTENT_HASHING;
 #endif
 
 	LbSimpleHttpResponse fallback;
