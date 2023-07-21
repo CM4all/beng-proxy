@@ -200,14 +200,14 @@ SessionManager::Attach(RealmSessionLease lease, const char *realm,
 		if (lease) {
 			/* assign new "attach" value to the given session */
 			lease->parent.attach = attach;
-			sessions_by_attach.insert(it, lease->parent);
+			sessions_by_attach.insert_commit(it, lease->parent);
 			return lease;
 		} else {
 			/* create new session */
 
 			auto l = CreateSession();
 			l->attach = attach;
-			sessions_by_attach.insert(it, *l);
+			sessions_by_attach.insert_commit(it, *l);
 
 			return {std::move(l), realm};
 		}

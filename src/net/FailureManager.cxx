@@ -75,7 +75,7 @@ FailureManager::Make(SocketAddress address) noexcept
 	auto [position, inserted] = failures.insert_check(address);
 	if (inserted) {
 		Failure *failure = new Failure(address);
-		failures.insert(position, *failure);
+		failures.insert_commit(position, *failure);
 		return *failure;
 	} else {
 		return *position;

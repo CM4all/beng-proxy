@@ -408,7 +408,7 @@ tcache::MakePerHost(const char *host) noexcept
 		return *position;
 
 	auto ph = new TranslateCachePerHost(*this, host);
-	per_host.insert(position, *ph);
+	per_host.insert_commit(position, *ph);
 	return *ph;
 }
 
@@ -458,7 +458,7 @@ tcache::MakePerSite(const char *site) noexcept
 		return *position;
 
 	auto ph = new TranslateCachePerSite(*this, site);
-	per_site.insert(position, *ph);
+	per_site.insert_commit(position, *ph);
 	return *ph;
 }
 

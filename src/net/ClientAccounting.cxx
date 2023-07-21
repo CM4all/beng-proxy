@@ -160,7 +160,7 @@ ClientAccountingMap::Get(SocketAddress _address) noexcept
 	auto [i, inserted] = map.insert_check(address);
 	if (inserted) {
 		auto *per_client = new PerClientAccounting(*this, address);
-		map.insert(i, *per_client);
+		map.insert_commit(i, *per_client);
 		return per_client;
 	} else
 		return &*i;
