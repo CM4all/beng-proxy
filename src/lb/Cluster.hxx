@@ -281,6 +281,15 @@ private:
 						   sticky_hash_t sticky_hash) noexcept;
 
 	/**
+	 * Like PickZeroconf(), but pick using #StickyCache.  Returns
+	 * nullptr if the hash was not found in the cache.
+	 *
+	 * Zeroconf only.
+	 */
+	const ZeroconfMember *PickZeroconfCache(Expiry now,
+						sticky_hash_t sticky_hash) noexcept;
+
+	/**
 	 * Obtain a HTTP connection to a Zeroconf member.
 	 */
 	void ConnectZeroconfHttp(AllocatorPtr alloc,

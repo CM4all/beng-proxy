@@ -286,6 +286,32 @@ LbCluster::PickZeroconfHashRing(Expiry now,
 	}
 }
 
+inline const LbCluster::ZeroconfMember *
+LbCluster::PickZeroconfCache(Expiry now,
+			     sticky_hash_t sticky_hash) noexcept
+{
+	/* look up the sticky_hash in the StickyCache */
+	if (sticky_cache == nullptr)
+		/* lazy cache allocation */
+		sticky_cache = std::make_unique<StickyCache>();
+
+	const auto *cached = sticky_cache->Get(sticky_hash);
+	if (cached != nullptr) {
+		/* cache hit */
+		auto i = zeroconf_members.find(*cached,
+					       zeroconf_members.key_comp());
+		if (i != zeroconf_members.end() &&
+		    // TODO: allow FAILURE_FADE here?
+		    i->GetFailureInfo().Check(now))
+			/* the node is active, we can use it */
+			return &*i;
+
+		sticky_cache->Remove(sticky_hash);
+	}
+
+	return nullptr;
+}
+
 const LbCluster::ZeroconfMember *
 LbCluster::PickZeroconf(const Expiry now, sticky_hash_t sticky_hash) noexcept
 {
@@ -304,24 +330,8 @@ LbCluster::PickZeroconf(const Expiry now, sticky_hash_t sticky_hash) noexcept
 			/* use consistent hashing */
 			return &PickZeroconfHashRing(now, sticky_hash);
 
-		/* look up the sticky_hash in the StickyCache */
-		if (sticky_cache == nullptr)
-			/* lazy cache allocation */
-			sticky_cache = std::make_unique<StickyCache>();
-
-		const auto *cached = sticky_cache->Get(sticky_hash);
-		if (cached != nullptr) {
-			/* cache hit */
-			auto i = zeroconf_members.find(*cached,
-						       zeroconf_members.key_comp());
-			if (i != zeroconf_members.end() &&
-			    // TODO: allow FAILURE_FADE here?
-			    i->GetFailureInfo().Check(now))
-				/* the node is active, we can use it */
-				return &*i;
-
-			sticky_cache->Remove(sticky_hash);
-		}
+		if (const auto *member = PickZeroconfCache(now, sticky_hash))
+			return member;
 
 		/* cache miss or cached node not active: fall back to
 		   round-robin and remember the new pick in the cache */
