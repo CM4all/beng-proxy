@@ -103,9 +103,9 @@ class LbCluster final
 
 		AllocatedSocketAddress address;
 
-		FailureRef failure;
+		const FailureRef failure;
 
-		std::unique_ptr<LbMonitorRef> monitor;
+		const std::unique_ptr<LbMonitorRef> monitor;
 
 		mutable std::string log_name;
 
