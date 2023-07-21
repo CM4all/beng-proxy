@@ -109,6 +109,12 @@ class LbCluster final
 
 		mutable std::string log_name;
 
+		/**
+		 * The precalculated hash of #address for Rendezvous
+		 * Hashing.
+		 */
+		sticky_hash_t address_hash;
+
 	public:
 		ZeroconfMember(const std::string &_key, SocketAddress _address,
 			       ReferencedFailureInfo &_failure,
@@ -126,8 +132,10 @@ class LbCluster final
 			return address;
 		}
 
-		void SetAddress(SocketAddress _address) noexcept {
-			address = _address;
+		void SetAddress(SocketAddress _address) noexcept;
+
+		sticky_hash_t GetAddressHash() const noexcept {
+			return address_hash;
 		}
 
 		auto &GetFailureRef() const noexcept {
@@ -279,6 +287,15 @@ private:
 	 */
 	const ZeroconfMember &PickZeroconfHashRing(Expiry now,
 						   sticky_hash_t sticky_hash) noexcept;
+
+	/**
+	 * Like PickZeroconf(), but pick using Rendezvous Hashing.
+	 *
+	 * To be called by PickZeroconf(), which has already
+	 * lazy-initialized and verified everything.
+	 */
+	const ZeroconfMember &PickZeroconfRendezvous(Expiry now,
+						     sticky_hash_t sticky_hash) noexcept;
 
 	/**
 	 * Like PickZeroconf(), but pick using #StickyCache.  Returns

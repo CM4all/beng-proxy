@@ -113,6 +113,8 @@ Example::
 
   - ``consistent_hashing`` (the default)
 
+  - ``rendezvous_hashing``
+
   - ``cache``: an assignment cache. The advantage of that cache is that
     existing clients will not be reassigned when new nodes appear. The
     major disadvantage is that this works only with a single

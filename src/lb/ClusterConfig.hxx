@@ -95,6 +95,8 @@ struct LbClusterConfig {
 	enum class StickyMethod : uint_least8_t {
 		CONSISTENT_HASHING,
 
+		RENDEZVOUS_HASHING,
+
 		/**
 		 * Enable the #StickyCache for Zeroconf?
 		 */

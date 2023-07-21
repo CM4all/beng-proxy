@@ -2,6 +2,7 @@ cm4all-beng-proxy (18.0.29) unstable; urgency=low
 
   * lb: reduce lookup overhead in translation cache
   * lb: fix translation cache corruption bug
+  * lb: implement optional Rendezvous Hashing
 
  --   
 

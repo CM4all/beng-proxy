@@ -47,11 +47,19 @@ LbCluster::ZeroconfMember::ZeroconfMember(const std::string &_key,
 	 monitor(monitors != nullptr
 		 ? std::make_unique<LbMonitorRef>(monitors->Add(key.c_str(),
 								_address))
-		 : std::unique_ptr<LbMonitorRef>())
+		 : std::unique_ptr<LbMonitorRef>()),
+	 address_hash(MemberAddressHash(address, 0))
 {
 }
 
 LbCluster::ZeroconfMember::~ZeroconfMember() noexcept = default;
+
+inline void
+LbCluster::ZeroconfMember::SetAddress(SocketAddress _address) noexcept
+{
+	address = _address;
+	address_hash = MemberAddressHash(address, 0);
+}
 
 const char *
 LbCluster::ZeroconfMember::GetLogName() const noexcept
@@ -286,6 +294,34 @@ LbCluster::PickZeroconfHashRing(Expiry now,
 	}
 }
 
+inline const LbCluster::ZeroconfMember &
+LbCluster::PickZeroconfRendezvous(Expiry now,
+				  sticky_hash_t sticky_hash) noexcept
+{
+	assert(!active_zeroconf_members.empty());
+
+	/* sort the list of active Zeroconf members by a mix of its
+	   address hash and the request's hash */
+	std::sort(active_zeroconf_members.begin(),
+		  active_zeroconf_members.end(),
+		  [sticky_hash](const ZeroconfMember *a,
+				const ZeroconfMember *b) noexcept
+		  {
+			  // TODO is XOR good enough to mix the two hashes?
+			  return (a->GetAddressHash() ^ sticky_hash) <
+				  (b->GetAddressHash() ^ sticky_hash);
+		  });
+
+	/* return the first "good" member */
+	for (const auto &i : active_zeroconf_members) {
+		if (i->GetFailureInfo().Check(now))
+			return *i;
+	}
+
+	/* all are "bad" - return the "best" "bad" one */
+	return *active_zeroconf_members.front();
+}
+
 inline const LbCluster::ZeroconfMember *
 LbCluster::PickZeroconfCache(Expiry now,
 			     sticky_hash_t sticky_hash) noexcept
@@ -329,6 +365,9 @@ LbCluster::PickZeroconf(const Expiry now, sticky_hash_t sticky_hash) noexcept
 		switch (config.sticky_method) {
 		case LbClusterConfig::StickyMethod::CONSISTENT_HASHING:
 			return &PickZeroconfHashRing(now, sticky_hash);
+
+		case LbClusterConfig::StickyMethod::RENDEZVOUS_HASHING:
+			return &PickZeroconfRendezvous(now, sticky_hash);
 
 		case LbClusterConfig::StickyMethod::CACHE:
 			if (const auto *member = PickZeroconfCache(now,
@@ -374,6 +413,7 @@ LbCluster::FillActive() noexcept
 
 		break;
 
+	case LbClusterConfig::StickyMethod::RENDEZVOUS_HASHING:
 	case LbClusterConfig::StickyMethod::CACHE:
 		break;
 	}

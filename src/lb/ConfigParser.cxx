@@ -554,6 +554,8 @@ ParseStickyMethod(const char *s)
 {
 	if (StringIsEqual(s, "consistent_hashing"))
 		return LbClusterConfig::StickyMethod::CONSISTENT_HASHING;
+	else if (StringIsEqual(s, "rendezvous_hashing"))
+		return LbClusterConfig::StickyMethod::RENDEZVOUS_HASHING;
 	else if (StringIsEqual(s, "cache"))
 		return LbClusterConfig::StickyMethod::CACHE;
 	else
