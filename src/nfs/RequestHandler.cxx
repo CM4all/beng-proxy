@@ -28,6 +28,14 @@ void
 Request::OnNfsCacheResponse(NfsCacheHandle &handle,
 			    const struct statx &st) noexcept
 {
+	/* check request method */
+	if (request.method != HttpMethod::HEAD &&
+	    request.method != HttpMethod::GET &&
+	    !processor_focus) {
+		DispatchMethodNotAllowed("GET, HEAD");
+		return;
+	}
+
 	const TranslateResponse &tr = *translate.response;
 
 	struct file_request file_request(st.stx_size);
@@ -115,15 +123,6 @@ Request::HandleNfsAddress() noexcept
 	assert(address.server != NULL);
 	assert(address.export_name != NULL);
 	assert(address.path != NULL);
-
-	/* check request */
-
-	if (request.method != HttpMethod::HEAD &&
-	    request.method != HttpMethod::GET &&
-	    !processor_focus) {
-		DispatchMethodNotAllowed("GET, HEAD");
-		return;
-	}
 
 	/* run the delegate helper */
 

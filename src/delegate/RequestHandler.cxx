@@ -23,6 +23,15 @@
 void
 Request::OnDelegateSuccess(UniqueFileDescriptor fd)
 {
+	/* check request method */
+
+	if (request.method != HttpMethod::HEAD &&
+	    request.method != HttpMethod::GET &&
+	    !processor_focus) {
+		DispatchMethodNotAllowed("GET, HEAD");
+		return;
+	}
+
 	/* get file information */
 
 	struct statx st;
@@ -66,15 +75,6 @@ Request::HandleDelegateAddress(const DelegateAddress &address,
 			       const char *path) noexcept
 {
 	assert(path != nullptr);
-
-	/* check request */
-
-	if (request.method != HttpMethod::HEAD &&
-	    request.method != HttpMethod::GET &&
-	    !processor_focus) {
-		DispatchMethodNotAllowed("GET, HEAD");
-		return;
-	}
 
 	/* run the delegate helper */
 

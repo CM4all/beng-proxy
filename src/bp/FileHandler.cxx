@@ -279,15 +279,6 @@ Request::HandleFileAddress(const FileAddress &address) noexcept
 
 	const char *const path = address.path;
 
-	/* check request */
-
-	if (request.method != HttpMethod::HEAD &&
-	    request.method != HttpMethod::GET &&
-	    !processor_focus) {
-		DispatchMethodNotAllowed("GET, HEAD");
-		return;
-	}
-
 	if (address.delegate != nullptr) {
 		HandleDelegateAddress(*address.delegate, path);
 		return;
@@ -355,6 +346,15 @@ Request::HandleFileAddress(const FileAddress &address,
 			   UniqueFileDescriptor fd,
 			   const struct statx &st) noexcept
 {
+	/* check request method */
+
+	if (request.method != HttpMethod::HEAD &&
+	    request.method != HttpMethod::GET &&
+	    !processor_focus) {
+		DispatchMethodNotAllowed("GET, HEAD");
+		return;
+	}
+
 	/* check file type */
 
 	if (S_ISCHR(st.stx_mode)) {
