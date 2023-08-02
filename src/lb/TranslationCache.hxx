@@ -6,6 +6,7 @@
 
 #include "io/Logger.hxx"
 #include "util/StaticCache.hxx"
+#include "util/IntrusiveList.hxx"
 
 #include <string>
 
@@ -15,10 +16,14 @@ struct TranslationInvalidateRequest;
 struct TranslateResponse;
 
 class LbTranslationCache final {
+	static constexpr std::size_t N_BUCKETS = 131071;
+
 	const LLogger logger;
 
 public:
 	struct Item {
+		IntrusiveHashSetHook<IntrusiveHookMode::AUTO_UNLINK> per_site_hook;
+
 		HttpStatus status = {};
 		uint16_t https_only = 0;
 		std::string redirect, message, pool, canonical_host, site;
@@ -31,6 +36,13 @@ public:
 			return sizeof(*this) + redirect.length() + message.length() +
 				pool.length() + canonical_host.length() + site.length();
 		}
+
+		struct GetSite {
+			[[gnu::pure]]
+			std::string_view operator()(const Item &item) const noexcept {
+				return item.site;
+			}
+		};
 	};
 
 	struct Vary {
@@ -61,7 +73,19 @@ public:
 	};
 
 private:
-	using Cache = StaticCache<std::string, Item, 65536, 131071,
+	/**
+	 * This hash table maps each site name to the #Item instances
+	 * with that site.  This is used to optimize the common
+	 * INVALIDATE=SITE response, to avoid traversing the whole
+	 * cache.
+	 */
+	IntrusiveHashSet<Item, N_BUCKETS,
+			 IntrusiveHashSetOperators<std::hash<std::string_view>,
+						   std::equal_to<std::string_view>,
+						   Item::GetSite>,
+			 IntrusiveHashSetMemberHookTraits<&Item::per_site_hook>> per_site;
+
+	using Cache = StaticCache<std::string, Item, 65536, N_BUCKETS,
 		std::hash<std::string_view>, std::equal_to<std::string_view>>;
 	Cache cache;
 

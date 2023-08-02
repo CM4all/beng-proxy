@@ -1,6 +1,7 @@
 cm4all-beng-proxy (18.0.30) unstable; urgency=low
 
   * bp: check request method after opening a static file
+  * lb/translation: optimize cache invalidation with SITE filter
 
  --   
 

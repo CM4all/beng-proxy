@@ -216,9 +216,17 @@ LbTranslationCache::Invalidate(const TranslationInvalidateRequest &request) noex
 	    (request.listener_tag != nullptr && !seen_vary.listener_tag))
 		return;
 
-	cache.RemoveIf([&request](const std::string &key, const Item &item){
-		return MatchKey(key.c_str(), request) && MatchItem(item, request);
-	});
+	if (request.site != nullptr)
+		per_site.remove_and_dispose_key_if(request.site, [this, &request](const Item &item){
+			const auto &key = cache.KeyOf(item);
+			return MatchKey(key.c_str(), request) && MatchItem(item, request);
+		}, [this](Item *item){
+			cache.RemoveItem(*item);
+		});
+	else
+		cache.RemoveIf([&request](const std::string &key, const Item &item){
+			return MatchKey(key.c_str(), request) && MatchItem(item, request);
+		});
 }
 
 const LbTranslationCache::Item *
@@ -262,5 +270,7 @@ LbTranslationCache::Put(const IncomingHttpRequest &request,
 
 	logger(4, "store '", key, "'");
 
-	cache.PutOrReplace(std::string_view{key}, response);
+	auto &item = cache.PutOrReplace(std::string_view{key}, response);
+	if (!item.site.empty())
+		per_site.insert(item);
 }
