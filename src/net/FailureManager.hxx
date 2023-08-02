@@ -38,7 +38,9 @@ class FailureManager {
 
 	static constexpr size_t N_BUCKETS = 3779;
 
-	using FailureSet = IntrusiveHashSet<Failure, N_BUCKETS, Hash, Equal>;
+	using FailureSet =
+		IntrusiveHashSet<Failure, N_BUCKETS,
+				 IntrusiveHashSetOperators<Hash, Equal>>;
 
 	FailureSet failures;
 

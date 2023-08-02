@@ -245,7 +245,8 @@ class FilterCache final : LeakDetector {
 	 * Lookup table to speed up FlushTag().
 	 */
 	IntrusiveHashSet<FilterCacheItem, 65521,
-			 FilterCacheItem::TagHash, FilterCacheItem::TagEqual,
+			 IntrusiveHashSetOperators<FilterCacheItem::TagHash,
+						   FilterCacheItem::TagEqual>,
 			 IntrusiveHashSetMemberHookTraits<&FilterCacheItem::per_tag_hook>> per_tag;
 
 	FarTimerEvent compress_timer;

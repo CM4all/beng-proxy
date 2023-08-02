@@ -115,8 +115,8 @@ class ClientAccountingMap {
 	const std::size_t max_connections;
 
 	using Map = IntrusiveHashSet<PerClientAccounting, 65521,
-				     PerClientAccounting::Hash,
-				     PerClientAccounting::Equal>;
+				     IntrusiveHashSetOperators<PerClientAccounting::Hash,
+							       PerClientAccounting::Equal>>;
 	Map map;
 
 	FarTimerEvent cleanup_timer;

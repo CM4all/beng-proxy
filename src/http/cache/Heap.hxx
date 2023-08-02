@@ -39,7 +39,8 @@ class HttpCacheHeap {
 	 * Lookup table to speed up FlushTag().
 	 */
 	IntrusiveHashSet<HttpCacheItem, 65521,
-			 HttpCacheItem::TagHash, HttpCacheItem::TagEqual,
+			 IntrusiveHashSetOperators<HttpCacheItem::TagHash,
+						   HttpCacheItem::TagEqual>,
 			 IntrusiveHashSetMemberHookTraits<&HttpCacheItem::per_tag_hook>> per_tag;
 
 public:

@@ -145,7 +145,8 @@ class Cache {
 	size_t size = 0;
 
 	using ItemSet = IntrusiveHashSet<CacheItem, 65521,
-					 CacheItem::Hash, CacheItem::Equal,
+					 IntrusiveHashSetOperators<CacheItem::Hash,
+								   CacheItem::Equal>,
 					 IntrusiveHashSetMemberHookTraits<&CacheItem::set_hook>>;
 
 	ItemSet items;

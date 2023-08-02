@@ -322,7 +322,10 @@ struct tcache {
 	 * #TranslateCachePerHost.  This is used to optimize the common
 	 * INVALIDATE=HOST response, to avoid traversing the whole cache.
 	 */
-	using PerHostSet = IntrusiveHashSet<TranslateCachePerHost, N_BUCKETS>;
+	using PerHostSet =
+		IntrusiveHashSet<TranslateCachePerHost, N_BUCKETS,
+				 IntrusiveHashSetOperators<TranslateCachePerHost::Hash,
+							   TranslateCachePerHost::Equal>>;
 	PerHostSet per_host;
 
 	/**
@@ -330,7 +333,11 @@ struct tcache {
 	 * #TranslateCachePerSite.  This is used to optimize the common
 	 * INVALIDATE=SITE response, to avoid traversing the whole cache.
 	 */
-	using PerSiteSet = IntrusiveHashSet<TranslateCachePerSite, N_BUCKETS>;
+	using PerSiteSet =
+		IntrusiveHashSet<TranslateCachePerSite, N_BUCKETS,
+				 IntrusiveHashSetOperators<TranslateCachePerSite::Hash,
+							   TranslateCachePerSite::Equal>>;
+
 	PerSiteSet per_site;
 
 	Cache cache;

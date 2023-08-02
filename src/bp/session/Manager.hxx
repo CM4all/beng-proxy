@@ -77,14 +77,15 @@ class SessionManager {
 	static constexpr unsigned N_BUCKETS = 65521;
 
 	using Set = IntrusiveHashSet<Session, N_BUCKETS,
-				     SessionHash, SessionEqual,
+				     IntrusiveHashSetOperators<SessionHash, SessionEqual>,
 				     IntrusiveHashSetMemberHookTraits<&Session::set_hook>,
 				     true>;
 
 	Set sessions;
 
 	using ByAttach = IntrusiveHashSet<Session, N_BUCKETS,
-					  SessionAttachHash, SessionAttachEqual,
+					  IntrusiveHashSetOperators<SessionAttachHash,
+								    SessionAttachEqual>,
 					  IntrusiveHashSetMemberHookTraits<&Session::by_attach_hook>,
 					  true>;
 
