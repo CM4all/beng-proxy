@@ -29,6 +29,8 @@
 #include "util/IntrusiveList.hxx"
 #include "util/SpanCast.hxx"
 
+#include <cassert>
+
 #include <time.h>
 #include <string.h>
 #include <stdlib.h>
@@ -45,29 +47,10 @@ static constexpr std::size_t MAX_FILE_NOT_FOUND = 256;
 static constexpr std::size_t MAX_DIRECTORY_INDEX = 256;
 static constexpr std::size_t MAX_READ_FILE = 256;
 
-struct TranslateCachePerHost;
-struct TranslateCachePerSite;
-
 struct TranslateCacheItem final : PoolHolder, CacheItem {
 	using SiblingsHook = IntrusiveListHook<IntrusiveHookMode::NORMAL>;
 
-	/**
-	 * A doubly linked list of cache items with the same HOST request
-	 * string.  Only those that had VARY=HOST in the response are
-	 * added to the list.  Check per_host!=nullptr to check whether
-	 * this item lives in such a list.
-	 */
-	SiblingsHook per_host_siblings;
-	TranslateCachePerHost *per_host = nullptr;
-
-	/**
-	 * A doubly linked list of cache items with the same SITE response
-	 * string.  Only those that had a #TranslationCommand::SITE packet in the
-	 * response are added to the list.  Check per_site!=nullptr to
-	 * check whether this item lives in such a list.
-	 */
-	SiblingsHook per_site_siblings;
-	TranslateCachePerSite *per_site = nullptr;
+	IntrusiveHashSetHook<IntrusiveHookMode::AUTO_UNLINK> per_host_siblings, per_site_siblings;
 
 	struct {
 		const char *param;
@@ -150,121 +133,29 @@ struct TranslateCacheItem final : PoolHolder, CacheItem {
 	/* virtual methods from class CacheItem */
 	bool Validate() const noexcept override;
 	void Destroy() noexcept override;
-};
 
-struct TranslateCachePerHost
-	: IntrusiveHashSetHook<IntrusiveHookMode::NORMAL>
-{
-	using ItemList =
-		IntrusiveList<TranslateCacheItem,
-			      IntrusiveListMemberHookTraits<&TranslateCacheItem::per_host_siblings>>;
-
-	/**
-	 * A double-linked list of #TranslateCacheItems (by its attribute
-	 * per_host_siblings).
-	 *
-	 * This must be the first attribute in the struct.
-	 */
-	ItemList items;
-
-	struct tcache &tcache;
-
-	/**
-	 * The hashmap key.
-	 */
-	const std::string host;
-
-	TranslateCachePerHost(struct tcache &_tcache, const char *_host) noexcept
-		:tcache(_tcache), host(_host) {
-	}
-
-	TranslateCachePerHost(const TranslateCachePerHost &) = delete;
-
-	void Dispose() noexcept;
-	void Erase(TranslateCacheItem &item) noexcept;
-
-	unsigned Invalidate(const TranslateRequest &request,
-			    std::span<const TranslationCommand> vary) noexcept;
-
-	[[gnu::pure]]
-	static std::size_t KeyHasher(const char *key) noexcept {
-		assert(key != nullptr);
-
-		return djb_hash_string(key);
-	}
-
-	[[gnu::pure]]
-	static std::size_t ValueHasher(const TranslateCachePerHost &value) noexcept {
-		return KeyHasher(value.host.c_str());
-	}
-
-	[[gnu::pure]]
-	static bool KeyValueEqual(const char *a, const TranslateCachePerHost &b) noexcept {
-		assert(a != nullptr);
-
-		return a == b.host;
-	}
-
-	struct Hash {
+	struct StringViewHash {
 		[[gnu::pure]]
 		std::size_t operator()(std::string_view key) const noexcept {
 			return djb_hash(AsBytes(key));
 		}
 	};
 
-	struct GetKey {
+	struct GetHost {
 		[[gnu::pure]]
-		std::string_view operator()(const TranslateCachePerHost &item) const noexcept {
-			return item.host;
-		}
-	};
-};
-
-struct TranslateCachePerSite
-	: IntrusiveHashSetHook<IntrusiveHookMode::NORMAL>
-{
-	using ItemList =
-		IntrusiveList<TranslateCacheItem,
-			      IntrusiveListMemberHookTraits<&TranslateCacheItem::per_site_siblings>>;
-
-	/**
-	 * A double-linked list of #TranslateCacheItems (by its attribute
-	 * per_site_siblings).
-	 *
-	 * This must be the first attribute in the struct.
-	 */
-	ItemList items;
-
-	struct tcache &tcache;
-
-	/**
-	 * The hashmap key.
-	 */
-	const std::string site;
-
-	TranslateCachePerSite(struct tcache &_tcache, const char *_site) noexcept
-		:tcache(_tcache), site(_site) {
-	}
-
-	TranslateCachePerSite(const TranslateCachePerSite &) = delete;
-
-	void Dispose() noexcept;
-	void Erase(TranslateCacheItem &item) noexcept;
-
-	unsigned Invalidate(const TranslateRequest &request,
-			    std::span<const TranslationCommand> vary) noexcept;
-
-	struct Hash {
-		[[gnu::pure]]
-		std::size_t operator()(std::string_view key) const noexcept {
-			return djb_hash(AsBytes(key));
+		std::string_view operator()(const TranslateCacheItem &item) const noexcept {
+			return item.request.host != nullptr
+				? std::string_view{item.request.host}
+				: std::string_view{};
 		}
 	};
 
-	struct GetKey {
+	struct GetSite {
 		[[gnu::pure]]
-		std::string_view operator()(const TranslateCachePerSite &item) const noexcept {
-			return item.site;
+		std::string_view operator()(const TranslateCacheItem &item) const noexcept {
+			assert(item.response.site != nullptr);
+
+			return item.response.site;
 		}
 	};
 };
@@ -276,28 +167,31 @@ struct tcache {
 	static constexpr std::size_t N_BUCKETS = 131071;
 
 	/**
-	 * This hash table maps each host name to a
-	 * #TranslateCachePerHost.  This is used to optimize the common
-	 * INVALIDATE=HOST response, to avoid traversing the whole cache.
+	 * This hash table maps each host name to the
+	 * #TranslateCacheItem instances with that host.  This is used
+	 * to optimize the common INVALIDATE=HOST response, to avoid
+	 * traversing the whole cache.
 	 */
 	using PerHostSet =
-		IntrusiveHashSet<TranslateCachePerHost, N_BUCKETS,
-				 IntrusiveHashSetOperators<TranslateCachePerHost::Hash,
+		IntrusiveHashSet<TranslateCacheItem, N_BUCKETS,
+				 IntrusiveHashSetOperators<TranslateCacheItem::StringViewHash,
 							   std::equal_to<std::string_view>,
-							   TranslateCachePerHost::GetKey>>;
+							   TranslateCacheItem::GetHost>,
+				 IntrusiveHashSetMemberHookTraits<&TranslateCacheItem::per_host_siblings>>;
 	PerHostSet per_host;
 
 	/**
-	 * This hash table maps each site name to a
-	 * #TranslateCachePerSite.  This is used to optimize the common
-	 * INVALIDATE=SITE response, to avoid traversing the whole cache.
+	 * This hash table maps each site name to the
+	 * #TranslateCacheItem instances with that site.  This is used
+	 * to optimize the common INVALIDATE=SITE response, to avoid
+	 * traversing the whole cache.
 	 */
 	using PerSiteSet =
-		IntrusiveHashSet<TranslateCachePerSite, N_BUCKETS,
-				 IntrusiveHashSetOperators<TranslateCachePerSite::Hash,
+		IntrusiveHashSet<TranslateCacheItem, N_BUCKETS,
+				 IntrusiveHashSetOperators<TranslateCacheItem::StringViewHash,
 							   std::equal_to<std::string_view>,
-							   TranslateCachePerSite::GetKey>>;
-
+							   TranslateCacheItem::GetSite>,
+				 IntrusiveHashSetMemberHookTraits<&TranslateCacheItem::per_site_siblings>>;
 	PerSiteSet per_site;
 
 	Cache cache;
@@ -318,15 +212,12 @@ struct tcache {
 
 	~tcache() noexcept = default;
 
-	TranslateCachePerHost &MakePerHost(const char *host) noexcept;
-	TranslateCachePerSite &MakePerSite(const char *site) noexcept;
-
 	unsigned InvalidateHost(const TranslateRequest &request,
 				std::span<const TranslationCommand> vary) noexcept;
 
 	unsigned InvalidateSite(const TranslateRequest &request,
 				std::span<const TranslationCommand> vary,
-				const char *site) noexcept;
+				std::string_view site) noexcept;
 
 	void Invalidate(const TranslateRequest &request,
 			std::span<const TranslationCommand> vary,
@@ -364,103 +255,6 @@ struct TranslateCacheRequest final : TranslateHandler {
 	void OnTranslateResponse(UniquePoolPtr<TranslateResponse> response) noexcept override;
 	void OnTranslateError(std::exception_ptr error) noexcept override;
 };
-
-inline TranslateCachePerHost &
-tcache::MakePerHost(const char *host) noexcept
-{
-	assert(host != nullptr);
-
-	auto [position, inserted] = per_host.insert_check(host);
-	if (!inserted)
-		return *position;
-
-	auto ph = new TranslateCachePerHost(*this, host);
-	per_host.insert_commit(position, *ph);
-	return *ph;
-}
-
-static void
-tcache_add_per_host(struct tcache &tcache, TranslateCacheItem *item) noexcept
-{
-	assert(item->response.VaryContains(TranslationCommand::HOST));
-
-	const char *host = item->request.host;
-	if (host == nullptr)
-		host = "";
-
-	TranslateCachePerHost &per_host = tcache.MakePerHost(host);
-	per_host.items.push_back(*item);
-	item->per_host = &per_host;
-}
-
-void
-TranslateCachePerHost::Dispose() noexcept
-{
-	assert(items.empty());
-
-	tcache.per_host.erase(tcache.per_host.iterator_to(*this));
-
-	delete this;
-}
-
-void
-TranslateCachePerHost::Erase(TranslateCacheItem &item) noexcept
-{
-	assert(item.per_host == this);
-	assert(item.response.VaryContains(TranslationCommand::HOST));
-
-	items.erase(items.iterator_to(item));
-
-	if (items.empty())
-		Dispose();
-}
-
-inline TranslateCachePerSite &
-tcache::MakePerSite(const char *site) noexcept
-{
-	assert(site != nullptr);
-
-	auto [position, inserted] = per_site.insert_check(site);
-	if (!inserted)
-		return *position;
-
-	auto ph = new TranslateCachePerSite(*this, site);
-	per_site.insert_commit(position, *ph);
-	return *ph;
-}
-
-static void
-tcache_add_per_site(struct tcache &tcache, TranslateCacheItem *item) noexcept
-{
-	const char *site = item->response.site;
-	assert(site != nullptr);
-
-	TranslateCachePerSite &per_site = tcache.MakePerSite(site);
-	per_site.items.push_back(*item);
-	item->per_site = &per_site;
-}
-
-void
-TranslateCachePerSite::Dispose() noexcept
-{
-	assert(items.empty());
-
-	tcache.per_site.erase(tcache.per_site.iterator_to(*this));
-
-	delete this;
-}
-
-void
-TranslateCachePerSite::Erase(TranslateCacheItem &item) noexcept
-{
-	assert(item.per_site == this);
-	assert(item.response.site != nullptr);
-
-	items.erase(items.iterator_to(item));
-
-	if (items.empty())
-		Dispose();
-}
 
 static const char *
 tcache_uri_key(AllocatorPtr alloc, const char *uri, const char *host,
@@ -1047,75 +841,27 @@ inline unsigned
 tcache::InvalidateHost(const TranslateRequest &request,
 		       std::span<const TranslationCommand> vary) noexcept
 {
-	const char *host = request.host;
-	if (host == nullptr)
-		host = "";
+	const std::string_view host = request.host != nullptr
+		? std::string_view{request.host}
+		: std::string_view{};
 
-	auto ph = per_host.find(host);
-	if (ph == per_host.end())
-		return 0;
-
-	assert(&ph->tcache == this);
-	assert(ph->host == host);
-
-	return ph->Invalidate(request, vary);
-}
-
-inline unsigned
-TranslateCachePerHost::Invalidate(const TranslateRequest &request,
-				  std::span<const TranslationCommand> vary) noexcept
-{
-	const auto n_removed = items.remove_and_dispose_if([&request, vary](const TranslateCacheItem &item){
+	return per_host.remove_and_dispose_key_if(host, [&request, vary](const TranslateCacheItem &item){
 		return item.InvalidateMatch(vary, request);
-	},
-		[this](TranslateCacheItem *item){
-			assert(item->per_host == this);
-			item->per_host = nullptr;
-
-			tcache.cache.Remove(*item);
-		});
-
-	if (items.empty())
-		Dispose();
-
-	return n_removed;
+	}, [this](TranslateCacheItem *item){
+		cache.Remove(*item);
+	});
 }
 
 inline unsigned
 tcache::InvalidateSite(const TranslateRequest &request,
 		       std::span<const TranslationCommand> vary,
-		       const char *site) noexcept
+		       std::string_view site) noexcept
 {
-	assert(site != nullptr);
-
-	auto ph = per_site.find(site);
-	if (ph == per_site.end())
-		return 0;
-
-	assert(&ph->tcache == this);
-	assert(ph->site == site);
-
-	return ph->Invalidate(request, vary);
-}
-
-inline unsigned
-TranslateCachePerSite::Invalidate(const TranslateRequest &request,
-				  std::span<const TranslationCommand> vary) noexcept
-{
-	const auto n_removed = items.remove_and_dispose_if([&request, vary](const TranslateCacheItem &item){
+	return per_site.remove_and_dispose_key_if(site, [&request, vary](const TranslateCacheItem &item){
 		return item.InvalidateMatch(vary, request);
-	},
-		[this](TranslateCacheItem *item){
-			assert(item->per_site == this);
-			item->per_site = nullptr;
-
-			tcache.cache.Remove(*item);
-		});
-
-	if (items.empty())
-		Dispose();
-
-	return n_removed;
+	}, [this](TranslateCacheItem *item){
+		cache.Remove(*item);
+	});
 }
 
 void
@@ -1249,10 +995,10 @@ tcache_store(TranslateCacheRequest &tcr, const TranslateResponse &response)
 	}
 
 	if (response.VaryContains(TranslationCommand::HOST))
-		tcache_add_per_host(*tcr.tcache, item);
+		tcr.tcache->per_host.insert(*item);
 
 	if (response.site != nullptr)
-		tcache_add_per_site(*tcr.tcache, item);
+		tcr.tcache->per_site.insert(*item);
 
 	TranslateCacheMatchContext match_ctx{tcr.request, tcr.find_base};
 	tcr.tcache->cache.PutMatch(key, *item, tcache_item_match, &match_ctx);
@@ -1451,12 +1197,6 @@ TranslateCacheItem::Validate() const noexcept
 void
 TranslateCacheItem::Destroy() noexcept
 {
-	if (per_host != nullptr)
-		per_host->Erase(*this);
-
-	if (per_site != nullptr)
-		per_site->Erase(*this);
-
 	pool_trash(pool);
 	this->~TranslateCacheItem();
 }
