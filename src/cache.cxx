@@ -11,11 +11,11 @@
 #include <string.h>
 
 inline size_t
-CacheItem::Hash::operator()(const char *key) const noexcept
+CacheItem::Hash::operator()(const char *_key) const noexcept
 {
-	assert(key != nullptr);
+	assert(_key != nullptr);
 
-	return djb_hash_string(key);
+	return djb_hash_string(_key);
 }
 
 inline bool
