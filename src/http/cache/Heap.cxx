@@ -92,7 +92,7 @@ HttpCacheHeap::Flush() noexcept
 void
 HttpCacheHeap::FlushTag(std::string_view tag) noexcept
 {
-	per_tag.remove_and_dispose(tag, [this](auto *item){
+	per_tag.remove_and_dispose_key(tag, [this](auto *item){
 		cache.Remove(*item);
 	});
 }
