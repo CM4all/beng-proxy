@@ -290,6 +290,7 @@ public:
 
 struct FcgiClientFactory {
 	static constexpr bool can_cancel_request_body = true;
+	static constexpr bool have_content_length_header = false;
 
 	static FcgiClientConnection *New(EventLoop &event_loop,
 					 void (*f)(struct pool *pool));

@@ -1452,12 +1452,14 @@ test_buckets(auto &factory, Context &c) noexcept
 	assert(c.released);
 	assert(c.status == HttpStatus::OK);
 	assert(c.content_length == nullptr);
-	assert(c.available > 0);
-	assert(c.body_eof);
-	assert(c.body_error == nullptr);
-	assert(!c.more_buckets);
-	assert(c.total_buckets == (size_t)c.available);
-	assert(c.available_after_bucket == 0);
+	if (factory.have_content_length_header) {
+		assert(c.available > 0);
+		assert(c.body_eof);
+		assert(c.body_error == nullptr);
+		assert(!c.more_buckets);
+		assert(c.total_buckets == (size_t)c.available);
+		assert(c.available_after_bucket == 0);
+	}
 	assert(c.available_after_bucket_partial == 0);
 	assert(c.reuse);
 }
@@ -1480,12 +1482,14 @@ test_buckets_after_data(auto &factory, Context &c) noexcept
 	assert(c.released);
 	assert(c.status == HttpStatus::OK);
 	assert(c.content_length == nullptr);
-	assert(c.available > 0);
+	if (factory.have_content_length_header) {
+		assert(c.available > 0);
+		assert(!c.more_buckets);
+		assert(c.total_buckets == (size_t)c.available);
+		assert(c.available_after_bucket == 0);
+	}
 	assert(c.body_eof);
 	assert(c.body_error == nullptr);
-	assert(!c.more_buckets);
-	assert(c.total_buckets == (size_t)c.available);
-	assert(c.available_after_bucket == 0);
 	assert(c.available_after_bucket_partial == 0);
 	assert(c.reuse);
 }
@@ -1508,7 +1512,9 @@ test_buckets_close(auto &factory, Context &c) noexcept
 	assert(c.released);
 	assert(c.status == HttpStatus::OK);
 	assert(c.content_length == nullptr);
-	assert(c.available > 0);
+	if (factory.have_content_length_header) {
+		assert(c.available > 0);
+	}
 	assert(!c.body_eof);
 	assert(c.body_error == nullptr);
 	assert(!c.more_buckets);
