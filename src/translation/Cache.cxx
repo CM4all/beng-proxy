@@ -1065,17 +1065,14 @@ inline unsigned
 TranslateCachePerHost::Invalidate(const TranslateRequest &request,
 				  std::span<const TranslationCommand> vary) noexcept
 {
-	unsigned n_removed = 0;
-
-	items.remove_and_dispose_if([&request, vary](const TranslateCacheItem &item){
+	const auto n_removed = items.remove_and_dispose_if([&request, vary](const TranslateCacheItem &item){
 		return item.InvalidateMatch(vary, request);
 	},
-		[&n_removed, this](TranslateCacheItem *item){
+		[this](TranslateCacheItem *item){
 			assert(item->per_host == this);
 			item->per_host = nullptr;
 
 			tcache.cache.Remove(*item);
-			++n_removed;
 		});
 
 	if (items.empty())
@@ -1105,17 +1102,14 @@ inline unsigned
 TranslateCachePerSite::Invalidate(const TranslateRequest &request,
 				  std::span<const TranslationCommand> vary) noexcept
 {
-	unsigned n_removed = 0;
-
-	items.remove_and_dispose_if([&request, vary](const TranslateCacheItem &item){
+	const auto n_removed = items.remove_and_dispose_if([&request, vary](const TranslateCacheItem &item){
 		return item.InvalidateMatch(vary, request);
 	},
-		[&n_removed, this](TranslateCacheItem *item){
+		[this](TranslateCacheItem *item){
 			assert(item->per_site == this);
 			item->per_site = nullptr;
 
 			tcache.cache.Remove(*item);
-			++n_removed;
 		});
 
 	if (items.empty())
