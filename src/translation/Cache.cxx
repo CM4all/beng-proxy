@@ -48,8 +48,6 @@ static constexpr std::size_t MAX_DIRECTORY_INDEX = 256;
 static constexpr std::size_t MAX_READ_FILE = 256;
 
 struct TranslateCacheItem final : PoolHolder, CacheItem {
-	using SiblingsHook = IntrusiveListHook<IntrusiveHookMode::NORMAL>;
-
 	IntrusiveHashSetHook<IntrusiveHookMode::AUTO_UNLINK> per_host_siblings, per_site_siblings;
 
 	struct {
