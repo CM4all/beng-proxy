@@ -5,24 +5,26 @@
 #include "cache.hxx"
 #include "event/Loop.hxx"
 #include "util/djb_hash.hxx"
+#include "util/StringAPI.hxx"
 
 #include <assert.h>
 #include <string.h>
 
 inline size_t
-CacheItem::KeyHasher(const char *key) noexcept
+CacheItem::Hash::operator()(const char *key) const noexcept
 {
 	assert(key != nullptr);
 
 	return djb_hash_string(key);
 }
 
-bool
-CacheItem::KeyValueEqual(const char *a, const CacheItem &b) noexcept
+inline bool
+CacheItem::Equal::operator()(const char *a, const char *b) const noexcept
 {
 	assert(a != nullptr);
+	assert(b != nullptr);
 
-	return strcmp(a, b.key) == 0;
+	return StringIsEqual(a, b);
 }
 
 void

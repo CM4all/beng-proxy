@@ -12,8 +12,21 @@
 #include "util/PrintException.hxx"
 
 #include <cassert>
+#include <cstring> // for memcmp()
 
 static constexpr unsigned MAX_SESSIONS = 65536;
+
+inline const SessionId &
+SessionManager::SessionGetId::operator()(const Session &session) const noexcept
+{
+	return session.id;
+}
+
+inline std::span<const std::byte>
+SessionManager::SessionGetAttach::operator()(const Session &session) const noexcept
+{
+	return session.attach;
+}
 
 inline size_t
 SessionManager::SessionAttachHash::operator()(std::span<const std::byte> attach) const noexcept
@@ -21,10 +34,11 @@ SessionManager::SessionAttachHash::operator()(std::span<const std::byte> attach)
 	return djb_hash(attach);
 }
 
-inline size_t
-SessionManager::SessionAttachHash::operator()(const Session &session) const noexcept
+inline bool
+SessionManager::SessionAttachEqual::operator()(std::span<const std::byte> a,
+					       std::span<const std::byte> b) const noexcept
 {
-	return session.id.Hash();
+	return a.size() == b.size() && memcmp(a.data(), b.data(), a.size()) == 0;
 }
 
 void
@@ -183,7 +197,7 @@ SessionManager::Attach(RealmSessionLease lease, const char *realm,
 	assert(attach.data() != nullptr);
 	assert(!attach.empty());
 
-	if (lease && sessions_by_attach.key_eq()(attach, lease->parent))
+	if (lease && lease->parent.IsAttach(attach))
 		/* already set, no-op */
 		return lease;
 

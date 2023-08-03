@@ -40,24 +40,10 @@ FailureManager::Hash::operator()(const SocketAddress a) const noexcept
 	return djb_hash(a);
 }
 
-inline size_t
-FailureManager::Hash::operator()(const Failure &f) const noexcept
+inline SocketAddress
+FailureManager::GetKey::operator()(const Failure &f) const noexcept
 {
-	return this->operator()(f.GetAddress());
-}
-
-inline bool
-FailureManager::Equal::operator()(const SocketAddress a,
-				  const SocketAddress b) const noexcept
-{
-	return a == b;
-}
-
-inline bool
-FailureManager::Equal::operator()(const SocketAddress a,
-				  const Failure &b) const noexcept
-{
-	return a == b.GetAddress();
+	return f.GetAddress();
 }
 
 FailureManager::FailureManager() noexcept = default;

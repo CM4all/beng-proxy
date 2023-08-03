@@ -27,6 +27,7 @@
 #include "util/djb_hash.hxx"
 #include "util/IntrusiveHashSet.hxx"
 #include "util/IntrusiveList.hxx"
+#include "util/SpanCast.hxx"
 
 #include <time.h>
 #include <string.h>
@@ -206,27 +207,15 @@ struct TranslateCachePerHost
 
 	struct Hash {
 		[[gnu::pure]]
-		std::size_t operator()(const TranslateCachePerHost &value) const noexcept {
-			return ValueHasher(value);
-		}
-
-		[[gnu::pure]]
-		std::size_t operator()(const char *key) const noexcept {
-			return KeyHasher(key);
+		std::size_t operator()(std::string_view key) const noexcept {
+			return djb_hash(AsBytes(key));
 		}
 	};
 
-	struct Equal {
+	struct GetKey {
 		[[gnu::pure]]
-		bool operator()(const TranslateCachePerHost &a,
-				const TranslateCachePerHost &b) const noexcept {
-			return KeyValueEqual(a.host.c_str(), b);
-		}
-
-		[[gnu::pure]]
-		bool operator()(const char *a,
-				const TranslateCachePerHost &b) const noexcept {
-			return KeyValueEqual(a, b);
+		std::string_view operator()(const TranslateCachePerHost &item) const noexcept {
+			return item.host;
 		}
 	};
 };
@@ -265,48 +254,17 @@ struct TranslateCachePerSite
 	unsigned Invalidate(const TranslateRequest &request,
 			    std::span<const TranslationCommand> vary) noexcept;
 
-	[[gnu::pure]]
-	static std::size_t KeyHasher(const char *key) noexcept {
-		assert(key != nullptr);
-
-		return djb_hash_string(key);
-	}
-
-	[[gnu::pure]]
-	static std::size_t ValueHasher(const TranslateCachePerSite &value) noexcept {
-		return KeyHasher(value.site.c_str());
-	}
-
-	[[gnu::pure]]
-	static bool KeyValueEqual(const char *a, const TranslateCachePerSite &b) noexcept {
-		assert(a != nullptr);
-
-		return a == b.site;
-	}
-
 	struct Hash {
 		[[gnu::pure]]
-		std::size_t operator()(const TranslateCachePerSite &value) const noexcept {
-			return ValueHasher(value);
-		}
-
-		[[gnu::pure]]
-		std::size_t operator()(const char *key) const noexcept {
-			return KeyHasher(key);
+		std::size_t operator()(std::string_view key) const noexcept {
+			return djb_hash(AsBytes(key));
 		}
 	};
 
-	struct Equal {
+	struct GetKey {
 		[[gnu::pure]]
-		bool operator()(const TranslateCachePerSite &a,
-				const TranslateCachePerSite &b) const noexcept {
-			return KeyValueEqual(a.site.c_str(), b);
-		}
-
-		[[gnu::pure]]
-		bool operator()(const char *a,
-				const TranslateCachePerSite &b) const noexcept {
-			return KeyValueEqual(a, b);
+		std::string_view operator()(const TranslateCachePerSite &item) const noexcept {
+			return item.site;
 		}
 	};
 };
@@ -325,7 +283,8 @@ struct tcache {
 	using PerHostSet =
 		IntrusiveHashSet<TranslateCachePerHost, N_BUCKETS,
 				 IntrusiveHashSetOperators<TranslateCachePerHost::Hash,
-							   TranslateCachePerHost::Equal>>;
+							   std::equal_to<std::string_view>,
+							   TranslateCachePerHost::GetKey>>;
 	PerHostSet per_host;
 
 	/**
@@ -336,7 +295,8 @@ struct tcache {
 	using PerSiteSet =
 		IntrusiveHashSet<TranslateCachePerSite, N_BUCKETS,
 				 IntrusiveHashSetOperators<TranslateCachePerSite::Hash,
-							   TranslateCachePerSite::Equal>>;
+							   std::equal_to<std::string_view>,
+							   TranslateCachePerSite::GetKey>>;
 
 	PerSiteSet per_site;
 

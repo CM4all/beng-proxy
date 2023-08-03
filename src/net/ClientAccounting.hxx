@@ -48,19 +48,9 @@ class PerClientAccounting final
 
 	const uint_least64_t address;
 
-	struct Hash {
-		constexpr std::size_t operator()(const PerClientAccounting &value) const noexcept {
-			return value.address;
-		}
-
-		constexpr std::size_t operator()(uint_least64_t _address) const noexcept {
-			return _address;
-		}
-	};
-
-	struct Equal {
-		constexpr std::size_t operator()(uint_least64_t _address, const PerClientAccounting &value) const noexcept {
-			return _address == value.address;
+	struct GetKey {
+		constexpr uint_least64_t operator()(const PerClientAccounting &item) const noexcept {
+			return item.address;
 		}
 	};
 
@@ -115,8 +105,9 @@ class ClientAccountingMap {
 	const std::size_t max_connections;
 
 	using Map = IntrusiveHashSet<PerClientAccounting, 65521,
-				     IntrusiveHashSetOperators<PerClientAccounting::Hash,
-							       PerClientAccounting::Equal>>;
+				     IntrusiveHashSetOperators<std::hash<uint_least64_t>,
+							       std::equal_to<uint_least64_t>,
+							       PerClientAccounting::GetKey>>;
 	Map map;
 
 	FarTimerEvent cleanup_timer;

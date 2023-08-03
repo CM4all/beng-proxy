@@ -105,22 +105,12 @@ struct FilterCacheItem final : PoolHolder, CacheItem, LeakDetector {
 		std::size_t operator()(std::string_view _tag) const noexcept {
 			return djb_hash(AsBytes(_tag));
 		}
-
-		[[gnu::pure]]
-		std::size_t operator()(const FilterCacheItem &item) const noexcept {
-			return operator()(item.tag);
-		}
 	};
 
-	struct TagEqual {
+	struct GetTag {
 		[[gnu::pure]]
-		bool operator()(std::string_view a, std::string_view b) const noexcept {
-			return a == b;
-		}
-
-		[[gnu::pure]]
-		bool operator()(std::string_view a, const FilterCacheItem &b) const noexcept {
-			return a == b.tag;
+		std::string_view operator()(const FilterCacheItem &item) const noexcept {
+			return item.tag;
 		}
 	};
 
@@ -246,7 +236,8 @@ class FilterCache final : LeakDetector {
 	 */
 	IntrusiveHashSet<FilterCacheItem, 65521,
 			 IntrusiveHashSetOperators<FilterCacheItem::TagHash,
-						   FilterCacheItem::TagEqual>,
+						   std::equal_to<std::string_view>,
+						   FilterCacheItem::GetTag>,
 			 IntrusiveHashSetMemberHookTraits<&FilterCacheItem::per_tag_hook>> per_tag;
 
 	FarTimerEvent compress_timer;

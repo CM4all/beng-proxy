@@ -40,7 +40,8 @@ class HttpCacheHeap {
 	 */
 	IntrusiveHashSet<HttpCacheItem, 65521,
 			 IntrusiveHashSetOperators<HttpCacheItem::TagHash,
-						   HttpCacheItem::TagEqual>,
+						   std::equal_to<std::string_view>,
+						   HttpCacheItem::GetTagFunction>,
 			 IntrusiveHashSetMemberHookTraits<&HttpCacheItem::per_tag_hook>> per_tag;
 
 public:

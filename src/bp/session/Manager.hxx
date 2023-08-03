@@ -30,64 +30,51 @@ class SessionManager {
 
 	SessionPrng prng;
 
+	struct SessionGetId {
+		[[gnu::const]]
+		const SessionId &operator()(const Session &session) const noexcept;
+	};
+
 	struct SessionHash {
 		[[gnu::pure]]
 		size_t operator()(const SessionId &id) const {
 			return id.Hash();
 		}
-
-		[[gnu::pure]]
-		size_t operator()(const Session &session) const {
-			return session.id.Hash();
-		}
 	};
 
-	struct SessionEqual {
-		[[gnu::pure]]
-		bool operator()(const Session &a, const Session &b) const {
-			return a.id == b.id;
-		}
-
-		[[gnu::pure]]
-		bool operator()(const SessionId &a, const Session &b) const {
-			return a == b.id;
-		}
+	struct SessionGetAttach {
+		[[gnu::const]]
+		std::span<const std::byte> operator()(const Session &session) const noexcept;
 	};
 
 	struct SessionAttachHash {
 		[[gnu::pure]]
 		size_t operator()(std::span<const std::byte> attach) const noexcept;
-
-		[[gnu::pure]]
-		size_t operator()(const Session &session) const noexcept;
 	};
 
 	struct SessionAttachEqual {
 		[[gnu::pure]]
-		bool operator()(const Session &a, const Session &b) const noexcept {
-			return b.IsAttach(a.attach);
-		}
-
-		[[gnu::pure]]
-		bool operator()(std::span<const std::byte> a, const Session &b) const noexcept {
-			return b.IsAttach(a);
-		}
+		bool operator()(std::span<const std::byte> a, std::span<const std::byte> b) const noexcept;
 	};
 
 	static constexpr unsigned N_BUCKETS = 65521;
 
 	using Set = IntrusiveHashSet<Session, N_BUCKETS,
-				     IntrusiveHashSetOperators<SessionHash, SessionEqual>,
+				     IntrusiveHashSetOperators<SessionHash,
+							       std::equal_to<SessionId>,
+							       SessionGetId>,
 				     IntrusiveHashSetMemberHookTraits<&Session::set_hook>,
 				     true>;
 
 	Set sessions;
 
-	using ByAttach = IntrusiveHashSet<Session, N_BUCKETS,
-					  IntrusiveHashSetOperators<SessionAttachHash,
-								    SessionAttachEqual>,
-					  IntrusiveHashSetMemberHookTraits<&Session::by_attach_hook>,
-					  true>;
+	using ByAttach =
+		IntrusiveHashSet<Session, N_BUCKETS,
+				 IntrusiveHashSetOperators<SessionAttachHash,
+							   SessionAttachEqual,
+							   SessionGetAttach>,
+				 IntrusiveHashSetMemberHookTraits<&Session::by_attach_hook>,
+				 true>;
 
 	ByAttach sessions_by_attach;
 

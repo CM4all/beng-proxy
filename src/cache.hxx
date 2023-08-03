@@ -102,40 +102,20 @@ public:
 
 	virtual void Destroy() noexcept = 0;
 
-	[[gnu::pure]]
-	static size_t KeyHasher(const char *key) noexcept;
-
-	[[gnu::pure]]
-	static size_t ValueHasher(const CacheItem &value) noexcept {
-		return KeyHasher(value.key);
-	}
-
-	[[gnu::pure]]
-	static bool KeyValueEqual(const char *a, const CacheItem &b) noexcept;
-
 	struct Hash {
 		[[gnu::pure]]
-		size_t operator()(const char *_key) const noexcept {
-			return KeyHasher(_key);
-		}
-
-		[[gnu::pure]]
-		size_t operator()(const CacheItem &value) const noexcept {
-			return ValueHasher(value);
-		}
+		size_t operator()(const char *key) const noexcept;
 	};
 
 	struct Equal {
 		[[gnu::pure]]
-		bool operator()(const char *a,
-				const CacheItem &b) const noexcept {
-			return KeyValueEqual(a, b);
-		}
+		bool operator()(const char *a, const char *b) const noexcept;
+	};
 
+	struct GetKeyFunction {
 		[[gnu::pure]]
-		bool operator()(const CacheItem &a,
-				const CacheItem &b) const noexcept {
-			return KeyValueEqual(a.key, b);
+		const char *operator()(const CacheItem &item) const noexcept {
+			return item.GetKey();
 		}
 	};
 };
@@ -146,7 +126,8 @@ class Cache {
 
 	using ItemSet = IntrusiveHashSet<CacheItem, 65521,
 					 IntrusiveHashSetOperators<CacheItem::Hash,
-								   CacheItem::Equal>,
+								   CacheItem::Equal,
+								   CacheItem::GetKeyFunction>,
 					 IntrusiveHashSetMemberHookTraits<&CacheItem::set_hook>>;
 
 	ItemSet items;

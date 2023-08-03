@@ -11,12 +11,6 @@
 #include "util/SpanCast.hxx"
 
 std::size_t
-HttpCacheItem::TagHash::operator()(const char *_tag) const noexcept
-{
-	return djb_hash_string(_tag);
-}
-
-std::size_t
 HttpCacheItem::TagHash::operator()(std::string_view _tag) const noexcept
 {
 	return djb_hash(AsBytes(_tag));

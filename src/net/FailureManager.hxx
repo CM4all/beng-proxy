@@ -21,26 +21,20 @@ class FailureManager {
 	struct Hash {
 		[[gnu::pure]]
 		size_t operator()(const SocketAddress a) const noexcept;
-
-		[[gnu::pure]]
-		size_t operator()(const Failure &f) const noexcept;
 	};
 
-	struct Equal {
+	struct GetKey {
 		[[gnu::pure]]
-		bool operator()(const SocketAddress a,
-				const SocketAddress b) const noexcept;
-
-		[[gnu::pure]]
-		bool operator()(const SocketAddress a,
-				const Failure &b) const noexcept;
+		SocketAddress operator()(const Failure &f) const noexcept;
 	};
 
 	static constexpr size_t N_BUCKETS = 3779;
 
 	using FailureSet =
 		IntrusiveHashSet<Failure, N_BUCKETS,
-				 IntrusiveHashSetOperators<Hash, Equal>>;
+				 IntrusiveHashSetOperators<Hash,
+							   std::equal_to<SocketAddress>,
+							   GetKey>>;
 
 	FailureSet failures;
 

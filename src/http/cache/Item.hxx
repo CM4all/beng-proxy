@@ -27,26 +27,13 @@ public:
 
 	struct TagHash {
 		[[gnu::pure]]
-		std::size_t operator()(const char *tag) const noexcept;
-
-		[[gnu::pure]]
 		std::size_t operator()(std::string_view tag) const noexcept;
-
-		[[gnu::pure]]
-		std::size_t operator()(const HttpCacheItem &item) const noexcept {
-			return operator()(item.tag);
-		}
 	};
 
-	struct TagEqual {
+	struct GetTagFunction {
 		[[gnu::pure]]
-		bool operator()(std::string_view a, std::string_view b) const noexcept {
-			return a == b;
-		}
-
-		[[gnu::pure]]
-		bool operator()(std::string_view a, const HttpCacheItem &b) const noexcept {
-			return a == b.tag;
+		std::string_view operator()(const HttpCacheItem &item) const noexcept {
+			return item.GetTag();
 		}
 	};
 
