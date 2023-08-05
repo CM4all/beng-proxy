@@ -20,7 +20,7 @@ class Stats:
         if len(payload) > expected_length:
             payload = payload[:expected_length]
         elif len(payload) < expected_length:
-            payload += '\0' * (expected_length - len(payload))
+            payload += b'\0' * (expected_length - len(payload))
 
         self.incoming_connections, self.outgoing_connections, \
         self.children, self.sessions, \
