@@ -10,7 +10,7 @@ class MalformedResponseError(Exception):
     pass
 
 class Stats:
-    def __init__(self, payload):
+    def __init__(self, payload: bytes):
         if len(payload) < 48:
             raise MalformedResponseError()
 

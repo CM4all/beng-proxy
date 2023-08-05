@@ -6,13 +6,13 @@
 
 import socket
 import struct
+from typing import Optional, Tuple, Union
+from collections.abc import Mapping
+
 from beng_proxy.control.protocol import *
 
 class Client:
-    def __init__(self, host, port=5478, broadcast=False, timeout=10):
-        assert isinstance(host, str)
-        assert isinstance(port, int)
-
+    def __init__(self, host: str, port: int=5478, broadcast: bool=False, timeout: int=10):
         if host:
             try:
                 # connect to a specific process by its PID
@@ -42,7 +42,7 @@ class Client:
             self._socket.connect((host, port))
             self._socket.settimeout(timeout)
 
-    def receive(self):
+    def receive(self) -> list[Tuple[int, bytes]]:
         """Receive a datagram from the server.  Returns a list of
         (command, payload) tuples."""
         packets = []
@@ -57,15 +57,12 @@ class Client:
         return packets
 
     @staticmethod
-    def __to_bytes(s):
-        assert isinstance(s, (str, bytes))
-
+    def __to_bytes(s: Union[str, bytes]) -> bytes:
         if not isinstance(s, bytes):
             s = s.encode('ascii')
         return s
 
-    def send(self, command, payload=None):
-        assert isinstance(command, int)
+    def send(self, command: int, payload: Optional[Union[str, bytes]]=None) -> None:
         if payload is None: payload = b''
         payload = self.__to_bytes(payload)
 
@@ -75,7 +72,7 @@ class Client:
         padding = b' ' * (3 - ((length - 1) & 0x3))
         self._socket.send(header + payload + padding)
 
-    def send_tcache_invalidate(self, vary):
+    def send_tcache_invalidate(self, vary: Mapping[int, Union[str, bytes]]) -> None:
         payload = b''
         for command, value in vary.items():
             assert isinstance(command, int)
@@ -89,48 +86,38 @@ class Client:
 
         self.send(CONTROL_TCACHE_INVALIDATE, payload)
 
-    def send_enable_node(self, node, port):
-        assert isinstance(node, str)
-        assert isinstance(port, int)
-
+    def send_enable_node(self, node: str, port: int) -> None:
         self.send(CONTROL_ENABLE_NODE, '%s:%i' % (node, port))
 
-    def send_fade_node(self, node, port):
-        assert isinstance(node, str)
-        assert isinstance(port, int)
-
+    def send_fade_node(self, node: str, port: int) -> None:
         self.send(CONTROL_FADE_NODE, '%s:%i' % (node, port))
 
-    def send_node_status(self, node, port):
-        assert isinstance(node, str)
-        assert isinstance(port, int)
-
+    def send_node_status(self, node: str, port: int) -> None:
         self.send(CONTROL_NODE_STATUS, '%s:%i' % (node, port))
 
-    def send_dump_pools(self):
+    def send_dump_pools(self) -> None:
         self.send(CONTROL_DUMP_POOLS)
 
-    def send_stats(self):
+    def send_stats(self) -> None:
         self.send(CONTROL_STATS)
 
-    def send_verbose(self, verbose):
-        assert isinstance(verbose, int)
+    def send_verbose(self, verbose: int) -> None:
         assert verbose >= 0
         assert verbose <= 0xff
 
         self.send(CONTROL_VERBOSE, struct.pack('B', verbose))
 
-    def send_fade_children(self, tag=None):
+    def send_fade_children(self, tag: Optional[str]=None) -> None:
         self.send(CONTROL_FADE_CHILDREN, tag)
 
-    def send_enable_zeroconf(self):
+    def send_enable_zeroconf(self) -> None:
         self.send(CONTROL_ENABLE_ZEROCONF)
 
-    def send_disable_zeroconf(self):
+    def send_disable_zeroconf(self) -> None:
         self.send(CONTROL_DISABLE_ZEROCONF)
 
-    def send_flush_nfs_cache(self):
+    def send_flush_nfs_cache(self) -> None:
         self.send(CONTROL_FLUSH_NFS_CACHE)
 
-    def send_flush_filter_cache(self):
+    def send_flush_filter_cache(self) -> None:
         self.send(CONTROL_FLUSH_FILTER_CACHE)
