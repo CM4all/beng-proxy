@@ -289,7 +289,7 @@ CatIstream::_ConsumeBucketList(std::size_t nbytes) noexcept
 		Consumed(r.consumed);
 		total += r.consumed;
 		nbytes -= r.consumed;
-		if (nbytes == 0)
+		if (r.consumed == 0)
 			break;
 	}
 

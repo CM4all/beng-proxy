@@ -3,6 +3,7 @@ cm4all-beng-proxy (18.0.30) unstable; urgency=low
   * bp: check request method after opening a static file
   * bp: remove the implicit per-process control listener
   * bp: create session_save_path with mode 0600
+  * bp: fix endless loop
   * lb/translation: optimize cache invalidation with SITE filter
 
  --   
