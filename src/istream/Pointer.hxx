@@ -27,10 +27,12 @@ public:
 	IstreamPointer(const IstreamPointer &) = delete;
 	IstreamPointer &operator=(const IstreamPointer &) = delete;
 
+	[[gnu::always_inline]]
 	bool IsDefined() const noexcept {
 		return stream != nullptr;
 	}
 
+	[[gnu::always_inline]]
 	void Clear() noexcept {
 		stream = nullptr;
 	}
@@ -62,12 +64,14 @@ public:
 		Set(std::forward<I>(_stream), handler);
 	}
 
+	[[gnu::always_inline]]
 	void SetDirect(FdTypeMask direct) noexcept {
 		assert(IsDefined());
 
 		stream->SetDirect(direct);
 	}
 
+	[[gnu::always_inline]]
 	void Read() noexcept {
 		assert(IsDefined());
 
@@ -87,18 +91,21 @@ public:
 		}
 	}
 
+	[[gnu::always_inline]]
 	auto ConsumeBucketList(std::size_t nbytes) noexcept {
 		assert(IsDefined());
 
 		return stream->ConsumeBucketList(nbytes);
 	}
 
+	[[gnu::always_inline]]
 	void ConsumeDirect(std::size_t nbytes) noexcept {
 		assert(IsDefined());
 
 		stream->ConsumeDirect(nbytes);
 	}
 
+	[[gnu::always_inline]]
 	[[gnu::pure]]
 	off_t GetAvailable(bool partial) const noexcept {
 		assert(IsDefined());
@@ -106,6 +113,7 @@ public:
 		return stream->GetAvailable(partial);
 	}
 
+	[[gnu::always_inline]]
 	off_t Skip(off_t length) noexcept {
 		assert(IsDefined());
 
