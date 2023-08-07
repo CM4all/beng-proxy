@@ -1,5 +1,6 @@
 cm4all-beng-proxy (18.0.30) unstable; urgency=low
 
+  * http_server: fix assertion failure
   * bp: check request method after opening a static file
   * bp: remove the implicit per-process control listener
   * bp: create session_save_path with mode 0600
