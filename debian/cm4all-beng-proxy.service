@@ -3,8 +3,8 @@ Description=CM4all beng-proxy
 Wants=network-online.target
 After=network-online.target
 
-# require at least Linux kernel 5.10
-AssertKernelVersion=>=5.10
+# require at least Linux kernel 5.12
+AssertKernelVersion=>=5.12
 
 [Service]
 Type=notify
