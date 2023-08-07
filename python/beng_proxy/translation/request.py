@@ -4,7 +4,6 @@
 # Author: Max Kellermann <mk@cm4all.com>
 #
 
-from __future__ import print_function
 import six
 import array, struct
 
