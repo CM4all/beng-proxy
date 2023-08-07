@@ -7,7 +7,6 @@
 #include "Connection.hxx"
 #include "memory/fb_pool.hxx"
 #include "event/net/control/Server.hxx"
-#include "control/Local.hxx"
 #include "cluster/TcpBalancer.hxx"
 #include "pipe/Stock.hxx"
 #include "DirectResourceLoader.hxx"

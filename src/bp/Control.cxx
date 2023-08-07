@@ -9,7 +9,6 @@
 #include "http/cache/Public.hxx"
 #include "nfs/Cache.hxx"
 #include "event/net/control/Server.hxx"
-#include "control/Local.hxx"
 #include "translation/Builder.hxx"
 #include "translation/Protocol.hxx"
 #include "translation/InvalidateParser.hxx"
@@ -206,27 +205,4 @@ void
 global_control_handler_deinit(BpInstance *instance)
 {
 	instance->control_servers.clear();
-}
-
-/*
- * local (implicit) control channel
- */
-
-void
-local_control_handler_init(BpInstance *instance)
-{
-	instance->local_control_server =
-		std::make_unique<LocalControl>("beng_control:pid=", *instance);
-}
-
-void
-local_control_handler_deinit(BpInstance *instance)
-{
-	instance->local_control_server.reset();
-}
-
-void
-local_control_handler_open(BpInstance *instance)
-{
-	instance->local_control_server->Open(instance->event_loop);
 }

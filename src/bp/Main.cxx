@@ -158,7 +158,6 @@ BpInstance::ShutdownCallback() noexcept
 
 	FreeStocksAndCaches();
 
-	local_control_handler_deinit(this);
 	global_control_handler_deinit(this);
 
 	pool_commit();
@@ -353,14 +352,6 @@ try {
 		session_save_init(*instance.session_manager,
 				  instance.config.session_save_path.c_str());
 		instance.ScheduleSaveSessions();
-	}
-
-	local_control_handler_init(&instance);
-
-	try {
-		local_control_handler_open(&instance);
-	} catch (const std::exception &e) {
-		PrintException(e);
 	}
 
 	/* launch the access logger */

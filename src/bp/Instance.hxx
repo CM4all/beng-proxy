@@ -45,7 +45,6 @@ class FilteredSocketStock;
 class FilteredSocketBalancer;
 class SpawnService;
 class ControlServer;
-class LocalControl;
 class SpawnServerClient;
 class TranslationStock;
 class TranslationCache;
@@ -115,13 +114,6 @@ struct BpInstance final : PInstance, ControlHandler, SpawnServerClientHandler,
 	 * configured.
 	 */
 	std::forward_list<ControlServer> control_servers;
-
-	/**
-	 * The implicit per-process control server.  It listens on a local
-	 * socket "@beng-proxy:PID" and will accept connections only from
-	 * root or the beng-proxy user.
-	 */
-	std::unique_ptr<LocalControl> local_control_server;
 
 #ifdef HAVE_AVAHI
 	std::unique_ptr<Avahi::Client> avahi_client;
