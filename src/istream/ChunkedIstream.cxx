@@ -358,10 +358,9 @@ ChunkedIstream::_FillBucketList(IstreamBucketList &list)
 		size_t nbytes = list.SpliceBuffersFrom(std::move(sub),
 						       missing_from_current_chunk);
 		if (nbytes >= missing_from_current_chunk)
-			list.Push(AsBytes("\r\n"sv));
-	}
-
-	list.SetMore();
+			list.Push(AsBytes(list.HasMore() ? "\r\n"sv : "\r\n0\r\n\r\n"sv));
+	} else
+		list.SetMore();
 }
 
 Istream::ConsumeBucketResult
@@ -387,10 +386,16 @@ ChunkedIstream::_ConsumeBucketList(size_t nbytes) noexcept
 
 		missing_from_current_chunk -= consumed;
 		if (missing_from_current_chunk == 0) {
-			/* a chunk ends with "\r\n" */
-			char *p = SetBuffer(2);
-			p[0] = '\r';
-			p[1] = '\n';
+			if (HasInput()) {
+				/* a chunk ends with "\r\n" */
+				char *p = SetBuffer(2);
+				p[0] = '\r';
+				p[1] = '\n';
+			} else {
+				const auto src = "\r\n0\r\n\r\n"sv;
+				char *p = SetBuffer(src.size());
+				std::copy(src.begin(), src.end(), p);
+			}
 
 			size = ConsumeBuffer(nbytes);
 			nbytes -= size;
@@ -398,8 +403,7 @@ ChunkedIstream::_ConsumeBucketList(size_t nbytes) noexcept
 		}
 	}
 
-	// TODO set eof?
-	return {total, false};
+	return {total, missing_from_current_chunk == 0 && IsBufferEmpty() && !HasInput()};
 }
 
 /*
