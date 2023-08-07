@@ -75,7 +75,7 @@ session_save(SessionManager &manager) noexcept
 try {
 	LogConcat(5, "SessionManager", "saving sessions to ", session_save_path);
 
-	FileWriter fw(session_save_path);
+	FileWriter fw(session_save_path, 0600);
 	FdOutputStream fos(fw.GetFileDescriptor());
 
 	{
