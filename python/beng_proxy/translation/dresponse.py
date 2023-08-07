@@ -5,11 +5,7 @@
 #
 
 import struct
-
-try:
-    from urllib.parse import urlparse
-except ImportError:
-    from urlparse import urlparse
+from urllib.parse import urlparse
 
 from twisted.names.client import getHostByName
 from twisted.internet import defer

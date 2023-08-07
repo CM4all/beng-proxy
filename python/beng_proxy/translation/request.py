@@ -6,11 +6,7 @@
 
 import six
 import array, struct
-
-try:
-    from urllib.parse import unquote
-except ImportError:
-    from urllib import unquote
+from urllib.parse import unquote
 
 from .protocol import *
 import beng_proxy.translation.uri

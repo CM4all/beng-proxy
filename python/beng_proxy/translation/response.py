@@ -6,11 +6,7 @@
 
 import six
 import array, struct
-
-try:
-    from urllib.parse import urlparse
-except ImportError:
-    from urlparse import urlparse
+from urllib.parse import urlparse
 
 from .protocol import *
 from .serialize import packet_header

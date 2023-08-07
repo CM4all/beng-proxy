@@ -4,10 +4,7 @@
 # Author: Max Kellermann <mk@cm4all.com>
 #
 
-try:
-    from urllib.parse import quote
-except ImportError:
-    from urllib import quote
+from urllib.parse import quote
 
 def absolute_uri(request, scheme=None, host=None, uri=None, query_string=None,
                  param=None):
