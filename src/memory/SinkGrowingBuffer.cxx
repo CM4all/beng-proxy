@@ -11,7 +11,7 @@
 #include <string.h>
 #include <unistd.h>
 
-bool
+IstreamReadyResult
 GrowingBufferSink::OnIstreamReady() noexcept
 {
 	IstreamBucketList list;
@@ -21,7 +21,7 @@ GrowingBufferSink::OnIstreamReady() noexcept
 	} catch (...) {
 		input.Clear();
 		handler.OnGrowingBufferSinkError(std::current_exception());
-		return false;
+		return IstreamReadyResult::CLOSED;
 	}
 
 	std::size_t nbytes = 0;
@@ -45,10 +45,10 @@ GrowingBufferSink::OnIstreamReady() noexcept
 	if (eof) {
 		CloseInput();
 		handler.OnGrowingBufferSinkEof(std::move(buffer));
-		return false;
+		return IstreamReadyResult::CLOSED;
 	}
 
-	return true;
+	return IstreamReadyResult::OK;
 }
 
 std::size_t

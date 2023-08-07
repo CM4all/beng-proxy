@@ -12,22 +12,24 @@
 #include <errno.h>
 #include <string.h>
 
-bool
+IstreamReadyResult
 HttpServerConnection::OnIstreamReady() noexcept
 {
 	switch (TryWriteBuckets()) {
 	case BucketResult::UNAVAILABLE:
-		return true;
+		return IstreamReadyResult::FALLBACK;
 
 	case BucketResult::MORE:
 		/* it's our responsibility now to ask for more data */
 		socket->ScheduleWrite();
-		return false;
+		return IstreamReadyResult::OK;
 
 	case BucketResult::BLOCKING:
 	case BucketResult::DEPLETED:
+		return IstreamReadyResult::OK;
+
 	case BucketResult::DESTROYED:
-		return false;
+		return IstreamReadyResult::CLOSED;
 	}
 
 	gcc_unreachable();

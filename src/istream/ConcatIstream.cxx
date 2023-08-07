@@ -56,7 +56,7 @@ class CatIstream final : public Istream, DestructAnchor {
 
 		/* virtual methods from class IstreamHandler */
 
-		bool OnIstreamReady() noexcept override {
+		IstreamReadyResult OnIstreamReady() noexcept override {
 			return cat.OnInputReady(*this);
 		}
 
@@ -133,10 +133,10 @@ private:
 		inputs.clear_and_dispose(Input::Disposer());
 	}
 
-	bool OnInputReady(Input &i) noexcept {
+	IstreamReadyResult OnInputReady(Input &i) noexcept {
 		return IsCurrent(i)
 			? InvokeReady()
-			: false;
+			: IstreamReadyResult::OK;
 	}
 
 	std::size_t OnInputData(Input &i, std::span<const std::byte> src) noexcept {

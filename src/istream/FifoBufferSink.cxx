@@ -14,7 +14,7 @@
 #include <string.h>
 #include <unistd.h>
 
-bool
+IstreamReadyResult
 FifoBufferSink::OnIstreamReady() noexcept
 {
 	IstreamBucketList list;
@@ -24,14 +24,16 @@ FifoBufferSink::OnIstreamReady() noexcept
 	} catch (...) {
 		input.Clear();
 		handler.OnFifoBufferSinkError(std::current_exception());
-		return false;
+		return IstreamReadyResult::CLOSED;
 	}
 
 	std::size_t nbytes = 0;
+	IstreamReadyResult result = IstreamReadyResult::OK;
 	bool more = list.HasMore();
 
 	for (const auto &bucket : list) {
 		if (!bucket.IsBuffer()) {
+			result = IstreamReadyResult::FALLBACK;
 			more = true;
 			break;
 		}
@@ -53,10 +55,10 @@ FifoBufferSink::OnIstreamReady() noexcept
 	if (!more) {
 		CloseInput();
 		handler.OnFifoBufferSinkEof();
-		return false;
+		return IstreamReadyResult::CLOSED;
 	}
 
-	return true;
+	return result;
 }
 
 std::size_t

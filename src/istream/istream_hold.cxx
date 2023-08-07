@@ -96,8 +96,10 @@ public:
 
 	/* virtual methods from class IstreamHandler */
 
-	bool OnIstreamReady() noexcept override {
-		return !HasHandler() || ForwardIstream::OnIstreamReady();
+	IstreamReadyResult OnIstreamReady() noexcept override {
+		return HasHandler()
+			? ForwardIstream::OnIstreamReady()
+			: IstreamReadyResult::OK;
 	}
 
 	std::size_t OnData(std::span<const std::byte> src) noexcept override {

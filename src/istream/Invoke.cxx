@@ -8,7 +8,7 @@
 
 #include <cassert>
 
-bool
+IstreamReadyResult
 Istream::InvokeReady() noexcept
 {
 	assert(!destroyed);
@@ -21,11 +21,11 @@ Istream::InvokeReady() noexcept
 	const DestructObserver destructed(*this);
 #endif
 
-	bool result = handler->OnIstreamReady();
+	const auto result = handler->OnIstreamReady();
 
 #ifndef NDEBUG
 	if (destructed || destroyed) {
-		assert(!result);
+		assert(result == IstreamReadyResult::CLOSED);
 	}
 #endif
 

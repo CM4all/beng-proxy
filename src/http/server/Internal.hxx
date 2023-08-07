@@ -423,7 +423,7 @@ struct HttpServerConnection final
 	void OnBufferedError(std::exception_ptr e) noexcept override;
 
 	/* virtual methods from class IstreamHandler */
-	bool OnIstreamReady() noexcept override;
+	IstreamReadyResult OnIstreamReady() noexcept override;
 	std::size_t OnData(std::span<const std::byte> src) noexcept override;
 	IstreamDirectResult OnDirect(FdType type, FileDescriptor fd,
 				     off_t offset, std::size_t max_length,

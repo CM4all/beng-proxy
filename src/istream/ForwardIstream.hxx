@@ -44,7 +44,7 @@ public:
 
 	/* virtual methods from class IstreamHandler */
 
-	bool OnIstreamReady() noexcept override {
+	IstreamReadyResult OnIstreamReady() noexcept override {
 		return InvokeReady();
 	}
 

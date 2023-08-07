@@ -122,7 +122,7 @@ private:
 	}
 
 	/* virtual methods from class IstreamHandler */
-	bool OnIstreamReady() noexcept override;
+	IstreamReadyResult OnIstreamReady() noexcept override;
 	std::size_t OnData(std::span<const std::byte> src) noexcept override;
 	IstreamDirectResult OnDirect(FdType type, FileDescriptor fd,
 				     off_t offset, std::size_t max_length,
@@ -190,7 +190,7 @@ WasOutput::OnDeferredWrite() noexcept
  *
  */
 
-bool
+IstreamReadyResult
 WasOutput::OnIstreamReady() noexcept
 {
 	assert(HasPipe());
@@ -205,7 +205,7 @@ WasOutput::OnIstreamReady() noexcept
 	} catch (...) {
 		ClearInput();
 		DestroyError(std::current_exception());
-		return false;
+		return IstreamReadyResult::CLOSED;
 	}
 
 	if (list.IsEmpty() && !list.HasMore()) {
@@ -213,17 +213,17 @@ WasOutput::OnIstreamReady() noexcept
 
 		CloseInput();
 		DestroyEof();
-		return false;
+		return IstreamReadyResult::CLOSED;
 	}
 
 	/* convert buckets to struct iovec array */
 
 	StaticVector<struct iovec, 64> v;
-	bool result = false;
+	IstreamReadyResult result = IstreamReadyResult::OK;
 
 	for (const auto &i : list) {
 		if (!i.IsBuffer()) {
-			result = true;
+			result = IstreamReadyResult::FALLBACK;
 			break;
 		}
 
@@ -236,7 +236,7 @@ WasOutput::OnIstreamReady() noexcept
 	}
 
 	if (v.empty())
-		return true;
+		return IstreamReadyResult::OK;
 
 	/* write this struct iovec array */
 
@@ -245,11 +245,11 @@ WasOutput::OnIstreamReady() noexcept
 		int e = errno;
 		if (e == EAGAIN) {
 			ScheduleWrite();
-			return false;
+			return IstreamReadyResult::OK;
 		}
 
 		DestroyError(std::make_exception_ptr(MakeErrno("Write to WAS process failed")));
-		return false;
+		return IstreamReadyResult::CLOSED;
 	}
 
 	sent += nbytes;
@@ -260,7 +260,7 @@ WasOutput::OnIstreamReady() noexcept
 
 		CloseInput();
 		DestroyEof();
-		return false;
+		return IstreamReadyResult::CLOSED;
 	}
 
 	ScheduleWrite();

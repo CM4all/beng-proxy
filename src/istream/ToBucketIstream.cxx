@@ -72,7 +72,7 @@ ToBucketIstream::_ConsumeBucketList(size_t nbytes) noexcept
 	return {0, true};
 }
 
-bool
+IstreamReadyResult
 ToBucketIstream::OnIstreamReady() noexcept
 {
 	defer_read.Cancel();

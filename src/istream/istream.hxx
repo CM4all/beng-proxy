@@ -112,7 +112,7 @@ protected:
 		return nbytes;
 	}
 
-	bool InvokeReady() noexcept;
+	IstreamReadyResult InvokeReady() noexcept;
 	std::size_t InvokeData(std::span<const std::byte> src) noexcept;
 	IstreamDirectResult InvokeDirect(FdType type, FileDescriptor fd,
 					 off_t offset, std::size_t max_length,

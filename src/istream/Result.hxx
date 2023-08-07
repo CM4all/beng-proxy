@@ -5,6 +5,29 @@
 #pragma once
 
 /**
+ * Return type for IstreamHandler::OnIstreamReady().
+ */
+enum class IstreamReadyResult {
+	/**
+	 * The callee acknowledges the readiness and has finished
+	 * processing data.  It might or might not have consumed data
+	 * from the #Istream.
+	 */
+	OK,
+
+	/**
+	 * The #Istream shall now invoke IstreamHandler::OnData() or
+	 * IstreamHandler::OnDirect().
+	 */
+	FALLBACK,
+
+	/**
+	 * The calling #Istream has been closed.
+	 */
+	CLOSED,
+};
+
+/**
  * These special values may be returned from
  * IstreamHandler::OnDirect().
  */

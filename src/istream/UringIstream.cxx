@@ -228,8 +228,14 @@ try {
 	buffer.Append(res);
 	offset += res;
 
-	if (!InvokeReady())
+	switch (InvokeReady()) {
+	case IstreamReadyResult::OK:
+	case IstreamReadyResult::CLOSED:
 		return;
+
+	case IstreamReadyResult::FALLBACK:
+		break;
+	}
 
 	// TODO free the buffer?
 	if (SendFromBuffer(buffer) > 0)
