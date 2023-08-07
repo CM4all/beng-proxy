@@ -39,6 +39,7 @@ public:
 
 	/* virtual methods from class Istream */
 
+	off_t _GetAvailable(bool partial) noexcept override;
 	void _Read() noexcept override;
 	void _FillBucketList(IstreamBucketList &list) override;
 	ConsumeBucketResult _ConsumeBucketList(size_t nbytes) noexcept override;
@@ -270,6 +271,30 @@ ChunkedIstream::OnError(std::exception_ptr ep) noexcept
  * istream implementation
  *
  */
+
+off_t
+ChunkedIstream::_GetAvailable(bool partial) noexcept
+{
+	if (!partial)
+		return -1;
+
+	off_t result = ReadBuffer().size();
+
+	if (input.IsDefined()) {
+		if (off_t available = input.GetAvailable(true); available > 0) {
+			result += available;
+
+			if (available >= (off_t)missing_from_current_chunk)
+				/* new chunk header */
+				result += 6;
+		}
+
+		/* EOF chunk */
+		result += 5;
+	}
+
+	return result;
+}
 
 void
 ChunkedIstream::_Read() noexcept
