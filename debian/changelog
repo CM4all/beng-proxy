@@ -3,6 +3,7 @@ cm4all-beng-proxy (18.0.30) unstable; urgency=low
   * http_server: fix assertion failure
   * spawn: workaround for creating user namespace in container
   * fcgi: fix "excess data" check
+  * fcgi: optimize
   * istream: fix assertion failure
   * istream/chunked: optimize
   * bp: check request method after opening a static file

@@ -104,6 +104,14 @@ class FcgiClient final
 		bool in_handler;
 
 		/**
+		 * Are we currently inside _Read()?  We need to keep
+		 * track of that to avoid invoking
+		 * handler.OnIstreamReady() if the handler is
+		 * currently invoking _Read().
+		 */
+		bool in_read;
+
+		/**
 		 * Is the FastCGI application currently sending a STDERR
 		 * packet?
 		 */
@@ -356,6 +364,7 @@ FcgiClient::HandleLine(std::string_view line)
 		stopwatch.RecordEvent("response_headers");
 
 		response.read_state = Response::READ_BODY;
+		response.in_read = false;
 		response.stderr = false;
 		return true;
 	}
@@ -753,12 +762,20 @@ FcgiClient::_GetAvailable(bool partial) noexcept
 void
 FcgiClient::_Read() noexcept
 {
+	assert(response.read_state == Response::READ_BODY);
+	assert(!response.in_read);
+
 	if (response.in_handler)
 		/* avoid recursion; the http_response_handler caller will
 		   continue parsing the response if possible */
 		return;
 
-	socket.Read();
+	response.in_read = true;
+
+	if (socket.Read() == BufferedReadResult::DESTROYED)
+		return;
+
+	response.in_read = false;
 }
 
 void
@@ -852,6 +869,10 @@ FcgiClient::_FillBucketList(IstreamBucketList &list)
 				}
 
 				found_end_request = true;
+
+				if (socket.IsConnected() &&
+				    remaining == sizeof(header) + FromBE16(header.content_length) + header.padding_length)
+					ReleaseSocket(true);
 			}
 
 			break;
@@ -955,6 +976,19 @@ FcgiClient::_ConsumeBucketList(std::size_t nbytes) noexcept
 BufferedResult
 FcgiClient::OnBufferedData()
 {
+	if (response.read_state == Response::READ_BODY && !response.in_read) {
+		switch (InvokeReady()) {
+		case IstreamReadyResult::OK:
+			return BufferedResult::OK;
+
+		case IstreamReadyResult::FALLBACK:
+			break;
+
+		case IstreamReadyResult::CLOSED:
+			return BufferedResult::CLOSED;
+		}
+	}
+
 	auto r = socket.ReadBuffer();
 	assert(!r.empty());
 
