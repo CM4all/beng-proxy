@@ -874,9 +874,12 @@ FcgiClient::_ConsumeBucketList(std::size_t nbytes) noexcept
 	assert(response.read_state == Response::READ_BODY);
 	assert(!response.stderr);
 
+	if (response.available == 0)
+		return {0, true};
+
 	std::size_t total = 0;
 
-	while (nbytes > 0) {
+	while (true) {
 		if (content_length > 0) {
 			std::size_t consumed = std::min(nbytes, content_length);
 			if (response.available > 0 && (off_t)consumed > response.available)
@@ -919,6 +922,15 @@ FcgiClient::_ConsumeBucketList(std::size_t nbytes) noexcept
 			continue;
 		}
 
+		if (header.type == FCGI_END_REQUEST && !socket.IsConnected()) {
+			/* this condition must have been detected
+			   already in _FillBucketList() */
+			assert(response.available == 0);
+
+			socket.DisposeConsumed(sizeof(header));
+			return {Consumed(total), true};
+		}
+
 		if (header.type != FCGI_STDOUT)
 			break;
 
@@ -932,7 +944,6 @@ FcgiClient::_ConsumeBucketList(std::size_t nbytes) noexcept
 
 	assert(nbytes == 0);
 
-	// TODO eof?
 	return {Consumed(total), false};
 }
 
