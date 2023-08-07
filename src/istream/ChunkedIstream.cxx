@@ -348,12 +348,15 @@ ChunkedIstream::_ConsumeBucketList(size_t nbytes) noexcept
 	if (size > 0) {
 		assert(input.IsDefined());
 
-		size = input.ConsumeBucketList(size).consumed;
-		Consumed(size);
-		nbytes -= size;
-		total += size;
+		const auto [consumed, is_eof] = input.ConsumeBucketList(size);
+		if (is_eof)
+			CloseInput();
 
-		missing_from_current_chunk -= size;
+		Consumed(consumed);
+		nbytes -= consumed;
+		total += consumed;
+
+		missing_from_current_chunk -= consumed;
 		if (missing_from_current_chunk == 0) {
 			/* a chunk ends with "\r\n" */
 			char *p = SetBuffer(2);
@@ -364,11 +367,6 @@ ChunkedIstream::_ConsumeBucketList(size_t nbytes) noexcept
 			nbytes -= size;
 			total += size;
 		}
-
-		if (nbytes > 0)
-			/* if data still remains, then our input must
-			   have reached end-of-file */
-			CloseInput();
 	}
 
 	// TODO set eof?
