@@ -2,6 +2,7 @@
 istream_api = static_library(
   'istream_api',
   'Handler.cxx',
+  'Debug.cxx',
   'Invoke.cxx',
   'Pointer.cxx',
   'UnusedPtr.cxx',

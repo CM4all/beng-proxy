@@ -335,52 +335,13 @@ public:
 	 * On error, this method destroys the #Istream instance and throws
 	 * std::runtime_error.
 	 */
+#ifdef NDEBUG
 	void FillBucketList(IstreamBucketList &list) {
-#ifndef NDEBUG
-		assert(!destroyed);
-		assert(!closing);
-		assert(!eof);
-		assert(!reading);
-		assert(!in_data);
-
-		const DestructObserver destructed(*this);
-		reading = true;
-
-		try {
-#endif
-
-			_FillBucketList(list);
-
-#ifndef NDEBUG
-		} catch (...) {
-			if (!destructed) {
-				assert(destroyed);
-			}
-
-			throw;
-		}
-
-		assert(!destructed);
-		assert(!destroyed);
-		assert(reading);
-
-		reading = false;
-
-#if 0
-		// TODO: not possible currently due to include dependencies
-		std::size_t total_size = list.GetTotalBufferSize();
-		if ((off_t)total_size > available_partial)
-			available_partial = total_size;
-
-		if (!list.HasMore() && !list.HasNonBuffer()) {
-			if (available_full_set)
-				assert((off_t)total_size == available_full);
-			else
-				available_full = total_size;
-		}
-#endif
-#endif
+		_FillBucketList(list);
 	}
+#else
+	void FillBucketList(IstreamBucketList &list);
+#endif
 
 	struct ConsumeBucketResult {
 		/**
