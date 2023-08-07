@@ -78,11 +78,9 @@ try {
 	FileWriter fw(session_save_path, 0600);
 	FdOutputStream fos(fw.GetFileDescriptor());
 
-	{
-		BufferedOutputStream bos(fos);
+	WithBufferedOutputStream(fos, [&manager](BufferedOutputStream &bos){
 		session_manager_save(manager, bos);
-		bos.Flush();
-	}
+	});
 
 	fw.Commit();
 } catch (...) {
