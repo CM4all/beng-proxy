@@ -242,7 +242,10 @@ public:
 	/* virtual methods from class Istream */
 
 	bool OnIstreamReady() noexcept override {
-		return GetBufferEndOffsetUntil(first_substitution) > position;
+		if (GetBufferEndOffsetUntil(first_substitution) > position)
+			return InvokeReady();
+		else
+			return false;
 	}
 
 	off_t _GetAvailable(bool partial) noexcept override;
