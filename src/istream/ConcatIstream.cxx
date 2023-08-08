@@ -278,17 +278,24 @@ CatIstream::_ConsumeBucketList(std::size_t nbytes) noexcept
 {
 	std::size_t total = 0;
 
-	while (nbytes > 0) {
+	while (true) {
 		auto &input = inputs.front();
 
 		const auto r = input.ConsumeBucketList(nbytes);
-		if (r.eof)
-			inputs.erase_and_dispose(inputs.iterator_to(input),
-						 Input::Disposer{});
 
 		Consumed(r.consumed);
 		total += r.consumed;
 		nbytes -= r.consumed;
+
+		if (nbytes == 0)
+			break;
+
+		/* if there is still data to be consumed, then the
+		   current input must have reached EOF */
+		assert(r.eof);
+
+		inputs.erase_and_dispose(inputs.iterator_to(input),
+					 Input::Disposer{});
 	}
 
 	return {total, inputs.empty()};
