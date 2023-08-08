@@ -55,7 +55,7 @@ class Istream : PoolHolder, LeakDetector, IstreamDestructAnchor {
 #ifndef NDEBUG
 	bool reading = false, destroyed = false;
 
-	bool closing = false, eof = false;
+	bool closing = false, eof = false, bucket_eof = false;
 
 	bool in_data = false, available_full_set = false;
 
@@ -259,6 +259,7 @@ public:
 		assert(!destroyed);
 		assert(!closing);
 		assert(!eof);
+		assert(!bucket_eof);
 		assert(!reading);
 
 		const DestructObserver destructed(*this);
@@ -309,6 +310,7 @@ public:
 		assert(!destroyed);
 		assert(!closing);
 		assert(!eof);
+		assert(!bucket_eof);
 		assert(!reading);
 		assert(!in_data);
 
@@ -370,6 +372,7 @@ public:
 		assert(!destroyed);
 		assert(!closing);
 		assert(!eof);
+		assert(!bucket_eof);
 		assert(!reading);
 		assert(!in_data);
 
@@ -380,11 +383,14 @@ public:
 
 #ifndef NDEBUG
 		assert(!destroyed);
+		assert(!bucket_eof);
 		assert(result.consumed <= nbytes);
 		assert(consumed_sum == result.consumed);
 		assert(result.eof || result.consumed == nbytes);
 		assert(!result.eof || available_partial == 0);
 		assert(!result.eof || !available_full_set || available_full == 0);
+
+		bucket_eof = result.eof;
 #endif
 
 		return result;
@@ -402,6 +408,7 @@ public:
 		assert(!destroyed);
 		assert(!closing);
 		assert(!eof);
+		assert(!bucket_eof);
 		assert(in_data);
 
 		consumed_sum = 0;
@@ -426,6 +433,7 @@ public:
 		assert(!destroyed);
 		assert(!closing);
 		assert(!eof);
+		assert(!bucket_eof);
 		assert(!reading);
 		assert(!in_data);
 

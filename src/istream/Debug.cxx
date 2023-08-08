@@ -14,6 +14,7 @@ Istream::FillBucketList(IstreamBucketList &list)
 	assert(!destroyed);
 	assert(!closing);
 	assert(!eof);
+	assert(!bucket_eof);
 	assert(!reading);
 	assert(!in_data);
 
