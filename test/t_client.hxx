@@ -278,8 +278,16 @@ struct Context final
 			if (break_data)
 				event_loop.Break();
 
-			auto result = input.ConsumeBucketList(total_buckets);
-			assert(result.consumed == total_buckets);
+			std::size_t consume_buckets = total_buckets;
+
+			if (close_after_buckets)
+				/* since we want to continue I/O after
+				   consuming buckets, let's not
+				   consume all */
+				--consume_buckets;
+
+			auto result = input.ConsumeBucketList(consume_buckets);
+			assert(result.consumed == consume_buckets);
 			body_data += result.consumed;
 			eof = result.eof;
 		} else
@@ -289,6 +297,7 @@ struct Context final
 		available_after_bucket_partial = input.GetAvailable(true);
 
 		if (eof) {
+			assert(!close_after_buckets);
 			CloseInput();
 			body_eof = true;
 		} else if (read_after_buckets) {
@@ -1519,8 +1528,8 @@ test_buckets_close(auto &factory, Context &c) noexcept
 	assert(c.body_error == nullptr);
 	assert(!c.more_buckets);
 	assert(c.total_buckets == (size_t)c.available);
-	assert(c.available_after_bucket == 0);
-	assert(c.available_after_bucket_partial == 0);
+	assert(c.available_after_bucket == 1);
+	assert(c.available_after_bucket_partial == 1);
 }
 
 #endif
