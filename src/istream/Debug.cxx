@@ -10,6 +10,7 @@
 void
 Istream::FillBucketList(IstreamBucketList &list)
 {
+	assert(!list.HasMore());
 	assert(!destroyed);
 	assert(!closing);
 	assert(!eof);
