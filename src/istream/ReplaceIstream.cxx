@@ -527,7 +527,6 @@ ReplaceIstream::_ConsumeBucketList(size_t nbytes) noexcept
 			break;
 
 		const auto r = s->ConsumeBucketList(nbytes);
-		// TODO use r.eof
 		Consumed(r.consumed);
 		total += r.consumed;
 		nbytes -= r.consumed;
@@ -538,6 +537,8 @@ ReplaceIstream::_ConsumeBucketList(size_t nbytes) noexcept
 		/* if there is still data to be consumed, it must mean
 		   that the substitution Istream has reached the
 		   end */
+		assert(r.eof);
+
 		ToNextSubstitution(s);
 	}
 
