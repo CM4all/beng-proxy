@@ -288,15 +288,15 @@ struct Context final
 		available_after_bucket = input.GetAvailable(false);
 		available_after_bucket_partial = input.GetAvailable(true);
 
-		if (read_after_buckets)
+		if (eof) {
+			CloseInput();
+			body_eof = true;
+		} else if (read_after_buckets) {
 			input.Read();
-		else if (close_after_buckets) {
+		} else if (close_after_buckets) {
 			body_closed = true;
 			CloseInput();
 			close_response_body_late = false;
-		} else if (eof) {
-			CloseInput();
-			body_eof = true;
 		}
 	}
 #endif
