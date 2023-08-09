@@ -784,8 +784,8 @@ FcgiClient::_FillBucketList(IstreamBucketList &list)
 
 	while (true) {
 		if (current_content_length > 0) {
-			if (response.available >= 0 &&
-			    (off_t)current_content_length > response.available) {
+			if (available >= 0 &&
+			    (off_t)current_content_length > available) {
 				/* the DATA packet was larger than the Content-Length
 				   declaration - fail */
 
