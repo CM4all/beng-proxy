@@ -835,8 +835,15 @@ FcgiClient::_FillBucketList(IstreamBucketList &list)
 		}
 
 		if (header.type != FCGI_STDOUT) {
-			if (header.type == FCGI_END_REQUEST)
+			if (header.type == FCGI_END_REQUEST) {
+				if (available > 0) {
+					Destroy();
+					throw FcgiClientError("premature end of body "
+							      "from FastCGI application");
+				}
+
 				found_end_request = true;
+			}
 
 			break;
 		}
