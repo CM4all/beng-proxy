@@ -779,6 +779,7 @@ FcgiClient::_FillBucketList(IstreamBucketList &list)
 	off_t available = response.available;
 	std::size_t current_content_length = content_length;
 	std::size_t current_skip_length = skip_length;
+	std::size_t total_size = 0;
 
 	bool found_end_request = false;
 
@@ -806,6 +807,7 @@ FcgiClient::_FillBucketList(IstreamBucketList &list)
 			list.Push({data, size});
 			data += size;
 			current_content_length -= size;
+			total_size += size;
 
 			if (current_content_length > 0)
 				break;
@@ -836,10 +838,17 @@ FcgiClient::_FillBucketList(IstreamBucketList &list)
 
 		if (header.type != FCGI_STDOUT) {
 			if (header.type == FCGI_END_REQUEST) {
+				/* "excess data" has already been checked */
+				assert(response.available < 0 ||
+				       static_cast<std::size_t>(response.available) >= total_size);
+
 				if (available > 0) {
 					Destroy();
 					throw FcgiClientError("premature end of body "
 							      "from FastCGI application");
+				} else if (response.available < 0) {
+					/* now we know how much data remains */
+					response.available = total_size;
 				}
 
 				found_end_request = true;
