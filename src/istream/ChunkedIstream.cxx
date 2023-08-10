@@ -47,7 +47,11 @@ public:
 	/* virtual methods from class IstreamHandler */
 
 	IstreamReadyResult OnIstreamReady() noexcept override {
-		return InvokeReady();
+		auto result = InvokeReady();
+		if (result != IstreamReadyResult::CLOSED && !HasInput())
+			/* our input has meanwhile been closed */
+			result = IstreamReadyResult::CLOSED;
+		return result;
 	}
 
 	size_t OnData(std::span<const std::byte> src) noexcept override;

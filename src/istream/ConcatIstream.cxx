@@ -134,9 +134,16 @@ private:
 	}
 
 	IstreamReadyResult OnInputReady(Input &i) noexcept {
-		return IsCurrent(i)
-			? InvokeReady()
-			: IstreamReadyResult::OK;
+		if (!IsCurrent(i))
+			return IstreamReadyResult::OK;
+
+		auto result = InvokeReady();
+		if (result != IstreamReadyResult::CLOSED && !IsCurrent(i))
+			/* the input that is ready has meanwhile been
+			   closed */
+			result = IstreamReadyResult::CLOSED;
+
+		return result;
 	}
 
 	std::size_t OnInputData(Input &i, std::span<const std::byte> src) noexcept {
