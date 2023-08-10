@@ -57,6 +57,7 @@ public:
 
 	using Istream::GetPool;
 	using Istream::Destroy;
+	using Istream::InvokeReady;
 
 	IstreamHandler *PrepareEof() noexcept {
 		/* suppress InvokeEof() if rest==REST_EOF_CHUNK because in

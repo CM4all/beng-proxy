@@ -192,6 +192,14 @@ class HttpClient final : BufferedSocketHandler, IstreamSink, Cancellable, Destru
 		 */
 		bool in_handler;
 
+		/**
+		 * Are we currently inside _Read()?  We need to keep
+		 * track of that to avoid invoking
+		 * handler.OnIstreamReady() if the handler is
+		 * currently invoking _Read().
+		 */
+		bool in_read;
+
 		HttpStatus status;
 		StringMap headers;
 
@@ -482,6 +490,7 @@ HttpClient::Read() noexcept
 	       (response_body_reader.IsChunked() && !IsConnected()) ||
 	       !socket.HasEnded());
 	assert(response.state == Response::State::BODY);
+	assert(!response.in_read);
 	assert(response_body_reader.HasHandler());
 
 	if (IsConnected())
@@ -492,7 +501,12 @@ HttpClient::Read() noexcept
 		   continue parsing the response if possible */
 		return;
 
-	socket.Read();
+	response.in_read = true;
+
+	if (socket.Read() == BufferedReadResult::DESTROYED)
+		return;
+
+	response.in_read = false;
 }
 
 inline void
@@ -762,6 +776,8 @@ HttpClient::HeadersFinished()
 						  chunked);
 
 	response.state = Response::State::BODY;
+	response.in_read = false;
+
 	if (!socket.IsReleased())
 		socket.SetDirect(CheckDirect());
 }
@@ -1057,6 +1073,19 @@ HttpClient::OnBufferedData()
 			/* we don't need the socket anymore, we've got everything
 			   we need in the input buffer */
 			ReleaseSocket(true, keep_alive);
+
+		if (!response.in_read) {
+			switch (response_body_reader.InvokeReady()) {
+			case IstreamReadyResult::OK:
+				return BufferedResult::OK;
+
+			case IstreamReadyResult::FALLBACK:
+				break;
+
+			case IstreamReadyResult::CLOSED:
+				return BufferedResult::CLOSED;
+			}
+		}
 
 		return FeedBody(socket.ReadBuffer());
 
