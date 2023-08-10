@@ -49,8 +49,10 @@ Istream::FillBucketList(IstreamBucketList &list)
 	if (!list.HasMore() && !list.HasNonBuffer()) {
 		if (available_full_set)
 			assert((off_t)total_size == available_full);
-		else
+		else {
+			available_full_set = true;
 			available_full = total_size;
+		}
 	}
 }
 
