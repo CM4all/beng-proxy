@@ -484,12 +484,6 @@ HttpClient::Read() noexcept
 	assert(response.state == Response::State::BODY);
 	assert(response_body_reader.HasHandler());
 
-	if (response_body_reader.IsEOF()) {
-		/* just in case EOF has been reached by ConsumeBucketList() */
-		ResponseBodyEOF();
-		return;
-	}
-
 	if (IsConnected())
 		socket.SetDirect(CheckDirect());
 
