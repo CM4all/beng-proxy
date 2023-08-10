@@ -816,9 +816,11 @@ test(
     't_istream_html_escape.cxx',
     '../src/escape/Istream.cxx',
     '../src/istream_html_escape.cxx',
+    '../src/istream/sink_close.cxx',
     't_istream_iconv.cxx',
     't_istream_replace.cxx',
     't_istream_subst.cxx',
+    't_istream_tee.cxx',
     'TestAutoPipeIstream.cxx',
     'TestBufferedIstream.cxx',
     istream_test_sources,
@@ -870,21 +872,6 @@ test(
       widget_dep,
       session_dep,
     ] + t_istream_filter_deps,
-  ),
-)
-
-test(
-  't_istream_tee',
-  executable(
-    't_istream_tee',
-    't_istream_tee.cxx',
-    '../src/istream/sink_close.cxx',
-    '../src/PInstance.cxx',
-    include_directories: inc,
-    dependencies: [
-      gtest,
-      istream_dep,
-    ],
   ),
 )
 

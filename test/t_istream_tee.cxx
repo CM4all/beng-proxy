@@ -24,6 +24,8 @@
 
 #include <string.h>
 
+namespace {
+
 struct StatsIstreamSink : IstreamSink {
 	size_t total_data = 0;
 	bool eof = false;
@@ -64,7 +66,7 @@ struct StatsIstreamSink : IstreamSink {
 	}
 };
 
-struct Context : StringSinkHandler {
+struct TeeContext : StringSinkHandler {
 	EventLoop &event_loop;
 
 	std::string value;
@@ -73,7 +75,7 @@ struct Context : StringSinkHandler {
 
 	bool break_strink_sink_finished = false;
 
-	explicit Context(EventLoop &_event_loop) noexcept
+	explicit TeeContext(EventLoop &_event_loop) noexcept
 		:event_loop(_event_loop) {}
 
 	void WaitStringSinkFinished() noexcept {
@@ -106,10 +108,10 @@ struct Context : StringSinkHandler {
 	}
 };
 
-struct BlockContext final : Context, StatsIstreamSink {
+struct BlockContext final : TeeContext, StatsIstreamSink {
 	template<typename I>
 	BlockContext(EventLoop &_event_loop, I &&_input) noexcept
-		:Context(_event_loop),
+		:TeeContext(_event_loop),
 		 StatsIstreamSink(std::forward<I>(_input)) {}
 
 	/* istream handler */
@@ -119,6 +121,8 @@ struct BlockContext final : Context, StatsIstreamSink {
 		return 0;
 	}
 };
+
+} // anonymouse namespace
 
 /*
  * tests
@@ -170,7 +174,7 @@ TEST(TeeIstream, Block1)
 TEST(TeeIstream, CloseData)
 {
 	PInstance instance;
-	Context ctx{instance.event_loop};
+	TeeContext ctx{instance.event_loop};
 	CancellablePointer cancel_ptr;
 
 	auto pool = pool_new_libc(instance.root_pool, "test");
@@ -201,7 +205,7 @@ TEST(TeeIstream, CloseData)
 TEST(TeeIstream, CloseSkipped)
 {
 	PInstance instance;
-	Context ctx{instance.event_loop};
+	TeeContext ctx{instance.event_loop};
 	CancellablePointer cancel_ptr;
 
 	auto pool = pool_new_libc(instance.root_pool, "test");
