@@ -6,6 +6,7 @@
 
 #include "FilteredSocket.hxx"
 #include "lease.hxx"
+#include "util/DestructObserver.hxx"
 
 #include <array>
 
@@ -20,6 +21,10 @@
  * method.
  */
 class FilteredSocketLease final : BufferedSocketHandler {
+	/* needed for translating the FilteredSocket::Read() return
+	   value */
+	DestructAnchor destruct_anchor;
+
 	FilteredSocket *socket;
 	LeasePtr lease_ref;
 

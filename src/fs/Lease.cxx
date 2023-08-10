@@ -160,8 +160,21 @@ FilteredSocketLease::Read() noexcept
 		return ReadReleased()
 			? BufferedReadResult::DISCONNECTED
 			: BufferedReadResult::DESTROYED;
-	else
-		return socket->Read();
+
+	const DestructObserver destructed{destruct_anchor};
+
+	auto result = socket->Read();
+
+	if (result == BufferedReadResult::DESTROYED && !destructed) {
+		/* FilteredSocket::READ() may return DESTRUCTED if we
+		   have just released our lease, but this lease has
+		   not been destroyed: translate the return value ot
+		   DISCONNECTED instead */
+		assert(IsReleased());
+		result = BufferedReadResult::DISCONNECTED;
+	}
+
+	return result;
 }
 
 void
