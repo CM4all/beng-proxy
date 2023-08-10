@@ -531,6 +531,9 @@ ReplaceIstream::_ConsumeBucketList(size_t nbytes) noexcept
 		total += r.consumed;
 		nbytes -= r.consumed;
 
+		if (r.eof)
+			ToNextSubstitution(s);
+
 		if (nbytes == 0)
 			break;
 
@@ -538,8 +541,6 @@ ReplaceIstream::_ConsumeBucketList(size_t nbytes) noexcept
 		   that the substitution Istream has reached the
 		   end */
 		assert(r.eof);
-
-		ToNextSubstitution(s);
 	}
 
 	// TODO eof?
