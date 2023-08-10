@@ -543,8 +543,7 @@ ReplaceIstream::_ConsumeBucketList(size_t nbytes) noexcept
 		assert(r.eof);
 	}
 
-	// TODO eof?
-	return {total, false};
+	return {total, IsEOF()};
 }
 
 void
