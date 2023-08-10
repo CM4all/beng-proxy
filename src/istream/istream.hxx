@@ -388,7 +388,7 @@ public:
 		assert(consumed_sum == result.consumed);
 		assert(result.eof || result.consumed == nbytes);
 		assert(!result.eof || available_partial == 0);
-		assert(!result.eof || !available_full_set || available_full == 0);
+		assert(result.eof == (available_full_set && available_full == 0));
 
 		bucket_eof = result.eof;
 #endif
