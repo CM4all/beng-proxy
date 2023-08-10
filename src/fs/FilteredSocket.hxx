@@ -368,13 +368,6 @@ public:
 	bool InternalRead() noexcept {
 		assert(filter != nullptr);
 
-#ifndef NDEBUG
-		if (!base.IsConnected() && base.GetAvailable() == 0)
-			/* work around assertion failure in
-			   BufferedSocket::TryRead2() */
-			return false;
-#endif
-
 		return base.Read();
 	}
 
