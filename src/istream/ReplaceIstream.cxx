@@ -459,9 +459,12 @@ ReplaceIstream::_FillBucketList(IstreamBucketList &list)
 			IstreamBucketList tmp;
 			buffer.FillBucketList(tmp, fill_position - position);
 			size_t nbytes = list.SpliceBuffersFrom(std::move(tmp),
-							       before_size);
-			if (nbytes < before_size)
+							       before_size,
+							       false);
+			if (nbytes < before_size) {
+				list.SetMore();
 				return;
+			}
 		}
 
 		if (s == nullptr) {

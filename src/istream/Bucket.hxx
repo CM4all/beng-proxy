@@ -133,22 +133,25 @@ public:
 	 * @return the number of bytes in all moved buffers
 	 */
 	size_t SpliceBuffersFrom(IstreamBucketList &&src,
-				 size_t max_size) noexcept {
-		if (src.HasMore())
+				 size_t max_size,
+				 bool copy_more_flag=true) noexcept {
+		if (src.HasMore() && copy_more_flag)
 			SetMore();
 
 		size_t total_size = 0;
 		for (const auto &bucket : src) {
 			if (max_size == 0 ||
 			    !bucket.IsBuffer()) {
-				SetMore();
+				if (copy_more_flag)
+					SetMore();
 				break;
 			}
 
 			auto buffer = bucket.GetBuffer();
 			if (buffer.size() > max_size) {
 				buffer = buffer.first(max_size);
-				SetMore();
+				if (copy_more_flag)
+					SetMore();
 			}
 
 			Push(buffer);
