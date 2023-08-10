@@ -9,11 +9,11 @@
 class ForwardIstream : public FacadeIstream {
 protected:
 	template<typename I>
-	ForwardIstream(struct pool &_pool, I &&_input)
-		:FacadeIstream(_pool, std::forward<I>(_input)) {}
+	ForwardIstream(struct pool &_pool, I &&_input TRACE_ARGS_DEFAULT)
+		:FacadeIstream(_pool, std::forward<I>(_input) TRACE_ARGS_FWD) {}
 
-	explicit ForwardIstream(struct pool &_pool)
-		:FacadeIstream(_pool) {}
+	explicit ForwardIstream(struct pool &_pool TRACE_ARGS_DEFAULT)
+		:FacadeIstream(_pool TRACE_ARGS_FWD) {}
 
 public:
 	/* virtual methods from class Istream */
