@@ -37,6 +37,8 @@ struct TeeIstream final : IstreamSink, DestructAnchor {
 		 */
 		size_t bucket_list_size;
 
+		bool bucket_more;
+
 		/**
 		 * A weak output is one which is closed automatically when all
 		 * "strong" outputs have been closed - it will not keep up the
@@ -108,6 +110,7 @@ struct TeeIstream final : IstreamSink, DestructAnchor {
 			}
 
 			bucket_list_size = list.SpliceBuffersFrom(std::move(sub));
+			bucket_more = list.HasMore();
 
 			if (!parent.IsSingleOutput())
 				/* if there are more outputs, they may
@@ -130,8 +133,10 @@ struct TeeIstream final : IstreamSink, DestructAnchor {
 			size_t consumed = std::min(nbytes, bucket_list_size);
 			skip = consumed;
 
-			// TODO eof?
-			return {Istream::Consumed(consumed), false};
+			return {
+				Istream::Consumed(consumed),
+				consumed == bucket_list_size && !bucket_more,
+			};
 		}
 
 		void _Close() noexcept override;
