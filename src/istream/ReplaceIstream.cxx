@@ -635,3 +635,19 @@ ReplaceIstream::Finish() noexcept
 
 	defer_read.Schedule();
 }
+
+IstreamReadyResult
+ReplaceIstream::OnSubstitutionReady(Substitution &s) noexcept
+{
+	assert(s.IsActive());
+
+	auto result = InvokeReady();
+	if (result != IstreamReadyResult::CLOSED && first_substitution != &s)
+		/* this substitution has been closed; we need to
+		   return CLOSED to its callback, even though
+		   ReplaceIstream's handler was successful and didn't
+		   close the ReplaceIstream */
+		result = IstreamReadyResult::CLOSED;
+
+	return result;
+}

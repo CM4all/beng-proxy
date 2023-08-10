@@ -71,7 +71,7 @@ class ReplaceIstream : public FacadeIstream, DestructAnchor {
 			if (!IsActive())
 				return IstreamReadyResult::OK;
 
-			return replace.InvokeReady();
+			return replace.OnSubstitutionReady(*this);
 		}
 
 		size_t OnData(std::span<const std::byte> src) noexcept override;
@@ -217,6 +217,8 @@ private:
 	void ToNextSubstitution(ReplaceIstream::Substitution *s) noexcept;
 
 	Substitution *GetLastSubstitution() noexcept;
+
+	IstreamReadyResult OnSubstitutionReady(Substitution &s) noexcept;
 
 protected:
 	/**
