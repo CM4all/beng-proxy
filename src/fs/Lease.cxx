@@ -153,11 +153,13 @@ FilteredSocketLease::ReadReleased() noexcept
 	return true;
 }
 
-bool
+BufferedReadResult
 FilteredSocketLease::Read() noexcept
 {
 	if (IsReleased())
-		return ReadReleased();
+		return ReadReleased()
+			? BufferedReadResult::DISCONNECTED
+			: BufferedReadResult::DESTROYED;
 	else
 		return socket->Read();
 }

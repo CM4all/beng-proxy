@@ -65,7 +65,17 @@ EchoSocket::OnBufferedClosed() noexcept
 bool
 EchoSocket::OnBufferedWrite()
 {
-	return socket.Read();
+	switch (socket.Read()) {
+	case BufferedReadResult::OK:
+	case BufferedReadResult::BLOCKING:
+		break;
+
+	case BufferedReadResult::DISCONNECTED:
+	case BufferedReadResult::DESTROYED:
+		return false;
+	}
+
+	return true;
 }
 
 void

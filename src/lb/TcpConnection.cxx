@@ -128,8 +128,15 @@ LbTcpConnection::Inbound::OnBufferedWrite()
 
 	tcp.got_outbound_data = false;
 
-	if (!tcp.outbound.socket.Read())
+	switch (tcp.outbound.socket.Read()) {
+	case BufferedReadResult::OK:
+	case BufferedReadResult::BLOCKING:
+		break;
+
+	case BufferedReadResult::DISCONNECTED:
+	case BufferedReadResult::DESTROYED:
 		return false;
+	}
 
 	if (!tcp.got_outbound_data)
 		socket->UnscheduleWrite();
@@ -254,8 +261,15 @@ LbTcpConnection::Outbound::OnBufferedWrite()
 
 	tcp.got_inbound_data = false;
 
-	if (!tcp.inbound.socket->Read())
+	switch (tcp.inbound.socket->Read()) {
+	case BufferedReadResult::OK:
+	case BufferedReadResult::BLOCKING:
+		break;
+
+	case BufferedReadResult::DISCONNECTED:
+	case BufferedReadResult::DESTROYED:
 		return false;
+	}
 
 	if (!tcp.got_inbound_data)
 		socket.UnscheduleWrite();
@@ -352,8 +366,16 @@ LbTcpConnection::OnSocketConnectSuccess(UniqueSocketDescriptor fd) noexcept
 	   (istream_direct_mask_to(inbound.base.base.fd_type) & FdType::FD_PIPE) != 0;
 	*/
 
-	if (inbound.socket->Read())
+	switch (inbound.socket->Read()) {
+	case BufferedReadResult::OK:
+	case BufferedReadResult::BLOCKING:
 		outbound.socket.Read();
+		break;
+
+	case BufferedReadResult::DISCONNECTED:
+	case BufferedReadResult::DESTROYED:
+		break;
+	}
 }
 
 void

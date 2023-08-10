@@ -99,7 +99,7 @@ public:
 	void DisposeConsumed(std::size_t nbytes) noexcept;
 	void AfterConsumed() noexcept;
 
-	bool Read() noexcept;
+	BufferedReadResult Read() noexcept;
 
 	void ScheduleRead() noexcept {
 		socket->ScheduleRead();

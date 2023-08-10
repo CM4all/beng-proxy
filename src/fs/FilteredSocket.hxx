@@ -253,7 +253,7 @@ public:
 	 * data available yet) an event gets scheduled and the
 	 * function returns immediately.
 	 */
-	bool Read() noexcept;
+	BufferedReadResult Read() noexcept;
 
 	ssize_t Write(std::span<const std::byte> src) noexcept;
 
@@ -365,7 +365,7 @@ public:
 		return base.GetInputBuffer();
 	}
 
-	bool InternalRead() noexcept {
+	BufferedReadResult InternalRead() noexcept {
 		assert(filter != nullptr);
 
 		return base.Read();

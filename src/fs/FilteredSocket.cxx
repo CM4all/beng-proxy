@@ -213,7 +213,7 @@ FilteredSocket::AfterConsumed() noexcept
 		base.AfterConsumed();
 }
 
-bool
+BufferedReadResult
 FilteredSocket::Read() noexcept
 {
 	if (filter != nullptr)

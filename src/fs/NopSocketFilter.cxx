@@ -47,7 +47,7 @@ NopSocketFilter::AfterConsumed() noexcept
 	socket->InternalAfterConsumed();
 }
 
-bool
+BufferedReadResult
 NopSocketFilter::Read() noexcept
 {
 	return socket->InternalRead();

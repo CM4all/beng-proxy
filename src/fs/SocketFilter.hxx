@@ -13,6 +13,7 @@
 #include <stddef.h>
 
 enum class BufferedResult;
+enum class BufferedReadResult;
 class FilteredSocket;
 
 class SocketFilter {
@@ -50,7 +51,7 @@ public:
 	 * The client asks to read more data.  The filter shall call
 	 * FilteredSocket::InvokeData() again.
 	 */
-	virtual bool Read() noexcept = 0;
+	virtual BufferedReadResult Read() noexcept = 0;
 
 	/**
 	 * The client asks to write data to the socket.  The filter

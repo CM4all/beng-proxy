@@ -472,12 +472,16 @@ ThreadSocketFilter::AfterConsumed() noexcept
 		MoveDecryptedInputAndSchedule();
 }
 
-bool
+BufferedReadResult
 ThreadSocketFilter::Read() noexcept
 {
-	return SubmitDecryptedInput() &&
-		(postponed_end ||
-		 socket->InternalRead());
+	if (!SubmitDecryptedInput())
+		return BufferedReadResult::DESTROYED;
+
+	if (postponed_end)
+		return BufferedReadResult::DISCONNECTED;
+
+	return socket->InternalRead();
 }
 
 inline std::size_t
