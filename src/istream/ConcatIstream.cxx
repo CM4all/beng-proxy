@@ -265,9 +265,21 @@ CatIstream::_FillBucketList(IstreamBucketList &list)
 {
 	assert(!list.HasMore());
 
-	for (auto &input : inputs) {
+	for (auto i = inputs.begin(); i != inputs.end();) {
+		auto &input = *i;
+
 		try {
+			const auto m = list.Mark();
+
 			input.FillBucketList(list);
+
+			if (list.EmptySinceMark(m)) {
+				/* this input hasn't added any data to
+				   the list and hasn't set the "more"
+				   flag, so we can assume it's EOF */
+				i = inputs.erase_and_dispose(i, Input::Disposer{});
+				continue;
+			}
 		} catch (...) {
 			input.unlink();
 			CloseAllInputs();
@@ -277,6 +289,8 @@ CatIstream::_FillBucketList(IstreamBucketList &list)
 
 		if (list.HasMore())
 			break;
+
+		++i;
 	}
 }
 

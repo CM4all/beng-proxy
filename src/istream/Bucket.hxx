@@ -88,6 +88,18 @@ public:
 		Push(IstreamBucket{buffer});
 	}
 
+	struct Marker {
+		List::size_type value;
+	};
+
+	Marker Mark() const noexcept {
+		return {list.size() - HasMore()};
+	}
+
+	bool EmptySinceMark(const Marker m) const noexcept {
+		return !HasMore() && list.size() == m.value;
+	}
+
 	List::const_iterator begin() const noexcept {
 		return list.begin();
 	}
