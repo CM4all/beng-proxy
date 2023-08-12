@@ -429,8 +429,6 @@ ReplaceIstream::_FillBucketList(IstreamBucketList &list)
 				Destroy();
 				throw;
 			}
-
-			assert(finished);
 		} else if (total > 0)
 			input.ConsumeBucketList(total);
 	}
