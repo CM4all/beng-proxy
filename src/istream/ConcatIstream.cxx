@@ -100,6 +100,10 @@ class CatIstream final : public Istream, DestructAnchor {
 public:
 	CatIstream(struct pool &p, std::span<UnusedIstreamPtr> _inputs) noexcept;
 
+	~CatIstream() noexcept {
+		inputs.clear_and_dispose(Input::Disposer());
+	}
+
 	void Append(UnusedIstreamPtr &&istream) noexcept {
 		auto *input = NewFromPool<Input>(GetPool(), *this,
 						 std::move(istream));
@@ -127,10 +131,6 @@ private:
 
 	bool IsEOF() const noexcept {
 		return inputs.empty();
-	}
-
-	void CloseAllInputs() noexcept {
-		inputs.clear_and_dispose(Input::Disposer());
 	}
 
 	IstreamReadyResult OnInputReady(Input &i) noexcept {
@@ -180,7 +180,6 @@ private:
 
 	void OnInputError(Input &i, std::exception_ptr ep) noexcept {
 		i.unlink();
-		CloseAllInputs();
 		DestroyError(ep);
 	}
 
@@ -199,7 +198,6 @@ public:
 	ConsumeBucketResult _ConsumeBucketList(std::size_t nbytes) noexcept override;
 	void _ConsumeDirect(std::size_t nbytes) noexcept override;
 	int _AsFd() noexcept override;
-	void _Close() noexcept override;
 };
 
 /*
@@ -282,7 +280,6 @@ CatIstream::_FillBucketList(IstreamBucketList &list)
 			}
 		} catch (...) {
 			input.unlink();
-			CloseAllInputs();
 			Destroy();
 			throw;
 		}
@@ -344,13 +341,6 @@ CatIstream::_AsFd() noexcept
 		Destroy();
 
 	return fd;
-}
-
-void
-CatIstream::_Close() noexcept
-{
-	CloseAllInputs();
-	Destroy();
 }
 
 /*
