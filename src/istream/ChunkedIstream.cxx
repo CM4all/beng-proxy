@@ -332,9 +332,19 @@ ChunkedIstream::_FillBucketList(IstreamBucketList &list)
 		return;
 	}
 
+	IstreamBucketList sub;
+	FillBucketListFromInput(sub);
+
 	auto b = ReadBuffer();
 	if (b.empty() && missing_from_current_chunk == 0) {
+		/* see which of FillBucketList() and GetAvailable()
+		   returns more data and use that to start the new
+		   chunk */
+
 		off_t available = input.GetAvailable(true);
+		if ((off_t)sub.GetTotalBufferSize() > available)
+			available = sub.GetTotalBufferSize();
+
 		if (available > 0) {
 			StartChunk(available);
 			b = ReadBuffer();
@@ -346,9 +356,6 @@ ChunkedIstream::_FillBucketList(IstreamBucketList &list)
 
 	if (missing_from_current_chunk > 0) {
 		assert(input.IsDefined());
-
-		IstreamBucketList sub;
-		FillBucketListFromInput(sub);
 
 		size_t nbytes = list.SpliceBuffersFrom(std::move(sub),
 						       missing_from_current_chunk);
