@@ -39,7 +39,11 @@ FromBucketIstream::_Read() noexcept
 			break;
 	}
 
-	input.ConsumeBucketList(total);
+	const auto c = input.ConsumeBucketList(total);
+	assert(c.consumed == total);
+
+	if (c.eof)
+		DestroyEof();
 }
 
 void
