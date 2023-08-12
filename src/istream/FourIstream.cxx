@@ -28,14 +28,7 @@ public:
 
 	void _FillBucketList(IstreamBucketList &list) override {
 		IstreamBucketList tmp;
-
-		try {
-			input.FillBucketList(tmp);
-		} catch (...) {
-			Destroy();
-			throw;
-		}
-
+		ForwardIstream::_FillBucketList(tmp);
 		list.SpliceBuffersFrom(std::move(tmp), 4);
 	}
 

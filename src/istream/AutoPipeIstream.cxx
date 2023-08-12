@@ -6,6 +6,7 @@
 #include "New.hxx"
 #include "UnusedPtr.hxx"
 #include "ForwardIstream.hxx"
+#include "Bucket.hxx"
 #include "pipe/Lease.hxx"
 #include "system/Error.hxx"
 #include "io/Splice.hxx"
@@ -36,14 +37,11 @@ public:
 
 	void _FillBucketList(IstreamBucketList &list) override {
 		if (piped > 0)
-			return Istream::_FillBucketList(list);
-
-		try {
-			input.FillBucketList(list);
-		} catch (...) {
-			Destroy();
-			throw;
-		}
+			/* there's data in the pipe, can't fill the
+			   bucket list right now */
+			list.SetMore();
+		else
+			ForwardIstream::_FillBucketList(list);
 	}
 
 	void _ConsumeDirect(std::size_t nbytes) noexcept override;

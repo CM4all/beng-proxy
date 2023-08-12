@@ -6,6 +6,7 @@
 #include "New.hxx"
 #include "UnusedPtr.hxx"
 #include "ForwardIstream.hxx"
+#include "Bucket.hxx"
 #include "event/SocketEvent.hxx"
 #include "net/SocketError.hxx"
 #include "io/Splice.hxx"
@@ -43,7 +44,8 @@ public:
 	void _Read() noexcept override;
 
 	void _FillBucketList(IstreamBucketList &list) override {
-		return Istream::_FillBucketList(list);
+		/* refuse to use buckets */
+		list.SetMore();
 	}
 
 	void _ConsumeDirect(std::size_t nbytes) noexcept override;

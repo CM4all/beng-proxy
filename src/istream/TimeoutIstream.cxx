@@ -46,13 +46,7 @@ public:
 
 	void _FillBucketList(IstreamBucketList &list) override {
 		IstreamBucketList tmp;
-
-		try {
-			input.FillBucketList(tmp);
-		} catch (...) {
-			Destroy();
-			throw;
-		}
+		ForwardIstream::_FillBucketList(tmp);
 
 		if (!tmp.IsEmpty())
 			/* disable the timeout as soon as the first data byte

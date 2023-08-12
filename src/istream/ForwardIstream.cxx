@@ -14,6 +14,17 @@ ForwardIstream::_Skip(off_t length) noexcept
 	return nbytes;
 }
 
+void
+ForwardIstream::_FillBucketList(IstreamBucketList &list)
+{
+	try {
+		return input.FillBucketList(list);
+	} catch (...) {
+		Destroy();
+		throw;
+	}
+}
+
 int
 ForwardIstream::_AsFd() noexcept
 {

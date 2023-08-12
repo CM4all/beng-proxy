@@ -22,15 +22,6 @@ public:
 	virtual ~UnlockIstream() noexcept override {
 		item.Unlock();
 	}
-
-	void _FillBucketList(IstreamBucketList &list) override {
-		try {
-			input.FillBucketList(list);
-		} catch (...) {
-			Destroy();
-			throw;
-		}
-	}
 };
 
 UnusedIstreamPtr

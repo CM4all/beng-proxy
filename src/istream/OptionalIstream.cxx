@@ -57,14 +57,9 @@ public:
 	}
 
 	void _FillBucketList(IstreamBucketList &list) override {
-		if (resumed) {
-			try {
-				input.FillBucketList(list);
-			} catch (...) {
-				Destroy();
-				throw;
-			}
-		} else
+		if (resumed)
+			ForwardIstream::_FillBucketList(list);
+		else
 			list.SetMore();
 	}
 

@@ -81,13 +81,7 @@ HeadIstream::_FillBucketList(IstreamBucketList &list)
 		return;
 
 	IstreamBucketList tmp1;
-
-	try {
-		input.FillBucketList(tmp1);
-	} catch (...) {
-		Destroy();
-		throw;
-	}
+	ForwardIstream::_FillBucketList(tmp1);
 
 	const auto nbytes = list.SpliceBuffersFrom(std::move(tmp1), rest, false);
 	if ((off_t)nbytes < rest && tmp1.HasMore())

@@ -21,6 +21,5 @@ protected:
 	/* virtual methods from class Istream */
 
 	void _Read() noexcept override;
-	void _FillBucketList(IstreamBucketList &list) override;
 	void _Close() noexcept override;
 };

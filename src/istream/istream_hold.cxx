@@ -57,12 +57,7 @@ public:
 
 	void _FillBucketList(IstreamBucketList &list) override {
 		if (HasInput()) [[likely]] {
-			try {
-				input.FillBucketList(list);
-			} catch (...) {
-				Destroy();
-				throw;
-			}
+			ForwardIstream::_FillBucketList(list);
 		} else if (input_error) [[unlikely]] {
 			auto copy = input_error;
 			Destroy();

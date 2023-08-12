@@ -45,9 +45,3 @@ FromBucketIstream::_Read() noexcept
 	if (c.eof)
 		DestroyEof();
 }
-
-void
-FromBucketIstream::_FillBucketList(IstreamBucketList &list)
-{
-	input.FillBucketList(list);
-}

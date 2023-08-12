@@ -79,14 +79,9 @@ public:
 	}
 
 	void _FillBucketList(IstreamBucketList &list) override {
-		if (HasInput()) {
-			try {
-				input.FillBucketList(list);
-			} catch (...) {
-				Destroy();
-				throw;
-			}
-		} else
+		if (HasInput())
+			ForwardIstream::_FillBucketList(list);
+		else
 			list.SetMore();
 	}
 

@@ -32,6 +32,8 @@ public:
 		input.Read();
 	}
 
+	void _FillBucketList(IstreamBucketList &list) override;
+
 	ConsumeBucketResult _ConsumeBucketList(std::size_t nbytes) noexcept override {
 		return Consumed(input.ConsumeBucketList(nbytes));
 	}
