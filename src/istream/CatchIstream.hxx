@@ -4,6 +4,8 @@
 
 #pragma once
 
+#include "util/BindMethod.hxx"
+
 #include <exception>
 
 struct pool;
@@ -15,4 +17,4 @@ class UnusedIstreamPtr;
  */
 UnusedIstreamPtr
 NewCatchIstream(struct pool *pool, UnusedIstreamPtr input,
-		std::exception_ptr (*callback)(std::exception_ptr ep, void *ctx), void *ctx) noexcept;
+		BoundMethod<std::exception_ptr(std::exception_ptr ep) noexcept> callback) noexcept;

@@ -11,7 +11,7 @@
 #include <stdio.h>
 
 static std::exception_ptr
-catch_callback(std::exception_ptr ep, void *)
+catch_callback(std::exception_ptr ep) noexcept
 {
 	fprintf(stderr, "caught: %s\n", GetFullMessage(ep).c_str());
 	return {};
@@ -35,7 +35,7 @@ public:
 	UnusedIstreamPtr CreateTest(EventLoop &, struct pool &pool,
 				    UnusedIstreamPtr input) const noexcept {
 		return NewCatchIstream(&pool, std::move(input),
-				       catch_callback, nullptr);
+				       BIND_FUNCTION(catch_callback));
 	}
 };
 

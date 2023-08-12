@@ -906,7 +906,7 @@ XmlProcessor::OnXmlAttributeFinished(const XmlParserAttribute &attr) noexcept
 }
 
 static std::exception_ptr
-widget_catch_callback(std::exception_ptr ep, void *ctx) noexcept
+widget_catch_callback(void *ctx, std::exception_ptr ep) noexcept
 {
 	const auto &widget = *(const Widget *)ctx;
 
@@ -963,7 +963,7 @@ XmlProcessor::EmbedWidget(Widget &child_widget) noexcept
 					   false, child_widget);
 	if (istream)
 		istream = NewCatchIstream(&GetPool(), std::move(istream),
-					  widget_catch_callback, &child_widget);
+					  {&child_widget, widget_catch_callback});
 
 	return istream;
 }

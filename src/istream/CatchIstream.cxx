@@ -25,14 +25,13 @@ class CatchIstream final : public ForwardIstream {
 	 */
 	std::size_t chunk = 0;
 
-	std::exception_ptr (*const callback)(std::exception_ptr ep, void *ctx);
-	void *const callback_ctx;
+	const BoundMethod<std::exception_ptr(std::exception_ptr ep) noexcept> callback;
 
 public:
 	CatchIstream(struct pool &_pool, UnusedIstreamPtr _input,
-		     std::exception_ptr (*_callback)(std::exception_ptr ep, void *ctx), void *ctx)
+		     BoundMethod<std::exception_ptr(std::exception_ptr ep) noexcept> _callback) noexcept
 		:ForwardIstream(_pool, std::move(_input)),
-		 callback(_callback), callback_ctx(ctx) {}
+		 callback(_callback) {}
 
 	void SendSpace() noexcept;
 
@@ -164,7 +163,7 @@ CatchIstream::OnData(std::span<const std::byte> src) noexcept
 void
 CatchIstream::OnError(std::exception_ptr ep) noexcept
 {
-	ep = callback(ep, callback_ctx);
+	ep = callback(ep);
 	if (ep) {
 		/* forward error to our handler */
 		ForwardIstream::OnError(ep);
@@ -226,8 +225,7 @@ CatchIstream::_FillBucketList(IstreamBucketList &list)
 	try {
 		input.FillBucketList(list);
 	} catch (...) {
-		if (auto error = callback(std::current_exception(),
-					  callback_ctx))
+		if (auto error = callback(std::current_exception()))
 			std::rethrow_exception(std::move(error));
 
 		/* the error has been handled by the callback, and he has
@@ -245,10 +243,9 @@ CatchIstream::_FillBucketList(IstreamBucketList &list)
 
 UnusedIstreamPtr
 NewCatchIstream(struct pool *pool, UnusedIstreamPtr input,
-		std::exception_ptr (*callback)(std::exception_ptr ep, void *ctx), void *ctx) noexcept
+		BoundMethod<std::exception_ptr(std::exception_ptr ep) noexcept> callback) noexcept
 {
-	assert(callback != nullptr);
+	assert(callback);
 
-	return NewIstreamPtr<CatchIstream>(*pool, std::move(input),
-					   callback, ctx);
+	return NewIstreamPtr<CatchIstream>(*pool, std::move(input), callback);
 }

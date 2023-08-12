@@ -111,7 +111,7 @@ try {
 }
 
 static std::exception_ptr
-CatchCallback(std::exception_ptr, void *) noexcept
+CatchCallback(std::exception_ptr) noexcept
 {
 	// TODO log?
 	return {};
@@ -160,7 +160,7 @@ LbPrometheusExporter::HandleHttpRequest(IncomingHttpRequest &request,
 		AppendConcatIstream(body,
 				    NewCatchIstream(pool,
 						    std::move(hold),
-						    CatchCallback, nullptr));
+						    BIND_FUNCTION(CatchCallback)));
 	}
 
 	if (http_client_accepts_encoding(request.headers, "gzip")) {
