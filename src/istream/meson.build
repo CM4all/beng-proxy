@@ -93,7 +93,7 @@ istream = static_library(
 
   'istream_iconv.cxx',
   'istream_later.cxx',
-  'istream_pause.cxx',
+  'PauseIstream.cxx',
 
   # IstreamSink implementations
   'sink_fd.cxx',

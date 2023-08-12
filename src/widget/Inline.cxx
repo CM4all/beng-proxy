@@ -16,7 +16,7 @@
 #include "istream/DelayedIstream.hxx"
 #include "istream/istream_iconv.hxx"
 #include "istream/istream_null.hxx"
-#include "istream/istream_pause.hxx"
+#include "istream/PauseIstream.hxx"
 #include "istream/istream_string.hxx"
 #include "istream/TimeoutIstream.hxx"
 #include "bp/session/Lease.hxx"
@@ -369,8 +369,8 @@ embed_inline_widget(struct pool &pool, SharedPoolPtr<WidgetContext> ctx,
 		   gets cancelled, but the event cannot reach this stack
 		   frame; by preventing reads on the request body, this
 		   situation is avoided */
-		auto _pause = istream_pause_new(pool, ctx->event_loop,
-						std::move(widget.from_request.body));
+		auto _pause = NewPauseIstream(pool, ctx->event_loop,
+					      std::move(widget.from_request.body));
 		pause = std::move(_pause.second);
 
 		widget.from_request.body = UnusedHoldIstreamPtr(pool, std::move(_pause.first));

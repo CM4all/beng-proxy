@@ -2,7 +2,7 @@
 // Copyright CM4all GmbH
 // author: Max Kellermann <mk@cm4all.com>
 
-#include "istream_pause.hxx"
+#include "PauseIstream.hxx"
 #include "ForwardIstream.hxx"
 #include "UnusedPtr.hxx"
 #include "New.hxx"
@@ -74,8 +74,8 @@ PauseIstreamControl::Resume() noexcept
 }
 
 std::pair<UnusedIstreamPtr, SharedPoolPtr<PauseIstreamControl>>
-istream_pause_new(struct pool &pool, EventLoop &event_loop,
-		  UnusedIstreamPtr input) noexcept
+NewPauseIstream(struct pool &pool, EventLoop &event_loop,
+		UnusedIstreamPtr input) noexcept
 {
 	auto *i = NewIstream<PauseIstream>(pool, event_loop, std::move(input));
 	return std::make_pair(UnusedIstreamPtr(i), i->GetControl());

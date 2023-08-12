@@ -24,5 +24,5 @@ public:
 };
 
 std::pair<UnusedIstreamPtr, SharedPoolPtr<PauseIstreamControl>>
-istream_pause_new(struct pool &pool, EventLoop &event_loop,
-		  UnusedIstreamPtr input) noexcept;
+NewPauseIstream(struct pool &pool, EventLoop &event_loop,
+		UnusedIstreamPtr input) noexcept;
