@@ -710,6 +710,20 @@ class StaticArrayPrinter:
         t = get_basic_type(self.val.type)
         return "StaticArray<%s>" % t.template_argument(0)
 
+class StaticVectorPrinter:
+    def __init__(self, val):
+        self.val = val
+        self.__t = get_basic_type(self.val.type).template_argument(0)
+
+    def display_hint(self):
+        return 'array'
+
+    def children(self):
+        return [('', self.val['array']['_M_elems'][i].cast(self.__t)) for i in range(self.val['the_size'])]
+
+    def to_string(self):
+        return "StaticVector<%s>" % self.__t
+
 class StringMapItemPrinter:
     def __init__(self, val):
         self.val = val
@@ -940,6 +954,7 @@ def build_pretty_printer():
     pp.add_printer('std::array', '^std::array<', StdArrayPrinter)
     pp.add_printer('TrivialArray', '^TrivialArray<', StaticArrayPrinter)
     pp.add_printer('StaticArray', '^StaticArray<', StaticArrayPrinter)
+    pp.add_printer('StaticVector', '^StaticVector<', StaticVectorPrinter)
     pp.add_printer('IntrusiveList', '^Intrusive(Forward)?List$', IntrusiveListPrinter)
     pp.add_printer('boost::intrusive::hooks', 'boost::intrusive::(s?list_base|generic|unordered_set_base)_hook', TypeNamePrinter)
     pp.add_printer('boost::intrusive::list', 'boost::intrusive::s?list<', BoostIntrusiveListPrinter)
