@@ -32,8 +32,6 @@
 #include <stdio.h>
 #include <string.h>
 
-struct SkipErrorTraits {};
-
 class AutoPoolCommit {
 public:
 	~AutoPoolCommit() noexcept {
@@ -307,9 +305,6 @@ TYPED_TEST_P(IstreamFilterTest, SmallBucket)
 /** Istream::FillBucketList() throws */
 TYPED_TEST_P(IstreamFilterTest, BucketError)
 {
-	if constexpr (std::is_base_of<SkipErrorTraits, TypeParam>::value)
-		return;
-
 	TypeParam traits;
 	Instance instance;
 
