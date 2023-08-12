@@ -225,8 +225,10 @@ CatchIstream::_FillBucketList(IstreamBucketList &list)
 	try {
 		input.FillBucketList(list);
 	} catch (...) {
-		if (auto error = callback(std::current_exception()))
+		if (auto error = callback(std::current_exception())) {
+			Destroy();
 			std::rethrow_exception(std::move(error));
+		}
 
 		/* the error has been handled by the callback, and he has
 		   disposed it */
