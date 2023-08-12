@@ -203,7 +203,6 @@ WasOutput::OnIstreamReady() noexcept
 	try {
 		input.FillBucketList(list);
 	} catch (...) {
-		ClearInput();
 		DestroyError(std::current_exception());
 		return IstreamReadyResult::CLOSED;
 	}

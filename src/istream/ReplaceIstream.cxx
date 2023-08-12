@@ -396,7 +396,6 @@ ReplaceIstream::_FillBucketList(IstreamBucketList &list)
 		try {
 			input.FillBucketList(tmp);
 		} catch (...) {
-			input.Clear();
 			Destroy();
 			throw;
 		}

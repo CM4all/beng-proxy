@@ -19,7 +19,6 @@ GrowingBufferSink::OnIstreamReady() noexcept
 	try {
 		input.FillBucketList(list);
 	} catch (...) {
-		input.Clear();
 		handler.OnGrowingBufferSinkError(std::current_exception());
 		return IstreamReadyResult::CLOSED;
 	}

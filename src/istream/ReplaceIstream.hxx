@@ -47,12 +47,7 @@ class ReplaceIstream : public FacadeIstream, DestructAnchor {
 			if (!IsDefined())
 				return;
 
-			try {
-				input.FillBucketList(list);
-			} catch (...) {
-				ClearInput();
-				throw;
-			}
+			input.FillBucketList(list);
 		}
 
 		auto ConsumeBucketList(size_t nbytes) noexcept {

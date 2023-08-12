@@ -22,7 +22,6 @@ FifoBufferSink::OnIstreamReady() noexcept
 	try {
 		input.FillBucketList(list);
 	} catch (...) {
-		input.Clear();
 		handler.OnFifoBufferSinkError(std::current_exception());
 		return IstreamReadyResult::CLOSED;
 	}
