@@ -37,7 +37,7 @@ ToBucketIstream::_FillBucketList(IstreamBucketList &list)
 		return;
 
 	IstreamBucketList tmp;
-	input.FillBucketList(tmp);
+	FillBucketListFromInput(tmp);
 	if (tmp.IsEmpty()) {
 		if (tmp.HasMore()) {
 			/* no data yet or FillBucketList() not implemented: invoke

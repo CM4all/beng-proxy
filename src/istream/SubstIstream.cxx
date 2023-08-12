@@ -711,13 +711,7 @@ SubstIstream::_FillBucketList(IstreamBucketList &list)
 	switch (state) {
 	case State::NONE: {
 		IstreamBucketList tmp;
-
-		try {
-			input.FillBucketList(tmp);
-		} catch (...) {
-			Destroy();
-			throw;
-		}
+		FillBucketListFromInput(tmp);
 
 		if (tmp.HasMore())
 			list.SetMore();

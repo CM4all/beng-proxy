@@ -17,12 +17,7 @@ ForwardIstream::_Skip(off_t length) noexcept
 void
 ForwardIstream::_FillBucketList(IstreamBucketList &list)
 {
-	try {
-		return input.FillBucketList(list);
-	} catch (...) {
-		Destroy();
-		throw;
-	}
+	FillBucketListFromInput(list);
 }
 
 int

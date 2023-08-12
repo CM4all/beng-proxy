@@ -22,4 +22,6 @@ protected:
 
 		input.Replace(std::forward<I>(_input), *this);
 	}
+
+	void FillBucketListFromInput(IstreamBucketList &list);
 };

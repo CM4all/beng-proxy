@@ -392,13 +392,7 @@ ReplaceIstream::_FillBucketList(IstreamBucketList &list)
 	if (HasInput()) {
 		/* fill our buffer from the input */
 		IstreamBucketList tmp;
-
-		try {
-			input.FillBucketList(tmp);
-		} catch (...) {
-			Destroy();
-			throw;
-		}
+		FillBucketListFromInput(tmp);
 
 		size_t total = 0;
 		bool only_buffers = true;

@@ -14,7 +14,7 @@ void
 FromBucketIstream::_Read() noexcept
 {
 	IstreamBucketList list;
-	input.FillBucketList(list);
+	FillBucketListFromInput(list);
 	if (list.IsEmpty())
 		return;
 

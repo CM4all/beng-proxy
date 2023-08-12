@@ -348,12 +348,7 @@ ChunkedIstream::_FillBucketList(IstreamBucketList &list)
 		assert(input.IsDefined());
 
 		IstreamBucketList sub;
-		try {
-			input.FillBucketList(sub);
-		} catch (...) {
-			Destroy();
-			throw;
-		}
+		FillBucketListFromInput(sub);
 
 		size_t nbytes = list.SpliceBuffersFrom(std::move(sub),
 						       missing_from_current_chunk);
