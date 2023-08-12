@@ -3,8 +3,7 @@
 // author: Max Kellermann <mk@cm4all.com>
 
 #include "MultiFifoBufferIstream.hxx"
-
-#include <string.h>
+#include "Bucket.hxx"
 
 void
 MultiFifoBufferIstream::SetEof() noexcept
@@ -62,6 +61,9 @@ void
 MultiFifoBufferIstream::_FillBucketList(IstreamBucketList &list) noexcept
 {
 	buffer.FillBucketList(list);
+
+	if (!eof)
+		list.SetMore();
 }
 
 Istream::ConsumeBucketResult
@@ -76,7 +78,7 @@ MultiFifoBufferIstream::_ConsumeBucketList(size_t nbytes) noexcept
 			handler.OnFifoBufferIstreamConsumed(consumed);
 	}
 
-	return {consumed, buffer.empty()};
+	return {consumed, eof && buffer.empty()};
 }
 
 void
