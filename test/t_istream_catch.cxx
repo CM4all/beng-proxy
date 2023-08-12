@@ -3,7 +3,7 @@
 // author: Max Kellermann <mk@cm4all.com>
 
 #include "IstreamFilterTest.hxx"
-#include "istream/istream_catch.hxx"
+#include "istream/CatchIstream.hxx"
 #include "istream/istream_string.hxx"
 #include "istream/UnusedPtr.hxx"
 #include "util/Exception.hxx"
@@ -34,8 +34,8 @@ public:
 
 	UnusedIstreamPtr CreateTest(EventLoop &, struct pool &pool,
 				    UnusedIstreamPtr input) const noexcept {
-		return istream_catch_new(&pool, std::move(input),
-					 catch_callback, nullptr);
+		return NewCatchIstream(&pool, std::move(input),
+				       catch_callback, nullptr);
 	}
 };
 

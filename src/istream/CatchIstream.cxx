@@ -2,7 +2,7 @@
 // Copyright CM4all GmbH
 // author: Max Kellermann <mk@cm4all.com>
 
-#include "istream_catch.hxx"
+#include "CatchIstream.hxx"
 #include "ForwardIstream.hxx"
 #include "UnusedPtr.hxx"
 #include "Bucket.hxx"
@@ -244,8 +244,8 @@ CatchIstream::_FillBucketList(IstreamBucketList &list)
  */
 
 UnusedIstreamPtr
-istream_catch_new(struct pool *pool, UnusedIstreamPtr input,
-		  std::exception_ptr (*callback)(std::exception_ptr ep, void *ctx), void *ctx)
+NewCatchIstream(struct pool *pool, UnusedIstreamPtr input,
+		std::exception_ptr (*callback)(std::exception_ptr ep, void *ctx), void *ctx) noexcept
 {
 	assert(callback != nullptr);
 

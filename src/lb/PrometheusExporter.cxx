@@ -23,7 +23,7 @@
 #include "istream/DelayedIstream.hxx"
 #include "istream/GzipIstream.hxx"
 #include "istream/UnusedHoldPtr.hxx"
-#include "istream/istream_catch.hxx"
+#include "istream/CatchIstream.hxx"
 #include "memory/istream_gb.hxx"
 #include "memory/GrowingBuffer.hxx"
 #include "stopwatch.hxx"
@@ -158,9 +158,9 @@ LbPrometheusExporter::HandleHttpRequest(IncomingHttpRequest &request,
 		ar->Start(pool, *instance);
 
 		AppendConcatIstream(body,
-				    istream_catch_new(pool,
-						      std::move(hold),
-						      CatchCallback, nullptr));
+				    NewCatchIstream(pool,
+						    std::move(hold),
+						    CatchCallback, nullptr));
 	}
 
 	if (http_client_accepts_encoding(request.headers, "gzip")) {

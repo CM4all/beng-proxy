@@ -14,5 +14,5 @@ class UnusedIstreamPtr;
  * them.
  */
 UnusedIstreamPtr
-istream_catch_new(struct pool *pool, UnusedIstreamPtr input,
-		  std::exception_ptr (*callback)(std::exception_ptr ep, void *ctx), void *ctx);
+NewCatchIstream(struct pool *pool, UnusedIstreamPtr input,
+		std::exception_ptr (*callback)(std::exception_ptr ep, void *ctx), void *ctx) noexcept;

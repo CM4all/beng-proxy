@@ -22,7 +22,7 @@
 #include "istream/istream.hxx"
 #include "istream/ReplaceIstream.hxx"
 #include "istream/ConcatIstream.hxx"
-#include "istream/istream_catch.hxx"
+#include "istream/CatchIstream.hxx"
 #include "istream/istream_memory.hxx"
 #include "istream/istream_string.hxx"
 #include "pool/pool.hxx"
@@ -962,8 +962,8 @@ XmlProcessor::EmbedWidget(Widget &child_widget) noexcept
 	auto istream = embed_inline_widget(GetPool(), ctx, widget_stopwatch,
 					   false, child_widget);
 	if (istream)
-		istream = istream_catch_new(&GetPool(), std::move(istream),
-					    widget_catch_callback, &child_widget);
+		istream = NewCatchIstream(&GetPool(), std::move(istream),
+					  widget_catch_callback, &child_widget);
 
 	return istream;
 }
