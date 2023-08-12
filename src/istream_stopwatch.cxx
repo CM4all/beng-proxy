@@ -19,6 +19,8 @@ public:
 
 	/* virtual methods from class Istream */
 
+	void _FillBucketList(IstreamBucketList &list) override;
+	ConsumeBucketResult _ConsumeBucketList(std::size_t nbytes) noexcept override;
 	int _AsFd() noexcept override;
 
 	/* virtual methods from class IstreamHandler */
@@ -52,6 +54,29 @@ StopwatchIstream::OnError(std::exception_ptr ep) noexcept
  * istream implementation
  *
  */
+
+void
+StopwatchIstream::_FillBucketList(IstreamBucketList &list)
+{
+	const auto stopwatch2 = stopwatch;
+
+	try {
+		ForwardIstream::_FillBucketList(list);
+	} catch (...) {
+		stopwatch2.RecordEvent("input_error");
+		throw;
+	}
+}
+
+Istream::ConsumeBucketResult
+StopwatchIstream::_ConsumeBucketList(std::size_t nbytes) noexcept
+{
+	const auto c = Consumed(input.ConsumeBucketList(nbytes));
+	if (c.eof)
+		stopwatch.RecordEvent("end");
+
+	return c;
+}
 
 int
 StopwatchIstream::_AsFd() noexcept
