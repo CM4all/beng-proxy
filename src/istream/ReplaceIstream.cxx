@@ -315,8 +315,6 @@ ReplaceIstream::OnError(std::exception_ptr ep) noexcept
 off_t
 ReplaceIstream::_GetAvailable(bool partial) noexcept
 {
-	off_t length, position2 = 0, l;
-
 	if (!partial && !finished)
 		/* we don't know yet how many substitutions will come, so we
 		   cannot calculate the exact rest */
@@ -324,6 +322,7 @@ ReplaceIstream::_GetAvailable(bool partial) noexcept
 
 	/* get available bytes from input */
 
+	off_t length = 0;
 	if (HasInput() && finished) {
 		length = input.GetAvailable(partial);
 		if (length == (off_t)-1) {
@@ -331,13 +330,12 @@ ReplaceIstream::_GetAvailable(bool partial) noexcept
 				return (off_t)-1;
 			length = 0;
 		}
-	} else
-		length = 0;
+	}
 
 	/* add available bytes from substitutions (and the source buffers
 	   before the substitutions) */
 
-	position2 = position;
+	off_t position2 = position;
 
 	for (auto subst = first_substitution;
 	     subst != nullptr; subst = subst->next) {
@@ -346,7 +344,7 @@ ReplaceIstream::_GetAvailable(bool partial) noexcept
 		length += subst->start - position2;
 
 		if (subst->IsDefined()) {
-			l = subst->GetAvailable(partial);
+			const off_t l = subst->GetAvailable(partial);
 			if (l != (off_t)-1)
 				length += l;
 			else if (!partial)
