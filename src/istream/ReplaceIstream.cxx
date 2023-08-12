@@ -322,31 +322,32 @@ ReplaceIstream::_GetAvailable(bool partial) noexcept
 
 	/* get available bytes from input */
 
-	off_t length = 0;
+	off_t input_avalable = 0;
 	if (HasInput() && finished) {
-		length = input.GetAvailable(partial);
-		if (length == (off_t)-1) {
+		input_avalable = input.GetAvailable(partial);
+		if (input_avalable == (off_t)-1) {
 			if (!partial)
 				return (off_t)-1;
-			length = 0;
+			input_avalable = 0;
 		}
 	}
 
 	/* add available bytes from substitutions (and the source buffers
 	   before the substitutions) */
 
+	off_t available = input_avalable;
 	off_t position2 = position;
 
 	for (auto subst = first_substitution;
 	     subst != nullptr; subst = subst->next) {
 		assert(position2 <= subst->start);
 
-		length += subst->start - position2;
+		available += subst->start - position2;
 
 		if (subst->IsDefined()) {
 			const off_t l = subst->GetAvailable(partial);
 			if (l != (off_t)-1)
-				length += l;
+				available += l;
 			else if (!partial)
 				return (off_t)-1;
 		}
@@ -357,9 +358,9 @@ ReplaceIstream::_GetAvailable(bool partial) noexcept
 	/* add available bytes from tail (if known yet) */
 
 	if (finished)
-		length += source_length - position2;
+		available += source_length - position2;
 
-	return length;
+	return available;
 }
 
 void
