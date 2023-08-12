@@ -41,3 +41,34 @@ public:
 
 INSTANTIATE_TYPED_TEST_CASE_P(Catch, IstreamFilterTest,
 			      IstreamCatchTestTraits);
+
+static std::exception_ptr
+catch_callback2(std::exception_ptr ep) noexcept
+{
+	return ep;
+}
+
+class IstreamCatchRethrowTestTraits {
+public:
+	/* an input string longer than the "space" buffer (128 bytes) to
+	   trigger bugs due to truncated OnData() buffers */
+	static constexpr const char *expected_result =
+		"long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long";
+
+	static constexpr bool call_available = false;
+	static constexpr bool enable_blocking = true;
+	static constexpr bool enable_abort_istream = true;
+
+	UnusedIstreamPtr CreateInput(struct pool &pool) const noexcept {
+		return istream_string_new(pool, expected_result);
+	}
+
+	UnusedIstreamPtr CreateTest(EventLoop &, struct pool &pool,
+				    UnusedIstreamPtr input) const noexcept {
+		return NewCatchIstream(&pool, std::move(input),
+				       BIND_FUNCTION(catch_callback2));
+	}
+};
+
+INSTANTIATE_TYPED_TEST_CASE_P(CatchRethrow, IstreamFilterTest,
+			      IstreamCatchRethrowTestTraits);
