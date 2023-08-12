@@ -6,6 +6,7 @@
 #include "FacadeIstream.hxx"
 #include "UnusedPtr.hxx"
 #include "New.hxx"
+#include "Bucket.hxx"
 #include "http/ChunkParser.hxx"
 #include "event/DeferEvent.hxx"
 #include "util/DestructObserver.hxx"
@@ -15,6 +16,54 @@
 
 #include <assert.h>
 #include <string.h>
+
+class IstreamBucketReader {
+	IstreamBucketList::const_iterator i;
+	const IstreamBucketList::const_iterator end;
+
+	std::size_t position = 0;
+
+public:
+	explicit IstreamBucketReader(const IstreamBucketList &list) noexcept
+		:i(list.begin()), end(list.end()) {}
+
+	std::size_t Skip(std::size_t size) noexcept {
+		std::size_t result = 0;
+		while (size > 0 && i != end && i->IsBuffer()) {
+			const auto b = i->GetBuffer().subspan(position);
+			assert(!b.empty());
+			if (b.size() <= size) {
+				result += b.size();
+				++i;
+				position = 0;
+			} else {
+				result += size;
+				position += size;
+				break;
+			}
+		}
+
+		return result;
+	}
+
+	std::span<const std::byte> ReadSome(std::size_t size) noexcept {
+		assert(size > 0);
+
+		if (i == end || !i->IsBuffer())
+			return {};
+
+		const auto b = i->GetBuffer().subspan(position);
+		assert(!b.empty());
+		if (b.size() <= size) {
+			++i;
+			position = 0;
+			return b;
+		} else {
+			position += size;
+			return b.first(size);
+		}
+	}
+};
 
 class DechunkIstream final : public FacadeIstream, DestructAnchor {
 	/* DeferEvent is used to defer an
@@ -117,9 +166,16 @@ public:
 
 	off_t _GetAvailable(bool partial) noexcept override;
 	void _Read() noexcept override;
+	void _FillBucketList(IstreamBucketList &list) override;
+	ConsumeBucketResult _ConsumeBucketList(size_t nbytes) noexcept override;
 
 protected:
 	/* virtual methods from class IstreamHandler */
+
+	IstreamReadyResult OnIstreamReady() noexcept override {
+		return InvokeReady();
+	}
+
 	size_t OnData(std::span<const std::byte> src) noexcept override;
 	void OnEof() noexcept override;
 	void OnError(std::exception_ptr ep) noexcept override;
@@ -353,6 +409,122 @@ DechunkIstream::_Read() noexcept
 		input.Read();
 	} while (!destructed && input.IsDefined() && had_input && !had_output &&
 		 !IsEofPending());
+}
+
+void
+DechunkIstream::_FillBucketList(IstreamBucketList &list)
+{
+	if (IsEofPending())
+		return;
+
+	IstreamBucketList tmp;
+	FillBucketListFromInput(tmp);
+
+	std::size_t skip = parsed_input;
+	for (const auto &i : tmp) {
+		if (!i.IsBuffer()) {
+			list.SetMore();
+			break;
+		}
+
+		auto b = i.GetBuffer();
+		if (b.size() <= skip) {
+			skip -= b.size();
+			continue;
+		}
+
+		b = b.subspan(skip);
+		skip = 0;
+
+		try {
+			if (!ParseInput(b)) {
+				list.SetMore();
+				break;
+			}
+		} catch (...) {
+			Destroy();
+			throw;
+		}
+	}
+
+	if (!parser.HasEnded()) {
+		if (!tmp.HasMore() && !list.HasMore())
+			throw std::runtime_error{"premature EOF in dechunker"};
+
+		list.SetMore();
+	}
+
+	IstreamBucketReader r{tmp};
+
+	for (const auto chunk : chunks) {
+		assert(chunk.header > 0 || chunk.data > 0);
+
+		const std::size_t skipped = r.Skip(chunk.header);
+		if (skipped < chunk.header)
+			break;
+
+		std::size_t remaining = chunk.data;
+		while (remaining > 0) {
+			const auto data = r.ReadSome(remaining);
+			if (data.empty())
+				break;
+
+			list.Push(data);
+			remaining -= data.size();
+		}
+	}
+}
+
+Istream::ConsumeBucketResult
+DechunkIstream::_ConsumeBucketList(size_t nbytes) noexcept
+{
+	if (IsEofPending())
+		return {0, true};
+
+	std::size_t headers = 0, consumed = 0;
+
+	auto i = chunks.begin();
+
+	for (const auto end = chunks.end(); i != end; ++i) {
+		auto &chunk = *i;
+		assert(chunk.header > 0 || chunk.data > 0);
+
+		headers += chunk.header;
+		chunk.header = 0;
+
+		if (nbytes < chunk.data) {
+			chunk.data -= nbytes;
+			consumed += nbytes;
+			break;
+		}
+
+		consumed += chunk.data;
+		nbytes -= chunk.data;
+	}
+
+	chunks.erase(chunks.begin(), i);
+
+	if (chunks.empty()) {
+		headers += pending_header;
+		pending_header = 0;
+	}
+
+	parsed_input -= headers + consumed;
+
+	[[maybe_unused]]
+	const auto r = input.ConsumeBucketList(headers + consumed);
+	assert(r.consumed == headers + consumed);
+
+	const bool at_eof = chunks.empty() && parser.HasEnded();
+	if (at_eof) {
+		if (dechunk_handler.OnDechunkEnd())
+			ClearInput();
+		else
+			/* this code path is only used by the unit test */
+			CloseInput();
+	}
+
+	return {Consumed(consumed), at_eof};
 }
 
 /*
