@@ -359,6 +359,8 @@ ReplaceIstream::_GetAvailable(bool partial) noexcept
 
 	if (finished)
 		available += source_length - position2;
+	else if (position2 < settled_position)
+		available += settled_position - position2;
 
 	return available;
 }
