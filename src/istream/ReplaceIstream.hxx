@@ -124,6 +124,11 @@ private:
 	using FacadeIstream::HasInput;
 
 	/**
+	 * Throws on error.
+	 */
+	void AppendToBuffer(const std::span<const std::byte> src);
+
+	/**
 	 * Is the buffer at the end-of-file position?
 	 */
 	bool IsBufferAtEOF() const noexcept {

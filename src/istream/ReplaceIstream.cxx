@@ -241,6 +241,18 @@ ReplaceIstream::TryRead() noexcept
 }
 
 
+void
+ReplaceIstream::AppendToBuffer(const std::span<const std::byte> src)
+{
+	if (source_length >= 8 * 1024 * 1024)
+		throw std::runtime_error{"file too large for processor"};
+
+	buffer.Write(src);
+	source_length += (off_t)src.size();
+
+	Parse(src);
+}
+
 /*
  * input handler
  *
@@ -251,18 +263,10 @@ ReplaceIstream::OnData(const std::span<const std::byte> src) noexcept
 {
 	had_input = true;
 
-	if (source_length >= 8 * 1024 * 1024) {
-		DestroyError(std::make_exception_ptr(std::runtime_error("file too large for processor")));
-		return 0;
-	}
-
 	const auto old_source_length = source_length;
 
-	buffer.Write(src);
-	source_length += (off_t)src.size();
-
 	try {
-		Parse(src);
+		AppendToBuffer(src);
 	} catch (...) {
 		DestroyError(std::current_exception());
 		return 0;
@@ -405,16 +409,9 @@ ReplaceIstream::_FillBucketList(IstreamBucketList &list)
 			}
 
 			const auto b = i.GetBuffer();
-			buffer.Write(b);
-			source_length += (off_t)b.size();
-
-			if (source_length >= 8 * 1024 * 1024) {
-				Destroy();
-				throw std::runtime_error("file too large for processor");
-			}
 
 			try {
-				Parse(b);
+				AppendToBuffer(b);
 			} catch (...) {
 				Destroy();
 				throw;
