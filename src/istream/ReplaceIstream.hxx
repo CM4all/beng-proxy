@@ -271,5 +271,4 @@ public:
 	void _Read() noexcept override;
 	void _FillBucketList(IstreamBucketList &list) override;
 	ConsumeBucketResult _ConsumeBucketList(size_t nbytes) noexcept override;
-	void _Close() noexcept override;
 };

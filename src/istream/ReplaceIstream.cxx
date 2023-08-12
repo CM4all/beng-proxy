@@ -543,12 +543,6 @@ ReplaceIstream::_ConsumeBucketList(size_t nbytes) noexcept
 }
 
 void
-ReplaceIstream::_Close() noexcept
-{
-	Destroy();
-}
-
-void
 ReplaceIstream::Add(off_t start, off_t end,
 		    UnusedIstreamPtr contents) noexcept
 {
