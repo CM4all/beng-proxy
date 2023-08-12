@@ -6,6 +6,7 @@
 #include "ForwardIstream.hxx"
 #include "UnusedPtr.hxx"
 #include "New.hxx"
+#include "Bucket.hxx"
 #include "event/DeferEvent.hxx"
 
 class PauseIstream final : public ForwardIstream {
@@ -54,6 +55,18 @@ protected:
 			defer_read.Cancel();
 			ForwardIstream::_Read();
 		} else {
+			/* we'll try again after Resume() gets called */
+			want_read = true;
+		}
+	}
+
+	void _FillBucketList(IstreamBucketList &list) override {
+		if (resumed) {
+			defer_read.Cancel();
+			ForwardIstream::_FillBucketList(list);
+		} else {
+			list.SetMore();
+
 			/* we'll try again after Resume() gets called */
 			want_read = true;
 		}
