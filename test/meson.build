@@ -823,6 +823,7 @@ test(
     't_istream_tee.cxx',
     'TestAutoPipeIstream.cxx',
     'TestBufferedIstream.cxx',
+    'TestLengthIstream.cxx',
     istream_test_sources,
     include_directories: inc,
     dependencies: [
