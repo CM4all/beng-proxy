@@ -26,6 +26,7 @@ LengthIstream::_ConsumeBucketList(std::size_t nbytes) noexcept
 {
 	auto r = input.ConsumeBucketList(nbytes);
 	remaining -= r.consumed;
+	Consumed(r.consumed);
 	return r;
 }
 
