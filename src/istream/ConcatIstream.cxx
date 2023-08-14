@@ -100,7 +100,7 @@ class CatIstream final : public Istream, DestructAnchor {
 public:
 	CatIstream(struct pool &p, std::span<UnusedIstreamPtr> _inputs) noexcept;
 
-	~CatIstream() noexcept {
+	~CatIstream() noexcept override {
 		inputs.clear_and_dispose(Input::Disposer());
 	}
 
