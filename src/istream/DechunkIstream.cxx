@@ -100,8 +100,10 @@ private:
 	 * update #chunkls and #parsed_input.
 	 *
 	 * Throws on error.
+	 *
+	 * @return true if more data can be parsed
 	 */
-	void ParseInput(std::span<const std::byte> src);
+	bool ParseInput(std::span<const std::byte> src);
 
 public:
 	/* virtual methods from class Istream */
@@ -153,12 +155,12 @@ DechunkIstream::EofDetected() noexcept
 	return result;
 }
 
-void
+bool
 DechunkIstream::ParseInput(std::span<const std::byte> src)
 {
 	if (parser.HasEnded())
 		/* don't accept any more data after the EOF chunk */
-		return;
+		return false;
 
 	while (!src.empty()) {
 		const auto data = parser.Parse(src);
@@ -166,14 +168,14 @@ DechunkIstream::ParseInput(std::span<const std::byte> src)
 		if (data.begin() > src.begin()) {
 			const std::size_t size = std::distance(src.begin(), data.begin());
 			if (!AddHeader(size))
-				return;
+				return false;
 
 			parsed_input += size;
 		}
 
 		if (!data.empty()) {
 			if (!AddData(data.size()))
-				return;
+				return false;
 
 			parsed_input += data.size();
 			parser.Consume(data.size());
@@ -186,6 +188,8 @@ DechunkIstream::ParseInput(std::span<const std::byte> src)
 			break;
 		}
 	}
+
+	return true;
 }
 
 
