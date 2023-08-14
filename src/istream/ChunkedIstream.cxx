@@ -394,7 +394,7 @@ ChunkedIstream::_ConsumeBucketList(size_t nbytes) noexcept
 				p[0] = '\r';
 				p[1] = '\n';
 			} else {
-				const auto src = "\r\n0\r\n\r\n"sv;
+				static constexpr auto src = "\r\n0\r\n\r\n"sv;
 				char *p = SetBuffer(src.size());
 				std::copy(src.begin(), src.end(), p);
 			}
