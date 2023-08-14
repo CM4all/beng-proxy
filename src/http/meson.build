@@ -11,6 +11,7 @@ http_util = static_library(
   'HeaderParser.cxx',
   'HeaderWriter.cxx',
   'XForwardedFor.cxx',
+  'ChunkParser.cxx',
   include_directories: inc,
   dependencies: [
     memory_dep,

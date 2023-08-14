@@ -105,6 +105,7 @@ istream = static_library(
   dependencies: [
     fmt_dep,
     net_dep,
+    http_util_dep, # for http/ChunkParser
   ],
 )
 

@@ -370,6 +370,7 @@ if libcommon_enable_libsystemd or avahi_dep.found()
   subdir('libcommon/src/lib/dbus')
 endif
 
+subdir('src/http')
 subdir('src/pipe')
 subdir('src/istream')
 
@@ -460,7 +461,6 @@ raddress_dep = declare_dependency(
 
 subdir('src/was')
 subdir('src/thread')
-subdir('src/http')
 subdir('src/fs')
 
 subdir('libcommon/src/translation')
