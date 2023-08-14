@@ -19,17 +19,16 @@ catch_callback(std::exception_ptr ep) noexcept
 
 class IstreamCatchTestTraits {
 public:
-	/* an input string longer than the "space" buffer (128 bytes) to
-	   trigger bugs due to truncated OnData() buffers */
-	static constexpr const char *expected_result =
-		"long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long";
-
-	static constexpr bool call_available = false;
-	static constexpr bool enable_blocking = true;
-	static constexpr bool enable_abort_istream = true;
+	static constexpr IstreamFilterTestOptions options{
+		/* an input string longer than the "space" buffer (128
+		   bytes) to trigger bugs due to truncated OnData()
+		   buffers */
+		.expected_result = "long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long",
+		.call_available = false,
+	};
 
 	UnusedIstreamPtr CreateInput(struct pool &pool) const noexcept {
-		return istream_string_new(pool, expected_result);
+		return istream_string_new(pool, options.expected_result);
 	}
 
 	UnusedIstreamPtr CreateTest(EventLoop &, struct pool &pool,
@@ -50,17 +49,16 @@ catch_callback2(std::exception_ptr ep) noexcept
 
 class IstreamCatchRethrowTestTraits {
 public:
-	/* an input string longer than the "space" buffer (128 bytes) to
-	   trigger bugs due to truncated OnData() buffers */
-	static constexpr const char *expected_result =
-		"long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long";
-
-	static constexpr bool call_available = false;
-	static constexpr bool enable_blocking = true;
-	static constexpr bool enable_abort_istream = true;
+	static constexpr IstreamFilterTestOptions options{
+		/* an input string longer than the "space" buffer (128
+		   bytes) to trigger bugs due to truncated OnData()
+		   buffers */
+		.expected_result = "long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long",
+		.call_available = false,
+	};
 
 	UnusedIstreamPtr CreateInput(struct pool &pool) const noexcept {
-		return istream_string_new(pool, expected_result);
+		return istream_string_new(pool, options.expected_result);
 	}
 
 	UnusedIstreamPtr CreateTest(EventLoop &, struct pool &pool,

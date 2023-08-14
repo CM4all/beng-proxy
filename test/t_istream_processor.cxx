@@ -87,7 +87,8 @@ embed_inline_widget(struct pool &pool, SharedPoolPtr<WidgetContext> ctx,
 
 class IstreamProcessorTestTraits {
 public:
-	static constexpr const char *expected_result = R"html(
+	static constexpr IstreamFilterTestOptions options{
+		.expected_result = R"html(
 foo &c:url;
 <script><c:widget id="foo" type="bar"/></script>
 bar
@@ -96,11 +97,8 @@ bar
 <META http-equiv="refresh" content="999;URL='/beng.html?&apos;%&quot;&lt;&gt;;focus=p&amp;path=refresh'">Refresh</meta>
 <a href="/beng.html?&apos;%&quot;&lt;&gt;;focus=p&amp;path=relative">
 
-)html";
-
-	static constexpr bool call_available = true;
-	static constexpr bool enable_blocking = true;
-	static constexpr bool enable_abort_istream = true;
+)html",
+	};
 
 	UnusedIstreamPtr CreateInput(struct pool &pool) const noexcept {
 		return istream_string_new(pool, R"html(

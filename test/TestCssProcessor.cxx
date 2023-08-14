@@ -59,16 +59,13 @@ public:
 		"  background-image: url(foo.jpg);\n"
 		"}\n";
 
-	static constexpr const char *const expected_result =
-		"body {\n"
+	static constexpr IstreamFilterTestOptions options{
+		.expected_result = "body {\n"
 		"  font-family: serif;\n"
 		"  \n"
 		"  background-image: url(foo.jpg);\n"
-		"}\n";
-
-	static constexpr bool call_available = true;
-	static constexpr bool enable_blocking = true;
-	static constexpr bool enable_abort_istream = true;
+		"}\n",
+	};
 
 	UnusedIstreamPtr CreateInput(struct pool &pool) const noexcept {
 		return istream_string_new(pool, input_text);

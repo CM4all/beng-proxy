@@ -39,6 +39,13 @@ public:
 	}
 };
 
+struct IstreamFilterTestOptions {
+	const char *expected_result = nullptr;
+	bool call_available = true;
+	bool enable_blocking = true;
+	bool enable_abort_istream = true;
+};
+
 template<typename T>
 class IstreamFilterTest : public ::testing::Test {
 	const ScopeFbPoolInit fb_pool_init;
@@ -188,7 +195,7 @@ run_istream_ctx(const Traits &traits, Context &ctx) noexcept
 
 	ctx.eof = false;
 
-	if (traits.call_available) {
+	if (traits.options.call_available) {
 		[[maybe_unused]] off_t a1 = ctx.input.GetAvailable(false);
 		[[maybe_unused]] off_t a2 = ctx.input.GetAvailable(true);
 	}
@@ -213,7 +220,7 @@ run_istream_block(const Traits &traits, Instance &instance, PoolPtr pool,
 		  int block_after)
 {
 	Context ctx(instance, std::move(pool),
-		    traits.expected_result, std::forward<I>(istream));
+		    traits.options.expected_result, std::forward<I>(istream));
 	ctx.block_after = block_after;
 	ctx.record = ctx.expected_result && record;
 
@@ -267,7 +274,7 @@ TYPED_TEST_P(IstreamFilterTest, Bucket)
 	input_pool.reset();
 
 	Context ctx(instance, std::move(pool),
-		    traits.expected_result, std::move(istream));
+		    traits.options.expected_result, std::move(istream));
 	if (ctx.expected_result)
 		ctx.record = true;
 
@@ -293,7 +300,7 @@ TYPED_TEST_P(IstreamFilterTest, BucketMore)
 	input_pool.reset();
 
 	Context ctx(instance, std::move(pool),
-		    traits.expected_result, std::move(istream));
+		    traits.options.expected_result, std::move(istream));
 	if (ctx.expected_result)
 		ctx.record = true;
 
@@ -318,7 +325,7 @@ TYPED_TEST_P(IstreamFilterTest, SmallBucket)
 	input_pool.reset();
 
 	Context ctx(instance, std::move(pool),
-		    traits.expected_result, std::move(istream));
+		    traits.options.expected_result, std::move(istream));
 	if (ctx.expected_result)
 		ctx.record = true;
 
@@ -342,7 +349,7 @@ TYPED_TEST_P(IstreamFilterTest, BucketError)
 	ASSERT_TRUE(!!istream);
 
 	Context ctx(instance, std::move(pool),
-		    traits.expected_result, std::move(istream));
+		    traits.options.expected_result, std::move(istream));
 	if (ctx.expected_result)
 		ctx.record = true;
 
@@ -373,7 +380,7 @@ TYPED_TEST_P(IstreamFilterTest, Skip)
 	input_pool.reset();
 
 	Context ctx(instance, std::move(pool),
-		    traits.expected_result, std::move(istream));
+		    traits.options.expected_result, std::move(istream));
 	ctx.record = ctx.expected_result != nullptr;
 	ctx.Skip(1);
 
@@ -384,7 +391,7 @@ TYPED_TEST_P(IstreamFilterTest, Skip)
 TYPED_TEST_P(IstreamFilterTest, Block)
 {
 	TypeParam traits;
-	if (!traits.enable_blocking)
+	if (!traits.options.enable_blocking)
 		return;
 
 	Instance instance;
@@ -408,7 +415,7 @@ TYPED_TEST_P(IstreamFilterTest, Block)
 TYPED_TEST_P(IstreamFilterTest, Byte)
 {
 	TypeParam traits;
-	if (!traits.enable_blocking)
+	if (!traits.options.enable_blocking)
 		return;
 
 	Instance instance;
@@ -430,7 +437,7 @@ TYPED_TEST_P(IstreamFilterTest, Byte)
 TYPED_TEST_P(IstreamFilterTest, BlockByte)
 {
 	TypeParam traits;
-	if (!traits.enable_blocking)
+	if (!traits.options.enable_blocking)
 		return;
 
 	Instance instance;
@@ -444,7 +451,7 @@ TYPED_TEST_P(IstreamFilterTest, BlockByte)
 	input_pool.reset();
 
 	Context ctx(instance, std::move(pool),
-		    traits.expected_result,
+		    traits.options.expected_result,
 		    std::move(istream));
 	ctx.block_byte = true;
 #ifdef EXPECTED_RESULT
@@ -458,7 +465,7 @@ TYPED_TEST_P(IstreamFilterTest, BlockByte)
 TYPED_TEST_P(IstreamFilterTest, BlockInject)
 {
 	TypeParam traits;
-	if (!traits.enable_blocking)
+	if (!traits.options.enable_blocking)
 		return;
 
 	Instance instance;
@@ -474,7 +481,7 @@ TYPED_TEST_P(IstreamFilterTest, BlockInject)
 					 std::move(inject.first));
 
 	Context ctx(instance, std::move(pool),
-		    traits.expected_result,
+		    traits.options.expected_result,
 		    std::move(istream));
 	ctx.block_inject = &inject.second;
 
@@ -497,7 +504,7 @@ TYPED_TEST_P(IstreamFilterTest, Half)
 	input_pool.reset();
 
 	Context ctx(instance, std::move(pool),
-		    traits.expected_result,
+		    traits.options.expected_result,
 		    std::move(istream));
 	ctx.half = true;
 #ifdef EXPECTED_RESULT
@@ -561,7 +568,7 @@ TYPED_TEST_P(IstreamFilterTest, CloseInHandler)
 	auto istream = traits.CreateTest(instance.event_loop, pool, std::move(input));
 
 	Context ctx(instance, std::move(pool),
-		    traits.expected_result,
+		    traits.options.expected_result,
 		    std::move(istream));
 	ctx.close_after = 0;
 
@@ -588,7 +595,7 @@ TYPED_TEST_P(IstreamFilterTest, AbortWithoutHandler)
 TYPED_TEST_P(IstreamFilterTest, AbortInHandler)
 {
 	TypeParam traits;
-	if (!traits.enable_abort_istream)
+	if (!traits.options.enable_abort_istream)
 		return;
 
 	Instance instance;
@@ -602,7 +609,7 @@ TYPED_TEST_P(IstreamFilterTest, AbortInHandler)
 	auto istream = traits.CreateTest(instance.event_loop, pool, std::move(inject.first));
 
 	Context ctx(instance, std::move(pool),
-		    traits.expected_result,
+		    traits.options.expected_result,
 		    std::move(istream));
 	ctx.block_after = -1;
 	ctx.abort_istream = &inject.second;
@@ -616,7 +623,7 @@ TYPED_TEST_P(IstreamFilterTest, AbortInHandler)
 TYPED_TEST_P(IstreamFilterTest, AbortInHandlerHalf)
 {
 	TypeParam traits;
-	if (!traits.enable_abort_istream || !traits.enable_blocking)
+	if (!traits.options.enable_abort_istream || !traits.options.enable_blocking)
 		return;
 
 	Instance instance;
@@ -633,7 +640,7 @@ TYPED_TEST_P(IstreamFilterTest, AbortInHandlerHalf)
 					 istream_byte_new(pool, std::move(inject.first)));
 
 	Context ctx(instance, std::move(pool),
-		    traits.expected_result,
+		    traits.options.expected_result,
 		    std::move(istream));
 	ctx.half = true;
 	ctx.abort_after = 2;
@@ -707,7 +714,7 @@ TYPED_TEST_P(IstreamFilterTest, BigHold)
 {
 #ifndef ISTREAM_TEST_NO_BIG
 	TypeParam traits;
-	if (!traits.expected_result)
+	if (!traits.options.expected_result)
 		return;
 
 	Instance instance;

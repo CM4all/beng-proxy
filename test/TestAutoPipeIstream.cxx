@@ -11,11 +11,9 @@
 
 class IstreamAutoPipeTestTraits {
 public:
-	static constexpr const char *expected_result = "foo";
-
-	static constexpr bool call_available = true;
-	static constexpr bool enable_blocking = true;
-	static constexpr bool enable_abort_istream = true;
+	static constexpr IstreamFilterTestOptions options{
+		.expected_result = "foo",
+	};
 
 	UnusedIstreamPtr CreateInput(struct pool &pool) const noexcept {
 		return istream_string_new(pool, "foo");

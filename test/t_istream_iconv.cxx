@@ -9,11 +9,9 @@
 
 class IstreamIconvTestTraits {
 public:
-	static constexpr const char *expected_result = "f\xc3\xbc\xc3\xbc";
-
-	static constexpr bool call_available = true;
-	static constexpr bool enable_blocking = true;
-	static constexpr bool enable_abort_istream = true;
+	static constexpr IstreamFilterTestOptions options{
+		.expected_result = "f\xc3\xbc\xc3\xbc",
+	};
 
 	UnusedIstreamPtr CreateInput(struct pool &pool) const noexcept {
 		return istream_string_new(pool, "f\xfc\xfc");

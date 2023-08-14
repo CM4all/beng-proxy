@@ -74,11 +74,11 @@ MakeBufferedIstream(struct pool &pool, EventLoop &event_loop,
 
 class IstreamBufferedTestTraits {
 public:
-	static constexpr const char *expected_result = "foobar";
-
-	static constexpr bool call_available = true;
-	static constexpr bool enable_blocking = false;
-	static constexpr bool enable_abort_istream = false;
+	static constexpr IstreamFilterTestOptions options{
+		.expected_result = "foobar",
+		.enable_blocking = false,
+		.enable_abort_istream = false,
+	};
 
 	UnusedIstreamPtr CreateInput(struct pool &pool) const noexcept {
 		PipeLease pl(nullptr);

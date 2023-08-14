@@ -29,11 +29,8 @@ using std::string_view_literals::operator""sv;
 
 class IstreamTeeTestTraits {
 public:
-	static constexpr const char *expected_result = nullptr;
-
-	static constexpr bool call_available = true;
-	static constexpr bool enable_blocking = true;
-	static constexpr bool enable_abort_istream = true;
+	static constexpr IstreamFilterTestOptions options{
+	};
 
 	UnusedIstreamPtr CreateInput(struct pool &pool) const noexcept {
 		return istream_string_new(pool, "foo");
