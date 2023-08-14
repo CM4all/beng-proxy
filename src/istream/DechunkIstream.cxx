@@ -30,6 +30,13 @@ class DechunkIstream final : public FacadeIstream, DestructAnchor {
 	 */
 	std::size_t parsed_input = 0;
 
+	/**
+	 * The amount of input that needs to be submitted to
+	 * AddHeader().  This variable is necessary if #chunks is full
+	 * and a new header cannot be added there.
+	 */
+	std::size_t pending_header = 0;
+
 	struct ParsedChunk {
 		std::size_t header = 0, data = 0;
 	};
@@ -165,13 +172,13 @@ DechunkIstream::ParseInput(std::span<const std::byte> src)
 	while (!src.empty()) {
 		const auto data = parser.Parse(src);
 
-		if (data.begin() > src.begin()) {
-			const std::size_t size = std::distance(src.begin(), data.begin());
-			if (!AddHeader(size))
-				return false;
+		const std::size_t header_size = std::distance(src.begin(), data.begin());
+		parsed_input += header_size;
+		pending_header += header_size;
+		if (pending_header > 0 && !AddHeader(pending_header))
+			return false;
 
-			parsed_input += size;
-		}
+		pending_header = 0;
 
 		if (!data.empty()) {
 			if (!AddData(data.size()))
@@ -210,6 +217,11 @@ DechunkIstream::OnData(std::span<const std::byte> src) noexcept
 	bool again;
 	do {
 		again = false;
+
+		/* apply pending_header */
+
+		if (pending_header > 0 && AddHeader(pending_header))
+			pending_header = 0;
 
 		/* parse chunk boundaries */
 
