@@ -6,7 +6,7 @@
 #include "util/SpanCast.hxx"
 
 bool
-Context::ReadBuckets(std::size_t limit)
+Context::ReadBuckets(std::size_t limit, bool consume_more)
 {
 	if (abort_istream != nullptr)
 		/* don't attempt to read buckets when this option is
@@ -20,6 +20,9 @@ Context::ReadBuckets(std::size_t limit)
 	if (list.IsEmpty() && list.HasMore())
 		return false;
 
+	if (list.HasMore())
+		consume_more = false;
+
 	got_data = true;
 
 	bool result = true;
@@ -27,12 +30,17 @@ Context::ReadBuckets(std::size_t limit)
 
 	for (const auto &i : list) {
 		if (!i.IsBuffer()) {
+			consume_more = false;
 			result = false;
 			break;
 		}
 
 		const auto b = i.GetBuffer();
-		std::size_t size = std::min(b.size(), limit);
+		std::size_t size = b.size();
+		if (size > limit) {
+			size = limit;
+			consume_more = false;
+		}
 
 		if (expected_result && record) {
 			assert(skipped + buffer.size() == offset);
@@ -46,11 +54,13 @@ Context::ReadBuckets(std::size_t limit)
 		consumed += size;
 		offset += size;
 		limit -= size;
-		if (limit == 0)
+		if (limit == 0) {
+			consume_more = false;
 			break;
+		}
 	}
 
-	[[maybe_unused]] const auto r = input.ConsumeBucketList(consumed);
+	[[maybe_unused]] const auto r = input.ConsumeBucketList(consumed + consume_more);
 	assert(r.consumed == consumed);
 	// TODO check r.eof
 

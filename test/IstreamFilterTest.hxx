@@ -146,7 +146,7 @@ struct Context final : IstreamSink {
 					    std::exception_ptr()));
 	}
 
-	bool ReadBuckets(std::size_t limit);
+	bool ReadBuckets(std::size_t limit, bool consume_more=false);
 
 	void WaitForEndOfStream() noexcept {
 		assert(!break_eof);
@@ -272,6 +272,32 @@ TYPED_TEST_P(IstreamFilterTest, Bucket)
 		ctx.record = true;
 
 	while (ctx.ReadBuckets(1024 * 1024)) {}
+
+	if (ctx.input.IsDefined())
+		run_istream_ctx(traits, ctx);
+}
+
+/** consume one more byte, expect _ConsumeBucketList() to assign this
+    to the next Istream */
+TYPED_TEST_P(IstreamFilterTest, BucketMore)
+{
+	TypeParam traits;
+	Instance instance;
+
+	auto pool = pool_new_linear(instance.root_pool, "test", 8192);
+	auto input_pool = pool_new_linear(instance.root_pool, "input", 8192);
+
+	auto istream = traits.CreateTest(instance.event_loop, pool,
+					 traits.CreateInput(input_pool));
+	ASSERT_TRUE(!!istream);
+	input_pool.reset();
+
+	Context ctx(instance, std::move(pool),
+		    traits.expected_result, std::move(istream));
+	if (ctx.expected_result)
+		ctx.record = true;
+
+	while (ctx.ReadBuckets(1024 * 1024, true)) {}
 
 	if (ctx.input.IsDefined())
 		run_istream_ctx(traits, ctx);
@@ -708,6 +734,7 @@ TYPED_TEST_P(IstreamFilterTest, BigHold)
 REGISTER_TYPED_TEST_CASE_P(IstreamFilterTest,
 			   Normal,
 			   Bucket,
+			   BucketMore,
 			   SmallBucket,
 			   BucketError,
 			   Skip,
