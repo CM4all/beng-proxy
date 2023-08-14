@@ -21,8 +21,6 @@ class DechunkIstream final : public FacadeIstream, DestructAnchor {
 
 	HttpChunkParser parser;
 
-	bool eof = false;
-
 	bool had_input, had_output;
 
 	bool seen_eof = false;
@@ -98,9 +96,6 @@ DechunkIstream::DeferredEof() noexcept
 {
 	assert(parser.HasEnded());
 	assert(!input.IsDefined());
-	assert(!eof);
-
-	eof = true;
 
 	DestroyEof();
 }
@@ -128,7 +123,6 @@ DechunkIstream::CalculateRemainingDataSize(const std::byte *src,
 					   const std::byte *const src_end) noexcept
 {
 	assert(!IsEofPending());
-	assert(!eof);
 
 	seen_data = 0;
 
@@ -269,9 +263,6 @@ DechunkIstream::OnEof() noexcept
 
 	if (IsEofPending())
 		/* let DeferEvent handle this */
-		return;
-
-	if (eof)
 		return;
 
 	DestroyError(std::make_exception_ptr(std::runtime_error("premature EOF in dechunker")));
