@@ -32,7 +32,7 @@ class HttpChunkParser {
 	size_t remaining_chunk;
 
 public:
-	bool HasEnded() const {
+	constexpr bool HasEnded() const noexcept {
 		return state == State::END;
 	}
 
@@ -46,7 +46,7 @@ public:
 	 */
 	std::span<const std::byte> Parse(std::span<const std::byte> input);
 
-	bool Consume(size_t nbytes) {
+	constexpr bool Consume(size_t nbytes) noexcept {
 		assert(nbytes > 0);
 		assert(state == State::DATA);
 		assert(nbytes <= remaining_chunk);
@@ -59,7 +59,7 @@ public:
 		return finished;
 	}
 
-	size_t GetAvailable() const {
+	constexpr size_t GetAvailable() const noexcept {
 		return state == State::DATA
 			? remaining_chunk
 			: 0;
