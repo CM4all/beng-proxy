@@ -9,6 +9,7 @@
 #include "http/ChunkParser.hxx"
 #include "event/DeferEvent.hxx"
 #include "util/DestructObserver.hxx"
+#include "util/StaticVector.hxx"
 
 #include <algorithm>
 
@@ -23,13 +24,17 @@ class DechunkIstream final : public FacadeIstream, DestructAnchor {
 
 	bool had_input, had_output;
 
-	bool seen_eof = false;
-
 	/**
-	 * Number of data chunk bytes already seen, but not yet consumed
-	 * by our #IstreamHandler.
+	 * The amount of raw (chunked) input which has been put into
+	 * #chunks already.
 	 */
-	size_t seen_data = 0;
+	std::size_t parsed_input = 0;
+
+	struct ParsedChunk {
+		std::size_t header = 0, data = 0;
+	};
+
+	StaticVector<ParsedChunk, 8> chunks;
 
 	/**
 	 * This event is used to defer an DechunkHandler::OnDechunkEnd()
@@ -64,9 +69,39 @@ private:
 	 */
 	bool EofDetected() noexcept;
 
-	bool CalculateRemainingDataSize(const std::byte *src, const std::byte *src_end) noexcept;
+	bool AddHeader(std::size_t size) noexcept {
+		assert(size > 0);
 
-	size_t Feed(std::span<const std::byte> src) noexcept;
+		if (!chunks.empty() && chunks.back().data == 0) {
+			chunks.back().header += size;
+			return true;
+		} else if (!chunks.full()) {
+			chunks.emplace_back().header = size;
+			return true;
+		} else
+			return false;
+	}
+
+	bool AddData(std::size_t size) noexcept {
+		assert(size > 0);
+
+		if (!chunks.empty()) {
+			chunks.back().data += size;
+			return true;
+		} else if (!chunks.full()) {
+			chunks.emplace_back().data = size;
+			return true;
+		} else
+			return false;
+	}
+
+	/**
+	 * Parse the chunk boundaries from the raw (chunked) input and
+	 * update #chunkls and #parsed_input.
+	 *
+	 * Throws on error.
+	 */
+	void ParseInput(std::span<const std::byte> src);
 
 public:
 	/* virtual methods from class Istream */
@@ -118,126 +153,39 @@ DechunkIstream::EofDetected() noexcept
 	return result;
 }
 
-inline bool
-DechunkIstream::CalculateRemainingDataSize(const std::byte *src,
-					   const std::byte *const src_end) noexcept
+void
+DechunkIstream::ParseInput(std::span<const std::byte> src)
 {
-	assert(!IsEofPending());
+	if (parser.HasEnded())
+		/* don't accept any more data after the EOF chunk */
+		return;
 
-	seen_data = 0;
+	while (!src.empty()) {
+		const auto data = parser.Parse(src);
 
-	if (parser.HasEnded()) {
-		if (!seen_eof) {
-			seen_eof = true;
-			dechunk_handler.OnDechunkEndSeen();
+		if (data.begin() > src.begin()) {
+			const std::size_t size = std::distance(src.begin(), data.begin());
+			if (!AddHeader(size))
+				return;
+
+			parsed_input += size;
 		}
-
-		return true;
-	}
-
-	/* work with a copy of our HttpChunkParser */
-	HttpChunkParser p(parser);
-
-	while (src != src_end) {
-		const std::span<const std::byte> src_remaining(src, src_end - src);
-
-		std::span<const std::byte> data;
-
-		try {
-			data = p.Parse(src_remaining);
-		} catch (...) {
-			Abort(std::current_exception());
-			return false;
-		}
-
-		if (data.empty()) {
-			if (p.HasEnded() && !seen_eof) {
-				seen_eof = true;
-				dechunk_handler.OnDechunkEndSeen();
-			}
-
-			break;
-		}
-
-		seen_data += data.size();
-		p.Consume(data.size());
-		src = data.data() + data.size();
-	}
-
-	return true;
-}
-
-size_t
-DechunkIstream::Feed(const std::span<const std::byte> _src) noexcept
-{
-	assert(input.IsDefined());
-	assert(!IsEofPending());
-
-	const DestructObserver destructed(*this);
-
-	had_input = true;
-
-	const auto src_begin = _src.data();
-	const auto src_end = src_begin + _src.size();
-
-	auto src = src_begin;
-
-	while (src != src_end) {
-		const std::span<const std::byte> src_remaining(src, src_end - src);
-
-		std::span<const std::byte> data;
-
-		try {
-			data = parser.Parse(src_remaining);
-		} catch (...) {
-			Abort(std::current_exception());
-			return 0;
-		}
-
-		assert(data.data() >= src);
-		assert(data.data() <= src_end);
-		assert(data.data() + data.size() <= src_end);
-
-		src = data.data();
 
 		if (!data.empty()) {
-			assert(!parser.HasEnded());
+			if (!AddData(data.size()))
+				return;
 
-			size_t nbytes;
+			parsed_input += data.size();
+			parser.Consume(data.size());
+		}
 
-			had_output = true;
-			seen_data += data.size();
-			nbytes = InvokeData({src, data.size()});
-			assert(nbytes <= data.size());
+		src = {data.end(), src.end()};
 
-			if (destructed)
-				return 0;
-
-			if (nbytes == 0)
-				break;
-
-			src += nbytes;
-
-			bool finished = parser.Consume(nbytes);
-			if (!finished)
-				break;
-		} else if (parser.HasEnded()) {
+		if (parser.HasEnded()) {
+			dechunk_handler.OnDechunkEndSeen();
 			break;
-		} else {
-			assert(src == src_end);
 		}
 	}
-
-	const size_t position = src - src_begin;
-	if (parser.HasEnded())
-		return EofDetected()
-			? position
-			: 0;
-
-	if (!CalculateRemainingDataSize(src, src_end))
-		return 0;
-
-	return position;
 }
 
 
@@ -249,11 +197,75 @@ DechunkIstream::Feed(const std::span<const std::byte> _src) noexcept
 size_t
 DechunkIstream::OnData(std::span<const std::byte> src) noexcept
 {
-	if (IsEofPending())
-		/* don't accept any more data after the EOF chunk */
+	const DestructObserver destructed{*this};
+
+	const auto begin = src.begin();
+
+	/* doing this in a loop because ParseInput() may be incomplete
+	   because the "chunks" array gets full */
+	while (!src.empty() && (!chunks.empty() || !parser.HasEnded())) {
+		/* parse chunk boundaries */
+
+		if (src.size() > parsed_input && !parser.HasEnded()) {
+			try {
+				ParseInput(src.subspan(parsed_input));
+			} catch (...) {
+				DestroyError(std::current_exception());
+				return 0;
+			}
+		}
+
+		/* submit all data chunks to our handler */
+
+		while (!chunks.empty()) {
+			auto &chunk = chunks.front();
+			assert(chunk.header > 0 || chunk.data > 0);
+
+			/* skip the header */
+
+			if (src.size() < chunk.header) {
+				/* there's not enough data to skip the
+				   whole header */
+				chunk.header -= src.size();
+				parsed_input -= src.size();
+				src = src.subspan(src.size());
+				break;
+			}
+
+			parsed_input -= chunk.header;
+			src = src.subspan(chunk.header);
+			chunk.header = 0;
+
+			/* handle data */
+
+			const std::size_t data_size = std::min(src.size(), chunk.data);
+			if (data_size > 0) {
+				std::size_t n = InvokeData(src.first(data_size));
+				if (n == 0 && destructed)
+					return 0;
+
+				parsed_input -= n;
+				src = src.subspan(n);
+				chunk.data -= n;
+
+				if (n < data_size)
+					/* not everything was
+					   consumed: stop here */
+					return std::distance(begin, src.begin());
+			}
+
+			if (chunk.data > 0)
+				/* there was not enough data */
+				break;
+
+			chunks.pop_front();
+		}
+	}
+
+	if (chunks.empty() && parser.HasEnded() && !EofDetected())
 		return 0;
 
-	return Feed(src);
+	return std::distance(begin, src.begin());
 }
 
 void
@@ -288,13 +300,17 @@ DechunkIstream::OnError(std::exception_ptr ep) noexcept
 off_t
 DechunkIstream::_GetAvailable(bool partial) noexcept
 {
-	if (IsEofPending())
-		return 0;
-
-	if (!partial && !seen_eof)
+	if (!partial && !parser.HasEnded())
 		return -1;
 
-	return seen_data;
+	std::size_t total = 0;
+
+	for (const auto &chunk : chunks) {
+		assert(chunk.header > 0 || chunk.data > 0);
+		total += chunk.data;
+	}
+
+	return total;
 }
 
 void
