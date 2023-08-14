@@ -187,15 +187,14 @@ struct Context final : IstreamSink {
  *
  */
 
-template<typename Traits>
 static void
-run_istream_ctx(const Traits &traits, Context &ctx) noexcept
+run_istream_ctx(const IstreamFilterTestOptions &options, Context &ctx) noexcept
 {
 	const AutoPoolCommit auto_pool_commit;
 
 	ctx.eof = false;
 
-	if (traits.options.call_available) {
+	if (options.call_available) {
 		[[maybe_unused]] off_t a1 = ctx.input.GetAvailable(false);
 		[[maybe_unused]] off_t a2 = ctx.input.GetAvailable(true);
 	}
@@ -212,27 +211,29 @@ run_istream_ctx(const Traits &traits, Context &ctx) noexcept
 	}
 }
 
-template<typename Traits, typename I>
+template<typename I>
 static void
-run_istream_block(const Traits &traits, Instance &instance, PoolPtr pool,
+run_istream_block(const IstreamFilterTestOptions &options,
+		  Instance &instance, PoolPtr pool,
 		  I &&istream,
 		  bool record,
 		  int block_after)
 {
 	Context ctx(instance, std::move(pool),
-		    traits.options.expected_result, std::forward<I>(istream));
+		    options.expected_result, std::forward<I>(istream));
 	ctx.block_after = block_after;
 	ctx.record = ctx.expected_result && record;
 
-	run_istream_ctx(traits, ctx);
+	run_istream_ctx(options, ctx);
 }
 
-template<typename Traits, typename I>
+template<typename I>
 static void
-run_istream(const Traits &traits, Instance &instance, PoolPtr pool,
+run_istream(const IstreamFilterTestOptions &options,
+	    Instance &instance, PoolPtr pool,
 	    I &&istream, bool record)
 {
-	run_istream_block(traits, instance, std::move(pool),
+	run_istream_block(options, instance, std::move(pool),
 			  std::forward<I>(istream), record, -1);
 }
 
@@ -255,7 +256,7 @@ TYPED_TEST_P(IstreamFilterTest, Normal)
 	ASSERT_TRUE(!!istream);
 	input_pool.reset();
 
-	run_istream(traits, instance, std::move(pool),
+	run_istream(traits.options, instance, std::move(pool),
 		    std::move(istream), true);
 }
 
@@ -281,7 +282,7 @@ TYPED_TEST_P(IstreamFilterTest, Bucket)
 	while (ctx.ReadBuckets(1024 * 1024)) {}
 
 	if (ctx.input.IsDefined())
-		run_istream_ctx(traits, ctx);
+		run_istream_ctx(traits.options, ctx);
 }
 
 /** consume one more byte, expect _ConsumeBucketList() to assign this
@@ -307,7 +308,7 @@ TYPED_TEST_P(IstreamFilterTest, BucketMore)
 	while (ctx.ReadBuckets(1024 * 1024, true)) {}
 
 	if (ctx.input.IsDefined())
-		run_istream_ctx(traits, ctx);
+		run_istream_ctx(traits.options, ctx);
 }
 
 /** test with Istream::FillBucketList() */
@@ -332,7 +333,7 @@ TYPED_TEST_P(IstreamFilterTest, SmallBucket)
 	while (ctx.ReadBuckets(3)) {}
 
 	if (ctx.input.IsDefined())
-		run_istream_ctx(traits, ctx);
+		run_istream_ctx(traits.options, ctx);
 }
 
 /** Istream::FillBucketList() throws */
@@ -384,7 +385,7 @@ TYPED_TEST_P(IstreamFilterTest, Skip)
 	ctx.record = ctx.expected_result != nullptr;
 	ctx.Skip(1);
 
-	run_istream_ctx(traits, ctx);
+	run_istream_ctx(traits.options, ctx);
 }
 
 /** block once after n data() invocations */
@@ -406,7 +407,7 @@ TYPED_TEST_P(IstreamFilterTest, Block)
 		ASSERT_TRUE(!!istream);
 		input_pool.reset();
 
-		run_istream_block(traits, instance, std::move(pool),
+		run_istream_block(traits.options, instance, std::move(pool),
 				  std::move(istream), true, n);
 	}
 }
@@ -429,7 +430,7 @@ TYPED_TEST_P(IstreamFilterTest, Byte)
 						   traits.CreateInput(input_pool)));
 	input_pool.reset();
 
-	run_istream(traits, instance, std::move(pool),
+	run_istream(traits.options, instance, std::move(pool),
 		    std::move(istream), true);
 }
 
@@ -458,7 +459,7 @@ TYPED_TEST_P(IstreamFilterTest, BlockByte)
 	ctx.record = true;
 #endif
 
-	run_istream_ctx(traits, ctx);
+	run_istream_ctx(traits.options, ctx);
 }
 
 /** error occurs while blocking */
@@ -485,7 +486,7 @@ TYPED_TEST_P(IstreamFilterTest, BlockInject)
 		    std::move(istream));
 	ctx.block_inject = &inject.second;
 
-	run_istream_ctx(traits, ctx);
+	run_istream_ctx(traits.options, ctx);
 
 	ASSERT_TRUE(ctx.eof);
 }
@@ -511,7 +512,7 @@ TYPED_TEST_P(IstreamFilterTest, Half)
 	ctx.record = true;
 #endif
 
-	run_istream_ctx(traits, ctx);
+	run_istream_ctx(traits.options, ctx);
 }
 
 /** input fails */
@@ -526,7 +527,7 @@ TYPED_TEST_P(IstreamFilterTest, Fail)
 	auto istream = traits.CreateTest(instance.event_loop, pool,
 					 istream_fail_new(pool, std::make_exception_ptr(error)));
 
-	run_istream(traits, instance, std::move(pool),
+	run_istream(traits.options, instance, std::move(pool),
 		    std::move(istream), false);
 }
 
@@ -550,7 +551,7 @@ TYPED_TEST_P(IstreamFilterTest, FailAfterFirstByte)
 								    std::make_exception_ptr(error))));
 	input_pool.reset();
 
-	run_istream(traits, instance, std::move(pool),
+	run_istream(traits.options, instance, std::move(pool),
 		    std::move(istream), false);
 }
 
@@ -572,7 +573,7 @@ TYPED_TEST_P(IstreamFilterTest, CloseInHandler)
 		    std::move(istream));
 	ctx.close_after = 0;
 
-	run_istream_ctx(traits, ctx);
+	run_istream_ctx(traits.options, ctx);
 }
 
 /** abort without handler */
@@ -666,7 +667,7 @@ TYPED_TEST_P(IstreamFilterTest, AbortAfter1Byte)
 					1, false);
 	input_pool.reset();
 
-	run_istream(traits, instance, std::move(pool),
+	run_istream(traits.options, instance, std::move(pool),
 		    std::move(istream), false);
 }
 
@@ -685,7 +686,7 @@ TYPED_TEST_P(IstreamFilterTest, Later)
 						    instance.event_loop));
 	input_pool.reset();
 
-	run_istream(traits, instance, std::move(pool),
+	run_istream(traits.options, instance, std::move(pool),
 		    std::move(istream), true);
 }
 
