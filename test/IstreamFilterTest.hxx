@@ -44,6 +44,7 @@ struct IstreamFilterTestOptions {
 	bool call_available = true;
 	bool enable_blocking = true;
 	bool enable_abort_istream = true;
+	bool enable_big = true;
 };
 
 template<typename T>
@@ -670,9 +671,8 @@ TYPED_TEST_P(IstreamFilterTest, AsFd)
 /** test with large input and blocking handler */
 TYPED_TEST_P(IstreamFilterTest, BigHold)
 {
-#ifndef ISTREAM_TEST_NO_BIG
 	TypeParam traits;
-	if (!traits.options.expected_result)
+	if (!traits.options.enable_big || !traits.options.expected_result)
 		return;
 
 	Instance instance;
@@ -693,7 +693,6 @@ TYPED_TEST_P(IstreamFilterTest, BigHold)
 	inner->Read();
 
 	hold.Clear();
-#endif
 }
 
 REGISTER_TYPED_TEST_CASE_P(IstreamFilterTest,

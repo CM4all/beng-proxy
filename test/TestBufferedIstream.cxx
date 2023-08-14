@@ -2,8 +2,6 @@
 // Copyright CM4all GmbH
 // author: Max Kellermann <mk@cm4all.com>
 
-#define ISTREAM_TEST_NO_BIG
-
 #include "IstreamFilterTest.hxx"
 #include "istream/New.hxx"
 #include "istream/BufferedIstream.hxx"
@@ -78,6 +76,7 @@ public:
 		.expected_result = "foobar",
 		.enable_blocking = false,
 		.enable_abort_istream = false,
+		.enable_big = false,
 	};
 
 	UnusedIstreamPtr CreateInput(struct pool &pool) const noexcept {
