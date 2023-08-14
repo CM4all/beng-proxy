@@ -39,15 +39,3 @@ UnusedIstreamPtr
 istream_dechunk_new(struct pool &pool, UnusedIstreamPtr input,
 		    EventLoop &event_loop,
 		    DechunkHandler &dechunk_handler) noexcept;
-
-/**
- * Check if the parameter is an istream_dechunk, and if so, switch to
- * "verbatim" mode and return true.  May only be called on a pristine
- * object.
- *
- * In "verbatim" mode, this istream's output is still chunked, but
- * verified, and its end-of-file is detected.  This is useful when we
- * need to output chunked data (e.g. proxying to another client).
- */
-bool
-istream_dechunk_check_verbatim(UnusedIstreamPtr &i) noexcept;

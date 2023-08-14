@@ -25,33 +25,13 @@ class DechunkIstream final : public FacadeIstream, DestructAnchor {
 
 	bool had_input, had_output;
 
-	/**
-	 * Copy chunked data verbatim to handler?
-	 *
-	 * @see istream_dechunk_check_verbatim()
-	 */
-	bool verbatim = false;
-
-	/**
-	 * Was the end-of-file chunk seen at the end of #pending_verbatim?
-	 */
-	bool eof_verbatim;
-
 	bool seen_eof = false;
 
 	/**
 	 * Number of data chunk bytes already seen, but not yet consumed
-	 * by our #IstreamHandler.  In verbatim mode, this attribute is
-	 * unused.
+	 * by our #IstreamHandler.
 	 */
 	size_t seen_data = 0;
-
-	/**
-	 * Number of bytes to be passed to handler verbatim, which have
-	 * already been parsed but have not yet been consumed by the
-	 * handler.
-	 */
-	size_t pending_verbatim;
 
 	/**
 	 * This event is used to defer an DechunkHandler::OnDechunkEnd()
@@ -69,12 +49,6 @@ public:
 		 defer_eof_event(event_loop, BIND_THIS_METHOD(DeferredEof)),
 		 dechunk_handler(_dechunk_handler)
 	{
-	}
-
-	void SetVerbatim() noexcept {
-		verbatim = true;
-		eof_verbatim = false;
-		pending_verbatim = 0;
 	}
 
 private:
@@ -204,7 +178,6 @@ DechunkIstream::Feed(const std::span<const std::byte> _src) noexcept
 {
 	assert(input.IsDefined());
 	assert(!IsEofPending());
-	assert(!verbatim || !eof_verbatim);
 
 	const DestructObserver destructed(*this);
 
@@ -214,10 +187,6 @@ DechunkIstream::Feed(const std::span<const std::byte> _src) noexcept
 	const auto src_end = src_begin + _src.size();
 
 	auto src = src_begin;
-	if (verbatim)
-		/* skip the part that has already been parsed in the last
-		   invocation, but could not be consumed by the handler */
-		src += pending_verbatim;
 
 	while (src != src_end) {
 		const std::span<const std::byte> src_remaining(src, src_end - src);
@@ -242,27 +211,21 @@ DechunkIstream::Feed(const std::span<const std::byte> _src) noexcept
 
 			size_t nbytes;
 
-			if (verbatim) {
-				/* postpone this data chunk; try to send it all later in
-				   one big block */
-				nbytes = data.size();
-			} else {
-				had_output = true;
-				seen_data += data.size();
-				nbytes = InvokeData({src, data.size()});
-				assert(nbytes <= data.size());
+			had_output = true;
+			seen_data += data.size();
+			nbytes = InvokeData({src, data.size()});
+			assert(nbytes <= data.size());
 
-				if (destructed)
-					return 0;
+			if (destructed)
+				return 0;
 
-				if (nbytes == 0)
-					break;
-			}
+			if (nbytes == 0)
+				break;
 
 			src += nbytes;
 
 			bool finished = parser.Consume(nbytes);
-			if (!finished && !verbatim)
+			if (!finished)
 				break;
 		} else if (parser.HasEnded()) {
 			break;
@@ -272,33 +235,12 @@ DechunkIstream::Feed(const std::span<const std::byte> _src) noexcept
 	}
 
 	const size_t position = src - src_begin;
-	if (verbatim && position > 0) {
-		/* send all chunks in one big block */
-		had_output = true;
-		size_t nbytes = InvokeData({src_begin, position});
-		if (destructed)
-			return 0;
-
-		/* postpone the rest that was not handled; it will not be
-		   parsed again */
-		pending_verbatim = position - nbytes;
-		if (parser.HasEnded()) {
-			if (pending_verbatim > 0)
-				/* not everything could be sent; postpone to
-				   next call */
-				eof_verbatim = true;
-			else if (!EofDetected())
-				return 0;
-		}
-
-		return nbytes;
-	} else if (parser.HasEnded()) {
+	if (parser.HasEnded())
 		return EofDetected()
 			? position
 			: 0;
-	}
 
-	if (!verbatim && !CalculateRemainingDataSize(src, src_end))
+	if (!CalculateRemainingDataSize(src, src_end))
 		return 0;
 
 	return position;
@@ -313,33 +255,9 @@ DechunkIstream::Feed(const std::span<const std::byte> _src) noexcept
 size_t
 DechunkIstream::OnData(std::span<const std::byte> src) noexcept
 {
-	assert(!verbatim || src.size() >= pending_verbatim);
-
 	if (IsEofPending())
 		/* don't accept any more data after the EOF chunk */
 		return 0;
-
-	if (verbatim && eof_verbatim) {
-		/* during the last call, the EOF chunk was parsed, but we
-		   could not handle it yet, because the handler did not
-		   consume all data yet; try to send the remaining pre-EOF
-		   data again and then handle the EOF chunk */
-
-		assert(pending_verbatim > 0);
-
-		assert(src.size() >= pending_verbatim);
-
-		had_output = true;
-		size_t nbytes = InvokeData(src.first(pending_verbatim));
-		if (nbytes == 0)
-			return 0;
-
-		pending_verbatim -= nbytes;
-		if (pending_verbatim == 0 && !EofDetected())
-			return 0;
-
-		return nbytes;
-	}
 
 	return Feed(src);
 }
@@ -382,17 +300,10 @@ DechunkIstream::_GetAvailable(bool partial) noexcept
 	if (IsEofPending())
 		return 0;
 
-	if (verbatim) {
-		if (!partial && !eof_verbatim)
-			return -1;
+	if (!partial && !seen_eof)
+		return -1;
 
-		return pending_verbatim;
-	} else {
-		if (!partial && !seen_eof)
-			return -1;
-
-		return seen_data;
-	}
+	return seen_data;
 }
 
 void
@@ -425,16 +336,4 @@ istream_dechunk_new(struct pool &pool, UnusedIstreamPtr input,
 	return NewIstreamPtr<DechunkIstream>(pool, std::move(input),
 					     event_loop,
 					     dechunk_handler);
-}
-
-bool
-istream_dechunk_check_verbatim(UnusedIstreamPtr &i) noexcept
-{
-	auto *dechunk = i.DynamicCast<DechunkIstream>();
-	if (dechunk == nullptr)
-		/* not a DechunkIstream instance */
-		return false;
-
-	dechunk->SetVerbatim();
-	return true;
 }
