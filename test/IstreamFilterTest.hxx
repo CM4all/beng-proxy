@@ -455,9 +455,8 @@ TYPED_TEST_P(IstreamFilterTest, BlockByte)
 		    traits.options.expected_result,
 		    std::move(istream));
 	ctx.block_byte = true;
-#ifdef EXPECTED_RESULT
-	ctx.record = true;
-#endif
+	if (ctx.expected_result)
+		ctx.record = true;
 
 	run_istream_ctx(traits.options, ctx);
 }
@@ -508,9 +507,8 @@ TYPED_TEST_P(IstreamFilterTest, Half)
 		    traits.options.expected_result,
 		    std::move(istream));
 	ctx.half = true;
-#ifdef EXPECTED_RESULT
-	ctx.record = true;
-#endif
+	if (ctx.expected_result)
+		ctx.record = true;
 
 	run_istream_ctx(traits.options, ctx);
 }
