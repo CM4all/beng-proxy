@@ -296,7 +296,7 @@ CatIstream::_ConsumeBucketList(std::size_t nbytes) noexcept
 {
 	std::size_t total = 0;
 
-	while (true) {
+	while (!inputs.empty()) {
 		auto &input = inputs.front();
 
 		const auto r = input.ConsumeBucketList(nbytes);
