@@ -125,7 +125,7 @@ Context::OnData(const std::span<const std::byte> src) noexcept
 		assert(memcmp((const char *)expected_result + skipped + buffer.size(),
 			      src.data(), src.size()) == 0);
 
-		buffer.append(ToStringView(src));
+		buffer.append(ToStringView(src.first(length)));
 	}
 
 	offset += length;
