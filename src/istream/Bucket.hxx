@@ -100,11 +100,13 @@ public:
 		return !HasMore() && list.size() == m.value;
 	}
 
-	List::const_iterator begin() const noexcept {
+	using const_iterator = List::const_iterator;
+
+	const_iterator begin() const noexcept {
 		return list.begin();
 	}
 
-	List::const_iterator end() const noexcept {
+	const_iterator end() const noexcept {
 		return list.end();
 	}
 
