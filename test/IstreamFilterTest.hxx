@@ -182,61 +182,20 @@ struct Context final : IstreamSink {
 	void OnError(std::exception_ptr ep) noexcept override;
 };
 
-/*
- * utils
- *
- */
+void
+run_istream_ctx(const IstreamFilterTestOptions &options, Context &ctx);
 
-static void
-run_istream_ctx(const IstreamFilterTestOptions &options, Context &ctx) noexcept
-{
-	const AutoPoolCommit auto_pool_commit;
-
-	ctx.eof = false;
-
-	if (options.call_available) {
-		[[maybe_unused]] off_t a1 = ctx.input.GetAvailable(false);
-		[[maybe_unused]] off_t a2 = ctx.input.GetAvailable(true);
-	}
-
-	ctx.WaitForEndOfStream();
-
-	if (ctx.expected_result && ctx.record) {
-		ASSERT_EQ(ctx.buffer.size() + ctx.skipped,
-			  strlen(ctx.expected_result));
-		ASSERT_EQ(memcmp(ctx.buffer.data(),
-				 (const char *)ctx.expected_result + ctx.skipped,
-				 ctx.buffer.size()),
-			  0);
-	}
-}
-
-template<typename I>
-static void
+void
 run_istream_block(const IstreamFilterTestOptions &options,
 		  Instance &instance, PoolPtr pool,
-		  I &&istream,
+		  UnusedIstreamPtr istream,
 		  bool record,
-		  int block_after)
-{
-	Context ctx(instance, std::move(pool),
-		    options.expected_result, std::forward<I>(istream));
-	ctx.block_after = block_after;
-	ctx.record = ctx.expected_result && record;
+		  int block_after);
 
-	run_istream_ctx(options, ctx);
-}
-
-template<typename I>
-static void
+void
 run_istream(const IstreamFilterTestOptions &options,
 	    Instance &instance, PoolPtr pool,
-	    I &&istream, bool record)
-{
-	run_istream_block(options, instance, std::move(pool),
-			  std::forward<I>(istream), record, -1);
-}
-
+	    UnusedIstreamPtr istream, bool record);
 
 /*
  * tests

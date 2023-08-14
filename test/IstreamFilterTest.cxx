@@ -227,3 +227,51 @@ Context::OnError(std::exception_ptr) noexcept
 
 	eof = true;
 }
+
+void
+run_istream_ctx(const IstreamFilterTestOptions &options, Context &ctx)
+{
+	const AutoPoolCommit auto_pool_commit;
+
+	ctx.eof = false;
+
+	if (options.call_available) {
+		[[maybe_unused]] off_t a1 = ctx.input.GetAvailable(false);
+		[[maybe_unused]] off_t a2 = ctx.input.GetAvailable(true);
+	}
+
+	ctx.WaitForEndOfStream();
+
+	if (ctx.expected_result && ctx.record) {
+		ASSERT_EQ(ctx.buffer.size() + ctx.skipped,
+			  strlen(ctx.expected_result));
+		ASSERT_EQ(memcmp(ctx.buffer.data(),
+				 (const char *)ctx.expected_result + ctx.skipped,
+				 ctx.buffer.size()),
+			  0);
+	}
+}
+
+void
+run_istream_block(const IstreamFilterTestOptions &options,
+		  Instance &instance, PoolPtr pool,
+		  UnusedIstreamPtr istream,
+		  bool record,
+		  int block_after)
+{
+	Context ctx(instance, std::move(pool),
+		    options.expected_result, std::move(istream));
+	ctx.block_after = block_after;
+	ctx.record = ctx.expected_result && record;
+
+	run_istream_ctx(options, ctx);
+}
+
+void
+run_istream(const IstreamFilterTestOptions &options,
+	    Instance &instance, PoolPtr pool,
+	    UnusedIstreamPtr istream, bool record)
+{
+	run_istream_block(options, instance, std::move(pool),
+			  std::move(istream), record, -1);
+}
