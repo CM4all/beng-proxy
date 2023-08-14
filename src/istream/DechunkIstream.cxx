@@ -207,16 +207,21 @@ DechunkIstream::OnData(std::span<const std::byte> src) noexcept
 
 	/* doing this in a loop because ParseInput() may be incomplete
 	   because the "chunks" array gets full */
-	while (!src.empty() && (!chunks.empty() || !parser.HasEnded())) {
+	bool again;
+	do {
+		again = false;
+
 		/* parse chunk boundaries */
 
-		if (src.size() > parsed_input && !parser.HasEnded()) {
+		if (src.size() > parsed_input) {
 			try {
 				ParseInput(src.subspan(parsed_input));
 			} catch (...) {
 				DestroyError(std::current_exception());
 				return 0;
 			}
+
+			again = !parser.HasEnded();
 		}
 
 		/* submit all data chunks to our handler */
@@ -233,6 +238,7 @@ DechunkIstream::OnData(std::span<const std::byte> src) noexcept
 				chunk.header -= src.size();
 				parsed_input -= src.size();
 				src = src.subspan(src.size());
+				again = false;
 				break;
 			}
 
@@ -258,13 +264,16 @@ DechunkIstream::OnData(std::span<const std::byte> src) noexcept
 					return std::distance(begin, src.begin());
 			}
 
-			if (chunk.data > 0)
+			if (chunk.data > 0) {
 				/* there was not enough data */
+				again = false;
 				break;
+			}
 
 			chunks.pop_front();
+			again = true;
 		}
-	}
+	} while (again);
 
 	if (chunks.empty() && parser.HasEnded() && !EofDetected())
 		return 0;
