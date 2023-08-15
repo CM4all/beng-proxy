@@ -152,12 +152,12 @@ class BoostIntrusiveContainerType:
             node = node['prev_']
 
 def for_each_intrusive_list_item(l, member_hook=None):
-    t = BoostIntrusiveContainerType(l.type, member_hook=member_hook)
+    t = IntrusiveContainerType(l.type, member_hook=member_hook)
     for node in t.iter_nodes(l):
         yield t.node_to_value(node).dereference()
 
 def for_each_intrusive_list_item_reverse(l, member_hook=None):
-    t = BoostIntrusiveContainerType(l.type, member_hook=member_hook)
+    t = IntrusiveContainerType(l.type, member_hook=member_hook)
     for node in t.iter_nodes_reverse(l):
         yield t.node_to_value(node).dereference()
 
