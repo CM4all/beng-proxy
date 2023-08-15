@@ -10,11 +10,21 @@
 #include "istream/UnusedPtr.hxx"
 #include "pool/pool.hxx"
 
+#include <cassert>
+
 class IstreamDechunkTestTraits {
 	class MyDechunkHandler final : public DechunkHandler {
-		void OnDechunkEndSeen() noexcept override {}
+		bool end_seen = false;
+
+		void OnDechunkEndSeen() noexcept override {
+			assert(!end_seen);
+
+			end_seen = true;
+		}
 
 		DechunkInputAction OnDechunkEnd() noexcept override {
+			assert(end_seen);
+
 			return DechunkInputAction::CLOSE;
 		}
 	};
