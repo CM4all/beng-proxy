@@ -242,6 +242,9 @@ DechunkIstream::ParseInput(std::span<const std::byte> src)
 	while (!src.empty()) {
 		const auto data = parser.Parse(src);
 
+		if (parser.HasEnded())
+			dechunk_handler.OnDechunkEndSeen();
+
 		const std::size_t header_size = std::distance(src.begin(), data.begin());
 		parsed_input += header_size;
 		pending_header += header_size;
@@ -260,10 +263,8 @@ DechunkIstream::ParseInput(std::span<const std::byte> src)
 
 		src = {data.end(), src.end()};
 
-		if (parser.HasEnded()) {
-			dechunk_handler.OnDechunkEndSeen();
+		if (parser.HasEnded())
 			break;
-		}
 	}
 
 	return true;
