@@ -14,8 +14,8 @@ class IstreamDechunkTestTraits {
 	class MyDechunkHandler final : public DechunkHandler {
 		void OnDechunkEndSeen() noexcept override {}
 
-		bool OnDechunkEnd() noexcept override {
-			return false;
+		DechunkInputAction OnDechunkEnd() noexcept override {
+			return DechunkInputAction::CLOSE;
 		}
 	};
 

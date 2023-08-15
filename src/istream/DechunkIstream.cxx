@@ -120,12 +120,12 @@ private:
 
 	void DeferredEof() noexcept;
 
-	bool InvokeDechunkEnd() noexcept;
+	DechunkHandler::DechunkInputAction InvokeDechunkEnd() noexcept;
 
 	/**
 	 * @return false if the input has been closed
 	 */
-	bool EofDetected() noexcept;
+	DechunkHandler::DechunkInputAction EofDetected() noexcept;
 
 	bool AddHeader(std::size_t size) noexcept {
 		assert(size > 0);
@@ -202,27 +202,32 @@ DechunkIstream::DeferredEof() noexcept
 	DestroyEof();
 }
 
-bool
+DechunkHandler::DechunkInputAction
 DechunkIstream::InvokeDechunkEnd() noexcept
 {
+
 	assert(input.IsDefined());
 	assert(parser.HasEnded());
 
-	bool result = dechunk_handler.OnDechunkEnd();
-	if (result)
-		ClearInput();
-	else
-		/* this code path is only used by the unit test */
-		CloseInput();
+	const auto action = dechunk_handler.OnDechunkEnd();
 
-	return result;
+	switch (action) {
+	case DechunkHandler::DechunkInputAction::ABANDON:
+		ClearInput();
+		break;
+
+	case DechunkHandler::DechunkInputAction::CLOSE:
+		CloseInput();
+		break;
+	}
+
+	return action;
 }
 
-bool
+DechunkHandler::DechunkInputAction
 DechunkIstream::EofDetected() noexcept
 {
 	defer_eof_event.Schedule();
-
 	return InvokeDechunkEnd();
 }
 
@@ -351,8 +356,15 @@ DechunkIstream::OnData(std::span<const std::byte> src) noexcept
 		}
 	} while (again);
 
-	if (chunks.empty() && parser.HasEnded() && !EofDetected())
-		return 0;
+	if (chunks.empty() && parser.HasEnded()) {
+		switch (EofDetected()) {
+		case DechunkHandler::DechunkInputAction::ABANDON:
+			break;
+
+		case DechunkHandler::DechunkInputAction::CLOSE:
+			return 0;
+		}
+	}
 
 	return std::distance(begin, src.begin());
 }

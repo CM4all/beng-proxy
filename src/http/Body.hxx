@@ -250,5 +250,5 @@ public:
 protected:
 	/* virtual methods from class DechunkHandler */
 	void OnDechunkEndSeen() noexcept override;
-	bool OnDechunkEnd() noexcept final;
+	DechunkInputAction OnDechunkEnd() noexcept final;
 };

@@ -18,13 +18,24 @@ public:
 	 */
 	virtual void OnDechunkEndSeen() noexcept = 0;
 
+	enum class DechunkInputAction {
+		/**
+		 * Keep the #DechunkIstream open but abandon the
+		 * pointer to it.
+		 */
+		ABANDON,
+
+		/**
+		 * Close the #DechunkIstream.
+		 */
+		CLOSE,
+	};
+
 	/**
 	 * Called after the end chunk has been consumed from the input,
 	 * right before calling IstreamHandler::OnEof().
-	 *
-	 * @return false if the caller shall close its input
 	 */
-	virtual bool OnDechunkEnd() noexcept = 0;
+	virtual DechunkInputAction OnDechunkEnd() noexcept = 0;
 };
 
 /**

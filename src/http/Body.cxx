@@ -112,7 +112,7 @@ HttpBodyReader::OnDechunkEndSeen() noexcept
 	end_seen = true;
 }
 
-bool
+DechunkHandler::DechunkInputAction
 HttpBodyReader::OnDechunkEnd() noexcept
 {
 	assert(rest == REST_CHUNKED);
@@ -120,7 +120,7 @@ HttpBodyReader::OnDechunkEnd() noexcept
 
 	rest = REST_EOF_CHUNK;
 
-	return true;
+	return DechunkInputAction::ABANDON;
 }
 
 UnusedIstreamPtr
