@@ -315,8 +315,9 @@ struct Context final
 	}
 
 	void OnDeferred() noexcept {
+		deferred = false;
+
 		if (defer_read_response_body) {
-			deferred = false;
 			input.Read();
 			return;
 		}
