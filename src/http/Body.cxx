@@ -116,8 +116,8 @@ bool
 HttpBodyReader::OnDechunkEnd() noexcept
 {
 	assert(rest == REST_CHUNKED);
+	assert(end_seen);
 
-	end_seen = true;
 	rest = REST_EOF_CHUNK;
 
 	return true;
