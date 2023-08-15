@@ -42,10 +42,10 @@ Context::ReadBuckets(std::size_t limit, bool consume_more)
 			consume_more = false;
 		}
 
-		if (expected_result && record) {
+		if (expected_result.data() != nullptr && record) {
 			assert(skipped + buffer.size() == offset);
-			assert(offset + b.size() <= strlen(expected_result));
-			assert(memcmp((const char *)expected_result + skipped + buffer.size(),
+			assert(offset + b.size() <= expected_result.size());
+			assert(memcmp(expected_result.data() + skipped + buffer.size(),
 				      b.data(), b.size()) == 0);
 
 			buffer.append((const char *)b.data(), size);
@@ -119,10 +119,10 @@ Context::OnData(const std::span<const std::byte> src) noexcept
 			return 0;
 	}
 
-	if (expected_result && record) {
+	if (expected_result.data() != nullptr && record) {
 		assert(skipped + buffer.size() == offset);
-		assert(offset + length <= strlen(expected_result));
-		assert(memcmp((const char *)expected_result + skipped + buffer.size(),
+		assert(offset + length <= expected_result.size());
+		assert(memcmp(expected_result.data() + skipped + buffer.size(),
 			      src.data(), src.size()) == 0);
 
 		buffer.append(ToStringView(src.first(length)));
@@ -172,10 +172,10 @@ Context::OnDirect(FdType, FileDescriptor fd, off_t,
 
 	const std::span<const std::byte> src = std::span{tmp}.first(nbytes);
 
-	if (expected_result && record) {
+	if (expected_result.data() != nullptr && record) {
 		assert(skipped + buffer.size() == offset);
-		assert(offset + nbytes <= strlen(expected_result));
-		assert(memcmp((const char *)expected_result + skipped + buffer.size(),
+		assert(offset + nbytes <= expected_result.size());
+		assert(memcmp(expected_result.data() + skipped + buffer.size(),
 			      src.data(), src.size()) == 0);
 
 		buffer.append(ToStringView(src));
@@ -215,7 +215,7 @@ Context::OnEof() noexcept
 void
 Context::OnError(std::exception_ptr) noexcept
 {
-	assert(!expected_result || !record);
+	assert(expected_result.data() == nullptr || !record);
 
 	if (break_eof)
 		instance.event_loop.Break();
@@ -242,11 +242,11 @@ run_istream_ctx(const IstreamFilterTestOptions &options, Context &ctx)
 
 	ctx.WaitForEndOfStream();
 
-	if (ctx.expected_result && ctx.record) {
+	if (ctx.expected_result.data() != nullptr && ctx.record) {
 		ASSERT_EQ(ctx.buffer.size() + ctx.skipped,
-			  strlen(ctx.expected_result));
+			  ctx.expected_result.size());
 		ASSERT_EQ(memcmp(ctx.buffer.data(),
-				 (const char *)ctx.expected_result + ctx.skipped,
+				 ctx.expected_result.data() + ctx.skipped,
 				 ctx.buffer.size()),
 			  0);
 	}
@@ -262,7 +262,7 @@ run_istream_block(const IstreamFilterTestOptions &options,
 	Context ctx(instance, std::move(pool),
 		    options.expected_result, std::move(istream));
 	ctx.block_after = block_after;
-	ctx.record = ctx.expected_result && record;
+	ctx.record = ctx.expected_result.data() != nullptr && record;
 
 	run_istream_ctx(options, ctx);
 }

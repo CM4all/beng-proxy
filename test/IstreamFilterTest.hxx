@@ -40,7 +40,7 @@ public:
 };
 
 struct IstreamFilterTestOptions {
-	const char *expected_result = nullptr;
+	std::string_view expected_result{};
 	bool call_available = true;
 	bool enable_blocking = true;
 	bool enable_abort_istream = true;
@@ -80,7 +80,7 @@ struct Context final : IstreamSink {
 
 	int close_after = -1;
 
-	const char *const expected_result;
+	const std::string_view expected_result;
 	bool record = false;
 	std::string buffer;
 
@@ -110,7 +110,7 @@ struct Context final : IstreamSink {
 
 	template<typename I>
 	explicit Context(Instance &_instance, PoolPtr &&_test_pool,
-			 const char *_expected_result,
+			 std::string_view _expected_result,
 			 I &&_input) noexcept
 		:IstreamSink(std::forward<I>(_input)), instance(_instance),
 		 test_pool(std::move(_test_pool)),
@@ -236,7 +236,7 @@ TYPED_TEST_P(IstreamFilterTest, Bucket)
 
 	Context ctx(instance, std::move(pool),
 		    traits.options.expected_result, std::move(istream));
-	if (ctx.expected_result)
+	if (ctx.expected_result.data() != nullptr)
 		ctx.record = true;
 
 	while (ctx.ReadBuckets(1024 * 1024)) {}
@@ -262,7 +262,7 @@ TYPED_TEST_P(IstreamFilterTest, BucketMore)
 
 	Context ctx(instance, std::move(pool),
 		    traits.options.expected_result, std::move(istream));
-	if (ctx.expected_result)
+	if (ctx.expected_result.data() != nullptr)
 		ctx.record = true;
 
 	while (ctx.ReadBuckets(1024 * 1024, true)) {}
@@ -287,7 +287,7 @@ TYPED_TEST_P(IstreamFilterTest, SmallBucket)
 
 	Context ctx(instance, std::move(pool),
 		    traits.options.expected_result, std::move(istream));
-	if (ctx.expected_result)
+	if (ctx.expected_result.data() != nullptr)
 		ctx.record = true;
 
 	while (ctx.ReadBuckets(3)) {}
@@ -311,7 +311,7 @@ TYPED_TEST_P(IstreamFilterTest, BucketError)
 
 	Context ctx(instance, std::move(pool),
 		    traits.options.expected_result, std::move(istream));
-	if (ctx.expected_result)
+	if (ctx.expected_result.data() != nullptr)
 		ctx.record = true;
 
 	try {
@@ -342,7 +342,7 @@ TYPED_TEST_P(IstreamFilterTest, Skip)
 
 	Context ctx(instance, std::move(pool),
 		    traits.options.expected_result, std::move(istream));
-	ctx.record = ctx.expected_result != nullptr;
+	ctx.record = ctx.expected_result.data() != nullptr;
 	ctx.Skip(1);
 
 	run_istream_ctx(traits.options, ctx);
@@ -415,7 +415,7 @@ TYPED_TEST_P(IstreamFilterTest, BlockByte)
 		    traits.options.expected_result,
 		    std::move(istream));
 	ctx.block_byte = true;
-	if (ctx.expected_result)
+	if (ctx.expected_result.data() != nullptr)
 		ctx.record = true;
 
 	run_istream_ctx(traits.options, ctx);
@@ -467,7 +467,7 @@ TYPED_TEST_P(IstreamFilterTest, Half)
 		    traits.options.expected_result,
 		    std::move(istream));
 	ctx.half = true;
-	if (ctx.expected_result)
+	if (ctx.expected_result.data() != nullptr)
 		ctx.record = true;
 
 	run_istream_ctx(traits.options, ctx);
@@ -672,7 +672,7 @@ TYPED_TEST_P(IstreamFilterTest, AsFd)
 TYPED_TEST_P(IstreamFilterTest, BigHold)
 {
 	TypeParam traits;
-	if (!traits.options.enable_big || !traits.options.expected_result)
+	if (!traits.options.enable_big || traits.options.expected_result.data() == nullptr)
 		return;
 
 	Instance instance;
