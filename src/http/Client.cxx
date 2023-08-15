@@ -285,6 +285,16 @@ private:
 		socket.Release(preserve, reuse);
 	}
 
+	void SocketDone() noexcept {
+		assert(response.state == Response::State::END ||
+		       response_body_reader.IsSocketDone(socket));
+
+		if (IsConnected())
+			/* we don't need the socket anymore, we've got everything we
+			   need in the input buffer */
+			ReleaseSocket(true, keep_alive);
+	}
+
 	void Destroy() noexcept {
 		/* this pool reference ensures that our destructor can finish
 		   execution even if HttpBodyReader's reference is released in
@@ -891,10 +901,8 @@ HttpClient::FeedBody(std::span<const std::byte> b) noexcept
 
 	socket.DisposeConsumed(nbytes);
 
-	if (IsConnected() && response_body_reader.IsSocketDone(socket))
-		/* we don't need the socket anymore, we've got everything we
-		   need in the input buffer */
-		ReleaseSocket(true, keep_alive);
+	if (response_body_reader.IsSocketDone(socket))
+		SocketDone();
 
 	if (response_body_reader.IsEOF()) {
 		ResponseBodyEOF();
@@ -964,11 +972,8 @@ HttpClient::FeedHeaders(std::span<const std::byte> b)
 	}
 
 	if ((response.state == Response::State::END ||
-	     response_body_reader.IsSocketDone(socket)) &&
-	    IsConnected())
-		/* we don't need the socket anymore, we've got everything we
-		   need in the input buffer */
-		ReleaseSocket(true, keep_alive);
+	     response_body_reader.IsSocketDone(socket)))
+		SocketDone();
 
 	const DestructObserver destructed(*this);
 
@@ -1068,10 +1073,8 @@ HttpClient::OnBufferedData()
 		}
 
 	case Response::State::BODY:
-		if (IsConnected() && response_body_reader.IsSocketDone(socket))
-			/* we don't need the socket anymore, we've got everything
-			   we need in the input buffer */
-			ReleaseSocket(true, keep_alive);
+		if (response_body_reader.IsSocketDone(socket))
+			SocketDone();
 
 		if (!response.in_read) {
 			switch (response_body_reader.InvokeReady()) {
