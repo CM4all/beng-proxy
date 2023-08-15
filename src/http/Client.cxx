@@ -1212,18 +1212,18 @@ HttpClient::OnBufferedWrite()
 	request.got_data = false;
 
 	switch (TryWriteBuckets()) {
-	case HttpClient::BucketResult::MORE:
+	case BucketResult::MORE:
 		break;
 
-	case HttpClient::BucketResult::BLOCKING:
+	case BucketResult::BLOCKING:
 		return true;
 
-	case HttpClient::BucketResult::DEPLETED:
+	case BucketResult::DEPLETED:
 		assert(!HasInput());
 		socket.UnscheduleWrite();
 		return true;
 
-	case HttpClient::BucketResult::DESTROYED:
+	case BucketResult::DESTROYED:
 		return false;
 	}
 
