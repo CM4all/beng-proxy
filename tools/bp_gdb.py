@@ -106,51 +106,6 @@ class IntrusiveListPrinter:
     def to_string(self):
         return "ilist<%s>" % self.t.value_type
 
-class BoostIntrusiveContainerType:
-    def __init__(self, list_type, member_hook=None):
-        self.list_type = get_basic_type(list_type)
-        self.value_type = list_type.template_argument(0)
-        self.value_pointer_type = self.value_type.pointer()
-
-        self.member_hook = None
-        if member_hook is not None:
-            self.member_hook = self.value_type[member_hook]
-            print("member_hook", member_hook, "offset", self.member_hook.bitpos/8)
-
-    def get_header(self, l):
-        rps = l['data_']['root_plus_size_']
-        if 'm_header' in rps.type:
-            # seen in Boost 1.62
-            return rps['m_header']
-        elif 'root_' in rps.type:
-            # seen in Boost 1.55
-            return rps['root_']
-        else:
-            # seen in Boost 1.62 slist
-            return rps['header_holder_']
-
-    def node_to_value(self, node):
-        if self.member_hook is None:
-            return node.cast(self.value_pointer_type)
-        else:
-            return (node.dereference().address - self.member_hook.bitpos // 8).cast(self.value_pointer_type)
-
-    def iter_nodes(self, l):
-        root = self.get_header(l)
-        root_address = root.address
-        node = root['next_']
-        while node != root_address:
-            yield node
-            node = node['next_']
-
-    def iter_nodes_reverse(self, l):
-        root = self.get_header(l)
-        root_address = root.address
-        node = root['prev_']
-        while node != root_address:
-            yield node
-            node = node['prev_']
-
 def for_each_intrusive_list_item(l, member_hook=None):
     t = IntrusiveContainerType(l.type, member_hook=member_hook)
     for node in t.iter_nodes(l):
@@ -160,36 +115,6 @@ def for_each_intrusive_list_item_reverse(l, member_hook=None):
     t = IntrusiveContainerType(l.type, member_hook=member_hook)
     for node in t.iter_nodes_reverse(l):
         yield t.node_to_value(node).dereference()
-
-class BoostIntrusiveListPrinter:
-    class Iterator:
-        def __init__(self, t, head):
-            self.t = t
-            self.head_address = head.address
-            self.i = head['next_']
-
-        def __iter__(self):
-            return self
-
-        def __next__(self):
-            if self.i == self.head_address:
-                raise StopIteration
-            result = self.t.node_to_value(self.i)
-            self.i = self.i['next_']
-            return '', result.dereference()
-
-    def __init__(self, val):
-        self.t = BoostIntrusiveContainerType(val.type)
-        self.val = val
-
-    def display_hint(self):
-        return 'array'
-
-    def children(self):
-        return self.Iterator(self.t, self.t.get_header(self.val))
-
-    def to_string(self):
-        return "bi::list<%s>" % self.t.value_type
 
 class BoostIntrusiveSetType:
     def __init__(self, list_type, member_hook=None):
@@ -957,7 +882,6 @@ def build_pretty_printer():
     pp.add_printer('StaticVector', '^StaticVector<', StaticVectorPrinter)
     pp.add_printer('IntrusiveList', '^Intrusive(Forward)?List$', IntrusiveListPrinter)
     pp.add_printer('boost::intrusive::hooks', 'boost::intrusive::(s?list_base|generic|unordered_set_base)_hook', TypeNamePrinter)
-    pp.add_printer('boost::intrusive::list', 'boost::intrusive::s?list<', BoostIntrusiveListPrinter)
     pp.add_printer('boost::intrusive::set', 'boost::intrusive::(multi)?set<', BoostIntrusiveSetPrinter)
     pp.add_printer('boost::intrusive::unordered_set', 'boost::intrusive::unordered_(multi)?set<', BoostIntrusiveUnorderedSetPrinter)
     pp.add_printer('StringMap::Item', '^StringMap::Item$', StringMapItemPrinter)
