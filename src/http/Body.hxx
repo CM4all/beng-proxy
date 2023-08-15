@@ -18,7 +18,7 @@ class SocketDescriptor;
 /**
  * Utilities for reading a HTTP body, either request or response.
  */
-class HttpBodyReader : public Istream, DechunkHandler {
+class HttpBodyReader : public Istream, protected DechunkHandler {
 	/**
 	 * The remaining size is unknown.
 	 */
@@ -249,6 +249,6 @@ public:
 
 protected:
 	/* virtual methods from class DechunkHandler */
-	void OnDechunkEndSeen() noexcept final;
+	void OnDechunkEndSeen() noexcept override;
 	bool OnDechunkEnd() noexcept final;
 };

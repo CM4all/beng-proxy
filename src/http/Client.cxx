@@ -132,6 +132,13 @@ class HttpClient final : BufferedSocketHandler, IstreamSink, Cancellable, Destru
 		void _Close() noexcept override {
 			GetClient().Close();
 		}
+
+	protected:
+		/* virtual methods from class DechunkHandler */
+		void OnDechunkEndSeen() noexcept final {
+			HttpBodyReader::OnDechunkEndSeen();
+			GetClient().SocketDone();
+		}
 	};
 
 	struct pool &pool;
