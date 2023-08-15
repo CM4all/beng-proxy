@@ -28,6 +28,7 @@
 #include "AllocatorPtr.hxx"
 #include "lib/fmt/RuntimeError.hxx"
 #include "lib/fmt/ToBuffer.hxx"
+#include "event/DeferEvent.hxx"
 #include "system/Error.hxx"
 #include "io/Iovec.hxx"
 #include "io/Logger.hxx"
@@ -137,12 +138,17 @@ class HttpClient final : BufferedSocketHandler, IstreamSink, Cancellable, Destru
 		/* virtual methods from class DechunkHandler */
 		void OnDechunkEndSeen() noexcept final {
 			HttpBodyReader::OnDechunkEndSeen();
-			GetClient().SocketDone();
+
+			/* the socket is not needed anymore, but we
+			   can't release it right now because it would
+			   invalidate the buffer pointers
+			   DechunkIstream is currently working with,
+			   therefore defer the SocketDone() call */
+			GetClient().defer_socket_done.Schedule();
 		}
 
 		DechunkInputAction OnDechunkEnd() noexcept final {
-			assert(!GetClient().IsConnected());
-
+			GetClient().SocketDone();
 			GetClient().stopwatch.RecordEvent("end");
 			GetClient().Destroy();
 			return DechunkInputAction::DESTROYED;
@@ -156,6 +162,8 @@ class HttpClient final : BufferedSocketHandler, IstreamSink, Cancellable, Destru
 	const StopwatchPtr stopwatch;
 
 	EventLoop &event_loop;
+
+	DeferEvent defer_socket_done{event_loop, BIND_THIS_METHOD(SocketDone)};
 
 	/* I/O */
 	FilteredSocketLease socket;
@@ -303,6 +311,8 @@ private:
 	void SocketDone() noexcept {
 		assert(response.state == Response::State::END ||
 		       response_body_reader.IsSocketDone(socket));
+
+		defer_socket_done.Cancel();
 
 		if (IsConnected())
 			/* we don't need the socket anymore, we've got everything we
