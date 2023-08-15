@@ -94,6 +94,12 @@ static constexpr auto http_client_timeout = std::chrono::minutes{2};
 class HttpClient final : BufferedSocketHandler, IstreamSink, Cancellable, DestructAnchor, PoolLeakDetector {
 	enum class BucketResult {
 		/**
+		 * No data is available right now.  Maybe the #Istream
+		 * doesn't support FillBucketList().
+		 */
+		UNAVAILABLE,
+
+		/**
 		 * More data will be available later.
 		 */
 		MORE,
@@ -615,7 +621,7 @@ inline HttpClient::BucketResult
 HttpClient::TryWriteBuckets2()
 {
 	if (socket.HasFilter())
-		return BucketResult::MORE;
+		return BucketResult::UNAVAILABLE;
 
 	IstreamBucketList list;
 	input.FillBucketList(list);
@@ -634,7 +640,7 @@ HttpClient::TryWriteBuckets2()
 	if (v.empty()) {
 		bool has_more = list.HasMore();
 		return has_more
-			? BucketResult::MORE
+			? BucketResult::UNAVAILABLE
 			: BucketResult::DEPLETED;
 	}
 
@@ -685,6 +691,7 @@ HttpClient::TryWriteBuckets() noexcept
 	}
 
 	switch (result) {
+	case BucketResult::UNAVAILABLE:
 	case BucketResult::MORE:
 		assert(HasInput());
 		break;
@@ -1212,6 +1219,7 @@ HttpClient::OnBufferedWrite()
 	request.got_data = false;
 
 	switch (TryWriteBuckets()) {
+	case BucketResult::UNAVAILABLE:
 	case BucketResult::MORE:
 		break;
 
