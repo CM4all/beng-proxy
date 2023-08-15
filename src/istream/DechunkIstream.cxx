@@ -120,6 +120,8 @@ private:
 
 	void DeferredEof() noexcept;
 
+	bool InvokeDechunkEnd() noexcept;
+
 	/**
 	 * @return false if the input has been closed
 	 */
@@ -201,12 +203,10 @@ DechunkIstream::DeferredEof() noexcept
 }
 
 bool
-DechunkIstream::EofDetected() noexcept
+DechunkIstream::InvokeDechunkEnd() noexcept
 {
 	assert(input.IsDefined());
 	assert(parser.HasEnded());
-
-	defer_eof_event.Schedule();
 
 	bool result = dechunk_handler.OnDechunkEnd();
 	if (result)
@@ -216,6 +216,14 @@ DechunkIstream::EofDetected() noexcept
 		CloseInput();
 
 	return result;
+}
+
+bool
+DechunkIstream::EofDetected() noexcept
+{
+	defer_eof_event.Schedule();
+
+	return InvokeDechunkEnd();
 }
 
 bool
@@ -516,13 +524,8 @@ DechunkIstream::_ConsumeBucketList(size_t nbytes) noexcept
 	assert(r.consumed == headers + consumed);
 
 	const bool at_eof = chunks.empty() && parser.HasEnded();
-	if (at_eof) {
-		if (dechunk_handler.OnDechunkEnd())
-			ClearInput();
-		else
-			/* this code path is only used by the unit test */
-			CloseInput();
-	}
+	if (at_eof)
+		InvokeDechunkEnd();
 
 	return {Consumed(consumed), at_eof};
 }
