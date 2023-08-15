@@ -264,7 +264,7 @@ DechunkIstream::ParseInput(std::span<const std::byte> src)
 		src = {data.end(), src.end()};
 
 		if (parser.HasEnded())
-			break;
+			return false;
 	}
 
 	return true;
@@ -461,7 +461,11 @@ DechunkIstream::_FillBucketList(IstreamBucketList &list)
 
 		try {
 			if (!ParseInput(b)) {
-				list.SetMore();
+				if (!parser.HasEnded())
+					/* there's more data, but our
+					   "chunks" array does not
+					   have enough room */
+					list.SetMore();
 				break;
 			}
 		} catch (...) {
