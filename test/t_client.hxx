@@ -1475,6 +1475,36 @@ test_buckets(auto &factory, Context &c) noexcept
 }
 
 static void
+test_buckets_chunked(auto &factory, Context &c) noexcept
+{
+	c.connection = factory.NewDummy(*c.pool, c.event_loop);
+	c.use_buckets = true;
+	c.buckets_after_data = true;
+
+	c.connection->Request(c.pool, c,
+			      HttpMethod::GET, "/foo", {},
+			      nullptr,
+			      false,
+			      c, c.cancel_ptr);
+
+	c.event_loop.Run();
+
+	assert(c.released);
+	assert(c.status == HttpStatus::OK);
+	assert(c.content_length == nullptr);
+	if (factory.have_content_length_header) {
+		assert(c.available > 0);
+		assert(c.body_eof);
+		assert(c.body_error == nullptr);
+		assert(!c.more_buckets);
+		assert(c.total_buckets == (size_t)c.available);
+		assert(c.available_after_bucket == 0);
+	}
+	assert(c.available_after_bucket_partial == 0);
+	assert(c.reuse);
+}
+
+static void
 test_buckets_after_data(auto &factory, Context &c) noexcept
 {
 	c.connection = factory.NewFixed(*c.pool, c.event_loop);
@@ -1826,6 +1856,7 @@ run_all_tests(Instance &instance, Factory &factory) noexcept
 #endif
 #ifdef USE_BUCKETS
 	run_test(instance, factory, test_buckets<Factory>);
+	run_test(instance, factory, test_buckets_chunked<Factory>);
 	run_test(instance, factory, test_buckets_after_data<Factory>);
 	run_test(instance, factory, test_buckets_close<Factory>);
 #endif
