@@ -213,6 +213,7 @@ DechunkIstream::InvokeDechunkEnd() noexcept
 
 	switch (action) {
 	case DechunkHandler::DechunkInputAction::ABANDON:
+	case DechunkHandler::DechunkInputAction::DESTROYED:
 		ClearInput();
 		break;
 
@@ -361,6 +362,7 @@ DechunkIstream::OnData(std::span<const std::byte> src) noexcept
 		case DechunkHandler::DechunkInputAction::ABANDON:
 			break;
 
+		case DechunkHandler::DechunkInputAction::DESTROYED:
 		case DechunkHandler::DechunkInputAction::CLOSE:
 			return 0;
 		}

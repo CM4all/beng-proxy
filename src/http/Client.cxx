@@ -139,6 +139,14 @@ class HttpClient final : BufferedSocketHandler, IstreamSink, Cancellable, Destru
 			HttpBodyReader::OnDechunkEndSeen();
 			GetClient().SocketDone();
 		}
+
+		DechunkInputAction OnDechunkEnd() noexcept final {
+			assert(!GetClient().IsConnected());
+
+			GetClient().stopwatch.RecordEvent("end");
+			GetClient().Destroy();
+			return DechunkInputAction::DESTROYED;
+		}
 	};
 
 	struct pool &pool;
