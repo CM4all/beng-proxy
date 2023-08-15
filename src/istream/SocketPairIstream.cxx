@@ -45,7 +45,7 @@ public:
 
 	void _FillBucketList(IstreamBucketList &list) override {
 		/* refuse to use buckets */
-		list.SetMore();
+		list.EnableFallback();
 	}
 
 	void _ConsumeDirect(std::size_t nbytes) noexcept override;

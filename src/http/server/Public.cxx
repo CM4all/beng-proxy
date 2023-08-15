@@ -90,7 +90,9 @@ HttpServerConnection::TryWriteBuckets2()
 
 	if (v.empty()) {
 		return list.HasMore()
-			? BucketResult::UNAVAILABLE
+			? (list.ShouldFallback()
+			   ? BucketResult::UNAVAILABLE
+			   : BucketResult::MORE)
 			: BucketResult::DEPLETED;
 	}
 
@@ -114,7 +116,9 @@ HttpServerConnection::TryWriteBuckets2()
 
 	return r.eof
 		? BucketResult::DEPLETED
-		: BucketResult::MORE;
+		: (list.ShouldFallback()
+		   ? BucketResult::UNAVAILABLE
+		   : BucketResult::MORE);
 }
 
 HttpServerConnection::BucketResult
@@ -137,10 +141,10 @@ HttpServerConnection::TryWriteBuckets() noexcept
 
 	switch (result) {
 	case BucketResult::UNAVAILABLE:
-	case BucketResult::MORE:
 		assert(HasInput());
 		break;
 
+	case BucketResult::MORE:
 	case BucketResult::BLOCKING:
 		assert(HasInput());
 		response.want_write = true;
@@ -172,9 +176,9 @@ HttpServerConnection::TryWrite() noexcept
 
 	switch (TryWriteBuckets()) {
 	case BucketResult::UNAVAILABLE:
-	case BucketResult::MORE:
 		break;
 
+	case BucketResult::MORE:
 	case BucketResult::BLOCKING:
 	case BucketResult::DEPLETED:
 		return true;

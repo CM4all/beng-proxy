@@ -39,7 +39,7 @@ public:
 		if (piped > 0)
 			/* there's data in the pipe, can't fill the
 			   bucket list right now */
-			list.SetMore();
+			list.EnableFallback();
 		else
 			ForwardIstream::_FillBucketList(list);
 	}

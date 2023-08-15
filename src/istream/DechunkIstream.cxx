@@ -443,10 +443,13 @@ DechunkIstream::_FillBucketList(IstreamBucketList &list)
 	IstreamBucketList tmp;
 	FillBucketListFromInput(tmp);
 
+	if (tmp.ShouldFallback())
+		list.EnableFallback();
+
 	std::size_t skip = parsed_input;
 	for (const auto &i : tmp) {
 		if (!i.IsBuffer()) {
-			list.SetMore();
+			list.EnableFallback();
 			break;
 		}
 

@@ -17,7 +17,7 @@ Istream::~Istream() noexcept
 void
 Istream::_FillBucketList(IstreamBucketList &list)
 {
-	list.SetMore();
+	list.EnableFallback();
 }
 
 [[gnu::noreturn]]

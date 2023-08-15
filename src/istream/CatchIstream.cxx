@@ -218,7 +218,7 @@ CatchIstream::_FillBucketList(IstreamBucketList &list)
 {
 	if (!HasInput()) {
 		// TODO: generate space bucket?
-		list.SetMore();
+		list.EnableFallback();
 		return;
 	}
 
@@ -232,7 +232,7 @@ CatchIstream::_FillBucketList(IstreamBucketList &list)
 
 		/* the error has been handled by the callback, and he has
 		   disposed it */
-		list.SetMore();
+		list.EnableFallback();
 
 		// TODO: return space bucket here
 	}

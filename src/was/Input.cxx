@@ -563,7 +563,7 @@ WasInput::_FillBucketList(IstreamBucketList &list)
 		if (direct) {
 			/* prefer splice() over buckets if possible */
 			if (!known_length || received < length)
-				list.SetMore();
+				list.EnableFallback();
 			return;
 		}
 

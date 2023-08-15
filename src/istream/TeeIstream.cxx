@@ -86,7 +86,7 @@ struct TeeIstream final : IstreamSink, DestructAnchor {
 				/* (for now) allow only the first output to read
 				   buckets, because implementing it for the other
 				   outputs is rather complicated */
-				list.SetMore();
+				list.EnableFallback();
 				bucket_list_size = 0;
 				return;
 			}

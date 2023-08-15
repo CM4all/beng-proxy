@@ -49,6 +49,8 @@ class IstreamBucketList {
 
 	bool more = false;
 
+	bool fallback = false;
+
 public:
 	IstreamBucketList() = default;
 
@@ -61,6 +63,20 @@ public:
 
 	bool HasMore() const noexcept {
 		return more;
+	}
+
+	void EnableFallback() noexcept {
+		SetMore();
+		fallback = true;
+	}
+
+	/**
+	 * Is the producer unable to produce more bucket data,
+	 * i.e. shall the consumer fall back to Istream::Read()
+	 * instead of Istream::FillBucketList()?
+	 */
+	bool ShouldFallback() const noexcept {
+		return fallback;
 	}
 
 	bool IsEmpty() const noexcept {
@@ -133,8 +149,12 @@ public:
 	}
 
 	void SpliceFrom(IstreamBucketList &&src) noexcept {
-		if (src.HasMore())
+		if (src.HasMore()) {
 			SetMore();
+
+			if (src.ShouldFallback() && src.IsEmpty())
+				EnableFallback();
+		}
 
 		for (const auto &bucket : src)
 			Push(bucket);
@@ -149,8 +169,12 @@ public:
 	size_t SpliceBuffersFrom(IstreamBucketList &&src,
 				 size_t max_size,
 				 bool copy_more_flag=true) noexcept {
-		if (src.HasMore() && copy_more_flag)
+		if (src.HasMore() && copy_more_flag) {
 			SetMore();
+
+			if (src.ShouldFallback() && src.IsEmpty())
+				EnableFallback();
+		}
 
 		size_t total_size = 0;
 		for (const auto &bucket : src) {
@@ -183,8 +207,12 @@ public:
 	 * @return the number of bytes in all moved buffers
 	 */
 	size_t SpliceBuffersFrom(IstreamBucketList &&src) noexcept {
-		if (src.HasMore())
+		if (src.HasMore()) {
 			SetMore();
+
+			if (src.ShouldFallback() && src.IsEmpty())
+				EnableFallback();
+		}
 
 		size_t total_size = 0;
 		for (const auto &bucket : src) {
@@ -210,8 +238,12 @@ public:
 	 */
 	size_t CopyBuffersFrom(size_t skip,
 			       const IstreamBucketList &src) noexcept {
-		if (src.HasMore())
+		if (src.HasMore()) {
 			SetMore();
+
+			if (src.ShouldFallback() && src.IsEmpty())
+				EnableFallback();
+		}
 
 		size_t total_size = 0;
 		for (const auto &bucket : src) {

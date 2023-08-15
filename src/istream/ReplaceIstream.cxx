@@ -394,10 +394,14 @@ ReplaceIstream::_FillBucketList(IstreamBucketList &list)
 		IstreamBucketList tmp;
 		FillBucketListFromInput(tmp);
 
+		if (tmp.ShouldFallback())
+			list.EnableFallback();
+
 		size_t total = 0;
 		bool only_buffers = true;
 		for (const auto &i : tmp) {
 			if (i.GetType() != IstreamBucket::Type::BUFFER) {
+				list.EnableFallback();
 				only_buffers = false;
 				break;
 			}

@@ -638,9 +638,10 @@ HttpClient::TryWriteBuckets2()
 	}
 
 	if (v.empty()) {
-		bool has_more = list.HasMore();
-		return has_more
-			? BucketResult::UNAVAILABLE
+		return list.HasMore()
+			? (list.ShouldFallback()
+			   ? BucketResult::UNAVAILABLE
+			   : BucketResult::MORE)
 			: BucketResult::DEPLETED;
 	}
 
@@ -670,7 +671,9 @@ HttpClient::TryWriteBuckets2()
 
 	return r.eof
 		? BucketResult::DEPLETED
-		: BucketResult::MORE;
+		: (list.ShouldFallback()
+		   ? BucketResult::UNAVAILABLE
+		   : BucketResult::MORE);
 }
 
 HttpClient::BucketResult
@@ -692,10 +695,10 @@ HttpClient::TryWriteBuckets() noexcept
 
 	switch (result) {
 	case BucketResult::UNAVAILABLE:
-	case BucketResult::MORE:
 		assert(HasInput());
 		break;
 
+	case BucketResult::MORE:
 	case BucketResult::BLOCKING:
 		assert(HasInput());
 		ScheduleWrite();
@@ -1220,9 +1223,9 @@ HttpClient::OnBufferedWrite()
 
 	switch (TryWriteBuckets()) {
 	case BucketResult::UNAVAILABLE:
-	case BucketResult::MORE:
 		break;
 
+	case BucketResult::MORE:
 	case BucketResult::BLOCKING:
 		return true;
 

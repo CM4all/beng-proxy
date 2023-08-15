@@ -698,6 +698,7 @@ SubstIstream::_FillBucketList(IstreamBucketList &list)
 
 			// TODO: re-parse the rest of the mismatch buffer
 			list.SetMore();
+			list.EnableFallback(); // TODO eliminate
 			return;
 		} else {
 			// WriteMismatch()
@@ -713,12 +714,17 @@ SubstIstream::_FillBucketList(IstreamBucketList &list)
 		IstreamBucketList tmp;
 		FillBucketListFromInput(tmp);
 
-		if (tmp.HasMore())
+		if (tmp.HasMore()) {
 			list.SetMore();
+
+			if (tmp.ShouldFallback())
+				list.EnableFallback();
+		}
 
 		for (const auto &bucket : tmp) {
 			if (!bucket.IsBuffer()) {
 				list.SetMore();
+				list.EnableFallback(); // TODO eliminate
 				return;
 			}
 
@@ -743,6 +749,7 @@ SubstIstream::_FillBucketList(IstreamBucketList &list)
 	case State::MATCH:
 		// TODO: read from input
 		list.SetMore();
+		list.EnableFallback(); // TODO eliminate
 		return;
 
 	case State::INSERT: {
@@ -758,6 +765,7 @@ SubstIstream::_FillBucketList(IstreamBucketList &list)
 
 		list.Push({(const std::byte *)match->leaf.b + b_sent, length});
 		list.SetMore();
+		list.EnableFallback(); // TODO eliminate
 
 		// TODO: read more
 		return;

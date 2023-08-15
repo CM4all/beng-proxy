@@ -260,7 +260,7 @@ FileIstream::_FillBucketList(IstreamBucketList &list) noexcept
 		list.Push(r);
 
 	if (offset < end_offset)
-		list.SetMore();
+		list.EnableFallback(); // TODO read from file
 }
 
 Istream::ConsumeBucketResult

@@ -328,7 +328,7 @@ ChunkedIstream::_FillBucketList(IstreamBucketList &list)
 {
 	if (!input.IsDefined()) {
 		// TODO: generate EOF chunk
-		list.SetMore();
+		list.EnableFallback();
 		return;
 	}
 
