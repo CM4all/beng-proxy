@@ -13,6 +13,7 @@ class IstreamAutoPipeTestTraits {
 public:
 	static constexpr IstreamFilterTestOptions options{
 		.expected_result = "foo",
+		.enable_buckets = false,
 	};
 
 	UnusedIstreamPtr CreateInput(struct pool &pool) const noexcept {

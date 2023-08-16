@@ -9,7 +9,9 @@
 
 class BrotliEncoderIstreamTestTraits {
 public:
-	static constexpr IstreamFilterTestOptions options{};
+	static constexpr IstreamFilterTestOptions options{
+		.enable_buckets = false,
+	};
 
 	UnusedIstreamPtr CreateInput(struct pool &pool) const noexcept {
 		return istream_string_new(pool, "foo");

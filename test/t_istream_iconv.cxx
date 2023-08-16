@@ -11,6 +11,7 @@ class IstreamIconvTestTraits {
 public:
 	static constexpr IstreamFilterTestOptions options{
 		.expected_result = "f\xc3\xbc\xc3\xbc",
+		.enable_buckets = false,
 	};
 
 	UnusedIstreamPtr CreateInput(struct pool &pool) const noexcept {

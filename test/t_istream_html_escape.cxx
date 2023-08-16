@@ -11,6 +11,7 @@ class IstreamHtmlEscapeTestTraits {
 public:
 	static constexpr IstreamFilterTestOptions options{
 		.expected_result = "test&lt;foo&amp;bar&gt;test&quot;test&apos;",
+		.enable_buckets = false,
 	};
 
 	UnusedIstreamPtr CreateInput(struct pool &pool) const noexcept {

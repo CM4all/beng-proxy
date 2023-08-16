@@ -47,6 +47,11 @@ struct IstreamFilterTestOptions {
 	bool enable_big = true;
 
 	/**
+	 * If disabled, all bucket tests are skipped.
+	 */
+	bool enable_buckets = true;
+
+	/**
 	 * Does the #Istream implementation forward errors from the
 	 * input?  (e.g. #CatchIstream does not)
 	 */
@@ -230,6 +235,9 @@ TYPED_TEST_P(IstreamFilterTest, Normal)
 TYPED_TEST_P(IstreamFilterTest, Bucket)
 {
 	TypeParam traits;
+	if (!traits.options.enable_buckets)
+		GTEST_SKIP();
+
 	Instance instance;
 
 	auto pool = pool_new_linear(instance.root_pool, "test", 8192);
@@ -256,6 +264,9 @@ TYPED_TEST_P(IstreamFilterTest, Bucket)
 TYPED_TEST_P(IstreamFilterTest, BucketMore)
 {
 	TypeParam traits;
+	if (!traits.options.enable_buckets)
+		GTEST_SKIP();
+
 	Instance instance;
 
 	auto pool = pool_new_linear(instance.root_pool, "test", 8192);
@@ -281,6 +292,9 @@ TYPED_TEST_P(IstreamFilterTest, BucketMore)
 TYPED_TEST_P(IstreamFilterTest, SmallBucket)
 {
 	TypeParam traits;
+	if (!traits.options.enable_buckets)
+		GTEST_SKIP();
+
 	Instance instance;
 
 	auto pool = pool_new_linear(instance.root_pool, "test", 8192);
@@ -306,6 +320,9 @@ TYPED_TEST_P(IstreamFilterTest, SmallBucket)
 TYPED_TEST_P(IstreamFilterTest, BucketError)
 {
 	TypeParam traits;
+	if (!traits.options.enable_buckets)
+		GTEST_SKIP();
+
 	Instance instance;
 
 	auto pool = pool_new_linear(instance.root_pool, "test", 8192);
