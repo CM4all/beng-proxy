@@ -226,6 +226,7 @@ Context::OnError(std::exception_ptr) noexcept
 	test_pool.reset();
 
 	eof = true;
+	error = true;
 }
 
 void

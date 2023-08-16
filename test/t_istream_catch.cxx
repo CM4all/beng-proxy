@@ -25,6 +25,7 @@ public:
 		   buffers */
 		.expected_result = "long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long",
 		.call_available = false,
+		.forwards_errors = false,
 	};
 
 	UnusedIstreamPtr CreateInput(struct pool &pool) const noexcept {
@@ -55,6 +56,7 @@ public:
 		   buffers */
 		.expected_result = "long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long",
 		.call_available = false,
+		.forwards_errors = false,
 	};
 
 	UnusedIstreamPtr CreateInput(struct pool &pool) const noexcept {

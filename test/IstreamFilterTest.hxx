@@ -45,6 +45,12 @@ struct IstreamFilterTestOptions {
 	bool enable_blocking = true;
 	bool enable_abort_istream = true;
 	bool enable_big = true;
+
+	/**
+	 * Does the #Istream implementation forward errors from the
+	 * input?  (e.g. #CatchIstream does not)
+	 */
+	bool forwards_errors = true;
 };
 
 template<typename T>
@@ -71,7 +77,7 @@ struct Context final : IstreamSink {
 
 	bool half = false;
 	bool got_data;
-	bool eof = false;
+	bool eof = false, error = false;
 
 	/**
 	 * Call EventLoop::Break() as soon as the stream ends?
@@ -485,8 +491,17 @@ TYPED_TEST_P(IstreamFilterTest, Fail)
 	auto istream = traits.CreateTest(instance.event_loop, pool,
 					 istream_fail_new(pool, std::make_exception_ptr(error)));
 
-	run_istream(traits.options, instance, std::move(pool),
-		    std::move(istream), false);
+	Context ctx{
+		instance, std::move(pool),
+		traits.options.expected_result,
+		std::move(istream),
+	};
+
+	run_istream_ctx(traits.options, ctx);
+
+	if (traits.options.forwards_errors) {
+		EXPECT_TRUE(ctx.error);
+	}
 }
 
 /** input fails after the first byte */
@@ -509,8 +524,17 @@ TYPED_TEST_P(IstreamFilterTest, FailAfterFirstByte)
 								    std::make_exception_ptr(error))));
 	input_pool.reset();
 
-	run_istream(traits.options, instance, std::move(pool),
-		    std::move(istream), false);
+	Context ctx{
+		instance, std::move(pool),
+		traits.options.expected_result,
+		std::move(istream),
+	};
+
+	run_istream_ctx(traits.options, ctx);
+
+	if (traits.options.forwards_errors) {
+		EXPECT_TRUE(ctx.error);
+	}
 }
 
 TYPED_TEST_P(IstreamFilterTest, CloseInHandler)
