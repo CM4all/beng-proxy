@@ -283,8 +283,15 @@ UringIstream::_FillBucketList(IstreamBucketList &list) noexcept
 	if (auto r = buffer.Read(); !r.empty())
 		list.Push(r);
 
-	if (offset < end_offset)
+	if (offset < end_offset) {
 		list.SetMore();
+
+		if (buffer.empty() && !IsUringPending())
+			/* we have no data and there is no pending
+			   operation; make sure we have some data next
+			   time */
+			StartRead();
+	}
 }
 
 Istream::ConsumeBucketResult
@@ -297,6 +304,11 @@ UringIstream::_ConsumeBucketList(std::size_t nbytes) noexcept
 	}
 
 	buffer.Consume(nbytes);
+
+	if (!is_eof && nbytes > 0 && !IsUringPending())
+		/* read more data from the file */
+		StartRead();
+
 	return {Consumed(nbytes), is_eof};
 }
 
