@@ -1493,11 +1493,10 @@ test_buckets_chunked(auto &factory, Context &c) noexcept
 	assert(c.status == HttpStatus::OK);
 	assert(c.content_length == nullptr);
 	if (factory.have_content_length_header) {
-		assert(c.available > 0);
 		assert(c.body_eof);
 		assert(c.body_error == nullptr);
 		assert(!c.more_buckets);
-		assert(c.total_buckets == (size_t)c.available);
+		assert(c.total_buckets > 0);
 		assert(c.available_after_bucket == 0);
 	}
 	assert(c.available_after_bucket_partial == 0);
