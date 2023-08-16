@@ -71,7 +71,7 @@ public:
 		if (HasInput()) [[likely]]
 			return ForwardIstream::_ConsumeBucketList(nbytes);
 		else
-			return {0, false};
+			return {0, true};
 	}
 
 	int _AsFd() noexcept override {
