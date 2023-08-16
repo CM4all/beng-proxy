@@ -273,6 +273,7 @@ struct Context final
 		total_buckets = list.GetTotalBufferSize();
 
 		bool eof;
+		bool again = false;
 
 		if (total_buckets > 0) {
 			if (break_data)
@@ -290,6 +291,8 @@ struct Context final
 			assert(result.consumed == consume_buckets);
 			body_data += result.consumed;
 			eof = result.eof;
+
+			again = result.consumed > 0 && !break_data;
 		} else
 			eof = !more_buckets;
 
@@ -306,7 +309,8 @@ struct Context final
 			body_closed = true;
 			CloseInput();
 			close_response_body_late = false;
-		}
+		} else if (again)
+			read_defer_event.Schedule();
 	}
 #endif
 
