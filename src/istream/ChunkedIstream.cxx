@@ -361,8 +361,12 @@ ChunkedIstream::_FillBucketList(IstreamBucketList &list)
 						       missing_from_current_chunk);
 		if (nbytes >= missing_from_current_chunk)
 			list.Push(AsBytes(list.HasMore() ? "\r\n"sv : "\r\n0\r\n\r\n"sv));
-	} else
+	} else {
 		list.SetMore();
+
+		if (sub.ShouldFallback())
+			list.EnableFallback();
+	}
 }
 
 Istream::ConsumeBucketResult
