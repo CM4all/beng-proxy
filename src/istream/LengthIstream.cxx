@@ -3,6 +3,7 @@
 // author: Max Kellermann <mk@cm4all.com>
 
 #include "LengthIstream.hxx"
+#include "Bucket.hxx"
 
 #include <stdexcept>
 
@@ -19,6 +20,28 @@ LengthIstream::_Skip(off_t length) noexcept
 	if (nbytes > 0)
 		remaining -= nbytes;
 	return nbytes;
+}
+
+void
+LengthIstream::_FillBucketList(IstreamBucketList &list)
+{
+	IstreamBucketList tmp;
+	FillBucketListFromInput(tmp);
+
+	const bool maybe_more = tmp.HasMore() || tmp.HasNonBuffer();
+	const std::size_t size = tmp.GetTotalBufferSize();
+
+	if ((off_t)size > remaining) {
+		Destroy();
+		throw std::runtime_error{"Too much data in stream"};
+	}
+
+	if (!maybe_more && (off_t)size < remaining) {
+		Destroy();
+		throw std::runtime_error{"Premature end of stream"};
+	}
+
+	list.SpliceBuffersFrom(std::move(tmp));
 }
 
 Istream::ConsumeBucketResult

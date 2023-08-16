@@ -25,6 +25,7 @@ public:
 
 	off_t _GetAvailable(bool) noexcept override;
 	off_t _Skip(off_t length) noexcept override;
+	void _FillBucketList(IstreamBucketList &list) override;
 	ConsumeBucketResult _ConsumeBucketList(std::size_t nbytes) noexcept override;
 	void _ConsumeDirect(std::size_t nbytes) noexcept override;
 
