@@ -286,7 +286,11 @@ UringIstream::_FillBucketList(IstreamBucketList &list) noexcept
 	if (offset < end_offset) {
 		list.SetMore();
 
-		if (buffer.empty() && !IsUringPending())
+		if (direct)
+			/* the caller prefers sendfile(), so let him
+			   invoke Istream::Read() */
+			list.EnableFallback();
+		else if (buffer.empty() && !IsUringPending())
 			/* we have no data and there is no pending
 			   operation; make sure we have some data next
 			   time */
@@ -305,7 +309,7 @@ UringIstream::_ConsumeBucketList(std::size_t nbytes) noexcept
 
 	buffer.Consume(nbytes);
 
-	if (!is_eof && nbytes > 0 && !IsUringPending())
+	if (!is_eof && nbytes > 0 && !direct && !IsUringPending())
 		/* read more data from the file */
 		StartRead();
 
