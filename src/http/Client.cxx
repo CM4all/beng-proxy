@@ -94,13 +94,20 @@ static constexpr auto http_client_timeout = std::chrono::minutes{2};
 class HttpClient final : BufferedSocketHandler, IstreamSink, Cancellable, DestructAnchor, PoolLeakDetector {
 	enum class BucketResult {
 		/**
-		 * No data is available right now.  Maybe the #Istream
-		 * doesn't support FillBucketList().
+		 * No bucket data is available.  Fall back to
+		 * Istream::Read().
 		 */
-		UNAVAILABLE,
+		FALLBACK,
 
 		/**
-		 * More data will be available later.
+		 * No data is available right now.  Wait for the
+		 * IstreamHandler::OnIstreamReady() call.
+		 */
+		LATER,
+
+		/**
+		 * Some data has been transferred, more data will be
+		 * available later.
 		 */
 		MORE,
 
@@ -621,7 +628,7 @@ inline HttpClient::BucketResult
 HttpClient::TryWriteBuckets2()
 {
 	if (socket.HasFilter())
-		return BucketResult::UNAVAILABLE;
+		return BucketResult::FALLBACK;
 
 	IstreamBucketList list;
 	input.FillBucketList(list);
@@ -640,8 +647,8 @@ HttpClient::TryWriteBuckets2()
 	if (v.empty()) {
 		return list.HasMore()
 			? (list.ShouldFallback()
-			   ? BucketResult::UNAVAILABLE
-			   : BucketResult::MORE)
+			   ? BucketResult::FALLBACK
+			   : BucketResult::LATER)
 			: BucketResult::DEPLETED;
 	}
 
@@ -672,7 +679,7 @@ HttpClient::TryWriteBuckets2()
 	return r.eof
 		? BucketResult::DEPLETED
 		: (list.ShouldFallback()
-		   ? BucketResult::UNAVAILABLE
+		   ? BucketResult::FALLBACK
 		   : BucketResult::MORE);
 }
 
@@ -694,7 +701,8 @@ HttpClient::TryWriteBuckets() noexcept
 	}
 
 	switch (result) {
-	case BucketResult::UNAVAILABLE:
+	case BucketResult::FALLBACK:
+	case BucketResult::LATER:
 		assert(HasInput());
 		break;
 
@@ -1222,9 +1230,10 @@ HttpClient::OnBufferedWrite()
 	request.got_data = false;
 
 	switch (TryWriteBuckets()) {
-	case BucketResult::UNAVAILABLE:
+	case BucketResult::FALLBACK:
 		break;
 
+	case BucketResult::LATER:
 	case BucketResult::MORE:
 	case BucketResult::BLOCKING:
 		return true;

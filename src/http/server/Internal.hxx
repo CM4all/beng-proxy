@@ -47,13 +47,20 @@ struct HttpServerConnection final
 
 	enum class BucketResult {
 		/**
-		 * No data is available right now.  Maybe the #Istream
-		 * doesn't support FillBucketList().
+		 * No bucket data is available.  Fall back to
+		 * Istream::Read().
 		 */
-		UNAVAILABLE,
+		FALLBACK,
 
 		/**
-		 * More data will be available later.
+		 * No data is available right now.  Wait for the
+		 * IstreamHandler::OnIstreamReady() call.
+		 */
+		LATER,
+
+		/**
+		 * Some data has been transferred, more data will be
+		 * available later.
 		 */
 		MORE,
 

@@ -16,7 +16,7 @@ IstreamReadyResult
 HttpServerConnection::OnIstreamReady() noexcept
 {
 	switch (TryWriteBuckets()) {
-	case BucketResult::UNAVAILABLE:
+	case BucketResult::FALLBACK:
 		return IstreamReadyResult::FALLBACK;
 
 	case BucketResult::MORE:
@@ -24,6 +24,7 @@ HttpServerConnection::OnIstreamReady() noexcept
 		socket->ScheduleWrite();
 		return IstreamReadyResult::OK;
 
+	case BucketResult::LATER:
 	case BucketResult::BLOCKING:
 		return IstreamReadyResult::OK;
 

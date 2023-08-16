@@ -67,7 +67,7 @@ HttpServerConnection::TryWriteBuckets2()
 	assert(HasInput());
 
 	if (socket->HasFilter())
-		return BucketResult::UNAVAILABLE;
+		return BucketResult::FALLBACK;
 
 	IstreamBucketList list;
 
@@ -91,8 +91,8 @@ HttpServerConnection::TryWriteBuckets2()
 	if (v.empty()) {
 		return list.HasMore()
 			? (list.ShouldFallback()
-			   ? BucketResult::UNAVAILABLE
-			   : BucketResult::MORE)
+			   ? BucketResult::FALLBACK
+			   : BucketResult::LATER)
 			: BucketResult::DEPLETED;
 	}
 
@@ -117,7 +117,7 @@ HttpServerConnection::TryWriteBuckets2()
 	return r.eof
 		? BucketResult::DEPLETED
 		: (list.ShouldFallback()
-		   ? BucketResult::UNAVAILABLE
+		   ? BucketResult::FALLBACK
 		   : BucketResult::MORE);
 }
 
@@ -140,7 +140,8 @@ HttpServerConnection::TryWriteBuckets() noexcept
 	}
 
 	switch (result) {
-	case BucketResult::UNAVAILABLE:
+	case BucketResult::FALLBACK:
+	case BucketResult::LATER:
 		assert(HasInput());
 		break;
 
@@ -175,9 +176,10 @@ HttpServerConnection::TryWrite() noexcept
 	assert(HasInput());
 
 	switch (TryWriteBuckets()) {
-	case BucketResult::UNAVAILABLE:
+	case BucketResult::FALLBACK:
 		break;
 
+	case BucketResult::LATER:
 	case BucketResult::MORE:
 	case BucketResult::BLOCKING:
 	case BucketResult::DEPLETED:
