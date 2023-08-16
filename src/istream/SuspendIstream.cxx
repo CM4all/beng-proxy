@@ -6,6 +6,7 @@
 #include "ForwardIstream.hxx"
 #include "UnusedPtr.hxx"
 #include "New.hxx"
+#include "Bucket.hxx"
 #include "event/FineTimerEvent.hxx"
 
 class SuspendIstream final : public ForwardIstream {
@@ -41,6 +42,13 @@ public:
 			Schedule();
 	}
 
+	void _FillBucketList(IstreamBucketList &list) override {
+		if (ready)
+			ForwardIstream::_FillBucketList(list);
+		else
+			list.SetMore();
+	}
+
 	int _AsFd() noexcept override {
 		return ready ? ForwardIstream::_AsFd() : -1;
 	}
@@ -53,7 +61,18 @@ private:
 
 	void OnTimer() noexcept {
 		ready = true;
-		input.Read();
+
+		switch (InvokeReady()) {
+		case IstreamReadyResult::OK:
+			break;
+
+		case IstreamReadyResult::FALLBACK:
+			input.Read();
+			break;
+
+		case IstreamReadyResult::CLOSED:
+			break;
+		}
 	}
 };
 
