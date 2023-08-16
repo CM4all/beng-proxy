@@ -1,6 +1,6 @@
 cm4all-beng-proxy (18.0.31) unstable; urgency=low
 
-  * io_uring: fix endless loop (18.0.29 regression)
+  * io_uring: fix endless loop (18.0.30 regression)
 
  --   
 
