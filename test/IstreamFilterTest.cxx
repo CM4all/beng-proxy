@@ -17,6 +17,9 @@ Context::ReadBuckets(std::size_t limit, bool consume_more)
 	IstreamBucketList list;
 	input.FillBucketList(list);
 
+	if (list.ShouldFallback())
+		bucket_fallback = true;
+
 	if (list.IsEmpty() && list.HasMore())
 		return false;
 
@@ -62,6 +65,7 @@ Context::ReadBuckets(std::size_t limit, bool consume_more)
 
 	[[maybe_unused]] const auto r = input.ConsumeBucketList(consumed + consume_more);
 	assert(r.consumed == consumed);
+	bucket_eof = r.eof;
 	// TODO check r.eof
 
 	if (result && !list.HasMore()) {
@@ -80,6 +84,11 @@ Context::ReadBuckets(std::size_t limit, bool consume_more)
 std::size_t
 Context::OnData(const std::span<const std::byte> src) noexcept
 {
+	if (break_ready) {
+		instance.event_loop.Break();
+		return 0;
+	}
+
 	std::size_t length = src.size();
 
 	got_data = true;
@@ -144,6 +153,11 @@ IstreamDirectResult
 Context::OnDirect(FdType, FileDescriptor fd, off_t,
 		  std::size_t max_length, bool then_eof) noexcept
 {
+	if (break_ready) {
+		instance.event_loop.Break();
+		return IstreamDirectResult::BLOCKING;
+	}
+
 	got_data = true;
 
 	if (block_inject != nullptr) {
@@ -201,7 +215,7 @@ Context::OnDirect(FdType, FileDescriptor fd, off_t,
 void
 Context::OnEof() noexcept
 {
-	if (break_eof)
+	if (break_eof || break_ready)
 		instance.event_loop.Break();
 
 	ClearInput();
@@ -217,7 +231,7 @@ Context::OnError(std::exception_ptr) noexcept
 {
 	assert(expected_result.data() == nullptr || !record);
 
-	if (break_eof)
+	if (break_eof || break_ready)
 		instance.event_loop.Break();
 
 	ClearInput();

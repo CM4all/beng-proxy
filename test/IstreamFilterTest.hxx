@@ -18,6 +18,8 @@
 #include "istream/istream_null.hxx"
 #include "istream/istream_later.hxx"
 #include "istream/UnusedHoldPtr.hxx"
+#include "istream/ForwardIstream.hxx"
+#include "istream/New.hxx"
 #include "pool/pool.hxx"
 #include "io/SpliceSupport.hxx"
 #include "event/DeferEvent.hxx"
@@ -84,6 +86,14 @@ struct Context final : IstreamSink {
 	bool got_data;
 	bool eof = false, error = false;
 
+	bool bucket_fallback = false, bucket_eof = false;
+
+	/**
+	 * Call EventLoop::Break() as soon as the #Istream becomes
+	 * ready?
+	 */
+	bool break_ready = false;
+
 	/**
 	 * Call EventLoop::Break() as soon as the stream ends?
 	 */
@@ -130,6 +140,11 @@ struct Context final : IstreamSink {
 				    BIND_THIS_METHOD(DeferredInject))
 	{
 		assert(test_pool);
+	}
+
+	~Context() noexcept {
+		if (HasInput())
+			CloseInput();
 	}
 
 	using IstreamSink::CloseInput;
@@ -229,6 +244,64 @@ TYPED_TEST_P(IstreamFilterTest, Normal)
 
 	run_istream(traits.options, instance, std::move(pool),
 		    std::move(istream), true);
+}
+
+/** normal run */
+TYPED_TEST_P(IstreamFilterTest, NoBucket)
+{
+	TypeParam traits;
+	if (!traits.options.enable_buckets)
+		GTEST_SKIP();
+
+	Instance instance;
+
+	auto pool = pool_new_linear(instance.root_pool, "test", 8192);
+	auto input_pool = pool_new_linear(instance.root_pool, "input", 8192);
+
+	class NoBucketIstream : public ForwardIstream {
+		bool has_read = false;
+
+	public:
+		NoBucketIstream(struct pool &p, UnusedIstreamPtr _input) noexcept
+			:ForwardIstream(p, std::move(_input)) {}
+
+	protected:
+		off_t _GetAvailable(bool partial) noexcept override {
+			return has_read ? ForwardIstream::_GetAvailable(partial) : -1;
+		}
+
+		void _Read() noexcept override {
+			has_read = true;
+			ForwardIstream::_Read();
+		}
+
+		void _FillBucketList(IstreamBucketList &list) override {
+			list.SetMore();
+			list.EnableFallback();
+		}
+	};
+
+	auto istream = traits.CreateTest(instance.event_loop, pool,
+					 NewIstreamPtr<NoBucketIstream>(input_pool,
+									traits.CreateInput(input_pool)));
+	ASSERT_TRUE(!!istream);
+	input_pool.reset();
+
+	Context ctx(instance, std::move(pool),
+		    traits.options.expected_result, std::move(istream));
+	if (ctx.expected_result.data() != nullptr)
+		ctx.record = true;
+
+	while (ctx.ReadBuckets(1024 * 1024)) {}
+
+	if (!ctx.bucket_eof && !ctx.bucket_fallback && ctx.input.IsDefined()) {
+		ctx.break_ready = true;
+		instance.event_loop.Run();
+
+		while (ctx.ReadBuckets(1024 * 1024)) {}
+	}
+
+	EXPECT_TRUE(ctx.bucket_eof || ctx.bucket_fallback);
 }
 
 /** test with Istream::FillBucketList() */
@@ -740,6 +813,7 @@ TYPED_TEST_P(IstreamFilterTest, BigHold)
 
 REGISTER_TYPED_TEST_CASE_P(IstreamFilterTest,
 			   Normal,
+			   NoBucket,
 			   Bucket,
 			   BucketMore,
 			   SmallBucket,
