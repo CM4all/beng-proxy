@@ -353,7 +353,7 @@ TYPED_TEST_P(IstreamFilterTest, Block)
 {
 	TypeParam traits;
 	if (!traits.options.enable_blocking)
-		return;
+		GTEST_SKIP();
 
 	Instance instance;
 
@@ -377,7 +377,7 @@ TYPED_TEST_P(IstreamFilterTest, Byte)
 {
 	TypeParam traits;
 	if (!traits.options.enable_blocking)
-		return;
+		GTEST_SKIP();
 
 	Instance instance;
 
@@ -399,7 +399,7 @@ TYPED_TEST_P(IstreamFilterTest, BlockByte)
 {
 	TypeParam traits;
 	if (!traits.options.enable_blocking)
-		return;
+		GTEST_SKIP();
 
 	Instance instance;
 
@@ -426,7 +426,7 @@ TYPED_TEST_P(IstreamFilterTest, BlockInject)
 {
 	TypeParam traits;
 	if (!traits.options.enable_blocking)
-		return;
+		GTEST_SKIP();
 
 	Instance instance;
 
@@ -555,7 +555,7 @@ TYPED_TEST_P(IstreamFilterTest, AbortInHandler)
 {
 	TypeParam traits;
 	if (!traits.options.enable_abort_istream)
-		return;
+		GTEST_SKIP();
 
 	Instance instance;
 
@@ -583,7 +583,7 @@ TYPED_TEST_P(IstreamFilterTest, AbortInHandlerHalf)
 {
 	TypeParam traits;
 	if (!traits.options.enable_abort_istream || !traits.options.enable_blocking)
-		return;
+		GTEST_SKIP();
 
 	Instance instance;
 
@@ -673,7 +673,7 @@ TYPED_TEST_P(IstreamFilterTest, BigHold)
 {
 	TypeParam traits;
 	if (!traits.options.enable_big || traits.options.expected_result.data() == nullptr)
-		return;
+		GTEST_SKIP();
 
 	Instance instance;
 
