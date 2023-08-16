@@ -99,6 +99,11 @@ struct Context final : IstreamSink {
 	 */
 	bool break_eof = false;
 
+	/**
+	 * Should OnIstreamReady() try to read buckets?
+	 */
+	bool on_ready_buckets = false;
+
 	int close_after = -1;
 
 	const std::string_view expected_result;
@@ -180,6 +185,7 @@ struct Context final : IstreamSink {
 					    std::exception_ptr()));
 	}
 
+	std::pair<IstreamReadyResult, bool> ReadBuckets2(std::size_t limit, bool consume_more);
 	bool ReadBuckets(std::size_t limit, bool consume_more=false);
 
 	void WaitForEndOfStream() noexcept {
@@ -201,6 +207,7 @@ struct Context final : IstreamSink {
 	}
 
 	/* virtual methods from class IstreamHandler */
+	IstreamReadyResult OnIstreamReady() noexcept override;
 	std::size_t OnData(std::span<const std::byte> src) noexcept override;
 	IstreamDirectResult OnDirect(FdType type, FileDescriptor fd,
 				     off_t offset, std::size_t max_length,
@@ -289,6 +296,7 @@ TYPED_TEST_P(IstreamFilterTest, NoBucket)
 
 	Context ctx(instance, std::move(pool),
 		    traits.options.expected_result, std::move(istream));
+	ctx.on_ready_buckets = true;
 	if (ctx.expected_result.data() != nullptr)
 		ctx.record = true;
 
@@ -323,6 +331,7 @@ TYPED_TEST_P(IstreamFilterTest, Bucket)
 
 	Context ctx(instance, std::move(pool),
 		    traits.options.expected_result, std::move(istream));
+	ctx.on_ready_buckets = true;
 	if (ctx.expected_result.data() != nullptr)
 		ctx.record = true;
 
@@ -352,6 +361,7 @@ TYPED_TEST_P(IstreamFilterTest, BucketMore)
 
 	Context ctx(instance, std::move(pool),
 		    traits.options.expected_result, std::move(istream));
+	ctx.on_ready_buckets = true;
 	if (ctx.expected_result.data() != nullptr)
 		ctx.record = true;
 
@@ -380,6 +390,7 @@ TYPED_TEST_P(IstreamFilterTest, SmallBucket)
 
 	Context ctx(instance, std::move(pool),
 		    traits.options.expected_result, std::move(istream));
+	ctx.on_ready_buckets = true;
 	if (ctx.expected_result.data() != nullptr)
 		ctx.record = true;
 
@@ -407,6 +418,7 @@ TYPED_TEST_P(IstreamFilterTest, BucketError)
 
 	Context ctx(instance, std::move(pool),
 		    traits.options.expected_result, std::move(istream));
+	ctx.on_ready_buckets = true;
 	if (ctx.expected_result.data() != nullptr)
 		ctx.record = true;
 

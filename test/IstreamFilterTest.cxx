@@ -5,14 +5,14 @@
 #include "IstreamFilterTest.hxx"
 #include "util/SpanCast.hxx"
 
-bool
-Context::ReadBuckets(std::size_t limit, bool consume_more)
+std::pair<IstreamReadyResult, bool>
+Context::ReadBuckets2(std::size_t limit, bool consume_more)
 {
 	if (abort_istream != nullptr)
 		/* don't attempt to read buckets when this option is
 		   set, because it's only properly implemented in
 		   OnData() */
-		return false;
+		return {IstreamReadyResult::OK, false};
 
 	IstreamBucketList list;
 	input.FillBucketList(list);
@@ -21,7 +21,10 @@ Context::ReadBuckets(std::size_t limit, bool consume_more)
 		bucket_fallback = true;
 
 	if (list.IsEmpty() && list.HasMore())
-		return false;
+		return {
+			list.ShouldFallback() ? IstreamReadyResult::FALLBACK : IstreamReadyResult::OK,
+			false
+		};
 
 	if (list.HasMore())
 		consume_more = false;
@@ -68,18 +71,47 @@ Context::ReadBuckets(std::size_t limit, bool consume_more)
 	bucket_eof = eof = r.eof;
 	// TODO check r.eof
 
+	IstreamReadyResult rresult = IstreamReadyResult::OK;
+
 	if (result && !list.HasMore()) {
 		CloseInput();
 		result = false;
+		rresult = IstreamReadyResult::CLOSED;
 	}
 
-	return result;
+	return {rresult, result};
+}
+
+bool
+Context::ReadBuckets(std::size_t limit, bool consume_more)
+{
+	return ReadBuckets2(limit, consume_more).second;
 }
 
 /*
  * istream handler
  *
  */
+
+IstreamReadyResult
+Context::OnIstreamReady() noexcept
+{
+	const auto result = on_ready_buckets
+		? ReadBuckets2(1024 * 1024, false).first
+		: IstreamReadyResult::FALLBACK;
+
+	switch (result) {
+	case IstreamReadyResult::OK:
+	case IstreamReadyResult::FALLBACK:
+		break;
+
+	case IstreamReadyResult::CLOSED:
+		instance.event_loop.Break();
+		break;
+	}
+
+	return result;
+}
 
 std::size_t
 Context::OnData(const std::span<const std::byte> src) noexcept
