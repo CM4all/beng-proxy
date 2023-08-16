@@ -167,8 +167,12 @@ WidgetResolverListener::Finish() noexcept
 	finished = true;
 #endif
 
-	callback();
+	/* copy the callback to the stack, destroy this object and
+	   then invoke the callback; this ordering is important
+	   because the callback may free all memory */
+	const auto _callback = callback;
 	Destroy();
+	_callback();
 }
 
 void
