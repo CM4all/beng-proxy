@@ -340,10 +340,12 @@ TYPED_TEST_P(IstreamFilterTest, BucketError)
 	try {
 		while (ctx.ReadBuckets(3)) {}
 
-		/* this is only reachable if the Istream doesn't support
-		   FillBucketList() */
-		ASSERT_TRUE(ctx.input.IsDefined());
-		ctx.CloseInput();
+		if (traits.options.forwards_errors) {
+			FAIL();
+		} else {
+			ASSERT_TRUE(ctx.input.IsDefined());
+			ctx.CloseInput();
+		}
 	} catch (...) {
 		ASSERT_FALSE(ctx.input.IsDefined());
 	}
