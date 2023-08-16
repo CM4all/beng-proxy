@@ -238,7 +238,7 @@ try {
 	}
 
 	// TODO free the buffer?
-	if (SendFromBuffer(buffer) > 0)
+	if (SendFromBuffer(buffer) > 0 && !IsUringPending())
 		StartRead();
 } catch (...) {
 	DestroyError(std::current_exception());
