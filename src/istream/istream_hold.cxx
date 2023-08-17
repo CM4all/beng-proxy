@@ -75,7 +75,7 @@ public:
 	}
 
 	int _AsFd() noexcept override {
-		return Check()
+		return HasInput() && !input_error
 			? ForwardIstream::_AsFd()
 			: -1;
 	}
