@@ -45,8 +45,10 @@ public:
 	void _FillBucketList(IstreamBucketList &list) override {
 		if (ready)
 			ForwardIstream::_FillBucketList(list);
-		else
+		else {
 			list.SetMore();
+			Schedule();
+		}
 	}
 
 	int _AsFd() noexcept override {
