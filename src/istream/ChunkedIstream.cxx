@@ -380,6 +380,11 @@ ChunkedIstream::_FillBucketList(IstreamBucketList &list)
 
 		if (sub.ShouldFallback())
 			list.EnableFallback();
+	} else if (!sub.IsEmpty()) {
+		/* no new chunk was generated yet because our buffer
+		   has no room yet for the chunk header, but there
+		   will be one */
+		list.SetMore();
 	}
 }
 
