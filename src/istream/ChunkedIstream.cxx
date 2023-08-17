@@ -297,8 +297,8 @@ ChunkedIstream::_GetAvailable(bool partial) noexcept
 			result += available;
 
 			if (available > (off_t)missing_from_current_chunk)
-				/* new chunk header */
-				result += CHUNK_START_SIZE;
+				/* new chunk header and end */
+				result += CHUNK_START_SIZE + CHUNK_END_SIZE;
 		}
 
 		/* EOF chunk */
