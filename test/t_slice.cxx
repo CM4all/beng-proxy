@@ -99,7 +99,10 @@ TEST(SliceTest, Medium)
 	for (unsigned i = 0; i < per_area; ++i) {
 		auto &allocation = allocations[i];
 		allocation = pool.Alloc();
-		ASSERT_EQ(allocation.area, area0);
+
+		if (!HaveAddressSanitizer()) {
+			ASSERT_EQ(allocation.area, area0);
+		}
 
 		ASSERT_NE(allocations[i].data, nullptr);
 		ASSERT_TRUE(i <= 0 || allocation.data != allocations[0].data);
@@ -148,7 +151,10 @@ TEST(SliceTest, Large)
 	for (unsigned i = 0; i < per_area; ++i) {
 		auto &allocation = allocations[i];
 		allocation = pool.Alloc();
-		ASSERT_EQ(allocation.area, area0);
+
+		if (!HaveAddressSanitizer()) {
+			ASSERT_EQ(allocation.area, area0);
+		}
 
 		ASSERT_NE(allocations[i].data, nullptr);
 		ASSERT_TRUE(i <= 0 || allocation.data != allocations[0].data);
