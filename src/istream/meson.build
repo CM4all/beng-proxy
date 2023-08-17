@@ -87,6 +87,7 @@ istream = static_library(
   'SocketPairIstream.cxx',
   'TeeIstream.cxx',
   'SuspendIstream.cxx',
+  'HalfSuspendIstream.cxx',
   'TimeoutIstream.cxx',
 
   'ToBucketIstream.cxx',
