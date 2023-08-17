@@ -57,6 +57,9 @@ FifoBufferSink::OnIstreamReady() noexcept
 		return IstreamReadyResult::CLOSED;
 	}
 
+	if (!handler.OnFifoBufferSinkData())
+		return IstreamReadyResult::CLOSED;
+
 	return result;
 }
 
