@@ -38,7 +38,7 @@ public:
 			ForwardIstream::_FillBucketList(tmp);
 
 			list.SpliceBuffersFrom(std::move(tmp),
-					       (list.GetTotalBufferSize() + 1) / 2);
+					       (tmp.GetTotalBufferSize() + 1) / 2);
 		}
 	}
 
