@@ -47,9 +47,24 @@ LengthIstream::_FillBucketList(IstreamBucketList &list)
 Istream::ConsumeBucketResult
 LengthIstream::_ConsumeBucketList(std::size_t nbytes) noexcept
 {
+	if ((off_t)nbytes > remaining)
+		nbytes = remaining;
+
+	if (nbytes == 0)
+		return {0, remaining == 0};
+
 	auto r = input.ConsumeBucketList(nbytes);
 	remaining -= r.consumed;
 	Consumed(r.consumed);
+
+	if (remaining == 0)
+		/* even if our input has not yet reported end-of-file,
+		   we'll override that; maybe the input doesn't have
+		   enough information yet, but since _GetAvailable()
+		   returned an authoritative value, we must stay
+		   consistent with that */
+		r.eof = true;
+
 	return r;
 }
 
