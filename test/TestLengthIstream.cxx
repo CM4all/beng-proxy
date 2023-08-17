@@ -48,8 +48,8 @@ TEST(LengthIstream, TooLong_Buckets)
 	auto pool = pool_new_linear(instance.root_pool, "test", 8192);
 
 	auto istream = NewIstreamPtr<LengthIstream>(pool,
-						    CreateZero(pool, 65),
-						    64);
+						    CreateZero(pool, 63),
+						    62);
 
 	Context ctx(instance, std::move(pool), {}, std::move(istream));
 
@@ -67,8 +67,8 @@ TEST(LengthIstream, TooShort_Buckets)
 	auto pool = pool_new_linear(instance.root_pool, "test", 8192);
 
 	auto istream = NewIstreamPtr<LengthIstream>(pool,
-						    CreateZero(pool, 63),
-						    64);
+						    CreateZero(pool, 62),
+						    63);
 
 	Context ctx(instance, std::move(pool), {}, std::move(istream));
 
