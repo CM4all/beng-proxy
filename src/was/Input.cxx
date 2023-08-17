@@ -603,6 +603,9 @@ WasInput::_ConsumeBucketList(std::size_t nbytes) noexcept
 	buffer.Consume(consumed);
 	buffer.FreeIfEmpty();
 
+	if (nbytes > 0 && HasPipe())
+		ScheduleRead();
+
 	return {Consumed(consumed), buffer.empty() && CanRelease()};
 }
 

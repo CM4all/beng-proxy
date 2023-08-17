@@ -4,6 +4,7 @@ cm4all-beng-proxy (18.0.31) unstable; urgency=low
   * io_uring: re-enable sendfile() (18.0.30 regression)
   * nghttp2: fix stall bug
   * http: fix stalled chunk transfer
+  * was: fix stall bug
   * istream/chunked: add missing end-of-file chunk
 
  --   
