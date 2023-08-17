@@ -28,7 +28,8 @@ LengthIstream::_FillBucketList(IstreamBucketList &list)
 	IstreamBucketList tmp;
 	FillBucketListFromInput(tmp);
 
-	const bool maybe_more = tmp.HasMore() || tmp.HasNonBuffer();
+	const bool has_non_buffer = tmp.HasNonBuffer();
+	const bool maybe_more = tmp.HasMore() || has_non_buffer;
 	const std::size_t size = tmp.GetTotalBufferSize();
 
 	if ((off_t)size > remaining) {
@@ -42,6 +43,14 @@ LengthIstream::_FillBucketList(IstreamBucketList &list)
 	}
 
 	list.SpliceBuffersFrom(std::move(tmp));
+
+	if (tmp.HasMore() && !has_non_buffer && (off_t)size == remaining) {
+		/* our input isn't yet sure whether it has ended, but
+		   since we got just the right amount of data, let's
+		   pretend it's the end */
+		list.DisableFallback();
+		list.SetMore(false);
+	}
 }
 
 Istream::ConsumeBucketResult

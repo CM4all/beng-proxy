@@ -70,6 +70,10 @@ public:
 		fallback = true;
 	}
 
+	void DisableFallback() noexcept {
+		fallback = false;
+	}
+
 	/**
 	 * Is the producer unable to produce more bucket data,
 	 * i.e. shall the consumer fall back to Istream::Read()
