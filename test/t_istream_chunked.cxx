@@ -4,6 +4,7 @@
 
 #include "IstreamFilterTest.hxx"
 #include "istream/ChunkedIstream.hxx"
+#include "istream/DelayedIstream.hxx"
 #include "istream/istream_string.hxx"
 #include "istream/istream.hxx"
 #include "istream/UnusedPtr.hxx"
@@ -75,4 +76,45 @@ TEST(IstreamChunkedTest, Custom)
 
 	pool.reset();
 	pool_commit();
+}
+
+/**
+ * Generate one chunk, leave the last byte of the end marker in the
+ * buffer, then enable the second chunk; this used to trigger a
+ * _FillBucketList() "more" miscalculation.
+ */
+TEST(IstreamChunkedTest, Leave1ByteInBuffer)
+{
+	Instance instance;
+
+	auto pool = pool_new_linear(instance.root_pool, "test", 8192);
+
+	auto delayed = istream_delayed_new(pool, instance.event_loop);
+
+	auto chunked = istream_chunked_new(pool,
+					   NewConcatIstream(pool,
+							    istream_string_new(pool, "x"),
+							    std::move(delayed.first)));
+
+	Context ctx{instance, std::move(pool), {}, std::move(chunked)};
+
+	static constexpr std::size_t CHUNK_START_SIZE = 6;
+	static constexpr std::size_t CHUNK_END_SIZE = 2;
+	static constexpr std::size_t EOF_SIZE = 5;
+
+	EXPECT_EQ(ctx.input.GetAvailable(false), -1);
+	EXPECT_EQ(ctx.input.GetAvailable(true), CHUNK_START_SIZE + 1 + CHUNK_END_SIZE + EOF_SIZE);
+
+	/* consume the first chunk, leave the "\n" in the buffer */
+	ctx.ReadBuckets(CHUNK_START_SIZE + 1 + CHUNK_END_SIZE - 1);
+
+	EXPECT_EQ(ctx.input.GetAvailable(false), -1);
+	EXPECT_EQ(ctx.input.GetAvailable(true), 1 + EOF_SIZE);
+
+	delayed.second.Set(istream_string_new(ctx.test_pool, "y"));
+
+	EXPECT_EQ(ctx.input.GetAvailable(false), 1 + CHUNK_START_SIZE + 1 + CHUNK_END_SIZE + EOF_SIZE);
+	EXPECT_EQ(ctx.input.GetAvailable(true), 1 + CHUNK_START_SIZE + 1 + CHUNK_END_SIZE + EOF_SIZE);
+
+	ctx.ReadBuckets(1 + 1 + 7);
 }
