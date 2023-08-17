@@ -21,6 +21,10 @@
 using std::string_view_literals::operator""sv;
 
 class ChunkedIstream final : public FacadeIstream, DestructAnchor {
+	static constexpr std::size_t CHUNK_START_SIZE = 6;
+	static constexpr std::size_t CHUNK_END_SIZE = 2;
+	static constexpr std::size_t EOF_SIZE = 5;
+
 	/**
 	 * This flag is true while writing the buffer inside _Read().
 	 * OnData() will check it, and refuse to accept more data from the
@@ -286,7 +290,7 @@ ChunkedIstream::_GetAvailable(bool partial) noexcept
 
 	if (missing_from_current_chunk > 0)
 		/* end of the current chunk */
-		result += 2;
+		result += CHUNK_END_SIZE;
 
 	if (input.IsDefined()) {
 		if (off_t available = input.GetAvailable(true); available > 0) {
@@ -294,11 +298,11 @@ ChunkedIstream::_GetAvailable(bool partial) noexcept
 
 			if (available > (off_t)missing_from_current_chunk)
 				/* new chunk header */
-				result += 6;
+				result += CHUNK_START_SIZE;
 		}
 
 		/* EOF chunk */
-		result += 5;
+		result += EOF_SIZE;
 	}
 
 	return result;
