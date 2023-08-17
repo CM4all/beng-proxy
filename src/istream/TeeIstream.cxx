@@ -81,6 +81,9 @@ struct TeeIstream final : IstreamSink, DestructAnchor {
 			parent.ReadInput();
 		}
 
+#if 0
+		// TODO enable this once this is implemented properly
+
 		void _FillBucketList(IstreamBucketList &list) override {
 			if (!parent.IsFirst(*this)) {
 				/* (for now) allow only the first output to read
@@ -138,6 +141,7 @@ struct TeeIstream final : IstreamSink, DestructAnchor {
 				consumed == bucket_list_size && !bucket_more,
 			};
 		}
+#endif
 
 		void _Close() noexcept override;
 	};
