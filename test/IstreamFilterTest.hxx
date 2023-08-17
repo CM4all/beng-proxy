@@ -17,6 +17,7 @@
 #include "istream/InjectIstream.hxx"
 #include "istream/istream_null.hxx"
 #include "istream/istream_later.hxx"
+#include "istream/HalfSuspendIstream.hxx"
 #include "istream/UnusedHoldPtr.hxx"
 #include "istream/ForwardIstream.hxx"
 #include "istream/New.hxx"
@@ -253,6 +254,26 @@ TYPED_TEST_P(IstreamFilterTest, Normal)
 		    std::move(istream), true);
 }
 
+/** suspend the first half of the input */
+TYPED_TEST_P(IstreamFilterTest, HalfSuspend)
+{
+	TypeParam traits;
+	Instance instance;
+
+	auto pool = pool_new_linear(instance.root_pool, "test", 8192);
+	auto input_pool = pool_new_linear(instance.root_pool, "input", 8192);
+
+	auto istream = traits.CreateTest(instance.event_loop, pool,
+					 NewHalfSuspendIstream(pool, traits.CreateInput(input_pool),
+							       instance.event_loop,
+							       std::chrono::milliseconds{1}));
+	ASSERT_TRUE(!!istream);
+	input_pool.reset();
+
+	run_istream(traits.options, instance, std::move(pool),
+		    std::move(istream), true);
+}
+
 /** normal run */
 TYPED_TEST_P(IstreamFilterTest, NoBucket)
 {
@@ -326,6 +347,37 @@ TYPED_TEST_P(IstreamFilterTest, Bucket)
 
 	auto istream = traits.CreateTest(instance.event_loop, pool,
 					 traits.CreateInput(input_pool));
+	ASSERT_TRUE(!!istream);
+	input_pool.reset();
+
+	Context ctx(instance, std::move(pool),
+		    traits.options.expected_result, std::move(istream));
+	ctx.on_ready_buckets = true;
+	if (ctx.expected_result.data() != nullptr)
+		ctx.record = true;
+
+	while (ctx.ReadBuckets(1024 * 1024)) {}
+
+	if (ctx.input.IsDefined())
+		run_istream_ctx(traits.options, ctx);
+}
+
+/** suspend the first half of the input */
+TYPED_TEST_P(IstreamFilterTest, BucketHalfSuspend)
+{
+	TypeParam traits;
+	if (!traits.options.enable_buckets)
+		GTEST_SKIP();
+
+	Instance instance;
+
+	auto pool = pool_new_linear(instance.root_pool, "test", 8192);
+	auto input_pool = pool_new_linear(instance.root_pool, "input", 8192);
+
+	auto istream = traits.CreateTest(instance.event_loop, pool,
+					 NewHalfSuspendIstream(pool, traits.CreateInput(input_pool),
+							       instance.event_loop,
+							       std::chrono::milliseconds{1}));
 	ASSERT_TRUE(!!istream);
 	input_pool.reset();
 
@@ -825,8 +877,10 @@ TYPED_TEST_P(IstreamFilterTest, BigHold)
 
 REGISTER_TYPED_TEST_CASE_P(IstreamFilterTest,
 			   Normal,
+			   HalfSuspend,
 			   NoBucket,
 			   Bucket,
+			   BucketHalfSuspend,
 			   BucketMore,
 			   SmallBucket,
 			   BucketError,
