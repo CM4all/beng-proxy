@@ -327,8 +327,9 @@ void
 ChunkedIstream::_FillBucketList(IstreamBucketList &list)
 {
 	if (!input.IsDefined()) {
-		// TODO: generate EOF chunk
-		list.EnableFallback();
+		if (auto b = ReadBuffer(); !b.empty())
+			list.Push(std::as_bytes(b));
+
 		return;
 	}
 
