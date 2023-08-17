@@ -407,7 +407,7 @@ DechunkIstream::_GetAvailable(bool partial) noexcept
 	if (!partial && !parser.HasEnded())
 		return -1;
 
-	std::size_t total = 0;
+	std::size_t total = parser.GetAvailable();
 
 	for (const auto &chunk : chunks) {
 		assert(chunk.header > 0 || chunk.data > 0);
