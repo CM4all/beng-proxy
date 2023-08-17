@@ -1,5 +1,6 @@
 cm4all-beng-proxy (18.0.32) unstable; urgency=low
 
+  * http: fix assertion failure in chunker
   * nghttp2: fix assertion failure
   * cgi: fix crash bug with empty request body
 

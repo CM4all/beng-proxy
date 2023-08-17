@@ -284,6 +284,10 @@ ChunkedIstream::_GetAvailable(bool partial) noexcept
 
 	off_t result = ReadBuffer().size();
 
+	if (missing_from_current_chunk > 0)
+		/* end of the current chunk */
+		result += 2;
+
 	if (input.IsDefined()) {
 		if (off_t available = input.GetAvailable(true); available > 0) {
 			result += available;
