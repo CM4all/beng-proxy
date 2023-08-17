@@ -283,9 +283,6 @@ ChunkedIstream::OnError(std::exception_ptr ep) noexcept
 off_t
 ChunkedIstream::_GetAvailable(bool partial) noexcept
 {
-	if (!partial)
-		return -1;
-
 	off_t result = ReadBuffer().size();
 
 	if (missing_from_current_chunk > 0)
@@ -293,13 +290,14 @@ ChunkedIstream::_GetAvailable(bool partial) noexcept
 		result += CHUNK_END_SIZE;
 
 	if (input.IsDefined()) {
-		if (off_t available = input.GetAvailable(true); available > 0) {
+		if (off_t available = input.GetAvailable(partial); available >= 0) {
 			result += available;
 
 			if (available > (off_t)missing_from_current_chunk)
 				/* new chunk header and end */
 				result += CHUNK_START_SIZE + CHUNK_END_SIZE;
-		}
+		} else if (!partial)
+			return -1;
 
 		/* EOF chunk */
 		result += EOF_SIZE;
