@@ -60,6 +60,9 @@ FifoBufferSink::OnIstreamReady() noexcept
 	if (!handler.OnFifoBufferSinkData())
 		return IstreamReadyResult::CLOSED;
 
+	if (list.ShouldFallback())
+		result = IstreamReadyResult::FALLBACK;
+
 	return result;
 }
 
