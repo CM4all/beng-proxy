@@ -225,6 +225,9 @@ private:
 	}
 
 	void OnFifoBufferIstreamClosed() noexcept override {
+		/* TOOD don't bother to send RST if the end of the
+		   stream is near */
+
 		nghttp2_submit_rst_stream(connection.session.get(),
 					  NGHTTP2_FLAG_NONE,
 					  id, NGHTTP2_CANCEL);
