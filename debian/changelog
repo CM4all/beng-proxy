@@ -7,7 +7,7 @@ cm4all-beng-proxy (18.0.31) unstable; urgency=low
   * was: fix stall bug
   * istream/chunked: add missing end-of-file chunk
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Thu, 17 Aug 2023 12:56:21 +0200
 
 cm4all-beng-proxy (18.0.30) unstable; urgency=low
 
