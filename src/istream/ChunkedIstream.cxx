@@ -335,8 +335,11 @@ ChunkedIstream::_FillBucketList(IstreamBucketList &list)
 	IstreamBucketList sub;
 	FillBucketListFromInput(sub);
 
+	if (sub.IsEmpty() && !sub.HasMore())
+		CloseInput();
+
 	auto b = ReadBuffer();
-	if (b.empty() && missing_from_current_chunk == 0) {
+	if (b.empty() && missing_from_current_chunk == 0 && HasInput()) {
 		/* see which of FillBucketList() and GetAvailable()
 		   returns more data and use that to start the new
 		   chunk */
