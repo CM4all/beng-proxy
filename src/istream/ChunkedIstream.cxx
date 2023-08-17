@@ -335,8 +335,12 @@ ChunkedIstream::_FillBucketList(IstreamBucketList &list)
 	IstreamBucketList sub;
 	FillBucketListFromInput(sub);
 
-	if (sub.IsEmpty() && !sub.HasMore())
+	if (sub.IsEmpty() && !sub.HasMore()) {
 		CloseInput();
+
+		/* write EOF chunk (length 0) */
+		AppendToBuffer("0\r\n\r\n"sv);
+	}
 
 	auto b = ReadBuffer();
 	if (b.empty() && missing_from_current_chunk == 0 && HasInput()) {
@@ -364,7 +368,7 @@ ChunkedIstream::_FillBucketList(IstreamBucketList &list)
 						       missing_from_current_chunk);
 		if (nbytes >= missing_from_current_chunk)
 			list.Push(AsBytes(list.HasMore() ? "\r\n"sv : "\r\n0\r\n\r\n"sv));
-	} else {
+	} else if (sub.HasMore()) {
 		list.SetMore();
 
 		if (sub.ShouldFallback())
