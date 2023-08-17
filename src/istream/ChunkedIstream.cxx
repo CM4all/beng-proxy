@@ -292,7 +292,7 @@ ChunkedIstream::_GetAvailable(bool partial) noexcept
 		if (off_t available = input.GetAvailable(true); available > 0) {
 			result += available;
 
-			if (available >= (off_t)missing_from_current_chunk)
+			if (available > (off_t)missing_from_current_chunk)
 				/* new chunk header */
 				result += 6;
 		}
