@@ -8,12 +8,9 @@
 #include "istream/Bucket.hxx"
 #include "istream/UnusedPtr.hxx"
 #include "istream/New.hxx"
-#include "util/ConstBuffer.hxx"
 
 #include <algorithm>
-
-#include <assert.h>
-#include <stdint.h>
+#include <cassert>
 
 class RubberIstream final : public Istream {
 	Rubber &rubber;
@@ -72,11 +69,11 @@ public:
 	}
 
 	void _FillBucketList(IstreamBucketList &list) override {
-		const uint8_t *data = (const uint8_t *)rubber.Read(id);
+		const std::byte *data = (const std::byte *)rubber.Read(id);
 		const size_t remaining = end - position;
 
 		if (remaining > 0)
-			list.Push(ConstBuffer<void>(data + position, remaining));
+			list.Push({data + position, remaining});
 	}
 
 	ConsumeBucketResult _ConsumeBucketList(size_t nbytes) noexcept override {
