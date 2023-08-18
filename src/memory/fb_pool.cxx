@@ -5,7 +5,7 @@
 #include "fb_pool.hxx"
 #include "SlicePool.hxx"
 
-#include <assert.h>
+#include <cassert>
 
 static SlicePool *fb_pool;
 

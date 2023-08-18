@@ -4,9 +4,8 @@
 
 #pragma once
 
+#include <cstddef>
 #include <exception>
-
-#include <stddef.h>
 
 struct pool;
 class UnusedIstreamPtr;

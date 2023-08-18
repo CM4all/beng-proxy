@@ -12,9 +12,9 @@
 #include "util/Sanitizer.hxx"
 #include "util/Valgrind.hxx"
 
+#include <cstdint>
 #include <new>
 
-#include <stdint.h>
 #include <stdlib.h>
 #include <stdio.h>
 

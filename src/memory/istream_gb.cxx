@@ -4,10 +4,8 @@
 
 #include "istream_gb.hxx"
 #include "istream/istream.hxx"
-#include "istream/UnusedPtr.hxx"
 #include "istream/New.hxx"
 #include "GrowingBuffer.hxx"
-#include "util/ConstBuffer.hxx"
 
 #include <utility>
 
@@ -71,5 +69,5 @@ public:
 UnusedIstreamPtr
 istream_gb_new(struct pool &pool, GrowingBuffer &&gb) noexcept
 {
-	return UnusedIstreamPtr(NewIstream<GrowingBufferIstream>(pool, std::move(gb)));
+	return NewIstreamPtr<GrowingBufferIstream>(pool, std::move(gb));
 }

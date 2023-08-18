@@ -4,7 +4,6 @@
 
 #include "MultiFifoBuffer.hxx"
 #include "istream/Bucket.hxx"
-#include "util/ConstBuffer.hxx"
 
 #include <algorithm>
 

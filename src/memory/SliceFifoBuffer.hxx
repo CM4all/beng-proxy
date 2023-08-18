@@ -7,8 +7,6 @@
 #include "SliceAllocation.hxx"
 #include "util/ForeignFifoBuffer.hxx"
 
-#include <stdint.h>
-
 class SlicePool;
 class SliceArea;
 

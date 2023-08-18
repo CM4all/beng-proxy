@@ -8,9 +8,6 @@
 
 #include <algorithm>
 
-#include <string.h>
-#include <unistd.h>
-
 IstreamReadyResult
 GrowingBufferSink::OnIstreamReady() noexcept
 {
