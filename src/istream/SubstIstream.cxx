@@ -737,6 +737,7 @@ SubstIstream::_FillBucketList(IstreamBucketList &list)
 				if (!s.empty())
 					list.Push(AsBytes(s));
 				list.SetMore();
+				list.EnableFallback(); // TOOD eliminate
 				return;
 			}
 
