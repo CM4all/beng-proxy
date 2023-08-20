@@ -32,6 +32,7 @@
 #include "stopwatch.hxx"
 #include "util/AbortFlag.hxx"
 
+#include <functional>
 #include <memory>
 
 #include <sys/socket.h>
@@ -119,6 +120,13 @@ struct HttpClientFactory {
 
 	HttpClientFactory(SocketFilterFactory &_socket_filter_factory) noexcept
 		:socket_filter_factory(_socket_filter_factory) {}
+
+	/**
+	 * Create a HTTP connection to a new child process acting as a
+	 * HTTP server.
+	 */
+	HttpClientConnection *NewFork(EventLoop &event_loop,
+				      std::function<void(SocketDescriptor)> function);
 
 	HttpClientConnection *New(EventLoop &event_loop,
 				  const char *path, const char *mode);
@@ -220,21 +228,42 @@ HttpClientConnection::~HttpClientConnection() noexcept
 
 template<typename SocketFilterFactory>
 HttpClientConnection *
-HttpClientFactory<SocketFilterFactory>::New(EventLoop &event_loop,
-					    const char *path, const char *mode)
+HttpClientFactory<SocketFilterFactory>::NewFork(EventLoop &event_loop,
+						std::function<void(SocketDescriptor)> function)
 {
 	SocketDescriptor client_socket, server_socket;
 	if (!SocketDescriptor::CreateSocketPair(AF_LOCAL, SOCK_STREAM, 0,
-						client_socket, server_socket))
-		throw MakeErrno("socketpair() failed");
+						client_socket, server_socket)) {
+		perror("socketpair() failed");
+		exit(EXIT_FAILURE);
+	}
 
 	const auto pid = fork();
-	if (pid < 0)
-		throw MakeErrno("fork() failed");
+	if (pid < 0) {
+		perror("fork() failed");
+		exit(EXIT_FAILURE);
+	}
 
 	if (pid == 0) {
-		server_socket.CheckDuplicate(FileDescriptor(STDIN_FILENO));
-		server_socket.CheckDuplicate(FileDescriptor(STDOUT_FILENO));
+		client_socket.Close();
+		function(server_socket);
+		_exit(EXIT_SUCCESS);
+	}
+
+	server_socket.Close();
+	client_socket.SetNonBlocking();
+	return new HttpClientConnection(event_loop, pid, client_socket,
+					socket_filter_factory());
+}
+
+template<typename SocketFilterFactory>
+HttpClientConnection *
+HttpClientFactory<SocketFilterFactory>::New(EventLoop &event_loop,
+					    const char *path, const char *mode)
+{
+	return NewFork(event_loop, [path, mode](SocketDescriptor s){
+		s.CheckDuplicate(FileDescriptor(STDIN_FILENO));
+		s.CheckDuplicate(FileDescriptor(STDOUT_FILENO));
 
 		execl(path, path,
 		      "0", "0", mode, nullptr);
@@ -249,44 +278,21 @@ HttpClientFactory<SocketFilterFactory>::New(EventLoop &event_loop,
 
 		perror("exec() failed");
 		_exit(EXIT_FAILURE);
-	}
-
-	server_socket.Close();
-	client_socket.SetNonBlocking();
-	return new HttpClientConnection(event_loop, pid, client_socket,
-					socket_filter_factory());
+	});
 }
 
 template<typename SocketFilterFactory>
 HttpClientConnection *
 HttpClientFactory<SocketFilterFactory>::NewClose100(struct pool &, EventLoop &event_loop)
 {
-	SocketDescriptor client_socket, server_socket;
-	if (!SocketDescriptor::CreateSocketPair(AF_LOCAL, SOCK_STREAM, 0,
-						client_socket, server_socket))
-		throw MakeErrno("socketpair() failed");
-
-	pid_t pid = fork();
-	if (pid < 0)
-		throw MakeErrno("fork() failed");
-
-	if (pid == 0) {
-		client_socket.Close();
-
+	return NewFork(event_loop, [](SocketDescriptor s){
 		static const char response[] = "HTTP/1.1 100 Continue\n\n";
-		(void)server_socket.Write(response, sizeof(response) - 1);
-		server_socket.ShutdownWrite();
+		(void)s.Write(response, sizeof(response) - 1);
+		s.ShutdownWrite();
 
 		char buffer[64];
-		while (server_socket.Read(buffer, sizeof(buffer)) > 0) {}
-
-		_exit(EXIT_SUCCESS);
-	}
-
-	server_socket.Close();
-	client_socket.SetNonBlocking();
-	return new HttpClientConnection(event_loop, pid, client_socket,
-					socket_filter_factory());
+		while (s.Read(buffer, sizeof(buffer)) > 0) {}
+	});
 }
 
 /**
