@@ -194,6 +194,29 @@ struct HttpClientFactory {
 		return NewForkWrite(event_loop, "HTTP/1.1 100 Continue\n\n"sv);
 	}
 
+	auto *NewManySmallChunks(struct pool &, EventLoop &event_loop) {
+		return NewForkWrite(event_loop, "HTTP/1.1 200 OK\r\n"
+				    "transfer-encoding: chunked\r\n"
+				    "\r\n"
+				    "1\r\na\r\n"
+				    "1\r\na\r\n"
+				    "1\r\na\r\n"
+				    "1\r\na\r\n"
+				    "1\r\na\r\n"
+				    "1\r\na\r\n"
+				    "1\r\na\r\n"
+				    "1\r\na\r\n"
+				    "1\r\na\r\n"
+				    "1\r\na\r\n"
+				    "1\r\na\r\n"
+				    "1\r\na\r\n"
+				    "1\r\na\r\n"
+				    "1\r\na\r\n"
+				    "1\r\na\r\n"
+				    "1\r\na\r\n"
+				    "0\r\n\r\n"sv);
+	}
+
 
 	auto *NewHold(struct pool &pool, EventLoop &event_loop) noexcept {
 		return NewWithServer(pool, event_loop,
@@ -424,6 +447,32 @@ test_expect_100_continue_splice(auto &factory, Context &c) noexcept
 	assert(c.reuse);
 }
 
+/**
+ * Parse a response with many small chunks.  The whole response fits
+ * into the input buffer, but the DechunkIstream did not fully analyze
+ * it, and that led to an assertion failure.
+ */
+static void
+test_many_small_chunks(auto &factory, Context &c) noexcept
+{
+	c.use_buckets = true;
+	c.connection = factory.NewManySmallChunks(*c.pool, c.event_loop);
+	c.connection->Request(c.pool, c,
+			      HttpMethod::GET, "/",
+			      {}, {},
+			      true,
+			      c, c.cancel_ptr);
+
+	c.WaitForEnd();
+
+	assert(c.released);
+	assert(c.connection == nullptr);
+	assert(c.status == HttpStatus::OK);
+	assert(c.consumed_body_data == 16);
+	assert(c.body_error == nullptr);
+	assert(!c.reuse);
+}
+
 /*
  * main
  *
@@ -438,6 +487,7 @@ RunHttpClientTests(Instance &instance, auto &socket_filter_factory) noexcept
 	run_test(instance, factory, test_no_keepalive);
 	run_test(instance, factory, test_ignored_request_body);
 	run_test(instance, factory, test_expect_100_continue_splice);
+	run_test(instance, factory, test_many_small_chunks);
 }
 
 struct NullSocketFilterFactory {
