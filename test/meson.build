@@ -482,7 +482,6 @@ test('t_http_client', executable('t_http_client',
     system_dep,
     thread_pool_dep,
   ]),
-  env: ['srcdir=' + meson.project_source_root()],
 )
 
 test('t_http_server', executable('t_http_server',

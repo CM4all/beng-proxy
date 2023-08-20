@@ -137,9 +137,6 @@ struct HttpClientFactory {
 	HttpClientConnection *NewForkWrite(EventLoop &event_loop,
 					   std::string_view response);
 
-	HttpClientConnection *New(EventLoop &event_loop,
-				  const char *path, const char *mode);
-
 	auto *NewWithServer(struct pool &pool,
 			    EventLoop &event_loop,
 			    DemoHttpServerConnection::Mode mode) noexcept {
@@ -188,7 +185,9 @@ struct HttpClientFactory {
 	}
 
 	auto *NewTwice100(struct pool &, EventLoop &event_loop) {
-		return New(event_loop, "./test/twice_100.sh", nullptr);
+		return NewForkWrite(event_loop, "HTTP/1.1 100 Continue\r\n\r\n"
+				    "HTTP/1.1 100 Continue\r\n\r\n"
+				    "HTTP/1.1 200 OK\r\n\r\n"sv);
 	}
 
 	auto *NewClose100(struct pool &, EventLoop &event_loop) {
@@ -213,7 +212,9 @@ struct HttpClientFactory {
 	}
 
 	auto *NewIgnoredRequestBody(struct pool &, EventLoop &event_loop) {
-		return New(event_loop, "./test/ignored_request_body.sh", nullptr);
+		return NewForkWrite(event_loop, "HTTP/1.1 200 OK\r\n"
+				    "Content-Length: 3\r\n"
+				    "\r\nfoo"sv);
 	}
 };
 
@@ -278,31 +279,6 @@ HttpClientFactory<SocketFilterFactory>::NewForkWrite(EventLoop &event_loop,
 
 		char buffer[64];
 		while (s.Read(buffer, sizeof(buffer)) > 0) {}
-	});
-}
-
-template<typename SocketFilterFactory>
-HttpClientConnection *
-HttpClientFactory<SocketFilterFactory>::New(EventLoop &event_loop,
-					    const char *path, const char *mode)
-{
-	return NewFork(event_loop, [path, mode](SocketDescriptor s){
-		s.CheckDuplicate(FileDescriptor(STDIN_FILENO));
-		s.CheckDuplicate(FileDescriptor(STDOUT_FILENO));
-
-		execl(path, path,
-		      "0", "0", mode, nullptr);
-
-		const char *srcdir = getenv("srcdir");
-		if (srcdir != nullptr) {
-			/* support automake out-of-tree build */
-			if (chdir(srcdir) == 0)
-				execl(path, path,
-				      "0", "0", mode, nullptr);
-		}
-
-		perror("exec() failed");
-		_exit(EXIT_FAILURE);
 	});
 }
 
