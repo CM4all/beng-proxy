@@ -121,7 +121,7 @@ struct HttpClientFactory {
 		:socket_filter_factory(_socket_filter_factory) {}
 
 	HttpClientConnection *New(EventLoop &event_loop,
-				  const char *path, const char *mode) noexcept;
+				  const char *path, const char *mode);
 
 	auto *NewWithServer(struct pool &pool,
 			    EventLoop &event_loop,
@@ -170,12 +170,12 @@ struct HttpClientFactory {
 				     DemoHttpServerConnection::Mode::HUGE_);
 	}
 
-	auto *NewTwice100(struct pool &, EventLoop &event_loop) noexcept {
+	auto *NewTwice100(struct pool &, EventLoop &event_loop) {
 		return New(event_loop, "./test/twice_100.sh", nullptr);
 	}
 
 	HttpClientConnection *NewClose100(struct pool &,
-					  EventLoop &event_loop) noexcept;
+					  EventLoop &event_loop);
 
 	auto *NewHold(struct pool &pool, EventLoop &event_loop) noexcept {
 		return NewWithServer(pool, event_loop,
@@ -193,7 +193,7 @@ struct HttpClientFactory {
 				     DemoHttpServerConnection::Mode::NOP);
 	}
 
-	auto *NewIgnoredRequestBody(struct pool &, EventLoop &event_loop) noexcept {
+	auto *NewIgnoredRequestBody(struct pool &, EventLoop &event_loop) {
 		return New(event_loop, "./test/ignored_request_body.sh", nullptr);
 	}
 };
@@ -221,20 +221,16 @@ HttpClientConnection::~HttpClientConnection() noexcept
 template<typename SocketFilterFactory>
 HttpClientConnection *
 HttpClientFactory<SocketFilterFactory>::New(EventLoop &event_loop,
-					    const char *path, const char *mode) noexcept
+					    const char *path, const char *mode)
 {
 	SocketDescriptor client_socket, server_socket;
 	if (!SocketDescriptor::CreateSocketPair(AF_LOCAL, SOCK_STREAM, 0,
-						client_socket, server_socket)) {
-		perror("socketpair() failed");
-		exit(EXIT_FAILURE);
-	}
+						client_socket, server_socket))
+		throw MakeErrno("socketpair() failed");
 
 	const auto pid = fork();
-	if (pid < 0) {
-		perror("fork() failed");
-		exit(EXIT_FAILURE);
-	}
+	if (pid < 0)
+		throw MakeErrno("fork() failed");
 
 	if (pid == 0) {
 		server_socket.CheckDuplicate(FileDescriptor(STDIN_FILENO));
@@ -263,20 +259,16 @@ HttpClientFactory<SocketFilterFactory>::New(EventLoop &event_loop,
 
 template<typename SocketFilterFactory>
 HttpClientConnection *
-HttpClientFactory<SocketFilterFactory>::NewClose100(struct pool &, EventLoop &event_loop) noexcept
+HttpClientFactory<SocketFilterFactory>::NewClose100(struct pool &, EventLoop &event_loop)
 {
 	SocketDescriptor client_socket, server_socket;
 	if (!SocketDescriptor::CreateSocketPair(AF_LOCAL, SOCK_STREAM, 0,
-						client_socket, server_socket)) {
-		perror("socketpair() failed");
-		exit(EXIT_FAILURE);
-	}
+						client_socket, server_socket))
+		throw MakeErrno("socketpair() failed");
 
 	pid_t pid = fork();
-	if (pid < 0) {
-		perror("fork() failed");
-		exit(EXIT_FAILURE);
-	}
+	if (pid < 0)
+		throw MakeErrno("fork() failed");
 
 	if (pid == 0) {
 		client_socket.Close();
