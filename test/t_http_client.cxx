@@ -38,6 +38,8 @@
 #include <sys/socket.h>
 #include <sys/wait.h>
 
+using std::string_view_literals::operator""sv;
+
 class Server final : DemoHttpServerConnection {
 public:
 	using DemoHttpServerConnection::DemoHttpServerConnection;
@@ -128,6 +130,13 @@ struct HttpClientFactory {
 	HttpClientConnection *NewFork(EventLoop &event_loop,
 				      std::function<void(SocketDescriptor)> function);
 
+	/**
+	 * Create a HTTP connection to a new child process which
+	 * writes the specified string as HTTP response.
+	 */
+	HttpClientConnection *NewForkWrite(EventLoop &event_loop,
+					   std::string_view response);
+
 	HttpClientConnection *New(EventLoop &event_loop,
 				  const char *path, const char *mode);
 
@@ -182,8 +191,10 @@ struct HttpClientFactory {
 		return New(event_loop, "./test/twice_100.sh", nullptr);
 	}
 
-	HttpClientConnection *NewClose100(struct pool &,
-					  EventLoop &event_loop);
+	auto *NewClose100(struct pool &, EventLoop &event_loop) {
+		return NewForkWrite(event_loop, "HTTP/1.1 100 Continue\n\n"sv);
+	}
+
 
 	auto *NewHold(struct pool &pool, EventLoop &event_loop) noexcept {
 		return NewWithServer(pool, event_loop,
@@ -258,6 +269,20 @@ HttpClientFactory<SocketFilterFactory>::NewFork(EventLoop &event_loop,
 
 template<typename SocketFilterFactory>
 HttpClientConnection *
+HttpClientFactory<SocketFilterFactory>::NewForkWrite(EventLoop &event_loop,
+						     std::string_view response)
+{
+	return NewFork(event_loop, [response](SocketDescriptor s){
+		(void)s.Write(response.data(), response.size());
+		s.ShutdownWrite();
+
+		char buffer[64];
+		while (s.Read(buffer, sizeof(buffer)) > 0) {}
+	});
+}
+
+template<typename SocketFilterFactory>
+HttpClientConnection *
 HttpClientFactory<SocketFilterFactory>::New(EventLoop &event_loop,
 					    const char *path, const char *mode)
 {
@@ -278,20 +303,6 @@ HttpClientFactory<SocketFilterFactory>::New(EventLoop &event_loop,
 
 		perror("exec() failed");
 		_exit(EXIT_FAILURE);
-	});
-}
-
-template<typename SocketFilterFactory>
-HttpClientConnection *
-HttpClientFactory<SocketFilterFactory>::NewClose100(struct pool &, EventLoop &event_loop)
-{
-	return NewFork(event_loop, [](SocketDescriptor s){
-		static const char response[] = "HTTP/1.1 100 Continue\n\n";
-		(void)s.Write(response, sizeof(response) - 1);
-		s.ShutdownWrite();
-
-		char buffer[64];
-		while (s.Read(buffer, sizeof(buffer)) > 0) {}
 	});
 }
 
