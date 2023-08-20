@@ -25,6 +25,7 @@ class IstreamYamlSubstTestTraits {
 public:
 	static constexpr IstreamFilterTestOptions options{
 		.expected_result = "Good morning, everybody! bar",
+		.enable_buckets = false, // TODO enable this once SubsIstream::_ConsumeBucketList() and _GetAvailable() is implemented properly
 	};
 
 	UnusedIstreamPtr CreateInput(struct pool &pool) const noexcept {

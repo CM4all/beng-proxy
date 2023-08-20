@@ -12,6 +12,7 @@ class IstreamSubstTestTraits {
 public:
 	static constexpr IstreamFilterTestOptions options{
 		.expected_result = "xyz bar fo fo bar bla! fo",
+		.enable_buckets = false, // TODO enable this once SubsIstream::_ConsumeBucketList() and _GetAvailable() is implemented properly
 	};
 
 	UnusedIstreamPtr CreateInput(struct pool &pool) const noexcept {

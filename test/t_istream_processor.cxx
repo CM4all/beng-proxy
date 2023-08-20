@@ -98,6 +98,7 @@ bar
 <a href="/beng.html?&apos;%&quot;&lt;&gt;;focus=p&amp;path=relative">
 
 )html",
+		.enable_buckets = false, // TODO enable this once SubsIstream::_ConsumeBucketList() and _GetAvailable() is implemented properly
 	};
 
 	UnusedIstreamPtr CreateInput(struct pool &pool) const noexcept {

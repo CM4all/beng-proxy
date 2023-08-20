@@ -90,8 +90,12 @@ public:
 	/* virtual methods from class Istream */
 
 	void _Read() noexcept override;
+
+#if 0
+	// TODO enable this once this and _GetAvailable() is implemented properly
 	void _FillBucketList(IstreamBucketList &list) override;
 	ConsumeBucketResult _ConsumeBucketList(size_t nbytes) noexcept override;
+#endif
 
 	/* istream handler */
 
@@ -686,6 +690,9 @@ SubstIstream::_Read() noexcept
 		DestroyEof();
 }
 
+#if 0
+// TODO enable this once this and _GetAvailable() is implemented properly
+
 void
 SubstIstream::_FillBucketList(IstreamBucketList &list)
 {
@@ -833,6 +840,8 @@ SubstIstream::_ConsumeBucketList(size_t nbytes) noexcept
 
 	gcc_unreachable();
 }
+
+#endif
 
 /*
  * constructor

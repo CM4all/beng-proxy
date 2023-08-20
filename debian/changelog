@@ -3,6 +3,7 @@ cm4all-beng-proxy (18.0.33) unstable; urgency=low
   * http_client: fix assertion failure on chunked response
   * http_client: disable keep-alive if writing request body fails early
   * processor: fix stall bug on cached widgets
+  * processor: fix assertion failure
 
  --   
 
