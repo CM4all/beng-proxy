@@ -175,7 +175,12 @@ struct Context final
 	}
 
 	using IstreamSink::HasInput;
-	using IstreamSink::CloseInput;
+
+	void CloseInput() noexcept {
+		IstreamSink::CloseInput();
+		read_later_event.Cancel();
+		read_defer_event.Cancel();
+	}
 
 	bool WaitingForResponse() const noexcept {
 		return status == HttpStatus{} && !request_error;
