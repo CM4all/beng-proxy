@@ -19,10 +19,15 @@ public:
 	/* virtual methods from class Istream */
 
 	off_t _GetAvailable(bool partial) noexcept override {
-		if (!partial)
-			return -1;
+		auto available = ForwardIstream::_GetAvailable(partial);
+		if (available > 4) {
+			if (partial)
+				available = 4;
+			else
+				available = -1;
+		}
 
-		return std::min(ForwardIstream::_GetAvailable(partial), (off_t)4);
+		return available;
 	}
 
 	off_t _Skip([[maybe_unused]] off_t length) noexcept override {
