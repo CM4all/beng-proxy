@@ -575,7 +575,9 @@ HttpClient::Read() noexcept
 inline void
 HttpClient::FillBucketList(IstreamBucketList &list) noexcept
 {
-	assert(response_body_reader.IsSocketDone(socket) || !socket.HasEnded());
+	assert(response_body_reader.IsSocketDone(socket) ||
+	       (response_body_reader.IsChunked() && !IsConnected()) ||
+	       !socket.HasEnded());
 	assert(response.state == Response::State::BODY);
 
 	response_body_reader.FillBucketList(socket, list);
@@ -584,7 +586,9 @@ HttpClient::FillBucketList(IstreamBucketList &list) noexcept
 inline Istream::ConsumeBucketResult
 HttpClient::ConsumeBucketList(std::size_t nbytes) noexcept
 {
-	assert(response_body_reader.IsSocketDone(socket) || !socket.HasEnded());
+	assert(response_body_reader.IsSocketDone(socket) ||
+	       (response_body_reader.IsChunked() && !IsConnected()) ||
+	       !socket.HasEnded());
 	assert(response.state == Response::State::BODY);
 
 	return response_body_reader.ConsumeBucketList(socket, nbytes);
