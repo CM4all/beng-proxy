@@ -276,6 +276,7 @@ struct Context final
 
 		more_buckets = list.HasMore();
 		total_buckets = list.GetTotalBufferSize();
+		body_data += total_buckets;
 
 		bool eof;
 		bool again = false;
@@ -294,7 +295,7 @@ struct Context final
 
 			auto result = input.ConsumeBucketList(consume_buckets);
 			assert(result.consumed == consume_buckets);
-			body_data += result.consumed;
+			consumed_body_data += result.consumed;
 			eof = result.eof;
 
 			again = result.consumed > 0 && !break_data;
