@@ -1174,6 +1174,8 @@ HttpClient::OnBufferedHangup() noexcept
 {
 	stopwatch.RecordEvent("hup");
 
+	keep_alive = false;
+
 	if (HasInput()) {
 		CloseInput();
 		socket.UnscheduleWrite();
