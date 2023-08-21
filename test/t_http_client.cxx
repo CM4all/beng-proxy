@@ -297,6 +297,9 @@ HttpClientFactory<SocketFilterFactory>::NewForkWrite(EventLoop &event_loop,
 						     std::string_view response)
 {
 	return NewFork(event_loop, [response](SocketDescriptor s){
+		/* wait until the request becomes ready */
+		s.WaitReadable(-1);
+
 		(void)s.Write(response.data(), response.size());
 		s.ShutdownWrite();
 
