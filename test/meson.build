@@ -34,6 +34,25 @@ gtest = declare_dependency(
   compile_args: gtest_compile_args,
 )
 
+test_instance = static_library(
+  'TestInstance',
+  'TestInstance.cxx',
+  '../src/PInstance.cxx',
+  include_directories: inc,
+  dependencies: [
+    event_dep,
+    pool_dep,
+  ],
+)
+
+test_instance_dep = declare_dependency(
+  link_with: test_instance,
+  dependencies: [
+    event_dep,
+    pool_dep,
+  ],
+)
+
 executable('dump_control',
   'dump_control.cxx',
   include_directories: inc,
@@ -44,28 +63,25 @@ executable('dump_control',
 
 executable('run_parser_cdata',
   'run_parser_cdata.cxx',
-  'TestInstance.cxx',
-  '../src/PInstance.cxx',
   include_directories: inc,
   dependencies: [
+    test_instance_dep,
     processor_dep,
   ])
 
 executable('run_css_parser',
   'run_css_parser.cxx',
-  'TestInstance.cxx',
-  '../src/PInstance.cxx',
   include_directories: inc,
   dependencies: [
+    test_instance_dep,
     processor_dep,
   ])
 
 executable('run_client',
   'run_client.cxx',
-  'TestInstance.cxx',
-  '../src/PInstance.cxx',
   include_directories: inc,
   dependencies: [
+    test_instance_dep,
     istream_pipe_dep,
     ssl_dep,
     was_client_dep,
@@ -80,13 +96,12 @@ executable('run_client',
 executable(
   'RunAnyHttpClient',
   'RunAnyHttpClient.cxx',
-  'TestInstance.cxx',
-  '../src/PInstance.cxx',
   '../src/http/AnyClient.cxx',
   '../src/http/GlueClient.cxx',
   '../src/ssl/SslSocketFilterFactory.cxx',
   include_directories: inc,
   dependencies: [
+    test_instance_dep,
     istream_pipe_dep,
     ssl_dep,
     was_client_dep,
@@ -122,11 +137,10 @@ executable('run_http_cache',
 executable('run_http_server',
   'run_http_server.cxx',
   'DemoHttpServerConnection.cxx',
-  'TestInstance.cxx',
-  '../src/PInstance.cxx',
   '../src/address_string.cxx',
   include_directories: inc,
   dependencies: [
+    test_instance_dep,
     http_server_dep,
     system_dep,
   ])
@@ -159,10 +173,9 @@ if libwas.found()
   executable(
     'run_was',
     'run_was.cxx',
-    'TestInstance.cxx',
-    '../src/PInstance.cxx',
     include_directories: inc,
     dependencies: [
+      test_instance_dep,
       fmt_dep,
       expand_dep,
       net_dep,
@@ -174,10 +187,9 @@ if libwas.found()
   executable(
     'was_mirror',
     'was_mirror.cxx',
-    'TestInstance.cxx',
-    '../src/PInstance.cxx',
     include_directories: inc,
     dependencies: [
+      test_instance_dep,
       was_server_dep,
     ],
   )
@@ -208,10 +220,9 @@ executable('format_http_date',
 
 executable('request_translation',
   'request_translation.cxx',
-  'TestInstance.cxx',
-  '../src/PInstance.cxx',
   include_directories: inc,
   dependencies: [
+    test_instance_dep,
     translation_dep,
     widget_dep,
     stock_dep,
@@ -221,10 +232,9 @@ executable('request_translation',
 
 executable('run_subst',
   'run_subst.cxx',
-  'TestInstance.cxx',
-  '../src/PInstance.cxx',
   include_directories: inc,
   dependencies: [
+    test_instance_dep,
     istream_dep,
   ])
 
@@ -294,14 +304,13 @@ executable('run_html_escape',
 executable('run_processor',
   'run_processor.cxx',
   'FailingResourceLoader.cxx',
-  'TestInstance.cxx',
-  '../src/PInstance.cxx',
   '../src/widget/FromSession.cxx',
   '../src/widget/FromRequest.cxx',
   '../src/escape/Istream.cxx',
   '../src/istream_html_escape.cxx',
   include_directories: inc,
   dependencies: [
+    test_instance_dep,
     processor_dep,
     widget_dep,
     session_dep,
@@ -309,11 +318,10 @@ executable('run_processor',
 
 executable('run_client_balancer',
   'run_client_balancer.cxx',
-  'TestInstance.cxx',
-  '../src/PInstance.cxx',
   '../src/cluster/ConnectBalancer.cxx',
   include_directories: inc,
   dependencies: [
+    test_instance_dep,
     event_net_dep,
     stopwatch_dep,
     eutil_dep,
@@ -325,12 +333,10 @@ if avahi_dep.found()
   executable(
     'DumpZeroconfHashRing',
     'DumpZeroconfHashRing.cxx',
-    'TestInstance.cxx',
-    '../src/PInstance.cxx',
     '../src/lb/MemberHash.cxx',
     include_directories: inc,
     dependencies: [
-      pool_dep,
+      test_instance_dep,
       avahi_dep,
       net_dep,
       sodium_dep,
@@ -343,11 +349,10 @@ if nfs_client_dep.found()
   executable(
     'run_nfs_client',
     'run_nfs_client.cxx',
-    'TestInstance.cxx',
-    '../src/PInstance.cxx',
     '../src/nfs/Istream.cxx',
     include_directories: inc,
     dependencies: [
+      test_instance_dep,
       nfs_client_dep,
       istream_pipe_dep,
       istream_dep,
@@ -470,11 +475,10 @@ test(
 
 test('t_cgi', executable('t_cgi',
   't_cgi.cxx',
-  'TestInstance.cxx',
-  '../src/PInstance.cxx',
   '../src/http/ResponseHandler.cxx',
   include_directories: inc,
   dependencies: [
+    test_instance_dep,
     cgi_dep,
     system_dep,
     raddress_dep,
@@ -485,12 +489,11 @@ test('t_cgi', executable('t_cgi',
 test('t_http_client', executable('t_http_client',
   't_http_client.cxx',
   't_client.cxx',
-  'TestInstance.cxx',
   'DemoHttpServerConnection.cxx',
-  '../src/PInstance.cxx',
   '../src/address_string.cxx',
   include_directories: inc,
   dependencies: [
+    test_instance_dep,
     istream_pipe_dep,
     http_client_dep,
     http_server_dep,
@@ -502,11 +505,10 @@ test('t_http_client', executable('t_http_client',
 
 test('t_http_server', executable('t_http_server',
   't_http_server.cxx',
-  'TestInstance.cxx',
-  '../src/PInstance.cxx',
   '../src/address_string.cxx',
   include_directories: inc,
   dependencies: [
+    test_instance_dep,
     fmt_dep,
     http_server_dep,
     http_client_dep,
@@ -516,11 +518,10 @@ test('t_http_server', executable('t_http_server',
 test('t_fcgi_client', executable('t_fcgi_client',
   't_fcgi_client.cxx',
   't_client.cxx',
-  'TestInstance.cxx',
   'fcgi_server.cxx',
-  '../src/PInstance.cxx',
   include_directories: inc,
   dependencies: [
+    test_instance_dep,
     fcgi_client_dep,
   ]),
 )
@@ -532,10 +533,9 @@ if libwas.found()
       't_was_client',
       't_was_client.cxx',
       't_client.cxx',
-      'TestInstance.cxx',
-      '../src/PInstance.cxx',
       include_directories: inc,
       dependencies: [
+        test_instance_dep,
         was_client_dep,
         was_server_dep,
       ],
@@ -546,12 +546,11 @@ endif
 test('t_http_cache', executable('t_http_cache',
   't_http_cache.cxx',
   'RecordingHttpResponseHandler.cxx',
-  'TestInstance.cxx',
-  '../src/PInstance.cxx',
   '../src/istream_unlock.cxx',
   include_directories: inc,
   dependencies: [
     gtest,
+    test_instance_dep,
     putil_dep,
     http_cache_dep,
   ]))
@@ -698,14 +697,13 @@ test('t_widget_resolver', executable('t_widget_resolver',
 test('t_wembed', executable('t_wembed',
   't_wembed.cxx',
   'FailingResourceLoader.cxx',
-  'TestInstance.cxx',
-  '../src/PInstance.cxx',
   '../src/widget/Inline.cxx',
   '../src/istream_html_escape.cxx',
   '../src/escape/Istream.cxx',
   '../src/bp/Global.cxx',
   include_directories: inc,
   dependencies: [
+    test_instance_dep,
     fmt_dep,
     widget_dep,
     istream_dep,
@@ -714,8 +712,6 @@ test('t_wembed', executable('t_wembed',
 
 test('t_widget_http', executable('t_widget_http',
   't_widget_http.cxx',
-  'TestInstance.cxx',
-  '../src/PInstance.cxx',
   '../src/widget/Request.cxx',
   '../src/widget/FromSession.cxx',
   '../src/widget/FromRequest.cxx',
@@ -725,6 +721,7 @@ test('t_widget_http', executable('t_widget_http',
   include_directories: inc,
   dependencies: [
     gtest,
+    test_instance_dep,
     fmt_dep,
     widget_dep,
     istream_dep,
@@ -759,8 +756,6 @@ test('t_escape', executable('t_escape',
 
 test('t_processor', executable('t_processor',
   'FailingResourceLoader.cxx',
-  'TestInstance.cxx',
-  '../src/PInstance.cxx',
   '../src/widget/FromSession.cxx',
   '../src/widget/FromRequest.cxx',
   '../src/escape/Istream.cxx',
@@ -769,23 +764,16 @@ test('t_processor', executable('t_processor',
   include_directories: inc,
   dependencies: [
     gtest,
+    test_instance_dep,
     processor_dep,
     widget_dep,
     session_dep,
   ]))
 
-t_istream_filter = static_library('t_istream_filter',
-  '../src/PInstance.cxx',
-  include_directories: inc,
-  dependencies: [
-    eutil_dep,
-    istream_dep,
-  ])
-
 t_istream_filter_deps = [
   gtest,
+  test_instance_dep,
   istream_dep,
-  declare_dependency(link_with: t_istream_filter),
 ]
 
 test(
@@ -797,12 +785,11 @@ test(
     'BlockingResourceLoader.cxx',
     'MirrorResourceLoader.cxx',
     'RecordingHttpResponseHandler.cxx',
-    'TestInstance.cxx',
     '../src/BufferedResourceLoader.cxx',
-    '../src/PInstance.cxx',
     include_directories: inc,
     dependencies: [
       gtest,
+      test_instance_dep,
       istream_dep,
       istream_pipe_dep,
       putil_dep,
@@ -828,7 +815,6 @@ test(
   executable(
     'IstreamFilterTest',
     'IstreamFilterTest.cxx',
-    'TestInstance.cxx',
     't_istream_byte.cxx',
     't_istream_cat.cxx',
     't_istream_catch.cxx',
@@ -864,7 +850,6 @@ test(
 test('t_istream_processor', executable('t_istream_processor',
   't_istream_processor.cxx',
   'IstreamFilterTest.cxx',
-  'TestInstance.cxx',
   'FailingResourceLoader.cxx',
   '../src/widget/FromSession.cxx',
   '../src/widget/FromRequest.cxx',
@@ -886,7 +871,6 @@ test(
     'TestCssProcessor',
     'TestCssProcessor.cxx',
     'IstreamFilterTest.cxx',
-    'TestInstance.cxx',
     'FailingResourceLoader.cxx',
     '../src/widget/FromSession.cxx',
     '../src/widget/FromRequest.cxx',
@@ -919,11 +903,10 @@ if uring_dep.found()
     executable(
       'TestUringIstream',
       'TestUringIstream.cxx',
-      'TestInstance.cxx',
-      '../src/PInstance.cxx',
       include_directories: inc,
       dependencies: [
         gtest,
+        test_instance_dep,
         uring_dep,
         istream_dep,
       ],
@@ -961,10 +944,9 @@ if uring_dep.found()
   executable(
     'RunUringIstream',
     'RunUringIstream.cxx',
-    'TestInstance.cxx',
-    '../src/PInstance.cxx',
     include_directories: inc,
     dependencies: [
+      test_instance_dep,
       istream_dep,
       event_uring_dep,
     ],
