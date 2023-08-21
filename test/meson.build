@@ -470,6 +470,7 @@ test('t_cgi', executable('t_cgi',
 
 test('t_http_client', executable('t_http_client',
   't_http_client.cxx',
+  't_client.cxx',
   'DemoHttpServerConnection.cxx',
   '../src/PInstance.cxx',
   '../src/address_string.cxx',
@@ -498,6 +499,7 @@ test('t_http_server', executable('t_http_server',
 
 test('t_fcgi_client', executable('t_fcgi_client',
   't_fcgi_client.cxx',
+  't_client.cxx',
   'fcgi_server.cxx',
   '../src/PInstance.cxx',
   include_directories: inc,
@@ -512,6 +514,7 @@ if libwas.found()
     executable(
       't_was_client',
       't_was_client.cxx',
+      't_client.cxx',
       '../src/PInstance.cxx',
       include_directories: inc,
       dependencies: [
