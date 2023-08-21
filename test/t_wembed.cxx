@@ -2,6 +2,7 @@
 // Copyright CM4all GmbH
 // author: Max Kellermann <mk@cm4all.com>
 
+#include "TestInstance.hxx"
 #include "FailingResourceLoader.hxx"
 #include "widget/Inline.hxx"
 #include "widget/Widget.hxx"
@@ -15,7 +16,6 @@
 #include "istream/istream_iconv.hxx"
 #include "pool/pool.hxx"
 #include "pool/SharedPtr.hxx"
-#include "PInstance.hxx"
 #include "bp/session/Lease.hxx"
 #include "util/Cancellable.hxx"
 #include "stopwatch.hxx"
@@ -111,7 +111,7 @@ ResolveWidget(AllocatorPtr alloc,
 static void
 test_abort_resolver()
 {
-	PInstance instance;
+	TestInstance instance;
 	const char *uri;
 	bool ret;
 	DissectedUri dissected_uri;

@@ -11,7 +11,6 @@
 #include "was/async/Socket.hxx"
 #include "system/SetupProcess.hxx"
 #include "io/FileDescriptor.hxx"
-#include "io/SpliceSupport.hxx"
 #include "net/SocketDescriptor.hxx"
 #include "lease.hxx"
 #include "istream/UnusedPtr.hxx"
@@ -20,7 +19,6 @@
 #include "util/ConstBuffer.hxx"
 #include "util/ByteOrder.hxx"
 #include "AllocatorPtr.hxx"
-#include "memory/fb_pool.hxx"
 #include "strmap.hxx"
 
 #include <functional>
@@ -498,8 +496,6 @@ int
 main(int, char **)
 {
 	SetupProcess();
-	direct_global_init();
-	const ScopeFbPoolInit fb_pool_init;
 
 	Instance instance;
 	WasFactory factory;

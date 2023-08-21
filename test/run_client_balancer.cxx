@@ -2,6 +2,7 @@
 // Copyright CM4all GmbH
 // author: Max Kellermann <mk@cm4all.com>
 
+#include "TestInstance.hxx"
 #include "cluster/ConnectBalancer.hxx"
 #include "cluster/BalancerMap.hxx"
 #include "cluster/AddressList.hxx"
@@ -13,7 +14,6 @@
 #include "net/Resolver.hxx"
 #include "net/AddressInfo.hxx"
 #include "net/UniqueSocketDescriptor.hxx"
-#include "PInstance.hxx"
 #include "pool/pool.hxx"
 #include "pool/Ptr.hxx"
 #include "pool/PSocketAddress.hxx"
@@ -27,7 +27,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-struct Context final : PInstance, ConnectSocketHandler {
+struct Context final : TestInstance, ConnectSocketHandler {
 	FailureManager failure_manager;
 	BalancerMap balancer;
 

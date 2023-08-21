@@ -8,7 +8,6 @@
 #include "http/Headers.hxx"
 #include "system/SetupProcess.hxx"
 #include "io/FileDescriptor.hxx"
-#include "io/SpliceSupport.hxx"
 #include "net/UniqueSocketDescriptor.hxx"
 #include "net/SocketAddress.hxx"
 #include "system/Error.hxx"
@@ -18,7 +17,6 @@
 #include "fs/NopThreadSocketFilter.hxx"
 #include "fs/ThreadSocketFilter.hxx"
 #include "thread/Pool.hxx"
-#include "memory/fb_pool.hxx"
 #include "pool/UniquePtr.hxx"
 #include "istream/New.hxx"
 #include "istream/DeferReadIstream.hxx"
@@ -532,9 +530,6 @@ int
 main(int, char **)
 {
 	SetupProcess();
-
-	direct_global_init();
-	const ScopeFbPoolInit fb_pool_init;
 
 	Instance instance;
 

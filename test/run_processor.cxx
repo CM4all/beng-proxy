@@ -4,8 +4,7 @@
 
 #include "StdioSink.hxx"
 #include "FailingResourceLoader.hxx"
-#include "PInstance.hxx"
-#include "memory/fb_pool.hxx"
+#include "TestInstance.hxx"
 #include "bp/XmlProcessor.hxx"
 #include "widget/Context.hxx"
 #include "widget/Inline.hxx"
@@ -64,8 +63,7 @@ try {
 	(void)argc;
 	(void)argv;
 
-	const ScopeFbPoolInit fb_pool_init;
-	PInstance instance;
+	TestInstance instance;
 
 	FailingResourceLoader resource_loader;
 

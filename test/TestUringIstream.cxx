@@ -2,6 +2,7 @@
 // Copyright CM4all GmbH
 // author: Max Kellermann <mk@cm4all.com>
 
+#include "TestInstance.hxx"
 #include "istream/Sink.hxx"
 #include "istream/UringIstream.hxx"
 #include "istream/UnusedPtr.hxx"
@@ -9,8 +10,6 @@
 #include "io/Open.hxx"
 #include "io/UniqueFileDescriptor.hxx"
 #include "system/Error.hxx"
-#include "pool/RootPool.hxx"
-#include "memory/fb_pool.hxx"
 
 #include <gtest/gtest.h>
 
@@ -69,11 +68,10 @@ MakeUringIstream(struct pool &pool, Uring::Queue &uring)
 
 TEST(UringIstream, Basic)
 try {
-	const ScopeFbPoolInit fb_pool_init;
-	RootPool root_pool;
+	TestInstance instance;
 	Uring::Queue uring(1024, 0);
 
-	auto [i, size] = MakeUringIstream(root_pool, uring);
+	auto [i, size] = MakeUringIstream(instance.root_pool, uring);
 
 	{
 		MyHandler h(std::move(i));
@@ -94,11 +92,10 @@ try {
 
 TEST(UringIstream, Cancel)
 try {
-	const ScopeFbPoolInit fb_pool_init;
-	RootPool root_pool;
+	TestInstance instance;
 	Uring::Queue uring(1024, 0);
 
-	auto [i, size] = MakeUringIstream(root_pool, uring);
+	auto [i, size] = MakeUringIstream(instance.root_pool, uring);
 
 	{
 		MyHandler h(std::move(i));
@@ -119,11 +116,10 @@ try {
 
 TEST(UringIstream, CancelLate)
 try {
-	const ScopeFbPoolInit fb_pool_init;
-	RootPool root_pool;
+	TestInstance instance;
 	Uring::Queue uring(1024, 0);
 
-	auto [i, size] = MakeUringIstream(root_pool, uring);
+	auto [i, size] = MakeUringIstream(instance.root_pool, uring);
 
 	{
 		MyHandler h(std::move(i));

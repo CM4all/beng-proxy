@@ -2,6 +2,7 @@
 // Copyright CM4all GmbH
 // author: Max Kellermann <mk@cm4all.com>
 
+#include "TestInstance.hxx"
 #include "tconstruct.hxx"
 #include "widget/Widget.hxx"
 #include "widget/Class.hxx"
@@ -11,7 +12,6 @@
 #include "http/Address.hxx"
 #include "strmap.hxx"
 #include "http/HeaderParser.hxx"
-#include "PInstance.hxx"
 #include "ResourceLoader.hxx"
 #include "http/ResponseHandler.hxx"
 #include "bp/XmlProcessor.hxx"
@@ -244,7 +244,7 @@ Context::OnHttpError(std::exception_ptr ep) noexcept
 
 TEST(WidgetHttpTest, CookieClient)
 {
-	PInstance instance;
+	TestInstance instance;
 	struct pool *pool = instance.root_pool;
 
 	SessionManager session_manager(instance.event_loop,

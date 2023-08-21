@@ -4,8 +4,7 @@
 
 #pragma once
 
-#include "memory/fb_pool.hxx"
-#include "PInstance.hxx"
+#include "TestInstance.hxx"
 #include "istream/istream.hxx"
 #include "istream/Bucket.hxx"
 #include "istream/Sink.hxx"
@@ -22,7 +21,6 @@
 #include "istream/ForwardIstream.hxx"
 #include "istream/New.hxx"
 #include "pool/pool.hxx"
-#include "io/SpliceSupport.hxx"
 #include "event/DeferEvent.hxx"
 
 #include <gtest/gtest.h>
@@ -34,13 +32,6 @@
 
 #include <stdio.h>
 #include <string.h>
-
-class AutoPoolCommit {
-public:
-	~AutoPoolCommit() noexcept {
-		pool_commit();
-	}
-};
 
 struct IstreamFilterTestOptions {
 	std::string_view expected_result{};
@@ -63,17 +54,11 @@ struct IstreamFilterTestOptions {
 
 template<typename T>
 class IstreamFilterTest : public ::testing::Test {
-	const ScopeFbPoolInit fb_pool_init;
-
-public:
-	IstreamFilterTest() noexcept {
-		direct_global_init();
-	}
 };
 
 TYPED_TEST_CASE_P(IstreamFilterTest);
 
-struct Instance : AutoPoolCommit, PInstance {
+struct Instance : TestInstance {
 };
 
 struct Context final : IstreamSink {

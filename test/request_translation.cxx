@@ -2,15 +2,14 @@
 // Copyright CM4all GmbH
 // author: Max Kellermann <mk@cm4all.com>
 
+#include "TestInstance.hxx"
 #include "translation/Stock.hxx"
 #include "translation/Handler.hxx"
 #include "translation/Request.hxx"
 #include "translation/Response.hxx"
 #include "translation/Transformation.hxx"
 #include "widget/View.hxx"
-#include "memory/fb_pool.hxx"
 #include "pool/pool.hxx"
-#include "PInstance.hxx"
 #include "http/local/Address.hxx"
 #include "http/Address.hxx"
 #include "file/Address.hxx"
@@ -136,8 +135,6 @@ MyHandler::OnTranslateError(std::exception_ptr ep) noexcept
 int
 main(int argc, char **argv)
 {
-	const ScopeFbPoolInit fb_pool_init;
-
 	TranslateRequest request;
 	request.host = "example.com";
 	request.uri = "/foo/index.html";
@@ -145,7 +142,7 @@ main(int argc, char **argv)
 	(void)argc;
 	(void)argv;
 
-	PInstance instance;
+	TestInstance instance;
 
 	AllocatedSocketAddress translation_socket;
 	translation_socket.SetLocal("@translation");

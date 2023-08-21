@@ -2,20 +2,18 @@
 // Copyright CM4all GmbH
 // author: Max Kellermann <mk@cm4all.com>
 
+#include "TestInstance.hxx"
 #include "was/Server.hxx"
 #include "istream/UnusedPtr.hxx"
-#include "PInstance.hxx"
-#include "memory/fb_pool.hxx"
 #include "pool/pool.hxx"
 #include "http/Status.hxx"
 #include "net/SocketDescriptor.hxx"
 #include "io/Logger.hxx"
-#include "io/SpliceSupport.hxx"
 
 #include <stdio.h>
 #include <stdlib.h>
 
-struct Instance final : PInstance, WasServerHandler {
+struct Instance final : TestInstance, WasServerHandler {
 	WasServer *server;
 
 	void OnWasRequest([[maybe_unused]] struct pool &pool,
@@ -40,9 +38,6 @@ main(int, char **)
 		UniqueFileDescriptor(STDIN_FILENO),
 		UniqueFileDescriptor(STDOUT_FILENO),
 	};
-
-	direct_global_init();
-	const ScopeFbPoolInit fb_pool_init;
 
 	Instance instance;
 

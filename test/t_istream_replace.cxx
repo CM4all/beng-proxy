@@ -66,8 +66,7 @@ INSTANTIATE_TYPED_TEST_CASE_P(Replace2, IstreamFilterTest,
 
 TEST(ReplaceIstream, Buckets)
 {
-	const ScopeFbPoolInit fb_pool_init;
-	PInstance instance;
+	Instance instance;
 	BlockingIstreamHandler handler;
 
 	auto &pool = instance.root_pool;

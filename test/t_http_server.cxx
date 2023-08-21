@@ -2,6 +2,7 @@
 // Copyright CM4all GmbH
 // author: Max Kellermann <mk@cm4all.com>
 
+#include "TestInstance.hxx"
 #include "http/server/Public.hxx"
 #include "http/server/Handler.hxx"
 #include "http/IncomingRequest.hxx"
@@ -10,7 +11,6 @@
 #include "http/Method.hxx"
 #include "http/ResponseHandler.hxx"
 #include "lease.hxx"
-#include "PInstance.hxx"
 #include "pool/pool.hxx"
 #include "pool/Holder.hxx"
 #include "pool/UniquePtr.hxx"
@@ -24,7 +24,6 @@
 #include "istream/ZeroIstream.hxx"
 #include "istream/istream_string.hxx"
 #include "istream/Sink.hxx"
-#include "memory/fb_pool.hxx"
 #include "memory/GrowingBuffer.hxx"
 #include "memory/SinkGrowingBuffer.hxx"
 #include "memory/istream_gb.hxx"
@@ -33,7 +32,6 @@
 #include "event/FineTimerEvent.hxx"
 #include "net/UniqueSocketDescriptor.hxx"
 #include "system/Error.hxx"
-#include "io/SpliceSupport.hxx"
 #include "util/Cancellable.hxx"
 #include "util/Exception.hxx"
 #include "util/PrintException.hxx"
@@ -511,9 +509,7 @@ try {
 	(void)argc;
 	(void)argv;
 
-	direct_global_init();
-	const ScopeFbPoolInit fb_pool_init;
-	PInstance instance;
+	TestInstance instance;
 
 	{
 		Server server(instance.root_pool, instance.event_loop);

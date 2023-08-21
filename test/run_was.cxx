@@ -2,6 +2,7 @@
 // Copyright CM4all GmbH
 // author: Max Kellermann <mk@cm4all.com>
 
+#include "TestInstance.hxx"
 #include "was/Client.hxx"
 #include "was/Launch.hxx"
 #include "was/Lease.hxx"
@@ -13,8 +14,6 @@
 #include "istream/sink_fd.hxx"
 #include "istream/UnusedPtr.hxx"
 #include "istream/OpenFileIstream.hxx"
-#include "memory/fb_pool.hxx"
-#include "PInstance.hxx"
 #include "spawn/Config.hxx"
 #include "spawn/ChildOptions.hxx"
 #include "spawn/Registry.hxx"
@@ -42,7 +41,7 @@
 #include <signal.h>
 
 struct Context final
-	: PInstance, WasLease, WasMetricsHandler, HttpResponseHandler, SinkFdHandler {
+	: TestInstance, WasLease, WasMetricsHandler, HttpResponseHandler, SinkFdHandler {
 
 	WasProcess process;
 
@@ -197,11 +196,7 @@ try {
 			throw std::runtime_error("Unrecognized parameter");
 	}
 
-	direct_global_init();
-
 	SpawnConfig spawn_config;
-
-	const ScopeFbPoolInit fb_pool_init;
 
 	ChildOptions child_options;
 	child_options.no_new_privs = true;

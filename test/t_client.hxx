@@ -2,6 +2,7 @@
 // Copyright CM4all GmbH
 // author: Max Kellermann <mk@cm4all.com>
 
+#include "TestInstance.hxx"
 #include "http/Method.hxx"
 #include "http/ResponseHandler.hxx"
 #include "lease.hxx"
@@ -20,7 +21,6 @@
 #include "pool/pool.hxx"
 #include "event/DeferEvent.hxx"
 #include "event/FineTimerEvent.hxx"
-#include "PInstance.hxx"
 #include "strmap.hxx"
 #include "util/Cancellable.hxx"
 #include "util/Exception.hxx"
@@ -65,7 +65,7 @@ public:
 	virtual void InjectSocketFailure() noexcept = 0;
 };
 
-struct Instance final : PInstance {
+struct Instance final : TestInstance {
 };
 
 struct Context final

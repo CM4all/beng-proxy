@@ -2,6 +2,7 @@
 // Copyright CM4all GmbH
 // author: Max Kellermann <mk@cm4all.com>
 
+#include "TestInstance.hxx"
 #include "strmap.hxx"
 #include "http/Client.hxx"
 #include "http/Headers.hxx"
@@ -14,8 +15,6 @@
 #include "istream/sink_fd.hxx"
 #include "istream/UnusedPtr.hxx"
 #include "pool/pool.hxx"
-#include "PInstance.hxx"
-#include "memory/fb_pool.hxx"
 #include "fs/FilteredSocket.hxx"
 #include "ssl/Init.hxx"
 #include "ssl/Client.hxx"
@@ -118,7 +117,7 @@ GetHostWithoutPort(struct pool &pool, const struct parsed_url &url) noexcept
 }
 
 struct Context final
-	: PInstance, ConnectSocketHandler, Lease,
+	: TestInstance, ConnectSocketHandler, Lease,
 #ifdef HAVE_NGHTTP2
 	  NgHttp2::ConnectionHandler,
 #endif
@@ -416,9 +415,7 @@ try {
 
 	ctx.url = parse_url(argv[1]);
 
-	direct_global_init();
 	SetupProcess();
-	const ScopeFbPoolInit fb_pool_init;
 
 	/* connect socket */
 

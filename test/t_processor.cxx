@@ -2,10 +2,10 @@
 // Copyright CM4all GmbH
 // author: Max Kellermann <mk@cm4all.com>
 
+#include "TestInstance.hxx"
 #include "FailingResourceLoader.hxx"
 #include "bp/XmlProcessor.hxx"
 #include "bp/WidgetLookupProcessor.hxx"
-#include "PInstance.hxx"
 #include "widget/Inline.hxx"
 #include "widget/Widget.hxx"
 #include "widget/Class.hxx"
@@ -97,7 +97,7 @@ public:
 
 TEST(Processor, Abort)
 {
-	PInstance instance;
+	TestInstance instance;
 
 	auto pool = pool_new_libc(instance.root_pool, "test");
 
@@ -129,5 +129,4 @@ TEST(Processor, Abort)
 	cancel_ptr.Cancel();
 
 	pool.reset();
-	pool_commit();
 }

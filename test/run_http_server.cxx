@@ -3,17 +3,15 @@
 // author: Max Kellermann <mk@cm4all.com>
 
 #include "DemoHttpServerConnection.hxx"
-#include "PInstance.hxx"
+#include "TestInstance.hxx"
 #include "pool/pool.hxx"
 #include "pool/Holder.hxx"
 #include "pool/UniquePtr.hxx"
 #include "event/ShutdownListener.hxx"
 #include "event/net/TemplateServerSocket.hxx"
 #include "fs/FilteredSocket.hxx"
-#include "memory/fb_pool.hxx"
 #include "net/UniqueSocketDescriptor.hxx"
 #include "io/UniqueFileDescriptor.hxx"
-#include "io/SpliceSupport.hxx"
 #include "util/PrintException.hxx"
 
 #include <memory>
@@ -45,7 +43,7 @@ protected:
 using Listener = TemplateServerSocket<Connection, Instance &,
 				      DemoHttpServerConnection::Mode>;
 
-struct Instance final : PInstance {
+struct Instance final : TestInstance {
 	ShutdownListener shutdown_listener;
 
 	std::unique_ptr<Listener> listener;
@@ -117,9 +115,6 @@ try {
 	}
 
 	UniqueSocketDescriptor listen_fd{STDIN_FILENO};
-
-	direct_global_init();
-	const ScopeFbPoolInit fb_pool_init;
 
 	Instance instance;
 	instance.shutdown_listener.Enable();

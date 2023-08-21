@@ -2,6 +2,7 @@
 // Copyright CM4all GmbH
 // author: Max Kellermann <mk@cm4all.com>
 
+#include "TestInstance.hxx"
 #include "BufferedResourceLoader.hxx"
 #include "RecordingHttpResponseHandler.hxx"
 #include "BlockingResourceLoader.hxx"
@@ -15,11 +16,9 @@
 #include "istream/istream_string.hxx"
 #include "istream/UnusedPtr.hxx"
 #include "util/Cancellable.hxx"
-#include "memory/fb_pool.hxx"
 #include "pool/pool.hxx"
 #include "http/Method.hxx"
 #include "http/ResponseHandler.hxx"
-#include "PInstance.hxx"
 #include "stopwatch.hxx"
 #include "strmap.hxx"
 
@@ -29,8 +28,7 @@
 
 TEST(BufferedResourceLoader, Empty)
 {
-	const ScopeFbPoolInit fb_pool_init;
-	PInstance instance;
+	TestInstance instance;
 	MirrorResourceLoader rl;
 	BufferedResourceLoader brl(instance.event_loop, rl, nullptr);
 
@@ -49,8 +47,7 @@ TEST(BufferedResourceLoader, Empty)
 
 TEST(BufferedResourceLoader, Small)
 {
-	const ScopeFbPoolInit fb_pool_init;
-	PInstance instance;
+	TestInstance instance;
 	MirrorResourceLoader rl;
 	BufferedResourceLoader brl(instance.event_loop, rl, nullptr);
 
@@ -75,8 +72,7 @@ TEST(BufferedResourceLoader, Small)
 
 TEST(BufferedResourceLoader, Large)
 {
-	const ScopeFbPoolInit fb_pool_init;
-	PInstance instance;
+	TestInstance instance;
 	MirrorResourceLoader rl;
 	BufferedResourceLoader brl(instance.event_loop, rl, nullptr);
 
@@ -104,8 +100,7 @@ TEST(BufferedResourceLoader, Large)
 
 TEST(BufferedResourceLoader, LargeFail)
 {
-	const ScopeFbPoolInit fb_pool_init;
-	PInstance instance;
+	TestInstance instance;
 	FailingResourceLoader rl;
 	BufferedResourceLoader brl(instance.event_loop, rl, nullptr);
 
@@ -133,7 +128,7 @@ TEST(BufferedResourceLoader, LargeFail)
 
 TEST(BufferedResourceLoader, EarlyRequestError)
 {
-	PInstance instance;
+	TestInstance instance;
 	MirrorResourceLoader rl;
 	BufferedResourceLoader brl(instance.event_loop, rl, nullptr);
 
@@ -159,7 +154,7 @@ TEST(BufferedResourceLoader, EarlyRequestError)
 
 TEST(BufferedResourceLoader, EarlyResponseError)
 {
-	PInstance instance;
+	TestInstance instance;
 	FailingResourceLoader rl;
 	BufferedResourceLoader brl(instance.event_loop, rl, nullptr);
 
@@ -177,7 +172,7 @@ TEST(BufferedResourceLoader, EarlyResponseError)
 
 TEST(BufferedResourceLoader, CancelEarly)
 {
-	PInstance instance;
+	TestInstance instance;
 	FailingResourceLoader rl;
 	BufferedResourceLoader brl(instance.event_loop, rl, nullptr);
 
@@ -198,8 +193,7 @@ TEST(BufferedResourceLoader, CancelEarly)
 
 TEST(BufferedResourceLoader, CancelNext)
 {
-	const ScopeFbPoolInit fb_pool_init;
-	PInstance instance;
+	TestInstance instance;
 	BlockingResourceLoader rl;
 	BufferedResourceLoader brl(instance.event_loop, rl, nullptr);
 

@@ -2,12 +2,11 @@
 // Copyright CM4all GmbH
 // author: Max Kellermann <mk@cm4all.com>
 
+#include "TestInstance.hxx"
 #include "parser/CssParser.hxx"
 #include "istream/OpenFileIstream.hxx"
 #include "istream/Sink.hxx"
 #include "istream/UnusedPtr.hxx"
-#include "PInstance.hxx"
-#include "memory/fb_pool.hxx"
 #include "pool/pool.hxx"
 #include "pool/Ptr.hxx"
 #include "util/Exception.hxx"
@@ -111,9 +110,7 @@ try {
 	(void)argc;
 	(void)argv;
 
-	const ScopeFbPoolInit fb_pool_init;
-
-	PInstance instance;
+	TestInstance instance;
 	const auto pool = pool_new_linear(instance.root_pool, "test", 8192);
 
 	auto istream = OpenFileIstream(instance.event_loop, *pool,

@@ -2,6 +2,8 @@
 // Copyright CM4all GmbH
 // author: Max Kellermann <mk@cm4all.com>
 
+#include "TestInstance.hxx"
+
 #include <algorithm>
 #include <array>
 
@@ -27,7 +29,6 @@
 #include "net/AllocatedSocketAddress.hxx"
 #include "net/ToString.hxx"
 #include "util/PrintException.hxx"
-#include "PInstance.hxx"
 
 #include <map>
 #include <vector>
@@ -39,7 +40,7 @@
 #include <string.h>
 #include <net/if.h> // for if_nametoindex()
 
-struct Context final : PInstance, Avahi::ServiceExplorerListener,
+struct Context final : TestInstance, Avahi::ServiceExplorerListener,
 		       Avahi::ErrorHandler {
 	ShutdownListener shutdown_listener;
 

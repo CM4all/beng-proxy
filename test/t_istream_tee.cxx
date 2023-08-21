@@ -3,7 +3,6 @@
 // author: Max Kellermann <mk@cm4all.com>
 
 #include "IstreamFilterTest.hxx"
-#include "PInstance.hxx"
 #include "istream/UnusedPtr.hxx"
 #include "istream/Sink.hxx"
 #include "istream/TeeIstream.hxx"
@@ -153,7 +152,7 @@ struct BlockContext final : TeeContext, StatsIstreamSink {
 
 TEST(TeeIstream, Block1)
 {
-	PInstance instance;
+	TestInstance instance;
 	CancellablePointer cancel_ptr;
 
 	auto pool = pool_new_libc(instance.root_pool, "test");
@@ -188,14 +187,11 @@ TEST(TeeIstream, Block1)
 
 	ASSERT_TRUE(ctx.error == nullptr && !ctx.eof);
 	ASSERT_EQ(ctx.value, "foo");
-
-	pool.reset();
-	pool_commit();
 }
 
 TEST(TeeIstream, CloseData)
 {
-	PInstance instance;
+	TestInstance instance;
 	TeeContext ctx{instance.event_loop};
 	CancellablePointer cancel_ptr;
 
@@ -215,8 +211,6 @@ TEST(TeeIstream, CloseData)
 	   should have passed the data to the StringSink */
 
 	ASSERT_EQ(ctx.value, "foo");
-
-	pool_commit();
 }
 
 /**
@@ -226,7 +220,7 @@ TEST(TeeIstream, CloseData)
  */
 TEST(TeeIstream, CloseSkipped)
 {
-	PInstance instance;
+	TestInstance instance;
 	TeeContext ctx{instance.event_loop};
 	CancellablePointer cancel_ptr;
 
@@ -243,15 +237,13 @@ TEST(TeeIstream, CloseSkipped)
 	ReadStringSink(sink);
 
 	ASSERT_EQ(ctx.value, "foo");
-
-	pool_commit();
 }
 
 static void
 test_error(bool close_first, bool close_second,
 	   bool read_first)
 {
-	PInstance instance;
+	TestInstance instance;
 	auto pool = pool_new_libc(instance.root_pool, "test");
 	auto tee1 =
 		NewTeeIstream(*pool, istream_fail_new(*pool,
@@ -289,8 +281,6 @@ test_error(bool close_first, bool close_second,
 		ASSERT_FALSE(second->eof);
 		ASSERT_TRUE(second->error != nullptr);
 	}
-
-	pool_commit();
 }
 
 TEST(TeeIstream, Error1)
@@ -320,7 +310,7 @@ static void
 test_bucket_error(bool close_second_early,
 		  bool close_second_late)
 {
-	PInstance instance;
+	TestInstance instance;
 	auto pool = pool_new_libc(instance.root_pool, "test");
 	auto tee1 =
 		NewTeeIstream(*pool, istream_fail_new(*pool,
@@ -360,8 +350,6 @@ test_bucket_error(bool close_second_early,
 		ASSERT_FALSE(second->eof);
 		ASSERT_TRUE(second->error != nullptr);
 	}
-
-	pool_commit();
 }
 
 TEST(TeeIstream, BucketError1)

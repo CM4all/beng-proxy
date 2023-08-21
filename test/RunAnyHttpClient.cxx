@@ -2,6 +2,7 @@
 // Copyright CM4all GmbH
 // author: Max Kellermann <mk@cm4all.com>
 
+#include "TestInstance.hxx"
 #include "cluster/AddressListBuilder.hxx"
 #include "http/Address.hxx"
 #include "http/AnyClient.hxx"
@@ -14,7 +15,6 @@
 #include "istream/UnusedPtr.hxx"
 #include "pool/pool.hxx"
 #include "pool/PSocketAddress.hxx"
-#include "memory/fb_pool.hxx"
 #include "fs/FilteredSocket.hxx"
 #include "fs/Stock.hxx"
 #include "fs/Balancer.hxx"
@@ -34,7 +34,6 @@
 #include "util/Cancellable.hxx"
 #include "util/PrintException.hxx"
 #include "AllocatorPtr.hxx"
-#include "PInstance.hxx"
 #include "stopwatch.hxx"
 #include "strmap.hxx"
 
@@ -47,7 +46,7 @@
 #include <unistd.h>
 
 struct Context final
-	: PInstance,
+	: TestInstance,
 	  SinkFdHandler,
 	  HttpResponseHandler {
 
@@ -223,9 +222,7 @@ try {
 
 	address->Check();
 
-	direct_global_init();
 	SetupProcess();
-	const ScopeFbPoolInit fb_pool_init;
 
 	/* initialize */
 

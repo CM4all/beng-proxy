@@ -2,6 +2,7 @@
 // Copyright CM4all GmbH
 // author: Max Kellermann <mk@cm4all.com>
 
+#include "TestInstance.hxx"
 #include "istream/UringIstream.hxx"
 #include "istream/sink_fd.hxx"
 #include "istream/UnusedPtr.hxx"
@@ -12,15 +13,13 @@
 #include "io/uring/Handler.hxx"
 #include "io/uring/OpenStat.hxx"
 #include "util/PrintException.hxx"
-#include "memory/fb_pool.hxx"
-#include "PInstance.hxx"
 
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <stdio.h>
 #include <stdlib.h>
 
-struct Context final : PInstance, Uring::OpenStatHandler, SinkFdHandler {
+struct Context final : TestInstance, Uring::OpenStatHandler, SinkFdHandler {
 	Uring::Manager uring_manager;
 	Uring::OpenStat open_stat;
 
@@ -129,10 +128,6 @@ try {
 	}
 
 	const char *path = argv[1];
-
-	direct_global_init();
-
-	const ScopeFbPoolInit fb_pool_init;
 
 	Context context;
 	context.Open(path);

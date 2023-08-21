@@ -2,6 +2,7 @@
 // Copyright CM4all GmbH
 // author: Max Kellermann <mk@cm4all.com>
 
+#include "TestInstance.hxx"
 #include "nfs/Handler.hxx"
 #include "nfs/Client.hxx"
 #include "nfs/Istream.hxx"
@@ -13,7 +14,6 @@
 #include "system/SetupProcess.hxx"
 #include "io/FileDescriptor.hxx"
 #include "io/SpliceSupport.hxx"
-#include "PInstance.hxx"
 #include "pool/pool.hxx"
 #include "http/ResponseHandler.hxx"
 #include "util/Cancellable.hxx"
@@ -25,7 +25,7 @@
 #include <sys/stat.h>
 
 struct Context final
-	: PInstance, NfsClientHandler, NfsClientOpenFileHandler, SinkFdHandler
+	: TestInstance, NfsClientHandler, NfsClientOpenFileHandler, SinkFdHandler
 {
 	PoolPtr pool;
 
@@ -224,8 +224,6 @@ main(int argc, char **argv)
 	/* initialize */
 
 	SetupProcess();
-
-	direct_global_init();
 
 	ctx.shutdown_listener.Enable();
 

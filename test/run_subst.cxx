@@ -2,12 +2,11 @@
 // Copyright CM4all GmbH
 // author: Max Kellermann <mk@cm4all.com>
 
+#include "TestInstance.hxx"
 #include "StdioSink.hxx"
 #include "istream/UnusedPtr.hxx"
 #include "istream/SubstIstream.hxx"
 #include "istream/OpenFileIstream.hxx"
-#include "memory/fb_pool.hxx"
-#include "PInstance.hxx"
 #include "pool/pool.hxx"
 #include "util/PrintException.hxx"
 
@@ -16,8 +15,7 @@ main(int argc, char **argv)
 try {
 	int i;
 
-	const ScopeFbPoolInit fb_pool_init;
-	PInstance instance;
+	TestInstance instance;
 
 	auto pool = pool_new_linear(instance.root_pool, "test", 8192);
 

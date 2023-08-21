@@ -7,11 +7,9 @@
 #include "fcgi/Client.hxx"
 #include "system/SetupProcess.hxx"
 #include "io/UniqueFileDescriptor.hxx"
-#include "io/SpliceSupport.hxx"
 #include "lease.hxx"
 #include "istream/UnusedPtr.hxx"
 #include "strmap.hxx"
-#include "memory/fb_pool.hxx"
 #include "net/SocketDescriptor.hxx"
 #include "util/ConstBuffer.hxx"
 #include "util/ByteOrder.hxx"
@@ -453,8 +451,6 @@ int
 main(int, char **)
 {
 	SetupProcess();
-	direct_global_init();
-	const ScopeFbPoolInit fb_pool_init;
 
 	Instance instance;
 	FcgiClientFactory factory;

@@ -2,6 +2,7 @@
 // Copyright CM4all GmbH
 // author: Max Kellermann <mk@cm4all.com>
 
+#include "TestInstance.hxx"
 #include "tconstruct.hxx"
 #include "http/cache/Public.hxx"
 #include "ResourceLoader.hxx"
@@ -14,8 +15,6 @@
 #include "http/Method.hxx"
 #include "strmap.hxx"
 #include "http/ResponseHandler.hxx"
-#include "PInstance.hxx"
-#include "memory/fb_pool.hxx"
 #include "istream/UnusedPtr.hxx"
 #include "istream/istream.hxx"
 #include "istream/istream_string.hxx"
@@ -182,7 +181,7 @@ MyResourceLoader::SendRequest(struct pool &pool,
 			       std::move(response_body));
 }
 
-struct Instance final : PInstance {
+struct Instance final : TestInstance {
 	MyResourceLoader resource_loader;
 
 	HttpCache *const cache;
@@ -267,7 +266,6 @@ run_cache_test(Instance &instance, const Request &request, bool cached)
 
 TEST(HttpCache, Basic)
 {
-	const ScopeFbPoolInit fb_pool_init;
 	Instance instance;
 
 	/* request one resource, cold and warm cache */
@@ -300,7 +298,6 @@ TEST(HttpCache, Basic)
 
 TEST(HttpCache, CacheableWithoutResponseBody)
 {
-	const ScopeFbPoolInit fb_pool_init;
 	Instance instance;
 
 	static constexpr Request r0{
@@ -318,7 +315,6 @@ TEST(HttpCache, CacheableWithoutResponseBody)
 
 TEST(HttpCache, Uncacheable)
 {
-	const ScopeFbPoolInit fb_pool_init;
 	Instance instance;
 
 	static constexpr Request with_body{
@@ -344,7 +340,6 @@ TEST(HttpCache, Uncacheable)
 
 TEST(HttpCache, MultiVary)
 {
-	const ScopeFbPoolInit fb_pool_init;
 	Instance instance;
 
 	/* request one resource, cold and warm cache */
@@ -479,7 +474,6 @@ TEST(HttpCache, MultiVary)
 
 TEST(HttpCache, Tag)
 {
-	const ScopeFbPoolInit fb_pool_init;
 	Instance instance;
 
 	Request request = requests[0];

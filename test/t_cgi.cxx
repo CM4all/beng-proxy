@@ -2,6 +2,7 @@
 // Copyright CM4all GmbH
 // author: Max Kellermann <mk@cm4all.com>
 
+#include "TestInstance.hxx"
 #include "tconstruct.hxx"
 #include "cgi/Glue.hxx"
 #include "cgi/Address.hxx"
@@ -12,14 +13,11 @@
 #include "istream/Sink.hxx"
 #include "istream/UnusedPtr.hxx"
 #include "istream/istream.hxx"
-#include "PInstance.hxx"
-#include "memory/fb_pool.hxx"
 #include "spawn/Config.hxx"
 #include "spawn/Registry.hxx"
 #include "spawn/Local.hxx"
 #include "system/SetupProcess.hxx"
 #include "system/KernelVersion.hxx"
-#include "io/SpliceSupport.hxx"
 #include "util/Cancellable.hxx"
 #include "util/PrintException.hxx"
 #include "stopwatch.hxx"
@@ -33,7 +31,7 @@
 
 static SpawnConfig spawn_config;
 
-struct Context final : PInstance, HttpResponseHandler, IstreamSink {
+struct Context final : TestInstance, HttpResponseHandler, IstreamSink {
 	ChildProcessRegistry child_process_registry;
 	LocalSpawnService spawn_service;
 
@@ -644,9 +642,6 @@ try {
 		return 77;
 
 	SetupProcess();
-
-	direct_global_init();
-	const ScopeFbPoolInit fb_pool_init;
 
 	run_all_tests();
 
