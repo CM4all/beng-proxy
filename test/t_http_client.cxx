@@ -12,6 +12,7 @@
 #include "net/UniqueSocketDescriptor.hxx"
 #include "net/SocketAddress.hxx"
 #include "system/Error.hxx"
+#include "fs/Factory.hxx"
 #include "fs/FilteredSocket.hxx"
 #include "fs/NopSocketFilter.hxx"
 #include "fs/NopThreadSocketFilter.hxx"
@@ -106,7 +107,6 @@ public:
 	}
 };
 
-template<typename SocketFilterFactory>
 struct HttpClientFactory {
 	using Error = HttpClientError;
 	using ErrorCode = HttpClientErrorCode;
@@ -118,11 +118,16 @@ struct HttpClientFactory {
 		.enable_close_ignored_request_body = true,
 	};
 
-	[[no_unique_address]]
-	SocketFilterFactory &socket_filter_factory;
+	SocketFilterFactoryPtr socket_filter_factory;
 
-	HttpClientFactory(SocketFilterFactory &_socket_filter_factory) noexcept
-		:socket_filter_factory(_socket_filter_factory) {}
+	HttpClientFactory(SocketFilterFactoryPtr &&_socket_filter_factory) noexcept
+		:socket_filter_factory(std::move(_socket_filter_factory)) {}
+
+	SocketFilterPtr CreateFilter() {
+		return socket_filter_factory
+			? socket_filter_factory->CreateFilter()
+			: nullptr;
+	}
 
 	/**
 	 * Create a HTTP connection to a new child process acting as a
@@ -143,7 +148,7 @@ struct HttpClientFactory {
 			    DemoHttpServerConnection::Mode mode) noexcept {
 		return new HttpClientConnection(event_loop,
 						Server::New(pool, event_loop, mode),
-						socket_filter_factory());
+						CreateFilter());
 	}
 
 	auto *NewMirror(struct pool &pool, EventLoop &event_loop) noexcept {
@@ -262,10 +267,9 @@ HttpClientConnection::~HttpClientConnection() noexcept
 	}
 }
 
-template<typename SocketFilterFactory>
 HttpClientConnection *
-HttpClientFactory<SocketFilterFactory>::NewFork(EventLoop &event_loop,
-						std::function<void(SocketDescriptor)> function)
+HttpClientFactory::NewFork(EventLoop &event_loop,
+			   std::function<void(SocketDescriptor)> function)
 {
 	SocketDescriptor client_socket, server_socket;
 	if (!SocketDescriptor::CreateSocketPair(AF_LOCAL, SOCK_STREAM, 0,
@@ -289,13 +293,11 @@ HttpClientFactory<SocketFilterFactory>::NewFork(EventLoop &event_loop,
 	server_socket.Close();
 	client_socket.SetNonBlocking();
 	return new HttpClientConnection(event_loop, pid, client_socket,
-					socket_filter_factory());
+					CreateFilter());
 }
 
-template<typename SocketFilterFactory>
 HttpClientConnection *
-HttpClientFactory<SocketFilterFactory>::NewForkWrite(EventLoop &event_loop,
-						     std::string_view response)
+HttpClientFactory::NewForkWrite(EventLoop &event_loop, std::string_view response)
 {
 	return NewFork(event_loop, [response](SocketDescriptor s){
 		/* wait until the request becomes ready */
@@ -481,9 +483,9 @@ test_many_small_chunks(auto &factory, Context &c) noexcept
  */
 
 static void
-RunHttpClientTests(Instance &instance, auto &socket_filter_factory) noexcept
+RunHttpClientTests(Instance &instance, SocketFilterFactoryPtr &&socket_filter_factory) noexcept
 {
-	HttpClientFactory factory{socket_filter_factory};
+	HttpClientFactory factory{std::move(socket_filter_factory)};
 
 	run_all_tests(instance, factory);
 	run_test(instance, factory, test_no_keepalive);
@@ -492,21 +494,17 @@ RunHttpClientTests(Instance &instance, auto &socket_filter_factory) noexcept
 	run_test(instance, factory, test_many_small_chunks);
 }
 
-struct NullSocketFilterFactory {
-	SocketFilterPtr operator()() const noexcept {
-		return {};
-	}
-};
-
-struct NopSocketFilterFactory {
-	SocketFilterPtr operator()() const noexcept {
+class NopSocketFilterFactory final : public SocketFilterFactory {
+public:
+	SocketFilterPtr CreateFilter() override {
 		return SocketFilterPtr{new NopSocketFilter()};
 	}
 };
 
-struct NopThreadSocketFilterFactory {
+class NopThreadSocketFilterFactory final : public SocketFilterFactory {
 	EventLoop &event_loop;
 
+public:
 	explicit NopThreadSocketFilterFactory(EventLoop &_event_loop) noexcept
 		:event_loop(_event_loop) {
 		/* keep the eventfd unregistered if the ThreadQueue is
@@ -521,7 +519,7 @@ struct NopThreadSocketFilterFactory {
 		thread_pool_deinit();
 	}
 
-	SocketFilterPtr operator()() const noexcept {
+	SocketFilterPtr CreateFilter() override {
 		return SocketFilterPtr{
 			new ThreadSocketFilter(event_loop,
 					       thread_pool_get_queue(event_loop),
@@ -540,18 +538,7 @@ main(int, char **)
 
 	Instance instance;
 
-	{
-		NullSocketFilterFactory socket_filter_factory;
-		RunHttpClientTests(instance, socket_filter_factory);
-	}
-
-	{
-		NopSocketFilterFactory socket_filter_factory;
-		RunHttpClientTests(instance, socket_filter_factory);
-	}
-
-	{
-		NopThreadSocketFilterFactory socket_filter_factory{instance.event_loop};
-		RunHttpClientTests(instance, socket_filter_factory);
-	}
+	RunHttpClientTests(instance, nullptr);
+	RunHttpClientTests(instance, std::make_unique<NopSocketFilterFactory>());
+	RunHttpClientTests(instance, std::make_unique<NopThreadSocketFilterFactory>(instance.event_loop));
 }
