@@ -2,12 +2,6 @@
 // Copyright CM4all GmbH
 // author: Max Kellermann <mk@cm4all.com>
 
-#define HAVE_CHUNKED_REQUEST_BODY
-#define ENABLE_HUGE_BODY
-#define ENABLE_VALID_PREMATURE
-#define ENABLE_MALFORMED_PREMATURE
-#define NO_EARLY_RELEASE_SOCKET // TODO: improve the WAS client
-
 #include "t_client.hxx"
 #include "tio.hxx"
 #include "stopwatch.hxx"
@@ -397,6 +391,13 @@ private:
 };
 
 struct WasFactory {
+	static constexpr ClientTestOptions options{
+		.have_chunked_request_body = true,
+		.enable_valid_premature = true,
+		.enable_malformed_premature = true,
+		.no_early_release_socket = true, // TODO: improve the WAS client
+	};
+
 	static constexpr bool can_cancel_request_body = true;
 	static constexpr bool have_content_length_header = true;
 

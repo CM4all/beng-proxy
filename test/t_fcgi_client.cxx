@@ -2,13 +2,6 @@
 // Copyright CM4all GmbH
 // author: Max Kellermann <mk@cm4all.com>
 
-#define ENABLE_PREMATURE_CLOSE_HEADERS
-#define ENABLE_PREMATURE_CLOSE_BODY
-#define USE_BUCKETS
-#define ENABLE_HUGE_BODY
-#define ENABLE_PREMATURE_END
-#define ENABLE_EXCESS_DATA
-
 #include "t_client.hxx"
 #include "tio.hxx"
 #include "fcgi/Client.hxx"
@@ -289,6 +282,14 @@ public:
 };
 
 struct FcgiClientFactory {
+	static constexpr ClientTestOptions options{
+		.enable_buckets = true,
+		.enable_premature_close_headers = true,
+		.enable_premature_close_body = true,
+		.enable_premature_end = true,
+		.enable_excess_data = true,
+	};
+
 	static constexpr bool can_cancel_request_body = true;
 	static constexpr bool have_content_length_header = false;
 

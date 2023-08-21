@@ -3,10 +3,6 @@
 // author: Max Kellermann <mk@cm4all.com>
 
 #define HAVE_EXPECT_100
-#define HAVE_CHUNKED_REQUEST_BODY
-#define ENABLE_CLOSE_IGNORED_REQUEST_BODY
-#define ENABLE_HUGE_BODY
-#define USE_BUCKETS
 
 #include "t_client.hxx"
 #include "DemoHttpServerConnection.hxx"
@@ -114,6 +110,12 @@ public:
 
 template<typename SocketFilterFactory>
 struct HttpClientFactory {
+	static constexpr const ClientTestOptions options{
+		.have_chunked_request_body = true,
+		.enable_buckets = true,
+		.enable_close_ignored_request_body = true,
+	};
+
 	static constexpr bool can_cancel_request_body = false;
 	static constexpr bool have_content_length_header = true;
 

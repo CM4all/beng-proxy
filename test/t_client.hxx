@@ -34,9 +34,21 @@
 
 #include <string.h>
 
-#ifndef HAVE_CHUNKED_REQUEST_BODY
 static constexpr size_t HEAD_SIZE = 16384;
-#endif
+
+struct ClientTestOptions {
+	bool have_chunked_request_body = false;
+	bool enable_buckets = false;
+	bool enable_huge_body = true;
+	bool enable_close_ignored_request_body = false;
+	bool enable_premature_close_headers = false;
+	bool enable_premature_close_body = false;
+	bool enable_premature_end = false;
+	bool enable_excess_data = false;
+	bool enable_valid_premature = false;
+	bool enable_malformed_premature = false;
+	bool no_early_release_socket = false;
+};
 
 class ClientConnection {
 public:
@@ -279,8 +291,6 @@ test_read_body(auto &factory, Context &c) noexcept
 	assert(c.reuse);
 }
 
-#ifdef ENABLE_HUGE_BODY
-
 /**
  * A huge response body with declared Content-Length.
  */
@@ -306,8 +316,6 @@ test_huge(auto &factory, Context &c) noexcept
 	assert(!c.request_error);
 	assert(c.body_error == nullptr);
 }
-
-#endif
 
 static void
 test_close_response_body_early(auto &factory, Context &c) noexcept
@@ -414,13 +422,13 @@ test_close_response_body_after(auto &factory, Context &c) noexcept
 	assert(c.body_error == nullptr);
 }
 
-static UnusedIstreamPtr
-wrap_fake_request_body([[maybe_unused]] struct pool *pool, UnusedIstreamPtr i)
+inline UnusedIstreamPtr
+wrap_fake_request_body(struct pool *pool, UnusedIstreamPtr i,
+		       const ClientTestOptions &options) noexcept
 {
-#ifndef HAVE_CHUNKED_REQUEST_BODY
-	if (i.GetAvailable(false) < 0)
+	if (!options.have_chunked_request_body && i.GetAvailable(false) < 0)
 		i = istream_head_new(*pool, std::move(i), HEAD_SIZE, true);
-#endif
+
 	return i;
 }
 
@@ -439,7 +447,8 @@ test_close_request_body_early(auto &factory, Context &c) noexcept
 	c.connection = factory.NewMirror(*c.pool, c.event_loop);
 	c.connection->Request(c.pool, c,
 			      HttpMethod::GET, "/foo", {},
-			      wrap_fake_request_body(c.pool, make_delayed_request_body(c)),
+			      wrap_fake_request_body(c.pool, make_delayed_request_body(c),
+						     factory.options),
 			      false,
 			      c, c.cancel_ptr);
 
@@ -463,7 +472,7 @@ test_close_request_body_fail(auto &factory, Context &c) noexcept
 	auto delayed = istream_delayed_new(*c.pool, c.event_loop);
 	auto request_body =
 		NewConcatIstream(*c.pool,
-				 istream_head_new(*c.pool, istream_zero_new(*c.pool),
+				 istream_head_new(c.pool, istream_zero_new(*c.pool),
 						  4096, false),
 				 std::move(delayed.first));
 
@@ -471,7 +480,8 @@ test_close_request_body_fail(auto &factory, Context &c) noexcept
 	c.connection = factory.NewMirror(*c.pool, c.event_loop);
 	c.connection->Request(c.pool, c,
 			      HttpMethod::GET, "/foo", {},
-			      wrap_fake_request_body(c.pool, std::move(request_body)),
+			      wrap_fake_request_body(c.pool, std::move(request_body),
+						     factory.options),
 			      false,
 			      c, c.cancel_ptr);
 
@@ -480,11 +490,11 @@ test_close_request_body_fail(auto &factory, Context &c) noexcept
 	assert(c.released);
 	assert(c.status == HttpStatus::OK);
 	assert(c.content_length == nullptr);
-#ifdef HAVE_CHUNKED_REQUEST_BODY
-	assert(c.available == -1);
-#else
-	assert(c.available == HEAD_SIZE);
-#endif
+	if (factory.options.have_chunked_request_body) {
+		assert(c.available == -1);
+	} else {
+		assert(c.available == HEAD_SIZE);
+	}
 	assert(!c.HasInput());
 	assert(!c.body_eof);
 	assert(c.body_error);
@@ -511,7 +521,8 @@ test_data_blocking(auto &factory, Context &c) noexcept
 	c.connection = factory.NewMirror(*c.pool, c.event_loop);
 	c.connection->Request(c.pool, c,
 			      HttpMethod::GET, "/foo", {},
-			      wrap_fake_request_body(c.pool, std::move(request_body)),
+			      wrap_fake_request_body(c.pool, std::move(request_body),
+						     factory.options),
 			      false,
 			      c, c.cancel_ptr);
 
@@ -520,11 +531,11 @@ test_data_blocking(auto &factory, Context &c) noexcept
 	assert(!c.request_error);
 	assert(c.status == HttpStatus::OK);
 	assert(c.content_length == nullptr);
-#ifdef HAVE_CHUNKED_REQUEST_BODY
-	assert(c.available == -1);
-#else
-	assert(c.available == HEAD_SIZE);
-#endif
+	if (factory.options.have_chunked_request_body) {
+		assert(c.available == -1);
+	} else {
+		assert(c.available == HEAD_SIZE);
+	}
 	assert(c.HasInput());
 	assert(!c.released);
 
@@ -590,9 +601,8 @@ test_data_blocking2(auto &factory, Context &c) noexcept
 
 	/* the socket is released by now, but the body isn't finished
 	   yet */
-#ifndef NO_EARLY_RELEASE_SOCKET
-	c.WaitReleased();
-#endif
+	if (!factory.options.no_early_release_socket)
+		c.WaitReleased();
 	assert(c.content_length == nullptr);
 	assert(c.available == body_size);
 	assert(c.HasInput());
@@ -619,7 +629,8 @@ test_body_fail(auto &factory, Context &c) noexcept
 
 	c.connection->Request(c.pool, c,
 			      HttpMethod::GET, "/foo", {},
-			      wrap_fake_request_body(c.pool, istream_fail_new(*c.pool, std::make_exception_ptr(error))),
+			      wrap_fake_request_body(c.pool, istream_fail_new(*c.pool, std::make_exception_ptr(error)),
+						     factory.options),
 			      false,
 			      c, c.cancel_ptr);
 
@@ -721,7 +732,8 @@ test_ignored_body(auto &factory, Context &c) noexcept
 	c.connection = factory.NewNull(*c.pool, c.event_loop);
 	c.connection->Request(c.pool, c,
 			      HttpMethod::GET, "/foo", {},
-			      wrap_fake_request_body(c.pool, istream_zero_new(*c.pool)),
+			      wrap_fake_request_body(c.pool, istream_zero_new(*c.pool),
+						     factory.options),
 			      false,
 			      c, c.cancel_ptr);
 
@@ -738,8 +750,6 @@ test_ignored_body(auto &factory, Context &c) noexcept
 	assert(!factory.can_cancel_request_body || c.reuse);
 }
 
-#ifdef ENABLE_CLOSE_IGNORED_REQUEST_BODY
-
 /**
  * Close request body in the response handler (with response body).
  */
@@ -750,7 +760,8 @@ test_close_ignored_request_body(auto &factory, Context &c) noexcept
 	c.close_request_body_early = true;
 	c.connection->Request(c.pool, c,
 			      HttpMethod::GET, "/foo", {},
-			      wrap_fake_request_body(c.pool, make_delayed_request_body(c)),
+			      wrap_fake_request_body(c.pool, make_delayed_request_body(c),
+						     factory.options),
 			      false,
 			      c, c.cancel_ptr);
 
@@ -777,7 +788,8 @@ test_head_close_ignored_request_body(auto &factory, Context &c) noexcept
 	c.close_request_body_early = true;
 	c.connection->Request(c.pool, c,
 			      HttpMethod::HEAD, "/foo", {},
-			      wrap_fake_request_body(c.pool, make_delayed_request_body(c)),
+			      wrap_fake_request_body(c.pool, make_delayed_request_body(c),
+						     factory.options),
 			      false,
 			      c, c.cancel_ptr);
 
@@ -803,7 +815,8 @@ test_close_request_body_eor(auto &factory, Context &c) noexcept
 	c.close_request_body_eof = true;
 	c.connection->Request(c.pool, c,
 			      HttpMethod::GET, "/foo", {},
-			      wrap_fake_request_body(c.pool, make_delayed_request_body(c)),
+			      wrap_fake_request_body(c.pool, make_delayed_request_body(c),
+						     factory.options),
 			      false,
 			      c, c.cancel_ptr);
 
@@ -844,8 +857,6 @@ test_close_request_body_eor2(auto &factory, Context &c) noexcept
 	assert(!c.request_error);
 	assert(c.body_error == nullptr);
 }
-
-#endif
 
 #ifdef HAVE_EXPECT_100
 
@@ -953,7 +964,8 @@ test_no_body_while_sending(auto &factory, Context &c) noexcept
 	c.connection = factory.NewNull(*c.pool, c.event_loop);
 	c.connection->Request(c.pool, c,
 			      HttpMethod::GET, "/foo", {},
-			      wrap_fake_request_body(c.pool, istream_block_new(*c.pool)),
+			      wrap_fake_request_body(c.pool, istream_block_new(*c.pool),
+						     factory.options),
 			      false,
 			      c, c.cancel_ptr);
 
@@ -973,7 +985,8 @@ test_hold(auto &factory, Context &c) noexcept
 	c.connection = factory.NewHold(*c.pool, c.event_loop);
 	c.connection->Request(c.pool, c,
 			      HttpMethod::GET, "/foo", {},
-			      wrap_fake_request_body(c.pool, istream_block_new(*c.pool)),
+			      wrap_fake_request_body(c.pool, istream_block_new(*c.pool),
+						     factory.options),
 			      false,
 			      c, c.cancel_ptr);
 
@@ -1007,8 +1020,6 @@ test_hold(auto &factory, Context &c) noexcept
 	assert(c.body_data == 0);
 }
 
-#ifdef ENABLE_PREMATURE_CLOSE_HEADERS
-
 /**
  * The server closes the connection before it finishes sending the
  * response headers.
@@ -1034,10 +1045,6 @@ test_premature_close_headers(auto &factory, Context &c) noexcept
 	assert(!c.reuse);
 }
 
-#endif
-
-#ifdef ENABLE_PREMATURE_CLOSE_BODY
-
 /**
  * The server closes the connection before it finishes sending the
  * response body.
@@ -1060,8 +1067,6 @@ test_premature_close_body(auto &factory, Context &c) noexcept
 	assert(c.body_error != nullptr);
 	assert(!c.reuse);
 }
-
-#endif
 
 /**
  * POST with empty request body.
@@ -1097,8 +1102,6 @@ test_post_empty(auto &factory, Context &c) noexcept
 	assert(c.body_error == nullptr);
 	assert(c.reuse);
 }
-
-#ifdef USE_BUCKETS
 
 static void
 test_buckets(auto &factory, Context &c) noexcept
@@ -1218,10 +1221,6 @@ test_buckets_close(auto &factory, Context &c) noexcept
 	assert(c.available_after_bucket_partial == 1);
 }
 
-#endif
-
-#ifdef ENABLE_PREMATURE_END
-
 static void
 test_premature_end(auto &factory, Context &c) noexcept
 {
@@ -1242,10 +1241,6 @@ test_premature_end(auto &factory, Context &c) noexcept
 	assert(!c.body_eof);
 	assert(c.body_error != nullptr);
 }
-
-#endif
-
-#ifdef ENABLE_EXCESS_DATA
 
 static void
 test_excess_data(auto &factory, Context &c) noexcept
@@ -1268,10 +1263,6 @@ test_excess_data(auto &factory, Context &c) noexcept
 	assert(c.body_error != nullptr);
 }
 
-#endif
-
-#ifdef ENABLE_VALID_PREMATURE
-
 static void
 TestValidPremature(auto &factory, Context &c) noexcept
 {
@@ -1291,10 +1282,6 @@ TestValidPremature(auto &factory, Context &c) noexcept
 	assert(c.body_error != nullptr);
 	assert(c.reuse);
 }
-
-#endif
-
-#ifdef ENABLE_MALFORMED_PREMATURE
 
 static void
 TestMalformedPremature(auto &factory, Context &c) noexcept
@@ -1317,8 +1304,6 @@ TestMalformedPremature(auto &factory, Context &c) noexcept
 	assert(c.body_error != nullptr);
 	assert(!c.reuse);
 }
-
-#endif
 
 static void
 TestCancelNop(auto &factory, Context &c) noexcept
@@ -1438,8 +1423,6 @@ run_test(Instance &instance, Factory &factory,
 	test(factory, c);
 }
 
-#ifdef USE_BUCKETS
-
 template<class Factory>
 static void
 run_bucket_test(Instance &instance, Factory &factory,
@@ -1451,8 +1434,6 @@ run_bucket_test(Instance &instance, Factory &factory,
 	test(factory, c);
 }
 
-#endif
-
 template<class Factory>
 static void
 run_test_and_buckets(Instance &instance, Factory &factory,
@@ -1461,9 +1442,8 @@ run_test_and_buckets(Instance &instance, Factory &factory,
 	/* regular run */
 	run_test(instance, factory, test);
 
-#ifdef USE_BUCKETS
-	run_bucket_test(instance, factory, test);
-#endif
+	if (factory.options.enable_buckets)
+		run_bucket_test(instance, factory, test);
 }
 
 template<class Factory>
@@ -1473,9 +1453,8 @@ run_all_tests(Instance &instance, Factory &factory) noexcept
 	run_test(instance, factory, test_empty<Factory>);
 	run_test_and_buckets(instance, factory, test_body<Factory>);
 	run_test(instance, factory, test_read_body<Factory>);
-#ifdef ENABLE_HUGE_BODY
-	run_test_and_buckets(instance, factory, test_huge<Factory>);
-#endif
+	if constexpr (factory.options.enable_huge_body)
+		run_test_and_buckets(instance, factory, test_huge<Factory>);
 	run_test(instance, factory, TestCancelNop<Factory>);
 	run_test(instance, factory, test_close_response_body_early<Factory>);
 	run_test(instance, factory, test_close_response_body_late<Factory>);
@@ -1490,12 +1469,12 @@ run_all_tests(Instance &instance, Factory &factory) noexcept
 	run_test(instance, factory, test_head_discard<Factory>);
 	run_test(instance, factory, test_head_discard2<Factory>);
 	run_test(instance, factory, test_ignored_body<Factory>);
-#ifdef ENABLE_CLOSE_IGNORED_REQUEST_BODY
-	run_test(instance, factory, test_close_ignored_request_body<Factory>);
-	run_test(instance, factory, test_head_close_ignored_request_body<Factory>);
-	run_test(instance, factory, test_close_request_body_eor<Factory>);
-	run_test(instance, factory, test_close_request_body_eor2<Factory>);
-#endif
+	if constexpr (factory.options.enable_close_ignored_request_body) {
+		run_test(instance, factory, test_close_ignored_request_body<Factory>);
+		run_test(instance, factory, test_head_close_ignored_request_body<Factory>);
+		run_test(instance, factory, test_close_request_body_eor<Factory>);
+		run_test(instance, factory, test_close_request_body_eor2<Factory>);
+	}
 #ifdef HAVE_EXPECT_100
 	run_test(instance, factory, test_bogus_100<Factory>);
 	run_test(instance, factory, test_twice_100<Factory>);
@@ -1503,30 +1482,24 @@ run_all_tests(Instance &instance, Factory &factory) noexcept
 #endif
 	run_test(instance, factory, test_no_body_while_sending<Factory>);
 	run_test(instance, factory, test_hold<Factory>);
-#ifdef ENABLE_PREMATURE_CLOSE_HEADERS
-	run_test(instance, factory, test_premature_close_headers<Factory>);
-#endif
-#ifdef ENABLE_PREMATURE_CLOSE_BODY
-	run_test_and_buckets(instance, factory, test_premature_close_body<Factory>);
-#endif
-#ifdef USE_BUCKETS
-	run_test(instance, factory, test_buckets<Factory>);
-	run_test(instance, factory, test_buckets_chunked<Factory>);
-	run_test(instance, factory, test_buckets_after_data<Factory>);
-	run_test(instance, factory, test_buckets_close<Factory>);
-#endif
-#ifdef ENABLE_PREMATURE_END
-	run_test_and_buckets(instance, factory, test_premature_end<Factory>);
-#endif
-#ifdef ENABLE_EXCESS_DATA
-	run_test_and_buckets(instance, factory, test_excess_data<Factory>);
-#endif
-#ifdef ENABLE_VALID_PREMATURE
-	run_test_and_buckets(instance, factory, TestValidPremature<Factory>);
-#endif
-#ifdef ENABLE_MALFORMED_PREMATURE
-	run_test_and_buckets(instance, factory, TestMalformedPremature<Factory>);
-#endif
+	if constexpr (factory.options.enable_premature_close_headers)
+		run_test(instance, factory, test_premature_close_headers<Factory>);
+	if constexpr (factory.options.enable_premature_close_body)
+		run_test_and_buckets(instance, factory, test_premature_close_body<Factory>);
+	if constexpr (factory.options.enable_buckets) {
+		run_test(instance, factory, test_buckets<Factory>);
+		run_test(instance, factory, test_buckets_chunked<Factory>);
+		run_test(instance, factory, test_buckets_after_data<Factory>);
+		run_test(instance, factory, test_buckets_close<Factory>);
+	}
+	if constexpr (factory.options.enable_premature_end)
+		run_test_and_buckets(instance, factory, test_premature_end<Factory>);
+	if constexpr (factory.options.enable_excess_data)
+		run_test_and_buckets(instance, factory, test_excess_data<Factory>);
+	if constexpr (factory.options.enable_valid_premature)
+		run_test_and_buckets(instance, factory, TestValidPremature<Factory>);
+	if constexpr (factory.options.enable_malformed_premature)
+		run_test_and_buckets(instance, factory, TestMalformedPremature<Factory>);
 	run_test(instance, factory, test_post_empty<Factory>);
 	run_test_and_buckets(instance, factory, TestCancelWithFailedSocketGet<Factory>);
 	run_test_and_buckets(instance, factory, TestCancelWithFailedSocketPost<Factory>);
