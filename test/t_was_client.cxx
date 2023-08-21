@@ -74,9 +74,9 @@ RunHold(WasServer &server, struct pool &pool,
 
 static void
 RunBlock(WasServer &server, struct pool &pool,
-	HttpMethod,
-	const char *, StringMap &&,
-	UnusedIstreamPtr body)
+	 HttpMethod,
+	 const char *, StringMap &&,
+	 UnusedIstreamPtr body)
 {
 	body.Clear();
 
@@ -164,8 +164,8 @@ public:
 		 control(event_loop, socket.control, *this),
 		 defer_premature(event_loop, BIND_THIS_METHOD(SendPremature)),
 		 handler(_handler)
-	{
-	}
+		{
+		}
 
 	void Free() noexcept {
 		ReleaseError();
@@ -292,24 +292,24 @@ public:
 		      Callback &&_callback)
 		:event_loop(_event_loop),
 		 callback(std::move(_callback))
-	{
-		WasServerHandler &handler = *this;
-		server = NewFromPool<WasServer>(pool, pool, event_loop,
-						MakeWasSocket(),
-						handler);
-	}
+		{
+			WasServerHandler &handler = *this;
+			server = NewFromPool<WasServer>(pool, pool, event_loop,
+							MakeWasSocket(),
+							handler);
+		}
 
 	struct MalformedPremature{};
 
 	WasConnection(struct pool &pool, EventLoop &_event_loop,
 		      MalformedPremature)
 		:event_loop(_event_loop)
-	{
-		WasServerHandler &handler = *this;
-		server2 = NewFromPool<MalformedPrematureWasServer>(pool, event_loop,
-								   MakeWasSocket(),
-								   handler);
-	}
+		{
+			WasServerHandler &handler = *this;
+			server2 = NewFromPool<MalformedPrematureWasServer>(pool, event_loop,
+									   MakeWasSocket(),
+									   handler);
+		}
 
 	~WasConnection() noexcept override {
 		if (server != nullptr)
@@ -397,6 +397,8 @@ struct WasFactory {
 		.no_early_release_socket = true, // TODO: improve the WAS client
 	};
 
+	explicit WasFactory(EventLoop &) noexcept {}
+
 	auto *NewMirror(struct pool &pool, EventLoop &event_loop) {
 		return new WasConnection(pool, event_loop, RunMirror);
 	}
@@ -451,9 +453,14 @@ struct WasFactory {
 	}
 };
 
-static void
-test_malformed_header_name(auto &factory, Context &c) noexcept
+INSTANTIATE_TYPED_TEST_CASE_P(WasClient, ClientTest, WasFactory);
+
+TEST(WasClient, MalformedHeaderName)
 {
+	Instance instance;
+	WasFactory factory{instance.event_loop};
+	Context c{instance};
+
 	c.connection = factory.NewMalformedHeaderName(*c.pool, c.event_loop);
 	c.connection->Request(c.pool, c,
 			      HttpMethod::GET, "/foo", {},
@@ -464,14 +471,17 @@ test_malformed_header_name(auto &factory, Context &c) noexcept
 
 	c.event_loop.Run();
 
-	assert(c.status == HttpStatus{});
-	assert(c.request_error);
-	assert(c.released);
+	EXPECT_EQ(c.status, HttpStatus{});
+	EXPECT_TRUE(c.request_error);
+	EXPECT_TRUE(c.released);
 }
 
-static void
-test_malformed_header_value(auto &factory, Context &c) noexcept
+TEST(WasClient, MalformedHeaderValue)
 {
+	Instance instance;
+	WasFactory factory{instance.event_loop};
+	Context c{instance};
+
 	c.connection = factory.NewMalformedHeaderValue(*c.pool, c.event_loop);
 	c.connection->Request(c.pool, c,
 			      HttpMethod::GET, "/foo", {},
@@ -482,25 +492,7 @@ test_malformed_header_value(auto &factory, Context &c) noexcept
 
 	c.event_loop.Run();
 
-	assert(c.status == HttpStatus{});
-	assert(c.request_error);
-	assert(c.released);
-}
-
-/*
- * main
- *
- */
-
-int
-main(int, char **)
-{
-	SetupProcess();
-
-	Instance instance;
-	WasFactory factory;
-
-	run_all_tests(instance, factory);
-	run_test(instance, factory, test_malformed_header_name);
-	run_test(instance, factory, test_malformed_header_value);
+	EXPECT_EQ(c.status, HttpStatus{});
+	EXPECT_TRUE(c.request_error);
+	EXPECT_TRUE(c.released);
 }

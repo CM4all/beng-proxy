@@ -311,14 +311,23 @@ HttpClientFactory::NewForkWrite(EventLoop &event_loop, std::string_view response
 	});
 }
 
+template<typename T>
+class HttpClientTest : public ::testing::Test {
+};
+
+TYPED_TEST_CASE_P(HttpClientTest);
+
 /**
  * Keep-alive disabled, and response body has unknown length, ends
  * when server closes socket.  Check if our HTTP client handles such
  * responses correctly.
  */
-static void
-test_no_keepalive(auto &factory, Context &c) noexcept
+TYPED_TEST_P(HttpClientTest, NoKeepalive)
 {
+	Instance instance;
+	TypeParam factory{instance.event_loop};
+	Context c{instance};
+
 	c.connection = factory.NewClose(*c.pool, c.event_loop);
 	c.connection->Request(c.pool, c,
 			      HttpMethod::GET, "/foo", {},
@@ -329,16 +338,16 @@ test_no_keepalive(auto &factory, Context &c) noexcept
 
 	c.WaitForResponse();
 
-	assert(c.status == HttpStatus::OK);
-	assert(c.request_error == nullptr);
+	EXPECT_EQ(c.status, HttpStatus::OK);
+	EXPECT_EQ(c.request_error, nullptr);
 
 	/* receive the rest of the response body from the buffer */
 	c.event_loop.Run();
 
-	assert(c.released);
-	assert(c.body_eof);
-	assert(c.body_data > 0);
-	assert(c.body_error == nullptr);
+	EXPECT_TRUE(c.released);
+	EXPECT_TRUE(c.body_eof);
+	EXPECT_TRUE(c.body_data > 0);
+	EXPECT_EQ(c.body_error, nullptr);
 }
 
 /**
@@ -348,9 +357,12 @@ test_no_keepalive(auto &factory, Context &c) noexcept
  * used to trigger an assertion failure, because the HTTP client
  * forgot about the in-progress request body.
  */
-static void
-test_ignored_request_body(auto &factory, Context &c) noexcept
+TYPED_TEST_P(HttpClientTest, IgnoredRequestBody)
 {
+	Instance instance;
+	TypeParam factory{instance.event_loop};
+	Context c{instance};
+
 	auto delayed = istream_delayed_new(*c.pool, c.event_loop);
 	AbortFlag abort_flag(delayed.second.cancel_ptr);
 	auto zero = istream_zero_new(*c.pool);
@@ -373,14 +385,14 @@ test_ignored_request_body(auto &factory, Context &c) noexcept
 		c.event_loop.Run();
 	}
 
-	assert(abort_flag.aborted);
+	EXPECT_TRUE(abort_flag.aborted);
 
-	assert(c.released);
-	assert(c.connection == nullptr);
-	assert(c.status == HttpStatus::OK);
-	assert(c.consumed_body_data == 3);
-	assert(c.body_error == nullptr);
-	assert(!c.reuse);
+	EXPECT_TRUE(c.released);
+	EXPECT_EQ(c.connection, nullptr);
+	EXPECT_EQ(c.status, HttpStatus::OK);
+	EXPECT_EQ(c.consumed_body_data, 3);
+	EXPECT_EQ(c.body_error, nullptr);
+	EXPECT_FALSE(c.reuse);
 }
 
 static char *
@@ -425,10 +437,13 @@ FillPipeLeaseIstream(struct pool &pool, PipeStock *stock,
  * Send a request with "Expect: 100-continue" with a request body that
  * can be spliced.
  */
-static void
-test_expect_100_continue_splice(auto &factory, Context &c) noexcept
+TYPED_TEST_P(HttpClientTest, Expect100ContinueSplice)
 {
 	constexpr std::size_t length = 4096;
+
+	Instance instance;
+	TypeParam factory{instance.event_loop};
+	Context c{instance};
 
 	c.connection = factory.NewDeferMirror(*c.pool, c.event_loop);
 	c.connection->Request(c.pool, c,
@@ -441,12 +456,12 @@ test_expect_100_continue_splice(auto &factory, Context &c) noexcept
 
 	c.WaitForEnd();
 
-	assert(c.released);
-	assert(c.connection == nullptr);
-	assert(c.status == HttpStatus::OK);
-	assert(c.consumed_body_data == length);
-	assert(c.body_error == nullptr);
-	assert(c.reuse);
+	EXPECT_TRUE(c.released);
+	EXPECT_EQ(c.connection, nullptr);
+	EXPECT_EQ(c.status, HttpStatus::OK);
+	EXPECT_EQ(c.consumed_body_data, length);
+	EXPECT_EQ(c.body_error, nullptr);
+	EXPECT_TRUE(c.reuse);
 }
 
 /**
@@ -454,9 +469,12 @@ test_expect_100_continue_splice(auto &factory, Context &c) noexcept
  * into the input buffer, but the DechunkIstream did not fully analyze
  * it, and that led to an assertion failure.
  */
-static void
-test_many_small_chunks(auto &factory, Context &c) noexcept
+TYPED_TEST_P(HttpClientTest, ManySmallChunks)
 {
+	Instance instance;
+	TypeParam factory{instance.event_loop};
+	Context c{instance};
+
 	c.use_buckets = true;
 	c.connection = factory.NewManySmallChunks(*c.pool, c.event_loop);
 	c.connection->Request(c.pool, c,
@@ -467,30 +485,19 @@ test_many_small_chunks(auto &factory, Context &c) noexcept
 
 	c.WaitForEnd();
 
-	assert(c.released);
-	assert(c.connection == nullptr);
-	assert(c.status == HttpStatus::OK);
-	assert(c.consumed_body_data == 16);
-	assert(c.body_error == nullptr);
-	assert(!c.reuse);
+	EXPECT_TRUE(c.released);
+	EXPECT_EQ(c.connection, nullptr);
+	EXPECT_EQ(c.status, HttpStatus::OK);
+	EXPECT_EQ(c.consumed_body_data, 16);
+	EXPECT_EQ(c.body_error, nullptr);
+	EXPECT_FALSE(c.reuse);
 }
 
-/*
- * main
- *
- */
-
-static void
-RunHttpClientTests(Instance &instance, SocketFilterFactoryPtr &&socket_filter_factory) noexcept
-{
-	HttpClientFactory factory{std::move(socket_filter_factory)};
-
-	run_all_tests(instance, factory);
-	run_test(instance, factory, test_no_keepalive);
-	run_test(instance, factory, test_ignored_request_body);
-	run_test(instance, factory, test_expect_100_continue_splice);
-	run_test(instance, factory, test_many_small_chunks);
-}
+REGISTER_TYPED_TEST_CASE_P(HttpClientTest,
+			   NoKeepalive,
+			   IgnoredRequestBody,
+			   Expect100ContinueSplice,
+			   ManySmallChunks);
 
 class NopSocketFilterFactory final : public SocketFilterFactory {
 public:
@@ -526,14 +533,29 @@ public:
 	}
 };
 
-int
-main(int, char **)
-{
-	SetupProcess();
+class NullHttpClientFactory final : public HttpClientFactory {
+public:
+	explicit NullHttpClientFactory(EventLoop &) noexcept
+		:HttpClientFactory(nullptr) {}
+};
 
-	Instance instance;
+INSTANTIATE_TYPED_TEST_CASE_P(HttpClient, ClientTest, NullHttpClientFactory);
+INSTANTIATE_TYPED_TEST_CASE_P(HttpClient, HttpClientTest, NullHttpClientFactory);
 
-	RunHttpClientTests(instance, nullptr);
-	RunHttpClientTests(instance, std::make_unique<NopSocketFilterFactory>());
-	RunHttpClientTests(instance, std::make_unique<NopThreadSocketFilterFactory>(instance.event_loop));
-}
+class NopHttpClientFactory final : public HttpClientFactory {
+public:
+	explicit NopHttpClientFactory(EventLoop &) noexcept
+		:HttpClientFactory(std::make_unique<NopSocketFilterFactory>()) {}
+};
+
+INSTANTIATE_TYPED_TEST_CASE_P(HttpClientNop, ClientTest, NopHttpClientFactory);
+INSTANTIATE_TYPED_TEST_CASE_P(HttpClientNop, HttpClientTest, NopHttpClientFactory);
+
+class NopThreadHttpClientFactory final : public HttpClientFactory {
+public:
+	explicit NopThreadHttpClientFactory(EventLoop &event_loop) noexcept
+		:HttpClientFactory(std::make_unique<NopThreadSocketFilterFactory>(event_loop)) {}
+};
+
+INSTANTIATE_TYPED_TEST_CASE_P(HttpClientNopThread, ClientTest, NopThreadHttpClientFactory);
+INSTANTIATE_TYPED_TEST_CASE_P(HttpClientNopThread, HttpClientTest, NopThreadHttpClientFactory);

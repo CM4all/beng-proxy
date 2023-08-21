@@ -290,6 +290,15 @@ struct FcgiClientFactory {
 		.enable_excess_data = true,
 	};
 
+	explicit FcgiClientFactory(EventLoop &) noexcept {}
+
+	~FcgiClientFactory() noexcept {
+		int status;
+		while (wait(&status) > 0) {
+			assert(!WIFSIGNALED(status));
+		}
+	}
+
 	static FcgiClientConnection *New(EventLoop &event_loop,
 					 void (*f)(struct pool *pool));
 
@@ -406,9 +415,14 @@ FcgiClientConnection::~FcgiClientConnection() noexcept
 	assert(!WIFSIGNALED(status));
 }
 
-static void
-test_malformed_header_name(auto &factory, Context &c) noexcept
+INSTANTIATE_TYPED_TEST_CASE_P(FcgiClient, ClientTest, FcgiClientFactory);
+
+TEST(FcgiClient, MalformedHeaderName)
 {
+	Instance instance;
+	FcgiClientFactory factory{instance.event_loop};
+	Context c{instance};
+
 	c.connection = factory.NewMalformedHeaderName(*c.pool, c.event_loop);
 	c.connection->Request(c.pool, c,
 			      HttpMethod::GET, "/foo", {},
@@ -419,14 +433,17 @@ test_malformed_header_name(auto &factory, Context &c) noexcept
 
 	c.event_loop.Run();
 
-	assert(c.status == HttpStatus{});
-	assert(c.request_error);
-	assert(c.released);
+	EXPECT_EQ(c.status, HttpStatus{});
+	EXPECT_TRUE(c.request_error);
+	EXPECT_TRUE(c.released);
 }
 
-static void
-test_malformed_header_value(auto &factory, Context &c) noexcept
+TEST(FcgiClient, MalformedHeaderValue)
 {
+	Instance instance;
+	FcgiClientFactory factory{instance.event_loop};
+	Context c{instance};
+
 	c.connection = factory.NewMalformedHeaderValue(*c.pool, c.event_loop);
 	c.connection->Request(c.pool, c,
 			      HttpMethod::GET, "/foo", {},
@@ -437,30 +454,7 @@ test_malformed_header_value(auto &factory, Context &c) noexcept
 
 	c.event_loop.Run();
 
-	assert(c.status == HttpStatus{});
-	assert(c.request_error);
-	assert(c.released);
-}
-
-/*
- * main
- *
- */
-
-int
-main(int, char **)
-{
-	SetupProcess();
-
-	Instance instance;
-	FcgiClientFactory factory;
-
-	run_all_tests(instance, factory);
-	run_test(instance, factory, test_malformed_header_name);
-	run_test(instance, factory, test_malformed_header_value);
-
-	int status;
-	while (wait(&status) > 0) {
-		assert(!WIFSIGNALED(status));
-	}
+	EXPECT_EQ(c.status, HttpStatus{});
+	EXPECT_TRUE(c.request_error);
+	EXPECT_TRUE(c.released);
 }

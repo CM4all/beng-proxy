@@ -26,6 +26,9 @@
 #include "util/Exception.hxx"
 #include "AllocatorPtr.hxx"
 
+#include <gtest/gtest.h>
+#include <gtest/gtest-typed-test.h>
+
 #include <stdexcept>
 
 #include <string.h>
@@ -64,6 +67,12 @@ public:
 
 	virtual void InjectSocketFailure() noexcept = 0;
 };
+
+template<typename T>
+class ClientTest : public ::testing::Test {
+};
+
+TYPED_TEST_CASE_P(ClientTest);
 
 struct Instance final : TestInstance {
 };
@@ -211,9 +220,12 @@ struct Context final
  *
  */
 
-static void
-test_empty(auto &factory, Context &c) noexcept
+TYPED_TEST_P(ClientTest, Empty)
 {
+	Instance instance;
+	TypeParam factory{instance.event_loop};
+	Context c{instance};
+
 	c.connection = factory.NewMirror(*c.pool, c.event_loop);
 	c.connection->Request(c.pool, c,
 			      HttpMethod::GET, "/foo", {},
@@ -224,20 +236,23 @@ test_empty(auto &factory, Context &c) noexcept
 
 	c.event_loop.Run();
 
-	assert(c.released);
-	assert(c.connection == nullptr);
-	assert(c.status == HttpStatus::NO_CONTENT);
-	assert(c.content_length == nullptr);
-	assert(!c.HasInput());
-	assert(!c.body_eof);
-	assert(!c.request_error);
-	assert(c.body_error == nullptr);
-	assert(c.reuse);
+	EXPECT_TRUE(c.released);
+	EXPECT_EQ(c.connection, nullptr);
+	EXPECT_EQ(c.status, HttpStatus::NO_CONTENT);
+	EXPECT_EQ(c.content_length, nullptr);
+	EXPECT_FALSE(c.HasInput());
+	EXPECT_FALSE(c.body_eof);
+	EXPECT_FALSE(c.request_error);
+	EXPECT_EQ(c.body_error, nullptr);
+	EXPECT_TRUE(c.reuse);
 }
 
-static void
-test_body(auto &factory, Context &c) noexcept
+TYPED_TEST_P(ClientTest, Body)
 {
+	Instance instance;
+	TypeParam factory{instance.event_loop};
+	Context c{instance};
+
 	c.connection = factory.NewMirror(*c.pool, c.event_loop);
 	c.connection->Request(c.pool, c,
 			      HttpMethod::GET, "/foo", {},
@@ -247,28 +262,64 @@ test_body(auto &factory, Context &c) noexcept
 
 	c.WaitForResponse();
 
-	assert(c.status == HttpStatus::OK);
-	assert(!c.request_error);
-	assert(c.content_length == nullptr);
-	assert(c.available == 6);
+	EXPECT_EQ(c.status, HttpStatus::OK);
+	EXPECT_FALSE(c.request_error);
+	EXPECT_EQ(c.content_length, nullptr);
+	EXPECT_EQ(c.available, 6);
 
 	c.WaitForFirstBodyByte();
 	c.WaitReleased();
 
-	assert(c.released);
-	assert(c.body_eof);
-	assert(c.body_data == 6);
-	assert(c.body_error == nullptr);
-	assert(c.reuse);
+	EXPECT_TRUE(c.released);
+	EXPECT_TRUE(c.body_eof);
+	EXPECT_EQ(c.body_data, 6);
+	EXPECT_EQ(c.body_error, nullptr);
+	EXPECT_TRUE(c.reuse);
+}
+
+TYPED_TEST_P(ClientTest, BodyBuckets)
+{
+	Instance instance;
+	TypeParam factory{instance.event_loop};
+	Context c{instance};
+
+	c.use_buckets = true;
+	c.read_after_buckets = true;
+
+	c.connection = factory.NewMirror(*c.pool, c.event_loop);
+	c.connection->Request(c.pool, c,
+			      HttpMethod::GET, "/foo", {},
+			      istream_string_new(*c.pool, "foobar"),
+			      false,
+			      c, c.cancel_ptr);
+
+	c.WaitForResponse();
+
+	EXPECT_EQ(c.status, HttpStatus::OK);
+	EXPECT_FALSE(c.request_error);
+	EXPECT_EQ(c.content_length, nullptr);
+	EXPECT_EQ(c.available, 6);
+
+	c.WaitForFirstBodyByte();
+	c.WaitReleased();
+
+	EXPECT_TRUE(c.released);
+	EXPECT_TRUE(c.body_eof);
+	EXPECT_EQ(c.body_data, 6);
+	EXPECT_EQ(c.body_error, nullptr);
+	EXPECT_TRUE(c.reuse);
 }
 
 /**
  * Call istream_read() on the response body from inside the response
  * callback.
  */
-static void
-test_read_body(auto &factory, Context &c) noexcept
+TYPED_TEST_P(ClientTest, ReadBody)
 {
+	Instance instance;
+	TypeParam factory{instance.event_loop};
+	Context c{instance};
+
 	c.read_response_body = true;
 	c.connection = factory.NewMirror(*c.pool, c.event_loop);
 	c.connection->Request(c.pool, c,
@@ -279,23 +330,29 @@ test_read_body(auto &factory, Context &c) noexcept
 
 	c.event_loop.Run();
 
-	assert(c.released);
-	assert(c.status == HttpStatus::OK);
-	assert(c.content_length == nullptr);
-	assert(c.available == 6);
-	assert(c.body_eof);
-	assert(c.body_data == 6);
-	assert(!c.request_error);
-	assert(c.body_error == nullptr);
-	assert(c.reuse);
+	EXPECT_TRUE(c.released);
+	EXPECT_EQ(c.status, HttpStatus::OK);
+	EXPECT_EQ(c.content_length, nullptr);
+	EXPECT_EQ(c.available, 6);
+	EXPECT_TRUE(c.body_eof);
+	EXPECT_EQ(c.body_data, 6);
+	EXPECT_FALSE(c.request_error);
+	EXPECT_EQ(c.body_error, nullptr);
+	EXPECT_TRUE(c.reuse);
 }
 
 /**
  * A huge response body with declared Content-Length.
  */
-static void
-test_huge(auto &factory, Context &c) noexcept
+TYPED_TEST_P(ClientTest, Huge)
 {
+	Instance instance;
+	TypeParam factory{instance.event_loop};
+	if constexpr (!factory.options.enable_huge_body)
+		GTEST_SKIP();
+
+	Context c{instance};
+
 	c.read_response_body = true;
 	c.close_response_body_data = true;
 	c.connection = factory.NewHuge(*c.pool, c.event_loop);
@@ -307,18 +364,74 @@ test_huge(auto &factory, Context &c) noexcept
 
 	c.event_loop.Run();
 
-	assert(c.released);
-	assert(c.status == HttpStatus::OK);
-	assert(c.available >= 65536);
-	assert(!c.body_eof);
-	assert(c.body_data > 0);
-	assert(!c.request_error);
-	assert(c.body_error == nullptr);
+	EXPECT_TRUE(c.released);
+	EXPECT_EQ(c.status, HttpStatus::OK);
+	EXPECT_TRUE(c.available >= 65536);
+	EXPECT_FALSE(c.body_eof);
+	EXPECT_TRUE(c.body_data > 0);
+	EXPECT_FALSE(c.request_error);
+	EXPECT_EQ(c.body_error, nullptr);
 }
 
-static void
-test_close_response_body_early(auto &factory, Context &c) noexcept
+TYPED_TEST_P(ClientTest, HugeBuckets)
 {
+	Instance instance;
+	TypeParam factory{instance.event_loop};
+	if constexpr (!factory.options.enable_huge_body)
+		GTEST_SKIP();
+
+	Context c{instance};
+
+	c.use_buckets = true;
+	c.read_after_buckets = true;
+
+	c.read_response_body = true;
+	c.close_response_body_data = true;
+	c.connection = factory.NewHuge(*c.pool, c.event_loop);
+	c.connection->Request(c.pool, c,
+			      HttpMethod::GET, "/foo", {},
+			      nullptr,
+			      false,
+			      c, c.cancel_ptr);
+
+	c.event_loop.Run();
+
+	EXPECT_TRUE(c.released);
+	EXPECT_EQ(c.status, HttpStatus::OK);
+	EXPECT_TRUE(c.available >= 65536);
+	EXPECT_FALSE(c.body_eof);
+	EXPECT_TRUE(c.body_data > 0);
+	EXPECT_FALSE(c.request_error);
+	EXPECT_EQ(c.body_error, nullptr);
+}
+
+TYPED_TEST_P(ClientTest, CancelNop)
+{
+	Instance instance;
+	TypeParam factory{instance.event_loop};
+	Context c{instance};
+
+	c.connection = factory.NewNop(*c.pool, c.event_loop);
+	c.connection->Request(c.pool, c,
+			      HttpMethod::POST, "/foo", {},
+			      istream_null_new(*c.pool),
+			      false,
+			      c, c.cancel_ptr);
+
+	c.cancel_ptr.Cancel();
+
+	/* let ThreadSocketFilter::postponed_destroy finish */
+	c.event_loop.Run();
+
+	EXPECT_TRUE(c.released);
+}
+
+TYPED_TEST_P(ClientTest, CloseResponseBodyEarly)
+{
+	Instance instance;
+	TypeParam factory{instance.event_loop};
+	Context c{instance};
+
 	c.close_response_body_early = true;
 	c.connection = factory.NewMirror(*c.pool, c.event_loop);
 	c.connection->Request(c.pool, c,
@@ -329,20 +442,23 @@ test_close_response_body_early(auto &factory, Context &c) noexcept
 
 	c.event_loop.Run();
 
-	assert(c.released);
-	assert(c.status == HttpStatus::OK);
-	assert(c.content_length == nullptr);
-	assert(c.available == 6);
-	assert(!c.HasInput());
-	assert(c.body_data == 0);
-	assert(!c.body_eof);
-	assert(!c.request_error);
-	assert(c.body_error == nullptr);
+	EXPECT_TRUE(c.released);
+	EXPECT_EQ(c.status, HttpStatus::OK);
+	EXPECT_EQ(c.content_length, nullptr);
+	EXPECT_EQ(c.available, 6);
+	EXPECT_FALSE(c.HasInput());
+	EXPECT_EQ(c.body_data, 0);
+	EXPECT_FALSE(c.body_eof);
+	EXPECT_FALSE(c.request_error);
+	EXPECT_EQ(c.body_error, nullptr);
 }
 
-static void
-test_close_response_body_late(auto &factory, Context &c) noexcept
+TYPED_TEST_P(ClientTest, CloseResponseBodyLate)
 {
+	Instance instance;
+	TypeParam factory{instance.event_loop};
+	Context c{instance};
+
 	c.close_response_body_late = true;
 	c.connection = factory.NewMirror(*c.pool, c.event_loop);
 	c.connection->Request(c.pool, c,
@@ -353,21 +469,24 @@ test_close_response_body_late(auto &factory, Context &c) noexcept
 
 	c.event_loop.Run();
 
-	assert(c.released);
-	assert(c.status == HttpStatus::OK);
-	assert(c.content_length == nullptr);
-	assert(c.available == 6);
-	assert(!c.HasInput());
-	assert(c.body_data == 0);
-	assert(!c.body_eof);
-	assert(c.body_closed);
-	assert(!c.request_error);
-	assert(c.body_error == nullptr);
+	EXPECT_TRUE(c.released);
+	EXPECT_EQ(c.status, HttpStatus::OK);
+	EXPECT_EQ(c.content_length, nullptr);
+	EXPECT_EQ(c.available, 6);
+	EXPECT_FALSE(c.HasInput());
+	EXPECT_EQ(c.body_data, 0);
+	EXPECT_FALSE(c.body_eof);
+	EXPECT_TRUE(c.body_closed);
+	EXPECT_FALSE(c.request_error);
+	EXPECT_EQ(c.body_error, nullptr);
 }
 
-static void
-test_close_response_body_data(auto &factory, Context &c) noexcept
+TYPED_TEST_P(ClientTest, CloseResponseBodyData)
 {
+	Instance instance;
+	TypeParam factory{instance.event_loop};
+	Context c{instance};
+
 	c.close_response_body_data = true;
 	c.connection = factory.NewMirror(*c.pool, c.event_loop);
 	c.connection->Request(c.pool, c,
@@ -378,24 +497,27 @@ test_close_response_body_data(auto &factory, Context &c) noexcept
 
 	c.WaitForResponse();
 
-	assert(c.status == HttpStatus::OK);
-	assert(!c.request_error);
-	assert(c.content_length == nullptr);
-	assert(c.available == 6);
+	EXPECT_EQ(c.status, HttpStatus::OK);
+	EXPECT_FALSE(c.request_error);
+	EXPECT_EQ(c.content_length, nullptr);
+	EXPECT_EQ(c.available, 6);
 
 	c.WaitForFirstBodyByte();
 
-	assert(c.released);
-	assert(!c.HasInput());
-	assert(c.body_data == 6);
-	assert(!c.body_eof);
-	assert(c.body_closed);
-	assert(c.body_error == nullptr);
+	EXPECT_TRUE(c.released);
+	EXPECT_FALSE(c.HasInput());
+	EXPECT_EQ(c.body_data, 6);
+	EXPECT_FALSE(c.body_eof);
+	EXPECT_TRUE(c.body_closed);
+	EXPECT_EQ(c.body_error, nullptr);
 }
 
-static void
-test_close_response_body_after(auto &factory, Context &c) noexcept
+TYPED_TEST_P(ClientTest, CloseResponseBodyAfter)
 {
+	Instance instance;
+	TypeParam factory{instance.event_loop};
+	Context c{instance};
+
 	c.close_response_body_after = 16384;
 	c.connection = factory.NewHuge(*c.pool, c.event_loop);
 	c.connection->Request(c.pool, c,
@@ -406,19 +528,19 @@ test_close_response_body_after(auto &factory, Context &c) noexcept
 
 	c.WaitForResponse();
 
-	assert(c.status == HttpStatus::OK);
-	assert(!c.request_error);
-	assert(c.content_length == nullptr);
-	assert(c.available == 524288);
+	EXPECT_EQ(c.status, HttpStatus::OK);
+	EXPECT_FALSE(c.request_error);
+	EXPECT_EQ(c.content_length, nullptr);
+	EXPECT_EQ(c.available, 524288);
 
 	c.event_loop.Run();
 
-	assert(c.released);
-	assert(!c.HasInput());
-	assert(c.body_data >= 16384);
-	assert(!c.body_eof);
-	assert(c.body_closed);
-	assert(c.body_error == nullptr);
+	EXPECT_TRUE(c.released);
+	EXPECT_FALSE(c.HasInput());
+	EXPECT_TRUE(c.body_data >= 16384);
+	EXPECT_FALSE(c.body_eof);
+	EXPECT_TRUE(c.body_closed);
+	EXPECT_EQ(c.body_error, nullptr);
 }
 
 inline UnusedIstreamPtr
@@ -440,9 +562,12 @@ make_delayed_request_body(Context &c) noexcept
 	return std::move(delayed.first);
 }
 
-static void
-test_close_request_body_early(auto &factory, Context &c) noexcept
+TYPED_TEST_P(ClientTest, CloseRequestBodyEarly)
 {
+	Instance instance;
+	TypeParam factory{instance.event_loop};
+	Context c{instance};
+
 	c.connection = factory.NewMirror(*c.pool, c.event_loop);
 	c.connection->Request(c.pool, c,
 			      HttpMethod::GET, "/foo", {},
@@ -456,18 +581,21 @@ test_close_request_body_early(auto &factory, Context &c) noexcept
 
 	c.event_loop.Run();
 
-	assert(c.released);
-	assert(c.status == HttpStatus{});
-	assert(!c.HasInput());
-	assert(!c.body_eof);
-	assert(c.body_error == nullptr);
-	assert(c.request_error != nullptr);
-	assert(strstr(GetFullMessage(c.request_error).c_str(), error.what()) != nullptr);
+	EXPECT_TRUE(c.released);
+	EXPECT_EQ(c.status, HttpStatus{});
+	EXPECT_FALSE(c.HasInput());
+	EXPECT_FALSE(c.body_eof);
+	EXPECT_EQ(c.body_error, nullptr);
+	EXPECT_NE(c.request_error, nullptr);
+	EXPECT_NE(strstr(GetFullMessage(c.request_error).c_str(), error.what()), nullptr);
 }
 
-static void
-test_close_request_body_fail(auto &factory, Context &c) noexcept
+TYPED_TEST_P(ClientTest, CloseRequestBodyFail)
 {
+	Instance instance;
+	TypeParam factory{instance.event_loop};
+	Context c{instance};
+
 	auto delayed = istream_delayed_new(*c.pool, c.event_loop);
 	auto request_body =
 		NewConcatIstream(*c.pool,
@@ -486,30 +614,33 @@ test_close_request_body_fail(auto &factory, Context &c) noexcept
 
 	c.event_loop.Run();
 
-	assert(c.released);
-	assert(c.status == HttpStatus::OK);
-	assert(c.content_length == nullptr);
+	EXPECT_TRUE(c.released);
+	EXPECT_EQ(c.status, HttpStatus::OK);
+	EXPECT_EQ(c.content_length, nullptr);
 	if (factory.options.have_chunked_request_body) {
-		assert(c.available == -1);
+		EXPECT_EQ(c.available, -1);
 	} else {
-		assert(c.available == HEAD_SIZE);
+		EXPECT_EQ(c.available, HEAD_SIZE);
 	}
-	assert(!c.HasInput());
-	assert(!c.body_eof);
-	assert(c.body_error);
+	EXPECT_FALSE(c.HasInput());
+	EXPECT_FALSE(c.body_eof);
+	EXPECT_TRUE(c.body_error);
 
 	if (!c.request_error) {
 		c.request_error = std::exchange(c.body_error, std::exception_ptr());
 	}
 
-	assert(c.request_error != nullptr);
-	assert(strstr(GetFullMessage(c.request_error).c_str(), "delayed_fail") != nullptr);
-	assert(c.body_error == nullptr);
+	EXPECT_NE(c.request_error, nullptr);
+	EXPECT_NE(strstr(GetFullMessage(c.request_error).c_str(), "delayed_fail"), nullptr);
+	EXPECT_EQ(c.body_error, nullptr);
 }
 
-static void
-test_data_blocking(auto &factory, Context &c) noexcept
+TYPED_TEST_P(ClientTest, DataBlocking)
 {
+	Instance instance;
+	TypeParam factory{instance.event_loop};
+	Context c{instance};
+
 	auto [request_body, approve_control] =
 		NewApproveIstream(*c.pool, c.event_loop,
 				  istream_head_new(*c.pool,
@@ -527,21 +658,21 @@ test_data_blocking(auto &factory, Context &c) noexcept
 
 	c.WaitForResponse();
 
-	assert(!c.request_error);
-	assert(c.status == HttpStatus::OK);
-	assert(c.content_length == nullptr);
+	EXPECT_FALSE(c.request_error);
+	EXPECT_EQ(c.status, HttpStatus::OK);
+	EXPECT_EQ(c.content_length, nullptr);
 	if (factory.options.have_chunked_request_body) {
-		assert(c.available == -1);
+		EXPECT_EQ(c.available, -1);
 	} else {
-		assert(c.available == HEAD_SIZE);
+		EXPECT_EQ(c.available, HEAD_SIZE);
 	}
-	assert(c.HasInput());
-	assert(!c.released);
+	EXPECT_TRUE(c.HasInput());
+	EXPECT_FALSE(c.released);
 
 	approve_control->Approve(16);
 
 	while (c.data_blocking > 0) {
-		assert(c.HasInput());
+		EXPECT_TRUE(c.HasInput());
 
 		const unsigned old_data_blocking = c.data_blocking;
 		c.ReadBody();
@@ -552,19 +683,19 @@ test_data_blocking(auto &factory, Context &c) noexcept
 
 	approve_control.reset();
 
-	assert(!c.released);
-	assert(c.HasInput());
-	assert(c.body_data > 0);
-	assert(!c.body_eof);
-	assert(!c.request_error);
-	assert(c.body_error == nullptr);
+	EXPECT_FALSE(c.released);
+	EXPECT_TRUE(c.HasInput());
+	EXPECT_TRUE(c.body_data > 0);
+	EXPECT_FALSE(c.body_eof);
+	EXPECT_FALSE(c.request_error);
+	EXPECT_EQ(c.body_error, nullptr);
 
 	c.CloseInput();
 
-	assert(c.released);
-	assert(!c.body_eof);
-	assert(!c.request_error);
-	assert(c.body_error == nullptr);
+	EXPECT_TRUE(c.released);
+	EXPECT_FALSE(c.body_eof);
+	EXPECT_FALSE(c.request_error);
+	EXPECT_EQ(c.body_error, nullptr);
 
 	/* flush all remaining events */
 	c.event_loop.Run();
@@ -574,9 +705,12 @@ test_data_blocking(auto &factory, Context &c) noexcept
  * This produces a closed socket while the HTTP client has data left
  * in the buffer.
  */
-static void
-test_data_blocking2(auto &factory, Context &c) noexcept
+TYPED_TEST_P(ClientTest, DataBlocking2)
 {
+	Instance instance;
+	TypeParam factory{instance.event_loop};
+	Context c{instance};
+
 	StringMap request_headers;
 	request_headers.Add(*c.pool, "connection", "close");
 
@@ -593,8 +727,8 @@ test_data_blocking2(auto &factory, Context &c) noexcept
 
 	c.WaitForResponse();
 
-	assert(c.status == HttpStatus::OK);
-	assert(!c.request_error);
+	EXPECT_EQ(c.status, HttpStatus::OK);
+	EXPECT_FALSE(c.request_error);
 
 	c.WaitForFirstBodyByte();
 
@@ -602,26 +736,29 @@ test_data_blocking2(auto &factory, Context &c) noexcept
 	   yet */
 	if (!factory.options.no_early_release_socket)
 		c.WaitReleased();
-	assert(c.content_length == nullptr);
-	assert(c.available == body_size);
-	assert(c.HasInput());
-	assert(!c.body_eof);
-	assert(c.consumed_body_data < (off_t)body_size);
-	assert(c.body_error == nullptr);
+	EXPECT_EQ(c.content_length, nullptr);
+	EXPECT_EQ(c.available, body_size);
+	EXPECT_TRUE(c.HasInput());
+	EXPECT_FALSE(c.body_eof);
+	EXPECT_TRUE(c.consumed_body_data < (off_t)body_size);
+	EXPECT_EQ(c.body_error, nullptr);
 
 	/* receive the rest of the response body from the buffer */
 	c.WaitForEndOfBody();
 
-	assert(c.released);
-	assert(c.body_eof);
-	assert(c.consumed_body_data == body_size);
-	assert(!c.request_error);
-	assert(c.body_error == nullptr);
+	EXPECT_TRUE(c.released);
+	EXPECT_TRUE(c.body_eof);
+	EXPECT_EQ(c.consumed_body_data, body_size);
+	EXPECT_FALSE(c.request_error);
+	EXPECT_EQ(c.body_error, nullptr);
 }
 
-static void
-test_body_fail(auto &factory, Context &c) noexcept
+TYPED_TEST_P(ClientTest, BodyFail)
 {
+	Instance instance;
+	TypeParam factory{instance.event_loop};
+	Context c{instance};
+
 	c.connection = factory.NewMirror(*c.pool, c.event_loop);
 
 	const std::runtime_error error("body_fail");
@@ -635,21 +772,24 @@ test_body_fail(auto &factory, Context &c) noexcept
 
 	c.event_loop.Run();
 
-	assert(c.released);
-	assert(c.aborted || c.body_error);
+	EXPECT_TRUE(c.released);
+	EXPECT_TRUE(c.aborted || c.body_error);
 
 	if (c.body_error != nullptr && !c.request_error) {
 		c.request_error = std::exchange(c.body_error, std::exception_ptr());
 	}
 
-	assert(c.request_error != nullptr);
-	assert(strstr(GetFullMessage(c.request_error).c_str(), error.what()) != nullptr);
-	assert(c.body_error == nullptr);
+	EXPECT_NE(c.request_error, nullptr);
+	EXPECT_NE(strstr(GetFullMessage(c.request_error).c_str(), error.what()), nullptr);
+	EXPECT_EQ(c.body_error, nullptr);
 }
 
-static void
-test_head(auto &factory, Context &c) noexcept
+TYPED_TEST_P(ClientTest, Head)
 {
+	Instance instance;
+	TypeParam factory{instance.event_loop};
+	Context c{instance};
+
 	c.connection = factory.NewMirror(*c.pool, c.event_loop);
 	c.connection->Request(c.pool, c,
 			      HttpMethod::HEAD, "/foo", {},
@@ -659,25 +799,28 @@ test_head(auto &factory, Context &c) noexcept
 
 	c.event_loop.Run();
 
-	assert(c.released);
-	assert(c.connection == nullptr);
-	assert(c.status == HttpStatus::OK);
-	assert(c.content_length != nullptr);
-	assert(strcmp(c.content_length, "6") == 0);
-	assert(!c.HasInput());
-	assert(!c.body_eof);
-	assert(!c.request_error);
-	assert(c.body_error == nullptr);
-	assert(c.reuse);
+	EXPECT_TRUE(c.released);
+	EXPECT_EQ(c.connection, nullptr);
+	EXPECT_EQ(c.status, HttpStatus::OK);
+	EXPECT_NE(c.content_length, nullptr);
+	EXPECT_EQ(strcmp(c.content_length, "6"), 0);
+	EXPECT_FALSE(c.HasInput());
+	EXPECT_FALSE(c.body_eof);
+	EXPECT_FALSE(c.request_error);
+	EXPECT_EQ(c.body_error, nullptr);
+	EXPECT_TRUE(c.reuse);
 }
 
 /**
  * Send a HEAD request.  The server sends a response body, and the
  * client library is supposed to discard it.
  */
-static void
-test_head_discard(auto &factory, Context &c) noexcept
+TYPED_TEST_P(ClientTest, HeadDiscard)
 {
+	Instance instance;
+	TypeParam factory{instance.event_loop};
+	Context c{instance};
+
 	c.connection = factory.NewFixed(*c.pool, c.event_loop);
 	c.connection->Request(c.pool, c,
 			      HttpMethod::HEAD, "/foo", {},
@@ -687,22 +830,25 @@ test_head_discard(auto &factory, Context &c) noexcept
 
 	c.event_loop.Run();
 
-	assert(c.released);
-	assert(c.connection == nullptr);
-	assert(c.status == HttpStatus::OK);
-	assert(!c.HasInput());
-	assert(!c.body_eof);
-	assert(!c.request_error);
-	assert(c.body_error == nullptr);
-	assert(c.reuse);
+	EXPECT_TRUE(c.released);
+	EXPECT_EQ(c.connection, nullptr);
+	EXPECT_EQ(c.status, HttpStatus::OK);
+	EXPECT_FALSE(c.HasInput());
+	EXPECT_FALSE(c.body_eof);
+	EXPECT_FALSE(c.request_error);
+	EXPECT_EQ(c.body_error, nullptr);
+	EXPECT_TRUE(c.reuse);
 }
 
 /**
  * Same as test_head_discard(), but uses factory.NewTiny)(*c.pool).
  */
-static void
-test_head_discard2(auto &factory, Context &c) noexcept
+TYPED_TEST_P(ClientTest, HeadDiscard2)
 {
+	Instance instance;
+	TypeParam factory{instance.event_loop};
+	Context c{instance};
+
 	c.connection = factory.NewTiny(*c.pool, c.event_loop);
 	c.connection->Request(c.pool, c,
 			      HttpMethod::HEAD, "/foo", {},
@@ -712,22 +858,25 @@ test_head_discard2(auto &factory, Context &c) noexcept
 
 	c.event_loop.Run();
 
-	assert(c.released);
-	assert(c.connection == nullptr);
-	assert(c.status == HttpStatus::OK);
-	assert(c.content_length != nullptr);
+	EXPECT_TRUE(c.released);
+	EXPECT_EQ(c.connection, nullptr);
+	EXPECT_EQ(c.status, HttpStatus::OK);
+	EXPECT_NE(c.content_length, nullptr);
 	[[maybe_unused]]
 		unsigned long content_length = strtoul(c.content_length, nullptr, 10);
-	assert(content_length == 5 || content_length == 256);
-	assert(!c.HasInput());
-	assert(!c.body_eof);
-	assert(!c.request_error);
-	assert(c.body_error == nullptr);
+	EXPECT_TRUE(content_length == 5 || content_length == 256);
+	EXPECT_FALSE(c.HasInput());
+	EXPECT_FALSE(c.body_eof);
+	EXPECT_FALSE(c.request_error);
+	EXPECT_EQ(c.body_error, nullptr);
 }
 
-static void
-test_ignored_body(auto &factory, Context &c) noexcept
+TYPED_TEST_P(ClientTest, IgnoredBody)
 {
+	Instance instance;
+	TypeParam factory{instance.event_loop};
+	Context c{instance};
+
 	c.connection = factory.NewNull(*c.pool, c.event_loop);
 	c.connection->Request(c.pool, c,
 			      HttpMethod::GET, "/foo", {},
@@ -738,23 +887,29 @@ test_ignored_body(auto &factory, Context &c) noexcept
 
 	c.event_loop.Run();
 
-	assert(c.released);
-	assert(c.connection == nullptr);
-	assert(c.status == HttpStatus::NO_CONTENT);
-	assert(c.content_length == nullptr);
-	assert(!c.HasInput());
-	assert(!c.body_eof);
-	assert(!c.request_error);
-	assert(c.body_error == nullptr);
-	assert(!factory.options.can_cancel_request_body || c.reuse);
+	EXPECT_TRUE(c.released);
+	EXPECT_EQ(c.connection, nullptr);
+	EXPECT_EQ(c.status, HttpStatus::NO_CONTENT);
+	EXPECT_EQ(c.content_length, nullptr);
+	EXPECT_FALSE(c.HasInput());
+	EXPECT_FALSE(c.body_eof);
+	EXPECT_FALSE(c.request_error);
+	EXPECT_EQ(c.body_error, nullptr);
+	EXPECT_TRUE(!factory.options.can_cancel_request_body || c.reuse);
 }
 
 /**
  * Close request body in the response handler (with response body).
  */
-static void
-test_close_ignored_request_body(auto &factory, Context &c) noexcept
+TYPED_TEST_P(ClientTest, CloseIgnoredRequestBody)
 {
+	Instance instance;
+	TypeParam factory{instance.event_loop};
+	if constexpr (!factory.options.enable_close_ignored_request_body)
+		GTEST_SKIP();
+
+	Context c{instance};
+
 	c.connection = factory.NewNull(*c.pool, c.event_loop);
 	c.close_request_body_early = true;
 	c.connection->Request(c.pool, c,
@@ -766,23 +921,29 @@ test_close_ignored_request_body(auto &factory, Context &c) noexcept
 
 	c.event_loop.Run();
 
-	assert(c.released);
-	assert(c.connection == nullptr);
-	assert(c.status == HttpStatus::NO_CONTENT);
-	assert(c.content_length == nullptr);
-	assert(!c.HasInput());
-	assert(!c.body_eof);
-	assert(!c.request_error);
-	assert(c.body_error == nullptr);
+	EXPECT_TRUE(c.released);
+	EXPECT_EQ(c.connection, nullptr);
+	EXPECT_EQ(c.status, HttpStatus::NO_CONTENT);
+	EXPECT_EQ(c.content_length, nullptr);
+	EXPECT_FALSE(c.HasInput());
+	EXPECT_FALSE(c.body_eof);
+	EXPECT_FALSE(c.request_error);
+	EXPECT_EQ(c.body_error, nullptr);
 }
 
 /**
  * Close request body in the response handler, method HEAD (no
  * response body).
  */
-static void
-test_head_close_ignored_request_body(auto &factory, Context &c) noexcept
+TYPED_TEST_P(ClientTest, HeadCloseIgnoredRequestBody)
 {
+	Instance instance;
+	TypeParam factory{instance.event_loop};
+	if constexpr (!factory.options.enable_close_ignored_request_body)
+		GTEST_SKIP();
+
+	Context c{instance};
+
 	c.connection = factory.NewNull(*c.pool, c.event_loop);
 	c.close_request_body_early = true;
 	c.connection->Request(c.pool, c,
@@ -794,22 +955,28 @@ test_head_close_ignored_request_body(auto &factory, Context &c) noexcept
 
 	c.event_loop.Run();
 
-	assert(c.released);
-	assert(c.connection == nullptr);
-	assert(c.status == HttpStatus::NO_CONTENT);
-	assert(c.content_length == nullptr);
-	assert(!c.HasInput());
-	assert(!c.body_eof);
-	assert(!c.request_error);
-	assert(c.body_error == nullptr);
+	EXPECT_TRUE(c.released);
+	EXPECT_EQ(c.connection, nullptr);
+	EXPECT_EQ(c.status, HttpStatus::NO_CONTENT);
+	EXPECT_EQ(c.content_length, nullptr);
+	EXPECT_FALSE(c.HasInput());
+	EXPECT_FALSE(c.body_eof);
+	EXPECT_FALSE(c.request_error);
+	EXPECT_EQ(c.body_error, nullptr);
 }
 
 /**
  * Close request body in the response_eof handler.
  */
-static void
-test_close_request_body_eor(auto &factory, Context &c) noexcept
+TYPED_TEST_P(ClientTest, CloseRequestBodyEof)
 {
+	Instance instance;
+	TypeParam factory{instance.event_loop};
+	if constexpr (!factory.options.enable_close_ignored_request_body)
+		GTEST_SKIP();
+
+	Context c{instance};
+
 	c.connection = factory.NewDummy(*c.pool, c.event_loop);
 	c.close_request_body_eof = true;
 	c.connection->Request(c.pool, c,
@@ -821,22 +988,28 @@ test_close_request_body_eor(auto &factory, Context &c) noexcept
 
 	c.event_loop.Run();
 
-	assert(c.released);
-	assert(c.connection == nullptr);
-	assert(c.status == HttpStatus::OK);
-	assert(c.content_length == nullptr);
-	assert(!c.HasInput());
-	assert(c.body_eof);
-	assert(!c.request_error);
-	assert(c.body_error == nullptr);
+	EXPECT_TRUE(c.released);
+	EXPECT_EQ(c.connection, nullptr);
+	EXPECT_EQ(c.status, HttpStatus::OK);
+	EXPECT_EQ(c.content_length, nullptr);
+	EXPECT_FALSE(c.HasInput());
+	EXPECT_TRUE(c.body_eof);
+	EXPECT_FALSE(c.request_error);
+	EXPECT_EQ(c.body_error, nullptr);
 }
 
 /**
  * Close request body in the response_eof handler.
  */
-static void
-test_close_request_body_eor2(auto &factory, Context &c) noexcept
+TYPED_TEST_P(ClientTest, CloseRequestBodyEof2)
 {
+	Instance instance;
+	TypeParam factory{instance.event_loop};
+	if constexpr (!factory.options.enable_close_ignored_request_body)
+		GTEST_SKIP();
+
+	Context c{instance};
+
 	c.connection = factory.NewFixed(*c.pool, c.event_loop);
 	c.close_request_body_eof = true;
 	c.connection->Request(c.pool, c,
@@ -847,119 +1020,142 @@ test_close_request_body_eor2(auto &factory, Context &c) noexcept
 
 	c.event_loop.Run();
 
-	assert(c.released);
-	assert(c.connection == nullptr);
-	assert(c.status == HttpStatus::OK);
-	assert(c.content_length == nullptr);
-	assert(!c.HasInput());
-	assert(c.body_eof);
-	assert(!c.request_error);
-	assert(c.body_error == nullptr);
+	EXPECT_TRUE(c.released);
+	EXPECT_EQ(c.connection, nullptr);
+	EXPECT_EQ(c.status, HttpStatus::OK);
+	EXPECT_EQ(c.content_length, nullptr);
+	EXPECT_FALSE(c.HasInput());
+	EXPECT_TRUE(c.body_eof);
+	EXPECT_FALSE(c.request_error);
+	EXPECT_EQ(c.body_error, nullptr);
 }
 
 /**
  * Check if the HTTP client handles "100 Continue" received without
  * announcing the expectation.
  */
-template<typename Factory>
-static void
-test_bogus_100(Factory &factory, Context &c) noexcept
+TYPED_TEST_P(ClientTest, Bogus100)
 {
-	c.connection = factory.NewTwice100(*c.pool, c.event_loop);
-	c.connection->Request(c.pool, c,
-			      HttpMethod::GET, "/foo", {},
-			      nullptr, false,
-			      c, c.cancel_ptr);
+	Instance instance;
+	TypeParam factory{instance.event_loop};
+
+	if constexpr (factory.options.have_expect_100) {
+		Context c{instance};
+
+		c.connection = factory.NewTwice100(*c.pool, c.event_loop);
+		c.connection->Request(c.pool, c,
+				      HttpMethod::GET, "/foo", {},
+				      nullptr, false,
+				      c, c.cancel_ptr);
 
 
-	c.event_loop.Run();
+		c.event_loop.Run();
 
-	assert(c.released);
-	assert(c.aborted);
-	assert(c.request_error);
+		EXPECT_TRUE(c.released);
+		EXPECT_TRUE(c.aborted);
+		EXPECT_TRUE(c.request_error);
 
-	const auto *e = FindNested<typename Factory::Error>(c.request_error);
-	(void)e;
-	assert(e != nullptr);
-	assert(e->GetCode() == Factory::ErrorCode::UNSPECIFIED);
+		const auto *e = FindNested<typename TypeParam::Error>(c.request_error);
+		(void)e;
+		EXPECT_NE(e, nullptr);
+		EXPECT_EQ(e->GetCode(), TypeParam::ErrorCode::UNSPECIFIED);
 
-	assert(strstr(GetFullMessage(c.request_error).c_str(), "unexpected status 100") != nullptr);
-	assert(c.body_error == nullptr);
-	assert(!c.reuse);
+		EXPECT_NE(strstr(GetFullMessage(c.request_error).c_str(), "unexpected status 100"), nullptr);
+		EXPECT_EQ(c.body_error, nullptr);
+		EXPECT_FALSE(c.reuse);
+	} else
+		GTEST_SKIP();
+
 }
 
 /**
  * Check if the HTTP client handles "100 Continue" received twice
  * well.
  */
-template<typename Factory>
-static void
-test_twice_100(Factory &factory, Context &c) noexcept
+TYPED_TEST_P(ClientTest, Twice100)
 {
-	c.connection = factory.NewTwice100(*c.pool, c.event_loop);
-	auto delayed = istream_delayed_new(*c.pool, c.event_loop);
-	delayed.second.cancel_ptr = nullptr;
-	c.request_body = &delayed.second;
-	c.connection->Request(c.pool, c,
-			      HttpMethod::GET, "/foo", {},
-			      std::move(delayed.first),
-			      false,
-			      c, c.cancel_ptr);
+	Instance instance;
+	TypeParam factory{instance.event_loop};
 
-	c.event_loop.Run();
+	if constexpr (factory.options.have_expect_100) {
+		Context c{instance};
 
-	assert(c.released);
-	assert(c.aborted);
-	assert(c.request_error);
+		c.connection = factory.NewTwice100(*c.pool, c.event_loop);
+		auto delayed = istream_delayed_new(*c.pool, c.event_loop);
+		delayed.second.cancel_ptr = nullptr;
+		c.request_body = &delayed.second;
+		c.connection->Request(c.pool, c,
+				      HttpMethod::GET, "/foo", {},
+				      std::move(delayed.first),
+				      false,
+				      c, c.cancel_ptr);
 
-	const auto *e = FindNested<typename Factory::Error>(c.request_error);
-	(void)e;
-	assert(e != nullptr);
-	assert(e->GetCode() == Factory::ErrorCode::UNSPECIFIED);
+		c.event_loop.Run();
 
-	assert(strstr(GetFullMessage(c.request_error).c_str(), "unexpected status 100") != nullptr);
-	assert(c.body_error == nullptr);
-	assert(!c.reuse);
+		EXPECT_TRUE(c.released);
+		EXPECT_TRUE(c.aborted);
+		EXPECT_TRUE(c.request_error);
+
+		const auto *e = FindNested<typename TypeParam::Error>(c.request_error);
+		(void)e;
+		EXPECT_NE(e, nullptr);
+		EXPECT_EQ(e->GetCode(), TypeParam::ErrorCode::UNSPECIFIED);
+
+		EXPECT_NE(strstr(GetFullMessage(c.request_error).c_str(), "unexpected status 100"), nullptr);
+		EXPECT_EQ(c.body_error, nullptr);
+		EXPECT_FALSE(c.reuse);
+	} else
+		GTEST_SKIP();
+
 }
 
 /**
  * The server sends "100 Continue" and closes the socket.
  */
-template<typename Factory>
-static void
-test_close_100(Factory &factory, Context &c) noexcept
+TYPED_TEST_P(ClientTest, Close100)
 {
-	auto request_body = istream_delayed_new(*c.pool, c.event_loop);
-	request_body.second.cancel_ptr = nullptr;
+	Instance instance;
+	TypeParam factory{instance.event_loop};
 
-	c.connection = factory.NewClose100(*c.pool, c.event_loop);
-	c.connection->Request(c.pool, c,
-			      HttpMethod::POST, "/foo", {},
-			      std::move(request_body.first), true,
-			      c, c.cancel_ptr);
+	if constexpr (factory.options.have_expect_100) {
+		Context c{instance};
 
-	c.event_loop.Run();
+		auto request_body = istream_delayed_new(*c.pool, c.event_loop);
+		request_body.second.cancel_ptr = nullptr;
 
-	assert(c.released);
-	assert(c.aborted);
-	assert(c.request_error != nullptr);
-	assert(strstr(GetFullMessage(c.request_error).c_str(), "closed the socket prematurely") != nullptr ||
-	       /* the following two errors are not the primary error,
-		  but sometimes occur depending on the timing: */
-	       strstr(GetFullMessage(c.request_error).c_str(), "Connection reset by peer") != nullptr ||
-	       strstr(GetFullMessage(c.request_error).c_str(), "unexpected status 100") != nullptr);
-	assert(c.body_error == nullptr);
-	assert(!c.reuse);
+		c.connection = factory.NewClose100(*c.pool, c.event_loop);
+		c.connection->Request(c.pool, c,
+				      HttpMethod::POST, "/foo", {},
+				      std::move(request_body.first), true,
+				      c, c.cancel_ptr);
+
+		c.event_loop.Run();
+
+		EXPECT_TRUE(c.released);
+		EXPECT_TRUE(c.aborted);
+		EXPECT_NE(c.request_error, nullptr);
+		EXPECT_TRUE(strstr(GetFullMessage(c.request_error).c_str(), "closed the socket prematurely") != nullptr ||
+		       /* the following two errors are not the primary error,
+			  but sometimes occur depending on the timing: */
+		       strstr(GetFullMessage(c.request_error).c_str(), "Connection reset by peer") != nullptr ||
+		       strstr(GetFullMessage(c.request_error).c_str(), "unexpected status 100") != nullptr);
+		EXPECT_EQ(c.body_error, nullptr);
+		EXPECT_FALSE(c.reuse);
+	} else
+		GTEST_SKIP();
+
 }
 
 /**
  * Receive an empty response from the server while still sending the
  * request body.
  */
-template<typename Factory>
-static void
-test_no_body_while_sending(Factory &factory, Context &c) noexcept
+TYPED_TEST_P(ClientTest, NoBodyWhileSending)
 {
+	Instance instance;
+	TypeParam factory{instance.event_loop};
+	Context c{instance};
+
 	c.connection = factory.NewNull(*c.pool, c.event_loop);
 	c.connection->Request(c.pool, c,
 			      HttpMethod::GET, "/foo", {},
@@ -970,17 +1166,20 @@ test_no_body_while_sending(Factory &factory, Context &c) noexcept
 
 	c.event_loop.Run();
 
-	assert(c.released);
-	assert(c.status == HttpStatus::NO_CONTENT);
-	assert(!c.HasInput());
-	assert(!c.body_eof);
-	assert(!c.request_error);
-	assert(c.body_error == nullptr);
+	EXPECT_TRUE(c.released);
+	EXPECT_EQ(c.status, HttpStatus::NO_CONTENT);
+	EXPECT_FALSE(c.HasInput());
+	EXPECT_FALSE(c.body_eof);
+	EXPECT_FALSE(c.request_error);
+	EXPECT_EQ(c.body_error, nullptr);
 }
 
-static void
-test_hold(auto &factory, Context &c) noexcept
+TYPED_TEST_P(ClientTest, Hold)
 {
+	Instance instance;
+	TypeParam factory{instance.event_loop};
+	Context c{instance};
+
 	c.connection = factory.NewHold(*c.pool, c.event_loop);
 	c.connection->Request(c.pool, c,
 			      HttpMethod::GET, "/foo", {},
@@ -991,88 +1190,134 @@ test_hold(auto &factory, Context &c) noexcept
 
 	c.WaitForResponse();
 
-	assert(!c.released);
-	assert(c.status == HttpStatus::OK);
-	assert(c.HasInput());
-	assert(!c.body_eof);
-	assert(!c.request_error);
-	assert(!c.body_error);
-	assert(c.body_data == 0);
+	EXPECT_FALSE(c.released);
+	EXPECT_EQ(c.status, HttpStatus::OK);
+	EXPECT_TRUE(c.HasInput());
+	EXPECT_FALSE(c.body_eof);
+	EXPECT_FALSE(c.request_error);
+	EXPECT_FALSE(c.body_error);
+	EXPECT_EQ(c.body_data, 0);
 
 	c.RunFor(std::chrono::milliseconds{10});
 
-	assert(!c.released);
-	assert(c.HasInput());
-	assert(!c.body_eof);
-	assert(!c.request_error);
-	assert(!c.body_error);
-	assert(c.body_data == 0);
+	EXPECT_FALSE(c.released);
+	EXPECT_TRUE(c.HasInput());
+	EXPECT_FALSE(c.body_eof);
+	EXPECT_FALSE(c.request_error);
+	EXPECT_FALSE(c.body_error);
+	EXPECT_EQ(c.body_data, 0);
 
 	c.CloseInput();
 	c.event_loop.Run();
 
-	assert(c.released);
-	assert(!c.HasInput());
-	assert(!c.body_eof);
-	assert(!c.request_error);
-	assert(!c.body_error);
-	assert(c.body_data == 0);
+	EXPECT_TRUE(c.released);
+	EXPECT_FALSE(c.HasInput());
+	EXPECT_FALSE(c.body_eof);
+	EXPECT_FALSE(c.request_error);
+	EXPECT_FALSE(c.body_error);
+	EXPECT_EQ(c.body_data, 0);
 }
 
 /**
  * The server closes the connection before it finishes sending the
  * response headers.
  */
-static void
-test_premature_close_headers(auto &factory, Context &c) noexcept
+TYPED_TEST_P(ClientTest, PrematureCloseHeaders)
 {
-	c.connection = factory.NewPrematureCloseHeaders(*c.pool, c.event_loop);
-	c.connection->Request(c.pool, c,
-			      HttpMethod::GET, "/foo", {},
-			      nullptr,
-			      false,
-			      c, c.cancel_ptr);
+	Instance instance;
+	TypeParam factory{instance.event_loop};
+	if constexpr (!factory.options.enable_premature_close_headers) {
+		GTEST_SKIP();
+	} else {
+		Context c{instance};
 
-	c.event_loop.Run();
+		c.connection = factory.NewPrematureCloseHeaders(*c.pool, c.event_loop);
+		c.connection->Request(c.pool, c,
+				      HttpMethod::GET, "/foo", {},
+				      nullptr,
+				      false,
+				      c, c.cancel_ptr);
 
-	assert(c.released);
-	assert(c.status == HttpStatus{});
-	assert(!c.HasInput());
-	assert(!c.body_eof);
-	assert(!c.body_error);
-	assert(c.request_error != nullptr);
-	assert(!c.reuse);
+		c.event_loop.Run();
+
+		EXPECT_TRUE(c.released);
+		EXPECT_EQ(c.status, HttpStatus{});
+		EXPECT_FALSE(c.HasInput());
+		EXPECT_FALSE(c.body_eof);
+		EXPECT_FALSE(c.body_error);
+		EXPECT_NE(c.request_error, nullptr);
+		EXPECT_FALSE(c.reuse);
+	}
 }
 
 /**
  * The server closes the connection before it finishes sending the
  * response body.
  */
-static void
-test_premature_close_body(auto &factory, Context &c) noexcept
+TYPED_TEST_P(ClientTest, PrematureCloseBody)
 {
-	c.connection = factory.NewPrematureCloseBody(*c.pool, c.event_loop);
-	c.connection->Request(c.pool, c,
-			      HttpMethod::GET, "/foo", {}, nullptr,
-			      false,
-			      c, c.cancel_ptr);
+	Instance instance;
+	TypeParam factory{instance.event_loop};
+	if constexpr (!factory.options.enable_premature_close_body) {
+		GTEST_SKIP();
+	} else {
+		Context c{instance};
 
-	c.event_loop.Run();
+		c.connection = factory.NewPrematureCloseBody(*c.pool, c.event_loop);
+		c.connection->Request(c.pool, c,
+				      HttpMethod::GET, "/foo", {}, nullptr,
+				      false,
+				      c, c.cancel_ptr);
 
-	assert(c.released);
-	assert(c.status == HttpStatus::OK);
-	assert(!c.body_eof);
-	assert(!c.request_error);
-	assert(c.body_error != nullptr);
-	assert(!c.reuse);
+		c.event_loop.Run();
+
+		EXPECT_TRUE(c.released);
+		EXPECT_EQ(c.status, HttpStatus::OK);
+		EXPECT_FALSE(c.body_eof);
+		EXPECT_FALSE(c.request_error);
+		EXPECT_NE(c.body_error, nullptr);
+		EXPECT_FALSE(c.reuse);
+	}
+}
+
+TYPED_TEST_P(ClientTest, PrematureCloseBodyBuckets)
+{
+	Instance instance;
+	TypeParam factory{instance.event_loop};
+	if constexpr (!factory.options.enable_premature_close_body) {
+		GTEST_SKIP();
+	} else {
+		Context c{instance};
+
+		c.use_buckets = true;
+		c.read_after_buckets = true;
+
+		c.connection = factory.NewPrematureCloseBody(*c.pool, c.event_loop);
+		c.connection->Request(c.pool, c,
+				      HttpMethod::GET, "/foo", {}, nullptr,
+				      false,
+				      c, c.cancel_ptr);
+
+		c.event_loop.Run();
+
+		EXPECT_TRUE(c.released);
+		EXPECT_EQ(c.status, HttpStatus::OK);
+		EXPECT_FALSE(c.body_eof);
+		EXPECT_FALSE(c.request_error);
+		EXPECT_NE(c.body_error, nullptr);
+		EXPECT_FALSE(c.reuse);
+	}
 }
 
 /**
  * POST with empty request body.
  */
-static void
-test_post_empty(auto &factory, Context &c) noexcept
+TYPED_TEST_P(ClientTest, PostEmpty)
 {
+	Instance instance;
+	TypeParam factory{instance.event_loop};
+	Context c{instance};
+
 	c.connection = factory.NewMirror(*c.pool, c.event_loop);
 	c.connection->Request(c.pool, c,
 			      HttpMethod::POST, "/foo", {},
@@ -1082,29 +1327,35 @@ test_post_empty(auto &factory, Context &c) noexcept
 
 	c.WaitForResponse();
 
-	assert(!c.request_error);
-	assert(c.status == HttpStatus::OK ||
+	EXPECT_FALSE(c.request_error);
+	EXPECT_TRUE(c.status == HttpStatus::OK ||
 	       c.status == HttpStatus::NO_CONTENT);
-	assert(c.content_length == nullptr ||
+	EXPECT_TRUE(c.content_length == nullptr ||
 	       strcmp(c.content_length, "0") == 0);
 
 	c.WaitForFirstBodyByte();
 
 	if (c.body_eof) {
-		assert(c.available == 0);
+		EXPECT_EQ(c.available, 0);
 	} else {
-		assert(c.available == -2);
+		EXPECT_EQ(c.available, -2);
 	}
 
-	assert(c.released);
-	assert(c.body_data == 0);
-	assert(c.body_error == nullptr);
-	assert(c.reuse);
+	EXPECT_TRUE(c.released);
+	EXPECT_EQ(c.body_data, 0);
+	EXPECT_EQ(c.body_error, nullptr);
+	EXPECT_TRUE(c.reuse);
 }
 
-static void
-test_buckets(auto &factory, Context &c) noexcept
+TYPED_TEST_P(ClientTest, Buckets)
 {
+	Instance instance;
+	TypeParam factory{instance.event_loop};
+	if constexpr (!factory.options.enable_buckets)
+		GTEST_SKIP();
+
+	Context c{instance};
+
 	c.connection = factory.NewFixed(*c.pool, c.event_loop);
 	c.use_buckets = true;
 	c.read_after_buckets = true;
@@ -1117,24 +1368,30 @@ test_buckets(auto &factory, Context &c) noexcept
 
 	c.event_loop.Run();
 
-	assert(c.released);
-	assert(c.status == HttpStatus::OK);
-	assert(c.content_length == nullptr);
+	EXPECT_TRUE(c.released);
+	EXPECT_EQ(c.status, HttpStatus::OK);
+	EXPECT_EQ(c.content_length, nullptr);
 	if (factory.options.have_content_length_header) {
-		assert(c.available > 0);
-		assert(c.body_eof);
-		assert(c.body_error == nullptr);
-		assert(!c.more_buckets);
-		assert(c.total_buckets == (size_t)c.available);
-		assert(c.available_after_bucket == 0);
+		EXPECT_TRUE(c.available > 0);
+		EXPECT_TRUE(c.body_eof);
+		EXPECT_EQ(c.body_error, nullptr);
+		EXPECT_FALSE(c.more_buckets);
+		EXPECT_EQ(c.total_buckets, (size_t)c.available);
+		EXPECT_EQ(c.available_after_bucket, 0);
 	}
-	assert(c.available_after_bucket_partial == 0);
-	assert(c.reuse);
+	EXPECT_EQ(c.available_after_bucket_partial, 0);
+	EXPECT_TRUE(c.reuse);
 }
 
-static void
-test_buckets_chunked(auto &factory, Context &c) noexcept
+TYPED_TEST_P(ClientTest, BucketsChunked)
 {
+	Instance instance;
+	TypeParam factory{instance.event_loop};
+	if constexpr (!factory.options.enable_buckets)
+		GTEST_SKIP();
+
+	Context c{instance};
+
 	c.connection = factory.NewDummy(*c.pool, c.event_loop);
 	c.use_buckets = true;
 	c.buckets_after_data = true;
@@ -1147,23 +1404,29 @@ test_buckets_chunked(auto &factory, Context &c) noexcept
 
 	c.event_loop.Run();
 
-	assert(c.released);
-	assert(c.status == HttpStatus::OK);
-	assert(c.content_length == nullptr);
+	EXPECT_TRUE(c.released);
+	EXPECT_EQ(c.status, HttpStatus::OK);
+	EXPECT_EQ(c.content_length, nullptr);
 	if (factory.options.have_content_length_header) {
-		assert(c.body_eof);
-		assert(c.body_error == nullptr);
-		assert(!c.more_buckets);
-		assert(c.total_buckets > 0);
-		assert(c.available_after_bucket == 0);
+		EXPECT_TRUE(c.body_eof);
+		EXPECT_EQ(c.body_error, nullptr);
+		EXPECT_FALSE(c.more_buckets);
+		EXPECT_TRUE(c.total_buckets > 0);
+		EXPECT_EQ(c.available_after_bucket, 0);
 	}
-	assert(c.available_after_bucket_partial == 0);
-	assert(c.reuse);
+	EXPECT_EQ(c.available_after_bucket_partial, 0);
+	EXPECT_TRUE(c.reuse);
 }
 
-static void
-test_buckets_after_data(auto &factory, Context &c) noexcept
+TYPED_TEST_P(ClientTest, BucketsAfterData)
 {
+	Instance instance;
+	TypeParam factory{instance.event_loop};
+	if constexpr (!factory.options.enable_buckets)
+		GTEST_SKIP();
+
+	Context c{instance};
+
 	c.connection = factory.NewFixed(*c.pool, c.event_loop);
 	c.use_buckets = true;
 	c.buckets_after_data = true;
@@ -1176,24 +1439,30 @@ test_buckets_after_data(auto &factory, Context &c) noexcept
 
 	c.event_loop.Run();
 
-	assert(c.released);
-	assert(c.status == HttpStatus::OK);
-	assert(c.content_length == nullptr);
+	EXPECT_TRUE(c.released);
+	EXPECT_EQ(c.status, HttpStatus::OK);
+	EXPECT_EQ(c.content_length, nullptr);
 	if (factory.options.have_content_length_header) {
-		assert(c.available > 0);
-		assert(!c.more_buckets);
-		assert(c.total_buckets == (size_t)c.available);
-		assert(c.available_after_bucket == 0);
+		EXPECT_TRUE(c.available > 0);
+		EXPECT_FALSE(c.more_buckets);
+		EXPECT_EQ(c.total_buckets, (size_t)c.available);
+		EXPECT_EQ(c.available_after_bucket, 0);
 	}
-	assert(c.body_eof);
-	assert(c.body_error == nullptr);
-	assert(c.available_after_bucket_partial == 0);
-	assert(c.reuse);
+	EXPECT_TRUE(c.body_eof);
+	EXPECT_EQ(c.body_error, nullptr);
+	EXPECT_EQ(c.available_after_bucket_partial, 0);
+	EXPECT_TRUE(c.reuse);
 }
 
-static void
-test_buckets_close(auto &factory, Context &c) noexcept
+TYPED_TEST_P(ClientTest, BucketsClose)
 {
+	Instance instance;
+	TypeParam factory{instance.event_loop};
+	if constexpr (!factory.options.enable_buckets)
+		GTEST_SKIP();
+
+	Context c{instance};
+
 	c.connection = factory.NewFixed(*c.pool, c.event_loop);
 	c.use_buckets = true;
 	c.close_after_buckets = true;
@@ -1206,125 +1475,257 @@ test_buckets_close(auto &factory, Context &c) noexcept
 
 	c.event_loop.Run();
 
-	assert(c.released);
-	assert(c.status == HttpStatus::OK);
-	assert(c.content_length == nullptr);
+	EXPECT_TRUE(c.released);
+	EXPECT_EQ(c.status, HttpStatus::OK);
+	EXPECT_EQ(c.content_length, nullptr);
 	if (factory.options.have_content_length_header) {
-		assert(c.available > 0);
+		EXPECT_TRUE(c.available > 0);
 	}
-	assert(!c.body_eof);
-	assert(c.body_error == nullptr);
-	assert(!c.more_buckets);
-	assert(c.total_buckets == (size_t)c.available);
-	assert(c.available_after_bucket == 1);
-	assert(c.available_after_bucket_partial == 1);
+	EXPECT_FALSE(c.body_eof);
+	EXPECT_EQ(c.body_error, nullptr);
+	EXPECT_FALSE(c.more_buckets);
+	EXPECT_EQ(c.total_buckets, (size_t)c.available);
+	EXPECT_EQ(c.available_after_bucket, 1);
+	EXPECT_EQ(c.available_after_bucket_partial, 1);
 }
 
-static void
-test_premature_end(auto &factory, Context &c) noexcept
+TYPED_TEST_P(ClientTest, PrematureEnd)
 {
-	c.connection = factory.NewPrematureEnd(*c.pool, c.event_loop);
+	Instance instance;
+	TypeParam factory{instance.event_loop};
 
-	c.connection->Request(c.pool, c,
-			      HttpMethod::GET, "/foo", {},
-			      nullptr,
-			      false,
-			      c, c.cancel_ptr);
+	if constexpr (factory.options.enable_premature_end) {
+		Context c{instance};
+		c.connection = factory.NewPrematureEnd(*c.pool, c.event_loop);
 
-	c.event_loop.Run();
+		c.connection->Request(c.pool, c,
+				      HttpMethod::GET, "/foo", {},
+				      nullptr,
+				      false,
+				      c, c.cancel_ptr);
 
-	assert(c.released);
-	assert(c.status == HttpStatus::OK);
-	assert(c.content_length == nullptr);
-	assert(c.available > 0);
-	assert(!c.body_eof);
-	assert(c.body_error != nullptr);
+		c.event_loop.Run();
+
+		EXPECT_TRUE(c.released);
+		EXPECT_EQ(c.status, HttpStatus::OK);
+		EXPECT_EQ(c.content_length, nullptr);
+		EXPECT_TRUE(c.available > 0);
+		EXPECT_FALSE(c.body_eof);
+		EXPECT_NE(c.body_error, nullptr);
+	} else
+		GTEST_SKIP();
 }
 
-static void
-test_excess_data(auto &factory, Context &c) noexcept
+TYPED_TEST_P(ClientTest, PrematureEndBuckets)
 {
-	c.connection = factory.NewExcessData(*c.pool, c.event_loop);
+	Instance instance;
+	TypeParam factory{instance.event_loop};
 
-	c.connection->Request(c.pool, c,
-			      HttpMethod::GET, "/foo", {},
-			      nullptr,
-			      false,
-			      c, c.cancel_ptr);
+	if constexpr (factory.options.enable_premature_end) {
+		Context c{instance};
+		c.use_buckets = true;
+		c.read_after_buckets = true;
 
-	c.event_loop.Run();
+		c.connection = factory.NewPrematureEnd(*c.pool, c.event_loop);
 
-	assert(c.released);
-	assert(c.status == HttpStatus::OK);
-	assert(c.content_length == nullptr);
-	assert(c.available > 0);
-	assert(!c.body_eof);
-	assert(c.body_error != nullptr);
+		c.connection->Request(c.pool, c,
+				      HttpMethod::GET, "/foo", {},
+				      nullptr,
+				      false,
+				      c, c.cancel_ptr);
+
+		c.event_loop.Run();
+
+		EXPECT_TRUE(c.released);
+		EXPECT_EQ(c.status, HttpStatus::OK);
+		EXPECT_EQ(c.content_length, nullptr);
+		EXPECT_TRUE(c.available > 0);
+		EXPECT_FALSE(c.body_eof);
+		EXPECT_NE(c.body_error, nullptr);
+	} else
+		GTEST_SKIP();
 }
 
-static void
-TestValidPremature(auto &factory, Context &c) noexcept
+TYPED_TEST_P(ClientTest, ExcessData)
 {
-	c.connection = factory.NewValidPremature(*c.pool, c.event_loop);
+	Instance instance;
+	TypeParam factory{instance.event_loop};
 
-	c.connection->Request(c.pool, c,
-			      HttpMethod::GET, "/foo", {},
-			      nullptr,
-			      false,
-			      c, c.cancel_ptr);
+	if constexpr (factory.options.enable_excess_data) {
+		Context c{instance};
 
-	c.event_loop.Run();
+		c.connection = factory.NewExcessData(*c.pool, c.event_loop);
 
-	assert(c.released);
-	assert(c.status == HttpStatus::OK);
-	assert(!c.body_eof);
-	assert(c.body_error != nullptr);
-	assert(c.reuse);
+		c.connection->Request(c.pool, c,
+				      HttpMethod::GET, "/foo", {},
+				      nullptr,
+				      false,
+				      c, c.cancel_ptr);
+
+		c.event_loop.Run();
+
+		EXPECT_TRUE(c.released);
+		EXPECT_EQ(c.status, HttpStatus::OK);
+		EXPECT_EQ(c.content_length, nullptr);
+		EXPECT_TRUE(c.available > 0);
+		EXPECT_FALSE(c.body_eof);
+		EXPECT_NE(c.body_error, nullptr);
+	} else
+		GTEST_SKIP();
 }
 
-static void
-TestMalformedPremature(auto &factory, Context &c) noexcept
+TYPED_TEST_P(ClientTest, ExcessDataBuckets)
 {
-	c.connection = factory.NewMalformedPremature(*c.pool, c.event_loop);
+	Instance instance;
+	TypeParam factory{instance.event_loop};
 
-	c.connection->Request(c.pool, c,
-			      HttpMethod::GET, "/foo", {},
-			      nullptr,
-			      false,
-			      c, c.cancel_ptr);
+	if constexpr (factory.options.enable_excess_data) {
+		Context c{instance};
+		c.use_buckets = true;
+		c.read_after_buckets = true;
 
-	c.event_loop.Run();
+		c.connection = factory.NewExcessData(*c.pool, c.event_loop);
 
-	assert(c.released);
-	assert(c.status == HttpStatus::OK);
-	assert(c.available == 1024);
-	assert(c.body_data == 0);
-	assert(!c.body_eof);
-	assert(c.body_error != nullptr);
-	assert(!c.reuse);
+		c.connection->Request(c.pool, c,
+				      HttpMethod::GET, "/foo", {},
+				      nullptr,
+				      false,
+				      c, c.cancel_ptr);
+
+		c.event_loop.Run();
+
+		EXPECT_TRUE(c.released);
+		EXPECT_EQ(c.status, HttpStatus::OK);
+		EXPECT_EQ(c.content_length, nullptr);
+		EXPECT_TRUE(c.available > 0);
+		EXPECT_FALSE(c.body_eof);
+		EXPECT_NE(c.body_error, nullptr);
+	} else
+		GTEST_SKIP();
 }
 
-static void
-TestCancelNop(auto &factory, Context &c) noexcept
+TYPED_TEST_P(ClientTest, ValidPremature)
 {
-	c.connection = factory.NewNop(*c.pool, c.event_loop);
-	c.connection->Request(c.pool, c,
-			      HttpMethod::POST, "/foo", {},
-			      istream_null_new(*c.pool),
-			      false,
-			      c, c.cancel_ptr);
+	Instance instance;
+	TypeParam factory{instance.event_loop};
 
-	c.cancel_ptr.Cancel();
+	if constexpr (factory.options.enable_valid_premature) {
+		Context c{instance};
 
-	/* let ThreadSocketFilter::postponed_destroy finish */
-	c.event_loop.Run();
+		c.connection = factory.NewValidPremature(*c.pool, c.event_loop);
 
-	assert(c.released);
+		c.connection->Request(c.pool, c,
+				      HttpMethod::GET, "/foo", {},
+				      nullptr,
+				      false,
+				      c, c.cancel_ptr);
+
+		c.event_loop.Run();
+
+		EXPECT_TRUE(c.released);
+		EXPECT_EQ(c.status, HttpStatus::OK);
+		EXPECT_FALSE(c.body_eof);
+		EXPECT_NE(c.body_error, nullptr);
+		EXPECT_TRUE(c.reuse);
+	} else
+		GTEST_SKIP();
 }
 
-static void
-TestCancelWithFailedSocketGet(auto &factory, Context &c) noexcept
+TYPED_TEST_P(ClientTest, ValidPrematureBuckets)
 {
+	Instance instance;
+	TypeParam factory{instance.event_loop};
+
+	if constexpr (factory.options.enable_valid_premature) {
+		Context c{instance};
+		c.use_buckets = true;
+		c.read_after_buckets = true;
+
+		c.connection = factory.NewValidPremature(*c.pool, c.event_loop);
+
+		c.connection->Request(c.pool, c,
+				      HttpMethod::GET, "/foo", {},
+				      nullptr,
+				      false,
+				      c, c.cancel_ptr);
+
+		c.event_loop.Run();
+
+		EXPECT_TRUE(c.released);
+		EXPECT_EQ(c.status, HttpStatus::OK);
+		EXPECT_FALSE(c.body_eof);
+		EXPECT_NE(c.body_error, nullptr);
+		EXPECT_TRUE(c.reuse);
+	} else
+		GTEST_SKIP();
+}
+
+TYPED_TEST_P(ClientTest, MalformedPremature)
+{
+	Instance instance;
+	TypeParam factory{instance.event_loop};
+
+	if constexpr (factory.options.enable_malformed_premature) {
+		Context c{instance};
+
+		c.connection = factory.NewMalformedPremature(*c.pool, c.event_loop);
+
+		c.connection->Request(c.pool, c,
+				      HttpMethod::GET, "/foo", {},
+				      nullptr,
+				      false,
+				      c, c.cancel_ptr);
+
+		c.event_loop.Run();
+
+		EXPECT_TRUE(c.released);
+		EXPECT_EQ(c.status, HttpStatus::OK);
+		EXPECT_EQ(c.available, 1024);
+		EXPECT_EQ(c.body_data, 0);
+		EXPECT_FALSE(c.body_eof);
+		EXPECT_NE(c.body_error, nullptr);
+		EXPECT_FALSE(c.reuse);
+	} else
+		GTEST_SKIP();
+}
+
+TYPED_TEST_P(ClientTest, MalformedPrematureBuckets)
+{
+	Instance instance;
+	TypeParam factory{instance.event_loop};
+
+	if constexpr (factory.options.enable_malformed_premature) {
+		Context c{instance};
+		c.use_buckets = true;
+		c.read_after_buckets = true;
+
+		c.connection = factory.NewMalformedPremature(*c.pool, c.event_loop);
+
+		c.connection->Request(c.pool, c,
+				      HttpMethod::GET, "/foo", {},
+				      nullptr,
+				      false,
+				      c, c.cancel_ptr);
+
+		c.event_loop.Run();
+
+		EXPECT_TRUE(c.released);
+		EXPECT_EQ(c.status, HttpStatus::OK);
+		EXPECT_EQ(c.available, 1024);
+		EXPECT_EQ(c.body_data, 0);
+		EXPECT_FALSE(c.body_eof);
+		EXPECT_NE(c.body_error, nullptr);
+		EXPECT_FALSE(c.reuse);
+	} else
+		GTEST_SKIP();
+}
+
+TYPED_TEST_P(ClientTest, CancelWithFailedSocketGet)
+{
+	Instance instance;
+	TypeParam factory{instance.event_loop};
+	Context c{instance};
+
 	c.connection = factory.NewNop(*c.pool, c.event_loop);
 	c.connection->Request(c.pool, c,
 			      HttpMethod::GET, "/foo", {},
@@ -1336,15 +1737,43 @@ TestCancelWithFailedSocketGet(auto &factory, Context &c) noexcept
 	c.connection->InjectSocketFailure();
 	c.cancel_ptr.Cancel();
 
-	assert(c.released);
+	EXPECT_TRUE(c.released);
 
 	/* let ThreadSocketFilter::postponed_destroy finish */
 	c.event_loop.Run();
 }
 
-static void
-TestCancelWithFailedSocketPost(auto &factory, Context &c) noexcept
+TYPED_TEST_P(ClientTest, CancelWithFailedSocketGetBuckets)
 {
+	Instance instance;
+	TypeParam factory{instance.event_loop};
+	Context c{instance};
+	c.use_buckets = true;
+	c.read_after_buckets = true;
+
+	c.connection = factory.NewNop(*c.pool, c.event_loop);
+	c.connection->Request(c.pool, c,
+			      HttpMethod::GET, "/foo", {},
+			      nullptr,
+			      false,
+
+			      c, c.cancel_ptr);
+
+	c.connection->InjectSocketFailure();
+	c.cancel_ptr.Cancel();
+
+	EXPECT_TRUE(c.released);
+
+	/* let ThreadSocketFilter::postponed_destroy finish */
+	c.event_loop.Run();
+}
+
+TYPED_TEST_P(ClientTest, CancelWithFailedSocketPost)
+{
+	Instance instance;
+	TypeParam factory{instance.event_loop};
+	Context c{instance};
+
 	c.connection = factory.NewNop(*c.pool, c.event_loop);
 	c.connection->Request(c.pool, c,
 			      HttpMethod::POST, "/foo", {},
@@ -1356,12 +1785,43 @@ TestCancelWithFailedSocketPost(auto &factory, Context &c) noexcept
 	c.connection->InjectSocketFailure();
 	c.cancel_ptr.Cancel();
 
-	assert(c.released);
+	EXPECT_TRUE(c.released);
+
+	/* let ThreadSocketFilter::postponed_destroy finish */
+	c.event_loop.Run();
 }
 
-static void
-TestCloseWithFailedSocketGet(auto &factory, Context &c) noexcept
+TYPED_TEST_P(ClientTest, CancelWithFailedSocketPostBuckets)
 {
+	Instance instance;
+	TypeParam factory{instance.event_loop};
+	Context c{instance};
+	c.use_buckets = true;
+	c.read_after_buckets = true;
+
+	c.connection = factory.NewNop(*c.pool, c.event_loop);
+	c.connection->Request(c.pool, c,
+			      HttpMethod::POST, "/foo", {},
+			      istream_null_new(*c.pool),
+			      false,
+
+			      c, c.cancel_ptr);
+
+	c.connection->InjectSocketFailure();
+	c.cancel_ptr.Cancel();
+
+	EXPECT_TRUE(c.released);
+
+	/* let ThreadSocketFilter::postponed_destroy finish */
+	c.event_loop.Run();
+}
+
+TYPED_TEST_P(ClientTest, CloseWithFailedSocketGet)
+{
+	Instance instance;
+	TypeParam factory{instance.event_loop};
+	Context c{instance};
+
 	c.connection = factory.NewBlock(*c.pool, c.event_loop);
 	c.connection->Request(c.pool, c,
 			      HttpMethod::GET, "/foo", {},
@@ -1372,9 +1832,9 @@ TestCloseWithFailedSocketGet(auto &factory, Context &c) noexcept
 
 	c.WaitForResponse();
 
-	assert(!c.released);
-	assert(c.status == HttpStatus::OK);
-	assert(c.HasInput());
+	EXPECT_FALSE(c.released);
+	EXPECT_EQ(c.status, HttpStatus::OK);
+	EXPECT_TRUE(c.HasInput());
 
 	c.connection->InjectSocketFailure();
 	c.CloseInput();
@@ -1383,12 +1843,47 @@ TestCloseWithFailedSocketGet(auto &factory, Context &c) noexcept
 
 	c.event_loop.Run();
 
-	assert(c.released);
+	EXPECT_TRUE(c.released);
 }
 
-static void
-TestCloseWithFailedSocketPost(auto &factory, Context &c) noexcept
+TYPED_TEST_P(ClientTest, CloseWithFailedSocketGetBuckets)
 {
+	Instance instance;
+	TypeParam factory{instance.event_loop};
+	Context c{instance};
+	c.use_buckets = true;
+	c.read_after_buckets = true;
+
+	c.connection = factory.NewBlock(*c.pool, c.event_loop);
+	c.connection->Request(c.pool, c,
+			      HttpMethod::GET, "/foo", {},
+			      nullptr,
+			      false,
+
+			      c, c.cancel_ptr);
+
+	c.WaitForResponse();
+
+	EXPECT_FALSE(c.released);
+	EXPECT_EQ(c.status, HttpStatus::OK);
+	EXPECT_TRUE(c.HasInput());
+
+	c.connection->InjectSocketFailure();
+	c.CloseInput();
+	c.read_later_event.Cancel();
+	c.read_defer_event.Cancel();
+
+	c.event_loop.Run();
+
+	EXPECT_TRUE(c.released);
+}
+
+TYPED_TEST_P(ClientTest, CloseWithFailedSocketPost)
+{
+	Instance instance;
+	TypeParam factory{instance.event_loop};
+	Context c{instance};
+
 	c.connection = factory.NewHold(*c.pool, c.event_loop);
 	c.connection->Request(c.pool, c,
 			      HttpMethod::POST, "/foo", {},
@@ -1399,9 +1894,9 @@ TestCloseWithFailedSocketPost(auto &factory, Context &c) noexcept
 
 	c.WaitForResponse();
 
-	assert(!c.released);
-	assert(c.status == HttpStatus::OK);
-	assert(c.HasInput());
+	EXPECT_FALSE(c.released);
+	EXPECT_EQ(c.status, HttpStatus::OK);
+	EXPECT_TRUE(c.HasInput());
 
 	c.connection->InjectSocketFailure();
 	c.CloseInput();
@@ -1410,107 +1905,95 @@ TestCloseWithFailedSocketPost(auto &factory, Context &c) noexcept
 
 	c.event_loop.Run();
 
-	assert(c.released);
+	EXPECT_TRUE(c.released);
 
 	/* let ThreadSocketFilter::postponed_destroy finish */
 	c.event_loop.Run();
 }
 
-
-/*
- * main
- *
- */
-
-template<class Factory>
-static void
-run_test(Instance &instance, Factory &factory,
-	 void (*test)(Factory &factory, Context &c)) noexcept
+TYPED_TEST_P(ClientTest, CloseWithFailedSocketPostBuckets)
 {
-	Context c{instance};
-	test(factory, c);
-}
-
-template<class Factory>
-static void
-run_bucket_test(Instance &instance, Factory &factory,
-		void (*test)(Factory &factory, Context &c)) noexcept
-{
+	Instance instance;
+	TypeParam factory{instance.event_loop};
 	Context c{instance};
 	c.use_buckets = true;
 	c.read_after_buckets = true;
-	test(factory, c);
+
+	c.connection = factory.NewHold(*c.pool, c.event_loop);
+	c.connection->Request(c.pool, c,
+			      HttpMethod::POST, "/foo", {},
+			      istream_null_new(*c.pool),
+			      false,
+
+			      c, c.cancel_ptr);
+
+	c.WaitForResponse();
+
+	EXPECT_FALSE(c.released);
+	EXPECT_EQ(c.status, HttpStatus::OK);
+	EXPECT_TRUE(c.HasInput());
+
+	c.connection->InjectSocketFailure();
+	c.CloseInput();
+	c.read_later_event.Cancel();
+	c.read_defer_event.Cancel();
+
+	c.event_loop.Run();
+
+	EXPECT_TRUE(c.released);
 }
 
-template<class Factory>
-static void
-run_test_and_buckets(Instance &instance, Factory &factory,
-		     void (*test)(Factory &factory, Context &c)) noexcept
-{
-	/* regular run */
-	run_test(instance, factory, test);
-
-	if (factory.options.enable_buckets)
-		run_bucket_test(instance, factory, test);
-}
-
-template<class Factory>
-static void
-run_all_tests(Instance &instance, Factory &factory) noexcept
-{
-	run_test(instance, factory, test_empty<Factory>);
-	run_test_and_buckets(instance, factory, test_body<Factory>);
-	run_test(instance, factory, test_read_body<Factory>);
-	if constexpr (factory.options.enable_huge_body)
-		run_test_and_buckets(instance, factory, test_huge<Factory>);
-	run_test(instance, factory, TestCancelNop<Factory>);
-	run_test(instance, factory, test_close_response_body_early<Factory>);
-	run_test(instance, factory, test_close_response_body_late<Factory>);
-	run_test(instance, factory, test_close_response_body_data<Factory>);
-	run_test(instance, factory, test_close_response_body_after<Factory>);
-	run_test(instance, factory, test_close_request_body_early<Factory>);
-	run_test(instance, factory, test_close_request_body_fail<Factory>);
-	run_test(instance, factory, test_data_blocking<Factory>);
-	run_test(instance, factory, test_data_blocking2<Factory>);
-	run_test(instance, factory, test_body_fail<Factory>);
-	run_test(instance, factory, test_head<Factory>);
-	run_test(instance, factory, test_head_discard<Factory>);
-	run_test(instance, factory, test_head_discard2<Factory>);
-	run_test(instance, factory, test_ignored_body<Factory>);
-	if constexpr (factory.options.enable_close_ignored_request_body) {
-		run_test(instance, factory, test_close_ignored_request_body<Factory>);
-		run_test(instance, factory, test_head_close_ignored_request_body<Factory>);
-		run_test(instance, factory, test_close_request_body_eor<Factory>);
-		run_test(instance, factory, test_close_request_body_eor2<Factory>);
-	}
-	if constexpr (factory.options.have_expect_100) {
-		run_test(instance, factory, test_bogus_100<Factory>);
-		run_test(instance, factory, test_twice_100<Factory>);
-		run_test(instance, factory, test_close_100<Factory>);
-	}
-	run_test(instance, factory, test_no_body_while_sending<Factory>);
-	run_test(instance, factory, test_hold<Factory>);
-	if constexpr (factory.options.enable_premature_close_headers)
-		run_test(instance, factory, test_premature_close_headers<Factory>);
-	if constexpr (factory.options.enable_premature_close_body)
-		run_test_and_buckets(instance, factory, test_premature_close_body<Factory>);
-	if constexpr (factory.options.enable_buckets) {
-		run_test(instance, factory, test_buckets<Factory>);
-		run_test(instance, factory, test_buckets_chunked<Factory>);
-		run_test(instance, factory, test_buckets_after_data<Factory>);
-		run_test(instance, factory, test_buckets_close<Factory>);
-	}
-	if constexpr (factory.options.enable_premature_end)
-		run_test_and_buckets(instance, factory, test_premature_end<Factory>);
-	if constexpr (factory.options.enable_excess_data)
-		run_test_and_buckets(instance, factory, test_excess_data<Factory>);
-	if constexpr (factory.options.enable_valid_premature)
-		run_test_and_buckets(instance, factory, TestValidPremature<Factory>);
-	if constexpr (factory.options.enable_malformed_premature)
-		run_test_and_buckets(instance, factory, TestMalformedPremature<Factory>);
-	run_test(instance, factory, test_post_empty<Factory>);
-	run_test_and_buckets(instance, factory, TestCancelWithFailedSocketGet<Factory>);
-	run_test_and_buckets(instance, factory, TestCancelWithFailedSocketPost<Factory>);
-	run_test_and_buckets(instance, factory, TestCloseWithFailedSocketGet<Factory>);
-	run_test_and_buckets(instance, factory, TestCloseWithFailedSocketPost<Factory>);
-}
+REGISTER_TYPED_TEST_CASE_P(ClientTest,
+			   Empty,
+			   Body,
+			   BodyBuckets,
+			   ReadBody,
+			   Huge,
+			   HugeBuckets,
+			   CancelNop,
+			   CloseResponseBodyEarly,
+			   CloseResponseBodyLate,
+			   CloseResponseBodyData,
+			   CloseResponseBodyAfter,
+			   CloseRequestBodyEarly,
+			   CloseRequestBodyFail,
+			   DataBlocking,
+			   DataBlocking2,
+			   BodyFail,
+			   Head,
+			   HeadDiscard,
+			   HeadDiscard2,
+			   IgnoredBody,
+			   CloseIgnoredRequestBody,
+			   HeadCloseIgnoredRequestBody,
+			   CloseRequestBodyEof,
+			   CloseRequestBodyEof2,
+			   Bogus100,
+			   Twice100,
+			   Close100,
+			   NoBodyWhileSending,
+			   Hold,
+			   PrematureCloseHeaders,
+			   PrematureCloseBody,
+			   PrematureCloseBodyBuckets,
+			   PostEmpty,
+			   Buckets,
+			   BucketsChunked,
+			   BucketsAfterData,
+			   BucketsClose,
+			   PrematureEnd,
+			   PrematureEndBuckets,
+			   ExcessData,
+			   ExcessDataBuckets,
+			   ValidPremature,
+			   ValidPrematureBuckets,
+			   MalformedPremature,
+			   MalformedPrematureBuckets,
+			   CancelWithFailedSocketGet,
+			   CancelWithFailedSocketGetBuckets,
+			   CancelWithFailedSocketPost,
+			   CancelWithFailedSocketPostBuckets,
+			   CloseWithFailedSocketGet,
+			   CloseWithFailedSocketGetBuckets,
+			   CloseWithFailedSocketPost,
+			   CloseWithFailedSocketPostBuckets);

@@ -493,6 +493,7 @@ test('t_http_client', executable('t_http_client',
   '../src/address_string.cxx',
   include_directories: inc,
   dependencies: [
+    gtest,
     test_instance_dep,
     istream_pipe_dep,
     http_client_dep,
@@ -521,6 +522,7 @@ test('t_fcgi_client', executable('t_fcgi_client',
   'fcgi_server.cxx',
   include_directories: inc,
   dependencies: [
+    gtest,
     test_instance_dep,
     fcgi_client_dep,
   ]),
@@ -535,6 +537,7 @@ if libwas.found()
       't_client.cxx',
       include_directories: inc,
       dependencies: [
+        gtest,
         test_instance_dep,
         was_client_dep,
         was_server_dep,
