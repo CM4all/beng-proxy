@@ -304,7 +304,9 @@ HttpClientFactory<SocketFilterFactory>::NewForkWrite(EventLoop &event_loop,
 		s.ShutdownWrite();
 
 		char buffer[64];
-		while (s.Read(buffer, sizeof(buffer)) > 0) {}
+		do {
+			s.WaitReadable(-1);
+		} while (s.Read(buffer, sizeof(buffer)) > 0);
 	});
 }
 
