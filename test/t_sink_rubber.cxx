@@ -117,9 +117,14 @@ TEST(SinkRubberTest, Empty2)
 	Rubber r{4 * 1024 * 1024, "rubber"};
 	Data data(r);
 
-	auto input = istream_byte_new(data.pool, istream_null_new(data.pool));
-	auto *sink = sink_rubber_new(data.pool, std::move(input), r, 1024,
+	EventLoop event_loop;
+	auto delayed = istream_delayed_new(data.pool, event_loop);
+
+	auto *sink = sink_rubber_new(data.pool, std::move(delayed.first), r, 1024,
 				     data, data.cancel_ptr);
+	ASSERT_NE(sink, nullptr);
+
+	delayed.second.Set(istream_null_new(data.pool));
 	ASSERT_NE(sink, nullptr);
 
 	ASSERT_EQ(Data::NONE, data.result);
