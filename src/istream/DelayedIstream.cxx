@@ -48,7 +48,17 @@ public:
 
 private:
 	void DeferredRead() noexcept {
-		input.Read();
+		switch (InvokeReady()) {
+		case IstreamReadyResult::OK:
+			break;
+
+		case IstreamReadyResult::FALLBACK:
+			input.Read();
+			break;
+
+		case IstreamReadyResult::CLOSED:
+			break;
+		}
 	}
 
 public:
