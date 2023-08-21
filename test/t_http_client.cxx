@@ -118,9 +118,6 @@ struct HttpClientFactory {
 		.enable_close_ignored_request_body = true,
 	};
 
-	static constexpr bool can_cancel_request_body = false;
-	static constexpr bool have_content_length_header = true;
-
 	[[no_unique_address]]
 	SocketFilterFactory &socket_filter_factory;
 

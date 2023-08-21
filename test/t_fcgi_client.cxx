@@ -283,15 +283,14 @@ public:
 
 struct FcgiClientFactory {
 	static constexpr ClientTestOptions options{
+		.can_cancel_request_body = true,
+		.have_content_length_header = false,
 		.enable_buckets = true,
 		.enable_premature_close_headers = true,
 		.enable_premature_close_body = true,
 		.enable_premature_end = true,
 		.enable_excess_data = true,
 	};
-
-	static constexpr bool can_cancel_request_body = true;
-	static constexpr bool have_content_length_header = false;
 
 	static FcgiClientConnection *New(EventLoop &event_loop,
 					 void (*f)(struct pool *pool));

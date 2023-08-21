@@ -393,13 +393,11 @@ private:
 struct WasFactory {
 	static constexpr ClientTestOptions options{
 		.have_chunked_request_body = true,
+		.can_cancel_request_body = true,
 		.enable_valid_premature = true,
 		.enable_malformed_premature = true,
 		.no_early_release_socket = true, // TODO: improve the WAS client
 	};
-
-	static constexpr bool can_cancel_request_body = true;
-	static constexpr bool have_content_length_header = true;
 
 	auto *NewMirror(struct pool &pool, EventLoop &event_loop) {
 		return new WasConnection(pool, event_loop, RunMirror);

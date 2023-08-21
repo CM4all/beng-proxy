@@ -35,6 +35,8 @@ static constexpr size_t HEAD_SIZE = 16384;
 struct ClientTestOptions {
 	bool have_chunked_request_body = false;
 	bool have_expect_100 = false;
+	bool can_cancel_request_body = false;
+	bool have_content_length_header = true;
 	bool enable_buckets = false;
 	bool enable_huge_body = true;
 	bool enable_close_ignored_request_body = false;
@@ -744,7 +746,7 @@ test_ignored_body(auto &factory, Context &c) noexcept
 	assert(!c.body_eof);
 	assert(!c.request_error);
 	assert(c.body_error == nullptr);
-	assert(!factory.can_cancel_request_body || c.reuse);
+	assert(!factory.options.can_cancel_request_body || c.reuse);
 }
 
 /**
@@ -1118,7 +1120,7 @@ test_buckets(auto &factory, Context &c) noexcept
 	assert(c.released);
 	assert(c.status == HttpStatus::OK);
 	assert(c.content_length == nullptr);
-	if (factory.have_content_length_header) {
+	if (factory.options.have_content_length_header) {
 		assert(c.available > 0);
 		assert(c.body_eof);
 		assert(c.body_error == nullptr);
@@ -1148,7 +1150,7 @@ test_buckets_chunked(auto &factory, Context &c) noexcept
 	assert(c.released);
 	assert(c.status == HttpStatus::OK);
 	assert(c.content_length == nullptr);
-	if (factory.have_content_length_header) {
+	if (factory.options.have_content_length_header) {
 		assert(c.body_eof);
 		assert(c.body_error == nullptr);
 		assert(!c.more_buckets);
@@ -1177,7 +1179,7 @@ test_buckets_after_data(auto &factory, Context &c) noexcept
 	assert(c.released);
 	assert(c.status == HttpStatus::OK);
 	assert(c.content_length == nullptr);
-	if (factory.have_content_length_header) {
+	if (factory.options.have_content_length_header) {
 		assert(c.available > 0);
 		assert(!c.more_buckets);
 		assert(c.total_buckets == (size_t)c.available);
@@ -1207,7 +1209,7 @@ test_buckets_close(auto &factory, Context &c) noexcept
 	assert(c.released);
 	assert(c.status == HttpStatus::OK);
 	assert(c.content_length == nullptr);
-	if (factory.have_content_length_header) {
+	if (factory.options.have_content_length_header) {
 		assert(c.available > 0);
 	}
 	assert(!c.body_eof);
