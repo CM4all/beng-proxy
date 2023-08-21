@@ -5,6 +5,7 @@
 #include "http/Method.hxx"
 #include "http/ResponseHandler.hxx"
 #include "lease.hxx"
+#include "istream/Bucket.hxx"
 #include "istream/istream.hxx"
 #include "istream/Sink.hxx"
 #include "istream/UnusedPtr.hxx"
@@ -29,10 +30,6 @@
 #include "util/Cancellable.hxx"
 #include "util/Exception.hxx"
 #include "AllocatorPtr.hxx"
-
-#ifdef USE_BUCKETS
-#include "istream/Bucket.hxx"
-#endif
 
 #ifdef HAVE_EXPECT_100
 #include "http/Client.hxx"
@@ -147,14 +144,12 @@ struct Context final
 	bool close_request_body_early = false, close_request_body_eof = false;
 	std::exception_ptr body_error;
 
-#ifdef USE_BUCKETS
 	bool use_buckets = false;
 	bool more_buckets;
 	bool buckets_after_data = false;
 	bool read_after_buckets = false, close_after_buckets = false;
 	size_t total_buckets;
 	off_t available_after_bucket, available_after_bucket_partial;
-#endif
 
 	FineTimerEvent read_later_event{event_loop, BIND_THIS_METHOD(OnDeferred)};
 	DeferEvent read_defer_event{event_loop, BIND_THIS_METHOD(OnDeferred)};
@@ -263,7 +258,6 @@ struct Context final
 		event_loop.Run();
 	}
 
-#ifdef USE_BUCKETS
 	void DoBuckets() noexcept {
 		IstreamBucketList list;
 
@@ -318,7 +312,6 @@ struct Context final
 		} else if (again)
 			read_defer_event.Schedule();
 	}
-#endif
 
 	void OnBreakEvent() noexcept {
 		event_loop.Break();
@@ -332,23 +325,19 @@ struct Context final
 			return;
 		}
 
-#ifdef USE_BUCKETS
 		if (use_buckets) {
 			available = input.GetAvailable(false);
 			DoBuckets();
 		} else
-#endif
 			assert(false);
 	}
 
 	void ReadBody() noexcept {
 		assert(HasInput());
 
-#ifdef USE_BUCKETS
 		if (use_buckets && !buckets_after_data)
 			DoBuckets();
 		else
-#endif
 			input.Read();
 	}
 
@@ -421,12 +410,10 @@ Context::OnData(std::span<const std::byte> src) noexcept
 	if (deferred)
 		return 0;
 
-#ifdef USE_BUCKETS
 	if (buckets_after_data) {
 		read_defer_event.Schedule();
 		return 0;
 	}
-#endif
 
 	consumed_body_data += src.size();
 	return src.size();
@@ -498,7 +485,6 @@ Context::OnHttpResponse(HttpStatus _status, StringMap &&headers,
 	else if (_body)
 		SetInput(std::move(_body));
 
-#ifdef USE_BUCKETS
 	if (use_buckets && !buckets_after_data) {
 		if (available >= 0)
 			DoBuckets();
@@ -510,7 +496,6 @@ Context::OnHttpResponse(HttpStatus _status, StringMap &&headers,
 
 		return;
 	}
-#endif
 
 	if (read_response_body)
 		ReadBody();
