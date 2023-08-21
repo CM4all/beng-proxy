@@ -264,7 +264,7 @@ class HttpClient final : BufferedSocketHandler, IstreamSink, Cancellable, Destru
 	ResponseBodyReader response_body_reader;
 
 	/* connection settings */
-	bool keep_alive;
+	bool keep_alive = true;
 
 public:
 	HttpClient(struct pool &_pool, struct pool &_caller_pool,
@@ -772,9 +772,10 @@ HttpClient::HeadersFinished()
 
 	auto &response_headers = response.headers;
 
-	const char *header_connection = response_headers.Remove("connection");
-	keep_alive = header_connection == nullptr ||
-		!http_list_contains_i(header_connection, "close");
+	if (const char *header_connection = response_headers.Remove("connection");
+	    header_connection != nullptr &&
+	    http_list_contains_i(header_connection, "close"))
+		keep_alive = false;
 
 	if (http_status_is_empty(response.status) &&
 	    /* "100 Continue" requires special handling here, because the
