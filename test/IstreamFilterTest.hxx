@@ -327,7 +327,8 @@ TYPED_TEST_P(IstreamFilterTest, NoBucket)
 		ctx.break_ready = true;
 		instance.event_loop.Run();
 
-		while (ctx.ReadBuckets(1024 * 1024)) {}
+		if (ctx.input.IsDefined())
+			while (ctx.ReadBuckets(1024 * 1024)) {}
 	}
 
 	EXPECT_TRUE(ctx.bucket_eof || ctx.bucket_fallback);
