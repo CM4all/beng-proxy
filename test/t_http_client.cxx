@@ -2,8 +2,6 @@
 // Copyright CM4all GmbH
 // author: Max Kellermann <mk@cm4all.com>
 
-#define HAVE_EXPECT_100
-
 #include "t_client.hxx"
 #include "DemoHttpServerConnection.hxx"
 #include "http/Client.hxx"
@@ -110,8 +108,12 @@ public:
 
 template<typename SocketFilterFactory>
 struct HttpClientFactory {
+	using Error = HttpClientError;
+	using ErrorCode = HttpClientErrorCode;
+
 	static constexpr const ClientTestOptions options{
 		.have_chunked_request_body = true,
+		.have_expect_100 = true,
 		.enable_buckets = true,
 		.enable_close_ignored_request_body = true,
 	};
@@ -324,9 +326,7 @@ test_no_keepalive(auto &factory, Context &c) noexcept
 	c.connection->Request(c.pool, c,
 			      HttpMethod::GET, "/foo", {},
 			      nullptr,
-#ifdef HAVE_EXPECT_100
 			      false,
-#endif
 			      c, c.cancel_ptr);
 	pool_commit();
 
@@ -363,9 +363,7 @@ test_ignored_request_body(auto &factory, Context &c) noexcept
 	c.connection->Request(c.pool, c,
 			      HttpMethod::GET, "/ignored-request-body", {},
 			      std::move(delayed.first),
-#ifdef HAVE_EXPECT_100
 			      false,
-#endif
 			      c, c.cancel_ptr);
 
 	c.WaitForEnd();

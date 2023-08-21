@@ -26,10 +26,6 @@
 #include "util/Exception.hxx"
 #include "AllocatorPtr.hxx"
 
-#ifdef HAVE_EXPECT_100
-#include "http/Client.hxx"
-#endif
-
 #include <stdexcept>
 
 #include <string.h>
@@ -38,6 +34,7 @@ static constexpr size_t HEAD_SIZE = 16384;
 
 struct ClientTestOptions {
 	bool have_chunked_request_body = false;
+	bool have_expect_100 = false;
 	bool enable_buckets = false;
 	bool enable_huge_body = true;
 	bool enable_close_ignored_request_body = false;
@@ -858,14 +855,13 @@ test_close_request_body_eor2(auto &factory, Context &c) noexcept
 	assert(c.body_error == nullptr);
 }
 
-#ifdef HAVE_EXPECT_100
-
 /**
  * Check if the HTTP client handles "100 Continue" received without
  * announcing the expectation.
  */
+template<typename Factory>
 static void
-test_bogus_100(auto &factory, Context &c) noexcept
+test_bogus_100(Factory &factory, Context &c) noexcept
 {
 	c.connection = factory.NewTwice100(*c.pool, c.event_loop);
 	c.connection->Request(c.pool, c,
@@ -880,10 +876,10 @@ test_bogus_100(auto &factory, Context &c) noexcept
 	assert(c.aborted);
 	assert(c.request_error);
 
-	const auto *e = FindNested<HttpClientError>(c.request_error);
+	const auto *e = FindNested<typename Factory::Error>(c.request_error);
 	(void)e;
 	assert(e != nullptr);
-	assert(e->GetCode() == HttpClientErrorCode::UNSPECIFIED);
+	assert(e->GetCode() == Factory::ErrorCode::UNSPECIFIED);
 
 	assert(strstr(GetFullMessage(c.request_error).c_str(), "unexpected status 100") != nullptr);
 	assert(c.body_error == nullptr);
@@ -894,8 +890,9 @@ test_bogus_100(auto &factory, Context &c) noexcept
  * Check if the HTTP client handles "100 Continue" received twice
  * well.
  */
+template<typename Factory>
 static void
-test_twice_100(auto &factory, Context &c) noexcept
+test_twice_100(Factory &factory, Context &c) noexcept
 {
 	c.connection = factory.NewTwice100(*c.pool, c.event_loop);
 	auto delayed = istream_delayed_new(*c.pool, c.event_loop);
@@ -913,10 +910,10 @@ test_twice_100(auto &factory, Context &c) noexcept
 	assert(c.aborted);
 	assert(c.request_error);
 
-	const auto *e = FindNested<HttpClientError>(c.request_error);
+	const auto *e = FindNested<typename Factory::Error>(c.request_error);
 	(void)e;
 	assert(e != nullptr);
-	assert(e->GetCode() == HttpClientErrorCode::UNSPECIFIED);
+	assert(e->GetCode() == Factory::ErrorCode::UNSPECIFIED);
 
 	assert(strstr(GetFullMessage(c.request_error).c_str(), "unexpected status 100") != nullptr);
 	assert(c.body_error == nullptr);
@@ -926,8 +923,9 @@ test_twice_100(auto &factory, Context &c) noexcept
 /**
  * The server sends "100 Continue" and closes the socket.
  */
+template<typename Factory>
 static void
-test_close_100(auto &factory, Context &c) noexcept
+test_close_100(Factory &factory, Context &c) noexcept
 {
 	auto request_body = istream_delayed_new(*c.pool, c.event_loop);
 	request_body.second.cancel_ptr = nullptr;
@@ -952,14 +950,13 @@ test_close_100(auto &factory, Context &c) noexcept
 	assert(!c.reuse);
 }
 
-#endif
-
 /**
  * Receive an empty response from the server while still sending the
  * request body.
  */
+template<typename Factory>
 static void
-test_no_body_while_sending(auto &factory, Context &c) noexcept
+test_no_body_while_sending(Factory &factory, Context &c) noexcept
 {
 	c.connection = factory.NewNull(*c.pool, c.event_loop);
 	c.connection->Request(c.pool, c,
@@ -1475,11 +1472,11 @@ run_all_tests(Instance &instance, Factory &factory) noexcept
 		run_test(instance, factory, test_close_request_body_eor<Factory>);
 		run_test(instance, factory, test_close_request_body_eor2<Factory>);
 	}
-#ifdef HAVE_EXPECT_100
-	run_test(instance, factory, test_bogus_100<Factory>);
-	run_test(instance, factory, test_twice_100<Factory>);
-	run_test(instance, factory, test_close_100<Factory>);
-#endif
+	if constexpr (factory.options.have_expect_100) {
+		run_test(instance, factory, test_bogus_100<Factory>);
+		run_test(instance, factory, test_twice_100<Factory>);
+		run_test(instance, factory, test_close_100<Factory>);
+	}
 	run_test(instance, factory, test_no_body_while_sending<Factory>);
 	run_test(instance, factory, test_hold<Factory>);
 	if constexpr (factory.options.enable_premature_close_headers)
