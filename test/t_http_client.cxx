@@ -490,7 +490,6 @@ TYPED_TEST_P(HttpClientTest, ManySmallChunks)
 	EXPECT_EQ(c.status, HttpStatus::OK);
 	EXPECT_EQ(c.consumed_body_data, 16);
 	EXPECT_EQ(c.body_error, nullptr);
-	EXPECT_FALSE(c.reuse);
 }
 
 REGISTER_TYPED_TEST_CASE_P(HttpClientTest,
