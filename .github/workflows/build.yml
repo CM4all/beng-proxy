@@ -47,6 +47,7 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y --no-install-recommends \
+            meson \
             libavahi-client-dev \
             libboost-dev \
             libbrotli-dev \
@@ -67,16 +68,22 @@ jobs:
             liburing-dev \
             libyaml-cpp-dev
 
+      - name: Configure
+        run: |
+          meson setup \
+             -Ddocumentation=disabled \
+             -Dcertdb=true \
+             -Dhttp2=enabled \
+             -Dnfs=enabled \
+             -Dwas=enabled \
+             -Dyaml=enabled \
+             -Dzeroconf=enabled \
+             -Dbrotli=enabled \
+             --force-fallback-for=libcm4all-was-protocol \
+             output
+
       - name: Build
-        uses: BSFishy/meson-build@v1.0.3
-        with:
-          action: build
-          setup-options: -Ddocumentation=disabled -Dcertdb=true -Dhttp2=enabled -Dnfs=enabled -Dwas=enabled -Dyaml=enabled -Dzeroconf=enabled -Dbrotli=enabled --force-fallback-for=libcm4all-was-protocol
-          meson-version: 0.56.0
+        run: ninja -C output
 
       - name: Unit Tests
-        uses: BSFishy/meson-build@v1.0.3
-        with:
-          action: test
-          setup-options: -Ddocumentation=disabled -Dcertdb=true -Dhttp2=enabled -Dnfs=enabled -Dwas=enabled -Dyaml=enabled -Dzeroconf=enabled -Dbrotli=enabled --force-fallback-for=libcm4all-was-protocol
-          meson-version: 0.56.0
+        run: meson test -C output
