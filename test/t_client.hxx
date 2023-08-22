@@ -1316,6 +1316,9 @@ TestCancelNop(auto &factory, Context &c) noexcept
 
 	c.cancel_ptr.Cancel();
 
+	/* let ThreadSocketFilter::postponed_destroy finish */
+	c.event_loop.Run();
+
 	assert(c.released);
 }
 
@@ -1334,6 +1337,9 @@ TestCancelWithFailedSocketGet(auto &factory, Context &c) noexcept
 	c.cancel_ptr.Cancel();
 
 	assert(c.released);
+
+	/* let ThreadSocketFilter::postponed_destroy finish */
+	c.event_loop.Run();
 }
 
 static void
@@ -1405,6 +1411,9 @@ TestCloseWithFailedSocketPost(auto &factory, Context &c) noexcept
 	c.event_loop.Run();
 
 	assert(c.released);
+
+	/* let ThreadSocketFilter::postponed_destroy finish */
+	c.event_loop.Run();
 }
 
 
