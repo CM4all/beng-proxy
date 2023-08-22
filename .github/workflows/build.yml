@@ -90,4 +90,5 @@ jobs:
 
       - name: Dump Unit Test Log
         if: ${{ failure() }}
+        continue-on-error: true
         run: cat output/meson-logs/testlog.txt
