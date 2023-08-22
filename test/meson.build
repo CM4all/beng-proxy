@@ -486,22 +486,39 @@ test('t_cgi', executable('t_cgi',
   env: ['srcdir=' + meson.project_source_root()],
 )
 
-test('t_http_client', executable('t_http_client',
-  't_http_client.cxx',
-  't_client.cxx',
-  'DemoHttpServerConnection.cxx',
-  '../src/address_string.cxx',
-  include_directories: inc,
-  dependencies: [
-    gtest,
-    test_instance_dep,
-    istream_pipe_dep,
-    http_client_dep,
-    http_server_dep,
-    stock_dep,
-    system_dep,
-    thread_pool_dep,
-  ]),
+t_client_sources = []
+t_client_dependencies = []
+
+if libwas.found()
+  t_client_sources += 't_was_client.cxx'
+  t_client_dependencies += [was_client_dep, was_server_dep]
+endif
+
+test(
+  't_client',
+  executable(
+    't_client',
+    't_client.cxx',
+    't_http_client.cxx',
+    't_fcgi_client.cxx',
+    'fcgi_server.cxx',
+    'DemoHttpServerConnection.cxx',
+    '../src/address_string.cxx',
+    t_client_sources,
+    include_directories: inc,
+    dependencies: [
+      gtest,
+      test_instance_dep,
+      istream_pipe_dep,
+      http_client_dep,
+      http_server_dep,
+      stock_dep,
+      system_dep,
+      thread_pool_dep,
+      fcgi_client_dep,
+      t_client_dependencies,
+    ],
+  ),
 )
 
 test('t_http_server', executable('t_http_server',
@@ -515,36 +532,6 @@ test('t_http_server', executable('t_http_server',
     http_client_dep,
     system_dep,
   ]))
-
-test('t_fcgi_client', executable('t_fcgi_client',
-  't_fcgi_client.cxx',
-  't_client.cxx',
-  'fcgi_server.cxx',
-  include_directories: inc,
-  dependencies: [
-    gtest,
-    test_instance_dep,
-    fcgi_client_dep,
-  ]),
-)
-
-if libwas.found()
-  test(
-    't_was_client',
-    executable(
-      't_was_client',
-      't_was_client.cxx',
-      't_client.cxx',
-      include_directories: inc,
-      dependencies: [
-        gtest,
-        test_instance_dep,
-        was_client_dep,
-        was_server_dep,
-      ],
-    ),
-  )
-endif
 
 test('t_http_cache', executable('t_http_cache',
   't_http_cache.cxx',
