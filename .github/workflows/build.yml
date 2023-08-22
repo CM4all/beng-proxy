@@ -83,7 +83,7 @@ jobs:
              output
 
       - name: Build
-        run: ninja -C output
+        run: ninja -C output -v
 
       - name: Unit Tests
         run: meson test -C output
