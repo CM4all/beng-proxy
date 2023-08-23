@@ -3,6 +3,7 @@
 // author: Max Kellermann <mk@cm4all.com>
 
 #include "EchoSocket.hxx"
+#include "RecordingLease.hxx"
 #include "TestBufferedSocketHandler.hxx"
 #include "fs/FilteredSocket.hxx"
 #include "fs/Lease.hxx"
@@ -15,7 +16,6 @@
 #include "event/Loop.hxx"
 #include "system/Error.hxx"
 #include "net/UniqueSocketDescriptor.hxx"
-#include "lease.hxx"
 
 #include <gtest/gtest.h>
 
@@ -207,14 +207,7 @@ TEST(FilteredSocket, Lease)
 	fs.InitDummy(s.Release(), FD_SOCKET,
 		     instance.NewThreadSocketFilter(std::move(h)));
 
-	struct MyLease final : Lease {
-		bool released = false, reuse;
-
-		void ReleaseLease(bool _reuse) noexcept override {
-			released = true;
-			reuse = _reuse;
-		}
-	} lease;
+	RecordingLease lease;
 
 	struct MyBufferedSocketHandler final
 		: TestBufferedSocketHandler<FilteredSocketLease>
