@@ -158,14 +158,14 @@ try {
 				_handler.OnTranslateResponse(std::move(_response));
 			}
 
-			return BufferedResult::CLOSED;
+			return BufferedResult::DESTROYED;
 		}
 	}
 
 	return BufferedResult::MORE;
 } catch (...) {
 	Fail(std::current_exception());
-	return BufferedResult::CLOSED;
+	return BufferedResult::DESTROYED;
 }
 
 /*

@@ -123,7 +123,7 @@ ThreadSocketFilter::SubmitDecryptedInput() noexcept
 			AfterConsumed();
 			continue;
 
-		case BufferedResult::CLOSED:
+		case BufferedResult::DESTROYED:
 			return false;
 		}
 	}

@@ -31,7 +31,8 @@ EchoSocket::OnBufferedData()
 
 		if (close_after_data) {
 			socket.Close();
-			return BufferedResult::CLOSED;
+			socket.Destroy();
+			return BufferedResult::DESTROYED;
 		}
 
 		socket.ScheduleWrite();
@@ -46,7 +47,7 @@ EchoSocket::OnBufferedData()
 		return BufferedResult::OK;
 
 	case WRITE_DESTROYED:
-		return BufferedResult::CLOSED;
+		return BufferedResult::DESTROYED;
 
 	case WRITE_BROKEN:
 		return BufferedResult::OK;

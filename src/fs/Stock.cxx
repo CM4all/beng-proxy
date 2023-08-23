@@ -183,7 +183,7 @@ FilteredSocketStockConnection::OnBufferedData()
 {
 	logger(2, "unexpected data in idle TCP connection");
 	InvokeIdleDisconnect();
-	return BufferedResult::CLOSED;
+	return BufferedResult::DESTROYED;
 }
 
 bool

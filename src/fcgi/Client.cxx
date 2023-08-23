@@ -571,13 +571,13 @@ FcgiClient::ConsumeInput(const std::byte *data0, std::size_t length0) noexcept
 				   declaration - fail */
 				AbortResponseBody(std::make_exception_ptr(FcgiClientError("excess data at end of body "
 											  "from FastCGI application")));
-				return BufferedResult::CLOSED;
+				return BufferedResult::DESTROYED;
 			}
 
 			std::size_t nbytes = Feed({data, length});
 			if (nbytes == 0) {
 				if (destructed)
-					return BufferedResult::CLOSED;
+					return BufferedResult::DESTROYED;
 
 				if (at_headers) {
 					/* incomplete header line received, want more
@@ -603,7 +603,7 @@ FcgiClient::ConsumeInput(const std::byte *data0, std::size_t length0) noexcept
 					/* continue parsing the response body from the
 					   buffer */
 					? BufferedResult::AGAIN
-					: BufferedResult::CLOSED;
+					: BufferedResult::DESTROYED;
 			}
 
 			if (content_length > 0)
@@ -641,7 +641,7 @@ FcgiClient::ConsumeInput(const std::byte *data0, std::size_t length0) noexcept
 		socket.KeepConsumed(sizeof(*header));
 
 		if (!HandleHeader(*header))
-			return BufferedResult::CLOSED;
+			return BufferedResult::DESTROYED;
 	} while (data != end);
 
 	return BufferedResult::MORE;
@@ -983,7 +983,7 @@ FcgiClient::OnBufferedData()
 			break;
 
 		case IstreamReadyResult::CLOSED:
-			return BufferedResult::CLOSED;
+			return BufferedResult::DESTROYED;
 		}
 	}
 

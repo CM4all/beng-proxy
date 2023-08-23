@@ -17,7 +17,7 @@ HttpServerConnection::FeedRequestBody(std::span<const std::byte> src) noexcept
 	std::size_t nbytes = request_body_reader->FeedBody(src);
 	if (nbytes == 0) {
 		if (destructed)
-			return BufferedResult::CLOSED;
+			return BufferedResult::DESTROYED;
 
 		read_timer.Cancel();
 		return BufferedResult::OK;
@@ -43,7 +43,7 @@ HttpServerConnection::FeedRequestBody(std::span<const std::byte> src) noexcept
 
 		request_body_reader->DestroyEof();
 		if (destructed)
-			return BufferedResult::CLOSED;
+			return BufferedResult::DESTROYED;
 	} else
 		/* refresh the request body timeout */
 		ScheduleReadTimeoutTimer();

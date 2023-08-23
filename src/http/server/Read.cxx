@@ -340,7 +340,7 @@ HttpServerConnection::FeedHeaders(const std::string_view b) noexcept
 		line = StripRight(line);
 
 		if (!HandleLine(line))
-			return BufferedResult::CLOSED;
+			return BufferedResult::DESTROYED;
 
 		if (request.read_state != Request::HEADERS)
 			break;
@@ -411,7 +411,7 @@ HttpServerConnection::Feed(std::span<const std::byte> b) noexcept
 				result = BufferedResult::AGAIN;
 
 			if (!SubmitRequest())
-				result = BufferedResult::CLOSED;
+				result = BufferedResult::DESTROYED;
 		}
 
 		return result;

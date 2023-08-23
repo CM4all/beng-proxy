@@ -63,7 +63,7 @@ LbTcpConnection::Inbound::OnBufferedData()
 
 	if (!tcp.outbound.socket.IsValid()) {
 		tcp.OnTcpError("Send error", "Broken socket");
-		return BufferedResult::CLOSED;
+		return BufferedResult::DESTROYED;
 	}
 
 	auto r = socket->ReadBuffer();
@@ -86,17 +86,17 @@ LbTcpConnection::Inbound::OnBufferedData()
 	case WRITE_ERRNO:
 		save_errno = errno;
 		tcp.OnTcpErrno("Send failed", save_errno);
-		return BufferedResult::CLOSED;
+		return BufferedResult::DESTROYED;
 
 	case WRITE_BLOCKING:
 		return BufferedResult::OK;
 
 	case WRITE_DESTROYED:
-		return BufferedResult::CLOSED;
+		return BufferedResult::DESTROYED;
 
 	case WRITE_BROKEN:
 		tcp.OnTcpEnd();
-		return BufferedResult::CLOSED;
+		return BufferedResult::DESTROYED;
 	}
 
 	assert(false);
@@ -208,17 +208,17 @@ LbTcpConnection::Outbound::OnBufferedData()
 	case WRITE_ERRNO:
 		save_errno = errno;
 		tcp.OnTcpErrno("Send failed", save_errno);
-		return BufferedResult::CLOSED;
+		return BufferedResult::DESTROYED;
 
 	case WRITE_BLOCKING:
 		return BufferedResult::OK;
 
 	case WRITE_DESTROYED:
-		return BufferedResult::CLOSED;
+		return BufferedResult::DESTROYED;
 
 	case WRITE_BROKEN:
 		tcp.OnTcpEnd();
-		return BufferedResult::CLOSED;
+		return BufferedResult::DESTROYED;
 	}
 
 	assert(false);

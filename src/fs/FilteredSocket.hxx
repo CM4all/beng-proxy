@@ -431,7 +431,7 @@ public:
 			return handler->OnBufferedData();
 		} catch (...) {
 			handler->OnBufferedError(std::current_exception());
-			return BufferedResult::CLOSED;
+			return BufferedResult::DESTROYED;
 		}
 	}
 

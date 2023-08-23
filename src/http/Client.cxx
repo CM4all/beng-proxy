@@ -958,7 +958,7 @@ HttpClient::FeedBody(std::span<const std::byte> b) noexcept
 
 		if (nbytes == 0)
 			return destructed
-				? BufferedResult::CLOSED
+				? BufferedResult::DESTROYED
 				: BufferedResult::OK;
 	}
 
@@ -969,7 +969,7 @@ HttpClient::FeedBody(std::span<const std::byte> b) noexcept
 
 	if (response_body_reader.IsEOF()) {
 		ResponseBodyEOF();
-		return BufferedResult::CLOSED;
+		return BufferedResult::DESTROYED;
 	}
 
 	if (nbytes < b.size())
@@ -1052,7 +1052,7 @@ HttpClient::FeedHeaders(std::span<const std::byte> b)
 		ResponseFinished();
 		handler.InvokeResponse(status, std::move(headers),
 				       std::move(body));
-		return BufferedResult::CLOSED;
+		return BufferedResult::DESTROYED;
 	}
 
 	response.in_handler = true;
@@ -1060,13 +1060,13 @@ HttpClient::FeedHeaders(std::span<const std::byte> b)
 				       std::move(response.headers),
 				       std::move(response.body));
 	if (destructed)
-		return BufferedResult::CLOSED;
+		return BufferedResult::DESTROYED;
 
 	response.in_handler = false;
 
 	if (response_body_reader.IsEOF()) {
 		ResponseBodyEOF();
-		return BufferedResult::CLOSED;
+		return BufferedResult::DESTROYED;
 	}
 
 	/* now do the response body */
@@ -1132,7 +1132,7 @@ HttpClient::OnBufferedData()
 			return FeedHeaders(socket.ReadBuffer());
 		} catch (...) {
 			AbortResponseHeaders(std::current_exception());
-			return BufferedResult::CLOSED;
+			return BufferedResult::DESTROYED;
 		}
 
 	case Response::State::BODY:
@@ -1148,7 +1148,7 @@ HttpClient::OnBufferedData()
 				break;
 
 			case IstreamReadyResult::CLOSED:
-				return BufferedResult::CLOSED;
+				return BufferedResult::DESTROYED;
 			}
 		}
 

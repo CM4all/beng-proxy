@@ -145,7 +145,7 @@ FilteredSocketLease::ReadReleased() noexcept
 		case BufferedResult::AGAIN:
 			break;
 
-		case BufferedResult::CLOSED:
+		case BufferedResult::DESTROYED:
 			return false;
 		}
 	}
@@ -193,7 +193,7 @@ FilteredSocketLease::OnBufferedData()
 {
 	while (true) {
 		const auto result = handler.OnBufferedData();
-		if (result == BufferedResult::CLOSED)
+		if (result == BufferedResult::DESTROYED)
 			break;
 
 		if (!IsReleased())
@@ -209,7 +209,7 @@ FilteredSocketLease::OnBufferedData()
 	/* if the socket has been released, we must always report CLOSED
 	   to the released BufferedSocket instance, even if our handler
 	   still wants to consume the remaining buffer */
-	return BufferedResult::CLOSED;
+	return BufferedResult::DESTROYED;
 }
 
 DirectResult

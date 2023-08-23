@@ -141,7 +141,7 @@ private:
 	BufferedResult OnBufferedData() override {
 		fprintf(stderr, "unexpected data in idle TCP connection");
 		CloseClientSocket();
-		return BufferedResult::CLOSED;
+		return BufferedResult::DESTROYED;
 	}
 
 	bool OnBufferedClosed() noexcept override {
