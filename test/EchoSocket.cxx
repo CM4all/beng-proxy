@@ -10,7 +10,7 @@
 
 EchoSocket::EchoSocket(EventLoop &_event_loop,
 		       UniqueSocketDescriptor _fd, FdType _fd_type,
-		       SocketFilterPtr _filter)
+		       SocketFilterPtr _filter) noexcept
 	:socket(_event_loop)
 {
 	socket.Init(_fd.Release(), _fd_type,

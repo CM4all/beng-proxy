@@ -12,7 +12,7 @@ class EchoSocket final : public BufferedSocketHandler {
 public:
 	EchoSocket(EventLoop &_event_loop,
 		   UniqueSocketDescriptor _fd, FdType _fd_type,
-		   SocketFilterPtr _filter={});
+		   SocketFilterPtr _filter={}) noexcept;
 
 	void Close() noexcept {
 		socket.Close();
