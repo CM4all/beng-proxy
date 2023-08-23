@@ -12,7 +12,7 @@
 
 /**
  * A #ThreadSocketFilterHandler implementation which just passes all
- * data through as-is (like #NopThreadSocketFilter), but needs blocks
+ * data through as-is (like #NopThreadSocketFilter), but blocks
  * until approval is given.  This is useful to reproduce race
  * conditions in unit tests.
  */
