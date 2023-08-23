@@ -108,7 +108,6 @@ TranslateClient::ReleaseSocket(bool reuse) noexcept
 	assert(socket.IsConnected());
 
 	socket.Abandon();
-	socket.Destroy();
 
 	lease_ref.Release(reuse);
 }

@@ -268,8 +268,6 @@ inline FcgiClient::~FcgiClient() noexcept
 {
 	if (socket.IsConnected())
 		ReleaseSocket(false);
-
-	socket.Destroy();
 }
 
 void
