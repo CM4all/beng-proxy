@@ -82,4 +82,5 @@ void
 EchoSocket::OnBufferedError(std::exception_ptr) noexcept
 {
 	socket.Close();
+	socket.Destroy();
 }
