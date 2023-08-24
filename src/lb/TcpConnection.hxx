@@ -71,7 +71,7 @@ public:
 		explicit Outbound(EventLoop &event_loop) noexcept
 			:socket(event_loop) {}
 
-		void Destroy() noexcept;
+		~Outbound() noexcept;
 
 	private:
 		/* virtual methods from class BufferedSocketHandler */

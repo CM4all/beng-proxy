@@ -302,13 +302,10 @@ LbTcpConnection::MakeLoggerDomain() const noexcept
 		+ "'";
 }
 
-void
-LbTcpConnection::Outbound::Destroy() noexcept
+LbTcpConnection::Outbound::~Outbound() noexcept
 {
 	if (socket.IsConnected())
 		socket.Close();
-
-	socket.Destroy();
 }
 
 inline void
@@ -455,8 +452,7 @@ LbTcpConnection::~LbTcpConnection() noexcept
 	if (cancel_connect) {
 		cancel_connect.Cancel();
 		cancel_connect = nullptr;
-	} else if (outbound.socket.IsValid())
-		outbound.Destroy();
+	}
 
 	auto &connections = instance.tcp_connections;
 	connections.erase(connections.iterator_to(*this));
