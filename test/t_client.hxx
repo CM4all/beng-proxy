@@ -553,7 +553,7 @@ wrap_fake_request_body(struct pool *pool, UnusedIstreamPtr i,
 	return i;
 }
 
-static UnusedIstreamPtr
+inline UnusedIstreamPtr
 make_delayed_request_body(Context &c) noexcept
 {
 	auto delayed = istream_delayed_new(*c.pool, c.event_loop);
