@@ -302,12 +302,6 @@ LbTcpConnection::MakeLoggerDomain() const noexcept
 		+ "'";
 }
 
-LbTcpConnection::Outbound::~Outbound() noexcept
-{
-	if (socket.IsConnected())
-		socket.Close();
-}
-
 inline void
 LbTcpConnection::OnDeferredHandshake() noexcept
 {

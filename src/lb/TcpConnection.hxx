@@ -71,8 +71,6 @@ public:
 		explicit Outbound(EventLoop &event_loop) noexcept
 			:socket(event_loop) {}
 
-		~Outbound() noexcept;
-
 	private:
 		/* virtual methods from class BufferedSocketHandler */
 		BufferedResult OnBufferedData() override;
