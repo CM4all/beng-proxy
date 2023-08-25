@@ -300,8 +300,14 @@ ThreadSocketFilter::Done() noexcept
 			return;
 
 		/* now pretend the peer has closed the connection */
-		if (!socket->ClosedByPeer())
+		switch (socket->ClosedByPeer()) {
+		case BufferedSocket::ClosedByPeerResult::OK:
+		case BufferedSocket::ClosedByPeerResult::ENDED:
+			break;
+
+		case BufferedSocket::ClosedByPeerResult::DESTROYED:
 			return;
+		}
 
 		lock.lock();
 	}

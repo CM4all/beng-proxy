@@ -152,7 +152,7 @@ public:
 		base.Abandon();
 	}
 
-	bool ClosedByPeer() noexcept {
+	auto ClosedByPeer() noexcept {
 		return base.ClosedByPeer();
 	}
 
