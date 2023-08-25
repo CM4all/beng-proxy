@@ -125,8 +125,15 @@ FilteredSocketLease::ReadReleased() noexcept
 
 		switch (handler.OnBufferedData()) {
 		case BufferedResult::OK:
-			if (IsReleasedEmpty() && !handler.OnBufferedEnd())
-				return false;
+			if (IsReleasedEmpty()) {
+				try {
+					if (!handler.OnBufferedEnd())
+						return false;
+				} catch (...) {
+					handler.OnBufferedError(std::current_exception());
+					return false;
+				}
+			}
 
 			if (input.front().GetAvailable() >= remaining)
 				/* no data was consumed */
@@ -233,9 +240,17 @@ FilteredSocketLease::OnBufferedClosed() noexcept
 
 		if (handler.OnBufferedRemaining(GetAvailable()) &&
 		    ReadReleased() &&
-		    IsReleasedEmpty() &&
-		    !handler.OnBufferedEnd())
-			handler.OnBufferedError(std::make_exception_ptr(SocketClosedPrematurelyError()));
+		    IsReleasedEmpty()) {
+			try {
+				if (!handler.OnBufferedEnd()) {
+					handler.OnBufferedError(std::make_exception_ptr(SocketClosedPrematurelyError{}));
+					return false;
+				}
+			} catch (...) {
+				handler.OnBufferedError(std::current_exception());
+				return false;
+			}
+		}
 	}
 
 	return result;
@@ -251,7 +266,7 @@ FilteredSocketLease::OnBufferedRemaining(std::size_t remaining) noexcept
 }
 
 bool
-FilteredSocketLease::OnBufferedEnd() noexcept
+FilteredSocketLease::OnBufferedEnd()
 {
 	return handler.OnBufferedEnd();
 }

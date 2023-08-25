@@ -103,8 +103,10 @@ public:
 	 * The buffered_socket has run empty after the socket has been
 	 * closed.  The filter may call FilteredSocket::InvokeEnd() as
 	 * soon as all its buffers have been consumed.
+	 *
+	 * Throws on error.
 	 */
-	virtual void OnEnd() noexcept = 0;
+	virtual void OnEnd() = 0;
 
 	virtual void Close() noexcept = 0;
 };

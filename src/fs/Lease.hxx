@@ -173,7 +173,7 @@ private:
 	bool OnBufferedHangup() noexcept override;
 	bool OnBufferedClosed() noexcept override;
 	bool OnBufferedRemaining(std::size_t remaining) noexcept override;
-	bool OnBufferedEnd() noexcept override;
+	bool OnBufferedEnd() override;
 	bool OnBufferedWrite() override;
 	bool OnBufferedDrained() noexcept override;
 	bool OnBufferedTimeout() noexcept override;

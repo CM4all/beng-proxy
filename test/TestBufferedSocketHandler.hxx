@@ -144,7 +144,7 @@ public:
 		return true;
 	}
 
-	bool OnBufferedEnd() noexcept override {
+	bool OnBufferedEnd() override {
 		DoBreakEnd();
 		return false;
 	}

@@ -246,7 +246,7 @@ ThreadSocketFilter::Run() noexcept
 
 void
 ThreadSocketFilter::Done() noexcept
-{
+try {
 	if (postponed_destroy) {
 		/* the object has been closed, and now that the thread has
 		   finished, we can finally destroy it */
@@ -344,7 +344,12 @@ ThreadSocketFilter::Done() noexcept
 		    unprotected_decrypted_input.empty()) {
 			lock.unlock();
 
-			socket->InvokeEnd();
+			try {
+				socket->InvokeEnd();
+			} catch (...) {
+				socket->InvokeError(std::current_exception());
+			}
+
 			return;
 		}
 
@@ -399,6 +404,8 @@ ThreadSocketFilter::Done() noexcept
 		Schedule();
 	else
 		PostRun();
+} catch (...) {
+	socket->InvokeError(std::current_exception());
 }
 
 /*
@@ -666,7 +673,7 @@ ThreadSocketFilter::OnRemaining(std::size_t remaining) noexcept
 }
 
 void
-ThreadSocketFilter::OnEnd() noexcept
+ThreadSocketFilter::OnEnd()
 {
 	assert(!postponed_end);
 

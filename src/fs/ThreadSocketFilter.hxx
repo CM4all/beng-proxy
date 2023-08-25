@@ -308,6 +308,6 @@ public:
 	bool InternalWrite() noexcept override;
 	void OnClosed() noexcept override;
 	bool OnRemaining(std::size_t remaining) noexcept override;
-	void OnEnd() noexcept override;
+	void OnEnd() override;
 	void Close() noexcept override;
 };

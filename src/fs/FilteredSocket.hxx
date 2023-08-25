@@ -447,7 +447,7 @@ public:
 		return handler->OnBufferedRemaining(remaining);
 	}
 
-	void InvokeEnd() noexcept {
+	void InvokeEnd() {
 		assert(filter != nullptr);
 		assert(!ended);
 		assert(base.HasEnded());
@@ -484,7 +484,7 @@ private:
 	bool OnBufferedHangup() noexcept override;
 	bool OnBufferedClosed() noexcept override;
 	bool OnBufferedRemaining(std::size_t remaining) noexcept override;
-	bool OnBufferedEnd() noexcept override;
+	bool OnBufferedEnd() override;
 	bool OnBufferedWrite() override;
 	bool OnBufferedTimeout() noexcept override;
 	enum write_result OnBufferedBroken() noexcept override;

@@ -233,7 +233,7 @@ LbTcpConnection::Outbound::OnBufferedClosed() noexcept
 }
 
 bool
-LbTcpConnection::Outbound::OnBufferedEnd() noexcept
+LbTcpConnection::Outbound::OnBufferedEnd()
 {
 	auto &tcp = LbTcpConnection::FromOutbound(*this);
 

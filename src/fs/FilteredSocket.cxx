@@ -62,7 +62,7 @@ FilteredSocket::OnBufferedWrite()
 }
 
 bool
-FilteredSocket::OnBufferedEnd() noexcept
+FilteredSocket::OnBufferedEnd()
 {
 	filter->OnEnd();
 	return true;

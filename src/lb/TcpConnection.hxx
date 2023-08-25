@@ -76,7 +76,7 @@ public:
 		BufferedResult OnBufferedData() override;
 		// TODO: DirectResult OnBufferedDirect(SocketDescriptor fd, FdType fd_type) override;
 		bool OnBufferedClosed() noexcept override;
-		bool OnBufferedEnd() noexcept override;
+		bool OnBufferedEnd() override;
 		bool OnBufferedWrite() override;
 		enum write_result OnBufferedBroken() noexcept override;
 		void OnBufferedError(std::exception_ptr e) noexcept override;

@@ -90,7 +90,7 @@ NopSocketFilter::OnRemaining(std::size_t remaining) noexcept
 }
 
 void
-NopSocketFilter::OnEnd() noexcept
+NopSocketFilter::OnEnd()
 {
 	socket->InvokeEnd();
 }

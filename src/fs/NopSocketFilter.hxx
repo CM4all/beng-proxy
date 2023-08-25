@@ -33,6 +33,6 @@ public:
 	void UnscheduleWrite() noexcept override;
 	bool InternalWrite() noexcept override;
 	bool OnRemaining(std::size_t remaining) noexcept override;
-	void OnEnd() noexcept override;
+	void OnEnd() override;
 	void Close() noexcept override;
 };
