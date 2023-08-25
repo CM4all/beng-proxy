@@ -242,10 +242,8 @@ FilteredSocketLease::OnBufferedClosed() noexcept
 		    ReadReleased() &&
 		    IsReleasedEmpty()) {
 			try {
-				if (!handler.OnBufferedEnd()) {
-					handler.OnBufferedError(std::make_exception_ptr(SocketClosedPrematurelyError{}));
+				if (!handler.OnBufferedEnd())
 					return false;
-				}
 			} catch (...) {
 				handler.OnBufferedError(std::current_exception());
 				return false;

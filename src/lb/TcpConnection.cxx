@@ -251,7 +251,7 @@ LbTcpConnection::Outbound::OnBufferedEnd()
 		   called */
 	}
 
-	return true;
+	return false;
 }
 
 bool

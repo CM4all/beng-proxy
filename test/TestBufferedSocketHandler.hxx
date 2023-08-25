@@ -146,7 +146,7 @@ public:
 
 	bool OnBufferedEnd() override {
 		DoBreakEnd();
-		return false;
+		return true;
 	}
 
 	bool OnBufferedWrite() override {
