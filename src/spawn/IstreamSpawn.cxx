@@ -63,10 +63,6 @@ struct SpawnIstream final : Istream, IstreamSink, ExitListener {
 
 	void Cancel() noexcept;
 
-	void FreeBuffer() noexcept {
-		buffer.FreeIfDefined();
-	}
-
 	/**
 	 * Send data from the buffer.  Invokes the "eof" callback when the
 	 * buffer becomes empty and the pipe has been closed already.
@@ -144,7 +140,6 @@ SpawnIstream::SendFromBuffer() noexcept
 
 	if (!output_fd.IsDefined()) {
 		if (buffer.empty()) {
-			FreeBuffer();
 			DestroyEof();
 		}
 
@@ -239,8 +234,6 @@ SpawnIstream::OnError(std::exception_ptr ep) noexcept
 	assert(HasInput());
 	assert(input_fd.IsDefined());
 
-	FreeBuffer();
-
 	input_event.Cancel();
 	input_fd.Close();
 	ClearInput();
@@ -273,7 +266,6 @@ SpawnIstream::ReadFromOutput() noexcept
 			Cancel();
 
 			if (buffer.empty()) {
-				FreeBuffer();
 				DestroyEof();
 			}
 		} else if (errno == EAGAIN) {
@@ -285,7 +277,6 @@ SpawnIstream::ReadFromOutput() noexcept
 				input.Read();
 		} else {
 			auto error = MakeErrno("failed to read from sub process");
-			FreeBuffer();
 			Cancel();
 			DestroyError(std::make_exception_ptr(error));
 		}
@@ -316,7 +307,6 @@ SpawnIstream::ReadFromOutput() noexcept
 			break;
 
 		case IstreamDirectResult::END:
-			FreeBuffer();
 			Cancel();
 			DestroyEof();
 			break;
@@ -330,7 +320,6 @@ SpawnIstream::ReadFromOutput() noexcept
 					input.Read();
 			} else {
 				auto error = MakeErrno("failed to read from sub process");
-				FreeBuffer();
 				Cancel();
 				DestroyError(std::make_exception_ptr(error));
 			}
@@ -362,8 +351,6 @@ SpawnIstream::_ConsumeDirect(std::size_t) noexcept
 void
 SpawnIstream::_Close() noexcept
 {
-	FreeBuffer();
-
 	if (output_fd.IsDefined())
 		Cancel();
 
