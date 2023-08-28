@@ -17,22 +17,22 @@ struct AllocatorStats {
 	 */
 	std::size_t netto_size;
 
-	static constexpr AllocatorStats Zero() {
+	static constexpr AllocatorStats Zero() noexcept {
 		return { 0, 0 };
 	}
 
-	void Clear() {
+	constexpr void Clear() noexcept {
 		brutto_size = 0;
 		netto_size = 0;
 	}
 
-	AllocatorStats &operator+=(const AllocatorStats other) {
+	constexpr AllocatorStats &operator+=(const AllocatorStats other) noexcept {
 		brutto_size += other.brutto_size;
 		netto_size += other.netto_size;
 		return *this;
 	}
 
-	constexpr AllocatorStats operator+(const AllocatorStats other) const {
+	constexpr AllocatorStats operator+(const AllocatorStats other) const noexcept {
 		return { brutto_size + other.brutto_size,
 			netto_size + other.netto_size };
 	}
