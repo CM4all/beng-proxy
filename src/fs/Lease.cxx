@@ -214,7 +214,7 @@ FilteredSocketLease::OnBufferedData()
 		const auto result = handler.OnBufferedData();
 
 		if (result != BufferedResult::DESTROYED) {
-			assert(handler_info = &info);
+			assert(handler_info == &info);
 			handler_info = nullptr;
 		}
 
