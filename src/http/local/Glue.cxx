@@ -46,15 +46,15 @@ private:
 	}
 
 	/* virtual methods from class Lease */
-	void ReleaseLease(PutAction action) noexcept override {
+	PutAction ReleaseLease(PutAction action) noexcept override {
 		if (socket.IsConnected())
 			socket.Abandon();
 		else
 			lhttp_stock_item_abandon_socket(stock_item);
 
-		stock_item.Put(action);
-
+		auto &_item = stock_item;
 		Destroy();
+		return _item.Put(action);
 	}
 };
 

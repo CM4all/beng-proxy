@@ -199,7 +199,7 @@ Context::ReadBody() noexcept
 		input.Read();
 }
 
-void
+PutAction
 Context::ReleaseLease(PutAction _action) noexcept
 {
 	assert(connection != nullptr);
@@ -211,6 +211,7 @@ Context::ReleaseLease(PutAction _action) noexcept
 	connection = nullptr;
 	released = true;
 	lease_action = _action;
+	return _action;
 }
 
 void

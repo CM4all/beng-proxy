@@ -18,8 +18,8 @@ struct DelegateGlue final : Lease {
 	explicit DelegateGlue(StockItem &_item):item(_item) {}
 
 	/* virtual methods from class Lease */
-	void ReleaseLease(PutAction action) noexcept override {
-		item.Put(action);
+	PutAction ReleaseLease(PutAction action) noexcept override {
+		return item.Put(action);
 	}
 };
 

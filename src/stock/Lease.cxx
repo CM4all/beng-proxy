@@ -5,9 +5,10 @@
 #include "Lease.hxx"
 #include "stock/Item.hxx"
 
-void
+PutAction
 StockItemLease::ReleaseLease(PutAction action) noexcept
 {
-	item.Put(action);
+	auto &_item = item;
 	Destroy();
+	return _item.Put(action);
 }

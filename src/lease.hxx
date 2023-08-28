@@ -10,7 +10,7 @@
 
 class Lease {
 public:
-	virtual void ReleaseLease(PutAction action) noexcept = 0;
+	virtual PutAction ReleaseLease(PutAction action) noexcept = 0;
 };
 
 class LeasePtr {
@@ -37,11 +37,11 @@ public:
 		lease = &_lease;
 	}
 
-	void Release(PutAction action) noexcept {
+	PutAction Release(PutAction action) noexcept {
 		assert(lease != nullptr);
 
 		auto *l = lease;
 		lease = nullptr;
-		l->ReleaseLease(action);
+		return l->ReleaseLease(action);
 	}
 };

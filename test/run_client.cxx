@@ -164,7 +164,7 @@ struct Context final
 	void OnSocketConnectError(std::exception_ptr ep) noexcept override;
 
 	/* virtual methods from class Lease */
-	void ReleaseLease(PutAction _action) noexcept override {
+	PutAction ReleaseLease(PutAction _action) noexcept override {
 		assert(!idle);
 		assert(url.protocol == parsed_url::HTTP ||
 		       fd.IsDefined());
@@ -178,6 +178,8 @@ struct Context final
 			fs.Destroy();
 		} else
 			fd.Close();
+
+		return PutAction::DESTROY;
 	}
 
 #ifdef HAVE_NGHTTP2

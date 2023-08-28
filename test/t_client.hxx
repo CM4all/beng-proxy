@@ -208,7 +208,7 @@ struct Context final
 	void OnError(std::exception_ptr ep) noexcept override;
 
 	/* virtual methods from class Lease */
-	void ReleaseLease(PutAction action) noexcept override;
+	PutAction ReleaseLease(PutAction action) noexcept override;
 
 	/* virtual methods from class HttpResponseHandler */
 	void OnHttpResponse(HttpStatus status, StringMap &&headers,

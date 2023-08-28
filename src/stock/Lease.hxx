@@ -28,5 +28,5 @@ public:
 	}
 
 	/* virtual methods from class Lease */
-	void ReleaseLease(PutAction action) noexcept override;
+	PutAction ReleaseLease(PutAction action) noexcept override;
 };

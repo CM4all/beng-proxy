@@ -126,15 +126,17 @@ private:
 	void HttpConnectionClosed() noexcept override;
 
 	/* virtual methods from class Lease */
-	void ReleaseLease(PutAction action) noexcept override {
+	PutAction ReleaseLease(PutAction action) noexcept override {
 		client_fs_released = true;
 
 		if (action == PutAction::REUSE && client_fs.IsValid() &&
 		    client_fs.IsConnected()) {
 			client_fs.Reinit(Event::Duration(-1), *this);
 			client_fs.UnscheduleWrite();
+			return PutAction::REUSE;
 		} else {
 			CloseClientSocket();
+			return PutAction::DESTROY;
 		}
 	}
 

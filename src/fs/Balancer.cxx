@@ -58,7 +58,7 @@ private:
 	void OnStockItemError(std::exception_ptr ep) noexcept override;
 
 	/* virtual methods from class Lease */
-	void ReleaseLease(PutAction action) noexcept final;
+	PutAction ReleaseLease(PutAction action) noexcept final;
 };
 
 using BR = BalancerRequest<FilteredSocketBalancer::Request,
@@ -108,13 +108,15 @@ FilteredSocketBalancer::Request::OnStockItemError(std::exception_ptr ep) noexcep
 	}
 }
 
-void
+PutAction
 FilteredSocketBalancer::Request::ReleaseLease(PutAction action) noexcept
 {
-	stock_item->Put(action);
+	auto &_item = *stock_item;
 
 	auto &base = BR::Cast(*this);
 	base.Destroy();
+
+	return _item.Put(action);
 }
 
 /*

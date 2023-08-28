@@ -100,9 +100,10 @@ private:
 	}
 
 	/* virtual methods from class Lease */
-	void ReleaseLease(PutAction action) noexcept override {
-		stock_item->Put(action);
+	PutAction ReleaseLease(PutAction action) noexcept override {
+		auto &_item = *stock_item;
 		Destroy();
+		return _item.Put(action);
 	}
 };
 

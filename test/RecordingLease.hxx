@@ -10,8 +10,9 @@ struct RecordingLease : Lease {
 	bool released = false;
 	PutAction action;
 
-	void ReleaseLease(PutAction _action) noexcept override {
+	PutAction ReleaseLease(PutAction _action) noexcept override {
 		released = true;
 		action = _action;
+		return _action;
 	}
 };
