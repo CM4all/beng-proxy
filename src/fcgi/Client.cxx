@@ -146,9 +146,9 @@ private:
 	/**
 	 * Release the socket held by this object.
 	 */
-	void ReleaseSocket(bool reuse) noexcept {
+	void ReleaseSocket(PutAction action) noexcept {
 		socket.Abandon();
-		lease_ref.Release(reuse);
+		lease_ref.Release(action);
 	}
 
 	/**
@@ -267,7 +267,7 @@ static constexpr auto fcgi_client_timeout = std::chrono::minutes(2);
 inline FcgiClient::~FcgiClient() noexcept
 {
 	if (socket.IsConnected())
-		ReleaseSocket(false);
+		ReleaseSocket(PutAction::DESTROY);
 }
 
 void
@@ -870,7 +870,7 @@ FcgiClient::_FillBucketList(IstreamBucketList &list)
 
 				if (socket.IsConnected() &&
 				    remaining == sizeof(header) + FromBE16(header.content_length) + header.padding_length)
-					ReleaseSocket(true);
+					ReleaseSocket(PutAction::REUSE);
 			}
 
 			break;
@@ -997,7 +997,9 @@ FcgiClient::OnBufferedData()
 		if (analysis.end_request_offset > 0)
 			/* found it: we no longer need the socket, everything we
 			   need is already in the given buffer */
-			ReleaseSocket(analysis.end_request_offset == r.size());
+			ReleaseSocket(analysis.end_request_offset == r.size()
+				      ? PutAction::REUSE
+				      : PutAction::DESTROY);
 	}
 
 	return ConsumeInput(r.data(), r.size());
@@ -1009,7 +1011,7 @@ FcgiClient::OnBufferedClosed() noexcept
 	stopwatch.RecordEvent("socket_closed");
 
 	/* the rest of the response may already be in the input buffer */
-	ReleaseSocket(false);
+	ReleaseSocket(PutAction::DESTROY);
 	return true;
 }
 

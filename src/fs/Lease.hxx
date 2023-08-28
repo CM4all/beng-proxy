@@ -68,7 +68,7 @@ public:
 	 * @param preserve preserve the contents of the input buffer for
 	 * further consumption?
 	 */
-	void Release(bool preserve, bool reuse) noexcept;
+	void Release(bool preserve, PutAction action) noexcept;
 
 	bool IsReleased() const noexcept {
 		return socket == nullptr;

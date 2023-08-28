@@ -7,10 +7,11 @@
 #include "lease.hxx"
 
 struct RecordingLease : Lease {
-	bool released = false, reuse;
+	bool released = false;
+	PutAction action;
 
-	void ReleaseLease(bool _reuse) noexcept override {
+	void ReleaseLease(PutAction _action) noexcept override {
 		released = true;
-		reuse = _reuse;
+		action = _action;
 	}
 };

@@ -62,7 +62,7 @@ private:
 		this->~TranslateClient();
 	}
 
-	void ReleaseSocket(bool reuse) noexcept;
+	void ReleaseSocket(PutAction action) noexcept;
 
 	void Fail(std::exception_ptr ep) noexcept;
 
@@ -97,19 +97,19 @@ private:
 	/* virtual methods from class Cancellable */
 	void Cancel() noexcept override {
 		stopwatch.RecordEvent("cancel");
-		ReleaseSocket(false);
+		ReleaseSocket(PutAction::DESTROY);
 		Destroy();
 	}
 };
 
 void
-TranslateClient::ReleaseSocket(bool reuse) noexcept
+TranslateClient::ReleaseSocket(PutAction action) noexcept
 {
 	assert(socket.IsConnected());
 
 	socket.Abandon();
 
-	lease_ref.Release(reuse);
+	lease_ref.Release(action);
 }
 
 void
@@ -117,7 +117,7 @@ TranslateClient::Fail(std::exception_ptr ep) noexcept
 {
 	stopwatch.RecordEvent("error");
 
-	ReleaseSocket(false);
+	ReleaseSocket(PutAction::DESTROY);
 
 	auto &_handler = handler;
 
@@ -149,7 +149,7 @@ try {
 			break;
 
 		case TranslateParser::Result::DONE:
-			ReleaseSocket(true);
+			ReleaseSocket(PutAction::REUSE);
 
 			{
 				auto &_handler = handler;
@@ -258,7 +258,7 @@ try {
 				   request, std::move(gb),
 				   handler, cancel_ptr);
 } catch (...) {
-	lease.ReleaseLease(true);
+	lease.ReleaseLease(PutAction::REUSE);
 
 	handler.OnTranslateError(std::current_exception());
 }

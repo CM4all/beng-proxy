@@ -4,11 +4,13 @@
 
 #pragma once
 
+#include "stock/PutAction.hxx"
+
 #include <assert.h>
 
 class Lease {
 public:
-	virtual void ReleaseLease(bool reuse) noexcept = 0;
+	virtual void ReleaseLease(PutAction action) noexcept = 0;
 };
 
 class LeasePtr {
@@ -35,11 +37,11 @@ public:
 		lease = &_lease;
 	}
 
-	void Release(bool reuse) noexcept {
+	void Release(PutAction action) noexcept {
 		assert(lease != nullptr);
 
 		auto *l = lease;
 		lease = nullptr;
-		l->ReleaseLease(reuse);
+		l->ReleaseLease(action);
 	}
 };

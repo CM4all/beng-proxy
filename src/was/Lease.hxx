@@ -4,10 +4,12 @@
 
 #pragma once
 
+#include "stock/PutAction.hxx"
+
 #include <stdint.h>
 
 class WasLease {
 public:
-	virtual void ReleaseWas(bool reuse) = 0;
+	virtual void ReleaseWas(PutAction action) = 0;
 	virtual void ReleaseWasStop(uint64_t input_received) = 0;
 };

@@ -338,7 +338,7 @@ FcgiConnection::~FcgiConnection() noexcept
 		kill = true;
 
 	if (child != nullptr)
-		child->Put(kill);
+		child->Put(kill ? PutAction::DESTROY : PutAction::REUSE);
 }
 
 

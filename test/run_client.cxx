@@ -145,7 +145,8 @@ struct Context final
 	UniqueSocketDescriptor fd;
 	FilteredSocket fs;
 
-	bool idle, reuse, aborted, got_response = false;
+	PutAction lease_action;
+	bool idle, aborted, got_response = false;
 	HttpStatus status;
 
 	SinkFd *body = nullptr;
@@ -163,13 +164,13 @@ struct Context final
 	void OnSocketConnectError(std::exception_ptr ep) noexcept override;
 
 	/* virtual methods from class Lease */
-	void ReleaseLease(bool _reuse) noexcept override {
+	void ReleaseLease(PutAction _action) noexcept override {
 		assert(!idle);
 		assert(url.protocol == parsed_url::HTTP ||
 		       fd.IsDefined());
 
 		idle = true;
-		reuse = _reuse;
+		lease_action = _action;
 
 		if (url.protocol == parsed_url::HTTP) {
 			if (fs.IsConnected())
@@ -361,7 +362,7 @@ try {
 
 #ifdef HAVE_NGHTTP2
 	case parsed_url::HTTP2:
-		reuse = false;
+		lease_action = PutAction::DESTROY;
 
 		fsp = std::make_unique<FilteredSocket>(event_loop,
 						       std::move(fd), FdType::FD_TCP,
@@ -454,7 +455,7 @@ try {
 	assert(!ctx.got_response || ctx.body_eof || ctx.body_abort || ctx.aborted);
 
 	if (ctx.got_response)
-		fprintf(stderr, "reuse=%d\n", ctx.reuse);
+		fprintf(stderr, "reuse=%d\n", ctx.lease_action == PutAction::REUSE);
 
 	/* cleanup */
 

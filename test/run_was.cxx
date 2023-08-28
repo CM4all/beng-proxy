@@ -58,13 +58,13 @@ struct Context final
 	}
 
 	/* virtual methods from class Lease */
-	void ReleaseWas([[maybe_unused]] bool reuse) override {
+	void ReleaseWas([[maybe_unused]] PutAction action) override {
 		process.handle.reset();
 		process.Close();
 	}
 
 	void ReleaseWasStop([[maybe_unused]] uint64_t input_received) override {
-		ReleaseWas(false);
+		ReleaseWas(PutAction::DESTROY);
 	}
 
 	/* virtual methods from class HttpResponseHandler */

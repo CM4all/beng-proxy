@@ -131,7 +131,8 @@ struct Context final
 	bool response_body_byte = false;
 	CancellablePointer cancel_ptr;
 	ClientConnection *connection = nullptr;
-	bool released = false, reuse, aborted = false;
+	bool released = false, aborted = false;
+	PutAction lease_action;
 	HttpStatus status = HttpStatus{};
 	std::exception_ptr request_error;
 
@@ -207,7 +208,7 @@ struct Context final
 	void OnError(std::exception_ptr ep) noexcept override;
 
 	/* virtual methods from class Lease */
-	void ReleaseLease(bool _reuse) noexcept override;
+	void ReleaseLease(PutAction action) noexcept override;
 
 	/* virtual methods from class HttpResponseHandler */
 	void OnHttpResponse(HttpStatus status, StringMap &&headers,
@@ -244,7 +245,7 @@ TYPED_TEST_P(ClientTest, Empty)
 	EXPECT_FALSE(c.body_eof);
 	EXPECT_FALSE(c.request_error);
 	EXPECT_EQ(c.body_error, nullptr);
-	EXPECT_TRUE(c.reuse);
+	EXPECT_EQ(c.lease_action, PutAction::REUSE);
 }
 
 TYPED_TEST_P(ClientTest, Body)
@@ -274,7 +275,7 @@ TYPED_TEST_P(ClientTest, Body)
 	EXPECT_TRUE(c.body_eof);
 	EXPECT_EQ(c.body_data, 6);
 	EXPECT_EQ(c.body_error, nullptr);
-	EXPECT_TRUE(c.reuse);
+	EXPECT_EQ(c.lease_action, PutAction::REUSE);
 }
 
 TYPED_TEST_P(ClientTest, BodyBuckets)
@@ -307,7 +308,7 @@ TYPED_TEST_P(ClientTest, BodyBuckets)
 	EXPECT_TRUE(c.body_eof);
 	EXPECT_EQ(c.body_data, 6);
 	EXPECT_EQ(c.body_error, nullptr);
-	EXPECT_TRUE(c.reuse);
+	EXPECT_EQ(c.lease_action, PutAction::REUSE);
 }
 
 /**
@@ -338,7 +339,7 @@ TYPED_TEST_P(ClientTest, ReadBody)
 	EXPECT_EQ(c.body_data, 6);
 	EXPECT_FALSE(c.request_error);
 	EXPECT_EQ(c.body_error, nullptr);
-	EXPECT_TRUE(c.reuse);
+	EXPECT_EQ(c.lease_action, PutAction::REUSE);
 }
 
 /**
@@ -808,7 +809,7 @@ TYPED_TEST_P(ClientTest, Head)
 	EXPECT_FALSE(c.body_eof);
 	EXPECT_FALSE(c.request_error);
 	EXPECT_EQ(c.body_error, nullptr);
-	EXPECT_TRUE(c.reuse);
+	EXPECT_EQ(c.lease_action, PutAction::REUSE);
 }
 
 /**
@@ -837,7 +838,7 @@ TYPED_TEST_P(ClientTest, HeadDiscard)
 	EXPECT_FALSE(c.body_eof);
 	EXPECT_FALSE(c.request_error);
 	EXPECT_EQ(c.body_error, nullptr);
-	EXPECT_TRUE(c.reuse);
+	EXPECT_EQ(c.lease_action, PutAction::REUSE);
 }
 
 /**
@@ -895,7 +896,8 @@ TYPED_TEST_P(ClientTest, IgnoredBody)
 	EXPECT_FALSE(c.body_eof);
 	EXPECT_FALSE(c.request_error);
 	EXPECT_EQ(c.body_error, nullptr);
-	EXPECT_TRUE(!factory.options.can_cancel_request_body || c.reuse);
+	EXPECT_TRUE(!factory.options.can_cancel_request_body ||
+		    c.lease_action == PutAction::REUSE);
 }
 
 /**
@@ -1062,7 +1064,7 @@ TYPED_TEST_P(ClientTest, Bogus100)
 
 		EXPECT_NE(strstr(GetFullMessage(c.request_error).c_str(), "unexpected status 100"), nullptr);
 		EXPECT_EQ(c.body_error, nullptr);
-		EXPECT_FALSE(c.reuse);
+		EXPECT_EQ(c.lease_action, PutAction::DESTROY);
 	} else
 		GTEST_SKIP();
 
@@ -1103,7 +1105,7 @@ TYPED_TEST_P(ClientTest, Twice100)
 
 		EXPECT_NE(strstr(GetFullMessage(c.request_error).c_str(), "unexpected status 100"), nullptr);
 		EXPECT_EQ(c.body_error, nullptr);
-		EXPECT_FALSE(c.reuse);
+		EXPECT_EQ(c.lease_action, PutAction::DESTROY);
 	} else
 		GTEST_SKIP();
 
@@ -1140,7 +1142,7 @@ TYPED_TEST_P(ClientTest, Close100)
 		       strstr(GetFullMessage(c.request_error).c_str(), "Connection reset by peer") != nullptr ||
 		       strstr(GetFullMessage(c.request_error).c_str(), "unexpected status 100") != nullptr);
 		EXPECT_EQ(c.body_error, nullptr);
-		EXPECT_FALSE(c.reuse);
+		EXPECT_EQ(c.lease_action, PutAction::DESTROY);
 	} else
 		GTEST_SKIP();
 
@@ -1246,7 +1248,7 @@ TYPED_TEST_P(ClientTest, PrematureCloseHeaders)
 		EXPECT_FALSE(c.body_eof);
 		EXPECT_FALSE(c.body_error);
 		EXPECT_NE(c.request_error, nullptr);
-		EXPECT_FALSE(c.reuse);
+		EXPECT_EQ(c.lease_action, PutAction::DESTROY);
 	}
 }
 
@@ -1276,7 +1278,7 @@ TYPED_TEST_P(ClientTest, PrematureCloseBody)
 		EXPECT_FALSE(c.body_eof);
 		EXPECT_FALSE(c.request_error);
 		EXPECT_NE(c.body_error, nullptr);
-		EXPECT_FALSE(c.reuse);
+		EXPECT_EQ(c.lease_action, PutAction::DESTROY);
 	}
 }
 
@@ -1305,7 +1307,7 @@ TYPED_TEST_P(ClientTest, PrematureCloseBodyBuckets)
 		EXPECT_FALSE(c.body_eof);
 		EXPECT_FALSE(c.request_error);
 		EXPECT_NE(c.body_error, nullptr);
-		EXPECT_FALSE(c.reuse);
+		EXPECT_EQ(c.lease_action, PutAction::DESTROY);
 	}
 }
 
@@ -1344,7 +1346,7 @@ TYPED_TEST_P(ClientTest, PostEmpty)
 	EXPECT_TRUE(c.released);
 	EXPECT_EQ(c.body_data, 0);
 	EXPECT_EQ(c.body_error, nullptr);
-	EXPECT_TRUE(c.reuse);
+	EXPECT_EQ(c.lease_action, PutAction::REUSE);
 }
 
 TYPED_TEST_P(ClientTest, Buckets)
@@ -1380,7 +1382,7 @@ TYPED_TEST_P(ClientTest, Buckets)
 		EXPECT_EQ(c.available_after_bucket, 0);
 	}
 	EXPECT_EQ(c.available_after_bucket_partial, 0);
-	EXPECT_TRUE(c.reuse);
+	EXPECT_EQ(c.lease_action, PutAction::REUSE);
 }
 
 TYPED_TEST_P(ClientTest, BucketsChunked)
@@ -1415,7 +1417,7 @@ TYPED_TEST_P(ClientTest, BucketsChunked)
 		EXPECT_EQ(c.available_after_bucket, 0);
 	}
 	EXPECT_EQ(c.available_after_bucket_partial, 0);
-	EXPECT_TRUE(c.reuse);
+	EXPECT_EQ(c.lease_action, PutAction::REUSE);
 }
 
 TYPED_TEST_P(ClientTest, BucketsAfterData)
@@ -1451,7 +1453,7 @@ TYPED_TEST_P(ClientTest, BucketsAfterData)
 	EXPECT_TRUE(c.body_eof);
 	EXPECT_EQ(c.body_error, nullptr);
 	EXPECT_EQ(c.available_after_bucket_partial, 0);
-	EXPECT_TRUE(c.reuse);
+	EXPECT_EQ(c.lease_action, PutAction::REUSE);
 }
 
 TYPED_TEST_P(ClientTest, BucketsClose)
@@ -1626,7 +1628,7 @@ TYPED_TEST_P(ClientTest, ValidPremature)
 		EXPECT_EQ(c.status, HttpStatus::OK);
 		EXPECT_FALSE(c.body_eof);
 		EXPECT_NE(c.body_error, nullptr);
-		EXPECT_TRUE(c.reuse);
+		EXPECT_EQ(c.lease_action, PutAction::REUSE);
 	} else
 		GTEST_SKIP();
 }
@@ -1655,7 +1657,7 @@ TYPED_TEST_P(ClientTest, ValidPrematureBuckets)
 		EXPECT_EQ(c.status, HttpStatus::OK);
 		EXPECT_FALSE(c.body_eof);
 		EXPECT_NE(c.body_error, nullptr);
-		EXPECT_TRUE(c.reuse);
+		EXPECT_EQ(c.lease_action, PutAction::REUSE);
 	} else
 		GTEST_SKIP();
 }
@@ -1684,7 +1686,7 @@ TYPED_TEST_P(ClientTest, MalformedPremature)
 		EXPECT_EQ(c.body_data, 0);
 		EXPECT_FALSE(c.body_eof);
 		EXPECT_NE(c.body_error, nullptr);
-		EXPECT_FALSE(c.reuse);
+		EXPECT_EQ(c.lease_action, PutAction::DESTROY);
 	} else
 		GTEST_SKIP();
 }
@@ -1715,7 +1717,7 @@ TYPED_TEST_P(ClientTest, MalformedPrematureBuckets)
 		EXPECT_EQ(c.body_data, 0);
 		EXPECT_FALSE(c.body_eof);
 		EXPECT_NE(c.body_error, nullptr);
-		EXPECT_FALSE(c.reuse);
+		EXPECT_EQ(c.lease_action, PutAction::DESTROY);
 	} else
 		GTEST_SKIP();
 }

@@ -126,10 +126,11 @@ private:
 	void HttpConnectionClosed() noexcept override;
 
 	/* virtual methods from class Lease */
-	void ReleaseLease(bool reuse) noexcept override {
+	void ReleaseLease(PutAction action) noexcept override {
 		client_fs_released = true;
 
-		if (reuse && client_fs.IsValid() && client_fs.IsConnected()) {
+		if (action == PutAction::REUSE && client_fs.IsValid() &&
+		    client_fs.IsConnected()) {
 			client_fs.Reinit(Event::Duration(-1), *this);
 			client_fs.UnscheduleWrite();
 		} else {

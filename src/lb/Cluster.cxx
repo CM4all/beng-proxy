@@ -494,7 +494,7 @@ private:
 	void OnStockItemError(std::exception_ptr ep) noexcept override;
 
 	/* virtual methods from class Lease */
-	void ReleaseLease(bool reuse) noexcept final;
+	void ReleaseLease(PutAction action) noexcept final;
 
 	/* virtual methods from class Cancellable */
 	void Cancel() noexcept override {
@@ -560,9 +560,9 @@ LbCluster::ZeroconfHttpConnect::OnStockItemError(std::exception_ptr ep) noexcept
 }
 
 void
-LbCluster::ZeroconfHttpConnect::ReleaseLease(bool reuse) noexcept
+LbCluster::ZeroconfHttpConnect::ReleaseLease(PutAction action) noexcept
 {
-	stock_item->Put(!reuse);
+	stock_item->Put(action);
 	Destroy();
 }
 

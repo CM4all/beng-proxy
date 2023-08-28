@@ -6,8 +6,8 @@
 #include "stock/Item.hxx"
 
 void
-StockItemLease::ReleaseLease(bool reuse) noexcept
+StockItemLease::ReleaseLease(PutAction action) noexcept
 {
-	item.Put(!reuse);
+	item.Put(action);
 	Destroy();
 }

@@ -59,7 +59,7 @@ FilteredSocketLease::MoveSocketInput() noexcept
 }
 
 void
-FilteredSocketLease::Release(bool preserve, bool reuse) noexcept
+FilteredSocketLease::Release(bool preserve, PutAction action) noexcept
 {
 	assert(!IsReleased());
 	assert(lease_ref);
@@ -67,7 +67,7 @@ FilteredSocketLease::Release(bool preserve, bool reuse) noexcept
 	if (preserve)
 		MoveSocketInput();
 
-	lease_ref.Release(reuse);
+	lease_ref.Release(action);
 	socket = nullptr;
 }
 

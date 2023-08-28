@@ -203,10 +203,13 @@ private:
 			/* already released */
 			return;
 
-		bool reuse = control.empty();
+		const PutAction action = control.empty()
+			? PutAction::REUSE
+			: PutAction::DESTROY;
+
 		control.ReleaseSocket();
 
-		lease.ReleaseWas(reuse);
+		lease.ReleaseWas(action);
 	}
 
 	/**
@@ -250,7 +253,7 @@ private:
 		if (control.IsDefined())
 			control.ReleaseSocket();
 
-		lease.ReleaseWas(false);
+		lease.ReleaseWas(PutAction::DESTROY);
 	}
 
 	/**
@@ -281,7 +284,7 @@ private:
 		if (control.IsDefined())
 			control.ReleaseSocket();
 
-		lease.ReleaseWas(false);
+		lease.ReleaseWas(PutAction::DESTROY);
 
 		Destroy();
 
@@ -852,7 +855,7 @@ WasClient::WasInputError() noexcept
 	if (control.IsDefined())
 		control.ReleaseSocket();
 
-	lease.ReleaseWas(false);
+	lease.ReleaseWas(PutAction::DESTROY);
 
 	Destroy();
 }

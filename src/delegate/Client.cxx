@@ -46,18 +46,18 @@ struct DelegateClient final : PoolLeakDetector, Cancellable {
 		this->~DelegateClient();
 	}
 
-	void ReleaseSocket(bool reuse) noexcept {
+	void ReleaseSocket(PutAction action) noexcept {
 		assert(s.IsDefined());
 
 		/* the SocketEvent must be canceled before releasing its lease
 		   to avoid EBADFD from epoll_ctl() */
 		event.Cancel();
 
-		lease_ref.Release(reuse);
+		lease_ref.Release(action);
 	}
 
 	void DestroyError(std::exception_ptr ep) noexcept {
-		ReleaseSocket(false);
+		ReleaseSocket(PutAction::DESTROY);
 
 		auto &_handler = handler;
 		Destroy();
@@ -81,7 +81,7 @@ private:
 
 	/* virtual methods from class Cancellable */
 	void Cancel() noexcept override {
-		ReleaseSocket(false);
+		ReleaseSocket(PutAction::DESTROY);
 		Destroy();
 	}
 };
@@ -105,7 +105,7 @@ DelegateClient::HandleFd(const struct msghdr &msg, size_t length)
 		return;
 	}
 
-	ReleaseSocket(true);
+	ReleaseSocket(PutAction::REUSE);
 
 	const void *data = CMSG_DATA(cmsg);
 	const int *fd_p = (const int *)data;
@@ -129,11 +129,11 @@ DelegateClient::HandleErrno(size_t length)
 	std::exception_ptr ep;
 
 	if (nbytes == sizeof(e)) {
-		ReleaseSocket(true);
+		ReleaseSocket(PutAction::REUSE);
 
 		ep = std::make_exception_ptr(MakeErrno(e, "Error from delegate"));
 	} else {
-		ReleaseSocket(false);
+		ReleaseSocket(PutAction::DESTROY);
 
 		ep = std::make_exception_ptr(std::runtime_error("Failed to receive errno"));
 	}
@@ -217,7 +217,7 @@ delegate_open(EventLoop &event_loop, SocketDescriptor s, Lease &lease,
 		SendDelegatePacket(s, DelegateRequestCommand::OPEN,
 				   AsBytes(path));
 	} catch (...) {
-		lease.ReleaseLease(false);
+		lease.ReleaseLease(PutAction::DESTROY);
 		handler.OnDelegateError(std::current_exception());
 		return;
 	}

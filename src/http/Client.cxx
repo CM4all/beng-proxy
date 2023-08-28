@@ -280,7 +280,7 @@ public:
 
 	~HttpClient() noexcept {
 		if (!socket.IsReleased())
-			ReleaseSocket(false, false);
+			ReleaseSocket(false, PutAction::DESTROY);
 	}
 
 private:
@@ -319,7 +319,7 @@ private:
 	/**
 	 * Release the socket held by this object.
 	 */
-	void ReleaseSocket(bool preserve, bool reuse) noexcept {
+	void ReleaseSocket(bool preserve, PutAction action) noexcept {
 		assert(!socket.IsReleased());
 
 		if (HasInput()) {
@@ -330,10 +330,10 @@ private:
 			/* closing a partially transferred request
 			   body means the HTTP connection is dirty, so
 			   we need to disable keep-alive */
-			reuse = false;
+			action = PutAction::DESTROY;
 		}
 
-		socket.Release(preserve, reuse);
+		socket.Release(preserve, action);
 	}
 
 	void SocketDone() noexcept {
@@ -345,7 +345,7 @@ private:
 		if (IsConnected())
 			/* we don't need the socket anymore, we've got everything we
 			   need in the input buffer */
-			ReleaseSocket(true, keep_alive);
+			ReleaseSocket(true, keep_alive ? PutAction::REUSE : PutAction::DESTROY);
 	}
 
 	void Destroy() noexcept {
@@ -478,7 +478,7 @@ HttpClient::AbortResponseHeaders(std::exception_ptr ep) noexcept
 	ep = PrefixError(std::move(ep));
 
 	if (IsConnected())
-		ReleaseSocket(false, false);
+		ReleaseSocket(false, PutAction::DESTROY);
 
 	DestroyInvokeError(std::move(ep));
 }
@@ -883,7 +883,7 @@ HttpClient::ResponseFinished() noexcept
 	}
 
 	if (!HasInput() && IsConnected())
-		ReleaseSocket(false, keep_alive);
+		ReleaseSocket(false, keep_alive ? PutAction::REUSE : PutAction::DESTROY);
 
 	Destroy();
 }
@@ -1214,7 +1214,7 @@ HttpClient::OnBufferedRemaining(std::size_t remaining) noexcept
 		/* note: the socket can't be reused, because it was closed by
 		   the peer; this method gets called only after
 		   OnBufferedClosed() */
-		ReleaseSocket(true, false);
+		ReleaseSocket(true, PutAction::DESTROY);
 
 	if (response.state < Response::State::BODY)
 		/* this information comes too early, we can't use it */
@@ -1534,7 +1534,7 @@ http_client_request(struct pool &caller_pool,
 	assert(http_method_is_valid(method));
 
 	if (!uri_path_verify_quick(uri)) {
-		lease.ReleaseLease(true);
+		lease.ReleaseLease(PutAction::DESTROY);
 		body.Clear();
 
 		handler.InvokeError(std::make_exception_ptr(HttpClientError(HttpClientErrorCode::UNSPECIFIED,

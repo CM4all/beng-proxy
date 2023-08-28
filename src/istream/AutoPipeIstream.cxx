@@ -67,7 +67,7 @@ void
 AutoPipeIstream::CloseInternal() noexcept
 {
 	/* reuse the pipe only if it's empty */
-	pipe.Release(piped == 0);
+	pipe.Release(piped == 0 ? PutAction::REUSE : PutAction::DESTROY);
 }
 
 void

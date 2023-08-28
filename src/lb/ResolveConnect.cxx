@@ -45,7 +45,9 @@ class LbResolveConnectRequest final
 
 	StockItem *stock_item;
 
-	bool response_sent = false, reuse;
+	bool response_sent = false;
+
+	PutAction put_action;
 
 	enum class LeaseState : uint8_t {
 		NONE,
@@ -76,7 +78,7 @@ private:
 		assert(lease_state == LeaseState::PENDING);
 
 		lease_state = LeaseState::NONE;
-		stock_item->Put(!reuse);
+		stock_item->Put(put_action);
 	}
 
 	bool CheckRelease() noexcept {
@@ -107,7 +109,7 @@ private:
 	void OnStockItemError(std::exception_ptr ep) noexcept override;
 
 	/* virtual methods from class Lease */
-	void ReleaseLease(bool reuse) noexcept override;
+	void ReleaseLease(PutAction action) noexcept override;
 
 	/* virtual methods from class HttpResponseHandler */
 	void OnHttpResponse(HttpStatus status, StringMap &&headers,
@@ -166,12 +168,12 @@ LbResolveConnectRequest::OnStockItemError(std::exception_ptr ep) noexcept
 }
 
 void
-LbResolveConnectRequest::ReleaseLease(bool _reuse) noexcept
+LbResolveConnectRequest::ReleaseLease(PutAction _action) noexcept
 {
 	assert(lease_state == LeaseState::BUSY);
 
 	lease_state = LeaseState::PENDING;
-	reuse = _reuse;
+	put_action = _action;
 
 	if (response_sent) {
 		DoRelease();

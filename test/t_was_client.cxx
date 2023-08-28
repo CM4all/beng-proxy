@@ -379,12 +379,12 @@ private:
 	}
 
 	/* virtual methods from class WasLease */
-	void ReleaseWas(bool reuse) override {
-		lease->ReleaseLease(reuse);
+	void ReleaseWas(PutAction action) override {
+		lease->ReleaseLease(action);
 	}
 
 	void ReleaseWasStop(uint64_t) override {
-		ReleaseWas(false);
+		ReleaseWas(PutAction::DESTROY);
 	}
 };
 

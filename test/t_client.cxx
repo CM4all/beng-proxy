@@ -200,7 +200,7 @@ Context::ReadBody() noexcept
 }
 
 void
-Context::ReleaseLease(bool _reuse) noexcept
+Context::ReleaseLease(PutAction _action) noexcept
 {
 	assert(connection != nullptr);
 
@@ -210,7 +210,7 @@ Context::ReleaseLease(bool _reuse) noexcept
 	delete connection;
 	connection = nullptr;
 	released = true;
-	reuse = _reuse;
+	lease_action = _action;
 }
 
 void

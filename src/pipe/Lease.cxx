@@ -10,14 +10,14 @@
 #include <assert.h>
 
 void
-PipeLease::Release(bool reuse) noexcept
+PipeLease::Release(PutAction action) noexcept
 {
 	if (!IsDefined())
 		return;
 
 	if (stock != nullptr) {
 		assert(item != nullptr);
-		item->Put(!reuse);
+		item->Put(action);
 		item = nullptr;
 
 		read_fd.SetUndefined();

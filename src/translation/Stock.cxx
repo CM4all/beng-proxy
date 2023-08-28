@@ -140,8 +140,8 @@ private:
 	void OnStockItemError(std::exception_ptr ep) noexcept override;
 
 	/* virtual methods from class Lease */
-	void ReleaseLease(bool reuse) noexcept override {
-		stock.Put(*item, !reuse);
+	void ReleaseLease(PutAction action) noexcept override {
+		stock.Put(*item, action);
 		Destroy();
 	}
 };

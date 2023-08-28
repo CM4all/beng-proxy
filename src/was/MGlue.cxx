@@ -112,14 +112,14 @@ private:
 	}
 
 	/* virtual methods from class WasLease */
-	void ReleaseWas(bool reuse) override {
-		connection->Put(!reuse);
+	void ReleaseWas(PutAction action) override {
+		connection->Put(action);
 		Destroy();
 	}
 
 	void ReleaseWasStop(uint64_t input_received) override {
 		connection->Stop(input_received);
-		connection->Put(false);
+		connection->Put(PutAction::REUSE);
 		Destroy();
 	}
 };

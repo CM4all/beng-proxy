@@ -392,7 +392,7 @@ TYPED_TEST_P(HttpClientTest, IgnoredRequestBody)
 	EXPECT_EQ(c.status, HttpStatus::OK);
 	EXPECT_EQ(c.consumed_body_data, 3);
 	EXPECT_EQ(c.body_error, nullptr);
-	EXPECT_FALSE(c.reuse);
+	EXPECT_EQ(c.lease_action, PutAction::DESTROY);
 }
 
 static char *
@@ -461,7 +461,7 @@ TYPED_TEST_P(HttpClientTest, Expect100ContinueSplice)
 	EXPECT_EQ(c.status, HttpStatus::OK);
 	EXPECT_EQ(c.consumed_body_data, length);
 	EXPECT_EQ(c.body_error, nullptr);
-	EXPECT_TRUE(c.reuse);
+	EXPECT_EQ(c.lease_action, PutAction::REUSE);
 }
 
 /**

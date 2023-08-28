@@ -38,8 +38,8 @@ public:
 		stock.Get(nullptr, handler, cancel_ptr);
 	}
 
-	void Put(StockItem &item, bool destroy) noexcept {
-		stock.Put(item, destroy);
+	void Put(StockItem &item, PutAction action) noexcept {
+		stock.Put(item, action);
 	}
 
 	/* virtual methods from class TranslationService */

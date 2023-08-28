@@ -16,7 +16,7 @@
 
 PipeLeaseIstream::~PipeLeaseIstream() noexcept
 {
-	pipe.Release(remaining == 0);
+	pipe.Release(remaining == 0 ? PutAction::REUSE : PutAction::DESTROY);
 }
 
 bool
@@ -101,7 +101,7 @@ PipeLeaseIstream::_Read() noexcept
 		}
 
 		if (remaining == 0)
-			pipe.Release(true);
+			pipe.Release(PutAction::REUSE);
 	}
 }
 

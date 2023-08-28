@@ -76,7 +76,9 @@ public:
 
 private:
 	~BufferedIstream() noexcept {
-		pipe.Release(in_pipe == 0);
+		pipe.Release(in_pipe == 0
+			     ? PutAction::REUSE
+			     : PutAction::DESTROY);
 	}
 
 	void Destroy() noexcept {

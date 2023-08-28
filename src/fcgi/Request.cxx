@@ -85,8 +85,8 @@ private:
 	}
 
 	/* virtual methods from class Lease */
-	void ReleaseLease(bool reuse) noexcept override {
-		stock_item->Put(!reuse);
+	void ReleaseLease(PutAction action) noexcept override {
+		stock_item->Put(action);
 		stock_item = nullptr;
 
 		Destroy();

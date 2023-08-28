@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include "stock/PutAction.hxx"
 #include "io/FileDescriptor.hxx"
 
 #include <utility>
@@ -54,11 +55,11 @@ public:
 			Create();
 	}
 
-	void Release(bool reuse) noexcept;
+	void Release(PutAction action) noexcept;
 
 	void ReleaseIfStock() noexcept {
 		if (item != nullptr)
-			Release(true);
+			Release(PutAction::REUSE);
 	}
 
 	void CloseWriteIfNotStock() noexcept {

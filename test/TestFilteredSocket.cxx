@@ -235,7 +235,7 @@ TEST(FilteredSocket, Lease)
 	a->Approve(1000);
 
 	EXPECT_EQ(handler.WaitRemaining(), 5);
-	handler.lease.Release(true, true);
+	handler.lease.Release(true, PutAction::REUSE);
 
 	handler.BlockData(false);
 	EXPECT_EQ(handler.WaitRead(), "oobar"sv);
