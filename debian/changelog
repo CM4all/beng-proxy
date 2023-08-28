@@ -4,6 +4,7 @@ cm4all-beng-proxy (18.0.34) unstable; urgency=low
   * lb: fix assertion failures with TCP connections
   * lb: improve Rendezvous Hashing, combine hashes without XOR
   * http: reduce redundant epoll_ctl() system calls
+  * translation/cache: optimize statistics
   * Multi-Path TCP support for listeners
 
  --   

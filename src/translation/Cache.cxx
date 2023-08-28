@@ -77,6 +77,8 @@ struct TranslateCacheItem final : PoolHolder, CacheItem {
 
 	UniqueRegex regex, inverse_regex;
 
+	AllocatorStats stats;
+
 	TranslateCacheItem(PoolPtr &&_pool,
 			   std::chrono::steady_clock::time_point now,
 			   std::chrono::seconds max_age) noexcept
@@ -159,7 +161,7 @@ struct TranslateCacheItem final : PoolHolder, CacheItem {
 	};
 };
 
-struct tcache {
+struct tcache final : private CacheHandler {
 	const PoolPtr pool;
 	SlicePool slice_pool;
 
@@ -195,6 +197,8 @@ struct tcache {
 
 	Cache cache;
 
+	AllocatorStats stats{};
+
 	TranslationService &next;
 
 	/**
@@ -221,6 +225,18 @@ struct tcache {
 	void Invalidate(const TranslateRequest &request,
 			std::span<const TranslationCommand> vary,
 			const char *site) noexcept;
+
+private:
+	/* virtual methods from CacheHandler */
+	void OnCacheItemAdded(const CacheItem &_item) noexcept override {
+		const auto &item = (const TranslateCacheItem &)_item;
+		stats += item.stats;
+	}
+
+	void OnCacheItemRemoved(const CacheItem &_item) noexcept override {
+		const auto &item = (const TranslateCacheItem &)_item;
+		stats -= item.stats;
+	}
 };
 
 struct TranslateCacheRequest final : TranslateHandler {
@@ -993,6 +1009,8 @@ tcache_store(TranslateCacheRequest &tcr, const TranslateResponse &response)
 		}
 	}
 
+	item->stats = pool_stats(item->GetPool());
+
 	if (response.VaryContains(TranslationCommand::HOST))
 		tcr.tcache->per_host.insert(*item);
 
@@ -1214,7 +1232,7 @@ tcache::tcache(struct pool &_pool, EventLoop &event_loop,
 	       bool handshake_cacheable)
 	:pool(pool_new_dummy(&_pool, "translate_cache")),
 	 slice_pool(4096, 32768, "translate_cache"),
-	 cache(event_loop, max_size),
+	 cache(event_loop, max_size, this),
 	 next(_next), active(handshake_cacheable)
 {
 	assert(max_size > 0);
@@ -1240,7 +1258,7 @@ TranslationCache::ForkCow(bool inherit) noexcept
 AllocatorStats
 TranslationCache::GetStats() const noexcept
 {
-	return pool_children_stats(cache->pool);
+	return cache->stats;
 }
 
 void
