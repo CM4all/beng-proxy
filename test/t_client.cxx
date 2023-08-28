@@ -211,7 +211,7 @@ Context::ReleaseLease(PutAction _action) noexcept
 	connection = nullptr;
 	released = true;
 	lease_action = _action;
-	return _action;
+	return PutAction::DESTROY;
 }
 
 void

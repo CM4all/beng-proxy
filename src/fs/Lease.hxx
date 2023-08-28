@@ -32,6 +32,15 @@ class FilteredSocketLease final : BufferedSocketHandler {
 
 	std::array<SliceFifoBuffer, 4> input;
 
+	struct HandlerInfo {
+#ifndef NDEBUG
+		bool released = false;
+#endif
+		PutAction action;
+	};
+
+	HandlerInfo *handler_info = nullptr;
+
 public:
 	FilteredSocketLease(FilteredSocket &_socket, Lease &lease,
 			    Event::Duration write_timeout,

@@ -67,7 +67,14 @@ FilteredSocketLease::Release(bool preserve, PutAction action) noexcept
 	if (preserve)
 		MoveSocketInput();
 
-	lease_ref.Release(action);
+	action = lease_ref.Release(action);
+	if (handler_info != nullptr) {
+#ifndef NDEBUG
+		handler_info->released = true;
+#endif
+		handler_info->action = action;
+	}
+
 	socket = nullptr;
 }
 
@@ -198,25 +205,50 @@ FilteredSocketLease::MoveInput() noexcept
 BufferedResult
 FilteredSocketLease::OnBufferedData()
 {
+	HandlerInfo info;
+
 	while (true) {
+		assert(handler_info == nullptr);
+		handler_info = &info;
+
 		const auto result = handler.OnBufferedData();
-		if (result == BufferedResult::DESTROYED)
-			break;
+
+		if (result != BufferedResult::DESTROYED) {
+			assert(handler_info = &info);
+			handler_info = nullptr;
+		}
+
+		if (result == BufferedResult::DESTROYED) {
+			assert(info.released);
+
+			return info.action == PutAction::DESTROY
+				? BufferedResult::DESTROYED
+				/* the FilteredSocketLease was
+				   destroyed, but the BufferedSocket
+				   is still alive (in the
+				   FilteredSocketStock) */
+				: BufferedResult::OK;
+		}
 
 		if (!IsReleased())
 			return result;
 
+		assert(info.released);
+
 		/* since the BufferedSocket is gone already, we must handle
 		   the AGAIN result codes here */
 
-		if (result != BufferedResult::AGAIN && !IsEmpty())
-			break;
+		if (result != BufferedResult::AGAIN && !IsEmpty()) {
+			/* if the socket has been released, we must
+			   always report OK/DESTROYED to the released
+			   BufferedSocket instance, even if our
+			   handler still wants to consume the
+			   remaining buffer */
+			return info.action == PutAction::DESTROY
+				? BufferedResult::DESTROYED
+				: BufferedResult::OK;
+		}
 	}
-
-	/* if the socket has been released, we must always report CLOSED
-	   to the released BufferedSocket instance, even if our handler
-	   still wants to consume the remaining buffer */
-	return BufferedResult::DESTROYED;
 }
 
 DirectResult
