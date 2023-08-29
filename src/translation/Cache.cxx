@@ -34,6 +34,7 @@
 #include <time.h>
 #include <string.h>
 #include <stdlib.h>
+#include <fcntl.h> // for AT_*
 #include <sys/stat.h>
 #include <errno.h>
 
@@ -1144,8 +1145,11 @@ tcache_validate_mtime(const TranslateResponse &response,
 		  "] validate_mtime ", response.validate_mtime.mtime,
 		  " ", response.validate_mtime.path);
 
-	struct stat st;
-	if (lstat(response.validate_mtime.path, &st) < 0) {
+	struct statx stx;
+	if (statx(-1, response.validate_mtime.path,
+		  AT_SYMLINK_NOFOLLOW|AT_STATX_DONT_SYNC,
+		  STATX_TYPE|STATX_MTIME,
+		  &stx) < 0) {
 		if (errno == ENOENT && response.validate_mtime.mtime == 0) {
 			/* the special value 0 matches when the file does not
 			   exist */
@@ -1161,13 +1165,13 @@ tcache_validate_mtime(const TranslateResponse &response,
 		return false;
 	}
 
-	if (!S_ISREG(st.st_mode)) {
+	if (!S_ISREG(stx.stx_mode)) {
 		LogConcat(3, "TranslationCache", "[", key,
 			  "] not a regular file: ", response.validate_mtime.path);
 		return false;
 	}
 
-	if (st.st_mtime == (time_t)response.validate_mtime.mtime) {
+	if ((uint_least64_t)stx.stx_mtime.tv_sec == response.validate_mtime.mtime) {
 		LogConcat(6, "TranslationCache", "[", key,
 			  "] validate_mtime unmodified ",
 			  response.validate_mtime.path);
