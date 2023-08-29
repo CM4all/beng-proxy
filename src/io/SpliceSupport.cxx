@@ -125,20 +125,21 @@ direct_available(int fd, FdType fd_type, size_t max_length)
 FdType
 guess_fd_type(int fd)
 {
-	struct stat st;
-	if (fstat(fd, &st) < 0)
+	struct statx stx;
+	if (statx(fd, "", AT_EMPTY_PATH|AT_NO_AUTOMOUNT|AT_SYMLINK_NOFOLLOW|AT_STATX_DONT_SYNC,
+		  STATX_TYPE, &stx) < 0)
 		return FdType::FD_NONE;
 
-	if (S_ISREG(st.st_mode))
+	if (S_ISREG(stx.stx_mode))
 		return FdType::FD_FILE;
 
-	if (S_ISCHR(st.st_mode))
+	if (S_ISCHR(stx.stx_mode))
 		return FdType::FD_CHARDEV;
 
-	if (S_ISFIFO(st.st_mode))
+	if (S_ISFIFO(stx.stx_mode))
 		return FdType::FD_PIPE;
 
-	if (S_ISSOCK(st.st_mode))
+	if (S_ISSOCK(stx.stx_mode))
 		return FdType::FD_SOCKET;
 
 	return FdType::FD_NONE;
