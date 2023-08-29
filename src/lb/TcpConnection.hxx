@@ -19,7 +19,6 @@
 #include <exception>
 
 class UniqueSocketDescriptor;
-class SocketAddress;
 struct LbListenerConfig;
 class LbCluster;
 struct LbInstance;
@@ -33,11 +32,7 @@ class LbTcpConnection final
 	const LbListenerConfig &listener;
 	LbCluster &cluster;
 
-	/**
-	 * The client's address formatted as a string (for logging).  This
-	 * is guaranteed to be non-nullptr.
-	 */
-	const char *client_address;
+	const StaticSocketAddress client_address;
 
 	const sticky_hash_t sticky_hash;
 

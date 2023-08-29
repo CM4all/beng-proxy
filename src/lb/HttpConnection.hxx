@@ -8,13 +8,13 @@
 #include "net/ClientAccounting.hxx"
 #include "pool/Holder.hxx"
 #include "pool/UniquePtr.hxx"
+#include "net/StaticSocketAddress.hxx"
 #include "io/Logger.hxx"
 #include "util/IntrusiveList.hxx"
 
 template<typename T> class UniquePoolPtr;
 class FilteredSocket;
 class SslFilter;
-class SocketAddress;
 struct HttpServerConnection;
 namespace NgHttp2 { class ServerConnection; }
 class LbListener;
@@ -40,11 +40,7 @@ struct LbHttpConnection final
 
 	const LbGoto &initial_destination;
 
-	/**
-	 * The client's address formatted as a string (for logging).  This
-	 * is guaranteed to be non-nullptr.
-	 */
-	const char *client_address;
+	const StaticSocketAddress client_address;
 
 	const LazyDomainLogger logger;
 

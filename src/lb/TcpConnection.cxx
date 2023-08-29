@@ -9,9 +9,9 @@
 #include "Instance.hxx"
 #include "AllocatorPtr.hxx"
 #include "cluster/AddressSticky.hxx"
+#include "lib/fmt/SocketAddressFormatter.hxx"
 #include "net/SocketAddress.hxx"
 #include "net/UniqueSocketDescriptor.hxx"
-#include "address_string.hxx"
 
 #include <assert.h>
 
@@ -296,10 +296,9 @@ LbTcpConnection::Outbound::OnBufferedError(std::exception_ptr ep) noexcept
 std::string
 LbTcpConnection::MakeLoggerDomain() const noexcept
 {
-	return "listener='" + listener.name
-		+ "' cluster='" + listener.destination.GetName()
-		+ "' client='" + client_address
-		+ "'";
+	return fmt::format("listener='{}' cluster='{}' client='{}'",
+			   listener.name, listener.destination.GetName(),
+			   client_address);
 }
 
 inline void
@@ -419,7 +418,7 @@ LbTcpConnection::LbTcpConnection(PoolPtr &&_pool, LbInstance &_instance,
 				 SocketAddress _client_address) noexcept
 	:PoolHolder(std::move(_pool)),
 	 instance(_instance), listener(_listener), cluster(_cluster),
-	 client_address(address_to_string(pool, _client_address)),
+	 client_address(_client_address),
 	 sticky_hash(lb_tcp_sticky(cluster.GetConfig().sticky_mode,
 				   _client_address)),
 	 logger(*this),
@@ -427,9 +426,6 @@ LbTcpConnection::LbTcpConnection(PoolPtr &&_pool, LbInstance &_instance,
 	 outbound(instance.event_loop),
 	 defer_connect(instance.event_loop, BIND_THIS_METHOD(OnDeferredHandshake))
 {
-	if (client_address == nullptr)
-		client_address = "unknown";
-
 	if (cluster.GetConfig().transparent_source) {
 		bind_address = _client_address;
 		bind_address.SetPort(0);

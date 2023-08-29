@@ -19,12 +19,11 @@
 #include "http/server/Handler.hxx"
 #include "http/server/Error.hxx"
 #include "pool/pool.hxx"
-#include "address_string.hxx"
 #include "fs/FilteredSocket.hxx"
 #include "ssl/AlpnCompare.hxx"
 #include "uri/Verify.hxx"
+#include "lib/fmt/SocketAddressFormatter.hxx"
 #include "net/SocketProtocolError.hxx"
-#include "net/StaticSocketAddress.hxx"
 #include "net/TimeoutError.hxx"
 #include "system/Error.hxx"
 #include "util/Exception.hxx"
@@ -46,12 +45,10 @@ LbHttpConnection::LbHttpConnection(PoolPtr &&_pool, LbInstance &_instance,
 	 listener(_listener),
 	 listener_config(listener.GetConfig()),
 	 initial_destination(_destination),
-	 client_address(address_to_string(pool, _client_address)),
+	 client_address(_client_address),
 	 logger(*this),
 	 hsts(listener_config.hsts)
 {
-	if (client_address == nullptr)
-		client_address = "unknown";
 }
 
 [[gnu::pure]]
@@ -324,8 +321,8 @@ LbHttpConnection::HttpConnectionClosed() noexcept
 std::string
 LbHttpConnection::MakeLoggerDomain() const noexcept
 {
-	return "listener='" + listener_config.name
-		+ "' cluster='" + listener_config.destination.GetName()
-		+ "' client='" + client_address
-		+ "'";
+	return fmt::format("listener='{}' cluster='{}' client='{}'",
+			   listener_config.name,
+			   listener_config.destination.GetName(),
+			   client_address);
 }
