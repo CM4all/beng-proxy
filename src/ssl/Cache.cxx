@@ -443,8 +443,6 @@ LookupCertResult
 CertCache::Apply(SSL &ssl, const char *host,
 		 const char *special) noexcept
 {
-	assert(db.IsDefined());
-
 	switch (state_idx.Get(ssl)) {
 	case State::NONE:
 		break;
