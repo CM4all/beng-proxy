@@ -17,11 +17,11 @@ extern FdTypeMask ISTREAM_TO_PIPE;
 extern FdTypeMask ISTREAM_TO_CHARDEV;
 
 void
-direct_global_init();
+direct_global_init() noexcept;
 
 [[gnu::const]]
 static inline FdTypeMask
-istream_direct_mask_to(FdType type)
+istream_direct_mask_to(FdType type) noexcept
 {
 	switch (type) {
 	case FdType::FD_NONE:
@@ -55,4 +55,4 @@ istream_direct_mask_to(FdType type)
  */
 [[gnu::pure]]
 FdType
-guess_fd_type(int fd);
+guess_fd_type(int fd) noexcept;

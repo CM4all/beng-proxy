@@ -18,15 +18,16 @@ FdTypeMask ISTREAM_TO_CHARDEV = 0;
  * Checks whether the kernel supports splice() between the two
  * specified file handle types.
  */
+[[gnu::pure]]
 static bool
-splice_supported(int src, int dest)
+splice_supported(int src, int dest) noexcept
 {
 	return splice(src, NULL, dest, NULL, 1, SPLICE_F_NONBLOCK) >= 0 ||
 		(errno != EINVAL && errno != ENOSYS);
 }
 
 void
-direct_global_init()
+direct_global_init() noexcept
 {
 	int a[2], b[2], fd;
 
@@ -91,7 +92,7 @@ direct_global_init()
 }
 
 FdType
-guess_fd_type(int fd)
+guess_fd_type(int fd) noexcept
 {
 	struct statx stx;
 	if (statx(fd, "", AT_EMPTY_PATH|AT_NO_AUTOMOUNT|AT_SYMLINK_NOFOLLOW|AT_STATX_DONT_SYNC,
