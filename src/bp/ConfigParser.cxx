@@ -132,6 +132,9 @@ BpConfigParser::Listener::ParseLine(FileLineParser &line)
 			throw LineParser::Error("Not a valid mode");
 
 		config.mode = value;
+	} else if (StringIsEqual(word, "mptcp")) {
+		config.mptcp = line.NextBool();
+		line.ExpectEnd();
 	} else if (strcmp(word, "tag") == 0) {
 		config.tag = line.ExpectValueAndEnd();
 	} else if (strcmp(word, "zeroconf_service") == 0 ||
