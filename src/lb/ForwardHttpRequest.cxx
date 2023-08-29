@@ -99,6 +99,14 @@ private:
 		return rl.GetCanonicalHost();
 	}
 
+	/**
+	 * Returns a pointer to the data section that will be used to
+	 * calculate the sticky hash.  May return a null span if the
+	 * current sticky mode does not support this.
+	 */
+	[[gnu::pure]]
+	std::span<const std::byte> GetStickySource() const noexcept;
+
 	sticky_hash_t GetStickyHash() noexcept;
 	sticky_hash_t GetHostHash() const noexcept;
 	sticky_hash_t GetXHostHash() const noexcept;
@@ -235,6 +243,45 @@ LbRequest::GetStickyHash() noexcept
 	}
 
 	return 0;
+}
+
+inline std::span<const std::byte>
+LbRequest::GetStickySource() const noexcept
+{
+	switch (cluster_config.sticky_mode) {
+	case StickyMode::NONE:
+	case StickyMode::FAILOVER:
+		/* these modes require no preparation; they are handled
+		   completely by balancer_get() */
+		break;
+
+	case StickyMode::SOURCE_IP:
+		/* calculate the sticky hash from remote address */
+		return request.remote_address.GetSteadyPart();
+
+	case StickyMode::HOST:
+		/* calculate the sticky hash from "Host" request header */
+		if (const char *host = GetCanonicalHost())
+			return AsBytes(std::string_view{host});
+
+		break;
+
+	case StickyMode::XHOST:
+		/* calculate the sticky hash from "X-CM4all-Host" request
+		   header */
+		if (const char *host = request.headers.Get("x-cm4all-host"))
+			return AsBytes(std::string_view{host});
+
+		break;
+
+	case StickyMode::SESSION_MODULO:
+	case StickyMode::COOKIE:
+	case StickyMode::JVM_ROUTE:
+		// this mode is not supported by this method
+		break;
+	}
+
+	return {};
 }
 
 /*
