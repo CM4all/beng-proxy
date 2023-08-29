@@ -5,13 +5,12 @@
 #include "SpliceSupport.hxx"
 
 #include <unistd.h>
-#include <sys/socket.h>
 #include <sys/stat.h>
 #include <errno.h>
 #include <stdlib.h>
 #include <fcntl.h>
 
-FdTypeMask ISTREAM_TO_PIPE = FdType::FD_FILE | FdType::FD_PIPE;
+FdTypeMask ISTREAM_TO_PIPE = FdType::FD_FILE | FdType::FD_PIPE | FdType::FD_SOCKET | FdType::FD_TCP;
 FdTypeMask ISTREAM_TO_CHARDEV = 0;
 
 /**
@@ -29,7 +28,7 @@ splice_supported(int src, int dest) noexcept
 void
 direct_global_init() noexcept
 {
-	int a[2], b[2], fd;
+	int a[2], fd;
 
 	/* create a pipe and feed some data into it */
 
@@ -51,26 +50,6 @@ direct_global_init() noexcept
 	if (fd >= 0) {
 		if (splice_supported(fd, a[1]))
 			ISTREAM_TO_PIPE |= FdType::FD_CHARDEV;
-		close(fd);
-	}
-
-	/* check splice(AF_LOCAL, pipe) */
-
-	if (socketpair(AF_LOCAL, SOCK_STREAM, 0, b) == 0) {
-		if (splice_supported(b[0], a[1]))
-			ISTREAM_TO_PIPE |= FdType::FD_SOCKET;
-
-		close(b[0]);
-		close(b[1]);
-	}
-
-	/* check splice(TCP, pipe) */
-
-	fd = socket(AF_INET, SOCK_STREAM, 0);
-	if (fd >= 0) {
-		if (splice_supported(fd, a[1]))
-			ISTREAM_TO_PIPE |= FdType::FD_TCP;
-
 		close(fd);
 	}
 
