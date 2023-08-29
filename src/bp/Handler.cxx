@@ -37,6 +37,7 @@
 #include "ResourceLoader.hxx"
 
 #include <assert.h>
+#include <fcntl.h> // for AT_*
 #include <sys/stat.h>
 
 using std::string_view_literals::operator""sv;
@@ -291,8 +292,9 @@ ProbeOnePathSuffix(const char *prefix, const char *suffix) noexcept
 	memcpy(path + prefix_length, suffix, suffix_length);
 	path[prefix_length + suffix_length] = 0;
 
-	struct stat st;
-	return stat(path, &st) == 0 && S_ISREG(st.st_mode);
+	struct statx stx;
+	return statx(-1, path, AT_STATX_DONT_SYNC, STATX_TYPE, &stx) == 0 &&
+		S_ISREG(stx.stx_mode);
 }
 
 [[gnu::pure]]
