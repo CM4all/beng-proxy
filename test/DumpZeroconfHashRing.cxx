@@ -23,11 +23,11 @@
 #include "lib/avahi/ErrorHandler.hxx"
 #include "lib/avahi/Explorer.hxx"
 #include "lib/avahi/ExplorerListener.hxx"
+#include "lib/fmt/SocketAddressFormatter.hxx"
 #include "lib/fmt/SystemError.hxx"
 #include "event/ShutdownListener.hxx"
 #include "event/CoarseTimerEvent.hxx"
 #include "net/AllocatedSocketAddress.hxx"
-#include "net/ToString.hxx"
 #include "util/PrintException.hxx"
 
 #include <map>
@@ -108,12 +108,8 @@ Context::Dump() noexcept
 	printf("HashRing:\n");
 
 	for (const auto &i : sorted) {
-		char buffer[1024];
-
-		printf("%8zu %s %s\n", i.first,
-		       i.second.first.c_str(),
-		       ToString(buffer, sizeof(buffer), i.second.second,
-				"unknown"));
+		fmt::print("{:8} {} {}\n", i.first,
+			   i.second.first, i.second.second);
 	}
 }
 
