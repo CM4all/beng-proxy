@@ -9,11 +9,9 @@
 #include <stddef.h>
 #include <sys/types.h>
 
-enum {
-	ISTREAM_TO_FILE = FdType::FD_PIPE,
-	ISTREAM_TO_SOCKET = FdType::FD_FILE | FdType::FD_PIPE,
-	ISTREAM_TO_TCP = FdType::FD_FILE | FdType::FD_PIPE,
-};
+static constexpr FdTypeMask ISTREAM_TO_FILE = FdType::FD_PIPE;
+static constexpr FdTypeMask ISTREAM_TO_SOCKET = FdType::FD_FILE | FdType::FD_PIPE;
+static constexpr FdTypeMask ISTREAM_TO_TCP = FdType::FD_FILE | FdType::FD_PIPE;
 
 extern FdTypeMask ISTREAM_TO_PIPE;
 extern FdTypeMask ISTREAM_TO_CHARDEV;
