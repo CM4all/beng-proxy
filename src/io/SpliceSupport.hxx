@@ -25,7 +25,7 @@ istream_direct_mask_to(FdType type) noexcept
 {
 	switch (type) {
 	case FdType::FD_NONE:
-		return FdType::FD_NONE;
+		break;
 
 	case FdType::FD_FILE:
 		return ISTREAM_TO_FILE;
