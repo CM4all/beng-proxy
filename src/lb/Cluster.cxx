@@ -307,9 +307,8 @@ LbCluster::PickZeroconfRendezvous(Expiry now,
 		  [sticky_hash](const ZeroconfMember *a,
 				const ZeroconfMember *b) noexcept
 		  {
-			  // TODO is XOR good enough to mix the two hashes?
-			  return (a->GetAddressHash() ^ sticky_hash) <
-				  (b->GetAddressHash() ^ sticky_hash);
+			  return CombineStickyHashes(a->GetAddressHash(), sticky_hash) <
+				  CombineStickyHashes(b->GetAddressHash(), sticky_hash);
 		  });
 
 	/* return the first "good" member */
