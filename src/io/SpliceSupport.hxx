@@ -9,8 +9,6 @@
 #include <stddef.h>
 #include <sys/types.h>
 
-#ifdef __linux
-
 enum {
 	ISTREAM_TO_FILE = FdType::FD_PIPE,
 	ISTREAM_TO_SOCKET = FdType::FD_FILE | FdType::FD_PIPE,
@@ -49,25 +47,6 @@ istream_direct_mask_to(FdType type)
 
 	return 0;
 }
-
-#else /* !__linux */
-
-enum {
-	ISTREAM_TO_PIPE = 0,
-	ISTREAM_TO_SOCKET = 0,
-	ISTREAM_TO_TCP = 0,
-};
-
-static inline FdTypeMask
-istream_direct_mask_to([[maybe_unused]] FdType type)
-{
-	return 0;
-}
-
-static inline void
-direct_global_init() {}
-
-#endif
 
 /**
  * Attempt to guess the type of the file descriptor.  Use only for

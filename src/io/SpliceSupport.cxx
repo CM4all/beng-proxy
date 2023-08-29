@@ -11,8 +11,6 @@
 #include <stdlib.h>
 #include <fcntl.h>
 
-#ifdef __linux
-
 FdTypeMask ISTREAM_TO_PIPE = FdType::FD_FILE;
 FdTypeMask ISTREAM_TO_CHARDEV = 0;
 
@@ -91,8 +89,6 @@ direct_global_init()
 	close(a[0]);
 	close(a[1]);
 }
-
-#endif  /* #ifdef __linux */
 
 FdType
 guess_fd_type(int fd)
