@@ -445,6 +445,7 @@ LbRequest::Start() noexcept
 	cluster.ConnectHttp(pool, nullptr,
 			    MakeFairnessHash(),
 			    MakeBindAddress(),
+			    GetStickySource(),
 			    GetStickyHash(),
 			    LB_HTTP_CONNECT_TIMEOUT,
 			    *this, cancel_ptr);

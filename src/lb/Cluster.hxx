@@ -141,7 +141,7 @@ class LbCluster final
 
 		void SetAddress(SocketAddress _address) noexcept;
 
-		void CalculateRendezvousHash(sticky_hash_t sticky_hash) noexcept;
+		void CalculateRendezvousHash(std::span<const std::byte> sticky_source) noexcept;
 
 		sticky_hash_t GetRendezvousHash() const noexcept {
 			return rendezvous_hash;
@@ -228,6 +228,7 @@ public:
 			 const StopwatchPtr &parent_stopwatch,
 			 uint_fast64_t fairness_hash,
 			 SocketAddress bind_address,
+			 std::span<const std::byte> sticky_source,
 			 sticky_hash_t sticky_hash,
 			 Event::Duration timeout,
 			 FilteredSocketBalancerHandler &handler,
@@ -285,7 +286,9 @@ private:
 	 *
 	 * Zeroconf only.
 	 */
-	const ZeroconfMember *PickZeroconf(Expiry now, sticky_hash_t sticky_hash) noexcept;
+	const ZeroconfMember *PickZeroconf(Expiry now,
+					   std::span<const std::byte> sticky_source,
+					   sticky_hash_t sticky_hash) noexcept;
 
 	/**
 	 * Like PickZeroconf(), but pick using Consistent Hashing (via
@@ -304,7 +307,7 @@ private:
 	 * lazy-initialized and verified everything.
 	 */
 	const ZeroconfMember &PickZeroconfRendezvous(Expiry now,
-						     sticky_hash_t sticky_hash) noexcept;
+						     std::span<const std::byte> sticky_source) noexcept;
 
 	/**
 	 * Like PickZeroconf(), but pick using #StickyCache.  Returns
@@ -322,6 +325,7 @@ private:
 				 const StopwatchPtr &parent_stopwatch,
 				 uint_fast64_t fairness_hash,
 				 SocketAddress bind_address,
+				 std::span<const std::byte> sticky_source,
 				 sticky_hash_t sticky_hash,
 				 Event::Duration timeout,
 				 FilteredSocketBalancerHandler &handler,

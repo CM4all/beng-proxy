@@ -92,9 +92,9 @@ LbCluster::ZeroconfMember::GetLogName() const noexcept
 }
 
 inline void
-LbCluster::ZeroconfMember::CalculateRendezvousHash(sticky_hash_t sticky_hash) noexcept
+LbCluster::ZeroconfMember::CalculateRendezvousHash(std::span<const std::byte> sticky_source) noexcept
 {
-	rendezvous_hash = CombineStickyHashes(address_hash, sticky_hash);
+	rendezvous_hash = djb_hash(sticky_source, address_hash);
 }
 
 #endif
@@ -156,6 +156,7 @@ LbCluster::ConnectHttp(AllocatorPtr alloc,
 		       const StopwatchPtr &parent_stopwatch,
 		       uint_fast64_t fairness_hash,
 		       SocketAddress bind_address,
+		       std::span<const std::byte> sticky_source,
 		       sticky_hash_t sticky_hash,
 		       Event::Duration timeout,
 		       FilteredSocketBalancerHandler &handler,
@@ -165,11 +166,14 @@ LbCluster::ConnectHttp(AllocatorPtr alloc,
 	if (config.HasZeroConf()) {
 		ConnectZeroconfHttp(alloc, parent_stopwatch,
 				    fairness_hash,
-				    bind_address, sticky_hash,
+				    bind_address,
+				    sticky_source, sticky_hash,
 				    timeout,
 				    handler, cancel_ptr);
 		return;
 	}
+#else
+	(void)sticky_source;
 #endif
 
 	ConnectStaticHttp(alloc, parent_stopwatch,
@@ -193,6 +197,8 @@ LbCluster::ConnectTcp(AllocatorPtr alloc,
 				   timeout, handler, cancel_ptr);
 		return;
 	}
+#else
+	(void)sticky_source;
 #endif
 
 	ConnectStaticTcp(alloc, bind_address,
@@ -313,12 +319,12 @@ LbCluster::PickZeroconfHashRing(Expiry now,
 
 inline const LbCluster::ZeroconfMember &
 LbCluster::PickZeroconfRendezvous(Expiry now,
-				  sticky_hash_t sticky_hash) noexcept
+				  std::span<const std::byte> sticky_source) noexcept
 {
 	assert(!active_zeroconf_members.empty());
 
 	for (auto &i : active_zeroconf_members)
-		i->CalculateRendezvousHash(sticky_hash);
+		i->CalculateRendezvousHash(sticky_source);
 
 	/* sort the list of active Zeroconf members by a mix of its
 	   address hash and the request's hash */
@@ -365,7 +371,9 @@ LbCluster::PickZeroconfCache(Expiry now,
 }
 
 const LbCluster::ZeroconfMember *
-LbCluster::PickZeroconf(const Expiry now, sticky_hash_t sticky_hash) noexcept
+LbCluster::PickZeroconf(const Expiry now,
+			std::span<const std::byte> sticky_source,
+			sticky_hash_t sticky_hash) noexcept
 {
 	if (dirty) {
 		dirty = false;
@@ -383,7 +391,7 @@ LbCluster::PickZeroconf(const Expiry now, sticky_hash_t sticky_hash) noexcept
 			return &PickZeroconfHashRing(now, sticky_hash);
 
 		case LbClusterConfig::StickyMethod::RENDEZVOUS_HASHING:
-			return &PickZeroconfRendezvous(now, sticky_hash);
+			return &PickZeroconfRendezvous(now, sticky_source);
 
 		case LbClusterConfig::StickyMethod::CACHE:
 			if (const auto *member = PickZeroconfCache(now,
@@ -443,6 +451,7 @@ class LbCluster::ZeroconfHttpConnect final : StockGetHandler, Lease, Cancellable
 	const uint_least64_t fairness_hash;
 
 	const SocketAddress bind_address;
+	const std::span<const std::byte> sticky_source;
 	const sticky_hash_t sticky_hash;
 	const Event::Duration timeout;
 	const SocketFilterParams *const filter_params;
@@ -465,6 +474,7 @@ public:
 	ZeroconfHttpConnect(LbCluster &_cluster, AllocatorPtr _alloc,
 			    const uint_fast64_t _fairness_hash,
 			    SocketAddress _bind_address,
+			    std::span<const std::byte> _sticky_source,
 			    sticky_hash_t _sticky_hash,
 			    Event::Duration _timeout,
 			    const SocketFilterParams *_filter_params,
@@ -473,6 +483,7 @@ public:
 		:cluster(_cluster), alloc(_alloc),
 		 fairness_hash(_fairness_hash),
 		 bind_address(_bind_address),
+		 sticky_source(_sticky_source),
 		 sticky_hash(_sticky_hash),
 		 timeout(_timeout),
 		 filter_params(_filter_params),
@@ -523,6 +534,7 @@ void
 LbCluster::ZeroconfHttpConnect::Start() noexcept
 {
 	auto *member = cluster.PickZeroconf(GetEventLoop().SteadyNow(),
+					    sticky_source,
 					    sticky_hash);
 	if (member == nullptr) {
 		auto &_handler = handler;
@@ -588,6 +600,7 @@ LbCluster::ConnectZeroconfHttp(AllocatorPtr alloc,
 			       const StopwatchPtr &,
 			       uint_fast64_t fairness_hash,
 			       SocketAddress bind_address,
+			       std::span<const std::byte> sticky_source,
 			       sticky_hash_t sticky_hash,
 			       Event::Duration timeout,
 			       FilteredSocketBalancerHandler &handler,
@@ -598,7 +611,8 @@ LbCluster::ConnectZeroconfHttp(AllocatorPtr alloc,
 	auto *c = alloc.New<ZeroconfHttpConnect>(*this, alloc,
 						 fairness_hash,
 						 bind_address,
-						 sticky_hash, timeout,
+						 sticky_source, sticky_hash,
+						 timeout,
 						 socket_filter_params.get(),
 						 handler, cancel_ptr);
 	c->Start();
@@ -618,6 +632,7 @@ LbCluster::ConnectZeroconfTcp(AllocatorPtr alloc,
 	auto &event_loop = fs_balancer.GetEventLoop();
 
 	const auto *member = PickZeroconf(event_loop.SteadyNow(),
+					  sticky_source,
 					  CalculateStickyHash(sticky_source));
 	if (member == nullptr) {
 		handler.OnSocketConnectError(std::make_exception_ptr(std::runtime_error("Zeroconf cluster is empty")));
