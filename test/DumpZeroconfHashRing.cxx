@@ -76,6 +76,10 @@ struct Context final : TestInstance, Avahi::ServiceExplorerListener,
 			      SocketAddress address) noexcept override;
 	void OnAvahiRemoveObject(const std::string &key) noexcept override;
 
+	void OnAvahiAllForNow() noexcept override {
+		dump_event.Schedule(std::chrono::seconds{});
+	}
+
 	/* virtual methods from class Avahi::ErrorHandler */
 	bool OnAvahiError(std::exception_ptr e) noexcept override {
 		PrintException(e);
