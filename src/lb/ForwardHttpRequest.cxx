@@ -205,7 +205,7 @@ LbRequest::GetStickyHash() noexcept
 	case StickyMode::FAILOVER:
 		/* these modes require no preparation; they are handled
 		   completely by balancer_get() */
-		return 0;
+		break;
 
 	case StickyMode::SOURCE_IP:
 		/* calculate the sticky hash from remote address */
@@ -234,8 +234,7 @@ LbRequest::GetStickyHash() noexcept
 		return lb_jvm_route_get(request.headers, cluster_config);
 	}
 
-	assert(false);
-	gcc_unreachable();
+	return 0;
 }
 
 /*
