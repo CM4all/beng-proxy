@@ -70,15 +70,6 @@ direct_global_init() {}
 #endif
 
 /**
- * Determine the minimum number of bytes available on the file
- * descriptor.  Returns -1 if that could not be determined
- * (unsupported fd type or error).
- */
-[[gnu::pure]]
-ssize_t
-direct_available(int fd, FdType fd_type, size_t max_length);
-
-/**
  * Attempt to guess the type of the file descriptor.  Use only for
  * testing.  In production code, the type shall be passed as a
  * parameter.

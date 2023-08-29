@@ -94,34 +94,6 @@ direct_global_init()
 
 #endif  /* #ifdef __linux */
 
-ssize_t
-direct_available(int fd, FdType fd_type, size_t max_length)
-{
-	if ((fd_type & ISTREAM_TO_CHARDEV) == 0)
-		/* unsupported fd type */
-		return -1;
-
-	/* XXX this is quite slow, and should be optimized with a
-	   preallocated pipe */
-	int fds[2];
-	if (pipe(fds) < 0)
-		return -1;
-
-	ssize_t nbytes = tee(fd, fds[1], max_length, SPLICE_F_NONBLOCK);
-	if (nbytes < 0) {
-		int save_errno = errno;
-		close(fds[0]);
-		close(fds[1]);
-		errno = save_errno;
-		return -1;
-	}
-
-	close(fds[0]);
-	close(fds[1]);
-
-	return nbytes;
-}
-
 FdType
 guess_fd_type(int fd)
 {
