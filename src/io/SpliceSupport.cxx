@@ -11,7 +11,7 @@
 #include <stdlib.h>
 #include <fcntl.h>
 
-FdTypeMask ISTREAM_TO_PIPE = FdType::FD_FILE;
+FdTypeMask ISTREAM_TO_PIPE = FdType::FD_FILE | FdType::FD_PIPE;
 FdTypeMask ISTREAM_TO_CHARDEV = 0;
 
 /**
@@ -35,17 +35,6 @@ direct_global_init() noexcept
 
 	if (pipe(a) < 0)
 		abort();
-
-	/* check splice(pipe, pipe) */
-
-	if (pipe(b) < 0)
-		abort();
-
-	if (splice_supported(a[0], b[1]))
-		ISTREAM_TO_PIPE |= FdType::FD_PIPE;
-
-	close(b[0]);
-	close(b[1]);
 
 	/* check splice(pipe, chardev) */
 
