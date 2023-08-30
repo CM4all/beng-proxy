@@ -738,6 +738,15 @@ pool_children_brutto_size(const struct pool *pool) noexcept
 }
 
 AllocatorStats
+pool_stats(const struct pool &pool) noexcept
+{
+	return {
+		.brutto_size = pool_brutto_size(&pool),
+		.netto_size = pool_netto_size(&pool),
+	};
+}
+
+AllocatorStats
 pool_children_stats(const struct pool &pool) noexcept
 {
 	AllocatorStats stats;

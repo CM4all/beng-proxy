@@ -106,6 +106,11 @@ pool_children_netto_size(const struct pool *pool) noexcept;
 size_t
 pool_children_brutto_size(const struct pool *pool) noexcept;
 
+[[gnu::pure]]
+AllocatorStats
+pool_stats(const struct pool &pool) noexcept;
+
+[[gnu::pure]]
 AllocatorStats
 pool_children_stats(const struct pool &pool) noexcept;
 
