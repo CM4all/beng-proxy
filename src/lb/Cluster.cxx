@@ -26,6 +26,7 @@
 #include "util/DeleteDisposer.hxx"
 #include "util/DereferenceIterator.hxx"
 #include "util/djb_hash.hxx"
+#include "util/FNVHash.hxx"
 #include "AllocatorPtr.hxx"
 #include "HttpMessageResponse.hxx"
 #include "lease.hxx"
@@ -34,6 +35,18 @@
 #ifdef HAVE_AVAHI
 #include "lib/avahi/Explorer.hxx"
 #endif
+
+/**
+ * The hash algorithm we use for Rendezvous Hashing.  FNV1a is fast
+ * and has just the right properties for a good distribution among all
+ * nodes.
+ *
+ * DJB is inferior when the node addresses are too similar (which is
+ * often the case when all nodes are on the same local network) and
+ * when the sticky_source is too short (e.g. when database serial
+ * numbers are used) due to its small prime (33).
+ */
+using RendezvousHashAlgorithm = FNV1aAlgorithm<FNVTraits<uint32_t>>;
 
 [[gnu::pure]]
 static sticky_hash_t
@@ -58,7 +71,7 @@ LbCluster::ZeroconfMember::ZeroconfMember(const std::string &_key,
 		 ? std::make_unique<LbMonitorRef>(monitors->Add(key.c_str(),
 								_address))
 		 : std::unique_ptr<LbMonitorRef>()),
-	 address_hash(djb_hash(address.GetSteadyPart()))
+	 address_hash(RendezvousHashAlgorithm::BinaryHash(address.GetSteadyPart()))
 {
 }
 
@@ -68,7 +81,7 @@ inline void
 LbCluster::ZeroconfMember::SetAddress(SocketAddress _address) noexcept
 {
 	address = _address;
-	address_hash = djb_hash(address.GetSteadyPart());
+	address_hash = RendezvousHashAlgorithm::BinaryHash(address.GetSteadyPart());
 }
 
 const char *
@@ -94,7 +107,7 @@ LbCluster::ZeroconfMember::GetLogName() const noexcept
 inline void
 LbCluster::ZeroconfMember::CalculateRendezvousHash(std::span<const std::byte> sticky_source) noexcept
 {
-	rendezvous_hash = djb_hash(sticky_source, address_hash);
+	rendezvous_hash = RendezvousHashAlgorithm::BinaryHash(sticky_source, address_hash);
 }
 
 #endif
