@@ -21,9 +21,9 @@ static constexpr Event::Duration LB_TCP_CONNECT_TIMEOUT =
 static constexpr auto write_timeout = std::chrono::seconds(30);
 
 [[gnu::pure]]
-static sticky_hash_t
-lb_tcp_sticky(StickyMode sticky_mode,
-	      SocketAddress remote_address)
+static std::span<const std::byte>
+GetStickySource(StickyMode sticky_mode,
+		SocketAddress remote_address) noexcept
 {
 	switch (sticky_mode) {
 	case StickyMode::NONE:
@@ -31,7 +31,7 @@ lb_tcp_sticky(StickyMode sticky_mode,
 		break;
 
 	case StickyMode::SOURCE_IP:
-		return socket_address_sticky(remote_address);
+		return remote_address.GetSteadyPart();
 
 	case StickyMode::HOST:
 	case StickyMode::XHOST:
@@ -42,7 +42,7 @@ lb_tcp_sticky(StickyMode sticky_mode,
 		break;
 	}
 
-	return 0;
+	return {};
 }
 
 /*
@@ -387,7 +387,8 @@ LbTcpConnection::OnSocketConnectError(std::exception_ptr ep) noexcept
 void
 LbTcpConnection::ConnectOutbound() noexcept
 {
-	cluster.ConnectTcp(*pool, bind_address, sticky_hash,
+	cluster.ConnectTcp(*pool, bind_address,
+			   GetStickySource(cluster.GetConfig().sticky_mode, client_address),
 			   LB_TCP_CONNECT_TIMEOUT,
 			   *this, cancel_connect);
 }
@@ -419,8 +420,6 @@ LbTcpConnection::LbTcpConnection(PoolPtr &&_pool, LbInstance &_instance,
 	:PoolHolder(std::move(_pool)),
 	 instance(_instance), listener(_listener), cluster(_cluster),
 	 client_address(_client_address),
-	 sticky_hash(lb_tcp_sticky(cluster.GetConfig().sticky_mode,
-				   _client_address)),
 	 logger(*this),
 	 inbound(std::move(_socket)),
 	 outbound(instance.event_loop),

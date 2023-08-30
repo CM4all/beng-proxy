@@ -239,7 +239,7 @@ public:
 	 */
 	void ConnectTcp(AllocatorPtr alloc,
 			SocketAddress bind_address,
-			sticky_hash_t sticky_hash,
+			std::span<const std::byte> sticky_source,
 			Event::Duration timeout,
 			ConnectSocketHandler &handler,
 			CancellablePointer &cancel_ptr) noexcept;
@@ -332,7 +332,7 @@ private:
 	 */
 	void ConnectZeroconfTcp(AllocatorPtr alloc,
 				SocketAddress bind_address,
-				sticky_hash_t sticky_hash,
+				std::span<const std::byte> sticky_source,
 				Event::Duration timeout,
 				ConnectSocketHandler &handler,
 				CancellablePointer &cancel_ptr) noexcept;

@@ -25,6 +25,7 @@
 #include "util/ConstBuffer.hxx"
 #include "util/DeleteDisposer.hxx"
 #include "util/DereferenceIterator.hxx"
+#include "util/djb_hash.hxx"
 #include "AllocatorPtr.hxx"
 #include "HttpMessageResponse.hxx"
 #include "lease.hxx"
@@ -33,6 +34,15 @@
 #ifdef HAVE_AVAHI
 #include "lib/avahi/Explorer.hxx"
 #endif
+
+[[gnu::pure]]
+static sticky_hash_t
+CalculateStickyHash(std::span<const std::byte> source) noexcept
+{
+	return source.data() != nullptr
+		? static_cast<sticky_hash_t>(djb_hash(source))
+		: sticky_hash_t{};
+}
 
 #ifdef HAVE_AVAHI
 
@@ -172,20 +182,21 @@ LbCluster::ConnectHttp(AllocatorPtr alloc,
 void
 LbCluster::ConnectTcp(AllocatorPtr alloc,
 		      SocketAddress bind_address,
-		      sticky_hash_t sticky_hash,
+		      std::span<const std::byte> sticky_source,
 		      Event::Duration timeout,
 		      ConnectSocketHandler &handler,
 		      CancellablePointer &cancel_ptr) noexcept
 {
 #ifdef HAVE_AVAHI
 	if (config.HasZeroConf()) {
-		ConnectZeroconfTcp(alloc, bind_address, sticky_hash,
+		ConnectZeroconfTcp(alloc, bind_address, sticky_source,
 				   timeout, handler, cancel_ptr);
 		return;
 	}
 #endif
 
-	ConnectStaticTcp(alloc, bind_address, sticky_hash,
+	ConnectStaticTcp(alloc, bind_address,
+			 CalculateStickyHash(sticky_source),
 			 timeout, handler, cancel_ptr);
 }
 
@@ -596,7 +607,7 @@ LbCluster::ConnectZeroconfHttp(AllocatorPtr alloc,
 inline void
 LbCluster::ConnectZeroconfTcp(AllocatorPtr alloc,
 			      SocketAddress bind_address,
-			      sticky_hash_t sticky_hash,
+			      std::span<const std::byte> sticky_source,
 			      Event::Duration timeout,
 			      ConnectSocketHandler &handler,
 			      CancellablePointer &cancel_ptr) noexcept
@@ -606,7 +617,8 @@ LbCluster::ConnectZeroconfTcp(AllocatorPtr alloc,
 
 	auto &event_loop = fs_balancer.GetEventLoop();
 
-	const auto *member = PickZeroconf(event_loop.SteadyNow(), sticky_hash);
+	const auto *member = PickZeroconf(event_loop.SteadyNow(),
+					  CalculateStickyHash(sticky_source));
 	if (member == nullptr) {
 		handler.OnSocketConnectError(std::make_exception_ptr(std::runtime_error("Zeroconf cluster is empty")));
 		return;

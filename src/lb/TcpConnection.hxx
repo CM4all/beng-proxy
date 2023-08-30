@@ -34,8 +34,6 @@ class LbTcpConnection final
 
 	const StaticSocketAddress client_address;
 
-	const sticky_hash_t sticky_hash;
-
 	const LazyDomainLogger logger;
 
 public:
