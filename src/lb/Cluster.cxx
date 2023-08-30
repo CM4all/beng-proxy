@@ -81,6 +81,12 @@ LbCluster::ZeroconfMember::GetLogName() const noexcept
 	return log_name.c_str();
 }
 
+inline void
+LbCluster::ZeroconfMember::CalculateRendezvousHash(sticky_hash_t sticky_hash) noexcept
+{
+	rendezvous_hash = CombineStickyHashes(address_hash, sticky_hash);
+}
+
 #endif
 
 LbCluster::LbCluster(const LbClusterConfig &_config,
@@ -300,15 +306,15 @@ LbCluster::PickZeroconfRendezvous(Expiry now,
 {
 	assert(!active_zeroconf_members.empty());
 
+	for (auto &i : active_zeroconf_members)
+		i->CalculateRendezvousHash(sticky_hash);
+
 	/* sort the list of active Zeroconf members by a mix of its
 	   address hash and the request's hash */
 	std::sort(active_zeroconf_members.begin(),
 		  active_zeroconf_members.end(),
-		  [sticky_hash](const ZeroconfMember *a,
-				const ZeroconfMember *b) noexcept
-		  {
-			  return CombineStickyHashes(a->GetAddressHash(), sticky_hash) <
-				  CombineStickyHashes(b->GetAddressHash(), sticky_hash);
+		  [](const ZeroconfMember *a, const ZeroconfMember *b) noexcept {
+			  return a->GetRendezvousHash() < b->GetRendezvousHash();
 		  });
 
 	/* return the first "good" member */

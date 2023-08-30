@@ -115,6 +115,13 @@ class LbCluster final
 		 */
 		sticky_hash_t address_hash;
 
+		/**
+		 * The hash of the sticky attribute of the current
+		 * request (e.g. the "Host" header) and this server
+		 * address.
+		 */
+		sticky_hash_t rendezvous_hash;
+
 	public:
 		ZeroconfMember(const std::string &_key, SocketAddress _address,
 			       ReferencedFailureInfo &_failure,
@@ -134,8 +141,10 @@ class LbCluster final
 
 		void SetAddress(SocketAddress _address) noexcept;
 
-		sticky_hash_t GetAddressHash() const noexcept {
-			return address_hash;
+		void CalculateRendezvousHash(sticky_hash_t sticky_hash) noexcept;
+
+		sticky_hash_t GetRendezvousHash() const noexcept {
+			return rendezvous_hash;
 		}
 
 		auto &GetFailureRef() const noexcept {
