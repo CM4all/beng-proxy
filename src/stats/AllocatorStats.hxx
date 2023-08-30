@@ -32,8 +32,21 @@ struct AllocatorStats {
 		return *this;
 	}
 
+	constexpr AllocatorStats &operator-=(const AllocatorStats other) noexcept {
+		brutto_size -= other.brutto_size;
+		netto_size -= other.netto_size;
+		return *this;
+	}
+
 	constexpr AllocatorStats operator+(const AllocatorStats other) const noexcept {
 		return { brutto_size + other.brutto_size,
 			netto_size + other.netto_size };
+	}
+
+	constexpr AllocatorStats operator-(const AllocatorStats other) const noexcept {
+		return {
+			brutto_size - other.brutto_size,
+			netto_size - other.netto_size,
+		};
 	}
 };
