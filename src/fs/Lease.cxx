@@ -254,7 +254,28 @@ FilteredSocketLease::OnBufferedData()
 DirectResult
 FilteredSocketLease::OnBufferedDirect(SocketDescriptor fd, FdType fd_type)
 {
-	return handler.OnBufferedDirect(fd, fd_type);
+	assert(handler_info == nullptr);
+	HandlerInfo info;
+	handler_info = &info;
+
+	auto result = handler.OnBufferedDirect(fd, fd_type);
+
+	if (result != DirectResult::CLOSED) {
+		assert(handler_info == &info);
+		handler_info = nullptr;
+	}
+
+	if (result == DirectResult::CLOSED) {
+		assert(info.released);
+
+		if (info.action != PutAction::DESTROY)
+			/* the FilteredSocketLease was destroyed, but
+			   the BufferedSocket is still alive (in the
+			   FilteredSocketStock) */
+			result = DirectResult::OK;
+	}
+
+	return result;
 }
 
 bool
