@@ -1242,11 +1242,13 @@ HttpClient::OnBufferedWrite()
 
 	switch (TryWriteBuckets()) {
 	case BucketResult::FALLBACK:
+		assert(HasInput());
 		break;
 
 	case BucketResult::LATER:
 	case BucketResult::MORE:
 	case BucketResult::BLOCKING:
+		assert(HasInput());
 		return true;
 
 	case BucketResult::DEPLETED:
