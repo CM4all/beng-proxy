@@ -453,6 +453,8 @@ HttpServerConnection::TryRequestBodyDirect(SocketDescriptor fd, FdType fd_type)
 	if (!MaybeSend100Continue())
 		return DirectResult::CLOSED;
 
+	const DestructObserver destructed{*this};
+
 	switch (request_body_reader->TryDirect(fd, fd_type)) {
 	case IstreamDirectResult::BLOCKING:
 		/* the destination fd blocks */
@@ -462,7 +464,9 @@ HttpServerConnection::TryRequestBodyDirect(SocketDescriptor fd, FdType fd_type)
 	case IstreamDirectResult::CLOSED:
 		/* the stream (and the whole connection) has been closed
 		   during the direct() callback (-3); no further checks */
-		return DirectResult::CLOSED;
+		return destructed
+			? DirectResult::CLOSED
+			: DirectResult::OK;
 
 	case IstreamDirectResult::ERRNO:
 		if (errno == EAGAIN)
@@ -485,7 +489,6 @@ HttpServerConnection::TryRequestBodyDirect(SocketDescriptor fd, FdType fd_type)
 			if (socket->IsConnected())
 				socket->SetDirect(false);
 
-			const DestructObserver destructed(*this);
 			request_body_reader->DestroyEof();
 			return destructed
 				? DirectResult::CLOSED

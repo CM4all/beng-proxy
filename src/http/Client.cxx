@@ -1080,6 +1080,8 @@ HttpClient::TryResponseDirect(SocketDescriptor fd, FdType fd_type) noexcept
 	assert(response.state == Response::State::BODY);
 	assert(CheckDirect());
 
+	const DestructObserver destructed{*this};
+
 	switch (response_body_reader.TryDirect(fd, fd_type)) {
 	case IstreamDirectResult::BLOCKING:
 		/* the destination fd blocks */
@@ -1088,7 +1090,9 @@ HttpClient::TryResponseDirect(SocketDescriptor fd, FdType fd_type) noexcept
 	case IstreamDirectResult::CLOSED:
 		/* the stream (and the whole connection) has been closed
 		   during the direct() callback */
-		return DirectResult::CLOSED;
+		return destructed
+			? DirectResult::CLOSED
+			: DirectResult::OK;
 
 	case IstreamDirectResult::ERRNO:
 		if (errno == EAGAIN)
