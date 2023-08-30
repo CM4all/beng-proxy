@@ -8,7 +8,7 @@ cm4all-beng-proxy (18.0.34) unstable; urgency=low
   * translation/cache: optimize statistics
   * Multi-Path TCP support for listeners
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Wed, 30 Aug 2023 15:54:19 +0200
 
 cm4all-beng-proxy (18.0.33) unstable; urgency=low
 
