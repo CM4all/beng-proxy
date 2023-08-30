@@ -120,9 +120,17 @@ public:
 	};
 };
 
+class CacheHandler {
+public:
+	virtual void OnCacheItemAdded(const CacheItem &item) noexcept = 0;
+	virtual void OnCacheItemRemoved(const CacheItem &item) noexcept = 0;
+};
+
 class Cache {
 	const size_t max_size;
 	size_t size = 0;
+
+	CacheHandler *const handler;
 
 	using ItemSet = IntrusiveHashSet<CacheItem, 65521,
 					 IntrusiveHashSetOperators<CacheItem::Hash,
@@ -142,7 +150,8 @@ class Cache {
 	CleanupTimer cleanup_timer;
 
 public:
-	Cache(EventLoop &event_loop, size_t _max_size) noexcept;
+	Cache(EventLoop &event_loop, size_t _max_size,
+	      CacheHandler *_handler=nullptr) noexcept;
 
 	~Cache() noexcept;
 

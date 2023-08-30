@@ -38,8 +38,10 @@ CacheItem::Release() noexcept
 }
 
 Cache::Cache(EventLoop &event_loop,
-	     size_t _max_size) noexcept
+	     size_t _max_size,
+	     CacheHandler *_handler) noexcept
 	:max_size(_max_size),
+	 handler(_handler),
 	 cleanup_timer(event_loop, std::chrono::minutes(1),
 		       BIND_THIS_METHOD(ExpireCallback)) {}
 
@@ -84,6 +86,9 @@ Cache::ItemRemoved(CacheItem *item) noexcept
 	sorted_items.erase(sorted_items.iterator_to(*item));
 
 	size -= item->size;
+
+	if (handler != nullptr)
+		handler->OnCacheItemRemoved(*item);
 
 	item->Release();
 
@@ -200,6 +205,9 @@ Cache::Add(const char *key, CacheItem &item) noexcept
 	size += item.size;
 	item.last_accessed = SteadyNow();
 
+	if (handler != nullptr)
+		handler->OnCacheItemAdded(item);
+
 	cleanup_timer.Enable();
 	return true;
 }
@@ -229,6 +237,9 @@ Cache::Put(const char *key, CacheItem &item) noexcept
 
 	items.insert(item);
 	sorted_items.push_back(item);
+
+	if (handler != nullptr)
+		handler->OnCacheItemAdded(item);
 
 	cleanup_timer.Enable();
 	return true;
