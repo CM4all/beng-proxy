@@ -1246,6 +1246,10 @@ HttpClient::OnBufferedWrite()
 		break;
 
 	case BucketResult::LATER:
+		assert(HasInput());
+		socket.UnscheduleWrite();
+		return true;
+
 	case BucketResult::MORE:
 	case BucketResult::BLOCKING:
 		assert(HasInput());
