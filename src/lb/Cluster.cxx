@@ -58,7 +58,7 @@ LbCluster::ZeroconfMember::ZeroconfMember(const std::string &_key,
 		 ? std::make_unique<LbMonitorRef>(monitors->Add(key.c_str(),
 								_address))
 		 : std::unique_ptr<LbMonitorRef>()),
-	 address_hash(MemberAddressHash(address, 0))
+	 address_hash(djb_hash(address.GetSteadyPart()))
 {
 }
 
@@ -68,7 +68,7 @@ inline void
 LbCluster::ZeroconfMember::SetAddress(SocketAddress _address) noexcept
 {
 	address = _address;
-	address_hash = MemberAddressHash(address, 0);
+	address_hash = djb_hash(address.GetSteadyPart());
 }
 
 const char *
