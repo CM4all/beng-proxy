@@ -54,7 +54,16 @@ private:
 
 		auto &_item = stock_item;
 		Destroy();
-		return _item.Put(action);
+		_item.Put(action);
+
+		/* we ignore the StockItem::Put() return value and
+		   unconditionally return DESTROY here because the
+		   FilteredSocket was destroyed already; strictly,
+		   this return value is wrong, and this is a
+		   workaround for the assertion in
+		   BufferedSocket::InvokeData() */
+		// TODO fix this properly
+		return PutAction::DESTROY;
 	}
 };
 
