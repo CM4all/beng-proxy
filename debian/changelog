@@ -1,6 +1,6 @@
 cm4all-beng-proxy (18.0.35) unstable; urgency=low
 
-  * 
+  * spawn: create dummy process to hold the systemd scope
 
  --   
 
