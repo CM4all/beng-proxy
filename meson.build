@@ -180,6 +180,7 @@ subdir('libcommon/src/lib/pcre')
 subdir('libcommon/src/lib/sodium')
 subdir('libcommon/src/time')
 subdir('libcommon/src/io')
+subdir('libcommon/src/io/linux')
 subdir('libcommon/src/io/config')
 
 io2 = static_library(
