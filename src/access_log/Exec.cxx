@@ -17,6 +17,7 @@
 
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h> // for strerror()
 #include <errno.h>
 #include <unistd.h>
 
