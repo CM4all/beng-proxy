@@ -50,6 +50,8 @@
 #include "lib/avahi/Publisher.hxx"
 #endif
 
+#include <fmt/core.h>
+
 #include <sys/signal.h>
 
 static constexpr auto COMPRESS_INTERVAL = std::chrono::minutes(10);
@@ -245,8 +247,8 @@ void
 BpInstance::OnMemoryWarning(uint64_t memory_usage,
 			    uint64_t memory_max) noexcept
 {
-	fprintf(stderr, "Spawner memory warning: %" PRIu64 " of %" PRIu64 " bytes used\n",
-		memory_usage, memory_max);
+	fmt::print(stderr, "Spawner memory warning: {} of {} bytes used\n",
+		   memory_usage, memory_max);
 
 	if (lhttp_stock != nullptr)
 		lhttp_stock_discard_some(*lhttp_stock);
