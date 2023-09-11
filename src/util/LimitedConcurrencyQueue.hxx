@@ -50,10 +50,10 @@ public:
 };
 
 class LimitedConcurrencyQueue {
-	using JobList =
-		IntrusiveList<LimitedConcurrencyJob,
-			      IntrusiveListBaseHookTraits<LimitedConcurrencyJob>,
-			      true>;
+	using JobList = IntrusiveList<
+		LimitedConcurrencyJob,
+		IntrusiveListBaseHookTraits<LimitedConcurrencyJob>,
+		IntrusiveListOptions{.constant_time_size = true}>;
 
 	JobList waiting, running;
 

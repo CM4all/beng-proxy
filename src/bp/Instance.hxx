@@ -83,9 +83,10 @@ struct BpInstance final : PInstance, ControlHandler, SpawnServerClientHandler,
 
 	std::forward_list<BPListener> listeners;
 
-	IntrusiveList<BpConnection,
-		      IntrusiveListBaseHookTraits<BpConnection>,
-		      true> connections;
+	IntrusiveList<
+		BpConnection,
+		IntrusiveListBaseHookTraits<BpConnection>,
+		IntrusiveListOptions{.constant_time_size = true}> connections;
 
 	std::unique_ptr<AccessLogGlue> access_log, child_error_log;
 

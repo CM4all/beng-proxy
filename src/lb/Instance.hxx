@@ -77,13 +77,15 @@ struct LbInstance final : PInstance, Avahi::ErrorHandler {
 	std::map<std::string, CertCache> cert_dbs;
 #endif
 
-	IntrusiveList<LbHttpConnection,
-		      IntrusiveListBaseHookTraits<LbHttpConnection>,
-		      true> http_connections;
+	IntrusiveList<
+		LbHttpConnection,
+		IntrusiveListBaseHookTraits<LbHttpConnection>,
+		IntrusiveListOptions{.constant_time_size = true}> http_connections;
 
-	IntrusiveList<LbTcpConnection,
-		      IntrusiveListBaseHookTraits<LbTcpConnection>,
-		      true> tcp_connections;
+	IntrusiveList<
+		LbTcpConnection,
+		IntrusiveListBaseHookTraits<LbTcpConnection>,
+		IntrusiveListOptions{.constant_time_size = true}> tcp_connections;
 
 	std::unique_ptr<AccessLogGlue> access_log;
 

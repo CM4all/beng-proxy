@@ -22,9 +22,10 @@ class AccountedClientConnection {
 	PerClientAccounting *per_client = nullptr;
 
 public:
-	using List = IntrusiveList<AccountedClientConnection,
-				   IntrusiveListMemberHookTraits<&AccountedClientConnection::siblings>,
-				   true>;
+	using List = IntrusiveList<
+		AccountedClientConnection,
+		IntrusiveListMemberHookTraits<&AccountedClientConnection::siblings>,
+		IntrusiveListOptions{.constant_time_size = true}>;
 
 	AccountedClientConnection() = default;
 	~AccountedClientConnection() noexcept;

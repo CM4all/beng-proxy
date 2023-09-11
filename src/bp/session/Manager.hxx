@@ -59,22 +59,23 @@ class SessionManager {
 
 	static constexpr unsigned N_BUCKETS = 65521;
 
-	using Set = IntrusiveHashSet<Session, N_BUCKETS,
-				     IntrusiveHashSetOperators<SessionHash,
-							       std::equal_to<SessionId>,
-							       SessionGetId>,
-				     IntrusiveHashSetMemberHookTraits<&Session::set_hook>,
-				     true>;
+	using Set = IntrusiveHashSet<
+		Session, N_BUCKETS,
+		IntrusiveHashSetOperators<SessionHash,
+					  std::equal_to<SessionId>,
+					  SessionGetId>,
+		IntrusiveHashSetMemberHookTraits<&Session::set_hook>,
+		IntrusiveHashSetOptions{.constant_time_size = true}>;
 
 	Set sessions;
 
-	using ByAttach =
-		IntrusiveHashSet<Session, N_BUCKETS,
-				 IntrusiveHashSetOperators<SessionAttachHash,
-							   SessionAttachEqual,
-							   SessionGetAttach>,
-				 IntrusiveHashSetMemberHookTraits<&Session::by_attach_hook>,
-				 true>;
+	using ByAttach = IntrusiveHashSet<
+		Session, N_BUCKETS,
+		IntrusiveHashSetOperators<SessionAttachHash,
+					  SessionAttachEqual,
+					  SessionGetAttach>,
+		IntrusiveHashSetMemberHookTraits<&Session::by_attach_hook>,
+		IntrusiveHashSetOptions{.constant_time_size = true}>;
 
 	ByAttach sessions_by_attach;
 

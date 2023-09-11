@@ -41,10 +41,10 @@ class ClientConnection final : BufferedSocketHandler {
 	NgHttp2::Session session;
 
 	class Request;
-	using RequestList =
-		IntrusiveList<Request,
-			      IntrusiveListBaseHookTraits<Request>,
-			      true>;
+	using RequestList = IntrusiveList<
+		Request,
+		IntrusiveListBaseHookTraits<Request>,
+		IntrusiveListOptions{.constant_time_size = true}>;
 
 	RequestList requests;
 
