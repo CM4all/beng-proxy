@@ -1,6 +1,6 @@
 cm4all-beng-proxy (18.0.36) unstable; urgency=low
 
-  * 
+  * spawn: on memory pressure, kill processes more often
 
  --   
 
