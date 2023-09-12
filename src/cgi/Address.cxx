@@ -197,7 +197,8 @@ void
 CgiAddress::InsertArgs(AllocatorPtr alloc, std::string_view new_args,
 		       std::string_view new_path_info) noexcept
 {
-	uri = uri_insert_args(alloc, uri, new_args, new_path_info);
+	if (uri != nullptr)
+		uri = uri_insert_args(alloc, uri, new_args, new_path_info);
 
 	if (path_info != nullptr)
 		path_info = alloc.Concat(path_info,
