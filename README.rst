@@ -40,7 +40,7 @@ Get the source code::
 
 Run ``meson``::
 
- meson . output
+ meson setup output
 
 Compile and install::
 
