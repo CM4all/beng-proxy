@@ -236,24 +236,19 @@ Request::MaybeEmulateModAuthEasy(const FileAddress &address,
 	return EmulateModAuthEasy(address, fd, st);
 }
 
-#ifdef HAVE_URING
-
-void
-Request::OnOpen(UniqueFileDescriptor fd) noexcept
+inline void
+Request::OnBaseOpen(FileDescriptor fd, SharedLease lease) noexcept
 {
 	const auto &address = *handler.file.address;
-
 	assert(address.base != nullptr);
 
-	handler.file.base = handler.file.base_ = std::move(fd);
+	handler.file.base = fd;
+	handler.file.base_lease = std::move(lease);
+
 	HandleFileAddressAfterBase(address);
 }
 
-void
-Request::OnOpenError(std::exception_ptr e) noexcept
-{
-	LogDispatchError(std::move(e));
-}
+#ifdef HAVE_URING
 
 void
 Request::OnOpenStat(UniqueFileDescriptor fd,
@@ -284,27 +279,18 @@ Request::HandleFileAddress(const FileAddress &address) noexcept
 		return;
 	}
 
-	/* open the file */
+	/* open the BASE directory */
 
 	if (address.base != nullptr) {
-#ifdef HAVE_URING
-		if (instance.uring) {
-			UringOpen(*instance.uring, pool,
-				  address.base, O_PATH,
-				  *this, cancel_ptr);
-			return;
-		}
-#endif
-
-		try {
-			handler.file.base =
-				handler.file.base_ = OpenPath(address.base);
-		} catch (...) {
-			LogDispatchError(std::current_exception());
-			return;
-		}
+		instance.fd_cache.Get(address.base, O_PATH|O_DIRECTORY,
+				      BIND_THIS_METHOD(OnBaseOpen),
+				      BIND_THIS_METHOD(OnBaseOpenError),
+				      cancel_ptr);
+		return;
 	} else
 		handler.file.base = FileDescriptor(AT_FDCWD);
+
+	/* open the file */
 
 	HandleFileAddressAfterBase(address);
 }

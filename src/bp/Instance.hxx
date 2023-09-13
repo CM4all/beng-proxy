@@ -20,6 +20,7 @@
 #include "spawn/Handler.hxx"
 #include "event/net/control/Handler.hxx"
 #include "net/FailureManager.hxx"
+#include "io/FdCache.hxx"
 #include "util/Background.hxx"
 #include "util/IntrusiveList.hxx"
 
@@ -78,6 +79,13 @@ struct BpInstance final : PInstance, ControlHandler, SpawnServerClientHandler,
 
 	[[no_unique_address]]
 	UringGlue uring{event_loop};
+
+	FdCache fd_cache{
+		event_loop,
+#ifdef HAVE_URING
+		uring.get(),
+#endif
+	};
 
 	std::map<std::string, TaggedHttpStats> listener_stats;
 

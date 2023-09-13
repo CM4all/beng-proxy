@@ -24,6 +24,7 @@
 #include "io/UniqueFileDescriptor.hxx"
 #include "co/InvokeTask.hxx"
 #include "util/Cancellable.hxx"
+#include "util/SharedLease.hxx"
 #include "stopwatch.hxx"
 
 #ifdef HAVE_URING
@@ -59,7 +60,6 @@ namespace Co { template<typename T> class Task; }
 class Request final : public HttpResponseHandler, DelegateHandler,
 		      TranslateHandler,
 #ifdef HAVE_URING
-		      Uring::OpenHandler,
 		      Uring::OpenStatHandler,
 #endif
 #ifdef HAVE_LIBNFS
@@ -248,7 +248,7 @@ private:
 		struct {
 			const FileAddress *address;
 
-			UniqueFileDescriptor base_;
+			SharedLease base_lease;
 
 			FileDescriptor base;
 		} file;
@@ -894,6 +894,11 @@ private:
 	 */
 	void ApplyFileEnotdir() noexcept;
 
+	void OnBaseOpen(FileDescriptor fd, SharedLease _lease) noexcept;
+	void OnBaseOpenError(std::exception_ptr error) noexcept {
+		LogDispatchError(std::move(error));
+	}
+
 	/* virtual methods from class Cancellable */
 	void Cancel() noexcept override {
 		DiscardRequestBody();
@@ -922,10 +927,6 @@ private:
 	void OnDelegateError(std::exception_ptr ep) override;
 
 #ifdef HAVE_URING
-	/* virtual methods from class Uring::OpenHandler */
-	void OnOpen(UniqueFileDescriptor fd) noexcept override;
-	void OnOpenError(std::exception_ptr e) noexcept override;
-
 	/* virtual methods from class Uring::OpenStatHandler */
 	void OnOpenStat(UniqueFileDescriptor fd,
 			struct statx &st) noexcept override;

@@ -126,6 +126,7 @@ void
 BpInstance::ShutdownCallback() noexcept
 {
 	uring.SetVolatile();
+	fd_cache.Disable();
 
 	DisableSignals();
 	thread_pool_stop();

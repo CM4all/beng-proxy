@@ -589,6 +589,7 @@ endif
 executable(
   'cm4all-beng-proxy',
   sources,
+  'src/io/FdCache.cxx',
   'src/delegate/RequestHandler.cxx',
   'src/address_string.cxx',
   'src/cluster/TcpBalancer.cxx',

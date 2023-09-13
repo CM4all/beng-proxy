@@ -31,13 +31,7 @@ Request::Request(BpConnection &_connection,
 	session_id.Clear();
 }
 
-Request::~Request() noexcept
-{
-#ifdef HAVE_URING
-	if (handler.file.base_.IsDefined())
-		instance.uring.Close(handler.file.base_.Release());
-#endif
-}
+Request::~Request() noexcept = default;
 
 TranslationService &
 Request::GetTranslationService() const noexcept
