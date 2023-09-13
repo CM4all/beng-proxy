@@ -34,6 +34,10 @@ Optional dependencies:
 - `libwas <https://github.com/CM4all/libwas>`__
 - `Avahi <https://www.avahi.org/>`__
 
+Get the source code::
+
+ git clone --recursive https://github.com/CM4all/beng-proxy.git
+
 Run ``meson``::
 
  meson . output
