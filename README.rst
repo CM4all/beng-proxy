@@ -31,6 +31,7 @@ Optional dependencies:
 
 - `nghttp2 <https://nghttp2.org/>`__
 - `libnfs <https://github.com/sahlberg/libnfs>`__
+- `liburing <https://github.com/axboe/liburing>`__
 - `libwas <https://github.com/CM4all/libwas>`__
 - `Avahi <https://www.avahi.org/>`__
 

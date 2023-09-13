@@ -197,7 +197,7 @@ io_dep = declare_dependency(
   ],
 )
 
-libcommon_require_uring = true
+libcommon_require_uring = get_option('io_uring')
 subdir('libcommon/src/io/uring')
 subdir('libcommon/src/system')
 

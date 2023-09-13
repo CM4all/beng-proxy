@@ -5,6 +5,7 @@ option('certdb', type: 'boolean', value: true, description: 'Build with certdb s
 
 option('brotli', type: 'feature', description: 'Brotli support')
 option('http2', type: 'feature', description: 'HTTP2 protocol support')
+option('io_uring', type: 'feature', description: 'io_uring support using liburing')
 option('nfs', type: 'feature', description: 'userspace NFS client')
 option('stopwatch', type: 'boolean', value: true, description: 'enable stopwatch support')
 option('systemd', type: 'boolean', value: true, description: 'systemd support (using libsystemd)')

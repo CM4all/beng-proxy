@@ -4,6 +4,8 @@
 
 #pragma once
 
+#include "io/FileDescriptor.hxx"
+
 #ifdef HAVE_URING
 #include "event/uring/Manager.hxx"
 #include "io/uring/Close.hxx"
