@@ -305,7 +305,9 @@ Request::HandleFileAddressAfterBase(const FileAddress &address) noexcept
 		UringOpenStat(*instance.uring, pool,
 			      handler.file.base,
 			      path,
-			      *this, cancel_ptr);
+			      BIND_THIS_METHOD(OnOpenStat),
+			      BIND_THIS_METHOD(OnOpenStatError),
+			      cancel_ptr);
 		return;
 	}
 #endif

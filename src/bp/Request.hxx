@@ -27,10 +27,6 @@
 #include "util/SharedLease.hxx"
 #include "stopwatch.hxx"
 
-#ifdef HAVE_URING
-#include "io/uring/Handler.hxx"
-#endif
-
 #include <exception>
 #include <string_view>
 
@@ -59,9 +55,6 @@ namespace Co { template<typename T> class Task; }
  */
 class Request final : public HttpResponseHandler, DelegateHandler,
 		      TranslateHandler,
-#ifdef HAVE_URING
-		      Uring::OpenStatHandler,
-#endif
 #ifdef HAVE_LIBNFS
 		      NfsCacheHandler,
 #endif
@@ -931,8 +924,8 @@ private:
 #ifdef HAVE_URING
 	/* virtual methods from class Uring::OpenStatHandler */
 	void OnOpenStat(UniqueFileDescriptor fd,
-			struct statx &st) noexcept override;
-	void OnOpenStatError(int error) noexcept override;
+			struct statx &st) noexcept;
+	void OnOpenStatError(int error) noexcept;
 #endif
 
 #ifdef HAVE_LIBNFS

@@ -15,16 +15,18 @@
 class UringOpenStatOperation final : Cancellable, Uring::OpenStatHandler {
 	std::unique_ptr<Uring::OpenStat> open_stat;
 
-	Uring::OpenStatHandler &handler;
+	const UringOpenStatSuccessCallback on_success;
+	const UringOpenStatErrorCallback on_error;
 
 public:
 	UringOpenStatOperation(Uring::Queue &uring,
 			       FileDescriptor directory,
 			       const char *path,
-			       Uring::OpenStatHandler &_handler,
+			       UringOpenStatSuccessCallback _on_success,
+			       UringOpenStatErrorCallback _on_error,
 			       CancellablePointer &cancel_ptr) noexcept
 		:open_stat(new Uring::OpenStat(uring, *this)),
-		 handler(_handler)
+		 on_success(_on_success), on_error(_on_error)
 	{
 		cancel_ptr = *this;
 
@@ -55,20 +57,21 @@ private:
 	/* virtual methods from class Uring::OpenStatHandler */
 	void OnOpenStat(UniqueFileDescriptor fd,
 			struct statx &st) noexcept override {
-		auto &_handler = handler;
+		const auto _on_succes = on_success;
 
 		/* delay destruction, because this object owns the
 		   memory pointed to by "st" */
 		const auto operation = std::move(open_stat);
 
 		Destroy();
-		_handler.OnOpenStat(std::move(fd), st);
+
+		_on_succes(std::move(fd), st);
 	}
 
 	void OnOpenStatError(int error) noexcept override {
-		auto &_handler = handler;
+		const auto _on_error = on_error;
 		Destroy();
-		_handler.OnOpenStatError(error);
+		_on_error(error);
 	}
 };
 
@@ -76,9 +79,10 @@ void
 UringOpenStat(Uring::Queue &uring, AllocatorPtr alloc,
 	      FileDescriptor directory,
 	      const char *path,
-	      Uring::OpenStatHandler &handler,
+	      UringOpenStatSuccessCallback on_success,
+	      UringOpenStatErrorCallback on_error,
 	      CancellablePointer &cancel_ptr) noexcept
 {
 	alloc.New<UringOpenStatOperation>(uring, directory, path,
-					  handler, cancel_ptr);
+					  on_success, on_error, cancel_ptr);
 }
