@@ -30,6 +30,7 @@
 #include <exception>
 #include <string_view>
 
+struct FileAt;
 struct statx;
 class Istream;
 class HttpHeaders;
@@ -108,6 +109,12 @@ private:
 	struct {
 		TranslateRequest request;
 		UniquePoolPtr<TranslateResponse> response;
+
+		/**
+		 * The response saved by a request handler that needed
+		 * to do some asynchronous operation.
+		 */
+		UniquePoolPtr<TranslateResponse> pending_response;
 
 		ResourceAddress address;
 
@@ -876,14 +883,19 @@ private:
 
 	bool SubmitEnotdir(const TranslateResponse &response) noexcept;
 
+	void OnEnotdirStat(const struct statx &st) noexcept;
+	void OnEnotdirStatError(int error) noexcept;
+
+	void OnEnotdirBaseOpen(FileDescriptor fd, SharedLease lease) noexcept;
+
 	/**
 	 * The #TranslateResponse contains #TRANSLATE_ENOTDIR.  Check this
 	 * condition and retranslate.
-	 *
-	 * @return true to continue handling the request, false on error or if
-	 * retranslation has been triggered
 	 */
-	bool CheckFileEnotdir(const TranslateResponse &response) noexcept;
+	void CheckFileEnotdir(UniquePoolPtr<TranslateResponse> response) noexcept;
+	void CheckFileEnotdir(UniquePoolPtr<TranslateResponse> _response, FileAt file) noexcept;
+
+	void OnTranslateResponseAfterEnotdir(UniquePoolPtr<TranslateResponse> response) noexcept;
 
 	/**
 	 * Append the ENOTDIR PATH_INFO to the resource address.

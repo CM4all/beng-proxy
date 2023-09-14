@@ -3,13 +3,14 @@
 // author: Max Kellermann <mk@cm4all.com>
 
 #include "Request.hxx"
+#include "Instance.hxx"
 #include "translation/Response.hxx"
 #include "file/Address.hxx"
 #include "cgi/Address.hxx"
 #include "http/local/Address.hxx"
 #include "http/IncomingRequest.hxx"
 #include "pool/pool.hxx"
-#include "io/StatAt.hxx"
+#include "io/FileAt.hxx"
 #include "AllocatorPtr.hxx"
 
 #include <assert.h>
@@ -17,15 +18,6 @@
 #include <string.h>
 #include <sys/stat.h>
 #include <errno.h>
-
-[[gnu::pure]]
-static bool
-IsEnotdir(const char *base, const char *path) noexcept
-{
-	struct statx st;
-	return !StatAt(base, path, AT_STATX_DONT_SYNC, STATX_TYPE, &st) &&
-		errno == ENOTDIR;
-}
 
 [[gnu::pure]]
 static const char *
@@ -111,9 +103,57 @@ Request::SubmitEnotdir(const TranslateResponse &response) noexcept
 	return false;
 }
 
-bool
-Request::CheckFileEnotdir(const TranslateResponse &response) noexcept
+inline void
+Request::OnEnotdirStat([[maybe_unused]] const struct statx &st) noexcept
 {
+	assert(translate.pending_response);
+
+	OnTranslateResponseAfterEnotdir(std::move(translate.pending_response));
+}
+
+inline void
+Request::OnEnotdirStatError(int error) noexcept
+{
+	assert(translate.pending_response);
+
+	if (error != ENOTDIR || SubmitEnotdir(*translate.pending_response))
+		OnTranslateResponseAfterEnotdir(std::move(translate.pending_response));
+}
+
+void
+Request::CheckFileEnotdir(UniquePoolPtr<TranslateResponse> _response, FileAt file) noexcept
+{
+	assert(_response);
+
+	translate.pending_response = std::move(_response);
+
+	instance.uring.Stat(file, AT_STATX_DONT_SYNC, STATX_TYPE,
+			    BIND_THIS_METHOD(OnEnotdirStat),
+			    BIND_THIS_METHOD(OnEnotdirStatError),
+			    cancel_ptr);
+}
+
+inline void
+Request::OnEnotdirBaseOpen(FileDescriptor fd, SharedLease lease) noexcept
+{
+	assert(translate.pending_response);
+
+	const auto &response = *translate.pending_response;
+
+	handler.file.base = fd;
+	handler.file.base_lease = std::move(lease);
+
+	CheckFileEnotdir(std::move(translate.pending_response),
+			 {fd, get_file_path(response)});
+}
+
+void
+Request::CheckFileEnotdir(UniquePoolPtr<TranslateResponse> _response) noexcept
+{
+	assert(_response);
+
+	const auto &response = *_response;
+
 	assert(response.enotdir.data() != nullptr);
 
 	const char *path = get_file_path(response);
@@ -121,13 +161,18 @@ Request::CheckFileEnotdir(const TranslateResponse &response) noexcept
 		LogDispatchError(HttpStatus::BAD_GATEWAY,
 				 "Resource address not compatible with ENOTDIR",
 				 1);
-		return false;
+		return;
 	}
 
-	if (IsEnotdir(get_file_base(response), path))
-		return SubmitEnotdir(response);
-
-	return true;
+	if (const char *base = get_file_base(response)) {
+		translate.pending_response = std::move(_response);
+		instance.fd_cache.Get(base, O_PATH|O_DIRECTORY,
+				      BIND_THIS_METHOD(OnEnotdirBaseOpen),
+				      BIND_THIS_METHOD(OnBaseOpenError),
+				      cancel_ptr);
+	} else
+		CheckFileEnotdir(std::move(_response),
+				 {FileDescriptor::Undefined(), path});
 }
 
 void
