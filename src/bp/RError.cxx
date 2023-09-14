@@ -46,6 +46,41 @@ Dup(struct pool &pool, HttpStatus status, const char *msg) noexcept
 	return {status, p_strdup(&pool, msg)};
 }
 
+static constexpr MessageHttpResponse
+ErrnoToResponse(int e) noexcept
+{
+	switch (e) {
+	case ENOENT:
+	case ENOTDIR:
+
+	case ELOOP: /* RESOLVE_NO_SYMLINKS failed */
+	case EXDEV: /* RESOLVE_BENEATH failed */
+		return {HttpStatus::NOT_FOUND,
+			"The requested file does not exist."};
+
+	case EACCES:
+	case EPERM:
+		return {HttpStatus::FORBIDDEN,
+			"Access to the requested file denied."};
+
+	case ECONNREFUSED:
+		return {HttpStatus::BAD_GATEWAY,
+			"Connect to upstream server failed."};
+
+	case ENETUNREACH:
+	case EHOSTUNREACH:
+		return {HttpStatus::BAD_GATEWAY,
+			"Upstream server is unreachable."};
+
+	case ETIMEDOUT:
+		return {HttpStatus::BAD_GATEWAY,
+			"Upstream server timed out"};
+
+	default:
+		return {};
+	}
+}
+
 [[gnu::pure]]
 static MessageHttpResponse
 ToResponse(struct pool &pool, std::exception_ptr ep) noexcept
@@ -55,33 +90,9 @@ ToResponse(struct pool &pool, std::exception_ptr ep) noexcept
 
 	if (const auto *e = FindNested<std::system_error>(ep)) {
 		if (e->code().category() == ErrnoCategory()) {
-			switch (e->code().value()) {
-			case ENOENT:
-			case ENOTDIR:
-
-			case ELOOP: /* RESOLVE_NO_SYMLINKS failed */
-			case EXDEV: /* RESOLVE_BENEATH failed */
-				return {HttpStatus::NOT_FOUND,
-					"The requested file does not exist."};
-
-			case EACCES:
-			case EPERM:
-				return {HttpStatus::FORBIDDEN,
-					"Access to the requested file denied."};
-
-			case ECONNREFUSED:
-				return {HttpStatus::BAD_GATEWAY,
-					"Connect to upstream server failed."};
-
-			case ENETUNREACH:
-			case EHOSTUNREACH:
-				return {HttpStatus::BAD_GATEWAY,
-					"Upstream server is unreachable."};
-
-			case ETIMEDOUT:
-				return {HttpStatus::BAD_GATEWAY,
-					"Upstream server timed out"};
-			}
+			if (auto r = ErrnoToResponse(e->code().value());
+			    r.status != HttpStatus{})
+				return r;
 		}
 	}
 
