@@ -575,6 +575,7 @@ if uring_dep.found()
   sources += [
     'src/io/UringOpen.cxx',
     'src/io/UringOpenStat.cxx',
+    'src/io/UringStat.cxx',
     'src/io/CoStatAt.cxx',
   ]
 endif

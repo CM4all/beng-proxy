@@ -8,6 +8,7 @@
 #include "AllocatorPtr.hxx"
 
 #ifdef HAVE_URING
+#include "io/UringStat.hxx"
 #include "io/UringOpenStat.hxx"
 #include "util/PrintException.hxx"
 
@@ -38,6 +39,29 @@ UringGlue::SetVolatile() noexcept
 	if (uring)
 		uring->SetVolatile();
 #endif
+}
+
+void
+UringGlue::Stat(FileAt file, int flags, unsigned mask,
+		UringStatSuccessCallback on_success,
+		UringStatErrorCallback on_error,
+		CancellablePointer &cancel_ptr) noexcept
+{
+#ifdef HAVE_URING
+	if (uring) [[likely]] {
+		UringStat(*uring, file, flags, mask,
+			  on_success, on_error, cancel_ptr);
+		return;
+	}
+#else
+	(void)cancel_ptr;
+#endif
+
+	struct statx st;
+	if (statx(file.directory.Get(), file.name, flags, mask, &st) == 0)
+		on_success(st);
+	else
+		on_error(errno);
 }
 
 void

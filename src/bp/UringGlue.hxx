@@ -20,6 +20,9 @@ class UniqueFileDescriptor;
 class EventLoop;
 class AllocatorPtr;
 
+using UringStatSuccessCallback = BoundMethod<void(const struct statx &st) noexcept>;
+using UringStatErrorCallback = BoundMethod<void(int error) noexcept>;
+
 using UringOpenStatSuccessCallback = BoundMethod<void(UniqueFileDescriptor fd, struct statx &st) noexcept>;
 using UringOpenStatErrorCallback = BoundMethod<void(int error) noexcept>;
 
@@ -46,6 +49,11 @@ public:
 		return *uring;
 	}
 #endif
+
+	void Stat(FileAt file, int flags, unsigned mask,
+		  UringStatSuccessCallback on_success,
+		  UringStatErrorCallback on_error,
+		  CancellablePointer &cancel_ptr) noexcept;
 
 	void OpenStat(AllocatorPtr alloc, FileAt file,
 		      UringOpenStatSuccessCallback on_success,
