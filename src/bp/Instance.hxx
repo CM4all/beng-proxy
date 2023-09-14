@@ -77,7 +77,7 @@ struct BpInstance final : PInstance, ControlHandler, SpawnServerClientHandler,
 	HttpStats http_stats;
 
 	[[no_unique_address]]
-	UringGlue uring;
+	UringGlue uring{event_loop};
 
 	std::map<std::string, TaggedHttpStats> listener_stats;
 

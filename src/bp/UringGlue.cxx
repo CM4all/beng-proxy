@@ -10,8 +10,7 @@
 #include <cstdio>
 #endif
 
-void
-UringGlue::Init([[maybe_unused]] EventLoop &event_loop) noexcept
+UringGlue::UringGlue([[maybe_unused]] EventLoop &event_loop) noexcept
 {
 #ifdef HAVE_URING
 	try {

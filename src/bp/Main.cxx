@@ -325,8 +325,6 @@ try {
 
 	direct_global_init();
 
-	instance.uring.Init(instance.event_loop);
-
 	instance.EnableSignals();
 
 	global_control_handler_init(&instance);

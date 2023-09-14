@@ -21,7 +21,8 @@ class UringGlue {
 #endif
 
 public:
-	void Init(EventLoop &event_loop) noexcept;
+	explicit UringGlue(EventLoop &event_loop) noexcept;
+
 	void SetVolatile() noexcept;
 
 #ifdef HAVE_URING
