@@ -258,9 +258,9 @@ Request::OnOpenStat(UniqueFileDescriptor fd,
 }
 
 void
-Request::OnOpenStatError(std::exception_ptr e) noexcept
+Request::OnOpenStatError(int error) noexcept
 {
-	LogDispatchError(std::move(e));
+	LogDispatchError(std::make_exception_ptr(MakeErrno(error, "Failed to open file")));
 }
 
 #endif

@@ -204,3 +204,19 @@ Request::LogDispatchError(HttpStatus status, const char *msg,
 
 	DispatchError(status, msg);
 }
+
+void
+Request::LogDispatchErrno(int error, const char *msg) noexcept
+{
+	auto response = ErrnoToResponse(error);
+	if (response.status == HttpStatus{})
+		response = {HttpStatus::INTERNAL_SERVER_ERROR, "Internal server error"};
+
+	if (instance.config.verbose_response)
+		response.message = strerror(error);
+
+	logger(response.status == HttpStatus::INTERNAL_SERVER_ERROR ? 1 : 2,
+	       "error on '", request.uri, "': ", msg, ": ", strerror(error));
+
+	DispatchError(response.status, response.message);
+}

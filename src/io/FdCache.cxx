@@ -18,6 +18,7 @@
 #endif
 
 #include <cassert>
+#include <cerrno>
 #include <string>
 
 inline std::size_t
@@ -81,7 +82,7 @@ struct FdCache::Item final
 
 	UniqueFileDescriptor fd;
 
-	std::exception_ptr error;
+	int error = 0;
 
 	std::chrono::steady_clock::time_point expires;
 
@@ -182,10 +183,10 @@ private:
 			delete this;
 	}
 
-	void OnOpenError(std::exception_ptr _error) noexcept override {
-		assert(_error);
+	void OnOpenError(int _error) noexcept override {
+		assert(_error != 0);
 		assert(!fd.IsDefined());
-		assert(!error);
+		assert(error == 0);
 		assert(uring_open != nullptr);
 
 		delete uring_open;
@@ -225,7 +226,7 @@ FdCache::Item::Start() noexcept
 		if (fd.Open(path.c_str(), flags)) {
 			InvokeSuccess();
 		} else {
-			error = std::make_exception_ptr(MakeErrno("Failed to open file"));
+			error = errno;
 			InvokeError();
 		}
 #ifdef HAVE_URING

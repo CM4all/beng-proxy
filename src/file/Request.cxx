@@ -12,6 +12,7 @@
 #include "istream/UringIstream.hxx"
 #include "pool/pool.hxx"
 #include "lib/fmt/SystemError.hxx"
+#include "system/Error.hxx"
 #include "io/Open.hxx"
 #include "io/UniqueFileDescriptor.hxx"
 #include "http/Status.hxx"
@@ -91,10 +92,10 @@ private:
 	void OnOpenStat(UniqueFileDescriptor fd,
 			struct statx &st) noexcept override;
 
-	void OnOpenStatError(std::exception_ptr e) noexcept override {
+	void OnOpenStatError(int error) noexcept override {
 		auto &_handler = handler;
 		Destroy();
-		_handler.InvokeError(std::move(e));
+		_handler.InvokeError(std::make_exception_ptr(MakeErrno(error, "Failed to open file")));
 	}
 };
 

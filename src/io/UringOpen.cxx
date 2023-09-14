@@ -56,10 +56,10 @@ private:
 		_handler.OnOpen(std::move(fd));
 	}
 
-	void OnOpenError(std::exception_ptr e) noexcept override {
+	void OnOpenError(int error) noexcept override {
 		auto &_handler = handler;
 		Destroy();
-		_handler.OnOpenError(std::move(e));
+		_handler.OnOpenError(error);
 	}
 };
 

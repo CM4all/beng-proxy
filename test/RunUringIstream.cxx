@@ -45,7 +45,7 @@ struct Context final : TestInstance, Uring::OpenStatHandler, SinkFdHandler {
 	/* virtual methods from class Uring::OpenStatHandler */
 	void OnOpenStat(UniqueFileDescriptor fd,
 			struct statx &st) noexcept override;
-	void OnOpenStatError(std::exception_ptr e) noexcept override;
+	void OnOpenStatError(int error) noexcept override;
 
 	/* virtual methods from class SinkFdHandler */
 	void OnInputEof() noexcept override;
@@ -88,9 +88,9 @@ try {
 }
 
 void
-Context::OnOpenStatError(std::exception_ptr e) noexcept
+Context::OnOpenStatError(int _error) noexcept
 {
-	error = std::move(e);
+	error = std::make_exception_ptr(MakeErrno(_error, "Failed to open file"));
 	BeginShutdown();
 }
 

@@ -10,7 +10,6 @@
 #include "util/IntrusiveList.hxx"
 #include "util/SharedLease.hxx"
 
-#include <exception>
 #include <string_view>
 
 class FileDescriptor;
@@ -83,7 +82,7 @@ public:
 	void Disable() noexcept;
 
 	using SuccessCallback = BoundMethod<void(FileDescriptor fd, SharedLease lease) noexcept>;
-	using ErrorCallback = BoundMethod<void(std::exception_ptr) noexcept>;
+	using ErrorCallback = BoundMethod<void(int error) noexcept>;
 
 	/**
 	 * Open a file (asynchronously).

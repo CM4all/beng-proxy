@@ -828,6 +828,8 @@ public:
 			      std::exception_ptr ep,
 			      unsigned log_level=2) noexcept;
 
+	void LogDispatchErrno(int error, const char *msg) noexcept;
+
 private:
 	/**
 	 * Coroutine glue method used by CoStart().
@@ -895,8 +897,8 @@ private:
 	void ApplyFileEnotdir() noexcept;
 
 	void OnBaseOpen(FileDescriptor fd, SharedLease _lease) noexcept;
-	void OnBaseOpenError(std::exception_ptr error) noexcept {
-		LogDispatchError(std::move(error));
+	void OnBaseOpenError(int error) noexcept {
+		LogDispatchErrno(error, "Failed to open file");
 	}
 
 	/* virtual methods from class Cancellable */
@@ -930,7 +932,7 @@ private:
 	/* virtual methods from class Uring::OpenStatHandler */
 	void OnOpenStat(UniqueFileDescriptor fd,
 			struct statx &st) noexcept override;
-	void OnOpenStatError(std::exception_ptr e) noexcept override;
+	void OnOpenStatError(int error) noexcept override;
 #endif
 
 #ifdef HAVE_LIBNFS
