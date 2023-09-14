@@ -873,11 +873,13 @@ private:
 	 * The #TranslateResponse contains #TRANSLATE_DIRECTORY_INDEX.
 	 * Check if the file is a directory, and if it is,
 	 * retranslate.
-	 *
-	 * @return true to continue handling the request, false on
-	 * error or if retranslation has been triggered
 	 */
-	bool CheckDirectoryIndex(const TranslateResponse &response) noexcept;
+	void CheckDirectoryIndex(UniquePoolPtr<TranslateResponse> response) noexcept;
+	void CheckDirectoryIndex(UniquePoolPtr<TranslateResponse> response, FileAt file) noexcept;
+	void OnDirectoryIndexBaseOpen(FileDescriptor fd, SharedLease lease) noexcept;
+	void OnDirectoryIndexStat(const struct statx &st) noexcept;
+	void OnDirectoryIndexStatError(int error) noexcept;
+	void SubmitDirectoryIndex(const TranslateResponse &response) noexcept;
 
 	/* FILE_ENOTDIR handler */
 
@@ -896,6 +898,7 @@ private:
 	void CheckFileEnotdir(UniquePoolPtr<TranslateResponse> _response, FileAt file) noexcept;
 
 	void OnTranslateResponseAfterEnotdir(UniquePoolPtr<TranslateResponse> response) noexcept;
+	void OnTranslateResponseAfterDirectoryIndex(UniquePoolPtr<TranslateResponse> _response) noexcept;
 
 	/**
 	 * Append the ENOTDIR PATH_INFO to the resource address.

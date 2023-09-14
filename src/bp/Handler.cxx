@@ -892,10 +892,17 @@ Request::OnTranslateResponseAfterEnotdir(UniquePoolPtr<TranslateResponse> _respo
 		return;
 
 	/* check if it's a directory */
-	if (response.directory_index.data() != nullptr &&
-	    !CheckDirectoryIndex(response))
+	if (response.directory_index.data() != nullptr) {
+		CheckDirectoryIndex(std::move(_response));
 		return;
+	}
 
+	OnTranslateResponseAfterDirectoryIndex(std::move(_response));
+}
+
+void
+Request::OnTranslateResponseAfterDirectoryIndex(UniquePoolPtr<TranslateResponse> _response) noexcept
+{
 	HandleTranslatedRequest(std::move(_response));
 }
 
