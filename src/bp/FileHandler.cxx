@@ -23,8 +23,6 @@
 #ifdef HAVE_URING
 #include "istream/UringIstream.hxx"
 #include "istream/UringSpliceIstream.hxx"
-#include "io/UringOpen.hxx"
-#include "io/UringOpenStat.hxx"
 #include "event/uring/Manager.hxx"
 #endif
 
@@ -248,22 +246,18 @@ Request::OnBaseOpen(FileDescriptor fd, SharedLease lease) noexcept
 	HandleFileAddressAfterBase(address);
 }
 
-#ifdef HAVE_URING
-
-void
+inline void
 Request::OnOpenStat(UniqueFileDescriptor fd,
 		    struct statx &st) noexcept
 {
 	HandleFileAddress(*handler.file.address, std::move(fd), st);
 }
 
-void
+inline void
 Request::OnOpenStatError(int error) noexcept
 {
 	LogDispatchErrno(error, "Failed to open file");
 }
-
-#endif
 
 void
 Request::HandleFileAddress(const FileAddress &address) noexcept
@@ -298,35 +292,10 @@ Request::HandleFileAddress(const FileAddress &address) noexcept
 void
 Request::HandleFileAddressAfterBase(const FileAddress &address) noexcept
 {
-	const char *const path = address.path;
-
-#ifdef HAVE_URING
-	if (instance.uring) {
-		UringOpenStat(*instance.uring, pool,
-			      handler.file.base,
-			      path,
-			      BIND_THIS_METHOD(OnOpenStat),
-			      BIND_THIS_METHOD(OnOpenStatError),
-			      cancel_ptr);
-		return;
-	}
-#endif
-
-	UniqueFileDescriptor fd;
-	struct statx st;
-
-	try {
-		fd = OpenReadOnly(handler.file.base, path);
-		if (statx(fd.Get(), "", AT_EMPTY_PATH,
-			  STATX_TYPE|STATX_MTIME|STATX_INO|STATX_SIZE,
-			  &st) < 0)
-			throw FmtErrno("Failed to stat {}", path);
-	} catch (...) {
-		LogDispatchError(std::current_exception());
-		return;
-	}
-
-	HandleFileAddress(address, std::move(fd), st);
+	instance.uring.OpenStat(pool, handler.file.base, address.path,
+				BIND_THIS_METHOD(OnOpenStat),
+				BIND_THIS_METHOD(OnOpenStatError),
+				cancel_ptr);
 }
 
 void

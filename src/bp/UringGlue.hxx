@@ -5,6 +5,7 @@
 #pragma once
 
 #include "io/FileDescriptor.hxx"
+#include "util/BindMethod.hxx"
 
 #ifdef HAVE_URING
 #include "event/uring/Manager.hxx"
@@ -13,7 +14,13 @@
 #include <optional>
 #endif
 
+class CancellablePointer;
+class UniqueFileDescriptor;
 class EventLoop;
+class AllocatorPtr;
+
+using UringOpenStatSuccessCallback = BoundMethod<void(UniqueFileDescriptor fd, struct statx &st) noexcept>;
+using UringOpenStatErrorCallback = BoundMethod<void(int error) noexcept>;
 
 class UringGlue {
 #ifdef HAVE_URING
@@ -38,6 +45,13 @@ public:
 		return *uring;
 	}
 #endif
+
+	void OpenStat(AllocatorPtr alloc,
+		      FileDescriptor directory,
+		      const char *path,
+		      UringOpenStatSuccessCallback on_success,
+		      UringOpenStatErrorCallback on_error,
+		      CancellablePointer &cancel_ptr) noexcept;
 
 	void Close(FileDescriptor fd) noexcept {
 #ifdef HAVE_URING

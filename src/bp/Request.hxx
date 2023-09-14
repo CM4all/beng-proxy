@@ -921,12 +921,10 @@ private:
 	void OnDelegateSuccess(UniqueFileDescriptor fd) override;
 	void OnDelegateError(std::exception_ptr ep) override;
 
-#ifdef HAVE_URING
-	/* virtual methods from class Uring::OpenStatHandler */
+	/* handler methods for UringOpenStat() */
 	void OnOpenStat(UniqueFileDescriptor fd,
 			struct statx &st) noexcept;
 	void OnOpenStatError(int error) noexcept;
-#endif
 
 #ifdef HAVE_LIBNFS
 	/* virtual methods from class NfsCacheHandler */
