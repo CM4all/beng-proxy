@@ -14,6 +14,7 @@
 #include <optional>
 #endif
 
+struct FileAt;
 class CancellablePointer;
 class UniqueFileDescriptor;
 class EventLoop;
@@ -46,9 +47,7 @@ public:
 	}
 #endif
 
-	void OpenStat(AllocatorPtr alloc,
-		      FileDescriptor directory,
-		      const char *path,
+	void OpenStat(AllocatorPtr alloc, FileAt file,
 		      UringOpenStatSuccessCallback on_success,
 		      UringOpenStatErrorCallback on_error,
 		      CancellablePointer &cancel_ptr) noexcept;

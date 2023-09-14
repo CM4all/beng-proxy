@@ -3,6 +3,7 @@
 // author: Max Kellermann <mk@cm4all.com>
 
 #include "UringGlue.hxx"
+#include "io/FileAt.hxx"
 #include "io/UniqueFileDescriptor.hxx"
 #include "AllocatorPtr.hxx"
 
@@ -40,16 +41,14 @@ UringGlue::SetVolatile() noexcept
 }
 
 void
-UringGlue::OpenStat(AllocatorPtr alloc,
-		    FileDescriptor directory,
-		    const char *path,
+UringGlue::OpenStat(AllocatorPtr alloc, FileAt file,
 		    UringOpenStatSuccessCallback on_success,
 		    UringOpenStatErrorCallback on_error,
 		    CancellablePointer &cancel_ptr) noexcept
 {
 #ifdef HAVE_URING
 	if (uring) [[likely]] {
-		UringOpenStat(*uring, alloc, directory, path,
+		UringOpenStat(*uring, alloc, file,
 			      on_success, on_error, cancel_ptr);
 		return;
 	}
@@ -60,7 +59,7 @@ UringGlue::OpenStat(AllocatorPtr alloc,
 
 	UniqueFileDescriptor fd;
 
-	if (fd.OpenReadOnly(directory, path)) {
+	if (fd.OpenReadOnly(file.directory, file.name)) {
 		struct statx st;
 		if (statx(fd.Get(), "", AT_EMPTY_PATH,
 			  STATX_TYPE|STATX_MTIME|STATX_INO|STATX_SIZE,

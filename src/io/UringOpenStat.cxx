@@ -3,6 +3,7 @@
 // author: Max Kellermann <mk@cm4all.com>
 
 #include "UringOpenStat.hxx"
+#include "io/FileAt.hxx"
 #include "io/uring/OpenStat.hxx"
 #include "io/uring/Handler.hxx"
 #include "util/Cancellable.hxx"
@@ -19,9 +20,7 @@ class UringOpenStatOperation final : Cancellable, Uring::OpenStatHandler {
 	const UringOpenStatErrorCallback on_error;
 
 public:
-	UringOpenStatOperation(Uring::Queue &uring,
-			       FileDescriptor directory,
-			       const char *path,
+	UringOpenStatOperation(Uring::Queue &uring, FileAt file,
 			       UringOpenStatSuccessCallback _on_success,
 			       UringOpenStatErrorCallback _on_error,
 			       CancellablePointer &cancel_ptr) noexcept
@@ -30,10 +29,10 @@ public:
 	{
 		cancel_ptr = *this;
 
-		if (directory != FileDescriptor(AT_FDCWD))
-			open_stat->StartOpenStatReadOnlyBeneath(directory, path);
+		if (file.directory != FileDescriptor{AT_FDCWD})
+			open_stat->StartOpenStatReadOnlyBeneath(file);
 		else
-			open_stat->StartOpenStatReadOnly(directory, path);
+			open_stat->StartOpenStatReadOnly(file);
 	}
 
 private:
@@ -76,13 +75,11 @@ private:
 };
 
 void
-UringOpenStat(Uring::Queue &uring, AllocatorPtr alloc,
-	      FileDescriptor directory,
-	      const char *path,
+UringOpenStat(Uring::Queue &uring, AllocatorPtr alloc, FileAt file,
 	      UringOpenStatSuccessCallback on_success,
 	      UringOpenStatErrorCallback on_error,
 	      CancellablePointer &cancel_ptr) noexcept
 {
-	alloc.New<UringOpenStatOperation>(uring, directory, path,
+	alloc.New<UringOpenStatOperation>(uring, file,
 					  on_success, on_error, cancel_ptr);
 }

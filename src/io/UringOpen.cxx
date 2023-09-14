@@ -3,6 +3,7 @@
 // author: Max Kellermann <mk@cm4all.com>
 
 #include "UringOpen.hxx"
+#include "io/FileAt.hxx"
 #include "io/UniqueFileDescriptor.hxx"
 #include "io/uring/Open.hxx"
 #include "io/uring/Handler.hxx"
@@ -28,7 +29,7 @@ public:
 		{
 			cancel_ptr = *this;
 
-			open_stat->StartOpen(FileDescriptor{AT_FDCWD}, path, flags);
+			open_stat->StartOpen({FileDescriptor{AT_FDCWD}, path}, flags);
 	}
 
 private:

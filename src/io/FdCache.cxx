@@ -5,6 +5,7 @@
 #include "FdCache.hxx"
 #include "event/Loop.hxx"
 #include "system/Error.hxx"
+#include "io/FileAt.hxx"
 #include "io/UniqueFileDescriptor.hxx"
 #include "util/Cancellable.hxx"
 #include "util/DeleteDisposer.hxx"
@@ -220,7 +221,7 @@ FdCache::Item::Start() noexcept
 
 	if (uring_queue != nullptr) {
 		uring_open = new Uring::Open(*uring_queue, *this);
-		uring_open->StartOpen(FileDescriptor::Undefined(), path.c_str(), flags);
+		uring_open->StartOpen({FileDescriptor::Undefined(), path.c_str()}, flags);
 	} else {
 #endif // HAVE_URING
 		if (fd.Open(path.c_str(), flags)) {

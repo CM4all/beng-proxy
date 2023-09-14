@@ -13,6 +13,7 @@
 #include "pool/pool.hxx"
 #include "lib/fmt/SystemError.hxx"
 #include "system/Error.hxx"
+#include "io/FileAt.hxx"
 #include "io/Open.hxx"
 #include "io/UniqueFileDescriptor.hxx"
 #include "http/Status.hxx"
@@ -65,7 +66,7 @@ public:
 		cancel_ptr = *this;
 
 		if (base.IsDefined())
-			open_stat->StartOpenStatReadOnlyBeneath(base, path);
+			open_stat->StartOpenStatReadOnlyBeneath({base, path});
 		else
 			open_stat->StartOpenStatReadOnly(path);
 	}

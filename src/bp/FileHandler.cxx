@@ -18,6 +18,7 @@
 #include "pool/pool.hxx"
 #include "translation/Vary.hxx"
 #include "lib/fmt/SystemError.hxx"
+#include "io/FileAt.hxx"
 #include "io/Open.hxx"
 #include "util/StringCompare.hxx"
 
@@ -184,7 +185,7 @@ Request::CheckCompressedFile(const char *path, const char *encoding) noexcept
 	const AllocatorPtr alloc(pool);
 	p.compressed_path = path;
 	p.encoding = encoding;
-	instance.uring.OpenStat(alloc, handler.file.base, p.compressed_path,
+	instance.uring.OpenStat(alloc, {handler.file.base, p.compressed_path},
 				BIND_THIS_METHOD(OnPrecompressedOpenStat),
 				BIND_THIS_METHOD(OnPrecompressedOpenStatError),
 				cancel_ptr);
@@ -209,7 +210,7 @@ Request::CheckAutoCompressedFile(const char *path, const char *encoding,
 	const AllocatorPtr alloc(pool);
 	p.compressed_path = alloc.Concat(path, suffix);
 	p.encoding = encoding;
-	instance.uring.OpenStat(alloc, handler.file.base, p.compressed_path,
+	instance.uring.OpenStat(alloc, {handler.file.base, p.compressed_path},
 				BIND_THIS_METHOD(OnPrecompressedOpenStat),
 				BIND_THIS_METHOD(OnPrecompressedOpenStatError),
 				cancel_ptr);
@@ -372,7 +373,7 @@ Request::HandleFileAddress(const FileAddress &address) noexcept
 void
 Request::HandleFileAddressAfterBase(const FileAddress &address) noexcept
 {
-	instance.uring.OpenStat(pool, handler.file.base, address.path,
+	instance.uring.OpenStat(pool, {handler.file.base, address.path},
 				BIND_THIS_METHOD(OnOpenStat),
 				BIND_THIS_METHOD(OnOpenStatError),
 				cancel_ptr);

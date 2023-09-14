@@ -6,8 +6,8 @@
 
 #include "util/BindMethod.hxx"
 
+struct FileAt;
 class AllocatorPtr;
-class FileDescriptor;
 class UniqueFileDescriptor;
 class CancellablePointer;
 namespace Uring { class Queue; class OpenStatHandler; }
@@ -20,9 +20,7 @@ using UringOpenStatErrorCallback = BoundMethod<void(int error) noexcept>;
  * used.
  */
 void
-UringOpenStat(Uring::Queue &uring, AllocatorPtr alloc,
-	      FileDescriptor directory,
-	      const char *path,
+UringOpenStat(Uring::Queue &uring, AllocatorPtr alloc, FileAt file,
 	      UringOpenStatSuccessCallback on_success,
 	      UringOpenStatErrorCallback on_error,
 	      CancellablePointer &cancel_ptr) noexcept;
