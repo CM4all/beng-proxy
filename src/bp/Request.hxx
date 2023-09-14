@@ -237,13 +237,16 @@ private:
 	/**
 	 * Area for handler-specific state variables.
 	 */
-	struct {
-		struct {
+	struct Handler {
+		struct File {
 			const FileAddress *address;
 
 			SharedLease base_lease;
 
 			FileDescriptor base;
+
+			struct Precompressed;
+			UniquePoolPtr<Precompressed> precompressed;
 		} file;
 
 		struct {
@@ -520,15 +523,13 @@ public:
 
 	bool DispatchCompressedFile(const char *path, FileDescriptor fd,
 				    const struct statx &st,
-				    const char *encoding) noexcept;
+				    const char *encoding,
+				    UniqueFileDescriptor compressed_fd,
+				    off_t compressed_size) noexcept;
 
-	bool CheckCompressedFile(const char *path, FileDescriptor fd,
-				 const struct statx &st,
-				 const char *encoding) noexcept;
+	bool CheckCompressedFile(const char *path, const char *encoding) noexcept;
 
-	bool CheckAutoCompressedFile(const char *path, FileDescriptor fd,
-				     const struct statx &st,
-				     const char *encoding,
+	bool CheckAutoCompressedFile(const char *path, const char *encoding,
 				     const char *suffix) noexcept;
 
 	bool EmulateModAuthEasy(const FileAddress &address,
@@ -893,6 +894,13 @@ private:
 	void OnBaseOpenError(int error) noexcept {
 		LogDispatchErrno(error, "Failed to open file");
 	}
+
+	void ProbePrecompressed(UniqueFileDescriptor fd,
+				const struct statx &st) noexcept;
+	void ProbeNextPrecompressed() noexcept;
+	void OnPrecompressedOpenStat(UniqueFileDescriptor fd,
+				     struct statx &st) noexcept;
+	void OnPrecompressedOpenStatError(int error) noexcept;
 
 	/* virtual methods from class Cancellable */
 	void Cancel() noexcept override {

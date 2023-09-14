@@ -3,6 +3,7 @@
 // author: Max Kellermann <mk@cm4all.com>
 
 #include "Request.hxx"
+#include "Precompressed.hxx"
 #include "Connection.hxx"
 #include "Config.hxx"
 #include "Listener.hxx"
@@ -31,7 +32,13 @@ Request::Request(BpConnection &_connection,
 	session_id.Clear();
 }
 
-Request::~Request() noexcept = default;
+Request::~Request() noexcept
+{
+	if (handler.file.precompressed) {
+		if (handler.file.precompressed->original_fd.IsDefined())
+			instance.uring.Close(handler.file.precompressed->original_fd.Release());
+	}
+}
 
 TranslationService &
 Request::GetTranslationService() const noexcept

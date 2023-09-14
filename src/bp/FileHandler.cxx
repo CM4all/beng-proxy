@@ -2,6 +2,7 @@
 // Copyright CM4all GmbH
 // author: Max Kellermann <mk@cm4all.com>
 
+#include "Precompressed.hxx"
 #include "FileHeaders.hxx"
 #include "file/Address.hxx"
 #include "Request.hxx"
@@ -119,25 +120,15 @@ Request::DispatchFile(const char *path, UniqueFileDescriptor fd,
 					     start_offset, end_offset));
 }
 
-bool
+inline bool
 Request::DispatchCompressedFile(const char *path, FileDescriptor fd,
 				const struct statx &st,
-				const char *encoding) noexcept
+				const char *encoding,
+				UniqueFileDescriptor compressed_fd,
+				off_t compressed_size) noexcept
 {
 	const TranslateResponse &tr = *translate.response;
 	const auto &address = *handler.file.address;
-
-	/* open compressed file */
-
-	UniqueFileDescriptor compressed_fd;
-	if (!compressed_fd.OpenReadOnly(handler.file.base, path))
-		return false;
-
-	struct statx st2;
-	if (statx(compressed_fd.Get(), "", AT_EMPTY_PATH,
-		  STATX_TYPE|STATX_MTIME|STATX_INO|STATX_SIZE, &st2) < 0 ||
-	    !S_ISREG(st2.stx_mode))
-		return false;
 
 	/* response headers with information from uncompressed file */
 
@@ -170,29 +161,39 @@ Request::DispatchCompressedFile(const char *path, FileDescriptor fd,
 			 instance.uring
 			 ? NewUringIstream(*instance.uring, pool, path,
 					   std::move(compressed_fd),
-					   0, st2.stx_size)
+					   0, compressed_size)
 			 :
 #endif
 			 istream_file_fd_new(instance.event_loop, pool,
 					     path, std::move(compressed_fd),
-					     0, st2.stx_size));
+					     0, compressed_size));
 	return true;
 }
 
-bool
-Request::CheckCompressedFile(const char *path, FileDescriptor fd,
-			     const struct statx &st,
-			     const char *encoding) noexcept
+inline bool
+Request::CheckCompressedFile(const char *path, const char *encoding) noexcept
 {
-	return path != nullptr &&
-		http_client_accepts_encoding(request.headers, encoding) &&
-		DispatchCompressedFile(path, fd, st, encoding);
+	assert(path != nullptr);
+	assert(encoding != nullptr);
+
+	if (!http_client_accepts_encoding(request.headers, encoding))
+		return false;
+
+	auto &p = *handler.file.precompressed;
+
+	const AllocatorPtr alloc(pool);
+	p.compressed_path = path;
+	p.encoding = encoding;
+	instance.uring.OpenStat(alloc, handler.file.base, p.compressed_path,
+				BIND_THIS_METHOD(OnPrecompressedOpenStat),
+				BIND_THIS_METHOD(OnPrecompressedOpenStatError),
+				cancel_ptr);
+	return true;
 }
 
-bool
-Request::CheckAutoCompressedFile(const char *path, FileDescriptor fd,
-				 const struct statx &st,
-				 const char *encoding, const char *suffix) noexcept
+inline bool
+Request::CheckAutoCompressedFile(const char *path, const char *encoding,
+				 const char *suffix) noexcept
 {
 	assert(encoding != nullptr);
 	assert(path != nullptr);
@@ -203,9 +204,88 @@ Request::CheckAutoCompressedFile(const char *path, FileDescriptor fd,
 	if (!http_client_accepts_encoding(request.headers, encoding))
 		return false;
 
+	auto &p = *handler.file.precompressed;
+
 	const AllocatorPtr alloc(pool);
-	const char *compressed_path = alloc.Concat(path, suffix);
-	return DispatchCompressedFile(compressed_path, fd, st, encoding);
+	p.compressed_path = alloc.Concat(path, suffix);
+	p.encoding = encoding;
+	instance.uring.OpenStat(alloc, handler.file.base, p.compressed_path,
+				BIND_THIS_METHOD(OnPrecompressedOpenStat),
+				BIND_THIS_METHOD(OnPrecompressedOpenStatError),
+				cancel_ptr);
+	return true;
+}
+
+inline void
+Request::OnPrecompressedOpenStat(UniqueFileDescriptor fd,
+				 struct statx &st) noexcept
+{
+	if (!S_ISREG(st.stx_mode)) {
+		ProbeNextPrecompressed();
+		return;
+	}
+
+	const auto &p = *handler.file.precompressed;
+
+	DispatchCompressedFile(p.compressed_path, p.original_fd, p.original_st,
+			       p.encoding,
+			       std::move(fd), st.stx_size);
+}
+
+inline void
+Request::OnPrecompressedOpenStatError([[maybe_unused]] int error) noexcept
+{
+	ProbeNextPrecompressed();
+}
+
+void
+Request::ProbeNextPrecompressed() noexcept
+{
+	const auto &address = *handler.file.address;
+	auto &p = *handler.file.precompressed;
+
+	switch (p.state) {
+	case Handler::File::Precompressed::AUTO_BROTLI:
+		p.state = Handler::File::Precompressed::AUTO_GZIPPED;
+
+		if ((address.auto_brotli_path || translate.auto_brotli_path) &&
+		    CheckAutoCompressedFile(address.path, "br", ".br"))
+			return;
+
+		// fall through
+
+	case Handler::File::Precompressed::AUTO_GZIPPED:
+		p.state = Handler::File::Precompressed::GZIPPED;
+
+		if ((address.auto_gzipped || translate.auto_gzipped) &&
+		    CheckAutoCompressedFile(address.path, "gzip", ".gz"))
+			return;
+
+		// fall through
+
+	case Handler::File::Precompressed::GZIPPED:
+		p.state = Handler::File::Precompressed::END;
+
+		if (address.gzipped != nullptr &&
+		    CheckCompressedFile(address.gzipped, "gzip"))
+			return;
+
+		// fall through
+	case Handler::File::Precompressed::END:
+		break;
+	}
+
+	const struct file_request file_request(p.original_st.stx_size);
+	DispatchFile(address.path, std::move(p.original_fd), p.original_st,
+		     file_request);
+}
+
+inline void
+Request::ProbePrecompressed(UniqueFileDescriptor fd,
+			    const struct statx &st) noexcept
+{
+	handler.file.precompressed = UniquePoolPtr<Request::Handler::File::Precompressed>::Make(pool, std::move(fd), st);
+	ProbeNextPrecompressed();
 }
 
 inline bool
@@ -348,13 +428,8 @@ Request::HandleFileAddress(const FileAddress &address,
 	/* precompressed? */
 
 	if (file_request.range.type == HttpRangeRequest::Type::NONE &&
-	    !IsTransformationEnabled() &&
-	    (((address.auto_brotli_path || translate.auto_brotli_path) &&
-	      CheckAutoCompressedFile(address.path, fd, st, "br", ".br")) ||
-	     ((address.auto_gzipped || translate.auto_gzipped) &&
-	      CheckAutoCompressedFile(address.path, fd, st, "gzip", ".gz")) ||
-	     CheckCompressedFile(address.gzipped, fd, st, "gzip"))) {
-		instance.uring.Close(fd.Release());
+	    !IsTransformationEnabled()) {
+		ProbePrecompressed(std::move(fd), st);
 		return;
 	}
 
