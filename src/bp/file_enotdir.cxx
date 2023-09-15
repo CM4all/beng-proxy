@@ -26,30 +26,7 @@ get_file_path(const TranslateResponse &response)
 	if (response.test_path != nullptr)
 		return response.test_path;
 
-	const auto &address = response.address;
-	switch (address.type) {
-	case ResourceAddress::Type::NONE:
-	case ResourceAddress::Type::HTTP:
-	case ResourceAddress::Type::PIPE:
-	case ResourceAddress::Type::NFS:
-		return nullptr;
-
-	case ResourceAddress::Type::CGI:
-	case ResourceAddress::Type::FASTCGI:
-	case ResourceAddress::Type::WAS:
-		return address.GetCgi().path;
-
-	case ResourceAddress::Type::LHTTP:
-		return address.GetLhttp().path;
-
-	case ResourceAddress::Type::LOCAL:
-		return address.GetFile().path;
-
-		// TODO: implement NFS
-	}
-
-	assert(false);
-	gcc_unreachable();
+	return response.address.GetFileOrExecutablePath();
 }
 
 inline bool

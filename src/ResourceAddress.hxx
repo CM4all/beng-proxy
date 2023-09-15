@@ -197,6 +197,20 @@ public:
 	bool IsValidBase() const noexcept;
 
 	/**
+	 * @return the path of the (data) file, or nullptr if this
+	 * address contains none
+	 */
+	[[gnu::pure]]
+	const char *GetFilePath() const noexcept;
+
+	/**
+	 * @return the path of the data file or the executable, or
+	 * nullptr if this address contains none
+	 */
+	[[gnu::pure]]
+	const char *GetFileOrExecutablePath() const noexcept;
+
+	/**
 	 * Determine the URI path.  May return nullptr if unknown or not
 	 * applicable.
 	 */

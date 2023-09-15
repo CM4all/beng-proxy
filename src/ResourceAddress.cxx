@@ -533,6 +533,54 @@ ResourceAddress::GetId(AllocatorPtr alloc) const noexcept
 }
 
 const char *
+ResourceAddress::GetFilePath() const noexcept
+{
+	switch (type) {
+	case Type::NONE:
+	case Type::HTTP:
+	case Type::PIPE:
+	case Type::NFS:
+	case Type::CGI:
+	case Type::FASTCGI:
+	case Type::WAS:
+	case Type::LHTTP:
+		return nullptr;
+
+	case Type::LOCAL:
+		return u.file->path;
+	}
+
+	assert(false);
+	gcc_unreachable();
+}
+
+const char *
+ResourceAddress::GetFileOrExecutablePath() const noexcept
+{
+	switch (type) {
+	case Type::NONE:
+	case Type::HTTP:
+	case Type::PIPE:
+	case Type::NFS:
+		return nullptr;
+
+	case Type::CGI:
+	case Type::FASTCGI:
+	case Type::WAS:
+		return u.cgi->path;
+
+	case Type::LHTTP:
+		return u.lhttp->path;
+
+	case Type::LOCAL:
+		return u.file->path;
+	}
+
+	assert(false);
+	gcc_unreachable();
+}
+
+const char *
 ResourceAddress::GetHostAndPort() const noexcept
 {
 	switch (type) {

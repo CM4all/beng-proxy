@@ -5,7 +5,6 @@
 #include "Request.hxx"
 #include "Instance.hxx"
 #include "translation/Response.hxx"
-#include "file/Address.hxx"
 #include "io/FileAt.hxx"
 
 #include <assert.h>
@@ -67,32 +66,18 @@ Request::CheckDirectoryIndex(UniquePoolPtr<TranslateResponse> _response, FileDes
 
 	const auto &response = *_response;
 
-	if (response.test_path != nullptr) {
-		CheckDirectoryIndex(std::move(_response),
-				    {base, response.test_path});
-	} else {
-		switch (response.address.type) {
-		case ResourceAddress::Type::NONE:
-		case ResourceAddress::Type::HTTP:
-		case ResourceAddress::Type::LHTTP:
-		case ResourceAddress::Type::PIPE:
-		case ResourceAddress::Type::CGI:
-		case ResourceAddress::Type::FASTCGI:
-		case ResourceAddress::Type::WAS:
-		case ResourceAddress::Type::NFS:
-			LogDispatchError(HttpStatus::BAD_GATEWAY,
-					 "Resource address not compatible with DIRECTORY_INDEX",
-					 1);
-			break;
+	const char *path = response.test_path;
+	if (path == nullptr)
+		path = response.address.GetFilePath();
 
-		case ResourceAddress::Type::LOCAL:
-			CheckDirectoryIndex(std::move(_response),
-					    {base, response.address.GetFile().path});
-			break;
-
-			// TODO: implement NFS
-		}
+	if (path == nullptr) {
+		LogDispatchError(HttpStatus::BAD_GATEWAY,
+				 "Resource address not compatible with DIRECTORY_INDEX",
+				 1);
+		return;
 	}
+
+	CheckDirectoryIndex(std::move(_response), {base, path});
 }
 
 void
