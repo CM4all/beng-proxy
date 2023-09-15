@@ -254,6 +254,9 @@ private:
 
 			struct Precompressed;
 			UniquePoolPtr<Precompressed> precompressed;
+
+			using OpenBaseCallback = void (Request:: *)(FileDescriptor fd) noexcept;
+			OpenBaseCallback open_base_callback;
 		} file;
 
 		struct {
@@ -546,7 +549,7 @@ public:
 				     const struct statx &st) noexcept;
 
 	void HandleFileAddress(const FileAddress &address) noexcept;
-	void HandleFileAddressAfterBase(const FileAddress &address) noexcept;
+	void HandleFileAddressAfterBase(FileDescriptor base) noexcept;
 	void HandleFileAddress(const FileAddress &address,
 			       UniqueFileDescriptor fd,
 			       const struct statx &st) noexcept;
@@ -873,8 +876,9 @@ private:
 	 * retranslate.
 	 */
 	void CheckDirectoryIndex(UniquePoolPtr<TranslateResponse> response) noexcept;
+	void CheckDirectoryIndex(UniquePoolPtr<TranslateResponse> _response, FileDescriptor base) noexcept;
 	void CheckDirectoryIndex(UniquePoolPtr<TranslateResponse> response, FileAt file) noexcept;
-	void OnDirectoryIndexBaseOpen(FileDescriptor fd, SharedLease lease) noexcept;
+	void OnDirectoryIndexBaseOpen(FileDescriptor fd) noexcept;
 	void OnDirectoryIndexStat(const struct statx &st) noexcept;
 	void OnDirectoryIndexStatError(int error) noexcept;
 	void SubmitDirectoryIndex(const TranslateResponse &response) noexcept;
@@ -884,7 +888,7 @@ private:
 	void CheckFileNotFound(UniquePoolPtr<TranslateResponse> response) noexcept;
 	void CheckFileNotFound(UniquePoolPtr<TranslateResponse> response, FileDescriptor base) noexcept;
 	void CheckFileNotFound(UniquePoolPtr<TranslateResponse> response, FileAt file) noexcept;
-	void OnFileNotFoundBaseOpen(FileDescriptor fd, SharedLease lease) noexcept;
+	void OnFileNotFoundBaseOpen(FileDescriptor fd) noexcept;
 	void OnFileNotFoundStat(const struct statx &st) noexcept;
 	void OnFileNotFoundStatError(int error) noexcept;
 	void SubmitFileNotFound(const TranslateResponse &response) noexcept;
@@ -896,7 +900,7 @@ private:
 	void OnEnotdirStat(const struct statx &st) noexcept;
 	void OnEnotdirStatError(int error) noexcept;
 
-	void OnEnotdirBaseOpen(FileDescriptor fd, SharedLease lease) noexcept;
+	void OnEnotdirBaseOpen(FileDescriptor fd) noexcept;
 
 	/**
 	 * The #TranslateResponse contains #TRANSLATE_ENOTDIR.  Check this
@@ -918,6 +922,18 @@ private:
 	void OnBaseOpenError(int error) noexcept {
 		LogDispatchErrno(error, "Failed to open file");
 	}
+
+	void OpenBase(const char *path,
+		      Handler::File::OpenBaseCallback callback) noexcept;
+
+	void OpenBase(const FileAddress &address,
+		      Handler::File::OpenBaseCallback callback) noexcept;
+
+	void OpenBase(const ResourceAddress &address,
+		      Handler::File::OpenBaseCallback callback) noexcept;
+
+	void OpenBase(const TranslateResponse &response,
+		      Handler::File::OpenBaseCallback callback) noexcept;
 
 	void ProbePrecompressed(UniqueFileDescriptor fd,
 				const struct statx &st) noexcept;

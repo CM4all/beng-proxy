@@ -316,18 +316,6 @@ Request::MaybeEmulateModAuthEasy(const FileAddress &address,
 }
 
 inline void
-Request::OnBaseOpen(FileDescriptor fd, SharedLease lease) noexcept
-{
-	const auto &address = *handler.file.address;
-	assert(address.base != nullptr);
-
-	handler.file.base = fd;
-	handler.file.base_lease = std::move(lease);
-
-	HandleFileAddressAfterBase(address);
-}
-
-inline void
 Request::OnOpenStat(UniqueFileDescriptor fd,
 		    struct statx &st) noexcept
 {
@@ -354,26 +342,13 @@ Request::HandleFileAddress(const FileAddress &address) noexcept
 		return;
 	}
 
-	/* open the BASE directory */
-
-	if (address.base != nullptr) {
-		instance.fd_cache.Get(address.base, O_PATH|O_DIRECTORY,
-				      BIND_THIS_METHOD(OnBaseOpen),
-				      BIND_THIS_METHOD(OnBaseOpenError),
-				      cancel_ptr);
-		return;
-	} else
-		handler.file.base = FileDescriptor(AT_FDCWD);
-
-	/* open the file */
-
-	HandleFileAddressAfterBase(address);
+	OpenBase(address, &Request::HandleFileAddressAfterBase);
 }
 
 void
-Request::HandleFileAddressAfterBase(const FileAddress &address) noexcept
+Request::HandleFileAddressAfterBase(FileDescriptor base) noexcept
 {
-	instance.uring.OpenStat(pool, {handler.file.base, address.path},
+	instance.uring.OpenStat(pool, {base, handler.file.address->path},
 				BIND_THIS_METHOD(OnOpenStat),
 				BIND_THIS_METHOD(OnOpenStatError),
 				cancel_ptr);

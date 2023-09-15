@@ -47,7 +47,7 @@ Request::OnDirectoryIndexStatError([[maybe_unused]] int error) noexcept
 	OnTranslateResponseAfterDirectoryIndex(std::move(translate.pending_response));
 }
 
-void
+inline void
 Request::CheckDirectoryIndex(UniquePoolPtr<TranslateResponse> _response, FileAt file) noexcept
 {
 	assert(_response);
@@ -61,32 +61,15 @@ Request::CheckDirectoryIndex(UniquePoolPtr<TranslateResponse> _response, FileAt 
 }
 
 inline void
-Request::OnDirectoryIndexBaseOpen(FileDescriptor fd, SharedLease lease) noexcept
-{
-	assert(translate.pending_response);
-
-	const auto &response = *translate.pending_response;
-
-	handler.file.base = fd;
-	handler.file.base_lease = std::move(lease);
-
-	CheckDirectoryIndex(std::move(translate.pending_response),
-			    {fd, response.address.GetFile().path});
-}
-
-void
-Request::CheckDirectoryIndex(UniquePoolPtr<TranslateResponse> _response) noexcept
+Request::CheckDirectoryIndex(UniquePoolPtr<TranslateResponse> _response, FileDescriptor base) noexcept
 {
 	assert(_response);
 
 	const auto &response = *_response;
 
-	assert(response.directory_index.data() != nullptr);
-
 	if (response.test_path != nullptr) {
 		CheckDirectoryIndex(std::move(_response),
-				    {FileDescriptor::Undefined(), response.test_path});
-		return;
+				    {base, response.test_path});
 	} else {
 		switch (response.address.type) {
 		case ResourceAddress::Type::NONE:
@@ -100,24 +83,35 @@ Request::CheckDirectoryIndex(UniquePoolPtr<TranslateResponse> _response) noexcep
 			LogDispatchError(HttpStatus::BAD_GATEWAY,
 					 "Resource address not compatible with DIRECTORY_INDEX",
 					 1);
-			return;
+			break;
 
 		case ResourceAddress::Type::LOCAL:
-			if (response.address.GetFile().base != nullptr) {
-				translate.pending_response = std::move(_response);
-				instance.fd_cache.Get(response.address.GetFile().base, O_PATH|O_DIRECTORY,
-						      BIND_THIS_METHOD(OnDirectoryIndexBaseOpen),
-						      BIND_THIS_METHOD(OnBaseOpenError),
-						      cancel_ptr);
-			} else
-				CheckDirectoryIndex(std::move(_response),
-						    {FileDescriptor::Undefined(), response.address.GetFile().path});
-
-			return;
+			CheckDirectoryIndex(std::move(_response),
+					    {base, response.address.GetFile().path});
+			break;
 
 			// TODO: implement NFS
 		}
 	}
+}
 
-	OnTranslateResponseAfterDirectoryIndex(std::move(_response));
+void
+Request::OnDirectoryIndexBaseOpen(FileDescriptor fd) noexcept
+{
+	assert(translate.pending_response);
+
+	CheckDirectoryIndex(std::move(translate.pending_response), fd);
+}
+
+void
+Request::CheckDirectoryIndex(UniquePoolPtr<TranslateResponse> _response) noexcept
+{
+	assert(_response);
+
+	const auto &response = *_response;
+
+	assert(response.directory_index.data() != nullptr);
+
+	translate.pending_response = std::move(_response);
+	OpenBase(response, &Request::OnDirectoryIndexBaseOpen);
 }
