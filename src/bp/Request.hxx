@@ -333,14 +333,12 @@ private:
 
 	SharedPoolPtr<WidgetContext> widget_context;
 
-public:
 	/**
 	 * A pointer to the request body, or nullptr if there is none.  Once
 	 * the request body has been "used", this pointer gets cleared.
 	 */
 	UnusedHoldIstreamPtr request_body;
 
-private:
 	/**
 	 * This attribute remembers the previous status for
 	 * ApplyFilterStatus().  Zero means the response was not generated
@@ -378,13 +376,11 @@ private:
 	 */
 	bool had_auth_token;
 
-public:
 	/**
 	 * Is the processor active, and is there a focused widget?
 	 */
 	bool processor_focus;
 
-private:
 	/**
 	 * Was the response already transformed?  The error document only
 	 * applies to the original, untransformed response.
