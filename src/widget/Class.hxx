@@ -4,9 +4,8 @@
 
 #pragma once
 
+#include "VList.hxx"
 #include "util/StringSet.hxx"
-
-struct WidgetView;
 
 /**
  * A widget class is a server which provides a widget.
@@ -15,7 +14,7 @@ struct WidgetClass {
 	/**
 	 * A linked list of view descriptions.
 	 */
-	WidgetView *views = nullptr;
+	WidgetViewList views;
 
 	/**
 	 * The URI prefix that represents '@/'.

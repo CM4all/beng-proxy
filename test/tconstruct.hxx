@@ -195,15 +195,16 @@ struct MakeResponse : TranslateResponse {
 	}
 
 	void AppendTransformation(Transformation *t) {
-		if (views == nullptr) {
-			views = alloc.New<WidgetView>(nullptr);
+		if (views.empty()) {
+			views.push_front(*alloc.New<WidgetView>(nullptr));
 		}
 
-		auto i = views->transformations.before_begin();
-		while (std::next(i) != views->transformations.end())
+		auto &view = views.front();
+		auto i = view.transformations.before_begin();
+		while (std::next(i) != view.transformations.end())
 			++i;
 
-		views->transformations.insert_after(i, *t);
+		view.transformations.insert_after(i, *t);
 	}
 
 	MakeResponse &&Filter(const CgiAddress &_cgi) {

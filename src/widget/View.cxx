@@ -6,6 +6,8 @@
 #include "translation/Transformation.hxx"
 #include "AllocatorPtr.hxx"
 
+#include <algorithm> // for std::any_of()
+
 #include <string.h>
 
 void
@@ -26,23 +28,6 @@ WidgetView::Clone(AllocatorPtr alloc) const noexcept
 	auto dest = alloc.New<WidgetView>(nullptr);
 	dest->CopyFrom(alloc, *this);
 	return dest;
-}
-
-WidgetView *
-WidgetView::CloneChain(AllocatorPtr alloc) const noexcept
-{
-	assert(name == nullptr);
-
-	WidgetView *dest = nullptr, **tail_p = &dest;
-
-	for (const WidgetView *src = this; src != nullptr; src = src->next) {
-		WidgetView *p = src->Clone(alloc);
-		*tail_p = p;
-		tail_p = &p->next;
-	}
-
-	return dest;
-
 }
 
 bool
@@ -72,26 +57,6 @@ WidgetView::InheritFrom(AllocatorPtr alloc, const WidgetView &src) noexcept
 		return false;
 }
 
-const WidgetView *
-widget_view_lookup(const WidgetView *view, const char *name) noexcept
-{
-	assert(view != nullptr);
-	assert(view->name == nullptr);
-
-	if (name == nullptr || *name == 0)
-		/* the default view has no name */
-		return view;
-
-	for (view = view->next; view != nullptr; view = view->next) {
-		assert(view->name != nullptr);
-
-		if (strcmp(view->name, name) == 0)
-			return view;
-	}
-
-	return nullptr;
-}
-
 bool
 WidgetView::HasProcessor() const noexcept
 {
@@ -111,32 +76,9 @@ WidgetView::IsExpandable() const noexcept
 		Transformation::IsChainExpandable(transformations);
 }
 
-bool
-widget_view_any_is_expandable(const WidgetView *view) noexcept
-{
-	while (view != nullptr) {
-		if (view->IsExpandable())
-			return true;
-
-		view = view->next;
-	}
-
-	return false;
-}
-
 void
 WidgetView::Expand(AllocatorPtr alloc, const MatchData &match_data) noexcept
 {
 	address.Expand(alloc, match_data);
 	Transformation::ExpandChain(alloc, transformations, match_data);
-}
-
-void
-widget_view_expand_all(AllocatorPtr alloc, WidgetView *view,
-		       const MatchData &match_data) noexcept
-{
-	while (view != nullptr) {
-		view->Expand(alloc, match_data);
-		view = view->next;
-	}
 }

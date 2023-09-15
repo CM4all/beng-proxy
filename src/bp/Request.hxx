@@ -592,7 +592,8 @@ private:
 	void HandleChainResponse(UniquePoolPtr<TranslateResponse> response) noexcept;
 
 	bool IsTransformationEnabled() const noexcept {
-		return !translate.response->views->transformations.empty();
+		return !translate.response->views.empty() &&
+			!translate.response->views.front().transformations.empty();
 	}
 
 	/**
@@ -601,8 +602,7 @@ private:
 	 */
 	bool IsProcessorFirst() const noexcept {
 		return IsTransformationEnabled() &&
-			translate.response->views->transformations.front().type
-			== Transformation::Type::PROCESS;
+			translate.response->views.front().transformations.front().type == Transformation::Type::PROCESS;
 	}
 
 	bool IsProcessorEnabled() const noexcept;

@@ -80,18 +80,17 @@ void
 MyHandler::OnTranslateResponse(UniquePoolPtr<TranslateResponse> _response) noexcept
 {
 	const auto &response = *_response;
-	const WidgetView *view;
 
 	if (response.status != HttpStatus{})
 		printf("status=%u\n", static_cast<unsigned>(response.status));
 
 	print_resource_address(&response.address);
 
-	for (view = response.views; view != nullptr; view = view->next) {
-		if (view->name != nullptr)
-			printf("view=%s\n", view->name);
+	for (const auto &view : response.views) {
+		if (view.name != nullptr)
+			printf("view=%s\n", view.name);
 
-		for (const auto &transformation : view->transformations) {
+		for (const auto &transformation : view.transformations) {
 			switch (transformation.type) {
 			case Transformation::Type::PROCESS:
 				printf("process\n");

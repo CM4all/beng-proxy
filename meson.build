@@ -805,6 +805,7 @@ executable(
 
   # the following sources are only necessary for the translation client
   'src/widget/View.cxx',
+  'src/widget/VList.cxx',
 
   include_directories: inc,
   dependencies: [

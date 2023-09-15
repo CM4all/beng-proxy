@@ -43,8 +43,8 @@ SuffixRegistryLookup::OnTranslateResponse(UniquePoolPtr<TranslateResponse> _resp
 					 response.auto_gzipped,
 					 response.auto_brotli_path,
 					 response.auto_brotli,
-					 response.views != nullptr
-					 ? IntrusiveForwardList<Transformation>{ShallowCopy{}, response.views->transformations}
+					 !response.views.empty()
+					 ? IntrusiveForwardList<Transformation>{ShallowCopy{}, response.views.front().transformations}
 					 : IntrusiveForwardList<Transformation>{});
 }
 

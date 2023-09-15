@@ -34,7 +34,7 @@ const Event::Duration inline_widget_body_timeout = std::chrono::seconds(10);
 struct MakeWidgetClass : WidgetClass {
 	explicit MakeWidgetClass(struct pool &p, const char *uri) {
 		auto http = MakeHttpAddress(uri).Host("widget-server");
-		views = NewFromPool<WidgetView>(p, *NewFromPool<HttpAddress>(p, p, http));
+		views.push_front(*NewFromPool<WidgetView>(p, *NewFromPool<HttpAddress>(p, p, http)));
 	}
 };
 
@@ -114,7 +114,7 @@ ResolveWidget(AllocatorPtr,
 
 	if (widget.cls != NULL)
 		widget.from_template.view = widget.from_request.view =
-			widget.cls->views;
+			&widget.cls->views.front();
 
 	callback();
 }

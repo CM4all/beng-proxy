@@ -49,7 +49,7 @@ Request::GetTranslationService() const noexcept
 bool
 Request::IsProcessorEnabled() const noexcept
 {
-	return translate.response->views->HasProcessor();
+	return translate.response->views.front().HasProcessor();
 }
 
 void

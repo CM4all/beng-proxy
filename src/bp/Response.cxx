@@ -1037,7 +1037,7 @@ Request::OnHttpResponse(HttpStatus status, StringMap &&_headers,
 			const char *view_name = headers.Get("x-cm4all-view");
 			if (view_name != nullptr) {
 				const WidgetView *view =
-					widget_view_lookup(translate.response->views, view_name);
+					FindByName(translate.response->views, view_name);
 				if (view == nullptr) {
 					/* the view specified in the response header does not
 					   exist, bail out */

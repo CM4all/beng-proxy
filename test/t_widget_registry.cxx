@@ -72,8 +72,8 @@ MyTranslationService::SendRequest(AllocatorPtr alloc,
 	if (strcmp(request.widget_type, "sync") == 0) {
 		auto response = UniquePoolPtr<TranslateResponse>::Make(alloc.GetPool());
 		response->address = *http_address_parse(alloc, "http://foo/");
-		response->views = alloc.New<WidgetView>(nullptr);
-		response->views->address = {ShallowCopy(), response->address};
+		response->views.push_front(*alloc.New<WidgetView>(nullptr));
+		response->views.front().address = {ShallowCopy(), response->address};
 		handler.OnTranslateResponse(std::move(response));
 	} else if (strcmp(request.widget_type, "block") == 0) {
 		cancel_ptr = *this;
@@ -102,13 +102,13 @@ TEST(WidgetRegistry, Normal)
 	ASSERT_FALSE(ts.aborted);
 	ASSERT_TRUE(data.got_class);
 	ASSERT_NE(data.cls, nullptr);
-	ASSERT_NE(data.cls->views, nullptr);
+	ASSERT_FALSE(data.cls->views.empty());
 
-	auto &view = *data.cls->views;
+	auto &view = data.cls->views.front();
 	ASSERT_EQ(view.address.type, ResourceAddress::Type::HTTP);
 	ASSERT_STREQ(view.address.GetHttp().host_and_port, "foo");
 	ASSERT_STREQ(view.address.GetHttp().path, "/");
-	ASSERT_EQ(view.next, nullptr);
+	ASSERT_EQ(std::next(data.cls->views.begin()), data.cls->views.end());
 	ASSERT_TRUE(view.transformations.empty());
 
 	pool.reset();

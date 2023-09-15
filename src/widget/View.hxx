@@ -11,9 +11,7 @@
 struct Transformation;
 class AllocatorPtr;
 
-struct WidgetView {
-	WidgetView *next = nullptr;
-
+struct WidgetView final : IntrusiveForwardListHook {
 	/**
 	 * The name of this view; always NULL for the first (default)
 	 * view.
@@ -61,8 +59,6 @@ struct WidgetView {
 
 	WidgetView *Clone(AllocatorPtr alloc) const noexcept;
 
-	WidgetView *CloneChain(AllocatorPtr alloc) const noexcept;
-
 	/**
 	 * Copy the specified address into the view, if it does not have an
 	 * address yet.
@@ -109,27 +105,3 @@ struct WidgetView {
 	 */
 	void Expand(AllocatorPtr alloc, const MatchData &match_data) noexcept;
 };
-
-/**
- * Finds a view by its name.  If name==NULL, it returns the first
- * view.
- */
-[[gnu::pure]]
-const WidgetView *
-widget_view_lookup(const WidgetView *view, const char *name) noexcept;
-
-/**
- * Does any view in the linked list need to be expanded with
- * widget_view_expand()?
- */
-[[gnu::pure]]
-bool
-widget_view_any_is_expandable(const WidgetView *view) noexcept;
-
-/**
- * The same as widget_view_expand(), but expand all voews in
- * the linked list.
- */
-void
-widget_view_expand_all(AllocatorPtr alloc, WidgetView *view,
-		       const MatchData &match_data) noexcept;

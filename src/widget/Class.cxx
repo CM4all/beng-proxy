@@ -7,7 +7,8 @@
 #include "AllocatorPtr.hxx"
 
 WidgetClass::WidgetClass(AllocatorPtr alloc, const WidgetClass &src) noexcept
-	:local_uri(alloc.CheckDup(src.local_uri)),
+	:views(Clone(alloc, src.views)),
+	 local_uri(alloc.CheckDup(src.local_uri)),
 	 untrusted_host(alloc.CheckDup(src.untrusted_host)),
 	 untrusted_prefix(alloc.CheckDup(src.untrusted_prefix)),
 	 untrusted_site_suffix(alloc.CheckDup(src.untrusted_site_suffix)),
@@ -21,14 +22,11 @@ WidgetClass::WidgetClass(AllocatorPtr alloc, const WidgetClass &src) noexcept
 	 info_headers(src.info_headers),
 	 dump_headers(src.dump_headers)
 {
-	if (src.views != nullptr)
-		views = src.views->CloneChain(alloc);
-
 	container_groups.CopyFrom(alloc, src.container_groups);
 }
 
 const WidgetView *
 WidgetClass::FindViewByName(const char *name) const noexcept
 {
-	return widget_view_lookup(views, name);
+	return FindByName(views, name);
 }

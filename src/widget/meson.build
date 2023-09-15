@@ -11,6 +11,7 @@ widget = static_library(
   'CSession.cxx',
   'Untrusted.cxx',
   'View.cxx',
+  'VList.cxx',
   'Ref.cxx',
   'Session.cxx',
   'Uri.cxx',

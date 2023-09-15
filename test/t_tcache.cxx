@@ -246,17 +246,9 @@ operator==(const WidgetView &a, const WidgetView &b) noexcept
 
 [[gnu::pure]]
 static bool
-AllEquals(WidgetView *a, WidgetView *b) noexcept
+AllEquals(const WidgetViewList &a, const WidgetViewList &b) noexcept
 {
-	while (a != nullptr && b != nullptr) {
-		if (!(*a == *b))
-			return false;
-
-		a = a->next;
-		b = b->next;
-	}
-
-	return a == nullptr && b == nullptr;
+	return std::equal(a.begin(), a.end(), b.begin(), b.end());
 }
 
 static bool

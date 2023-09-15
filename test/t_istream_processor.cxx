@@ -41,7 +41,7 @@ MakeWidgetClass(struct pool &pool, const char *name) noexcept
 							 "/processed/");
 
 		auto *cls = NewFromPool<WidgetClass>(pool);
-		cls->views = NewFromPool<WidgetView>(pool, *address);
+		cls->views.push_front(*NewFromPool<WidgetView>(pool, *address));
 		return cls;
 	}
 
@@ -68,7 +68,7 @@ embed_inline_widget(struct pool &pool, SharedPoolPtr<WidgetContext> ctx,
 {
 	widget.cls = MakeWidgetClass(widget.pool, widget.class_name);
 	if (widget.cls != nullptr) {
-		widget.from_request.view = widget.from_template.view = widget.cls->views;
+		widget.from_request.view = widget.from_template.view = &widget.cls->views.front();
 	}
 
 	if (StringIsEqual(widget.class_name, "processed")) {

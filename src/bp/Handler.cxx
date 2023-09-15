@@ -104,8 +104,8 @@ Request::HandleTranslatedRequest2(const TranslateResponse &response) noexcept
 {
 	const ResourceAddress address(ShallowCopy(), translate.address);
 
-	if (response.views != nullptr)
-		translate.transformations = {ShallowCopy{}, response.views->transformations};
+	if (!response.views.empty())
+		translate.transformations = {ShallowCopy{}, response.views.front().transformations};
 	else
 		translate.transformations.clear();
 
@@ -680,8 +680,8 @@ Request::HandleChainResponse(UniquePoolPtr<TranslateResponse> _response) noexcep
 		return;
 	}
 
-	if (response.views != nullptr)
-		translate.transformations = {ShallowCopy{}, response.views->transformations};
+	if (!response.views.empty())
+		translate.transformations = {ShallowCopy{}, response.views.front().transformations};
 	else
 		translate.transformations.clear();
 
