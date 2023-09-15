@@ -9,17 +9,5 @@
 constexpr bool
 MethodNeedsCsrfProtection(HttpMethod method) noexcept
 {
-	switch (method) {
-	case HttpMethod::HEAD:
-	case HttpMethod::GET:
-	case HttpMethod::OPTIONS:
-	case HttpMethod::TRACE:
-	case HttpMethod::PROPFIND:
-	case HttpMethod::REPORT:
-		return false;
-
-	default:
-		return true;
-	}
+	return !IsSafeMethod(method);
 }
-

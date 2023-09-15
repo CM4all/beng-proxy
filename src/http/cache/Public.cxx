@@ -40,19 +40,7 @@ static constexpr Event::Duration http_cache_compress_interval = std::chrono::min
 static constexpr bool
 IsModifyingMethod(HttpMethod method) noexcept
 {
-	// TODO: code copied from MethodNeedsCsrfProtection()
-	switch (method) {
-	case HttpMethod::HEAD:
-	case HttpMethod::GET:
-	case HttpMethod::OPTIONS:
-	case HttpMethod::TRACE:
-	case HttpMethod::PROPFIND:
-	case HttpMethod::REPORT:
-		return false;
-
-	default:
-		return true;
-	}
+	return !IsSafeMethod(method);
 }
 
 class HttpCacheRequest final : PoolHolder,
