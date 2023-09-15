@@ -97,6 +97,11 @@ private:
 	HttpCacheDocument *const document;
 
 	/**
+	 * A lease for #document.
+	 */
+	const SharedLease lease;
+
+	/**
 	 * This struct holds response information while this module
 	 * receives the response body.
 	 */
@@ -118,7 +123,8 @@ public:
 			 const StringMap &_headers,
 			 HttpResponseHandler &_handler,
 			 const HttpCacheRequestInfo &_info,
-			 HttpCacheDocument *_document) noexcept;
+			 HttpCacheDocument *_document,
+			 SharedLease &&_lease) noexcept;
 
 	HttpCacheRequest(const HttpCacheRequest &) = delete;
 	HttpCacheRequest &operator=(const HttpCacheRequest &) = delete;
@@ -346,12 +352,9 @@ public:
 		heap.RemoveURL(url, headers);
 	}
 
-	void Lock(HttpCacheDocument &document) noexcept {
-		heap.Lock(document);
-	}
-
-	void Unlock(HttpCacheDocument &document) noexcept {
-		heap.Unlock(document);
+	[[nodiscard]]
+	SharedLease Lock(HttpCacheDocument &document) noexcept {
+		return heap.Lock(document);
 	}
 
 	/**
@@ -564,8 +567,6 @@ HttpCacheRequest::OnHttpResponse(HttpStatus status, StringMap &&_headers,
 {
 	const AllocatorPtr alloc{GetPool()};
 
-	HttpCacheDocument *locked_document = document;
-
 	if (document != nullptr && status == HttpStatus::NOT_MODIFIED) {
 		assert(!body);
 
@@ -590,10 +591,6 @@ HttpCacheRequest::OnHttpResponse(HttpStatus status, StringMap &&_headers,
 
 		LogConcat(5, "HttpCache", "not_modified ", key);
 		Serve();
-
-		if (locked_document != nullptr)
-			cache.Unlock(*locked_document);
-
 		Destroy();
 		return;
 	}
@@ -606,10 +603,6 @@ HttpCacheRequest::OnHttpResponse(HttpStatus status, StringMap &&_headers,
 		body.Clear();
 
 		Serve();
-
-		if (locked_document != nullptr)
-			cache.Unlock(*locked_document);
-
 		Destroy();
 		return;
 	}
@@ -715,9 +708,6 @@ HttpCacheRequest::OnHttpError(std::exception_ptr ep) noexcept
 {
 	ep = NestException(ep, FmtRuntimeError("http_cache {}", key));
 
-	if (document != nullptr)
-		cache.Unlock(*document);
-
 	auto &_handler = handler;
 	Destroy();
 	_handler.InvokeError(ep);
@@ -731,9 +721,6 @@ HttpCacheRequest::OnHttpError(std::exception_ptr ep) noexcept
 void
 HttpCacheRequest::Cancel() noexcept
 {
-	if (document != nullptr)
-		cache.Unlock(*document);
-
 	cancel_ptr.Cancel();
 	Destroy();
 }
@@ -744,6 +731,7 @@ HttpCacheRequest::Cancel() noexcept
  *
  */
 
+inline
 HttpCacheRequest::HttpCacheRequest(PoolPtr &&_pool,
 				   struct pool &_caller_pool,
 				   bool _eager_cache,
@@ -753,7 +741,8 @@ HttpCacheRequest::HttpCacheRequest(PoolPtr &&_pool,
 				   const StringMap &_headers,
 				   HttpResponseHandler &_handler,
 				   const HttpCacheRequestInfo &_request_info,
-				   HttpCacheDocument *_document) noexcept
+				   HttpCacheDocument *_document,
+				   SharedLease &&_lease) noexcept
 	:PoolHolder(std::move(_pool)), caller_pool(_caller_pool),
 	 cache_tag(_cache_tag),
 	 cache(_cache),
@@ -761,7 +750,7 @@ HttpCacheRequest::HttpCacheRequest(PoolPtr &&_pool,
 	 request_headers(pool, _headers),
 	 handler(_handler),
 	 request_info(_request_info),
-	 document(_document),
+	 document(_document), lease(std::move(_lease)),
 	 eager_cache(_eager_cache)
 {
 }
@@ -877,7 +866,7 @@ HttpCache::Miss(struct pool &caller_pool,
 					      key,
 					      headers,
 					      handler,
-					      info, nullptr);
+					      info, nullptr, SharedLease{});
 
 	LogConcat(4, "HttpCache", "miss ", request->GetKey());
 
@@ -1032,8 +1021,6 @@ HttpCache::Revalidate(struct pool &caller_pool,
 	   allocate a new pool for it from cache.pool */
 	auto request_pool = pool_new_linear(pool, "HttpCacheRequest", 8192);
 
-	Lock(document);
-
 	auto request =
 		NewFromPool<HttpCacheRequest>(std::move(request_pool), caller_pool,
 					      params.eager_cache,
@@ -1042,7 +1029,7 @@ HttpCache::Revalidate(struct pool &caller_pool,
 					      key,
 					      headers,
 					      handler,
-					      info, &document);
+					      info, &document, Lock(document));
 
 	LogConcat(4, "HttpCache", "test ", request->GetKey());
 

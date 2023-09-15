@@ -6,8 +6,7 @@
 #include "Item.hxx"
 #include "stats/AllocatorStats.hxx"
 #include "istream/UnusedPtr.hxx"
-#include "istream/istream_null.hxx"
-#include "istream_unlock.hxx"
+#include "istream/SharedLeaseIstream.hxx"
 #include "pool/pool.hxx"
 
 static bool
@@ -58,7 +57,6 @@ HttpCacheHeap::Remove(HttpCacheDocument &document) noexcept
 	auto &item = (HttpCacheItem &)document;
 
 	cache.Remove(item);
-	item.Unlock();
 }
 
 void
@@ -97,20 +95,11 @@ HttpCacheHeap::FlushTag(std::string_view tag) noexcept
 	});
 }
 
-void
+SharedLease
 HttpCacheHeap::Lock(HttpCacheDocument &document) noexcept
 {
 	auto &item = (HttpCacheItem &)document;
-
-	item.Lock();
-}
-
-void
-HttpCacheHeap::Unlock(HttpCacheDocument &document) noexcept
-{
-	auto &item = (HttpCacheItem &)document;
-
-	item.Unlock();
+	return item;
 }
 
 UnusedIstreamPtr
@@ -123,7 +112,7 @@ HttpCacheHeap::OpenStream(struct pool &_pool,
 		/* don't lock the item */
 		return {};
 
-	return istream_unlock_new(_pool, item.OpenStream(_pool), item);
+	return NewSharedLeaseIstream(_pool, item.OpenStream(_pool), item);
 }
 
 /*

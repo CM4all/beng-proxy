@@ -7,6 +7,7 @@
 #include "event/CleanupTimer.hxx"
 #include "util/IntrusiveHashSet.hxx"
 #include "util/IntrusiveList.hxx"
+#include "util/SharedLease.hxx"
 
 #include <chrono>
 #include <memory>
@@ -15,7 +16,11 @@
 
 class EventLoop;
 
-class CacheItem {
+/**
+ * Use #SharedLease with the #SharedAnchor base class to prevent items
+ * from getting removed and freed while you are still using them.
+ */
+class CacheItem : public SharedAnchor {
 	friend class Cache;
 
 	/**
@@ -35,12 +40,6 @@ class CacheItem {
 	const size_t size;
 
 	std::chrono::steady_clock::time_point last_accessed{};
-
-	/**
-	 * If non-zero, then this item has been locked by somebody, and
-	 * must not be destroyed.
-	 */
-	unsigned lock = 0;
 
 	/**
 	 * If true, then this item has been removed from the cache, but
@@ -64,16 +63,6 @@ public:
 	CacheItem(const CacheItem &) = delete;
 
 	void Release() noexcept;
-
-	/**
-	 * Locks the specified item in memory, i.e. prevents that it is
-	 * freed by Cache::Remove().
-	 */
-	void Lock() noexcept {
-		++lock;
-	}
-
-	void Unlock() noexcept;
 
 	const char *GetKey() const noexcept {
 		return key;
@@ -118,6 +107,11 @@ public:
 			return item.GetKey();
 		}
 	};
+
+protected:
+	/* virtual methods from SharedAnchor */
+	virtual void OnAbandoned() noexcept;
+	
 };
 
 class CacheHandler {

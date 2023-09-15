@@ -75,8 +75,8 @@ public:
 	void Flush() noexcept;
 	void FlushTag(std::string_view tag) noexcept;
 
-	static void Lock(HttpCacheDocument &document) noexcept;
-	void Unlock(HttpCacheDocument &document) noexcept;
+	[[nodiscard]]
+	static SharedLease Lock(HttpCacheDocument &document) noexcept;
 
 	UnusedIstreamPtr OpenStream(struct pool &_pool,
 				    HttpCacheDocument &document) noexcept;

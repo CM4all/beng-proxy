@@ -11,9 +11,9 @@
 #include "ResourceLoader.hxx"
 #include "istream/UnusedPtr.hxx"
 #include "istream/istream_null.hxx"
+#include "istream/SharedLeaseIstream.hxx"
 #include "istream/TeeIstream.hxx"
 #include "istream/RefIstream.hxx"
-#include "istream_unlock.hxx"
 #include "memory/istream_rubber.hxx"
 #include "memory/Rubber.hxx"
 #include "memory/sink_rubber.hxx"
@@ -745,7 +745,7 @@ FilterCache::Serve(FilterCacheItem &item,
 				     0, item.size, false)
 		: istream_null_new(caller_pool);
 
-	response_body = istream_unlock_new(caller_pool, std::move(response_body), item);
+	response_body = NewSharedLeaseIstream(caller_pool, std::move(response_body), item);
 
 	handler.InvokeResponse(item.status,
 			       StringMap(ShallowCopy(), caller_pool, item.headers),

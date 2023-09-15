@@ -13,9 +13,9 @@
 #include "memory/Rubber.hxx"
 #include "memory/istream_rubber.hxx"
 #include "memory/sink_rubber.hxx"
-#include "istream_unlock.hxx"
 #include "istream/UnusedPtr.hxx"
 #include "istream/istream_null.hxx"
+#include "istream/SharedLeaseIstream.hxx"
 #include "istream/TeeIstream.hxx"
 #include "stats/AllocatorStats.hxx"
 #include "cache.hxx"
@@ -452,12 +452,12 @@ nfs_cache_item_open(struct pool &pool,
 
 	assert(item.body);
 
-	return istream_unlock_new(pool,
-				  istream_rubber_new(pool,
-						     item.body.GetRubber(),
-						     item.body.GetId(),
-						     start, end, false),
-				  item);
+	return NewSharedLeaseIstream(pool,
+				     istream_rubber_new(pool,
+							item.body.GetRubber(),
+							item.body.GetId(),
+							start, end, false),
+				     item);
 }
 
 inline UnusedIstreamPtr

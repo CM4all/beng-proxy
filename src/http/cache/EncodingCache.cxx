@@ -4,8 +4,8 @@
 
 #include "EncodingCache.hxx"
 #include "istream/UnusedPtr.hxx"
+#include "istream/SharedLeaseIstream.hxx"
 #include "istream/TeeIstream.hxx"
-#include "istream_unlock.hxx"
 #include "memory/istream_rubber.hxx"
 #include "memory/sink_rubber.hxx"
 #include "pool/pool.hxx"
@@ -167,10 +167,10 @@ EncodingCache::Get(struct pool &pool, const char *key) noexcept
 
 	LogConcat(5, "EncodingCache", "hit ", key);
 
-	return istream_unlock_new(pool,
-				  istream_rubber_new(pool, rubber, item->allocation.GetId(),
-						     0, item->GetSize(), false),
-				  *item);
+	return NewSharedLeaseIstream(pool,
+				     istream_rubber_new(pool, rubber, item->allocation.GetId(),
+							0, item->GetSize(), false),
+				     *item);
 }
 
 UnusedIstreamPtr

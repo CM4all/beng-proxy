@@ -664,7 +664,6 @@ executable(
   'src/FilterResourceLoader.cxx',
   'src/BufferedResourceLoader.cxx',
   'src/widget/Frame.cxx',
-  'src/istream_unlock.cxx',
   'src/access_log/ChildErrorLog.cxx',
   'src/PInstance.cxx',
   'src/bp/UringGlue.cxx',

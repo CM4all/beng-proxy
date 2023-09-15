@@ -30,7 +30,7 @@ CacheItem::Equal::operator()(const char *a, const char *b) const noexcept
 void
 CacheItem::Release() noexcept
 {
-	if (lock == 0)
+	if (IsAbandoned())
 		Destroy();
 	else
 		/* this item is locked - postpone the Destroy() call */
@@ -48,7 +48,7 @@ Cache::Cache(EventLoop &event_loop,
 Cache::~Cache() noexcept
 {
 	items.clear_and_dispose([this](CacheItem *item){
-		assert(item->lock == 0);
+		assert(item->IsAbandoned());
 		assert(size >= item->size);
 		size -= item->size;
 
@@ -80,7 +80,7 @@ Cache::ItemRemoved(CacheItem *item) noexcept
 {
 	assert(item != nullptr);
 	assert(item->size > 0);
-	assert(item->lock > 0 || !item->removed);
+	assert(!item->IsAbandoned() || !item->removed);
 	assert(size >= item->size);
 
 	sorted_items.erase(sorted_items.iterator_to(*item));
@@ -218,7 +218,7 @@ Cache::Put(const char *key, CacheItem &item) noexcept
 	/* XXX size constraints */
 
 	assert(item.size > 0);
-	assert(item.lock == 0);
+	assert(item.IsAbandoned());
 	assert(!item.removed);
 
 	if (!NeedRoom(item.size)) {
@@ -252,7 +252,7 @@ Cache::PutMatch(const char *key, CacheItem &item,
 	auto *old = GetMatch(key, match, ctx);
 
 	assert(item.size > 0);
-	assert(item.lock == 0);
+	assert(item.IsAbandoned());
 	assert(!item.removed);
 
 	if (old != nullptr)
@@ -286,7 +286,7 @@ Cache::Remove(CacheItem &item) noexcept
 {
 	if (item.removed) {
 		/* item has already been removed by somebody else */
-		assert(item.lock > 0);
+		assert(!item.IsAbandoned());
 		return;
 	}
 
@@ -339,11 +339,9 @@ CacheItem::CacheItem(std::chrono::steady_clock::time_point now,
 }
 
 void
-CacheItem::Unlock() noexcept
+CacheItem::OnAbandoned() noexcept
 {
-	assert(lock > 0);
-
-	if (--lock == 0 && removed)
+	if (removed)
 		/* postponed destroy */
 		Destroy();
 }
