@@ -246,12 +246,14 @@ Request::ProbeNextPrecompressed() noexcept
 	auto &p = *handler.file.precompressed;
 
 	switch (p.state) {
+#ifdef HAVE_BROTLI
 	case Handler::File::Precompressed::AUTO_BROTLI:
 		p.state = Handler::File::Precompressed::AUTO_GZIPPED;
 
 		if ((address.auto_brotli_path || translate.auto_brotli_path) &&
 		    CheckAutoCompressedFile(address.path, "br", ".br"))
 			return;
+#endif // HAVE_BROTLI
 
 		// fall through
 

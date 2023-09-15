@@ -218,7 +218,11 @@ private:
 		 */
 		bool had_internal_redirect = false;
 
-		bool auto_gzipped = false, auto_brotli_path = false, auto_brotli = false;
+		bool auto_gzipped = false;
+
+#ifdef HAVE_BROTLI
+		bool auto_brotli_path = false, auto_brotli = false;
+#endif
 
 		// TODO make configurable (via translation protocol)
 		const bool enable_metrics = true;

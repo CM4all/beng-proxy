@@ -345,8 +345,13 @@ Request::OnSuffixRegistrySuccess(const char *content_type,
 	translate.content_type = content_type;
 	translate.suffix_transformations = {ShallowCopy{}, transformations};
 	translate.auto_gzipped = auto_gzipped;
+#ifdef HAVE_BROTLI
 	translate.auto_brotli_path = auto_brotli_path;
 	translate.auto_brotli = auto_brotli;
+#else
+	(void)auto_brotli_path;
+	(void)auto_brotli;
+#endif
 
 	HandleTranslatedRequest2(*translate.response);
 }

@@ -18,11 +18,13 @@ struct Request::Handler::File::Precompressed {
 	UniqueFileDescriptor original_fd;
 
 	enum Stat {
+#ifdef HAVE_BROTLI
 		AUTO_BROTLI,
+#endif
 		AUTO_GZIPPED,
 		GZIPPED,
 		END
-	} state = AUTO_BROTLI;
+	} state{};
 
 	Precompressed(UniqueFileDescriptor &&_fd, const struct statx &_st) noexcept
 		:original_st(_st), original_fd(std::move(_fd)) {}
