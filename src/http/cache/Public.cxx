@@ -718,8 +718,9 @@ HttpCacheRequest::OnHttpError(std::exception_ptr ep) noexcept
 	if (document != nullptr)
 		cache.Unlock(*document);
 
-	handler.InvokeError(ep);
+	auto &_handler = handler;
 	Destroy();
+	_handler.InvokeError(ep);
 }
 
 /*
