@@ -887,9 +887,20 @@ Request::OnTranslateResponseAfterEnotdir(UniquePoolPtr<TranslateResponse> _respo
 	const auto &response = *_response;
 
 	/* check if the file exists */
-	if (response.file_not_found.data() != nullptr &&
-	    !CheckFileNotFound(response))
+	if (response.file_not_found.data() != nullptr) {
+		CheckFileNotFound(std::move(_response));
 		return;
+	}
+
+	OnTranslateResponseAfterFileNotFound(std::move(_response));
+}
+
+void
+Request::OnTranslateResponseAfterFileNotFound(UniquePoolPtr<TranslateResponse> _response) noexcept
+{
+	assert(_response);
+
+	const auto &response = *_response;
 
 	/* check if it's a directory */
 	if (response.directory_index.data() != nullptr) {

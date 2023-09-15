@@ -483,8 +483,6 @@ public:
 	 */
 	RealmSessionLease ApplyTranslateResponseSession(const TranslateResponse &response) noexcept;
 
-	bool CheckFileNotFound(const TranslateResponse &response) noexcept;
-
 	bool CheckHandleReadFile(const TranslateResponse &response) noexcept;
 	bool CheckHandlePathExists(const TranslateResponse &response) noexcept;
 	bool CheckHandleProbePathSuffixes(const TranslateResponse &response) noexcept;
@@ -881,6 +879,16 @@ private:
 	void OnDirectoryIndexStatError(int error) noexcept;
 	void SubmitDirectoryIndex(const TranslateResponse &response) noexcept;
 
+	/* FILE_NOT_FOUND handler */
+
+	void CheckFileNotFound(UniquePoolPtr<TranslateResponse> response) noexcept;
+	void CheckFileNotFound(UniquePoolPtr<TranslateResponse> response, FileDescriptor base) noexcept;
+	void CheckFileNotFound(UniquePoolPtr<TranslateResponse> response, FileAt file) noexcept;
+	void OnFileNotFoundBaseOpen(FileDescriptor fd, SharedLease lease) noexcept;
+	void OnFileNotFoundStat(const struct statx &st) noexcept;
+	void OnFileNotFoundStatError(int error) noexcept;
+	void SubmitFileNotFound(const TranslateResponse &response) noexcept;
+
 	/* FILE_ENOTDIR handler */
 
 	bool SubmitEnotdir(const TranslateResponse &response) noexcept;
@@ -898,6 +906,7 @@ private:
 	void CheckFileEnotdir(UniquePoolPtr<TranslateResponse> _response, FileAt file) noexcept;
 
 	void OnTranslateResponseAfterEnotdir(UniquePoolPtr<TranslateResponse> response) noexcept;
+	void OnTranslateResponseAfterFileNotFound(UniquePoolPtr<TranslateResponse> response) noexcept;
 	void OnTranslateResponseAfterDirectoryIndex(UniquePoolPtr<TranslateResponse> _response) noexcept;
 
 	/**
