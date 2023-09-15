@@ -432,16 +432,13 @@ private:
 
 	void RepeatTranslation(UniquePoolPtr<TranslateResponse> response) noexcept;
 
-public:
 	/**
 	 * Submit the #TranslateResponse to the translation cache.
 	 */
 	void SubmitTranslateRequest() noexcept;
 
-private:
 	bool ParseRequestUri() noexcept;
 
-public:
 	void OnTranslateResponseAfterAuth(UniquePoolPtr<TranslateResponse> response) noexcept;
 	void OnTranslateResponse2(UniquePoolPtr<TranslateResponse> &&response) noexcept;
 
@@ -457,12 +454,14 @@ public:
 	[[gnu::pure]]
 	bool HasValidCsrfToken() noexcept;
 
+public:
 	/**
 	 * @return false if there is no valid token (an error response has
 	 * already been sent then)
 	 */
 	bool CheckCsrfToken() noexcept;
 
+private:
 	void WriteCsrfToken(HttpHeaders &headers) noexcept;
 
 	/**
@@ -501,6 +500,7 @@ public:
 
 	bool DoContentTypeLookup(const ResourceAddress &address) noexcept;
 
+public:
 	void OnAuthTranslateResponse(const TranslateResponse &response) noexcept;
 	void OnAuthTranslateError(std::exception_ptr ep) noexcept;
 
@@ -510,6 +510,7 @@ public:
 	void OnTokenAuthTranslateResponse(const TranslateResponse &response) noexcept;
 	void OnTokenAuthTranslateError(std::exception_ptr ep) noexcept;
 
+private:
 	/**
 	 * Handle #TRANSLATE_AUTH.
 	 */
@@ -611,11 +612,13 @@ public:
 			!translate.suffix_transformations.empty();
 	}
 
+public:
 	void CancelTransformations() noexcept {
 		translate.transformations.clear();
 		translate.suffix_transformations.clear();
 	}
 
+private:
 	void CancelChainAndTransformations() noexcept {
 		CancelTransformations();
 		translate.chain = {};
@@ -648,18 +651,19 @@ public:
 		request_body.Clear();
 	}
 
-private:
 	[[gnu::pure]]
 	std::string_view GetCookieSessionId() noexcept;
 
 	SessionLease LoadSession(std::string_view _session_id) noexcept;
 
-public:
 	void DetermineSession() noexcept;
 
 	SessionLease GetSession() const noexcept;
+
+public:
 	RealmSessionLease GetRealmSession() const noexcept;
 
+private:
 	SessionLease MakeSession() noexcept;
 	RealmSessionLease MakeRealmSession() noexcept;
 
@@ -708,6 +712,7 @@ public:
 					const char *host_and_port,
 					const char *uri) noexcept;
 
+public:
 	StringMap ForwardResponseHeaders(HttpStatus status,
 					 const StringMap &src,
 					 const char *(*relocate)(const char *uri,
