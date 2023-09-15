@@ -187,7 +187,6 @@ io2 = static_library(
   'io2',
   'src/io/Buffered.cxx',
   'src/io/SpliceSupport.cxx',
-  'src/io/StatAt.cxx',
   include_directories: inc,
 )
 io_dep = declare_dependency(
@@ -576,7 +575,6 @@ if uring_dep.found()
     'src/io/UringOpen.cxx',
     'src/io/UringOpenStat.cxx',
     'src/io/UringStat.cxx',
-    'src/io/CoStatAt.cxx',
   ]
 endif
 
