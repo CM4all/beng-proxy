@@ -239,9 +239,9 @@ class Translation(Protocol):
         path = os.path.join(document_root, unquote(uri))
         easy_path = document_root + '/'
 
-        if request.file_not_found == '404':
+        if request.file_not_found == b'404':
             response.status(404)
-        elif request.file_not_found == 'index.html':
+        elif request.file_not_found == b'index.html':
             # index.html does not exist, fall back to directory_index.py
             response.packet(TRANSLATE_REGEX, r'^(.*)$')
             response.packet(TRANSLATE_REGEX_TAIL)
