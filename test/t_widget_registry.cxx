@@ -4,6 +4,7 @@
 
 #include "widget/Registry.hxx"
 #include "widget/Widget.hxx"
+#include "widget/View.hxx"
 #include "widget/Class.hxx"
 #include "http/Address.hxx"
 #include "translation/Service.hxx"

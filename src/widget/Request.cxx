@@ -4,6 +4,7 @@
 
 #include "Request.hxx"
 #include "Widget.hxx"
+#include "View.hxx"
 #include "Class.hxx"
 #include "Context.hxx"
 #include "Error.hxx"

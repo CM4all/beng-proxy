@@ -4,6 +4,7 @@
 
 #include "RewriteUri.hxx"
 #include "Widget.hxx"
+#include "View.hxx"
 #include "Resolver.hxx"
 #include "Class.hxx"
 #include "Context.hxx"

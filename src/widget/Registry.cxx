@@ -4,6 +4,7 @@
 
 #include "Registry.hxx"
 #include "Class.hxx"
+#include "View.hxx"
 #include "translation/Service.hxx"
 #include "translation/Handler.hxx"
 #include "translation/Request.hxx"

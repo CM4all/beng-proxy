@@ -4,8 +4,9 @@
 
 #pragma once
 
-#include "View.hxx"
 #include "util/StringSet.hxx"
+
+struct WidgetView;
 
 /**
  * A widget class is a server which provides a widget.
@@ -105,9 +106,8 @@ struct WidgetClass {
 	 */
 	void CheckHost(const char *host, const char *site_name) const;
 
-	const WidgetView *FindViewByName(const char *name) const noexcept {
-		return widget_view_lookup(views, name);
-	}
+	[[gnu::pure]]
+	const WidgetView *FindViewByName(const char *name) const noexcept;
 
 	[[gnu::pure]]
 	bool HasGroups() const noexcept {

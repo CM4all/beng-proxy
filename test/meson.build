@@ -662,6 +662,7 @@ test('t_widget_registry', executable('t_widget_registry',
   't_widget_registry.cxx',
   '../src/PInstance.cxx',
   '../src/widget/Registry.cxx',
+  '../src/widget/Class.cxx',
   include_directories: inc,
   dependencies: [
     gtest,

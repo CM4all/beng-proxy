@@ -3,6 +3,7 @@
 // author: Max Kellermann <mk@cm4all.com>
 
 #include "Class.hxx"
+#include "View.hxx"
 #include "AllocatorPtr.hxx"
 
 WidgetClass::WidgetClass(AllocatorPtr alloc, const WidgetClass &src) noexcept
@@ -24,4 +25,10 @@ WidgetClass::WidgetClass(AllocatorPtr alloc, const WidgetClass &src) noexcept
 		views = src.views->CloneChain(alloc);
 
 	container_groups.CopyFrom(alloc, src.container_groups);
+}
+
+const WidgetView *
+WidgetClass::FindViewByName(const char *name) const noexcept
+{
+	return widget_view_lookup(views, name);
 }

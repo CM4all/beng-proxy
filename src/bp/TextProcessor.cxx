@@ -8,6 +8,7 @@
 #include "istream/UnusedPtr.hxx"
 #include "istream/SubstIstream.hxx"
 #include "widget/Widget.hxx"
+#include "widget/View.hxx"
 #include "widget/Class.hxx"
 #include "widget/Context.hxx"
 #include "pool/pool.hxx"

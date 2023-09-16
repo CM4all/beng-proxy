@@ -9,6 +9,7 @@
 #include "pool/pool.hxx"
 #include "pool/SharedPtr.hxx"
 #include "widget/Widget.hxx"
+#include "widget/View.hxx"
 #include "widget/Ptr.hxx"
 #include "widget/Class.hxx"
 #include "widget/Context.hxx"

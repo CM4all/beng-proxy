@@ -3,6 +3,7 @@
 // author: Max Kellermann <mk@cm4all.com>
 
 #include "Widget.hxx"
+#include "View.hxx"
 #include "Class.hxx"
 #include "pool/tpool.hxx"
 #include "http/Address.hxx"

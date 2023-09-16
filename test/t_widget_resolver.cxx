@@ -55,13 +55,6 @@ Widget::DiscardForFocused() noexcept
 {
 }
 
-const WidgetView *
-widget_view_lookup(const WidgetView *view,
-		   [[maybe_unused]] const char *name) noexcept
-{
-	return view;
-}
-
 void
 Context::ResolverCallback1() noexcept
 {
@@ -125,6 +118,13 @@ widget_registry_finish(Context *data)
 	data->registry.callback(&cls);
 }
 
+// fake symbols
+
+const WidgetView *
+WidgetClass::FindViewByName([[maybe_unused]] const char *name) const noexcept
+{
+	return nullptr;
+}
 
 /*
  * tests
