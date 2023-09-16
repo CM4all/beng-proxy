@@ -3,8 +3,8 @@
 // author: Max Kellermann <mk@cm4all.com>
 
 #include "Isolate.hxx"
+#include "spawn/UserNamespace.hxx"
 #include "system/pivot_root.h"
-#include "io/WriteFile.hxx"
 
 #include <sched.h>
 #include <stdio.h>
@@ -17,33 +17,6 @@
 #ifndef __linux
 #error This library requires Linux
 #endif
-
-static WriteFileResult
-setup_uid_map(int uid)
-{
-	char buffer[64];
-	sprintf(buffer, "%d %d 1", uid, uid);
-	return TryWriteExistingFile("/proc/self/uid_map", buffer);
-}
-
-static WriteFileResult
-setup_gid_map(int gid)
-{
-	char buffer[64];
-	sprintf(buffer, "%d %d 1", gid, gid);
-	return TryWriteExistingFile("/proc/self/gid_map", buffer);
-}
-
-/**
- * Write "deny" to /proc/self/setgroups which is necessary for
- * unprivileged processes to set up a gid_map.  See Linux commits
- * 9cc4651 and 66d2f33 for details.
- */
-static void
-deny_setgroups()
-{
-	TryWriteExistingFile("/proc/self/setgroups", "deny");
-}
 
 void
 isolate_from_filesystem(bool allow_dbus,
@@ -61,9 +34,9 @@ isolate_from_filesystem(bool allow_dbus,
 	   or else the mkdir() calls below fail */
 	/* for dbus "AUTH EXTERNAL", libdbus needs to obtain the "real"
 	   uid from geteuid(), so set up the mapping */
-	deny_setgroups();
-	setup_gid_map(gid);
-	setup_uid_map(uid);
+	DenySetGroups(0);
+	SetupGidMap(0, gid, false);
+	SetupUidMap(0, uid, false);
 
 	/* convert all "shared" mounts to "private" mounts */
 	mount(nullptr, "/", nullptr, MS_PRIVATE|MS_REC, nullptr);
