@@ -4,7 +4,9 @@
 
 #include "Isolate.hxx"
 #include "spawn/UserNamespace.hxx"
+#include "system/Mount.hxx"
 #include "system/pivot_root.h"
+#include "io/FileDescriptor.hxx"
 
 #include <sched.h>
 #include <stdio.h>
@@ -39,16 +41,16 @@ isolate_from_filesystem(bool allow_dbus,
 	SetupUidMap(0, uid, false);
 
 	/* convert all "shared" mounts to "private" mounts */
-	mount(nullptr, "/", nullptr, MS_PRIVATE|MS_REC, nullptr);
+	MountSetAttr(FileDescriptor::Undefined(), "/",
+		     AT_RECURSIVE|AT_SYMLINK_NOFOLLOW|AT_NO_AUTOMOUNT,
+		     0, 0, MS_PRIVATE);
 
 	const char *const new_root = "/tmp";
 	const char *const put_old = "old";
 
-	if (mount(nullptr, new_root, "tmpfs", MS_NODEV|MS_NOEXEC|MS_NOSUID,
-		  "size=16k,nr_inodes=16,mode=700") < 0) {
-		fprintf(stderr, "failed to mount tmpfs: %s\n", strerror(errno));
-		return;
-	}
+	/* create an empty tmpfs as the new filesystem root */
+	MountOrThrow("none", new_root, "tmpfs", MS_NODEV|MS_NOEXEC|MS_NOSUID,
+		     "size=16k,nr_inodes=16,mode=700");
 
 	/* release a reference to the old root */
 	if (chdir(new_root) < 0) {
@@ -124,11 +126,7 @@ isolate_from_filesystem(bool allow_dbus,
 	}
 
 	/* get rid of the old root */
-	if (umount2(put_old, MNT_DETACH) < 0) {
-		fprintf(stderr, "umount('%s') failed: %s",
-			put_old, strerror(errno));
-		_exit(2);
-	}
+	Umount(put_old, MNT_DETACH);
 
 	rmdir(put_old);
 
