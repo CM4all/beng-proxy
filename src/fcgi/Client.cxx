@@ -33,6 +33,8 @@
 #include "stopwatch.hxx"
 #include "lease.hxx"
 
+#include <fmt/format.h>
+
 #include <string.h>
 #include <errno.h>
 #include <stdlib.h>
@@ -1155,16 +1157,14 @@ fcgi_client_request(struct pool *pool, EventLoop &event_loop,
 		? body.GetAvailable(false)
 		: -1;
 	if (available >= 0) {
-		char value[64];
-		snprintf(value, sizeof(value),
-			 "%lu", (unsigned long)available);
+		const fmt::format_int value{available};
 
 		const char *content_type = headers.Get("content-type");
 
-		ps("HTTP_CONTENT_LENGTH", value)
+		ps("HTTP_CONTENT_LENGTH", value.c_str())
 			/* PHP wants the parameter without
 			   "HTTP_" */
-			("CONTENT_LENGTH", value);
+			("CONTENT_LENGTH", value.c_str());
 
 		/* same for the "Content-Type" request
 		   header */

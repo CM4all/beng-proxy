@@ -10,6 +10,7 @@ fcgi_client = static_library(
     memory_istream_dep,
     http_util_dep,
     stopwatch_dep,
+    fmt_dep,
   ],
 )
 
