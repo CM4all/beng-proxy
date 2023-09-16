@@ -10,6 +10,7 @@
 #include "WrapKey.hxx"
 #include "Wildcard.hxx"
 #include "lib/fmt/RuntimeError.hxx"
+#include "lib/fmt/ToBuffer.hxx"
 #include "lib/openssl/Buffer.hxx"
 #include "lib/openssl/Dummy.hxx"
 #include "lib/openssl/Key.hxx"
@@ -34,6 +35,8 @@
 #include <stdlib.h>
 #include <sys/stat.h>
 
+using std::string_view_literals::operator""sv;
+
 struct AutoUsage {};
 
 WorkshopProgress root_progress;
@@ -56,8 +59,8 @@ LoadCertDatabaseConfig(const char *path)
 		throw FmtRuntimeError("No cert_db section found in {}", path);
 
 	if (std::next(i) != lb_config.cert_dbs.end())
-		fprintf(stderr, "Warning: %s contains multiple cert_db sections\n",
-			path);
+		fmt::print(stderr, "Warning: {} contains multiple cert_db sections\n",
+			   path);
 
 	return std::move(i->second);
 }
@@ -115,7 +118,8 @@ LoadCertificate(const CertDatabaseConfig &db_config,
 						    wrap_key.second);
 	});
 
-	printf("%s: %s\n", inserted ? "insert" : "update", common_name.c_str());
+	fmt::print("{}: {}\n", inserted ? "insert"sv : "update"sv,
+		   common_name.c_str());
 	db.NotifyModified();
 }
 
@@ -176,16 +180,16 @@ static void
 FindPrintCertificates(CertDatabase &db, const char *name)
 {
 	for (const auto &row : db.FindServerCertificatesByName(name))
-		printf("%s\t%s\t%s\t%s\n",
-		       row.GetValue(0), row.GetValue(1),
-		       row.GetValue(2), row.GetValue(3));
+		fmt::print("{}\t{}\t{}\t{}\n",
+			   row.GetValueView(0), row.GetValueView(1),
+			   row.GetValueView(2), row.GetValueView(3));
 }
 
 static void
 FindCertificate(const CertDatabaseConfig &db_config, const char *host, bool headers)
 {
 	if (headers)
-		printf("id\thandle\tissuer\tnot_after\n");
+		fmt::print("id\thandle\tissuer\tnot_after\n");
 
 	CertDatabase db(db_config);
 
@@ -238,10 +242,10 @@ Monitor(const CertDatabaseConfig &db_config)
 			throw "No MAX(modified) found";
 
 		for (const auto &row : db.GetModifiedServerCertificatesMeta(last_modified.c_str()))
-			printf("%s %s %s\n",
-			       row.GetValue(1),
-			       *row.GetValue(0) == 't' ? "deleted" : "modified",
-			       row.GetValue(2));
+			fmt::print("{} {} {}\n",
+				   row.GetValueView(1),
+				   row.GetValueView(0) == "t"sv ? "deleted"sv : "modified"sv,
+				   row.GetValueView(2));
 
 		last_modified = std::move(new_last_modified);
 	}
@@ -253,10 +257,10 @@ Tail(const CertDatabaseConfig &db_config)
 	CertDatabase db(db_config);
 
 	for (const auto &row : db.TailModifiedServerCertificatesMeta())
-		printf("%s %s %s\n",
-		       row.GetValue(1),
-		       *row.GetValue(0) == 't' ? "deleted" : "modified",
-		       row.GetValue(2));
+		fmt::print("{} {} {}\n",
+			   row.GetValueView(1),
+			   row.GetValueView(0) == "t"sv ? "deleted"sv : "modified"sv,
+			   row.GetValueView(2));
 }
 
 static void
@@ -292,8 +296,7 @@ Populate(const CertDatabaseConfig &db_config,
 	} else {
 		db.DoSerializableRepeat(2, [&](){
 			for (unsigned i = 1; i <= n; ++i) {
-				char buffer[256];
-				snprintf(buffer, sizeof(buffer), "%u%s", i, suffix);
+				const auto buffer = FmtBuffer<256>("{}{}", i, suffix);
 				Populate(db, key.get(), key_buffer.get(), buffer);
 			}
 		});
@@ -337,7 +340,7 @@ PrintNames(const CertDatabaseConfig &db_config, const char *handle)
 {
 	CertDatabase db(db_config);
 	for (const auto &name : db.GetNamesByHandle(handle))
-		printf("%s\n", name.c_str());
+		fmt::print("{}\n", name);
 }
 
 static void
@@ -447,8 +450,8 @@ HandleGenwrap(ConstBuffer<const char *> args)
 	UrandomFill(&key, sizeof(key));
 
 	for (auto b : key)
-		printf("%02x", b);
-	printf("\n");
+		fmt::print("{:02x}", b);
+	fmt::print("\n");
 }
 
 static void
@@ -547,31 +550,31 @@ try {
 			args.shift();
 			root_progress.UseControlChannel();
 		} else {
-			fprintf(stderr, "Unknown option: %s\n\n", args.front());
+			fmt::print(stderr, "Unknown option: {}\n\n", args.front());
 			/* clear the list to trigger printing the usage */
 			args.size = 0;
 		}
 	}
 
 	if (args.empty()) {
-		fprintf(stderr, "Usage: %s [OPTIONS] COMMAND ...\n"
-			"\n"
-			"Commands:\n", argv[0]);
+		fmt::print(stderr, "Usage: {} [OPTIONS] COMMAND ...\n"
+			   "\n"
+			   "Commands:\n", argv[0]);
 
 		for (const auto &i : commands) {
 			if (i.undocumented)
 				continue;
 
 			if (i.usage != nullptr)
-				fprintf(stderr, "  %s %s\n", i.name, i.usage);
+				fmt::print(stderr, "  {} {}\n", i.name, i.usage);
 			else
-				fprintf(stderr, "  %s\n", i.name);
+				fmt::print(stderr, "  {}\n", i.name);
 		}
 
-		fprintf(stderr, "\n"
-			"Global options:\n"
-			"  --progress[=MIN,MAX]  print Workshop job progress\n"
-			"  --workshop-control    use the Workshop control channel for progress\n");
+		fmt::print(stderr, "\n"
+			   "Global options:\n"
+			   "  --progress[=MIN,MAX]  print Workshop job progress\n"
+			   "  --workshop-control    use the Workshop control channel for progress\n");
 
 		return EXIT_FAILURE;
 	}
@@ -586,7 +589,7 @@ try {
 
 	const auto *cmd2 = FindCommand(cmd);
 	if (cmd2 == nullptr) {
-		fprintf(stderr, "Unknown command: %s\n", cmd);
+		fmt::print(stderr, "Unknown command: {}\n", cmd);
 		return EXIT_FAILURE;
 	}
 
@@ -594,11 +597,11 @@ try {
 		cmd2->function(args);
 	} catch (AutoUsage) {
 		if (cmd2->usage != nullptr)
-			fprintf(stderr, "Usage: %s %s %s\n", argv[0],
-				cmd2->name, cmd2->usage);
+			fmt::print(stderr, "Usage: {} {} {}\n", argv[0],
+				   cmd2->name, cmd2->usage);
 		else
-			fprintf(stderr, "Usage: %s %s\n", argv[0],
-				cmd2->name);
+			fmt::print(stderr, "Usage: {} {}\n", argv[0],
+				   cmd2->name);
 		return EXIT_FAILURE;
 	}
 
@@ -607,9 +610,9 @@ try {
 	PrintException(e);
 	return EXIT_FAILURE;
 } catch (Usage u) {
-	fprintf(stderr, "Usage: %s %s\n", argv[0], u.text);
+	fmt::print(stderr, "Usage: {} {}\n", argv[0], u.text);
 	return EXIT_FAILURE;
 } catch (const char *msg) {
-	fprintf(stderr, "%s\n", msg);
+	fmt::print(stderr, "{}\n", msg);
 	return EXIT_FAILURE;
 }

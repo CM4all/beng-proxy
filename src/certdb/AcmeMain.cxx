@@ -277,10 +277,10 @@ CollectPendingAuthorizations(const CertDatabaseConfig &db_config,
 					      ar.identifier);
 
 		if (config.debug) {
-			fprintf(stderr, "ACME authorization: %s\n", ar.identifier.c_str());
+			fmt::print(stderr, "ACME authorization: {}\n", ar.identifier);
 			for (const auto &c : ar.challenges)
-				fprintf(stderr, "Challenge type=%s status=%s\n",
-					c.type.c_str(), c.FormatStatus(c.status));
+				fmt::print(stderr, "Challenge type={} status={}\n",
+					   c.type, c.FormatStatus(c.status));
 		}
 
 		const auto *challenge = SelectChallenge(config, account_key, db,
@@ -514,12 +514,12 @@ AcmeRenewCert(const CertDatabaseConfig &db_config, const AcmeConfig &config,
 static void
 PrintAccount(const AcmeAccount &account) noexcept
 {
-	printf("status: %s\n", AcmeAccount::FormatStatus(account.status));
+	fmt::print("status: {}\n", AcmeAccount::FormatStatus(account.status));
 
 	for (const auto &i : account.contact)
-		printf("contact: %s\n", i.c_str());
+		fmt::print("contact: {}\n", i);
 
-	printf("location: %s\n", account.location.c_str());
+	fmt::print("location: {}\n", account.location);
 }
 
 void
@@ -632,11 +632,11 @@ Acme(ConstBuffer<const char *> args)
 					     account.location.c_str(), *key,
 					     wrap_key.first, wrap_key.second);
 
-			printf("%s\n", account.location.c_str());
+			fmt::print("{}\n", account.location);
 		} else {
 			const AcmeKey key(key_path);
 			const auto account = AcmeClient(config).NewAccount(*key, email);
-			printf("%s\n", account.location.c_str());
+			fmt::print("{}\n", account.location);
 		}
 	} else if (StringIsEqual(cmd, "get-account")) {
 		if (!args.empty())
@@ -705,7 +705,7 @@ Acme(ConstBuffer<const char *> args)
 
 		AcmeNewOrder(db_config, config, *key, db, client, root_progress,
 			     handle, identifiers);
-		printf("OK\n");
+		fmt::print("OK\n");
 	} else if (StringIsEqual(cmd, "renew-cert")) {
 		if (args.size != 1)
 			throw Usage("acme renew-cert HANDLE");
@@ -720,7 +720,7 @@ Acme(ConstBuffer<const char *> args)
 		AcmeRenewCert(db_config, config, *key,
 			      db, client, root_progress, handle);
 
-		printf("OK\n");
+		fmt::print("OK\n");
 	} else
 		throw "Unknown acme command";
 }
