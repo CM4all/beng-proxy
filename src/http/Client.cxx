@@ -204,8 +204,6 @@ class HttpClient final : BufferedSocketHandler, IstreamSink, Cancellable, Destru
 		 */
 		SharedPoolPtr<OptionalIstreamControl> pending_body;
 
-		char content_length_buffer[32];
-
 		/**
 		 * This flag is set when the request istream has submitted
 		 * data.  It is used to check whether the request istream is
@@ -1491,11 +1489,9 @@ HttpClient::HttpClient(struct pool &_pool, struct pool &_caller_pool,
 
 			body = istream_chunked_new(GetPool(), std::move(body));
 		} else {
-			snprintf(request.content_length_buffer,
-				 sizeof(request.content_length_buffer),
-				 "%lu", (unsigned long)content_length);
-			header_write(headers2, "content-length",
-				     request.content_length_buffer);
+			header_write_begin(headers2, "content-length"sv);
+			headers2.Fmt("{}", content_length);
+			header_write_finish(headers2);
 		}
 
 		off_t available = expect_100 ? body.GetAvailable(true) : 0;
