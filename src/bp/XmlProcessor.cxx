@@ -566,7 +566,8 @@ XmlProcessor::TransformUriAttribute(const XmlParserAttribute &attr,
 
 	assert(target_widget != nullptr);
 
-	if (target_widget->cls == nullptr && target_widget->class_name == nullptr)
+	if (target_widget->IsRoot() ||
+	    (target_widget->cls == nullptr && target_widget->class_name == nullptr))
 		return;
 
 	std::string_view fragment{};

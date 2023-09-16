@@ -115,7 +115,10 @@ processor_subst_beng_widget(struct pool &pool,
 	subst.Add(pool, "&c:uri;", EscapeValue(pool, ctx.absolute_uri));
 	subst.Add(pool, "&c:base;", EscapeValue(pool, base_uri(&pool, ctx.uri)));
 	subst.Add(pool, "&c:frame;", EscapeValue(pool, strmap_get_checked(ctx.args, "frame")));
-	subst.Add(pool, "&c:view;", widget.GetEffectiveView()->name);
+
+	if (!widget.IsRoot())
+		subst.Add(pool, "&c:view;", widget.GetEffectiveView()->name);
+
 	subst.Add(pool, "&c:session;", nullptr); /* obsolete as of version 15.29 */
 	return subst;
 }

@@ -188,7 +188,8 @@ css_processor_parser_url(const CssParserValue *url, void *ctx) noexcept
 {
 	CssProcessor *processor = (CssProcessor *)ctx;
 
-	if (!css_processor_option_rewrite_url(processor))
+	if (!css_processor_option_rewrite_url(processor) ||
+	    processor->container.IsRoot())
 		return;
 
 	auto istream =
@@ -211,7 +212,8 @@ css_processor_parser_import(const CssParserValue *url, void *ctx) noexcept
 {
 	CssProcessor *processor = (CssProcessor *)ctx;
 
-	if (!css_processor_option_rewrite_url(processor))
+	if (!css_processor_option_rewrite_url(processor) ||
+	    processor->container.IsRoot())
 		return;
 
 	auto istream =

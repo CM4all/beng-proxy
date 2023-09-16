@@ -306,6 +306,10 @@ public:
 	[[gnu::pure]]
 	const char *GetLogName() const noexcept;
 
+	bool IsRoot() const noexcept {
+		return parent == nullptr;
+	}
+
 	[[gnu::pure]]
 	Widget *FindRoot() noexcept {
 		Widget *w = this;
