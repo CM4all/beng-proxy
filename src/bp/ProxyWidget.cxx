@@ -20,6 +20,7 @@
 #include "WidgetLookupProcessor.hxx"
 #include "istream/AutoPipeIstream.hxx"
 #include "pool/pool.hxx"
+#include "lib/fmt/ToBuffer.hxx"
 #include "io/Logger.hxx"
 
 class ProxyWidget final : PoolLeakDetector, WidgetLookupHandler, HttpResponseHandler, Cancellable {
@@ -260,9 +261,8 @@ ProxyWidget::ResolverCallback() noexcept
 	if (widget->cls == nullptr) {
 		widget->Cancel();
 
-		char log_msg[256];
-		snprintf(log_msg, sizeof(log_msg), "Failed to look up class for widget '%s'",
-			 widget->GetLogName());
+		const auto log_msg = FmtBuffer<256>("Failed to look up class for widget '{}'",
+						    widget->GetLogName());
 
 		auto &_request = request;
 		Destroy();
@@ -301,9 +301,8 @@ ProxyWidget::WidgetNotFound() noexcept
 
 	widget->Cancel();
 
-	char log_msg[256];
-	snprintf(log_msg, sizeof(log_msg), "Widget '%s' not found in %s",
-		 ref->id, widget->GetLogName());
+	const auto log_msg = FmtBuffer<256>("Widget '{}' not found in '{}'",
+					    ref->id, widget->GetLogName());
 
 	auto &_request = request;
 	Destroy();
