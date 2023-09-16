@@ -307,14 +307,11 @@ LbRequest::OnHttpResponse(HttpStatus status, StringMap &&_headers,
 		headers.MoveToBuffer("content-length");
 
 	if (new_cookie != 0) {
-		char buffer[64];
-		/* "Discard" must be last, to work around an Android bug*/
-		snprintf(buffer, sizeof(buffer),
-			 "beng_lb_node=0-%x; HttpOnly; Path=/; Version=1; Discard",
-			 new_cookie);
-
 		headers.Write("cookie2", "$Version=\"1\"");
-		headers.Write("set-cookie", buffer);
+
+		/* "Discard" must be last, to work around an Android bug*/
+		headers.Fmt("set-cookie",
+			    "beng_lb_node=0-{:x}; HttpOnly; Path=/; Version=1; Discard", new_cookie);
 	}
 
 	auto &_request = request;
