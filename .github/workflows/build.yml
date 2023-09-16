@@ -79,7 +79,7 @@ jobs:
              -Dyaml=enabled \
              -Dzeroconf=enabled \
              -Dbrotli=enabled \
-             --force-fallback-for=libcm4all-was-protocol \
+             --force-fallback-for=fmt,libcm4all-was-protocol \
              output
 
       - name: Build
