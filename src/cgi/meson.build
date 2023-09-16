@@ -5,6 +5,9 @@ cgi = static_library(
   'Client.cxx',
   'Launch.cxx',
   include_directories: inc,
+  dependencies: [
+    fmt_dep,
+  ],
 )
 
 cgi_dep = declare_dependency(

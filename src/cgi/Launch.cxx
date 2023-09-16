@@ -13,6 +13,8 @@
 #include "util/CharUtil.hxx"
 #include "AllocatorPtr.hxx"
 
+#include <fmt/format.h>
+
 #include <string.h>
 
 static const char *
@@ -112,10 +114,7 @@ PrepareCgi(struct pool &pool, PreparedChildProcess &p,
 		p.SetEnv("CONTENT_TYPE", content_type);
 
 	if (content_length >= 0) {
-		char value[32];
-		snprintf(value, sizeof(value), "%llu",
-			 (unsigned long long)content_length);
-		p.SetEnv("CONTENT_LENGTH", value);
+		p.SetEnv("CONTENT_LENGTH", fmt::format_int{content_length}.c_str());
 	}
 
 	const char *https = headers.Get("x-cm4all-https");
