@@ -111,6 +111,17 @@ public:
 		header_write(buffer, name, value);
 	}
 
+	void VFmt(std::string_view name, fmt::string_view format_str, fmt::format_args args) noexcept {
+		header_write_begin(buffer, name);
+		buffer.VFmt(format_str, args);
+		header_write_finish(buffer);
+	}
+
+	template<typename S, typename... Args>
+	void Fmt(std::string_view name, const S &format_str, Args&&... args) noexcept {
+		return VFmt(name, format_str, fmt::make_format_args(args...));
+	}
+
 	/**
 	 * Copy a (hop-by-hop) header from a map to the buffer.
 	 */
