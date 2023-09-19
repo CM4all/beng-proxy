@@ -113,7 +113,7 @@ ParseBasicAuth(const char *authorization) noexcept
 static char *
 ReadFirstLine(FileDescriptor fd, char *buffer, size_t size) noexcept
 {
-	ssize_t nbytes = pread(fd.Get(), buffer, size - 1, 0);
+	ssize_t nbytes = fd.ReadAt(0, buffer, size - 1);
 	if (nbytes <= 0)
 		return nullptr;
 
