@@ -5,6 +5,7 @@ cm4all-beng-proxy (18.0.36) unstable; urgency=low
   * bp: cache the BASE directory file handle for a minute
   * bp: use io_uring for AUTO_BROTLI, AUTO_GZIPPED, GZIPPED, FILE_ENOTDIR,
     FILE_NOT_FOUND, DIRECTORY_INDEX
+  * translation/cache: allow dots in CGROUP_SET
 
  --   
 
