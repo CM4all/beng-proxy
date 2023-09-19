@@ -149,7 +149,7 @@ RemoteWasStock::Get(AllocatorPtr alloc, SocketAddress address,
 	r->concurrency = concurrency;
 
 	char buffer[1024];
-	if (!ToString(buffer, sizeof(buffer), address))
+	if (!ToString(buffer, address))
 		buffer[0] = 0;
 
 	const char *key = alloc.Dup(buffer);

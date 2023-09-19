@@ -112,7 +112,7 @@ try {
 	if (!d.logger_client_address.IsNull() &&
 	    d.logger_client_address.IsDefined()) {
 		char buffer[1024];
-		if (ToString(buffer, sizeof(buffer), d.logger_client_address))
+		if (ToString(buffer, d.logger_client_address))
 			Lua::SetTable(L, RelativeStackIndex{-1},
 				      "logger_client", buffer);
 	}

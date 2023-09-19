@@ -35,7 +35,7 @@ LbPrometheusDiscovery::GenerateJSON() const noexcept
 	bool first = true;
 	for (const auto &[_, address] : members) {
 		char buffer[256];
-		if (!ToString(buffer, sizeof(buffer), address))
+		if (!ToString(buffer, address))
 			continue;
 
 		if (first)

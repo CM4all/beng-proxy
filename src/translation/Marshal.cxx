@@ -46,7 +46,7 @@ TranslationMarshaller::Write(TranslationCommand command,
 
 	char address_string[1024];
 
-	if (ToString(address_string, sizeof(address_string), address))
+	if (ToString(address_string, address))
 		Write(command_string, address_string);
 }
 

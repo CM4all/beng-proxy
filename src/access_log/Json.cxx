@@ -26,7 +26,7 @@ Dump(JsonWriter::Sink sink, const ReceivedAccessLogDatagram &d)
 	if (!d.logger_client_address.IsNull() &&
 	    d.logger_client_address.IsDefined()) {
 		char buffer[1024];
-		if (ToString(buffer, sizeof(buffer), d.logger_client_address))
+		if (ToString(buffer, d.logger_client_address))
 			o.AddMember("logger_client", buffer);
 	}
 

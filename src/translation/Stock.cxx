@@ -33,7 +33,7 @@ CreateConnectStreamSocket(const SocketAddress address)
 	if (!fd.Connect(address)) {
 		const int e = errno;
 		char buffer[256];
-		ToString(buffer, sizeof(buffer), address);
+		ToString(buffer, address);
 		throw FmtErrno(e, "Failed to connect to {}", buffer);
 	}
 

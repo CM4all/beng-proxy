@@ -41,7 +41,7 @@ static std::string
 ToString(SocketAddress address) noexcept
 {
 	char buffer[4096];
-	return ToString(buffer, sizeof(buffer), address, "unknown");
+	return ToString(buffer, address, "unknown");
 }
 
 LbMonitorStock::LbMonitorStock(EventLoop &_event_loop,

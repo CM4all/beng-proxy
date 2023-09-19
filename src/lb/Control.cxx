@@ -46,8 +46,7 @@ LbControl::InvalidateTranslationCache(std::span<const std::byte> payload,
 		char address_buffer[256];
 		sd_journal_send("MESSAGE=control TCACHE_INVALIDATE *",
 				"REMOTE_ADDR=%s",
-				ToString(address_buffer, sizeof(address_buffer),
-					 address, "?"),
+				ToString(address_buffer, address, "?"),
 				"PRIORITY=%i", LOG_DEBUG,
 				nullptr);
 #else
@@ -75,8 +74,7 @@ LbControl::InvalidateTranslationCache(std::span<const std::byte> payload,
 	char address_buffer[256];
 	sd_journal_send("MESSAGE=control TCACHE_INVALIDATE %s", request.ToString().c_str(),
 			"REMOTE_ADDR=%s",
-			ToString(address_buffer, sizeof(address_buffer),
-				 address, "?"),
+			ToString(address_buffer, address, "?"),
 			"PRIORITY=%i", LOG_DEBUG,
 			nullptr);
 #endif
@@ -116,7 +114,7 @@ LbControl::EnableNode(const char *payload, size_t length)
 
 	char buffer[64];
 	logger(4, "enabling node ", node_name, " (",
-	       ToString(buffer, sizeof(buffer), with_port, "?"),
+	       ToString(buffer, with_port, "?"),
 	       ")");
 
 	instance.failure_manager.Make(with_port).UnsetAll();
@@ -154,7 +152,7 @@ LbControl::FadeNode(const char *payload, size_t length)
 
 	char buffer[64];
 	logger(4, "fading node ", node_name, " (",
-	       ToString(buffer, sizeof(buffer), with_port, "?"),
+	       ToString(buffer, with_port, "?"),
 	       ")");
 
 	/* set status "FADE" for 3 hours */

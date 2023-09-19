@@ -94,7 +94,7 @@ LbCluster::ZeroconfMember::GetLogName() const noexcept
 		log_name = key.c_str();
 
 		char buffer[512];
-		if (ToString(buffer, sizeof(buffer), address)) {
+		if (ToString(buffer, address)) {
 			log_name += " (";
 			log_name += buffer;
 			log_name += ")";

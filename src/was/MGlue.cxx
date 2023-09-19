@@ -287,7 +287,7 @@ stopwatch_new_was(const StopwatchPtr &parent_stopwatch,
 
 	char path_buffer[1024];
 	if (path == nullptr) {
-		if (!ToString(path_buffer, sizeof(path_buffer), address))
+		if (!ToString(path_buffer, address))
 			return nullptr;
 		path = path_buffer;
 	}

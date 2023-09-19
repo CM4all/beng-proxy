@@ -14,7 +14,7 @@ address_to_string(struct pool &pool, SocketAddress address)
 		return nullptr;
 
 	char host[512];
-	bool success = ToString(host, sizeof(host), address);
+	bool success = ToString(host, address);
 	if (!success || *host == 0)
 		return nullptr;
 
@@ -28,7 +28,7 @@ address_to_host_string(struct pool &pool, SocketAddress address)
 		return nullptr;
 
 	char host[512];
-	bool success = HostToString(host, sizeof(host), address);
+	bool success = HostToString(host, address);
 	if (!success || *host == 0)
 		return nullptr;
 

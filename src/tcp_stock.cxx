@@ -231,12 +231,12 @@ TcpStock::Get(AllocatorPtr alloc, const StopwatchPtr &parent_stopwatch,
 
 	if (name == nullptr) {
 		char buffer[1024];
-		if (!ToString(buffer, sizeof(buffer), address))
+		if (!ToString(buffer, address))
 			buffer[0] = 0;
 
 		if (!bind_address.IsNull()) {
 			char bind_buffer[1024];
-			if (!ToString(bind_buffer, sizeof(bind_buffer), bind_address))
+			if (!ToString(bind_buffer, bind_address))
 				bind_buffer[0] = 0;
 			name = alloc.Concat(bind_buffer, ">", buffer);
 		} else
