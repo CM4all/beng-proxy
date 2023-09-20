@@ -368,6 +368,8 @@ endif
 
 if libcommon_enable_libsystemd or avahi_dep.found()
   subdir('libcommon/src/lib/dbus')
+else
+  odbus_dep = dependency('', required: false)
 endif
 
 subdir('src/http')
@@ -679,6 +681,7 @@ executable(
     event_uring_dep,
     event_net_log_dep,
     avahi_dep,
+    odbus_dep,
     pool_dep,
     io_config_dep,
     net_dep,
@@ -842,6 +845,7 @@ executable(
     stopwatch_dep,
     cookie_dep,
     control_server_dep,
+    odbus_dep,
     lua_dep,
     pcre_dep,
     cluster_dep,
