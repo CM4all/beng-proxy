@@ -7,7 +7,7 @@ cm4all-beng-proxy (18.0.36) unstable; urgency=low
     FILE_NOT_FOUND, DIRECTORY_INDEX
   * translation: allow dots in CGROUP_SET
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Wed, 20 Sep 2023 10:00:42 +0200
 
 cm4all-beng-proxy (18.0.35) unstable; urgency=low
 
