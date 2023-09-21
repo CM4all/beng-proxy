@@ -47,7 +47,7 @@ class FdCache {
 	Uring::Queue *const uring_queue;
 #endif // HAVE_URING
 
-	IntrusiveHashSet<Item, 32768,
+	IntrusiveHashSet<Item, 8192,
 			 IntrusiveHashSetOperators<Key::Hash, std::equal_to<Key>,
 						   ItemGetKey>> map;
 
