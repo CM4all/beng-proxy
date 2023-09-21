@@ -1,6 +1,6 @@
 cm4all-beng-proxy (18.0.37) unstable; urgency=low
 
-  * 
+  * spawn: fix stack corruption bug due to ABI mismatch
 
  --   
 
