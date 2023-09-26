@@ -6,6 +6,11 @@
  * I/O utilities for unit tests.
  */
 
+#include "system/Error.hxx"
+
+#include <cstddef>
+#include <stdexcept>
+
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <unistd.h>
@@ -19,8 +24,10 @@ read_full(void *_p, std::size_t length)
 
 	while (p < end) {
 		ssize_t nbytes = recv(0, p, length, MSG_WAITALL);
-		if (nbytes <= 0)
-			_exit(EXIT_FAILURE);
+		if (nbytes < 0)
+			throw MakeErrno("Failed to receive");
+		else if (nbytes == 0)
+			throw std::runtime_error{"Socket closed prematurely"};
 		p += nbytes;
 	}
 }
@@ -32,7 +39,7 @@ read_byte(std::size_t *remaining_r)
 	uint8_t value;
 
 	if (*remaining_r < sizeof(value))
-		_exit(EXIT_FAILURE);
+		throw std::runtime_error{"Premature end of packet"};
 
 	read_full(&value, sizeof(value));
 	(*remaining_r) -= sizeof(value);
@@ -61,8 +68,10 @@ write_full(const void *_p, std::size_t length)
 
 	while (p < end) {
 		ssize_t nbytes = send(0, p, length, MSG_NOSIGNAL);
-		if (nbytes <= 0)
-			_exit(EXIT_FAILURE);
+		if (nbytes < 0)
+			throw MakeErrno("Failed to send");
+		else if (nbytes == 0)
+			throw std::runtime_error{"Failed to send"};
 		p += nbytes;
 	}
 }

@@ -11,6 +11,8 @@
 #include "util/CharUtil.hxx"
 #include "AllocatorPtr.hxx"
 
+#include <stdexcept>
+
 #include <stdio.h>
 
 void
@@ -18,7 +20,7 @@ read_fcgi_header(struct fcgi_record_header *header)
 {
 	read_full(header, sizeof(*header));
 	if (header->version != FCGI_VERSION_1)
-		abort();
+		throw std::runtime_error{"Wrong FastCGI protocol version"};
 }
 
 static void
@@ -27,9 +29,11 @@ read_fcgi_begin_request(struct fcgi_begin_request *begin, uint16_t *request_id)
 	struct fcgi_record_header header;
 	read_fcgi_header(&header);
 
-	if (header.type != FCGI_BEGIN_REQUEST ||
-	    FromBE16(header.content_length) != sizeof(*begin))
-		abort();
+	if (header.type != FCGI_BEGIN_REQUEST)
+		throw std::runtime_error{"BEGIN_REQUEST expected"};
+
+	if (FromBE16(header.content_length) != sizeof(*begin))
+		throw std::runtime_error{"Malformed BEGIN_REQUEST"};
 
 	*request_id = header.request_id;
 
@@ -87,9 +91,11 @@ read_fcgi_params(struct pool *pool, FcgiRequest *r)
 		struct fcgi_record_header header;
 		read_fcgi_header(&header);
 
-		if (header.type != FCGI_PARAMS ||
-		    header.request_id != r->id)
-			abort();
+		if (header.type != FCGI_PARAMS)
+			throw std::runtime_error{"PARAMS expected"};
+
+		if (header.request_id != r->id)
+			throw std::runtime_error{"Malformed PARAMS"};
 
 		size_t remaining = FromBE16(header.content_length);
 		if (remaining == 0)
@@ -101,7 +107,7 @@ read_fcgi_params(struct pool *pool, FcgiRequest *r)
 
 			if (name_length >= sizeof(name) || value_length >= sizeof(value) ||
 			    name_length + value_length > remaining)
-				abort();
+				throw std::runtime_error{"Malformed PARAMS"};
 
 			read_full(name, name_length);
 			name[name_length] = 0;
@@ -124,7 +130,7 @@ read_fcgi_request(struct pool *pool, FcgiRequest *r)
 	struct fcgi_begin_request begin;
 	read_fcgi_begin_request(&begin, &r->id);
 	if (FromBE16(begin.role) != FCGI_RESPONDER)
-		abort();
+		throw std::runtime_error{"role==RESPONDER expected"};
 
 	read_fcgi_params(pool, r);
 
@@ -153,9 +159,11 @@ discard_fcgi_request_body(FcgiRequest *r)
 	while (true) {
 		read_fcgi_header(&header);
 
-		if (header.type != FCGI_STDIN ||
-		    header.request_id != r->id)
-			abort();
+		if (header.type != FCGI_STDIN)
+			throw std::runtime_error{"STDIN expected"};
+
+		if (header.request_id != r->id)
+			throw std::runtime_error{"Malformed STDIN"};
 
 		size_t length = FromBE16(header.content_length);
 		if (length == 0)

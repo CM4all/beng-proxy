@@ -13,6 +13,7 @@
 #include "net/SocketDescriptor.hxx"
 #include "util/ConstBuffer.hxx"
 #include "util/ByteOrder.hxx"
+#include "util/PrintException.hxx"
 #include "fcgi_server.hxx"
 #include "stopwatch.hxx"
 #include "AllocatorPtr.hxx"
@@ -388,7 +389,14 @@ FcgiClientFactory::New(EventLoop &event_loop, void (*f)(struct pool *pool))
 		client_socket.Close();
 
 		auto pool = pool_new_libc(nullptr, "f");
-		f(pool);
+
+		try {
+			f(pool);
+		} catch (...) {
+			PrintException(std::current_exception());
+			_exit(EXIT_FAILURE);
+		}
+
 		shutdown(0, SHUT_RDWR);
 		pool.reset();
 		_exit(EXIT_SUCCESS);
