@@ -3,22 +3,15 @@
 // author: Max Kellermann <mk@cm4all.com>
 
 #include "t_client.hxx"
-#include "tio.hxx"
 #include "stopwatch.hxx"
 #include "was/Client.hxx"
 #include "was/Server.hxx"
 #include "was/Lease.hxx"
 #include "was/async/Socket.hxx"
-#include "system/SetupProcess.hxx"
-#include "io/FileDescriptor.hxx"
-#include "net/SocketDescriptor.hxx"
 #include "lease.hxx"
 #include "istream/UnusedPtr.hxx"
 #include "istream/SuspendIstream.hxx"
 #include "event/FineTimerEvent.hxx"
-#include "util/ConstBuffer.hxx"
-#include "util/ByteOrder.hxx"
-#include "AllocatorPtr.hxx"
 #include "strmap.hxx"
 
 #include <functional>
