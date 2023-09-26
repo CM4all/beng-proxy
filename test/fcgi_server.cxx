@@ -7,6 +7,7 @@
 #include "http/Method.hxx"
 #include "strmap.hxx"
 #include "tio.hxx"
+#include "util/ByteOrder.hxx"
 #include "util/CharUtil.hxx"
 #include "AllocatorPtr.hxx"
 
