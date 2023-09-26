@@ -13,7 +13,7 @@
 #include <stdint.h>
 
 static void
-read_full(void *_p, size_t length)
+read_full(void *_p, std::size_t length)
 {
 	uint8_t *p = (uint8_t *)_p, *const end = p + length;
 
@@ -27,7 +27,7 @@ read_full(void *_p, size_t length)
 
 [[maybe_unused]]
 static uint8_t
-read_byte(size_t *remaining_r)
+read_byte(std::size_t *remaining_r)
 {
 	uint8_t value;
 
@@ -41,11 +41,11 @@ read_byte(size_t *remaining_r)
 
 [[maybe_unused]]
 static void
-discard(size_t length)
+discard(std::size_t length)
 {
 	while (length > 0) {
 		uint8_t buffer[1024];
-		size_t nbytes = length;
+		std::size_t nbytes = length;
 		if (nbytes > sizeof(buffer))
 			nbytes = sizeof(buffer);
 		read_full(buffer, nbytes);
@@ -55,7 +55,7 @@ discard(size_t length)
 
 [[maybe_unused]]
 static void
-write_full(const void *_p, size_t length)
+write_full(const void *_p, std::size_t length)
 {
 	const uint8_t *p = (const uint8_t *)_p, *const end = p + length;
 
