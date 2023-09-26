@@ -3,12 +3,13 @@
 // author: Max Kellermann <mk@cm4all.com>
 
 #include "fcgi/Protocol.hxx"
+#include "net/UniqueSocketDescriptor.hxx"
 #include "strmap.hxx"
 
 #include <cstdint>
+#include <string_view>
 
 #include <sys/types.h>
-#include <string.h>
 
 enum class HttpMethod : uint_least8_t;
 enum class HttpStatus : uint_least16_t;
@@ -26,29 +27,58 @@ struct FcgiRequest {
 	off_t length;
 };
 
-void
-read_fcgi_header(struct fcgi_record_header *header);
+class FcgiServer {
+	UniqueSocketDescriptor socket;
 
-void
-read_fcgi_request(struct pool *pool, FcgiRequest *r);
+public:
+	[[nodiscard]]
+	explicit FcgiServer(UniqueSocketDescriptor &&_socket) noexcept
+		:socket(std::move(_socket)) {}
 
-void
-discard_fcgi_request_body(FcgiRequest *r);
+	[[nodiscard]]
+	struct fcgi_record_header ReadHeader();
 
-void
-write_fcgi_stdout(const FcgiRequest *r,
-		  const void *data, size_t length);
+	[[nodiscard]]
+	std::pair<struct fcgi_begin_request, uint_least16_t> ReadBeginRequest();
 
-static inline void
-write_fcgi_stdout_string(const FcgiRequest *r,
-			 const char *data)
-{
-	write_fcgi_stdout(r, data, strlen(data));
-}
+	std::byte ReadByte(std::size_t &remaining);
+	std::size_t ReadLength(std::size_t &remaining);
 
-void
-write_fcgi_headers(const FcgiRequest *r, HttpStatus status,
-		   const StringMap &headers);
+	void ReadParams(struct pool &pool, FcgiRequest &request);
 
-void
-write_fcgi_end(const FcgiRequest *r);
+	[[nodiscard]]
+	FcgiRequest ReadRequest(struct pool &pool);
+
+	void DiscardRequestBody(const FcgiRequest &r);
+
+	[[nodiscard]]
+	std::size_t ReadRaw(std::span<std::byte> dest);
+
+	[[nodiscard]]
+	std::size_t ReadAllRaw(std::span<std::byte> dest);
+
+	void ReadFullRaw(std::span<std::byte> dest);
+
+	void DiscardRaw(std::size_t size);
+
+	[[nodiscard]]
+	std::size_t WriteRaw(std::span<const std::byte> src);
+
+	void WriteFullRaw(std::span<const std::byte> src);
+
+	void WriteHeader(const struct fcgi_record_header &src) {
+		WriteFullRaw(std::as_bytes(std::span{&src, 1}));
+	}
+
+	void WriteResponseHeaders(const FcgiRequest &r, HttpStatus status,
+				  const StringMap &headers);
+	void WriteStdout(const FcgiRequest &r, std::string_view src);
+
+	void MirrorRaw(std::size_t size);
+
+	void EndResponse(const FcgiRequest &r);
+
+	void Shutdown() noexcept {
+		socket.Shutdown();
+	}
+};

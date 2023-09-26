@@ -3,7 +3,6 @@
 // author: Max Kellermann <mk@cm4all.com>
 
 #include "t_client.hxx"
-#include "tio.hxx"
 #include "fcgi/Client.hxx"
 #include "system/SetupProcess.hxx"
 #include "io/UniqueFileDescriptor.hxx"
@@ -11,39 +10,22 @@
 #include "istream/UnusedPtr.hxx"
 #include "strmap.hxx"
 #include "net/SocketDescriptor.hxx"
-#include "util/ConstBuffer.hxx"
 #include "util/ByteOrder.hxx"
 #include "util/PrintException.hxx"
+#include "util/SpanCast.hxx"
 #include "fcgi_server.hxx"
 #include "stopwatch.hxx"
 #include "AllocatorPtr.hxx"
 
+#include <sys/socket.h>
 #include <sys/wait.h>
 
-static void
-mirror_data(size_t length)
-{
-	char buffer[4096];
-
-	while (length > 0) {
-		size_t l = length;
-		if (l > sizeof(buffer))
-			l = sizeof(buffer);
-
-		ssize_t nbytes = recv(0, buffer, l, MSG_WAITALL);
-		if (nbytes <= 0)
-			_exit(EXIT_FAILURE);
-
-		write_full(buffer, nbytes);
-		length -= nbytes;
-	}
-}
+using std::string_view_literals::operator""sv;
 
 static void
-fcgi_server_mirror(struct pool *pool)
+fcgi_server_mirror(struct pool &pool, FcgiServer &server)
 {
-	FcgiRequest request;
-	read_fcgi_request(pool, &request);
+	auto request = server.ReadRequest(pool);
 
 	HttpStatus status = request.length == 0
 		? HttpStatus::NO_CONTENT
@@ -52,17 +34,16 @@ fcgi_server_mirror(struct pool *pool)
 	char buffer[32];
 	if (request.length > 0) {
 		sprintf(buffer, "%llu", (unsigned long long)request.length);
-		request.headers.Add(*pool, "content-length", buffer);
+		request.headers.Add(pool, "content-length", buffer);
 	}
 
-	write_fcgi_headers(&request, status, request.headers);
+	server.WriteResponseHeaders(request, status, request.headers);
 
 	if (request.method == HttpMethod::HEAD)
-		discard_fcgi_request_body(&request);
+		server.DiscardRequestBody(request);
 	else {
 		while (true) {
-			struct fcgi_record_header header;
-			read_fcgi_header(&header);
+			auto header = server.ReadHeader();
 
 			if (header.type != FCGI_STDIN ||
 			    header.request_id != request.id)
@@ -72,77 +53,71 @@ fcgi_server_mirror(struct pool *pool)
 				break;
 
 			header.type = FCGI_STDOUT;
-			write_full(&header, sizeof(header));
-			mirror_data(FromBE16(header.content_length) + header.padding_length);
+			server.WriteHeader(header);
+			server.MirrorRaw(FromBE16(header.content_length) + header.padding_length);
 		}
 	}
 
-	write_fcgi_end(&request);
+	server.EndResponse(request);
 }
 
 static void
-fcgi_server_null(struct pool *pool)
+fcgi_server_null(struct pool &pool, FcgiServer &server)
 {
-	FcgiRequest request;
-	read_fcgi_request(pool, &request);
-	write_fcgi_headers(&request, HttpStatus::NO_CONTENT, {});
-	write_fcgi_end(&request);
-	discard_fcgi_request_body(&request);
+	const auto request = server.ReadRequest(pool);
+	server.WriteResponseHeaders(request, HttpStatus::NO_CONTENT, {});
+	server.EndResponse(request);
+	server.DiscardRequestBody(request);
 }
 
 static void
-fcgi_server_hello(struct pool *pool)
+fcgi_server_hello(struct pool &pool, FcgiServer &server)
 {
-	FcgiRequest request;
-	read_fcgi_request(pool, &request);
+	const auto request = server.ReadRequest(pool);
 
-	write_fcgi_headers(&request, HttpStatus::OK, {});
-	discard_fcgi_request_body(&request);
-	write_fcgi_stdout_string(&request, "hello");
-	write_fcgi_end(&request);
+	server.WriteResponseHeaders(request, HttpStatus::OK, {});
+	server.DiscardRequestBody(request);
+	server.WriteStdout(request, "hello");
+	server.EndResponse(request);
 }
 
 static void
-fcgi_server_tiny(struct pool *pool)
+fcgi_server_tiny(struct pool &pool, FcgiServer &server)
 {
-	FcgiRequest request;
-	read_fcgi_request(pool, &request);
+	const auto request = server.ReadRequest(pool);
 
-	discard_fcgi_request_body(&request);
-	write_fcgi_stdout_string(&request, "content-length: 5\n\nhello");
-	write_fcgi_end(&request);
+	server.DiscardRequestBody(request);
+	server.WriteStdout(request, "content-length: 5\n\nhello");
+	server.EndResponse(request);
 }
 
 static void
-fcgi_server_malformed_header_name(struct pool *pool)
+fcgi_server_malformed_header_name(struct pool &pool, FcgiServer &server)
 {
-	FcgiRequest request;
-	read_fcgi_request(pool, &request);
+	const auto request = server.ReadRequest(pool);
 
-	discard_fcgi_request_body(&request);
-	write_fcgi_stdout_string(&request, "header name: foo\n\nhello");
-	write_fcgi_end(&request);
+	server.DiscardRequestBody(request);
+	server.WriteStdout(request, "header name: foo\n\nhello");
+	server.EndResponse(request);
 }
 
 static void
-fcgi_server_malformed_header_value(struct pool *pool)
+fcgi_server_malformed_header_value(struct pool &pool, FcgiServer &server)
 {
-	FcgiRequest request;
-	read_fcgi_request(pool, &request);
+	const auto request = server.ReadRequest(pool);
 
-	discard_fcgi_request_body(&request);
-	write_fcgi_stdout_string(&request, "header: foo\rbar\n\nhello");
-	write_fcgi_end(&request);
+	server.DiscardRequestBody(request);
+	server.WriteStdout(request, "header: foo\rbar\n\nhello");
+	server.EndResponse(request);
 }
 
 static void
-fcgi_server_huge(struct pool *pool)
+fcgi_server_huge(struct pool &pool, FcgiServer &server)
 {
-	FcgiRequest request;
-	read_fcgi_request(pool, &request);
+	const auto request = server.ReadRequest(pool);
 
-	discard_fcgi_request_body(&request);
-	write_fcgi_stdout_string(&request, "content-length: 524288\n\nhello");
+	server.DiscardRequestBody(request);
+	server.WriteStdout(request, "content-length: 524288\n\nhello");
 
 	char buffer[23456];
 	memset(buffer, 0xab, sizeof(buffer));
@@ -150,34 +125,31 @@ fcgi_server_huge(struct pool *pool)
 	size_t remaining = 524288;
 	while (remaining > 0) {
 		size_t nbytes = std::min(remaining, sizeof(buffer));
-		write_fcgi_stdout(&request, buffer, nbytes);
+		server.WriteStdout(request, {buffer, nbytes});
 		remaining -= nbytes;
 	}
 
-	write_fcgi_end(&request);
+	server.EndResponse(request);
 }
 
 [[noreturn]]
 static void
-fcgi_server_hold(struct pool *pool)
+fcgi_server_hold(struct pool &pool, FcgiServer &server)
 {
-	FcgiRequest request;
-	read_fcgi_request(pool, &request);
-	write_fcgi_headers(&request, HttpStatus::OK, {});
+	const auto request = server.ReadRequest(pool);
+	server.WriteResponseHeaders(request, HttpStatus::OK, {});
 
 	/* wait until the connection gets closed */
 	while (true) {
-		struct fcgi_record_header header;
-		read_fcgi_header(&header);
+		server.ReadHeader();
 	}
 }
 
 static void
-fcgi_server_premature_close_headers(struct pool *pool)
+fcgi_server_premature_close_headers(struct pool &pool, FcgiServer &server)
 {
-	FcgiRequest request;
-	read_fcgi_request(pool, &request);
-	discard_fcgi_request_body(&request);
+	const auto request = server.ReadRequest(pool);
+	server.DiscardRequestBody(request);
 
 	const struct fcgi_record_header header = {
 		.version = FCGI_VERSION_1,
@@ -188,18 +160,16 @@ fcgi_server_premature_close_headers(struct pool *pool)
 		.reserved = 0,
 	};
 
-	write_full(&header, sizeof(header));
+	server.WriteHeader(header);
 
-	const char *data = "Foo: 1\nBar: 1\nX: ";
-	write_full(data, strlen(data));
+	server.WriteFullRaw(AsBytes("Foo: 1\nBar: 1\nX: "sv));
 }
 
 static void
-fcgi_server_premature_close_body(struct pool *pool)
+fcgi_server_premature_close_body(struct pool &pool, FcgiServer &server)
 {
-	FcgiRequest request;
-	read_fcgi_request(pool, &request);
-	discard_fcgi_request_body(&request);
+	const auto request = server.ReadRequest(pool);
+	server.DiscardRequestBody(request);
 
 	const struct fcgi_record_header header = {
 		.version = FCGI_VERSION_1,
@@ -210,40 +180,36 @@ fcgi_server_premature_close_body(struct pool *pool)
 		.reserved = 0,
 	};
 
-	write_full(&header, sizeof(header));
+	server.WriteHeader(header);
 
-	const char *data = "Foo: 1\nBar: 1\n\nFoo Bar";
-	write_full(data, strlen(data));
+	server.WriteFullRaw(AsBytes("Foo: 1\nBar: 1\n\nFoo Bar"sv));
 }
 
 static void
-fcgi_server_premature_end(struct pool *pool)
+fcgi_server_premature_end(struct pool &pool, FcgiServer &server)
 {
-	FcgiRequest request;
-	read_fcgi_request(pool, &request);
+	const auto request = server.ReadRequest(pool);
 
-	discard_fcgi_request_body(&request);
-	write_fcgi_stdout_string(&request, "content-length: 524288\n\nhello");
-	write_fcgi_end(&request);
+	server.DiscardRequestBody(request);
+	server.WriteStdout(request, "content-length: 524288\n\nhello");
+	server.EndResponse(request);
 }
 
 static void
-fcgi_server_excess_data(struct pool *pool)
+fcgi_server_excess_data(struct pool &pool, FcgiServer &server)
 {
-	FcgiRequest request;
-	read_fcgi_request(pool, &request);
+	const auto request = server.ReadRequest(pool);
 
-	discard_fcgi_request_body(&request);
-	write_fcgi_stdout_string(&request, "content-length: 5\n\nhello world");
-	write_fcgi_end(&request);
+	server.DiscardRequestBody(request);
+	server.WriteStdout(request, "content-length: 5\n\nhello world");
+	server.EndResponse(request);
 }
 
 static void
-fcgi_server_nop(struct pool *pool)
+fcgi_server_nop(struct pool &pool, FcgiServer &server)
 {
-	FcgiRequest request;
-	read_fcgi_request(pool, &request);
-	discard_fcgi_request_body(&request);
+	const auto request = server.ReadRequest(pool);
+	server.DiscardRequestBody(request);
 }
 
 class FcgiClientConnection final : public ClientConnection {
@@ -301,7 +267,7 @@ struct FcgiClientFactory {
 	}
 
 	static FcgiClientConnection *New(EventLoop &event_loop,
-					 void (*f)(struct pool *pool));
+					 void (*f)(struct pool &pool, FcgiServer &server));
 
 	auto *NewMirror(struct pool &, EventLoop &event_loop) {
 		return New(event_loop, fcgi_server_mirror);
@@ -367,7 +333,7 @@ struct FcgiClientFactory {
 };
 
 FcgiClientConnection *
-FcgiClientFactory::New(EventLoop &event_loop, void (*f)(struct pool *pool))
+FcgiClientFactory::New(EventLoop &event_loop, void (*f)(struct pool &pool, FcgiServer &server))
 {
 	SocketDescriptor server_socket, client_socket;
 	if (!SocketDescriptor::CreateSocketPair(AF_LOCAL, SOCK_STREAM, 0,
@@ -383,21 +349,19 @@ FcgiClientFactory::New(EventLoop &event_loop, void (*f)(struct pool *pool))
 	}
 
 	if (pid == 0) {
-		server_socket.Duplicate(FileDescriptor(STDIN_FILENO));
-		server_socket.Duplicate(FileDescriptor(STDOUT_FILENO));
-		server_socket.Close();
 		client_socket.Close();
 
 		auto pool = pool_new_libc(nullptr, "f");
+		FcgiServer server{UniqueSocketDescriptor{server_socket}};
 
 		try {
-			f(pool);
+			f(*pool, server);
 		} catch (...) {
 			PrintException(std::current_exception());
 			_exit(EXIT_FAILURE);
 		}
 
-		shutdown(0, SHUT_RDWR);
+		server.Shutdown();
 		pool.reset();
 		_exit(EXIT_SUCCESS);
 	}

@@ -5,50 +5,68 @@
 #include "fcgi_server.hxx"
 #include "pool/pool.hxx"
 #include "http/Method.hxx"
-#include "tio.hxx"
+#include "system/Error.hxx"
 #include "util/ByteOrder.hxx"
 #include "util/CharUtil.hxx"
+#include "util/SpanCast.hxx"
 #include "AllocatorPtr.hxx"
 
 #include <stdexcept>
 
 #include <stdio.h>
+#include <sys/socket.h>
 
-void
-read_fcgi_header(struct fcgi_record_header *header)
-{
-	read_full(header, sizeof(*header));
-	if (header->version != FCGI_VERSION_1)
-		throw std::runtime_error{"Wrong FastCGI protocol version"};
-}
-
-static void
-read_fcgi_begin_request(struct fcgi_begin_request *begin, uint16_t *request_id)
+struct fcgi_record_header
+FcgiServer::ReadHeader()
 {
 	struct fcgi_record_header header;
-	read_fcgi_header(&header);
+	ReadFullRaw(std::as_writable_bytes(std::span{&header, 1}));
 
+	if (header.version != FCGI_VERSION_1)
+		throw std::runtime_error{"Wrong FastCGI protocol version"};
+
+	return header;
+}
+
+inline std::pair<struct fcgi_begin_request, uint_least16_t>
+FcgiServer::ReadBeginRequest()
+{
+	const auto header = ReadHeader();
 	if (header.type != FCGI_BEGIN_REQUEST)
 		throw std::runtime_error{"BEGIN_REQUEST expected"};
 
-	if (FromBE16(header.content_length) != sizeof(*begin))
+	struct fcgi_begin_request begin;
+	if (FromBE16(header.content_length) != sizeof(begin))
 		throw std::runtime_error{"Malformed BEGIN_REQUEST"};
 
-	*request_id = header.request_id;
+	ReadFullRaw(std::as_writable_bytes(std::span{&begin, 1}));
+	DiscardRaw(header.padding_length);
 
-	read_full(begin, sizeof(*begin));
-	discard(header.padding_length);
+	return {begin, header.request_id};
 }
 
-static size_t
-read_fcgi_length(size_t *remaining_r)
+std::byte
+FcgiServer::ReadByte(std::size_t &remaining)
 {
-	uint8_t a = read_byte(remaining_r);
+	if (remaining == 0)
+		throw std::runtime_error{"Premature end of packet"};
+
+	std::byte value;
+	ReadFullRaw({&value, 1});
+	--remaining;
+	return value;
+}
+
+std::size_t
+FcgiServer::ReadLength(std::size_t &remaining)
+{
+	const uint_least8_t a = (uint_least8_t)ReadByte(remaining);
 	if (a < 0x80)
 		return a;
 
-	uint8_t b = read_byte(remaining_r), c = read_byte(remaining_r),
-		d = read_byte(remaining_r);
+	const uint_least8_t b = (uint_least8_t)ReadByte(remaining);
+	const uint_least8_t c = (uint_least8_t)ReadByte(remaining);
+	const uint_least8_t d = (uint_least8_t)ReadByte(remaining);
 
 	return ((a & 0x7f) << 24) | (b << 16) | (c << 8) | d;
 }
@@ -78,21 +96,20 @@ handle_fcgi_param(struct pool *pool, FcgiRequest *r,
 	}
 }
 
-static void
-read_fcgi_params(struct pool *pool, FcgiRequest *r)
+void
+FcgiServer::ReadParams(struct pool &pool, FcgiRequest &r)
 {
-	r->method = HttpMethod::GET;
-	r->uri = nullptr;
+	r.method = HttpMethod::GET;
+	r.uri = nullptr;
 
 	char name[1024], value[8192];
 	while (true) {
-		struct fcgi_record_header header;
-		read_fcgi_header(&header);
+		const auto header = ReadHeader();
 
 		if (header.type != FCGI_PARAMS)
 			throw std::runtime_error{"PARAMS expected"};
 
-		if (header.request_id != r->id)
+		if (header.request_id != r.id)
 			throw std::runtime_error{"Malformed PARAMS"};
 
 		size_t remaining = FromBE16(header.content_length);
@@ -100,97 +117,167 @@ read_fcgi_params(struct pool *pool, FcgiRequest *r)
 			break;
 
 		while (remaining > 0) {
-			size_t name_length = read_fcgi_length(&remaining),
-				value_length = read_fcgi_length(&remaining);
+			const std::size_t name_length = ReadLength(remaining);
+			const std::size_t value_length = ReadLength(remaining);
 
 			if (name_length >= sizeof(name) || value_length >= sizeof(value) ||
 			    name_length + value_length > remaining)
 				throw std::runtime_error{"Malformed PARAMS"};
 
-			read_full(name, name_length);
+			ReadFullRaw(std::as_writable_bytes(std::span{name}.first(name_length)));
 			name[name_length] = 0;
 			remaining -= name_length;
 
-			read_full(value, value_length);
+			ReadFullRaw(std::as_writable_bytes(std::span{value}.first(value_length)));
 			value[value_length] = 0;
 			remaining -= value_length;
 
-			handle_fcgi_param(pool,r, name, value);
+			handle_fcgi_param(&pool, &r, name, value);
 		}
 
-		discard(header.padding_length);
+		DiscardRaw(header.padding_length);
 	}
 }
 
-void
-read_fcgi_request(struct pool *pool, FcgiRequest *r)
+FcgiRequest
+FcgiServer::ReadRequest(struct pool &pool)
 {
-	struct fcgi_begin_request begin;
-	read_fcgi_begin_request(&begin, &r->id);
+	const auto [begin, request_id] = ReadBeginRequest();
 	if (FromBE16(begin.role) != FCGI_RESPONDER)
 		throw std::runtime_error{"role==RESPONDER expected"};
 
-	read_fcgi_params(pool, r);
+	FcgiRequest r;
+	r.id = request_id;
 
-	const char *content_length = r->headers.Remove("content-length");
-	r->length = content_length != nullptr
+	ReadParams(pool, r);
+
+	const char *content_length = r.headers.Remove("content-length");
+	r.length = content_length != nullptr
 		? strtol(content_length, nullptr, 10)
 		: -1;
 
 	if (content_length == nullptr) {
 		struct fcgi_record_header header;
-		ssize_t nbytes = recv(0, &header, sizeof(header),
-				      MSG_DONTWAIT|MSG_PEEK);
+		ssize_t nbytes = socket.Receive(std::as_writable_bytes(std::span{&header, 1}),
+						MSG_DONTWAIT|MSG_PEEK);
 		if (nbytes == (ssize_t)sizeof(header) &&
 		    header.version == FCGI_VERSION_1 &&
 		    header.type == FCGI_STDIN &&
 		    header.content_length == 0)
-			r->length = 0;
+			r.length = 0;
 	}
+
+	return r;
 }
 
 void
-discard_fcgi_request_body(FcgiRequest *r)
+FcgiServer::DiscardRequestBody(const FcgiRequest &r)
 {
-	struct fcgi_record_header header;
-
 	while (true) {
-		read_fcgi_header(&header);
+		const auto header = ReadHeader();
 
 		if (header.type != FCGI_STDIN)
 			throw std::runtime_error{"STDIN expected"};
 
-		if (header.request_id != r->id)
+		if (header.request_id != r.id)
 			throw std::runtime_error{"Malformed STDIN"};
 
-		size_t length = FromBE16(header.content_length);
-		if (length == 0)
-			break;
+		std::size_t content_length = FromBE16(header.content_length);
+		DiscardRaw(content_length + header.padding_length);
 
-		discard(length);
+		if (content_length == 0)
+			break;
+	}
+}
+
+std::size_t
+FcgiServer::ReadRaw(std::span<std::byte> dest)
+{
+	auto nbytes = socket.Receive(dest);
+	if (nbytes < 0)
+		throw MakeErrno("Failed to receive");
+
+	return nbytes;
+}
+
+std::size_t
+FcgiServer::ReadAllRaw(std::span<std::byte> dest)
+{
+	auto nbytes = socket.Receive(dest, MSG_WAITALL);
+	if (nbytes < 0)
+		throw MakeErrno("Failed to receive");
+
+	return nbytes;
+}
+
+void
+FcgiServer::ReadFullRaw(std::span<std::byte> dest)
+{
+	while (!dest.empty()) {
+		std::size_t nbytes = ReadAllRaw(dest);
+		if (nbytes == 0)
+			throw std::runtime_error{"Peer closed the socket prematurely"};
+
+		dest = dest.subspan(nbytes);
 	}
 }
 
 void
-write_fcgi_stdout(const FcgiRequest *r,
-		  const void *data, size_t length)
+FcgiServer::DiscardRaw(std::size_t size)
+{
+	while (size > 0) {
+		std::byte buffer[4096];
+
+		std::span<std::byte> dest = buffer;
+		if (size < dest.size())
+			dest = dest.first(size);
+
+		std::size_t nbytes = ReadAllRaw(dest);
+		if (nbytes == 0)
+			throw std::runtime_error{"Peer closed the socket prematurely"};
+
+		size -= nbytes;
+	}
+}
+
+std::size_t
+FcgiServer::WriteRaw(std::span<const std::byte> src)
+{
+	auto nbytes = socket.Send(src);
+	if (nbytes < 0)
+		throw MakeErrno("Failed to send");
+
+	return nbytes;
+}
+
+void
+FcgiServer::WriteFullRaw(std::span<const std::byte> src)
+{
+	while (!src.empty()) {
+		std::size_t nbytes = WriteRaw(src);
+		src = src.subspan(nbytes);
+	}
+}
+
+void
+FcgiServer::WriteStdout(const FcgiRequest &r, std::string_view src)
 {
 	const struct fcgi_record_header header = {
 		.version = FCGI_VERSION_1,
 		.type = FCGI_STDOUT,
-		.request_id = r->id,
-		.content_length = ToBE16(length),
+		.request_id = r.id,
+		.content_length = ToBE16(src.size()),
 		.padding_length = 0,
 		.reserved = 0,
 	};
 
-	write_full(&header, sizeof(header));
-	write_full(data, length);
+	WriteHeader(header);
+	WriteFullRaw(AsBytes(src));
 }
 
 void
-write_fcgi_headers(const FcgiRequest *r, HttpStatus status,
-		   const StringMap &headers)
+FcgiServer::WriteResponseHeaders(const FcgiRequest &r, HttpStatus status,
+				 const StringMap &headers)
 {
 	char buffer[8192], *p = buffer;
 	p += sprintf(p, "status: %u\n", static_cast<unsigned>(status));
@@ -200,20 +287,40 @@ write_fcgi_headers(const FcgiRequest *r, HttpStatus status,
 
 	p += sprintf(p, "\n");
 
-	write_fcgi_stdout(r, buffer, p - buffer);
+	WriteStdout(r, {buffer, std::size_t(p - buffer)});
 }
 
 void
-write_fcgi_end(const FcgiRequest *r)
+FcgiServer::EndResponse(const FcgiRequest &r)
 {
 	const struct fcgi_record_header header = {
 		.version = FCGI_VERSION_1,
 		.type = FCGI_END_REQUEST,
-		.request_id = r->id,
+		.request_id = r.id,
 		.content_length = 0,
 		.padding_length = 0,
 		.reserved = 0,
 	};
 
-	write_full(&header, sizeof(header));
+	WriteHeader(header);
+}
+
+void
+FcgiServer::MirrorRaw(std::size_t size)
+{
+	while (size > 0) {
+		std::byte buffer[4096];
+
+		std::span<std::byte> dest = buffer;
+		if (size < dest.size())
+			dest = dest.first(size);
+
+		auto nbytes = ReadAllRaw(dest);
+		if (nbytes == 0)
+			throw std::runtime_error{"Peer closed the socket prematurely"};
+
+		WriteFullRaw(dest.first(nbytes));
+
+		size -= nbytes;
+	}
 }
