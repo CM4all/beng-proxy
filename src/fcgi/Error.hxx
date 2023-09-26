@@ -8,6 +8,5 @@
 
 class FcgiClientError : public std::runtime_error {
 public:
-	explicit FcgiClientError(const char *_msg)
-		:std::runtime_error(_msg) {}
+	using std::runtime_error::runtime_error;
 };
