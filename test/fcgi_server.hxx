@@ -48,7 +48,7 @@ write_fcgi_stdout_string(const FcgiRequest *r,
 
 void
 write_fcgi_headers(const FcgiRequest *r, HttpStatus status,
-		   StringMap *headers);
+		   const StringMap &headers);
 
 void
 write_fcgi_end(const FcgiRequest *r);

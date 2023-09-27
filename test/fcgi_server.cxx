@@ -190,14 +190,13 @@ write_fcgi_stdout(const FcgiRequest *r,
 
 void
 write_fcgi_headers(const FcgiRequest *r, HttpStatus status,
-		   StringMap *headers)
+		   const StringMap &headers)
 {
 	char buffer[8192], *p = buffer;
 	p += sprintf(p, "status: %u\n", static_cast<unsigned>(status));
 
-	if (headers != nullptr)
-		for (const auto &i : *headers)
-			p += sprintf(p, "%s: %s\n", i.key, i.value);
+	for (const auto &i : headers)
+		p += sprintf(p, "%s: %s\n", i.key, i.value);
 
 	p += sprintf(p, "\n");
 
