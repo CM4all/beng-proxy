@@ -5,6 +5,7 @@
 #include "Internal.hxx"
 #include "Request.hxx"
 #include "Handler.hxx"
+#include "http/HeaderLimits.hxx"
 #include "http/Method.hxx"
 #include "http/Upgrade.hxx"
 #include "pool/pool.hxx"
@@ -284,7 +285,7 @@ HttpServerConnection::HandleLine(std::string_view line) noexcept
 		if (request.ignore_headers)
 			return true;
 
-		if (line.size() >= 8192) {
+		if (line.size() >= MAX_HTTP_HEADER_SIZE) {
 			request.SetError(HttpStatus::REQUEST_HEADER_FIELDS_TOO_LARGE,
 					 "Request header is too long\n");
 			request.ignore_headers = true;
@@ -309,7 +310,7 @@ HttpServerConnection::FeedHeaders(const std::string_view b) noexcept
 	assert(request.read_state == Request::START ||
 	       request.read_state == Request::HEADERS);
 
-	if (request.bytes_received >= 64 * 1024) {
+	if (request.bytes_received >= MAX_TOTAL_HTTP_HEADER_SIZE) {
 		assert(request.read_state == Request::HEADERS);
 
 		socket->DisposeConsumed(b.size());
