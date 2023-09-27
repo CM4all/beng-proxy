@@ -77,10 +77,10 @@ fcgi_server_hello(struct pool &pool, FcgiServer &server)
 
 	server.WriteResponseHeaders(request, HttpStatus::OK, {});
 	server.DiscardRequestBody(request);
-	server.WriteStdout(request, "hello");
+	server.WriteStdout(request, "hello"sv);
 
 	/* writing a STDERR packet, trying to confuse the client */
-	server.WriteStderr(request, "err\n");
+	server.WriteStderr(request, "err\n"sv);
 
 	server.EndResponse(request);
 }
@@ -91,7 +91,7 @@ fcgi_server_tiny(struct pool &pool, FcgiServer &server)
 	const auto request = server.ReadRequest(pool);
 
 	server.DiscardRequestBody(request);
-	server.WriteStdout(request, "content-length: 5\n\nhello");
+	server.WriteStdout(request, "content-length: 5\n\nhello"sv);
 	server.EndResponse(request);
 }
 
@@ -101,7 +101,7 @@ fcgi_server_malformed_header_name(struct pool &pool, FcgiServer &server)
 	const auto request = server.ReadRequest(pool);
 
 	server.DiscardRequestBody(request);
-	server.WriteStdout(request, "header name: foo\n\nhello");
+	server.WriteStdout(request, "header name: foo\n\nhello"sv);
 	server.EndResponse(request);
 }
 
@@ -111,7 +111,7 @@ fcgi_server_malformed_header_value(struct pool &pool, FcgiServer &server)
 	const auto request = server.ReadRequest(pool);
 
 	server.DiscardRequestBody(request);
-	server.WriteStdout(request, "header: foo\rbar\n\nhello");
+	server.WriteStdout(request, "header: foo\rbar\n\nhello"sv);
 	server.EndResponse(request);
 }
 
@@ -121,7 +121,7 @@ fcgi_server_huge(struct pool &pool, FcgiServer &server)
 	const auto request = server.ReadRequest(pool);
 
 	server.DiscardRequestBody(request);
-	server.WriteStdout(request, "content-length: 524288\n\nhello");
+	server.WriteStdout(request, "content-length: 524288\n\nhello"sv);
 
 	char buffer[23456];
 	memset(buffer, 0xab, sizeof(buffer));
@@ -187,7 +187,7 @@ fcgi_server_premature_end(struct pool &pool, FcgiServer &server)
 	const auto request = server.ReadRequest(pool);
 
 	server.DiscardRequestBody(request);
-	server.WriteStdout(request, "content-length: 524288\n\nhello");
+	server.WriteStdout(request, "content-length: 524288\n\nhello"sv);
 	server.EndResponse(request);
 }
 
@@ -197,7 +197,7 @@ fcgi_server_excess_data(struct pool &pool, FcgiServer &server)
 	const auto request = server.ReadRequest(pool);
 
 	server.DiscardRequestBody(request);
-	server.WriteStdout(request, "content-length: 5\n\nhello world");
+	server.WriteStdout(request, "content-length: 5\n\nhello world"sv);
 	server.EndResponse(request);
 }
 
