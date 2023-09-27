@@ -82,6 +82,10 @@ fcgi_server_hello(struct pool &pool, FcgiServer &server)
 	/* writing a STDERR packet, trying to confuse the client */
 	server.WriteStderr(request, "err\n"sv);
 
+	/* some more confusion: an unknown record which should be
+	   ignored by the client */
+	server.WriteRecord(request, FCGI_UNKNOWN_TYPE, "ignore this"sv);
+
 	server.EndResponse(request);
 }
 
