@@ -886,6 +886,10 @@ FcgiClient::_FillBucketList(IstreamBucketList &list)
 				ReleaseSocket(PutAction::REUSE);
 
 			break;
+		} else if (header.type == FCGI_STDERR) {
+			data += sizeof(header);
+			current_skip_length = new_content_length + header.padding_length;
+			continue;
 		} else if (header.type != FCGI_STDOUT)
 			break;
 
@@ -965,7 +969,16 @@ FcgiClient::_ConsumeBucketList(std::size_t nbytes) noexcept
 			return {Consumed(total), true};
 		}
 
-		if (header.type != FCGI_STDOUT)
+		if (header.type == FCGI_STDERR) {
+			if (b.size() < sizeof(header) + new_content_length)
+				break;
+
+			HandleStderrPayload(b.subspan(sizeof(header)).first(new_content_length));
+			socket.DisposeConsumed(sizeof(header) + new_content_length);
+
+			skip_length = header.padding_length;
+			continue;
+		} else if (header.type != FCGI_STDOUT)
 			break;
 
 		content_length = new_content_length;
