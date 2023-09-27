@@ -155,14 +155,12 @@ fcgi_server_premature_close_headers(struct pool &pool, FcgiServer &server)
 	const auto request = server.ReadRequest(pool);
 	server.DiscardRequestBody(request);
 
-	const struct fcgi_record_header header = {
+	server.WriteHeader({
 		.version = FCGI_VERSION_1,
 		.type = FCGI_STDOUT,
 		.request_id = request.id,
 		.content_length = ToBE16(1024),
-	};
-
-	server.WriteHeader(header);
+	});
 
 	server.WriteFullRaw(AsBytes("Foo: 1\nBar: 1\nX: "sv));
 }
@@ -173,14 +171,12 @@ fcgi_server_premature_close_body(struct pool &pool, FcgiServer &server)
 	const auto request = server.ReadRequest(pool);
 	server.DiscardRequestBody(request);
 
-	const struct fcgi_record_header header = {
+	server.WriteHeader({
 		.version = FCGI_VERSION_1,
 		.type = FCGI_STDOUT,
 		.request_id = request.id,
 		.content_length = ToBE16(1024),
-	};
-
-	server.WriteHeader(header);
+	});
 
 	server.WriteFullRaw(AsBytes("Foo: 1\nBar: 1\n\nFoo Bar"sv));
 }

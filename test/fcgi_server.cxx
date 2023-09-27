@@ -262,14 +262,13 @@ FcgiServer::WriteFullRaw(std::span<const std::byte> src)
 void
 FcgiServer::WriteRecord(const FcgiRequest &r, uint8_t type, std::string_view payload)
 {
-	const struct fcgi_record_header header = {
+	WriteHeader({
 		.version = FCGI_VERSION_1,
 		.type = type,
 		.request_id = r.id,
 		.content_length = ToBE16(payload.size()),
-	};
+	});
 
-	WriteHeader(header);
 	WriteFullRaw(AsBytes(payload));
 }
 
@@ -291,13 +290,11 @@ FcgiServer::WriteResponseHeaders(const FcgiRequest &r, HttpStatus status,
 void
 FcgiServer::EndResponse(const FcgiRequest &r)
 {
-	const struct fcgi_record_header header = {
+	WriteHeader({
 		.version = FCGI_VERSION_1,
 		.type = FCGI_END_REQUEST,
 		.request_id = r.id,
-	};
-
-	WriteHeader(header);
+	});
 }
 
 void
