@@ -347,7 +347,9 @@ FcgiClient::AnalyseBuffer(const std::span<const std::byte> buffer) const noexcep
 			/* reached the end of the given buffer */
 			break;
 
-		data += FromBE16(header.content_length);
+		const std::size_t new_content_length = FromBE16(header.content_length);
+
+		data += new_content_length;
 		data += header.padding_length;
 
 		if (header.request_id == id) {
@@ -356,7 +358,7 @@ FcgiClient::AnalyseBuffer(const std::span<const std::byte> buffer) const noexcep
 				result.end_request_offset = data - data0;
 				break;
 			} else if (header.type == FCGI_STDOUT) {
-				result.total_stdout += FromBE16(header.content_length);
+				result.total_stdout += new_content_length;
 			}
 		}
 	}
@@ -853,10 +855,12 @@ FcgiClient::_FillBucketList(IstreamBucketList &list)
 		if (remaining < sizeof(header))
 			break;
 
+		const std::size_t new_content_length = FromBE16(header.content_length);
+
 		if (header.request_id != id) {
 			/* ignore packets from other requests */
 			current_skip_length = sizeof(header)
-				+ FromBE16(header.content_length)
+				+ new_content_length
 				+ header.padding_length;
 			continue;
 		}
@@ -878,14 +882,14 @@ FcgiClient::_FillBucketList(IstreamBucketList &list)
 			found_end_request = true;
 
 			if (socket.IsConnected() &&
-			    remaining == sizeof(header) + FromBE16(header.content_length) + header.padding_length)
+			    remaining == sizeof(header) + new_content_length + header.padding_length)
 				ReleaseSocket(PutAction::REUSE);
 
 			break;
 		} else if (header.type != FCGI_STDOUT)
 			break;
 
-		current_content_length = FromBE16(header.content_length);
+		current_content_length = new_content_length;
 		current_skip_length = header.padding_length;
 
 		data += sizeof(header);
@@ -943,9 +947,11 @@ FcgiClient::_ConsumeBucketList(std::size_t nbytes) noexcept
 		if (b.size() < sizeof(header))
 			break;
 
+		const std::size_t new_content_length = FromBE16(header.content_length);
+
 		if (header.request_id != id) {
 			/* ignore packets from other requests */
-			skip_length = sizeof(header) + FromBE16(header.content_length)
+			skip_length = sizeof(header) + new_content_length
 				+ header.padding_length;
 			continue;
 		}
@@ -962,7 +968,7 @@ FcgiClient::_ConsumeBucketList(std::size_t nbytes) noexcept
 		if (header.type != FCGI_STDOUT)
 			break;
 
-		content_length = FromBE16(header.content_length);
+		content_length = new_content_length;
 		skip_length = header.padding_length;
 
 		socket.DisposeConsumed(sizeof(header));
