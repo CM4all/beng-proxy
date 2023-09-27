@@ -4,7 +4,8 @@
 
 #pragma once
 
-#include <stdint.h>
+#include <cstdint>
+#include <cstddef>
 
 #define FCGI_VERSION_1 1
 
@@ -34,15 +35,15 @@
 #define FCGI_FILTER     3
 
 struct fcgi_record_header {
-	unsigned char version;
-	unsigned char type;
+	uint8_t version;
+	uint8_t type;
 	uint16_t request_id;
 	uint16_t content_length;
-	unsigned char padding_length;
-	unsigned char reserved;
+	uint8_t padding_length;
+	std::byte reserved;
 	/*
-	  unsigned char content_data[content_length];
-	  unsigned char padding_data[padding_length];
+	  std::byte content_data[content_length];
+	  std::byte padding_data[padding_length];
 	*/
 };
 
@@ -50,8 +51,8 @@ static_assert(sizeof(fcgi_record_header) == 8, "Wrong FastCGI header size");
 
 struct fcgi_begin_request {
 	uint16_t role;
-	unsigned char flags;
-	unsigned char reserved[5];
+	uint8_t flags;
+	uint8_t reserved[5];
 };
 
 static_assert(sizeof(fcgi_begin_request) == 8, "Wrong FastCGI packet size");
