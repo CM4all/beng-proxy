@@ -43,12 +43,12 @@ try {
 		destinations[i].fd = ResolveConnectDatagramSocket(argv[1 + i], 5479);
 	}
 
-	static char buffer[16384];
+	static std::byte buffer[16384];
 	ssize_t nbytes;
 	while ((nbytes = recv(0, buffer, sizeof(buffer), 0)) > 0) {
 		size_t length = (size_t)nbytes;
 		for (unsigned i = 0; i < num_destinations; ++i) {
-			nbytes = destinations[i].fd.Write(buffer, length);
+			nbytes = destinations[i].fd.WriteNoWait({buffer, length});
 			if (nbytes == (ssize_t)length)
 				destinations[i].failed = false;
 			else if (nbytes < 0 && errno != EAGAIN && errno != EWOULDBLOCK &&

@@ -162,8 +162,8 @@ private:
 void
 FcgiConnection::OnSocketEvent(unsigned) noexcept
 {
-	char buffer;
-	ssize_t nbytes = fd.Read(&buffer, sizeof(buffer));
+	std::byte buffer[1];
+	ssize_t nbytes = fd.ReadNoWait(buffer);
 	if (nbytes < 0)
 		logger(2, "error on idle FastCGI connection: ", strerror(errno));
 	else if (nbytes > 0)
@@ -297,8 +297,8 @@ FcgiConnection::Borrow() noexcept
 	/* check the connection status before using it, just in case the
 	   FastCGI server has decided to close the connection before
 	   fcgi_connection_event_callback() got invoked */
-	char buffer;
-	ssize_t nbytes = fd.Read(&buffer, sizeof(buffer));
+	std::byte buffer[1];
+	ssize_t nbytes = fd.ReadNoWait(buffer);
 	if (nbytes > 0) {
 		logger(2, "unexpected data from idle FastCGI connection");
 		return false;

@@ -301,13 +301,13 @@ HttpClientFactory::NewForkWrite(EventLoop &event_loop, std::string_view response
 		/* wait until the request becomes ready */
 		s.WaitReadable(-1);
 
-		(void)s.Write(response.data(), response.size());
+		(void)s.Send(AsBytes(response));
 		s.ShutdownWrite();
 
-		char buffer[64];
+		std::byte buffer[64];
 		do {
 			s.WaitReadable(-1);
-		} while (s.Read(buffer, sizeof(buffer)) > 0);
+		} while (s.ReadNoWait(buffer) > 0);
 	});
 }
 

@@ -69,7 +69,7 @@ fd_read(FdType type, FileDescriptor fd, off_t offset,
 	std::span<std::byte> dest) noexcept
 {
 	return IsAnySocket(type)
-		? SocketDescriptor::FromFileDescriptor(fd).Read(dest.data(), dest.size())
+		? SocketDescriptor::FromFileDescriptor(fd).ReadNoWait(dest)
 		: (IstreamHandler::HasOffset(offset)
 		   ? fd.ReadAt(offset, dest.data(), dest.size())
 		   : fd.Read(dest));

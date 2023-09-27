@@ -193,7 +193,7 @@ try {
 		lua_pop(L, 1);
 
 		if (result)
-			filter_sink.Write(d.raw.data(), d.raw.size());
+			filter_sink.Write(d.raw);
 	}
 } catch (...) {
 	PrintException(std::current_exception());

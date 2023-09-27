@@ -159,8 +159,8 @@ lhttp_stock_key(struct pool *pool, const LhttpAddress *address) noexcept
 inline void
 LhttpConnection::Read() noexcept
 {
-	char buffer;
-	ssize_t nbytes = GetSocket().Read(&buffer, sizeof(buffer));
+	std::byte buffer[1];
+	ssize_t nbytes = GetSocket().ReadNoWait(buffer);
 	if (nbytes < 0)
 		logger(2, "error on idle LHTTP connection: ", strerror(errno));
 	else if (nbytes > 0)

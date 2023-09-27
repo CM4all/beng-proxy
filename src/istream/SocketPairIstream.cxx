@@ -163,7 +163,7 @@ SocketPairIstream::OnData(std::span<const std::byte> src) noexcept
 	if (!w.IsDefined() && !CreateSocketPair())
 		return 0;
 
-	auto nbytes = w.GetSocket().Write(src.data(), src.size());
+	auto nbytes = w.GetSocket().WriteNoWait(src);
 	if (nbytes <= 0) [[unlikely]] {
 		if (nbytes == 0)
 			DestroyError(std::make_exception_ptr(std::runtime_error{"Empty send"}));

@@ -123,10 +123,8 @@ private:
 inline void
 TcpStockConnection::EventCallback(unsigned) noexcept
 {
-	char buffer;
-	ssize_t nbytes;
-
-	nbytes = fd.Read(&buffer, sizeof(buffer));
+	std::byte buffer[1];
+	ssize_t nbytes = fd.ReadNoWait(buffer);
 	if (nbytes < 0)
 		logger(2, "error on idle TCP connection: ", strerror(errno));
 	else if (nbytes > 0)
