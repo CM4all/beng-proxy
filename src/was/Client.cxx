@@ -20,6 +20,7 @@
 #include "lib/fmt/ToBuffer.hxx"
 #include "io/FileDescriptor.hxx"
 #include "event/FineTimerEvent.hxx"
+#include "http/HeaderLimits.hxx"
 #include "http/HeaderName.hxx"
 #include "http/Method.hxx"
 #include "util/Cancellable.hxx"
@@ -83,6 +84,8 @@ class WasClient final
 		 * Response headers being assembled.
 		 */
 		StringMap headers;
+
+		std::size_t total_header_size = 0;
 
 		WasInput *body;
 
@@ -539,6 +542,13 @@ WasClient::OnWasControlPacket(enum was_command cmd,
 		}
 
 		try {
+			if (payload.size() >= MAX_HTTP_HEADER_SIZE)
+				throw WasProtocolError{"Response header is too long"};
+
+			response.total_header_size += payload.size();
+			if (response.total_header_size >= MAX_TOTAL_HTTP_HEADER_SIZE)
+				throw WasProtocolError{"Too many response headers"};
+
 			ParseHeaderPacket(alloc, response.headers,
 					  ToStringView(payload));
 		} catch (...) {
