@@ -340,23 +340,23 @@ FcgiClient::AnalyseBuffer(const std::span<const std::byte> buffer) const noexcep
 	data += content_length + skip_length;
 
 	while (true) {
-		const struct fcgi_record_header *header =
-			(const struct fcgi_record_header *)(const void *)data;
-		data = (const std::byte *)(header + 1);
+		const struct fcgi_record_header &header =
+			*(const struct fcgi_record_header *)(const void *)data;
+		data = (const std::byte *)(&header + 1);
 		if (data > end)
 			/* reached the end of the given buffer */
 			break;
 
-		data += FromBE16(header->content_length);
-		data += header->padding_length;
+		data += FromBE16(header.content_length);
+		data += header.padding_length;
 
-		if (header->request_id == id) {
-			if (header->type == FCGI_END_REQUEST) {
+		if (header.request_id == id) {
+			if (header.type == FCGI_END_REQUEST) {
 				/* found the END packet: stop here */
 				result.end_request_offset = data - data0;
 				break;
-			} else if (header->type == FCGI_STDOUT) {
-				result.total_stdout += FromBE16(header->content_length);
+			} else if (header.type == FCGI_STDOUT) {
+				result.total_stdout += FromBE16(header.content_length);
 			}
 		}
 	}
