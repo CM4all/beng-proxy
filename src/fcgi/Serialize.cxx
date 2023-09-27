@@ -18,11 +18,11 @@ FcgiRecordSerializer::FcgiRecordSerializer(GrowingBuffer &_buffer,
 	:buffer(_buffer),
 	 header((struct fcgi_record_header *)buffer.Write(sizeof(*header)))
 {
-	header->version = FCGI_VERSION_1;
-	header->type = type;
-	header->request_id = request_id_be;
-	header->padding_length = 0;
-	header->reserved = 0;
+	*header = {
+		.version = FCGI_VERSION_1,
+		.type = type,
+		.request_id = request_id_be,
+	};
 }
 
 void
