@@ -171,6 +171,8 @@ private:
 	 */
 	void AbortResponse(std::exception_ptr ep) noexcept;
 
+	void HandleStderrPayload(std::span<const std::byte> payload) noexcept;
+
 	/**
 	 * Return type for AnalyseBuffer().
 	 */
@@ -314,6 +316,15 @@ FcgiClient::_Close() noexcept
 	Istream::_Close();
 }
 
+void
+FcgiClient::HandleStderrPayload(std::span<const std::byte> payload) noexcept
+{
+	if (stderr_fd.IsDefined())
+		stderr_fd.Write(payload);
+	else
+		fwrite(payload.data(), 1, payload.size(), stderr);
+}
+
 FcgiClient::BufferAnalysis
 FcgiClient::AnalyseBuffer(const std::span<const std::byte> buffer) const noexcept
 {
@@ -398,10 +409,7 @@ FcgiClient::Feed(std::span<const std::byte> src) noexcept
 		/* ignore errors and partial writes while forwarding STDERR
 		   payload; there's nothing useful we can do, and we can't let
 		   this delay/disturb the response delivery */
-		if (stderr_fd.IsDefined())
-			stderr_fd.Write(src);
-		else
-			fwrite(src.data(), 1, src.size(), stderr);
+		HandleStderrPayload(src);
 		return src.size();
 	}
 
