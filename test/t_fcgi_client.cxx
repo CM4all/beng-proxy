@@ -78,6 +78,10 @@ fcgi_server_hello(struct pool &pool, FcgiServer &server)
 	server.WriteResponseHeaders(request, HttpStatus::OK, {});
 	server.DiscardRequestBody(request);
 	server.WriteStdout(request, "hello");
+
+	/* writing a STDERR packet, trying to confuse the client */
+	server.WriteStderr(request, "err\n");
+
 	server.EndResponse(request);
 }
 

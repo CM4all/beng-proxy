@@ -74,6 +74,8 @@ public:
 				  const StringMap &headers);
 	void WriteStdout(const FcgiRequest &r, std::string_view src);
 
+	void WriteStderr(const FcgiRequest &r, std::string_view src);
+
 	void MirrorRaw(std::size_t size);
 
 	void EndResponse(const FcgiRequest &r);

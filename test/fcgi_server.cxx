@@ -276,6 +276,22 @@ FcgiServer::WriteStdout(const FcgiRequest &r, std::string_view src)
 }
 
 void
+FcgiServer::WriteStderr(const FcgiRequest &r, std::string_view src)
+{
+	const struct fcgi_record_header header = {
+		.version = FCGI_VERSION_1,
+		.type = FCGI_STDERR,
+		.request_id = r.id,
+		.content_length = ToBE16(src.size()),
+		.padding_length = 0,
+		.reserved = 0,
+	};
+
+	WriteHeader(header);
+	WriteFullRaw(AsBytes(src));
+}
+
+void
 FcgiServer::WriteResponseHeaders(const FcgiRequest &r, HttpStatus status,
 				 const StringMap &headers)
 {
