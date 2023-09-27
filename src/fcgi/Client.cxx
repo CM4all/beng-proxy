@@ -14,6 +14,7 @@
 #include "istream/UnusedPtr.hxx"
 #include "istream/ConcatIstream.hxx"
 #include "istream/Bucket.hxx"
+#include "http/HeaderLimits.hxx"
 #include "http/Method.hxx"
 #include "http/HeaderParser.hxx"
 #include "strmap.hxx"
@@ -87,6 +88,8 @@ class FcgiClient final
 		HttpStatus status;
 
 		StringMap headers;
+
+		std::size_t total_header_size = 0;
 
 		off_t available;
 
@@ -370,6 +373,13 @@ inline bool
 FcgiClient::HandleLine(std::string_view line)
 {
 	if (!line.empty()) {
+		if (line.size() >= MAX_HTTP_HEADER_SIZE)
+			throw FcgiClientError{"Response header is too long"};
+
+		response.total_header_size += line.size();
+		if (response.total_header_size >= MAX_TOTAL_HTTP_HEADER_SIZE)
+			throw FcgiClientError{"Too many response headers"};
+
 		if (!header_parse_line(GetPool(), response.headers, line))
 			throw FcgiClientError("Malformed FastCGI response header");
 		return false;
