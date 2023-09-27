@@ -66,6 +66,8 @@ public:
 
 	void WriteFullRaw(std::span<const std::byte> src);
 
+	void WriteZero(std::size_t size);
+
 	void WriteHeader(const struct fcgi_record_header &src) {
 		WriteFullRaw(std::as_bytes(std::span{&src, 1}));
 	}
@@ -73,14 +75,17 @@ public:
 	void WriteResponseHeaders(const FcgiRequest &r, HttpStatus status,
 				  const StringMap &headers);
 
-	void WriteRecord(const FcgiRequest &r, uint8_t type, std::string_view payload);
+	void WriteRecord(const FcgiRequest &r, uint8_t type, std::string_view payload,
+			 std::size_t padding=0);
 
-	void WriteStdout(const FcgiRequest &r, std::string_view payload) {
-		WriteRecord(r, FCGI_STDOUT, payload);
+	void WriteStdout(const FcgiRequest &r, std::string_view payload,
+			 std::size_t padding=0) {
+		WriteRecord(r, FCGI_STDOUT, payload, padding);
 	}
 
-	void WriteStderr(const FcgiRequest &r, std::string_view payload) {
-		WriteRecord(r, FCGI_STDERR, payload);
+	void WriteStderr(const FcgiRequest &r, std::string_view payload,
+			 std::size_t padding=0) {
+		WriteRecord(r, FCGI_STDERR, payload, padding);
 	}
 
 	void MirrorRaw(std::size_t size);

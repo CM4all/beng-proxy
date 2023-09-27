@@ -260,16 +260,37 @@ FcgiServer::WriteFullRaw(std::span<const std::byte> src)
 }
 
 void
-FcgiServer::WriteRecord(const FcgiRequest &r, uint8_t type, std::string_view payload)
+FcgiServer::WriteZero(std::size_t size)
 {
+	static constexpr std::byte zero[4096]{};
+
+	while (size > 0) {
+		std::span<const std::byte> src{zero};
+		if (src.size() > size)
+			src = src.first(size);
+
+		std::size_t nbytes = WriteRaw(src);
+		size -= nbytes;
+	}
+}
+
+void
+FcgiServer::WriteRecord(const FcgiRequest &r, uint8_t type, std::string_view payload,
+			std::size_t padding)
+{
+	assert(payload.size() < 0x10000);
+	assert(padding < 0x100);
+
 	WriteHeader({
 		.version = FCGI_VERSION_1,
 		.type = type,
 		.request_id = r.id,
 		.content_length = ToBE16(payload.size()),
+		.padding_length = static_cast<uint8_t>(padding),
 	});
 
 	WriteFullRaw(AsBytes(payload));
+	WriteZero(padding);
 }
 
 void

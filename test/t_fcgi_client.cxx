@@ -77,14 +77,14 @@ fcgi_server_hello(struct pool &pool, FcgiServer &server)
 
 	server.WriteResponseHeaders(request, HttpStatus::OK, {});
 	server.DiscardRequestBody(request);
-	server.WriteStdout(request, "hello"sv);
+	server.WriteStdout(request, "hello"sv, 42);
 
 	/* writing a STDERR packet, trying to confuse the client */
-	server.WriteStderr(request, "err\n"sv);
+	server.WriteStderr(request, "err\n"sv, 13);
 
 	/* some more confusion: an unknown record which should be
 	   ignored by the client */
-	server.WriteRecord(request, FCGI_UNKNOWN_TYPE, "ignore this"sv);
+	server.WriteRecord(request, FCGI_UNKNOWN_TYPE, "ignore this"sv, 7);
 
 	server.EndResponse(request);
 }
