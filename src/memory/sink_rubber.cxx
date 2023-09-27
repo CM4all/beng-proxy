@@ -66,13 +66,13 @@ private:
 
 static ssize_t
 fd_read(FdType type, FileDescriptor fd, off_t offset,
-	void *p, std::size_t size) noexcept
+	std::span<std::byte> dest) noexcept
 {
 	return IsAnySocket(type)
-		? SocketDescriptor::FromFileDescriptor(fd).Read(p, size)
+		? SocketDescriptor::FromFileDescriptor(fd).Read(dest.data(), dest.size())
 		: (IstreamHandler::HasOffset(offset)
-		   ? fd.ReadAt(offset, p, size)
-		   : fd.Read(p, size));
+		   ? fd.ReadAt(offset, dest.data(), dest.size())
+		   : fd.Read(dest));
 }
 
 void
@@ -137,9 +137,8 @@ RubberSink::OnDirect(FdType type, FileDescriptor fd, off_t offset,
 	if (length == 0) {
 		/* already full, see what the file descriptor says */
 
-		uint8_t dummy;
-		ssize_t nbytes = fd_read(type, fd, offset,
-					 &dummy, sizeof(dummy));
+		std::byte dummy[1];
+		ssize_t nbytes = fd_read(type, fd, offset, dummy);
 		if (nbytes > 0) {
 			input.ConsumeDirect(nbytes);
 			FailTooLarge();
@@ -157,10 +156,10 @@ RubberSink::OnDirect(FdType type, FileDescriptor fd, off_t offset,
 	if (length > max_length)
 		length = max_length;
 
-	uint8_t *p = (uint8_t *)allocation.Write();
+	std::byte *p = (std::byte *)allocation.Write();
 	p += position;
 
-	ssize_t nbytes = fd_read(type, fd, offset, p, length);
+	ssize_t nbytes = fd_read(type, fd, offset, {p, length});
 	if (nbytes <= 0)
 		return nbytes < 0
 			? IstreamDirectResult::ERRNO
