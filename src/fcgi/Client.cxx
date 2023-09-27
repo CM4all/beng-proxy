@@ -399,7 +399,7 @@ FcgiClient::Feed(std::span<const std::byte> src) noexcept
 		   payload; there's nothing useful we can do, and we can't let
 		   this delay/disturb the response delivery */
 		if (stderr_fd.IsDefined())
-			stderr_fd.Write(src.data(), src.size());
+			stderr_fd.Write(src);
 		else
 			fwrite(src.data(), 1, src.size(), stderr);
 		return src.size();

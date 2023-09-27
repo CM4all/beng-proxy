@@ -23,7 +23,7 @@ inline void
 Notify::EventFdCallback(unsigned) noexcept
 {
 	uint64_t value;
-	(void)event.GetFileDescriptor().Read(&value, sizeof(value));
+	(void)event.GetFileDescriptor().Read(std::as_writable_bytes(std::span{&value, 1}));
 
 	if (pending.exchange(false))
 		callback();

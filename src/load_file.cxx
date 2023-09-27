@@ -33,7 +33,7 @@ LoadFile(struct pool &pool, const char *path, off_t max_size)
 	if (p == nullptr)
 		throw std::bad_alloc();
 
-	ssize_t nbytes = fd.Read(p, size);
+	ssize_t nbytes = fd.Read({p, (std::size_t)size});
 	if (nbytes < 0)
 		throw FmtErrno("Failed to read from '{}'", path);
 

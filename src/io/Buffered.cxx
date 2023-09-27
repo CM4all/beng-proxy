@@ -18,10 +18,10 @@ ReadToBuffer(FileDescriptor fd, ForeignFifoBuffer<std::byte> &buffer,
 	if (w.empty())
 		return -2;
 
-	if (length > w.size())
-		length = w.size();
+	if (length < w.size())
+		w = w.first(length);
 
-	ssize_t nbytes = fd.Read(w.data(), length);
+	ssize_t nbytes = fd.Read(w);
 	if (nbytes > 0)
 		buffer.Append((size_t)nbytes);
 

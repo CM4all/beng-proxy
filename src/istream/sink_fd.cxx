@@ -114,7 +114,7 @@ SinkFd::OnData(std::span<const std::byte> src) noexcept
 	ssize_t nbytes = IsAnySocket(fd_type)
 		? send(fd.Get(), src.data(), src.size(),
 		       MSG_DONTWAIT|MSG_NOSIGNAL)
-		: fd.Write(src.data(), src.size());
+		: fd.Write(src);
 	if (nbytes >= 0) {
 		ScheduleWrite();
 		return nbytes;

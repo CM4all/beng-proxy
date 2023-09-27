@@ -275,7 +275,7 @@ WasOutput::OnData(const std::span<const std::byte> src) noexcept
 
 	got_data = true;
 
-	ssize_t nbytes = GetPipe().Write(src.data(), src.size());
+	ssize_t nbytes = GetPipe().Write(src);
 	if (nbytes > 0) [[likely]] {
 		sent += nbytes;
 
