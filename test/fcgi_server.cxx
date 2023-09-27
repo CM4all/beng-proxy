@@ -267,8 +267,6 @@ FcgiServer::WriteStdout(const FcgiRequest &r, std::string_view src)
 		.type = FCGI_STDOUT,
 		.request_id = r.id,
 		.content_length = ToBE16(src.size()),
-		.padding_length = 0,
-		.reserved = 0,
 	};
 
 	WriteHeader(header);
@@ -283,8 +281,6 @@ FcgiServer::WriteStderr(const FcgiRequest &r, std::string_view src)
 		.type = FCGI_STDERR,
 		.request_id = r.id,
 		.content_length = ToBE16(src.size()),
-		.padding_length = 0,
-		.reserved = 0,
 	};
 
 	WriteHeader(header);
@@ -313,9 +309,6 @@ FcgiServer::EndResponse(const FcgiRequest &r)
 		.version = FCGI_VERSION_1,
 		.type = FCGI_END_REQUEST,
 		.request_id = r.id,
-		.content_length = 0,
-		.padding_length = 0,
-		.reserved = 0,
 	};
 
 	WriteHeader(header);

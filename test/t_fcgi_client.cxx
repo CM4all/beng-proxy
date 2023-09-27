@@ -160,8 +160,6 @@ fcgi_server_premature_close_headers(struct pool &pool, FcgiServer &server)
 		.type = FCGI_STDOUT,
 		.request_id = request.id,
 		.content_length = ToBE16(1024),
-		.padding_length = 0,
-		.reserved = 0,
 	};
 
 	server.WriteHeader(header);
@@ -180,8 +178,6 @@ fcgi_server_premature_close_body(struct pool &pool, FcgiServer &server)
 		.type = FCGI_STDOUT,
 		.request_id = request.id,
 		.content_length = ToBE16(1024),
-		.padding_length = 0,
-		.reserved = 0,
 	};
 
 	server.WriteHeader(header);
