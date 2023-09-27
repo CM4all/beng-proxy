@@ -1,7 +1,7 @@
 cm4all-beng-proxy (18.0.38) unstable; urgency=low
 
   * fcgi: fix assertion failure on trailing STDERR
-  * fcgi: implement response header limits
+  * fcgi, http_client: implement response header limits
 
  --   
 

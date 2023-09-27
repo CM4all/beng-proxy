@@ -8,6 +8,7 @@
 #include "ResponseHandler.hxx"
 #include "HeaderParser.hxx"
 #include "HeaderWriter.hxx"
+#include "http/HeaderLimits.hxx"
 #include "http/List.hxx"
 #include "http/Method.hxx"
 #include "istream/Bucket.hxx"
@@ -251,6 +252,8 @@ class HttpClient final : BufferedSocketHandler, IstreamSink, Cancellable, Destru
 
 		HttpStatus status;
 		StringMap headers;
+
+		std::size_t total_header_size = 0;
 
 		/**
 		 * The response body pending to be submitted to the
@@ -861,6 +864,15 @@ HttpClient::HandleLine(std::string_view line)
 	if (response.state == Response::State::STATUS)
 		ParseStatusLine(line);
 	else if (!line.empty()) {
+		if (line.size() >= MAX_HTTP_HEADER_SIZE)
+			throw HttpClientError(HttpClientErrorCode::GARBAGE,
+					      "Response header is too long");
+
+		response.total_header_size += line.size();
+		if (response.total_header_size >= MAX_TOTAL_HTTP_HEADER_SIZE)
+			throw HttpClientError(HttpClientErrorCode::GARBAGE,
+					      "Too many response headers");
+
 		if (!header_parse_line(caller_pool, response.headers, line))
 			throw HttpClientError(HttpClientErrorCode::GARBAGE,
 					      "malformed HTTP header line");
