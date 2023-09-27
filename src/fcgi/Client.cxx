@@ -853,30 +853,29 @@ FcgiClient::_FillBucketList(IstreamBucketList &list)
 			continue;
 		}
 
-		if (header.type != FCGI_STDOUT) {
-			if (header.type == FCGI_END_REQUEST) {
-				/* "excess data" has already been checked */
-				assert(response.available < 0 ||
-				       static_cast<std::size_t>(response.available) >= total_size);
+		if (header.type == FCGI_END_REQUEST) {
+			/* "excess data" has already been checked */
+			assert(response.available < 0 ||
+			       static_cast<std::size_t>(response.available) >= total_size);
 
-				if (available > 0) {
-					Destroy();
-					throw FcgiClientError("premature end of body "
-							      "from FastCGI application");
-				} else if (response.available < 0) {
-					/* now we know how much data remains */
-					response.available = total_size;
-				}
-
-				found_end_request = true;
-
-				if (socket.IsConnected() &&
-				    remaining == sizeof(header) + FromBE16(header.content_length) + header.padding_length)
-					ReleaseSocket(PutAction::REUSE);
+			if (available > 0) {
+				Destroy();
+				throw FcgiClientError("premature end of body "
+						      "from FastCGI application");
+			} else if (response.available < 0) {
+				/* now we know how much data remains */
+				response.available = total_size;
 			}
 
+			found_end_request = true;
+
+			if (socket.IsConnected() &&
+			    remaining == sizeof(header) + FromBE16(header.content_length) + header.padding_length)
+				ReleaseSocket(PutAction::REUSE);
+
 			break;
-		}
+		} else if (header.type != FCGI_STDOUT)
+			break;
 
 		current_content_length = FromBE16(header.content_length);
 		current_skip_length = header.padding_length;
