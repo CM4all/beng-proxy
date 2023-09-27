@@ -5,7 +5,6 @@
 #include "fcgi_server.hxx"
 #include "pool/pool.hxx"
 #include "http/Method.hxx"
-#include "strmap.hxx"
 #include "tio.hxx"
 #include "util/ByteOrder.hxx"
 #include "util/CharUtil.hxx"
@@ -75,7 +74,7 @@ handle_fcgi_param(struct pool *pool, FcgiRequest *r,
 				*q += 'a' - 'A';
 		}
 
-		r->headers->Add(*pool, p, p_strdup(pool, value));
+		r->headers.Add(*pool, p, p_strdup(pool, value));
 	}
 }
 
@@ -84,7 +83,6 @@ read_fcgi_params(struct pool *pool, FcgiRequest *r)
 {
 	r->method = HttpMethod::GET;
 	r->uri = nullptr;
-	r->headers = strmap_new(pool);
 
 	char name[1024], value[8192];
 	while (true) {
@@ -134,7 +132,7 @@ read_fcgi_request(struct pool *pool, FcgiRequest *r)
 
 	read_fcgi_params(pool, r);
 
-	const char *content_length = r->headers->Remove("content-length");
+	const char *content_length = r->headers.Remove("content-length");
 	r->length = content_length != nullptr
 		? strtol(content_length, nullptr, 10)
 		: -1;

@@ -3,6 +3,7 @@
 // author: Max Kellermann <mk@cm4all.com>
 
 #include "fcgi/Protocol.hxx"
+#include "strmap.hxx"
 
 #include <cstdint>
 
@@ -20,7 +21,7 @@ struct FcgiRequest {
 
 	HttpMethod method;
 	const char *uri;
-	StringMap *headers;
+	StringMap headers;
 
 	off_t length;
 };
