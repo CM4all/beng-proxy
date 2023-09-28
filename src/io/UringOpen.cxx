@@ -26,10 +26,10 @@ public:
 			   CancellablePointer &cancel_ptr) noexcept
 		:open_stat(new Uring::Open(uring, *this)),
 		 handler(_handler)
-		{
-			cancel_ptr = *this;
+	{
+		cancel_ptr = *this;
 
-			open_stat->StartOpen({FileDescriptor{AT_FDCWD}, path}, flags);
+		open_stat->StartOpen({FileDescriptor{AT_FDCWD}, path}, flags);
 	}
 
 private:
