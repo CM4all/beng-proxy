@@ -466,13 +466,9 @@ Request::HandlePathExistsAfterBase(FileDescriptor base) noexcept
 {
 	const FileAddress &address = *handler.file.address;
 
-	try {
-		translate.request.status = PathExists(address, base)
-			? HttpStatus::OK
-			: ErrnoToHttpStatus(errno);
-		translate.request.path_exists = true;
-		SubmitTranslateRequest();
-	} catch (...) {
-		LogDispatchError(std::current_exception());
-	}
+	translate.request.status = PathExists(address, base)
+		? HttpStatus::OK
+		: ErrnoToHttpStatus(errno);
+	translate.request.path_exists = true;
+	SubmitTranslateRequest();
 }
