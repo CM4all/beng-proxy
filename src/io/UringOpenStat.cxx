@@ -29,7 +29,7 @@ public:
 	{
 		cancel_ptr = *this;
 
-		if (file.directory != FileDescriptor{AT_FDCWD})
+		if (file.directory.IsDefined())
 			open_stat->StartOpenStatReadOnlyBeneath(file);
 		else
 			open_stat->StartOpenStatReadOnly(file);
