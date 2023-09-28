@@ -24,7 +24,7 @@ Request::OpenBase(const char *path,
 {
 	handler.file.open_base_callback = callback;
 
-	instance.fd_cache.Get(path, O_PATH|O_DIRECTORY,
+	instance.fd_cache.Get(path, O_PATH|O_DIRECTORY|O_NOFOLLOW,
 			      BIND_THIS_METHOD(OnBaseOpen),
 			      BIND_THIS_METHOD(OnBaseOpenError),
 			      cancel_ptr);
