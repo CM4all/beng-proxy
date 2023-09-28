@@ -5,6 +5,7 @@
 #include "Request.hxx"
 #include "Instance.hxx"
 #include "file/Address.hxx"
+#include "util/StringCompare.hxx"
 #include "ResourceAddress.hxx"
 
 #include <fcntl.h> // for O_PATH, O_DIRECTORY
@@ -13,6 +14,13 @@
 static constexpr struct open_how open_directory_path{
 	.flags = O_PATH|O_DIRECTORY|O_NOFOLLOW|O_CLOEXEC,
 	.resolve = RESOLVE_NO_MAGICLINKS,
+};
+
+static constexpr struct open_how open_directory_path_beneath{
+	/* we can afford to omit O_NOFOLLOW because RESOLVE_BENEATH
+	   protects us */
+	.flags = O_PATH|O_DIRECTORY|O_CLOEXEC,
+	.resolve = RESOLVE_BENEATH|RESOLVE_NO_MAGICLINKS,
 };
 
 [[gnu::pure]]
@@ -36,6 +44,43 @@ Request::OnBaseOpen(FileDescriptor fd, SharedLease lease) noexcept
 }
 
 inline void
+Request::OnBeneathOpen(FileDescriptor fd, SharedLease lease) noexcept
+{
+	const auto &address = *handler.file.address;
+	assert(address.beneath != nullptr);
+
+	handler.file.base = fd;
+	handler.file.base_path = address.beneath;
+	handler.file.beneath_lease = std::move(lease);
+
+	if (address.base != nullptr) {
+		instance.fd_cache.Get(fd, address.beneath,
+				      NormalizePath(address.base),
+				      open_directory_path_beneath,
+				      BIND_THIS_METHOD(OnBaseOpen),
+				      BIND_THIS_METHOD(OnBaseOpenError),
+				      cancel_ptr);
+	} else
+		(this->*handler.file.open_base_callback)(fd);
+}
+
+inline void
+Request::OpenBeneath(const FileAddress &address,
+		     Handler::File::OpenBaseCallback callback) noexcept
+{
+	assert(address.beneath != nullptr);
+
+	handler.file.open_base_callback = callback;
+	handler.file.address = &address;
+
+	instance.fd_cache.Get(FileDescriptor::Undefined(), {}, address.beneath,
+			      open_directory_path,
+			      BIND_THIS_METHOD(OnBeneathOpen),
+			      BIND_THIS_METHOD(OnBaseOpenError),
+			      cancel_ptr);
+}
+
+inline void
 Request::OpenBase(std::string_view path,
 		  Handler::File::OpenBaseCallback callback) noexcept
 {
@@ -53,7 +98,11 @@ void
 Request::OpenBase(const FileAddress &address,
 		  Handler::File::OpenBaseCallback callback) noexcept
 {
-	if (address.base != nullptr)
+	handler.file.base_path = {};
+
+	if (address.beneath != nullptr)
+		OpenBeneath(address, callback);
+	else if (address.base != nullptr)
 		OpenBase(address.base, callback);
 	else
 		(this->*callback)(FileDescriptor::Undefined());
@@ -86,4 +135,30 @@ Request::OpenBase(const TranslateResponse &response,
 		  Handler::File::OpenBaseCallback callback) noexcept
 {
 	OpenBase(response.address, callback);
+}
+
+const char *
+Request::StripBase(const char *path) const noexcept
+{
+	if (handler.file.base_path.empty())
+		return path;
+
+	assert(handler.file.base_path.front() == '/');
+	assert(handler.file.base_path.back() != '/');
+
+	const char *relative = StringAfterPrefix(path, handler.file.base_path);
+	if (relative == nullptr)
+		return path;
+
+	if (*relative == 0)
+		return ".";
+
+	if (*relative != '/')
+		return path;
+
+	path = relative + 1;
+	if (*path == 0)
+		return ".";
+
+	return path;
 }

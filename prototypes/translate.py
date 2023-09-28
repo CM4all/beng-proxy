@@ -303,6 +303,7 @@ class Translation(Protocol):
             response.packet(TRANSLATE_EASY_BASE)
             response.packet(TRANSLATE_INVERSE_REGEX, r'(\.(cls|php|py)|/)$')
             response.packet(TRANSLATE_PATH, easy_path)
+            response.packet(TRANSLATE_BENEATH, '/var')
             response.packet(TRANSLATE_AUTO_GZIPPED)
             response.packet(TRANSLATE_ENOTDIR, 'foo')
             response.packet(TRANSLATE_DIRECTORY_INDEX, 'foo')
@@ -501,6 +502,12 @@ class Translation(Protocol):
             response.packet(TRANSLATE_HOST, 'xyz.intern.cm-ag')
             response.packet(TRANSLATE_URI, '/foo/' + uri[6:])
             self._handle_local_file('/var/www' + uri[5:], response)
+        elif uri[:9] == '/beneath/':
+            response.packet(TRANSLATE_SCHEME, 'https')
+            response.packet(TRANSLATE_HOST, 'xyz.intern.cm-ag')
+            response.packet(TRANSLATE_URI, '/foo/' + uri[6:])
+            response.path('/var/www' + uri[8:])
+            response.packet(TRANSLATE_BENEATH, '/var/www')
         elif uri[:11] == '/easy-base/':
             response.packet(TRANSLATE_BASE, '/easy-base/')
             response.packet(TRANSLATE_EASY_BASE)

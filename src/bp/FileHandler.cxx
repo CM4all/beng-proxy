@@ -185,7 +185,8 @@ Request::CheckCompressedFile(const char *path, const char *encoding) noexcept
 	const AllocatorPtr alloc(pool);
 	p.compressed_path = path;
 	p.encoding = encoding;
-	instance.uring.OpenStat(alloc, {handler.file.base, p.compressed_path},
+	instance.uring.OpenStat(alloc,
+				{handler.file.base, StripBase(p.compressed_path)},
 				BIND_THIS_METHOD(OnPrecompressedOpenStat),
 				BIND_THIS_METHOD(OnPrecompressedOpenStatError),
 				cancel_ptr);
@@ -210,7 +211,8 @@ Request::CheckAutoCompressedFile(const char *path, const char *encoding,
 	const AllocatorPtr alloc(pool);
 	p.compressed_path = alloc.Concat(path, suffix);
 	p.encoding = encoding;
-	instance.uring.OpenStat(alloc, {handler.file.base, p.compressed_path},
+	instance.uring.OpenStat(alloc,
+				{handler.file.base, StripBase(p.compressed_path)},
 				BIND_THIS_METHOD(OnPrecompressedOpenStat),
 				BIND_THIS_METHOD(OnPrecompressedOpenStatError),
 				cancel_ptr);
@@ -350,7 +352,8 @@ Request::HandleFileAddress(const FileAddress &address) noexcept
 void
 Request::HandleFileAddressAfterBase(FileDescriptor base) noexcept
 {
-	instance.uring.OpenStat(pool, {base, handler.file.address->path},
+	instance.uring.OpenStat(pool,
+				{base, StripBase(handler.file.address->path)},
 				BIND_THIS_METHOD(OnOpenStat),
 				BIND_THIS_METHOD(OnOpenStatError),
 				cancel_ptr);
@@ -454,7 +457,7 @@ Request::HandlePathExistsAfterBase(FileDescriptor base) noexcept
 {
 	const FileAddress &address = *handler.file.address;
 
-	instance.uring.Stat({base, address.path},
+	instance.uring.Stat({base, StripBase(address.path)},
 			    AT_SYMLINK_NOFOLLOW|AT_STATX_SYNC_AS_STAT, 0,
 			    BIND_THIS_METHOD(OnPathExistsStat),
 			    BIND_THIS_METHOD(OnPathExistsStatError),

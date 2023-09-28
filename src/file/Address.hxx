@@ -20,6 +20,11 @@ struct FileAddress {
 	const char *gzipped = nullptr;
 
 	/**
+	 * Limit file access to files beneath this directory.
+	 */
+	const char *beneath = nullptr;
+
+	/**
 	 * Absolute path of a directory below which the other paths
 	 * (#path, #gzipped) are located.
 	 */

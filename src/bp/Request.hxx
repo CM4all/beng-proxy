@@ -252,9 +252,15 @@ private:
 		struct File {
 			const FileAddress *address;
 
-			SharedLease base_lease;
+			SharedLease beneath_lease, base_lease;
 
 			FileDescriptor base;
+
+			/**
+			 * The absolute path of #base, remembered for
+			 * StripBase().
+			 */
+			std::string_view base_path;
 
 			struct Precompressed;
 			UniquePoolPtr<Precompressed> precompressed;
@@ -931,6 +937,11 @@ private:
 		LogDispatchErrno(error, "Failed to open file");
 	}
 
+	void OnBeneathOpen(FileDescriptor fd, SharedLease _lease) noexcept;
+
+	void OpenBeneath(const FileAddress &address,
+			 Handler::File::OpenBaseCallback callback) noexcept;
+
 	void OpenBase(std::string_view path,
 		      Handler::File::OpenBaseCallback callback) noexcept;
 
@@ -942,6 +953,15 @@ private:
 
 	void OpenBase(const TranslateResponse &response,
 		      Handler::File::OpenBaseCallback callback) noexcept;
+
+	/**
+	 * Try to convert the specified absolute path to a path
+	 * relative to the current base (or "beneath") path.  This is
+	 * needed because RESOLVE_BENEATH disallows absolute paths
+	 * completely.
+	 */
+	[[gnu::pure]]
+	const char *StripBase(const char *path) const noexcept;
 
 	void ProbePrecompressed(UniqueFileDescriptor fd,
 				const struct statx &st) noexcept;

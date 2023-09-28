@@ -17,6 +17,7 @@ FileAddress::FileAddress(AllocatorPtr alloc, const FileAddress &src,
 			 const char *_path) noexcept
 	:path(_path),
 	 gzipped(alloc.CheckDup(src.gzipped)),
+	 beneath(alloc.CheckDup(src.beneath)),
 	 base(alloc.CheckDup(src.base)),
 	 content_type(alloc.CheckDup(src.content_type)),
 	 content_type_lookup(alloc.Dup(src.content_type_lookup)),

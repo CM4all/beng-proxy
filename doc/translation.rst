@@ -791,6 +791,10 @@ served.  The following packets are available:
   useful for serving static files which are usually referenced with a
   version number in the query string.
 
+- ``BENEATH``: Absolute path of a directory that the ``PATH`` shall
+  not escape, not even using symlinks.  This is implemented using the
+  ``RESOLVE_BENEATH`` flag of Linux's ``openat2()`` system call.
+
 .. _tdelegate:
 
 Delegates
