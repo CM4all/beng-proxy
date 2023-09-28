@@ -24,7 +24,13 @@ Request::OpenBase(const char *path,
 {
 	handler.file.open_base_callback = callback;
 
-	instance.fd_cache.Get(path, O_PATH|O_DIRECTORY|O_NOFOLLOW,
+	static constexpr struct open_how open_directory_path{
+		.flags = O_PATH|O_DIRECTORY|O_NOFOLLOW|O_CLOEXEC,
+		.resolve = RESOLVE_NO_MAGICLINKS,
+	};
+
+	instance.fd_cache.Get(FileDescriptor::Undefined(), path,
+			      open_directory_path,
 			      BIND_THIS_METHOD(OnBaseOpen),
 			      BIND_THIS_METHOD(OnBaseOpenError),
 			      cancel_ptr);

@@ -10,8 +10,10 @@
 #include "util/IntrusiveList.hxx"
 #include "util/SharedLease.hxx"
 
+#include <cstdint>
 #include <string_view>
 
+struct open_how;
 class FileDescriptor;
 class SharedLease;
 class CancellablePointer;
@@ -23,7 +25,7 @@ namespace Uring { class Queue; }
 class FdCache {
 	struct Key {
 		std::string_view path;
-		int flags;
+		uint_least64_t flags;
 
 		friend constexpr auto operator<=>(const Key &,
 						  const Key &) noexcept = default;
@@ -87,10 +89,17 @@ public:
 	/**
 	 * Open a file (asynchronously).
 	 *
+	 * @param directory an optional directory descriptor (only
+	 * used on cache miss)
+	 *
+	 * @param path an absolute path
+	 *
 	 * @param on_success the callback to be used on success
 	 * @param on_error the callback to be used on error
 	 */
-	void Get(std::string_view path, int flags,
+	void Get(FileDescriptor beneath_directory,
+		 std::string_view path,
+		 const struct open_how &how,
 		 SuccessCallback on_success,
 		 ErrorCallback on_error,
 		 CancellablePointer &cancel_ptr) noexcept;

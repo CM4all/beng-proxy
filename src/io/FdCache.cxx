@@ -5,6 +5,7 @@
 #include "FdCache.hxx"
 #include "event/Loop.hxx"
 #include "system/Error.hxx"
+#include "system/openat2.h"
 #include "io/FileAt.hxx"
 #include "io/UniqueFileDescriptor.hxx"
 #include "util/Cancellable.hxx"
@@ -55,7 +56,7 @@ struct FdCache::Item final
 {
 	const std::string path;
 
-	const int flags;
+	const uint_least64_t flags;
 
 	struct Request final : IntrusiveListHook<IntrusiveHookMode::AUTO_UNLINK>, Cancellable {
 		const SuccessCallback on_success;
@@ -87,7 +88,7 @@ struct FdCache::Item final
 
 	std::chrono::steady_clock::time_point expires;
 
-	Item(std::string_view _path, int _flags,
+	Item(std::string_view _path, uint_least64_t _flags,
 #ifdef HAVE_URING
 	     Uring::Queue *_uring_queue,
 #endif
@@ -127,7 +128,8 @@ struct FdCache::Item final
 		return SharedAnchor::IsAbandoned() && requests.empty();
 	}
 
-	void Start() noexcept;
+	void Start(FileDescriptor directory,
+		   const struct open_how &how) noexcept;
 
 	void Get(SuccessCallback on_success,
 		 ErrorCallback on_error,
@@ -211,7 +213,8 @@ private:
 };
 
 inline void
-FdCache::Item::Start() noexcept
+FdCache::Item::Start(FileDescriptor directory,
+		     const struct open_how &how) noexcept
 {
 	assert(!fd.IsDefined());
 	assert(!error);
@@ -221,10 +224,13 @@ FdCache::Item::Start() noexcept
 
 	if (uring_queue != nullptr) {
 		uring_open = new Uring::Open(*uring_queue, *this);
-		uring_open->StartOpen({FileDescriptor::Undefined(), path.c_str()}, flags);
+		uring_open->StartOpen({directory, path.c_str()}, how);
 	} else {
 #endif // HAVE_URING
-		if (fd.Open(path.c_str(), flags)) {
+		int _fd = openat2(directory.Get(), path.c_str(),
+				  &how, sizeof(how));
+		if (_fd >= 0) {
+			fd = UniqueFileDescriptor{_fd};
 			InvokeSuccess();
 		} else {
 			error = errno;
@@ -305,14 +311,16 @@ NormalizePath(std::string_view path) noexcept
 }
 
 void
-FdCache::Get(std::string_view path, int flags,
+FdCache::Get(FileDescriptor directory,
+	     std::string_view path,
+	     const struct open_how &how,
 	     SuccessCallback on_success,
 	     ErrorCallback on_error,
 	     CancellablePointer &cancel_ptr) noexcept
 {
 	path = NormalizePath(path);
 
-	auto [it, inserted] = map.insert_check(Key{path, flags});
+	auto [it, inserted] = map.insert_check(Key{path, how.flags});
 	if (inserted) {
 		if (empty() && enabled)
 			/* the cache is about to become non-empty and
@@ -320,7 +328,7 @@ FdCache::Get(std::string_view path, int flags,
 			   periodically */
 			expire_timer.Schedule(std::chrono::seconds{10});
 
-		auto *item = new Item(path, flags,
+		auto *item = new Item(path, how.flags,
 #ifdef HAVE_URING
 				      uring_queue,
 #endif
@@ -336,7 +344,7 @@ FdCache::Get(std::string_view path, int flags,
 		   synchronously */
 		const SharedLease lock{*item};
 
-		item->Start();
+		item->Start(directory, how);
 		item->Get(on_success, on_error, cancel_ptr);
 	} else
 		it->Get(on_success, on_error, cancel_ptr);
