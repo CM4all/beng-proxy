@@ -557,6 +557,8 @@ private:
 
 	void HandlePathExists(const FileAddress &address) noexcept;
 	void HandlePathExistsAfterBase(FileDescriptor base) noexcept;
+	void OnPathExistsStat(const struct statx &st) noexcept;
+	void OnPathExistsStatError(int error) noexcept;
 
 	void HandleDelegateAddress(const DelegateAddress &address,
 				   const char *path) noexcept;
