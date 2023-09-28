@@ -416,23 +416,16 @@ Request::HandleFileAddress(const FileAddress &address,
 	DispatchFile(address.path, std::move(fd), st, file_request);
 }
 
+[[gnu::pure]]
 static bool
-PathExists(const FileAddress &address)
+PathExists(const FileAddress &address, FileDescriptor base) noexcept
 {
 	// TODO: use uring
 
 	struct statx st;
-
-	if (address.base != nullptr) {
-		auto base = OpenPath(address.base);
-		return statx(base.Get(), address.path,
-			     AT_SYMLINK_NOFOLLOW|AT_STATX_SYNC_AS_STAT,
-			     0, &st) == 0;
-	} else {
-		return statx(-1, address.path,
-			     AT_SYMLINK_NOFOLLOW|AT_STATX_SYNC_AS_STAT,
-			     0, &st) == 0;
-	}
+	return statx(base.Get(), address.path,
+		     AT_SYMLINK_NOFOLLOW|AT_STATX_SYNC_AS_STAT,
+		     0, &st) == 0;
 }
 
 static constexpr HttpStatus
@@ -463,8 +456,18 @@ ErrnoToHttpStatus(int e) noexcept
 void
 Request::HandlePathExists(const FileAddress &address) noexcept
 {
+	handler.file.address = &address;
+
+	OpenBase(address, &Request::HandlePathExistsAfterBase);
+}
+
+void
+Request::HandlePathExistsAfterBase(FileDescriptor base) noexcept
+{
+	const FileAddress &address = *handler.file.address;
+
 	try {
-		translate.request.status = PathExists(address)
+		translate.request.status = PathExists(address, base)
 			? HttpStatus::OK
 			: ErrnoToHttpStatus(errno);
 		translate.request.path_exists = true;

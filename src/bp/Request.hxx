@@ -556,6 +556,7 @@ private:
 			       const struct statx &st) noexcept;
 
 	void HandlePathExists(const FileAddress &address) noexcept;
+	void HandlePathExistsAfterBase(FileDescriptor base) noexcept;
 
 	void HandleDelegateAddress(const DelegateAddress &address,
 				   const char *path) noexcept;
