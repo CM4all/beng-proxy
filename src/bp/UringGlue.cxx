@@ -5,6 +5,7 @@
 #include "UringGlue.hxx"
 #include "io/FileAt.hxx"
 #include "io/UniqueFileDescriptor.hxx"
+#include "io/Beneath.hxx"
 #include "AllocatorPtr.hxx"
 
 #ifdef HAVE_URING
@@ -64,6 +65,17 @@ UringGlue::Stat(FileAt file, int flags, unsigned mask,
 		on_error(errno);
 }
 
+static UniqueFileDescriptor
+TryOpenMaybeBeneath(FileAt file) noexcept
+{
+	if (file.directory.IsDefined())
+		return TryOpenReadOnlyBeneath(file);
+
+	UniqueFileDescriptor fd;
+	fd.OpenReadOnly(file.name);
+	return fd;
+}
+
 void
 UringGlue::OpenStat(AllocatorPtr alloc, FileAt file,
 		    UringOpenStatSuccessCallback on_success,
@@ -81,9 +93,7 @@ UringGlue::OpenStat(AllocatorPtr alloc, FileAt file,
 	(void)cancel_ptr;
 #endif
 
-	UniqueFileDescriptor fd;
-
-	if (fd.OpenReadOnly(file.directory, file.name)) {
+	if (auto fd = TryOpenMaybeBeneath(file); fd.IsDefined()) {
 		struct statx st;
 		if (statx(fd.Get(), "", AT_EMPTY_PATH,
 			  STATX_TYPE|STATX_MTIME|STATX_INO|STATX_SIZE,
