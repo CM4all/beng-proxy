@@ -179,7 +179,7 @@ static_file_get(EventLoop &event_loop,
 	struct statx st;
 
 	try {
-		fd = OpenReadOnly(base.IsDefined() ? base : FileDescriptor(AT_FDCWD),
+		fd = OpenReadOnly(base.IsDefined() ? base : FileDescriptor::Undefined(),
 				  path, O_NOFOLLOW);
 		if (statx(fd.Get(), "", AT_EMPTY_PATH,
 			  STATX_TYPE|STATX_MTIME|STATX_INO|STATX_SIZE,

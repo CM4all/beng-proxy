@@ -2,6 +2,7 @@ cm4all-beng-proxy (18.0.38) unstable; urgency=low
 
   * fcgi: fix assertion failure on trailing STDERR
   * fcgi, http_client, was: implement response header limits
+  * bp: require absolute paths for static files
 
  --   
 

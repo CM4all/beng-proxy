@@ -429,7 +429,7 @@ PathExists(const FileAddress &address)
 			     AT_SYMLINK_NOFOLLOW|AT_STATX_SYNC_AS_STAT,
 			     0, &st) == 0;
 	} else {
-		return statx(AT_FDCWD, address.path,
+		return statx(-1, address.path,
 			     AT_SYMLINK_NOFOLLOW|AT_STATX_SYNC_AS_STAT,
 			     0, &st) == 0;
 	}
