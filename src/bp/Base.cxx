@@ -9,6 +9,17 @@
 
 #include <fcntl.h> // for O_PATH, O_DIRECTORY
 
+[[gnu::pure]]
+static std::string_view
+NormalizePath(std::string_view path) noexcept
+{
+	/* strip trailing slashes */
+	while (path.ends_with('/'))
+		path.remove_suffix(1);
+
+	return path;
+}
+
 inline void
 Request::OnBaseOpen(FileDescriptor fd, SharedLease lease) noexcept
 {
@@ -19,7 +30,7 @@ Request::OnBaseOpen(FileDescriptor fd, SharedLease lease) noexcept
 }
 
 inline void
-Request::OpenBase(const char *path,
+Request::OpenBase(std::string_view path,
 		  Handler::File::OpenBaseCallback callback) noexcept
 {
 	handler.file.open_base_callback = callback;
@@ -29,7 +40,8 @@ Request::OpenBase(const char *path,
 		.resolve = RESOLVE_NO_MAGICLINKS,
 	};
 
-	instance.fd_cache.Get(FileDescriptor::Undefined(), path,
+	instance.fd_cache.Get(FileDescriptor::Undefined(),
+			      NormalizePath(path),
 			      open_directory_path,
 			      BIND_THIS_METHOD(OnBaseOpen),
 			      BIND_THIS_METHOD(OnBaseOpenError),

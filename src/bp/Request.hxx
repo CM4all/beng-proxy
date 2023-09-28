@@ -931,7 +931,7 @@ private:
 		LogDispatchErrno(error, "Failed to open file");
 	}
 
-	void OpenBase(const char *path,
+	void OpenBase(std::string_view path,
 		      Handler::File::OpenBaseCallback callback) noexcept;
 
 	void OpenBase(const FileAddress &address,

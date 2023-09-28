@@ -92,7 +92,7 @@ public:
 	 * @param directory an optional directory descriptor (only
 	 * used on cache miss)
 	 *
-	 * @param path an absolute path
+	 * @param path an absolute path (must be normalized)
 	 *
 	 * @param on_success the callback to be used on success
 	 * @param on_error the callback to be used on error
