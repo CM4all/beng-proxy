@@ -293,12 +293,25 @@ FdCache::Disable() noexcept
 	Flush();
 }
 
+[[gnu::pure]]
+static std::string_view
+NormalizePath(std::string_view path) noexcept
+{
+	/* strip trailing slashes */
+	while (path.ends_with('/'))
+		path.remove_suffix(1);
+
+	return path;
+}
+
 void
 FdCache::Get(std::string_view path, int flags,
 	     SuccessCallback on_success,
 	     ErrorCallback on_error,
 	     CancellablePointer &cancel_ptr) noexcept
 {
+	path = NormalizePath(path);
+
 	auto [it, inserted] = map.insert_check(Key{path, flags});
 	if (inserted) {
 		if (empty() && enabled)
