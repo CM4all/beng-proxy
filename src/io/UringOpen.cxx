@@ -21,7 +21,7 @@ class UringOpenOperation final : Cancellable, Uring::OpenHandler {
 
 public:
 	UringOpenOperation(Uring::Queue &uring,
-			   const char *path, int flags,
+			   FileAt file, int flags,
 			   Uring::OpenHandler &_handler,
 			   CancellablePointer &cancel_ptr) noexcept
 		:open_stat(new Uring::Open(uring, *this)),
@@ -29,7 +29,7 @@ public:
 	{
 		cancel_ptr = *this;
 
-		open_stat->StartOpen({FileDescriptor{AT_FDCWD}, path}, flags);
+		open_stat->StartOpen(file, flags);
 	}
 
 private:
@@ -66,10 +66,10 @@ private:
 
 void
 UringOpen(Uring::Queue &uring, AllocatorPtr alloc,
-	  const char *path, int flags,
+	  FileAt file, int flags,
 	  Uring::OpenHandler &handler,
 	  CancellablePointer &cancel_ptr) noexcept
 {
-	alloc.New<UringOpenOperation>(uring, path, flags,
+	alloc.New<UringOpenOperation>(uring, file, flags,
 				      handler, cancel_ptr);
 }

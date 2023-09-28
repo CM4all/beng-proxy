@@ -4,6 +4,7 @@
 
 #pragma once
 
+struct FileAt;
 class AllocatorPtr;
 class CancellablePointer;
 namespace Uring { class Queue; class OpenHandler; }
@@ -14,6 +15,6 @@ namespace Uring { class Queue; class OpenHandler; }
  */
 void
 UringOpen(Uring::Queue &uring, AllocatorPtr alloc,
-	  const char *path, int flags,
+	  FileAt file, int flags,
 	  Uring::OpenHandler &handler,
 	  CancellablePointer &cancel_ptr) noexcept;
