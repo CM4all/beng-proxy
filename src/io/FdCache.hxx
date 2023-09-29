@@ -92,12 +92,17 @@ public:
 	 * @param directory an optional directory descriptor (only
 	 * used on cache miss)
 	 *
+	 * @param strip_path the absolute path of the #directory
+	 * parameter; it is stripped from the #path parameter
+	 * (necessary if using RESOLVE_BENEATH)
+	 *
 	 * @param path an absolute path (must be normalized)
 	 *
 	 * @param on_success the callback to be used on success
 	 * @param on_error the callback to be used on error
 	 */
-	void Get(FileDescriptor beneath_directory,
+	void Get(FileDescriptor directory,
+		 std::string_view strip_path,
 		 std::string_view path,
 		 const struct open_how &how,
 		 SuccessCallback on_success,

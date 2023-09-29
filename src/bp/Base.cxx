@@ -40,7 +40,7 @@ Request::OpenBase(std::string_view path,
 		.resolve = RESOLVE_NO_MAGICLINKS,
 	};
 
-	instance.fd_cache.Get(FileDescriptor::Undefined(),
+	instance.fd_cache.Get(FileDescriptor::Undefined(), {},
 			      NormalizePath(path),
 			      open_directory_path,
 			      BIND_THIS_METHOD(OnBaseOpen),

@@ -23,6 +23,8 @@
 #include <cerrno>
 #include <string>
 
+using std::string_view_literals::operator""sv;
+
 inline std::size_t
 FdCache::Key::Hash::operator()(const Key &key) const noexcept
 {
@@ -128,7 +130,7 @@ struct FdCache::Item final
 		return SharedAnchor::IsAbandoned() && requests.empty();
 	}
 
-	void Start(FileDescriptor directory,
+	void Start(FileDescriptor directory, std::size_t strip_length,
 		   const struct open_how &how) noexcept;
 
 	void Get(SuccessCallback on_success,
@@ -213,21 +215,26 @@ private:
 };
 
 inline void
-FdCache::Item::Start(FileDescriptor directory,
+FdCache::Item::Start(FileDescriptor directory, std::size_t strip_length,
 		     const struct open_how &how) noexcept
 {
 	assert(!fd.IsDefined());
 	assert(!error);
+	assert(strip_length <= path.length());
+
+	const char *p = path.c_str() + strip_length;
+	if (*p == 0)
+		p = ".";
 
 #ifdef HAVE_URING
 	assert(uring_open == nullptr);
 
 	if (uring_queue != nullptr) {
 		uring_open = new Uring::Open(*uring_queue, *this);
-		uring_open->StartOpen({directory, path.c_str()}, how);
+		uring_open->StartOpen({directory, p}, how);
 	} else {
 #endif // HAVE_URING
-		int _fd = openat2(directory.Get(), path.c_str(),
+		int _fd = openat2(directory.Get(), p,
 				  &how, sizeof(how));
 		if (_fd >= 0) {
 			fd = UniqueFileDescriptor{_fd};
@@ -299,8 +306,31 @@ FdCache::Disable() noexcept
 	Flush();
 }
 
+/**
+ * Determine how many characters shall be stripped at the beginning of
+ * #path to make it relative to #strip_path.  Returns 0 on mismatch.
+ */
+[[gnu::pure]]
+static std::size_t
+StripLength(std::string_view strip_path, std::string_view path)
+{
+	if (strip_path.empty())
+		return 0;
+
+	if (path.starts_with(strip_path)) {
+		if (path.size() == strip_path.size())
+			return path.size();
+
+		if (path[strip_path.size()] == '/')
+			return strip_path.size() + 1;
+	}
+
+	return 0;
+}
+
 void
 FdCache::Get(FileDescriptor directory,
+	     std::string_view strip_path,
 	     std::string_view path,
 	     const struct open_how &how,
 	     SuccessCallback on_success,
@@ -335,7 +365,7 @@ FdCache::Get(FileDescriptor directory,
 		   synchronously */
 		const SharedLease lock{*item};
 
-		item->Start(directory, how);
+		item->Start(directory, StripLength(strip_path, path), how);
 		item->Get(on_success, on_error, cancel_ptr);
 	} else
 		it->Get(on_success, on_error, cancel_ptr);
