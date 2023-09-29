@@ -8,6 +8,7 @@
 #include "ResourceAddress.hxx"
 
 #include <fcntl.h> // for O_PATH, O_DIRECTORY
+#include <linux/openat2.h> // for RESOLVE_*
 
 static constexpr struct open_how open_directory_path{
 	.flags = O_PATH|O_DIRECTORY|O_NOFOLLOW|O_CLOEXEC,
