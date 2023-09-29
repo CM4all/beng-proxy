@@ -198,6 +198,8 @@ BpInstance::ReloadEventCallback(int) noexcept
 		remote_was_stock->FadeAll();
 #endif
 
+	fd_cache.Flush();
+
 	Compress();
 }
 
