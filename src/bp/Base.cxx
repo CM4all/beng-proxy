@@ -9,6 +9,11 @@
 
 #include <fcntl.h> // for O_PATH, O_DIRECTORY
 
+static constexpr struct open_how open_directory_path{
+	.flags = O_PATH|O_DIRECTORY|O_NOFOLLOW|O_CLOEXEC,
+	.resolve = RESOLVE_NO_MAGICLINKS,
+};
+
 [[gnu::pure]]
 static std::string_view
 NormalizePath(std::string_view path) noexcept
@@ -34,11 +39,6 @@ Request::OpenBase(std::string_view path,
 		  Handler::File::OpenBaseCallback callback) noexcept
 {
 	handler.file.open_base_callback = callback;
-
-	static constexpr struct open_how open_directory_path{
-		.flags = O_PATH|O_DIRECTORY|O_NOFOLLOW|O_CLOEXEC,
-		.resolve = RESOLVE_NO_MAGICLINKS,
-	};
 
 	instance.fd_cache.Get(FileDescriptor::Undefined(), {},
 			      NormalizePath(path),
