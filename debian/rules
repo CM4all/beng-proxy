@@ -5,6 +5,7 @@ MESON_OPTIONS = \
 	-Ddocumentation=enabled \
 	-Dbrotli=enabled \
 	-Dhttp2=enabled \
+	-Dio_uring=enabled \
 	-Dnfs=enabled \
 	-Dsystemd=true \
 	-Dwas=enabled \
