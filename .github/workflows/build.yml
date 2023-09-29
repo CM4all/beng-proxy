@@ -65,7 +65,6 @@ jobs:
             libsodium-dev \
             libssl-dev \
             libsystemd-dev \
-            liburing-dev \
             libyaml-cpp-dev
 
       - name: Configure
@@ -79,8 +78,11 @@ jobs:
              -Dyaml=enabled \
              -Dzeroconf=enabled \
              -Dbrotli=enabled \
+             -Dio_uring=disabled \
              --force-fallback-for=fmt,libcm4all-was-protocol \
              output
+        # Note: io_uring is disabled because the liburing version in
+        # Ubuntu is broken; it redefines "struct open_how"
 
       - name: Build
         run: ninja -C output -v
