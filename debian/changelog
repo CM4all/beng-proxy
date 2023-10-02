@@ -1,6 +1,6 @@
 cm4all-beng-proxy (18.0.40) unstable; urgency=low
 
-  * 
+  * spawn: don't follow symlinks for BIND_MOUNT
 
  --   
 
