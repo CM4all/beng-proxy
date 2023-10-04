@@ -11,7 +11,7 @@
 #include "MonitorConfig.hxx"
 #include "ClusterConfig.hxx"
 #include "net/SocketAddress.hxx"
-#include "net/FormatAddress.hxx"
+#include "net/ToString.hxx"
 
 #include <assert.h>
 
@@ -35,13 +35,6 @@ LookupMonitorClass(LbMonitorConfig::Type type)
 	}
 
 	gcc_unreachable();
-}
-
-static std::string
-ToString(SocketAddress address) noexcept
-{
-	char buffer[4096];
-	return ToString(buffer, address, "unknown");
 }
 
 LbMonitorStock::LbMonitorStock(EventLoop &_event_loop,
