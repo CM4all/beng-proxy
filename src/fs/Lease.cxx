@@ -186,7 +186,10 @@ FilteredSocketLease::Read() noexcept
 		   DISCONNECTED instead */
 		assert(IsReleased());
 		result = BufferedReadResult::DISCONNECTED;
-	}
+	} else if (destructed)
+		/* the FilteredSocket is alive, but the lease has been
+		   destroyed */
+		result = BufferedReadResult::DESTROYED;
 
 	return result;
 }
