@@ -9,8 +9,7 @@ extern "C" {
 #include <nfsc/libnfs.h>
 }
 
-#include <assert.h>
-#include <string.h>
+#include <cassert>
 
 static auto
 FormatNfsClientError(struct nfs_context *nfs, const char *msg) noexcept
