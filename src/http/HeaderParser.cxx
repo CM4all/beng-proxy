@@ -7,7 +7,6 @@
 #include "strmap.hxx"
 #include "memory/GrowingBuffer.hxx"
 #include "http/HeaderName.hxx"
-#include "util/ConstBuffer.hxx"
 #include "util/StaticFifoBuffer.hxx"
 #include "util/StringCompare.hxx"
 #include "util/StringSplit.hxx"

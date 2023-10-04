@@ -7,7 +7,6 @@
 #include "Bucket.hxx"
 #include "New.hxx"
 #include "UnusedPtr.hxx"
-#include "util/ConstBuffer.hxx"
 #include "util/DestructObserver.hxx"
 #include "util/HexFormat.hxx"
 #include "util/SpanCast.hxx"

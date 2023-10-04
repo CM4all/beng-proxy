@@ -11,7 +11,6 @@
 #include "io/UniqueFileDescriptor.hxx"
 #include "system/Error.hxx"
 #include "http/Status.hxx"
-#include "util/ConstBuffer.hxx"
 
 std::span<const std::byte>
 LoadFile(struct pool &pool, const char *path, off_t max_size)

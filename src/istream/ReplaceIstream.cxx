@@ -6,7 +6,6 @@
 #include "UnusedPtr.hxx"
 #include "Bucket.hxx"
 #include "pool/pool.hxx"
-#include "util/ConstBuffer.hxx"
 #include "util/DestructObserver.hxx"
 
 #include <stdexcept>
