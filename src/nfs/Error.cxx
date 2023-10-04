@@ -13,7 +13,7 @@ extern "C" {
 #include <string.h>
 
 static StringBuffer<256>
-FormatNfsClientError(struct nfs_context *nfs, const char *msg)
+FormatNfsClientError(struct nfs_context *nfs, const char *msg) noexcept
 {
 	assert(msg != nullptr);
 
@@ -21,13 +21,13 @@ FormatNfsClientError(struct nfs_context *nfs, const char *msg)
 	return FmtBuffer<256>("{}: {}", msg, msg2);
 }
 
-NfsClientError::NfsClientError(struct nfs_context *nfs, const char *msg)
+NfsClientError::NfsClientError(struct nfs_context *nfs, const char *msg) noexcept
 	:std::runtime_error(FormatNfsClientError(nfs, msg).c_str()),
 	 code(0) {}
 
 static StringBuffer<256>
 FormatNfsClientError(int err, struct nfs_context *nfs, void *data,
-		     const char *msg)
+		     const char *msg) noexcept
 {
 	assert(msg != nullptr);
 	assert(err < 0);
@@ -43,6 +43,6 @@ FormatNfsClientError(int err, struct nfs_context *nfs, void *data,
 }
 
 NfsClientError::NfsClientError(int err, struct nfs_context *nfs, void *data,
-			       const char *msg)
+			       const char *msg) noexcept
 	:std::runtime_error(FormatNfsClientError(err, nfs, data, msg).c_str()),
 	 code(-err) {}
