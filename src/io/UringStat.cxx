@@ -48,6 +48,11 @@ private:
 
 	/* virtual methods from class Uring::Operation */
 	void OnUringCompletion(int res) noexcept override {
+		if (canceled) {
+			Destroy();
+			return;
+		}
+
 		if (res < 0) {
 			auto _on_error = on_error;
 			Destroy();
