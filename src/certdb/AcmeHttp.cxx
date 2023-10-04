@@ -7,7 +7,7 @@
 #include "JWS.hxx"
 #include "lib/sodium/UrlSafeBase64SHA256.hxx"
 #include "io/FileWriter.hxx"
-#include "util/ConstBuffer.hxx"
+#include "util/SpanCast.hxx"
 
 #include <boost/json.hpp>
 
@@ -22,7 +22,7 @@ MakeHttp01(const AcmeChallenge &challenge, EVP_PKEY &account_key)
 }
 
 static void
-CreateFile(const char *path, ConstBuffer<void> contents)
+CreateFile(const char *path, std::span<const std::byte> contents)
 {
 	FileWriter file(path);
 
@@ -30,14 +30,14 @@ CreateFile(const char *path, ConstBuffer<void> contents)
 	   deliver it to the ACME server's HTTP client */
 	fchmod(file.GetFileDescriptor().Get(), 0644);
 
-	file.Write(contents.data, contents.size);
+	file.Write(contents);
 	file.Commit();
 }
 
 static void
-CreateFile(const char *path, const std::string &contents)
+CreateFile(const char *path, std::string_view contents)
 {
-	CreateFile(path, ConstBuffer<void>(contents.data(), contents.length()));
+	CreateFile(path, AsBytes(contents));
 }
 
 [[gnu::pure]]
