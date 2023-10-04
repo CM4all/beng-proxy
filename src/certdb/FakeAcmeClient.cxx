@@ -37,14 +37,6 @@ ParseJson(const AllocatedArray<T> &src)
 	return ParseJson(std::as_bytes(std::span<const T>(src)));
 }
 
-/*
-  static Json::Value
-  ParseJson(const std::string &src)
-  {
-  return ParseJson(ConstBuffer<void>(src.data(), src.length()));
-  }
-*/
-
 static void
 DecodeUrlSafe(BIO *dest, std::string_view src)
 {

@@ -12,7 +12,6 @@
 
 struct LbInstance;
 struct LbControlConfig;
-template<typename T> struct ConstBuffer;
 
 class LbControl final : ControlHandler {
 	const LLogger logger;

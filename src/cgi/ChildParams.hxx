@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include "util/ConstBuffer.hxx"
+#include <span>
 
 struct ChildOptions;
 class AllocatorPtr;
@@ -12,7 +12,7 @@ class AllocatorPtr;
 struct CgiChildParams {
 	const char *executable_path;
 
-	ConstBuffer<const char *> args;
+	std::span<const char *const> args;
 
 	const ChildOptions &options;
 
@@ -21,7 +21,7 @@ struct CgiChildParams {
 	bool disposable;
 
 	CgiChildParams(const char *_executable_path,
-		       ConstBuffer<const char *> _args,
+		       std::span<const char *const> _args,
 		       const ChildOptions &_options,
 		       unsigned _parallelism,
 		       unsigned _concurrency,

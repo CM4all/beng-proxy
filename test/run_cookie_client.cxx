@@ -9,7 +9,6 @@
 #include "memory/fb_pool.hxx"
 #include "strmap.hxx"
 #include "memory/GrowingBuffer.hxx"
-#include "util/ConstBuffer.hxx"
 #include "AllocatorPtr.hxx"
 
 #include <stdio.h>
@@ -33,9 +32,12 @@ main(int argc, char **argv) noexcept
 
 	GrowingBufferReader reader(headers_dup(headers));
 
-	ConstBuffer<void> src;
-	while (!(src = reader.Read()).IsNull()) {
-		ssize_t nbytes = write(1, src.data, src.size);
+	while (true) {
+		const auto src = reader.Read();
+		if (src.data() ==nullptr)
+			break;
+
+		ssize_t nbytes = write(1, src.data(), src.size());
 		if (nbytes < 0) {
 			perror("write() failed");
 			return 1;

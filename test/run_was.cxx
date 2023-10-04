@@ -22,7 +22,6 @@
 #include "io/SpliceSupport.hxx"
 #include "http/HeaderName.hxx"
 #include "http/Method.hxx"
-#include "util/ConstBuffer.hxx"
 #include "util/Cancellable.hxx"
 #include "util/PrintException.hxx"
 #include "util/StaticVector.hxx"

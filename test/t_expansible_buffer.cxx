@@ -4,7 +4,6 @@
 
 #include "memory/ExpansibleBuffer.hxx"
 #include "TestPool.hxx"
-#include "util/ConstBuffer.hxx"
 
 #include <gtest/gtest.h>
 
