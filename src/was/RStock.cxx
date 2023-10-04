@@ -15,7 +15,7 @@
 #include "event/SocketEvent.hxx"
 #include "net/AllocatedSocketAddress.hxx"
 #include "net/ConnectSocket.hxx"
-#include "net/ToString.hxx"
+#include "net/FormatAddress.hxx"
 #include "net/UniqueSocketDescriptor.hxx"
 #include "system/Error.hxx"
 #include "util/Exception.hxx"

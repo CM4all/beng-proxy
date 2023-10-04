@@ -7,7 +7,7 @@
 #include "Layout.hxx"
 #include "translation/Protocol.hxx"
 #include "lib/fmt/RuntimeError.hxx"
-#include "net/ToString.hxx"
+#include "net/FormatAddress.hxx"
 #include "util/SpanCast.hxx"
 
 void

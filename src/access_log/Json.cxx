@@ -10,7 +10,7 @@
 #include "Server.hxx"
 #include "http/Method.hxx"
 #include "http/Status.hxx"
-#include "net/ToString.hxx"
+#include "net/FormatAddress.hxx"
 #include "net/log/String.hxx"
 #include "time/Cast.hxx"
 #include "time/ISO8601.hxx"

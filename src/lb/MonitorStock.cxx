@@ -11,7 +11,7 @@
 #include "MonitorConfig.hxx"
 #include "ClusterConfig.hxx"
 #include "net/SocketAddress.hxx"
-#include "net/ToString.hxx"
+#include "net/FormatAddress.hxx"
 
 #include <assert.h>
 

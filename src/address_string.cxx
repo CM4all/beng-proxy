@@ -5,7 +5,7 @@
 #include "address_string.hxx"
 #include "pool/pool.hxx"
 #include "net/SocketAddress.hxx"
-#include "net/ToString.hxx"
+#include "net/FormatAddress.hxx"
 
 const char *
 address_to_string(struct pool &pool, SocketAddress address)

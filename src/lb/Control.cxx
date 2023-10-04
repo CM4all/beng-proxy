@@ -8,7 +8,7 @@
 #include "pool/tpool.hxx"
 #include "pool/pool.hxx"
 #include "translation/InvalidateParser.hxx"
-#include "net/ToString.hxx"
+#include "net/FormatAddress.hxx"
 #include "net/FailureManager.hxx"
 #include "net/FailureRef.hxx"
 #include "util/Exception.hxx"

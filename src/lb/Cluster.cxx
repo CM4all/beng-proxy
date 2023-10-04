@@ -21,7 +21,7 @@
 #include "event/Loop.hxx"
 #include "net/PConnectSocket.hxx"
 #include "net/FailureManager.hxx"
-#include "net/ToString.hxx"
+#include "net/FormatAddress.hxx"
 #include "util/ConstBuffer.hxx"
 #include "util/DeleteDisposer.hxx"
 #include "util/DereferenceIterator.hxx"

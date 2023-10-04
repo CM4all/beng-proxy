@@ -18,7 +18,7 @@
 #include "pool/LeakDetector.hxx"
 #include "stopwatch.hxx"
 #include "net/SocketAddress.hxx"
-#include "net/ToString.hxx"
+#include "net/FormatAddress.hxx"
 #include "util/Cancellable.hxx"
 #include "util/StringCompare.hxx"
 #include "AllocatorPtr.hxx"

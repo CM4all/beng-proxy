@@ -15,7 +15,7 @@
 #include "net/AllocatedSocketAddress.hxx"
 #include "net/SocketAddress.hxx"
 #include "net/UniqueSocketDescriptor.hxx"
-#include "net/ToString.hxx"
+#include "net/FormatAddress.hxx"
 #include "io/Logger.hxx"
 #include "util/Cancellable.hxx"
 #include "util/Exception.hxx"

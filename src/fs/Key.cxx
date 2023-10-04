@@ -5,7 +5,7 @@
 #include "Key.hxx"
 #include "Params.hxx"
 #include "net/SocketAddress.hxx"
-#include "net/ToString.hxx"
+#include "net/FormatAddress.hxx"
 #include "util/StringBuilder.hxx"
 
 #include <assert.h>

@@ -12,7 +12,7 @@
 #include "memory/istream_gb.hxx"
 #include "lib/avahi/Explorer.hxx"
 #include "net/AllocatedSocketAddress.hxx"
-#include "net/ToString.hxx"
+#include "net/FormatAddress.hxx"
 
 using std::string_view_literals::operator""sv;
 

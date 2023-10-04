@@ -15,7 +15,7 @@
 #include "lua/Util.hxx"
 #include "lib/fmt/RuntimeError.hxx"
 #include "http/Method.hxx"
-#include "net/ToString.hxx"
+#include "net/FormatAddress.hxx"
 #include "net/UniqueSocketDescriptor.hxx"
 #include "net/log/String.hxx"
 #include "system/Error.hxx"
