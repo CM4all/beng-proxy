@@ -855,7 +855,7 @@ ParseCondition(FileLineParser &line)
 		throw LineParser::Error("Regular expression expected");
 
 	if (re)
-		return {std::move(a), negate, UniqueRegex(string, false, false)};
+		return {std::move(a), negate, UniqueRegex{string, {}}};
 	else
 		return {std::move(a), negate, string};
 }

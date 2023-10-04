@@ -16,7 +16,7 @@ TEST(RegexTest, Expand)
 {
 	UniqueRegex r;
 	ASSERT_FALSE(r.IsDefined());
-	r.Compile("^/foo/(\\w+)/([^/]+)/(.*)$", false, true);
+	r.Compile("^/foo/(\\w+)/([^/]+)/(.*)$", {.capture=true});
 	ASSERT_TRUE(r.IsDefined());
 
 	ASSERT_FALSE(r.Match("a"));
@@ -53,7 +53,7 @@ TEST(RegexTest, ExpandMalformedUriEscape)
 {
 	UniqueRegex r;
 	ASSERT_FALSE(r.IsDefined());
-	r.Compile("^(.*)$", false, true);
+	r.Compile("^(.*)$", {.capture=true});
 	ASSERT_TRUE(r.IsDefined());
 
 	auto match_data = r.Match("%xxx");
@@ -74,7 +74,7 @@ TEST(RegexTest, ExpandOptional)
 {
 	UniqueRegex r;
 	ASSERT_FALSE(r.IsDefined());
-	r.Compile("^(a)(b)?(c)$", true, true);
+	r.Compile("^(a)(b)?(c)$", {.anchored=true, .capture=true});
 	ASSERT_TRUE(r.IsDefined());
 
 	auto match_data = r.Match("abc");
@@ -98,7 +98,7 @@ TEST(RegexTest, ExpandOptionalLast)
 {
 	UniqueRegex r;
 	ASSERT_FALSE(r.IsDefined());
-	r.Compile("^(a)(b)?(c)?$", true, true);
+	r.Compile("^(a)(b)?(c)?$", {.anchored=true, .capture=true});
 	ASSERT_TRUE(r.IsDefined());
 
 	auto match_data = r.Match("abc");
