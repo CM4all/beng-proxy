@@ -50,11 +50,11 @@ private:
 	void OnUringCompletion(int res) noexcept override {
 		if (res < 0) {
 			auto _on_error = on_error;
-			delete this;
+			Destroy();
 			_on_error(-res);
 		} else {
 			on_success(st);
-			delete this;
+			Destroy();
 		}
 	}
 };
