@@ -11,9 +11,9 @@
 #include "lease.hxx"
 #include "pool/pool.hxx"
 #include "pool/LeakDetector.hxx"
+#include "lib/fmt/SocketAddressFormatter.hxx"
 #include "lib/fmt/SystemError.hxx"
 #include "net/UniqueSocketDescriptor.hxx"
-#include "net/ToString.hxx"
 #include "event/SocketEvent.hxx"
 #include "io/Logger.hxx"
 #include "util/Cancellable.hxx"
@@ -30,12 +30,8 @@ CreateConnectStreamSocket(const SocketAddress address)
 	if (!fd.CreateNonBlock(address.GetFamily(), SOCK_STREAM, 0))
 		throw MakeErrno("Failed to create socket");
 
-	if (!fd.Connect(address)) {
-		const int e = errno;
-		char buffer[256];
-		ToString(buffer, address);
-		throw FmtErrno(e, "Failed to connect to {}", buffer);
-	}
+	if (!fd.Connect(address))
+		throw FmtErrno("Failed to connect to {}", address);
 
 	return fd;
 }
