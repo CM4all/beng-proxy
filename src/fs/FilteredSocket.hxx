@@ -374,13 +374,13 @@ public:
 	ssize_t InternalDirectWrite(std::span<const std::byte> src) noexcept {
 		assert(filter != nullptr);
 
-		return base.DirectWrite(src.data(), src.size());
+		return base.DirectWrite(src);
 	}
 
 	ssize_t InternalWrite(std::span<const std::byte> src) noexcept {
 		assert(filter != nullptr);
 
-		return base.Write(src.data(), src.size());
+		return base.Write(src);
 	}
 
 	/**

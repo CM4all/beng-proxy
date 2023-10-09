@@ -179,7 +179,7 @@ TranslateClient::TryWrite() noexcept
 	auto src = request.Read();
 	assert(!src.empty());
 
-	ssize_t nbytes = socket.Write(src.data(), src.size());
+	ssize_t nbytes = socket.Write(src);
 	if (nbytes < 0) [[unlikely]] {
 		if (nbytes == WRITE_BLOCKING) [[likely]]
 			return true;

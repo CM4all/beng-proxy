@@ -682,7 +682,7 @@ FcgiClient::OnData(std::span<const std::byte> src) noexcept
 
 	request.got_data = true;
 
-	ssize_t nbytes = socket.Write(src.data(), src.size());
+	ssize_t nbytes = socket.Write(src);
 	if (nbytes > 0)
 		socket.ScheduleWrite();
 	else if (nbytes == WRITE_BLOCKING || nbytes == WRITE_DESTROYED) [[likely]]

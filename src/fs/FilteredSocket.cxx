@@ -227,7 +227,7 @@ FilteredSocket::Write(std::span<const std::byte> src) noexcept
 {
 	return filter != nullptr
 		? filter->Write(src)
-		: base.Write(src.data(), src.size());
+		: base.Write(src);
 }
 
 bool
