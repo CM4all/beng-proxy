@@ -73,6 +73,7 @@ struct LbConfig {
 	std::unique_ptr<LbHttpCheckConfig> global_http_check;
 
 	unsigned tcp_stock_limit = 256;
+	static constexpr std::size_t tcp_stock_max_idle = 16;
 
 	LbConfig() noexcept;
 	~LbConfig() noexcept;

@@ -377,12 +377,14 @@ try {
 	/* initialize ResourceLoader and all its dependencies */
 
 	instance.tcp_stock = new TcpStock(instance.event_loop,
-					  instance.config.tcp_stock_limit);
+					  instance.config.tcp_stock_limit,
+					  instance.config.tcp_stock_max_idle);
 	instance.tcp_balancer = new TcpBalancer(*instance.tcp_stock,
 						instance.failure_manager);
 
 	instance.fs_stock = new FilteredSocketStock(instance.event_loop,
-						    instance.config.tcp_stock_limit);
+						    instance.config.tcp_stock_limit,
+						    instance.config.tcp_stock_max_idle);
 	instance.fs_balancer = new FilteredSocketBalancer(*instance.fs_stock,
 							  instance.failure_manager);
 

@@ -33,8 +33,9 @@ public:
 	/**
 	 * @param limit the maximum number of connections per host
 	 */
-	FilteredSocketStock(EventLoop &event_loop, std::size_t limit) noexcept
-		:stock(event_loop, *this, limit, 16,
+	FilteredSocketStock(EventLoop &event_loop,
+			    std::size_t limit, std::size_t max_idle) noexcept
+		:stock(event_loop, *this, limit, max_idle,
 		       std::chrono::minutes(5)) {}
 
 	EventLoop &GetEventLoop() noexcept {

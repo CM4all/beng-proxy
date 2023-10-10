@@ -119,6 +119,7 @@ struct BpConfig {
 	unsigned translate_stock_limit = 32;
 
 	unsigned tcp_stock_limit = 0;
+	static constexpr std::size_t tcp_stock_max_idle = 16;
 
 	unsigned lhttp_stock_limit = 0, lhttp_stock_max_idle = 8;
 	unsigned fcgi_stock_limit = 0, fcgi_stock_max_idle = 8;

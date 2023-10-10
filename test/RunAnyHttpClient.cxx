@@ -60,7 +60,7 @@ struct Context final
 
 	FailureManager failure_manager;
 
-	FilteredSocketStock fs_stock{event_loop, 1};
+	FilteredSocketStock fs_stock{event_loop, 1, 1};
 
 	FilteredSocketBalancer fs_balancer{fs_stock, failure_manager};
 
