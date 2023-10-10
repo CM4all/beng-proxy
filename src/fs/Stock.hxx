@@ -33,7 +33,7 @@ public:
 	/**
 	 * @param limit the maximum number of connections per host
 	 */
-	FilteredSocketStock(EventLoop &event_loop, unsigned limit) noexcept
+	FilteredSocketStock(EventLoop &event_loop, std::size_t limit) noexcept
 		:stock(event_loop, *this, limit, 16,
 		       std::chrono::minutes(5)) {}
 

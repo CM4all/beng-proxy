@@ -31,7 +31,7 @@ public:
 	/**
 	 * @param limit the maximum number of connections per host
 	 */
-	TcpStock(EventLoop &event_loop, unsigned limit) noexcept
+	TcpStock(EventLoop &event_loop, std::size_t limit) noexcept
 		:stock(event_loop, *this, limit, 16,
 		       /* each TcpStockConnection has its own timer */
 		       Event::Duration::zero()) {}
