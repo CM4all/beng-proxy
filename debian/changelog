@@ -2,6 +2,7 @@ cm4all-beng-proxy (18.0.42) unstable; urgency=low
 
   * lb: keep up to 256 idle outgoing connections (was 16)
   * lb: do not log requests that were canceled during the tarpit delay
+  * http_client: keep (and reuse) canceled outgoing connections
 
  --   
 

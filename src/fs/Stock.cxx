@@ -52,6 +52,10 @@ struct FilteredSocketStockRequest {
 		 bind_address(_bind_address), address(_address),
 		 timeout(_timeout),
 		 filter_params(_filter_params) {}
+
+	bool ShouldContinueOnCancel() const noexcept {
+		return !stopwatch && !ip_transparent;
+	}
 };
 
 class FilteredSocketStockConnection final
@@ -72,6 +76,18 @@ class FilteredSocketStockConnection final
 	std::unique_ptr<FilteredSocket> socket;
 
 	CoarseTimerEvent idle_timer;
+
+	/**
+	 * Should canceled requests be continued anyway?  If yes, then
+	 * a Cancel() will set the state to CANCELED; upon completion,
+	 * the connection will be put to the #Stock to be used by the
+	 * next request.
+	 */
+	enum class ContinueState : uint_least8_t {
+		NO,
+		YES,
+		CANCELED,
+	} continue_state;
 
 public:
 	FilteredSocketStockConnection(CreateStockItem c,
@@ -111,6 +127,10 @@ public:
 	}
 
 	void Start(FilteredSocketStockRequest &&request) noexcept {
+		continue_state = request.ShouldContinueOnCancel()
+			? ContinueState::YES
+			: ContinueState::NO;
+
 		ConnectFilteredSocket(GetEventLoop(),
 				      std::move(request.stopwatch),
 				      request.ip_transparent,
@@ -139,6 +159,21 @@ private:
 	/* virtual methods from class Cancellable */
 	void Cancel() noexcept override {
 		assert(cancel_ptr);
+		assert(continue_state == ContinueState::YES ||
+		       continue_state == ContinueState::NO);
+
+		if (continue_state == ContinueState::YES) {
+			/* even if we continue the request, we call
+			   InvokeCreateAborted() for Stock's book
+			   keeping, because we must later call Put()
+			   instead of ItemCreateSuccess(); only
+			   ItemCreateAborted() will decrement
+			   BasicStock::num_create; TODO optimize
+			   this */
+			continue_state = ContinueState::CANCELED;
+			GetStock().ItemCreateAborted();
+			return;
+		}
 
 		// our destructor will call cancel_ptr.Cancel()
 		InvokeCreateAborted();
@@ -220,6 +255,14 @@ FilteredSocketStockConnection::OnConnectFilteredSocket(std::unique_ptr<FilteredS
 	socket = std::move(_socket);
 	socket->Reinit(Event::Duration(-1), *this);
 
+	if (continue_state == ContinueState::CANCELED) {
+		/* the connect operation has been canceled and the
+		   handler isn't intersted in the connection anymore -
+		   put it to the stock as "idle" */
+		static_cast<Stock &>(GetStock()).InjectIdle(*this);
+		return;
+	}
+
 	InvokeCreateSuccess(*handler);
 }
 
@@ -233,6 +276,12 @@ FilteredSocketStockConnection::OnConnectFilteredSocketError(std::exception_ptr e
 	ep = NestException(ep,
 			   FmtRuntimeError("Failed to connect to '{}'",
 					   GetStockName()));
+
+	if (continue_state == ContinueState::CANCELED) {
+		logger(2, ep);
+		return;
+	}
+
 	InvokeCreateError(*handler, std::move(ep));
 }
 
