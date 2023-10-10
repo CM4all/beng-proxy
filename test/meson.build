@@ -116,6 +116,30 @@ executable(
     raddress_dep,
   ])
 
+if nghttp2_client_dep.found()
+  executable(
+    'http2_rapid_reset',
+    'http2_rapid_reset.cxx',
+    '../src/ssl/SslSocketFilterFactory.cxx',
+    include_directories: inc,
+    dependencies: [
+      test_instance_dep,
+      istream_pipe_dep,
+      ssl_dep,
+      was_client_dep,
+      http_client_dep,
+      nghttp2_client_dep,
+      event_net_dep,
+      stock_dep,
+      socket_dep,
+      cluster_dep,
+      net_dep,
+      thread_pool_dep,
+      raddress_dep,
+    ],
+  )
+endif
+
 executable('run_delegate',
   'run_delegate.cxx',
   '../src/PInstance.cxx',
