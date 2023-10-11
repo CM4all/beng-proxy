@@ -191,8 +191,8 @@ LbHttpConnection::RecordAbuse(double size) noexcept
 void
 LbHttpConnection::OnInvalidFrameReceived() noexcept
 {
-	++connection.instance.http_stats.n_invalid_frames;
-	++connection.listener.GetHttpStats().n_invalid_frames;
+	++instance.http_stats.n_invalid_frames;
+	++listener.GetHttpStats().n_invalid_frames;
 
 	RecordAbuse(5);
 }
