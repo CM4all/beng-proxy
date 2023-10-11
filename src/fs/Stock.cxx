@@ -140,7 +140,7 @@ private:
 	void Cancel() noexcept override {
 		assert(cancel_ptr);
 
-		cancel_ptr.Cancel();
+		// our destructor will call cancel_ptr.Cancel()
 		InvokeCreateAborted();
 	}
 
