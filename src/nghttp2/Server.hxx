@@ -64,22 +64,22 @@ private:
 		return c.SendCallback({(const std::byte *)data, length});
 	}
 
-	int OnFrameRecvCallback(const nghttp2_frame *frame) noexcept;
+	int OnFrameRecvCallback(const nghttp2_frame &frame) noexcept;
 
 	static int OnFrameRecvCallback(nghttp2_session *,
 				       const nghttp2_frame *frame,
 				       void *user_data) noexcept {
 		auto &c = *(ServerConnection *)user_data;
-		return c.OnFrameRecvCallback(frame);
+		return c.OnFrameRecvCallback(*frame);
 	}
 
-	int OnBeginHeaderCallback(const nghttp2_frame *frame) noexcept;
+	int OnBeginHeaderCallback(const nghttp2_frame &frame) noexcept;
 
 	static int OnBeginHeaderCallback(nghttp2_session *,
 					 const nghttp2_frame *frame,
 					 void *user_data) noexcept {
 		auto &c = *(ServerConnection *)user_data;
-		return c.OnBeginHeaderCallback(frame);
+		return c.OnBeginHeaderCallback(*frame);
 	}
 
 	/* virtual methods from class BufferedSocketHandler */

@@ -107,13 +107,13 @@ private:
 		return c.SendCallback({(const std::byte *)data, length});
 	}
 
-	int OnFrameRecvCallback(const nghttp2_frame *frame) noexcept;
+	int OnFrameRecvCallback(const nghttp2_frame &frame) noexcept;
 
 	static int OnFrameRecvCallback(nghttp2_session *,
 				       const nghttp2_frame *frame,
 				       void *user_data) noexcept {
 		auto &c = *(ClientConnection *)user_data;
-		return c.OnFrameRecvCallback(frame);
+		return c.OnFrameRecvCallback(*frame);
 	}
 
 	/* virtual methods from class BufferedSocketHandler */

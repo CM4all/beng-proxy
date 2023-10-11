@@ -526,25 +526,25 @@ ClientConnection::SendCallback(std::span<const std::byte> src) noexcept
 }
 
 int
-ClientConnection::OnFrameRecvCallback(const nghttp2_frame *frame) noexcept
+ClientConnection::OnFrameRecvCallback(const nghttp2_frame &frame) noexcept
 {
-	switch (frame->hd.type) {
+	switch (frame.hd.type) {
 	case NGHTTP2_HEADERS:
-		if (frame->hd.flags & NGHTTP2_FLAG_END_HEADERS) {
+		if (frame.hd.flags & NGHTTP2_FLAG_END_HEADERS) {
 			void *stream_data = nghttp2_session_get_stream_user_data(session.get(),
-										 frame->hd.stream_id);
+										 frame.hd.stream_id);
 			if (stream_data == nullptr)
 				return 0;
 
 			auto &request = *(Request *)stream_data;
-			return request.SubmitResponse((frame->hd.flags & NGHTTP2_FLAG_END_STREAM) == 0);
+			return request.SubmitResponse((frame.hd.flags & NGHTTP2_FLAG_END_STREAM) == 0);
 		}
 		break;
 
 	case NGHTTP2_DATA:
-		if (frame->hd.flags & NGHTTP2_FLAG_END_STREAM) {
+		if (frame.hd.flags & NGHTTP2_FLAG_END_STREAM) {
 			void *stream_data = nghttp2_session_get_stream_user_data(session.get(),
-										 frame->hd.stream_id);
+										 frame.hd.stream_id);
 			if (stream_data == nullptr)
 				return 0;
 
@@ -555,9 +555,9 @@ ClientConnection::OnFrameRecvCallback(const nghttp2_frame *frame) noexcept
 		break;
 
 	case NGHTTP2_SETTINGS:
-		for (size_t i = 0; i < frame->settings.niv; ++i)
-			if (frame->settings.iv[i].settings_id == NGHTTP2_SETTINGS_MAX_CONCURRENT_STREAMS)
-				max_concurrent_streams = std::min<size_t>(frame->settings.iv[i].value,
+		for (size_t i = 0; i < frame.settings.niv; ++i)
+			if (frame.settings.iv[i].settings_id == NGHTTP2_SETTINGS_MAX_CONCURRENT_STREAMS)
+				max_concurrent_streams = std::min<size_t>(frame.settings.iv[i].value,
 									  MAX_CONCURRENT_STREAMS);
 		break;
 

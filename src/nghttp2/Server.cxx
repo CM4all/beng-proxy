@@ -558,25 +558,25 @@ ServerConnection::SendCallback(std::span<const std::byte> src) noexcept
 }
 
 int
-ServerConnection::OnFrameRecvCallback(const nghttp2_frame *frame) noexcept
+ServerConnection::OnFrameRecvCallback(const nghttp2_frame &frame) noexcept
 {
-	switch (frame->hd.type) {
+	switch (frame.hd.type) {
 	case NGHTTP2_HEADERS:
-		if (frame->hd.flags & NGHTTP2_FLAG_END_HEADERS) {
+		if (frame.hd.flags & NGHTTP2_FLAG_END_HEADERS) {
 			void *stream_data = nghttp2_session_get_stream_user_data(session.get(),
-										 frame->hd.stream_id);
+										 frame.hd.stream_id);
 			if (stream_data == nullptr)
 				return 0;
 
 			auto &request = *(Request *)stream_data;
-			return request.OnReceiveRequest((frame->hd.flags & NGHTTP2_FLAG_END_STREAM) == 0);
+			return request.OnReceiveRequest((frame.hd.flags & NGHTTP2_FLAG_END_STREAM) == 0);
 		}
 		break;
 
 	case NGHTTP2_DATA:
-		if (frame->hd.flags & NGHTTP2_FLAG_END_STREAM) {
+		if (frame.hd.flags & NGHTTP2_FLAG_END_STREAM) {
 			void *stream_data = nghttp2_session_get_stream_user_data(session.get(),
-										 frame->hd.stream_id);
+										 frame.hd.stream_id);
 			if (stream_data == nullptr)
 				return 0;
 
@@ -593,20 +593,20 @@ ServerConnection::OnFrameRecvCallback(const nghttp2_frame *frame) noexcept
 }
 
 int
-ServerConnection::OnBeginHeaderCallback(const nghttp2_frame *frame) noexcept
+ServerConnection::OnBeginHeaderCallback(const nghttp2_frame &frame) noexcept
 {
-	if (frame->hd.type == NGHTTP2_HEADERS &&
-	    frame->headers.cat == NGHTTP2_HCAT_REQUEST) {
+	if (frame.hd.type == NGHTTP2_HEADERS &&
+	    frame.headers.cat == NGHTTP2_HCAT_REQUEST) {
 
 		auto stream_pool = pool_new_linear(&pool,
 						   "NgHttp2ServerRequest", 8192);
 		pool_set_major(stream_pool);
 
 		auto *request = NewFromPool<Request>(std::move(stream_pool),
-						     *this, frame->hd.stream_id);
+						     *this, frame.hd.stream_id);
 		requests.push_front(*request);
 		nghttp2_session_set_stream_user_data(session.get(),
-						     frame->hd.stream_id,
+						     frame.hd.stream_id,
 						     request);
 		return 0;
 	} else
