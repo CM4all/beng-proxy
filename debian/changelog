@@ -3,6 +3,7 @@ cm4all-beng-proxy (18.0.42) unstable; urgency=low
   * lb: keep up to 256 idle outgoing connections (was 16)
   * lb: do not log requests that were canceled during the tarpit delay
   * lb: throttle HTTP/2 Rapid Reset
+  * lb: limit the translation client to 16 concurrent connections
   * http_client: keep (and reuse) canceled outgoing connections
   * prometheus: show the number of delayed HTTP requests
   * prometheus: show the number of invalid HTTP/2 frames

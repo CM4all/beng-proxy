@@ -29,7 +29,7 @@ LbTranslationHandler::LbTranslationHandler(EventLoop &event_loop,
 					   LbGotoMap &goto_map,
 					   const LbTranslationHandlerConfig &config)
 	:name(config.name.c_str()),
-	 stock(event_loop, config.address, 0),
+	 stock(event_loop, config.address, 16),
 	 destinations(ToInstance(goto_map, config))
 {
 }
