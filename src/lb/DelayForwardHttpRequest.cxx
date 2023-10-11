@@ -62,6 +62,12 @@ private:
 
 	/* virtual methods from class Cancellable */
 	void Cancel() noexcept override {
+		/* do not bother to log requests that have been
+		   delayed artificially already; this is probably a
+		   DoS and logging it would only consume more of our
+		   resources */
+		request.logger = nullptr;
+
 		Destroy();
 	}
 };
