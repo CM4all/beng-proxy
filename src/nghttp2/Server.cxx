@@ -107,6 +107,9 @@ public:
 			request_body_control->DestroyError(std::make_exception_ptr(std::runtime_error("Canceled")));
 		}
 
+		if (cancel_ptr)
+			cancel_ptr.Cancel();
+
 		if (logger != nullptr && (method != HttpMethod{} || uri != nullptr)) {
 			int64_t length = -1;
 			if (response_body)
@@ -115,9 +118,6 @@ public:
 			logger->LogHttpRequest(*this, the_status, length,
 					       /* TODO: */ 0, length);
 		}
-
-		if (cancel_ptr)
-			cancel_ptr.Cancel();
 	}
 
 	void Destroy() noexcept {

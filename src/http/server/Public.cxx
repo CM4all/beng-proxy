@@ -351,8 +351,6 @@ HttpServerConnection::CloseRequest() noexcept
 
 	auto *_request = std::exchange(request.request, nullptr);
 
-	Log(*_request);
-
 	if ((request.read_state == Request::BODY ||
 	     request.read_state == Request::END)) {
 		if (HasInput())
@@ -362,6 +360,8 @@ HttpServerConnection::CloseRequest() noexcept
 			   _response_stream_abort() */
 			request.cancel_ptr.Cancel();
 	}
+
+	Log(*_request);
 
 	_request->Destroy();
 
