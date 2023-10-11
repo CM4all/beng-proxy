@@ -282,7 +282,7 @@ struct HttpServerConnection final
 	void IdleTimeoutCallback() noexcept;
 	void OnReadTimeout() noexcept;
 
-	void Log() noexcept;
+	void Log(HttpServerRequest &r) noexcept;
 
 	/**
 	 * @return false if the connection has been closed

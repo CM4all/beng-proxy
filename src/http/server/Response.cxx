@@ -151,7 +151,7 @@ HttpServerConnection::ResponseIstreamFinished()
 	if (handler != nullptr)
 		handler->ResponseFinished();
 
-	Log();
+	Log(*request.request);
 
 	/* check for end of chunked request body again, just in case
 	   DechunkIstream has announced this in a derred event */

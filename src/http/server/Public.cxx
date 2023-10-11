@@ -21,9 +21,8 @@
 #include <unistd.h>
 
 void
-HttpServerConnection::Log() noexcept
+HttpServerConnection::Log(HttpServerRequest &r) noexcept
 {
-	auto &r = *request.request;
 	auto *logger = r.logger;
 	if (logger == nullptr)
 		return;
@@ -350,9 +349,9 @@ HttpServerConnection::CloseRequest() noexcept
 	assert(request.read_state != Request::START);
 	assert(request.request != nullptr);
 
-	Log();
-
 	auto *_request = std::exchange(request.request, nullptr);
+
+	Log(*_request);
 
 	if ((request.read_state == Request::BODY ||
 	     request.read_state == Request::END)) {
