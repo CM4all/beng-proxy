@@ -78,8 +78,6 @@ struct TcpStockConnection final
 			    BIND_THIS_METHOD(OnIdleTimeout))
 	{
 		_cancel_ptr = *this;
-
-		cancel_ptr = nullptr;
 	}
 
 	~TcpStockConnection() noexcept override;

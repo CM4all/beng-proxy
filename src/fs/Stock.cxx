@@ -86,8 +86,6 @@ public:
 			    BIND_THIS_METHOD(OnIdleTimeout))
 	{
 		_cancel_ptr = *this;
-
-		cancel_ptr = nullptr;
 	}
 
 	FilteredSocketStockConnection(CreateStockItem c,
