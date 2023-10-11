@@ -11,17 +11,17 @@
 #include <cstdint>
 
 struct HttpStats {
-	uint64_t n_requests = 0;
-	uint64_t traffic_received = 0;
-	uint64_t traffic_sent = 0;
+	uint_least64_t n_requests = 0;
+	uint_least64_t traffic_received = 0;
+	uint_least64_t traffic_sent = 0;
 
 	std::chrono::steady_clock::duration total_duration{};
 
-	std::array<uint64_t, valid_http_status_array.size()> n_per_status{};
+	std::array<uint_least64_t, valid_http_status_array.size()> n_per_status{};
 
 	void AddRequest(HttpStatus status,
-			uint64_t bytes_received,
-			uint64_t bytes_sent,
+			uint_least64_t bytes_received,
+			uint_least64_t bytes_sent,
 			std::chrono::steady_clock::duration duration) noexcept {
 		++n_requests;
 		traffic_received += bytes_received;
