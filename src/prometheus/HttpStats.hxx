@@ -4,6 +4,8 @@
 
 #pragma once
 
+#include <string_view>
+
 class GrowingBuffer;
 struct HttpStats;
 struct TaggedHttpStats;
@@ -11,11 +13,13 @@ struct TaggedHttpStats;
 namespace Prometheus {
 
 void
-Write(GrowingBuffer &buffer, const char *process, const char *listener,
+Write(GrowingBuffer &buffer, std::string_view process,
+      std::string_view listener,
       const HttpStats &stats) noexcept;
 
 void
-Write(GrowingBuffer &buffer, const char *process, const char *listener,
+Write(GrowingBuffer &buffer, std::string_view process,
+      std::string_view listener,
       const TaggedHttpStats &stats) noexcept;
 
 } // namespace Prometheus

@@ -28,6 +28,8 @@
 #include "memory/GrowingBuffer.hxx"
 #include "stopwatch.hxx"
 
+using std::string_view_literals::operator""sv;
+
 class LbPrometheusExporter::AppendRequest final
 	: public HttpResponseHandler, Cancellable
 {
@@ -120,14 +122,14 @@ CatchCallback(std::exception_ptr) noexcept
 static void
 WriteStats(GrowingBuffer &buffer, const LbInstance &instance) noexcept
 {
-	const char *process = "lb";
+	constexpr auto process = "lb"sv;
 
 	Prometheus::Write(buffer, process, instance.GetStats());
 
 	for (const auto &listener : instance.listeners)
 		if (const auto *stats = listener.GetHttpStats())
 			Prometheus::Write(buffer, process,
-					  listener.GetConfig().name.c_str(),
+					  listener.GetConfig().name,
 					  *stats);
 }
 

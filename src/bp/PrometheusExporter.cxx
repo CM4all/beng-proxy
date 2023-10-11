@@ -22,7 +22,7 @@ BpPrometheusExporter::HandleHttpRequest(IncomingHttpRequest &request,
 {
 	GrowingBuffer buffer;
 
-	const char *process = "bp";
+	constexpr auto process = "bp"sv;
 	Prometheus::Write(buffer, process, instance.GetStats());
 
 	if (instance.encoding_cache) {
@@ -34,7 +34,7 @@ BpPrometheusExporter::HandleHttpRequest(IncomingHttpRequest &request,
 	}
 
 	for (const auto &[name, stats] : instance.listener_stats)
-		Prometheus::Write(buffer, process, name.c_str(), stats);
+		Prometheus::Write(buffer, process, name, stats);
 
 #ifdef HAVE_LIBWAS
 	buffer.Write("# HELP beng_proxy_was_metric Metric received from WAS applications\n"

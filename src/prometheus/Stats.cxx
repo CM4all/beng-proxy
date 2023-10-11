@@ -10,7 +10,7 @@
 namespace Prometheus {
 
 void
-Write(GrowingBuffer &buffer, const char *process,
+Write(GrowingBuffer &buffer, std::string_view process,
       const BengProxy::ControlStats &stats) noexcept
 {
 	buffer.Fmt(
