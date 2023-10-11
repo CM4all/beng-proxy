@@ -5,6 +5,7 @@ cm4all-beng-proxy (18.0.42) unstable; urgency=low
   * lb: throttle HTTP/2 Rapid Reset
   * http_client: keep (and reuse) canceled outgoing connections
   * prometheus: show the number of delayed HTTP requests
+  * prometheus: show the number of invalid HTTP/2 frames
 
  --   
 

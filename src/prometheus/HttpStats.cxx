@@ -22,6 +22,9 @@ Write(GrowingBuffer &buffer, std::string_view labels,
 # HELP beng_proxy_http_requests_delayed Number of delayed HTTP requests
 # TYPE beng_proxy_http_requests_delayed counter
 
+# HELP beng_proxy_http_invalid_frames Number of invalid HTTP/2 frames
+# TYPE beng_proxy_http_invalid_frames counter
+
 # HELP beng_proxy_http_total_duration Total duration of all HTTP requests
 # TYPE beng_proxy_http_total_duration counter
 
@@ -30,10 +33,12 @@ Write(GrowingBuffer &buffer, std::string_view labels,
 
 )"
 	       "beng_proxy_http_requests_delayed{{{}}} {}\n"
+	       "beng_proxy_http_invalid_frames{{{}}} {}\n"
 	       "beng_proxy_http_total_duration{{{}}} {:e}\n"
 	       "beng_proxy_http_traffic{{{}direction=\"in\"}} {}\n"
 	       "beng_proxy_http_traffic{{{}direction=\"out\"}} {}\n",
 	       labels, stats.n_delayed,
+	       labels, stats.n_invalid_frames,
 	       labels, std::chrono::duration_cast<std::chrono::duration<double>>(stats.total_duration).count(),
 	       labels, stats.traffic_received,
 	       labels, stats.traffic_sent);

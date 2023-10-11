@@ -14,6 +14,13 @@ struct HttpStats {
 	uint_least64_t n_requests = 0;
 
 	/**
+	 * The number of invalid HTTP/2 frames received.
+	 *
+	 * @see https://nghttp2.org/documentation/nghttp2_session_callbacks_set_on_invalid_frame_recv_callback.html
+	 */
+	uint_least64_t n_invalid_frames = 0;
+
+	/**
 	 * The number of HTTP requests that were delayed due (for
 	 * throttling/tarpit).
 	 */
