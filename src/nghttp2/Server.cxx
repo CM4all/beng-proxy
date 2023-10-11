@@ -508,6 +508,8 @@ ServerConnection::ServerConnection(struct pool &_pool,
 								  Request::OnDataChunkReceivedCallback);
 	nghttp2_session_callbacks_set_on_begin_headers_callback(callbacks.get(),
 								OnBeginHeaderCallback);
+	nghttp2_session_callbacks_set_on_invalid_frame_recv_callback(callbacks.get(),
+								     OnInvalidFrameReceivedCallback);
 
 	session = NgHttp2::Session::NewServer(callbacks.get(), this, option.get());
 
@@ -611,6 +613,14 @@ ServerConnection::OnBeginHeaderCallback(const nghttp2_frame &frame) noexcept
 		return 0;
 	} else
 		return 0;
+}
+
+int
+ServerConnection::OnInvalidFrameReceivedCallback([[maybe_unused]] const nghttp2_frame &frame,
+						 [[maybe_unused]] int lib_error_code) noexcept
+{
+	handler.OnInvalidFrameReceived();
+	return 0;
 }
 
 BufferedResult

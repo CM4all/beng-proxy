@@ -82,6 +82,17 @@ private:
 		return c.OnBeginHeaderCallback(*frame);
 	}
 
+	int OnInvalidFrameReceivedCallback(const nghttp2_frame &frame,
+					   int lib_error_code) noexcept;
+
+	static int OnInvalidFrameReceivedCallback(nghttp2_session *,
+						  const nghttp2_frame *frame,
+						  int lib_error_code,
+						  void *user_data) noexcept {
+		auto &c = *(ServerConnection *)user_data;
+		return c.OnInvalidFrameReceivedCallback(*frame, lib_error_code);
+	}
+
 	/* virtual methods from class BufferedSocketHandler */
 	BufferedResult OnBufferedData() override;
 	bool OnBufferedClosed() noexcept override;

@@ -13,6 +13,11 @@ class StopwatchPtr;
 class HttpServerConnectionHandler {
 public:
 	/**
+	 * An invalid HTTP/2 frame was received.
+	 */
+	virtual void OnInvalidFrameReceived() noexcept {}
+
+	/**
 	 * Called after the empty line after the last header has been
 	 * parsed.  Several attributes can be evaluated (method, uri,
 	 * headers; but not the body).  This can be used to collect
