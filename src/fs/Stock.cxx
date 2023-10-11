@@ -171,7 +171,6 @@ private:
 			   BasicStock::num_create; TODO optimize
 			   this */
 			continue_state = ContinueState::CANCELED;
-			GetStock().ItemCreateAborted();
 			return;
 		}
 
@@ -260,6 +259,7 @@ FilteredSocketStockConnection::OnConnectFilteredSocket(std::unique_ptr<FilteredS
 		   handler isn't intersted in the connection anymore -
 		   put it to the stock as "idle" */
 		static_cast<Stock &>(GetStock()).InjectIdle(*this);
+		GetStock().ItemCreateAborted();
 		return;
 	}
 
@@ -278,6 +278,7 @@ FilteredSocketStockConnection::OnConnectFilteredSocketError(std::exception_ptr e
 					   GetStockName()));
 
 	if (continue_state == ContinueState::CANCELED) {
+		InvokeCreateAborted();
 		logger(2, ep);
 		return;
 	}
