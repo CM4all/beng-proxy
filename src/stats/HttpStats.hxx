@@ -12,6 +12,13 @@
 
 struct HttpStats {
 	uint_least64_t n_requests = 0;
+
+	/**
+	 * The number of HTTP requests that were delayed due (for
+	 * throttling/tarpit).
+	 */
+	uint_least64_t n_delayed = 0;
+
 	uint_least64_t traffic_received = 0;
 	uint_least64_t traffic_sent = 0;
 

@@ -4,6 +4,7 @@ cm4all-beng-proxy (18.0.42) unstable; urgency=low
   * lb: do not log requests that were canceled during the tarpit delay
   * lb: throttle HTTP/2 Rapid Reset
   * http_client: keep (and reuse) canceled outgoing connections
+  * prometheus: show the number of delayed HTTP requests
 
  --   
 

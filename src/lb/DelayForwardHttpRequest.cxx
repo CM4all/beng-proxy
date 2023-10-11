@@ -6,6 +6,7 @@
 #include "ForwardHttpRequest.hxx"
 #include "HttpConnection.hxx"
 #include "Instance.hxx"
+#include "Listener.hxx"
 #include "http/IncomingRequest.hxx"
 #include "pool/LeakDetector.hxx"
 #include "event/CoarseTimerEvent.hxx"
@@ -81,6 +82,9 @@ DelayForwardHttpRequest(LbHttpConnection &connection,
 			Event::Duration delay,
 			CancellablePointer &cancel_ptr) noexcept
 {
+	++connection.instance.http_stats.n_delayed;
+	++connection.listener.GetHttpStats().n_delayed;
+
 	const auto request2 =
 		NewFromPool<LbDelayRequest>(request.pool,
 					    connection,  request, cluster,
