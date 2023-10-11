@@ -68,6 +68,8 @@ private:
 		   resources */
 		request.logger = nullptr;
 
+		connection.RecordAbuse();
+
 		Destroy();
 	}
 };

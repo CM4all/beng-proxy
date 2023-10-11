@@ -174,10 +174,25 @@ LbHttpConnection::LogSendError(IncomingHttpRequest &request,
 	SendError(request, ep);
 }
 
+void
+LbHttpConnection::RecordAbuse(double size) noexcept
+{
+	if (!IsHTTP2())
+		return;
+
+	abuse_tarpit.Record(instance.GetEventLoop().SteadyNow(), size);
+}
+
 /*
  * http connection handler
  *
  */
+
+void
+LbHttpConnection::OnInvalidFrameReceived() noexcept
+{
+	RecordAbuse(5);
+}
 
 void
 LbHttpConnection::RequestHeadersFinished(IncomingHttpRequest &request) noexcept
@@ -284,6 +299,15 @@ LbHttpConnection::ForwardHttpRequest(LbCluster &cluster,
 		AccountedClientConnection::NoteRequest();
 
 		if (auto delay = AccountedClientConnection::GetDelay();
+		    delay.count() > 0) {
+			DelayForwardHttpRequest(*this, request, cluster, delay,
+						cancel_ptr);
+			return;
+		}
+	}
+
+	if (IsHTTP2()) {
+		if (auto delay = abuse_tarpit.GetDelay(instance.GetEventLoop().SteadyNow());
 		    delay.count() > 0) {
 			DelayForwardHttpRequest(*this, request, cluster, delay,
 						cancel_ptr);

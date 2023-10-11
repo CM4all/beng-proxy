@@ -118,6 +118,7 @@ private:
 
 	/* virtual methods from class Cancellable */
 	void Cancel() noexcept override {
+		connection.RecordAbuse();
 		cancel_ptr.Cancel();
 		Destroy();
 	}

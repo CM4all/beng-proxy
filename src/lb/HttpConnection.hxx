@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include "AbuseTarpit.hxx"
 #include "http/server/Handler.hxx"
 #include "net/ClientAccounting.hxx"
 #include "pool/Holder.hxx"
@@ -52,6 +53,8 @@ struct LbHttpConnection final
 	UniquePoolPtr<NgHttp2::ServerConnection> http2;
 #endif
 
+	AbuseTarpit abuse_tarpit;
+
 	bool hsts;
 
 	LbHttpConnection(PoolPtr &&_pool, LbInstance &_instance,
@@ -76,11 +79,22 @@ struct LbHttpConnection final
 #endif
 	}
 
+	/**
+	 * Call when a request was canceled (e.g. via HTTP/2
+	 * RST_STREAM).  This keeps track of #abuse_tarpit.
+	 *
+	 * @param the token bucket "size" parameter; defaults to 1
+	 * (one request was canceled), but higher scores can be used
+	 * for more severe events
+	 */
+	void RecordAbuse(double size=1) noexcept;
+
 	void SendError(IncomingHttpRequest &request, std::exception_ptr ep) noexcept;
 	void LogSendError(IncomingHttpRequest &request, std::exception_ptr ep,
 			  unsigned log_level=2) noexcept;
 
 	/* virtual methods from class HttpServerConnectionHandler */
+	void OnInvalidFrameReceived() noexcept override;
 	void RequestHeadersFinished(IncomingHttpRequest &request) noexcept override;
 	void ResponseFinished() noexcept override;
 	void HandleHttpRequest(IncomingHttpRequest &request,
