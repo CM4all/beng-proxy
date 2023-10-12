@@ -20,17 +20,17 @@
 static constexpr unsigned MAX_CHILDREN = 32;
 
 struct Child {
-	int fd;
+	SocketDescriptor fd;
 };
 
 static unsigned n_children;
 static Child children[MAX_CHILDREN];
 
 static bool
-Forward()
+Forward(SocketDescriptor src)
 {
-	char buffer[65536];
-	ssize_t nbytes = recv(STDIN_FILENO, buffer, sizeof(buffer), 0);
+	std::byte buffer[65536];
+	ssize_t nbytes = src.Receive(buffer);
 	if (nbytes <= 0) {
 		if (nbytes < 0) {
 			if (errno == EAGAIN || errno == EINTR)
@@ -42,9 +42,11 @@ Forward()
 		return false;
 	}
 
+	const auto span = std::span{buffer}.first(nbytes);
+
 	for (unsigned i = 0; i < n_children; ++i) {
 		Child &c = children[i];
-		send(c.fd, buffer, nbytes, MSG_DONTWAIT|MSG_NOSIGNAL);
+		c.fd.Send(span, MSG_DONTWAIT);
 	}
 
 	return true;
@@ -58,14 +60,16 @@ try {
 		return EXIT_FAILURE;
 	}
 
+	const SocketDescriptor src{STDIN_FILENO};
+
 	for (int i = 1; i < argc; ++i) {
 		const char *program = argv[i];
 		auto process = LaunchLogger(program, nullptr);
 		Child &child = children[n_children++];
-		child.fd = process.fd.Steal();
+		child.fd = process.fd.Release();
 	}
 
-	while (Forward()) {}
+	while (Forward(src)) {}
 	return EXIT_SUCCESS;
 } catch (const std::exception &e) {
 	PrintException(e);

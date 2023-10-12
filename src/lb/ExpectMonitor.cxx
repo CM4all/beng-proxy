@@ -14,6 +14,7 @@
 #include "event/CoarseTimerEvent.hxx"
 #include "event/FineTimerEvent.hxx"
 #include "util/Cancellable.hxx"
+#include "util/SpanCast.hxx"
 
 #include <unistd.h>
 #include <string.h>
@@ -86,10 +87,10 @@ private:
 };
 
 static bool
-check_expectation(char *received, size_t received_length,
+check_expectation(std::span<const std::byte> received,
 		  const char *expect) noexcept
 {
-	return memmem(received, received_length, expect, strlen(expect)) != nullptr;
+	return memmem(received.data(), received.size(), expect, strlen(expect)) != nullptr;
 }
 
 /*
@@ -136,21 +137,20 @@ ExpectMonitor::OnTimeout() noexcept
 void
 ExpectMonitor::DelayCallback() noexcept
 {
-	char buffer[1024];
+	std::byte buffer[1024];
 
-	ssize_t nbytes = recv(fd.Get(), buffer, sizeof(buffer),
-			      MSG_DONTWAIT);
+	ssize_t nbytes = fd.Receive(buffer, MSG_DONTWAIT);
 	if (nbytes < 0) {
 		auto e = MakeErrno("Failed to receive");
 		fd.Close();
 		handler.Error(std::make_exception_ptr(e));
 	} else if (!config.fade_expect.empty() &&
-		   check_expectation(buffer, nbytes,
+		   check_expectation(std::span{buffer}.first(nbytes),
 				     config.fade_expect.c_str())) {
 		fd.Close();
 		handler.Fade();
 	} else if (config.expect.empty() ||
-		   check_expectation(buffer, nbytes,
+		   check_expectation(std::span{buffer}.first(nbytes),
 				     config.expect.c_str())) {
 		fd.Close();
 		handler.Success();
@@ -171,9 +171,7 @@ void
 ExpectMonitor::OnSocketConnectSuccess(UniqueSocketDescriptor new_fd) noexcept
 {
 	if (!config.send.empty()) {
-		ssize_t nbytes = send(new_fd.Get(), config.send.data(),
-				      config.send.length(),
-				      MSG_DONTWAIT);
+		ssize_t nbytes = new_fd.Send(AsBytes(config.send), MSG_DONTWAIT);
 		if (nbytes < 0) {
 			handler.Error(std::make_exception_ptr(MakeErrno("Failed to send")));
 			delete this;

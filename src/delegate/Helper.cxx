@@ -113,9 +113,11 @@ delegate_handle(DelegateRequestCommand command,
 int
 main(int, char **) noexcept
 {
+	const SocketDescriptor s{STDIN_FILENO};
+
 	while (true) {
 		DelegateRequestHeader header;
-		ssize_t nbytes = recv(0, &header, sizeof(header), 0);
+		ssize_t nbytes = s.Receive(std::as_writable_bytes(std::span{&header, 1}));
 		if (nbytes < 0) {
 			fprintf(stderr, "recv() on delegate socket failed: %s\n",
 				strerror(errno));

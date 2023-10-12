@@ -113,8 +113,8 @@ private:
 inline void
 DelegateProcess::SocketEventCallback(unsigned) noexcept
 {
-	char buffer;
-	ssize_t nbytes = recv(fd.Get(), &buffer, sizeof(buffer), MSG_DONTWAIT);
+	std::byte buffer[1];
+	ssize_t nbytes = fd.Receive(buffer, MSG_DONTWAIT);
 	if (nbytes < 0)
 		logger(2, "error on idle delegate process: ", strerror(errno));
 	else if (nbytes > 0)

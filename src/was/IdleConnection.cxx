@@ -17,10 +17,10 @@ WasIdleConnection::WasIdleConnection(EventLoop &event_loop,
 }
 
 WasIdleConnection::ReceiveResult
-WasIdleConnection::ReceiveControl(void *p, size_t size)
+WasIdleConnection::ReceiveControl(std::span<std::byte> dest)
 {
-	ssize_t nbytes = recv(socket.control.Get(), p, size, MSG_DONTWAIT);
-	if (nbytes == (ssize_t)size)
+	ssize_t nbytes = socket.control.Receive(dest, MSG_DONTWAIT);
+	if (nbytes == (ssize_t)dest.size())
 		return ReceiveResult::SUCCESS;
 
 	if (nbytes < 0 && errno == EAGAIN) {
@@ -41,10 +41,12 @@ inline void
 WasIdleConnection::DiscardControl(size_t size)
 {
 	while (size > 0) {
-		char buffer[1024];
-		ssize_t nbytes = recv(socket.control.Get(), buffer,
-				      std::min(size, sizeof(buffer)),
-				      MSG_DONTWAIT);
+		std::byte buffer[1024];
+		std::span<std::byte> dest{buffer};
+		if (size < dest.size())
+			dest = dest.first(size);
+
+		ssize_t nbytes = socket.control.Receive(dest, MSG_DONTWAIT);
 		if (nbytes < 0)
 			throw MakeErrno("error on idle WAS control connection");
 		else if (nbytes == 0)
@@ -77,7 +79,7 @@ WasIdleConnection::RecoverStop()
 
 	while (true) {
 		struct was_header header;
-		switch (ReceiveControl(&header, sizeof(header))) {
+		switch (ReceiveControl(std::as_writable_bytes(std::span{&header, 1}))) {
 		case ReceiveResult::SUCCESS:
 			break;
 
@@ -117,7 +119,7 @@ WasIdleConnection::RecoverStop()
 			break;
 		}
 
-		if (ReceiveControl(&premature, sizeof(premature)) != ReceiveResult::SUCCESS)
+		if (ReceiveControl(std::as_writable_bytes(std::span{&premature, 1})) != ReceiveResult::SUCCESS)
 			throw std::runtime_error("Missing PREMATURE payload");
 
 		break;
@@ -142,9 +144,8 @@ try {
 		return;
 	}
 
-	std::byte buffer;
-	ssize_t nbytes = recv(socket.control.Get(), &buffer, sizeof(buffer),
-			      MSG_DONTWAIT);
+	std::byte buffer[1];
+	ssize_t nbytes = socket.control.Receive(buffer, MSG_DONTWAIT);
 	if (nbytes < 0)
 		throw MakeErrno("error on idle WAS control connection");
 	else if (nbytes > 0)

@@ -95,7 +95,7 @@ private:
 	 *
 	 * Throws on error.
 	 */
-	ReceiveResult ReceiveControl(void *p, size_t size);
+	ReceiveResult ReceiveControl(std::span<std::byte> dest);
 
 	/**
 	 * Receive and discard data on the control channel.

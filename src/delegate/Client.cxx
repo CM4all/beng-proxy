@@ -125,7 +125,7 @@ DelegateClient::HandleErrno(size_t length)
 		return;
 	}
 
-	ssize_t nbytes = recv(s.Get(), &e, sizeof(e), 0);
+	ssize_t nbytes = s.Receive(std::as_writable_bytes(std::span{&e, 1}));
 	std::exception_ptr ep;
 
 	if (nbytes == sizeof(e)) {

@@ -52,8 +52,8 @@ public:
 
 private:
 	void EventCallback(unsigned) noexcept {
-		char buffer;
-		ssize_t nbytes = recv(s.Get(), &buffer, sizeof(buffer), MSG_DONTWAIT);
+		std::byte buffer[1];
+		ssize_t nbytes = s.Receive(buffer, MSG_DONTWAIT);
 		if (nbytes < 0)
 			LogConcat(2, "translation",
 				  "error on idle translation server connection: ",
