@@ -8,6 +8,7 @@
 #include "system/openat2.h"
 #include "io/FileAt.hxx"
 #include "io/UniqueFileDescriptor.hxx"
+#include "io/linux/ProcPath.hxx"
 #include "util/Cancellable.hxx"
 #include "util/DeleteDisposer.hxx"
 #include "util/djb_hash.hxx"
@@ -22,6 +23,8 @@
 #include <cassert>
 #include <cerrno>
 #include <string>
+
+#include <sys/inotify.h>
 
 using std::string_view_literals::operator""sv;
 
@@ -49,7 +52,8 @@ FdCache::Key::Hash::operator()(const Key &key) const noexcept
  * the result.
  */
 struct FdCache::Item final
-	: IntrusiveHashSetHook<IntrusiveHookMode::AUTO_UNLINK>,
+	: IntrusiveHashSetHook<IntrusiveHookMode::AUTO_UNLINK, KeyTag>,
+	  IntrusiveHashSetHook<IntrusiveHookMode::AUTO_UNLINK, InotifyTag>,
 	  IntrusiveListHook<IntrusiveHookMode::AUTO_UNLINK>,
 #ifdef HAVE_URING
 	  Uring::OpenHandler,
@@ -89,6 +93,8 @@ struct FdCache::Item final
 
 	int error = 0;
 
+	int watch_descriptor = -1;
+
 	std::chrono::steady_clock::time_point expires;
 
 	Item(FdCache &_cache,
@@ -101,6 +107,11 @@ struct FdCache::Item final
 	~Item() noexcept {
 		assert(requests.empty());
 		assert(IsAbandoned());
+
+		if (watch_descriptor >= 0) {
+			cache.inotify_event.RemoveWatch(watch_descriptor);
+			cache.inotify_map.erase(cache.inotify_map.iterator_to(*this));
+		}
 
 #ifdef HAVE_URING
 		if (uring_open != nullptr) {
@@ -165,6 +176,18 @@ private:
 		});
 	}
 
+	void RegisterInotify() noexcept {
+		/* tell the kernel to notify us when the directory
+		   gets deleted or moved; if that happens, we need to
+		   discard this item */
+		watch_descriptor = cache.inotify_event
+			.TryAddWatch(ProcFdPath(fd),
+				     IN_DELETE_SELF|IN_MOVE_SELF|IN_ONESHOT|IN_ONLYDIR|IN_MASK_CREATE);
+
+		if (watch_descriptor >= 0)
+			cache.inotify_map.insert(*this);
+	}
+
 #ifdef HAVE_URING
 	/* virtual methods from Uring::OpenHandler */
 	void OnOpen(UniqueFileDescriptor _fd) noexcept override {
@@ -177,6 +200,8 @@ private:
 		uring_open = nullptr;
 
 		fd = std::move(_fd);
+		RegisterInotify();
+
 		InvokeSuccess();
 
 		assert(requests.empty());
@@ -235,6 +260,7 @@ FdCache::Item::Start(FileDescriptor directory, std::size_t strip_length,
 				  &how, sizeof(how));
 		if (_fd >= 0) {
 			fd = UniqueFileDescriptor{_fd};
+			RegisterInotify();
 			InvokeSuccess();
 		} else {
 			error = errno;
@@ -266,15 +292,22 @@ FdCache::ItemGetKey::operator()(const Item &item) noexcept
 	return {item.path, item.flags};
 }
 
+inline int
+FdCache::ItemGetInotify::operator()(const Item &item) noexcept
+{
+	return item.watch_descriptor;
+}
+
 FdCache::FdCache(EventLoop &event_loop
 #ifdef HAVE_URING
 		, Uring::Queue *_uring_queue
 #endif // HAVE_URING
 	) noexcept
-	:expire_timer(event_loop, BIND_THIS_METHOD(Expire))
+	:expire_timer(event_loop, BIND_THIS_METHOD(Expire)),
 #ifdef HAVE_URING
-	, uring_queue(_uring_queue)
+	 uring_queue(_uring_queue),
 #endif
+	 inotify_event(event_loop, *this)
 {
 }
 
@@ -299,6 +332,7 @@ FdCache::Disable() noexcept
 	enabled = false;
 
 	expire_timer.Cancel();
+	inotify_event.Disable();
 
 	Flush();
 }
@@ -382,4 +416,28 @@ FdCache::Expire() noexcept
 
 	if (!empty() && enabled)
 		expire_timer.Schedule(std::chrono::seconds{10});
+}
+
+void
+FdCache::OnInotify(int wd, [[maybe_unused]] unsigned mask,
+		   [[maybe_unused]] const char *name)
+{
+	if (auto i = inotify_map.find(wd); i != inotify_map.end()) {
+		assert(i->watch_descriptor == wd);
+		inotify_map.erase(i);
+		i->watch_descriptor = -1;
+
+		if (i->IsUnused())
+			/* unused, delete immediately */
+			delete &*i;
+		else
+			/* still in use, delete later */
+			i->Disable();
+	}
+}
+
+void
+FdCache::OnInotifyError([[maybe_unused]] std::exception_ptr error) noexcept
+{
+	// TODO log?
 }
