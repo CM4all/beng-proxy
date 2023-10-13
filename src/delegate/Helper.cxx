@@ -8,16 +8,18 @@
  */
 
 #include "Protocol.hxx"
+#include "system/Error.hxx"
 #include "net/SendMessage.hxx"
 #include "net/ScmRightsBuilder.hxx"
 #include "net/SocketDescriptor.hxx"
+#include "net/SocketProtocolError.hxx"
 #include "io/Iovec.hxx"
 #include "util/PrintException.hxx"
 
-#include <stdbool.h>
+#include <stdexcept>
+
 #include <sys/socket.h>
 #include <stdio.h>
-#include <string.h>
 #include <errno.h>
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -25,25 +27,18 @@
 #include <sys/un.h>
 #include <unistd.h>
 
-static bool
-delegate_send(SocketDescriptor s, std::span<const std::byte> src) noexcept
+static void
+delegate_send(SocketDescriptor s, std::span<const std::byte> src)
 {
 	ssize_t nbytes = s.Send(src);
-	if (nbytes < 0) {
-		fprintf(stderr, "send() on delegate socket failed: %s\n",
-			strerror(errno));
-		return false;
-	}
+	if (nbytes < 0)
+		throw MakeErrno("send() on delegate socket failed");
 
-	if ((size_t)nbytes != src.size()) {
-		fprintf(stderr, "short send() on delegate socket\n");
-		return false;
-	}
-
-	return true;
+	if ((size_t)nbytes != src.size())
+		throw std::runtime_error{"short send() on delegate socket"};
 }
 
-static bool
+static void
 delegate_send_int(SocketDescriptor s, DelegateResponseCommand command, int value)
 {
 	const DelegateIntPacket packet{
@@ -54,10 +49,10 @@ delegate_send_int(SocketDescriptor s, DelegateResponseCommand command, int value
 		value,
 	};
 
-	return delegate_send(s, std::as_bytes(std::span{&packet, 1}));
+	delegate_send(s, std::as_bytes(std::span{&packet, 1}));
 }
 
-static bool
+static void
 delegate_send_fd(SocketDescriptor s, DelegateResponseCommand command, int fd)
 {
 	const DelegateResponseHeader header{
@@ -71,31 +66,24 @@ delegate_send_fd(SocketDescriptor s, DelegateResponseCommand command, int fd)
 	srb.push_back(fd);
 	srb.Finish(msg);
 
-	try {
-		SendMessage(s, msg, 0);
-	} catch (...) {
-		PrintException(std::current_exception());
-	}
-
-	return true;
+	SendMessage(s, msg, 0);
 }
 
-static bool
+static void
 delegate_handle_open(SocketDescriptor s, const char *payload)
 {
 	int fd = open(payload, O_RDONLY|O_CLOEXEC|O_NOCTTY);
 	if (fd >= 0) {
-		bool success = delegate_send_fd(s, DelegateResponseCommand::FD, fd);
+		delegate_send_fd(s, DelegateResponseCommand::FD, fd);
 		close(fd);
-		return success;
 	} else {
 		/* error: send error code to client */
 
-		return delegate_send_int(s, DelegateResponseCommand::ERRNO, errno);
+		delegate_send_int(s, DelegateResponseCommand::ERRNO, errno);
 	}
 }
 
-static bool
+static void
 delegate_handle(SocketDescriptor s, DelegateRequestCommand command,
 		const char *payload, size_t length)
 {
@@ -103,51 +91,41 @@ delegate_handle(SocketDescriptor s, DelegateRequestCommand command,
 
 	switch (command) {
 	case DelegateRequestCommand::OPEN:
-		return delegate_handle_open(s, payload);
+		delegate_handle_open(s, payload);
+		return;
 	}
 
-	fprintf(stderr, "unknown command: %d\n", int(command));
-	return false;
+	throw SocketProtocolError{"Unknown delegate command"};
 }
 
 int
 main(int, char **) noexcept
-{
+try {
 	const SocketDescriptor s{STDIN_FILENO};
 
 	while (true) {
 		DelegateRequestHeader header;
 		ssize_t nbytes = s.Receive(std::as_writable_bytes(std::span{&header, 1}));
-		if (nbytes < 0) {
-			fprintf(stderr, "recv() on delegate socket failed: %s\n",
-				strerror(errno));
-			return 2;
-		}
+		if (nbytes < 0)
+			throw MakeErrno("recv() on delegate socket failed");
 
 		if (nbytes == 0)
 			break;
 
-		if ((size_t)nbytes != sizeof(header)) {
-			fprintf(stderr, "short recv() on delegate socket\n");
-			return 2;
-		}
+		if ((size_t)nbytes != sizeof(header))
+			throw std::runtime_error{"short recv() on delegate socket"};
 
 		char payload[4096];
-		if (header.length >= sizeof(payload)) {
-			fprintf(stderr, "delegate payload too large\n");
-			return 2;
-		}
+		if (header.length >= sizeof(payload))
+			throw SocketProtocolError{"delegate payload too large"};
 
 		size_t length = 0;
 
 		while (length < header.length) {
 			nbytes = recv(0, payload + length,
 				      sizeof(payload) - 1 - length, 0);
-			if (nbytes < 0) {
-				fprintf(stderr, "recv() on delegate socket failed: %s\n",
-					strerror(errno));
-				return 2;
-			}
+			if (nbytes < 0)
+				throw MakeErrno("recv() on delegate socket failed");
 
 			if (nbytes == 0)
 				break;
@@ -157,9 +135,12 @@ main(int, char **) noexcept
 
 		payload[length] = 0;
 
-		if (!delegate_handle(s, header.command, payload, length))
+		delegate_handle(s, header.command, payload, length);
 			return 2;
 	}
 
-	return 0;
+	return EXIT_SUCCESS;
+} catch (...) {
+	PrintException(std::current_exception());
+	return EXIT_FAILURE;
 }
