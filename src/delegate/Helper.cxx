@@ -14,6 +14,7 @@
 #include "net/SocketDescriptor.hxx"
 #include "net/SocketProtocolError.hxx"
 #include "io/Iovec.hxx"
+#include "io/UniqueFileDescriptor.hxx"
 #include "util/PrintException.hxx"
 
 #include <stdexcept>
@@ -53,7 +54,7 @@ delegate_send_int(SocketDescriptor s, DelegateResponseCommand command, int value
 }
 
 static void
-delegate_send_fd(SocketDescriptor s, DelegateResponseCommand command, int fd)
+delegate_send_fd(SocketDescriptor s, DelegateResponseCommand command, FileDescriptor fd)
 {
 	const DelegateResponseHeader header{
 		0,
@@ -63,7 +64,7 @@ delegate_send_fd(SocketDescriptor s, DelegateResponseCommand command, int fd)
 	MessageHeader msg{vec};
 
 	ScmRightsBuilder<1> srb(msg);
-	srb.push_back(fd);
+	srb.push_back(fd.Get());
 	srb.Finish(msg);
 
 	SendMessage(s, msg, 0);
@@ -72,10 +73,9 @@ delegate_send_fd(SocketDescriptor s, DelegateResponseCommand command, int fd)
 static void
 delegate_handle_open(SocketDescriptor s, const char *payload)
 {
-	int fd = open(payload, O_RDONLY|O_CLOEXEC|O_NOCTTY);
-	if (fd >= 0) {
+	UniqueFileDescriptor fd;
+	if (fd.OpenReadOnly(payload)) {
 		delegate_send_fd(s, DelegateResponseCommand::FD, fd);
-		close(fd);
 	} else {
 		/* error: send error code to client */
 
