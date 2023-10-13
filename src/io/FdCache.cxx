@@ -56,6 +56,8 @@ struct FdCache::Item final
 #endif // HAVE_URING
 	  SharedAnchor
 {
+	FdCache &cache;
+
 	const std::string path;
 
 	const uint_least64_t flags;
@@ -80,7 +82,6 @@ struct FdCache::Item final
 	IntrusiveList<Request> requests;
 
 #ifdef HAVE_URING
-	Uring::Queue *const uring_queue;
 	Uring::Open *uring_open = nullptr;
 #endif // HAVE_URING
 
@@ -90,15 +91,11 @@ struct FdCache::Item final
 
 	std::chrono::steady_clock::time_point expires;
 
-	Item(std::string_view _path, uint_least64_t _flags,
-#ifdef HAVE_URING
-	     Uring::Queue *_uring_queue,
-#endif
+	Item(FdCache &_cache,
+	     std::string_view _path, uint_least64_t _flags,
 	     std::chrono::steady_clock::time_point now) noexcept
-		:path(_path), flags(_flags),
-#ifdef HAVE_URING
-		 uring_queue(_uring_queue),
-#endif
+		:cache(_cache),
+		 path(_path), flags(_flags),
 		 expires(now + std::chrono::minutes{1}) {}
 
 	~Item() noexcept {
@@ -114,7 +111,7 @@ struct FdCache::Item final
 		}
 
 		if (fd.IsDefined())
-			Uring::Close(uring_queue, fd.Release());
+			Uring::Close(cache.uring_queue, fd.Release());
 #endif // HAVE_URING
 	}
 
@@ -229,8 +226,8 @@ FdCache::Item::Start(FileDescriptor directory, std::size_t strip_length,
 #ifdef HAVE_URING
 	assert(uring_open == nullptr);
 
-	if (uring_queue != nullptr) {
-		uring_open = new Uring::Open(*uring_queue, *this);
+	if (cache.uring_queue != nullptr) {
+		uring_open = new Uring::Open(*cache.uring_queue, *this);
 		uring_open->StartOpen({directory, p}, how);
 	} else {
 #endif // HAVE_URING
@@ -349,10 +346,7 @@ FdCache::Get(FileDescriptor directory,
 			   periodically */
 			expire_timer.Schedule(std::chrono::seconds{10});
 
-		auto *item = new Item(path, how.flags,
-#ifdef HAVE_URING
-				      uring_queue,
-#endif
+		auto *item = new Item(*this, path, how.flags,
 				      GetEventLoop().SteadyNow());
 		chronological_list.push_back(*item);
 		map.insert_commit(it, *item);
