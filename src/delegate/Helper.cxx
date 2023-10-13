@@ -26,16 +26,16 @@
 #include <unistd.h>
 
 static bool
-delegate_send(const void *data, size_t length)
+delegate_send(SocketDescriptor s, std::span<const std::byte> src) noexcept
 {
-	ssize_t nbytes = send(0, data, length, 0);
+	ssize_t nbytes = s.Send(src);
 	if (nbytes < 0) {
 		fprintf(stderr, "send() on delegate socket failed: %s\n",
 			strerror(errno));
 		return false;
 	}
 
-	if ((size_t)nbytes != length) {
+	if ((size_t)nbytes != src.size()) {
 		fprintf(stderr, "short send() on delegate socket\n");
 		return false;
 	}
@@ -44,7 +44,7 @@ delegate_send(const void *data, size_t length)
 }
 
 static bool
-delegate_send_int(DelegateResponseCommand command, int value)
+delegate_send_int(SocketDescriptor s, DelegateResponseCommand command, int value)
 {
 	const DelegateIntPacket packet{
 		{
@@ -54,11 +54,11 @@ delegate_send_int(DelegateResponseCommand command, int value)
 		value,
 	};
 
-	return delegate_send(&packet, sizeof(packet));
+	return delegate_send(s, std::as_bytes(std::span{&packet, 1}));
 }
 
 static bool
-delegate_send_fd(DelegateResponseCommand command, int fd)
+delegate_send_fd(SocketDescriptor s, DelegateResponseCommand command, int fd)
 {
 	const DelegateResponseHeader header{
 		0,
@@ -72,7 +72,7 @@ delegate_send_fd(DelegateResponseCommand command, int fd)
 	srb.Finish(msg);
 
 	try {
-		SendMessage(SocketDescriptor(0), msg, 0);
+		SendMessage(s, msg, 0);
 	} catch (...) {
 		PrintException(std::current_exception());
 	}
@@ -81,29 +81,29 @@ delegate_send_fd(DelegateResponseCommand command, int fd)
 }
 
 static bool
-delegate_handle_open(const char *payload)
+delegate_handle_open(SocketDescriptor s, const char *payload)
 {
 	int fd = open(payload, O_RDONLY|O_CLOEXEC|O_NOCTTY);
 	if (fd >= 0) {
-		bool success = delegate_send_fd(DelegateResponseCommand::FD, fd);
+		bool success = delegate_send_fd(s, DelegateResponseCommand::FD, fd);
 		close(fd);
 		return success;
 	} else {
 		/* error: send error code to client */
 
-		return delegate_send_int(DelegateResponseCommand::ERRNO, errno);
+		return delegate_send_int(s, DelegateResponseCommand::ERRNO, errno);
 	}
 }
 
 static bool
-delegate_handle(DelegateRequestCommand command,
+delegate_handle(SocketDescriptor s, DelegateRequestCommand command,
 		const char *payload, size_t length)
 {
 	(void)length;
 
 	switch (command) {
 	case DelegateRequestCommand::OPEN:
-		return delegate_handle_open(payload);
+		return delegate_handle_open(s, payload);
 	}
 
 	fprintf(stderr, "unknown command: %d\n", int(command));
@@ -157,7 +157,7 @@ main(int, char **) noexcept
 
 		payload[length] = 0;
 
-		if (!delegate_handle(header.command, payload, length))
+		if (!delegate_handle(s, header.command, payload, length))
 			return 2;
 	}
 
