@@ -143,6 +143,12 @@ public:
 		 CancellablePointer &cancel_ptr) noexcept;
 
 private:
+	/**
+	 * Reduce the "expires" time of the given item, also changing
+	 * its position in #chronological_list.
+	 */
+	void SetExpiresSoon(Item &item, Event::Duration expiry) noexcept;
+
 	void Expire() noexcept;
 
 	/* virtual methods from class InotifyHandler */

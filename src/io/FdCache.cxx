@@ -189,6 +189,12 @@ private:
 	}
 
 	void SetError(int _error) noexcept {
+		/* short expiry for negative items (because we have no
+		   inotify here) */
+		// TODO watch the parent directory
+		if (_error == ENOENT)
+			cache.SetExpiresSoon(*this, std::chrono::seconds{1});
+
 		error = _error;
 		InvokeError();
 	}
@@ -400,6 +406,34 @@ FdCache::Get(FileDescriptor directory,
 		item->Get(on_success, on_error, cancel_ptr);
 	} else
 		it->Get(on_success, on_error, cancel_ptr);
+}
+
+inline void
+FdCache::SetExpiresSoon(Item &item, Event::Duration expiry) noexcept
+{
+	assert(!chronological_list.empty());
+	assert(enabled == expire_timer.IsPending());
+
+	const auto new_expires = std::min(GetEventLoop().SteadyNow() + expiry,
+					  chronological_list.front().expires);
+	/* the new expires must not be later than
+	   chronological_list.front() or else the chronological_list
+	   isn't sorted anymore; really sorting that list would jut
+	   add overhead, and I guess just using std::min() is the best
+	   compromise */
+	if (new_expires >= item.expires)
+		/* not sooner than the old time */
+		return;
+
+	item.expires = new_expires;
+
+	/* move to the front, because it's now the earliest expires */
+	chronological_list.erase(chronological_list.iterator_to(item));
+	chronological_list.push_front(item);
+
+	/* re-schedule the timer to make sure this item really gets
+	   flushed soon */
+	expire_timer.Schedule(expiry);
 }
 
 void
