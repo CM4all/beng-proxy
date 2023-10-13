@@ -98,6 +98,21 @@ delegate_handle(SocketDescriptor s, DelegateRequestCommand command,
 	throw SocketProtocolError{"Unknown delegate command"};
 }
 
+static void
+ReceiveFull(SocketDescriptor s, std::span<std::byte> dest)
+{
+	while (!dest.empty()) {
+		auto nbytes = s.Receive(dest);
+		if (nbytes < 0)
+			throw MakeErrno("Failed to receive");
+
+		if (nbytes == 0)
+			throw SocketClosedPrematurelyError{};
+
+		dest = dest.subspan(nbytes);
+	}
+}
+
 int
 main(int, char **) noexcept
 try {
@@ -119,23 +134,11 @@ try {
 		if (header.length >= sizeof(payload))
 			throw SocketProtocolError{"delegate payload too large"};
 
-		size_t length = 0;
+		ReceiveFull(s, std::as_writable_bytes(std::span{payload}).first(header.length));
 
-		while (length < header.length) {
-			nbytes = recv(0, payload + length,
-				      sizeof(payload) - 1 - length, 0);
-			if (nbytes < 0)
-				throw MakeErrno("recv() on delegate socket failed");
+		payload[header.length] = 0;
 
-			if (nbytes == 0)
-				break;
-
-			length += (size_t)nbytes;
-		}
-
-		payload[length] = 0;
-
-		delegate_handle(s, header.command, payload, length);
+		delegate_handle(s, header.command, payload, header.length);
 			return 2;
 	}
 
