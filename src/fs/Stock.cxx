@@ -126,10 +126,19 @@ public:
 		return idle_timer.GetEventLoop();
 	}
 
-	void Start(FilteredSocketStockRequest &&request) noexcept {
+	void Start(StockMap &map, FilteredSocketStockRequest &&request) noexcept {
 		continue_state = request.ShouldContinueOnCancel()
 			? ContinueState::YES
 			: ContinueState::NO;
+
+		if (request.ShouldContinueOnCancel())
+			/* if we continue on cancel eventually, make
+			   this stock sticky so it never gets deleted
+			   when it's empty because the Stock doesn't
+			   know we may still be creating an item which
+			   has no handler*/
+			/* TODO eliminate this workaround */
+			map.SetSticky(static_cast<Stock &>(GetStock()), true);
 
 		ConnectFilteredSocket(GetEventLoop(),
 				      std::move(request.stopwatch),
@@ -170,6 +179,7 @@ private:
 			   ItemCreateAborted() will decrement
 			   BasicStock::num_create; TODO optimize
 			   this */
+			GetStock().ItemCreateAborted();
 			continue_state = ContinueState::CANCELED;
 			return;
 		}
@@ -256,10 +266,9 @@ FilteredSocketStockConnection::OnConnectFilteredSocket(std::unique_ptr<FilteredS
 
 	if (continue_state == ContinueState::CANCELED) {
 		/* the connect operation has been canceled and the
-		   handler isn't intersted in the connection anymore -
-		   put it to the stock as "idle" */
+		   handler isn't interested in the connection anymore
+		   - put it to the stock as "idle" */
 		static_cast<Stock &>(GetStock()).InjectIdle(*this);
-		GetStock().ItemCreateAborted();
 		return;
 	}
 
@@ -278,7 +287,7 @@ FilteredSocketStockConnection::OnConnectFilteredSocketError(std::exception_ptr e
 					   GetStockName()));
 
 	if (continue_state == ContinueState::CANCELED) {
-		InvokeCreateAborted();
+		delete this;
 		logger(2, ep);
 		return;
 	}
@@ -305,7 +314,7 @@ FilteredSocketStock::Create(CreateStockItem c, StockRequest _request,
 	auto *connection = new FilteredSocketStockConnection(c,
 							     request.address,
 							     handler, cancel_ptr);
-	connection->Start(std::move(request));
+	connection->Start(stock, std::move(request));
 }
 
 uint_fast64_t
