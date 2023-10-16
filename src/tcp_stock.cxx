@@ -91,7 +91,7 @@ private:
 		assert(cancel_ptr);
 
 		// our destructor will call cancel_ptr.Cancel()
-		InvokeCreateAborted();
+		delete this;
 	}
 
 	/* virtual methods from class ConnectSocketHandler */

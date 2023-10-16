@@ -172,20 +172,12 @@ private:
 		       continue_state == ContinueState::NO);
 
 		if (continue_state == ContinueState::YES) {
-			/* even if we continue the request, we call
-			   InvokeCreateAborted() for Stock's book
-			   keeping, because we must later call Put()
-			   instead of ItemCreateSuccess(); only
-			   ItemCreateAborted() will decrement
-			   BasicStock::num_create; TODO optimize
-			   this */
-			GetStock().ItemCreateAborted();
 			continue_state = ContinueState::CANCELED;
 			return;
 		}
 
 		// our destructor will call cancel_ptr.Cancel()
-		InvokeCreateAborted();
+		delete this;
 	}
 
 	/* virtual methods from class ConnectSocketHandler */
