@@ -60,18 +60,34 @@ class FdCache final : InotifyHandler {
 
 	InotifyEvent inotify_event;
 
+	/**
+	 * Map #Key (path and flags) to #Item.
+	 */
 	IntrusiveHashSet<Item, 8192,
 			 IntrusiveHashSetOperators<Key::Hash, std::equal_to<Key>,
 						   ItemGetKey>,
 			 IntrusiveHashSetBaseHookTraits<Item, KeyTag>> map;
 
+	/**
+	 * Map inotify watch descriptors to #Item.
+	 */
 	IntrusiveHashSet<Item, 2048,
 			 IntrusiveHashSetOperators<std::hash<int>, std::equal_to<int>,
 						   ItemGetInotify>,
 			 IntrusiveHashSetBaseHookTraits<Item, InotifyTag>> inotify_map;
 
+	/**
+	 * A list of items sorted by its "expires" field.  This is
+	 * used by Expire().
+	 */
 	IntrusiveList<Item> chronological_list;
 
+	/**
+	 * If not enabled, then all newly created items will be
+	 * flushed immediately.  This is used during shutdown.
+	 *
+	 * @see Disable()
+	 */
 	bool enabled = true;
 
 public:
