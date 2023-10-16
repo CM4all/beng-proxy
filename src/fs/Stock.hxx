@@ -86,6 +86,8 @@ private:
 		    StockGetHandler &handler,
 		    CancellablePointer &cancel_ptr) override;
 
+	bool ShouldContinueOnCancel(const void *request) const noexcept;
+
 	uint_fast64_t GetFairnessHash(const void *request) const noexcept override;
 };
 
