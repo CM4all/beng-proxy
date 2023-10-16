@@ -63,7 +63,7 @@ class FdCache final : InotifyHandler {
 	IntrusiveHashSet<Item, 8192,
 			 IntrusiveHashSetOperators<Key::Hash, std::equal_to<Key>,
 						   ItemGetKey>,
-		IntrusiveHashSetBaseHookTraits<Item, KeyTag>> map;
+			 IntrusiveHashSetBaseHookTraits<Item, KeyTag>> map;
 
 	IntrusiveHashSet<Item, 2048,
 			 IntrusiveHashSetOperators<std::hash<int>, std::equal_to<int>,
