@@ -188,6 +188,11 @@ private:
 			cache.inotify_map.insert(*this);
 	}
 
+	void SetError(int _error) noexcept {
+		error = _error;
+		InvokeError();
+	}
+
 #ifdef HAVE_URING
 	/* virtual methods from Uring::OpenHandler */
 	void OnOpen(UniqueFileDescriptor _fd) noexcept override {
@@ -219,8 +224,7 @@ private:
 		delete uring_open;
 		uring_open = nullptr;
 
-		error = _error;
-		InvokeError();
+		SetError(_error);
 
 		assert(requests.empty());
 
@@ -263,8 +267,7 @@ FdCache::Item::Start(FileDescriptor directory, std::size_t strip_length,
 			RegisterInotify();
 			InvokeSuccess();
 		} else {
-			error = errno;
-			InvokeError();
+			SetError(errno);
 		}
 #ifdef HAVE_URING
 	}
