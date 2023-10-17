@@ -30,8 +30,9 @@
 #include <exception>
 #include <string_view>
 
+#include <sys/stat.h> // for struct statx
+
 struct FileAt;
-struct statx;
 class Istream;
 class HttpHeaders;
 class GrowingBuffer;
@@ -257,6 +258,25 @@ private:
 			FileDescriptor base;
 
 			/**
+			 * If defined, then this is a O_RDONLY file
+			 * descriptor for the file referred to by
+			 * #base.
+			 */
+			UniqueFileDescriptor fd;
+
+			/**
+			 * If non-zero, then this is the error that
+			 * occurred file trying to open the file.
+			 */
+			int error = 0;
+
+			/**
+			 * If #fd is defined, then this is a copy of
+			 * its statx.
+			 */
+			struct statx stx;
+
+			/**
 			 * The absolute path of #base, remembered for
 			 * StripBase().
 			 */
@@ -276,6 +296,12 @@ private:
 
 			using OpenBaseCallback = void (Request:: *)(FileDescriptor fd) noexcept;
 			OpenBaseCallback open_base_callback;
+
+			using StatSuccessCallback = void (Request:: *)(const struct statx &st) noexcept;
+			using StatErrorCallback = void (Request:: *)(int error) noexcept;
+
+			StatSuccessCallback on_stat_success;
+			StatErrorCallback on_stat_error;
 		} file;
 
 		struct {
@@ -570,8 +596,15 @@ private:
 			       UniqueFileDescriptor fd,
 			       const struct statx &st) noexcept;
 
+	void OnStatOpenStatSuccess(UniqueFileDescriptor fd,
+				   struct statx &st) noexcept;
+	void OnStatOpenStatError(int error) noexcept;
+	void StatFileAddressAfterBase(FileDescriptor base) noexcept;
+	void StatFileAddress(const FileAddress &address,
+			     Handler::File::StatSuccessCallback on_success,
+			     Handler::File::StatErrorCallback on_error) noexcept;
+
 	void HandlePathExists(const FileAddress &address) noexcept;
-	void HandlePathExistsAfterBase(FileDescriptor base) noexcept;
 	void OnPathExistsStat(const struct statx &st) noexcept;
 	void OnPathExistsStatError(int error) noexcept;
 

@@ -34,6 +34,9 @@ Request::Request(BpConnection &_connection,
 
 Request::~Request() noexcept
 {
+	if (handler.file.fd.IsDefined())
+		instance.uring.Close(handler.file.fd.Release());
+
 	if (handler.file.precompressed) {
 		if (handler.file.precompressed->original_fd.IsDefined())
 			instance.uring.Close(handler.file.precompressed->original_fd.Release());

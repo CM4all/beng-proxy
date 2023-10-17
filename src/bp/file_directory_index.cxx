@@ -67,15 +67,7 @@ Request::CheckDirectoryIndex(UniquePoolPtr<TranslateResponse> _response, FileDes
 	const auto &response = *_response;
 
 	const char *path = response.test_path;
-	if (path == nullptr)
-		path = response.address.GetFilePath();
-
-	if (path == nullptr) {
-		LogDispatchError(HttpStatus::BAD_GATEWAY,
-				 "Resource address not compatible with DIRECTORY_INDEX",
-				 1);
-		return;
-	}
+	assert(path != nullptr);
 
 	CheckDirectoryIndex(std::move(_response), {base, StripBase(path)});
 }
@@ -98,5 +90,15 @@ Request::CheckDirectoryIndex(UniquePoolPtr<TranslateResponse> _response) noexcep
 	assert(response.directory_index.data() != nullptr);
 
 	translate.pending_response = std::move(_response);
-	OpenBase(response, &Request::OnDirectoryIndexBaseOpen);
+
+	if (response.test_path != nullptr)
+		OpenBase(response, &Request::OnDirectoryIndexBaseOpen);
+	else if (response.address.type == ResourceAddress::Type::LOCAL)
+		StatFileAddress(response.address.GetFile(),
+				&Request::OnDirectoryIndexStat,
+				&Request::OnDirectoryIndexStatError);
+	else
+		LogDispatchError(HttpStatus::BAD_GATEWAY,
+				 "Resource address not compatible with DIRECTORY_INDEX",
+				 1);
 }

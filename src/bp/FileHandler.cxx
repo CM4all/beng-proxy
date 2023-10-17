@@ -346,7 +346,14 @@ Request::HandleFileAddress(const FileAddress &address) noexcept
 		return;
 	}
 
-	OpenBase(address, &Request::HandleFileAddressAfterBase);
+	if (handler.file.fd.IsDefined())
+		/* file has already been opened */
+		HandleFileAddress(address, std::move(handler.file.fd),
+				  handler.file.stx);
+	else if (handler.file.error != 0)
+		OnOpenStatError(handler.file.error);
+	else
+		OpenBase(address, &Request::HandleFileAddressAfterBase);
 }
 
 void
@@ -419,6 +426,62 @@ Request::HandleFileAddress(const FileAddress &address,
 	DispatchFile(address.path, std::move(fd), st, file_request);
 }
 
+void
+Request::OnStatOpenStatSuccess(UniqueFileDescriptor fd,
+			       struct statx &st) noexcept
+{
+	assert(!handler.file.fd.IsDefined());
+	assert(handler.file.error == 0);
+
+	handler.file.fd = std::move(fd);
+	handler.file.stx = st;
+
+	(this->*handler.file.on_stat_success)(st);
+}
+
+void
+Request::OnStatOpenStatError(int error) noexcept
+{
+	assert(!handler.file.fd.IsDefined());
+	assert(handler.file.error == 0);
+
+	handler.file.error = error;
+
+	(this->*handler.file.on_stat_error)(error);
+}
+
+void
+Request::StatFileAddressAfterBase(FileDescriptor base) noexcept
+{
+	assert(!handler.file.fd.IsDefined());
+
+	const FileAddress &address = *handler.file.address;
+
+	instance.uring.OpenStat(pool,
+				{base, StripBase(address.path)},
+				BIND_THIS_METHOD(OnStatOpenStatSuccess),
+				BIND_THIS_METHOD(OnStatOpenStatError),
+				cancel_ptr);
+}
+
+void
+Request::StatFileAddress(const FileAddress &address,
+			 Handler::File::StatSuccessCallback on_success,
+			 Handler::File::StatErrorCallback on_error) noexcept
+{
+	if (handler.file.fd.IsDefined()) {
+		(this->*on_success)(handler.file.stx);
+	} else if (handler.file.error != 0) {
+		(this->*on_error)(handler.file.error);
+	} else {
+		handler.file.address = &address;
+		handler.file.on_stat_success = on_success;
+		handler.file.on_stat_error = on_error;
+
+		OpenBase(address, &Request::StatFileAddressAfterBase);
+	}
+}
+
 static constexpr HttpStatus
 ErrnoToHttpStatus(int e) noexcept
 {
@@ -449,19 +512,9 @@ Request::HandlePathExists(const FileAddress &address) noexcept
 {
 	handler.file.address = &address;
 
-	OpenBase(address, &Request::HandlePathExistsAfterBase);
-}
-
-void
-Request::HandlePathExistsAfterBase(FileDescriptor base) noexcept
-{
-	const FileAddress &address = *handler.file.address;
-
-	instance.uring.Stat({base, StripBase(address.path)},
-			    AT_SYMLINK_NOFOLLOW|AT_STATX_SYNC_AS_STAT, 0,
-			    BIND_THIS_METHOD(OnPathExistsStat),
-			    BIND_THIS_METHOD(OnPathExistsStatError),
-			    cancel_ptr);
+	StatFileAddress(address,
+			&Request::OnPathExistsStat,
+			&Request::OnPathExistsStatError);
 }
 
 inline void

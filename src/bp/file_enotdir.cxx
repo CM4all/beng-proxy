@@ -112,7 +112,14 @@ Request::CheckFileEnotdir(UniquePoolPtr<TranslateResponse> _response) noexcept
 	assert(response.enotdir.data() != nullptr);
 
 	translate.pending_response = std::move(_response);
-	OpenBase(response, &Request::OnEnotdirBaseOpen);
+
+	if (response.test_path != nullptr ||
+	    response.address.type != ResourceAddress::Type::LOCAL)
+		OpenBase(response, &Request::OnEnotdirBaseOpen);
+	else
+		StatFileAddress(response.address.GetFile(),
+				&Request::OnEnotdirStat,
+				&Request::OnEnotdirStatError);
 }
 
 void
