@@ -262,6 +262,15 @@ private:
 			 */
 			std::string_view base_path;
 
+			/**
+			 * The path of FileAddress::base relative to
+			 * the #base FileDescriptor field.  This is
+			 * non-empty if #base is actually a "BENEATH"
+			 * directory.  This is inserted into relative
+			 * paths passed to StripBase().
+			 */
+			std::string_view base_relative;
+
 			struct Precompressed;
 			UniquePoolPtr<Precompressed> precompressed;
 

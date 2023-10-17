@@ -6,6 +6,7 @@
 #include "Instance.hxx"
 #include "file/Address.hxx"
 #include "util/StringCompare.hxx"
+#include "AllocatorPtr.hxx"
 #include "ResourceAddress.hxx"
 
 #include <fcntl.h> // for O_PATH, O_DIRECTORY
@@ -14,13 +15,6 @@
 static constexpr struct open_how open_directory_path{
 	.flags = O_PATH|O_DIRECTORY|O_NOFOLLOW|O_CLOEXEC,
 	.resolve = RESOLVE_NO_MAGICLINKS,
-};
-
-static constexpr struct open_how open_directory_path_beneath{
-	/* we can afford to omit O_NOFOLLOW because RESOLVE_BENEATH
-	   protects us */
-	.flags = O_PATH|O_DIRECTORY|O_CLOEXEC,
-	.resolve = RESOLVE_BENEATH|RESOLVE_NO_MAGICLINKS,
 };
 
 [[gnu::pure]]
@@ -39,6 +33,7 @@ Request::OnBaseOpen(FileDescriptor fd, SharedLease lease) noexcept
 {
 	handler.file.base = fd;
 	handler.file.base_lease = std::move(lease);
+	handler.file.base_relative = {};
 
 	(this->*handler.file.open_base_callback)(fd);
 }
@@ -51,17 +46,24 @@ Request::OnBeneathOpen(FileDescriptor fd, SharedLease lease) noexcept
 
 	handler.file.base = fd;
 	handler.file.base_path = address.beneath;
+	handler.file.base_relative = {};
 	handler.file.beneath_lease = std::move(lease);
 
 	if (address.base != nullptr) {
-		instance.fd_cache.Get(fd, address.beneath,
-				      NormalizePath(address.base),
-				      open_directory_path_beneath,
-				      BIND_THIS_METHOD(OnBaseOpen),
-				      BIND_THIS_METHOD(OnBaseOpenError),
-				      cancel_ptr);
-	} else
-		(this->*handler.file.open_base_callback)(fd);
+		/* check the relative path of BASE within BENEATH;
+		   this prepares for inserting this prefix into paths
+		   passed to StripBase() */
+		std::string_view base{address.base};
+
+		if (base.size() > handler.file.base_path.size() &&
+		    base.starts_with(handler.file.base_path) &&
+		    base[handler.file.base_path.size()] == '/')
+			base = base.substr(handler.file.base_path.size() + 1);
+
+		handler.file.base_relative = base;
+	}
+
+	(this->*handler.file.open_base_callback)(fd);
 }
 
 inline void
@@ -145,6 +147,16 @@ Request::StripBase(const char *path) const noexcept
 
 	assert(handler.file.base_path.front() == '/');
 	assert(handler.file.base_path.back() != '/');
+
+	if (*path != '/' && !handler.file.base_relative.empty()) {
+		/* this is a path relative to BASE, but we need it to
+		   be relative to BENEATH, so insert "base_relative"
+		   here */
+		assert(handler.file.base_relative.back() == '/');
+
+		const AllocatorPtr alloc{pool};
+		return alloc.Concat(handler.file.base_relative, path);
+	}
 
 	const char *relative = StringAfterPrefix(path, handler.file.base_path);
 	if (relative == nullptr)
