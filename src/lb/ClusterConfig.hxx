@@ -78,6 +78,11 @@ struct LbClusterConfig {
 
 	bool ssl = false;
 
+	/**
+	 * Send "Strict-Transport-Security" header?
+	 */
+	bool hsts = false;
+
 	bool fair_scheduling = false;
 
 	bool tarpit = false;

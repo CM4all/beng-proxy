@@ -46,8 +46,7 @@ LbHttpConnection::LbHttpConnection(PoolPtr &&_pool, LbInstance &_instance,
 	 listener_config(listener.GetConfig()),
 	 initial_destination(_destination),
 	 client_address(_client_address),
-	 logger(*this),
-	 hsts(listener_config.hsts)
+	 logger(*this)
 {
 }
 
@@ -219,7 +218,10 @@ LbHttpConnection::HandleHttpRequest(IncomingHttpRequest &request,
 {
 	/* send the HSTS header only on the first response on this
 	   connection to save some overhead */
-	request.generate_hsts_header = std::exchange(hsts, false);
+	if (!hsts_sent && listener_config.hsts) {
+		request.generate_hsts_header = true;
+		hsts_sent = true;
+	}
 
 	if (!uri_path_verify_quick(request.uri)) {
 		request.body.Clear();
@@ -298,6 +300,11 @@ LbHttpConnection::ForwardHttpRequest(LbCluster &cluster,
 				     IncomingHttpRequest &request,
 				     CancellablePointer &cancel_ptr) noexcept
 {
+	if (!hsts_sent && cluster.GetConfig().hsts) {
+		request.generate_hsts_header = true;
+		hsts_sent = true;
+	}
+
 	if (cluster.GetConfig().tarpit) {
 		AccountedClientConnection::NoteRequest();
 

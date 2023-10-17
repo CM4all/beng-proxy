@@ -667,6 +667,9 @@ LbConfigParser::Cluster::ParseLine(FileLineParser &line)
 			throw LineParser::Error{"SSL cannot be disabled at this point"};
 
 		config.ssl = value;
+	} else if (StringIsEqual(word, "hsts")) {
+		config.hsts = line.NextBool();
+		line.ExpectEnd();
 	} else if (StringIsEqual(word, "fair_scheduling")) {
 		config.fair_scheduling = line.NextBool();
 		line.ExpectEnd();

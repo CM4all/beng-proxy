@@ -102,6 +102,9 @@ Example::
 - ``ssl``: use HTTPS (HTTP over SSL/TLS) instead of plain HTTP for
   outgoing connections to members.
 
+- ``hsts``: ``yes`` generates a ``Strict-Transport-Security`` header
+  in the first response of each connection.
+
 - ``http_host``: overrides the ``Host`` header in all forwarded HTTP
   requests.  This also enables TLS Server Name Indication (RFC 6066
   3).

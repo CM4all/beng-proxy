@@ -55,7 +55,7 @@ struct LbHttpConnection final
 
 	AbuseTarpit abuse_tarpit;
 
-	bool hsts;
+	bool hsts_sent = false;
 
 	LbHttpConnection(PoolPtr &&_pool, LbInstance &_instance,
 			 LbListener &_listener,
