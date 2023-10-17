@@ -83,7 +83,7 @@ Request::CheckFileNotFound(UniquePoolPtr<TranslateResponse> _response, FileDescr
 		return;
 	}
 
-	CheckFileNotFound(std::move(_response), {base, path});
+	CheckFileNotFound(std::move(_response), {base, StripBase(path)});
 }
 
 void

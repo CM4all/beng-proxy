@@ -77,7 +77,7 @@ Request::CheckDirectoryIndex(UniquePoolPtr<TranslateResponse> _response, FileDes
 		return;
 	}
 
-	CheckDirectoryIndex(std::move(_response), {base, path});
+	CheckDirectoryIndex(std::move(_response), {base, StripBase(path)});
 }
 
 void

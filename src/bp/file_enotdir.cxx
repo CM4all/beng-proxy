@@ -98,7 +98,8 @@ Request::OnEnotdirBaseOpen(FileDescriptor fd) noexcept
 		return;
 	}
 
-	CheckFileEnotdir(std::move(translate.pending_response), {fd, path});
+	CheckFileEnotdir(std::move(translate.pending_response),
+			 {fd, StripBase(path)});
 }
 
 void
