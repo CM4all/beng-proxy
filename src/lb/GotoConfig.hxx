@@ -71,6 +71,7 @@ struct LbGotoConfig {
 	const char *GetName() const noexcept;
 
 #ifdef HAVE_AVAHI
+	[[gnu::pure]]
 	bool HasZeroConf() const noexcept;
 #endif
 };
