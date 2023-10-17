@@ -94,9 +94,10 @@ try {
 		break;
 
 	case LbProtocol::TCP:
-		assert(destination.cluster != nullptr);
+		assert(std::holds_alternative<LbCluster *>(destination.destination));
 
-		LbTcpConnection::New(instance, config, *destination.cluster,
+		LbTcpConnection::New(instance, config,
+				     *std::get<LbCluster *>(destination.destination),
 				     std::move(pool),
 				     std::move(socket),
 				     address);

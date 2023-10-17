@@ -4,6 +4,8 @@
 
 #pragma once
 
+#include <variant>
+
 class LbCluster;
 class LbBranch;
 class LbLuaHandler;
@@ -11,33 +13,49 @@ class LbTranslationHandler;
 class HttpServerRequestHandler;
 struct LbSimpleHttpResponse;
 
+/**
+ * Resolve this host name and connect to the resulting
+ * address.
+ */
+struct LbResolveConnect {
+	const char *host;
+};
+
 struct LbGoto {
-	LbCluster *cluster = nullptr;
-	LbBranch *branch = nullptr;
-	LbLuaHandler *lua = nullptr;
-	LbTranslationHandler *translation = nullptr;
-	HttpServerRequestHandler *handler = nullptr;
-	const LbSimpleHttpResponse *response = nullptr;
+	std::variant<std::monostate,
+		     LbCluster *,
+		     LbBranch *,
+		     LbLuaHandler *,
+		     LbTranslationHandler *,
+		     HttpServerRequestHandler *,
+		     const LbSimpleHttpResponse *,
+		     LbResolveConnect> destination;
 
-	/**
-	 * Resolve this host name and connect to the resulting
-	 * address.
-	 */
-	const char *resolve_connect = nullptr;
+	constexpr LbGoto() noexcept = default;
 
-	LbGoto() noexcept = default;
-	LbGoto(LbCluster &_cluster) noexcept:cluster(&_cluster) {}
-	LbGoto(LbBranch &_branch) noexcept:branch(&_branch) {}
-	LbGoto(LbLuaHandler &_lua) noexcept:lua(&_lua) {}
-	LbGoto(LbTranslationHandler &_translation) noexcept:translation(&_translation) {}
-	LbGoto(HttpServerRequestHandler &_handler) noexcept:handler(&_handler) {}
-	LbGoto(const LbSimpleHttpResponse &_response) noexcept:response(&_response) {}
+	constexpr LbGoto(LbCluster &cluster) noexcept
+		:destination(&cluster) {}
+
+	constexpr LbGoto(LbBranch &branch) noexcept
+		:destination(&branch) {}
+
+	constexpr LbGoto(LbLuaHandler &lua) noexcept
+		:destination(&lua) {}
+
+	constexpr LbGoto(LbTranslationHandler &translation) noexcept
+		:destination(&translation) {}
+
+	constexpr LbGoto(HttpServerRequestHandler &handler) noexcept
+		:destination(&handler) {}
+
+	constexpr LbGoto(const LbSimpleHttpResponse &response) noexcept
+		:destination(&response) {}
+
+	constexpr LbGoto(const LbResolveConnect &resolve_connect) noexcept
+		:destination(resolve_connect) {}
 
 	bool IsDefined() const noexcept {
-		return cluster != nullptr || branch != nullptr ||
-			lua != nullptr || translation != nullptr ||
-			handler != nullptr ||
-			response != nullptr || resolve_connect != nullptr;
+		return destination.index() != 0;
 	}
 
 	template<typename R>

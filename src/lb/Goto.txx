@@ -11,8 +11,8 @@ template<typename R>
 const LbGoto &
 LbGoto::FindRequestLeaf(const R &request) const noexcept
 {
-	if (branch != nullptr)
-		return branch->FindRequestLeaf(request);
+	if (auto *branch = std::get_if<LbBranch *>(&destination))
+		return (*branch)->FindRequestLeaf(request);
 
 	return *this;
 }

@@ -22,6 +22,8 @@ CastLuaGoto(lua_State *L, int idx)
 	return LuaGoto::Cast(L, idx);
 }
 
+template<class> constexpr bool always_false_v = false;
+
 static int
 LuaGotoIndex(lua_State *L)
 {
@@ -35,47 +37,72 @@ LuaGotoIndex(lua_State *L)
 
 	const char *name = lua_tostring(L, 2);
 	if (strcmp(name, "type") == 0) {
-		if (g.cluster != nullptr) {
-			Lua::Push(L, "pool");
-			return 1;
-		} else if (g.branch != nullptr) {
-			Lua::Push(L, "branch");
-			return 1;
-		} else if (g.lua != nullptr) {
-			Lua::Push(L, "lua_handler");
-			return 1;
-		} else if (g.response != nullptr) {
-			Lua::Push(L, "response");
-			return 1;
-		} else
-			return 0;
+		return std::visit([L](const auto &value){
+			using T = std::decay_t<decltype(value)>;
+
+			if constexpr (std::is_same_v<T, LbCluster *>) {
+				Lua::Push(L, "pool");
+				return 1;
+			} else if constexpr (std::is_same_v<T, LbBranch *>) {
+				Lua::Push(L, "branch");
+				return 1;
+			} else if constexpr (std::is_same_v<T, LbLuaHandler *>) {
+				Lua::Push(L, "lua_handler");
+				return 1;
+			} else if constexpr (std::is_same_v<T, const LbSimpleHttpResponse *>) {
+				Lua::Push(L, "response");
+				return 1;
+			} else if constexpr (std::is_same_v<T, LbTranslationHandler *> ||
+					     std::is_same_v<T, HttpServerRequestHandler *> ||
+					     std::is_same_v<T, LbResolveConnect> ||
+					     std::is_same_v<T, std::monostate>) {
+				return 0;
+			} else {
+				static_assert(always_false_v<T>);
+			}
+		}, g.destination);
 	} else if (strcmp(name, "name") == 0) {
-		if (g.cluster != nullptr) {
-			Lua::Push(L, g.cluster->GetConfig().name.c_str());
-			return 1;
-		} else if (g.cluster != nullptr) {
-			Lua::Push(L, g.branch->GetConfig().name.c_str());
-			return 1;
-		} else if (g.lua != nullptr) {
-			Lua::Push(L, g.lua->GetConfig().name.c_str());
+		const std::string_view result = std::visit([](const auto &value) -> std::string_view {
+			using T = std::decay_t<decltype(value)>;
+
+			if constexpr (std::is_same_v<T, LbCluster *> ||
+				      std::is_same_v<T, LbBranch *> ||
+				      std::is_same_v<T, LbLuaHandler *>) {
+				return value->GetConfig().name;
+			} else if constexpr (std::is_same_v<T, const LbSimpleHttpResponse *> ||
+					     std::is_same_v<T, LbTranslationHandler *> ||
+					     std::is_same_v<T, HttpServerRequestHandler *> ||
+					     std::is_same_v<T, LbResolveConnect> ||
+					     std::is_same_v<T, std::monostate>) {
+				return {};
+			} else {
+				static_assert(always_false_v<T>);
+			}
+		}, g.destination);
+
+		if (result.data() != nullptr) {
+			Lua::Push(L, result);
 			return 1;
 		}
 	} else if (strcmp(name, "status") == 0) {
-		if (g.response != nullptr) {
-			Lua::Push(L, lua_Integer(g.response->status));
+		if (auto *value = std::get_if<const LbSimpleHttpResponse *>(&g.destination)) {
+			const auto &response = **value;
+			Lua::Push(L, lua_Integer(response.status));
 			return 1;
 		}
 	} else if (strcmp(name, "location") == 0) {
-		if (g.response != nullptr) {
-			if (!g.response->location.empty()) {
-				Lua::Push(L, g.response->location.c_str());
+		if (auto *value = std::get_if<const LbSimpleHttpResponse *>(&g.destination)) {
+			const auto &response = **value;
+			if (!response.location.empty()) {
+				Lua::Push(L, response.location);
 				return 1;
 			}
 		}
 	} else if (strcmp(name, "message") == 0) {
-		if (g.response != nullptr) {
-			if (!g.response->message.empty()) {
-				Lua::Push(L, g.response->message.c_str());
+		if (auto *value = std::get_if<const LbSimpleHttpResponse *>(&g.destination)) {
+			const auto &response = **value;
+			if (!response.message.empty()) {
+				Lua::Push(L, response.message);
 				return 1;
 			}
 		}

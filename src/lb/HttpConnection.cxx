@@ -258,6 +258,8 @@ LbHttpConnection::HandleHttpRequest(IncomingHttpRequest &request,
 	HandleHttpRequest(initial_destination, request, parent_stopwatch, cancel_ptr);
 }
 
+template <class> constexpr bool always_false_v = false;
+
 void
 LbHttpConnection::HandleHttpRequest(const LbGoto &destination,
 				    IncomingHttpRequest &request,
@@ -265,34 +267,29 @@ LbHttpConnection::HandleHttpRequest(const LbGoto &destination,
 				    CancellablePointer &cancel_ptr) noexcept
 {
 	const auto &goto_ = destination.FindRequestLeaf(request);
-	if (goto_.response != nullptr) {
-		request.body.Clear();
-		SendResponse(request, *goto_.response);
-		return;
-	}
 
-	if (goto_.lua != nullptr) {
-		InvokeLua(*goto_.lua, request, parent_stopwatch, cancel_ptr);
-		return;
-	}
+	std::visit([&](const auto &value){
+                using T = std::decay_t<decltype(value)>;
 
-	if (goto_.translation != nullptr) {
-		AskTranslationServer(*goto_.translation, request, cancel_ptr);
-		return;
-	}
-
-	if (goto_.handler != nullptr) {
-		goto_.handler->HandleHttpRequest(request, parent_stopwatch, cancel_ptr);
-		return;
-	}
-
-	if (goto_.resolve_connect != nullptr) {
-		ResolveConnect(goto_.resolve_connect, request, cancel_ptr);
-		return;
-	}
-
-	assert(goto_.cluster != nullptr);
-	ForwardHttpRequest(*goto_.cluster, request, cancel_ptr);
+                if constexpr (std::is_same_v<T, const LbSimpleHttpResponse *>) {
+			request.body.Clear();
+			SendResponse(request, *value);
+		} else if constexpr (std::is_same_v<T, LbLuaHandler *>) {
+			InvokeLua(*value, request, parent_stopwatch, cancel_ptr);
+		} else if constexpr (std::is_same_v<T, LbTranslationHandler *>) {
+			AskTranslationServer(*value, request, cancel_ptr);
+		} else if constexpr (std::is_same_v<T, HttpServerRequestHandler *>) {
+			value->HandleHttpRequest(request, parent_stopwatch, cancel_ptr);
+		} else if constexpr (std::is_same_v<T, LbResolveConnect>) {
+			ResolveConnect(value.host, request, cancel_ptr);
+		} else if constexpr (std::is_same_v<T, LbCluster *>) {
+			ForwardHttpRequest(*value, request, cancel_ptr);
+		} else if constexpr (std::is_same_v<T, LbBranch *>) {
+			std::terminate();
+		} else if constexpr (!std::is_same_v<T, std::monostate>) {
+			static_assert(always_false_v<T>);
+		}
+	}, goto_.destination);
 }
 
 void
