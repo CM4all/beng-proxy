@@ -45,14 +45,14 @@ fcgi_server_mirror(struct pool &pool, FcgiServer &server)
 		while (true) {
 			auto header = server.ReadHeader();
 
-			if (header.type != FCGI_STDIN ||
+			if (header.type != FcgiRecordType::STDIN ||
 			    header.request_id != request.id)
 				abort();
 
 			if (header.content_length == 0)
 				break;
 
-			header.type = FCGI_STDOUT;
+			header.type = FcgiRecordType::STDOUT;
 			server.WriteHeader(header);
 			server.MirrorRaw(FromBE16(header.content_length) + header.padding_length);
 		}
@@ -84,7 +84,7 @@ fcgi_server_hello(struct pool &pool, FcgiServer &server)
 
 	/* some more confusion: an unknown record which should be
 	   ignored by the client */
-	server.WriteRecord(request, FCGI_UNKNOWN_TYPE, "ignore this"sv, 7);
+	server.WriteRecord(request, FcgiRecordType::UNKNOWN_TYPE, "ignore this"sv, 7);
 
 	server.EndResponse(request);
 }
@@ -161,7 +161,7 @@ fcgi_server_premature_close_headers(struct pool &pool, FcgiServer &server)
 
 	server.WriteHeader({
 		.version = FCGI_VERSION_1,
-		.type = FCGI_STDOUT,
+		.type = FcgiRecordType::STDOUT,
 		.request_id = request.id,
 		.content_length = ToBE16(1024),
 	});
@@ -177,7 +177,7 @@ fcgi_server_premature_close_body(struct pool &pool, FcgiServer &server)
 
 	server.WriteHeader({
 		.version = FCGI_VERSION_1,
-		.type = FCGI_STDOUT,
+		.type = FcgiRecordType::STDOUT,
 		.request_id = request.id,
 		.content_length = ToBE16(1024),
 	});

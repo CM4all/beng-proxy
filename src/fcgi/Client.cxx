@@ -74,8 +74,9 @@ class FcgiClient final
 
 			/**
 			 * There is no response body.  Waiting for the
-			 * #FCGI_END_REQUEST packet, and then we'll forward the
-			 * response to the #http_response_handler.
+			 * #FcgiRecordType::END_REQUEST packet, and
+			 * then we'll forward the response to the
+			 * #http_response_handler.
 			 */
 			READ_NO_BODY,
 
@@ -181,20 +182,23 @@ private:
 	 */
 	struct BufferAnalysis {
 		/**
-		 * Offset of the end of the #FCGI_END_REQUEST packet, or 0 if
-		 * none was found.
+		 * Offset of the end of the
+		 * #FcgiRecordType::END_REQUEST packet, or 0 if none
+		 * was found.
 		 */
 		std::size_t end_request_offset = 0;
 
 		/**
-		 * Amount of #FCGI_STDOUT data found in the buffer.
+		 * Amount of #FcgiRecordType::STDOUT data found in the
+		 * buffer.
 		 */
 		std::size_t total_stdout = 0;
 	};
 
 	/**
-	 * Find the #FCGI_END_REQUEST packet matching the current request, and
-	 * returns the offset where it ends, or 0 if none was found.
+	 * Find the #FcgiRecordType::END_REQUEST packet matching the
+	 * current request, and returns the offset where it ends, or 0
+	 * if none was found.
 	 */
 	[[gnu::pure]]
 	BufferAnalysis AnalyseBuffer(std::span<const std::byte> buffer) const noexcept;
@@ -356,11 +360,11 @@ FcgiClient::AnalyseBuffer(const std::span<const std::byte> buffer) const noexcep
 		data += header.padding_length;
 
 		if (header.request_id == id) {
-			if (header.type == FCGI_END_REQUEST) {
+			if (header.type == FcgiRecordType::END_REQUEST) {
 				/* found the END packet: stop here */
 				result.end_request_offset = data - data0;
 				break;
-			} else if (header.type == FCGI_STDOUT) {
+			} else if (header.type == FcgiRecordType::STDOUT) {
 				result.total_stdout += new_content_length;
 			}
 		}
@@ -546,22 +550,22 @@ FcgiClient::HandleHeader(const struct fcgi_record_header &header) noexcept
 	}
 
 	switch (header.type) {
-	case FCGI_STDOUT:
+	case FcgiRecordType::STDOUT:
 		response.stderr = false;
 
 		if (response.read_state == Response::READ_NO_BODY) {
-			/* ignore all payloads until #FCGI_END_REQUEST */
+			/* ignore all payloads until END_REQUEST */
 			skip_length += content_length;
 			content_length = 0;
 		}
 
 		return true;
 
-	case FCGI_STDERR:
+	case FcgiRecordType::STDERR:
 		response.stderr = true;
 		return true;
 
-	case FCGI_END_REQUEST:
+	case FcgiRecordType::END_REQUEST:
 		HandleEnd();
 		return false;
 
@@ -875,7 +879,7 @@ FcgiClient::_FillBucketList(IstreamBucketList &list)
 			continue;
 		}
 
-		if (header.type == FCGI_END_REQUEST) {
+		if (header.type == FcgiRecordType::END_REQUEST) {
 			/* "excess data" has already been checked */
 			assert(response.available < 0 ||
 			       static_cast<std::size_t>(response.available) >= total_size);
@@ -896,7 +900,7 @@ FcgiClient::_FillBucketList(IstreamBucketList &list)
 				ReleaseSocket(PutAction::REUSE);
 
 			break;
-		} else if (header.type != FCGI_STDOUT) {
+		} else if (header.type != FcgiRecordType::STDOUT) {
 			data += sizeof(header);
 			current_skip_length = new_content_length + header.padding_length;
 			continue;
@@ -969,7 +973,7 @@ FcgiClient::_ConsumeBucketList(std::size_t nbytes) noexcept
 			continue;
 		}
 
-		if (header.type == FCGI_END_REQUEST && !socket.IsConnected()) {
+		if (header.type == FcgiRecordType::END_REQUEST && !socket.IsConnected()) {
 			/* this condition must have been detected
 			   already in _FillBucketList() */
 			assert(response.available == 0);
@@ -978,7 +982,7 @@ FcgiClient::_ConsumeBucketList(std::size_t nbytes) noexcept
 			return {Consumed(total), true};
 		}
 
-		if (header.type == FCGI_STDERR) {
+		if (header.type == FcgiRecordType::STDERR) {
 			if (b.size() < sizeof(header) + new_content_length)
 				break;
 
@@ -987,7 +991,7 @@ FcgiClient::_ConsumeBucketList(std::size_t nbytes) noexcept
 
 			skip_length = header.padding_length;
 			continue;
-		} else if (header.type != FCGI_STDOUT) {
+		} else if (header.type != FcgiRecordType::STDOUT) {
 			/* ignore unknown packets */
 			skip_length = sizeof(header) + new_content_length
 				+ header.padding_length;
@@ -1032,7 +1036,7 @@ FcgiClient::OnBufferedData()
 	assert(!r.empty());
 
 	if (socket.IsConnected()) {
-		/* check if the #FCGI_END_REQUEST packet can be found in the
+		/* check if the END_REQUEST packet can be found in the
 		   following data chunk */
 		const auto analysis = AnalyseBuffer(r);
 		if (analysis.end_request_offset > 0)
@@ -1163,7 +1167,7 @@ fcgi_client_request(struct pool *pool, EventLoop &event_loop,
 
 	struct fcgi_record_header header{
 		.version = FCGI_VERSION_1,
-		.type = FCGI_BEGIN_REQUEST,
+		.type = FcgiRecordType::BEGIN_REQUEST,
 		.request_id = ToBE16(next_request_id),
 	};
 	static constexpr struct fcgi_begin_request begin_request{
@@ -1225,7 +1229,7 @@ fcgi_client_request(struct pool *pool, EventLoop &event_loop,
 
 	ps.Commit();
 
-	header.type = FCGI_PARAMS;
+	header.type = FcgiRecordType::PARAMS;
 	header.content_length = ToBE16(0);
 	buffer.WriteT(header);
 
@@ -1239,7 +1243,7 @@ fcgi_client_request(struct pool *pool, EventLoop &event_loop,
 							    header.request_id));
 	else {
 		/* no request body - append an empty STDIN packet */
-		header.type = FCGI_STDIN;
+		header.type = FcgiRecordType::STDIN;
 		header.content_length = ToBE16(0);
 		buffer.WriteT(header);
 

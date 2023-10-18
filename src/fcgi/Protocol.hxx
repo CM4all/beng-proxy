@@ -9,18 +9,19 @@
 
 #define FCGI_VERSION_1 1
 
-#define FCGI_BEGIN_REQUEST       1
-#define FCGI_ABORT_REQUEST       2
-#define FCGI_END_REQUEST         3
-#define FCGI_PARAMS              4
-#define FCGI_STDIN               5
-#define FCGI_STDOUT              6
-#define FCGI_STDERR              7
-#define FCGI_DATA                8
-#define FCGI_GET_VALUES          9
-#define FCGI_GET_VALUES_RESULT  10
-#define FCGI_UNKNOWN_TYPE       11
-#define FCGI_MAXTYPE (FCGI_UNKNOWN_TYPE)
+enum class FcgiRecordType : uint8_t {
+	BEGIN_REQUEST = 1,
+	ABORT_REQUEST = 2,
+	END_REQUEST = 3,
+	PARAMS = 4,
+	STDIN = 5,
+	STDOUT = 6,
+	STDERR = 7,
+	DATA = 8,
+	GET_VALUES = 9,
+	GET_VALUES_RESULT = 10,
+	UNKNOWN_TYPE = 11,
+};
 
 /*
  * Mask for flags component of FCGI_BeginRequestBody
@@ -36,7 +37,7 @@
 
 struct fcgi_record_header {
 	uint8_t version;
-	uint8_t type;
+	FcgiRecordType type;
 	uint16_t request_id;
 	uint16_t content_length;
 	uint8_t padding_length;

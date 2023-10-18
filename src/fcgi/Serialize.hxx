@@ -13,6 +13,7 @@
 #include <stdint.h>
 #include <stddef.h>
 
+enum class FcgiRecordType : uint8_t;
 class GrowingBuffer;
 class StringMap;
 
@@ -21,7 +22,7 @@ class FcgiRecordSerializer {
 	struct fcgi_record_header *const header;
 
 public:
-	FcgiRecordSerializer(GrowingBuffer &_buffer, uint8_t type,
+	FcgiRecordSerializer(GrowingBuffer &_buffer, FcgiRecordType type,
 			     uint16_t request_id_be) noexcept;
 
 	GrowingBuffer &GetBuffer() {

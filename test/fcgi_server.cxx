@@ -32,7 +32,7 @@ inline std::pair<struct fcgi_begin_request, uint_least16_t>
 FcgiServer::ReadBeginRequest()
 {
 	const auto header = ReadHeader();
-	if (header.type != FCGI_BEGIN_REQUEST)
+	if (header.type != FcgiRecordType::BEGIN_REQUEST)
 		throw std::runtime_error{"BEGIN_REQUEST expected"};
 
 	struct fcgi_begin_request begin;
@@ -106,7 +106,7 @@ FcgiServer::ReadParams(struct pool &pool, FcgiRequest &r)
 	while (true) {
 		const auto header = ReadHeader();
 
-		if (header.type != FCGI_PARAMS)
+		if (header.type != FcgiRecordType::PARAMS)
 			throw std::runtime_error{"PARAMS expected"};
 
 		if (header.request_id != r.id)
@@ -162,7 +162,7 @@ FcgiServer::ReadRequest(struct pool &pool)
 						MSG_DONTWAIT|MSG_PEEK);
 		if (nbytes == (ssize_t)sizeof(header) &&
 		    header.version == FCGI_VERSION_1 &&
-		    header.type == FCGI_STDIN &&
+		    header.type == FcgiRecordType::STDIN &&
 		    header.content_length == 0)
 			r.length = 0;
 	}
@@ -176,7 +176,7 @@ FcgiServer::DiscardRequestBody(const FcgiRequest &r)
 	while (true) {
 		const auto header = ReadHeader();
 
-		if (header.type != FCGI_STDIN)
+		if (header.type != FcgiRecordType::STDIN)
 			throw std::runtime_error{"STDIN expected"};
 
 		if (header.request_id != r.id)
@@ -275,7 +275,8 @@ FcgiServer::WriteZero(std::size_t size)
 }
 
 void
-FcgiServer::WriteRecord(const FcgiRequest &r, uint8_t type, std::string_view payload,
+FcgiServer::WriteRecord(const FcgiRequest &r, FcgiRecordType type,
+			std::string_view payload,
 			std::size_t padding)
 {
 	assert(payload.size() < 0x10000);
@@ -313,7 +314,7 @@ FcgiServer::EndResponse(const FcgiRequest &r)
 {
 	WriteHeader({
 		.version = FCGI_VERSION_1,
-		.type = FCGI_END_REQUEST,
+		.type = FcgiRecordType::END_REQUEST,
 		.request_id = r.id,
 	});
 }

@@ -13,7 +13,7 @@
 #include <cstdint>
 
 FcgiRecordSerializer::FcgiRecordSerializer(GrowingBuffer &_buffer,
-					   uint8_t type,
+					   FcgiRecordType type,
 					   uint16_t request_id_be) noexcept
 	:buffer(_buffer),
 	 header((struct fcgi_record_header *)buffer.Write(sizeof(*header)))
@@ -62,7 +62,7 @@ fcgi_serialize_pair(GrowingBuffer &gb, std::string_view name,
 
 FcgiParamsSerializer::FcgiParamsSerializer(GrowingBuffer &_buffer,
 					   uint16_t request_id_be) noexcept
-	:record(_buffer, FCGI_PARAMS, request_id_be) {}
+	:record(_buffer, FcgiRecordType::PARAMS, request_id_be) {}
 
 FcgiParamsSerializer &
 FcgiParamsSerializer::operator()(std::string_view name,

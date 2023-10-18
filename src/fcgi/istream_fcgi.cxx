@@ -25,7 +25,7 @@ public:
 		:FacadeIstream(_pool, std::move(_input)),
 		 header{
 			 .version = FCGI_VERSION_1,
-			 .type = FCGI_STDIN,
+			 .type = FcgiRecordType::STDIN,
 			 .request_id = request_id,
 		 }
 	{

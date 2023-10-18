@@ -75,17 +75,18 @@ public:
 	void WriteResponseHeaders(const FcgiRequest &r, HttpStatus status,
 				  const StringMap &headers);
 
-	void WriteRecord(const FcgiRequest &r, uint8_t type, std::string_view payload,
+	void WriteRecord(const FcgiRequest &r, FcgiRecordType type,
+			 std::string_view payload,
 			 std::size_t padding=0);
 
 	void WriteStdout(const FcgiRequest &r, std::string_view payload,
 			 std::size_t padding=0) {
-		WriteRecord(r, FCGI_STDOUT, payload, padding);
+		WriteRecord(r, FcgiRecordType::STDOUT, payload, padding);
 	}
 
 	void WriteStderr(const FcgiRequest &r, std::string_view payload,
 			 std::size_t padding=0) {
-		WriteRecord(r, FCGI_STDERR, payload, padding);
+		WriteRecord(r, FcgiRecordType::STDERR, payload, padding);
 	}
 
 	void MirrorRaw(std::size_t size);
