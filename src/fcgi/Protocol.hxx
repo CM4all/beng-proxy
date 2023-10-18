@@ -4,6 +4,8 @@
 
 #pragma once
 
+#include "util/ByteOrder.hxx"
+
 #include <cstdint>
 #include <cstddef>
 
@@ -38,8 +40,8 @@ enum class FcgiRecordType : uint8_t {
 struct fcgi_record_header {
 	uint8_t version;
 	FcgiRecordType type;
-	uint16_t request_id;
-	uint16_t content_length;
+	PackedBE16 request_id;
+	PackedBE16 content_length;
 	uint8_t padding_length;
 	std::byte reserved;
 	/*
@@ -49,11 +51,13 @@ struct fcgi_record_header {
 };
 
 static_assert(sizeof(fcgi_record_header) == 8, "Wrong FastCGI header size");
+static_assert(alignof(fcgi_record_header) == 1);
 
 struct fcgi_begin_request {
-	uint16_t role;
+	PackedBE16 role;
 	uint8_t flags;
 	uint8_t reserved[5];
 };
 
 static_assert(sizeof(fcgi_begin_request) == 8, "Wrong FastCGI packet size");
+static_assert(alignof(fcgi_begin_request) == 1);

@@ -36,7 +36,7 @@ FcgiServer::ReadBeginRequest()
 		throw std::runtime_error{"BEGIN_REQUEST expected"};
 
 	struct fcgi_begin_request begin;
-	if (FromBE16(header.content_length) != sizeof(begin))
+	if (header.content_length != sizeof(begin))
 		throw std::runtime_error{"Malformed BEGIN_REQUEST"};
 
 	ReadFullRaw(std::as_writable_bytes(std::span{&begin, 1}));
@@ -112,7 +112,7 @@ FcgiServer::ReadParams(struct pool &pool, FcgiRequest &r)
 		if (header.request_id != r.id)
 			throw std::runtime_error{"Malformed PARAMS"};
 
-		size_t remaining = FromBE16(header.content_length);
+		size_t remaining = header.content_length;
 		if (remaining == 0)
 			break;
 
@@ -143,7 +143,7 @@ FcgiRequest
 FcgiServer::ReadRequest(struct pool &pool)
 {
 	const auto [begin, request_id] = ReadBeginRequest();
-	if (FromBE16(begin.role) != FCGI_RESPONDER)
+	if (begin.role != FCGI_RESPONDER)
 		throw std::runtime_error{"role==RESPONDER expected"};
 
 	FcgiRequest r;
@@ -182,7 +182,7 @@ FcgiServer::DiscardRequestBody(const FcgiRequest &r)
 		if (header.request_id != r.id)
 			throw std::runtime_error{"Malformed STDIN"};
 
-		std::size_t content_length = FromBE16(header.content_length);
+		std::size_t content_length = header.content_length;
 		DiscardRaw(content_length + header.padding_length);
 
 		if (content_length == 0)
@@ -286,7 +286,7 @@ FcgiServer::WriteRecord(const FcgiRequest &r, FcgiRecordType type,
 		.version = FCGI_VERSION_1,
 		.type = type,
 		.request_id = r.id,
-		.content_length = ToBE16(payload.size()),
+		.content_length = payload.size(),
 		.padding_length = static_cast<uint8_t>(padding),
 	});
 

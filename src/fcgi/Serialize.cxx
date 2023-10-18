@@ -6,8 +6,8 @@
 #include "Protocol.hxx"
 #include "memory/GrowingBuffer.hxx"
 #include "strmap.hxx"
-#include "util/CharUtil.hxx"
 #include "util/ByteOrder.hxx"
+#include "util/CharUtil.hxx"
 
 #include <cassert>
 #include <cstdint>
@@ -29,7 +29,7 @@ void
 FcgiRecordSerializer::Commit(size_t content_length) noexcept
 {
 	assert(content_length < (1 << 16));
-	header->content_length = ToBE16(content_length);
+	header->content_length = content_length;
 }
 
 static size_t

@@ -54,7 +54,7 @@ fcgi_server_mirror(struct pool &pool, FcgiServer &server)
 
 			header.type = FcgiRecordType::STDOUT;
 			server.WriteHeader(header);
-			server.MirrorRaw(FromBE16(header.content_length) + header.padding_length);
+			server.MirrorRaw(header.content_length + header.padding_length);
 		}
 	}
 
@@ -163,7 +163,7 @@ fcgi_server_premature_close_headers(struct pool &pool, FcgiServer &server)
 		.version = FCGI_VERSION_1,
 		.type = FcgiRecordType::STDOUT,
 		.request_id = request.id,
-		.content_length = ToBE16(1024),
+		.content_length = 1024,
 	});
 
 	server.WriteFullRaw(AsBytes("Foo: 1\nBar: 1\nX: "sv));
@@ -179,7 +179,7 @@ fcgi_server_premature_close_body(struct pool &pool, FcgiServer &server)
 		.version = FCGI_VERSION_1,
 		.type = FcgiRecordType::STDOUT,
 		.request_id = request.id,
-		.content_length = ToBE16(1024),
+		.content_length = 1024,
 	});
 
 	server.WriteFullRaw(AsBytes("Foo: 1\nBar: 1\n\nFoo Bar"sv));

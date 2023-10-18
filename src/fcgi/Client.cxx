@@ -27,7 +27,6 @@
 #include "util/DestructObserver.hxx"
 #include "util/StringSplit.hxx"
 #include "util/StringStrip.hxx"
-#include "util/ByteOrder.hxx"
 #include "util/Cancellable.hxx"
 #include "util/Exception.hxx"
 #include "AllocatorPtr.hxx"
@@ -348,13 +347,13 @@ FcgiClient::AnalyseBuffer(const std::span<const std::byte> buffer) const noexcep
 
 	while (true) {
 		const struct fcgi_record_header &header =
-			*(const struct fcgi_record_header *)(const void *)data;
+			*(const struct fcgi_record_header *)data;
 		data = (const std::byte *)(&header + 1);
 		if (data > end)
 			/* reached the end of the given buffer */
 			break;
 
-		const std::size_t new_content_length = FromBE16(header.content_length);
+		const std::size_t new_content_length = header.content_length;
 
 		data += new_content_length;
 		data += header.padding_length;
@@ -539,7 +538,7 @@ FcgiClient::HandleEnd() noexcept
 inline bool
 FcgiClient::HandleHeader(const struct fcgi_record_header &header) noexcept
 {
-	content_length = FromBE16(header.content_length);
+	content_length = header.content_length;
 	skip_length = header.padding_length;
 
 	if (header.request_id != id) {
@@ -658,7 +657,7 @@ FcgiClient::ConsumeInput(const std::byte *data0, std::size_t length0) noexcept
 		}
 
 		const struct fcgi_record_header *header =
-			(const struct fcgi_record_header *)(const void *)data;
+			(const struct fcgi_record_header *)data;
 		const std::size_t remaining = end - data;
 		if (remaining < sizeof(*header))
 			return BufferedResult::MORE;
@@ -864,12 +863,12 @@ FcgiClient::_FillBucketList(IstreamBucketList &list)
 				break;
 		}
 
-		const auto &header = *(const struct fcgi_record_header *)(const void *)data;
+		const auto &header = *(const struct fcgi_record_header *)data;
 		const std::size_t remaining = end - data;
 		if (remaining < sizeof(header))
 			break;
 
-		const std::size_t new_content_length = FromBE16(header.content_length);
+		const std::size_t new_content_length = header.content_length;
 
 		if (header.request_id != id) {
 			/* ignore packets from other requests */
@@ -960,11 +959,11 @@ FcgiClient::_ConsumeBucketList(std::size_t nbytes) noexcept
 		}
 
 		const auto b = socket.ReadBuffer();
-		const auto &header = *(const struct fcgi_record_header *)(const void *)b.data();
+		const auto &header = *(const struct fcgi_record_header *)b.data();
 		if (b.size() < sizeof(header))
 			break;
 
-		const std::size_t new_content_length = FromBE16(header.content_length);
+		const std::size_t new_content_length = header.content_length;
 
 		if (header.request_id != id) {
 			/* ignore packets from other requests */
@@ -1168,17 +1167,17 @@ fcgi_client_request(struct pool *pool, EventLoop &event_loop,
 	struct fcgi_record_header header{
 		.version = FCGI_VERSION_1,
 		.type = FcgiRecordType::BEGIN_REQUEST,
-		.request_id = ToBE16(next_request_id),
+		.request_id = next_request_id,
 	};
 	static constexpr struct fcgi_begin_request begin_request{
-		.role = ToBE16(FCGI_RESPONDER),
+		.role = FCGI_RESPONDER,
 		.flags = FCGI_KEEP_CONN,
 	};
 
 	assert(http_method_is_valid(method));
 
 	GrowingBuffer buffer;
-	header.content_length = ToBE16(sizeof(begin_request));
+	header.content_length = sizeof(begin_request);
 	buffer.WriteT(header);
 	buffer.WriteT(begin_request);
 
@@ -1230,7 +1229,7 @@ fcgi_client_request(struct pool *pool, EventLoop &event_loop,
 	ps.Commit();
 
 	header.type = FcgiRecordType::PARAMS;
-	header.content_length = ToBE16(0);
+	header.content_length = 0;
 	buffer.WriteT(header);
 
 	UnusedIstreamPtr request;
@@ -1244,7 +1243,7 @@ fcgi_client_request(struct pool *pool, EventLoop &event_loop,
 	else {
 		/* no request body - append an empty STDIN packet */
 		header.type = FcgiRecordType::STDIN;
-		header.content_length = ToBE16(0);
+		header.content_length = 0;
 		buffer.WriteT(header);
 
 		request = istream_gb_new(*pool, std::move(buffer));

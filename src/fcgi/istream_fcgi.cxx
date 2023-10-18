@@ -91,7 +91,7 @@ FcgiIstream::StartRecord(size_t length) noexcept
 		/* uint16_t's limit */
 		length = 0xffff;
 
-	header.content_length = ToBE16(length);
+	header.content_length = length;
 	header_sent = 0;
 	missing_from_current_record = length;
 }
