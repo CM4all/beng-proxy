@@ -243,16 +243,15 @@ LbLuaHandler::HandleRequest(IncomingHttpRequest &request,
 
 	if (lua_istable(L, -1)) {
 		lua_getfield(L, -1, "resolve_connect");
+		AtScopeExit(L) { lua_pop(L, 1); };
+
 		const char *resolve_connect = lua_tostring(L, -1);
 		if (resolve_connect != nullptr) {
 			/* allocate a LbGoto instance from the request pool */
 			auto *rg = NewFromPool<LbGoto>(request.pool);
 			rg->resolve_connect = p_strdup(request.pool, resolve_connect);
-			lua_pop(L, 1);
 			return rg;
 		}
-
-		lua_pop(L, 1);
 	}
 
 	throw std::runtime_error("Wrong return type from Lua handler");
