@@ -23,7 +23,11 @@ public:
 	FcgiIstream(struct pool &_pool, UnusedIstreamPtr _input,
 		    uint16_t request_id) noexcept
 		:FacadeIstream(_pool, std::move(_input)),
-		 header{FCGI_VERSION_1, FCGI_STDIN, request_id}
+		 header{
+			 .version = FCGI_VERSION_1,
+			 .type = FCGI_STDIN,
+			 .request_id = request_id,
+		 }
 	{
 	}
 
