@@ -78,7 +78,7 @@ struct BpInstance final : PInstance, ControlHandler, SpawnServerClientHandler,
 	HttpStats http_stats;
 
 	[[no_unique_address]]
-	UringGlue uring{event_loop};
+	UringGlue uring{event_loop, config.use_io_uring};
 
 	FdCache fd_cache{
 		event_loop,

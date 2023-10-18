@@ -405,6 +405,10 @@ The following settings are available:
   ``user.ETag`` and ``user.Content-Type``.  This feature is usually
   not needed and only adds overhead.
 
+- ``use_io_uring``: Set to ``no`` to disable the use of ``io_uring``,
+  which can make debugging with ``strace`` easier, because ``strace``
+  cannot see ``io_uring`` operations.
+
 - ``verbose_response``: Set to ``yes`` to reveal internal error
   messages in HTTP responses.
 

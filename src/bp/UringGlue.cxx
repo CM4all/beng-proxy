@@ -21,9 +21,13 @@
 #include <fcntl.h> // for AT_EMPTY_PATH
 #include <sys/stat.h>
 
-UringGlue::UringGlue([[maybe_unused]] EventLoop &event_loop) noexcept
+UringGlue::UringGlue([[maybe_unused]] EventLoop &event_loop,
+		     [[maybe_unused]] bool enable) noexcept
 {
 #ifdef HAVE_URING
+	if (!enable)
+		return;
+
 	try {
 		uring.emplace(event_loop);
 	} catch (...) {

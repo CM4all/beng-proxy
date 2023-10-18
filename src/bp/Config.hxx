@@ -142,6 +142,8 @@ struct BpConfig {
 
 	bool use_xattr = false;
 
+	bool use_io_uring = true;
+
 	SpawnConfig spawn;
 
 	SslClientConfig ssl_client;
