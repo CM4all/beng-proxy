@@ -346,13 +346,16 @@ Request::HandleFileAddress(const FileAddress &address) noexcept
 		return;
 	}
 
-	if (handler.file.fd.IsDefined())
-		/* file has already been opened */
-		HandleFileAddress(address, std::move(handler.file.fd),
-				  handler.file.stx);
-	else if (handler.file.error != 0)
-		OnOpenStatError(handler.file.error);
-	else
+	if (&address == handler.file.open_address) {
+		assert(handler.file.fd.IsDefined() || handler.file.error != 0);
+
+		if (handler.file.fd.IsDefined())
+			/* file has already been opened */
+			HandleFileAddress(address, std::move(handler.file.fd),
+					  handler.file.stx);
+		else
+			OnOpenStatError(handler.file.error);
+	} else
 		OpenBase(address, &Request::HandleFileAddressAfterBase);
 }
 
@@ -435,6 +438,7 @@ Request::OnStatOpenStatSuccess(UniqueFileDescriptor fd,
 
 	handler.file.fd = std::move(fd);
 	handler.file.stx = st;
+	handler.file.open_address = handler.file.address;
 
 	(this->*handler.file.on_stat_success)(st);
 }
@@ -446,6 +450,7 @@ Request::OnStatOpenStatError(int error) noexcept
 	assert(handler.file.error == 0);
 
 	handler.file.error = error;
+	handler.file.open_address = handler.file.address;
 
 	(this->*handler.file.on_stat_error)(error);
 }
@@ -469,10 +474,13 @@ Request::StatFileAddress(const FileAddress &address,
 			 Handler::File::StatSuccessCallback on_success,
 			 Handler::File::StatErrorCallback on_error) noexcept
 {
-	if (handler.file.fd.IsDefined()) {
-		(this->*on_success)(handler.file.stx);
-	} else if (handler.file.error != 0) {
-		(this->*on_error)(handler.file.error);
+	if (&address == handler.file.open_address) {
+		assert(handler.file.fd.IsDefined() || handler.file.error != 0);
+
+		if (handler.file.fd.IsDefined())
+			(this->*on_success)(handler.file.stx);
+		else
+			(this->*on_error)(handler.file.error);
 	} else {
 		handler.file.address = &address;
 		handler.file.on_stat_success = on_success;

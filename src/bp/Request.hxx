@@ -253,6 +253,12 @@ private:
 		struct File {
 			const FileAddress *address;
 
+			/**
+			 * The address that was opened in #fd or
+			 * #error.
+			 */
+			const FileAddress *open_address = nullptr;
+
 			SharedLease beneath_lease, base_lease;
 
 			FileDescriptor base;
