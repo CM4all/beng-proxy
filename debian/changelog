@@ -1,3 +1,9 @@
+cm4all-beng-proxy (18.0.45) unstable; urgency=low
+
+  * 
+
+ --   
+
 cm4all-beng-proxy (18.0.44) unstable; urgency=low
 
   * bp: fix DIRECTORY_INDEX regression ("Not a regular file")
