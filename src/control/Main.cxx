@@ -10,6 +10,7 @@
 #include "util/ByteOrder.hxx"
 #include "util/ConstBuffer.hxx"
 #include "util/PrintException.hxx"
+#include "util/SpanCast.hxx"
 #include "util/StringCompare.hxx"
 
 #include <inttypes.h>
@@ -105,7 +106,7 @@ Verbose(const char *server, ConstBuffer<const char *> args)
 
 	BengControlClient client(server);
 	client.Send(BengProxy::ControlCommand::VERBOSE,
-		    std::as_bytes(std::span{&log_level, 1}));
+		    ReferenceAsBytes(log_level));
 }
 
 static void

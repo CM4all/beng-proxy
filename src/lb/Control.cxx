@@ -256,7 +256,7 @@ try {
 	const auto stats = instance.GetStats();
 	control_server.Reply(address,
 			     ControlCommand::STATS,
-			     std::as_bytes(std::span{&stats, 1}));
+			     ReferenceAsBytes(stats));
 } catch (...) {
 	logger(3, std::current_exception());
 }

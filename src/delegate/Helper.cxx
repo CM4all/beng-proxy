@@ -16,6 +16,7 @@
 #include "io/Iovec.hxx"
 #include "io/UniqueFileDescriptor.hxx"
 #include "util/PrintException.hxx"
+#include "util/SpanCast.hxx"
 
 #include <stdexcept>
 
@@ -50,7 +51,7 @@ delegate_send_int(SocketDescriptor s, DelegateResponseCommand command, int value
 		value,
 	};
 
-	delegate_send(s, std::as_bytes(std::span{&packet, 1}));
+	delegate_send(s, ReferenceAsBytes(packet));
 }
 
 static void

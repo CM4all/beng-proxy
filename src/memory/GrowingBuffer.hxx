@@ -181,7 +181,7 @@ public:
 	void Write(std::span<const std::byte> src) noexcept;
 
 	void WriteT(const auto &src) noexcept {
-		Write(std::as_bytes(std::span{&src, 1}));
+		Write(ReferenceAsBytes(src));
 	}
 
 	void Write(std::string_view s) noexcept {

@@ -4,6 +4,7 @@
 
 #include "fcgi/Protocol.hxx"
 #include "net/UniqueSocketDescriptor.hxx"
+#include "util/SpanCast.hxx"
 #include "strmap.hxx"
 
 #include <cstdint>
@@ -69,7 +70,7 @@ public:
 	void WriteZero(std::size_t size);
 
 	void WriteHeader(const struct fcgi_record_header &src) {
-		WriteFullRaw(std::as_bytes(std::span{&src, 1}));
+		WriteFullRaw(ReferenceAsBytes(src));
 	}
 
 	void WriteResponseHeaders(const FcgiRequest &r, HttpStatus status,
