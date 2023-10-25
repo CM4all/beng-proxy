@@ -330,6 +330,9 @@ stock_dep = declare_dependency(
   dependencies: [stock_dep, event_dep],
 )
 
+openssl_min_version = '3'
+openssl_api_compat = '0x30000000L'
+
 subdir('libcommon/src/lib/openssl')
 subdir('libcommon/src/jwt')
 
