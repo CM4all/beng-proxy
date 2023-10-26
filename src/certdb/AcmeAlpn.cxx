@@ -76,7 +76,7 @@ Alpn01ChallengeRecord::AddChallenge(const AcmeChallenge &challenge,
 {
 	struct {
 		uint8_t type = 0x04, size;
-		SHA256Digest payload;
+		SHA256DigestBuffer payload;
 	} value;
 
 	value.size = sizeof(value.payload);
