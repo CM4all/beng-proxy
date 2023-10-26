@@ -9,6 +9,7 @@
 #include "lib/sodium/UrlSafeBase64SHA256.hxx"
 #include "system/Error.hxx"
 #include "util/PrintException.hxx"
+#include "util/SpanCast.hxx"
 
 #include <sys/wait.h>
 #include <unistd.h>
@@ -78,7 +79,7 @@ void
 Dns01ChallengeRecord::AddChallenge(const AcmeChallenge &challenge,
 				   EVP_PKEY &account_key)
 {
-	values.emplace(UrlSafeBase64SHA256(MakeHttp01(challenge, account_key)));
+	values.emplace(UrlSafeBase64SHA256(AsBytes(MakeHttp01(challenge, account_key))));
 }
 
 void

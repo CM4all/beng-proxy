@@ -14,6 +14,7 @@
 #include "util/HexFormat.hxx"
 #include "util/PrintException.hxx"
 #include "util/ScopeExit.hxx"
+#include "util/SpanCast.hxx"
 
 #include <fmt/core.h>
 
@@ -40,7 +41,7 @@ MakeCommonName(std::string_view host) noexcept
 	   in subjectAltName, and the common_name is meaningless for
 	   acme-alpn */
 
-	const auto sha256 = SHA256(host);
+	const auto sha256 = SHA256(AsBytes(host));
 	const auto hex = HexFormat(std::span{sha256}.first<20>());
 
 	std::string result{"acme-tls-alpn-01:"};
@@ -80,7 +81,7 @@ Alpn01ChallengeRecord::AddChallenge(const AcmeChallenge &challenge,
 	} value;
 
 	value.size = sizeof(value.payload);
-	value.payload = SHA256(MakeHttp01(challenge, account_key));
+	value.payload = SHA256(AsBytes(MakeHttp01(challenge, account_key)));
 
 	const int nid = GetAcmeIdentifierObjectId();
 

@@ -17,8 +17,9 @@
 std::string
 MakeHttp01(const AcmeChallenge &challenge, EVP_PKEY &account_key)
 {
+	const auto jwk = boost::json::serialize(MakeJwk(account_key));
 	return challenge.token + "." +
-		UrlSafeBase64SHA256(boost::json::serialize(MakeJwk(account_key))).c_str();
+		UrlSafeBase64SHA256(AsBytes(jwk)).c_str();
 }
 
 static void
