@@ -1,6 +1,6 @@
 cm4all-beng-proxy (18.0.45) unstable; urgency=low
 
-  * 
+  * spawn: do not ignore SIGTERM in spawned processes
 
  --   
 
