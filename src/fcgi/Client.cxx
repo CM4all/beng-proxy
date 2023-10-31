@@ -911,7 +911,7 @@ FcgiClient::_FillBucketList(IstreamBucketList &list)
 		data += sizeof(header);
 	}
 
-	if (available > 0 || (available < 0 && !found_end_request))
+	if (!found_end_request)
 		list.SetMore();
 }
 
