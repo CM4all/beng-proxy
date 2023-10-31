@@ -670,16 +670,19 @@ TYPED_TEST_P(ClientTest, DataBlocking)
 	EXPECT_TRUE(c.HasInput());
 	EXPECT_FALSE(c.released);
 
-	approve_control->Approve(16);
+	c.break_data = true;
 
 	while (c.data_blocking > 0) {
 		EXPECT_TRUE(c.HasInput());
 
 		const unsigned old_data_blocking = c.data_blocking;
+		approve_control->Approve(16);
 		c.ReadBody();
 
-		if (c.data_blocking == old_data_blocking)
+		if (c.data_blocking == old_data_blocking) {
+			approve_control->Approve(16);
 			c.event_loop.Run();
+		}
 	}
 
 	approve_control.reset();

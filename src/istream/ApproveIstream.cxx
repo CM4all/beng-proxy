@@ -41,7 +41,7 @@ public:
 
 private:
 	void DeferredRead() noexcept {
-		ForwardIstream::_Read();
+		Read();
 	}
 
 protected:
@@ -54,7 +54,11 @@ protected:
 		if (length > approved)
 			length = approved;
 
-		return ForwardIstream::_Skip(length);
+		auto nbytes = ForwardIstream::_Skip(length);
+		if (nbytes > 0)
+			approved -= nbytes;
+
+		return nbytes;
 	}
 
 	void _Read() noexcept override {
@@ -74,6 +78,23 @@ protected:
 		list.SpliceBuffersFrom(std::move(tmp), approved);
 	}
 
+	ConsumeBucketResult _ConsumeBucketList(std::size_t nbytes) noexcept override {
+		auto result = ForwardIstream::_ConsumeBucketList(nbytes);
+		if (result.consumed > 0){
+			assert(static_cast<off_t>(result.consumed) <= approved);
+			approved -= result.consumed;
+		}
+
+		return result;
+	}
+
+	void _ConsumeDirect(std::size_t nbytes) noexcept override {
+		assert(static_cast<off_t>(nbytes) <= approved);
+		approved -= nbytes;
+
+		ForwardIstream::_ConsumeDirect(nbytes);
+	}
+
 	int _AsFd() noexcept override {
 		return -1;
 	}
@@ -87,7 +108,10 @@ protected:
 		if ((off_t)src.size() > approved)
 			src = src.first((std::size_t)approved);
 
-		return ForwardIstream::OnData(src);
+		auto nbytes = ForwardIstream::OnData(src);
+		assert(static_cast<off_t>(nbytes) <= approved);
+		approved -= nbytes;
+		return nbytes;
 	}
 
 	IstreamDirectResult OnDirect(FdType type, FileDescriptor fd,
