@@ -108,7 +108,7 @@ private:
 
 	void ReleaseWasStop(uint64_t input_received) override {
 		connection->Stop(input_received);
-		connection->Put(PutAction::DESTROY);
+		connection->Put(PutAction::REUSE);
 		Destroy();
 	}
 };
