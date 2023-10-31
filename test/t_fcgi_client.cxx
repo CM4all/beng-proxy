@@ -349,6 +349,20 @@ struct FcgiClientFactory {
 			server.EndResponse(request);
 		});
 	}
+
+	auto *NewIncompleteEndRequest(struct pool &, EventLoop &event_loop) {
+		return New(event_loop, [](struct pool &pool, FcgiServer &server){
+			const auto request = server.ReadRequest(pool);
+			server.DiscardRequestBody(request);
+			server.WriteStdout(request, "content-length: 5\n\nhello"sv);
+			server.WriteHeader({
+					.version = FCGI_VERSION_1,
+					.type = FcgiRecordType::END_REQUEST,
+					.request_id = request.id,
+					.padding_length = 1,
+				});
+		});
+	}
 };
 
 FcgiClientConnection *
@@ -483,6 +497,34 @@ TEST_P(FcgiClientB, InterleavedStderr)
 	EXPECT_TRUE(c.body_eof);
 	EXPECT_TRUE(c.released);
 	EXPECT_EQ(c.lease_action, PutAction::REUSE);
+}
+
+/**
+ * Server sends an incomplete END_REQUEST which should cause an error
+ * at the end of the response body.
+ */
+TEST_P(FcgiClientB, IncompleteEndRequest)
+{
+	Instance instance;
+	FcgiClientFactory factory{instance.event_loop};
+	Context c{instance};
+
+	c.use_buckets = GetParam();
+
+	c.connection = factory.NewIncompleteEndRequest(*c.pool, c.event_loop);
+	c.connection->Request(c.pool, c,
+			      HttpMethod::GET, "/foo", {},
+			      nullptr,
+			      false,
+
+			      c, c.cancel_ptr);
+
+	c.event_loop.Run();
+
+	EXPECT_EQ(c.status, HttpStatus::OK);
+	EXPECT_TRUE(c.request_error || c.body_error);
+	EXPECT_TRUE(c.released);
+	EXPECT_EQ(c.lease_action, PutAction::DESTROY);
 }
 
 INSTANTIATE_TEST_SUITE_P(FcgiClient,
