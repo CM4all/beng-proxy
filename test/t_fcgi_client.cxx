@@ -43,6 +43,7 @@ fcgi_server_mirror(struct pool &pool, FcgiServer &server)
 		server.DiscardRequestBody(request);
 	else {
 		while (true) {
+			server.FlushOutput();
 			auto header = server.ReadHeader();
 
 			if (header.type != FcgiRecordType::STDIN ||
@@ -67,6 +68,7 @@ fcgi_server_null(struct pool &pool, FcgiServer &server)
 	const auto request = server.ReadRequest(pool);
 	server.WriteResponseHeaders(request, HttpStatus::NO_CONTENT, {});
 	server.EndResponse(request);
+	server.FlushOutput();
 	server.DiscardRequestBody(request);
 }
 
@@ -146,6 +148,7 @@ fcgi_server_hold(struct pool &pool, FcgiServer &server)
 {
 	const auto request = server.ReadRequest(pool);
 	server.WriteResponseHeaders(request, HttpStatus::OK, {});
+	server.FlushOutput();
 
 	/* wait until the connection gets closed */
 	while (true) {
@@ -356,6 +359,7 @@ FcgiClientFactory::New(EventLoop &event_loop, void (*f)(struct pool &pool, FcgiS
 
 		try {
 			f(*pool, server);
+			server.FlushOutput();
 		} catch (...) {
 			PrintException(std::current_exception());
 			_exit(EXIT_FAILURE);

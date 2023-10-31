@@ -240,14 +240,39 @@ FcgiServer::DiscardRaw(std::size_t size)
 	}
 }
 
+void
+FcgiServer::FlushOutput()
+{
+	while (true) {
+		const auto r = output_buffer.Read();
+		if (r.empty())
+			return;
+
+		auto nbytes = socket.Send(r);
+		if (nbytes < 0)
+			throw MakeErrno("Failed to send");
+
+		output_buffer.Consume(nbytes);
+		output_buffer.FreeIfEmpty();
+	}
+}
+
 std::size_t
 FcgiServer::WriteRaw(std::span<const std::byte> src)
 {
-	auto nbytes = socket.Send(src);
-	if (nbytes < 0)
-		throw MakeErrno("Failed to send");
+	output_buffer.AllocateIfNull();
 
-	return nbytes;
+	auto w = output_buffer.Write();
+	if (w.empty())
+		FlushOutput();
+
+	if (w.size() < src.size())
+		src = src.first(w.size());
+
+	std::copy(src.begin(), src.end(), w.begin());
+	output_buffer.Append(src.size());
+
+	return src.size();
 }
 
 void
@@ -334,6 +359,7 @@ FcgiServer::MirrorRaw(std::size_t size)
 			throw std::runtime_error{"Peer closed the socket prematurely"};
 
 		WriteFullRaw(dest.first(nbytes));
+		FlushOutput();
 
 		size -= nbytes;
 	}

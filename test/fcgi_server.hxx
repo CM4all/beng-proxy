@@ -5,6 +5,7 @@
 #include "fcgi/Protocol.hxx"
 #include "net/UniqueSocketDescriptor.hxx"
 #include "util/SpanCast.hxx"
+#include "DefaultFifoBuffer.hxx"
 #include "strmap.hxx"
 
 #include <cstdint>
@@ -30,6 +31,8 @@ struct FcgiRequest {
 
 class FcgiServer {
 	UniqueSocketDescriptor socket;
+
+	DefaultFifoBuffer output_buffer;
 
 public:
 	[[nodiscard]]
@@ -61,6 +64,8 @@ public:
 	void ReadFullRaw(std::span<std::byte> dest);
 
 	void DiscardRaw(std::size_t size);
+
+	void FlushOutput();
 
 	[[nodiscard]]
 	std::size_t WriteRaw(std::span<const std::byte> src);
