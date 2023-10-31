@@ -354,7 +354,7 @@ FcgiServer::MirrorRaw(std::size_t size)
 		if (size < dest.size())
 			dest = dest.first(size);
 
-		auto nbytes = ReadAllRaw(dest);
+		auto nbytes = ReadRaw(dest);
 		if (nbytes == 0)
 			throw std::runtime_error{"Peer closed the socket prematurely"};
 
