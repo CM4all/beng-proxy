@@ -229,6 +229,19 @@ Context::Cancel() noexcept
  *
  */
 
+IstreamReadyResult
+Context::OnIstreamReady() noexcept
+{
+	if (use_buckets && !read_after_buckets) {
+		DoBuckets();
+		if (body_error || body_eof || body_closed)
+			return IstreamReadyResult::CLOSED;
+
+		return IstreamReadyResult::OK;
+	} else
+		return IstreamSink::OnIstreamReady();
+}
+
 std::size_t
 Context::OnData(std::span<const std::byte> src) noexcept
 {

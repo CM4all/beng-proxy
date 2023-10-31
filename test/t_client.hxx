@@ -203,6 +203,7 @@ struct Context final
 	void Cancel() noexcept override;
 
 	/* virtual methods from class IstreamHandler */
+	IstreamReadyResult OnIstreamReady() noexcept override;
 	std::size_t OnData(std::span<const std::byte> src) noexcept override;
 	void OnEof() noexcept override;
 	void OnError(std::exception_ptr ep) noexcept override;
