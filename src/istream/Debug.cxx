@@ -53,6 +53,10 @@ Istream::FillBucketList(IstreamBucketList &list)
 			available_full_set = true;
 			available_full = total_size;
 		}
+
+		bucket_eof_seen = true;
+	} else {
+		assert(!bucket_eof_seen);
 	}
 }
 

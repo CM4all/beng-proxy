@@ -55,7 +55,7 @@ class Istream : PoolHolder, LeakDetector, IstreamDestructAnchor {
 #ifndef NDEBUG
 	bool reading = false, destroyed = false;
 
-	bool closing = false, eof = false, bucket_eof = false;
+	bool closing = false, eof = false, bucket_eof = false, bucket_eof_seen = false;
 
 	bool in_data = false, available_full_set = false;
 
@@ -388,7 +388,20 @@ public:
 		assert(consumed_sum == result.consumed);
 		assert(result.eof || result.consumed == nbytes);
 		assert(!result.eof || available_partial == 0);
-		assert(result.eof == (available_full_set && available_full == 0));
+
+		if (bucket_eof_seen) {
+			assert(available_full_set);
+
+			if (result.eof) {
+				assert(available_partial == 0);
+				assert(available_full == 0);
+			} else {
+				assert(available_partial > 0);
+				assert(available_full > 0);
+			}
+		} else {
+			assert(!result.eof);
+		}
 
 		bucket_eof = result.eof;
 #endif
