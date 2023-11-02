@@ -70,19 +70,12 @@ jobs:
       - name: Configure
         run: |
           meson setup \
-             -Ddocumentation=disabled \
-             -Dcap=enabled \
-             -Dcertdb=true \
-             -Dhttp2=enabled \
-             -Dnfs=enabled \
-             -Dwas=enabled \
-             -Dyaml=enabled \
-             -Dseccomp=enabled \
-             -Dzeroconf=enabled \
-             -Dbrotli=enabled \
-             -Dio_uring=disabled \
-             --force-fallback-for=fmt,libcm4all-was-protocol \
-             output
+            -Dauto_features=enabled \
+            -Ddocumentation=disabled \
+            -Dcertdb=true \
+            -Dio_uring=disabled \
+            --force-fallback-for=fmt,libcm4all-was-protocol \
+            output
         # Note: io_uring is disabled because the liburing version in
         # Ubuntu is broken; it redefines "struct open_how"
 
