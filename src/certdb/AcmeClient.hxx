@@ -26,8 +26,6 @@ struct AcmeDirectory {
 	std::string new_nonce;
 	std::string new_account;
 	std::string new_order;
-	std::string new_authz;
-	std::string new_cert;
 };
 
 /**

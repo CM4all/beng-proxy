@@ -137,8 +137,6 @@ tag_invoke(boost::json::value_to_tag<AcmeDirectory>,
 	directory.new_nonce = Json::GetString(json, "newNonce");
 	directory.new_account = Json::GetString(json, "newAccount");
 	directory.new_order = Json::GetString(json, "newOrder");
-	directory.new_authz = Json::GetString(json, "new-authz");
-	directory.new_cert = Json::GetString(json, "new-cert");
 	return directory;
 }
 
