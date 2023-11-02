@@ -113,7 +113,6 @@ jobs:
             libgtest-dev \
             libluajit-5.1-dev \
             libpcre2-dev \
-            libseccomp-dev \
             libsodium-dev \
             libssl-dev
 
