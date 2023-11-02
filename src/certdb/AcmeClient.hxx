@@ -85,6 +85,8 @@ public:
 	AcmeOrder FinalizeOrder(EVP_PKEY &key, const AcmeOrder &order,
 				X509_REQ &csr);
 
+	AcmeOrder PollOrder(EVP_PKEY &key, const char *url);
+
 	UniqueX509 DownloadCertificate(EVP_PKEY &key,
 				       const AcmeOrder &order);
 

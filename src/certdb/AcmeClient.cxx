@@ -483,6 +483,22 @@ AcmeClient::FinalizeOrder(EVP_PKEY &key, const AcmeOrder &order,
 	return WithLocation(root.get<AcmeOrder>(), response);
 }
 
+AcmeOrder
+AcmeClient::PollOrder(EVP_PKEY &key, const char *url)
+{
+	auto response = SignedRequestRetry(key,
+					   HttpMethod::POST,
+					   url,
+					   ""sv);
+	if (response.status != HttpStatus::OK)
+		ThrowStatusError(std::move(response),
+				 "Failed to poll order");
+
+	const auto root = ParseJson(std::move(response));
+	CheckThrowError(root, "Failed to poll order");
+	return root.get<AcmeOrder>();
+}
+
 UniqueX509
 AcmeClient::DownloadCertificate(EVP_PKEY &key, const AcmeOrder &order)
 {

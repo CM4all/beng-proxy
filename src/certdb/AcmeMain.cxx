@@ -370,6 +370,18 @@ AcmeAuthorize(const CertDatabaseConfig &db_config, const AcmeConfig &config,
 	}
 }
 
+static AcmeOrder
+WaitOrderFinishProcessing(EVP_PKEY &account_key,
+			  AcmeClient &client, AcmeOrder &&order)
+{
+	while (order.status == AcmeOrder::Status::PROCESSING) {
+		std::this_thread::sleep_for(std::chrono::seconds{1});
+		order = client.PollOrder(account_key, order.location.c_str());
+	}
+
+	return std::move(order);
+}
+
 static void
 AcmeNewOrder(const CertDatabaseConfig &db_config, const AcmeConfig &config,
 	     EVP_PKEY &account_key,
@@ -392,7 +404,7 @@ AcmeNewOrder(const CertDatabaseConfig &db_config, const AcmeConfig &config,
 	}
 
 	StepProgress progress(_progress,
-			      n_identifiers * 3 + 5);
+			      n_identifiers * 3 + 6);
 
 	auto order = client.NewOrder(account_key, std::move(order_request));
 	progress();
@@ -404,6 +416,16 @@ AcmeNewOrder(const CertDatabaseConfig &db_config, const AcmeConfig &config,
 	const auto req = MakeCertRequest(*cert_key, identifiers);
 
 	order = client.FinalizeOrder(account_key, order, *req);
+	progress();
+
+	order = WaitOrderFinishProcessing(account_key, client, std::move(order));
+	if (order.status != AcmeOrder::Status::VALID)
+		throw FmtRuntimeError("Bad order status: {}",
+				      AcmeOrder::FormatStatus(order.status));
+
+	if (order.certificate.empty())
+		throw std::runtime_error{"No certificate URL in valid order"};
+
 	progress();
 
 	const auto cert = client.DownloadCertificate(account_key, order);
