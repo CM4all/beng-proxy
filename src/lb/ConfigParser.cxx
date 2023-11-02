@@ -115,6 +115,7 @@ class LbConfigParser final : public NestedConfigParser {
 		void Finish() override;
 	};
 
+#ifdef HAVE_LUA
 	class LuaHandler final : public ConfigParser {
 		LbConfigParser &parent;
 		LbLuaHandlerConfig config;
@@ -128,6 +129,7 @@ class LbConfigParser final : public NestedConfigParser {
 		void ParseLine(FileLineParser &line) override;
 		void Finish() override;
 	};
+#endif // HAVE_LUA
 
 	class TranslationHandler final : public ConfigParser {
 		LbConfigParser &parent;
@@ -221,7 +223,9 @@ private:
 
 	void CreateCluster(FileLineParser &line);
 	void CreateBranch(FileLineParser &line);
+#ifdef HAVE_LUA
 	void CreateLuaHandler(FileLineParser &line);
+#endif // HAVE_LUA
 	void CreateTranslationHandler(FileLineParser &line);
 	void CreatePrometheusExporter(FileLineParser &line);
 	void CreatePrometheusDiscovery(FileLineParser &line);
@@ -970,6 +974,8 @@ LbConfigParser::CreateBranch(FileLineParser &line)
 	SetChild(std::make_unique<Branch>(*this, name));
 }
 
+#ifdef HAVE_LUA
+
 void
 LbConfigParser::LuaHandler::ParseLine(FileLineParser &line)
 {
@@ -1014,6 +1020,8 @@ LbConfigParser::CreateLuaHandler(FileLineParser &line)
 
 	SetChild(std::make_unique<LuaHandler>(*this, name));
 }
+
+#endif // HAVE_LUA
 
 void
 LbConfigParser::TranslationHandler::ParseLine(FileLineParser &line)
@@ -1460,8 +1468,10 @@ LbConfigParser::ParseLine2(FileLineParser &line)
 		CreateCluster(line);
 	else if (StringIsEqual(word, "branch"))
 		CreateBranch(line);
+#ifdef HAVE_LUA
 	else if (StringIsEqual(word, "lua_handler"))
 		CreateLuaHandler(line);
+#endif // HAVE_LUA
 	else if (StringIsEqual(word, "translation_handler"))
 		CreateTranslationHandler(line);
 	else if (StringIsEqual(word, "prometheus_exporter"))

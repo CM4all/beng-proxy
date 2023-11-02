@@ -4,8 +4,12 @@
 
 #pragma once
 
+#include "config.h"
 #include "Context.hxx"
+
+#ifdef HAVE_LUA
 #include "LuaInitHook.hxx"
+#endif
 
 #include <cstddef>
 #include <map>
@@ -33,7 +37,9 @@ class LbGotoMap final : LbContext {
 	const LbConfig &root_config;
 	EventLoop &event_loop;
 
-	LbLuaInitHook lua_init_hook;
+#ifdef HAVE_LUA
+	LbLuaInitHook lua_init_hook{this};
+#endif
 
 	std::map<const LbClusterConfig *, LbCluster> clusters;
 	std::map<const LbBranchConfig *, LbBranch> branches;
@@ -45,8 +51,11 @@ class LbGotoMap final : LbContext {
 	std::map<const LbPrometheusDiscoveryConfig *,
 		 LbPrometheusDiscovery> prometheus_discoveries;
 #endif
+
+#ifdef HAVE_LUA
 	std::map<const LbLuaHandlerConfig *,
 		 LbLuaHandler> lua_handlers;
+#endif
 
 public:
 	LbGotoMap(const LbConfig &_config,
@@ -75,7 +84,9 @@ public:
 
 private:
 	LbBranch &GetInstance(const LbBranchConfig &config);
+#ifdef HAVE_LUA
 	LbLuaHandler &GetInstance(const LbLuaHandlerConfig &config);
+#endif
 	LbTranslationHandler &GetInstance(const LbTranslationHandlerConfig &config);
 	LbPrometheusExporter &GetInstance(const LbPrometheusExporterConfig &config);
 #ifdef HAVE_AVAHI

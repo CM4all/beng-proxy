@@ -4,6 +4,8 @@
 
 #pragma once
 
+#include "config.h"
+
 #include <variant>
 
 class LbCluster;
@@ -25,7 +27,9 @@ struct LbGoto {
 	std::variant<std::monostate,
 		     LbCluster *,
 		     LbBranch *,
+#ifdef HAVE_LUA
 		     LbLuaHandler *,
+#endif
 		     LbTranslationHandler *,
 		     HttpServerRequestHandler *,
 		     const LbSimpleHttpResponse *,
@@ -39,8 +43,10 @@ struct LbGoto {
 	constexpr LbGoto(LbBranch &branch) noexcept
 		:destination(&branch) {}
 
+#ifdef HAVE_LUA
 	constexpr LbGoto(LbLuaHandler &lua) noexcept
 		:destination(&lua) {}
+#endif
 
 	constexpr LbGoto(LbTranslationHandler &translation) noexcept
 		:destination(&translation) {}

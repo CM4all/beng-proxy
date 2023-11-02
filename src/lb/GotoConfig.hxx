@@ -28,7 +28,9 @@ struct LbGotoConfig {
 	std::variant<std::monostate,
 		     const LbClusterConfig *,
 		     const LbBranchConfig *,
+#ifdef HAVE_LUA
 		     const LbLuaHandlerConfig *,
+#endif
 		     const LbTranslationHandlerConfig *,
 		     const LbPrometheusExporterConfig *,
 #ifdef HAVE_AVAHI
@@ -44,8 +46,10 @@ struct LbGotoConfig {
 	explicit LbGotoConfig(const LbBranchConfig &_branch) noexcept
 		:destination(&_branch) {}
 
+#ifdef HAVE_LUA
 	explicit LbGotoConfig(const LbLuaHandlerConfig &_lua) noexcept
 		:destination(&_lua) {}
+#endif
 
 	explicit LbGotoConfig(const LbTranslationHandlerConfig &_translation) noexcept
 		:destination(&_translation) {}

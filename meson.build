@@ -151,6 +151,7 @@ inc = include_directories(
 )
 
 libcommon_require_cap = get_option('cap')
+libcommon_require_lua = get_option('lua')
 
 subdir('libcommon/src/util')
 subdir('libcommon/src/lib/cap')
@@ -755,6 +756,15 @@ if avahi_dep.found()
   lb_sources += 'src/lb/PrometheusDiscovery.cxx'
 endif
 
+if lua_dep.found()
+  lb_sources += [
+    'src/lb/LuaHandler.cxx',
+    'src/lb/LuaInitHook.cxx',
+    'src/lb/LuaGoto.cxx',
+    'src/lb/LuaHttpRequestHandler.cxx',
+  ]
+endif
+
 executable(
   'cm4all-beng-lb',
   lb_sources,
@@ -774,14 +784,10 @@ executable(
   'src/lb/HttpConnection.cxx',
   'src/lb/RLogger.cxx',
   'src/lb/ResolveConnect.cxx',
-  'src/lb/LuaHttpRequestHandler.cxx',
   'src/lb/TranslationHttpRequestHandler.cxx',
   'src/lb/TcpConnection.cxx',
   'src/lb/ForwardHttpRequest.cxx',
   'src/lb/DelayForwardHttpRequest.cxx',
-  'src/lb/LuaHandler.cxx',
-  'src/lb/LuaInitHook.cxx',
-  'src/lb/LuaGoto.cxx',
   'src/lb/Stats.cxx',
   'src/lb/Control.cxx',
   'src/lb/JvmRoute.cxx',
@@ -921,6 +927,7 @@ conf = configuration_data()
 conf.set('HAVE_AVAHI', avahi_dep.found())
 conf.set('HAVE_LIBCAP', cap_dep.found())
 conf.set('HAVE_LIBSYSTEMD', libsystemd.found())
+conf.set('HAVE_LUA', lua_dep.found())
 configure_file(output: 'config.h', configuration: conf)
 
 subdir('doc')

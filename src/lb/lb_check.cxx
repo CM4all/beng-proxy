@@ -4,14 +4,17 @@
 
 #include "lb_check.hxx"
 #include "lb/Config.hxx"
-#include "lb/LuaHandler.hxx"
-#include "lb/LuaInitHook.hxx"
 #include "ssl/Factory.hxx"
 #include "ssl/CertCallback.hxx"
 
 #include "lb_features.h"
 #ifdef ENABLE_CERTDB
 #include "ssl/Cache.hxx"
+#endif
+
+#ifdef HAVE_LUA
+#include "lb/LuaHandler.hxx"
+#include "lb/LuaInitHook.hxx"
 #endif
 
 static void
@@ -55,10 +58,12 @@ lb_check(EventLoop &event_loop, const LbConfig &config)
 		}
 	}
 
+#ifdef HAVE_LUA
 	{
 		LbLuaInitHook init_hook(nullptr);
 
 		for (const auto &i : config.lua_handlers)
 			LbLuaHandler(init_hook, i.second);
 	}
+#endif
 }

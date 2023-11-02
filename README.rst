@@ -36,6 +36,7 @@ Optional dependencies:
   call filter support
 - `liburing <https://github.com/axboe/liburing>`__
 - `libwas <https://github.com/CM4all/libwas>`__
+- `LuaJIT <http://luajit.org/>`__
 - `Avahi <https://www.avahi.org/>`__
 
 Get the source code::

@@ -60,7 +60,9 @@ struct LbConfig {
 
 	std::map<std::string, LbClusterConfig> clusters;
 	std::map<std::string, LbBranchConfig> branches;
+#ifdef HAVE_LUA
 	std::map<std::string, LbLuaHandlerConfig> lua_handlers;
+#endif
 	std::map<std::string, LbTranslationHandlerConfig> translation_handlers;
 	std::map<std::string, LbPrometheusExporterConfig> prometheus_exporters;
 
@@ -125,9 +127,11 @@ struct LbConfig {
 		if (branch != nullptr)
 			return LbGotoConfig(*branch);
 
+#ifdef HAVE_LUA
 		const auto *lua = FindLuaHandler(t);
 		if (lua != nullptr)
 			return LbGotoConfig(*lua);
+#endif // HAVE_LUA
 
 		const auto *translation = FindTranslationHandler(t);
 		if (translation != nullptr)
@@ -153,6 +157,7 @@ struct LbConfig {
 			: nullptr;
 	}
 
+#ifdef HAVE_LUA
 	template<typename T>
 	[[gnu::pure]]
 	const LbLuaHandlerConfig *FindLuaHandler(T &&t) const noexcept {
@@ -161,6 +166,7 @@ struct LbConfig {
 			? &i->second
 			: nullptr;
 	}
+#endif // HAVE_LUA
 
 	template<typename T>
 	[[gnu::pure]]

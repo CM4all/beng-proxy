@@ -274,8 +274,10 @@ LbHttpConnection::HandleHttpRequest(const LbGoto &destination,
                 if constexpr (std::is_same_v<T, const LbSimpleHttpResponse *>) {
 			request.body.Clear();
 			SendResponse(request, *value);
+#ifdef HAVE_LUA
 		} else if constexpr (std::is_same_v<T, LbLuaHandler *>) {
 			InvokeLua(*value, request, parent_stopwatch, cancel_ptr);
+#endif
 		} else if constexpr (std::is_same_v<T, LbTranslationHandler *>) {
 			AskTranslationServer(*value, request, cancel_ptr);
 		} else if constexpr (std::is_same_v<T, HttpServerRequestHandler *>) {

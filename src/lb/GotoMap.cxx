@@ -8,9 +8,12 @@
 #include "Branch.hxx"
 #include "TranslationHandler.hxx"
 #include "PrometheusExporter.hxx"
-#include "LuaHandler.hxx"
 #include "Config.hxx"
 #include "MonitorManager.hxx"
+
+#ifdef HAVE_LUA
+#include "LuaHandler.hxx"
+#endif
 
 #ifdef HAVE_AVAHI
 #include "PrometheusDiscovery.hxx"
@@ -21,8 +24,9 @@ LbGotoMap::LbGotoMap(const LbConfig &_config,
 		     EventLoop &_event_loop) noexcept
 	:LbContext(_context),
 	 root_config(_config),
-	 event_loop(_event_loop),
-	 lua_init_hook(this) {}
+	 event_loop(_event_loop)
+{
+}
 
 LbGotoMap::~LbGotoMap() noexcept = default;
 
@@ -84,9 +88,11 @@ LbGotoMap::GetInstance(const LbGotoConfig &config)
 			return map.GetInstance(*branch);
 		}
 
+#ifdef HAVE_LUA
 		LbGoto operator()(const LbLuaHandlerConfig *lua) const {
 			return map.GetInstance(*lua);
 		}
+#endif // HAVE_LUA
 
 		LbGoto operator()(const LbTranslationHandlerConfig *translation) const {
 			return map.GetInstance(*translation);
@@ -131,12 +137,16 @@ LbGotoMap::GetInstance(const LbBranchConfig &config)
 		.first->second;
 }
 
+#ifdef HAVE_LUA
+
 LbLuaHandler &
 LbGotoMap::GetInstance(const LbLuaHandlerConfig &config)
 {
 	return lua_handlers.try_emplace(&config, lua_init_hook, config)
 		.first->second;
 }
+
+#endif // HAVE_LUA
 
 LbTranslationHandler &
 LbGotoMap::GetInstance(const LbTranslationHandlerConfig &config)

@@ -39,22 +39,24 @@ executable(
   install: true,
 )
 
-executable(
-  'cm4all-beng-proxy-log-lua',
-  'Server.cxx',
-  'Lua.cxx',
-  'Launch.cxx',
-  include_directories: inc,
-  dependencies: [
-    lua_dep,
-    fmt_dep,
-    spawn_dep,
-    net_log_dep,
-    http_dep,
-    liblua,
-  ],
-  install: true,
-)
+if lua_dep.found()
+  executable(
+    'cm4all-beng-proxy-log-lua',
+    'Server.cxx',
+    'Lua.cxx',
+    'Launch.cxx',
+    include_directories: inc,
+    dependencies: [
+      lua_dep,
+      fmt_dep,
+      spawn_dep,
+      net_log_dep,
+      http_dep,
+      liblua,
+    ],
+    install: true,
+  )
+endif
 
 executable(
   'cm4all-beng-proxy-log-traffic',
