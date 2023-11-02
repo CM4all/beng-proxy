@@ -315,6 +315,7 @@ else
 endif
 
 libcommon_enable_was = get_option('was')
+libcommon_enable_seccomp = get_option('seccomp')
 libcommon_enable_libsystemd = get_option('systemd')
 
 subdir('libcommon/src/was/async')

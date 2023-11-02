@@ -17,7 +17,6 @@ You need:
 - Linux kernel 5.12 or later
 - a C++20 compliant compiler (e.g. GCC 10 or clang 10)
 - `libcap2 <https://sites.google.com/site/fullycapable/>`__
-- `libseccomp <https://github.com/seccomp/libseccomp>`__
 - `libfmt <https://fmt.dev/>`__
 - `libpq <https://www.postgresql.org/>`__
 - `Boost <http://www.boost.org/>`__
@@ -32,6 +31,8 @@ Optional dependencies:
 
 - `nghttp2 <https://nghttp2.org/>`__
 - `libnfs <https://github.com/sahlberg/libnfs>`__
+- `libseccomp <https://github.com/seccomp/libseccomp>`__ for system
+  call filter support
 - `liburing <https://github.com/axboe/liburing>`__
 - `libwas <https://github.com/CM4all/libwas>`__
 - `Avahi <https://www.avahi.org/>`__

@@ -76,6 +76,7 @@ jobs:
              -Dnfs=enabled \
              -Dwas=enabled \
              -Dyaml=enabled \
+             -Dseccomp=enabled \
              -Dzeroconf=enabled \
              -Dbrotli=enabled \
              -Dio_uring=disabled \
