@@ -42,6 +42,8 @@ jobs:
 
       - id: cache-ccache
         uses: hendrikmuhs/ccache-action@v1
+        with:
+          key: ${{github.job}}
 
       - name: Install dependencies
         run: |
@@ -78,6 +80,52 @@ jobs:
             output
         # Note: io_uring is disabled because the liburing version in
         # Ubuntu is broken; it redefines "struct open_how"
+
+      - name: Build
+        run: ninja -C output -v
+
+      - name: Unit Tests
+        run: meson test -C output
+
+      - name: Dump Unit Test Log
+        if: ${{ failure() }}
+        continue-on-error: true
+        run: cat output/meson-logs/testlog.txt
+
+  mini:
+    runs-on: ubuntu-22.04
+    steps:
+      - id: checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - id: cache-ccache
+        uses: hendrikmuhs/ccache-action@v1
+        with:
+          key: ${{github.job}}
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            meson \
+            libboost-dev \
+            libc-ares-dev \
+            libgtest-dev \
+            libluajit-5.1-dev \
+            libpcre2-dev \
+            libseccomp-dev \
+            libsodium-dev \
+            libssl-dev
+
+      - name: Configure
+        run: |
+          meson setup \
+            -Dauto_features=disabled \
+            -Dcertdb=false \
+            --force-fallback-for=fmt \
+            output
 
       - name: Build
         run: ninja -C output -v
