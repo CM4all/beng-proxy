@@ -2,6 +2,10 @@
 // Copyright CM4all GmbH
 // author: Max Kellermann <mk@cm4all.com>
 
+#include "config.h"
+
+#ifdef HAVE_LIBCAP
+
 #include "Capabilities.hxx"
 #include "lib/cap/State.hxx"
 #include "system/Error.hxx"
@@ -29,3 +33,5 @@ capabilities_post_setuid(std::span<const cap_value_t> keep_list)
 
 	state.Install();
 }
+
+#endif // HAVE_LIBCAP

@@ -42,11 +42,9 @@
 #include "access_log/Glue.hxx"
 #include "ssl/Init.hxx"
 #include "ssl/Client.hxx"
-#include "lib/cap/Glue.hxx"
 #include "system/KernelVersion.hxx"
 #include "system/SetupProcess.hxx"
 #include "system/ProcessName.hxx"
-#include "system/Capabilities.hxx"
 #include "spawn/Launch.hxx"
 #include "spawn/Client.hxx"
 #include "net/SocketAddress.hxx"
@@ -54,6 +52,11 @@
 #include "io/Logger.hxx"
 #include "io/SpliceSupport.hxx"
 #include "util/PrintException.hxx"
+
+#ifdef HAVE_LIBCAP
+#include "lib/cap/Glue.hxx"
+#include "system/Capabilities.hxx"
+#endif // HAVE_LIBCAP
 
 #if defined(HAVE_LIBSYSTEMD) || defined(HAVE_AVAHI)
 #include "lib/dbus/Init.hxx"
@@ -291,7 +294,9 @@ try {
 	InitProcessName(argc, argv);
 
 #ifndef NDEBUG
+#ifdef HAVE_LIBCAP
 	debug_mode = !HaveSetuid();
+#endif
 #endif
 
 	/* configuration */
@@ -320,7 +325,9 @@ try {
 
 	BpInstance instance(std::move(_config));
 
+#ifdef HAVE_LIBCAP
 	capabilities_init();
+#endif // HAVE_LIBCAP
 
 	const ScopeSslGlobalInit ssl_init;
 	instance.ssl_client_factory =
@@ -574,6 +581,7 @@ try {
 
 	/* daemonize II */
 
+#ifdef HAVE_LIBCAP
 	try {
 		capabilities_post_setuid(cap_keep_list);
 	} catch (...) {
@@ -581,6 +589,7 @@ try {
 		   all capabilities */
 		capabilities_post_setuid({});
 	}
+#endif // HAVE_LIBCAP
 
 #ifdef HAVE_LIBSYSTEMD
 	/* tell systemd we're ready */

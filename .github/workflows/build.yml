@@ -71,6 +71,7 @@ jobs:
         run: |
           meson setup \
              -Ddocumentation=disabled \
+             -Dcap=enabled \
              -Dcertdb=true \
              -Dhttp2=enabled \
              -Dnfs=enabled \

@@ -16,12 +16,15 @@
 #include "pool/pool.hxx"
 #include "thread/Pool.hxx"
 #include "memory/fb_pool.hxx"
-#include "system/Capabilities.hxx"
 #include "system/Isolate.hxx"
 #include "system/SetupProcess.hxx"
 #include "io/SpliceSupport.hxx"
 #include "util/PrintException.hxx"
 #include "config.h"
+
+#ifdef HAVE_LIBCAP
+#include "system/Capabilities.hxx"
+#endif // HAVE_LIBCAP
 
 #if defined(HAVE_LIBSYSTEMD) || defined(HAVE_AVAHI)
 #include "lib/dbus/Init.hxx"
@@ -148,7 +151,10 @@ try {
 	/* initialize */
 
 	SetupProcess();
+
+#ifdef HAVE_LIBCAP
 	capabilities_init();
+#endif // HAVE_LIBCAP
 
 #if defined(HAVE_LIBSYSTEMD) || defined(HAVE_AVAHI)
 	const ODBus::ScopeInit dbus_init;
@@ -182,6 +188,8 @@ try {
 		isolate_from_filesystem(config.HasZeroConf(),
 					config.HasPrometheusExporter());
 
+
+#ifdef HAVE_LIBCAP
 	if (config.HasTransparentSource()) {
 		static constexpr cap_value_t cap_keep_list[] = {
 			/* keep the NET_RAW capability to be able to
@@ -193,6 +201,7 @@ try {
 	} else {
 		capabilities_post_setuid({});
 	}
+#endif // HAVE_LIBCAP
 
 #ifdef __linux
 	prctl(PR_SET_NO_NEW_PRIVS, 1, 0, 0, 0);

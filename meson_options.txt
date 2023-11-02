@@ -4,6 +4,7 @@ option('documentation', type: 'feature',
 option('certdb', type: 'boolean', value: true, description: 'Build with certdb support')
 
 option('brotli', type: 'feature', description: 'Brotli support')
+option('cap', type: 'feature', description: 'Linux capability support (using libcap)')
 option('http2', type: 'feature', description: 'HTTP2 protocol support')
 option('io_uring', type: 'feature', description: 'io_uring support using liburing')
 option('nfs', type: 'feature', description: 'userspace NFS client')
