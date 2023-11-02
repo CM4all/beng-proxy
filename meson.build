@@ -6,6 +6,10 @@ project('CM4all beng-proxy', 'cpp', version: '18.0.45',
 
     # This is only here to build subprojects as static libraries
     'default_library=static',
+
+    'libwas:apreq2=disabled',
+    'libwas:xios=disabled',
+    'libwas:documentation=disabled',
   ],
 )
 
