@@ -318,7 +318,7 @@ endif
 
 libcommon_enable_was = get_option('was')
 libcommon_enable_seccomp = get_option('seccomp')
-libcommon_enable_libsystemd = libsystemd = dependency('libsystemd', required: get_option('systemd')).found()
+libcommon_enable_libsystemd = dependency('libsystemd', required: get_option('systemd')).found()
 
 subdir('libcommon/src/was/async')
 subdir('libcommon/src/stock')
