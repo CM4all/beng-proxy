@@ -9,6 +9,7 @@
 #include "SimpleHttpResponse.hxx"
 #include "net/AllocatedSocketAddress.hxx"
 #include "util/StringLess.hxx"
+#include "config.h"
 
 #include <filesystem>
 #include <string>

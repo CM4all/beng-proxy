@@ -21,6 +21,7 @@
 #include "system/SetupProcess.hxx"
 #include "io/SpliceSupport.hxx"
 #include "util/PrintException.hxx"
+#include "config.h"
 
 #if defined(HAVE_LIBSYSTEMD) || defined(HAVE_AVAHI)
 #include "lib/dbus/Init.hxx"

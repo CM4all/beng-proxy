@@ -9,6 +9,7 @@
 #include "http/CookieSameSite.hxx"
 #include "net/SocketConfig.hxx"
 #include "spawn/Config.hxx"
+#include "config.h"
 
 #include <forward_list>
 #include <chrono>

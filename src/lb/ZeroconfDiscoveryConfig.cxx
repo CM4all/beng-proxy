@@ -8,6 +8,7 @@
 #include "lib/fmt/SystemError.hxx"
 #include "io/config/FileLineParser.hxx"
 #include "util/StringAPI.hxx"
+#include "config.h"
 
 #include <cassert>
 

@@ -11,6 +11,7 @@
 #include "net/FailureRef.hxx"
 #include "io/Logger.hxx"
 #include "util/LeakDetector.hxx"
+#include "config.h"
 
 #ifdef HAVE_AVAHI
 #include "lib/avahi/ExplorerListener.hxx"

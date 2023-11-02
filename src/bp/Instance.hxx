@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include "config.h"
 #include "PInstance.hxx"
 #include "CommandLine.hxx"
 #include "UringGlue.hxx"

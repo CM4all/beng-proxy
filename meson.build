@@ -360,10 +360,6 @@ subdir('src/control')
 
 libcommon_require_avahi = get_option('zeroconf')
 subdir('libcommon/src/lib/avahi')
-if avahi_dep.found()
-  avahi_dep = declare_dependency(compile_args: '-DHAVE_AVAHI',
-                                 dependencies: avahi_dep)
-endif
 
 if get_option('certdb')
   subdir('libcommon/src/lib/curl')
@@ -913,6 +909,11 @@ executable(
   install: true,
   install_dir: 'lib/cm4all/beng-proxy/delegate/bin',
 )
+
+conf = configuration_data()
+conf.set('HAVE_AVAHI', avahi_dep.found())
+conf.set('HAVE_LIBSYSTEMD', libsystemd.found())
+configure_file(output: 'config.h', configuration: conf)
 
 subdir('doc')
 subdir('test')

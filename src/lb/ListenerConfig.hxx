@@ -7,6 +7,7 @@
 #include "GotoConfig.hxx"
 #include "ssl/Config.hxx"
 #include "net/SocketConfig.hxx"
+#include "config.h"
 
 #include <string>
 

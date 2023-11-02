@@ -19,6 +19,7 @@
 #include "util/SpanCast.hxx"
 #include "AllocatorPtr.hxx"
 #include "stopwatch.hxx"
+#include "config.h"
 
 #ifdef HAVE_AVAHI
 #include "lib/avahi/Publisher.hxx"
