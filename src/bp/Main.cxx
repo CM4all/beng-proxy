@@ -81,11 +81,15 @@
 bool debug_mode = false;
 #endif
 
+#ifdef HAVE_LIBCAP
+
 static constexpr cap_value_t cap_keep_list[] = {
 	/* allow libnfs to bind to privileged ports, which in turn allows
 	   disabling the "insecure" flag on the NFS server */
 	CAP_NET_BIND_SERVICE,
 };
+
+#endif
 
 inline TranslationServiceBuilder &
 BpInstance::GetTranslationServiceBuilder() const noexcept
@@ -276,8 +280,10 @@ static unsigned
 GetDefaultPort() noexcept
 {
 #ifndef NDEBUG
+#ifdef HAVE_LIBCAP
 	if (!HaveNetBindService())
 		return 8080;
+#endif
 #endif
 
 	return 80;
