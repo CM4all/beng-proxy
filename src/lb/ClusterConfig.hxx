@@ -9,6 +9,7 @@
 #include "cluster/AddressList.hxx"
 #include "cluster/StickyMode.hxx"
 #include "net/AllocatedSocketAddress.hxx"
+#include "config.h"
 
 #ifdef HAVE_AVAHI
 #include "ZeroconfDiscoveryConfig.hxx"
