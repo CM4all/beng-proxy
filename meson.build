@@ -146,6 +146,8 @@ inc = include_directories(
   '.',
 )
 
+libcommon_require_cap = get_option('cap')
+
 subdir('libcommon/src/util')
 subdir('libcommon/src/lib/cap')
 subdir('libcommon/src/lib/fmt')
@@ -317,7 +319,6 @@ endif
 libcommon_enable_was = get_option('was')
 libcommon_enable_seccomp = get_option('seccomp')
 libcommon_enable_libsystemd = get_option('systemd')
-libcommon_require_cap = get_option('cap')
 
 subdir('libcommon/src/was/async')
 subdir('libcommon/src/stock')
