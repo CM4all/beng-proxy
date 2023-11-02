@@ -317,6 +317,7 @@ endif
 libcommon_enable_was = get_option('was')
 libcommon_enable_seccomp = get_option('seccomp')
 libcommon_enable_libsystemd = get_option('systemd')
+libcommon_require_cap = get_option('cap')
 
 subdir('libcommon/src/was/async')
 subdir('libcommon/src/stock')
