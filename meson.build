@@ -885,6 +885,7 @@ if get_option('certdb')
     'src/certdb/AcmeClient.cxx',
     'src/certdb/AcmeChallenge.cxx',
     'src/certdb/AcmeAccount.cxx',
+    'src/certdb/AcmeOrder.cxx',
     'src/certdb/AcmeAuthorization.cxx',
     'src/certdb/AcmeKey.cxx',
     'src/certdb/FakeAcmeClient.cxx',

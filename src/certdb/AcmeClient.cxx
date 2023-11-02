@@ -418,6 +418,12 @@ to_json(json &jv, const AcmeClient::OrderRequest &request) noexcept
 }
 
 static void
+from_json(const json &j, AcmeOrder::Status &status)
+{
+	status = AcmeOrder::ParseStatus(j.get<std::string_view>());
+}
+
+static void
 from_json(const json &j, AcmeOrder &order)
 {
 	j.at("status"sv).get_to(order.status);
