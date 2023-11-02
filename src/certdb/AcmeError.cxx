@@ -3,26 +3,26 @@
 // author: Max Kellermann <mk@cm4all.com>
 
 #include "AcmeError.hxx"
-#include "json/String.hxx"
+#include "lib/nlohmann_json/String.hxx"
 #include "util/Exception.hxx"
 
-#include <boost/json.hpp>
+using std::string_view_literals::operator""sv;
 
 static std::string
-MakeAcmeErrorMessage(const boost::json::object &error) noexcept
+MakeAcmeErrorMessage(const json &error) noexcept
 {
-	const auto *detail = error.if_contains("detail");
-	if (detail == nullptr)
+	const auto detail = error.find("detail"sv);
+	if (detail == error.end())
 		return "Server error";
 
 	std::string msg = "Server error: ";
-	msg.append(detail->as_string());
+	msg.append(detail->get<std::string_view>());
 	return msg;
 }
 
-AcmeError::AcmeError(const boost::json::object &error)
+AcmeError::AcmeError(const json &error)
 	:std::runtime_error(MakeAcmeErrorMessage(error)),
-	 type(Json::GetString(error.if_contains("type")))
+	 type(Json::GetStringRobust(error, "type"sv))
 {
 }
 

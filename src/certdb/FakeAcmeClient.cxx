@@ -13,9 +13,12 @@
 #include "util/AllocatedArray.hxx"
 #include "util/Exception.hxx"
 
-#include <boost/json.hpp>
+#include <nlohmann/json.hpp>
 
 #include <sstream>
+
+using std::string_view_literals::operator""sv;
+using json = nlohmann::json;
 
 static constexpr std::string_view
 ToStringView(std::span<const std::byte> span) noexcept
@@ -24,14 +27,14 @@ ToStringView(std::span<const std::byte> span) noexcept
 	return {char_span.begin(), char_span.end()};
 }
 
-static boost::json::value
+static json
 ParseJson(std::span<const std::byte> buffer)
 {
-	return boost::json::parse(ToStringView(buffer));
+	return json::parse(ToStringView(buffer));
 }
 
 template<typename T>
-static boost::json::value
+static json
 ParseJson(const AllocatedArray<T> &src)
 {
 	return ParseJson(std::as_bytes(std::span<const T>(src)));
@@ -87,16 +90,15 @@ static AllocatedArray<std::byte>
 ParseSignedBody(std::span<const std::byte> body)
 {
 	const auto root = ParseJson(body);
-	const auto &payload = root.as_object().at("playload");
-	return DecodeUrlSafeBase64(payload.as_string());
+	return DecodeUrlSafeBase64(root.at("payload"sv).get<std::string_view>());
 }
 
 static UniqueX509_REQ
 ParseNewCertBody(std::span<const std::byte> body)
 {
 	const auto payload = ParseJson(ParseSignedBody(body));
-	const auto &csr = payload.as_object().at("csr");
-	const auto req_der = DecodeUrlSafeBase64(csr.as_string());
+	const auto &csr = payload.at("csr"sv);
+	const auto req_der = DecodeUrlSafeBase64(csr.get<std::string_view>());
 	return DecodeDerCertificateRequest(req_der);
 }
 

@@ -8,7 +8,7 @@
 #include "GlueHttpClient.hxx"
 #include "lib/openssl/UniqueX509.hxx"
 
-#include <boost/json/fwd.hpp>
+#include <nlohmann/json_fwd.hpp>
 
 #include <forward_list>
 #include <span>
@@ -130,7 +130,13 @@ private:
 	}
 
 	GlueHttpResponse Request(HttpMethod method, const char *uri,
-				 const boost::json::value &body);
+				 const std::string &body) {
+		return Request(method, uri,
+			       static_cast<std::string_view>(body));
+	}
+
+	GlueHttpResponse Request(HttpMethod method, const char *uri,
+				 const nlohmann::json &body);
 
 	GlueHttpResponse SignedRequest(EVP_PKEY &key,
 				       HttpMethod method, const char *uri,
@@ -145,7 +151,14 @@ private:
 
 	GlueHttpResponse SignedRequest(EVP_PKEY &key,
 				       HttpMethod method, const char *uri,
-				       const boost::json::value &payload);
+				       const std::string &body) {
+		return SignedRequest(key, method, uri,
+				     static_cast<std::string_view>(body));
+	}
+
+	GlueHttpResponse SignedRequest(EVP_PKEY &key,
+				       HttpMethod method, const char *uri,
+				       const nlohmann::json &payload);
 
 	template<typename P>
 	GlueHttpResponse SignedRequestRetry(EVP_PKEY &key,

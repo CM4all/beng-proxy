@@ -8,12 +8,10 @@
 
 #include <openssl/ossl_typ.h>
 
-#include <boost/json/fwd.hpp>
-
-#include <string>
+#include <nlohmann/json_fwd.hpp>
 
 /**
  * Throws on error.
  */
-boost::json::object
+nlohmann::json
 MakeJwk(EVP_PKEY &key);

@@ -15,11 +15,14 @@
 #include <openssl/core_names.h>
 #endif
 
-#include <boost/json.hpp>
+#include <nlohmann/json.hpp>
+using json = nlohmann::json;
 
 #include <stdexcept>
 
-boost::json::object
+using std::string_view_literals::operator""sv;
+
+json
 MakeJwk(EVP_PKEY &key)
 {
 	if (EVP_PKEY_base_id(&key) != EVP_PKEY_RSA)
@@ -42,9 +45,9 @@ MakeJwk(EVP_PKEY &key)
 	RSA_get0_key(EVP_PKEY_get0_RSA(&key), &n, &e, nullptr);
 #endif
 
-	boost::json::object root;
-	root.emplace("e", UrlSafeBase64(SslBuffer(*e).get()).c_str());
-	root.emplace("kty", "RSA");
-	root.emplace("n", UrlSafeBase64(SslBuffer(*n).get()).c_str());
-	return root;
+	return {
+		{ "e"sv, UrlSafeBase64(SslBuffer(*e).get()).c_str() },
+		{ "kty"sv, "RSA"sv },
+		{ "n"sv, UrlSafeBase64(SslBuffer(*n).get()).c_str() },
+	};
 }

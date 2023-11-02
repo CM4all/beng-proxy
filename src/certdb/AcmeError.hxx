@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include <boost/json/fwd.hpp>
+#include <nlohmann/json_fwd.hpp>
 
 #include <stdexcept>
 #include <string>
@@ -13,7 +13,7 @@ class AcmeError : public std::runtime_error {
 	std::string type;
 
 public:
-	AcmeError(const boost::json::object &error);
+	explicit AcmeError(const nlohmann::json &error);
 
 	const std::string &GetType() const {
 		return type;

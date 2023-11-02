@@ -156,6 +156,7 @@ libcommon_require_lua = get_option('lua')
 subdir('libcommon/src/util')
 subdir('libcommon/src/lib/cap')
 subdir('libcommon/src/lib/fmt')
+subdir('libcommon/src/lib/nlohmann_json')
 subdir('libcommon/src/uri')
 
 util2 = static_library(
@@ -225,7 +226,6 @@ system_dep = declare_dependency(
 )
 
 subdir('libcommon/src/http')
-subdir('libcommon/src/json')
 subdir('libcommon/src/lua')
 
 subdir('src/memory')
@@ -894,7 +894,7 @@ if get_option('certdb')
     include_directories: inc,
     dependencies: [
       lb_config_dep,
-      boost_json_dep,
+      nlohmann_json_dep,
       fmt_dep,
       pcre_dep,
       sodium_dep,

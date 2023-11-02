@@ -9,7 +9,7 @@
 #include "io/FileWriter.hxx"
 #include "util/SpanCast.hxx"
 
-#include <boost/json.hpp>
+#include <nlohmann/json.hpp>
 
 #include <sys/stat.h>
 #include <unistd.h>
@@ -17,7 +17,7 @@
 std::string
 MakeHttp01(const AcmeChallenge &challenge, EVP_PKEY &account_key)
 {
-	const auto jwk = boost::json::serialize(MakeJwk(account_key));
+	const auto jwk = MakeJwk(account_key).dump();
 	return challenge.token + "." +
 		UrlSafeBase64SHA256(AsBytes(jwk)).c_str();
 }

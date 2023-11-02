@@ -10,8 +10,6 @@
 #include "AcmeError.hxx"
 #include "AcmeConfig.hxx"
 #include "JWS.hxx"
-#include "json/String.hxx"
-#include "json/ForwardList.hxx"
 #include "jwt/RS256.hxx"
 #include "http/Method.hxx"
 #include "http/Status.hxx"
@@ -22,11 +20,12 @@
 #include "util/AllocatedString.hxx"
 #include "util/Exception.hxx"
 
-#include <boost/json.hpp>
+#include <nlohmann/json.hpp>
 
 #include <memory>
 
 using std::string_view_literals::operator""sv;
+using json = nlohmann::json;
 
 [[gnu::pure]]
 static bool
@@ -43,13 +42,13 @@ IsJson(const GlueHttpResponse &response) noexcept
 }
 
 [[gnu::pure]]
-static boost::json::value
+static json
 ParseJson(GlueHttpResponse &&response)
 {
 	if (!IsJson(response))
 		throw std::runtime_error("JSON expected");
 
-	return boost::json::parse(response.body);
+	return json::parse(response.body);
 }
 
 /**
@@ -57,15 +56,14 @@ ParseJson(GlueHttpResponse &&response)
  * element.
  */
 static void
-CheckThrowError(const boost::json::object &root)
+CheckThrowError(const json &root)
 {
-	const auto *error = root.if_contains("error");
-	if (error == nullptr)
+	const auto error = root.find("error"sv);
+	if (error == root.end())
 		return;
 
-	const auto *error_object = error->if_object();
-	if (error_object != nullptr)
-		throw AcmeError(*error_object);
+	if (error->is_object())
+		throw AcmeError(*error);
 }
 
 /**
@@ -73,7 +71,7 @@ CheckThrowError(const boost::json::object &root)
  * element.
  */
 static void
-CheckThrowError(const boost::json::object &root, const char *msg)
+CheckThrowError(const json &root, const char *msg)
 {
 	try {
 		CheckThrowError(root);
@@ -91,8 +89,8 @@ static void
 ThrowError(GlueHttpResponse &&response, const char *msg)
 {
 	if (IsJson(response)) {
-		const auto root = boost::json::parse(response.body);
-		std::rethrow_exception(NestException(std::make_exception_ptr(AcmeError(root.as_object())),
+		const auto root = json::parse(response.body);
+		std::rethrow_exception(NestException(std::make_exception_ptr(AcmeError(root)),
 						     std::runtime_error(msg)));
 	}
 
@@ -128,16 +126,12 @@ AcmeClient::AcmeClient(const AcmeConfig &config) noexcept
 
 AcmeClient::~AcmeClient() noexcept = default;
 
-static auto
-tag_invoke(boost::json::value_to_tag<AcmeDirectory>,
-	   const boost::json::value &jv)
+static void
+from_json(const json &j, AcmeDirectory &directory)
 {
-	const auto &json = jv.as_object();
-	AcmeDirectory directory;
-	directory.new_nonce = Json::GetString(json, "newNonce");
-	directory.new_account = Json::GetString(json, "newAccount");
-	directory.new_order = Json::GetString(json, "newOrder");
-	return directory;
+	j.at("newNonce"sv).get_to(directory.new_nonce);
+	j.at("newAccount"sv).get_to(directory.new_account);
+	j.at("newOrder"sv).get_to(directory.new_order);
 }
 
 void
@@ -166,7 +160,7 @@ AcmeClient::RequestDirectory()
 		if (!IsJson(response))
 			throw std::runtime_error("JSON expected");
 
-		directory = boost::json::value_to<AcmeDirectory>(boost::json::parse(response.body));
+		json::parse(response.body).get_to(directory);
 		break;
 	}
 }
@@ -209,7 +203,7 @@ AcmeClient::RequestNonce()
 		}
 
 		if (IsJson(response))
-			directory = boost::json::value_to<AcmeDirectory>(boost::json::parse(response.body));
+			json::parse(response.body).get_to(directory);
 
 		auto nonce = response.headers.find("replay-nonce");
 		if (nonce == response.headers.end())
@@ -229,11 +223,11 @@ AcmeClient::NextNonce()
 	return result;
 }
 
-static boost::json::object
+static json
 MakeHeader(EVP_PKEY &key, const char *url, const char *kid,
 	   std::string_view nonce)
 {
-	boost::json::object root{
+	json root{
 		{"alg", "RS256"},
 		{"url", url},
 		{"nonce", nonce},
@@ -264,9 +258,9 @@ AcmeClient::Request(HttpMethod method, const char *uri,
 
 GlueHttpResponse
 AcmeClient::Request(HttpMethod method, const char *uri,
-		    const boost::json::value &body)
+		    const json &body)
 {
-	return Request(method, uri, boost::json::serialize(body));
+	return Request(method, uri, body.dump());
 }
 
 GlueHttpResponse
@@ -277,15 +271,15 @@ AcmeClient::SignedRequest(EVP_PKEY &key,
 	const auto payload_b64 = UrlSafeBase64(payload);
 
 	const auto protected_header =
-		boost::json::serialize(MakeHeader(key, uri,
-						  account_key_id.empty()
-						  ? nullptr
-						  : account_key_id.c_str(),
-						  NextNonce()));
+		MakeHeader(key, uri,
+			   account_key_id.empty()
+			   ? nullptr
+			   : account_key_id.c_str(),
+			   NextNonce()).dump();
 
 	const auto protected_header_b64 = UrlSafeBase64(protected_header);
 
-	const boost::json::object root{
+	const json root{
 		{"payload", payload_b64.c_str()},
 		{"signature",
 		 JWT::SignRS256(key, protected_header_b64.c_str(),
@@ -299,10 +293,10 @@ AcmeClient::SignedRequest(EVP_PKEY &key,
 GlueHttpResponse
 AcmeClient::SignedRequest(EVP_PKEY &key,
 			  HttpMethod method, const char *uri,
-			  const boost::json::value &payload)
+			  const json &payload)
 {
 	return SignedRequest(key, method, uri,
-			     boost::json::serialize(payload));
+			     payload.dump());
 }
 
 template<typename T>
@@ -316,15 +310,13 @@ WithLocation(T &&t, const GlueHttpResponse &response) noexcept
 	return std::move(t);
 }
 
-static boost::json::string
+static json
 MakeMailToString(const char *email) noexcept
 {
-	boost::json::string s("mailto:");
-	s.append(email);
-	return s;
+	return fmt::format("mailto:{}"sv, email);
 }
 
-static boost::json::array
+static json
 MakeMailToArray(const char *email) noexcept
 {
 	return {MakeMailToString(email)};
@@ -333,7 +325,7 @@ MakeMailToArray(const char *email) noexcept
 static auto
 MakeNewAccountRequest(const char *email, bool only_return_existing) noexcept
 {
-	boost::json::object root{
+	json root{
 		{"termsOfServiceAgreed", true},
 	};
 
@@ -346,20 +338,19 @@ MakeNewAccountRequest(const char *email, bool only_return_existing) noexcept
 	return root;
 }
 
-static auto
-tag_invoke(boost::json::value_to_tag<AcmeAccount>,
-	   const boost::json::value &jv)
+static void
+from_json(const json &j, AcmeAccount::Status &status)
 {
-	const auto &root = jv.as_object();
+	status = AcmeAccount::ParseStatus(j.get<std::string_view>());
+}
 
-	AcmeAccount account;
-	account.status = AcmeAccount::ParseStatus(root.at("status").as_string());
+static void
+from_json(const json &j, AcmeAccount &account)
+{
+	j.at("status"sv).get_to(account.status);
 
-	const auto *contact = root.if_contains("contact");
-	if (contact != nullptr)
-		account.contact = boost::json::value_to<std::forward_list<std::string>>(*contact);
-
-	return account;
+	if (const auto contact = j.find("contact"sv); contact != j.end())
+		contact->get_to(account.contact);
 }
 
 AcmeAccount
@@ -396,12 +387,12 @@ AcmeClient::NewAccount(EVP_PKEY &key, const char *email,
 	}
 
 	const auto root = ParseJson(std::move(response));
-	CheckThrowError(root.as_object(), "Failed to create account");
-	return WithLocation(boost::json::value_to<AcmeAccount>(root), response);
+	CheckThrowError(root, "Failed to create account");
+	return WithLocation(root.get<AcmeAccount>(), response);
 }
 
-static boost::json::object
-DnsIdentifierToJson(const std::string &value) noexcept
+static json
+DnsIdentifierToJson(std::string_view value) noexcept
 {
 	return {
 		{"type", "dns"},
@@ -409,42 +400,35 @@ DnsIdentifierToJson(const std::string &value) noexcept
 	};
 }
 
-static boost::json::array
+static json
 DnsIdentifiersToJson(const std::forward_list<std::string> &identifiers) noexcept
 {
-	boost::json::array root;
+	json root = json::value_t::array;
 	for (const auto &i : identifiers)
 		root.emplace_back(DnsIdentifierToJson(i));
 	return root;
 }
 
 static void
-tag_invoke(boost::json::value_from_tag, boost::json::value &jv,
-	   const AcmeClient::OrderRequest &request) noexcept
+to_json(json &jv, const AcmeClient::OrderRequest &request) noexcept
 {
-	jv = {{"identifiers", DnsIdentifiersToJson(request.identifiers)}};
+	jv = {
+		{"identifiers", DnsIdentifiersToJson(request.identifiers)},
+	};
 }
 
-static auto
-tag_invoke(boost::json::value_to_tag<AcmeOrder>,
-	   const boost::json::value &jv)
+static void
+from_json(const json &j, AcmeOrder &order)
 {
-	const auto &root = jv.as_object();
+	j.at("status"sv).get_to(order.status);
 
-	AcmeOrder order;
-	order.status = root.at("status").as_string();
+	if (auto authorizations = j.find("authorizations"sv); authorizations != j.end())
+		authorizations->get_to(order.authorizations);
 
-	const auto *authorizations = root.if_contains("authorizations");
-	if (authorizations != nullptr)
-		order.authorizations = boost::json::value_to<std::forward_list<std::string>>(*authorizations);
+	j.at("finalize"sv).get_to(order.finalize);
 
-	order.finalize = root.at("finalize").as_string();
-
-	const auto *certificate = root.if_contains("certificate");
-	if (certificate != nullptr)
-		order.certificate = certificate->as_string();
-
-	return order;
+	if (auto certificate = j.find("certificate"sv); certificate != j.end())
+		certificate->get_to(order.certificate);
 }
 
 AcmeOrder
@@ -454,20 +438,21 @@ AcmeClient::NewOrder(EVP_PKEY &key, OrderRequest &&request)
 	if (directory.new_order.empty())
 		throw std::runtime_error("No newOrder in directory");
 
+	const json request_json = request;
 	auto response = SignedRequestRetry(key,
 					   HttpMethod::POST,
 					   directory.new_order.c_str(),
-					   boost::json::value_from(request));
+					   request_json);
 	if (response.status != HttpStatus::CREATED)
 		ThrowStatusError(std::move(response),
 				 "Failed to create order");
 
 	const auto root = ParseJson(std::move(response));
-	CheckThrowError(root.as_object(), "Failed to create order");
-	return WithLocation(boost::json::value_to<AcmeOrder>(root), response);
+	CheckThrowError(root, "Failed to create order");
+	return WithLocation(root.get<AcmeOrder>(), response);
 }
 
-static boost::json::object
+static json
 ToJson(X509_REQ &req) noexcept
 {
 	return {
@@ -488,8 +473,8 @@ AcmeClient::FinalizeOrder(EVP_PKEY &key, const AcmeOrder &order,
 				 "Failed to finalize order");
 
 	const auto root = ParseJson(std::move(response));
-	CheckThrowError(root.as_object(), "Failed to finalize order");
-	return WithLocation(boost::json::value_to<AcmeOrder>(root), response);
+	CheckThrowError(root, "Failed to finalize order");
+	return WithLocation(root.get<AcmeOrder>(), response);
 }
 
 UniqueX509
@@ -514,44 +499,44 @@ AcmeClient::DownloadCertificate(EVP_PKEY &key, const AcmeOrder &order)
 						    nullptr, nullptr, nullptr));
 }
 
-static auto
-tag_invoke(boost::json::value_to_tag<AcmeChallenge>,
-	   const boost::json::value &jv)
+static void
+from_json(const json &j, AcmeChallenge::Status &status)
 {
-	const auto &root = jv.as_object();
+	status = AcmeChallenge::ParseStatus(j.get<std::string_view>());
+}
 
-	AcmeChallenge challenge;
-	challenge.type = root.at("type").as_string();
-	challenge.uri = root.at("url").as_string();
-	challenge.status = AcmeChallenge::ParseStatus(root.at("status").as_string());
-	challenge.token = root.at("token").as_string();
+static void
+from_json(const json &j, AcmeChallenge &challenge)
+{
+	j.at("type"sv).get_to(challenge.type);
+	j.at("url"sv).get_to(challenge.uri);
+	j.at("status"sv).get_to(challenge.status);
+	j.at("token"sv).get_to(challenge.token);
 
 	try {
-		CheckThrowError(root);
+		CheckThrowError(j);
 	} catch (...) {
 		challenge.error = std::current_exception();
 	}
-
-	return challenge;
 }
 
-static auto
-tag_invoke(boost::json::value_to_tag<AcmeAuthorization>,
-	   const boost::json::value &jv)
+static void
+from_json(const json &j, AcmeAuthorization::Status &status)
 {
-	const auto &root = jv.as_object();
+	status = AcmeAuthorization::ParseStatus(j.get<std::string_view>());
+}
 
-	AcmeAuthorization response;
-	response.status = AcmeAuthorization::ParseStatus(root.at("status").as_string());
-	response.identifier = root.at("identifier").at("value").as_string();
-	response.challenges = boost::json::value_to<std::forward_list<AcmeChallenge>>(root.at("challenges"));
+static void
+from_json(const json &j, AcmeAuthorization &response)
+{
+	j.at("status"sv).get_to(response.status);
+	j.at("identifier"sv).at("value"sv).get_to(response.identifier);
+	j.at("challenges"sv).get_to(response.challenges);
 	if (response.challenges.empty())
 		throw std::runtime_error("No challenges");
 
-	const auto *wildcard = root.if_contains("wildcard");
-	response.wildcard = wildcard != nullptr && wildcard->as_bool();
-
-	return response;
+	if (auto wildcard = j.find("wildcard"sv); wildcard != j.end())
+		wildcard->get_to(response.wildcard);
 }
 
 AcmeAuthorization
@@ -566,8 +551,8 @@ AcmeClient::Authorize(EVP_PKEY &key, const char *url)
 				 "Failed to request authorization");
 
 	const auto root = ParseJson(std::move(response));
-	CheckThrowError(root.as_object(), "Failed to request authorization");
-	return boost::json::value_to<AcmeAuthorization>(root);
+	CheckThrowError(root, "Failed to request authorization");
+	return root.get<AcmeAuthorization>();
 }
 
 AcmeAuthorization
@@ -582,8 +567,8 @@ AcmeClient::PollAuthorization(EVP_PKEY &key, const char *url)
 				 "Failed to poll authorization");
 
 	const auto root = ParseJson(std::move(response));
-	CheckThrowError(root.as_object(), "Failed to poll authorization");
-	return boost::json::value_to<AcmeAuthorization>(root);
+	CheckThrowError(root, "Failed to poll authorization");
+	return root.get<AcmeAuthorization>();
 }
 
 AcmeChallenge
@@ -592,13 +577,12 @@ AcmeClient::UpdateChallenge(EVP_PKEY &key, const AcmeChallenge &challenge)
 	auto response = SignedRequestRetry(key,
 					   HttpMethod::POST,
 					   challenge.uri.c_str(),
-					   boost::json::object{});
+					   json::value_t::object);
 	if (response.status != HttpStatus::OK)
 		ThrowStatusError(std::move(response),
 				 "Failed to update challenge");
 
-	const auto root_value = ParseJson(std::move(response));
-	const auto &root = root_value.as_object();
+	const auto root = ParseJson(std::move(response));
 	CheckThrowError(root, "Failed to update challenge");
-	return boost::json::value_to<AcmeChallenge>(root_value);
+	return root.get<AcmeChallenge>();
 }
