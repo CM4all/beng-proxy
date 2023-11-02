@@ -53,7 +53,6 @@ jobs:
             libavahi-client-dev \
             libboost-dev \
             libbrotli-dev \
-            libc-ares-dev \
             libcap-dev \
             libcurl4-openssl-dev \
             libdbus-1-dev \
@@ -111,7 +110,6 @@ jobs:
           sudo apt-get install -y --no-install-recommends \
             meson \
             libboost-dev \
-            libc-ares-dev \
             libgtest-dev \
             libluajit-5.1-dev \
             libpcre2-dev \
