@@ -394,8 +394,7 @@ AcmeNewOrder(const CertDatabaseConfig &db_config, const AcmeConfig &config,
 	StepProgress progress(_progress,
 			      n_identifiers * 3 + 5);
 
-	const auto order = client.NewOrder(account_key,
-					   std::move(order_request));
+	auto order = client.NewOrder(account_key, std::move(order_request));
 	progress();
 
 	AcmeAuthorize(db_config, config, account_key, db, client, progress,
@@ -404,10 +403,10 @@ AcmeNewOrder(const CertDatabaseConfig &db_config, const AcmeConfig &config,
 	const auto cert_key = GenerateEcKey();
 	const auto req = MakeCertRequest(*cert_key, identifiers);
 
-	const auto order2 = client.FinalizeOrder(account_key, order, *req);
+	order = client.FinalizeOrder(account_key, order, *req);
 	progress();
 
-	const auto cert = client.DownloadCertificate(account_key, order2);
+	const auto cert = client.DownloadCertificate(account_key, order);
 	progress();
 
 	WrapKeyHelper wrap_key_helper;
