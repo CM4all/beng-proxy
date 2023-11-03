@@ -671,7 +671,7 @@ Acme(ConstBuffer<const char *> args)
 			/* using the account database: generate a new
 			   key, create account and store it in the
 			   database */
-			const AcmeKey key(GenerateRsaKey());
+			const AcmeKey key(GenerateEcKey());
 			const auto account = AcmeClient(config).NewAccount(*key, email);
 
 			const auto db_config = LoadPatchCertDatabaseConfig();

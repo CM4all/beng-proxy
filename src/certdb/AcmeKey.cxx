@@ -9,7 +9,8 @@
 AcmeKey::AcmeKey(const char *path)
 	:key(LoadKeyFile(path))
 {
-	if (EVP_PKEY_base_id(key.get()) != EVP_PKEY_RSA)
-		throw FmtRuntimeError("File '{}' does not contain an RSA file",
+	if (EVP_PKEY_get_base_id(key.get()) != EVP_PKEY_RSA &&
+	    EVP_PKEY_get_base_id(key.get()) != EVP_PKEY_EC)
+		throw FmtRuntimeError("File '{}' does not contain an EC or RSA key",
 				      path);
 }
