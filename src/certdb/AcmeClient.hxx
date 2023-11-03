@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include "AcmeDirectory.hxx"
 #include "event/Loop.hxx"
 #include "GlueHttpClient.hxx"
 #include "lib/openssl/UniqueX509.hxx"
@@ -21,12 +22,6 @@ struct AcmeAccount;
 struct AcmeOrder;
 struct AcmeAuthorization;
 struct AcmeChallenge;
-
-struct AcmeDirectory {
-	std::string new_nonce;
-	std::string new_account;
-	std::string new_order;
-};
 
 /**
  * Implementation of a ACME client, i.e. the protocol of the "Let's
