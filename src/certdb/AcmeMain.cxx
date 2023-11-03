@@ -311,11 +311,12 @@ CollectPendingAuthorizations(const CertDatabaseConfig &db_config,
 	/* update all challenges, which triggers the server-side
 	   check */
 	while (!challenges.empty()) {
-		const auto &challenge = challenges.front();
-		auto challenge2 = client.UpdateChallenge(account_key, challenge);
+		auto challenge = std::move(challenges.front());
 		challenges.pop_front();
 
-		challenge2.Check();
+		challenge = client.UpdateChallenge(account_key, challenge);
+		challenge.Check();
+
 		progress();
 	}
 
