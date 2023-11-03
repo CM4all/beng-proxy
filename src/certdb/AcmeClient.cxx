@@ -20,6 +20,7 @@
 #include "lib/sodium/Base64.hxx"
 #include "util/AllocatedString.hxx"
 #include "util/Exception.hxx"
+#include "util/MimeType.hxx"
 
 #include <nlohmann/json.hpp>
 
@@ -36,7 +37,7 @@ IsJson(const GlueHttpResponse &response) noexcept
 	if (i == response.headers.end())
 		return false;
 
-	const std::string_view content_type = i->second;
+	const std::string_view content_type = GetMimeTypeBase(i->second);
 	return content_type == "application/json"sv ||
 		content_type ==  "application/jose+json" ||
 		content_type == "application/problem+json"sv;
