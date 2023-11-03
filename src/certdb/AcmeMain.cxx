@@ -314,7 +314,9 @@ CollectPendingAuthorizations(const CertDatabaseConfig &db_config,
 		auto challenge = std::move(challenges.front());
 		challenges.pop_front();
 
-		challenge = client.UpdateChallenge(account_key, challenge);
+		if (challenge.status == AcmeChallenge::Status::PENDING)
+			challenge = client.UpdateChallenge(account_key, challenge);
+
 		challenge.Check();
 
 		progress();
