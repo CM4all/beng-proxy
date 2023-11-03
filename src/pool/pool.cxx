@@ -5,6 +5,7 @@
 #include "pool.hxx"
 #include "Ptr.hxx"
 #include "LeakDetector.hxx"
+#include "memory/Checker.hxx"
 #include "memory/SlicePool.hxx"
 #include "stats/AllocatorStats.hxx"
 #include "io/Logger.hxx"
@@ -12,8 +13,6 @@
 #include "util/IntrusiveList.hxx"
 #include "util/Recycler.hxx"
 #include "util/Poison.hxx"
-#include "util/Sanitizer.hxx"
-#include "util/Valgrind.hxx"
 
 #include <forward_list>
 #include <typeinfo>
@@ -428,7 +427,7 @@ PoolPtr
 pool_new_linear(struct pool *parent, const char *name,
 		size_t initial_size) noexcept
 {
-	if (HaveAddressSanitizer() || HaveValgrind())
+	if (HaveMemoryChecker())
 		/* Valgrind cannot verify allocations and memory accesses with
 		   this library; therefore use the "libc" pool when running on
 		   valgrind */
@@ -465,7 +464,7 @@ pool_new_slice(struct pool *parent, const char *name,
 	return pool_new_libc(parent, name);
 #else
 
-	if (HaveAddressSanitizer() || HaveValgrind())
+	if (HaveMemoryChecker())
 		/* Valgrind cannot verify allocations and memory accesses with
 		   this library; therefore use the "libc" pool when running on
 		   valgrind */
