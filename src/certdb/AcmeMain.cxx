@@ -507,8 +507,7 @@ AcmeRenewCert(const CertDatabaseConfig &db_config, const AcmeConfig &config,
 	for (const auto &host : names)
 		order_request.identifiers.emplace_front(host);
 
-	const auto order = client.NewOrder(account_key,
-					   std::move(order_request));
+	auto order = client.NewOrder(account_key, std::move(order_request));
 	progress();
 
 	AcmeAuthorize(db_config, config, account_key, db, client, progress,
@@ -516,10 +515,10 @@ AcmeRenewCert(const CertDatabaseConfig &db_config, const AcmeConfig &config,
 
 	const auto req = MakeCertRequest(new_key, old_cert);
 
-	const auto order2 = client.FinalizeOrder(account_key, order, *req);
+	order = client.FinalizeOrder(account_key, order, *req);
 	progress();
 
-	const auto cert = client.DownloadCertificate(account_key, order2);
+	const auto cert = client.DownloadCertificate(account_key, order);
 	progress();
 
 	WrapKeyHelper wrap_key_helper;
