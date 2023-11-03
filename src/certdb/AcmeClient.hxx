@@ -37,7 +37,7 @@ struct AcmeDirectory {
 class AcmeClient {
 	EventLoop event_loop;
 	GlueHttpClient glue_http_client;
-	const std::string server;
+	const char *const directory_url;
 
 	const std::string account_key_id;
 
