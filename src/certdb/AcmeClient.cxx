@@ -112,7 +112,7 @@ ThrowStatusError(GlueHttpResponse &&response, const char *msg)
 	ThrowError(std::move(response), what.c_str());
 }
 
-AcmeClient::AcmeClient(const AcmeConfig &config) noexcept
+AcmeClient::AcmeClient(const AcmeConfig &config)
 	:glue_http_client(event_loop),
 	 server(config.staging
 		? "https://acme-staging-v02.api.letsencrypt.org"

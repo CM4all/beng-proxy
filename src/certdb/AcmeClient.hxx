@@ -53,7 +53,11 @@ class AcmeClient {
 	const bool fake;
 
 public:
-	explicit AcmeClient(const AcmeConfig &config) noexcept;
+	/**
+	 * Throws on error (e.g. if CURL initialization fails).
+	 */
+	explicit AcmeClient(const AcmeConfig &config);
+
 	~AcmeClient() noexcept;
 
 	bool IsFake() const {
