@@ -403,7 +403,7 @@ AcmeClient::DownloadCertificate(EVP_PKEY &key, const AcmeOrder &order)
 
 	auto ct = response.headers.find("content-type");
 	if (ct == response.headers.end() ||
-	    ct->second != "application/pem-certificate-chain")
+	    GetMimeTypeBase(ct->second) != "application/pem-certificate-chain"sv)
 		throw std::runtime_error("Wrong Content-Type in certificate download");
 
 	UniqueBIO in(BIO_new_mem_buf(response.body.data(), response.body.length()));
