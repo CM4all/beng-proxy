@@ -35,10 +35,10 @@ IsJson(const GlueHttpResponse &response) noexcept
 	if (i == response.headers.end())
 		return false;
 
-	const char *content_type = i->second.c_str();
-	return strcmp(content_type, "application/json") == 0 ||
-		strcmp(content_type, "application/jose+json") == 0 ||
-		strcmp(content_type, "application/problem+json") == 0;
+	const std::string_view content_type = i->second;
+	return content_type == "application/json"sv ||
+		content_type ==  "application/jose+json" ||
+		content_type == "application/problem+json"sv;
 }
 
 [[gnu::pure]]
