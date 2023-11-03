@@ -227,9 +227,11 @@ AcmeClient::Request(HttpMethod method, const char *uri,
 					   method, uri,
 					   body);
 
-	auto new_nonce = response.headers.find("replay-nonce");
-	if (new_nonce != response.headers.end())
+	if (auto new_nonce = response.headers.find("replay-nonce");
+	    new_nonce != response.headers.end()) {
 		next_nonce = std::move(new_nonce->second);
+		response.headers.erase(new_nonce);
+	}
 
 	return response;
 }
