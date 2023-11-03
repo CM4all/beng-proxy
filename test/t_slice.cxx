@@ -2,6 +2,7 @@
 // Copyright CM4all GmbH
 // author: Max Kellermann <mk@cm4all.com>
 
+#include "memory/Checker.hxx"
 #include "memory/SlicePool.hxx"
 #include "util/Sanitizer.hxx"
 
@@ -38,7 +39,7 @@ TEST(SliceTest, Small)
 
 	auto allocation0 = pool.Alloc();
 	auto *area0 = allocation0.area;
-	if (!HaveAddressSanitizer()) {
+	if (!HaveMemoryChecker()) {
 		ASSERT_NE(area0, nullptr);
 	}
 	allocation0.Free();
@@ -67,7 +68,7 @@ TEST(SliceTest, Small)
 		Fill(more[i].data, slice_size, per_area + i);
 	}
 
-	if (!HaveAddressSanitizer()) {
+	if (!HaveMemoryChecker()) {
 		ASSERT_NE(more[per_area - 1].area, area0);
 	}
 
@@ -89,7 +90,7 @@ TEST(SliceTest, Medium)
 
 	auto allocation0 = pool.Alloc();
 	auto *area0 = allocation0.area;
-	if (!HaveAddressSanitizer()) {
+	if (!HaveMemoryChecker()) {
 		ASSERT_NE(area0, nullptr);
 	}
 	allocation0.Free();
@@ -100,7 +101,7 @@ TEST(SliceTest, Medium)
 		auto &allocation = allocations[i];
 		allocation = pool.Alloc();
 
-		if (!HaveAddressSanitizer()) {
+		if (!HaveMemoryChecker()) {
 			ASSERT_EQ(allocation.area, area0);
 		}
 
@@ -141,7 +142,7 @@ TEST(SliceTest, Large)
 
 	auto allocation0 = pool.Alloc();
 	auto *area0 = allocation0.area;
-	if (!HaveAddressSanitizer()) {
+	if (!HaveMemoryChecker()) {
 		ASSERT_NE(area0, nullptr);
 	}
 	allocation0.Free();
@@ -152,7 +153,7 @@ TEST(SliceTest, Large)
 		auto &allocation = allocations[i];
 		allocation = pool.Alloc();
 
-		if (!HaveAddressSanitizer()) {
+		if (!HaveMemoryChecker()) {
 			ASSERT_EQ(allocation.area, area0);
 		}
 
