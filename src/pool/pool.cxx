@@ -433,12 +433,6 @@ pool_new_linear(struct pool *parent, const char *name,
 		   valgrind */
 		return pool_new_libc(parent, name);
 
-#ifdef POOL_LIBC_ONLY
-	(void)initial_size;
-
-	return pool_new_libc(parent, name);
-#else
-
 	struct pool *pool = pool_new(parent, name);
 	pool->type = POOL_LINEAR;
 	pool->area_size = initial_size;
@@ -448,7 +442,6 @@ pool_new_linear(struct pool *parent, const char *name,
 	assert(parent != nullptr);
 
 	return PoolPtr(PoolPtr::donate, *pool);
-#endif
 }
 
 PoolPtr
@@ -457,12 +450,6 @@ pool_new_slice(struct pool *parent, const char *name,
 {
 	assert(parent != nullptr);
 	assert(slice_pool->GetSliceSize() > LINEAR_POOL_AREA_HEADER);
-
-#ifdef POOL_LIBC_ONLY
-	(void)slice_pool;
-
-	return pool_new_libc(parent, name);
-#else
 
 	if (HaveMemoryChecker())
 		/* Valgrind cannot verify allocations and memory accesses with
@@ -477,7 +464,6 @@ pool_new_slice(struct pool *parent, const char *name,
 	pool->current_area.linear = nullptr;
 
 	return PoolPtr(PoolPtr::donate, *pool);
-#endif
 }
 
 #ifndef NDEBUG
