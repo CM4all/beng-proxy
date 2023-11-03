@@ -28,7 +28,7 @@ public:
 	Alpn01ChallengeRecord &operator=(const Alpn01ChallengeRecord &) = delete;
 
 	void AddChallenge(const AcmeChallenge &challenge,
-			  EVP_PKEY &account_key);
+			  const EVP_PKEY &account_key);
 
 	void Commit(const CertDatabaseConfig &db_config);
 };

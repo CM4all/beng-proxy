@@ -202,7 +202,7 @@ AcmeClient::NextNonce()
 }
 
 static json
-MakeHeader(EVP_PKEY &key, const char *url, const char *kid,
+MakeHeader(const EVP_PKEY &key, const char *url, const char *kid,
 	   std::string_view nonce)
 {
 	json root{
@@ -350,7 +350,7 @@ AcmeClient::NewOrder(EVP_PKEY &key, AcmeOrderRequest &&request)
 }
 
 static json
-ToJson(X509_REQ &req) noexcept
+ToJson(const X509_REQ &req) noexcept
 {
 	return {
 		{"csr", UrlSafeBase64(SslBuffer(req).get()).c_str()},
@@ -359,7 +359,7 @@ ToJson(X509_REQ &req) noexcept
 
 AcmeOrder
 AcmeClient::FinalizeOrder(EVP_PKEY &key, const AcmeOrder &order,
-			  X509_REQ &csr)
+			  const X509_REQ &csr)
 {
 	auto response = SignedRequestRetry(key,
 					   HttpMethod::POST,

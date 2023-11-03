@@ -77,7 +77,7 @@ Dns01ChallengeRecord::~Dns01ChallengeRecord() noexcept
 
 void
 Dns01ChallengeRecord::AddChallenge(const AcmeChallenge &challenge,
-				   EVP_PKEY &account_key)
+				   const EVP_PKEY &account_key)
 {
 	values.emplace(UrlSafeBase64SHA256(AsBytes(MakeHttp01(challenge, account_key))));
 }

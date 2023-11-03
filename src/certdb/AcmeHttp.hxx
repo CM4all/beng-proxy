@@ -14,7 +14,7 @@ struct AcmeChallenge;
  * @return file contents
  */
 std::string
-MakeHttp01(const AcmeChallenge &challenge, EVP_PKEY &account_key);
+MakeHttp01(const AcmeChallenge &challenge, const EVP_PKEY &account_key);
 
 class Http01ChallengeFile final {
 	std::string path;
@@ -22,7 +22,7 @@ class Http01ChallengeFile final {
 public:
 	Http01ChallengeFile(const std::string &directory,
 			    const AcmeChallenge &challenge,
-			    EVP_PKEY &account_key);
+			    const EVP_PKEY &account_key);
 
 	~Http01ChallengeFile() noexcept;
 

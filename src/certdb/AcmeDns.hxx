@@ -31,7 +31,7 @@ public:
 	Dns01ChallengeRecord &operator=(const Dns01ChallengeRecord &) = delete;
 
 	void AddChallenge(const AcmeChallenge &challenge,
-			  EVP_PKEY &account_key);
+			  const EVP_PKEY &account_key);
 
 	void Commit();
 };

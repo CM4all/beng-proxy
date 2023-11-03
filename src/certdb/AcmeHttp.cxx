@@ -15,7 +15,7 @@
 #include <unistd.h>
 
 std::string
-MakeHttp01(const AcmeChallenge &challenge, EVP_PKEY &account_key)
+MakeHttp01(const AcmeChallenge &challenge, const EVP_PKEY &account_key)
 {
 	const auto jwk = ToJWK(account_key).dump();
 	return challenge.token + "." +
@@ -61,7 +61,7 @@ MakeHttp01FilePath(const std::string &directory,
 
 Http01ChallengeFile::Http01ChallengeFile(const std::string &directory,
 					 const AcmeChallenge &challenge,
-					 EVP_PKEY &account_key)
+					 const EVP_PKEY &account_key)
 	:path(MakeHttp01FilePath(directory, challenge))
 {
 	CreateFile(path.c_str(), MakeHttp01(challenge, account_key));

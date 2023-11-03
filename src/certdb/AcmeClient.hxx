@@ -79,7 +79,7 @@ public:
 	AcmeOrder NewOrder(EVP_PKEY &key, AcmeOrderRequest &&request);
 
 	AcmeOrder FinalizeOrder(EVP_PKEY &key, const AcmeOrder &order,
-				X509_REQ &csr);
+				const X509_REQ &csr);
 
 	AcmeOrder PollOrder(EVP_PKEY &key, const char *url);
 

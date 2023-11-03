@@ -159,7 +159,7 @@ struct PendingAuthorization {
 			     const std::string &_url,
 			     const std::string &directory,
 			     const AcmeChallenge &_challenge,
-			     EVP_PKEY &account_key)
+			     const EVP_PKEY &account_key)
 		:url(_url),
 		 challenge(std::in_place_type_t<Http01ChallengeFile>{},
 			   directory, _challenge, account_key) {}

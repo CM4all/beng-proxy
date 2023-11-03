@@ -73,7 +73,7 @@ Alpn01ChallengeRecord::~Alpn01ChallengeRecord() noexcept
 
 void
 Alpn01ChallengeRecord::AddChallenge(const AcmeChallenge &challenge,
-				    EVP_PKEY &account_key)
+				    const EVP_PKEY &account_key)
 {
 	struct {
 		uint8_t type = 0x04, size;

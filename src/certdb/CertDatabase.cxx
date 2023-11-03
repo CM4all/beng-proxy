@@ -145,7 +145,7 @@ CertDatabase::InsertServerCertificate(const char *handle,
 
 bool
 CertDatabase::LoadServerCertificate(const char *handle, const char *special,
-				    X509 &cert, EVP_PKEY &key,
+				    X509 &cert, const EVP_PKEY &key,
 				    const char *key_wrap_name,
 				    AES_KEY *wrap_key)
 {
