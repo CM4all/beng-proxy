@@ -964,3 +964,5 @@ if uring_dep.found()
     ],
   )
 endif
+
+subdir('acme')

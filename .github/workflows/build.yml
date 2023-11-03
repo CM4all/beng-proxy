@@ -133,3 +133,88 @@ jobs:
         if: ${{ failure() }}
         continue-on-error: true
         run: cat output/meson-logs/testlog.txt
+
+  certdb:
+    runs-on: ubuntu-22.04
+    steps:
+      - id: checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - id: cache-ccache
+        uses: hendrikmuhs/ccache-action@v1
+        with:
+          key: ${{github.job}}
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            meson \
+            libboost-dev \
+            libsystemd-dev libdbus-1-dev \
+            libcurl4-openssl-dev \
+            libgtest-dev \
+            libpcre2-dev \
+            libsodium-dev \
+            libssl-dev \
+            libpq-dev \
+            pebble
+
+      - name: Configure
+        run: |
+          meson setup \
+            -Dauto_features=disabled \
+            -Dsystemd=enabled \
+            -Dcertdb=true \
+            -Dio_uring=disabled \
+            --force-fallback-for=fmt,nlohmann_json \
+            output
+
+      - name: Build
+        run: ninja -C output -v cm4all-certdb cm4all-beng-lb test/acme/pebble-cert.pem
+
+      - name: Set up certdb
+        run: |
+          sudo systemctl start postgresql.service
+          pg_isready
+          sudo -u postgres createuser runner
+          sudo -u postgres createuser cm4all-beng-lb
+          sudo -u postgres createdb certdb
+          sudo -u postgres psql certdb <certdb/certdb.sql
+          sudo -u postgres psql certdb <certdb/acme_account.sql
+          sudo -u postgres psql certdb --command='GRANT SELECT,INSERT,UPDATE,DELETE ON ALL TABLES IN SCHEMA public TO runner'
+          sudo -u postgres psql certdb --command='GRANT UPDATE,SELECT ON server_certificate_id_seq TO runner'
+          sudo -u postgres psql certdb --command='GRANT UPDATE,SELECT ON server_certificate_alt_name_id_seq TO runner'
+          sudo -u postgres psql certdb --command='GRANT UPDATE,SELECT ON acme_account_id_seq TO runner'
+          sudo -u postgres psql certdb --command='GRANT SELECT ON server_certificate, server_certificate_alt_name TO "cm4all-beng-lb"'
+
+      - name: Start beng-lb
+        run: |
+          sudo mkdir -vp /etc/cm4all/beng/lb /usr/lib/cm4all/beng-lb/systemd
+          sudo cp -v test/acme/lb.conf /etc/cm4all/beng/
+          sudo cp -v output/test/acme/ca-cert.pem /etc/cm4all/beng/lb/ca.pem
+          sudo cp -v output/test/acme/pebble-cert.pem /etc/cm4all/beng/lb/cert.pem
+          sudo cp -v output/test/acme/pebble-key.pem /etc/cm4all/beng/lb/key.pem
+          sudo cp -v systemd/lb/run.sh /usr/lib/cm4all/beng-lb/systemd/
+          sudo cp -v debian/cm4all-beng-lb.sysusers /lib/sysusers.d/cm4all-beng-lb.conf
+          sudo cp -v debian/cm4all-beng-lb.service /etc/systemd/system/
+          sudo cp -v output/cm4all-beng-lb /usr/sbin/
+          sudo systemd-sysusers
+          sudo systemctl daemon-reload
+          sudo systemctl start cm4all-beng-lb
+
+      - name: Test ACME client
+        run: |
+          set -x
+          pebble -strict -config output/test/acme/pebble-config.json &
+          sleep 1
+          sudo mkdir -vp /etc/cm4all/beng
+          sudo cp -v test/acme/certdb.conf /etc/cm4all/beng/
+          ACME="./output/cm4all-certdb acme --debug --tls-ca output/test/acme/ca-cert.pem --directory-url https://0.0.0.0:14000/dir --account-db --alpn"
+          $ACME new-account nobody@example.com
+          $ACME new-order foo localhost
+          $ACME renew-cert foo
+          ./output/cm4all-certdb tail
+          ./output/cm4all-certdb get foo
