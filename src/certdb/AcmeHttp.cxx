@@ -4,8 +4,8 @@
 
 #include "AcmeHttp.hxx"
 #include "AcmeChallenge.hxx"
-#include "JWS.hxx"
 #include "lib/sodium/UrlSafeBase64SHA256.hxx"
+#include "jwt/OsslJWK.hxx"
 #include "io/FileWriter.hxx"
 #include "util/SpanCast.hxx"
 
@@ -17,7 +17,7 @@
 std::string
 MakeHttp01(const AcmeChallenge &challenge, EVP_PKEY &account_key)
 {
-	const auto jwk = MakeJwk(account_key).dump();
+	const auto jwk = ToJWK(account_key).dump();
 	return challenge.token + "." +
 		UrlSafeBase64SHA256(AsBytes(jwk)).c_str();
 }

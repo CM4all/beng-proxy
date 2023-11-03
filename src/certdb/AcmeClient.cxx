@@ -10,8 +10,8 @@
 #include "AcmeChallenge.hxx"
 #include "AcmeError.hxx"
 #include "AcmeConfig.hxx"
-#include "JWS.hxx"
 #include "jwt/RS256.hxx"
+#include "jwt/OsslJWK.hxx"
 #include "http/Method.hxx"
 #include "http/Status.hxx"
 #include "lib/fmt/RuntimeError.hxx"
@@ -213,7 +213,7 @@ MakeHeader(EVP_PKEY &key, const char *url, const char *kid,
 	if (kid != nullptr)
 		root.emplace("kid", kid);
 	else
-		root.emplace("jwk", MakeJwk(key));
+		root.emplace("jwk", ToJWK(key));
 	return root;
 }
 

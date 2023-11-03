@@ -877,7 +877,6 @@ if get_option('certdb')
     'src/certdb/FromResult.cxx',
     'src/certdb/Wildcard.cxx',
     'src/certdb/GlueHttpClient.cxx',
-    'src/certdb/JWS.cxx',
     'src/certdb/AcmeError.cxx',
     'src/certdb/AcmeHttp.cxx',
     'src/certdb/AcmeDns.cxx',
