@@ -12,6 +12,7 @@
 #include "AcmeConfig.hxx"
 #include "jwt/RS256.hxx"
 #include "jwt/OsslJWK.hxx"
+#include "jwt/OsslJWS.hxx"
 #include "http/Method.hxx"
 #include "http/Status.hxx"
 #include "lib/fmt/RuntimeError.hxx"
@@ -206,7 +207,7 @@ MakeHeader(const EVP_PKEY &key, const char *url, const char *kid,
 	   std::string_view nonce)
 {
 	json root{
-		{"alg", "RS256"},
+		{"alg", JWS::GetAlg(key)},
 		{"url", url},
 		{"nonce", nonce},
 	};
