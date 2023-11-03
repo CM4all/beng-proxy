@@ -562,6 +562,14 @@ Acme(ConstBuffer<const char *> args)
 
 			config.directory_url = args.front();
 			args.shift();
+		} else if (StringIsEqual(arg, "--tls-ca")) {
+			args.shift();
+
+			if (args.empty())
+				throw std::runtime_error("TLS CA filename missing");
+
+			config.tls_ca = args.front();
+			args.shift();
 		} else if (StringIsEqual(arg, "--debug")) {
 			args.shift();
 			config.debug = true;
@@ -624,6 +632,7 @@ Acme(ConstBuffer<const char *> args)
 			"  --staging     use the Let's Encrypt staging server\n"
 			"  --directory-url URL\n"
 			"                use this ACME server\n"
+			"  --tls-ca FILE accept this CA certificate for TLS\n"
 			"  --debug       enable debug mode\n"
 			"  --account-db  load the ACME account key from the database\n"
 			"  --account-key FILE\n"

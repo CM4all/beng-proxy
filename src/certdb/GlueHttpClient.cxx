@@ -12,8 +12,10 @@
 
 #include <exception>
 
-GlueHttpClient::GlueHttpClient(EventLoop &event_loop)
-	:curl_global(event_loop)
+GlueHttpClient::GlueHttpClient(EventLoop &event_loop,
+			       const char *_tls_ca)
+	:curl_global(event_loop),
+	 tls_ca(_tls_ca)
 {
 }
 
@@ -83,6 +85,9 @@ GlueHttpClient::Request(EventLoop &event_loop,
 
 	GlueHttpResponseHandler handler{event_loop};
 	CurlRequest request(curl_global, uri, handler);
+
+	if (tls_ca != nullptr)
+		request.SetOption(CURLOPT_CAINFO, tls_ca);
 
 	request.SetOption(CURLOPT_VERBOSE, long(verbose));
 

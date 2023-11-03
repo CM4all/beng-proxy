@@ -31,10 +31,13 @@ struct GlueHttpResponse {
 class GlueHttpClient {
 	CurlGlobal curl_global;
 
+	const char *const tls_ca;
+
 	bool verbose = false;
 
 public:
-	explicit GlueHttpClient(EventLoop &event_loop);
+	GlueHttpClient(EventLoop &event_loop,
+		       const char *_tls_ca);
 	~GlueHttpClient();
 
 	GlueHttpClient(const GlueHttpClient &) = delete;

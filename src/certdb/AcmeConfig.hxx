@@ -10,6 +10,8 @@ struct AcmeConfig {
 	std::string account_key_path = "/etc/cm4all/acme/account.key";
 	std::string account_key_id;
 
+	std::string tls_ca;
+
 	std::string directory_url;
 
 	/**

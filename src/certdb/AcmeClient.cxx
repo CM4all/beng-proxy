@@ -99,7 +99,8 @@ ThrowStatusError(GlueHttpResponse &&response, const char *msg)
 }
 
 AcmeClient::AcmeClient(const AcmeConfig &config)
-	:glue_http_client(event_loop),
+	:glue_http_client(event_loop,
+			  config.tls_ca.empty() ? nullptr : config.tls_ca.c_str()),
 	 directory_url(config.GetDirectoryURL()),
 	 account_key_id(config.account_key_id),
 	 fake(config.fake)
