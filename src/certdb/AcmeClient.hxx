@@ -19,6 +19,7 @@
 
 struct AcmeConfig;
 struct AcmeAccount;
+struct AcmeOrderRequest;
 struct AcmeOrder;
 struct AcmeAuthorization;
 struct AcmeChallenge;
@@ -68,10 +69,6 @@ public:
 	AcmeAccount NewAccount(EVP_PKEY &key, const char *email,
 			       bool only_return_existing=false);
 
-	struct OrderRequest {
-		std::forward_list<std::string> identifiers;
-	};
-
 	/**
 	 * Apply for Certificate Issuance.
 	 *
@@ -79,7 +76,7 @@ public:
 	 *
 	 * @param key the account key
 	 */
-	AcmeOrder NewOrder(EVP_PKEY &key, OrderRequest &&request);
+	AcmeOrder NewOrder(EVP_PKEY &key, AcmeOrderRequest &&request);
 
 	AcmeOrder FinalizeOrder(EVP_PKEY &key, const AcmeOrder &order,
 				X509_REQ &csr);

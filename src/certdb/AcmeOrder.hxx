@@ -8,6 +8,10 @@
 #include <forward_list>
 #include <string>
 
+struct AcmeOrderRequest {
+	std::forward_list<std::string> identifiers;
+};
+
 struct AcmeOrder {
 	std::string location;
 

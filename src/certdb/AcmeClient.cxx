@@ -410,7 +410,7 @@ DnsIdentifiersToJson(const std::forward_list<std::string> &identifiers) noexcept
 }
 
 static void
-to_json(json &jv, const AcmeClient::OrderRequest &request) noexcept
+to_json(json &jv, const AcmeOrderRequest &request) noexcept
 {
 	jv = {
 		{"identifiers", DnsIdentifiersToJson(request.identifiers)},
@@ -438,7 +438,7 @@ from_json(const json &j, AcmeOrder &order)
 }
 
 AcmeOrder
-AcmeClient::NewOrder(EVP_PKEY &key, OrderRequest &&request)
+AcmeClient::NewOrder(EVP_PKEY &key, AcmeOrderRequest &&request)
 {
 	EnsureDirectory();
 	if (directory.new_order.empty())

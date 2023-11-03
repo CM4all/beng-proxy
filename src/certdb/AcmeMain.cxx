@@ -396,7 +396,7 @@ AcmeNewOrder(const CertDatabaseConfig &db_config, const AcmeConfig &config,
 	    config.dns_txt_program.empty())
 		throw "Neither --alpn nor --challenge-directory nor --dns-txt-program specified";
 
-	AcmeClient::OrderRequest order_request;
+	AcmeOrderRequest order_request;
 	size_t n_identifiers = 0;
 	for (const auto &i : identifiers) {
 		order_request.identifiers.emplace_front(i);
@@ -500,7 +500,7 @@ AcmeRenewCert(const CertDatabaseConfig &db_config, const AcmeConfig &config,
 	StepProgress progress(_progress,
 			      names.size() * 3 + 5);
 
-	AcmeClient::OrderRequest order_request;
+	AcmeOrderRequest order_request;
 	for (const auto &host : names)
 		order_request.identifiers.emplace_front(host);
 
