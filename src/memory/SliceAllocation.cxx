@@ -4,12 +4,17 @@
 
 #include "SliceAllocation.hxx"
 #include "SliceArea.hxx"
+#include "Checker.hxx"
 
 void
 SliceAllocation::Free() noexcept
 {
 	assert(IsDefined());
 
-	area->Free(data);
+	if (HaveMemoryChecker())
+		free(data);
+	else
+		area->Free(data);
+
 	data = nullptr;
 }
