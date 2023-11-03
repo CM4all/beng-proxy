@@ -100,9 +100,7 @@ ThrowStatusError(GlueHttpResponse &&response, const char *msg)
 
 AcmeClient::AcmeClient(const AcmeConfig &config)
 	:glue_http_client(event_loop),
-	 directory_url(config.staging
-		       ? "https://acme-staging-v02.api.letsencrypt.org/directory"
-		       : "https://acme-v02.api.letsencrypt.org/directory"),
+	 directory_url(config.GetDirectoryURL()),
 	 account_key_id(config.account_key_id),
 	 fake(config.fake)
 {
