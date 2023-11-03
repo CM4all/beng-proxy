@@ -3,6 +3,7 @@
 // author: Max Kellermann <mk@cm4all.com>
 
 #include "AcmeClient.hxx"
+#include "AcmeJson.hxx"
 #include "AcmeAccount.hxx"
 #include "AcmeOrder.hxx"
 #include "AcmeAuthorization.hxx"
@@ -49,21 +50,6 @@ ParseJson(GlueHttpResponse &&response)
 		throw std::runtime_error("JSON expected");
 
 	return json::parse(response.body);
-}
-
-/**
- * Throw an exception if the given JSON document contains an "error"
- * element.
- */
-static void
-CheckThrowError(const json &root)
-{
-	const auto error = root.find("error"sv);
-	if (error == root.end())
-		return;
-
-	if (error->is_object())
-		throw AcmeError(*error);
 }
 
 /**
@@ -125,14 +111,6 @@ AcmeClient::AcmeClient(const AcmeConfig &config)
 }
 
 AcmeClient::~AcmeClient() noexcept = default;
-
-static void
-from_json(const json &j, AcmeDirectory &directory)
-{
-	j.at("newNonce"sv).get_to(directory.new_nonce);
-	j.at("newAccount"sv).get_to(directory.new_account);
-	j.at("newOrder"sv).get_to(directory.new_order);
-}
 
 void
 AcmeClient::RequestDirectory()
@@ -310,49 +288,6 @@ WithLocation(T &&t, const GlueHttpResponse &response) noexcept
 	return std::move(t);
 }
 
-static json
-MakeMailToString(const char *email) noexcept
-{
-	return fmt::format("mailto:{}"sv, email);
-}
-
-static json
-MakeMailToArray(const char *email) noexcept
-{
-	return {MakeMailToString(email)};
-}
-
-static auto
-MakeNewAccountRequest(const char *email, bool only_return_existing) noexcept
-{
-	json root{
-		{"termsOfServiceAgreed", true},
-	};
-
-	if (email != nullptr)
-		root.emplace("contact", MakeMailToArray(email));
-
-	if (only_return_existing)
-		root.emplace("onlyReturnExisting", true);
-
-	return root;
-}
-
-static void
-from_json(const json &j, AcmeAccount::Status &status)
-{
-	status = AcmeAccount::ParseStatus(j.get<std::string_view>());
-}
-
-static void
-from_json(const json &j, AcmeAccount &account)
-{
-	j.at("status"sv).get_to(account.status);
-
-	if (const auto contact = j.find("contact"sv); contact != j.end())
-		contact->get_to(account.contact);
-}
-
 AcmeAccount
 AcmeClient::NewAccount(EVP_PKEY &key, const char *email,
 		       bool only_return_existing)
@@ -389,52 +324,6 @@ AcmeClient::NewAccount(EVP_PKEY &key, const char *email,
 	const auto root = ParseJson(std::move(response));
 	CheckThrowError(root, "Failed to create account");
 	return WithLocation(root.get<AcmeAccount>(), response);
-}
-
-static json
-DnsIdentifierToJson(std::string_view value) noexcept
-{
-	return {
-		{"type", "dns"},
-		{"value", value},
-	};
-}
-
-static json
-DnsIdentifiersToJson(const std::forward_list<std::string> &identifiers) noexcept
-{
-	json root = json::value_t::array;
-	for (const auto &i : identifiers)
-		root.emplace_back(DnsIdentifierToJson(i));
-	return root;
-}
-
-static void
-to_json(json &jv, const AcmeOrderRequest &request) noexcept
-{
-	jv = {
-		{"identifiers", DnsIdentifiersToJson(request.identifiers)},
-	};
-}
-
-static void
-from_json(const json &j, AcmeOrder::Status &status)
-{
-	status = AcmeOrder::ParseStatus(j.get<std::string_view>());
-}
-
-static void
-from_json(const json &j, AcmeOrder &order)
-{
-	j.at("status"sv).get_to(order.status);
-
-	if (auto authorizations = j.find("authorizations"sv); authorizations != j.end())
-		authorizations->get_to(order.authorizations);
-
-	j.at("finalize"sv).get_to(order.finalize);
-
-	if (auto certificate = j.find("certificate"sv); certificate != j.end())
-		certificate->get_to(order.certificate);
 }
 
 AcmeOrder
@@ -519,46 +408,6 @@ AcmeClient::DownloadCertificate(EVP_PKEY &key, const AcmeOrder &order)
 	return UniqueX509((X509 *)PEM_ASN1_read_bio((d2i_of_void *)d2i_X509,
 						    PEM_STRING_X509, in.get(),
 						    nullptr, nullptr, nullptr));
-}
-
-static void
-from_json(const json &j, AcmeChallenge::Status &status)
-{
-	status = AcmeChallenge::ParseStatus(j.get<std::string_view>());
-}
-
-static void
-from_json(const json &j, AcmeChallenge &challenge)
-{
-	j.at("type"sv).get_to(challenge.type);
-	j.at("url"sv).get_to(challenge.uri);
-	j.at("status"sv).get_to(challenge.status);
-	j.at("token"sv).get_to(challenge.token);
-
-	try {
-		CheckThrowError(j);
-	} catch (...) {
-		challenge.error = std::current_exception();
-	}
-}
-
-static void
-from_json(const json &j, AcmeAuthorization::Status &status)
-{
-	status = AcmeAuthorization::ParseStatus(j.get<std::string_view>());
-}
-
-static void
-from_json(const json &j, AcmeAuthorization &response)
-{
-	j.at("status"sv).get_to(response.status);
-	j.at("identifier"sv).at("value"sv).get_to(response.identifier);
-	j.at("challenges"sv).get_to(response.challenges);
-	if (response.challenges.empty())
-		throw std::runtime_error("No challenges");
-
-	if (auto wildcard = j.find("wildcard"sv); wildcard != j.end())
-		wildcard->get_to(response.wildcard);
 }
 
 AcmeAuthorization
