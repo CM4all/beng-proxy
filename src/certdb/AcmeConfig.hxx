@@ -10,6 +10,8 @@ struct AcmeConfig {
 	std::string account_key_path = "/etc/cm4all/acme/account.key";
 	std::string account_key_id;
 
+	std::string directory_url;
+
 	/**
 	 * Specifies the directory mapped to
 	 * "http://example.com/.well-known/acme-challenge/".
@@ -29,6 +31,9 @@ struct AcmeConfig {
 	bool fake = false;
 
 	const char *GetDirectoryURL() const noexcept {
+		if (!directory_url.empty())
+			return directory_url.c_str();
+
 		return staging
 			? "https://acme-staging-v02.api.letsencrypt.org/directory"
 			: "https://acme-v02.api.letsencrypt.org/directory";

@@ -554,6 +554,14 @@ Acme(ConstBuffer<const char *> args)
 		if (StringIsEqual(arg, "--staging")) {
 			args.shift();
 			config.staging = true;
+		} else if (StringIsEqual(arg, "--directory-url")) {
+			args.shift();
+
+			if (args.empty())
+				throw std::runtime_error("Directory URL missing");
+
+			config.directory_url = args.front();
+			args.shift();
 		} else if (StringIsEqual(arg, "--debug")) {
 			args.shift();
 			config.debug = true;
@@ -614,6 +622,8 @@ Acme(ConstBuffer<const char *> args)
 			"\n"
 			"options:\n"
 			"  --staging     use the Let's Encrypt staging server\n"
+			"  --directory-url URL\n"
+			"                use this ACME server\n"
 			"  --debug       enable debug mode\n"
 			"  --account-db  load the ACME account key from the database\n"
 			"  --account-key FILE\n"
