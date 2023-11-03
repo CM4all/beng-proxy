@@ -501,7 +501,7 @@ AcmeRenewCert(const CertDatabaseConfig &db_config, const AcmeConfig &config,
 
 	const auto names = AllNames(old_cert);
 	StepProgress progress(_progress,
-			      names.size() * 3 + 5);
+			      names.size() * 3 + 6);
 
 	AcmeOrderRequest order_request;
 	for (const auto &host : names)
@@ -516,6 +516,16 @@ AcmeRenewCert(const CertDatabaseConfig &db_config, const AcmeConfig &config,
 	const auto req = MakeCertRequest(new_key, old_cert);
 
 	order = client.FinalizeOrder(account_key, order, *req);
+	progress();
+
+	order = WaitOrderFinishProcessing(account_key, client, std::move(order));
+	if (order.status != AcmeOrder::Status::VALID)
+		throw FmtRuntimeError("Bad order status: {}",
+				      AcmeOrder::FormatStatus(order.status));
+
+	if (order.certificate.empty())
+		throw std::runtime_error{"No certificate URL in valid order"};
+
 	progress();
 
 	const auto cert = client.DownloadCertificate(account_key, order);
