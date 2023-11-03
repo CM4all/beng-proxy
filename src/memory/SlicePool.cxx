@@ -4,13 +4,12 @@
 
 #include "SlicePool.hxx"
 #include "SliceArea.hxx"
+#include "Checker.hxx"
 #include "stats/AllocatorStats.hxx"
 #include "system/PageAllocator.hxx"
 #include "system/HugePage.hxx"
 #include "system/VmaName.hxx"
 #include "util/Poison.h"
-#include "util/Sanitizer.hxx"
-#include "util/Valgrind.hxx"
 
 #include <cstdint>
 #include <new>
@@ -28,19 +27,6 @@ static constexpr unsigned
 divide_round_up(unsigned a, unsigned b) noexcept
 {
 	return (a + b - 1) / b;
-}
-
-[[gnu::const]]
-static bool
-HaveMemoryChecker() noexcept
-{
-	if (HaveAddressSanitizer())
-		return true;
-
-	if (HaveValgrind())
-		return true;
-
-	return false;
 }
 
 /*
