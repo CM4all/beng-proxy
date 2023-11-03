@@ -13,13 +13,12 @@
 
 #include <memory>
 
-#if OPENSSL_VERSION_NUMBER >= 0x30000000L
 /* the AES_wrap_key() API was deprecated in OpenSSL 3.0.0, but its
    replacement is more complicated, so let's ignore the warnings until
    we have migrated to libsodium */
+// TODO
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wdeprecated-declarations"
-#endif
 
 class WrapKeyHelper {
 	AES_KEY buffer;
@@ -67,9 +66,7 @@ public:
 	}
 };
 
-#if OPENSSL_VERSION_NUMBER >= 0x30000000L
 #pragma GCC diagnostic pop
-#endif
 
 Pg::BinaryValue
 WrapKey(Pg::BinaryValue key_der, AES_KEY *wrap_key,
