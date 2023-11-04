@@ -49,7 +49,7 @@ struct WidgetSession {
 	void Attach(WidgetSession &&other) noexcept;
 
 	[[gnu::pure]]
-	WidgetSession *GetChild(const char *child_id, bool create) noexcept;
+	WidgetSession *GetChild(std::string_view child_id, bool create) noexcept;
 };
 
 struct Session;
@@ -138,7 +138,7 @@ struct RealmSession {
 	void Expire(Expiry now) noexcept;
 
 	[[gnu::pure]]
-	WidgetSession *GetWidget(const char *widget_id, bool create) noexcept;
+	WidgetSession *GetWidget(std::string_view widget_id, bool create) noexcept;
 };
 
 struct Session {

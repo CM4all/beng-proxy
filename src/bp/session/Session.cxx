@@ -240,18 +240,14 @@ hashmap_r_get_widget_session(WidgetSession::Set &set,
 }
 
 WidgetSession *
-RealmSession::GetWidget(const char *widget_id, bool create) noexcept
+RealmSession::GetWidget(std::string_view widget_id, bool create) noexcept
 {
-	assert(widget_id != nullptr);
-
 	return hashmap_r_get_widget_session(widgets, widget_id, create);
 }
 
 WidgetSession *
-WidgetSession::GetChild(const char *child_id, bool create) noexcept
+WidgetSession::GetChild(std::string_view child_id, bool create) noexcept
 {
-	assert(child_id != nullptr);
-
 	return hashmap_r_get_widget_session(children, child_id, create);
 }
 
