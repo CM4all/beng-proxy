@@ -64,11 +64,6 @@ struct Session;
 struct RealmSession
 	: boost::intrusive::set_base_hook<boost::intrusive::link_mode<boost::intrusive::normal_link>> {
 
-	using SetHook = IntrusiveHashSetHook<IntrusiveHookMode::NORMAL>;
-	SetHook set_hook;
-
-	SetHook by_attach_hook;
-
 	Session &parent;
 
 	struct Compare {
