@@ -266,12 +266,9 @@ SessionManager::DiscardRealmSession(SessionId id, const char *realm_name) noexce
 	if (i == sessions.end())
 		return;
 
-	auto *realm = i->GetRealm(realm_name);
-	if (realm == nullptr)
+	if (!i->DiscardRealm(realm_name))
 		return;
 
-	i->realms.erase_and_dispose(i->realms.iterator_to(*realm),
-				    DeleteDisposer{});
 	if (i->realms.empty())
 		EraseAndDispose(*i);
 }

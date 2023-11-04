@@ -293,3 +293,13 @@ Session::GetRealm(const char *realm_name) noexcept
 	realms.insert_commit(*realm, commit_data);
 	return realm;
 }
+
+bool
+Session::DiscardRealm(const char *realm) noexcept
+{
+	if (auto i = realms.find(realm, RealmSession::Compare{}); i != realms.end()) {
+		realms.erase_and_dispose(i, DeleteDisposer{});
+		return true;
+	} else
+		return false;
+}

@@ -277,6 +277,8 @@ struct Session {
 
 	[[gnu::pure]]
 	RealmSession *GetRealm(const char *realm) noexcept;
+
+	bool DiscardRealm(const char *realm) noexcept;
 };
 
 /**
