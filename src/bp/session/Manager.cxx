@@ -191,7 +191,7 @@ SessionManager::Find(SessionId id) noexcept
 }
 
 RealmSessionLease
-SessionManager::Attach(RealmSessionLease lease, const char *realm,
+SessionManager::Attach(RealmSessionLease lease, std::string_view realm,
 		       std::span<const std::byte> attach) noexcept
 {
 	assert(attach.data() != nullptr);

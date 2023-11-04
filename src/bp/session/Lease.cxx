@@ -19,7 +19,7 @@ SessionLease::Put(SessionManager &manager, Session &session) noexcept
 	manager.Put(session);
 }
 
-RealmSessionLease::RealmSessionLease(SessionLease &&src, const char *realm) noexcept
+RealmSessionLease::RealmSessionLease(SessionLease &&src, std::string_view realm) noexcept
 	:session(src.session != nullptr
 		 ? src.session->GetRealm(realm)
 		 : nullptr),
@@ -30,7 +30,7 @@ RealmSessionLease::RealmSessionLease(SessionLease &&src, const char *realm) noex
 }
 
 RealmSessionLease::RealmSessionLease(SessionManager &_manager,
-				     SessionId id, const char *realm) noexcept
+				     SessionId id, std::string_view realm) noexcept
 	:manager(&_manager)
 {
 	SessionLease parent(_manager, id);

@@ -82,10 +82,10 @@ public:
 	RealmSessionLease() noexcept = default;
 	RealmSessionLease(std::nullptr_t) noexcept {}
 
-	RealmSessionLease(SessionLease &&src, const char *realm) noexcept;
+	RealmSessionLease(SessionLease &&src, std::string_view realm) noexcept;
 
 	RealmSessionLease(SessionManager &_manager,
-			  SessionId id, const char *realm) noexcept;
+			  SessionId id, std::string_view realm) noexcept;
 
 	explicit RealmSessionLease(SessionManager &_manager, RealmSession *_session) noexcept
 		:session(_session), manager(&_manager) {}

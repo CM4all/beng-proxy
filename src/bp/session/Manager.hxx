@@ -133,7 +133,7 @@ public:
 	 *
 	 * @return a new lease for the attached session
 	 */
-	RealmSessionLease Attach(RealmSessionLease lease, const char *realm,
+	RealmSessionLease Attach(RealmSessionLease lease, std::string_view realm,
 				 std::span<const std::byte> attach) noexcept;
 
 	void Put(Session &session) noexcept;
