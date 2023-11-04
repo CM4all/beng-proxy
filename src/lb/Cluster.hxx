@@ -17,11 +17,10 @@
 #include "lib/avahi/ExplorerListener.hxx"
 #endif
 
-#include <boost/intrusive/set.hpp>
-
 #include <forward_list>
 #include <vector>
 #include <string>
+#include <map>
 #include <memory>
 
 struct LbClusterConfig;
@@ -97,10 +96,7 @@ class LbCluster final
 
 #ifdef HAVE_AVAHI
 	class ZeroconfMember final
-		: LeakDetector,
-		  public boost::intrusive::set_base_hook<boost::intrusive::link_mode<boost::intrusive::normal_link>> {
-
-		const std::string key;
+		: LeakDetector {
 
 		AllocatedSocketAddress address;
 
@@ -124,17 +120,14 @@ class LbCluster final
 		sticky_hash_t rendezvous_hash;
 
 	public:
-		ZeroconfMember(const std::string &_key, SocketAddress _address,
+		ZeroconfMember(std::string_view key,
+			       SocketAddress _address,
 			       ReferencedFailureInfo &_failure,
 			       LbMonitorStock *monitors) noexcept;
 		~ZeroconfMember() noexcept;
 
 		ZeroconfMember(const ZeroconfMember &) = delete;
 		ZeroconfMember &operator=(const ZeroconfMember &) = delete;
-
-		std::string_view GetKey() const noexcept {
-			return key;
-		}
 
 		SocketAddress GetAddress() const noexcept {
 			return address;
@@ -160,32 +153,12 @@ class LbCluster final
 		 * Obtain a name identifying this object for logging.
 		 */
 		[[gnu::pure]]
-		const char *GetLogName() const noexcept;
-
-		struct Compare {
-			bool operator()(const ZeroconfMember &a,
-					const ZeroconfMember &b) const noexcept {
-				return a.key < b.key;
-			}
-
-			bool operator()(const ZeroconfMember &a,
-					const std::string &b) const noexcept {
-				return a.key < b;
-			}
-
-			bool operator()(const std::string &a,
-					const ZeroconfMember &b) const noexcept {
-				return a < b.key;
-			}
-		};
+		const char *GetLogName(const char *key) const noexcept;
 	};
 
-	using ZeroconfMemberMap =
-		boost::intrusive::set<ZeroconfMember,
-				      boost::intrusive::compare<ZeroconfMember::Compare>,
-				      boost::intrusive::constant_time_size<false>>;
+	using ZeroconfMemberMap = std::map<std::string, ZeroconfMember, std::less<>>;
 
-	using ZeroconfMemberList = std::vector<ZeroconfMemberMap::pointer>;
+	using ZeroconfMemberList = std::vector<ZeroconfMemberMap::iterator>;
 
 	struct ZeroconfListWrapper;
 
@@ -287,9 +260,9 @@ private:
 	 *
 	 * Zeroconf only.
 	 */
-	const ZeroconfMember *PickZeroconf(Expiry now,
-					   std::span<const std::byte> sticky_source,
-					   sticky_hash_t sticky_hash) noexcept;
+	ZeroconfMemberMap::const_pointer PickZeroconf(Expiry now,
+						      std::span<const std::byte> sticky_source,
+						      sticky_hash_t sticky_hash) noexcept;
 
 	/**
 	 * Like PickZeroconf(), but pick using Consistent Hashing (via
@@ -298,8 +271,8 @@ private:
 	 * To be called by PickZeroconf(), which has already
 	 * lazy-initialized and verified everything.
 	 */
-	const ZeroconfMember &PickZeroconfHashRing(Expiry now,
-						   sticky_hash_t sticky_hash) noexcept;
+	ZeroconfMemberMap::const_reference PickZeroconfHashRing(Expiry now,
+								sticky_hash_t sticky_hash) noexcept;
 
 	/**
 	 * Like PickZeroconf(), but pick using Rendezvous Hashing.
@@ -307,8 +280,8 @@ private:
 	 * To be called by PickZeroconf(), which has already
 	 * lazy-initialized and verified everything.
 	 */
-	const ZeroconfMember &PickZeroconfRendezvous(Expiry now,
-						     std::span<const std::byte> sticky_source) noexcept;
+	ZeroconfMemberMap::const_reference PickZeroconfRendezvous(Expiry now,
+								  std::span<const std::byte> sticky_source) noexcept;
 
 	/**
 	 * Like PickZeroconf(), but pick using #StickyCache.  Returns
@@ -316,8 +289,8 @@ private:
 	 *
 	 * Zeroconf only.
 	 */
-	const ZeroconfMember *PickZeroconfCache(Expiry now,
-						sticky_hash_t sticky_hash) noexcept;
+	ZeroconfMemberMap::const_pointer PickZeroconfCache(Expiry now,
+							   sticky_hash_t sticky_hash) noexcept;
 
 	/**
 	 * Obtain a HTTP connection to a Zeroconf member.
