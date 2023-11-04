@@ -118,7 +118,6 @@ Request::OpenBase(const ResourceAddress &address,
 	case ResourceAddress::Type::NONE:
 	case ResourceAddress::Type::HTTP:
 	case ResourceAddress::Type::PIPE:
-	case ResourceAddress::Type::NFS:
 	case ResourceAddress::Type::CGI:
 	case ResourceAddress::Type::FASTCGI:
 	case ResourceAddress::Type::WAS:

@@ -11,7 +11,6 @@
 #include "translation/Builder.hxx"
 #include "http/cache/FilterCache.hxx"
 #include "http/cache/Public.hxx"
-#include "nfs/Cache.hxx"
 #include "session/Manager.hxx"
 #include "stats/AllocatorStats.hxx"
 #include "net/control/Protocol.hxx"
@@ -52,12 +51,6 @@ BpInstance::GetStats() const noexcept
 	stats.translation_cache_brutto_size = ToBE64(tcache_stats.brutto_size);
 	stats.http_cache_brutto_size = ToBE64(http_cache_stats.brutto_size);
 	stats.filter_cache_brutto_size = ToBE64(fcache_stats.brutto_size);
-
-#ifdef HAVE_LIBNFS
-	const auto nfs_cache_stats = nfs_cache_get_stats(*nfs_cache);
-	stats.nfs_cache_size = ToBE64(nfs_cache_stats.netto_size);
-	stats.nfs_cache_brutto_size = ToBE64(nfs_cache_stats.brutto_size);
-#endif
 
 	const auto io_buffers_stats = fb_pool_get().GetStats();
 	stats.io_buffers_size = ToBE64(io_buffers_stats.netto_size);

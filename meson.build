@@ -446,7 +446,6 @@ raddress = static_library('raddress',
   'src/cgi/Address.cxx',
   'src/file/Address.cxx',
   'src/delegate/Address.cxx',
-  'src/nfs/Address.cxx',
   'src/http/local/Address.cxx',
   'src/http/Address.cxx',
   'src/cluster/AddressList.cxx',
@@ -546,7 +545,6 @@ subdir('src/nghttp2')
 subdir('src/http/cache')
 subdir('src/cgi')
 subdir('src/fcgi')
-subdir('src/nfs')
 subdir('src/delegate')
 subdir('src/bp/session')
 subdir('src/widget')
@@ -584,13 +582,6 @@ if uring_dep.found()
     'src/io/UringOpen.cxx',
     'src/io/UringOpenStat.cxx',
     'src/io/UringStat.cxx',
-  ]
-endif
-
-if nfs_client_dep.found()
-  sources += [
-    'src/nfs/RequestHandler.cxx',
-    'src/nfs/Istream.cxx',
   ]
 endif
 
@@ -706,7 +697,6 @@ executable(
     session_dep,
     widget_dep,
     processor_dep,
-    nfs_client_dep,
     delegate_client_dep,
     control_server_dep,
     nghttp2_client_dep,

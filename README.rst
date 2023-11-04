@@ -31,7 +31,6 @@ Optional dependencies:
 - `nghttp2 <https://nghttp2.org/>`__
 - `libcap2 <https://sites.google.com/site/fullycapable/>`__ for
   dropping unnecessary Linux capabilities
-- `libnfs <https://github.com/sahlberg/libnfs>`__
 - `libseccomp <https://github.com/seccomp/libseccomp>`__ for system
   call filter support
 - `liburing <https://github.com/axboe/liburing>`__

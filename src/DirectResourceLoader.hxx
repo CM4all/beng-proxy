@@ -17,7 +17,6 @@ class WasMetricsHandler;
 class StockMap;
 class LhttpStock;
 class FcgiStock;
-class NfsCache;
 class TcpBalancer;
 namespace Uring { class Queue; }
 class FilteredSocketBalancer;
@@ -45,9 +44,6 @@ class DirectResourceLoader final : public ResourceLoader {
 	RemoteWasStock *const remote_was_stock;
 	WasMetricsHandler *const metrics_handler;
 #endif
-#ifdef HAVE_LIBNFS
-	NfsCache *nfs_cache;
-#endif
 	StockMap *delegate_stock;
 
 	const XForwardedForConfig &xff;
@@ -72,9 +68,6 @@ public:
 			     WasMetricsHandler *_metrics_handler,
 #endif
 			     StockMap *_delegate_stock,
-#ifdef HAVE_LIBNFS
-			     NfsCache *_nfs_cache,
-#endif
 			     SslClientFactory *_ssl_client_factory,
 			     const XForwardedForConfig &_xff) noexcept
 		:event_loop(_event_loop),
@@ -95,9 +88,6 @@ public:
 		 multi_was_stock(_multi_was_stock),
 		 remote_was_stock(_remote_was_stock),
 		 metrics_handler(_metrics_handler),
-#endif
-#ifdef HAVE_LIBNFS
-		 nfs_cache(_nfs_cache),
 #endif
 		 delegate_stock(_delegate_stock),
 		 xff(_xff)

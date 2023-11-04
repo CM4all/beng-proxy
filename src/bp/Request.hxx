@@ -15,7 +15,6 @@
 #include "translation/Transformation.hxx"
 #include "translation/SuffixRegistry.hxx"
 #include "delegate/Handler.hxx"
-#include "nfs/Cache.hxx"
 #include "strmap.hxx"
 #include "session/Id.hxx"
 #include "widget/View.hxx"
@@ -57,9 +56,6 @@ namespace Co { template<typename T> class Task; }
  */
 class Request final : public HttpResponseHandler, DelegateHandler,
 		      TranslateHandler,
-#ifdef HAVE_LIBNFS
-		      NfsCacheHandler,
-#endif
 		      SuffixRegistryHandler, Cancellable, PoolLeakDetector {
 
 public:
@@ -617,8 +613,6 @@ private:
 	void HandleDelegateAddress(const DelegateAddress &address,
 				   const char *path) noexcept;
 
-	void HandleNfsAddress() noexcept;
-
 	/**
 	 * Return a copy of the original request URI for forwarding to the
 	 * next server.  This omits the beng-proxy request "arguments"
@@ -1049,13 +1043,6 @@ private:
 	void OnOpenStat(UniqueFileDescriptor fd,
 			struct statx &st) noexcept;
 	void OnOpenStatError(int error) noexcept;
-
-#ifdef HAVE_LIBNFS
-	/* virtual methods from class NfsCacheHandler */
-	void OnNfsCacheResponse(NfsCacheHandle &handle,
-				const struct statx &st) noexcept override;
-	void OnNfsCacheError(std::exception_ptr ep) noexcept override;
-#endif
 
 	/* virtual methods from class SuffixRegistryHandler */
 	void OnSuffixRegistrySuccess(const char *content_type,

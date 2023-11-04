@@ -248,12 +248,6 @@ Response
 - ``PIPE``: a local program which reads input from stdin and prints the
   modified resource on stdout (see :ref:`pipe`).
 
-- ``NFS_SERVER``: Mount the specified NFS server (see :ref:`nfs`).
-  The payload is a string specifying the server’s IP address.
-
-- ``NFS_EXPORT``: Mount the specified path from the NFS server
-  specified right before this packet (see :ref:`nfs`)
-
 - ``LHTTP_PATH``: a local path which is executed as HTTP server
 
 - ``LHTTP_URI``: the request URI for ``LHTTP_PATH``
@@ -1454,7 +1448,7 @@ indicates that the translation server is willing to look up
 ``Content-Type`` by file name suffix. It will disable the normal
 lookup via *extended attributes*.
 
-When a HTTP request for a static file (local file or NFS file) is
+When a HTTP request for a static file is
 handled, :program:`beng-proxy` will check if the file name has a
 “suffix” (short alphanumeric name after a dot). If will ask the
 translation server for a ``Content-Type`` for this suffix. This

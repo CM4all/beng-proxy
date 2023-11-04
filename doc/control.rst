@@ -88,7 +88,7 @@ Commands
 - ``ENABLE_ZEROCONF``: Re-publish all registered Zeroconf services to
   undo the effect of ``DISABLE_ZEROCONF``.
 
-- ``FLUSH_NFS_CACHE``: Flush all items from the NFS cache.
+- ``FLUSH_NFS_CACHE``: Deprecated.
 
 .. _flush_filter_cache:
 
@@ -106,7 +106,7 @@ Commands
 - ``DISCARD_SESSION``: Discard the session with the given
   :ref:`ATTACH_SESSION <t_attach_session>` value.
 
-Only ``TCACHE_INVALIDATE``, ``FLUSH_NFS_CACHE``,
+Only ``TCACHE_INVALIDATE``,
 ``FLUSH_FILTER_CACHE``, ``STATS`` and ``NODE_STATUS`` are allowed when
 received via IP. The other commands are only accepted from clients
 connected on a local socket (aka Unix Domain Socket, ``AF_LOCAL``).

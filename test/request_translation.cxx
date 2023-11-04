@@ -14,7 +14,6 @@
 #include "http/Address.hxx"
 #include "file/Address.hxx"
 #include "cgi/Address.hxx"
-#include "nfs/Address.hxx"
 #include "net/AllocatedSocketAddress.hxx"
 #include "util/Cancellable.hxx"
 #include "util/PrintException.hxx"
@@ -60,11 +59,6 @@ print_resource_address(const ResourceAddress *address)
 
 	case ResourceAddress::Type::WAS:
 		printf("was=%s\n", address->GetCgi().path);
-		break;
-
-	case ResourceAddress::Type::NFS:
-		printf("nfs=%s:%s\n", address->GetNfs().server,
-		       address->GetNfs().path);
 		break;
 	}
 }

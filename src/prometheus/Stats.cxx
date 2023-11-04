@@ -41,8 +41,6 @@ Write(GrowingBuffer &buffer, std::string_view process,
 	       "beng_proxy_cache_size{{process=\"{}\",type=\"http\",metric=\"brutto\"}} {}\n"
 	       "beng_proxy_cache_size{{process=\"{}\",type=\"filter\",metric=\"netto\"}} {}\n"
 	       "beng_proxy_cache_size{{process=\"{}\",type=\"filter\",metric=\"brutto\"}} {}\n"
-	       "beng_proxy_cache_size{{process=\"{}\",type=\"nfs\",metric=\"netto\"}} {}\n"
-	       "beng_proxy_cache_size{{process=\"{}\",type=\"nfs\",metric=\"brutto\"}} {}\n"
 	       "beng_proxy_buffer_size{{process=\"{}\",type=\"io\",metric=\"netto\"}} {}\n"
 	       "beng_proxy_buffer_size{{process=\"{}\",type=\"io\",metric=\"brutto\"}} {}\n",
 	       process, FromBE32(stats.incoming_connections),
@@ -55,8 +53,6 @@ Write(GrowingBuffer &buffer, std::string_view process,
 	       process, FromBE64(stats.http_cache_brutto_size),
 	       process, FromBE64(stats.filter_cache_size),
 	       process, FromBE64(stats.filter_cache_brutto_size),
-	       process, FromBE64(stats.nfs_cache_size),
-	       process, FromBE64(stats.nfs_cache_brutto_size),
 	       process, FromBE64(stats.io_buffers_size),
 	       process, FromBE64(stats.io_buffers_brutto_size));
 }

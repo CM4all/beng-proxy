@@ -114,8 +114,6 @@ struct BpConfig {
 
 	std::size_t encoding_cache_size = 0;
 
-	size_t nfs_cache_size = 256 * 1024 * 1024;
-
 	unsigned translate_cache_size = 131072;
 	unsigned translate_stock_limit = 32;
 

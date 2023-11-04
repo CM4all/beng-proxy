@@ -7,7 +7,6 @@
 #include "session/Manager.hxx"
 #include "http/cache/FilterCache.hxx"
 #include "http/cache/Public.hxx"
-#include "nfs/Cache.hxx"
 #include "event/net/control/Server.hxx"
 #include "translation/Builder.hxx"
 #include "translation/Protocol.hxx"
@@ -151,10 +150,7 @@ BpInstance::OnControlPacket(ControlServer &control_server,
 		break;
 
 	case ControlCommand::FLUSH_NFS_CACHE:
-#ifdef HAVE_LIBNFS
-		if (nfs_cache != nullptr)
-			nfs_cache_flush(*nfs_cache);
-#endif
+		// deprecated
 		break;
 
 	case ControlCommand::FLUSH_FILTER_CACHE:

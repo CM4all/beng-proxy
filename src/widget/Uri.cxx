@@ -95,7 +95,6 @@ Widget::DetermineAddress(bool stateful) const noexcept
 	case ResourceAddress::Type::NONE:
 	case ResourceAddress::Type::LOCAL:
 	case ResourceAddress::Type::PIPE:
-	case ResourceAddress::Type::NFS:
 		break;
 
 	case ResourceAddress::Type::HTTP:

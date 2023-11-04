@@ -455,7 +455,6 @@ http_cache_key(struct pool &pool, const ResourceAddress &address) noexcept
 	case ResourceAddress::Type::CGI:
 	case ResourceAddress::Type::FASTCGI:
 	case ResourceAddress::Type::WAS:
-	case ResourceAddress::Type::NFS:
 		return address.GetId(pool);
 	}
 

@@ -15,7 +15,6 @@ struct FileAddress;
 struct LhttpAddress;
 struct HttpAddress;
 struct CgiAddress;
-struct NfsAddress;
 class MatchData;
 class AllocatorPtr;
 
@@ -33,7 +32,6 @@ struct ResourceAddress {
 		CGI,
 		FASTCGI,
 		WAS,
-		NFS,
 	};
 
 	Type type;
@@ -48,15 +46,12 @@ private:
 
 		const CgiAddress *cgi;
 
-		const NfsAddress *nfs;
-
 		U() = default;
 		constexpr U(std::nullptr_t n) noexcept:file(n) {}
 		constexpr U(const FileAddress &_file) noexcept:file(&_file) {}
 		constexpr U(const HttpAddress &_http) noexcept:http(&_http) {}
 		constexpr U(const LhttpAddress &_lhttp) noexcept:lhttp(&_lhttp) {}
 		constexpr U(const CgiAddress &_cgi) noexcept:cgi(&_cgi) {}
-		constexpr U(const NfsAddress &_nfs) noexcept:nfs(&_nfs) {}
 	} u;
 
 public:
@@ -77,9 +72,6 @@ public:
 	constexpr ResourceAddress(Type _type,
 				  const CgiAddress &cgi) noexcept
 		:type(_type), u(cgi) {}
-
-	constexpr ResourceAddress(const NfsAddress &nfs) noexcept
-		:type(Type::NFS), u(nfs) {}
 
 	constexpr ResourceAddress(ShallowCopy, const ResourceAddress &src) noexcept
 		:type(src.type), u(src.u) {}
@@ -160,20 +152,6 @@ public:
 		assert(type == Type::LHTTP);
 
 		return *const_cast<LhttpAddress *>(u.lhttp);
-	}
-
-	[[gnu::pure]]
-	const NfsAddress &GetNfs() const noexcept {
-		assert(type == Type::NFS);
-
-		return *u.nfs;
-	}
-
-	[[gnu::pure]]
-	NfsAddress &GetNfs() noexcept {
-		assert(type == Type::NFS);
-
-		return *const_cast<NfsAddress *>(u.nfs);
 	}
 
 	[[gnu::pure]]

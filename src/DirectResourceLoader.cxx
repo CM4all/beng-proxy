@@ -16,8 +16,6 @@
 #include "fcgi/Remote.hxx"
 #include "was/Glue.hxx"
 #include "was/MGlue.hxx"
-#include "nfs/Address.hxx"
-#include "nfs/Glue.hxx"
 #include "pipe_filter.hxx"
 #include "delegate/Address.hxx"
 #include "delegate/HttpRequest.hxx"
@@ -61,9 +59,6 @@ try {
 	switch (address.type) {
 		const FileAddress *file;
 		const CgiAddress *cgi;
-#ifdef HAVE_LIBNFS
-		const NfsAddress *nfs;
-#endif
 
 	case ResourceAddress::Type::NONE:
 		break;
@@ -97,22 +92,6 @@ try {
 				false,
 				handler, cancel_ptr);
 		return;
-
-	case ResourceAddress::Type::NFS:
-#ifdef HAVE_LIBNFS
-		/* NFS files cannot receive a request body, close it */
-		body.Clear();
-
-		nfs = &address.GetNfs();
-
-		nfs_request(pool, *nfs_cache,
-			    nfs->server, nfs->export_name,
-			    nfs->path, nfs->content_type,
-			    handler, cancel_ptr);
-		return;
-#else
-		throw std::runtime_error("NFS support is disabled");
-#endif
 
 	case ResourceAddress::Type::PIPE:
 		cgi = &address.GetCgi();

@@ -58,7 +58,6 @@ Request::HandleProxyAddress() noexcept
 
 	assert(address.type == ResourceAddress::Type::HTTP ||
 	       address.type == ResourceAddress::Type::LHTTP ||
-	       address.type == ResourceAddress::Type::NFS ||
 	       address.IsCgiAlike());
 
 	if (tr.transparent &&

@@ -11,7 +11,6 @@
 #include "Instance.hxx"
 #include "load_file.hxx"
 #include "file/Address.hxx"
-#include "nfs/Address.hxx"
 #include "session/Lease.hxx"
 #include "session/Session.hxx"
 #include "ExternalSession.hxx"
@@ -87,12 +86,6 @@ Request::HandleAddress(const ResourceAddress &address)
 	case ResourceAddress::Type::LOCAL:
 		HandleFileAddress(address.GetFile());
 		break;
-
-#ifdef HAVE_LIBNFS
-	case ResourceAddress::Type::NFS:
-		HandleNfsAddress();
-		break;
-#endif
 
 	default:
 		HandleProxyAddress();

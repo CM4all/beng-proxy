@@ -31,8 +31,6 @@
 #include "delegate/Stock.hxx"
 #include "thread/Pool.hxx"
 #include "pipe/Stock.hxx"
-#include "nfs/Stock.hxx"
-#include "nfs/Cache.hxx"
 #include "DirectResourceLoader.hxx"
 #include "CachedResourceLoader.hxx"
 #include "FilterResourceLoader.hxx"
@@ -79,16 +77,6 @@
 
 #ifndef NDEBUG
 bool debug_mode = false;
-#endif
-
-#ifdef HAVE_LIBCAP
-
-static constexpr cap_value_t cap_keep_list[] = {
-	/* allow libnfs to bind to privileged ports, which in turn allows
-	   disabling the "insecure" flag on the NFS server */
-	CAP_NET_BIND_SERVICE,
-};
-
 #endif
 
 inline TranslationServiceBuilder &
@@ -189,11 +177,6 @@ BpInstance::ReloadEventCallback(int) noexcept
 
 	if (encoding_cache)
 		encoding_cache->Flush();
-
-#ifdef HAVE_LIBNFS
-	if (nfs_cache != nullptr)
-		nfs_cache_flush(*nfs_cache);
-#endif
 
 #ifdef HAVE_NGHTTP2
 	if (nghttp2_stock != nullptr)
@@ -478,14 +461,6 @@ try {
 	instance.delegate_stock = delegate_stock_new(instance.event_loop,
 						     *instance.spawn_service);
 
-#ifdef HAVE_LIBNFS
-	instance.nfs_stock = nfs_stock_new(instance.event_loop);
-	instance.nfs_cache = nfs_cache_new(instance.root_pool,
-					   instance.config.nfs_cache_size,
-					   *instance.nfs_stock,
-					   instance.event_loop);
-#endif
-
 	instance.direct_resource_loader =
 		new DirectResourceLoader(instance.event_loop,
 #ifdef HAVE_URING
@@ -506,9 +481,6 @@ try {
 					 &instance,
 #endif
 					 instance.delegate_stock,
-#ifdef HAVE_LIBNFS
-					 instance.nfs_cache,
-#endif
 					 instance.ssl_client_factory.get(),
 					 instance.config.access_log.xff);
 
@@ -589,7 +561,7 @@ try {
 
 #ifdef HAVE_LIBCAP
 	try {
-		capabilities_post_setuid(cap_keep_list);
+		capabilities_post_setuid({});
 	} catch (...) {
 		/* if we failed to preserve CAP_NET_BIND_SERVICE, drop
 		   all capabilities */

@@ -6,7 +6,6 @@
 #include "SuffixRegistry.hxx"
 #include "ResourceAddress.hxx"
 #include "file/Address.hxx"
-#include "nfs/Address.hxx"
 #include "util/CharUtil.hxx"
 #include "util/Compiler.h"
 #include "AllocatorPtr.hxx"
@@ -54,9 +53,6 @@ GetAddressSuffixInfo(const ResourceAddress &address) noexcept
 
 	case ResourceAddress::Type::LOCAL:
 		return {address.GetFile().path, address.GetFile().content_type_lookup};
-
-	case ResourceAddress::Type::NFS:
-		return {address.GetNfs().path, address.GetNfs().content_type_lookup};
 	}
 
 	gcc_unreachable();

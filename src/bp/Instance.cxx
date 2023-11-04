@@ -35,8 +35,6 @@
 #include "stock/MapStock.hxx"
 #include "session/Manager.hxx"
 #include "session/Save.hxx"
-#include "nfs/Stock.hxx"
-#include "nfs/Cache.hxx"
 #include "spawn/Client.hxx"
 #include "access_log/Glue.hxx"
 #include "util/PrintException.hxx"
@@ -137,18 +135,6 @@ BpInstance::FreeStocksAndCaches() noexcept
 		delegate_stock = nullptr;
 	}
 
-#ifdef HAVE_LIBNFS
-	if (nfs_cache != nullptr) {
-		nfs_cache_free(nfs_cache);
-		nfs_cache = nullptr;
-	}
-
-	if (nfs_stock != nullptr) {
-		nfs_stock_free(nfs_stock);
-		nfs_stock = nullptr;
-	}
-#endif
-
 	delete std::exchange(pipe_stock, nullptr);
 }
 
@@ -168,11 +154,6 @@ BpInstance::ForkCow(bool inherit) noexcept
 
 	if (encoding_cache)
 		encoding_cache->ForkCow(inherit);
-
-#ifdef HAVE_LIBNFS
-	if (nfs_cache != nullptr)
-		nfs_cache_fork_cow(*nfs_cache, inherit);
-#endif
 }
 
 void

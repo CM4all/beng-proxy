@@ -49,7 +49,7 @@ BpConfig::HandleSet(std::string_view name, const char *value)
 	} else if (name == "encoding_cache_size"sv) {
 		encoding_cache_size = ParseSize(value);
 	} else if (name == "nfs_cache_size"sv) {
-		nfs_cache_size = ParseSize(value);
+		/* deprecated */
 	} else if (name == "translate_cache_size"sv) {
 		translate_cache_size = ParseUnsignedLong(value);
 	} else if (name == "translate_stock_limit"sv) {

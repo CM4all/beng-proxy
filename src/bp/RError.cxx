@@ -9,7 +9,6 @@
 #include "Request.hxx"
 #include "Instance.hxx"
 #include "http/Client.hxx"
-#include "nfs/Error.hxx"
 #include "cgi/Error.hxx"
 #include "fcgi/Error.hxx"
 #include "was/async/Error.hxx"
@@ -23,10 +22,6 @@
 #include "net/SocketProtocolError.hxx"
 #include "net/TimeoutError.hxx"
 #include "util/Exception.hxx"
-
-#ifdef HAVE_LIBNFS
-#include <nfsc/libnfs-raw-nfs.h>
-#endif
 
 bool
 Request::DispatchHttpMessageResponse(std::exception_ptr e) noexcept
@@ -126,17 +121,6 @@ ToResponse(struct pool &pool, std::exception_ptr ep) noexcept
 	    FindNested<FcgiClientError>(ep) ||
 	    FindNested<CgiError>(ep))
 		return {HttpStatus::BAD_GATEWAY, "Script failed"};
-
-#ifdef HAVE_LIBNFS
-	if (const auto *e = FindNested<NfsClientError>(ep)) {
-		switch (e->GetCode()) {
-		case NFS3ERR_NOENT:
-		case NFS3ERR_NOTDIR:
-			return {HttpStatus::NOT_FOUND,
-				"The requested file does not exist."};
-		}
-	}
-#endif
 
 	if (FindNested<TimeoutError>(ep))
 		return {HttpStatus::BAD_GATEWAY,

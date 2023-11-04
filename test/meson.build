@@ -368,23 +368,6 @@ if avahi_dep.found()
   )
 endif
 
-if nfs_client_dep.found()
-  executable(
-    'run_nfs_client',
-    'run_nfs_client.cxx',
-    '../src/nfs/Istream.cxx',
-    include_directories: inc,
-    dependencies: [
-      test_instance_dep,
-      nfs_client_dep,
-      istream_pipe_dep,
-      istream_dep,
-      stock_dep,
-      io_dep,
-    ],
-  )
-endif
-
 test(
   't_cache',
   executable(

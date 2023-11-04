@@ -482,8 +482,6 @@ class Translation(Protocol):
             response.packet(TRANSLATE_TRANSPARENT)
         elif raw_uri[:6] == '/1234/':
             response.http('http://localhost:1234/' + raw_uri[4:])
-        elif raw_uri[:5] == '/nfs/':
-            response.nfs('172.28.0.8', '/srv/nfs4/foo', raw_uri[4:])
         elif uri[:8] == '/fcgi.rb':
             response.packet(TRANSLATE_FASTCGI, os.path.join(test_script_path, 'fcgi.rb'))
             response.packet(TRANSLATE_NO_NEW_PRIVS)

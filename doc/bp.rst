@@ -788,30 +788,6 @@ used to generate a resource, but only for resource filters. The same can
 be achieved with CGI, but pipes are simpler to implement, because they
 do not need to bother with HTTP status code and headers.
 
-.. _nfs:
-
-NFS
----
-
-:program:`beng-proxy` can serve files right from a NFSv3 server without having to
-mount it locally. The NFS server must accept “insecure” connections,
-that is connections from non-privileged source ports. Don’t fear,
-calling it “insecure” is an exaggeration; that option’s name was chosen
-long ago, when people thought the concept of “privileged ports” would
-benefit security.
-
-Three translation response packets are necessary to construct an NFS
-resource address; example::
-
-   NFS_SERVER "1.2.3.4"
-   NFS_EXPORT "/srv/nfs/foo"
-   PATH "/index.html"
-
-This mounts the path :file:`/srv/nfs/foo` from server ``1.2.3.4`` and
-serves the file ``index.html``. The leading slashes are necessary.
-
-The options above are compatible with ``BASE`` and ``EXPAND_PATH``.
-
 .. _lhttp:
 
 Local HTTP

@@ -58,8 +58,6 @@ class MultiTranslationService;
 class WidgetRegistry;
 class LhttpStock;
 class FcgiStock;
-class NfsStock;
-class NfsCache;
 class HttpCache;
 class FilterCache;
 class EncodingCache;
@@ -173,11 +171,6 @@ struct BpInstance final : PInstance, ControlHandler, SpawnServerClientHandler,
 #endif
 
 	StockMap *delegate_stock = nullptr;
-
-#ifdef HAVE_LIBNFS
-	NfsStock *nfs_stock = nullptr;
-	NfsCache *nfs_cache = nullptr;
-#endif
 
 	PipeStock *pipe_stock = nullptr;
 

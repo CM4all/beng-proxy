@@ -8,7 +8,6 @@
 #include "http/Address.hxx"
 #include "http/Status.hxx"
 #include "cgi/Address.hxx"
-#include "nfs/Address.hxx"
 #include "uri/Extract.hxx"
 #include "uri/Verify.hxx"
 #include "uri/Base.hxx"
@@ -53,10 +52,6 @@ ResourceAddress::CopyFrom(AllocatorPtr alloc,
 	case Type::WAS:
 		u.cgi = src.u.cgi->Clone(alloc);
 		break;
-
-	case Type::NFS:
-		u.nfs = alloc.New<NfsAddress>(alloc, *src.u.nfs);
-		break;
 	}
 }
 
@@ -73,7 +68,6 @@ ResourceAddress::WithPath(AllocatorPtr alloc, const char *path) const noexcept
 	case Type::NONE:
 	case Type::LOCAL:
 	case Type::PIPE:
-	case Type::NFS:
 	case Type::CGI:
 	case Type::FASTCGI:
 	case Type::WAS:
@@ -102,7 +96,6 @@ ResourceAddress::WithQueryStringFrom(AllocatorPtr alloc,
 	case Type::NONE:
 	case Type::LOCAL:
 	case Type::PIPE:
-	case Type::NFS:
 		/* no query string support */
 		return {ShallowCopy(), *this};
 
@@ -155,7 +148,6 @@ ResourceAddress::WithArgs(AllocatorPtr alloc,
 	case Type::NONE:
 	case Type::LOCAL:
 	case Type::PIPE:
-	case Type::NFS:
 		/* no arguments support */
 		return {ShallowCopy(), *this};
 
@@ -197,7 +189,6 @@ ResourceAddress::AutoBase(AllocatorPtr alloc, const char *uri) const noexcept
 	case Type::PIPE:
 	case Type::HTTP:
 	case Type::LHTTP:
-	case Type::NFS:
 		return nullptr;
 
 	case Type::CGI:
@@ -255,15 +246,6 @@ ResourceAddress::SaveBase(AllocatorPtr alloc,
 				return nullptr;
 
 			return *lhttp;
-		}
-
-	case Type::NFS:
-		{
-			auto *nfs = GetNfs().SaveBase(alloc, suffix);
-			if (nfs == nullptr)
-				return nullptr;
-
-			return *nfs;
 		}
 	}
 
@@ -357,15 +339,6 @@ ResourceAddress::LoadBase(AllocatorPtr alloc,
 
 			return *lhttp;
 		}
-
-	case Type::NFS:
-		{
-			auto *nfs = GetNfs().LoadBase(alloc, suffix);
-			if (nfs == nullptr)
-				return nullptr;
-
-			return *nfs;
-		}
 	}
 
 	assert(false);
@@ -411,7 +384,6 @@ ResourceAddress::Apply(AllocatorPtr alloc,
 
 	case Type::LOCAL:
 	case Type::PIPE:
-	case Type::NFS:
 		return {ShallowCopy(), *this};
 
 	case Type::HTTP:
@@ -451,7 +423,6 @@ ResourceAddress::RelativeTo(const ResourceAddress &base) const noexcept
 	case Type::NONE:
 	case Type::LOCAL:
 	case Type::PIPE:
-	case Type::NFS:
 		return {};
 
 	case Type::HTTP:
@@ -481,7 +452,6 @@ ResourceAddress::RelativeToApplied(AllocatorPtr alloc,
 	case Type::NONE:
 	case Type::LOCAL:
 	case Type::PIPE:
-	case Type::NFS:
 	case Type::HTTP:
 		break;
 
@@ -523,9 +493,6 @@ ResourceAddress::GetId(AllocatorPtr alloc) const noexcept
 	case Type::FASTCGI:
 	case Type::WAS:
 		return u.cgi->GetId(alloc);
-
-	case Type::NFS:
-		return u.nfs->GetId(alloc);
 	}
 
 	assert(false);
@@ -539,7 +506,6 @@ ResourceAddress::GetFilePath() const noexcept
 	case Type::NONE:
 	case Type::HTTP:
 	case Type::PIPE:
-	case Type::NFS:
 	case Type::CGI:
 	case Type::FASTCGI:
 	case Type::WAS:
@@ -561,7 +527,6 @@ ResourceAddress::GetFileOrExecutablePath() const noexcept
 	case Type::NONE:
 	case Type::HTTP:
 	case Type::PIPE:
-	case Type::NFS:
 		return nullptr;
 
 	case Type::CGI:
@@ -590,7 +555,6 @@ ResourceAddress::GetHostAndPort() const noexcept
 	case Type::CGI:
 	case Type::FASTCGI:
 	case Type::WAS:
-	case Type::NFS:
 		return nullptr;
 
 	case Type::HTTP:
@@ -611,7 +575,6 @@ ResourceAddress::GetUriPath() const noexcept
 	case Type::NONE:
 	case Type::LOCAL:
 	case Type::PIPE:
-	case Type::NFS:
 		return nullptr;
 
 	case Type::HTTP:
@@ -658,10 +621,6 @@ ResourceAddress::Check() const
 	case Type::WAS:
 		u.cgi->Check(type == Type::WAS);
 		break;
-
-	case Type::NFS:
-		u.nfs->Check();
-		break;
 	}
 }
 
@@ -686,9 +645,6 @@ ResourceAddress::IsValidBase() const noexcept
 	case Type::FASTCGI:
 	case Type::WAS:
 		return u.cgi->IsValidBase();
-
-	case Type::NFS:
-		return u.nfs->IsValidBase();
 	}
 
 	assert(false);
@@ -716,9 +672,6 @@ ResourceAddress::HasQueryString() const noexcept
 	case Type::FASTCGI:
 	case Type::WAS:
 		return u.cgi->HasQueryString();
-
-	case Type::NFS:
-		return u.nfs->HasQueryString();
 	}
 
 	/* unreachable */
@@ -747,9 +700,6 @@ ResourceAddress::IsExpandable() const noexcept
 
 	case Type::LHTTP:
 		return u.lhttp->IsExpandable();
-
-	case Type::NFS:
-		return u.nfs->IsExpandable();
 	}
 
 	assert(false);
@@ -793,12 +743,6 @@ ResourceAddress::Expand(AllocatorPtr alloc, const MatchData &match_data)
 		   in-line) and expand it */
 		u.lhttp = lhttp = u.lhttp->Dup(alloc);
 		lhttp->Expand(alloc, match_data);
-		break;
-
-	case Type::NFS:
-		/* copy the nfs_address object (it's a pointer, not
-		   in-line) and expand it */
-		u.nfs = u.nfs->Expand(alloc, match_data);
 		break;
 	}
 }
