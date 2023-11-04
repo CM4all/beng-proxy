@@ -308,6 +308,12 @@ CollectPendingAuthorizations(const CertDatabaseConfig &db_config,
 	for (auto &i : alpn_map)
 		i.second->Commit(db_config);
 
+	/* wait for a moment so the changes we just commited can take
+	   effect (e.g. beng-lb updates its CertNameCache after
+	   receiving a PostgreSQL notification about a new alpn-01
+	   certificate) before we ask the ACME server to check them */
+	std::this_thread::sleep_for(std::chrono::seconds{1});
+
 	/* update all challenges, which triggers the server-side
 	   check */
 	while (!challenges.empty()) {

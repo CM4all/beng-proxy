@@ -10,6 +10,7 @@ cm4all-beng-proxy (18.0.45) unstable; urgency=low
   * certdb/acme: relaxed JSON Content-Type check
   * certdb/acme: support ECDSA account keys
   * certdb/acme: retry after "badNonce" error
+  * certdb/acme: delay challenge update to avoid race with cache invalidation
   * debian: remove obsolete dependency on libc-ares-dev
   * make Lua optional
   * drop support for PolicyKit older than version 121
