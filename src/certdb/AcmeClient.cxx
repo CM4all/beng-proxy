@@ -10,7 +10,6 @@
 #include "AcmeChallenge.hxx"
 #include "AcmeError.hxx"
 #include "AcmeConfig.hxx"
-#include "jwt/RS256.hxx"
 #include "jwt/OsslJWK.hxx"
 #include "jwt/OsslJWS.hxx"
 #include "http/Method.hxx"
@@ -263,8 +262,8 @@ AcmeClient::SignedRequest(EVP_PKEY &key,
 	const json root{
 		{"payload", payload_b64.c_str()},
 		{"signature",
-		 JWT::SignRS256(key, protected_header_b64.c_str(),
-				payload_b64.c_str()).c_str()},
+		 JWS::Sign(key, protected_header_b64.c_str(),
+			   payload_b64.c_str()).c_str()},
 		{"protected", protected_header_b64.c_str()},
 	};
 
