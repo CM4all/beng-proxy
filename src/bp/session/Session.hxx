@@ -20,6 +20,8 @@
 #include <boost/intrusive/set.hpp>
 
 #include <chrono>
+#include <map>
+#include <string>
 
 #include <string.h>
 
@@ -29,33 +31,8 @@ struct HttpAddress;
 /**
  * Session data associated with a widget instance (struct widget).
  */
-struct WidgetSession
-	: boost::intrusive::set_base_hook<boost::intrusive::link_mode<boost::intrusive::normal_link>> {
-
-	struct Compare {
-		[[gnu::pure]]
-		bool operator()(const WidgetSession &a, const WidgetSession &b) const noexcept {
-			return strcmp(a.id.c_str(), b.id.c_str()) < 0;
-		}
-
-		[[gnu::pure]]
-		bool operator()(const WidgetSession &a, const char *b) const noexcept {
-			return strcmp(a.id.c_str(), b) < 0;
-		}
-
-		[[gnu::pure]]
-		bool operator()(const char *a, const WidgetSession &b) const noexcept {
-			return strcmp(a, b.id.c_str()) < 0;
-		}
-	};
-
-	using Set = boost::intrusive::set<WidgetSession,
-					  boost::intrusive::compare<Compare>,
-					  boost::intrusive::constant_time_size<false>>;
-
-	/** local id of this widget; must not be nullptr since widgets
-	    without an id cannot have a session */
-	const AllocatedString id;
+struct WidgetSession {
+	using Set = std::map<std::string, WidgetSession, std::less<>>;
 
 	Set children;
 
@@ -65,11 +42,12 @@ struct WidgetSession
 	/** last query string */
 	AllocatedString query_string;
 
-	template<typename I>
-	explicit WidgetSession(I &&_id) noexcept
-		:id(std::forward<I>(_id)) {}
+	WidgetSession() noexcept = default;
 
 	~WidgetSession() noexcept;
+
+	WidgetSession(WidgetSession &&) noexcept = default;
+	WidgetSession &operator=(WidgetSession &&) noexcept = default;
 
 	static void Attach(Set &dest, Set &&src) noexcept;
 	void Attach(WidgetSession &&other) noexcept;

@@ -113,12 +113,11 @@ DoReadWidgetSession(FileReader &file, WidgetSession &ws)
 	Expect32(file, MAGIC_END_OF_RECORD);
 }
 
-static std::unique_ptr<WidgetSession>
+static WidgetSession
 ReadWidgetSession(FileReader &file)
 {
-	auto id = file.ReadString();
-	auto ws = std::make_unique<WidgetSession>(std::move(id));
-	DoReadWidgetSession(file, *ws);
+	WidgetSession ws;
+	DoReadWidgetSession(file, ws);
 	return ws;
 }
 
@@ -132,9 +131,9 @@ ReadWidgetSessions(FileReader &file, WidgetSession::Set &widgets)
 		} else if (magic != MAGIC_WIDGET_SESSION)
 			throw SessionDeserializerError();
 
+		auto id = file.ReadString();
 		auto ws = ReadWidgetSession(file);
-		if (widgets.insert(*ws).second)
-			ws.release();
+		widgets.emplace(std::string_view{id.c_str()}, std::move(ws));
 	}
 }
 

@@ -17,16 +17,15 @@ static constexpr std::chrono::seconds SESSION_TTL_NEW(120);
 void
 WidgetSession::Attach(Set &dest, Set &&src) noexcept
 {
-	src.clear_and_dispose([&dest](WidgetSession *other_ws){
-		Set::insert_commit_data commit_data;
-		auto [existing, inserted] = dest.insert(*other_ws);
-		if (!inserted) {
+	while (!src.empty()) {
+		auto node = src.extract(src.begin());
+		auto i = dest.insert(std::move(node));
+		if (!i.inserted) {
 			/* this WidgetSession exists already - attach
 			   it (recursively) */
-			existing->Attach(std::move(*other_ws));
-			delete other_ws;
+			i.position->second.Attach(std::move(i.node.mapped()));
 		}
-	});
+	}
 }
 
 void
@@ -41,10 +40,7 @@ WidgetSession::Attach(WidgetSession &&src) noexcept
 	}
 }
 
-RealmSession::~RealmSession() noexcept
-{
-	widgets.clear_and_dispose(DeleteDisposer{});
-}
+RealmSession::~RealmSession() noexcept = default;
 
 void
 RealmSession::Attach(RealmSession &&other) noexcept
@@ -234,20 +230,20 @@ Session::SetExternalManager(const HttpAddress &address,
 
 static WidgetSession *
 hashmap_r_get_widget_session(WidgetSession::Set &set,
-			     const char *id, bool create)
+			     std::string_view id, bool create)
 {
-	assert(id != nullptr);
-
-	auto i = set.find(id, WidgetSession::Compare());
-	if (i != set.end())
-		return &*i;
+	if (auto i = set.find(id); i != set.end())
+		return &i->second;
 
 	if (!create)
 		return nullptr;
 
-	auto *ws = new WidgetSession(id);
-	set.insert(*ws);
-	return ws;
+	// TODO optimize, use hint with lower_bound()
+	auto [it, inserted] = set.emplace(std::piecewise_construct,
+					  std::forward_as_tuple(id),
+					  std::forward_as_tuple());
+	assert(inserted);
+	return &it->second;
 }
 
 WidgetSession *
@@ -266,10 +262,7 @@ WidgetSession::GetChild(const char *child_id, bool create) noexcept
 	return hashmap_r_get_widget_session(children, child_id, create);
 }
 
-WidgetSession::~WidgetSession() noexcept
-{
-	children.clear_and_dispose(DeleteDisposer{});
-}
+WidgetSession::~WidgetSession() noexcept = default;
 
 void
 RealmSession::Expire(Expiry now) noexcept

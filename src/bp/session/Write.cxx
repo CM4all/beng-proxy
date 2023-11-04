@@ -115,7 +115,6 @@ WriteWidgetSessions(FileWriter &file, const WidgetSession::Set &widgets);
 static void
 WriteWidgetSession(FileWriter &file, const WidgetSession &session)
 {
-	file.Write(session.id);
 	WriteWidgetSessions(file, session.children);
 	file.Write(session.path_info);
 	file.Write(session.query_string);
@@ -125,8 +124,9 @@ WriteWidgetSession(FileWriter &file, const WidgetSession &session)
 static void
 WriteWidgetSessions(FileWriter &file, const WidgetSession::Set &widgets)
 {
-	for (const auto &ws : widgets) {
+	for (const auto &[id, ws] : widgets) {
 		file.Write32(MAGIC_WIDGET_SESSION);
+		file.Write(id);
 		WriteWidgetSession(file, ws);
 	}
 

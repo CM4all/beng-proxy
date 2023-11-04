@@ -83,24 +83,24 @@ session_drop_widgets(RealmSession &session, const char *uri,
 		     const WidgetRef *ref) noexcept
 {
 	WidgetSession::Set *map = &session.widgets;
-	const char *id = uri;
+	std::string_view id = uri;
 
 	while (true) {
-		auto i = map->find(id, WidgetSession::Compare());
+		auto i = map->find(id);
 		if (i == map->end())
 			/* no such widget session */
 			return;
 
-		auto &ws = *i;
+		auto &ws = i->second;
 
 		if (ref == nullptr) {
 			/* found the widget session */
-			map->erase_and_dispose(i, DeleteDisposer{});
+			map->erase(i);
 			return;
 		}
 
 		map = &ws.children;
-		id = ref->id;
+		id = i->first;
 		ref = ref->next;
 	}
 }
