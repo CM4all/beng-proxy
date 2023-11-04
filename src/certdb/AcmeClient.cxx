@@ -21,6 +21,7 @@
 #include "util/AllocatedString.hxx"
 #include "util/Exception.hxx"
 #include "util/MimeType.hxx"
+#include "util/SpanCast.hxx"
 
 #include <nlohmann/json.hpp>
 
@@ -225,13 +226,6 @@ AcmeClient::Request(HttpMethod method, const char *uri,
 }
 
 GlueHttpResponse
-AcmeClient::Request(HttpMethod method, const char *uri,
-		    const json &body)
-{
-	return Request(method, uri, body.dump());
-}
-
-GlueHttpResponse
 AcmeClient::SignedRequest(EVP_PKEY &key,
 			  HttpMethod method, const char *uri,
 			  std::span<const std::byte> payload)
@@ -255,16 +249,7 @@ AcmeClient::SignedRequest(EVP_PKEY &key,
 		{"protected", protected_header_b64.c_str()},
 	};
 
-	return Request(method, uri, root);
-}
-
-GlueHttpResponse
-AcmeClient::SignedRequest(EVP_PKEY &key,
-			  HttpMethod method, const char *uri,
-			  const json &payload)
-{
-	return SignedRequest(key, method, uri,
-			     payload.dump());
+	return Request(method, uri, AsBytes(root.dump()));
 }
 
 template<typename T>
@@ -291,7 +276,7 @@ AcmeClient::NewAccount(EVP_PKEY &key, const char *email,
 	auto response = SignedRequestRetry(key,
 					   HttpMethod::POST,
 					   directory.new_account.c_str(),
-					   payload);
+					   AsBytes(payload.dump()));
 	if (only_return_existing) {
 		if (response.status != HttpStatus::OK)
 			ThrowStatusError(std::move(response),
@@ -327,7 +312,7 @@ AcmeClient::NewOrder(EVP_PKEY &key, AcmeOrderRequest &&request)
 	auto response = SignedRequestRetry(key,
 					   HttpMethod::POST,
 					   directory.new_order.c_str(),
-					   request_json);
+					   AsBytes(request_json.dump()));
 	if (response.status != HttpStatus::CREATED)
 		ThrowStatusError(std::move(response),
 				 "Failed to create order");
@@ -352,7 +337,7 @@ AcmeClient::FinalizeOrder(EVP_PKEY &key, const AcmeOrder &order,
 	auto response = SignedRequestRetry(key,
 					   HttpMethod::POST,
 					   order.finalize.c_str(),
-					   ToJson(csr));
+					   AsBytes(ToJson(csr).dump()));
 	if (response.status != HttpStatus::OK)
 		ThrowStatusError(std::move(response),
 				 "Failed to finalize order");
@@ -368,7 +353,7 @@ AcmeClient::PollOrder(EVP_PKEY &key, const char *url)
 	auto response = SignedRequestRetry(key,
 					   HttpMethod::POST,
 					   url,
-					   ""sv);
+					   {});
 	if (response.status != HttpStatus::OK)
 		ThrowStatusError(std::move(response),
 				 "Failed to poll order");
@@ -384,7 +369,7 @@ AcmeClient::DownloadCertificate(EVP_PKEY &key, const AcmeOrder &order)
 	auto response = SignedRequestRetry(key,
 					   HttpMethod::POST,
 					   order.certificate.c_str(),
-					   ""sv);
+					   {});
 	if (response.status != HttpStatus::OK)
 		ThrowStatusError(std::move(response),
 				 "Failed to download certificate");
@@ -406,7 +391,7 @@ AcmeClient::Authorize(EVP_PKEY &key, const char *url)
 	auto response = SignedRequestRetry(key,
 					   HttpMethod::POST,
 					   url,
-					   ""sv);
+					   {});
 	if (response.status != HttpStatus::OK)
 		ThrowStatusError(std::move(response),
 				 "Failed to request authorization");
@@ -422,7 +407,7 @@ AcmeClient::PollAuthorization(EVP_PKEY &key, const char *url)
 	auto response = SignedRequestRetry(key,
 					   HttpMethod::POST,
 					   url,
-					   ""sv);
+					   {});
 	if (response.status != HttpStatus::OK)
 		ThrowStatusError(std::move(response),
 				 "Failed to poll authorization");
@@ -435,10 +420,11 @@ AcmeClient::PollAuthorization(EVP_PKEY &key, const char *url)
 AcmeChallenge
 AcmeClient::UpdateChallenge(EVP_PKEY &key, const AcmeChallenge &challenge)
 {
+	const json request_body = json::value_t::object;
 	auto response = SignedRequestRetry(key,
 					   HttpMethod::POST,
 					   challenge.uri.c_str(),
-					   json::value_t::object);
+					   AsBytes(request_body.dump()));
 	if (response.status != HttpStatus::OK)
 		ThrowStatusError(std::move(response),
 				 "Failed to update challenge");

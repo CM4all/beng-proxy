@@ -7,6 +7,7 @@
 #include "AcmeDirectory.hxx"
 #include "event/Loop.hxx"
 #include "GlueHttpClient.hxx"
+#include "http/Status.hxx"
 #include "lib/openssl/UniqueX509.hxx"
 
 #include <nlohmann/json_fwd.hpp>
@@ -115,47 +116,13 @@ private:
 		return Request(method, uri, std::span<const std::byte>{});
 	}
 
-	GlueHttpResponse Request(HttpMethod method, const char *uri,
-				 const std::string_view body) {
-		return Request(method, uri,
-			       std::as_bytes(std::span<const char>{body}));
-	}
-
-	GlueHttpResponse Request(HttpMethod method, const char *uri,
-				 const std::string &body) {
-		return Request(method, uri,
-			       static_cast<std::string_view>(body));
-	}
-
-	GlueHttpResponse Request(HttpMethod method, const char *uri,
-				 const nlohmann::json &body);
-
 	GlueHttpResponse SignedRequest(EVP_PKEY &key,
 				       HttpMethod method, const char *uri,
 				       std::span<const std::byte> payload);
 
-	GlueHttpResponse SignedRequest(EVP_PKEY &key,
-				       HttpMethod method, const char *uri,
-				       const std::string_view body) {
-		return SignedRequest(key, method, uri,
-				     std::as_bytes(std::span<const char>{body}));
-	}
-
-	GlueHttpResponse SignedRequest(EVP_PKEY &key,
-				       HttpMethod method, const char *uri,
-				       const std::string &body) {
-		return SignedRequest(key, method, uri,
-				     static_cast<std::string_view>(body));
-	}
-
-	GlueHttpResponse SignedRequest(EVP_PKEY &key,
-				       HttpMethod method, const char *uri,
-				       const nlohmann::json &payload);
-
-	template<typename P>
 	GlueHttpResponse SignedRequestRetry(EVP_PKEY &key,
 					    HttpMethod method, const char *uri,
-					    P payload) {
+					    std::span<const std::byte> payload) {
 		constexpr unsigned max_attempts = 3;
 		for (unsigned remaining_attempts = max_attempts;;) {
 			auto response = SignedRequest(key, method, uri, payload);
