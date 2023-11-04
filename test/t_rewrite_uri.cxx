@@ -51,7 +51,7 @@ WidgetContext::GetRealmSession() const
 }
 
 RealmSession *
-Session::GetRealm(const char *) noexcept
+Session::GetRealm(std::string_view) noexcept
 {
 	return nullptr;
 }

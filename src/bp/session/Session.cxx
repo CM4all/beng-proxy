@@ -64,10 +64,7 @@ Session::Session(SessionId _id, SessionId _csrf_salt) noexcept
 {
 }
 
-Session::~Session() noexcept
-{
-	realms.clear_and_dispose(DeleteDisposer{});
-}
+Session::~Session() noexcept = default;
 
 unsigned
 Session::GetPurgeScore() const noexcept
@@ -119,27 +116,23 @@ Session::Attach(Session &&other) noexcept
 		next_external_keepalive = other.next_external_keepalive;
 	}
 
-	other.realms.clear_and_dispose([this](RealmSession *other_realm){
-		RealmSessionSet::insert_commit_data hint;
-		auto [existing, inserted] = realms.insert_check(*other_realm, hint);
-		if (inserted) {
+	while (!other.realms.empty()) {
+		auto node = other.realms.extract(other.realms.begin());
+
+		auto existing = realms.find(node.key());
+		if (existing == realms.end()) {
+			// TODO optimize with lower_bound()
 			/* doesn't exist already: create a copy (with
 			   a new RealmSession::parent) and commit
 			   it */
-			auto *new_realm =
-				new RealmSession(*this,
-						 std::move(*other_realm));
-			realms.insert_commit(*new_realm, hint);
+			realms.emplace(std::piecewise_construct,
+				       std::forward_as_tuple(std::move(node.key())),
+				       std::forward_as_tuple(*this, std::move(node.mapped())));
 		} else {
 			/* exists already: attach */
-			existing->Attach(std::move(*other_realm));
+			existing->second.Attach(std::move(node.mapped()));
 		}
-
-		/* delete this RealmSession; we can't reuse it because
-		   its "parent" field points to the moved-from Session
-		   instance about to be deleted */
-		delete other_realm;
-	});
+	}
 }
 
 void
@@ -276,29 +269,25 @@ RealmSession::Expire(Expiry now) noexcept
 void
 Session::Expire(Expiry now) noexcept
 {
-	for (auto &realm : realms)
+	for (auto &[name, realm] : realms)
 		realm.Expire(now);
 }
 
 RealmSession *
-Session::GetRealm(const char *realm_name) noexcept
+Session::GetRealm(std::string_view realm_name) noexcept
 {
-	RealmSessionSet::insert_commit_data commit_data;
-	auto result = realms.insert_check(realm_name, RealmSession::Compare(),
-					  commit_data);
-	if (!result.second)
-		return &*result.first;
+	if (auto i = realms.find(realm_name); i != realms.end())
+		return &i->second;
 
-	auto realm = new RealmSession(*this, realm_name);
-	realms.insert_commit(*realm, commit_data);
-	return realm;
+	// TODO optimize, use hint with lower_bound()
+	return &realms.emplace(realm_name, *this).first->second;
 }
 
 bool
-Session::DiscardRealm(const char *realm) noexcept
+Session::DiscardRealm(std::string_view realm) noexcept
 {
-	if (auto i = realms.find(realm, RealmSession::Compare{}); i != realms.end()) {
-		realms.erase_and_dispose(i, DeleteDisposer{});
+	if (auto i = realms.find(realm); i != realms.end()) {
+		realms.erase(i);
 		return true;
 	} else
 		return false;

@@ -149,7 +149,7 @@ public:
 
 	void EraseAndDispose(SessionId id) noexcept;
 
-	void DiscardRealmSession(SessionId id, const char *realm) noexcept;
+	void DiscardRealmSession(SessionId id, std::string_view realm) noexcept;
 
 	SessionLease CreateSession() noexcept;
 

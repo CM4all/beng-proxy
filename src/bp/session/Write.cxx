@@ -158,7 +158,6 @@ WriteCookieJar(FileWriter &file, const CookieJar &jar)
 static void
 WriteRealmSession(FileWriter &file, const RealmSession &session)
 {
-	file.Write(session.realm);
 	file.Write(session.site);
 	file.Write(session.translate);
 	file.Write(session.user);
@@ -181,8 +180,9 @@ session_write(BufferedOutputStream &os, const Session *session)
 	file.Write(session->translate);
 	file.Write(session->language);
 
-	for (const auto &realm : session->realms) {
+	for (const auto &[name, realm] : session->realms) {
 		file.Write32(MAGIC_REALM_SESSION);
+		file.Write(name);
 		WriteRealmSession(file, realm);
 	}
 

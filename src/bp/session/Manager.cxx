@@ -260,7 +260,7 @@ SessionManager::EraseAndDispose(SessionId id) noexcept
 }
 
 void
-SessionManager::DiscardRealmSession(SessionId id, const char *realm_name) noexcept
+SessionManager::DiscardRealmSession(SessionId id, std::string_view realm_name) noexcept
 {
 	auto i = sessions.find(id);
 	if (i == sessions.end())

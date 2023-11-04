@@ -17,13 +17,9 @@
 #include "util/Expiry.hxx"
 #include "util/IntrusiveHashSet.hxx"
 
-#include <boost/intrusive/set.hpp>
-
 #include <chrono>
 #include <map>
 #include <string>
-
-#include <string.h>
 
 struct RealmSession;
 struct HttpAddress;
@@ -61,32 +57,8 @@ struct Session;
 /**
  * A session associated with a user.
  */
-struct RealmSession
-	: boost::intrusive::set_base_hook<boost::intrusive::link_mode<boost::intrusive::normal_link>> {
-
+struct RealmSession {
 	Session &parent;
-
-	struct Compare {
-		[[gnu::pure]]
-		bool operator()(const RealmSession &a, const RealmSession &b) const noexcept {
-			return strcmp(a.realm.c_str(), b.realm.c_str()) < 0;
-		}
-
-		[[gnu::pure]]
-		bool operator()(const RealmSession &a, const char *b) const noexcept {
-			return strcmp(a.realm.c_str(), b) < 0;
-		}
-
-		[[gnu::pure]]
-		bool operator()(const char *a, const RealmSession &b) const noexcept {
-			return strcmp(a, b.realm.c_str()) < 0;
-		}
-	};
-
-	/**
-	 * The name of this session's realm.  It is always non-nullptr.
-	 */
-	const AllocatedString realm;
 
 	/**
 	 * The site name as provided by the translation server in the
@@ -119,16 +91,13 @@ struct RealmSession
 	 */
 	CookieSameSite session_cookie_same_site = CookieSameSite::DEFAULT;
 
-	template<typename R>
-	RealmSession(Session &_parent, R &&_realm) noexcept
-		:parent(_parent),
-		 realm(std::forward<R>(_realm))
+	explicit RealmSession(Session &_parent) noexcept
+		:parent(_parent)
 	{
 	}
 
 	RealmSession(Session &_parent, RealmSession &&src) noexcept
 		:parent(_parent),
-		 realm(std::move(src.realm)),
 		 site(std::move(src.site)),
 		 user(std::move(src.user)),
 		 user_expires(src.user_expires),
@@ -136,6 +105,8 @@ struct RealmSession
 		 cookies(std::move(src.cookies))
 	{
 	}
+
+	RealmSession(RealmSession &&) noexcept = default;
 
 	~RealmSession() noexcept;
 
@@ -219,10 +190,7 @@ struct Session {
 
 	std::chrono::steady_clock::time_point next_external_keepalive;
 
-	using RealmSessionSet =
-		boost::intrusive::set<RealmSession,
-				      boost::intrusive::compare<RealmSession::Compare>,
-				      boost::intrusive::constant_time_size<false>>;
+	using RealmSessionSet = std::map<std::string, RealmSession, std::less<>>;
 
 	RealmSessionSet realms;
 
@@ -238,7 +206,7 @@ struct Session {
 
 	[[gnu::pure]]
 	bool HasUser() const noexcept {
-		for (auto &realm : realms)
+		for (auto &[name, realm] : realms)
 			if (realm.user != nullptr)
 				return true;
 
@@ -276,9 +244,9 @@ struct Session {
 	void Expire(Expiry now) noexcept;
 
 	[[gnu::pure]]
-	RealmSession *GetRealm(const char *realm) noexcept;
+	RealmSession *GetRealm(std::string_view realm) noexcept;
 
-	bool DiscardRealm(const char *realm) noexcept;
+	bool DiscardRealm(std::string_view realm) noexcept;
 };
 
 /**

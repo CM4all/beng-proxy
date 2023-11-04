@@ -167,7 +167,7 @@ ReadCookieJar(FileReader &file, CookieJar &jar)
 	}
 }
 
-static std::unique_ptr<RealmSession>
+static RealmSession
 ReadRealmSession(FileReader &file, uint32_t magic, Session &parent)
 {
 	bool have_translate;
@@ -181,20 +181,18 @@ ReadRealmSession(FileReader &file, uint32_t magic, Session &parent)
 		throw SessionDeserializerError();
 
 
-	auto name = file.ReadString();
-	auto session = std::make_unique<RealmSession>(parent,
-						      std::move(name));
+	RealmSession session{parent};
 
-	session->site = file.ReadString();
+	session.site = file.ReadString();
 
 	if (have_translate)
-		session->translate = file.ReadArray();
+		session.translate = file.ReadArray();
 
-	session->user = file.ReadString();
-	file.Read(session->user_expires);
-	ReadWidgetSessions(file, session->widgets);
-	ReadCookieJar(file, session->cookies);
-	session->session_cookie_same_site = file.ReadT<CookieSameSite>();
+	session.user = file.ReadString();
+	file.Read(session.user_expires);
+	ReadWidgetSessions(file, session.widgets);
+	ReadCookieJar(file, session.cookies);
+	session.session_cookie_same_site = file.ReadT<CookieSameSite>();
 	Expect32(file, MAGIC_END_OF_RECORD);
 
 	return session;
@@ -214,9 +212,10 @@ DoReadSession(FileReader &file, Session &session)
 		if (magic == MAGIC_END_OF_LIST)
 			break;
 
+		auto name = file.ReadString();
 		auto realm_session = ReadRealmSession(file, magic, session);
-		if (session.realms.insert(*realm_session).second)
-			realm_session.release();
+		session.realms.emplace(std::string_view{name.c_str()},
+				       std::move(realm_session));
 	}
 
 	Expect32(file, MAGIC_END_OF_RECORD);
