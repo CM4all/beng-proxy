@@ -260,6 +260,19 @@ AcmeClient::SignedRequestRetry(EVP_PKEY &key,
 	constexpr unsigned max_attempts = 3;
 	for (unsigned remaining_attempts = max_attempts;;) {
 		auto response = SignedRequest(key, method, uri, payload);
+
+		if (response.status == HttpStatus::BAD_REQUEST && IsJson(response)) {
+			try {
+				throw AcmeError{ParseJson(std::move(response))};
+			} catch (const AcmeError &e) {
+				if (e.GetType() == "urn:ietf:params:acme:error:badNonce"sv)
+					/* try again */
+					continue;
+
+				throw;
+			}
+		}
+
 		if (!http_status_is_server_error(response.status) ||
 		    --remaining_attempts == 0)
 			return response;
