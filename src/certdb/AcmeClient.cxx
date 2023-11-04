@@ -252,6 +252,20 @@ AcmeClient::SignedRequest(EVP_PKEY &key,
 	return Request(method, uri, AsBytes(root.dump()));
 }
 
+GlueHttpResponse
+AcmeClient::SignedRequestRetry(EVP_PKEY &key,
+			       HttpMethod method, const char *uri,
+			       std::span<const std::byte> payload)
+{
+	constexpr unsigned max_attempts = 3;
+	for (unsigned remaining_attempts = max_attempts;;) {
+		auto response = SignedRequest(key, method, uri, payload);
+		if (!http_status_is_server_error(response.status) ||
+		    --remaining_attempts == 0)
+			return response;
+	}
+}
+
 template<typename T>
 static auto
 WithLocation(T &&t, const GlueHttpResponse &response) noexcept
