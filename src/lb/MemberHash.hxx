@@ -7,6 +7,7 @@
 #include "cluster/StickyHash.hxx"
 #include "util/HashRing.hxx"
 
+#include <concepts>
 #include <cstddef>
 
 class SocketAddress;
@@ -18,9 +19,10 @@ MemberAddressHash(SocketAddress address, std::size_t replica) noexcept;
 template<typename Node>
 using MemberHashRing = HashRing<Node, sticky_hash_t, 8192, 64>;
 
-template<typename Node, typename C, typename F>
+template<typename Node, typename C>
 void
-BuildMemberHashRing(MemberHashRing<Node> &ring, C &&nodes, F &&f) noexcept
+BuildMemberHashRing(MemberHashRing<Node> &ring, C &&nodes,
+		    std::invocable<const Node &> auto f) noexcept
 {
 	ring.Build(std::forward<C>(nodes),
 		   [&f](const Node &node, std::size_t replica) noexcept {
