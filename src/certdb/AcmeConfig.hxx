@@ -30,8 +30,6 @@ struct AcmeConfig {
 
 	bool staging = false;
 
-	bool fake = false;
-
 	const char *GetDirectoryURL() const noexcept {
 		if (!directory_url.empty())
 			return directory_url.c_str();

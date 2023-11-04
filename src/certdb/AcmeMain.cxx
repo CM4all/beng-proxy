@@ -585,11 +585,6 @@ Acme(ConstBuffer<const char *> args)
 		} else if (StringIsEqual(arg, "--debug")) {
 			args.shift();
 			config.debug = true;
-		} else if (StringIsEqual(arg, "--fake")) {
-			/* undocumented debugging option: no HTTP requests, fake
-			   ACME responses */
-			args.shift();
-			config.fake = true;
 		} else if (StringIsEqual(arg, "--account-db")) {
 			args.shift();
 			config.account_db = true;

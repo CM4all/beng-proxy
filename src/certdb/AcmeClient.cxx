@@ -103,8 +103,7 @@ AcmeClient::AcmeClient(const AcmeConfig &config)
 	:glue_http_client(event_loop,
 			  config.tls_ca.empty() ? nullptr : config.tls_ca.c_str()),
 	 directory_url(config.GetDirectoryURL()),
-	 account_key_id(config.account_key_id),
-	 fake(config.fake)
+	 account_key_id(config.account_key_id)
 {
 	if (config.debug)
 		glue_http_client.EnableVerbose();
@@ -115,9 +114,6 @@ AcmeClient::~AcmeClient() noexcept = default;
 void
 AcmeClient::RequestDirectory()
 {
-	if (fake)
-		return;
-
 	unsigned remaining_tries = 3;
 	while (true) {
 		auto response = glue_http_client.Request(event_loop,
@@ -146,9 +142,6 @@ AcmeClient::RequestDirectory()
 void
 AcmeClient::EnsureDirectory()
 {
-	if (fake)
-		return;
-
 	if (directory.new_nonce.empty())
 		RequestDirectory();
 }
@@ -156,9 +149,6 @@ AcmeClient::EnsureDirectory()
 std::string
 AcmeClient::RequestNonce()
 {
-	if (fake)
-		return "foo";
-
 	EnsureDirectory();
 	if (directory.new_nonce.empty())
 		throw std::runtime_error("No newNonce in directory");
@@ -221,11 +211,9 @@ GlueHttpResponse
 AcmeClient::Request(HttpMethod method, const char *uri,
 		    std::span<const std::byte> body)
 {
-	auto response = fake
-		? FakeRequest(method, uri, body)
-		: glue_http_client.Request(event_loop,
-					   method, uri,
-					   body);
+	auto response = glue_http_client.Request(event_loop,
+						 method, uri,
+						 body);
 
 	if (auto new_nonce = response.headers.find("replay-nonce");
 	    new_nonce != response.headers.end()) {

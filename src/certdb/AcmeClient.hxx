@@ -46,8 +46,6 @@ class AcmeClient {
 
 	AcmeDirectory directory;
 
-	const bool fake;
-
 public:
 	/**
 	 * Throws on error (e.g. if CURL initialization fails).
@@ -55,10 +53,6 @@ public:
 	explicit AcmeClient(const AcmeConfig &config);
 
 	~AcmeClient() noexcept;
-
-	bool IsFake() const {
-		return fake;
-	}
 
 	/**
 	 * Register a new account.

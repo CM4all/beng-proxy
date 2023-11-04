@@ -6,6 +6,7 @@ cm4all-beng-proxy (18.0.45) unstable; urgency=low
   * certdb/acme: poll for order to finish "processing"
   * certdb/acme: update challenge only if it is "pending"
   * certdb/acme: add options "--directory-url", "--tls-ca"
+  * certdb/acme: remove option "--fake"
   * certdb/acme: relaxed JSON Content-Type check
   * certdb/acme: support ECDSA account keys
   * debian: remove obsolete dependency on libc-ares-dev
