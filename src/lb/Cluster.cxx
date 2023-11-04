@@ -67,8 +67,7 @@ LbCluster::ZeroconfMember::ZeroconfMember(const std::string &_key,
 					  LbMonitorStock *monitors) noexcept
 	:key(_key), address(_address), failure(_failure),
 	 monitor(monitors != nullptr
-		 ? std::make_unique<LbMonitorRef>(monitors->Add(key.c_str(),
-								_address))
+		 ? std::make_unique<LbMonitorRef>(monitors->Add(key, _address))
 		 : std::unique_ptr<LbMonitorRef>()),
 	 address_hash(RendezvousHashAlgorithm::BinaryHash(address.GetSteadyPart()))
 {

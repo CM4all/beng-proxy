@@ -109,7 +109,7 @@ LbMonitorController::TimeoutCallback() noexcept
 }
 
 static std::string
-MakeLoggerDomain(const char *monitor_name, const char *node_name,
+MakeLoggerDomain(std::string_view monitor_name, std::string_view node_name,
 		 unsigned port) noexcept
 {
 	return fmt::format("monitor {}:[{}]:{}",
@@ -118,7 +118,7 @@ MakeLoggerDomain(const char *monitor_name, const char *node_name,
 
 LbMonitorController::LbMonitorController(EventLoop &_event_loop,
 					 FailureManager &failure_manager,
-					 const char *node_name,
+					 std::string_view node_name,
 					 const LbMonitorConfig &_config,
 					 SocketAddress _address,
 					 const LbMonitorClass &_class) noexcept
@@ -127,7 +127,7 @@ LbMonitorController::LbMonitorController(EventLoop &_event_loop,
 	 config(_config),
 	 address(_address),
 	 class_(_class),
-	 logger(MakeLoggerDomain(config.name.c_str(), node_name,
+	 logger(MakeLoggerDomain(config.name, node_name,
 				 address.GetPort())),
 	 interval_event(event_loop, BIND_THIS_METHOD(IntervalCallback)),
 	 timeout_event(event_loop, BIND_THIS_METHOD(TimeoutCallback))

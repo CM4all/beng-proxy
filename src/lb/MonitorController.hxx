@@ -40,7 +40,7 @@ class LbMonitorController final : public LbMonitorHandler {
 public:
 	LbMonitorController(EventLoop &_event_loop,
 			    FailureManager &_failure_manager,
-			    const char *node_name,
+			    std::string_view node_name,
 			    const LbMonitorConfig &_config,
 			    SocketAddress _address,
 			    const LbMonitorClass &_class) noexcept;

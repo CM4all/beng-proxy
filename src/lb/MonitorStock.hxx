@@ -37,7 +37,7 @@ public:
 	LbMonitorStock(const LbMonitorStock &) = delete;
 	LbMonitorStock &operator=(const LbMonitorStock &) = delete;
 
-	LbMonitorRef Add(const char *node_name, SocketAddress address);
+	LbMonitorRef Add(std::string_view node_name, SocketAddress address);
 
 	LbMonitorRef Add(const LbNodeConfig &node, unsigned port);
 

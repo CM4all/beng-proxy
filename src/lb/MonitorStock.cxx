@@ -53,7 +53,7 @@ LbMonitorStock::~LbMonitorStock()
 }
 
 LbMonitorRef
-LbMonitorStock::Add(const char *node_name, SocketAddress address)
+LbMonitorStock::Add(std::string_view node_name, SocketAddress address)
 {
 	auto &m = map.emplace(std::piecewise_construct,
 			      std::forward_as_tuple(ToString(address)),
@@ -71,7 +71,7 @@ LbMonitorStock::Add(const LbNodeConfig &node, unsigned port)
 	if (port > 0)
 		address.SetPort(port);
 
-	return Add(node.name.c_str(), address);
+	return Add(node.name, address);
 }
 
 void
