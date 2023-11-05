@@ -19,8 +19,8 @@ Request::GetCookieHost() const noexcept
 
 static void
 ParseSetCookie(CookieJar &cookies,
-	       StringMap::const_iterator begin,
-	       StringMap::const_iterator end,
+	       StringMap::equal_iterator begin,
+	       StringMap::equal_iterator end,
 	       const char *host_and_port, const char *path) noexcept
 {
 	for (auto i = begin; i != end; ++i)

@@ -4,9 +4,9 @@
 
 #pragma once
 
+#include "util/IntrusiveHashArrayTrie.hxx"
 #include "util/ShallowCopy.hxx"
-
-#include <boost/intrusive/set.hpp>
+#include "util/djb_hash.hxx"
 
 #include <utility>
 
@@ -17,7 +17,7 @@ class AllocatorPtr;
  * String hash map.
  */
 class StringMap {
-	struct Item : boost::intrusive::set_base_hook<boost::intrusive::link_mode<boost::intrusive::normal_link>> {
+	struct Item : IntrusiveHashArrayTrieHook<> {
 		const char *key, *value;
 
 		Item(const char *_key, const char *_value) noexcept
@@ -29,24 +29,20 @@ class StringMap {
 		Item(const Item &) = delete;
 		Item &operator=(const Item &) = delete;
 
-		class Compare {
-			[[gnu::pure]]
-			bool Less(const char *a, const char *b) const noexcept;
-
-		public:
-			[[gnu::pure]]
-			bool operator()(const char *a, const Item &b) const noexcept {
-				return Less(a, b.key);
+		struct Hash {
+			std::size_t operator()(const char *k) const noexcept {
+				return djb_hash_string(k);
 			}
+		};
 
+		struct Equal {
 			[[gnu::pure]]
-			bool operator()(const Item &a, const char *b) const noexcept {
-				return Less(a.key, b);
-			}
+			bool operator()(const char *a, const char *b) const noexcept;
+		};
 
-			[[gnu::pure]]
-			bool operator()(const Item &a, const Item &b) const noexcept {
-				return Less(a.key, b.key);
+		struct GetKey {
+			const char *operator()(const Item &item) const noexcept {
+				return item.key;
 			}
 		};
 
@@ -69,14 +65,17 @@ class StringMap {
 		};
 	};
 
-	typedef boost::intrusive::multiset<Item,
-					   boost::intrusive::compare<Item::Compare>,
-					   boost::intrusive::constant_time_size<false>> Map;
+
+	using Map = IntrusiveHashArrayTrie<Item,
+					   IntrusiveHashArrayTrieOperators<Item::Hash,
+									   Item::Equal,
+									   Item::GetKey>>;
 
 	Map map;
 
 public:
 	using const_iterator = Map::const_iterator;
+	using equal_iterator = Map::equal_iterator;
 
 	StringMap() = default;
 
@@ -151,7 +150,13 @@ public:
 	}
 
 	[[gnu::pure]]
-	std::pair<const_iterator, const_iterator> EqualRange(const char *key) const noexcept;
+	std::pair<equal_iterator, equal_iterator> EqualRange(const char *key) const noexcept;
+
+	void ForEach(const char *key, std::invocable<const char *> auto f) const {
+		map.for_each(key, [&f](const Item &item){
+			f(item.value);
+		});
+	}
 
 	void CopyFrom(AllocatorPtr alloc,
 		      const StringMap &src, const char *key) noexcept;
