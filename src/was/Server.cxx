@@ -118,14 +118,14 @@ WasServer::WasOutputLength(uint64_t length) noexcept
 bool
 WasServer::WasOutputPremature(uint64_t length, std::exception_ptr ep) noexcept
 {
+	assert(response.body != nullptr);
+	response.body = nullptr;
+
 	if (!control.IsDefined())
 		/* this can happen if was_input_free() call destroys the
 		   WasOutput instance; this check means to work around this
 		   circular call */
 		return true;
-
-	assert(response.body != nullptr);
-	response.body = nullptr;
 
 	(void)ep; // TODO: log?
 
