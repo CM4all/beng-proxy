@@ -18,7 +18,6 @@ You need:
 - a C++20 compliant compiler (e.g. GCC 10 or clang 10)
 - `libfmt <https://fmt.dev/>`__
 - `libpq <https://www.postgresql.org/>`__
-- `Boost <http://www.boost.org/>`__
 - `CURL <https://curl.haxx.se/>`__
 - `D-Bus <https://www.freedesktop.org/wiki/Software/dbus/>`__
 - `systemd <https://www.freedesktop.org/wiki/Software/systemd/>`__

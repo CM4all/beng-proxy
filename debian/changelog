@@ -15,6 +15,7 @@ cm4all-beng-proxy (18.0.45) unstable; urgency=low
   * debian: remove obsolete dependency on libc-ares-dev
   * make Lua optional
   * drop support for PolicyKit older than version 121
+  * drop the build-dependency on Boost
 
  --   
 
