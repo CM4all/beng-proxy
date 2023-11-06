@@ -78,12 +78,17 @@ ReplaceIstream::Substitution::OnEof() noexcept
 	input.Clear();
 
 	if (IsActive()) {
-		replace.ToNextSubstitution(this);
+		/* copy the "replace" reference into our stack frame
+		   because ToNextSubstitution() will destruct this
+		   object */
+		auto &r = replace;
 
-		if (replace.IsEOF())
-			replace.DestroyEof();
+		r.ToNextSubstitution(this);
+
+		if (r.IsEOF())
+			r.DestroyEof();
 		else
-			replace.defer_read.Schedule();
+			r.defer_read.Schedule();
 	}
 }
 
