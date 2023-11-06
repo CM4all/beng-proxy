@@ -1170,8 +1170,8 @@ fcgi_client_request(struct pool *pool, EventLoop &event_loop,
 		.request_id = next_request_id,
 	};
 	static constexpr struct fcgi_begin_request begin_request{
-		.role = FCGI_RESPONDER,
-		.flags = FCGI_KEEP_CONN,
+		.role = static_cast<uint16_t>(FcgiRole::RESPONDER),
+		.flags = FCGI_FLAG_KEEP_CONN,
 	};
 
 	assert(http_method_is_valid(method));

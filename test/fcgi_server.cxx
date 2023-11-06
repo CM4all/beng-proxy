@@ -143,7 +143,7 @@ FcgiRequest
 FcgiServer::ReadRequest(struct pool &pool)
 {
 	const auto [begin, request_id] = ReadBeginRequest();
-	if (begin.role != FCGI_RESPONDER)
+	if (begin.role != static_cast<uint16_t>(FcgiRole::RESPONDER))
 		throw std::runtime_error{"role==RESPONDER expected"};
 
 	FcgiRequest r;

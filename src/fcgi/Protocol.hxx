@@ -9,7 +9,7 @@
 #include <cstdint>
 #include <cstddef>
 
-#define FCGI_VERSION_1 1
+static constexpr uint8_t FCGI_VERSION_1 = 1;
 
 enum class FcgiRecordType : uint8_t {
 	BEGIN_REQUEST = 1,
@@ -24,18 +24,6 @@ enum class FcgiRecordType : uint8_t {
 	GET_VALUES_RESULT = 10,
 	UNKNOWN_TYPE = 11,
 };
-
-/*
- * Mask for flags component of FCGI_BeginRequestBody
- */
-#define FCGI_KEEP_CONN  1
-
-/*
- * Values for role component of FCGI_BeginRequestBody
- */
-#define FCGI_RESPONDER  1
-#define FCGI_AUTHORIZER 2
-#define FCGI_FILTER     3
 
 struct fcgi_record_header {
 	uint8_t version;
@@ -52,6 +40,20 @@ struct fcgi_record_header {
 
 static_assert(sizeof(fcgi_record_header) == 8, "Wrong FastCGI header size");
 static_assert(alignof(fcgi_record_header) == 1);
+
+/*
+ * Values for role component of FCGI_BeginRequestBody
+ */
+enum class FcgiRole : uint16_t {
+	RESPONDER = 1,
+	AUTHORIZER = 2,
+	FILTER = 3,
+};
+
+/*
+ * Mask for flags component of FCGI_BeginRequestBody
+ */
+static constexpr uint8_t FCGI_FLAG_KEEP_CONN = 1;
 
 struct fcgi_begin_request {
 	PackedBE16 role;
