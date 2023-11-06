@@ -337,11 +337,18 @@ FcgiServer::WriteResponseHeaders(const FcgiRequest &r, HttpStatus status,
 void
 FcgiServer::EndResponse(const FcgiRequest &r)
 {
+	static constexpr FcgiEndRequest end_request{
+		.protocol_status = static_cast<uint8_t>(FcgiProtocolStatus::REQUEST_COMPLETE),
+	};
+
 	WriteHeader({
 		.version = FCGI_VERSION_1,
 		.type = FcgiRecordType::END_REQUEST,
 		.request_id = r.id,
+		.content_length = sizeof(end_request),
 	});
+
+	WriteFullRaw(ReferenceAsBytes(end_request));
 }
 
 void
