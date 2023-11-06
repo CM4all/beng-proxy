@@ -28,9 +28,6 @@ debug = get_option('b_ndebug') != 'true'
 
 common_flags = [
   '-D_REENTRANT', '-D_GNU_SOURCE',
-
-  # disable boost specific code in libcommon
-  '-DNO_BOOST',
 ]
 
 test_common_flags = [
@@ -153,7 +150,6 @@ inc = include_directories(
   '.',
 )
 
-libcommon_enable_boost = false
 libcommon_require_cap = get_option('cap')
 libcommon_require_lua = get_option('lua')
 
