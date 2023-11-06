@@ -286,7 +286,6 @@ TYPED_TEST_P(ClientTest, BodyBuckets)
 	Context c{instance};
 
 	c.use_buckets = true;
-	c.read_after_buckets = true;
 
 	c.connection = factory.NewMirror(*c.pool, c.event_loop);
 	c.connection->Request(c.pool, c,
@@ -385,7 +384,6 @@ TYPED_TEST_P(ClientTest, HugeBuckets)
 	Context c{instance};
 
 	c.use_buckets = true;
-	c.read_after_buckets = true;
 
 	c.read_response_body = true;
 	c.close_response_body_data = true;
@@ -1296,7 +1294,6 @@ TYPED_TEST_P(ClientTest, PrematureCloseBodyBuckets)
 		Context c{instance};
 
 		c.use_buckets = true;
-		c.read_after_buckets = true;
 
 		c.connection = factory.NewPrematureCloseBody(*c.pool, c.event_loop);
 		c.connection->Request(c.pool, c,
@@ -1364,7 +1361,6 @@ TYPED_TEST_P(ClientTest, Buckets)
 
 	c.connection = factory.NewFixed(*c.pool, c.event_loop);
 	c.use_buckets = true;
-	c.read_after_buckets = true;
 
 	c.connection->Request(c.pool, c,
 			      HttpMethod::GET, "/foo", {},
@@ -1530,7 +1526,6 @@ TYPED_TEST_P(ClientTest, PrematureEndBuckets)
 	if constexpr (factory.options.enable_premature_end) {
 		Context c{instance};
 		c.use_buckets = true;
-		c.read_after_buckets = true;
 
 		c.connection = factory.NewPrematureEnd(*c.pool, c.event_loop);
 
@@ -1588,7 +1583,6 @@ TYPED_TEST_P(ClientTest, ExcessDataBuckets)
 	if constexpr (factory.options.enable_excess_data) {
 		Context c{instance};
 		c.use_buckets = true;
-		c.read_after_buckets = true;
 
 		c.connection = factory.NewExcessData(*c.pool, c.event_loop);
 
@@ -1645,7 +1639,6 @@ TYPED_TEST_P(ClientTest, ValidPrematureBuckets)
 	if constexpr (factory.options.enable_valid_premature) {
 		Context c{instance};
 		c.use_buckets = true;
-		c.read_after_buckets = true;
 
 		c.connection = factory.NewValidPremature(*c.pool, c.event_loop);
 
@@ -1703,7 +1696,6 @@ TYPED_TEST_P(ClientTest, MalformedPrematureBuckets)
 	if constexpr (factory.options.enable_malformed_premature) {
 		Context c{instance};
 		c.use_buckets = true;
-		c.read_after_buckets = true;
 
 		c.connection = factory.NewMalformedPremature(*c.pool, c.event_loop);
 
@@ -1755,7 +1747,6 @@ TYPED_TEST_P(ClientTest, CancelWithFailedSocketGetBuckets)
 	TypeParam factory{instance.event_loop};
 	Context c{instance};
 	c.use_buckets = true;
-	c.read_after_buckets = true;
 
 	c.connection = factory.NewNop(*c.pool, c.event_loop);
 	c.connection->Request(c.pool, c,
@@ -1803,7 +1794,6 @@ TYPED_TEST_P(ClientTest, CancelWithFailedSocketPostBuckets)
 	TypeParam factory{instance.event_loop};
 	Context c{instance};
 	c.use_buckets = true;
-	c.read_after_buckets = true;
 
 	c.connection = factory.NewNop(*c.pool, c.event_loop);
 	c.connection->Request(c.pool, c,
@@ -1858,7 +1848,6 @@ TYPED_TEST_P(ClientTest, CloseWithFailedSocketGetBuckets)
 	TypeParam factory{instance.event_loop};
 	Context c{instance};
 	c.use_buckets = true;
-	c.read_after_buckets = true;
 
 	c.connection = factory.NewBlock(*c.pool, c.event_loop);
 	c.connection->Request(c.pool, c,
@@ -1923,7 +1912,6 @@ TYPED_TEST_P(ClientTest, CloseWithFailedSocketPostBuckets)
 	TypeParam factory{instance.event_loop};
 	Context c{instance};
 	c.use_buckets = true;
-	c.read_after_buckets = true;
 
 	c.connection = factory.NewHold(*c.pool, c.event_loop);
 	c.connection->Request(c.pool, c,
