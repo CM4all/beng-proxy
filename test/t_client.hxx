@@ -401,7 +401,7 @@ TYPED_TEST_P(ClientTest, HugeBuckets)
 	EXPECT_TRUE(c.released);
 	EXPECT_EQ(c.status, HttpStatus::OK);
 	EXPECT_TRUE(c.available >= 65536);
-	EXPECT_FALSE(c.body_eof);
+	EXPECT_TRUE(c.body_eof);
 	EXPECT_TRUE(c.body_data > 0);
 	EXPECT_FALSE(c.request_error);
 	EXPECT_EQ(c.body_error, nullptr);
