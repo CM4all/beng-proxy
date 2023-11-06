@@ -17,6 +17,7 @@
 #include "bp/XmlProcessor.hxx"
 #include "bp/CssProcessor.hxx"
 #include "bp/TextProcessor.hxx"
+#include "bp/WidgetLookupProcessor.hxx"
 #include "translation/Transformation.hxx"
 #include "translation/SuffixRegistry.hxx"
 #include "translation/AddressSuffixRegistry.hxx"
@@ -82,7 +83,7 @@ processor_lookup_widget(struct pool &,
 			SharedPoolPtr<WidgetContext>,
 			unsigned,
 			WidgetLookupHandler &handler,
-			CancellablePointer &)
+			CancellablePointer &) noexcept
 {
 	handler.WidgetNotFound();
 }
