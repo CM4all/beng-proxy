@@ -8,7 +8,6 @@ MESON_OPTIONS = \
 	-Dhttp2=enabled \
 	-Dio_uring=enabled \
 	-Dlua=enabled \
-	-Dnfs=enabled \
 	-Dseccomp=enabled \
 	-Dsystemd=enabled \
 	-Dwas=enabled \
