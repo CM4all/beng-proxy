@@ -152,7 +152,7 @@ struct Context final
 	bool use_buckets = false;
 	bool more_buckets;
 	bool buckets_after_data = false;
-	bool read_after_buckets = false, close_after_buckets = false;
+	bool close_after_buckets = false;
 	size_t total_buckets;
 	off_t available_after_bucket, available_after_bucket_partial;
 

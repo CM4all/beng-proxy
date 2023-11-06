@@ -163,8 +163,6 @@ Context::DoBuckets() noexcept {
 		assert(!close_after_buckets);
 		CloseInput();
 		body_eof = true;
-	} else if (read_after_buckets) {
-		input.Read();
 	} else if (close_after_buckets) {
 		body_closed = true;
 		CloseInput();
@@ -235,7 +233,7 @@ Context::Cancel() noexcept
 IstreamReadyResult
 Context::OnIstreamReady() noexcept
 {
-	if (use_buckets && !read_after_buckets) {
+	if (use_buckets) {
 		DoBuckets();
 		if (body_error || body_eof || body_closed)
 			return IstreamReadyResult::CLOSED;
