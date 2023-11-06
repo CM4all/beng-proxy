@@ -164,7 +164,7 @@ private:
 	 * @return false if the handler blocks or if this object has been
 	 * destroyed
 	 */
-	bool SubmitBuffer() noexcept;
+	bool SubmitBuffer(bool invoke_ready) noexcept;
 
 	/*
 	 * socket i/o
@@ -176,15 +176,15 @@ private:
 	 */
 	void ReadToBuffer();
 
-	bool TryBuffered() noexcept;
+	bool TryBuffered(bool invoke_ready) noexcept;
 	bool TryDirect() noexcept;
 
-	void TryRead() noexcept {
+	void TryRead(bool invoke_ready) noexcept {
 		if (direct) {
-			if (SubmitBuffer() && buffer.empty())
+			if (SubmitBuffer(invoke_ready) && buffer.empty())
 				TryDirect();
 		} else {
-			TryBuffered();
+			TryBuffered(invoke_ready);
 		}
 	}
 
@@ -207,8 +207,8 @@ private:
 	}
 
 	void _Read() noexcept override {
-		if (SubmitBuffer())
-			TryRead();
+		if (SubmitBuffer(false))
+			TryRead(false);
 	}
 
 	void _FillBucketList(IstreamBucketList &list) override;
@@ -240,9 +240,22 @@ private:
 };
 
 bool
-WasInput::SubmitBuffer() noexcept
+WasInput::SubmitBuffer(bool invoke_ready) noexcept
 {
 	auto r = buffer.Read();
+	if (invoke_ready && !r.empty()) {
+		switch (InvokeReady()) {
+		case IstreamReadyResult::OK:
+			return true;
+
+		case IstreamReadyResult::FALLBACK:
+			break;
+
+		case IstreamReadyResult::CLOSED:
+			return false;
+		}
+	}
+
 	if (!r.empty()) {
 		std::size_t nbytes = InvokeData(r);
 		if (nbytes == 0)
@@ -299,7 +312,7 @@ WasInput::ReadToBuffer()
 }
 
 inline bool
-WasInput::TryBuffered() noexcept
+WasInput::TryBuffered(bool invoke_ready) noexcept
 {
 	if (HasPipe()) {
 		try {
@@ -313,7 +326,7 @@ WasInput::TryBuffered() noexcept
 			return false;
 	}
 
-	if (SubmitBuffer()) {
+	if (SubmitBuffer(invoke_ready)) {
 		assert(!buffer.IsDefinedAndFull());
 
 		if (HasPipe())
@@ -382,7 +395,7 @@ WasInput::EventCallback(unsigned) noexcept
 {
 	assert(HasPipe());
 
-	TryRead();
+	TryRead(true);
 }
 
 inline void
@@ -390,7 +403,7 @@ WasInput::OnDeferredRead() noexcept
 {
 	assert(HasPipe());
 
-	TryRead();
+	TryRead(true);
 }
 
 /*
