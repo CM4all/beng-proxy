@@ -164,22 +164,7 @@ private:
 	 * @return false if the handler blocks or if this object has been
 	 * destroyed
 	 */
-	bool SubmitBuffer() noexcept {
-		auto r = buffer.Read();
-		if (!r.empty()) {
-			std::size_t nbytes = InvokeData(r);
-			if (nbytes == 0)
-				return false;
-
-			buffer.Consume(nbytes);
-			buffer.FreeIfEmpty();
-		}
-
-		if (CheckEof())
-			return false;
-
-		return true;
-	}
+	bool SubmitBuffer() noexcept;
 
 	/*
 	 * socket i/o
@@ -253,6 +238,25 @@ private:
 		Destroy();
 	}
 };
+
+bool
+WasInput::SubmitBuffer() noexcept
+{
+	auto r = buffer.Read();
+	if (!r.empty()) {
+		std::size_t nbytes = InvokeData(r);
+		if (nbytes == 0)
+			return false;
+
+		buffer.Consume(nbytes);
+		buffer.FreeIfEmpty();
+	}
+
+	if (CheckEof())
+		return false;
+
+	return true;
+}
 
 void
 WasInput::ReadToBuffer()
