@@ -231,7 +231,7 @@ private:
 		   handler - he's not interested anymore */
 		ignore_control_errors = true;
 
-		if (!control.SendEmpty(WAS_COMMAND_STOP) ||
+		if (!control.Send(WAS_COMMAND_STOP) ||
 		    !control.FlushOutput())
 			return false;
 
@@ -918,10 +918,10 @@ SendRequest(Was::Control &control,
 {
 	const uint32_t method32 = (uint32_t)method;
 
-	return control.SendEmpty(WAS_COMMAND_REQUEST) &&
-		(!enable_metrics || control.SendEmpty(WAS_COMMAND_METRIC)) &&
+	return control.Send(WAS_COMMAND_REQUEST) &&
+		(!enable_metrics || control.Send(WAS_COMMAND_METRIC)) &&
 		(method == HttpMethod::GET ||
-		 control.Send(WAS_COMMAND_METHOD, &method32, sizeof(method32))) &&
+		 control.SendT(WAS_COMMAND_METHOD, method32)) &&
 		control.SendString(WAS_COMMAND_URI, uri) &&
 		(script_name == nullptr ||
 		 control.SendString(WAS_COMMAND_SCRIPT_NAME, script_name)) &&
@@ -933,9 +933,9 @@ SendRequest(Was::Control &control,
 		control.SendArray(WAS_COMMAND_PARAMETER, params) &&
 		(remote_host == nullptr ||
 		 control.SendString(WAS_COMMAND_REMOTE_HOST, remote_host)) &&
-		control.SendEmpty(request_body != nullptr
-				  ? WAS_COMMAND_DATA
-				  : WAS_COMMAND_NO_DATA) &&
+		control.Send(request_body != nullptr
+			     ? WAS_COMMAND_DATA
+			     : WAS_COMMAND_NO_DATA) &&
 		(request_body == nullptr || was_output_check_length(*request_body));
 }
 

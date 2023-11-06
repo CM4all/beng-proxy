@@ -164,7 +164,7 @@ WasServer::WasInputClose([[maybe_unused]] uint64_t received) noexcept
 	request.body = nullptr;
 
 	if (control.IsDefined())
-		control.SendEmpty(WAS_COMMAND_STOP);
+		control.Send(WAS_COMMAND_STOP);
 
 	// TODO: handle PREMATURE packet which we'll receive soon
 }
@@ -428,7 +428,7 @@ WasServer::SendResponse(HttpStatus status,
 	assert(http_status_is_valid(status));
 	assert(!http_status_is_empty(status) || !body);
 
-	if (!control.Send(WAS_COMMAND_STATUS, &status, sizeof(status)))
+	if (!control.SendT(WAS_COMMAND_STATUS, status))
 		return;
 
 	if (body && http_method_is_empty(request.method)) {
@@ -451,11 +451,11 @@ WasServer::SendResponse(HttpStatus status,
 					       control.GetEventLoop(),
 					       socket.output, std::move(body),
 					       *this);
-		if (!control.SendEmpty(WAS_COMMAND_DATA) ||
+		if (!control.Send(WAS_COMMAND_DATA) ||
 		    !was_output_check_length(*response.body))
 			return;
 	} else {
-		if (!control.SendEmpty(WAS_COMMAND_NO_DATA))
+		if (!control.Send(WAS_COMMAND_NO_DATA))
 			return;
 	}
 }

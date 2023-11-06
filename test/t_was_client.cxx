@@ -242,7 +242,7 @@ MalformedPrematureWasServer::OnWasControlPacket(enum was_command cmd,
 	case WAS_COMMAND_NO_DATA:
 	case WAS_COMMAND_DATA:
 		/* announce a response body of 1 kB */
-		if (!control.SendEmpty(WAS_COMMAND_DATA) ||
+		if (!control.Send(WAS_COMMAND_DATA) ||
 		    !control.SendUint64(WAS_COMMAND_LENGTH, 1024))
 			return false;
 
