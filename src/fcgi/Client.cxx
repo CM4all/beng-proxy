@@ -837,6 +837,9 @@ FcgiClient::_FillBucketList(IstreamBucketList &list)
 			}
 
 			const std::size_t remaining = end - data;
+			if (remaining == 0)
+				break;
+
 			std::size_t size = std::min(remaining, current_content_length);
 			if (available > 0) {
 				if ((off_t)size > available)
