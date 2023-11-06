@@ -107,6 +107,9 @@ StringMap::SecureSet(AllocatorPtr alloc,
 		item = i;
 	});
 
+	if (value == nullptr)
+		return;
+
 	if (item == nullptr)
 		item = alloc.New<Item>(key, value);
 	else
