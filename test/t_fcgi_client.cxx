@@ -127,7 +127,7 @@ fcgi_server_huge(struct pool &pool, FcgiServer &server)
 	const auto request = server.ReadRequest(pool);
 
 	server.DiscardRequestBody(request);
-	server.WriteStdout(request, "content-length: 524288\n\nhello"sv);
+	server.WriteStdout(request, "content-length: 524288\n\n"sv);
 
 	char buffer[23456];
 	memset(buffer, 0xab, sizeof(buffer));
