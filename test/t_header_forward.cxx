@@ -12,24 +12,43 @@
 
 #include <gtest/gtest.h>
 
+#include <map>
 #include <string>
 
 using std::string_view_literals::operator""sv;
 using namespace BengProxy;
 
+static std::multimap<std::string, std::string, std::less<>>
+strmap_to_multimap(const StringMap &map) noexcept
+{
+	std::multimap<std::string, std::string, std::less<>> result;
+
+	for (const auto &i : map)
+		result.emplace(i.key, i.value);
+
+	return result;
+}
+
 static std::string
-strmap_to_string(const StringMap &map)
+multimap_to_string(const std::multimap<std::string, std::string, std::less<>> &map) noexcept
 {
 	std::string result;
 
-	for (const auto &i : map) {
-		result.append(i.key);
+	for (const auto &[key, value] : map) {
+		result.append(key);
 		result.push_back('=');
-		result.append(i.value);
+		result.append(value);
 		result.push_back(';');
 	}
 
 	return result;
+}
+
+static std::string
+strmap_to_string(const StringMap &map) noexcept
+{
+	// convert to std::multimap to ensure the output is sorted
+	return multimap_to_string(strmap_to_multimap(map));
 }
 
 static StringMap
