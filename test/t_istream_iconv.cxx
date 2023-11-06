@@ -24,5 +24,5 @@ public:
 	}
 };
 
-INSTANTIATE_TYPED_TEST_CASE_P(Iconv, IstreamFilterTest,
-			      IstreamIconvTestTraits);
+INSTANTIATE_TYPED_TEST_SUITE_P(Iconv, IstreamFilterTest,
+			       IstreamIconvTestTraits);

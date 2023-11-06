@@ -23,5 +23,5 @@ public:
 	}
 };
 
-INSTANTIATE_TYPED_TEST_CASE_P(BrotliEncoder, IstreamFilterTest,
-			      BrotliEncoderIstreamTestTraits);
+INSTANTIATE_TYPED_TEST_SUITE_P(BrotliEncoder, IstreamFilterTest,
+			       BrotliEncoderIstreamTestTraits);

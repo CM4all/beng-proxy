@@ -35,8 +35,8 @@ public:
 	}
 };
 
-INSTANTIATE_TYPED_TEST_CASE_P(Replace, IstreamFilterTest,
-			      IstreamReplaceTestTraits);
+INSTANTIATE_TYPED_TEST_SUITE_P(Replace, IstreamFilterTest,
+			       IstreamReplaceTestTraits);
 
 class IstreamReplace2TestTraits {
 public:
@@ -61,8 +61,8 @@ public:
 	}
 };
 
-INSTANTIATE_TYPED_TEST_CASE_P(Replace2, IstreamFilterTest,
-			      IstreamReplace2TestTraits);
+INSTANTIATE_TYPED_TEST_SUITE_P(Replace2, IstreamFilterTest,
+			       IstreamReplace2TestTraits);
 
 TEST(ReplaceIstream, Buckets)
 {

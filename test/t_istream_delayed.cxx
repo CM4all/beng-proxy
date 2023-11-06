@@ -39,5 +39,5 @@ public:
 	}
 };
 
-INSTANTIATE_TYPED_TEST_CASE_P(Delayed, IstreamFilterTest,
-			      IstreamDelayedTestTraits);
+INSTANTIATE_TYPED_TEST_SUITE_P(Delayed, IstreamFilterTest,
+			       IstreamDelayedTestTraits);

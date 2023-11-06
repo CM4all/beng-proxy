@@ -41,5 +41,5 @@ public:
 	}
 };
 
-INSTANTIATE_TYPED_TEST_CASE_P(YamlSubst, IstreamFilterTest,
-			      IstreamYamlSubstTestTraits);
+INSTANTIATE_TYPED_TEST_SUITE_P(YamlSubst, IstreamFilterTest,
+			       IstreamYamlSubstTestTraits);

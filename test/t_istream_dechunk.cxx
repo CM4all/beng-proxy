@@ -56,8 +56,8 @@ public:
 	}
 };
 
-INSTANTIATE_TYPED_TEST_CASE_P(Dechunk, IstreamFilterTest,
-			      IstreamDechunkTestTraits);
+INSTANTIATE_TYPED_TEST_SUITE_P(Dechunk, IstreamFilterTest,
+			       IstreamDechunkTestTraits);
 
 /**
  * A variant with exactly the number of chunks so the EOF chunk
@@ -97,5 +97,5 @@ public:
 	}
 };
 
-INSTANTIATE_TYPED_TEST_CASE_P(Dechunk2, IstreamFilterTest,
-			      IstreamDechunk2TestTraits);
+INSTANTIATE_TYPED_TEST_SUITE_P(Dechunk2, IstreamFilterTest,
+			       IstreamDechunk2TestTraits);

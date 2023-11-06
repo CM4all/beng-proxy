@@ -32,8 +32,8 @@ public:
 	}
 };
 
-INSTANTIATE_TYPED_TEST_CASE_P(Length, IstreamFilterTest,
-			      IstreamLengthTestTraits);
+INSTANTIATE_TYPED_TEST_SUITE_P(Length, IstreamFilterTest,
+			       IstreamLengthTestTraits);
 
 static auto
 CreateZero(struct pool &pool, std::size_t size) noexcept

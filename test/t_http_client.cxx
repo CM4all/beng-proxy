@@ -315,7 +315,7 @@ template<typename T>
 class HttpClientTest : public ::testing::Test {
 };
 
-TYPED_TEST_CASE_P(HttpClientTest);
+TYPED_TEST_SUITE_P(HttpClientTest);
 
 /**
  * Keep-alive disabled, and response body has unknown length, ends
@@ -492,11 +492,11 @@ TYPED_TEST_P(HttpClientTest, ManySmallChunks)
 	EXPECT_EQ(c.body_error, nullptr);
 }
 
-REGISTER_TYPED_TEST_CASE_P(HttpClientTest,
-			   NoKeepalive,
-			   IgnoredRequestBody,
-			   Expect100ContinueSplice,
-			   ManySmallChunks);
+REGISTER_TYPED_TEST_SUITE_P(HttpClientTest,
+			    NoKeepalive,
+			    IgnoredRequestBody,
+			    Expect100ContinueSplice,
+			    ManySmallChunks);
 
 class NopSocketFilterFactory final : public SocketFilterFactory {
 public:
@@ -538,8 +538,8 @@ public:
 		:HttpClientFactory(nullptr) {}
 };
 
-INSTANTIATE_TYPED_TEST_CASE_P(HttpClient, ClientTest, NullHttpClientFactory);
-INSTANTIATE_TYPED_TEST_CASE_P(HttpClient, HttpClientTest, NullHttpClientFactory);
+INSTANTIATE_TYPED_TEST_SUITE_P(HttpClient, ClientTest, NullHttpClientFactory);
+INSTANTIATE_TYPED_TEST_SUITE_P(HttpClient, HttpClientTest, NullHttpClientFactory);
 
 class NopHttpClientFactory final : public HttpClientFactory {
 public:
@@ -547,8 +547,8 @@ public:
 		:HttpClientFactory(std::make_unique<NopSocketFilterFactory>()) {}
 };
 
-INSTANTIATE_TYPED_TEST_CASE_P(HttpClientNop, ClientTest, NopHttpClientFactory);
-INSTANTIATE_TYPED_TEST_CASE_P(HttpClientNop, HttpClientTest, NopHttpClientFactory);
+INSTANTIATE_TYPED_TEST_SUITE_P(HttpClientNop, ClientTest, NopHttpClientFactory);
+INSTANTIATE_TYPED_TEST_SUITE_P(HttpClientNop, HttpClientTest, NopHttpClientFactory);
 
 class NopThreadHttpClientFactory final : public HttpClientFactory {
 public:
@@ -556,5 +556,5 @@ public:
 		:HttpClientFactory(std::make_unique<NopThreadSocketFilterFactory>(event_loop)) {}
 };
 
-INSTANTIATE_TYPED_TEST_CASE_P(HttpClientNopThread, ClientTest, NopThreadHttpClientFactory);
-INSTANTIATE_TYPED_TEST_CASE_P(HttpClientNopThread, HttpClientTest, NopThreadHttpClientFactory);
+INSTANTIATE_TYPED_TEST_SUITE_P(HttpClientNopThread, ClientTest, NopThreadHttpClientFactory);
+INSTANTIATE_TYPED_TEST_SUITE_P(HttpClientNopThread, HttpClientTest, NopThreadHttpClientFactory);

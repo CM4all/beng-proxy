@@ -100,5 +100,5 @@ public:
 	}
 };
 
-INSTANTIATE_TYPED_TEST_CASE_P(CssProcessor, IstreamFilterTest,
-			      IstreamCssProcessorTestTraits);
+INSTANTIATE_TYPED_TEST_SUITE_P(CssProcessor, IstreamFilterTest,
+			       IstreamCssProcessorTestTraits);

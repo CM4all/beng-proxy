@@ -446,7 +446,7 @@ struct WasFactory {
 	}
 };
 
-INSTANTIATE_TYPED_TEST_CASE_P(WasClient, ClientTest, WasFactory);
+INSTANTIATE_TYPED_TEST_SUITE_P(WasClient, ClientTest, WasFactory);
 
 TEST(WasClient, MalformedHeaderName)
 {

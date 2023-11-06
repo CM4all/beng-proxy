@@ -391,7 +391,7 @@ FcgiClientConnection::~FcgiClientConnection() noexcept
 	assert(!WIFSIGNALED(status));
 }
 
-INSTANTIATE_TYPED_TEST_CASE_P(FcgiClient, ClientTest, FcgiClientFactory);
+INSTANTIATE_TYPED_TEST_SUITE_P(FcgiClient, ClientTest, FcgiClientFactory);
 
 TEST(FcgiClient, MalformedHeaderName)
 {

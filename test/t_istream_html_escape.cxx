@@ -24,5 +24,5 @@ public:
 	}
 };
 
-INSTANTIATE_TYPED_TEST_CASE_P(HtmlEscape, IstreamFilterTest,
-			      IstreamHtmlEscapeTestTraits);
+INSTANTIATE_TYPED_TEST_SUITE_P(HtmlEscape, IstreamFilterTest,
+			       IstreamHtmlEscapeTestTraits);

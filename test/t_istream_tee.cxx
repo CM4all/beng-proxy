@@ -42,8 +42,8 @@ public:
 	}
 };
 
-INSTANTIATE_TYPED_TEST_CASE_P(Tee, IstreamFilterTest,
-			      IstreamTeeTestTraits);
+INSTANTIATE_TYPED_TEST_SUITE_P(Tee, IstreamFilterTest,
+			       IstreamTeeTestTraits);
 
 namespace {
 

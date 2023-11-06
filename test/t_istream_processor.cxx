@@ -139,5 +139,5 @@ foo &c:url;
 	}
 };
 
-INSTANTIATE_TYPED_TEST_CASE_P(Processor, IstreamFilterTest,
-			      IstreamProcessorTestTraits);
+INSTANTIATE_TYPED_TEST_SUITE_P(Processor, IstreamFilterTest,
+			       IstreamProcessorTestTraits);

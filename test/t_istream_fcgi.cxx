@@ -23,5 +23,5 @@ public:
 	}
 };
 
-INSTANTIATE_TYPED_TEST_CASE_P(Fcgi, IstreamFilterTest,
-			      IstreamFcgiTestTraits);
+INSTANTIATE_TYPED_TEST_SUITE_P(Fcgi, IstreamFilterTest,
+			       IstreamFcgiTestTraits);

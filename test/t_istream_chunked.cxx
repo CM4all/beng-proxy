@@ -29,8 +29,8 @@ public:
 	}
 };
 
-INSTANTIATE_TYPED_TEST_CASE_P(Chunked, IstreamFilterTest,
-			      IstreamChunkedTestTraits);
+INSTANTIATE_TYPED_TEST_SUITE_P(Chunked, IstreamFilterTest,
+			       IstreamChunkedTestTraits);
 
 TEST(IstreamChunkedTest, Custom)
 {

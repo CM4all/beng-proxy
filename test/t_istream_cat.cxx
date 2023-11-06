@@ -24,5 +24,5 @@ public:
 	}
 };
 
-INSTANTIATE_TYPED_TEST_CASE_P(Cat, IstreamFilterTest,
-			      IstreamCatTestTraits);
+INSTANTIATE_TYPED_TEST_SUITE_P(Cat, IstreamFilterTest,
+			       IstreamCatTestTraits);

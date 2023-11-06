@@ -29,5 +29,5 @@ public:
 	}
 };
 
-INSTANTIATE_TYPED_TEST_CASE_P(Subst, IstreamFilterTest,
-			      IstreamSubstTestTraits);
+INSTANTIATE_TYPED_TEST_SUITE_P(Subst, IstreamFilterTest,
+			       IstreamSubstTestTraits);

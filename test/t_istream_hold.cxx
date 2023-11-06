@@ -23,5 +23,5 @@ public:
 	}
 };
 
-INSTANTIATE_TYPED_TEST_CASE_P(Hold, IstreamFilterTest,
-			      IstreamHoldTestTraits);
+INSTANTIATE_TYPED_TEST_SUITE_P(Hold, IstreamFilterTest,
+			       IstreamHoldTestTraits);

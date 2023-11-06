@@ -56,7 +56,7 @@ template<typename T>
 class IstreamFilterTest : public ::testing::Test {
 };
 
-TYPED_TEST_CASE_P(IstreamFilterTest);
+TYPED_TEST_SUITE_P(IstreamFilterTest);
 
 struct Instance : TestInstance {
 };
@@ -861,28 +861,28 @@ TYPED_TEST_P(IstreamFilterTest, BigHold)
 	hold.Clear();
 }
 
-REGISTER_TYPED_TEST_CASE_P(IstreamFilterTest,
-			   Normal,
-			   HalfSuspend,
-			   NoBucket,
-			   Bucket,
-			   BucketHalfSuspend,
-			   BucketMore,
-			   SmallBucket,
-			   BucketError,
-			   Skip,
-			   Block,
-			   Byte,
-			   BlockByte,
-			   BlockInject,
-			   Half,
-			   Fail,
-			   FailAfterFirstByte,
-			   CloseInHandler,
-			   AbortWithoutHandler,
-			   AbortInHandler,
-			   AbortInHandlerHalf,
-			   AbortAfter1Byte,
-			   AsFd,
-			   Later,
-			   BigHold);
+REGISTER_TYPED_TEST_SUITE_P(IstreamFilterTest,
+			    Normal,
+			    HalfSuspend,
+			    NoBucket,
+			    Bucket,
+			    BucketHalfSuspend,
+			    BucketMore,
+			    SmallBucket,
+			    BucketError,
+			    Skip,
+			    Block,
+			    Byte,
+			    BlockByte,
+			    BlockInject,
+			    Half,
+			    Fail,
+			    FailAfterFirstByte,
+			    CloseInHandler,
+			    AbortWithoutHandler,
+			    AbortInHandler,
+			    AbortInHandlerHalf,
+			    AbortAfter1Byte,
+			    AsFd,
+			    Later,
+			    BigHold);

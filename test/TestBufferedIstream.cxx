@@ -95,5 +95,5 @@ public:
 	}
 };
 
-INSTANTIATE_TYPED_TEST_CASE_P(Buffered, IstreamFilterTest,
-			      IstreamBufferedTestTraits);
+INSTANTIATE_TYPED_TEST_SUITE_P(Buffered, IstreamFilterTest,
+			       IstreamBufferedTestTraits);

@@ -39,8 +39,8 @@ public:
 	}
 };
 
-INSTANTIATE_TYPED_TEST_CASE_P(Catch, IstreamFilterTest,
-			      IstreamCatchTestTraits);
+INSTANTIATE_TYPED_TEST_SUITE_P(Catch, IstreamFilterTest,
+			       IstreamCatchTestTraits);
 
 static std::exception_ptr
 catch_callback2(std::exception_ptr ep) noexcept
@@ -70,5 +70,5 @@ public:
 	}
 };
 
-INSTANTIATE_TYPED_TEST_CASE_P(CatchRethrow, IstreamFilterTest,
-			      IstreamCatchRethrowTestTraits);
+INSTANTIATE_TYPED_TEST_SUITE_P(CatchRethrow, IstreamFilterTest,
+			       IstreamCatchRethrowTestTraits);

@@ -23,5 +23,5 @@ public:
 	}
 };
 
-INSTANTIATE_TYPED_TEST_CASE_P(Gzip, IstreamFilterTest,
-			      GzipIstreamTestTraits);
+INSTANTIATE_TYPED_TEST_SUITE_P(Gzip, IstreamFilterTest,
+			       GzipIstreamTestTraits);

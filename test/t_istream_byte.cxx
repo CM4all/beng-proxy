@@ -23,5 +23,5 @@ public:
 	}
 };
 
-INSTANTIATE_TYPED_TEST_CASE_P(Byte, IstreamFilterTest,
-			      IstreamByteTestTraits);
+INSTANTIATE_TYPED_TEST_SUITE_P(Byte, IstreamFilterTest,
+			       IstreamByteTestTraits);
