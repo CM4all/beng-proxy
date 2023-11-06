@@ -189,7 +189,7 @@ struct Context final
 
 	void RunFor(Event::Duration duration) noexcept;
 
-	void DoBuckets() noexcept;
+	IstreamReadyResult DoBuckets() noexcept;
 
 	void OnBreakEvent() noexcept {
 		event_loop.Break();

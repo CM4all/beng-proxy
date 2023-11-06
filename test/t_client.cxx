@@ -115,7 +115,7 @@ Context::RunFor(Event::Duration duration) noexcept
 	event_loop.Run();
 }
 
-void
+IstreamReadyResult
 Context::DoBuckets() noexcept {
 	IstreamBucketList list;
 
@@ -125,7 +125,7 @@ Context::DoBuckets() noexcept {
 		read_later_event.Cancel();
 		read_defer_event.Cancel();
 		body_error = std::current_exception();
-		return;
+		return IstreamReadyResult::CLOSED;
 	}
 
 	more_buckets = list.HasMore();
@@ -163,12 +163,17 @@ Context::DoBuckets() noexcept {
 		assert(!close_after_buckets);
 		CloseInput();
 		body_eof = true;
+		return IstreamReadyResult::CLOSED;
 	} else if (close_after_buckets) {
 		body_closed = true;
 		CloseInput();
 		close_response_body_late = false;
-	} else if (again)
+		return IstreamReadyResult::CLOSED;
+	} else if (again) {
 		read_defer_event.Schedule();
+		return IstreamReadyResult::OK;
+	} else
+		return IstreamReadyResult::OK;
 }
 
 void
@@ -234,11 +239,7 @@ IstreamReadyResult
 Context::OnIstreamReady() noexcept
 {
 	if (use_buckets) {
-		DoBuckets();
-		if (body_error || body_eof || body_closed)
-			return IstreamReadyResult::CLOSED;
-
-		return IstreamReadyResult::OK;
+		return DoBuckets();
 	} else
 		return IstreamSink::OnIstreamReady();
 }
