@@ -122,6 +122,8 @@ Context::DoBuckets() noexcept {
 	try {
 		input.FillBucketList(list);
 	} catch (...) {
+		read_later_event.Cancel();
+		read_defer_event.Cancel();
 		body_error = std::current_exception();
 		return;
 	}
