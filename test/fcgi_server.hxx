@@ -17,7 +17,7 @@ enum class HttpMethod : uint_least8_t;
 enum class HttpStatus : uint_least16_t;
 struct pool;
 class StringMap;
-struct fcgi_record_header;
+struct FcgiRecordHeader;
 
 struct FcgiRequest {
 	uint16_t id;
@@ -40,10 +40,10 @@ public:
 		:socket(std::move(_socket)) {}
 
 	[[nodiscard]]
-	struct fcgi_record_header ReadHeader();
+	FcgiRecordHeader ReadHeader();
 
 	[[nodiscard]]
-	std::pair<struct fcgi_begin_request, uint_least16_t> ReadBeginRequest();
+	std::pair<FcgiBeginRequest, uint_least16_t> ReadBeginRequest();
 
 	std::byte ReadByte(std::size_t &remaining);
 	std::size_t ReadLength(std::size_t &remaining);
@@ -74,7 +74,7 @@ public:
 
 	void WriteZero(std::size_t size);
 
-	void WriteHeader(const struct fcgi_record_header &src) {
+	void WriteHeader(const FcgiRecordHeader &src) {
 		WriteFullRaw(ReferenceAsBytes(src));
 	}
 

@@ -16,7 +16,7 @@
 class FcgiIstream final : public FacadeIstream, DestructAnchor {
 	size_t missing_from_current_record = 0;
 
-	struct fcgi_record_header header;
+	FcgiRecordHeader header;
 	size_t header_sent = sizeof(header);
 
 public:

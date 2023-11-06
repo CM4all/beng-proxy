@@ -16,7 +16,7 @@ FcgiRecordSerializer::FcgiRecordSerializer(GrowingBuffer &_buffer,
 					   FcgiRecordType type,
 					   uint16_t request_id_be) noexcept
 	:buffer(_buffer),
-	 header((struct fcgi_record_header *)buffer.Write(sizeof(*header)))
+	 header((FcgiRecordHeader *)buffer.Write(sizeof(*header)))
 {
 	*header = {
 		.version = FCGI_VERSION_1,

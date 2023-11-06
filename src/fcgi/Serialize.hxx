@@ -14,12 +14,13 @@
 #include <stddef.h>
 
 enum class FcgiRecordType : uint8_t;
+struct FcgiRecordHeader;
 class GrowingBuffer;
 class StringMap;
 
 class FcgiRecordSerializer {
 	GrowingBuffer &buffer;
-	struct fcgi_record_header *const header;
+	FcgiRecordHeader *const header;
 
 public:
 	FcgiRecordSerializer(GrowingBuffer &_buffer, FcgiRecordType type,

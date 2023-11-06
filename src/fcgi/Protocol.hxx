@@ -25,7 +25,7 @@ enum class FcgiRecordType : uint8_t {
 	UNKNOWN_TYPE = 11,
 };
 
-struct fcgi_record_header {
+struct FcgiRecordHeader {
 	uint8_t version;
 	FcgiRecordType type;
 	PackedBE16 request_id;
@@ -38,8 +38,8 @@ struct fcgi_record_header {
 	*/
 };
 
-static_assert(sizeof(fcgi_record_header) == 8, "Wrong FastCGI header size");
-static_assert(alignof(fcgi_record_header) == 1);
+static_assert(sizeof(FcgiRecordHeader) == 8, "Wrong FastCGI header size");
+static_assert(alignof(FcgiRecordHeader) == 1);
 
 /*
  * Values for role component of FCGI_BeginRequestBody
@@ -55,11 +55,11 @@ enum class FcgiRole : uint16_t {
  */
 static constexpr uint8_t FCGI_FLAG_KEEP_CONN = 1;
 
-struct fcgi_begin_request {
+struct FcgiBeginRequest {
 	PackedBE16 role;
 	uint8_t flags;
 	uint8_t reserved[5];
 };
 
-static_assert(sizeof(fcgi_begin_request) == 8, "Wrong FastCGI packet size");
-static_assert(alignof(fcgi_begin_request) == 1);
+static_assert(sizeof(FcgiBeginRequest) == 8, "Wrong FastCGI packet size");
+static_assert(alignof(FcgiBeginRequest) == 1);

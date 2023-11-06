@@ -238,7 +238,7 @@ private:
 	 *
 	 * @return false if the client has been destroyed
 	 */
-	bool HandleHeader(const struct fcgi_record_header &header) noexcept;
+	bool HandleHeader(const FcgiRecordHeader &header) noexcept;
 
 	/**
 	 * Consume data from the input buffer.
@@ -346,8 +346,8 @@ FcgiClient::AnalyseBuffer(const std::span<const std::byte> buffer) const noexcep
 	data += content_length + skip_length;
 
 	while (true) {
-		const struct fcgi_record_header &header =
-			*(const struct fcgi_record_header *)data;
+		const FcgiRecordHeader &header =
+			*(const FcgiRecordHeader *)data;
 		data = (const std::byte *)(&header + 1);
 		if (data > end)
 			/* reached the end of the given buffer */
@@ -536,7 +536,7 @@ FcgiClient::HandleEnd() noexcept
 }
 
 inline bool
-FcgiClient::HandleHeader(const struct fcgi_record_header &header) noexcept
+FcgiClient::HandleHeader(const FcgiRecordHeader &header) noexcept
 {
 	content_length = header.content_length;
 	skip_length = header.padding_length;
@@ -656,8 +656,8 @@ FcgiClient::ConsumeInput(const std::byte *data0, std::size_t length0) noexcept
 			continue;
 		}
 
-		const struct fcgi_record_header *header =
-			(const struct fcgi_record_header *)data;
+		const FcgiRecordHeader *header =
+			(const FcgiRecordHeader *)data;
 		const std::size_t remaining = end - data;
 		if (remaining < sizeof(*header))
 			return BufferedResult::MORE;
@@ -863,7 +863,7 @@ FcgiClient::_FillBucketList(IstreamBucketList &list)
 				break;
 		}
 
-		const auto &header = *(const struct fcgi_record_header *)data;
+		const auto &header = *(const FcgiRecordHeader *)data;
 		const std::size_t remaining = end - data;
 		if (remaining < sizeof(header))
 			break;
@@ -959,7 +959,7 @@ FcgiClient::_ConsumeBucketList(std::size_t nbytes) noexcept
 		}
 
 		const auto b = socket.ReadBuffer();
-		const auto &header = *(const struct fcgi_record_header *)b.data();
+		const auto &header = *(const FcgiRecordHeader *)b.data();
 		if (b.size() < sizeof(header))
 			break;
 
@@ -1164,12 +1164,12 @@ fcgi_client_request(struct pool *pool, EventLoop &event_loop,
 	static unsigned next_request_id = 1;
 	++next_request_id;
 
-	struct fcgi_record_header header{
+	FcgiRecordHeader header{
 		.version = FCGI_VERSION_1,
 		.type = FcgiRecordType::BEGIN_REQUEST,
 		.request_id = next_request_id,
 	};
-	static constexpr struct fcgi_begin_request begin_request{
+	static constexpr FcgiBeginRequest begin_request{
 		.role = static_cast<uint16_t>(FcgiRole::RESPONDER),
 		.flags = FCGI_FLAG_KEEP_CONN,
 	};

@@ -16,10 +16,10 @@
 #include <stdio.h>
 #include <sys/socket.h>
 
-struct fcgi_record_header
+FcgiRecordHeader
 FcgiServer::ReadHeader()
 {
-	struct fcgi_record_header header;
+	FcgiRecordHeader header;
 	ReadFullRaw(std::as_writable_bytes(std::span{&header, 1}));
 
 	if (header.version != FCGI_VERSION_1)
@@ -28,14 +28,14 @@ FcgiServer::ReadHeader()
 	return header;
 }
 
-inline std::pair<struct fcgi_begin_request, uint_least16_t>
+inline std::pair<FcgiBeginRequest, uint_least16_t>
 FcgiServer::ReadBeginRequest()
 {
 	const auto header = ReadHeader();
 	if (header.type != FcgiRecordType::BEGIN_REQUEST)
 		throw std::runtime_error{"BEGIN_REQUEST expected"};
 
-	struct fcgi_begin_request begin;
+	FcgiBeginRequest begin;
 	if (header.content_length != sizeof(begin))
 		throw std::runtime_error{"Malformed BEGIN_REQUEST"};
 
@@ -157,7 +157,7 @@ FcgiServer::ReadRequest(struct pool &pool)
 		: -1;
 
 	if (content_length == nullptr) {
-		struct fcgi_record_header header;
+		FcgiRecordHeader header;
 		ssize_t nbytes = socket.Receive(std::as_writable_bytes(std::span{&header, 1}),
 						MSG_DONTWAIT|MSG_PEEK);
 		if (nbytes == (ssize_t)sizeof(header) &&
