@@ -63,3 +63,19 @@ struct FcgiBeginRequest {
 
 static_assert(sizeof(FcgiBeginRequest) == 8, "Wrong FastCGI packet size");
 static_assert(alignof(FcgiBeginRequest) == 1);
+
+enum class FcgiProtocolStatus : uint8_t {
+	REQUEST_COMPLETE = 0,
+	CANT_MPX_CONN = 1,
+	OVERLOADED = 2,
+	UNKNOWN_ROLE = 3,
+};
+
+struct FcgiEndRequest {
+	PackedBE32 app_status;
+	uint8_t protocol_status;
+	uint8_t reserved[3];
+};
+
+static_assert(sizeof(FcgiEndRequest) == 8);
+static_assert(alignof(FcgiEndRequest) == 1);
