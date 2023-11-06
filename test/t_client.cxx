@@ -182,7 +182,8 @@ Context::OnDeferred() noexcept
 	}
 
 	if (use_buckets) {
-		available = input.GetAvailable(false);
+		if (available < 0)
+			available = input.GetAvailable(false);
 		DoBuckets();
 	} else
 		assert(false);

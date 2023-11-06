@@ -137,7 +137,7 @@ struct Context final
 	std::exception_ptr request_error;
 
 	char *content_length = nullptr;
-	off_t available = 0;
+	off_t available = -3;
 
 	DelayedIstreamControl *delayed = nullptr;
 
