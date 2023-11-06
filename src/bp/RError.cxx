@@ -23,6 +23,8 @@
 #include "net/TimeoutError.hxx"
 #include "util/Exception.hxx"
 
+#include <string.h> // for strerror()
+
 bool
 Request::DispatchHttpMessageResponse(std::exception_ptr e) noexcept
 {
