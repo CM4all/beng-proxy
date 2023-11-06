@@ -30,6 +30,7 @@
 #include "util/SpanCast.hxx"
 #include "util/StringSplit.hxx"
 #include "util/ScopeExit.hxx"
+#include "util/Unaligned.hxx"
 #include "AllocatorPtr.hxx"
 
 #include <was/protocol.h>
@@ -513,10 +514,7 @@ WasClient::OnWasControlPacket(enum was_command cmd,
 			      std::span<const std::byte> payload) noexcept
 {
 	switch (cmd) {
-		const uint32_t *status32_r;
-		const uint16_t *status16_r;
 		HttpStatus status;
-		const uint64_t *length_p;
 
 	case WAS_COMMAND_NOP:
 		break;
@@ -569,13 +567,10 @@ WasClient::OnWasControlPacket(enum was_command cmd,
 			return false;
 		}
 
-		status32_r = (const uint32_t *)(const void *)payload.data();
-		status16_r = (const uint16_t *)(const void *)payload.data();
-
-		if (payload.size() == sizeof(*status32_r))
-			status = (HttpStatus)*status32_r;
-		else if (payload.size() == sizeof(*status16_r))
-			status = (HttpStatus)*status16_r;
+		if (payload.size() == sizeof(uint32_t))
+			status = static_cast<HttpStatus>(LoadUnaligned<uint32_t>(payload.data()));
+		else if (payload.size() == sizeof(uint16_t))
+			status = static_cast<HttpStatus>(LoadUnaligned<uint16_t>(payload.data()));
 		else {
 			stopwatch.RecordEvent("control_error");
 			AbortResponseHeaders(std::make_exception_ptr(WasProtocolError("malformed STATUS")));
@@ -648,14 +643,14 @@ WasClient::OnWasControlPacket(enum was_command cmd,
 			return false;
 		}
 
-		length_p = (const uint64_t *)(const void *)payload.data();
-		if (payload.size() != sizeof(*length_p)) {
+		if (payload.size() != sizeof(uint64_t)) {
 			stopwatch.RecordEvent("control_error");
 			AbortResponseBody(std::make_exception_ptr(WasProtocolError("malformed LENGTH packet")));
 			return false;
 		}
 
-		if (!was_input_set_length(response.body, *length_p))
+		if (!was_input_set_length(response.body,
+					  LoadUnaligned<uint64_t>(payload.data())))
 			return false;
 
 		if (!control.IsDefined()) {
@@ -689,8 +684,7 @@ WasClient::OnWasControlPacket(enum was_command cmd,
 			return false;
 		}
 
-		length_p = (const uint64_t *)(const void *)payload.data();
-		if (payload.size() != sizeof(*length_p)) {
+		if (payload.size() != sizeof(uint64_t)) {
 			stopwatch.RecordEvent("control_error");
 			AbortResponseBody(std::make_exception_ptr(WasProtocolError("malformed PREMATURE packet")));
 			return false;
@@ -705,12 +699,14 @@ WasClient::OnWasControlPacket(enum was_command cmd,
 			   catch it and report it to the #HttpResponseHandler */
 			try {
 				AtScopeExit(this) { response.body = nullptr; };
-				was_input_premature_throw(response.body, *length_p);
+				was_input_premature_throw(response.body,
+							  LoadUnaligned<uint64_t>(payload.data()));
 			} catch (...) {
 				AbortPending(std::current_exception());
 			}
 		} else {
-			was_input_premature(response.body, *length_p);
+			was_input_premature(response.body,
+					    LoadUnaligned<uint64_t>(payload.data()));
 		}
 
 		return false;

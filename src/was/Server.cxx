@@ -14,6 +14,7 @@
 #include "pool/pool.hxx"
 #include "util/SpanCast.hxx"
 #include "util/StringSplit.hxx"
+#include "util/Unaligned.hxx"
 #include "AllocatorPtr.hxx"
 
 #include <was/protocol.h>
@@ -211,7 +212,6 @@ WasServer::OnWasControlPacket(enum was_command cmd,
 			      std::span<const std::byte> payload) noexcept
 {
 	switch (cmd) {
-		const uint64_t *length_p;
 		HttpMethod method;
 
 	case WAS_COMMAND_NOP:
@@ -345,13 +345,13 @@ WasServer::OnWasControlPacket(enum was_command cmd,
 			return false;
 		}
 
-		length_p = (const uint64_t *)(const void *)payload.data();
-		if (payload.size() != sizeof(*length_p)) {
+		if (payload.size() != sizeof(uint64_t)) {
 			AbortProtocolError("malformed LENGTH packet");
 			return false;
 		}
 
-		if (!was_input_set_length(request.body, *length_p)) {
+		if (!was_input_set_length(request.body,
+					  LoadUnaligned<uint64_t>(payload.data()))) {
 			AbortProtocolError("invalid LENGTH packet");
 			return false;
 		}
@@ -365,8 +365,7 @@ WasServer::OnWasControlPacket(enum was_command cmd,
 		return false;
 
 	case WAS_COMMAND_PREMATURE:
-		length_p = (const uint64_t *)(const void *)payload.data();
-		if (payload.size() != sizeof(*length_p)) {
+		if (payload.size() != sizeof(uint64_t)) {
 			AbortError(std::make_exception_ptr("malformed PREMATURE packet"));
 			return false;
 		}
@@ -374,7 +373,8 @@ WasServer::OnWasControlPacket(enum was_command cmd,
 		if (request.body == nullptr)
 			break;
 
-		was_input_premature(request.body, *length_p);
+		was_input_premature(request.body,
+				    LoadUnaligned<uint64_t>(payload.data()));
 		return false;
 	}
 
