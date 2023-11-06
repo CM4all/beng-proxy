@@ -10,6 +10,8 @@
 
 #include <memory>
 
+#include <string.h>
+
 using std::string_view_literals::operator""sv;
 
 LbTranslationCache::Vary::Vary(const TranslateResponse &response) noexcept
