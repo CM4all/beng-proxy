@@ -538,7 +538,7 @@ RelocateCallback(const char *uri, void *ctx) noexcept
 	return uri;
 }
 
-StringMap
+static StringMap
 forward_response_headers(AllocatorPtr alloc, HttpStatus status,
 			 const StringMap &src,
 			 const char *(*relocate)(const char *uri, void *ctx) noexcept,
@@ -551,7 +551,7 @@ forward_response_headers(AllocatorPtr alloc, HttpStatus status,
 					settings);
 }
 
-StringMap
+static StringMap
 forward_response_headers(AllocatorPtr alloc, HttpStatus status,
 			 const StringMap &src,
 			 const HeaderForwardSettings &settings) noexcept
