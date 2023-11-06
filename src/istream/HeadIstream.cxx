@@ -61,7 +61,7 @@ HeadIstream::OnData(std::span<const std::byte> src) noexcept
 		src = src.first(rest);
 
 	std::size_t nbytes = InvokeData(src);
-	assert((off_t)nbytes <= rest);
+	assert(nbytes == 0 || (off_t)nbytes <= rest);
 
 	if (nbytes > 0) {
 		rest -= nbytes;
