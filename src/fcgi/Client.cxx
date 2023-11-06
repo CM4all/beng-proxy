@@ -804,7 +804,7 @@ FcgiClient::_Read() noexcept
 void
 FcgiClient::_FillBucketList(IstreamBucketList &list)
 {
-	if (response.available == 0)
+	if (response.available == 0 && !socket.IsConnected())
 		return;
 
 	if (response.read_state != Response::READ_BODY || response.stderr) {
