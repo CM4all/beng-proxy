@@ -9,6 +9,7 @@
 #include "pool/Ptr.hxx"
 #include "istream/UnusedPtr.hxx"
 
+#include <cstdint>
 #include <string_view>
 
 enum class HttpMethod : uint_least8_t;
