@@ -246,7 +246,7 @@ WasInput::SubmitBuffer(bool invoke_ready) noexcept
 	if (invoke_ready && !r.empty()) {
 		switch (InvokeReady()) {
 		case IstreamReadyResult::OK:
-			return true;
+			return !buffer.IsDefinedAndFull();
 
 		case IstreamReadyResult::FALLBACK:
 			break;
