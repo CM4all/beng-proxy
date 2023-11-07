@@ -64,12 +64,12 @@ class HttpClientConnection final : public ClientConnection {
 public:
 	HttpClientConnection(EventLoop &_event_loop,
 			     std::thread &&_thread,
-			     SocketDescriptor fd,
+			     UniqueSocketDescriptor fd,
 			     SocketFilterPtr _filter) noexcept
 		:thread(std::move(_thread)),
 		 socket(_event_loop)
 	{
-		socket.InitDummy(fd, FdType::FD_SOCKET,
+		socket.InitDummy(fd.Release(), FdType::FD_SOCKET,
 				 std::move(_filter));
 	}
 
@@ -263,21 +263,16 @@ HttpClientConnection *
 HttpClientFactory::NewFork(EventLoop &event_loop,
 			   std::function<void(SocketDescriptor)> _function)
 {
-	SocketDescriptor client_socket, server_socket;
-	if (!SocketDescriptor::CreateSocketPair(AF_LOCAL, SOCK_STREAM, 0,
-						client_socket, server_socket)) {
-		perror("socketpair() failed");
-		exit(EXIT_FAILURE);
-	}
+	auto [client_socket, server_socket] = CreateStreamSocketPair();
 
 	// not using std::thread because libc++ still doesn't have it in 2023
-	std::thread thread{[](SocketDescriptor s, std::function<void(SocketDescriptor)> function){
+	std::thread thread{[](UniqueSocketDescriptor s, std::function<void(SocketDescriptor)> function){
 		function(s);
-	}, server_socket, std::move(_function)};
+	}, std::move(server_socket), std::move(_function)};
 
 	client_socket.SetNonBlocking();
 	return new HttpClientConnection(event_loop, std::move(thread),
-					client_socket,
+					std::move(client_socket),
 					CreateFilter());
 }
 
