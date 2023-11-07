@@ -116,7 +116,7 @@ class FcgiClient final
 		 * Is the FastCGI application currently sending a STDERR
 		 * packet?
 		 */
-		bool stderr;
+		bool stderr = false;
 
 		explicit Response(bool _no_body)
 			:no_body(_no_body) {}
@@ -375,6 +375,7 @@ inline bool
 FcgiClient::HandleLine(std::string_view line)
 {
 	assert(response.receiving_headers);
+	assert(!response.stderr);
 
 	if (!line.empty()) {
 		if (line.size() >= MAX_HTTP_HEADER_SIZE)
@@ -392,7 +393,6 @@ FcgiClient::HandleLine(std::string_view line)
 
 		response.receiving_headers = false;
 		response.in_read = false;
-		response.stderr = false;
 		return true;
 	}
 }
