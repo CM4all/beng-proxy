@@ -952,9 +952,6 @@ FcgiClient::_ConsumeBucketList(std::size_t nbytes) noexcept
 	assert(response.WasResponseSubmitted());
 	assert(!response.stderr);
 
-	if (response.available == 0)
-		return {0, true};
-
 	std::size_t total = 0;
 
 	while (true) {
