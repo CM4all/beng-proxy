@@ -839,11 +839,6 @@ FcgiClient::_FillBucketList(IstreamBucketList &list)
 	if (response.available == 0 && !socket.IsConnected())
 		return;
 
-	if (response.stderr) {
-		list.SetMore();
-		return;
-	}
-
 	auto b = socket.ReadBuffer();
 	auto data = b.data();
 	const auto end = data + b.size();
@@ -854,6 +849,11 @@ FcgiClient::_FillBucketList(IstreamBucketList &list)
 	std::size_t total_size = 0;
 
 	bool found_end_request = response.end_request;
+
+	if (current_content_length > 0 && response.stderr)
+		/* skip STDERR payloads in this method;
+		   _ConsumeBucketList() will handle them */
+		current_skip_length += std::exchange(current_content_length, 0);
 
 	while (true) {
 		if (current_content_length > 0) {
@@ -950,23 +950,36 @@ FcgiClient::_ConsumeBucketList(std::size_t nbytes) noexcept
 {
 	assert(response.available != 0);
 	assert(response.WasResponseSubmitted());
-	assert(!response.stderr);
 
 	std::size_t total = 0;
 
 	while (true) {
 		if (content_length > 0) {
-			std::size_t consumed = std::min(nbytes, content_length);
-			if (response.available > 0 && (off_t)consumed > response.available)
-				consumed = response.available;
+			std::size_t consumed = content_length;
+
+			if (response.stderr) {
+				auto r = socket.ReadBuffer();
+				assert(nbytes == 0 || r.size() >= content_length);
+
+				if (r.size() < consumed)
+					consumed = r.size();
+
+				HandleStderrPayload(r.first(consumed));
+			} else {
+				if (nbytes < consumed)
+					consumed = nbytes;
+
+				nbytes -= consumed;
+				total += consumed;
+
+				if (response.available > 0)
+					response.available -= consumed;
+			}
+
+			assert(socket.GetAvailable() >= consumed);
 
 			socket.DisposeConsumed(consumed);
 			content_length -= consumed;
-			nbytes -= consumed;
-			total += consumed;
-
-			if (response.available > 0)
-				response.available -= consumed;
 
 			if (content_length > 0)
 				break;
@@ -1011,7 +1024,10 @@ FcgiClient::_ConsumeBucketList(std::size_t nbytes) noexcept
 
 			response.end_request = true;
 			skip_length += std::exchange(content_length, 0);
+		} else if (header.type == FcgiRecordType::STDOUT) {
+			response.stderr = false;
 		} else if (header.type == FcgiRecordType::STDERR) {
+			response.stderr = true;
 			if (b.size() < sizeof(header) + content_length) {
 				/* incomplete packet: rollback */
 				content_length = skip_length = 0;
@@ -1021,7 +1037,7 @@ FcgiClient::_ConsumeBucketList(std::size_t nbytes) noexcept
 			HandleStderrPayload(b.subspan(sizeof(header)).first(content_length));
 
 			skip_length += std::exchange(content_length, 0);
-		} else if (header.type != FcgiRecordType::STDOUT) {
+		} else {
 			/* ignore unknown packets */
 			skip_length += std::exchange(content_length, 0);
 		}
