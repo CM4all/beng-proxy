@@ -221,15 +221,22 @@ fcgi_server_nop(struct pool &pool, FcgiServer &server)
 
 class FcgiClientConnection final : public ClientConnection {
 	EventLoop &event_loop;
-	const std::jthread thread;
+	std::thread thread;
 	UniqueSocketDescriptor fd;
 
 public:
-	FcgiClientConnection(EventLoop &_event_loop, std::jthread &&_thread,
+	FcgiClientConnection(EventLoop &_event_loop, std::thread &&_thread,
 			     UniqueSocketDescriptor &&_fd)
 		:event_loop(_event_loop),
 		 thread(std::move(_thread)),
 		 fd(std::move(_fd)) {}
+
+	~FcgiClientConnection() noexcept override {
+		fd.Close();
+
+		if (thread.joinable())
+			thread.join();
+	}
 
 	void Request(struct pool &pool,
 		     Lease &lease,
@@ -373,7 +380,8 @@ FcgiClientFactory::New(EventLoop &event_loop, void (*_f)(struct pool &pool, Fcgi
 {
 	auto [server_socket, client_socket] = CreateStreamSocketPair();
 
-	std::jthread thread{[](UniqueSocketDescriptor &&s, void (*f)(struct pool &pool, FcgiServer &server)){
+	// not using std::thread because libc++ still doesn't have it in 2023
+	std::thread thread{[](UniqueSocketDescriptor &&s, void (*f)(struct pool &pool, FcgiServer &server)){
 		auto pool = pool_new_libc(nullptr, "f");
 		FcgiServer server{std::move(s)};
 
