@@ -124,6 +124,14 @@ class FcgiClient final
 
 		explicit Response(bool _no_body)
 			:no_body(_no_body) {}
+
+		/**
+		 * Were status and headers submitted to
+		 * HttpResponseHandler::OnHttpResponse() already?
+		 */
+		bool WasResponseSubmitted() const noexcept {
+			return read_state == READ_BODY;
+		}
 	} response;
 
 	std::size_t content_length = 0, skip_length = 0;
@@ -283,8 +291,7 @@ inline FcgiClient::~FcgiClient() noexcept
 void
 FcgiClient::AbortResponseHeaders(std::exception_ptr ep) noexcept
 {
-	assert(response.read_state == Response::READ_HEADERS ||
-	       response.read_state == Response::READ_NO_BODY);
+	assert(!response.WasResponseSubmitted());
 
 	auto &_handler = handler;
 	Destroy();
@@ -294,7 +301,7 @@ FcgiClient::AbortResponseHeaders(std::exception_ptr ep) noexcept
 void
 FcgiClient::AbortResponseBody(std::exception_ptr ep) noexcept
 {
-	assert(response.read_state == Response::READ_BODY);
+	assert(response.WasResponseSubmitted());
 
 	DestroyError(ep);
 }
@@ -302,7 +309,7 @@ FcgiClient::AbortResponseBody(std::exception_ptr ep) noexcept
 void
 FcgiClient::AbortResponse(std::exception_ptr ep) noexcept
 {
-	if (response.read_state != Response::READ_BODY)
+	if (!response.WasResponseSubmitted())
 		AbortResponseHeaders(ep);
 	else
 		AbortResponseBody(ep);
@@ -311,7 +318,7 @@ FcgiClient::AbortResponse(std::exception_ptr ep) noexcept
 void
 FcgiClient::_Close() noexcept
 {
-	assert(response.read_state == Response::READ_BODY);
+	assert(response.WasResponseSubmitted());
 
 	stopwatch.RecordEvent("close");
 
@@ -585,7 +592,7 @@ FcgiClient::ConsumeInput(const std::byte *data0, std::size_t length0) noexcept
 			if (length > content_length)
 				length = content_length;
 
-			if (response.read_state == Response::READ_BODY &&
+			if (response.WasResponseSubmitted() &&
 			    !response.stderr &&
 			    response.available >= 0 &&
 			    (off_t)length > response.available) {
@@ -617,7 +624,7 @@ FcgiClient::ConsumeInput(const std::byte *data0, std::size_t length0) noexcept
 			content_length -= nbytes;
 			socket.DisposeConsumed(nbytes);
 
-			if (at_headers && response.read_state == Response::READ_BODY) {
+			if (at_headers && response.read_state != Response::READ_HEADERS) {
 				/* the read_state has been switched from HEADERS to
 				   BODY: we have to deliver the response now */
 
@@ -782,7 +789,7 @@ FcgiClient::_GetAvailable(bool partial) noexcept
 void
 FcgiClient::_Read() noexcept
 {
-	assert(response.read_state == Response::READ_BODY);
+	assert(response.WasResponseSubmitted());
 	assert(!response.in_read);
 
 	if (response.in_handler)
@@ -801,7 +808,7 @@ FcgiClient::_Read() noexcept
 void
 FcgiClient::_FillBucketList(IstreamBucketList &list)
 {
-	assert(response.read_state == Response::READ_BODY);
+	assert(response.WasResponseSubmitted());
 
 	if (response.available == 0 && !socket.IsConnected())
 		return;
@@ -921,7 +928,7 @@ Istream::ConsumeBucketResult
 FcgiClient::_ConsumeBucketList(std::size_t nbytes) noexcept
 {
 	assert(response.available != 0);
-	assert(response.read_state == Response::READ_BODY);
+	assert(response.WasResponseSubmitted());
 	assert(!response.stderr);
 
 	if (response.available == 0)
@@ -1020,7 +1027,7 @@ FcgiClient::_ConsumeBucketList(std::size_t nbytes) noexcept
 BufferedResult
 FcgiClient::OnBufferedData()
 {
-	if (response.read_state == Response::READ_BODY && !response.in_read) {
+	if (response.WasResponseSubmitted() && !response.in_read) {
 		switch (InvokeReady()) {
 		case IstreamReadyResult::OK:
 			return BufferedResult::OK;
