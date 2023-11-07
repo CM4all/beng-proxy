@@ -20,9 +20,8 @@
 
 #include <gtest/gtest-param-test.h>
 
+#include <functional>
 #include <thread>
-
-#include <sys/socket.h>
 
 using std::string_view_literals::operator""sv;
 
@@ -281,8 +280,9 @@ struct FcgiClientFactory {
 		}
 	}
 
-	static FcgiClientConnection *New(EventLoop &event_loop,
-					 void (*f)(struct pool &pool, FcgiServer &server));
+	using ServerFunction = std::function<void(struct pool &pool, FcgiServer &server)>;
+
+	static FcgiClientConnection *New(EventLoop &event_loop, ServerFunction function);
 
 	auto *NewMirror(struct pool &, EventLoop &event_loop) {
 		return New(event_loop, fcgi_server_mirror);
@@ -376,17 +376,17 @@ struct FcgiClientFactory {
 };
 
 FcgiClientConnection *
-FcgiClientFactory::New(EventLoop &event_loop, void (*_f)(struct pool &pool, FcgiServer &server))
+FcgiClientFactory::New(EventLoop &event_loop, ServerFunction _function)
 {
 	auto [server_socket, client_socket] = CreateStreamSocketPair();
 
 	// not using std::thread because libc++ still doesn't have it in 2023
-	std::thread thread{[](UniqueSocketDescriptor &&s, void (*f)(struct pool &pool, FcgiServer &server)){
+	std::thread thread{[](UniqueSocketDescriptor s, ServerFunction function){
 		auto pool = pool_new_libc(nullptr, "f");
 		FcgiServer server{std::move(s)};
 
 		try {
-			f(*pool, server);
+			function(*pool, server);
 			server.FlushOutput();
 		} catch (...) {
 			PrintException(std::current_exception());
@@ -394,7 +394,7 @@ FcgiClientFactory::New(EventLoop &event_loop, void (*_f)(struct pool &pool, Fcgi
 
 		server.Shutdown();
 		pool.reset();
-	}, std::move(server_socket), _f};
+	}, std::move(server_socket), std::move(_function)};
 
 	client_socket.SetNonBlocking();
 	return new FcgiClientConnection(event_loop, std::move(thread),
