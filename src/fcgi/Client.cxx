@@ -302,10 +302,6 @@ FcgiClient::AbortResponseBody(std::exception_ptr ep) noexcept
 void
 FcgiClient::AbortResponse(std::exception_ptr ep) noexcept
 {
-	assert(response.read_state == Response::READ_HEADERS ||
-	       response.read_state == Response::READ_NO_BODY ||
-	       response.read_state == Response::READ_BODY);
-
 	if (response.read_state != Response::READ_BODY)
 		AbortResponseHeaders(ep);
 	else
