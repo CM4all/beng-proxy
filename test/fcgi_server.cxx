@@ -253,15 +253,12 @@ FcgiServer::FlushOutput()
 			throw MakeErrno("Failed to send");
 
 		output_buffer.Consume(nbytes);
-		output_buffer.FreeIfEmpty();
 	}
 }
 
 std::size_t
 FcgiServer::WriteRaw(std::span<const std::byte> src)
 {
-	output_buffer.AllocateIfNull();
-
 	auto w = output_buffer.Write();
 	if (w.empty())
 		FlushOutput();

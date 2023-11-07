@@ -5,7 +5,7 @@
 #include "fcgi/Protocol.hxx"
 #include "net/UniqueSocketDescriptor.hxx"
 #include "util/SpanCast.hxx"
-#include "DefaultFifoBuffer.hxx"
+#include "util/StaticFifoBuffer.hxx"
 #include "strmap.hxx"
 
 #include <cstdint>
@@ -32,7 +32,7 @@ struct FcgiRequest {
 class FcgiServer {
 	UniqueSocketDescriptor socket;
 
-	DefaultFifoBuffer output_buffer;
+	StaticFifoBuffer<std::byte, 4096> output_buffer;
 
 public:
 	[[nodiscard]]
