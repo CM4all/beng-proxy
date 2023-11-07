@@ -367,6 +367,36 @@ struct FcgiClientFactory {
 		});
 	}
 
+	/**
+	 * Like NewInterleavedStderr(), but the server blocks in the
+	 * middle of the STDERR payload until a pipe becomes readable.
+	 */
+	auto *NewBlockingStderr(EventLoop &event_loop,
+				UniqueFileDescriptor &&wait_pipe_r) {
+		return New(event_loop, [&wait_pipe_r](struct pool &pool, FcgiServer &server){
+			const auto request = server.ReadRequest(pool);
+
+			server.DiscardRequestBody(request);
+			server.WriteStdout(request, "content-length: 5\n\nhel"sv, 3);
+
+			server.WriteHeader({
+				.version = FCGI_VERSION_1,
+				.type = FcgiRecordType::STDERR,
+				.request_id = request.id,
+				.content_length = 7,
+			});
+
+			server.WriteFullRaw(AsBytes("foo"sv));
+			server.FlushOutput();
+
+			wait_pipe_r.WaitReadable(-1);
+			server.WriteFullRaw(AsBytes("bar\n"sv));
+
+			server.WriteStdout(request, "lo"sv, 7);
+			server.EndResponse(request);
+		});
+	}
+
 	auto *NewIncompleteEndRequest(struct pool &, EventLoop &event_loop) {
 		return New(event_loop, [](struct pool &pool, FcgiServer &server){
 			const auto request = server.ReadRequest(pool);
@@ -533,3 +563,59 @@ TEST_P(FcgiClientB, IncompleteEndRequest)
 INSTANTIATE_TEST_SUITE_P(FcgiClient,
                          FcgiClientB,
                          testing::Values(false, true));
+
+/**
+ * The server blocks in the middle of the STDERR payload, and after
+ * that, we switch to buckets.
+ */
+TEST(FcgiClient, BlockingStderr)
+{
+	Instance instance;
+	FcgiClientFactory factory{instance.event_loop};
+	Context c{instance};
+
+	c.break_data = true;
+
+	auto [wait_pipe_r, wait_pipe_w] = CreatePipe();
+	auto [stderr_r, stderr_w] = CreatePipeNonBlock();
+
+	auto *connection = factory.NewBlockingStderr(c.event_loop,
+						     std::move(wait_pipe_r));
+	connection->SetStderr(std::move(stderr_w));
+
+	c.connection = connection;
+	c.connection->Request(c.pool, c,
+			      HttpMethod::GET, "/foo", {},
+			      nullptr,
+			      false,
+			      c, c.cancel_ptr);
+
+	c.event_loop.Run();
+
+	EXPECT_FALSE(c.request_error);
+	EXPECT_FALSE(c.body_error);
+	EXPECT_EQ(c.status, HttpStatus::OK);
+	EXPECT_EQ(c.available, 5);
+	EXPECT_EQ(c.body_data, 3);
+	EXPECT_EQ(c.consumed_body_data, 3);
+	EXPECT_FALSE(c.body_eof);
+	EXPECT_FALSE(c.released);
+	EXPECT_EQ(ReadStderr(stderr_r), "foo"sv);
+
+	c.break_data = false;
+	c.use_buckets = true;
+
+	wait_pipe_w.Close();
+	c.event_loop.Run();
+
+	EXPECT_FALSE(c.request_error);
+	EXPECT_FALSE(c.body_error);
+	EXPECT_EQ(c.status, HttpStatus::OK);
+	EXPECT_EQ(c.available, 5);
+	EXPECT_EQ(c.body_data, 5);
+	EXPECT_EQ(c.consumed_body_data, 5);
+	EXPECT_TRUE(c.body_eof);
+	EXPECT_TRUE(c.released);
+	EXPECT_EQ(c.lease_action, PutAction::REUSE);
+	EXPECT_EQ(ReadStderr(stderr_r), "bar\n"sv);
+}
