@@ -45,7 +45,6 @@ class FcgiClient final
 	: BufferedSocketHandler, Cancellable, Istream, IstreamSink,
 	  DestructAnchor
 {
-
 	BufferedSocket socket;
 
 	LeasePtr lease_ref;
@@ -68,16 +67,16 @@ class FcgiClient final
 	} request;
 
 	struct Response {
-		/**
-		 * Only used when #no_body is set.
-		 */
-		HttpStatus status;
-
 		StringMap headers;
 
 		std::size_t total_header_size = 0;
 
 		off_t available;
+
+		/**
+		 * Only used when #no_body is set.
+		 */
+		HttpStatus status;
 
 		/**
 		 * This flag is true in HEAD requests.  HEAD responses may
