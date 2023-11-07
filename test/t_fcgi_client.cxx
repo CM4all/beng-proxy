@@ -9,8 +9,8 @@
 #include "lease.hxx"
 #include "istream/UnusedPtr.hxx"
 #include "strmap.hxx"
-#include "net/SocketDescriptor.hxx"
 #include "net/SocketError.hxx"
+#include "net/UniqueSocketDescriptor.hxx"
 #include "util/ByteOrder.hxx"
 #include "util/PrintException.hxx"
 #include "util/SpanCast.hxx"
@@ -222,14 +222,14 @@ fcgi_server_nop(struct pool &pool, FcgiServer &server)
 class FcgiClientConnection final : public ClientConnection {
 	EventLoop &event_loop;
 	const std::jthread thread;
-	SocketDescriptor fd;
+	UniqueSocketDescriptor fd;
 
 public:
 	FcgiClientConnection(EventLoop &_event_loop, std::jthread &&_thread,
-			     SocketDescriptor _fd)
-		:event_loop(_event_loop), thread(std::move(_thread)), fd(_fd) {}
-
-	~FcgiClientConnection() noexcept override;
+			     UniqueSocketDescriptor &&_fd)
+		:event_loop(_event_loop),
+		 thread(std::move(_thread)),
+		 fd(std::move(_fd)) {}
 
 	void Request(struct pool &pool,
 		     Lease &lease,
@@ -371,14 +371,14 @@ struct FcgiClientFactory {
 FcgiClientConnection *
 FcgiClientFactory::New(EventLoop &event_loop, void (*_f)(struct pool &pool, FcgiServer &server))
 {
-	SocketDescriptor server_socket, client_socket;
-	if (!SocketDescriptor::CreateSocketPair(AF_LOCAL, SOCK_STREAM, 0,
-						server_socket, client_socket))
+	UniqueSocketDescriptor server_socket, client_socket;
+	if (!UniqueSocketDescriptor::CreateSocketPair(AF_LOCAL, SOCK_STREAM, 0,
+						      server_socket, client_socket))
 		throw MakeSocketError("socketpair() failed");
 
-	std::jthread thread{[](SocketDescriptor s, void (*f)(struct pool &pool, FcgiServer &server)){
+	std::jthread thread{[](UniqueSocketDescriptor &&s, void (*f)(struct pool &pool, FcgiServer &server)){
 		auto pool = pool_new_libc(nullptr, "f");
-		FcgiServer server{UniqueSocketDescriptor{s}};
+		FcgiServer server{std::move(s)};
 
 		try {
 			f(*pool, server);
@@ -389,17 +389,11 @@ FcgiClientFactory::New(EventLoop &event_loop, void (*_f)(struct pool &pool, Fcgi
 
 		server.Shutdown();
 		pool.reset();
-	}, server_socket, _f};
+	}, std::move(server_socket), _f};
 
 	client_socket.SetNonBlocking();
-	return new FcgiClientConnection(event_loop, std::move(thread), client_socket);
-}
-
-FcgiClientConnection::~FcgiClientConnection() noexcept
-{
-	assert(fd.IsDefined());
-
-	fd.Close();
+	return new FcgiClientConnection(event_loop, std::move(thread),
+					std::move(client_socket));
 }
 
 INSTANTIATE_TYPED_TEST_SUITE_P(FcgiClient, ClientTest, FcgiClientFactory);
