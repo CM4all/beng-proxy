@@ -865,17 +865,13 @@ FcgiClient::_FillBucketList(IstreamBucketList &list)
 		if (remaining < sizeof(header))
 			break;
 
-		const std::size_t new_content_length = header.content_length;
+		current_content_length = header.content_length;
+		current_skip_length = header.padding_length;
 
 		if (header.request_id != id) {
 			/* ignore packets from other requests */
-			current_skip_length = sizeof(header)
-				+ new_content_length
-				+ header.padding_length;
-			continue;
-		}
-
-		if (header.type == FcgiRecordType::END_REQUEST) {
+			current_skip_length += std::exchange(current_content_length, 0);
+		} else if (header.type == FcgiRecordType::END_REQUEST) {
 			/* "excess data" has already been checked */
 			assert(response.available < 0 ||
 			       static_cast<std::size_t>(response.available) >= total_size);
@@ -892,18 +888,14 @@ FcgiClient::_FillBucketList(IstreamBucketList &list)
 			found_end_request = true;
 
 			if (socket.IsConnected() &&
-			    remaining == sizeof(header) + new_content_length + header.padding_length)
+			    remaining == sizeof(header) + current_content_length + skip_length)
 				ReleaseSocket(PutAction::REUSE);
 
 			break;
 		} else if (header.type != FcgiRecordType::STDOUT) {
-			data += sizeof(header);
-			current_skip_length = new_content_length + header.padding_length;
-			continue;
+			/* ignore unknown packets */
+			current_skip_length += std::exchange(current_content_length, 0);
 		}
-
-		current_content_length = new_content_length;
-		current_skip_length = header.padding_length;
 
 		data += sizeof(header);
 	}
@@ -960,42 +952,35 @@ FcgiClient::_ConsumeBucketList(std::size_t nbytes) noexcept
 		if (b.size() < sizeof(header))
 			break;
 
-		const std::size_t new_content_length = header.content_length;
+		content_length = header.content_length;
+		skip_length = header.padding_length;
 
 		if (header.request_id != id) {
 			/* ignore packets from other requests */
-			skip_length = sizeof(header) + new_content_length
-				+ header.padding_length;
-			continue;
-		}
-
-		if (header.type == FcgiRecordType::END_REQUEST && !socket.IsConnected()) {
+			skip_length += std::exchange(content_length, 0);
+		} else if (header.type == FcgiRecordType::END_REQUEST && !socket.IsConnected()) {
 			/* this condition must have been detected
 			   already in _FillBucketList() */
 			assert(response.available == 0);
 
+			content_length = skip_length = 0;
+
 			socket.DisposeConsumed(sizeof(header));
 			return {Consumed(total), true};
-		}
-
-		if (header.type == FcgiRecordType::STDERR) {
-			if (b.size() < sizeof(header) + new_content_length)
+		} else if (header.type == FcgiRecordType::STDERR) {
+			if (b.size() < sizeof(header) + content_length) {
+				/* incomplete packet: rollback */
+				content_length = skip_length = 0;
 				break;
+			}
 
-			HandleStderrPayload(b.subspan(sizeof(header)).first(new_content_length));
-			socket.DisposeConsumed(sizeof(header) + new_content_length);
+			HandleStderrPayload(b.subspan(sizeof(header)).first(content_length));
 
-			skip_length = header.padding_length;
-			continue;
+			skip_length += std::exchange(content_length, 0);
 		} else if (header.type != FcgiRecordType::STDOUT) {
 			/* ignore unknown packets */
-			skip_length = sizeof(header) + new_content_length
-				+ header.padding_length;
-			continue;
+			skip_length += std::exchange(content_length, 0);
 		}
-
-		content_length = new_content_length;
-		skip_length = header.padding_length;
 
 		socket.DisposeConsumed(sizeof(header));
 	}
