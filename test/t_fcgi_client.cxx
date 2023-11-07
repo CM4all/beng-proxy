@@ -10,6 +10,7 @@
 #include "istream/UnusedPtr.hxx"
 #include "strmap.hxx"
 #include "net/SocketDescriptor.hxx"
+#include "net/SocketError.hxx"
 #include "util/ByteOrder.hxx"
 #include "util/PrintException.hxx"
 #include "util/SpanCast.hxx"
@@ -370,10 +371,8 @@ FcgiClientFactory::New(EventLoop &event_loop, void (*f)(struct pool &pool, FcgiS
 {
 	SocketDescriptor server_socket, client_socket;
 	if (!SocketDescriptor::CreateSocketPair(AF_LOCAL, SOCK_STREAM, 0,
-						server_socket, client_socket)) {
-		perror("socketpair() failed");
-		exit(EXIT_FAILURE);
-	}
+						server_socket, client_socket))
+		throw MakeSocketError("socketpair() failed");
 
 	const auto pid = fork();
 	if (pid < 0) {
