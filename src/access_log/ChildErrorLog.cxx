@@ -6,10 +6,9 @@
 #include "ChildErrorLogOptions.hxx"
 #include "spawn/Prepared.hxx"
 #include "event/net/log/PipeAdapter.hxx"
-#include "io/UniqueFileDescriptor.hxx"
-#include "system/Error.hxx"
+#include "io/Pipe.hxx"
 
-#include <assert.h>
+#include <cassert>
 
 ChildErrorLog::ChildErrorLog() = default;
 ChildErrorLog::~ChildErrorLog() noexcept = default;
@@ -37,9 +36,7 @@ ChildErrorLog::EnableClient(EventLoop &event_loop, SocketDescriptor socket,
 	if (!socket.IsDefined())
 		return UniqueFileDescriptor();
 
-	UniqueFileDescriptor r, w;
-	if (!UniqueFileDescriptor::CreatePipe(r, w))
-		throw MakeErrno("Failed to create pipe");
+	auto [r, w] = CreatePipe();
 
 	/* this should not be necessary because Net::Log::PipeAdapter
 	   reads only after epoll signals that the pipe is readable,

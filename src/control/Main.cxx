@@ -5,6 +5,7 @@
 #include "net/control/Client.hxx"
 #include "translation/Protocol.hxx"
 #include "lib/fmt/RuntimeError.hxx"
+#include "io/Pipe.hxx"
 #include "io/UniqueFileDescriptor.hxx"
 #include "system/Error.hxx"
 #include "util/ByteOrder.hxx"
@@ -268,9 +269,7 @@ Stopwatch(const char *server, ConstBuffer<const char *> args)
 	if (!args.empty())
 		throw Usage{"Too many arguments"};
 
-	UniqueFileDescriptor r, w;
-	if (!UniqueFileDescriptor::CreatePipe(r, w))
-		throw MakeErrno("pipe() failed");
+	auto [r, w] = CreatePipe();
 
 	FileDescriptor fds[] = { w };
 

@@ -7,12 +7,14 @@
 #include "New.hxx"
 #include "lib/fmt/RuntimeError.hxx"
 #include "lib/fmt/SystemError.hxx"
+#include "io/Pipe.hxx"
 #include "io/UniqueFileDescriptor.hxx"
 #include "io/uring/Close.hxx"
 #include "io/uring/Operation.hxx"
 #include "io/uring/Queue.hxx"
 
 #include <cassert>
+#include <tuple>
 
 #include <fcntl.h>
 #include <limits.h>
@@ -68,8 +70,7 @@ public:
 		 offset(_start_offset), end_offset(_end_offset)
 	{
 		// TODO use PipeStock
-		if (!UniqueFileDescriptor::CreatePipe(r, w))
-			throw MakeErrno("Failed to create pipe");
+		std::tie(r, w) = CreatePipe();
 
 		/* enlarge the pipe buffer to 256 kB to reduce the
 		   number of splice() system calls */

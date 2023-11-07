@@ -10,6 +10,7 @@
 #include "istream/UnusedPtr.hxx"
 #include "istream/istream.hxx"
 #include "istream/Sink.hxx"
+#include "io/Pipe.hxx"
 #include "io/Splice.hxx"
 #include "io/SpliceSupport.hxx"
 #include "io/Buffered.hxx"
@@ -416,17 +417,14 @@ SpawnChildProcess(EventLoop &event_loop, struct pool *pool, const char *name,
 	UniqueFileDescriptor stdin_pipe;
 	if (input) {
 		UniqueFileDescriptor stdin_r;
-		if (!UniqueFileDescriptor::CreatePipe(stdin_r, stdin_pipe))
-			throw MakeErrno("pipe() failed");
+		std::tie(stdin_r, stdin_pipe) = CreatePipe();
 
 		prepared.SetStdin(std::move(stdin_r));
 
 		stdin_pipe.SetNonBlocking();
 	}
 
-	UniqueFileDescriptor stdout_pipe, stdout_w;
-	if (!UniqueFileDescriptor::CreatePipe(stdout_pipe, stdout_w))
-		throw MakeErrno("pipe() failed");
+	auto [stdout_pipe, stdout_w] = CreatePipe();
 
 	prepared.SetStdout(std::move(stdout_w));
 
