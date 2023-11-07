@@ -124,14 +124,14 @@ class FcgiClient final
 		 */
 		bool end_request = false;
 
-		explicit Response(bool _no_body)
+		explicit constexpr Response(bool _no_body) noexcept
 			:no_body(_no_body) {}
 
 		/**
 		 * Were status and headers submitted to
 		 * HttpResponseHandler::OnHttpResponse() already?
 		 */
-		bool WasResponseSubmitted() const noexcept {
+		constexpr bool WasResponseSubmitted() const noexcept {
 			return !receiving_headers && !no_body;
 		}
 	} response;
