@@ -5,6 +5,7 @@
 #include "t_client.hxx"
 #include "fcgi/Client.hxx"
 #include "system/SetupProcess.hxx"
+#include "io/Pipe.hxx"
 #include "io/UniqueFileDescriptor.hxx"
 #include "lease.hxx"
 #include "istream/UnusedPtr.hxx"
@@ -223,6 +224,8 @@ class FcgiClientConnection final : public ClientConnection {
 	std::thread thread;
 	UniqueSocketDescriptor fd;
 
+	UniqueFileDescriptor stderr_w;
+
 public:
 	FcgiClientConnection(EventLoop &_event_loop, std::thread &&_thread,
 			     UniqueSocketDescriptor &&_fd)
@@ -235,6 +238,10 @@ public:
 
 		if (thread.joinable())
 			thread.join();
+	}
+
+	void SetStderr(UniqueFileDescriptor &&_stderr_w) noexcept {
+		stderr_w = std::move(_stderr_w);
 	}
 
 	void Request(struct pool &pool,
@@ -251,7 +258,7 @@ public:
 				    nullptr, "192.168.1.100",
 				    std::move(headers), std::move(body),
 				    {},
-				    {},
+				    std::move(stderr_w),
 				    handler, cancel_ptr);
 	}
 
@@ -447,6 +454,16 @@ TEST(FcgiClient, MalformedHeaderValue)
 
 class FcgiClientB : public testing::TestWithParam<bool> {};
 
+static std::string
+ReadStderr(FileDescriptor fd) noexcept
+{
+	char buffer[4096];
+	auto nbytes = fd.Read(std::as_writable_bytes(std::span{buffer}));
+	if (nbytes <= 0)
+		return {};
+	return {buffer, static_cast<std::size_t>(nbytes)};
+}
+
 /**
  * A STDERR packet between two STDOUT.  Let's see if that confuses the
  * FastCGI client.
@@ -459,7 +476,12 @@ TEST_P(FcgiClientB, InterleavedStderr)
 
 	c.use_buckets = GetParam();
 
-	c.connection = factory.NewInterleavedStderr(*c.pool, c.event_loop);
+	auto [stderr_r, stderr_w] = CreatePipeNonBlock();
+
+	auto *connection = factory.NewInterleavedStderr(*c.pool, c.event_loop);
+	connection->SetStderr(std::move(stderr_w));
+
+	c.connection = connection;
 	c.connection->Request(c.pool, c,
 			      HttpMethod::GET, "/foo", {},
 			      nullptr,
@@ -477,6 +499,7 @@ TEST_P(FcgiClientB, InterleavedStderr)
 	EXPECT_TRUE(c.body_eof);
 	EXPECT_TRUE(c.released);
 	EXPECT_EQ(c.lease_action, PutAction::REUSE);
+	EXPECT_EQ(ReadStderr(stderr_r), "foobar\n"sv);
 }
 
 /**
