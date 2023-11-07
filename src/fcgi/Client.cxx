@@ -586,6 +586,7 @@ FcgiClient::ConsumeInput(const std::byte *data0, std::size_t length0) noexcept
 				length = content_length;
 
 			if (response.read_state == Response::READ_BODY &&
+			    !response.stderr &&
 			    response.available >= 0 &&
 			    (off_t)length > response.available) {
 				/* the DATA packet was larger than the Content-Length
