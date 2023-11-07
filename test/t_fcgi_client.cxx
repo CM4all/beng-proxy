@@ -410,6 +410,24 @@ struct FcgiClientFactory {
 				});
 		});
 	}
+
+	/**
+	 * The server blocks after the last STDOUT and sends
+	 * END_REQUEST later.
+	 */
+	auto *NewBlockingEnd(EventLoop &event_loop,
+			     UniqueFileDescriptor &&wait_pipe_r) {
+		return New(event_loop, [&wait_pipe_r](struct pool &pool, FcgiServer &server){
+			const auto request = server.ReadRequest(pool);
+
+			server.DiscardRequestBody(request);
+			server.WriteStdout(request, "content-length: 5\n\nhello"sv, 3);
+			server.FlushOutput();
+			wait_pipe_r.WaitReadable(-1);
+			server.WriteStderr(request, "foobar\n", 13);
+			server.EndResponse(request);
+		});
+	}
 };
 
 FcgiClientConnection *
@@ -558,6 +576,62 @@ TEST_P(FcgiClientB, IncompleteEndRequest)
 	EXPECT_TRUE(c.request_error || c.body_error);
 	EXPECT_TRUE(c.released);
 	EXPECT_EQ(c.lease_action, PutAction::DESTROY);
+}
+
+/**
+ * The server blocks after the last STDOUT and sends END_REQUEST
+ * later.
+ */
+TEST_P(FcgiClientB, BlockingEnd)
+{
+	Instance instance;
+	FcgiClientFactory factory{instance.event_loop};
+	Context c{instance};
+
+	c.use_buckets = GetParam();
+	c.break_data = true;
+
+	auto [wait_pipe_r, wait_pipe_w] = CreatePipe();
+	auto [stderr_r, stderr_w] = CreatePipeNonBlock();
+
+	auto  *connection = factory.NewBlockingEnd(c.event_loop,
+						   std::move(wait_pipe_r));
+	connection->SetStderr(std::move(stderr_w));
+
+	c.connection = connection;
+	c.connection->Request(c.pool, c,
+			      HttpMethod::GET, "/foo", {},
+			      nullptr,
+			      false,
+			      c, c.cancel_ptr);
+
+	c.event_loop.Run();
+
+	EXPECT_FALSE(c.request_error);
+	EXPECT_FALSE(c.body_error);
+	EXPECT_EQ(c.status, HttpStatus::OK);
+	EXPECT_EQ(c.available, 5);
+	EXPECT_EQ(c.body_data, 5);
+	EXPECT_EQ(c.consumed_body_data, 5);
+	EXPECT_FALSE(c.body_eof);
+	EXPECT_FALSE(c.released);
+	EXPECT_EQ(ReadStderr(stderr_r), ""sv);
+
+	c.break_data = false;
+
+	wait_pipe_w.Close();
+	c.event_loop.Run();
+
+	EXPECT_FALSE(c.request_error);
+	EXPECT_FALSE(c.body_error);
+	EXPECT_EQ(c.status, HttpStatus::OK);
+	EXPECT_EQ(c.available, 5);
+	EXPECT_EQ(c.body_data, 5);
+	EXPECT_EQ(c.consumed_body_data, 5);
+	EXPECT_TRUE(c.body_eof);
+	EXPECT_TRUE(c.released);
+	EXPECT_EQ(c.lease_action, PutAction::REUSE);
+	EXPECT_EQ(ReadStderr(stderr_r), "foobar\n"sv);
 }
 
 INSTANTIATE_TEST_SUITE_P(FcgiClient,
