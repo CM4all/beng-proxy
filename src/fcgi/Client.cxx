@@ -1114,8 +1114,7 @@ FcgiClient::Cancel() noexcept
 {
 	/* Cancellable::Cancel() can only be used before the
 	   response was delivered to our callback */
-	assert(response.read_state == Response::READ_HEADERS ||
-	       response.read_state == Response::READ_NO_BODY);
+	assert(!response.WasResponseSubmitted());
 	assert(socket.IsConnected());
 
 	stopwatch.RecordEvent("cancel");
