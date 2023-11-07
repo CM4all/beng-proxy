@@ -71,19 +71,11 @@ class FcgiClient final
 		enum {
 			READ_HEADERS,
 
-			/**
-			 * There is no response body.  Waiting for the
-			 * #FcgiRecordType::END_REQUEST packet, and
-			 * then we'll forward the response to the
-			 * #http_response_handler.
-			 */
-			READ_NO_BODY,
-
 			READ_BODY,
 		} read_state = READ_HEADERS;
 
 		/**
-		 * Only used when read_state==READ_NO_BODY.
+		 * Only used when #no_body is set.
 		 */
 		HttpStatus status;
 
@@ -97,8 +89,12 @@ class FcgiClient final
 		 * This flag is true in HEAD requests.  HEAD responses may
 		 * contain a Content-Length header, but no response body will
 		 * follow (RFC 2616 4.3).
+		 *
+		 * With this flag, the contents of STDOUT packets are
+		 * ignored and the response headers are only submitted
+		 * after END_REQUEST was received.
 		 */
-		const bool no_body;
+		bool no_body;
 
 		/**
 		 * This flag is true if SubmitResponse() is currently calling
@@ -130,7 +126,7 @@ class FcgiClient final
 		 * HttpResponseHandler::OnHttpResponse() already?
 		 */
 		bool WasResponseSubmitted() const noexcept {
-			return read_state == READ_BODY;
+			return !no_body && read_state > READ_HEADERS;
 		}
 	} response;
 
@@ -442,12 +438,8 @@ FcgiClient::Feed(std::span<const std::byte> src) noexcept
 			return 0;
 		}
 
-	case Response::READ_NO_BODY:
-		/* unreachable */
-		assert(false);
-		return 0;
-
 	case Response::READ_BODY:
+		assert(!response.no_body);
 		assert(response.available < 0 ||
 		       (off_t)src.size() <= response.available);
 
@@ -479,10 +471,12 @@ FcgiClient::SubmitResponse() noexcept
 			status = static_cast<HttpStatus>(i);
 	}
 
-	if (http_status_is_empty(status) || response.no_body) {
+	if (http_status_is_empty(status))
+		response.no_body = true;
+
+	if (response.no_body) {
 		stopwatch.RecordEvent("response_no_body");
 
-		response.read_state = Response::READ_NO_BODY;
 		response.status = status;
 
 		/* ignore the rest of this STDOUT payload */
@@ -526,7 +520,7 @@ FcgiClient::HandleEnd() noexcept
 		return;
 	}
 
-	if (response.read_state == Response::READ_NO_BODY) {
+	if (response.no_body) {
 		auto &_handler = handler;
 		Destroy();
 		_handler.InvokeResponse(response.status, std::move(response.headers),
@@ -555,7 +549,8 @@ FcgiClient::HandleHeader(const FcgiRecordHeader &header) noexcept
 	case FcgiRecordType::STDOUT:
 		response.stderr = false;
 
-		if (response.read_state == Response::READ_NO_BODY) {
+		if (response.read_state != Response::READ_HEADERS &&
+		    response.no_body) {
 			/* ignore all payloads until END_REQUEST */
 			skip_length += content_length;
 			content_length = 0;
