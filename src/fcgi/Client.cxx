@@ -118,6 +118,13 @@ class FcgiClient final
 		 */
 		bool stderr = false;
 
+		/**
+		 * Is the FastCGI application currently sending an
+		 * END_REQUEST packet?  If yes, then we are waiting
+		 * for its payload/padding to be received.
+		 */
+		bool end_request = false;
+
 		explicit Response(bool _no_body)
 			:no_body(_no_body) {}
 
@@ -232,10 +239,17 @@ private:
 	bool SubmitResponse() noexcept;
 
 	/**
-	 * Handle an END_REQUEST packet.  This function will always
-	 * destroy the client.
+	 * The END_REQUEST packet was received completely.  This
+	 * function will always destroy the client.
 	 */
-	void HandleEnd() noexcept;
+	void HandleEndComplete() noexcept;
+
+	/**
+	 * Handle an END_REQUEST packet.
+	 *
+	 * @return false if the client has been destroyed
+	 */
+	bool HandleEnd() noexcept;
 
 	/**
 	 * A packet header was received.
@@ -502,28 +516,49 @@ FcgiClient::SubmitResponse() noexcept
 }
 
 inline void
-FcgiClient::HandleEnd() noexcept
+FcgiClient::HandleEndComplete() noexcept
 {
-	assert(!socket.IsConnected());
-
-	stopwatch.RecordEvent("end");
-
-	if (response.receiving_headers) {
-		AbortResponseHeaders(std::make_exception_ptr(FcgiClientError("premature end of headers "
-									     "from FastCGI application")));
-		return;
-	}
+	assert(!response.receiving_headers);
+	assert(response.no_body || response.available == 0);
 
 	if (response.no_body) {
 		auto &_handler = handler;
 		Destroy();
 		_handler.InvokeResponse(response.status, std::move(response.headers),
 					UnusedIstreamPtr{});
-	} else if (response.available > 0) {
-		AbortResponseBody(std::make_exception_ptr(FcgiClientError("premature end of body "
-									  "from FastCGI application")));
 	} else
 		DestroyEof();
+}
+
+inline bool
+FcgiClient::HandleEnd() noexcept
+{
+	assert(!response.end_request);
+	response.end_request = true;
+
+	skip_length += content_length;
+	content_length = 0;
+
+	stopwatch.RecordEvent("end");
+
+	if (response.receiving_headers) {
+		AbortResponseHeaders(std::make_exception_ptr(FcgiClientError("premature end of headers "
+									     "from FastCGI application")));
+		return false;
+	} else if (!response.no_body && response.available > 0) {
+		AbortResponseBody(std::make_exception_ptr(FcgiClientError("premature end of body "
+									  "from FastCGI application")));
+		return false;
+	}
+
+	response.available = 0;
+
+	if (skip_length == 0) {
+		HandleEndComplete();
+		return false;
+	}
+
+	return true;
 }
 
 inline bool
@@ -556,8 +591,7 @@ FcgiClient::HandleHeader(const FcgiRecordHeader &header) noexcept
 		return true;
 
 	case FcgiRecordType::END_REQUEST:
-		HandleEnd();
-		return false;
+		return HandleEnd();
 
 	default:
 		skip_length += content_length;
@@ -644,6 +678,11 @@ FcgiClient::ConsumeInput(const std::byte *data0, std::size_t length0) noexcept
 
 			if (skip_length > 0)
 				return BufferedResult::MORE;
+
+			if (response.end_request) {
+				HandleEndComplete();
+				return BufferedResult::DESTROYED;
+			}
 
 			continue;
 		}
@@ -815,7 +854,7 @@ FcgiClient::_FillBucketList(IstreamBucketList &list)
 	std::size_t current_skip_length = skip_length;
 	std::size_t total_size = 0;
 
-	bool found_end_request = false;
+	bool found_end_request = response.end_request;
 
 	while (true) {
 		if (current_content_length > 0) {
@@ -860,6 +899,12 @@ FcgiClient::_FillBucketList(IstreamBucketList &list)
 				break;
 		}
 
+		if (found_end_request) {
+			if (socket.IsConnected())
+				ReleaseSocket(data == end ? PutAction::REUSE : PutAction::DESTROY);
+			break;
+		}
+
 		const auto &header = *(const FcgiRecordHeader *)data;
 		const std::size_t remaining = end - data;
 		if (remaining < sizeof(header))
@@ -886,12 +931,7 @@ FcgiClient::_FillBucketList(IstreamBucketList &list)
 			}
 
 			found_end_request = true;
-
-			if (socket.IsConnected() &&
-			    remaining == sizeof(header) + current_content_length + skip_length)
-				ReleaseSocket(PutAction::REUSE);
-
-			break;
+			current_skip_length += std::exchange(current_content_length, 0);
 		} else if (header.type != FcgiRecordType::STDOUT) {
 			/* ignore unknown packets */
 			current_skip_length += std::exchange(current_content_length, 0);
@@ -900,7 +940,9 @@ FcgiClient::_FillBucketList(IstreamBucketList &list)
 		data += sizeof(header);
 	}
 
-	if (!found_end_request)
+	/* report EOF only after we have received the whole
+	   END_REQUEST payload/padding */
+	if (!found_end_request || current_skip_length > 0)
 		list.SetMore();
 }
 
@@ -947,6 +989,14 @@ FcgiClient::_ConsumeBucketList(std::size_t nbytes) noexcept
 				break;
 		}
 
+		if (response.end_request) {
+			/* socket has been released by
+			   _FillBucketList() already */
+			assert(!socket.IsConnected());
+
+			return {Consumed(total), true};
+		}
+
 		const auto b = socket.ReadBuffer();
 		const auto &header = *(const FcgiRecordHeader *)b.data();
 		if (b.size() < sizeof(header))
@@ -963,10 +1013,8 @@ FcgiClient::_ConsumeBucketList(std::size_t nbytes) noexcept
 			   already in _FillBucketList() */
 			assert(response.available == 0);
 
-			content_length = skip_length = 0;
-
-			socket.DisposeConsumed(sizeof(header));
-			return {Consumed(total), true};
+			response.end_request = true;
+			skip_length += std::exchange(content_length, 0);
 		} else if (header.type == FcgiRecordType::STDERR) {
 			if (b.size() < sizeof(header) + content_length) {
 				/* incomplete packet: rollback */
@@ -1020,7 +1068,8 @@ FcgiClient::OnBufferedData()
 		/* check if the END_REQUEST packet can be found in the
 		   following data chunk */
 		const auto analysis = AnalyseBuffer(r);
-		if (analysis.end_request_offset > 0)
+		if (analysis.end_request_offset > 0 &&
+		    analysis.end_request_offset <= r.size())
 			/* found it: we no longer need the socket, everything we
 			   need is already in the given buffer */
 			ReleaseSocket(analysis.end_request_offset == r.size()

@@ -8,6 +8,7 @@ cm4all-beng-proxy (18.0.46) unstable; urgency=low
 
   * http: fix null pointer dereference (18.0.45 regression)
   * fcgi: exclude STDERR packets from Content-Length check
+  * fcgi: do not release socket until END_REQUEST payload is received
 
  -- Max Kellermann <mk@cm4all.com>  Tue, 07 Nov 2023 12:15:00 +0100
 
