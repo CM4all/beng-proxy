@@ -20,8 +20,9 @@
 
 #include <gtest/gtest-param-test.h>
 
+#include <thread>
+
 #include <sys/socket.h>
-#include <sys/wait.h>
 
 using std::string_view_literals::operator""sv;
 
@@ -220,12 +221,13 @@ fcgi_server_nop(struct pool &pool, FcgiServer &server)
 
 class FcgiClientConnection final : public ClientConnection {
 	EventLoop &event_loop;
-	const pid_t pid;
+	const std::jthread thread;
 	SocketDescriptor fd;
 
 public:
-	FcgiClientConnection(EventLoop &_event_loop, pid_t _pid, SocketDescriptor _fd)
-		:event_loop(_event_loop), pid(_pid), fd(_fd) {}
+	FcgiClientConnection(EventLoop &_event_loop, std::jthread &&_thread,
+			     SocketDescriptor _fd)
+		:event_loop(_event_loop), thread(std::move(_thread)), fd(_fd) {}
 
 	~FcgiClientConnection() noexcept override;
 
@@ -367,57 +369,37 @@ struct FcgiClientFactory {
 };
 
 FcgiClientConnection *
-FcgiClientFactory::New(EventLoop &event_loop, void (*f)(struct pool &pool, FcgiServer &server))
+FcgiClientFactory::New(EventLoop &event_loop, void (*_f)(struct pool &pool, FcgiServer &server))
 {
 	SocketDescriptor server_socket, client_socket;
 	if (!SocketDescriptor::CreateSocketPair(AF_LOCAL, SOCK_STREAM, 0,
 						server_socket, client_socket))
 		throw MakeSocketError("socketpair() failed");
 
-	const auto pid = fork();
-	if (pid < 0) {
-		perror("fork() failed");
-		abort();
-	}
-
-	if (pid == 0) {
-		client_socket.Close();
-
+	std::jthread thread{[](SocketDescriptor s, void (*f)(struct pool &pool, FcgiServer &server)){
 		auto pool = pool_new_libc(nullptr, "f");
-		FcgiServer server{UniqueSocketDescriptor{server_socket}};
+		FcgiServer server{UniqueSocketDescriptor{s}};
 
 		try {
 			f(*pool, server);
 			server.FlushOutput();
 		} catch (...) {
 			PrintException(std::current_exception());
-			_exit(EXIT_FAILURE);
 		}
 
 		server.Shutdown();
 		pool.reset();
-		_exit(EXIT_SUCCESS);
-	}
+	}, server_socket, _f};
 
-	server_socket.Close();
 	client_socket.SetNonBlocking();
-	return new FcgiClientConnection(event_loop, pid, client_socket);
+	return new FcgiClientConnection(event_loop, std::move(thread), client_socket);
 }
 
 FcgiClientConnection::~FcgiClientConnection() noexcept
 {
-	assert(pid >= 1);
 	assert(fd.IsDefined());
 
 	fd.Close();
-
-	int status;
-	if (waitpid(pid, &status, 0) < 0) {
-		perror("waitpid() failed");
-		abort();
-	}
-
-	assert(!WIFSIGNALED(status));
 }
 
 INSTANTIATE_TYPED_TEST_SUITE_P(FcgiClient, ClientTest, FcgiClientFactory);
