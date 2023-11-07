@@ -800,10 +800,12 @@ FcgiClient::_Read() noexcept
 void
 FcgiClient::_FillBucketList(IstreamBucketList &list)
 {
+	assert(response.read_state == Response::READ_BODY);
+
 	if (response.available == 0 && !socket.IsConnected())
 		return;
 
-	if (response.read_state != Response::READ_BODY || response.stderr) {
+	if (response.stderr) {
 		list.SetMore();
 		return;
 	}
