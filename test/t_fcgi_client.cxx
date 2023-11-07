@@ -325,12 +325,12 @@ struct FcgiClientFactory {
 	}
 
 	auto *NewPrematureCloseHeaders(struct pool &,
-					      EventLoop &event_loop) {
+				       EventLoop &event_loop) {
 		return New(event_loop, fcgi_server_premature_close_headers);
 	}
 
 	auto *NewPrematureCloseBody(struct pool &,
-					   EventLoop &event_loop) {
+				    EventLoop &event_loop) {
 		return New(event_loop, fcgi_server_premature_close_body);
 	}
 
