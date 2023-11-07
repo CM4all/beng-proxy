@@ -17,6 +17,8 @@
 #include "stopwatch.hxx"
 #include "AllocatorPtr.hxx"
 
+#include <gtest/gtest-param-test.h>
+
 #include <sys/socket.h>
 #include <sys/wait.h>
 
@@ -333,6 +335,20 @@ struct FcgiClientFactory {
 	auto *NewNop(struct pool &, EventLoop &event_loop) {
 		return New(event_loop, fcgi_server_nop);
 	}
+
+	auto *NewInterleavedStderr(struct pool &, EventLoop &event_loop) {
+		return New(event_loop, [](struct pool &pool, FcgiServer &server){
+			const auto request = server.ReadRequest(pool);
+
+			server.DiscardRequestBody(request);
+			server.WriteStdout(request, "content-length: 5\n\nhel"sv, 3);
+
+			server.WriteStderr(request, "foobar\n", 13);
+
+			server.WriteStdout(request, "lo"sv, 7);
+			server.EndResponse(request);
+		});
+	}
 };
 
 FcgiClientConnection *
@@ -434,3 +450,41 @@ TEST(FcgiClient, MalformedHeaderValue)
 	EXPECT_TRUE(c.request_error);
 	EXPECT_TRUE(c.released);
 }
+
+class FcgiClientB : public testing::TestWithParam<bool> {};
+
+/**
+ * A STDERR packet between two STDOUT.  Let's see if that confuses the
+ * FastCGI client.
+ */
+TEST_P(FcgiClientB, InterleavedStderr)
+{
+	Instance instance;
+	FcgiClientFactory factory{instance.event_loop};
+	Context c{instance};
+
+	c.use_buckets = GetParam();
+
+	c.connection = factory.NewInterleavedStderr(*c.pool, c.event_loop);
+	c.connection->Request(c.pool, c,
+			      HttpMethod::GET, "/foo", {},
+			      nullptr,
+			      false,
+			      c, c.cancel_ptr);
+
+	c.event_loop.Run();
+
+	EXPECT_FALSE(c.request_error);
+	EXPECT_FALSE(c.body_error);
+	EXPECT_EQ(c.status, HttpStatus::OK);
+	EXPECT_EQ(c.available, 5);
+	EXPECT_EQ(c.body_data, 5);
+	EXPECT_EQ(c.consumed_body_data, 5);
+	EXPECT_TRUE(c.body_eof);
+	EXPECT_TRUE(c.released);
+	EXPECT_EQ(c.lease_action, PutAction::REUSE);
+}
+
+INSTANTIATE_TEST_SUITE_P(FcgiClient,
+                         FcgiClientB,
+                         testing::Values(false, true));
