@@ -9,7 +9,7 @@
 #include "lease.hxx"
 #include "istream/UnusedPtr.hxx"
 #include "strmap.hxx"
-#include "net/SocketError.hxx"
+#include "net/SocketPair.hxx"
 #include "net/UniqueSocketDescriptor.hxx"
 #include "util/ByteOrder.hxx"
 #include "util/PrintException.hxx"
@@ -371,10 +371,7 @@ struct FcgiClientFactory {
 FcgiClientConnection *
 FcgiClientFactory::New(EventLoop &event_loop, void (*_f)(struct pool &pool, FcgiServer &server))
 {
-	UniqueSocketDescriptor server_socket, client_socket;
-	if (!UniqueSocketDescriptor::CreateSocketPair(AF_LOCAL, SOCK_STREAM, 0,
-						      server_socket, client_socket))
-		throw MakeSocketError("socketpair() failed");
+	auto [server_socket, client_socket] = CreateStreamSocketPair();
 
 	std::jthread thread{[](UniqueSocketDescriptor &&s, void (*f)(struct pool &pool, FcgiServer &server)){
 		auto pool = pool_new_libc(nullptr, "f");

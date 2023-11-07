@@ -30,6 +30,7 @@
 #include "fs/FilteredSocket.hxx"
 #include "lib/fmt/RuntimeError.hxx"
 #include "event/FineTimerEvent.hxx"
+#include "net/SocketPair.hxx"
 #include "net/UniqueSocketDescriptor.hxx"
 #include "system/Error.hxx"
 #include "util/Cancellable.hxx"
@@ -269,10 +270,7 @@ Server::Server(struct pool &_pool, EventLoop &event_loop)
 	:PoolHolder(pool_new_libc(&_pool, "catch")),
 	 client_fs(event_loop)
 {
-	UniqueSocketDescriptor client_socket, server_socket;
-	if (!UniqueSocketDescriptor::CreateSocketPair(AF_LOCAL, SOCK_STREAM, 0,
-						      client_socket, server_socket))
-		throw MakeErrno("socketpair() failed");
+	auto [client_socket, server_socket] = CreateStreamSocketPair();
 
 	connection = http_server_connection_new(pool,
 						UniquePoolPtr<FilteredSocket>::Make(pool,

@@ -16,6 +16,7 @@
 #include "spawn/ChildStockItem.hxx"
 #include "spawn/Prepared.hxx"
 #include "event/SocketEvent.hxx"
+#include "net/SocketPair.hxx"
 #include "net/UniqueSocketDescriptor.hxx"
 #include "system/Error.hxx"
 #include "util/Exception.hxx"
@@ -68,10 +69,7 @@ MultiWasChild::Prepare(ChildStockClass &cls, void *info,
 
 	ChildStockItem::Prepare(cls, info, p);
 
-	UniqueSocketDescriptor for_child, for_parent;
-	if (!UniqueSocketDescriptor::CreateSocketPair(AF_LOCAL, SOCK_SEQPACKET, 0,
-						      for_child, for_parent))
-		throw MakeErrno("socketpair() failed");
+	auto [for_child, for_parent] = CreateSocketPair(SOCK_SEQPACKET);
 
 	p.SetStdin(std::move(for_child));
 

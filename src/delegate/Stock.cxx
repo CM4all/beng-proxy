@@ -7,6 +7,7 @@
 #include "stock/Class.hxx"
 #include "stock/Item.hxx"
 #include "system/Error.hxx"
+#include "net/SocketPair.hxx"
 #include "net/UniqueSocketDescriptor.hxx"
 #include "event/SocketEvent.hxx"
 #include "spawn/Interface.hxx"
@@ -141,10 +142,7 @@ DelegateStock::Create(CreateStockItem c,
 
 	info.options.CopyTo(p);
 
-	UniqueSocketDescriptor server_fd, client_fd;
-	if (!UniqueSocketDescriptor::CreateSocketPair(AF_LOCAL, SOCK_STREAM, 0,
-						      server_fd, client_fd))
-		throw MakeErrno("socketpair() failed");
+	auto [server_fd, client_fd] = CreateStreamSocketPair();
 
 	p.SetStdin(std::move(server_fd));
 

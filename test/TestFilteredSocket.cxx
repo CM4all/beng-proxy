@@ -15,6 +15,7 @@
 #include "memory/fb_pool.hxx"
 #include "event/Loop.hxx"
 #include "system/Error.hxx"
+#include "net/SocketPair.hxx"
 #include "net/UniqueSocketDescriptor.hxx"
 
 #include <gtest/gtest.h>
@@ -63,11 +64,7 @@ struct Instance final {
 static std::pair<UniqueSocketDescriptor, std::unique_ptr<EchoSocket>>
 NewEchoSocket(EventLoop &event_loop, SocketFilterPtr _filter={})
 {
-	UniqueSocketDescriptor a, b;
-	if (!UniqueSocketDescriptor::CreateSocketPairNonBlock(AF_LOCAL,
-							      SOCK_STREAM, 0,
-							      a, b))
-		throw MakeErrno("socketpair() failed");
+	auto [a, b] = CreateStreamSocketPairNonBlock();
 
 	return {
 		std::move(a),

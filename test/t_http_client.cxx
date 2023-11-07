@@ -10,6 +10,7 @@
 #include "io/FileDescriptor.hxx"
 #include "net/UniqueSocketDescriptor.hxx"
 #include "net/SocketAddress.hxx"
+#include "net/SocketPair.hxx"
 #include "system/Error.hxx"
 #include "fs/Factory.hxx"
 #include "fs/FilteredSocket.hxx"
@@ -38,10 +39,7 @@ public:
 	using DemoHttpServerConnection::DemoHttpServerConnection;
 
 	static auto New(struct pool &pool, EventLoop &event_loop, Mode mode) {
-		UniqueSocketDescriptor client_socket, server_socket;
-		if (!UniqueSocketDescriptor::CreateSocketPair(AF_LOCAL, SOCK_STREAM, 0,
-							      client_socket, server_socket))
-			throw MakeErrno("socketpair() failed");
+		auto [client_socket, server_socket] = CreateStreamSocketPair();
 
 		auto server = std::make_unique<Server>(pool, event_loop,
 						       UniquePoolPtr<FilteredSocket>::Make(pool,
