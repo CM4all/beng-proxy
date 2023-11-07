@@ -28,9 +28,9 @@
 
 #include <functional>
 #include <memory>
+#include <thread>
 
 #include <sys/socket.h>
-#include <sys/wait.h>
 
 using std::string_view_literals::operator""sv;
 
@@ -53,7 +53,7 @@ public:
 };
 
 class HttpClientConnection final : public ClientConnection {
-	const pid_t pid = 0;
+	std::thread thread;
 
 	std::unique_ptr<Server> server;
 
@@ -62,10 +62,13 @@ class HttpClientConnection final : public ClientConnection {
 	const std::string peer_name{"localhost"};
 
 public:
-	HttpClientConnection(EventLoop &_event_loop, pid_t _pid,
+	HttpClientConnection(EventLoop &_event_loop,
+			     std::thread &&_thread,
 			     SocketDescriptor fd,
 			     SocketFilterPtr _filter) noexcept
-		:pid(_pid), socket(_event_loop) {
+		:thread(std::move(_thread)),
+		 socket(_event_loop)
+	{
 		socket.InitDummy(fd, FdType::FD_SOCKET,
 				 std::move(_filter));
 	}
@@ -252,20 +255,13 @@ HttpClientConnection::~HttpClientConnection() noexcept
 		socket.Destroy();
 	}
 
-	if (pid > 0) {
-		int status;
-		if (waitpid(pid, &status, 0) < 0) {
-			perror("waitpid() failed");
-			exit(EXIT_FAILURE);
-		}
-
-		assert(!WIFSIGNALED(status));
-	}
+	if (thread.joinable())
+		thread.join();
 }
 
 HttpClientConnection *
 HttpClientFactory::NewFork(EventLoop &event_loop,
-			   std::function<void(SocketDescriptor)> function)
+			   std::function<void(SocketDescriptor)> _function)
 {
 	SocketDescriptor client_socket, server_socket;
 	if (!SocketDescriptor::CreateSocketPair(AF_LOCAL, SOCK_STREAM, 0,
@@ -274,21 +270,14 @@ HttpClientFactory::NewFork(EventLoop &event_loop,
 		exit(EXIT_FAILURE);
 	}
 
-	const auto pid = fork();
-	if (pid < 0) {
-		perror("fork() failed");
-		exit(EXIT_FAILURE);
-	}
+	// not using std::thread because libc++ still doesn't have it in 2023
+	std::thread thread{[](SocketDescriptor s, std::function<void(SocketDescriptor)> function){
+		function(s);
+	}, server_socket, std::move(_function)};
 
-	if (pid == 0) {
-		client_socket.Close();
-		function(server_socket);
-		_exit(EXIT_SUCCESS);
-	}
-
-	server_socket.Close();
 	client_socket.SetNonBlocking();
-	return new HttpClientConnection(event_loop, pid, client_socket,
+	return new HttpClientConnection(event_loop, std::move(thread),
+					client_socket,
 					CreateFilter());
 }
 
