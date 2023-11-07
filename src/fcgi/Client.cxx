@@ -68,12 +68,6 @@ class FcgiClient final
 	} request;
 
 	struct Response {
-		enum {
-			READ_HEADERS,
-
-			READ_BODY,
-		} read_state = READ_HEADERS;
-
 		/**
 		 * Only used when #no_body is set.
 		 */
@@ -113,6 +107,12 @@ class FcgiClient final
 		bool in_read;
 
 		/**
+		 * Are we currently receiving headers?  All STDOUT
+		 * payloads will be fed to the header parser.
+		 */
+		bool receiving_headers = true;
+
+		/**
 		 * Is the FastCGI application currently sending a STDERR
 		 * packet?
 		 */
@@ -126,7 +126,7 @@ class FcgiClient final
 		 * HttpResponseHandler::OnHttpResponse() already?
 		 */
 		bool WasResponseSubmitted() const noexcept {
-			return !no_body && read_state > READ_HEADERS;
+			return !receiving_headers && !no_body;
 		}
 	} response;
 
@@ -374,6 +374,8 @@ FcgiClient::AnalyseBuffer(const std::span<const std::byte> buffer) const noexcep
 inline bool
 FcgiClient::HandleLine(std::string_view line)
 {
+	assert(response.receiving_headers);
+
 	if (!line.empty()) {
 		if (line.size() >= MAX_HTTP_HEADER_SIZE)
 			throw FcgiClientError{"Response header is too long"};
@@ -388,7 +390,7 @@ FcgiClient::HandleLine(std::string_view line)
 	} else {
 		stopwatch.RecordEvent("response_headers");
 
-		response.read_state = Response::READ_BODY;
+		response.receiving_headers = false;
 		response.in_read = false;
 		response.stderr = false;
 		return true;
@@ -427,23 +429,19 @@ FcgiClient::Feed(std::span<const std::byte> src) noexcept
 		return src.size();
 	}
 
-	switch (response.read_state) {
-		std::size_t consumed;
-
-	case Response::READ_HEADERS:
+	if (response.receiving_headers) {
 		try {
 			return ParseHeaders(ToStringView(src));
 		} catch (...) {
 			AbortResponseHeaders(std::current_exception());
 			return 0;
 		}
-
-	case Response::READ_BODY:
+	} else {
 		assert(!response.no_body);
 		assert(response.available < 0 ||
 		       (off_t)src.size() <= response.available);
 
-		consumed = InvokeData(src);
+		std::size_t consumed = InvokeData(src);
 		if (consumed > 0 && response.available >= 0) {
 			assert((off_t)consumed <= response.available);
 			response.available -= consumed;
@@ -451,16 +449,12 @@ FcgiClient::Feed(std::span<const std::byte> src) noexcept
 
 		return consumed;
 	}
-
-	/* unreachable */
-	assert(false);
-	return 0;
 }
 
 inline bool
 FcgiClient::SubmitResponse() noexcept
 {
-	assert(response.read_state == Response::READ_BODY);
+	assert(!response.receiving_headers);
 
 	HttpStatus status = HttpStatus::OK;
 
@@ -514,7 +508,7 @@ FcgiClient::HandleEnd() noexcept
 
 	stopwatch.RecordEvent("end");
 
-	if (response.read_state == Response::READ_HEADERS) {
+	if (response.receiving_headers) {
 		AbortResponseHeaders(std::make_exception_ptr(FcgiClientError("premature end of headers "
 									     "from FastCGI application")));
 		return;
@@ -549,8 +543,7 @@ FcgiClient::HandleHeader(const FcgiRecordHeader &header) noexcept
 	case FcgiRecordType::STDOUT:
 		response.stderr = false;
 
-		if (response.read_state != Response::READ_HEADERS &&
-		    response.no_body) {
+		if (!response.receiving_headers && response.no_body) {
 			/* ignore all payloads until END_REQUEST */
 			skip_length += content_length;
 			content_length = 0;
@@ -581,7 +574,7 @@ FcgiClient::ConsumeInput(const std::byte *data0, std::size_t length0) noexcept
 
 	do {
 		if (content_length > 0) {
-			bool at_headers = response.read_state == Response::READ_HEADERS;
+			const bool at_headers = response.receiving_headers;
 
 			std::size_t length = end - data;
 			if (length > content_length)
@@ -606,7 +599,7 @@ FcgiClient::ConsumeInput(const std::byte *data0, std::size_t length0) noexcept
 				if (at_headers) {
 					/* incomplete header line received, want more
 					   data */
-					assert(response.read_state == Response::READ_HEADERS);
+					assert(response.receiving_headers);
 					return BufferedResult::MORE;
 				}
 
@@ -619,7 +612,7 @@ FcgiClient::ConsumeInput(const std::byte *data0, std::size_t length0) noexcept
 			content_length -= nbytes;
 			socket.DisposeConsumed(nbytes);
 
-			if (at_headers && response.read_state != Response::READ_HEADERS) {
+			if (at_headers && !response.receiving_headers) {
 				/* the read_state has been switched from HEADERS to
 				   BODY: we have to deliver the response now */
 
@@ -631,7 +624,7 @@ FcgiClient::ConsumeInput(const std::byte *data0, std::size_t length0) noexcept
 			}
 
 			if (content_length > 0)
-				return data < end && response.read_state != Response::READ_HEADERS
+				return data < end && !response.receiving_headers
 					/* some was consumed, try again later */
 					? BufferedResult::OK
 					/* all input was consumed, want more */
