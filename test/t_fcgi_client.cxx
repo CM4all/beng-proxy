@@ -634,20 +634,17 @@ TEST_P(FcgiClientB, BlockingEnd)
 	EXPECT_EQ(ReadStderr(stderr_r), "foobar\n"sv);
 }
 
-INSTANTIATE_TEST_SUITE_P(FcgiClient,
-                         FcgiClientB,
-                         testing::Values(false, true));
-
 /**
  * The server blocks in the middle of the STDERR payload, and after
  * that, we switch to buckets.
  */
-TEST(FcgiClient, BlockingStderr)
+TEST_P(FcgiClientB, BlockingStderr)
 {
 	Instance instance;
 	FcgiClientFactory factory{instance.event_loop};
 	Context c{instance};
 
+	c.use_buckets = GetParam();
 	c.break_data = true;
 
 	auto [wait_pipe_r, wait_pipe_w] = CreatePipe();
@@ -693,3 +690,7 @@ TEST(FcgiClient, BlockingStderr)
 	EXPECT_EQ(c.lease_action, PutAction::REUSE);
 	EXPECT_EQ(ReadStderr(stderr_r), "bar\n"sv);
 }
+
+INSTANTIATE_TEST_SUITE_P(FcgiClient,
+                         FcgiClientB,
+                         testing::Values(false, true));
