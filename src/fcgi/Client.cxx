@@ -138,6 +138,15 @@ class FcgiClient final
 
 	std::size_t content_length = 0, skip_length = 0;
 
+	/**
+	 * How much STDERR content of the unconsumed input has already
+	 * been handled?  We need to keep track of this because
+	 * _FillBucketList() may be called multiple times without
+	 * _ConsumeBucketList(), and only the first call shall handle
+	 * STDERR content.
+	 */
+	std::size_t skip_stderr = 0;
+
 public:
 	FcgiClient(struct pool &_pool, EventLoop &event_loop,
 		   StopwatchPtr &&_stopwatch,
@@ -438,8 +447,18 @@ FcgiClient::Feed(std::span<const std::byte> src) noexcept
 		/* ignore errors and partial writes while forwarding STDERR
 		   payload; there's nothing useful we can do, and we can't let
 		   this delay/disturb the response delivery */
-		HandleStderrPayload(src);
-		return src.size();
+
+		const std::size_t consumed = src.size();
+
+		if (src.size() > skip_stderr) {
+			src = src.subspan(skip_stderr);
+			skip_stderr = 0;
+			HandleStderrPayload(src);
+		} else {
+			skip_stderr -= src.size();
+		}
+
+		return consumed;
 	}
 
 	if (response.receiving_headers) {
@@ -846,17 +865,37 @@ FcgiClient::_FillBucketList(IstreamBucketList &list)
 	off_t available = response.available;
 	std::size_t current_content_length = content_length;
 	std::size_t current_skip_length = skip_length;
+	std::size_t current_skip_stderr = skip_stderr;
 	std::size_t total_size = 0;
+	bool current_stderr = response.stderr;
 
 	bool found_end_request = response.end_request;
 
-	if (current_content_length > 0 && response.stderr)
-		/* skip STDERR payloads in this method;
-		   _ConsumeBucketList() will handle them */
-		current_skip_length += std::exchange(current_content_length, 0);
-
 	while (true) {
+		if (current_content_length > 0 && current_stderr) {
+			const std::size_t remaining = end - data;
+			const std::size_t size = std::min(remaining, current_content_length);
+
+			if (size > current_skip_stderr) {
+				std::span<const std::byte> src{data, size};
+				src = src.subspan(current_skip_stderr);
+				current_skip_stderr = 0;
+				HandleStderrPayload(src);
+				skip_stderr += src.size();
+			} else {
+				current_skip_stderr -= size;
+			}
+
+			data += size;
+			current_content_length -= size;
+
+			if (current_content_length > 0)
+				break;
+		}
+
 		if (current_content_length > 0) {
+			assert(!current_stderr);
+
 			if (available >= 0 &&
 			    (off_t)current_content_length > available) {
 				/* the DATA packet was larger than the Content-Length
@@ -931,7 +970,11 @@ FcgiClient::_FillBucketList(IstreamBucketList &list)
 
 			found_end_request = true;
 			current_skip_length += std::exchange(current_content_length, 0);
-		} else if (header.type != FcgiRecordType::STDOUT) {
+		} else if (header.type == FcgiRecordType::STDOUT) {
+			current_stderr = false;
+		} else if (header.type == FcgiRecordType::STDERR) {
+			current_stderr = true;
+		} else {
 			/* ignore unknown packets */
 			current_skip_length += std::exchange(current_content_length, 0);
 		}
@@ -958,13 +1001,12 @@ FcgiClient::_ConsumeBucketList(std::size_t nbytes) noexcept
 			std::size_t consumed = content_length;
 
 			if (response.stderr) {
-				auto r = socket.ReadBuffer();
-				assert(nbytes == 0 || r.size() >= content_length);
+				if (const std::size_t a = socket.GetAvailable();
+				    a < consumed)
+					consumed = a;
 
-				if (r.size() < consumed)
-					consumed = r.size();
-
-				HandleStderrPayload(r.first(consumed));
+				assert(consumed <= skip_stderr);
+				skip_stderr -= consumed;
 			} else {
 				if (nbytes < consumed)
 					consumed = nbytes;
@@ -1028,15 +1070,6 @@ FcgiClient::_ConsumeBucketList(std::size_t nbytes) noexcept
 			response.stderr = false;
 		} else if (header.type == FcgiRecordType::STDERR) {
 			response.stderr = true;
-			if (b.size() < sizeof(header) + content_length) {
-				/* incomplete packet: rollback */
-				content_length = skip_length = 0;
-				break;
-			}
-
-			HandleStderrPayload(b.subspan(sizeof(header)).first(content_length));
-
-			skip_length += std::exchange(content_length, 0);
 		} else {
 			/* ignore unknown packets */
 			skip_length += std::exchange(content_length, 0);
