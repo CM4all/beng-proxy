@@ -50,7 +50,7 @@ ChildErrorLog::EnableClient(EventLoop &event_loop, SocketDescriptor socket,
 							  Net::Log::Type::HTTP_ERROR);
 	if (options.rate_limit > 0)
 		adapter->SetRateLimit(options.rate_limit, options.burst);
-	return w;
+	return std::move(w);
 }
 
 void
