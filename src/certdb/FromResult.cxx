@@ -8,6 +8,7 @@
 #include "lib/openssl/Certificate.hxx"
 #include "lib/openssl/Key.hxx"
 #include "lib/openssl/UniqueCertKey.hxx"
+#include "util/AllocatedArray.hxx"
 
 UniqueX509
 LoadCertificate(const Pg::Result &result, unsigned row, unsigned column)
@@ -28,12 +29,12 @@ LoadWrappedKey(const CertDatabaseConfig &config,
 
 	auto key_der = result.GetBinaryValue(row, column);
 
-	std::unique_ptr<std::byte[]> unwrapped;
+	AllocatedArray<std::byte> unwrapped;
 	if (!result.IsValueNull(row, column + 1)) {
 		/* the private key is encrypted; descrypt it using the AES key
 		   from the configuration file */
 		const auto key_wrap_name = result.GetValue(row, column + 1);
-		key_der = UnwrapKey(key_der, config, key_wrap_name, unwrapped);
+		key_der = unwrapped = UnwrapKey(key_der, config, key_wrap_name);
 	}
 
 	return DecodeDerKey(key_der);

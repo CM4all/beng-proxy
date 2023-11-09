@@ -13,6 +13,7 @@
 #include "lib/openssl/AltName.hxx"
 #include "lib/openssl/UniqueCertKey.hxx"
 #include "io/FileDescriptor.hxx"
+#include "util/AllocatedArray.hxx"
 #include "util/AllocatedString.hxx"
 
 #include <openssl/aes.h>
@@ -160,9 +161,9 @@ CertDatabase::LoadServerCertificate(const char *handle, const char *special,
 	const SslBuffer key_buffer(key);
 	Pg::BinaryValue key_der(key_buffer.get());
 
-	std::unique_ptr<std::byte[]> wrapped;
+	AllocatedArray<std::byte> wrapped;
 	if (wrap_key != nullptr)
-		key_der = WrapKey(key_der, wrap_key, wrapped);
+		key_der = wrapped = WrapKey(key_der, wrap_key);
 
 	const auto alt_names = GetSubjectAltNames(cert);
 
@@ -314,9 +315,9 @@ CertDatabase::InsertAcmeAccount(bool staging,
 	const SslBuffer key_buffer(key);
 	Pg::BinaryValue key_der(key_buffer.get());
 
-	std::unique_ptr<std::byte[]> wrapped;
+	AllocatedArray<std::byte> wrapped;
 	if (wrap_key != nullptr)
-		key_der = WrapKey(key_der, wrap_key, wrapped);
+		key_der = wrapped = WrapKey(key_der, wrap_key);
 
 	conn.ExecuteParams("INSERT INTO acme_account("
 			   "staging, email, location, key_der, key_wrap_name) "

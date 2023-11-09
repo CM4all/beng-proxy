@@ -5,6 +5,7 @@
 #include "certdb/WrapKey.hxx"
 #include "certdb/Config.hxx"
 #include "system/Urandom.hxx"
+#include "util/AllocatedArray.hxx"
 #include "util/SpanCast.hxx"
 
 #include <gtest/gtest.h>
@@ -22,15 +23,13 @@ TestWrapKeyAES256(const CertDatabaseConfig::AES256 &key,
 	WrapKeyHelper wrap_key;
 	auto *aes = wrap_key.SetEncryptKey(key);
 
-	std::unique_ptr<std::byte[]> allocation1;
-	const auto wrapped = WrapKey(msg, aes, allocation1);
+	const auto wrapped = WrapKey(msg, aes);
 
 	if (expected.data() != nullptr) {
 		EXPECT_EQ(ToStringView(wrapped), ToStringView(expected));
 	}
 
-	std::unique_ptr<std::byte[]> allocation2;
-	const auto unwrapped = UnwrapKey(wrapped, config, "foo"sv, allocation2);
+	const auto unwrapped = UnwrapKey(wrapped, config, "foo"sv);
 
 	EXPECT_EQ(ToStringView(msg), ToStringView(unwrapped));
 }

@@ -7,12 +7,14 @@
 #include "Config.hxx"
 #include "lib/fmt/RuntimeError.hxx"
 #include "lib/openssl/Error.hxx"
-#include "pg/BinaryValue.hxx"
 
 #include <openssl/aes.h>
 #include <openssl/opensslv.h>
 
-#include <memory>
+#include <cstddef>
+#include <span>
+
+template<typename> class AllocatedArray;
 
 /* the AES_wrap_key() API was deprecated in OpenSSL 3.0.0, but its
    replacement is more complicated, so let's ignore the warnings until
@@ -69,11 +71,9 @@ public:
 
 #pragma GCC diagnostic pop
 
-Pg::BinaryValue
-WrapKey(Pg::BinaryValue src, AES_KEY *wrap_key,
-	std::unique_ptr<std::byte[]> &wrapped);
+AllocatedArray<std::byte>
+WrapKey(std::span<const std::byte> src, AES_KEY *wrap_key);
 
-Pg::BinaryValue
-UnwrapKey(Pg::BinaryValue src,
-	  const CertDatabaseConfig &config, std::string_view key_wrap_name,
-	  std::unique_ptr<std::byte[]> &unwrapped);
+AllocatedArray<std::byte>
+UnwrapKey(std::span<const std::byte> src,
+	  const CertDatabaseConfig &config, std::string_view key_wrap_name);
