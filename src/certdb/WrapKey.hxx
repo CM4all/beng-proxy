@@ -5,6 +5,7 @@
 #pragma once
 
 #include "Config.hxx"
+#include "lib/fmt/RuntimeError.hxx"
 #include "lib/openssl/Error.hxx"
 #include "pg/BinaryValue.hxx"
 
@@ -35,7 +36,7 @@ public:
 			       const std::string &name) {
 		const auto i = config.wrap_keys.find(name);
 		if (i == config.wrap_keys.end())
-			throw std::runtime_error("No such wrap_key: " + name);
+			throw FmtRuntimeError("No such wrap_key: {}", name);
 
 		return SetEncryptKey(i->second);
 	}
@@ -60,7 +61,7 @@ public:
 			       const std::string &name) {
 		const auto i = config.wrap_keys.find(name);
 		if (i == config.wrap_keys.end())
-			throw std::runtime_error("No such wrap_key: " + name);
+			throw FmtRuntimeError("No such wrap_key: {}", name);
 
 		return SetDecryptKey(i->second);
 	}

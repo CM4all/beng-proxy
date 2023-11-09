@@ -53,8 +53,7 @@ UnwrapKey(Pg::BinaryValue key_der,
 
 	auto i = config.wrap_keys.find(key_wrap_name);
 	if (i == config.wrap_keys.end())
-		throw std::runtime_error(std::string("No such wrap_key: ") +
-					 key_wrap_name);
+		throw FmtRuntimeError("No such wrap_key: {}", key_wrap_name);
 
 	WrapKeyHelper wrap_key_helper;
 	const auto wrap_key =
