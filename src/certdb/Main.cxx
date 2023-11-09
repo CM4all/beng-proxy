@@ -105,7 +105,7 @@ LoadCertificate(const CertDatabaseConfig &db_config,
 	if (!MatchModulus(*cert, *key))
 		throw "Key and certificate do not match.";
 
-	auto [wrap_key_name, wrap_key] = WrapKey::MakeDefault(db_config);
+	const auto [wrap_key_name, wrap_key] = WrapKey::MakeDefault(db_config);
 
 	CertDatabase db(db_config);
 
@@ -131,7 +131,7 @@ ReloadCertificate(const CertDatabaseConfig &db_config, const char *handle)
 	if (!cert_key)
 		throw "Certificate not found";
 
-	auto [wrap_key_name, wrap_key] = WrapKey::MakeDefault(db_config);
+	const auto [wrap_key_name, wrap_key] = WrapKey::MakeDefault(db_config);
 
 	db.LoadServerCertificate(handle, nullptr,
 				 *cert_key.cert, *cert_key.key,

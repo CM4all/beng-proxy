@@ -37,7 +37,7 @@ WrapKey::MakeDefault(const CertDatabaseConfig &config)
 }
 
 AllocatedArray<std::byte>
-WrapKey::Encrypt(std::span<const std::byte> src)
+WrapKey::Encrypt(std::span<const std::byte> src) const
 {
 	AllocatedArray<std::byte> padded;
 	size_t padded_size = ((src.size() - 1) | 7) + 1;
@@ -84,7 +84,7 @@ WrapKey::Encrypt(std::span<const std::byte> src)
 }
 
 AllocatedArray<std::byte>
-WrapKey::Decrypt(std::span<const std::byte> src)
+WrapKey::Decrypt(std::span<const std::byte> src) const
 {
 	if (src.size() <= 8)
 		throw std::runtime_error("Malformed wrapped key");

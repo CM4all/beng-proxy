@@ -113,7 +113,7 @@ public:
 	bool LoadServerCertificate(const char *handle, const char *special,
 				   X509 &cert, const EVP_PKEY &key,
 				   const char *key_wrap_name,
-				   WrapKey *wrap_key);
+				   const WrapKey *wrap_key);
 
 	UniqueX509 GetServerCertificateByHandle(const char *handle);
 
@@ -273,7 +273,7 @@ public:
 	void InsertAcmeAccount(bool staging,
 			       const char *email, const char *location,
 			       EVP_PKEY &key, const char *key_wrap_name,
-			       WrapKey *wrap_key);
+			       const WrapKey *wrap_key);
 
 	void TouchAcmeAccount(const char *id);
 

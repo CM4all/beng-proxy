@@ -29,6 +29,6 @@ public:
 	static WrapKey Make(const CertDatabaseConfig &config, std::string_view name);
 	static std::pair<const char *, WrapKey> MakeDefault(const CertDatabaseConfig &config);
 
-	AllocatedArray<std::byte> Encrypt(std::span<const std::byte> src);
-	AllocatedArray<std::byte> Decrypt(std::span<const std::byte> src);
+	AllocatedArray<std::byte> Encrypt(std::span<const std::byte> src) const;
+	AllocatedArray<std::byte> Decrypt(std::span<const std::byte> src) const;
 };

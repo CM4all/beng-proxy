@@ -148,7 +148,7 @@ bool
 CertDatabase::LoadServerCertificate(const char *handle, const char *special,
 				    X509 &cert, const EVP_PKEY &key,
 				    const char *key_wrap_name,
-				    WrapKey *wrap_key)
+				    const WrapKey *wrap_key)
 {
 	const auto common_name = GetCommonName(cert);
 	assert(common_name != nullptr);
@@ -310,7 +310,7 @@ void
 CertDatabase::InsertAcmeAccount(bool staging,
 				const char *email, const char *location,
 				EVP_PKEY &key, const char *key_wrap_name,
-				WrapKey *wrap_key)
+				const WrapKey *wrap_key)
 {
 	const SslBuffer key_buffer(key);
 	Pg::BinaryValue key_der(key_buffer.get());
