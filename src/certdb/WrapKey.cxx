@@ -15,27 +15,27 @@
 #pragma GCC diagnostic ignored "-Wdeprecated-declarations"
 
 Pg::BinaryValue
-WrapKey(Pg::BinaryValue key_der, AES_KEY *wrap_key,
+WrapKey(Pg::BinaryValue src, AES_KEY *wrap_key,
 	std::unique_ptr<std::byte[]> &wrapped)
 {
 	std::unique_ptr<std::byte[]> padded;
-	size_t padded_size = ((key_der.size() - 1) | 7) + 1;
-	if (padded_size != key_der.size()) {
+	size_t padded_size = ((src.size() - 1) | 7) + 1;
+	if (padded_size != src.size()) {
 		/* pad with zeroes */
 		padded.reset(new std::byte[padded_size]);
 
 		std::byte *p = padded.get();
-		p = std::copy(key_der.begin(), key_der.end(), p);
+		p = std::copy(src.begin(), src.end(), p);
 		std::fill(p, padded.get() + padded_size, std::byte{});
 
-		key_der = {padded.get(), padded_size};
+		src = {padded.get(), padded_size};
 	}
 
-	wrapped.reset(new std::byte[key_der.size() + 8]);
+	wrapped.reset(new std::byte[src.size() + 8]);
 	int result = AES_wrap_key(wrap_key, nullptr,
 				  (unsigned char *)wrapped.get(),
-				  (const unsigned char *)key_der.data(),
-				  key_der.size());
+				  (const unsigned char *)src.data(),
+				  src.size());
 	if (result <= 0)
 		throw SslError("AES_wrap_key() failed");
 
@@ -44,11 +44,11 @@ WrapKey(Pg::BinaryValue key_der, AES_KEY *wrap_key,
 }
 
 Pg::BinaryValue
-UnwrapKey(Pg::BinaryValue key_der,
+UnwrapKey(Pg::BinaryValue src,
 	  const CertDatabaseConfig &config, std::string_view key_wrap_name,
 	  std::unique_ptr<std::byte[]> &unwrapped)
 {
-	if (key_der.size() <= 8)
+	if (src.size() <= 8)
 		throw std::runtime_error("Malformed wrapped key");
 
 	auto i = config.wrap_keys.find(key_wrap_name);
@@ -61,11 +61,11 @@ UnwrapKey(Pg::BinaryValue key_der,
 
 	ERR_clear_error();
 
-	unwrapped.reset(new std::byte[key_der.size() - 8]);
+	unwrapped.reset(new std::byte[src.size() - 8]);
 	int r = AES_unwrap_key(wrap_key, nullptr,
 			       (unsigned char *)unwrapped.get(),
-			       (const unsigned char *)key_der.data(),
-			       key_der.size());
+			       (const unsigned char *)src.data(),
+			       src.size());
 	if (r <= 0)
 		throw SslError("AES_unwrap_key() failed");
 

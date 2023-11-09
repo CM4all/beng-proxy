@@ -70,10 +70,10 @@ public:
 #pragma GCC diagnostic pop
 
 Pg::BinaryValue
-WrapKey(Pg::BinaryValue key_der, AES_KEY *wrap_key,
+WrapKey(Pg::BinaryValue src, AES_KEY *wrap_key,
 	std::unique_ptr<std::byte[]> &wrapped);
 
 Pg::BinaryValue
-UnwrapKey(Pg::BinaryValue key_der,
+UnwrapKey(Pg::BinaryValue src,
 	  const CertDatabaseConfig &config, std::string_view key_wrap_name,
 	  std::unique_ptr<std::byte[]> &unwrapped);
