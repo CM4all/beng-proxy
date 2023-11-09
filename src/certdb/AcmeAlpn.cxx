@@ -104,7 +104,7 @@ Alpn01ChallengeRecord::Commit(const CertDatabaseConfig &db_config)
 	if (!X509_sign(cert.get(), cert_key.get(), EVP_sha256()))
 		throw SslError("X509_sign() failed");
 
-	auto [wrap_key_name, wrap_key] = WrapKey::MakeEncryptKey(db_config);
+	auto [wrap_key_name, wrap_key] = WrapKey::MakeDefault(db_config);
 
 	db.LoadServerCertificate(handle.c_str(), "acme-alpn-tls-01",
 				 *cert, *cert_key,

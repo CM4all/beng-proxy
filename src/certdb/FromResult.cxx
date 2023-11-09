@@ -34,7 +34,7 @@ LoadWrappedKey(const CertDatabaseConfig &config,
 		/* the private key is encrypted; descrypt it using the AES key
 		   from the configuration file */
 		const auto key_wrap_name = result.GetValue(row, column + 1);
-		auto wrap_key = WrapKey::MakeDecryptKey(config, key_wrap_name);
+		auto wrap_key = WrapKey::Make(config, key_wrap_name);
 		key_der = unwrapped = wrap_key.Decrypt(key_der);
 	}
 

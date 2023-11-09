@@ -4,8 +4,8 @@
 
 #pragma once
 
-#include <openssl/aes.h>
-
+#include <algorithm>
+#include <array>
 #include <cstddef>
 #include <span>
 #include <string_view>
@@ -13,28 +13,19 @@
 template<typename> class AllocatedArray;
 struct CertDatabaseConfig;
 
-/* the AES_wrap_key() API was deprecated in OpenSSL 3.0.0, but its
-   replacement is more complicated, so let's ignore the warnings until
-   we have migrated to libsodium */
-// TODO
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
-
 class WrapKey {
-	AES_KEY key;
+	std::array<std::byte, 32> key;
+
+	constexpr WrapKey() noexcept = default;
 
 public:
-	static WrapKey MakeEncryptKey(const std::span<const std::byte, 32> src);
-	static WrapKey MakeEncryptKey(const CertDatabaseConfig &config,
-				      std::string_view name);
-	static std::pair<const char *, WrapKey> MakeEncryptKey(const CertDatabaseConfig &config);
+	explicit constexpr WrapKey(std::span<const std::byte, 32> src) noexcept {
+		std::copy(src.begin(), src.end(), key.begin());
+	}
 
-	static WrapKey MakeDecryptKey(const std::span<const std::byte, 32> src);
-	static WrapKey MakeDecryptKey(const CertDatabaseConfig &config,
-				      std::string_view name);
+	static WrapKey Make(const CertDatabaseConfig &config, std::string_view name);
+	static std::pair<const char *, WrapKey> MakeDefault(const CertDatabaseConfig &config);
 
 	AllocatedArray<std::byte> Encrypt(std::span<const std::byte> src);
 	AllocatedArray<std::byte> Decrypt(std::span<const std::byte> src);
 };
-
-#pragma GCC diagnostic pop

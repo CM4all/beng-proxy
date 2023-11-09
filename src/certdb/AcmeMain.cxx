@@ -440,7 +440,7 @@ AcmeNewOrder(const CertDatabaseConfig &db_config, const AcmeConfig &config,
 	const auto cert = client.DownloadCertificate(account_key, order);
 	progress();
 
-	auto [wrap_key_name, wrap_key] = WrapKey::MakeEncryptKey(db_config);
+	auto [wrap_key_name, wrap_key] = WrapKey::MakeDefault(db_config);
 
 	db.DoSerializableRepeat(8, [&](){
 		db.LoadServerCertificate(handle, nullptr, *cert, *cert_key,
@@ -536,7 +536,7 @@ AcmeRenewCert(const CertDatabaseConfig &db_config, const AcmeConfig &config,
 	const auto cert = client.DownloadCertificate(account_key, order);
 	progress();
 
-	auto [wrap_key_name, wrap_key] = WrapKey::MakeEncryptKey(db_config);
+	auto [wrap_key_name, wrap_key] = WrapKey::MakeDefault(db_config);
 
 	db.DoSerializableRepeat(8, [&](){
 		db.LoadServerCertificate(handle, nullptr, *cert, new_key,
@@ -676,7 +676,7 @@ Acme(ConstBuffer<const char *> args)
 			const auto db_config = LoadPatchCertDatabaseConfig();
 			CertDatabase db(db_config);
 
-			auto [wrap_key_name, wrap_key] = WrapKey::MakeEncryptKey(db_config);
+			auto [wrap_key_name, wrap_key] = WrapKey::MakeDefault(db_config);
 
 			db.InsertAcmeAccount(config.staging, email,
 					     account.location.c_str(), *key,
@@ -728,7 +728,7 @@ Acme(ConstBuffer<const char *> args)
 		if (account.status != AcmeAccount::Status::VALID)
 			throw Usage("Account is not valid");
 
-		auto [wrap_key_name, wrap_key] = WrapKey::MakeEncryptKey(db_config);
+		auto [wrap_key_name, wrap_key] = WrapKey::MakeDefault(db_config);
 
 		CertDatabase db(db_config);
 		db.InsertAcmeAccount(config.staging,
