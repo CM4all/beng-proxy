@@ -8,7 +8,6 @@
 #include <openssl/err.h>
 
 #include <algorithm>
-#include <memory>
 
 /* the AES_wrap_key() API was deprecated in OpenSSL 3.0.0, but its
    replacement is more complicated, so let's ignore the warnings until
@@ -19,17 +18,17 @@
 AllocatedArray<std::byte>
 WrapKey(std::span<const std::byte> src, AES_KEY *wrap_key)
 {
-	std::unique_ptr<std::byte[]> padded;
+	AllocatedArray<std::byte> padded;
 	size_t padded_size = ((src.size() - 1) | 7) + 1;
 	if (padded_size != src.size()) {
 		/* pad with zeroes */
-		padded.reset(new std::byte[padded_size]);
+		padded.ResizeDiscard(padded_size);
 
-		std::byte *p = padded.get();
+		auto p = padded.begin();
 		p = std::copy(src.begin(), src.end(), p);
-		std::fill(p, padded.get() + padded_size, std::byte{});
+		std::fill(p, padded.end(), std::byte{});
 
-		src = {padded.get(), padded_size};
+		src = padded;
 	}
 
 	AllocatedArray<std::byte> dest{src.size() + 8};
