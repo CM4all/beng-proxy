@@ -20,24 +20,21 @@ template<typename> class AllocatedArray;
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wdeprecated-declarations"
 
-class WrapKeyHelper {
-	AES_KEY buffer;
+class WrapKey {
+	AES_KEY key;
 
 public:
-	AES_KEY *SetEncryptKey(const std::span<const std::byte, 32> key);
-	AES_KEY *SetEncryptKey(const CertDatabaseConfig &config,
-			       std::string_view name);
-	std::pair<const char *, AES_KEY *> SetEncryptKey(const CertDatabaseConfig &config);
-	AES_KEY *SetDecryptKey(const std::span<const std::byte, 32> key);
-	AES_KEY *SetDecryptKey(const CertDatabaseConfig &config,
-			       std::string_view name);
+	static WrapKey MakeEncryptKey(const std::span<const std::byte, 32> src);
+	static WrapKey MakeEncryptKey(const CertDatabaseConfig &config,
+				      std::string_view name);
+	static std::pair<const char *, WrapKey> MakeEncryptKey(const CertDatabaseConfig &config);
+
+	static WrapKey MakeDecryptKey(const std::span<const std::byte, 32> src);
+	static WrapKey MakeDecryptKey(const CertDatabaseConfig &config,
+				      std::string_view name);
+
+	AllocatedArray<std::byte> Encrypt(std::span<const std::byte> src);
+	AllocatedArray<std::byte> Decrypt(std::span<const std::byte> src);
 };
 
 #pragma GCC diagnostic pop
-
-AllocatedArray<std::byte>
-WrapKey(std::span<const std::byte> src, AES_KEY *wrap_key);
-
-AllocatedArray<std::byte>
-UnwrapKey(std::span<const std::byte> src,
-	  const CertDatabaseConfig &config, std::string_view key_wrap_name);

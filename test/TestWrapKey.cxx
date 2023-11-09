@@ -19,20 +19,13 @@ TestWrapKeyAES256(const CertDatabaseConfig::AES256 &key,
 		  std::span<const std::byte> msg,
 		  std::span<const std::byte> expected)
 {
-	CertDatabaseConfig config;
-	config.wrap_keys.emplace("foo"sv, key);
-
-	WrapKeyHelper wrap_key;
-	auto *aes = wrap_key.SetEncryptKey(key);
-
-	const auto wrapped = WrapKey(msg, aes);
+	const auto wrapped = WrapKey::MakeEncryptKey(key).Encrypt(msg);
 
 	if (expected.data() != nullptr) {
 		EXPECT_EQ(ToStringView(wrapped), ToStringView(expected));
 	}
 
-	const auto unwrapped = UnwrapKey(wrapped, config, "foo"sv);
-
+	const auto unwrapped = WrapKey::MakeDecryptKey(key).Decrypt(wrapped);
 	EXPECT_EQ(ToStringView(msg), ToStringView(unwrapped));
 }
 

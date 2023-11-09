@@ -148,7 +148,7 @@ bool
 CertDatabase::LoadServerCertificate(const char *handle, const char *special,
 				    X509 &cert, const EVP_PKEY &key,
 				    const char *key_wrap_name,
-				    AES_KEY *wrap_key)
+				    WrapKey *wrap_key)
 {
 	const auto common_name = GetCommonName(cert);
 	assert(common_name != nullptr);
@@ -162,8 +162,8 @@ CertDatabase::LoadServerCertificate(const char *handle, const char *special,
 	Pg::BinaryValue key_der(key_buffer.get());
 
 	AllocatedArray<std::byte> wrapped;
-	if (wrap_key != nullptr)
-		key_der = wrapped = WrapKey(key_der, wrap_key);
+	if (key_wrap_name != nullptr)
+		key_der = wrapped = wrap_key->Decrypt(key_der);
 
 	const auto alt_names = GetSubjectAltNames(cert);
 
@@ -310,14 +310,14 @@ void
 CertDatabase::InsertAcmeAccount(bool staging,
 				const char *email, const char *location,
 				EVP_PKEY &key, const char *key_wrap_name,
-				AES_KEY *wrap_key)
+				WrapKey *wrap_key)
 {
 	const SslBuffer key_buffer(key);
 	Pg::BinaryValue key_der(key_buffer.get());
 
 	AllocatedArray<std::byte> wrapped;
-	if (wrap_key != nullptr)
-		key_der = wrapped = WrapKey(key_der, wrap_key);
+	if (key_wrap_name != nullptr)
+		key_der = wrapped = wrap_key->Encrypt(key_der);
 
 	conn.ExecuteParams("INSERT INTO acme_account("
 			   "staging, email, location, key_der, key_wrap_name) "

@@ -105,8 +105,7 @@ LoadCertificate(const CertDatabaseConfig &db_config,
 	if (!MatchModulus(*cert, *key))
 		throw "Key and certificate do not match.";
 
-	WrapKeyHelper wrap_key_helper;
-	const auto wrap_key = wrap_key_helper.SetEncryptKey(db_config);
+	auto [wrap_key_name, wrap_key] = WrapKey::MakeEncryptKey(db_config);
 
 	CertDatabase db(db_config);
 
@@ -114,8 +113,8 @@ LoadCertificate(const CertDatabaseConfig &db_config,
 
 	db.DoSerializableRepeat(8, [&](){
 		inserted = db.LoadServerCertificate(handle, nullptr,
-						    *cert, *key, wrap_key.first,
-						    wrap_key.second);
+						    *cert, *key, wrap_key_name,
+						    &wrap_key);
 	});
 
 	fmt::print("{}: {}\n", inserted ? "insert"sv : "update"sv,
@@ -132,12 +131,11 @@ ReloadCertificate(const CertDatabaseConfig &db_config, const char *handle)
 	if (!cert_key)
 		throw "Certificate not found";
 
-	WrapKeyHelper wrap_key_helper;
-	const auto wrap_key = wrap_key_helper.SetEncryptKey(db_config);
+	auto [wrap_key_name, wrap_key] = WrapKey::MakeEncryptKey(db_config);
 
 	db.LoadServerCertificate(handle, nullptr,
 				 *cert_key.cert, *cert_key.key,
-				 wrap_key.first, wrap_key.second);
+				 wrap_key_name, &wrap_key);
 }
 
 static void
