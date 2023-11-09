@@ -14,6 +14,7 @@ template<typename> class AllocatedArray;
 struct CertDatabaseConfig;
 
 using WrapKeyBuffer = std::array<std::byte, 32>;
+using WrapKeyView = std::span<const std::byte, 32>;
 
 class WrapKey {
 	WrapKeyBuffer key;
@@ -21,7 +22,7 @@ class WrapKey {
 	constexpr WrapKey() noexcept = default;
 
 public:
-	explicit constexpr WrapKey(std::span<const std::byte, 32> src) noexcept {
+	explicit constexpr WrapKey(WrapKeyView src) noexcept {
 		std::copy(src.begin(), src.end(), key.begin());
 	}
 
