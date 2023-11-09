@@ -925,6 +925,7 @@ if get_option('certdb')
       dependencies: [
         crypto_dep,
         system_dep,
+        sodium_dep,
         gtest,
       ],
     ),

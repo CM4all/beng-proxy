@@ -641,13 +641,14 @@ PostgreSQL user to access the schema using
 ``GRANT USAGE ON SCHEMA TO username``.
 
 If at least one ``wrap_key`` setting is present, all new private keys
-will be encrypted (“wrapped”) with the first AES256 key. That way,
-private keys are not leaked to everybody with read acccess to the
-database. Multiple ``wrap_key`` lines may be used to migrate to new AES
-keys, while still being able to use private keys encrypted with an old
-AES key. The database refers to AES keys by their name, which means you
-must not rename the keys in the configuration file. A new AES key may be
-generated using “``cm4all-certdb genwrap``”.
+will be encrypted (“wrapped”) with the first wrap key (a 256 bit
+XSalsa20/Poly1305 key).  That way, private keys are not leaked to
+everybody with read acccess to the database.  Multiple ``wrap_key``
+lines may be used to migrate to new wrap keys, while still being able
+to use private keys encrypted with an old wrap key.  The database
+refers to wrap keys by their name, which means you must not rename the
+wrap keys in the configuration file.  A new wrap key may be generated
+using “``cm4all-certdb genwrap``”.
 
 Each time a server name is received from a client, :program:`beng-lb` will
 attempt to look up a matching certificate, and use that for the TLS

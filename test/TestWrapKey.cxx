@@ -18,6 +18,9 @@ TestWrapKey(const WrapKey &key,
 	    std::span<const std::byte> msg,
 	    std::span<const std::byte> expected_aes256)
 {
+	const auto secret_box = key.Encrypt(msg);
+	EXPECT_EQ(ToStringView(key.Decrypt(secret_box)), ToStringView(msg));
+
 	const auto aes256 = key.EncryptAES256(msg);
 
 	if (expected_aes256.data() != nullptr) {
