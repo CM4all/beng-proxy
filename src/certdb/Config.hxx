@@ -16,7 +16,7 @@ struct CertDatabaseConfig {
 
 	using AES256 = std::array<unsigned char, 256 / 8>;
 
-	std::map<std::string, AES256> wrap_keys;
+	std::map<std::string, AES256, std::less<>> wrap_keys;
 
 	std::string default_wrap_key;
 
