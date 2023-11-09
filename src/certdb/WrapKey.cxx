@@ -3,6 +3,7 @@
 // author: Max Kellermann <mk@cm4all.com>
 
 #include "WrapKey.hxx"
+#include "Config.hxx"
 #include "lib/fmt/RuntimeError.hxx"
 #include "lib/openssl/Error.hxx"
 #include "util/AllocatedArray.hxx"

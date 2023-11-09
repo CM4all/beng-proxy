@@ -4,14 +4,14 @@
 
 #pragma once
 
-#include "Config.hxx"
-
 #include <openssl/aes.h>
 
 #include <cstddef>
 #include <span>
+#include <string_view>
 
 template<typename> class AllocatedArray;
+struct CertDatabaseConfig;
 
 /* the AES_wrap_key() API was deprecated in OpenSSL 3.0.0, but its
    replacement is more complicated, so let's ignore the warnings until
