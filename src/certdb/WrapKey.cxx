@@ -18,9 +18,10 @@
 #pragma GCC diagnostic ignored "-Wdeprecated-declarations"
 
 AES_KEY *
-WrapKeyHelper::SetEncryptKey(const std::span<const unsigned char, 32> key)
+WrapKeyHelper::SetEncryptKey(const std::span<const std::byte, 32> key)
 {
-	if (AES_set_encrypt_key(key.data(), key.size() * 8, &buffer) != 0)
+	if (AES_set_encrypt_key(reinterpret_cast<const unsigned char *>(key.data()),
+				key.size() * 8, &buffer) != 0)
 		throw SslError("AES_set_encrypt_key() failed");
 
 	return &buffer;
@@ -48,9 +49,10 @@ WrapKeyHelper::SetEncryptKey(const CertDatabaseConfig &config)
 }
 
 AES_KEY *
-WrapKeyHelper::SetDecryptKey(const std::span<const unsigned char, 32> key)
+WrapKeyHelper::SetDecryptKey(const std::span<const std::byte, 32> key)
 {
-	if (AES_set_decrypt_key(key.data(), key.size() * 8, &buffer) != 0)
+	if (AES_set_decrypt_key(reinterpret_cast<const unsigned char *>(key.data()),
+				key.size() * 8, &buffer) != 0)
 		throw SslError("AES_set_decrypt_key() failed");
 
 	return &buffer;
