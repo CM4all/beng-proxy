@@ -24,11 +24,11 @@ class WrapKeyHelper {
 	AES_KEY buffer;
 
 public:
-	AES_KEY *SetEncryptKey(const CertDatabaseConfig::AES256 &key);
+	AES_KEY *SetEncryptKey(const std::span<const unsigned char, 32> key);
 	AES_KEY *SetEncryptKey(const CertDatabaseConfig &config,
 			       std::string_view name);
 	std::pair<const char *, AES_KEY *> SetEncryptKey(const CertDatabaseConfig &config);
-	AES_KEY *SetDecryptKey(const CertDatabaseConfig::AES256 &key);
+	AES_KEY *SetDecryptKey(const std::span<const unsigned char, 32> key);
 	AES_KEY *SetDecryptKey(const CertDatabaseConfig &config,
 			       std::string_view name);
 };
