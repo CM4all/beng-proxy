@@ -15,7 +15,7 @@ struct CertDatabaseConfig {
 	std::string connect;
 	std::string schema;
 
-	std::map<std::string, WrapKeyBuffer, std::less<>> wrap_keys;
+	std::map<std::string, WrapKey, std::less<>> wrap_keys;
 
 	std::string default_wrap_key;
 

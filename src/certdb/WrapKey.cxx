@@ -21,7 +21,7 @@ WrapKey::Make(const CertDatabaseConfig &config,
 	if (i == config.wrap_keys.end())
 		throw FmtRuntimeError("No such wrap_key: {}", name);
 
-	return WrapKey{i->second};
+	return i->second;
 }
 
 std::pair<const char *, WrapKey>
