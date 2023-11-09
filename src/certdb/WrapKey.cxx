@@ -45,7 +45,7 @@ WrapKey(Pg::BinaryValue key_der, AES_KEY *wrap_key,
 
 Pg::BinaryValue
 UnwrapKey(Pg::BinaryValue key_der,
-	  const CertDatabaseConfig &config, const std::string &key_wrap_name,
+	  const CertDatabaseConfig &config, std::string_view key_wrap_name,
 	  std::unique_ptr<std::byte[]> &unwrapped)
 {
 	if (key_der.size() <= 8)

@@ -33,7 +33,7 @@ public:
 	}
 
 	AES_KEY *SetEncryptKey(const CertDatabaseConfig &config,
-			       const std::string &name) {
+			       std::string_view name) {
 		const auto i = config.wrap_keys.find(name);
 		if (i == config.wrap_keys.end())
 			throw FmtRuntimeError("No such wrap_key: {}", name);
@@ -58,7 +58,7 @@ public:
 	}
 
 	AES_KEY *SetDecryptKey(const CertDatabaseConfig &config,
-			       const std::string &name) {
+			       std::string_view name) {
 		const auto i = config.wrap_keys.find(name);
 		if (i == config.wrap_keys.end())
 			throw FmtRuntimeError("No such wrap_key: {}", name);
@@ -75,5 +75,5 @@ WrapKey(Pg::BinaryValue key_der, AES_KEY *wrap_key,
 
 Pg::BinaryValue
 UnwrapKey(Pg::BinaryValue key_der,
-	  const CertDatabaseConfig &config, const std::string &key_wrap_name,
+	  const CertDatabaseConfig &config, std::string_view key_wrap_name,
 	  std::unique_ptr<std::byte[]> &unwrapped);
