@@ -14,7 +14,7 @@ struct CertDatabaseConfig {
 	std::string connect;
 	std::string schema;
 
-	typedef std::array<unsigned char, 256/8> AES256;
+	using AES256 = std::array<unsigned char, 256 / 8>;
 
 	std::map<std::string, AES256> wrap_keys;
 
