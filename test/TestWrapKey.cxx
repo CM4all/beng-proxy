@@ -14,17 +14,17 @@
 using std::string_view_literals::operator""sv;
 
 static void
-TestWrapKeyAES256(WrapKeyView key,
-		  std::span<const std::byte> msg,
-		  std::span<const std::byte> expected)
+TestWrapKey(const WrapKey &key,
+	    std::span<const std::byte> msg,
+	    std::span<const std::byte> expected)
 {
-	const auto wrapped = WrapKey{key}.Encrypt(msg);
+	const auto wrapped = key.Encrypt(msg);
 
 	if (expected.data() != nullptr) {
 		EXPECT_EQ(ToStringView(wrapped), ToStringView(expected));
 	}
 
-	const auto unwrapped = WrapKey{key}.Decrypt(wrapped);
+	const auto unwrapped = key.Decrypt(wrapped);
 	EXPECT_EQ(ToStringView(msg), ToStringView(unwrapped));
 }
 
@@ -35,8 +35,9 @@ TEST(WrapKey, ZeroKey)
 {
 	static constexpr WrapKeyBuffer key{};
 
-	TestWrapKeyAES256(key, AsBytes("0123456789abcdef"sv),
-			  AsBytes("\x0a\x9f\xd3\x11\xc4\xbf\xfb\xa1\x3d\x64\x4c\x7b\x33\x7a\x3c\xa9\x69\xdc\x82\x71\xbb\x4a\xe7\xcb"sv));
+	TestWrapKey(WrapKey{key},
+		    AsBytes("0123456789abcdef"sv),
+		    AsBytes("\x0a\x9f\xd3\x11\xc4\xbf\xfb\xa1\x3d\x64\x4c\x7b\x33\x7a\x3c\xa9\x69\xdc\x82\x71\xbb\x4a\xe7\xcb"sv));
 }
 
 /**
@@ -51,8 +52,9 @@ TEST(WrapKey, PregeneratedKey)
 		0x82, 0x29, 0xbe, 0x43, 0x18, 0xf2, 0x7c, 0x35,
 	};
 
-	TestWrapKeyAES256(std::as_bytes(std::span{key}), AsBytes("0123456789abcdef"sv),
-			  AsBytes("\x4e\xa6\x02\xe1\xb5\x7c\xf6\x88\x6a\xf5\x59\x73\xfa\x08\xc9\xb7\x1c\xf1\x8d\x78\x24\x5a\x65\xfd"sv));
+	TestWrapKey(WrapKey{std::as_bytes(std::span{key})},
+		    AsBytes("0123456789abcdef"sv),
+		    AsBytes("\x4e\xa6\x02\xe1\xb5\x7c\xf6\x88\x6a\xf5\x59\x73\xfa\x08\xc9\xb7\x1c\xf1\x8d\x78\x24\x5a\x65\xfd"sv));
 }
 
 /**
@@ -63,5 +65,6 @@ TEST(WrapKey, RandomKey)
 	WrapKeyBuffer key;
 	UrandomFill(key);
 
-	TestWrapKeyAES256(key, AsBytes("0123456789abcdef"sv), {});
+	TestWrapKey(WrapKey{key},
+		    AsBytes("0123456789abcdef"sv), {});
 }
