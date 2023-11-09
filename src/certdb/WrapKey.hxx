@@ -5,11 +5,8 @@
 #pragma once
 
 #include "Config.hxx"
-#include "lib/fmt/RuntimeError.hxx"
-#include "lib/openssl/Error.hxx"
 
 #include <openssl/aes.h>
-#include <openssl/opensslv.h>
 
 #include <cstddef>
 #include <span>
@@ -27,46 +24,13 @@ class WrapKeyHelper {
 	AES_KEY buffer;
 
 public:
-	AES_KEY *SetEncryptKey(const CertDatabaseConfig::AES256 &key) {
-		if (AES_set_encrypt_key(key.data(), sizeof(key) * 8, &buffer) != 0)
-			throw SslError("AES_set_encrypt_key() failed");
-
-		return &buffer;
-	}
-
+	AES_KEY *SetEncryptKey(const CertDatabaseConfig::AES256 &key);
 	AES_KEY *SetEncryptKey(const CertDatabaseConfig &config,
-			       std::string_view name) {
-		const auto i = config.wrap_keys.find(name);
-		if (i == config.wrap_keys.end())
-			throw FmtRuntimeError("No such wrap_key: {}", name);
-
-		return SetEncryptKey(i->second);
-	}
-
-	std::pair<const char *,
-		  AES_KEY *> SetEncryptKey(const CertDatabaseConfig &config) {
-		if (config.default_wrap_key.empty())
-			return std::make_pair(nullptr, nullptr);
-
-		return std::make_pair(config.default_wrap_key.c_str(),
-				      SetEncryptKey(config, config.default_wrap_key));
-	}
-
-	AES_KEY *SetDecryptKey(const CertDatabaseConfig::AES256 &key) {
-		if (AES_set_decrypt_key(key.data(), sizeof(key) * 8, &buffer) != 0)
-			throw SslError("AES_set_decrypt_key() failed");
-
-		return &buffer;
-	}
-
+			       std::string_view name);
+	std::pair<const char *, AES_KEY *> SetEncryptKey(const CertDatabaseConfig &config);
+	AES_KEY *SetDecryptKey(const CertDatabaseConfig::AES256 &key);
 	AES_KEY *SetDecryptKey(const CertDatabaseConfig &config,
-			       std::string_view name) {
-		const auto i = config.wrap_keys.find(name);
-		if (i == config.wrap_keys.end())
-			throw FmtRuntimeError("No such wrap_key: {}", name);
-
-		return SetDecryptKey(i->second);
-	}
+			       std::string_view name);
 };
 
 #pragma GCC diagnostic pop
