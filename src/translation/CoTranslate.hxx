@@ -6,7 +6,7 @@
 
 #include "translation/Handler.hxx"
 #include "translation/Response.hxx"
-#include "co/Compat.hxx"
+#include "co/AwaitableHelper.hxx"
 #include "util/Cancellable.hxx"
 
 struct TranslateRequest;
@@ -22,6 +22,9 @@ class CoTranslate final : TranslateHandler {
 
 	std::coroutine_handle<> continuation;
 
+	using Awaitable = Co::AwaitableHelper<CoTranslate>;
+	friend Awaitable;
+
 public:
 	CoTranslate(TranslationService &service,
 		    AllocatorPtr alloc,
@@ -36,25 +39,8 @@ public:
 	CoTranslate(const CoTranslate &) = delete;
 	CoTranslate &operator=(const CoTranslate &) = delete;
 
-	auto operator co_await() noexcept {
-		struct Awaitable final {
-			CoTranslate &request;
-
-			bool await_ready() const noexcept {
-				return request.IsReady();
-			}
-
-			std::coroutine_handle<> await_suspend(std::coroutine_handle<> _continuation) const noexcept {
-				request.continuation = _continuation;
-				return std::noop_coroutine();
-			}
-
-			UniquePoolPtr<TranslateResponse> await_resume() const {
-				return request.AwaitResume();
-			}
-		};
-
-		return Awaitable{*this};
+	Awaitable operator co_await() noexcept {
+		return *this;
 	}
 
 private:
@@ -62,10 +48,7 @@ private:
 		return !cancel_ptr;
 	}
 
-	UniquePoolPtr<TranslateResponse> AwaitResume() {
-		if (error)
-			std::rethrow_exception(std::move(error));
-
+	UniquePoolPtr<TranslateResponse> TakeValue() noexcept {
 		return std::move(response);
 	}
 

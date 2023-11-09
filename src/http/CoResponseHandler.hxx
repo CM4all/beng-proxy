@@ -6,7 +6,7 @@
 
 #include "ResponseHandler.hxx"
 #include "pool/UniquePtr.hxx"
-#include "co/Compat.hxx"
+#include "co/AwaitableHelper.hxx"
 #include "util/Cancellable.hxx"
 
 struct PendingResponse;
@@ -25,8 +25,11 @@ class CoHttpResponseHandler
 
 	std::coroutine_handle<> continuation;
 
+	using Awaitable = Co::AwaitableHelper<CoHttpResponseHandler>;
+	friend Awaitable;
+
 protected:
-		CancellablePointer cancel_ptr;
+	CancellablePointer cancel_ptr;
 
 public:
 	explicit CoHttpResponseHandler(struct pool &_pool) noexcept
@@ -40,25 +43,8 @@ public:
 	CoHttpResponseHandler(const CoHttpResponseHandler &) = delete;
 	CoHttpResponseHandler &operator=(const CoHttpResponseHandler &) = delete;
 
-	auto operator co_await() noexcept {
-		struct Awaitable final {
-			CoHttpResponseHandler &request;
-
-			bool await_ready() const noexcept {
-				return request.IsReady();
-			}
-
-			std::coroutine_handle<> await_suspend(std::coroutine_handle<> _continuation) const noexcept {
-				request.continuation = _continuation;
-				return std::noop_coroutine();
-			}
-
-			UniquePoolPtr<PendingResponse> await_resume() const {
-				return request.AwaitResume();
-			}
-		};
-
-		return Awaitable{*this};
+	Awaitable operator co_await() noexcept {
+		return *this;
 	}
 
 private:
@@ -66,10 +52,7 @@ private:
 		return !cancel_ptr;
 	}
 
-	UniquePoolPtr<PendingResponse> AwaitResume() {
-		if (error)
-			std::rethrow_exception(std::move(error));
-
+	UniquePoolPtr<PendingResponse> TakeValue() noexcept {
 		return std::move(response);
 	}
 
