@@ -3,7 +3,6 @@
 // author: Max Kellermann <mk@cm4all.com>
 
 #include "certdb/WrapKey.hxx"
-#include "certdb/Config.hxx"
 #include "system/Urandom.hxx"
 #include "util/AllocatedArray.hxx"
 #include "util/SpanCast.hxx"
@@ -15,7 +14,7 @@
 using std::string_view_literals::operator""sv;
 
 static void
-TestWrapKeyAES256(const CertDatabaseConfig::AES256 &key,
+TestWrapKeyAES256(const WrapKeyBuffer &key,
 		  std::span<const std::byte> msg,
 		  std::span<const std::byte> expected)
 {
@@ -34,7 +33,7 @@ TestWrapKeyAES256(const CertDatabaseConfig::AES256 &key,
  */
 TEST(WrapKey, ZeroKey)
 {
-	static constexpr CertDatabaseConfig::AES256 key{};
+	static constexpr WrapKeyBuffer key{};
 
 	TestWrapKeyAES256(key, AsBytes("0123456789abcdef"sv),
 			  AsBytes("\x0a\x9f\xd3\x11\xc4\xbf\xfb\xa1\x3d\x64\x4c\x7b\x33\x7a\x3c\xa9\x69\xdc\x82\x71\xbb\x4a\xe7\xcb"sv));
@@ -52,7 +51,7 @@ TEST(WrapKey, PregeneratedKey)
 		0x82, 0x29, 0xbe, 0x43, 0x18, 0xf2, 0x7c, 0x35,
 	};
 
-	CertDatabaseConfig::AES256 key;
+	WrapKeyBuffer key;
 	const auto _key = std::as_bytes(std::span{__key});
 	std::copy(_key.begin(), _key.end(), key.begin());
 
@@ -65,7 +64,7 @@ TEST(WrapKey, PregeneratedKey)
  */
 TEST(WrapKey, RandomKey)
 {
-	CertDatabaseConfig::AES256 key;
+	WrapKeyBuffer key;
 	UrandomFill(key);
 
 	TestWrapKeyAES256(key, AsBytes("0123456789abcdef"sv), {});

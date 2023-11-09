@@ -24,7 +24,7 @@ CertDatabaseConfig::ParseLine(const char *word, LineParser &line)
 		const char *hex_key = line.ExpectValue();
 		line.ExpectEnd();
 
-		CertDatabaseConfig::AES256 key;
+		WrapKeyBuffer key;
 		if (!ParseLowerHexFixed(hex_key, key))
 			throw LineParser::Error("Malformed AES256 key");
 

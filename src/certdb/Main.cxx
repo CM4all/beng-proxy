@@ -444,7 +444,7 @@ HandleGenwrap(ConstBuffer<const char *> args)
 	if (args.size != 0)
 		throw AutoUsage();
 
-	CertDatabaseConfig::AES256 key;
+	WrapKeyBuffer key;
 	UrandomFill(std::as_writable_bytes(std::span{key}));
 
 	for (auto b : key)

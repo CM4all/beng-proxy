@@ -4,9 +4,10 @@
 
 #pragma once
 
+#include "WrapKey.hxx"
+
 #include <map>
 #include <string>
-#include <array>
 
 class LineParser;
 
@@ -14,9 +15,7 @@ struct CertDatabaseConfig {
 	std::string connect;
 	std::string schema;
 
-	using AES256 = std::array<std::byte, 256 / 8>;
-
-	std::map<std::string, AES256, std::less<>> wrap_keys;
+	std::map<std::string, WrapKeyBuffer, std::less<>> wrap_keys;
 
 	std::string default_wrap_key;
 

@@ -13,8 +13,10 @@
 template<typename> class AllocatedArray;
 struct CertDatabaseConfig;
 
+using WrapKeyBuffer = std::array<std::byte, 32>;
+
 class WrapKey {
-	std::array<std::byte, 32> key;
+	WrapKeyBuffer key;
 
 	constexpr WrapKey() noexcept = default;
 
