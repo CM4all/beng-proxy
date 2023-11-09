@@ -3,7 +3,7 @@
 // author: Max Kellermann <mk@cm4all.com>
 
 #include "FromResult.hxx"
-#include "WrapKey.hxx"
+#include "Config.hxx"
 #include "pg/Result.hxx"
 #include "lib/openssl/Certificate.hxx"
 #include "lib/openssl/Key.hxx"
@@ -34,7 +34,7 @@ LoadWrappedKey(const CertDatabaseConfig &config,
 		/* the private key is encrypted; descrypt it using the AES key
 		   from the configuration file */
 		const auto key_wrap_name = result.GetValueView(row, column + 1);
-		const auto wrap_key = WrapKey::Make(config, key_wrap_name);
+		const auto &wrap_key = config.GetWrapKey(key_wrap_name);
 		key_der = unwrapped = wrap_key.Decrypt(key_der);
 	}
 

@@ -30,6 +30,16 @@ struct CertDatabaseConfig {
 	 * Throws on error.
 	 */
 	void Check();
+
+	/**
+	 * Throws on error.
+	 */
+	const WrapKey &GetWrapKey(std::string_view name) const;
+
+	/**
+	 * Throws on error.
+	 */
+	std::pair<const char *, const WrapKey *> GetDefaultWrapKey() const;
 };
 
 CertDatabaseConfig

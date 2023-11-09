@@ -5,7 +5,7 @@
 #include "AcmeAlpn.hxx"
 #include "AcmeHttp.hxx"
 #include "CertDatabase.hxx"
-#include "WrapKey.hxx"
+#include "Config.hxx"
 #include "lib/openssl/Dummy.hxx"
 #include "lib/openssl/Error.hxx"
 #include "lib/openssl/Edit.hxx"
@@ -104,10 +104,10 @@ Alpn01ChallengeRecord::Commit(const CertDatabaseConfig &db_config)
 	if (!X509_sign(cert.get(), cert_key.get(), EVP_sha256()))
 		throw SslError("X509_sign() failed");
 
-	const auto [wrap_key_name, wrap_key] = WrapKey::MakeDefault(db_config);
+	const auto [wrap_key_name, wrap_key] = db_config.GetDefaultWrapKey();
 
 	db.LoadServerCertificate(handle.c_str(), "acme-alpn-tls-01",
 				 *cert, *cert_key,
-				 wrap_key_name, &wrap_key);
+				 wrap_key_name, wrap_key);
 	db.NotifyModified();
 }

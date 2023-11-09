@@ -440,11 +440,11 @@ AcmeNewOrder(const CertDatabaseConfig &db_config, const AcmeConfig &config,
 	const auto cert = client.DownloadCertificate(account_key, order);
 	progress();
 
-	const auto [wrap_key_name, wrap_key] = WrapKey::MakeDefault(db_config);
+	const auto [wrap_key_name, wrap_key] = db_config.GetDefaultWrapKey();
 
 	db.DoSerializableRepeat(8, [&](){
 		db.LoadServerCertificate(handle, nullptr, *cert, *cert_key,
-					 wrap_key_name, &wrap_key);
+					 wrap_key_name, wrap_key);
 	});
 
 	db.NotifyModified();
@@ -536,11 +536,11 @@ AcmeRenewCert(const CertDatabaseConfig &db_config, const AcmeConfig &config,
 	const auto cert = client.DownloadCertificate(account_key, order);
 	progress();
 
-	const auto [wrap_key_name, wrap_key] = WrapKey::MakeDefault(db_config);
+	const auto [wrap_key_name, wrap_key] = db_config.GetDefaultWrapKey();
 
 	db.DoSerializableRepeat(8, [&](){
 		db.LoadServerCertificate(handle, nullptr, *cert, new_key,
-					 wrap_key_name, &wrap_key);
+					 wrap_key_name, wrap_key);
 	});
 
 	db.NotifyModified();
@@ -676,11 +676,11 @@ Acme(ConstBuffer<const char *> args)
 			const auto db_config = LoadPatchCertDatabaseConfig();
 			CertDatabase db(db_config);
 
-			const auto [wrap_key_name, wrap_key] = WrapKey::MakeDefault(db_config);
+			const auto [wrap_key_name, wrap_key] = db_config.GetDefaultWrapKey();
 
 			db.InsertAcmeAccount(config.staging, email,
 					     account.location.c_str(), *key,
-					     wrap_key_name, &wrap_key);
+					     wrap_key_name, wrap_key);
 
 			fmt::print("{}\n", account.location);
 		} else {
@@ -728,13 +728,13 @@ Acme(ConstBuffer<const char *> args)
 		if (account.status != AcmeAccount::Status::VALID)
 			throw Usage("Account is not valid");
 
-		const auto [wrap_key_name, wrap_key] = WrapKey::MakeDefault(db_config);
+		const auto [wrap_key_name, wrap_key] = db_config.GetDefaultWrapKey();
 
 		CertDatabase db(db_config);
 		db.InsertAcmeAccount(config.staging,
 				     account.GetEmail(),
 				     account.location.c_str(), *key,
-				     wrap_key_name, &wrap_key);
+				     wrap_key_name, wrap_key);
 
 		PrintAccount(account);
 	} else if (StringIsEqual(cmd, "new-order")) {

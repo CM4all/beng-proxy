@@ -105,7 +105,7 @@ LoadCertificate(const CertDatabaseConfig &db_config,
 	if (!MatchModulus(*cert, *key))
 		throw "Key and certificate do not match.";
 
-	const auto [wrap_key_name, wrap_key] = WrapKey::MakeDefault(db_config);
+	const auto [wrap_key_name, wrap_key] = db_config.GetDefaultWrapKey();
 
 	CertDatabase db(db_config);
 
@@ -114,7 +114,7 @@ LoadCertificate(const CertDatabaseConfig &db_config,
 	db.DoSerializableRepeat(8, [&](){
 		inserted = db.LoadServerCertificate(handle, nullptr,
 						    *cert, *key, wrap_key_name,
-						    &wrap_key);
+						    wrap_key);
 	});
 
 	fmt::print("{}: {}\n", inserted ? "insert"sv : "update"sv,
@@ -131,11 +131,11 @@ ReloadCertificate(const CertDatabaseConfig &db_config, const char *handle)
 	if (!cert_key)
 		throw "Certificate not found";
 
-	const auto [wrap_key_name, wrap_key] = WrapKey::MakeDefault(db_config);
+	const auto [wrap_key_name, wrap_key] = db_config.GetDefaultWrapKey();
 
 	db.LoadServerCertificate(handle, nullptr,
 				 *cert_key.cert, *cert_key.key,
-				 wrap_key_name, &wrap_key);
+				 wrap_key_name, wrap_key);
 }
 
 static void

@@ -13,29 +13,6 @@
 
 #include <algorithm>
 
-WrapKey
-WrapKey::Make(const CertDatabaseConfig &config,
-	      std::string_view name)
-{
-	const auto i = config.wrap_keys.find(name);
-	if (i == config.wrap_keys.end())
-		throw FmtRuntimeError("No such wrap_key: {}", name);
-
-	return i->second;
-}
-
-std::pair<const char *, WrapKey>
-WrapKey::MakeDefault(const CertDatabaseConfig &config)
-{
-	if (config.default_wrap_key.empty())
-		return {nullptr, {}};
-
-	return {
-		config.default_wrap_key.c_str(),
-		Make(config, config.default_wrap_key),
-	};
-}
-
 AllocatedArray<std::byte>
 WrapKey::Encrypt(std::span<const std::byte> src) const
 {
