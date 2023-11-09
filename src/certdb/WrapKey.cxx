@@ -12,9 +12,10 @@
 #include <openssl/err.h>
 
 #include <algorithm>
+#include <stdexcept>
 
 AllocatedArray<std::byte>
-WrapKey::Encrypt(std::span<const std::byte> src) const
+WrapKey::EncryptAES256(std::span<const std::byte> src) const
 {
 	AllocatedArray<std::byte> padded;
 	size_t padded_size = ((src.size() - 1) | 7) + 1;
@@ -61,7 +62,7 @@ WrapKey::Encrypt(std::span<const std::byte> src) const
 }
 
 AllocatedArray<std::byte>
-WrapKey::Decrypt(std::span<const std::byte> src) const
+WrapKey::DecryptAES256(std::span<const std::byte> src) const
 {
 	if (src.size() <= 8)
 		throw std::runtime_error("Malformed wrapped key");
@@ -95,4 +96,16 @@ WrapKey::Decrypt(std::span<const std::byte> src) const
 	assert(dest_position <= dest.size());
 	dest.SetSize(dest_position);
 	return dest;
+}
+
+AllocatedArray<std::byte>
+WrapKey::Encrypt(std::span<const std::byte> src) const
+{
+	return EncryptAES256(src);
+}
+
+AllocatedArray<std::byte>
+WrapKey::Decrypt(std::span<const std::byte> src) const
+{
+	return DecryptAES256(src);
 }

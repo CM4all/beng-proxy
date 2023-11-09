@@ -22,6 +22,9 @@ public:
 		std::copy(src.begin(), src.end(), key.begin());
 	}
 
+	AllocatedArray<std::byte> EncryptAES256(std::span<const std::byte> src) const;
+	AllocatedArray<std::byte> DecryptAES256(std::span<const std::byte> src) const;
+
 	AllocatedArray<std::byte> Encrypt(std::span<const std::byte> src) const;
 	AllocatedArray<std::byte> Decrypt(std::span<const std::byte> src) const;
 };
