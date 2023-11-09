@@ -914,4 +914,21 @@ if uring_dep.found()
   )
 endif
 
+if get_option('certdb')
+  test(
+    'TestWrapKey',
+    executable(
+      'TestWrapKey',
+      'TestWrapKey.cxx',
+      '../src/certdb/WrapKey.cxx',
+      include_directories: inc,
+      dependencies: [
+        crypto_dep,
+        system_dep,
+        gtest,
+      ],
+    ),
+  )
+endif
+
 subdir('acme')
