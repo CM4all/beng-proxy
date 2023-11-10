@@ -16,16 +16,16 @@ using std::string_view_literals::operator""sv;
 static void
 TestWrapKey(const WrapKey &key,
 	    std::span<const std::byte> msg,
-	    std::span<const std::byte> expected)
+	    std::span<const std::byte> expected_aes256)
 {
-	const auto wrapped = key.Encrypt(msg);
+	const auto aes256 = key.EncryptAES256(msg);
 
-	if (expected.data() != nullptr) {
-		EXPECT_EQ(ToStringView(wrapped), ToStringView(expected));
+	if (expected_aes256.data() != nullptr) {
+		EXPECT_EQ(ToStringView(aes256), ToStringView(expected_aes256));
 	}
 
-	const auto unwrapped = key.Decrypt(wrapped);
-	EXPECT_EQ(ToStringView(msg), ToStringView(unwrapped));
+	EXPECT_EQ(ToStringView(key.DecryptAES256(aes256)), ToStringView(msg));
+	EXPECT_EQ(ToStringView(key.Decrypt(aes256)), ToStringView(msg));
 }
 
 /**
