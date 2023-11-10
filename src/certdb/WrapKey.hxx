@@ -17,8 +17,6 @@ using WrapKeyView = std::span<const std::byte, 32>;
 class WrapKey {
 	WrapKeyBuffer key;
 
-	constexpr WrapKey() noexcept = default;
-
 public:
 	explicit constexpr WrapKey(WrapKeyView src) noexcept {
 		std::copy(src.begin(), src.end(), key.begin());
