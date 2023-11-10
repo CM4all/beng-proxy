@@ -163,7 +163,7 @@ CertDatabase::LoadServerCertificate(const char *handle, const char *special,
 
 	AllocatedArray<std::byte> wrapped;
 	if (key_wrap_name != nullptr)
-		key_der = wrapped = wrap_key->Decrypt(key_der);
+		key_der = wrapped = wrap_key->Encrypt(key_der);
 
 	const auto alt_names = GetSubjectAltNames(cert);
 
