@@ -8,6 +8,7 @@
 #include "Instance.hxx"
 #include "Listener.hxx"
 #include "http/IncomingRequest.hxx"
+#include "istream/UnusedHoldPtr.hxx"
 #include "pool/LeakDetector.hxx"
 #include "event/CoarseTimerEvent.hxx"
 #include "util/Cancellable.hxx"
@@ -17,6 +18,12 @@ class LbDelayRequest final
 {
 	LbHttpConnection &connection;
 	IncomingHttpRequest &request;
+
+	/**
+	 * This object temporarily holds the request body
+	 */
+	UnusedHoldIstreamPtr request_body;
+
 	LbCluster &cluster;
 	CancellablePointer &cancel_ptr;
 
@@ -30,6 +37,7 @@ public:
 		:PoolLeakDetector(_request.pool),
 		 connection(_connection),
 		 request(_request),
+		 request_body(request.pool, std::move(request.body)),
 		 cluster(_cluster),
 		 cancel_ptr(_cancel_ptr),
 		 timer(connection.instance.event_loop,
@@ -52,6 +60,8 @@ private:
 	}
 
 	void OnTimer() noexcept {
+		request.body = std::move(request_body);
+
 		auto &_connection = connection;
 		auto &_request = request;
 		auto &_cluster = cluster;
