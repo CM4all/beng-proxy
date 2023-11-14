@@ -1,6 +1,6 @@
 cm4all-beng-proxy (18.0.48) unstable; urgency=low
 
-  * 
+  * certdb: fix SQL syntax error
 
  --   
 

@@ -220,7 +220,7 @@ private:
 		return conn.ExecuteParams(true,
 					  "SELECT certificate_der "
 					  "FROM server_certificate "
-					  "WHERE NOT deleted AND handle=$1"
+					  "WHERE NOT deleted AND handle=$1 "
 					  "LIMIT 1",
 					  handle);
 	}
