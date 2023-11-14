@@ -119,7 +119,7 @@ CertDatabase::GetIdByHandle(const char *handle)
 	if (result.GetRowCount() == 0)
 		return Pg::Serial();
 
-	return Pg::Serial::Parse(result.GetValue(0, 0));
+	return Pg::Serial::Parse(result.GetValueView(0, 0));
 }
 
 void
