@@ -15,10 +15,6 @@
 #include "util/StringCompare.hxx"
 #include "AllocatorPtr.hxx"
 
-#ifndef NDEBUG
-#include "io/Logger.hxx"
-#endif
-
 using namespace BengProxy;
 
 [[gnu::pure]]
@@ -260,21 +256,6 @@ forward_request_headers(AllocatorPtr alloc, const StringMap &src,
 			const char *has_session,
 			const char *host_and_port, const char *uri) noexcept
 {
-#ifndef NDEBUG
-	if (session != nullptr && CheckLogLevel(10)) {
-		LogFormat(10, "forward_request_headers",
-			  "remote_host='%s' "
-			  "host='%s' uri='%s' session=%s user='%s' cookie='%s'",
-			  remote_host, host_and_port, uri,
-			  session->parent.id.Format().c_str(),
-			  user,
-			  host_and_port != nullptr && uri != nullptr
-			  ? cookie_jar_http_header_value(session->cookies,
-							 host_and_port, uri, alloc)
-			  : nullptr);
-	}
-#endif
-
 	const bool is_upgrade = with_body && http_is_upgrade(src);
 
 	StringMap dest;
