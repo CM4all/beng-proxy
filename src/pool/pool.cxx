@@ -14,6 +14,8 @@
 #include "util/Recycler.hxx"
 #include "util/Poison.hxx"
 
+#include <fmt/format.h>
+
 #include <forward_list>
 #include <typeinfo>
 
@@ -29,6 +31,8 @@
 #if defined(DEBUG_POOL_GROW) || defined(DUMP_POOL_ALLOC_ALL)
 #define DUMP_POOL_ALLOC
 #endif
+
+using std::string_view_literals::operator""sv;
 
 #if defined(__x86_64__) || defined(__PPC64__)
 static constexpr unsigned ALIGN_BITS = 3;
@@ -496,8 +500,8 @@ pool_check_leaks(const struct pool &pool) noexcept
 	pool.logger(1, "pool has leaked objects:");
 
 	for (const auto &ld : pool.leaks)
-		pool.logger.Format(1, " %p %s",
-				   &ld, typeid(ld).name());
+		pool.logger.Fmt(1, " {} {}"sv,
+				fmt::ptr(&ld), typeid(ld).name());
 
 	abort();
 #endif
@@ -510,7 +514,7 @@ pool_destroy(struct pool *pool, struct pool *reparent_to) noexcept
 	assert(pool->parent == nullptr);
 
 #ifdef DUMP_POOL_SIZE
-	pool->logger.Format(4, "pool size=%zu", pool->netto_size);
+	pool->logger.Fmt(4, "pool size={}"sv, pool->netto_size);
 #endif
 
 #ifdef DUMP_POOL_ALLOC_ALL
@@ -590,16 +594,16 @@ pool_increment_ref(std::forward_list<PoolRef> &list TRACE_ARGS_DECL) noexcept
 static void
 pool_dump_refs(const struct pool &pool) noexcept
 {
-	pool.logger.Format(0, "pool[%p](%u) REF:",
-			   (const void *)&pool, pool.ref);
+	pool.logger.Fmt(0, "pool[{}]({}) REF:"sv,
+			fmt::ptr(&pool), pool.ref);
 
 #ifdef ENABLE_TRACE
 	for (auto &ref : pool.refs)
-		pool.logger.Format(0, " %s:%u %u", ref.file, ref.line, ref.count);
+		pool.logger.Fmt(0, " {}:{} {}"sv, ref.file, ref.line, ref.count);
 
 	pool.logger(0, "UNREF:");
 	for (auto &ref : pool.unrefs)
-		pool.logger.Format(0, " %s:%u %u", ref.file, ref.line, ref.count);
+		pool.logger.Fmt(0, " {}:{} {}"sv, ref.file, ref.line, ref.count);
 #endif
 }
 #endif
@@ -761,11 +765,11 @@ pool_type_string(enum pool_type type) noexcept
 static void
 pool_dump_node(int indent, const struct pool &pool) noexcept
 {
-	pool.logger.Format(2, "%*spool '%s' type=%s ref=%u size=%zu p=%p",
-			   indent, "",
-			   pool.name, pool_type_string(pool.type),
-			   pool.ref, pool.netto_size,
-			   (const void *)&pool);
+	pool.logger.Fmt(2, "{:{}}pool '{}' type={} ref={} size={} p={}"sv,
+			""sv, indent,
+			pool.name, pool_type_string(pool.type),
+			pool.ref, pool.netto_size,
+			fmt::ptr(&pool));
 
 	indent += 2;
 	for (const auto &child : pool.children)
@@ -805,7 +809,7 @@ pool_commit() noexcept
 #ifdef DEBUG_POOL_REF
 		pool_dump_refs(pool);
 #else
-		LogFormat(0, "pool", "- '%s'(%u)", pool.name, pool.ref);
+		LogFmt(0, "pool", "- '{}'({})"sv, pool.name, pool.ref);
 #endif
 	}
 
@@ -900,8 +904,8 @@ pool_dump_allocations(const struct pool &pool) noexcept
 	size_t sum = 0;
 	for (const auto &info : pool.allocations) {
 		sum += info.size;
-		pool.logger.Format(6, "- %s:%u %zu [%s] => %zu\n",
-				   info.file, info.line, info.size, info.type ? info.type : "", sum);
+		pool.logger.Fmt(6, "- {}:{} {} [{}] => {}"sv,
+				info.file, info.line, info.size, info.type ? info.type : "", sum);
 	}
 }
 #endif
@@ -920,11 +924,11 @@ p_malloc_linear(struct pool *pool, const size_t original_size
 		/* this allocation is larger than the standard area size;
 		   obtain a new area just for this allocation, and keep on
 		   using the last area */
-		logger.Format(5, "big allocation on linear pool '%s' (%zu bytes)",
+		logger.Fmt(5, "big allocation on linear pool '{}' ({} bytes)"sv,
 			      pool->name, original_size);
 #ifdef DEBUG_POOL_GROW
 		pool_dump_allocations(*pool);
-		logger.Format(6, "+ %s:%u %zu", file, line, original_size);
+		logger.Fmt(6, "+ {}:{} {}"sv, file, line, original_size);
 #else
 		TRACE_ARGS_IGNORE;
 #endif
@@ -941,10 +945,10 @@ p_malloc_linear(struct pool *pool, const size_t original_size
 		}
 	} else if (area == nullptr || area->used + size > area->size) [[unlikely]] {
 		if (area != nullptr) {
-			logger.Format(5, "growing linear pool '%s'", pool->name);
+			logger.Fmt(5, "growing linear pool '{}'"sv, pool->name);
 #ifdef DEBUG_POOL_GROW
 			pool_dump_allocations(*pool);
-			logger.Format(6, "+ %s:%u %zu", file, line, original_size);
+			logger.Fmt(6, "+ {}:{} {}"sv, file, line, original_size);
 #else
 			TRACE_ARGS_IGNORE;
 #endif

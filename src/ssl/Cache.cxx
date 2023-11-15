@@ -20,6 +20,8 @@
 
 #include <set>
 
+using std::string_view_literals::operator""sv;
+
 struct CertCache::Request final : IntrusiveListHook<>, Cancellable {
 	CertCache &cache;
 
@@ -525,9 +527,9 @@ CertCache::OnCertModified(const std::string &name, bool deleted) noexcept
 	const std::scoped_lock lock{mutex};
 
 	if (Flush(name))
-		logger.Format(5, "flushed %s certificate '%s'",
-			      deleted ? "deleted" : "modified",
-			      name.c_str());
+		logger.Fmt(5, "flushed {} certificate '{}'"sv,
+			   deleted ? "deleted"sv : "modified"sv,
+			   name);
 }
 
 void

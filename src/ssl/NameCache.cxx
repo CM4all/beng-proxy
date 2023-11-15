@@ -7,6 +7,8 @@
 
 #include <cassert>
 
+using std::string_view_literals::operator""sv;
+
 CertNameCache::CertNameCache(EventLoop &event_loop,
 			     const CertDatabaseConfig &config,
 			     CertNameCacheHandler &_handler) noexcept
@@ -215,8 +217,8 @@ CertNameCache::OnResult(Pg::Result &&result)
 void
 CertNameCache::OnResultEnd()
 {
-	logger.Format(4, "certificate database name cache: %u added, %u updated, %u deleted",
-		      n_added, n_updated, n_deleted);
+	logger.Fmt(4, "certificate database name cache: {} added, {} updated, {} deleted"sv,
+		   n_added, n_updated, n_deleted);
 
 	if (!complete) {
 		logger(4, "certificate database name cache is complete");
