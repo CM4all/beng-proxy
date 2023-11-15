@@ -449,6 +449,9 @@ ClassifyResponseHeader(const char *name, const bool is_upgrade) noexcept
 			/* "exclude" */
 			return HeaderGroup::MAX;
 
+		if (StringIsEqual(name, "digest"))
+			return HeaderGroup::ALL;
+
 		break;
 
 	case 'e':

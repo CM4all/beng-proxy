@@ -1,5 +1,6 @@
 cm4all-beng-proxy (18.0.48) unstable; urgency=low
 
+  * bp: always forward the "Digest" response header
   * translation: add packet MAPPED_UID_GID
   * certdb: fix SQL syntax error
 
