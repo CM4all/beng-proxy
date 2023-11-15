@@ -12,6 +12,7 @@
 #include "ClusterConfig.hxx"
 #include "net/SocketAddress.hxx"
 #include "net/ToString.hxx"
+#include "util/Compiler.h"
 
 #include <assert.h>
 

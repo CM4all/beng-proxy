@@ -11,6 +11,7 @@
 #include "http/IncomingRequest.hxx"
 #include "http/Method.hxx"
 #include "http/Status.hxx"
+#include "util/Compiler.h"
 
 #include <assert.h>
 #include <string.h>

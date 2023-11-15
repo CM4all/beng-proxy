@@ -25,6 +25,7 @@
 #include "lib/fmt/ToBuffer.hxx"
 #include "event/CoarseTimerEvent.hxx"
 #include "util/Cancellable.hxx"
+#include "util/Compiler.h"
 #include "util/LimitedConcurrencyQueue.hxx"
 #include "util/StringCompare.hxx"
 #include "AllocatorPtr.hxx"

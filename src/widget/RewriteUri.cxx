@@ -23,6 +23,7 @@
 #include "istream/istream_string.hxx"
 #include "strmap.hxx"
 #include "bp/session/Lease.hxx"
+#include "util/Compiler.h"
 #include "util/SpanCast.hxx"
 #include "util/Cancellable.hxx"
 #include "util/StringCompare.hxx"
