@@ -260,7 +260,7 @@ public:
 	ssize_t WriteV(std::span<const struct iovec> v) noexcept {
 		assert(filter == nullptr);
 
-		return base.WriteV(v.data(), v.size());
+		return base.WriteV(v);
 	}
 
 	ssize_t WriteFrom(FileDescriptor fd, FdType fd_type, off_t *offset,
