@@ -2,7 +2,7 @@ cm4all-beng-proxy (17.17) unstable; urgency=low
 
   * fcgi: disable bucket methods to work around bug
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Wed, 22 Nov 2023 14:13:25 +0100
 
 cm4all-beng-proxy (17.16) unstable; urgency=low
 
