@@ -269,8 +269,13 @@ private:
 
 	off_t _GetAvailable(bool partial) noexcept override;
 	void _Read() noexcept override;
+
+#if 0
+	// disabled due to a bug in this unmaintained branch
 	void _FillBucketList(IstreamBucketList &list) override;
 	std::size_t _ConsumeBucketList(std::size_t nbytes) noexcept override;
+#endif
+
 	void _Close() noexcept override;
 
 	/* virtual methods from class IstreamHandler */
@@ -780,6 +785,9 @@ FcgiClient::_Read() noexcept
 	socket.Read();
 }
 
+#if 0
+// disabled due to a bug in this unmaintained branch
+
 void
 FcgiClient::_FillBucketList(IstreamBucketList &list)
 {
@@ -937,6 +945,8 @@ FcgiClient::_ConsumeBucketList(std::size_t nbytes) noexcept
 
 	return Consumed(total);
 }
+
+#endif // disabled due to a bug in this unmaintained branch
 
 /*
  * socket_wrapper handler

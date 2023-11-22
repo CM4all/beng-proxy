@@ -1,6 +1,6 @@
 cm4all-beng-proxy (17.17) unstable; urgency=low
 
-  * 
+  * fcgi: disable bucket methods to work around bug
 
  --   
 
