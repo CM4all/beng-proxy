@@ -28,7 +28,6 @@
 #include "strmap.hxx"
 #include "istream/UnusedPtr.hxx"
 #include "istream/AutoPipeIstream.hxx"
-#include "istream/YamlSubstIstream.hxx"
 #include "pool/pool.hxx"
 #include "pool/LeakDetector.hxx"
 #include "pool/SharedPtr.hxx"
@@ -55,8 +54,6 @@ class WidgetRequest final
 	 * by a filter.
 	 */
 	HttpStatus previous_status = {};
-
-	bool subst_alt_syntax;
 
 	Widget &widget;
 	const char *const lookup_id = nullptr;
@@ -179,12 +176,6 @@ private:
 	void FilterResponse(HttpStatus status,
 			    StringMap &&headers, UnusedIstreamPtr body,
 			    const FilterTransformation &filter) noexcept;
-
-	void SubstResponse(HttpStatus status,
-			   StringMap &&headers, UnusedIstreamPtr body,
-			   const char *prefix,
-			   const char *yaml_file,
-			   const char *yaml_map_path) noexcept;
 
 	/**
 	 * Apply a transformation to the widget response and hand it back
@@ -457,33 +448,6 @@ WidgetRequest::FilterResponse(HttpStatus status,
 }
 
 void
-WidgetRequest::SubstResponse(HttpStatus status,
-			     StringMap &&headers, UnusedIstreamPtr body,
-			     const char *prefix,
-			     const char *yaml_file,
-			     const char *yaml_map_path) noexcept
-{
-	try {
-#ifdef HAVE_YAML
-		InvokeResponse(status, std::move(headers),
-			       NewYamlSubstIstream(pool, std::move(body),
-						   subst_alt_syntax,
-						   prefix, yaml_file, yaml_map_path));
-#else
-		(void)status;
-		(void)headers;
-		(void)body;
-		(void)prefix;
-		(void)yaml_file;
-		(void)yaml_map_path;
-		throw std::runtime_error("YAML support is disabled");
-#endif
-	} catch (...) {
-		DispatchError(std::current_exception());
-	}
-}
-
-void
 WidgetRequest::TransformResponse(HttpStatus status,
 				 StringMap &&headers, UnusedIstreamPtr body,
 				 const Transformation &t) noexcept
@@ -523,13 +487,6 @@ WidgetRequest::TransformResponse(HttpStatus status,
 	case Transformation::Type::FILTER:
 		FilterResponse(status, std::move(headers), std::move(body),
 			       t.u.filter);
-		break;
-
-	case Transformation::Type::SUBST:
-		SubstResponse(status, std::move(headers), std::move(body),
-			      t.u.subst.prefix,
-			      t.u.subst.yaml_file,
-			      t.u.subst.yaml_map_path);
 		break;
 	}
 }
@@ -607,7 +564,6 @@ WidgetRequest::UpdateView(StringMap &headers)
 
 		/* install the new view */
 		transformations = {ShallowCopy{}, view->transformations};
-		subst_alt_syntax = view->subst_alt_syntax;
 	} else if (widget.from_request.unauthorized_view &&
 		   processable(headers) &&
 		   !widget.IsContainer()) {
@@ -712,7 +668,6 @@ WidgetRequest::SendRequest() noexcept
 		? widget.cls->cookie_host
 		: a_view->address.GetHostAndPort();
 	transformations = {ShallowCopy{}, t_view->transformations};
-	subst_alt_syntax = t_view->subst_alt_syntax;
 
 	const auto &address = widget.GetAddress();
 

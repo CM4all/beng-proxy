@@ -1654,28 +1654,6 @@ different styles for this class.
 The expansion is applied even when the class/id consists only of two or
 three underscores.
 
-.. _subst:
-
-The Substitution Filter
-=======================
-
-This filter substitutes variables with their according values in a text
-stream. It can be enabled with ``SUBST_YAML_FILE``.
-
-Variable references have the form “``{%NAME%}``”. If
-``SUBST_ALT_SYNTAX`` is specified, the syntax is instead switched to
-“``{[NAME]}``”.
-
-If a variable does not exist, the behavior is undefined; the reference
-may be left as-is, or replaced with an empty string, or the filter may
-fail with an error. Don’t make assumptions on what happens; it may
-change at any time.
-
-Multiple consecutive substitution filters may be merged. Thus, variable
-values which contain another variable reference (or recursive variable
-references) are not supported and the resulting behavior is undefined.
-Duplicate variable names also result in undefined behavior.
-
 Security Considerations
 -----------------------
 

@@ -832,14 +832,6 @@ private:
 				 StringMap &response_headers,
 				 UnusedIstreamPtr response_body) noexcept;
 
-	void InvokeSubst(HttpStatus status,
-			 StringMap &&response_headers,
-			 UnusedIstreamPtr response_body,
-			 bool alt_syntax,
-			 const char *prefix,
-			 const char *yaml_file,
-			 const char *yaml_map_path) noexcept;
-
 	void ApplyFilter(HttpStatus status, StringMap &&headers2,
 			 UnusedIstreamPtr body,
 			 const FilterTransformation &filter) noexcept;

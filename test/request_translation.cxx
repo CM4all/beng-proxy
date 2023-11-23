@@ -102,10 +102,6 @@ MyHandler::OnTranslateResponse(UniquePoolPtr<TranslateResponse> _response) noexc
 				printf("filter\n");
 				print_resource_address(&transformation.u.filter.address);
 				break;
-
-			case Transformation::Type::SUBST:
-				printf("subst '%s'\n", transformation.u.subst.yaml_file);
-				break;
 			}
 		}
 	}

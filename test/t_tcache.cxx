@@ -225,9 +225,6 @@ operator==(const Transformation &a, const Transformation &b) noexcept
 
 	case Transformation::Type::FILTER:
 		return a.u.filter.address == b.u.filter.address;
-
-	case Transformation::Type::SUBST:
-		return StringEquals(a.u.subst.yaml_file, b.u.subst.yaml_file);
 	}
 
 	/* unreachable */

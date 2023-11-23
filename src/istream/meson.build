@@ -149,14 +149,6 @@ if libbrotlienc.found()
   istream_extra_sources += 'BrotliEncoderIstream.cxx'
 endif
 
-libyamlcpp = dependency('yaml-cpp',
-                        fallback: ['yaml-cpp', 'libyamlcpp_dep'],
-                        required: get_option('yaml'))
-if libyamlcpp.found()
-  istream_extra_compile_args += '-DHAVE_YAML'
-  istream_extra_sources += 'YamlSubstIstream.cxx'
-endif
-
 istream_extra = static_library(
   'istream_extra',
   istream_extra_sources,
@@ -166,7 +158,6 @@ istream_extra = static_library(
     fmt_dep,
     zlib,
     libbrotlienc,
-    libyamlcpp,
   ],
 )
 

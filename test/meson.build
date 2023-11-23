@@ -227,19 +227,6 @@ executable('run_subst',
     istream_dep,
   ])
 
-if libyamlcpp.found()
-  executable(
-    'RunYamlSubst',
-    'RunYamlSubst.cxx',
-    '../src/PInstance.cxx',
-    include_directories: inc,
-    dependencies: [
-      istream_dep,
-      istream_extra_dep,
-    ],
-  )
-endif
-
 executable('run_cookie_client',
   'run_cookie_client.cxx',
   include_directories: inc,
@@ -764,11 +751,6 @@ test(
 istream_test_sources = []
 if libbrotlienc.found()
   istream_test_sources += 'TestBrotliEncoderIstream.cxx'
-endif
-
-if libyamlcpp.found()
-  istream_test_sources += 'TestYamlSubstIstream.cxx'
-  t_istream_filter_deps += libyamlcpp
 endif
 
 test(

@@ -63,8 +63,7 @@ jobs:
             libseccomp-dev \
             libsodium-dev \
             libssl-dev \
-            libsystemd-dev \
-            libyaml-cpp-dev
+            libsystemd-dev
 
       - name: Configure
         run: |

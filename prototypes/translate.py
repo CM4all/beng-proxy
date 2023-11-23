@@ -783,20 +783,6 @@ class Translation(Protocol):
             response.packet(TRANSLATE_FASTCGI, os.path.join(cgi_path, 'pipe2.sed'))
             response.packet(TRANSLATE_NO_NEW_PRIVS)
             response.packet(TRANSLATE_ACTION, sed_fastcgi)
-        elif uri == '/subst':
-            response.path(os.path.join(demo_path, 'subst.txt'))
-            response.packet(TRANSLATE_SUBST_YAML_FILE, '\0' + os.path.join(demo_path, 'subst.yaml') + '\0')
-        elif uri == '/subst2':
-            response.path(os.path.join(demo_path, 'subst.txt'))
-            response.packet(TRANSLATE_SUBST_YAML_FILE, '\0' + os.path.join(demo_path, 'subst.yaml') + '\0child')
-        elif uri == '/subst-alt':
-            response.path(os.path.join(demo_path, 'subst-alt.txt'))
-            response.packet(TRANSLATE_SUBST_YAML_FILE, '\0' + os.path.join(demo_path, 'subst.yaml') + '\0')
-            response.packet(TRANSLATE_SUBST_ALT_SYNTAX)
-        elif uri == '/subst2-alt':
-            response.path(os.path.join(demo_path, 'subst-alt.txt'))
-            response.packet(TRANSLATE_SUBST_YAML_FILE, '\0' + os.path.join(demo_path, 'subst.yaml') + '\0child')
-            response.packet(TRANSLATE_SUBST_ALT_SYNTAX)
         elif uri[:11] == '/functions/':
             response.packet(TRANSLATE_BASE, "/functions/")
             response.packet(TRANSLATE_EASY_BASE)

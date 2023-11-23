@@ -367,22 +367,6 @@ Response
   Without this flag, only successful responses (2xx) are filtered. Only
   useful when at least one ``FILTER`` was specified.
 
-- ``SUBST_YAML_FILE``: Substitute variables with values from the given
-  YAML file. The payload consists of 3 strings separated by a null byte:
-  the prefix for variable names (example: “``foo.``”; may be empty; will
-  be stripped before looking up in the YAML file), the YAML file path
-  (absolute, i.e. starting with slash) and a path inside the YAML file
-  where YAML map to be used is found (segments separated with dots; may
-  be empty). Example: “``foo.\0/the/file.yaml\0inside.file``”. Inside
-  the specified YAML map, child maps can be addressed using the dot as a
-  separator, e.g. “``foo.bar``” looks up the key ``bar`` in a map found
-  under key ``foo``. See section :ref:`subst` for more information.
-
-- ``SUBST_ALT_SYNTAX``: Use the alternative variable reference syntax.
-  This setting is enabled for all substitution filters of this response
-  (but not for substitution filters of embedded widgets). No payload.
-  See section :ref:`subst` for more information.
-
 - ``PROCESS``: enables the :program:`beng-proxy` processor, see section
   :ref:`processor`
 

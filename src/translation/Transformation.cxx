@@ -26,10 +26,6 @@ Transformation::Transformation(AllocatorPtr alloc,
 	case Type::FILTER:
 		new(&u.filter) FilterTransformation(alloc, src.u.filter);
 		break;
-
-	case Type::SUBST:
-		new(&u.subst) SubstTransformation(alloc, src.u.subst);
-		break;
 	}
 }
 
@@ -93,9 +89,6 @@ Transformation::Expand(AllocatorPtr alloc, const MatchData &match_data)
 
 	case Type::FILTER:
 		u.filter.Expand(alloc, match_data);
-		break;
-
-	case Type::SUBST:
 		break;
 	}
 }

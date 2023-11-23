@@ -5,7 +5,6 @@
 #pragma once
 
 #include "FilterTransformation.hxx"
-#include "SubstTransformation.hxx"
 #include "util/IntrusiveForwardList.hxx"
 
 #include <new>
@@ -33,7 +32,6 @@ struct Transformation : IntrusiveForwardListHook {
 		PROCESS_CSS,
 		PROCESS_TEXT,
 		FILTER,
-		SUBST,
 	} type;
 
 	union U {
@@ -45,15 +43,12 @@ struct Transformation : IntrusiveForwardListHook {
 
 		FilterTransformation filter;
 
-		SubstTransformation subst;
-
 		/* we don't even try to call destructors in this union, and
 		   these assertions ensure that this is safe: */
 		static_assert(std::is_trivially_destructible<XmlProcessorTransformation>::value);
 		static_assert(std::is_trivially_destructible<CssProcessorTransformation>::value);
 		static_assert(std::is_trivially_destructible<TextProcessorTransformation>::value);
 		static_assert(std::is_trivially_destructible<FilterTransformation>::value);
-		static_assert(std::is_trivially_destructible<SubstTransformation>::value);
 
 		/**
 		 * This constructor declaration is necessary to allow
@@ -80,11 +75,6 @@ struct Transformation : IntrusiveForwardListHook {
 	explicit Transformation(FilterTransformation &&src) noexcept
 		:type(Type::FILTER) {
 		new(&u.filter) FilterTransformation(std::move(src));
-	}
-
-	explicit Transformation(SubstTransformation &&src) noexcept
-		:type(Type::SUBST) {
-		new(&u.subst) SubstTransformation(std::move(src));
 	}
 
 	Transformation(AllocatorPtr alloc, const Transformation &src) noexcept;

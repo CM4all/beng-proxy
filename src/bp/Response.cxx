@@ -35,7 +35,6 @@
 #include "istream/GzipIstream.hxx"
 #include "istream/AutoPipeIstream.hxx"
 #include "istream/BrotliEncoderIstream.hxx"
-#include "istream/YamlSubstIstream.hxx"
 #include "istream/istream_string.hxx"
 #include "AllocatorPtr.hxx"
 #include "pool/pool.hxx"
@@ -495,36 +494,6 @@ Request::InvokeTextProcessor(HttpStatus status,
 		       std::move(response_body));
 }
 
-inline void
-Request::InvokeSubst(HttpStatus status,
-		     StringMap &&response_headers,
-		     UnusedIstreamPtr response_body,
-		     bool alt_syntax,
-		     const char *prefix,
-		     const char *yaml_file,
-		     const char *yaml_map_path) noexcept
-{
-	try {
-#ifdef HAVE_YAML
-		InvokeResponse(status, std::move(response_headers),
-			       NewYamlSubstIstream(pool, std::move(response_body),
-						   alt_syntax,
-						   prefix, yaml_file, yaml_map_path));
-#else
-		(void)status;
-		(void)response_headers;
-		(void)response_body;
-		(void)alt_syntax;
-		(void)prefix;
-		(void)yaml_file;
-		(void)yaml_map_path;
-		throw std::runtime_error("YAML support is disabled");
-#endif
-	} catch (...) {
-		LogDispatchError(std::current_exception());
-	}
-}
-
 /**
  * Append response headers set by the translation server.
  */
@@ -795,17 +764,6 @@ Request::ApplyTransformation(HttpStatus status, StringMap &&headers,
 		resource_tag = nullptr;
 
 		InvokeTextProcessor(status, headers, std::move(response_body));
-		break;
-
-	case Transformation::Type::SUBST:
-		/* subst responses cannot be cached */
-		resource_tag = nullptr;
-
-		InvokeSubst(status, std::move(headers), std::move(response_body),
-			    translate.response->subst_alt_syntax,
-			    transformation.u.subst.prefix,
-			    transformation.u.subst.yaml_file,
-			    transformation.u.subst.yaml_map_path);
 		break;
 	}
 }
