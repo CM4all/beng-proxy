@@ -3,7 +3,7 @@ cm4all-beng-proxy (18.0.49) unstable; urgency=low
   * http: fix missing headers (18.0.45 regression)
   * translation: remove support for packet SUBST_YAML_FILE
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Thu, 23 Nov 2023 19:14:25 +0100
 
 cm4all-beng-proxy (18.0.48) unstable; urgency=low
 
