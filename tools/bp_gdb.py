@@ -25,7 +25,7 @@ def assert_gdb_type(value, expected_type):
     actual_type = value.type.unqualified()
     expected_type = expected_type.unqualified()
     if str(actual_type) != str(expected_type):
-        raise gdb.GdbError("Expected '%s', got '%s'" % (expected_type, actual_type))
+        raise gdb.GdbError(f"Expected '{expected_type}', got '{actual_type}'")
 
 def parse_and_eval_assert_type(s, expected_type):
     value = gdb.parse_and_eval(s)
@@ -104,7 +104,7 @@ class IntrusiveListPrinter:
         return self.Iterator(self.t, self.t.get_header(self.val))
 
     def to_string(self):
-        return "ilist<%s>" % self.t.value_type
+        return f"ilist<{self.t.value_type}>"
 
 def for_each_intrusive_list_item(l, member_hook=None):
     t = IntrusiveContainerType(l.type, member_hook=member_hook)
@@ -633,7 +633,7 @@ class StaticArrayPrinter:
 
     def to_string(self):
         t = get_basic_type(self.val.type)
-        return "StaticArray<%s>" % t.template_argument(0)
+        return f"StaticArray<{t.template_argument(0)}>"
 
 class StaticVectorPrinter:
     def __init__(self, val):
@@ -647,7 +647,7 @@ class StaticVectorPrinter:
         return [('', self.val['array']['_M_elems'][i].cast(self.__t)) for i in range(self.val['the_size'])]
 
     def to_string(self):
-        return "StaticVector<%s>" % self.__t
+        return f"StaticVector<{self.__t}>"
 
 class StringMapItemPrinter:
     def __init__(self, val):
@@ -656,7 +656,7 @@ class StringMapItemPrinter:
     def to_string(self):
         k = self.val['key']
         v = self.val['value']
-        return '{"%s"="%s"}' % (k.string(), v.string())
+        return f'{{"{k.string()}"="{v.string()}"}}'
 
 class StringMapPrinter:
     def __init__(self, val):
@@ -681,7 +681,7 @@ class BoundMethodPrinter:
         function = str(self.val['function'].dereference())
         import re
         function = re.sub(r'^.*BindMethodDetail::BindMethodWrapperGenerator.*, &(.+?),.*$', r'\1', function)
-        return "BoundMethod{%s, %s}" % (function, instance)
+        return f"BoundMethod{{{function}, {instance}}}"
 
 class CancellablePointerPrinter:
     def __init__(self, val):
@@ -790,7 +790,7 @@ class DeferEventPrinter:
         self.val = val
 
     def to_string(self):
-        return 'DeferEvent{scheduled=%s, callback=%s}' % (not is_null(self.val['siblings']['next']), self.val['callback'])
+        return f"DeferEvent{{scheduled={not is_null(self.val['siblings']['next'])}, callback={self.val['callback']}}}"
 
 class SliceAllocationPrinter:
     def __init__(self, val):
@@ -800,7 +800,7 @@ class SliceAllocationPrinter:
         val = self.val
         if is_null(val['data']):
             return "nullptr"
-        return "SliceAllocation{%s, %s}" % (val['data'], val['size'])
+        return f"SliceAllocation{{{val['data']}, {val['size']}}}"
 
 class SliceFifoBufferPrinter:
     def __init__(self, val):
@@ -810,14 +810,14 @@ class SliceFifoBufferPrinter:
         val = self.val
         if is_null(val['allocation']['data']):
             return "nullptr"
-        return "SliceFifoBuffer{%s, %s}" % (val['data'] + val['head'], val['tail'] - val['head'])
+        return f"SliceFifoBuffer{{{val['data'] + val['head']}, {val['tail'] - val['head']}}}"
 
 class StockPrinter:
     def __init__(self, val):
         self.val = val
 
     def to_string(self):
-        return 'Stock{%s, %s, idle=%s, busy=%s}' % (self.val['cls'].referenced_value().dynamic_type, self.val['name'], self.val['idle'], self.val['busy'])
+        return f"Stock{{{self.val['cls'].referenced_value().dynamic_type}, {self.val['name']}, idle={self.val['idle']}, busy={self.val['busy']}}}"
 
 class StockItemPrinter:
     def __init__(self, val):
@@ -864,7 +864,7 @@ class SpawnServerChildPrinter:
         self.val = val
 
     def to_string(self):
-        return '{id=%d, pid=%d, name=%s}' % (self.val['id'], self.val['pid'], self.val['name'])
+        return f"{{id={self.val['id']}, pid={self.val['pid']}, name={self.val['name']}}}"
 
 class TypeNamePrinter:
     def __init__(self, val):
