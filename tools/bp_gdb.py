@@ -4,6 +4,7 @@
 # Author: Max Kellermann <mk@cm4all.com>
 #
 
+import re
 import gdb
 
 try:
@@ -48,17 +49,34 @@ def pool_sizes(pool):
         brutto_size = netto_size
     return brutto_size, netto_size
 
+def find_field(t, name):
+    for i in t.fields():
+        if i.name == name and not i.artificial:
+            return i
+    return None
+
 class IntrusiveContainerType:
     def __init__(self, list_type, member_hook=None):
         self.list_type = get_basic_type(list_type)
         self.value_type = list_type.template_argument(0)
         self.value_pointer_type = self.value_type.pointer()
 
+        hook_traits = list_type.template_argument(1).strip_typedefs().name
+        if m := re.match(r'IntrusiveListMemberHookTraits<&(\w+)::(\w+)>$', hook_traits):
+            field = find_field(self.value_type, m.group(2))
+            if field is None: raise RuntimeError('Field not found')
+            self.__offset = field.bitpos // 8
+        else:
+            self.__offset = None
+
     def get_header(self, l):
         return l['head']
 
     def node_to_value(self, node):
-        return node.cast(self.value_pointer_type)
+        if self.__offset is None:
+            return node.cast(self.value_pointer_type)
+        else:
+            return (node.reinterpret_cast(gdb.lookup_type('void').pointer()) - self.__offset).reinterpret_cast(self.value_pointer_type)
 
     def iter_nodes(self, l):
         root = self.get_header(l)
