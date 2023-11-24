@@ -838,7 +838,7 @@ class StockMapItemPrinter:
         self.val = val
 
     def to_string(self):
-        return self.val['stock']
+        return f"StockMap::Item{{{self.val['cls'].referenced_value().dynamic_type}, {self.val['name']}, idle={self.val['idle']}, busy={self.val['busy']}, sticky={self.val['sticky']}}}"
 
 class IstreamPointerPrinter:
     def __init__(self, val):
