@@ -723,7 +723,7 @@ class StockItemPrinter:
         self.val = val
 
     def to_string(self):
-        return 'StockItem{%s}' % self.val.dynamic_type
+        return f"StockItem{{{self.val.dynamic_type} {self.val.address}}}"
 
 class StockMapPrinter:
     def __init__(self, val):
