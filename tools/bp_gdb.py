@@ -754,7 +754,7 @@ def build_pretty_printer():
     pp.add_printer('TrivialArray', '^TrivialArray<', StaticArrayPrinter)
     pp.add_printer('StaticArray', '^StaticArray<', StaticArrayPrinter)
     pp.add_printer('StaticVector', '^StaticVector<', StaticVectorPrinter)
-    pp.add_printer('IntrusiveList', '^Intrusive(Forward)?List$', IntrusiveListPrinter)
+    pp.add_printer('IntrusiveList', '^Intrusive(Forward)?List<', IntrusiveListPrinter)
     pp.add_printer('StringMap::Item', '^StringMap::Item$', StringMapItemPrinter)
     pp.add_printer('StringMap', '^StringMap$', StringMapPrinter)
     pp.add_printer('BoundMethod', '^BoundMethod<', BoundMethodPrinter)
