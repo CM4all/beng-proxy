@@ -116,98 +116,6 @@ def for_each_intrusive_list_item_reverse(l, member_hook=None):
     for node in t.iter_nodes_reverse(l):
         yield t.node_to_value(node).dereference()
 
-class BoostIntrusiveSetType:
-    def __init__(self, list_type, member_hook=None):
-        self.list_type = get_basic_type(list_type)
-        self.value_type = list_type.template_argument(0)
-        self.value_pointer_type = self.value_type.pointer()
-
-        self.member_hook = None
-        if member_hook is not None:
-            self.member_hook = self.value_type[member_hook]
-
-    def get_header(self, s):
-        return s['holder']['root']
-
-    def node_to_value(self, node):
-        if self.member_hook is None:
-            return node.cast(self.value_pointer_type)
-        else:
-            return (node.dereference().address - self.member_hook.bitpos // 8).cast(self.value_pointer_type)
-
-    def _minimum(self, node):
-        while True:
-            left = node['left_'].dereference()
-            if is_null(left.address):
-                return node
-            node = left
-
-    def _next_node(self, node):
-        right = node['right_'].dereference()
-        if not is_null(right.address):
-            return self._minimum(right)
-
-        while True:
-            parent = node['parent_'].dereference()
-            if node.address != parent['right_'].dereference().address: break
-            node = parent
-        if node['right_'].dereference().address == parent.address:
-            return node
-        else:
-            return parent
-
-    def iter_nodes(self, s):
-        header = self.get_header(s)
-        i = header['left_'].dereference()
-        while i.address != header.address:
-            yield i
-            i = self._next_node(i)
-
-def for_each_intrusive_set_item(s, member_hook=None):
-    t = BoostIntrusiveSetType(s.type, member_hook=member_hook)
-    for node in t.iter_nodes(s):
-        yield t.node_to_value(node.address).dereference()
-
-class BoostIntrusiveUnorderedSetType:
-    def __init__(self, list_type, member_hook=None):
-        self.list_type = get_basic_type(list_type)
-        self.value_type = list_type.template_argument(0)
-        self.value_pointer_type = self.value_type.pointer()
-
-        self.member_hook = None
-        if member_hook is not None:
-            self.member_hook = self.value_type[member_hook]
-
-    def node_to_value(self, node):
-        if self.member_hook is None:
-            return node.cast(self.value_pointer_type)
-        else:
-            return (node.dereference().address - self.member_hook.bitpos // 8).cast(self.value_pointer_type)
-
-    def iter_nodes(self, s):
-        bucket_traits = s['data']['bucket_traits_']
-        buckets = bucket_traits['buckets_']
-        n_buckets = int(bucket_traits['buckets_len_'])
-        for i in range(n_buckets):
-            l = buckets[i]
-            root = l['data_']['root_plus_size_']['header_holder_']
-            root_address = root.address
-            node = root
-            while True:
-                node = node['next_']
-                if node.dereference().address == root_address:
-                    break
-                yield node
-
-    def iter_values(self, s):
-        for node in self.iter_nodes(s):
-            yield self.node_to_value(node)
-
-def for_each_intrusive_unordered_set_item(s, member_hook=None):
-    t = BoostIntrusiveUnorderedSetType(s.type, member_hook=member_hook)
-    for value in t.iter_values(s):
-        yield value.dereference()
-
 def for_each_recursive_pool(pool):
     yield pool
 
@@ -586,34 +494,6 @@ DumpSlicePoolAreas()
 FindSliceFifoBuffer()
 LbStats()
 
-class BoostIntrusiveSetPrinter:
-    def __init__(self, val):
-        self.t = BoostIntrusiveSetType(val.type)
-        self.val = val
-
-    def display_hint(self):
-        return 'array'
-
-    def children(self):
-        return [('', i) for i in for_each_intrusive_set_item(self.val)]
-
-    def to_string(self):
-        return "bi::set<%s>" % self.t.value_type
-
-class BoostIntrusiveUnorderedSetPrinter:
-    def __init__(self, val):
-        self.t = BoostIntrusiveUnorderedSetType(val.type)
-        self.val = val
-
-    def display_hint(self):
-        return 'array'
-
-    def children(self):
-        return [('', i.dereference()) for i in self.t.iter_values(self.val)]
-
-    def to_string(self):
-        return "bi::unordered_set<%s>" % self.t.value_type
-
 class StdArrayPrinter:
     def __init__(self, val):
         self.val = val
@@ -666,6 +546,7 @@ class StringMapPrinter:
         return 'array'
 
     def children(self):
+        # TODO
         return BoostIntrusiveSetPrinter(self.val['map']).children()
 
     def to_string(self):
@@ -866,13 +747,6 @@ class SpawnServerChildPrinter:
     def to_string(self):
         return f"{{id={self.val['id']}, pid={self.val['pid']}, name={self.val['name']}}}"
 
-class TypeNamePrinter:
-    def __init__(self, val):
-        self.val = val
-
-    def to_string(self):
-        return str(self.val.type)
-
 import gdb.printing
 def build_pretty_printer():
     pp = gdb.printing.RegexpCollectionPrettyPrinter("cm4all-beng-proxy")
@@ -881,9 +755,6 @@ def build_pretty_printer():
     pp.add_printer('StaticArray', '^StaticArray<', StaticArrayPrinter)
     pp.add_printer('StaticVector', '^StaticVector<', StaticVectorPrinter)
     pp.add_printer('IntrusiveList', '^Intrusive(Forward)?List$', IntrusiveListPrinter)
-    pp.add_printer('boost::intrusive::hooks', 'boost::intrusive::(s?list_base|generic|unordered_set_base)_hook', TypeNamePrinter)
-    pp.add_printer('boost::intrusive::set', 'boost::intrusive::(multi)?set<', BoostIntrusiveSetPrinter)
-    pp.add_printer('boost::intrusive::unordered_set', 'boost::intrusive::unordered_(multi)?set<', BoostIntrusiveUnorderedSetPrinter)
     pp.add_printer('StringMap::Item', '^StringMap::Item$', StringMapItemPrinter)
     pp.add_printer('StringMap', '^StringMap$', StringMapPrinter)
     pp.add_printer('BoundMethod', '^BoundMethod<', BoundMethodPrinter)
