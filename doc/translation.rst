@@ -1657,6 +1657,9 @@ A successful response must contain at least ``HOME`` and ``UID_GID``:
 - ``AUTHORIZED_KEYS``: The contents of an OpenSSH
   :file:`authorized_keys` file.
 
+- ``NO_HOME_AUTHORIZED_KEYS``: If present, then
+  :file:`~/.ssh/authorized_keys` is not used.
+
 .. _cron:
 
 Cron translation
