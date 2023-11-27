@@ -1272,6 +1272,10 @@ Other Child Process Options
   :program:`beng-proxy` itself (or the one specified with
   ``--spawn-user``).
 
+- ``MAPPED_UID_GID`` is like ``UID_GID``, but these are the numbers
+  visible inside the user namespace.  Currently, only the uid is
+  implemented, therefore the payload must be a 32-bit integer.
+
 - ``NO_NEW_PRIVS`` permanently disables new privileges for the child
   process. That is, ``setuid`` and ``setgid`` bits are ignored on
   executed programs. It is recommended to set this flag on **all**
