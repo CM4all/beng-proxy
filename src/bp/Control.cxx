@@ -125,6 +125,9 @@ BpInstance::OnControlPacket(ControlServer &control_server,
 			SetLogLevel(*(const uint8_t *)payload.data());
 		break;
 
+	case ControlCommand::TERMINATE_CHILDREN:
+		// TODO terminate immediately, no fade
+
 	case ControlCommand::FADE_CHILDREN:
 		if (!payload.empty())
 			/* tagged fade is allowed for any unprivileged client */

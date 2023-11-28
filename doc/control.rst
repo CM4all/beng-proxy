@@ -81,6 +81,11 @@ Commands
   then this is a tag which fades only child processes with the given
   ``CHILD_TAG``.
 
+- ``TERMINATE_CHILDREN``: Terminate all child processes with the
+  ``CHILD_TAG`` from the payload.  Unlike ``FADE_CHILDREN``, this does
+  not wait for completion of the child's currently work.Fade out child
+  processes.
+
 - ``DISABLE_ZEROCONF``: Hide all registered Zeroconf services. To
   reveal them again, use ``ENABLE_ZEROCONF``. This is a privileged
   operation (only allowed through local socket by user root).

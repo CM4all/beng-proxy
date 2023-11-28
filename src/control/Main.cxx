@@ -234,6 +234,21 @@ FadeChildren(const char *server, ConstBuffer<const char *> args)
 }
 
 static void
+TerminateChildren(const char *server, ConstBuffer<const char *> args)
+{
+	std::string_view tag{};
+
+	if (!args.empty())
+		tag = args.shift();
+
+	if (!args.empty())
+		throw Usage{"Too many arguments"};
+
+	BengControlClient client(server);
+	client.Send(BengProxy::ControlCommand::TERMINATE_CHILDREN, tag);
+}
+
+static void
 FlushFilterCache(const char *server, ConstBuffer<const char *> args)
 {
 	std::string_view tag{};
@@ -336,6 +351,9 @@ try {
 		return EXIT_SUCCESS;
 	} else if (StringIsEqual(command, "fade-children")) {
 		FadeChildren(server, args);
+		return EXIT_SUCCESS;
+	} else if (StringIsEqual(command, "terminate-children")) {
+		TerminateChildren(server, args);
 		return EXIT_SUCCESS;
 	} else if (StringIsEqual(command, "disable-zeroconf")) {
 		SimpleCommand(server, args,
