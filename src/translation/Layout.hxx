@@ -30,7 +30,7 @@ struct TranslationLayoutItem {
 		:value(_value) {}
 
 	struct Regex {};
-	TranslationLayoutItem(Regex, std::string_view _value) noexcept
+	TranslationLayoutItem(Regex, std::string_view _value)
 		:value(_value), regex(value.c_str(), {.anchored=true}) {}
 
 	Type GetType() const noexcept {

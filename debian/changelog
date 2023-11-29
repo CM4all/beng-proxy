@@ -1,6 +1,7 @@
 cm4all-beng-proxy (18.0.50) unstable; urgency=low
 
   * translation: add packet NO_HOME_AUTHORIZED_KEYS
+  * translation: fix crash on malformed LAYOUT/REGEX
   * control: add packet TERMINATE_CHILDREN
 
  --   
