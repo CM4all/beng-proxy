@@ -62,7 +62,7 @@ class IntrusiveContainerType:
         self.value_pointer_type = self.value_type.pointer()
 
         hook_traits = list_type.template_argument(1).strip_typedefs().name
-        if m := re.match(r'IntrusiveListMemberHookTraits<&(\w+)::(\w+)>$', hook_traits):
+        if m := re.match(r'Intrusive\w+MemberHookTraits<&(\w+)::(\w+)>$', hook_traits):
             field = find_field(self.value_type, m.group(2))
             if field is None: raise RuntimeError('Field not found')
             self.__offset = field.bitpos // 8
@@ -133,6 +133,29 @@ def for_each_intrusive_list_item_reverse(l, member_hook=None):
     t = IntrusiveContainerType(l.type, member_hook=member_hook)
     for node in t.iter_nodes_reverse(l):
         yield t.node_to_value(node).dereference()
+
+class IntrusiveHashArrayTriePrinter:
+    def __init__(self, val):
+        self.__val = val
+        self.__type = IntrusiveContainerType(val.type)
+
+    def display_hint(self):
+        return 'array'
+
+    def children(self):
+        def for_each_child(node):
+            children = node['children']
+            for i in range(4):
+                child = children['_M_elems'][i]
+                if child:
+                    child = child
+                    yield '', self.__type.node_to_value(child).dereference()
+                    yield from for_each_child(child)
+
+        yield from for_each_child(self.__val['root'])
+
+    def to_string(self):
+        return f"ihamt<{self.__type.value_type}>"
 
 def for_each_recursive_pool(pool):
     yield pool
@@ -558,14 +581,13 @@ class StringMapItemPrinter:
 
 class StringMapPrinter:
     def __init__(self, val):
-        self.val = val
+        self.__next = IntrusiveHashArrayTriePrinter(val['map'])
 
     def display_hint(self):
         return 'array'
 
     def children(self):
-        # TODO
-        return BoostIntrusiveSetPrinter(self.val['map']).children()
+        return self.__next.children()
 
     def to_string(self):
         return 'StringMap'
@@ -773,6 +795,7 @@ def build_pretty_printer():
     pp.add_printer('StaticArray', '^StaticArray<', StaticArrayPrinter)
     pp.add_printer('StaticVector', '^StaticVector<', StaticVectorPrinter)
     pp.add_printer('IntrusiveList', '^Intrusive(Forward)?List<', IntrusiveListPrinter)
+    pp.add_printer('IntrusiveHashArrayTrie', '^IntrusiveHashArrayTrie<', IntrusiveHashArrayTriePrinter)
     pp.add_printer('StringMap::Item', '^StringMap::Item$', StringMapItemPrinter)
     pp.add_printer('StringMap', '^StringMap$', StringMapPrinter)
     pp.add_printer('BoundMethod', '^BoundMethod<', BoundMethodPrinter)
