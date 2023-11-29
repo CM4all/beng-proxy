@@ -34,6 +34,16 @@
 
 using std::string_view_literals::operator""sv;
 
+inline void
+Request::Handler::File::Close(UringGlue &uring) noexcept
+{
+	open_address = nullptr;
+	error = 0;
+
+	if (fd.IsDefined())
+		uring.Close(fd.Release());
+}
+
 void
 Request::DispatchFile(const char *path, UniqueFileDescriptor fd,
 		      const struct statx &st,
@@ -482,6 +492,8 @@ Request::StatFileAddress(const FileAddress &address,
 		else
 			(this->*on_error)(handler.file.error);
 	} else {
+		handler.file.Close(instance.uring);
+
 		handler.file.address = &address;
 		handler.file.on_stat_success = on_success;
 		handler.file.on_stat_error = on_error;

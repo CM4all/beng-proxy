@@ -1,5 +1,6 @@
 cm4all-beng-proxy (18.0.50) unstable; urgency=low
 
+  * bp: fix assertion failure with ENOTDIR and DIRECTORY_INDEX
   * translation: add packet NO_HOME_AUTHORIZED_KEYS
   * translation: fix crash on malformed LAYOUT/REGEX
   * control: add packet TERMINATE_CHILDREN

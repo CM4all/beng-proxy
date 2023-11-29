@@ -48,6 +48,7 @@ struct ForwardRequest;
 class Widget;
 class SessionLease;
 class RealmSessionLease;
+class UringGlue;
 namespace Co { template<typename T> class Task; }
 
 /*
@@ -304,6 +305,12 @@ private:
 
 			StatSuccessCallback on_stat_success;
 			StatErrorCallback on_stat_error;
+
+			/**
+			 * Clear #open_address, #fd, #error as if
+			 * StatFileAddress() had never been called.
+			 */
+			void Close(UringGlue &uring) noexcept;
 		} file;
 
 		struct {
