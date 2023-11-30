@@ -12,6 +12,12 @@
 #include <cstddef>
 #include <span>
 
+#ifdef _LIBCPP_VERSION
+/* with libc++, we can't pass a span<iovec> when iovec is
+   forward-declared*/
+#include <sys/uio.h>
+#endif
+
 class UniqueSocketDescriptor;
 
 /**
