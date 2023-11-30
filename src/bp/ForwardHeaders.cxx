@@ -411,6 +411,7 @@ ClassifyResponseHeader(const char *name, const bool is_upgrade) noexcept
 			    StringIsEqual(content, "language") ||
 			    StringIsEqual(content, "md5") ||
 			    StringIsEqual(content, "range") ||
+			    StringIsEqual(content, "security-policy") ||
 			    StringIsEqual(content, "type") ||
 			    StringIsEqual(content, "disposition"))
 				/* "body" */
@@ -509,7 +510,12 @@ ClassifyResponseHeader(const char *name, const bool is_upgrade) noexcept
 				return HeaderGroup::SSL;
 			else if (StringIsEqual(c4, "view"))
 				return HeaderGroup::TRANSFORMATION;
-		}
+		} else if (StringIsEqual(name, "x-content-type-options"))
+			// https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/X-Content-Type-Options
+			return HeaderGroup::ALL;
+		else if (StringIsEqual(name, "x-frame-options"))
+			// https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/X-Frame-Options
+			return HeaderGroup::ALL;
 
 		break;
 	}
