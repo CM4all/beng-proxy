@@ -2,7 +2,7 @@
 // Copyright CM4all GmbH
 // author: Max Kellermann <mk@cm4all.com>
 
-#include "TestPool.hxx"
+#include "../TestPool.hxx"
 #include "memory/GrowingBuffer.hxx"
 #include "memory/istream_gb.hxx"
 #include "istream/istream.hxx"

@@ -2,8 +2,8 @@
 // Copyright CM4all GmbH
 // author: Max Kellermann <mk@cm4all.com>
 
-#include "TestInstance.hxx"
-#include "FailingResourceLoader.hxx"
+#include "../TestInstance.hxx"
+#include "../FailingResourceLoader.hxx"
 #include "widget/Inline.hxx"
 #include "widget/Widget.hxx"
 #include "widget/Request.hxx"

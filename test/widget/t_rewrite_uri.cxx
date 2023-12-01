@@ -2,8 +2,8 @@
 // Copyright CM4all GmbH
 // author: Max Kellermann <mk@cm4all.com>
 
-#include "FailingResourceLoader.hxx"
-#include "tconstruct.hxx"
+#include "../FailingResourceLoader.hxx"
+#include "../tconstruct.hxx"
 #include "widget/RewriteUri.hxx"
 #include "http/Address.hxx"
 #include "bp/session/Lease.hxx"

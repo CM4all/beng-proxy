@@ -199,14 +199,6 @@ executable(
   ],
 )
 
-executable('format_http_date',
-  'format_http_date.cxx',
-  include_directories: inc,
-  dependencies: [
-    time_dep,
-    http_dep,
-  ])
-
 executable('request_translation',
   'request_translation.cxx',
   include_directories: inc,
@@ -226,40 +218,6 @@ executable('run_subst',
     test_instance_dep,
     istream_dep,
   ])
-
-executable('run_cookie_client',
-  'run_cookie_client.cxx',
-  include_directories: inc,
-  dependencies: [
-    cookie_dep,
-  ])
-
-executable('run_cookie_server',
-  'run_cookie_server.cxx',
-  include_directories: inc,
-  dependencies: [
-    cookie_dep,
-  ])
-
-executable('run_header_parser',
-  'run_header_parser.cxx',
-  include_directories: inc,
-  dependencies: [
-    http_util_dep,
-  ])
-
-test(
-  'TestHttpUtil',
-  executable(
-    'TestHttpUtil',
-    'TestXFF.cxx',
-    include_directories: inc,
-    dependencies: [
-      http_util_dep,
-      gtest,
-    ],
-  ),
-)
 
 executable('run_html_unescape',
   'run_html_unescape.cxx',
@@ -378,15 +336,6 @@ test('t_header_forward', executable('t_header_forward',
     system_dep,
   ]))
 
-test('TestRedirectHttps', executable('TestRedirectHttps',
-  'TestRedirectHttps.cxx',
-  include_directories: inc,
-  dependencies: [
-    gtest,
-    putil_dep,
-    net_dep,
-  ]))
-
 test('t_resource_address', executable('t_resource_address',
   't_resource_address.cxx',
   't_http_address.cxx',
@@ -396,14 +345,6 @@ test('t_resource_address', executable('t_resource_address',
   dependencies: [
     gtest,
     raddress_dep,
-  ]))
-
-test('t_expansible_buffer', executable('t_expansible_buffer',
-  't_expansible_buffer.cxx',
-  include_directories: inc,
-  dependencies: [
-    gtest,
-    putil_dep,
   ]))
 
 test('t_balancer', executable('t_balancer',
@@ -519,21 +460,6 @@ test('t_fcache', executable('t_fcache',
     stopwatch_dep,
   ]))
 
-test(
-  't_cookie',
-  executable(
-    't_cookie',
-    't_cookie_client.cxx',
-    't_cookie_server.cxx',
-    'TestCookieExtract.cxx',
-    include_directories: inc,
-    dependencies: [
-      gtest,
-      cookie_dep,
-    ],
-  ),
-)
-
 test('t_session', executable('t_session',
   't_session.cxx',
   'TestSessionId.cxx',
@@ -545,151 +471,6 @@ test('t_session', executable('t_session',
   dependencies: [
     gtest,
     session_dep,
-  ]))
-
-test('t_pool', executable('t_pool',
-  't_pool.cxx',
-  include_directories: inc,
-  dependencies: [
-    gtest,
-    pool_dep,
-  ]))
-
-test('t_rubber', executable('t_rubber',
-  't_rubber.cxx',
-  include_directories: inc,
-  dependencies: [
-    gtest,
-    memory_dep,
-  ]))
-
-test('t_sink_rubber', executable('t_sink_rubber',
-  't_sink_rubber.cxx',
-  include_directories: inc,
-  dependencies: [
-    gtest,
-    istream_dep,
-    memory_istream_dep,
-    net_dep,
-  ]))
-
-test('t_slice', executable('t_slice',
-  't_slice.cxx',
-  include_directories: inc,
-  dependencies: [
-    gtest,
-    memory_dep,
-  ]))
-
-test('t_relocate_uri', executable('t_relocate_uri',
-  't_relocate_uri.cxx',
-  '../src/uri/Relocate.cxx',
-  include_directories: inc,
-  dependencies: [
-    gtest,
-    putil_dep,
-  ]))
-
-test('t_rewrite_uri', executable('t_rewrite_uri',
-  't_rewrite_uri.cxx',
-  'FailingResourceLoader.cxx',
-  '../src/PInstance.cxx',
-  '../src/widget/RewriteUri.cxx',
-  '../src/bp/session/Lease.cxx',
-  '../src/escape/Istream.cxx',
-  include_directories: inc,
-  dependencies: [
-    gtest,
-    putil_dep,
-    widget_dep,
-    istream_dep,
-  ]))
-
-test(
-  'TestWidget',
-  executable(
-    'TestWidget',
-    'TestArgs.cxx',
-    include_directories: inc,
-    dependencies: [
-      gtest,
-      widget_dep,
-    ],
-  ),
-)
-
-test('t_widget_registry', executable('t_widget_registry',
-  't_widget_registry.cxx',
-  '../src/PInstance.cxx',
-  '../src/widget/Registry.cxx',
-  '../src/widget/Class.cxx',
-  include_directories: inc,
-  dependencies: [
-    gtest,
-    widget_dep,
-  ]))
-
-test('t_widget_resolver', executable('t_widget_resolver',
-  't_widget_resolver.cxx',
-  '../src/widget/Resolver.cxx',
-  '../src/widget/Init.cxx',
-  '../src/widget/Root.cxx',
-  '../src/widget/Ptr.cxx',
-  include_directories: inc,
-  dependencies: [
-    gtest,
-    putil_dep,
-    istream_dep,
-  ]))
-
-test('t_wembed', executable('t_wembed',
-  't_wembed.cxx',
-  'FailingResourceLoader.cxx',
-  '../src/widget/Inline.cxx',
-  '../src/istream_html_escape.cxx',
-  '../src/escape/Istream.cxx',
-  '../src/bp/Global.cxx',
-  include_directories: inc,
-  dependencies: [
-    test_instance_dep,
-    fmt_dep,
-    widget_dep,
-    istream_dep,
-    http_util_dep,
-  ]))
-
-test('t_widget_http', executable('t_widget_http',
-  't_widget_http.cxx',
-  '../src/widget/Request.cxx',
-  '../src/widget/FromSession.cxx',
-  '../src/widget/FromRequest.cxx',
-  '../src/bp/ForwardHeaders.cxx',
-  '../src/resource_tag.cxx',
-  '../src/http/ResponseHandler.cxx',
-  include_directories: inc,
-  dependencies: [
-    gtest,
-    test_instance_dep,
-    fmt_dep,
-    widget_dep,
-    istream_dep,
-    http_util_dep,
-    session_dep,
-    processor_dep,
-    time_dep,
-    http_dep,
-  ]))
-
-test('t_uri', executable('t_uri',
-  'TestUriPRelative.cxx',
-  'TestUriRelative.cxx',
-  't_uri_compare.cxx',
-  'TestUriDissect.cxx',
-  include_directories: inc,
-  dependencies: [
-    gtest,
-    util_dep,
-    putil_dep,
   ]))
 
 test('t_escape', executable('t_escape',
@@ -718,12 +499,6 @@ test('t_processor', executable('t_processor',
     session_dep,
   ]))
 
-t_istream_filter_deps = [
-  gtest,
-  test_instance_dep,
-  istream_dep,
-]
-
 test(
   'TestBufferedResourceLoader',
   executable(
@@ -747,115 +522,6 @@ test(
     ],
   ),
 )  
-
-istream_test_sources = []
-if libbrotlienc.found()
-  istream_test_sources += 'TestBrotliEncoderIstream.cxx'
-endif
-
-test(
-  'IstreamFilterTest',
-  executable(
-    'IstreamFilterTest',
-    'IstreamFilterTest.cxx',
-    't_istream_byte.cxx',
-    't_istream_cat.cxx',
-    't_istream_catch.cxx',
-    't_istream_chunked.cxx',
-    't_istream_dechunk.cxx',
-    'TestGzipIstream.cxx',
-    't_istream_delayed.cxx',
-    't_istream_fcgi.cxx',
-    '../src/fcgi/istream_fcgi.cxx',
-    't_istream_hold.cxx',
-    't_istream_html_escape.cxx',
-    '../src/escape/Istream.cxx',
-    '../src/istream_html_escape.cxx',
-    '../src/istream/sink_close.cxx',
-    't_istream_iconv.cxx',
-    't_istream_replace.cxx',
-    't_istream_subst.cxx',
-    't_istream_tee.cxx',
-    'TestAutoPipeIstream.cxx',
-    'TestBufferedIstream.cxx',
-    'TestLengthIstream.cxx',
-    istream_test_sources,
-    include_directories: inc,
-    dependencies: [
-      t_istream_filter_deps,
-      istream_pipe_dep,
-      istream_extra_dep,
-      stock_dep,
-    ],
-  ),
-)
-
-test('t_istream_processor', executable('t_istream_processor',
-  't_istream_processor.cxx',
-  'IstreamFilterTest.cxx',
-  'FailingResourceLoader.cxx',
-  '../src/widget/FromSession.cxx',
-  '../src/widget/FromRequest.cxx',
-  '../src/widget/Resolver.cxx',
-  '../src/widget/RewriteUri.cxx',
-  '../src/escape/Istream.cxx',
-  '../src/istream_html_escape.cxx',
-  include_directories: inc,
-  dependencies: [
-    gtest,
-    processor_dep,
-    widget_dep,
-    session_dep,
-  ] + t_istream_filter_deps))
-
-test(
-  'TestCssProcessor',
-  executable(
-    'TestCssProcessor',
-    'TestCssProcessor.cxx',
-    'IstreamFilterTest.cxx',
-    'FailingResourceLoader.cxx',
-    '../src/widget/FromSession.cxx',
-    '../src/widget/FromRequest.cxx',
-    '../src/widget/Resolver.cxx',
-    '../src/widget/RewriteUri.cxx',
-    '../src/escape/Istream.cxx',
-    '../src/istream_html_escape.cxx',
-    include_directories: inc,
-    dependencies: [
-      gtest,
-      processor_dep,
-      widget_dep,
-      session_dep,
-    ] + t_istream_filter_deps,
-  ),
-)
-
-test('t_growing_buffer', executable('t_growing_buffer',
-  't_growing_buffer.cxx',
-  include_directories: inc,
-  dependencies: [
-    gtest,
-    istream_api_dep,
-    memory_istream_dep,
-  ]))
-
-if uring_dep.found()
-  test(
-    'TestUringIstream',
-    executable(
-      'TestUringIstream',
-      'TestUringIstream.cxx',
-      include_directories: inc,
-      dependencies: [
-        gtest,
-        test_instance_dep,
-        uring_dep,
-        istream_dep,
-      ],
-    ),
-  )
-endif
 
 test(
   'TestAprMd5',
@@ -915,3 +581,8 @@ if get_option('certdb')
 endif
 
 subdir('acme')
+subdir('http')
+subdir('istream')
+subdir('memory')
+subdir('uri')
+subdir('widget')

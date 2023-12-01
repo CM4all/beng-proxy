@@ -2,8 +2,8 @@
 // Copyright CM4all GmbH
 // author: Max Kellermann <mk@cm4all.com>
 
-#include "TestInstance.hxx"
-#include "tconstruct.hxx"
+#include "../TestInstance.hxx"
+#include "../tconstruct.hxx"
 #include "widget/Widget.hxx"
 #include "widget/Class.hxx"
 #include "widget/Context.hxx"

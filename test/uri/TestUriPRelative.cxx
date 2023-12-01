@@ -3,7 +3,7 @@
 // author: Max Kellermann <mk@cm4all.com>
 
 #include "uri/PRelative.hxx"
-#include "TestPool.hxx"
+#include "../TestPool.hxx"
 #include "AllocatorPtr.hxx"
 
 #include <gtest/gtest.h>

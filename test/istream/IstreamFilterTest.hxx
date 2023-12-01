@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include "TestInstance.hxx"
+#include "../TestInstance.hxx"
 #include "istream/istream.hxx"
 #include "istream/Bucket.hxx"
 #include "istream/Sink.hxx"

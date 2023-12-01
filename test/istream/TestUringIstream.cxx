@@ -2,7 +2,7 @@
 // Copyright CM4all GmbH
 // author: Max Kellermann <mk@cm4all.com>
 
-#include "TestInstance.hxx"
+#include "../TestInstance.hxx"
 #include "istream/Sink.hxx"
 #include "istream/UringIstream.hxx"
 #include "istream/UnusedPtr.hxx"

@@ -2,7 +2,7 @@
 // Copyright CM4all GmbH
 // author: Max Kellermann <mk@cm4all.com>
 
-#include "TestPool.hxx"
+#include "../TestPool.hxx"
 #include "memory/Rubber.hxx"
 #include "memory/sink_rubber.hxx"
 #include "event/Loop.hxx"
