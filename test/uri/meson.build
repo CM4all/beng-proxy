@@ -3,6 +3,7 @@ test(
   executable(
     't_uri',
     'TestArgs.cxx',
+    'TestUriPNormalize.cxx',
     'TestUriPRelative.cxx',
     'TestUriRelative.cxx',
     't_uri_compare.cxx',
