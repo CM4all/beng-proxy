@@ -268,6 +268,9 @@ Configures the process spawner. Example::
 - ``allow_group``: allow child processes to impersonate the given
   group.
 
+- ``cgroups_writable_by_group``: make this group the owner of all
+  cgroups and grant the group write access.
+
 - ``CPUWeight``: CPU weight for all spawned processes combined
   (:math:`1..10000`).  :program:`systemd`'s default is 100.
 
