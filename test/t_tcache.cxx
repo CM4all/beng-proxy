@@ -555,6 +555,29 @@ TEST(TranslationCache, EasyBaseUri)
 }
 
 /**
+ * Test EASY_BASE+URI where URIm needs normalization.
+ */
+TEST(TranslationCache, EasyBaseUriNormalize)
+{
+	Instance instance;
+	struct pool &pool = instance.root_pool;
+	auto &cache = instance.cache;
+
+	Feed(pool, cache, MakeRequest("/easy_base_uri/foo//./bar"),
+	     MakeResponse(pool).EasyBase("/easy_base_uri/")
+	     .File(".", "/var/www/")
+	     .Uri("/modified/"),
+	     MakeResponse(pool).EasyBase("/easy_base_uri/")
+	     .File("foo/bar", "/var/www/")
+	     .Uri("/modified/foo//./bar"));
+
+	Cached(pool, cache, MakeRequest("/easy_base_uri/hansi"),
+	       MakeResponse(pool).EasyBase("/easy_base_uri/")
+	       .File("hansi", "/var/www/")
+	       .Uri("/modified/hansi"));
+}
+
+/**
  * Test EASY_BASE + TEST_PATH.
  */
 TEST(TranslationCache, EasyBaseTestPath)
@@ -839,6 +862,14 @@ TEST(TranslationCache, ExpandLocal)
 	       .Base("/regex-expand2/")
 	       .Regex("^/regex-expand2/(.+\\.jpg)/([^/]+=[^/]+)$")
 	       .File("/var/www/x/y/z.jpg"));
+
+	/* normalize */
+
+	Cached(pool, cache, MakeRequest("/regex-expand2/a//b/./c.jpg/x=y"),
+	       MakeResponse(pool)
+	       .Base("/regex-expand2/")
+	       .Regex("^/regex-expand2/(.+\\.jpg)/([^/]+=[^/]+)$")
+	       .File("/var/www/a/b/c.jpg"));
 }
 
 TEST(TranslationCache, ExpandLocalFilter)

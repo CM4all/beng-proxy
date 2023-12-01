@@ -4,7 +4,7 @@ cm4all-beng-proxy (18.0.51) unstable; urgency=low
     - Content-Security-Policy
     - X-Content-Type-Options
     - X-Frame-Options
-  * bp: normalize URI paths for BASE
+  * bp: normalize URI paths for BASE and REGEX/EXPAND
   * spawn: add setting `cgroups_writable_by_gid`
   * systemd: add "Wants=cm4all-spawn-reaper.service"
 

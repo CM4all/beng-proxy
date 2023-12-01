@@ -15,6 +15,7 @@
 #include "uri/Verify.hxx"
 #include "uri/Escape.hxx"
 #include "uri/PEscape.hxx"
+#include "uri/PNormalize.hxx"
 #include "pool/tpool.hxx"
 #include "pool/Holder.hxx"
 #include "AllocatorPtr.hxx"
@@ -550,6 +551,7 @@ tcache_expand_response(AllocatorPtr alloc, TranslateResponse &response,
 					  "Malformed Host header");
 
 	uri = tcache_regex_input(AllocatorPtr{tpool}, uri, host, user, response);
+	uri = NormalizeUriPath(AllocatorPtr{tpool}, uri);
 	if (uri == nullptr || (!response.unsafe_base &&
 			       !uri_path_verify_paranoid(uri)))
 		throw HttpMessageResponse(HttpStatus::BAD_REQUEST,
