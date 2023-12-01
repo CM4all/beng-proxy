@@ -25,6 +25,7 @@ TEST(UriRelativeTest, Compress)
 	EXPECT_STREQ(uri_compress(alloc, "foo/../bar"), "bar");
 	EXPECT_STREQ(uri_compress(alloc, "foo//../bar"), "bar");
 	EXPECT_STREQ(uri_compress(alloc, "foo/.."), "");
+	EXPECT_STREQ(uri_compress(alloc, "foo/."), "foo/");
 	EXPECT_STREQ(uri_compress(alloc, "foo/../."), "");
 
 	EXPECT_EQ(uri_compress(alloc, "/1/2/../../../3/"), nullptr);

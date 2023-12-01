@@ -4,6 +4,7 @@
 
 #include "PRelative.hxx"
 #include "uri/Extract.hxx"
+#include "util/StringCompare.hxx"
 #include "AllocatorPtr.hxx"
 
 #include <assert.h>
@@ -25,7 +26,8 @@ uri_compress(AllocatorPtr alloc, const char *uri) noexcept
 
 	if (strstr(uri, "//") == nullptr &&
 	    strstr(uri, "/./") == nullptr &&
-	    strstr(uri, "/..") == nullptr)
+	    strstr(uri, "/..") == nullptr &&
+	    !StringEndsWith(uri, "/."))
 		/* cheap route: the URI is already compressed, do not
 		   duplicate anything */
 		return uri;
