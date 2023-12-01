@@ -8,7 +8,7 @@ cm4all-beng-proxy (18.0.51) unstable; urgency=low
   * spawn: add setting `cgroups_writable_by_gid`
   * systemd: add "Wants=cm4all-spawn-reaper.service"
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Fri, 01 Dec 2023 22:52:08 +0100
 
 cm4all-beng-proxy (18.0.50) unstable; urgency=low
 
