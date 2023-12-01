@@ -393,6 +393,11 @@ TEST(TranslationCache, Basic)
 	       MakeResponse(pool).Base("/foo/")
 	       .File(".", "/srv/foo/"));
 
+	// this URI path will be normalized
+	Cached(pool, cache, MakeRequest("/foo//./index.html"),
+	       MakeResponse(pool).Base("/foo/")
+	       .File("index.html", "/srv/foo/"));
+
 	CachedError(pool, cache, MakeRequest("/foo"));
 
 	Cached(pool, cache, MakeRequest("/foo//bar"),

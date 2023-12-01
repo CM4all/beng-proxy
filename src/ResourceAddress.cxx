@@ -11,6 +11,7 @@
 #include "uri/Extract.hxx"
 #include "uri/Verify.hxx"
 #include "uri/Base.hxx"
+#include "uri/PNormalize.hxx"
 #include "util/Compiler.h"
 #include "AllocatorPtr.hxx"
 #include "HttpMessageResponse.hxx"
@@ -352,6 +353,7 @@ ResourceAddress::CacheLoad(AllocatorPtr alloc, const ResourceAddress &src,
 {
 	if (base != nullptr && !expandable) {
 		const char *tail = require_base_tail(uri, base);
+		tail = NormalizeUriPath(alloc, tail);
 
 		if (!unsafe_base && !uri_path_verify_paranoid(tail - 1))
 			throw HttpMessageResponse(HttpStatus::BAD_REQUEST, "Malformed URI");
