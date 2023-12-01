@@ -3,6 +3,9 @@ Description=CM4all beng-proxy
 Wants=network-online.target
 After=network-online.target
 
+# the spawn-reaper cleans up empty cgroups
+Wants=cm4all-spawn-reaper.service
+
 # require at least Linux kernel 5.12
 AssertKernelVersion=>=5.12
 
