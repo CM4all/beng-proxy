@@ -44,6 +44,10 @@ AmbientCapabilities=CAP_SETUID CAP_SETGID
 # container)
 AmbientCapabilities=CAP_CHOWN
 
+# The spawner needs this during initialization to be able to set the
+# set-group-ID bit on the cgroup
+AmbientCapabilities=CAP_FSETID
+
 # Needed by the spawner
 AmbientCapabilities=CAP_KILL
 #TODO: check CAP_SYS_NICE CAP_SYS_PTRACE CAP_SYS_RESOURCE
