@@ -4,8 +4,8 @@ Wants=network-online.target
 After=network-online.target
 
 # the spawn-accessory daemon provides services for our spawner
-Wants=cm4all-spawn-accessory.service
-After=cm4all-spawn-accessory.service
+Wants=cm4all-spawn-accessory.socket
+After=cm4all-spawn-accessory.socket
 
 # the spawn-reaper cleans up empty cgroups
 Wants=cm4all-spawn-reaper.service
