@@ -3,7 +3,7 @@ cm4all-beng-proxy (18.0.52) unstable; urgency=low
   * systemd: keep CAP_FSETID (needed for `cgroups_writable_by_gid`)
   * systemd: add "After=cm4all-spawn-accessory.service"
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Mon, 04 Dec 2023 15:32:15 +0100
 
 cm4all-beng-proxy (18.0.51) unstable; urgency=low
 
