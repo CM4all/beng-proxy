@@ -76,6 +76,33 @@ public:
 	}
 };
 
+inline CurlEasy
+GlueHttpClient::PrepareRequest(HttpMethod method, const char *uri,
+			       CurlSlist &header_list,
+			       std::span<const std::byte> body)
+{
+	CurlEasy easy{uri};
+
+	if (tls_ca != nullptr)
+		easy.SetOption(CURLOPT_CAINFO, tls_ca);
+
+	easy.SetOption(CURLOPT_VERBOSE, long(verbose));
+
+	if (method == HttpMethod::HEAD)
+		easy.SetNoBody();
+	else if (method == HttpMethod::POST)
+		easy.SetPost();
+
+	if (body.data() != nullptr) {
+		easy.SetRequestBody(body.data(), body.size_bytes());
+		header_list.Append("Content-Type: application/jose+json");
+	}
+
+	easy.SetRequestHeaders(header_list.Get());
+
+	return easy;
+}
+
 GlueHttpResponse
 GlueHttpClient::Request(EventLoop &event_loop,
 			HttpMethod method, const char *uri,
@@ -84,24 +111,11 @@ GlueHttpClient::Request(EventLoop &event_loop,
 	CurlSlist header_list;
 
 	GlueHttpResponseHandler handler{event_loop};
-	CurlRequest request(curl_global, uri, handler);
-
-	if (tls_ca != nullptr)
-		request.SetOption(CURLOPT_CAINFO, tls_ca);
-
-	request.SetOption(CURLOPT_VERBOSE, long(verbose));
-
-	if (method == HttpMethod::HEAD)
-		request.SetNoBody();
-	else if (method == HttpMethod::POST)
-		request.SetPost();
-
-	if (body.data() != nullptr) {
-		request.SetRequestBody(body.data(), body.size_bytes());
-		header_list.Append("Content-Type: application/jose+json");
-	}
-
-	request.SetRequestHeaders(header_list.Get());
+	CurlRequest request{
+		curl_global,
+		PrepareRequest(method, uri, header_list, body),
+		handler,
+	};
 
 	request.Start();
 

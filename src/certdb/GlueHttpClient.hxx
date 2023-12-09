@@ -13,6 +13,8 @@
 
 enum class HttpMethod : uint_least8_t;
 enum class HttpStatus : uint_least16_t;
+class CurlSlist;
+class CurlEasy;
 class EventLoop;
 
 struct GlueHttpResponse {
@@ -50,4 +52,9 @@ public:
 	GlueHttpResponse Request(EventLoop &event_loop,
 				 HttpMethod method, const char *uri,
 				 std::span<const std::byte> body);
+
+private:
+	CurlEasy PrepareRequest(HttpMethod method, const char *uri,
+				CurlSlist &header_list,
+				std::span<const std::byte> body);
 };
