@@ -3,10 +3,10 @@
 // author: Max Kellermann <mk@cm4all.com>
 
 #include "Rubber.hxx"
+#include "memory/AllocatorStats.hxx"
 #include "system/HugePage.hxx"
 #include "system/PageAllocator.hxx"
 #include "system/VmaName.hxx"
-#include "stats/AllocatorStats.hxx"
 
 #include <assert.h>
 #include <stdint.h>

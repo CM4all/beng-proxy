@@ -1,9 +1,6 @@
 memory = static_library(
   'memory',
   'fb_pool.cxx',
-  'SlicePool.cxx',
-  'SliceAllocation.cxx',
-  'SliceFifoBuffer.cxx',
   'MultiFifoBuffer.cxx',
   '../DefaultFifoBuffer.cxx',
   'DefaultChunkAllocator.cxx',
@@ -12,6 +9,7 @@ memory = static_library(
   'Rubber.cxx',
   include_directories: inc,
   dependencies: [
+    memory_dep,
     fmt_dep,
   ]
 )

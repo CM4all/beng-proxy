@@ -12,8 +12,8 @@
 #include "http/cache/Info.hxx"
 #include "strmap.hxx"
 #include "memory/Rubber.hxx"
+#include "memory/AllocatorStats.hxx"
 #include "AllocatorPtr.hxx"
-#include "stats/AllocatorStats.hxx"
 
 #include <stdlib.h>
 

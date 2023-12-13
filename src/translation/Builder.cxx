@@ -5,8 +5,8 @@
 #include "Builder.hxx"
 #include "Stock.hxx"
 #include "Cache.hxx"
+#include "memory/AllocatorStats.hxx"
 #include "net/SocketAddress.hxx"
-#include "stats/AllocatorStats.hxx"
 
 #include <cassert>
 #include <cstring>

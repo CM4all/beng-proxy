@@ -12,7 +12,7 @@
 #include "ResourceLoader.hxx"
 #include "ResourceAddress.hxx"
 #include "memory/sink_rubber.hxx"
-#include "stats/AllocatorStats.hxx"
+#include "memory/AllocatorStats.hxx"
 #include "http/Date.hxx"
 #include "http/List.hxx"
 #include "http/Method.hxx"

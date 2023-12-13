@@ -7,7 +7,7 @@
 #include "LeakDetector.hxx"
 #include "memory/Checker.hxx"
 #include "memory/SlicePool.hxx"
-#include "stats/AllocatorStats.hxx"
+#include "memory/AllocatorStats.hxx"
 #include "io/Logger.hxx"
 #include "util/Compiler.h"
 #include "util/IntrusiveList.hxx"

@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include "SliceAllocation.hxx"
+#include "memory/SliceAllocation.hxx"
 
 #include <cassert>
 #include <cstddef>

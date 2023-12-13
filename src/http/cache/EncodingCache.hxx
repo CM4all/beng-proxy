@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include "stats/AllocatorStats.hxx"
+#include "memory/AllocatorStats.hxx"
 #include "memory/Rubber.hxx"
 #include "event/FarTimerEvent.hxx"
 #include "util/IntrusiveList.hxx"

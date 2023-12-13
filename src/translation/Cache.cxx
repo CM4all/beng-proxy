@@ -22,7 +22,7 @@
 #include "pool/StringBuilder.hxx"
 #include "pool/PSocketAddress.hxx"
 #include "memory/SlicePool.hxx"
-#include "stats/AllocatorStats.hxx"
+#include "memory/AllocatorStats.hxx"
 #include "lib/pcre/UniqueRegex.hxx"
 #include "io/Logger.hxx"
 #include "util/djb_hash.hxx"

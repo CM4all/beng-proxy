@@ -3,7 +3,7 @@
 // author: Max Kellermann <mk@cm4all.com>
 
 #include "fb_pool.hxx"
-#include "SlicePool.hxx"
+#include "memory/SlicePool.hxx"
 
 #include <cassert>
 

@@ -8,11 +8,11 @@
 #include "stock/Stats.hxx"
 #include "memory/fb_pool.hxx"
 #include "memory/SlicePool.hxx"
+#include "memory/AllocatorStats.hxx"
 #include "translation/Builder.hxx"
 #include "http/cache/FilterCache.hxx"
 #include "http/cache/Public.hxx"
 #include "session/Manager.hxx"
-#include "stats/AllocatorStats.hxx"
 #include "net/control/Protocol.hxx"
 #include "util/ByteOrder.hxx"
 

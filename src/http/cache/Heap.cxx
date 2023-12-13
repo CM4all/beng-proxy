@@ -4,7 +4,7 @@
 
 #include "Heap.hxx"
 #include "Item.hxx"
-#include "stats/AllocatorStats.hxx"
+#include "memory/AllocatorStats.hxx"
 #include "istream/UnusedPtr.hxx"
 #include "istream/SharedLeaseIstream.hxx"
 #include "pool/pool.hxx"

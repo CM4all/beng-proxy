@@ -227,6 +227,7 @@ system_dep = declare_dependency(
 
 subdir('libcommon/src/http')
 subdir('libcommon/src/lua')
+subdir('libcommon/src/memory')
 
 subdir('src/memory')
 subdir('src/prometheus')
