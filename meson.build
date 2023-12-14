@@ -470,7 +470,7 @@ raddress_dep = declare_dependency(
 )
 
 subdir('src/was')
-subdir('src/thread')
+subdir('libcommon/src/thread')
 subdir('src/fs')
 
 subdir('libcommon/src/translation')
