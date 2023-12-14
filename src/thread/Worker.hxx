@@ -17,11 +17,14 @@ class ThreadWorker {
 	ThreadQueue &queue;
 
 public:
-	ThreadWorker(ThreadQueue &_queue);
+	/**
+	 * Throws on error.
+	 */
+	explicit ThreadWorker(ThreadQueue &_queue);
 
 	/**
 	 * Wait for the thread to exit.  You must call
-	 * thread_queue_stop() prior to this function.
+	 * ThreadQueue::Stop() prior to this function.
 	 */
 	void Join() noexcept {
 		pthread_join(thread, nullptr);

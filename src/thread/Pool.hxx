@@ -12,7 +12,7 @@ class EventLoop;
 class ThreadQueue;
 
 /**
- * Returns the global #thread_queue instance.  The first call to this
+ * Returns the global #ThreadQueue instance.  The first call to this
  * function creates the queue and starts the worker threads.  To shut
  * down, call thread_pool_stop(), thread_pool_join() and
  * thread_pool_deinit().

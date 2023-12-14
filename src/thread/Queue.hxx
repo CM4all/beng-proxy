@@ -2,10 +2,6 @@
 // Copyright CM4all GmbH
 // author: Max Kellermann <mk@cm4all.com>
 
-/*
- * A queue that manages work for worker threads.
- */
-
 #pragma once
 
 #include "Notify.hxx"
@@ -17,6 +13,9 @@
 class EventLoop;
 class ThreadJob;
 
+/**
+ * A queue that manages work for worker threads (#ThreadWorker).
+ */
 class ThreadQueue {
 	std::mutex mutex;
 	std::condition_variable cond;
@@ -63,12 +62,12 @@ public:
 	/**
 	 * Dequeue an existing job or wait for a new job, and reserve it.
 	 *
-	 * @return NULL if thread_queue_stop() has been called
+	 * @return nullptr if Stop() has been called
 	 */
 	ThreadJob *Wait() noexcept;
 
 	/**
-	 * Mark the specified job (returned by thread_queue_wait()) as "done".
+	 * Mark the specified job (returned by Wait()) as "done".
 	 */
 	void Done(ThreadJob &job) noexcept;
 

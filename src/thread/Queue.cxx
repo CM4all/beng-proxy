@@ -6,7 +6,7 @@
 #include "Job.hxx"
 #include "util/Compiler.h"
 
-#include <assert.h>
+#include <cassert>
 
 ThreadQueue::ThreadQueue(EventLoop &event_loop) noexcept
 	:notify(event_loop, BIND_THIS_METHOD(WakeupCallback))
