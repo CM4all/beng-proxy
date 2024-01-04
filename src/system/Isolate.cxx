@@ -3,10 +3,10 @@
 // author: Max Kellermann <mk@cm4all.com>
 
 #include "Isolate.hxx"
-#include "spawn/UserNamespace.hxx"
 #include "system/Mount.hxx"
 #include "system/pivot_root.h"
 #include "io/FileDescriptor.hxx"
+#include "io/linux/UserNamespace.hxx"
 
 #include <sched.h>
 #include <stdio.h>
