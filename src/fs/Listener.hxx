@@ -57,7 +57,7 @@ public:
 	~FilteredSocketListener() noexcept;
 
 protected:
-	void OnAccept(UniqueSocketDescriptor &&s,
+	void OnAccept(UniqueSocketDescriptor s,
 		      SocketAddress address) noexcept override;
 	void OnAcceptError(std::exception_ptr e) noexcept override;
 };

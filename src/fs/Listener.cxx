@@ -107,7 +107,7 @@ FilteredSocketListener::~FilteredSocketListener() noexcept
 }
 
 void
-FilteredSocketListener::OnAccept(UniqueSocketDescriptor &&s,
+FilteredSocketListener::OnAccept(UniqueSocketDescriptor s,
 				 SocketAddress address) noexcept
 try {
 	s = handler.OnFilteredSocketAccept(std::move(s), address);
