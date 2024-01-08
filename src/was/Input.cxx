@@ -403,7 +403,20 @@ WasInput::OnDeferredRead() noexcept
 {
 	assert(HasPipe());
 
-	TryRead(true);
+	/* this method gets called after Enable(); maybe there's
+	   already data in the buffer, so submit that; then schedule
+	   reading more, but do not fill the buffer in here (if the
+	   pipe was readable, then EventCallback() would have done
+	   that already */
+
+	if (SubmitBuffer(true)) {
+		assert(!buffer.IsDefinedAndFull());
+
+		if (direct)
+			TryDirect();
+		else
+			ScheduleRead();
+	}
 }
 
 /*
