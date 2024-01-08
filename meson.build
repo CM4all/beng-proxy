@@ -434,6 +434,13 @@ istream_spawn = static_library(
   'src/spawn/ChildStockItem.cxx',
   'src/spawn/ListenChildStock.cxx',
   include_directories: inc,
+  dependencies: [
+    io_dep,
+    memory_dep,
+    spawn_dep,
+    istream_dep,
+    fmt_dep,
+  ],
 )
 istream_spawn_dep = declare_dependency(
   link_with: istream_spawn,
