@@ -241,6 +241,10 @@ pool = static_library('pool',
   'src/pool/pool.cxx',
   'src/pool/LeakDetector.cxx',
   include_directories: inc,
+  dependencies: [
+    memory_dep,
+    fmt_dep,
+  ],
 )
 pool_dep = declare_dependency(link_with: pool,
                              dependencies: [memory_dep, io_dep])
