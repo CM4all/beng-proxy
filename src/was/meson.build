@@ -57,6 +57,8 @@ was_stock = static_library(
   'RStock.cxx',
   include_directories: inc,
   dependencies: [
+    io_dep,
+    stock_dep,
     was_client_dep,
     libwas,
   ],
