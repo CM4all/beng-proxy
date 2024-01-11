@@ -7,6 +7,7 @@
 #include "util/Poison.hxx"
 #include "util/SpanCast.hxx"
 
+#include <algorithm>
 #include <cassert>
 
 using std::string_view_literals::operator""sv;
@@ -15,7 +16,7 @@ ExpansibleBuffer::ExpansibleBuffer(struct pool &_pool,
 				   size_t initial_size,
 				   size_t _hard_limit) noexcept
 	:pool(_pool),
-	 buffer((char *)p_malloc(&pool, initial_size)),
+	 buffer(PoolAlloc<std::byte>(pool, initial_size)),
 	 hard_limit(_hard_limit),
 	 max_size(initial_size)
 {
@@ -39,8 +40,8 @@ ExpansibleBuffer::Resize(size_t new_max_size) noexcept
 	if (new_max_size > hard_limit)
 		return false;
 
-	char *new_buffer = (char *)p_malloc(&pool, new_max_size);
-	memcpy(new_buffer, buffer, size);
+	std::byte *new_buffer = PoolAlloc<std::byte>(pool, new_max_size);
+	std::copy_n(buffer, size, new_buffer);
 
 	p_free(&pool, buffer, max_size);
 
@@ -49,7 +50,7 @@ ExpansibleBuffer::Resize(size_t new_max_size) noexcept
 	return true;
 }
 
-void *
+std::byte *
 ExpansibleBuffer::Write(size_t length) noexcept
 {
 	size_t new_size = size + length;
@@ -57,7 +58,7 @@ ExpansibleBuffer::Write(size_t length) noexcept
 	    !Resize(((new_size - 1) | 0x3ff) + 1))
 		return nullptr;
 
-	char *dest = buffer + size;
+	std::byte *dest = buffer + size;
 	size = new_size;
 
 	return dest;
@@ -66,11 +67,11 @@ ExpansibleBuffer::Write(size_t length) noexcept
 bool
 ExpansibleBuffer::Write(std::span<const std::byte> src) noexcept
 {
-	void *q = Write(src.size());
+	std::byte *q = Write(src.size());
 	if (q == nullptr)
 		return false;
 
-	memcpy(q, src.data(), src.size());
+	std::copy(src.begin(), src.end(), q);
 	return true;
 }
 
@@ -106,13 +107,13 @@ ExpansibleBuffer::Read() const noexcept
 const char *
 ExpansibleBuffer::ReadString() noexcept
 {
-	if (size == 0 || buffer[size - 1] != 0)
+	if (size == 0 || buffer[size - 1] != std::byte{})
 		/* append a null terminator */
 		Write("\0"sv);
 
 	/* the buffer is now a valid C string (assuming it doesn't contain
 	   any nulls */
-	return buffer;
+	return reinterpret_cast<const char *>(buffer);
 }
 
 std::string_view

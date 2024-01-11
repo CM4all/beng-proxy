@@ -17,7 +17,7 @@ struct pool;
  */
 class ExpansibleBuffer {
 	struct pool &pool;
-	char *buffer;
+	std::byte *buffer;
 	const size_t hard_limit;
 	size_t max_size;
 	size_t size = 0;
@@ -45,7 +45,7 @@ public:
 	/**
 	 * @return nullptr if the operation would exceed the hard limit
 	 */
-	void *Write(size_t length) noexcept;
+	std::byte *Write(size_t length) noexcept;
 
 	/**
 	 * @return false if the operation would exceed the hard limit
