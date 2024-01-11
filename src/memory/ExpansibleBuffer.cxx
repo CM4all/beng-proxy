@@ -5,6 +5,7 @@
 #include "ExpansibleBuffer.hxx"
 #include "pool/pool.hxx"
 #include "util/Poison.hxx"
+#include "util/SpanCast.hxx"
 
 #include <cassert>
 
@@ -63,37 +64,37 @@ ExpansibleBuffer::Write(size_t length) noexcept
 }
 
 bool
-ExpansibleBuffer::Write(const void *p, size_t length) noexcept
+ExpansibleBuffer::Write(std::span<const std::byte> src) noexcept
 {
-	void *q = Write(length);
+	void *q = Write(src.size());
 	if (q == nullptr)
 		return false;
 
-	memcpy(q, p, length);
+	memcpy(q, src.data(), src.size());
 	return true;
 }
 
 bool
 ExpansibleBuffer::Write(std::string_view src) noexcept
 {
-	return Write(src.data(), src.size());
+	return Write(AsBytes(src));
 }
 
 bool
-ExpansibleBuffer::Set(const void *p, size_t new_size) noexcept
+ExpansibleBuffer::Set(std::span<const std::byte> src) noexcept
 {
-	if (new_size > max_size && !Resize(((new_size - 1) | 0x3ff) + 1))
+	if (src.size() > max_size && !Resize(((src.size() - 1) | 0x3ff) + 1))
 		return false;
 
-	size = new_size;
-	memcpy(buffer, p, new_size);
+	size = src.size();
+	memcpy(buffer, src.data(), src.size());
 	return true;
 }
 
 bool
 ExpansibleBuffer::Set(std::string_view p) noexcept
 {
-	return Set(p.data(), p.size());
+	return Set(AsBytes(p));
 }
 
 std::span<const std::byte>

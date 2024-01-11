@@ -50,7 +50,7 @@ public:
 	/**
 	 * @return false if the operation would exceed the hard limit
 	 */
-	bool Write(const void *p, size_t length) noexcept;
+	bool Write(std::span<const std::byte> src) noexcept;
 
 	/**
 	 * @return false if the operation would exceed the hard limit
@@ -60,7 +60,7 @@ public:
 	/**
 	 * @return false if the operation would exceed the hard limit
 	 */
-	bool Set(const void *p, size_t new_size) noexcept;
+	bool Set(std::span<const std::byte> src) noexcept;
 
 	bool Set(std::string_view p) noexcept;
 
