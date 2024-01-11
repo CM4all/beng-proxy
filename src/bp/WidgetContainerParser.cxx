@@ -235,7 +235,7 @@ expansible_buffer_append_uri_escaped(ExpansibleBuffer &buffer,
 {
 	char *escaped = (char *)p_malloc(&tpool, value.size() * 3);
 	size_t length = UriEscape(escaped, value);
-	buffer.Write(escaped, length);
+	buffer.Write({escaped, length});
 }
 
 bool
@@ -273,12 +273,12 @@ WidgetContainerParser::OnXmlTagFinished(const XmlParserTag &xml_tag) noexcept
 			value = unescape_dup(*tpool, html_escape_class, value);
 
 		if (!widget.params.IsEmpty())
-			widget.params.Write("&", 1);
+			widget.params.Write("&"sv);
 
 		const auto name = widget.param.name.ReadStringView();
 		expansible_buffer_append_uri_escaped(widget.params, tpool, name);
 
-		widget.params.Write("=", 1);
+		widget.params.Write("="sv);
 
 		expansible_buffer_append_uri_escaped(widget.params, tpool, value);
 	} else if (tag == Tag::WIDGET_HEADER) {

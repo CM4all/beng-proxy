@@ -693,7 +693,7 @@ XmlProcessor::HandleClassAttribute(const XmlParserAttribute &attr) noexcept
 	buffer.Clear();
 
 	do {
-		if (!buffer.Write(p, u - p))
+		if (!buffer.Write({p, u}))
 			return;
 
 		p = u;
@@ -716,7 +716,7 @@ XmlProcessor::HandleClassAttribute(const XmlParserAttribute &attr) noexcept
 			while (u < end && *u == '_')
 				++u;
 
-			if (!buffer.Write(p, u - p))
+			if (!buffer.Write({p, u}))
 				return;
 
 			p = u;
@@ -725,7 +725,7 @@ XmlProcessor::HandleClassAttribute(const XmlParserAttribute &attr) noexcept
 		u = find_underscore(p, end);
 	} while (u != nullptr);
 
-	if (!buffer.Write(p, end - p))
+	if (!buffer.Write({p, end}))
 		return;
 
 	ReplaceAttributeValue(attr, istream_memory_new(GetPool(), buffer.Dup(GetPool())));

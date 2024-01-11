@@ -55,7 +55,7 @@ public:
 	/**
 	 * @return false if the operation would exceed the hard limit
 	 */
-	bool Write(const char *p) noexcept;
+	bool Write(std::string_view src) noexcept;
 
 	/**
 	 * @return false if the operation would exceed the hard limit

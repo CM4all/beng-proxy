@@ -6,8 +6,9 @@
 #include "pool/pool.hxx"
 #include "util/Poison.hxx"
 
-#include <assert.h>
-#include <string.h>
+#include <cassert>
+
+using std::string_view_literals::operator""sv;
 
 ExpansibleBuffer::ExpansibleBuffer(struct pool &_pool,
 				   size_t initial_size,
@@ -73,9 +74,9 @@ ExpansibleBuffer::Write(const void *p, size_t length) noexcept
 }
 
 bool
-ExpansibleBuffer::Write(const char *p) noexcept
+ExpansibleBuffer::Write(std::string_view src) noexcept
 {
-	return Write(p, strlen(p));
+	return Write(src.data(), src.size());
 }
 
 bool
@@ -106,7 +107,7 @@ ExpansibleBuffer::ReadString() noexcept
 {
 	if (size == 0 || buffer[size - 1] != 0)
 		/* append a null terminator */
-		Write("\0", 1);
+		Write("\0"sv);
 
 	/* the buffer is now a valid C string (assuming it doesn't contain
 	   any nulls */

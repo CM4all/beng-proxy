@@ -258,14 +258,14 @@ XmlParser::Feed(const char *start, size_t length) noexcept
 			p = (const char *)memchr(buffer, attr_value_delimiter,
 						 end - buffer);
 			if (p == nullptr) {
-				if (!attr_value.Write(buffer, end - buffer)) {
+				if (!attr_value.Write({buffer, end})) {
 					state = State::ELEMENT_TAG;
 					break;
 				}
 
 				buffer = end;
 			} else {
-				if (!attr_value.Write(buffer, p - buffer)) {
+				if (!attr_value.Write({buffer, p})) {
 					state = State::ELEMENT_TAG;
 					break;
 				}
@@ -283,7 +283,7 @@ XmlParser::Feed(const char *start, size_t length) noexcept
 			/* wait till the value is finished */
 			do {
 				if (!IsWhitespaceOrNull(*buffer) && *buffer != '>') {
-					if (!attr_value.Write(buffer, 1)) {
+					if (!attr_value.Write({buffer, 1})) {
 						state = State::ELEMENT_TAG;
 						break;
 					}
