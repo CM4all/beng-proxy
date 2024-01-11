@@ -614,26 +614,6 @@ tcache_vary_copy(AllocatorPtr alloc, std::span<const T> value,
  * @param strict in strict mode, nullptr values are a mismatch
  */
 static bool
-tcache_buffer_match(const void *a, std::size_t a_length,
-		    const void *b, std::size_t b_length,
-		    bool strict) noexcept
-{
-	assert((a == nullptr) == (a_length == 0));
-	assert((b == nullptr) == (b_length == 0));
-
-	if (a == nullptr || b == nullptr)
-		return !strict && a == b;
-
-	if (a_length != b_length)
-		return false;
-
-	return memcmp(a, b, a_length) == 0;
-}
-
-/**
- * @param strict in strict mode, nullptr values are a mismatch
- */
-static bool
 tcache_string_match(const char *a, const char *b, bool strict) noexcept
 {
 	if (a == nullptr || b == nullptr)
@@ -660,9 +640,7 @@ tcache_buffer_match(std::span<const std::byte> a, std::span<const std::byte> b,
 static bool
 tcache_address_match(SocketAddress a, SocketAddress b, bool strict) noexcept
 {
-	return tcache_buffer_match(a.GetAddress(), a.GetSize(),
-				   b.GetAddress(), b.GetSize(),
-				   strict);
+	return tcache_buffer_match(a, b, strict);
 }
 
 /**
