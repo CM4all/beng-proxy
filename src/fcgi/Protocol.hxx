@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include "util/ByteOrder.hxx"
+#include "util/PackedBigEndian.hxx"
 
 #include <cstdint>
 #include <cstddef>
