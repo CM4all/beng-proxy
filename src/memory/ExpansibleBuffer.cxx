@@ -51,27 +51,25 @@ ExpansibleBuffer::Resize(size_t new_max_size) noexcept
 }
 
 std::byte *
-ExpansibleBuffer::Write(size_t length) noexcept
+ExpansibleBuffer::BeginWrite(std::size_t add_size) noexcept
 {
-	size_t new_size = size + length;
+	size_t new_size = size + add_size;
 	if (new_size > max_size &&
 	    !Resize(((new_size - 1) | 0x3ff) + 1))
 		return nullptr;
 
-	std::byte *dest = buffer + size;
-	size = new_size;
-
-	return dest;
+	return buffer + size;
 }
 
 bool
 ExpansibleBuffer::Write(std::span<const std::byte> src) noexcept
 {
-	std::byte *q = Write(src.size());
+	std::byte *q = BeginWrite(src.size());
 	if (q == nullptr)
 		return false;
 
 	std::copy(src.begin(), src.end(), q);
+	CommitWrite(src.size());
 	return true;
 }
 

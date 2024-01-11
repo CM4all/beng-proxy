@@ -228,14 +228,18 @@ header_name_valid(const char *name, size_t length) noexcept
 	return true;
 }
 
-static void
+static bool
 expansible_buffer_append_uri_escaped(ExpansibleBuffer &buffer,
-				     struct pool &tpool,
 				     std::string_view value) noexcept
 {
-	char *escaped = (char *)p_malloc(&tpool, value.size() * 3);
+	std::byte *w = buffer.BeginWrite(value.size() * 3);
+	if (w == nullptr)
+		return false;
+
+	char *escaped = reinterpret_cast<char *>(w);
 	size_t length = UriEscape(escaped, value);
-	buffer.Write({escaped, length});
+	buffer.CommitWrite(length);
+	return true;
 }
 
 bool
@@ -276,11 +280,11 @@ WidgetContainerParser::OnXmlTagFinished(const XmlParserTag &xml_tag) noexcept
 			widget.params.Write("&"sv);
 
 		const auto name = widget.param.name.ReadStringView();
-		expansible_buffer_append_uri_escaped(widget.params, tpool, name);
+		expansible_buffer_append_uri_escaped(widget.params, name);
 
 		widget.params.Write("="sv);
 
-		expansible_buffer_append_uri_escaped(widget.params, tpool, value);
+		expansible_buffer_append_uri_escaped(widget.params, value);
 	} else if (tag == Tag::WIDGET_HEADER) {
 		assert(widget.widget != nullptr);
 

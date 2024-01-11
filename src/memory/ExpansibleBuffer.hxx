@@ -45,7 +45,11 @@ public:
 	/**
 	 * @return nullptr if the operation would exceed the hard limit
 	 */
-	std::byte *Write(size_t length) noexcept;
+	std::byte *BeginWrite(std::size_t add_size) noexcept;
+
+	void CommitWrite(std::size_t add_size) noexcept {
+		size += add_size;
+	}
 
 	/**
 	 * @return false if the operation would exceed the hard limit

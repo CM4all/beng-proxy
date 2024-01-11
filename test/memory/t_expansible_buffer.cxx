@@ -51,10 +51,11 @@ TEST(ExpansibleBufferTest, Basic)
 	ASSERT_EQ(p.size(), 6u);
 	ASSERT_EQ(memcmp(q.data(), "abcdef", 6), 0);
 
-	void *r = eb.Write(512);
+	void *r = eb.BeginWrite(512);
 	ASSERT_NE(r, nullptr);
+	eb.CommitWrite(512);
 
 	/* this call hits the hard limit */
-	r = eb.Write(512);
+	r = eb.BeginWrite(512);
 	ASSERT_EQ(r, nullptr);
 }
