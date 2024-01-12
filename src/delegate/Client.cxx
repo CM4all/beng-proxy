@@ -165,10 +165,10 @@ inline void
 DelegateClient::TryRead()
 {
 	DelegateResponseHeader header;
-	auto iov = MakeIovecT(header);
+	std::array iov{MakeIovecT(header)};
 	int new_fd;
 	std::byte ccmsg[CMSG_SPACE(sizeof(new_fd))];
-	auto msg = MakeMsgHdr(nullptr, std::span{&iov, 1}, {ccmsg, sizeof(ccmsg)});
+	auto msg = MakeMsgHdr(nullptr, iov, ccmsg);
 	ssize_t nbytes;
 
 	nbytes = recvmsg(s.Get(), &msg, MSG_CMSG_CLOEXEC);
