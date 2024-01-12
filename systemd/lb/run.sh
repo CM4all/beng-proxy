@@ -1,8 +1,5 @@
 #!/bin/bash
 
-# work around the boost::locale::facet::_S_create_c_locale exception
-export LC_ALL=C
-
 DAEMON_USER=
 LOGGER_USER=cm4all-logger
 ACCESS_LOGGER=""
