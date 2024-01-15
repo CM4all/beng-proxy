@@ -337,6 +337,8 @@ LbControl::OnControlPacket(ControlServer &control_server,
 	case ControlCommand::DISCARD_SESSION:
 	case ControlCommand::FLUSH_HTTP_CACHE:
 	case ControlCommand::TERMINATE_CHILDREN:
+	case ControlCommand::ENABLE_QUEUE:
+	case ControlCommand::DISABLE_QUEUE:
 		/* not applicable */
 		break;
 	}

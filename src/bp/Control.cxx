@@ -182,6 +182,11 @@ BpInstance::OnControlPacket(ControlServer &control_server,
 			http_cache_flush_tag(*http_cache, ToStringView(payload));
 
 		break;
+
+	case ControlCommand::ENABLE_QUEUE:
+	case ControlCommand::DISABLE_QUEUE:
+		// not applicable
+		break;
 	}
 }
 
