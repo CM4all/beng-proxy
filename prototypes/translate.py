@@ -144,6 +144,8 @@ class Translation(Protocol):
             response.status(400)
             return response
 
+        response.packet(TRANSLATE_CHILD_TAG, user)
+
         if uri is not None:
             response.packet(TRANSLATE_EXECUTE, '/bin/echo')
             response.packet(TRANSLATE_APPEND, 'Hello, World!')
