@@ -8,6 +8,7 @@
 #include "io/config/FileLineParser.hxx"
 #include "io/config/ConfigParser.hxx"
 #include "net/Parser.hxx"
+#include "net/control/Protocol.hxx"
 #include "util/StringAPI.hxx"
 
 #ifdef HAVE_AVAHI
@@ -255,7 +256,7 @@ BpConfigParser::Control::ParseLine(FileLineParser &line)
 
 	if (strcmp(word, "bind") == 0) {
 		config.bind_address = ParseSocketAddress(line.ExpectValueAndEnd(),
-							 5478, true);
+							 BengProxy::CONTROL_PORT, true);
 	} else if (strcmp(word, "multicast_group") == 0) {
 		config.multicast_group = ParseSocketAddress(line.ExpectValueAndEnd(),
 							    0, false);

@@ -11,6 +11,7 @@
 #include "io/config/ConfigParser.hxx"
 #include "net/Parser.hxx"
 #include "net/AddressInfo.hxx"
+#include "net/control/Protocol.hxx"
 #include "http/Status.hxx"
 #include "uri/Verify.hxx"
 #include "util/StringAPI.hxx"
@@ -239,9 +240,8 @@ LbConfigParser::Control::ParseLine(FileLineParser &line)
 	const char *word = line.ExpectWord();
 
 	if (StringIsEqual(word, "bind")) {
-		const char *address = line.ExpectValueAndEnd();
-
-		config.bind_address = ParseSocketAddress(address, 5478, true);
+		config.bind_address = ParseSocketAddress(line.ExpectValueAndEnd(),
+							 BengProxy::CONTROL_PORT, true);
 	} else if (StringIsEqual(word, "multicast_group")) {
 		config.multicast_group = ParseSocketAddress(line.ExpectValueAndEnd(),
 							    0, false);
