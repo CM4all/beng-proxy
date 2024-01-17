@@ -24,19 +24,19 @@ struct Usage {
 
 static void
 SimpleCommand(const char *server, ConstBuffer<const char *> args,
-	      BengProxy::ControlCommand cmd)
+	      BengControl::Command cmd)
 {
 	if (!args.empty())
 		throw Usage{"Too many arguments"};
 
-	BengControlClient client(server);
+	BengControl::Client client(server);
 	client.Send(cmd);
 }
 
 static void
 Nop(const char *server, ConstBuffer<const char *> args)
 {
-	SimpleCommand(server, args, BengProxy::ControlCommand::NOP);
+	SimpleCommand(server, args, BengControl::Command::NOP);
 }
 
 static constexpr struct {
@@ -62,7 +62,7 @@ ParseTcacheInvalidate(std::string_view name, const char *value)
 {
 	for (const auto &i : tcache_invalidate_strings)
 		if (name == i.name)
-			return BengControlClient::MakeTcacheInvalidate(i.cmd, value);
+			return BengControl::Client::MakeTcacheInvalidate(i.cmd, value);
 
 	throw FmtRuntimeError("Unrecognized key: '{}'", name);
 }
@@ -88,8 +88,8 @@ TcacheInvalidate(const char *server, ConstBuffer<const char *> args)
 	for (const char *s : args)
 		payload += ParseTcacheInvalidate(s);
 
-	BengControlClient client(server);
-	client.Send(BengProxy::ControlCommand::TCACHE_INVALIDATE, payload);
+	BengControl::Client client(server);
+	client.Send(BengControl::Command::TCACHE_INVALIDATE, payload);
 }
 
 static void
@@ -105,8 +105,8 @@ Verbose(const char *server, ConstBuffer<const char *> args)
 
 	uint8_t log_level = atoi(s);
 
-	BengControlClient client(server);
-	client.Send(BengProxy::ControlCommand::VERBOSE,
+	BengControl::Client client(server);
+	client.Send(BengControl::Command::VERBOSE,
 		    ReferenceAsBytes(log_level));
 }
 
@@ -121,8 +121,8 @@ EnableNode(const char *server, ConstBuffer<const char *> args)
 	if (!args.empty())
 		throw Usage{"Too many arguments"};
 
-	BengControlClient client(server);
-	client.Send(BengProxy::ControlCommand::ENABLE_NODE, name);
+	BengControl::Client client(server);
+	client.Send(BengControl::Command::ENABLE_NODE, name);
 }
 
 static void
@@ -136,8 +136,8 @@ FadeNode(const char *server, ConstBuffer<const char *> args)
 	if (!args.empty())
 		throw Usage{"Too many arguments"};
 
-	BengControlClient client(server);
-	client.Send(BengProxy::ControlCommand::FADE_NODE, name);
+	BengControl::Client client(server);
+	client.Send(BengControl::Command::FADE_NODE, name);
 }
 
 static void
@@ -151,12 +151,12 @@ NodeStatus(const char *server, ConstBuffer<const char *> args)
 	if (!args.empty())
 		throw Usage{"Too many arguments"};
 
-	BengControlClient client(server);
+	BengControl::Client client(server);
 	client.AutoBind();
-	client.Send(BengProxy::ControlCommand::NODE_STATUS, name);
+	client.Send(BengControl::Command::NODE_STATUS, name);
 
 	const auto response = client.Receive();
-	if (response.first != BengProxy::ControlCommand::NODE_STATUS)
+	if (response.first != BengControl::Command::NODE_STATUS)
 		throw std::runtime_error("Wrong response command");
 
 	const auto nul = response.second.find('\0');
@@ -186,16 +186,15 @@ Stats(const char *server, ConstBuffer<const char *> args)
 	if (!args.empty())
 		throw Usage{"Too many arguments"};
 
-	BengControlClient client(server);
+	BengControl::Client client(server);
 	client.AutoBind();
-	client.Send(BengProxy::ControlCommand::STATS);
+	client.Send(BengControl::Command::STATS);
 
 	const auto response = client.Receive();
-	if (response.first != BengProxy::ControlCommand::STATS)
+	if (response.first != BengControl::Command::STATS)
 		throw std::runtime_error("Wrong response command");
 
-	BengProxy::ControlStats stats;
-	memset(&stats, 0, sizeof(stats));
+	BengControl::Stats stats{};
 	memcpy(&stats, response.second.data(),
 	       std::min(sizeof(stats), response.second.size()));
 
@@ -229,8 +228,8 @@ FadeChildren(const char *server, ConstBuffer<const char *> args)
 	if (!args.empty())
 		throw Usage{"Too many arguments"};
 
-	BengControlClient client(server);
-	client.Send(BengProxy::ControlCommand::FADE_CHILDREN, tag);
+	BengControl::Client client(server);
+	client.Send(BengControl::Command::FADE_CHILDREN, tag);
 }
 
 static void
@@ -244,8 +243,8 @@ TerminateChildren(const char *server, ConstBuffer<const char *> args)
 	if (!args.empty())
 		throw Usage{"Too many arguments"};
 
-	BengControlClient client(server);
-	client.Send(BengProxy::ControlCommand::TERMINATE_CHILDREN, tag);
+	BengControl::Client client(server);
+	client.Send(BengControl::Command::TERMINATE_CHILDREN, tag);
 }
 
 static void
@@ -259,8 +258,8 @@ FlushFilterCache(const char *server, ConstBuffer<const char *> args)
 	if (!args.empty())
 		throw Usage{"Too many arguments"};
 
-	BengControlClient client(server);
-	client.Send(BengProxy::ControlCommand::FLUSH_FILTER_CACHE, tag);
+	BengControl::Client client(server);
+	client.Send(BengControl::Command::FLUSH_FILTER_CACHE, tag);
 }
 
 static void
@@ -274,8 +273,8 @@ DiscardSession(const char *server, ConstBuffer<const char *> args)
 	if (!args.empty())
 		throw Usage{"Too many arguments"};
 
-	BengControlClient client(server);
-	client.Send(BengProxy::ControlCommand::DISCARD_SESSION, attach_id);
+	BengControl::Client client(server);
+	client.Send(BengControl::Command::DISCARD_SESSION, attach_id);
 }
 
 static void
@@ -288,8 +287,8 @@ Stopwatch(const char *server, ConstBuffer<const char *> args)
 
 	FileDescriptor fds[] = { w };
 
-	BengControlClient client(server);
-	client.Send(BengProxy::ControlCommand::STOPWATCH_PIPE, nullptr, fds);
+	BengControl::Client client(server);
+	client.Send(BengControl::Command::STOPWATCH_PIPE, nullptr, fds);
 
 	w.Close();
 
@@ -341,7 +340,7 @@ try {
 		return EXIT_SUCCESS;
 	} else if (StringIsEqual(command, "dump-pools")) {
 		SimpleCommand(server, args,
-			      BengProxy::ControlCommand::DUMP_POOLS);
+			      BengControl::Command::DUMP_POOLS);
 		return EXIT_SUCCESS;
 	} else if (StringIsEqual(command, "stats")) {
 		Stats(server, args);
@@ -357,14 +356,14 @@ try {
 		return EXIT_SUCCESS;
 	} else if (StringIsEqual(command, "disable-zeroconf")) {
 		SimpleCommand(server, args,
-			      BengProxy::ControlCommand::DISABLE_ZEROCONF);
+			      BengControl::Command::DISABLE_ZEROCONF);
 		return EXIT_SUCCESS;
 	} else if (StringIsEqual(command, "enable-zeroconf")) {
 		SimpleCommand(server, args,
-			      BengProxy::ControlCommand::ENABLE_ZEROCONF);
+			      BengControl::Command::ENABLE_ZEROCONF);
 		return EXIT_SUCCESS;
 	} else if (StringIsEqual(command, "flush-nfs-cache")) {
-		SimpleCommand(server, args, BengProxy::ControlCommand::FLUSH_NFS_CACHE);
+		SimpleCommand(server, args, BengControl::Command::FLUSH_NFS_CACHE);
 		return EXIT_SUCCESS;
 	} else if (StringIsEqual(command, "flush-filter-cache")) {
 		FlushFilterCache(server, args);

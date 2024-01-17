@@ -7,12 +7,12 @@
 #include <string_view>
 
 class GrowingBuffer;
-namespace BengProxy { struct ControlStats; }
+namespace BengControl { struct Stats; }
 
 namespace Prometheus {
 
 void
 Write(GrowingBuffer &buffer, std::string_view process,
-      const BengProxy::ControlStats &stats) noexcept;
+      const BengControl::Stats &stats) noexcept;
 
 } // namespace Prometheus

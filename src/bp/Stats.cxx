@@ -16,10 +16,10 @@
 #include "net/control/Protocol.hxx"
 #include "util/ByteOrder.hxx"
 
-BengProxy::ControlStats
+BengControl::Stats
 BpInstance::GetStats() const noexcept
 {
-	BengProxy::ControlStats stats{};
+	BengControl::Stats stats{};
 
 	StockStats tcp_stock_stats{};
 

@@ -11,7 +11,7 @@ namespace Prometheus {
 
 void
 Write(GrowingBuffer &buffer, std::string_view process,
-      const BengProxy::ControlStats &stats) noexcept
+      const BengControl::Stats &stats) noexcept
 {
 	buffer.Fmt(
 	       R"(

@@ -163,7 +163,7 @@ ParseTranslationInvalidateRequest(AllocatorPtr alloc,
 {
 	TranslationInvalidateRequest request;
 
-	if (!BengProxy::IsControlSizePadded(p.size()))
+	if (!BengControl::IsSizePadded(p.size()))
 		/* must be padded */
 		throw std::runtime_error("Not padded");
 

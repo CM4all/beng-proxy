@@ -241,7 +241,7 @@ LbConfigParser::Control::ParseLine(FileLineParser &line)
 
 	if (StringIsEqual(word, "bind")) {
 		config.bind_address = ParseSocketAddress(line.ExpectValueAndEnd(),
-							 BengProxy::CONTROL_PORT, true);
+							 BengControl::DEFAULT_PORT, true);
 	} else if (StringIsEqual(word, "multicast_group")) {
 		config.multicast_group = ParseSocketAddress(line.ExpectValueAndEnd(),
 							    0, false);

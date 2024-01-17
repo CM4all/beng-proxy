@@ -24,8 +24,6 @@
 #include "lib/avahi/Publisher.hxx"
 #endif
 
-using namespace BengProxy;
-
 static void
 control_tcache_invalidate(BpInstance *instance, std::span<const std::byte> payload)
 {
@@ -59,14 +57,14 @@ control_tcache_invalidate(BpInstance *instance, std::span<const std::byte> paylo
 }
 
 static void
-query_stats(BpInstance *instance, ControlServer *server,
+query_stats(BpInstance *instance, BengControl::Server *server,
 	    SocketAddress address)
 {
 	const auto stats = instance->GetStats();
 
 	try {
 		server->Reply(address,
-			      ControlCommand::STATS,
+			      BengControl::Command::STATS,
 			      ReferenceAsBytes(stats));
 	} catch (...) {
 		LogConcat(3, "control", std::current_exception());
@@ -84,12 +82,14 @@ HandleStopwatchPipe(std::span<const std::byte> payload,
 }
 
 void
-BpInstance::OnControlPacket(ControlServer &control_server,
-			    BengProxy::ControlCommand command,
+BpInstance::OnControlPacket(BengControl::Server &control_server,
+			    BengControl::Command command,
 			    std::span<const std::byte> payload,
 			    std::span<UniqueFileDescriptor> fds,
 			    SocketAddress address, int uid)
 {
+	using namespace BengControl;
+
 	LogConcat(5, "control", "command=", int(command), " uid=", uid,
 		  " payload_length=", unsigned(payload.size()));
 
@@ -97,38 +97,38 @@ BpInstance::OnControlPacket(ControlServer &control_server,
 	const bool is_privileged = uid >= 0;
 
 	switch (command) {
-	case ControlCommand::NOP:
+	case Command::NOP:
 		/* duh! */
 		break;
 
-	case ControlCommand::TCACHE_INVALIDATE:
+	case Command::TCACHE_INVALIDATE:
 		control_tcache_invalidate(this, payload);
 		break;
 
-	case ControlCommand::DUMP_POOLS:
+	case Command::DUMP_POOLS:
 		if (is_privileged)
 			pool_dump_tree(root_pool);
 		break;
 
-	case ControlCommand::ENABLE_NODE:
-	case ControlCommand::FADE_NODE:
-	case ControlCommand::NODE_STATUS:
+	case Command::ENABLE_NODE:
+	case Command::FADE_NODE:
+	case Command::NODE_STATUS:
 		/* only for beng-lb */
 		break;
 
-	case ControlCommand::STATS:
+	case Command::STATS:
 		query_stats(this, &control_server, address);
 		break;
 
-	case ControlCommand::VERBOSE:
+	case Command::VERBOSE:
 		if (is_privileged && payload.size() == 1)
 			SetLogLevel(*(const uint8_t *)payload.data());
 		break;
 
-	case ControlCommand::TERMINATE_CHILDREN:
+	case Command::TERMINATE_CHILDREN:
 		// TODO terminate immediately, no fade
 
-	case ControlCommand::FADE_CHILDREN:
+	case Command::FADE_CHILDREN:
 		if (!payload.empty())
 			/* tagged fade is allowed for any unprivileged client */
 			FadeTaggedChildren(ToStringView(payload));
@@ -138,25 +138,25 @@ BpInstance::OnControlPacket(ControlServer &control_server,
 			FadeChildren();
 		break;
 
-	case ControlCommand::DISABLE_ZEROCONF:
+	case Command::DISABLE_ZEROCONF:
 #ifdef HAVE_AVAHI
 		if (is_privileged && avahi_publisher)
 			avahi_publisher->HideServices();
 #endif
 		break;
 
-	case ControlCommand::ENABLE_ZEROCONF:
+	case Command::ENABLE_ZEROCONF:
 #ifdef HAVE_AVAHI
 		if (is_privileged && avahi_publisher)
 			avahi_publisher->ShowServices();
 #endif
 		break;
 
-	case ControlCommand::FLUSH_NFS_CACHE:
+	case Command::FLUSH_NFS_CACHE:
 		// deprecated
 		break;
 
-	case ControlCommand::FLUSH_FILTER_CACHE:
+	case Command::FLUSH_FILTER_CACHE:
 		if (filter_cache != nullptr) {
 			if (payload.empty())
 				filter_cache_flush(*filter_cache);
@@ -168,23 +168,23 @@ BpInstance::OnControlPacket(ControlServer &control_server,
 
 		break;
 
-	case ControlCommand::STOPWATCH_PIPE:
+	case Command::STOPWATCH_PIPE:
 		HandleStopwatchPipe(payload, fds);
 		break;
 
-	case ControlCommand::DISCARD_SESSION:
+	case Command::DISCARD_SESSION:
 		if (!payload.empty() && session_manager)
 			session_manager->DiscardAttachSession(payload);
 		break;
 
-	case ControlCommand::FLUSH_HTTP_CACHE:
+	case Command::FLUSH_HTTP_CACHE:
 		if (http_cache != nullptr)
 			http_cache_flush_tag(*http_cache, ToStringView(payload));
 
 		break;
 
-	case ControlCommand::ENABLE_QUEUE:
-	case ControlCommand::DISABLE_QUEUE:
+	case Command::ENABLE_QUEUE:
+	case Command::DISABLE_QUEUE:
 		// not applicable
 		break;
 	}

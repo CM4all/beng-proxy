@@ -256,7 +256,7 @@ BpConfigParser::Control::ParseLine(FileLineParser &line)
 
 	if (strcmp(word, "bind") == 0) {
 		config.bind_address = ParseSocketAddress(line.ExpectValueAndEnd(),
-							 BengProxy::CONTROL_PORT, true);
+							 BengControl::DEFAULT_PORT, true);
 	} else if (strcmp(word, "multicast_group") == 0) {
 		config.multicast_group = ParseSocketAddress(line.ExpectValueAndEnd(),
 							    0, false);

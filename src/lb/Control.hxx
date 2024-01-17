@@ -13,12 +13,12 @@
 struct LbInstance;
 struct LbControlConfig;
 
-class LbControl final : ControlHandler {
+class LbControl final : BengControl::Handler {
 	const LLogger logger;
 
 	LbInstance &instance;
 
-	ControlServer server;
+	BengControl::Server server;
 
 public:
 	LbControl(LbInstance &_instance, const LbControlConfig &config);
@@ -42,15 +42,15 @@ private:
 	void EnableNode(const char *payload, size_t length);
 	void FadeNode(const char *payload, size_t length);
 
-	void QueryNodeStatus(ControlServer &control_server,
+	void QueryNodeStatus(BengControl::Server &control_server,
 			     std::string_view payload,
 			     SocketAddress address);
 
-	void QueryStats(ControlServer &control_server, SocketAddress address);
+	void QueryStats(BengControl::Server &control_server, SocketAddress address);
 
-	/* virtual methods from class ControlHandler */
-	void OnControlPacket(ControlServer &control_server,
-			     BengProxy::ControlCommand command,
+	/* virtual methods from class BengControl::Handler */
+	void OnControlPacket(BengControl::Server &control_server,
+			     BengControl::Command command,
 			     std::span<const std::byte> payload,
 			     std::span<UniqueFileDescriptor> fds,
 			     SocketAddress address, int uid) override;

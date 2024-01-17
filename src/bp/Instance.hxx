@@ -46,7 +46,7 @@ class SslClientFactory;
 class FilteredSocketStock;
 class FilteredSocketBalancer;
 class SpawnService;
-class ControlServer;
+namespace BengControl { class Server; }
 class SpawnServerClient;
 class TranslationStock;
 class TranslationCache;
@@ -67,7 +67,7 @@ struct BpConnection;
 namespace NgHttp2 { class Stock; }
 namespace Avahi { class Client; class Publisher; struct Service; }
 
-struct BpInstance final : PInstance, ControlHandler, SpawnServerClientHandler,
+struct BpInstance final : PInstance, BengControl::Handler, SpawnServerClientHandler,
 #ifdef HAVE_LIBWAS
 			  WasMetricsHandler,
 #endif
@@ -121,7 +121,7 @@ struct BpInstance final : PInstance, ControlHandler, SpawnServerClientHandler,
 	 * BpConfig::control_listen).  May be empty if none was
 	 * configured.
 	 */
-	std::forward_list<ControlServer> control_servers;
+	std::forward_list<BengControl::Server> control_servers;
 
 #ifdef HAVE_AVAHI
 	std::unique_ptr<Avahi::Client> avahi_client;
@@ -223,11 +223,11 @@ struct BpInstance final : PInstance, ControlHandler, SpawnServerClientHandler,
 	void DisableListeners() noexcept;
 
 	[[gnu::pure]]
-	BengProxy::ControlStats GetStats() const noexcept;
+	BengControl::Stats GetStats() const noexcept;
 
-	/* virtual methods from class ControlHandler */
-	void OnControlPacket(ControlServer &control_server,
-			     BengProxy::ControlCommand command,
+	/* virtual methods from class BengControl::Handler */
+	void OnControlPacket(BengControl::Server &control_server,
+			     BengControl::Command command,
 			     std::span<const std::byte> payload,
 			     std::span<UniqueFileDescriptor> fds,
 			     SocketAddress address, int uid) override;

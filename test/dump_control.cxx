@@ -13,12 +13,12 @@
 
 #include <stdio.h>
 
-using namespace BengProxy;
+using namespace BengControl;
 
-class DumpControlHandler final : public ControlHandler {
+class DumpControlHandler final : public Handler {
 public:
-	void OnControlPacket(ControlServer &,
-			     BengProxy::ControlCommand command,
+	void OnControlPacket(Server &,
+			     Command command,
 			     std::span<const std::byte> payload,
 			     std::span<UniqueFileDescriptor>,
 			     SocketAddress, int uid) override {
@@ -57,7 +57,7 @@ try {
 
 	DumpControlHandler handler;
 
-	ControlServer cs(event_loop, handler, config);
+	Server cs{event_loop, handler, config};
 
 	event_loop.Run();
 

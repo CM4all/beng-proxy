@@ -34,7 +34,7 @@ class LbTcpConnection;
 class LbControl;
 class LbListener;
 class CertCache;
-namespace BengProxy { struct ControlStats; }
+namespace BengControl { struct Stats; }
 namespace Avahi { class Client; class Publisher; struct Service; }
 
 struct LbInstance final : PInstance, Avahi::ErrorHandler {
@@ -110,7 +110,7 @@ struct LbInstance final : PInstance, Avahi::ErrorHandler {
 	void DeinitAllControls() noexcept;
 
 	[[gnu::pure]]
-	BengProxy::ControlStats GetStats() const noexcept;
+	BengControl::Stats GetStats() const noexcept;
 
 	/**
 	 * Compress memory allocators, try to return unused memory areas

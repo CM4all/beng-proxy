@@ -27,8 +27,6 @@
 #include <string.h>
 #include <stdlib.h>
 
-using namespace BengProxy;
-
 LbControl::LbControl(LbInstance &_instance, const LbControlConfig &config)
 	:logger("control"), instance(_instance),
 	 server(instance.event_loop, *this, config)
@@ -180,7 +178,7 @@ failure_status_to_string(FailureStatus status) noexcept
 }
 
 static void
-node_status_response(ControlServer *server,
+node_status_response(BengControl::Server *server,
 		     struct pool &pool,
 		     SocketAddress address,
 		     std::string_view payload, std::string_view status)
@@ -193,12 +191,12 @@ node_status_response(ControlServer *server,
 	std::copy(status.begin(), status.end(), p);
 
 	server->Reply(address,
-		      ControlCommand::NODE_STATUS,
+		      BengControl::Command::NODE_STATUS,
 		      AsBytes(std::string_view{response, response_length}));
 }
 
 inline void
-LbControl::QueryNodeStatus(ControlServer &control_server,
+LbControl::QueryNodeStatus(BengControl::Server &control_server,
 			   std::string_view payload,
 			   SocketAddress address)
 try {
@@ -250,24 +248,26 @@ try {
 }
 
 inline void
-LbControl::QueryStats(ControlServer &control_server,
+LbControl::QueryStats(BengControl::Server &control_server,
 		      SocketAddress address)
 try {
 	const auto stats = instance.GetStats();
 	control_server.Reply(address,
-			     ControlCommand::STATS,
+			     BengControl::Command::STATS,
 			     ReferenceAsBytes(stats));
 } catch (...) {
 	logger(3, std::current_exception());
 }
 
 void
-LbControl::OnControlPacket(ControlServer &control_server,
-			   BengProxy::ControlCommand command,
+LbControl::OnControlPacket(BengControl::Server &control_server,
+			   BengControl::Command command,
 			   std::span<const std::byte> payload,
 			   std::span<UniqueFileDescriptor>,
 			   SocketAddress address, int uid)
 {
+	using namespace BengControl;
+
 	logger(5, "command=", int(command), " uid=", uid,
 	       " payload_length=", unsigned(payload.size()));
 
@@ -275,70 +275,70 @@ LbControl::OnControlPacket(ControlServer &control_server,
 	const bool is_privileged = uid >= 0;
 
 	switch (command) {
-	case ControlCommand::NOP:
+	case Command::NOP:
 		break;
 
-	case ControlCommand::TCACHE_INVALIDATE:
+	case Command::TCACHE_INVALIDATE:
 		InvalidateTranslationCache(payload, address);
 		break;
 
-	case ControlCommand::FADE_CHILDREN:
+	case Command::FADE_CHILDREN:
 		break;
 
-	case ControlCommand::DISABLE_ZEROCONF:
+	case Command::DISABLE_ZEROCONF:
 #ifdef HAVE_AVAHI
 		if (is_privileged && instance.avahi_publisher)
 			instance.avahi_publisher->HideServices();
 #endif
 		break;
 
-	case ControlCommand::ENABLE_ZEROCONF:
+	case Command::ENABLE_ZEROCONF:
 #ifdef HAVE_AVAHI
 		if (is_privileged && instance.avahi_publisher)
 			instance.avahi_publisher->ShowServices();
 #endif
 		break;
 
-	case ControlCommand::ENABLE_NODE:
+	case Command::ENABLE_NODE:
 		if (is_privileged)
 			EnableNode((const char *)payload.data(), payload.size());
 		break;
 
-	case ControlCommand::FADE_NODE:
+	case Command::FADE_NODE:
 		if (is_privileged)
 			FadeNode((const char *)payload.data(), payload.size());
 		break;
 
-	case ControlCommand::NODE_STATUS:
+	case Command::NODE_STATUS:
 		QueryNodeStatus(control_server,
 				ToStringView(payload),
 				address);
 		break;
 
-	case ControlCommand::DUMP_POOLS:
+	case Command::DUMP_POOLS:
 		if (is_privileged)
 			pool_dump_tree(instance.root_pool);
 		break;
 
-	case ControlCommand::STATS:
+	case Command::STATS:
 		QueryStats(control_server, address);
 		break;
 
-	case ControlCommand::VERBOSE:
+	case Command::VERBOSE:
 		if (is_privileged && payload.size() == 1) {
 			SetLogLevel(*(const uint8_t *)payload.data());
 		}
 
 		break;
 
-	case ControlCommand::FLUSH_NFS_CACHE:
-	case ControlCommand::FLUSH_FILTER_CACHE:
-	case ControlCommand::STOPWATCH_PIPE:
-	case ControlCommand::DISCARD_SESSION:
-	case ControlCommand::FLUSH_HTTP_CACHE:
-	case ControlCommand::TERMINATE_CHILDREN:
-	case ControlCommand::ENABLE_QUEUE:
-	case ControlCommand::DISABLE_QUEUE:
+	case Command::FLUSH_NFS_CACHE:
+	case Command::FLUSH_FILTER_CACHE:
+	case Command::STOPWATCH_PIPE:
+	case Command::DISCARD_SESSION:
+	case Command::FLUSH_HTTP_CACHE:
+	case Command::TERMINATE_CHILDREN:
+	case Command::ENABLE_QUEUE:
+	case Command::DISABLE_QUEUE:
 		/* not applicable */
 		break;
 	}
