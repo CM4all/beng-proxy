@@ -219,7 +219,7 @@ MakeTranslationService(EventLoop &event_loop, TranslationServiceBuilder &b,
 }
 
 void
-BpInstance::AddListener(const BpConfig::Listener &c
+BpInstance::AddListener(const BpListenerConfig &c
 #ifdef HAVE_AVAHI
 			, std::forward_list<Avahi::Service> &avahi_services
 #endif
@@ -235,7 +235,7 @@ BpInstance::AddListener(const BpConfig::Listener &c
 				listener_stats[c.tag],
 				std::move(ts),
 				c.tag.empty() ? nullptr : c.tag.c_str(),
-				c.handler == BpConfig::Listener::Handler::PROMETHEUS_EXPORTER,
+				c.handler == BpListenerConfig::Handler::PROMETHEUS_EXPORTER,
 				c.auth_alt_host,
 				c.ssl ? &c.ssl_config : nullptr);
 	auto &listener = listeners.front();

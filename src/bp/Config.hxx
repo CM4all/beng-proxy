@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include "LConfig.hxx"
 #include "access_log/Config.hxx"
 #include "ssl/Config.hxx"
 #include "http/CookieSameSite.hxx"
@@ -21,64 +22,7 @@
  * Configuration.
  */
 struct BpConfig {
-	struct Listener : SocketConfig {
-		std::string tag;
-
-#ifdef HAVE_AVAHI
-		std::string zeroconf_service;
-		std::string zeroconf_interface;
-#endif
-
-		/**
-		 * If non-empty, then this listener has its own
-		 * translation server(s) and doesn't use the global
-		 * server.
-		 */
-		std::forward_list<AllocatedSocketAddress> translation_sockets;
-
-		SslConfig ssl_config;
-
-		enum class Handler {
-			TRANSLATION,
-			PROMETHEUS_EXPORTER,
-		} handler = Handler::TRANSLATION;
-
-		bool auth_alt_host = false;
-
-		bool ssl = false;
-
-		Listener() {
-			listen = 64;
-			tcp_defer_accept = 10;
-		}
-
-		explicit Listener(SocketAddress _address) noexcept
-			:SocketConfig(_address)
-		{
-			listen = 64;
-			tcp_defer_accept = 10;
-			tcp_no_delay = true;
-		}
-
-#ifdef HAVE_AVAHI
-		/**
-		 * @return the name of the interface where the
-		 * Zeroconf service shall be published
-		 */
-		[[gnu::pure]]
-		const char *GetZeroconfInterface() const noexcept {
-			if (!zeroconf_interface.empty())
-				return zeroconf_interface.c_str();
-
-			if (!interface.empty())
-				return interface.c_str();
-
-			return nullptr;
-		}
-#endif
-	};
-
-	std::forward_list<Listener> listen;
+	std::forward_list<BpListenerConfig> listen;
 
 	AccessLogConfig access_log;
 

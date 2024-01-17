@@ -213,7 +213,7 @@ struct BpInstance final : PInstance, BengControl::Handler, SpawnServerClientHand
 
 	Avahi::Client &GetAvahiClient();
 
-	void AddListener(const BpConfig::Listener &c
+	void AddListener(const BpListenerConfig &c
 #ifdef HAVE_AVAHI
 			 , std::forward_list<Avahi::Service> &avahi_services
 #endif
