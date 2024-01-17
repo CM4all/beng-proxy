@@ -10,7 +10,7 @@
 #include <memory>
 
 struct BpInstance;
-struct SslConfig;
+struct BpListenerConfig;
 struct TaggedHttpStats;
 class TranslationService;
 class BpPrometheusExporter;
@@ -37,10 +37,7 @@ public:
 	BPListener(BpInstance &_instance,
 		   TaggedHttpStats &_http_stats,
 		   std::shared_ptr<TranslationService> _translation_service,
-		   const char *_tag,
-		   bool _prometheus_exporter,
-		   bool _auth_alt_host,
-		   const SslConfig *ssl_config);
+		   const BpListenerConfig &config);
 	~BPListener() noexcept;
 
 	void Listen(UniqueSocketDescriptor &&_fd) noexcept {

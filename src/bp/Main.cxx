@@ -49,6 +49,7 @@
 #include "net/StaticSocketAddress.hxx"
 #include "io/Logger.hxx"
 #include "io/SpliceSupport.hxx"
+#include "util/StringCompare.hxx"
 #include "util/PrintException.hxx"
 
 #ifdef HAVE_LIBCAP
@@ -234,10 +235,7 @@ BpInstance::AddListener(const BpListenerConfig &c
 	listeners.emplace_front(*this,
 				listener_stats[c.tag],
 				std::move(ts),
-				c.tag.empty() ? nullptr : c.tag.c_str(),
-				c.handler == BpListenerConfig::Handler::PROMETHEUS_EXPORTER,
-				c.auth_alt_host,
-				c.ssl ? &c.ssl_config : nullptr);
+				c);
 	auto &listener = listeners.front();
 
 	listener.Listen(c.Create(SOCK_STREAM));
@@ -544,16 +542,14 @@ try {
 		}
 #endif
 	} else {
-		const char *tag = cmdline.debug_listener_tag;
-		if (*tag == 0)
-			tag = nullptr;
+		BpListenerConfig config;
+		if (!StringIsEmpty(cmdline.debug_listener_tag))
+			config.tag = cmdline.debug_listener_tag;
 
 		instance.listeners.emplace_front(instance,
 						 instance.listener_stats[cmdline.debug_listener_tag],
 						 instance.translation_service,
-						 tag,
-						 false,
-						 false, nullptr);
+						 config);
 		instance.listeners.front().Listen(UniqueSocketDescriptor(STDIN_FILENO));
 	}
 
