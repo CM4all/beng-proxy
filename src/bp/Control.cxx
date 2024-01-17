@@ -185,6 +185,7 @@ BpInstance::OnControlPacket(BengControl::Server &control_server,
 
 	case Command::ENABLE_QUEUE:
 	case Command::DISABLE_QUEUE:
+	case Command::RELOAD_STATE:
 		// not applicable
 		break;
 	}
