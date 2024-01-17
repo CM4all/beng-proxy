@@ -18,6 +18,7 @@ struct LbListenerConfig;
 struct LbInstance;
 class LbGotoMap;
 class ClientAccountingMap;
+namespace Avahi { struct Service; }
 
 /**
  * Listener on a TCP port.
@@ -30,6 +31,10 @@ class LbListener final : FilteredSocketListenerHandler {
 	HttpStats http_stats;
 
 	FilteredSocketListener listener;
+
+#ifdef HAVE_AVAHI
+	std::unique_ptr<Avahi::Service> avahi_service;
+#endif
 
 	LbGoto destination;
 
@@ -72,6 +77,8 @@ public:
 	void Scan(LbGotoMap &goto_map);
 
 private:
+	std::unique_ptr<Avahi::Service> MakeAvahiService() const noexcept;
+
 	/* virtual methods from class FilteredSocketListenerHandler */
 	UniqueSocketDescriptor OnFilteredSocketAccept(UniqueSocketDescriptor s,
 						      SocketAddress address) override;

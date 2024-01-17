@@ -65,7 +65,7 @@ class SessionManager;
 class BPListener;
 struct BpConnection;
 namespace NgHttp2 { class Stock; }
-namespace Avahi { class Client; class Publisher; struct Service; }
+namespace Avahi { class Client; class Publisher; }
 
 struct BpInstance final : PInstance, BengControl::Handler, SpawnServerClientHandler,
 #ifdef HAVE_LIBWAS
@@ -211,13 +211,12 @@ struct BpInstance final : PInstance, BengControl::Handler, SpawnServerClientHand
 
 	void ReloadEventCallback(int signo) noexcept;
 
-	Avahi::Client &GetAvahiClient();
-
-	void AddListener(const BpListenerConfig &c
 #ifdef HAVE_AVAHI
-			 , std::forward_list<Avahi::Service> &avahi_services
+	Avahi::Client &GetAvahiClient();
+	Avahi::Publisher &GetAvahiPublisher();
 #endif
-			 );
+
+	void AddListener(const BpListenerConfig &c);
 
 	void EnableListeners() noexcept;
 	void DisableListeners() noexcept;

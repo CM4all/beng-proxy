@@ -102,6 +102,19 @@ BpInstance::GetAvahiClient()
 	return *avahi_client;
 }
 
+Avahi::Publisher &
+BpInstance::GetAvahiPublisher()
+{
+	if (!avahi_publisher) {
+		Avahi::ErrorHandler &error_handler = *this;
+		avahi_publisher = std::make_unique<Avahi::Publisher>(GetAvahiClient(),
+								     "beng-proxy",
+								     error_handler);
+	}
+
+	return *avahi_publisher;
+}
+
 #endif
 
 void
@@ -220,11 +233,7 @@ MakeTranslationService(EventLoop &event_loop, TranslationServiceBuilder &b,
 }
 
 void
-BpInstance::AddListener(const BpListenerConfig &c
-#ifdef HAVE_AVAHI
-			, std::forward_list<Avahi::Service> &avahi_services
-#endif
-			)
+BpInstance::AddListener(const BpListenerConfig &c)
 {
 	auto ts = c.translation_sockets.empty()
 		? translation_service
@@ -236,22 +245,6 @@ BpInstance::AddListener(const BpListenerConfig &c
 				listener_stats[c.tag],
 				std::move(ts),
 				c, c.Create(SOCK_STREAM));
-
-#ifdef HAVE_AVAHI
-	auto &listener = listeners.front();
-	if (!c.zeroconf_service.empty()) {
-		const char *const interface = c.GetZeroconfInterface();
-
-		/* ask the kernel for the effective address via getsockname(),
-		   because it may have changed, e.g. if the kernel has
-		   selected a port for us */
-		const auto local_address = listener.GetLocalAddress();
-		if (local_address.IsDefined())
-			avahi_services.emplace_front(c.zeroconf_service.c_str(),
-						     interface, local_address,
-						     c.v6only);
-	}
-#endif
 }
 
 [[gnu::const]]
@@ -517,28 +510,8 @@ try {
 	global_pipe_stock = instance.pipe_stock;
 
 	if (cmdline.debug_listener_tag == nullptr) {
-#ifdef HAVE_AVAHI
-		std::forward_list<Avahi::Service> avahi_services;
-#endif
-
 		for (const auto &i : instance.config.listen)
-			instance.AddListener(i
-#ifdef HAVE_AVAHI
-					     , avahi_services
-#endif
-					     );
-
-#ifdef HAVE_AVAHI
-		if (!avahi_services.empty()) {
-			assert(!instance.avahi_publisher);
-
-			Avahi::ErrorHandler &error_handler = instance;
-			instance.avahi_publisher = std::make_unique<Avahi::Publisher>(instance.GetAvahiClient(),
-										      "beng-proxy",
-										      std::move(avahi_services),
-										      error_handler);
-		}
-#endif
+			instance.AddListener(i);
 	} else {
 		BpListenerConfig config;
 		if (!StringIsEmpty(cmdline.debug_listener_tag))

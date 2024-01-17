@@ -80,6 +80,35 @@ LbInstance::InitWorker()
 #endif
 }
 
+#ifdef HAVE_AVAHI
+
+Avahi::Client &
+LbInstance::GetAvahiClient()
+{
+	if (!avahi_client) {
+		Avahi::ErrorHandler &error_handler = *this;
+		avahi_client = std::make_unique<Avahi::Client>(event_loop,
+							       error_handler);
+	}
+
+	return *avahi_client;
+}
+
+Avahi::Publisher &
+LbInstance::GetAvahiPublisher()
+{
+	if (!avahi_publisher) {
+		Avahi::ErrorHandler &error_handler = *this;
+		avahi_publisher = std::make_unique<Avahi::Publisher>(GetAvahiClient(),
+								     "beng-lb",
+								     error_handler);
+	}
+
+	return *avahi_publisher;
+}
+
+#endif
+
 void
 LbInstance::Compress() noexcept
 {

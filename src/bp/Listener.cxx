@@ -16,6 +16,30 @@
 #include "net/SocketAddress.hxx"
 #include "io/Logger.hxx"
 
+#ifdef HAVE_AVAHI
+#include "lib/avahi/Service.hxx"
+#include "lib/avahi/Publisher.hxx"
+
+inline std::unique_ptr<Avahi::Service>
+BPListener::MakeAvahiService(const BpListenerConfig &config) const noexcept
+{
+	if (config.zeroconf_service.empty())
+		return {};
+
+	/* ask the kernel for the effective address via getsockname(),
+	   because it may have changed, e.g. if the kernel has
+	   selected a port for us */
+	if (const auto local_address = GetLocalAddress();
+	    local_address.IsDefined())
+		return std::make_unique<Avahi::Service>(config.zeroconf_service.c_str(),
+							config.GetZeroconfInterface(), local_address,
+							config.v6only);
+
+	return {};
+}
+
+#endif // HAVE_AVAHI
+
 static std::unique_ptr<SslFactory>
 MakeSslFactory(const BpListenerConfig &config)
 {
@@ -48,10 +72,23 @@ BPListener::BPListener(BpInstance &_instance,
 	 listener(instance.root_pool, instance.event_loop,
 		  MakeSslFactory(config),
 		  *this, std::move(_socket))
+#ifdef HAVE_AVAHI
+	, avahi_service(MakeAvahiService(config))
+#endif
 {
+#ifdef HAVE_AVAHI
+	if (avahi_service)
+		instance.GetAvahiPublisher().AddService(*avahi_service);
+#endif
 }
 
-BPListener::~BPListener() noexcept = default;
+BPListener::~BPListener() noexcept
+{
+#ifdef HAVE_AVAHI
+	if (avahi_service)
+		instance.GetAvahiPublisher().RemoveService(*avahi_service);
+#endif
+}
 
 void
 BPListener::OnFilteredSocketConnect(PoolPtr pool,

@@ -136,6 +136,11 @@ struct LbInstance final : PInstance, Avahi::ErrorHandler {
 
 	void ReloadEventCallback(int signo) noexcept;
 
+#ifdef HAVE_AVAHI
+	Avahi::Client &GetAvahiClient();
+	Avahi::Publisher &GetAvahiPublisher();
+#endif
+
 private:
 	void OnCompressTimer() noexcept;
 

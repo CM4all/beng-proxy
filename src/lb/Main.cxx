@@ -73,16 +73,16 @@ LbInstance::ShutdownCallback() noexcept
 
 	goto_map.Clear();
 
-#ifdef HAVE_AVAHI
-	avahi_publisher.reset();
-	avahi_client.reset();
-#endif
-
 #ifdef ENABLE_CERTDB
 	DisconnectCertCaches();
 #endif
 
 	DeinitAllListeners();
+
+#ifdef HAVE_AVAHI
+	avahi_publisher.reset();
+	avahi_client.reset();
+#endif
 
 	thread_pool_join();
 

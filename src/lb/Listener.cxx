@@ -17,6 +17,30 @@
 #include "util/SpanCast.hxx"
 #include "lb_features.h"
 
+#ifdef HAVE_AVAHI
+#include "lib/avahi/Service.hxx"
+#include "lib/avahi/Publisher.hxx"
+
+inline std::unique_ptr<Avahi::Service>
+LbListener::MakeAvahiService() const noexcept
+{
+	if (config.zeroconf_service.empty())
+		return {};
+
+	/* ask the kernel for the effective address via getsockname(),
+	   because it may have changed, e.g. if the kernel has
+	   selected a port for us */
+	if (const auto local_address = GetLocalAddress();
+	    local_address.IsDefined())
+		return std::make_unique<Avahi::Service>(config.zeroconf_service.c_str(),
+							config.GetZeroconfInterface(), local_address,
+							config.v6only);
+
+	return {};
+}
+
+#endif // HAVE_AVAHI
+
 UniqueSocketDescriptor
 LbListener::OnFilteredSocketAccept(UniqueSocketDescriptor s,
 				   SocketAddress address)
@@ -125,15 +149,29 @@ LbListener::LbListener(LbInstance &_instance,
 	 listener(instance.root_pool, instance.event_loop,
 		  MakeSslFactory(config, instance),
 		  *this, config.Create(SOCK_STREAM)),
+#ifdef HAVE_AVAHI
+	 avahi_service(MakeAvahiService()),
+#endif
 	 logger("listener " + config.name),
 	 protocol(config.destination.GetProtocol())
 {
 	if (config.max_connections_per_ip > 0)
 		client_accounting = std::make_unique<ClientAccountingMap>(GetEventLoop(),
 									  config.max_connections_per_ip);
+
+#ifdef HAVE_AVAHI
+	if (avahi_service)
+		instance.GetAvahiPublisher().AddService(*avahi_service);
+#endif
 }
 
-LbListener::~LbListener() noexcept = default;
+LbListener::~LbListener() noexcept
+{
+#ifdef HAVE_AVAHI
+	if (avahi_service)
+		instance.GetAvahiPublisher().RemoveService(*avahi_service);
+#endif
+}
 
 void
 LbListener::Scan(LbGotoMap &goto_map)

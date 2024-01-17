@@ -6,6 +6,7 @@
 
 #include "fs/Listener.hxx"
 #include "net/StaticSocketAddress.hxx"
+#include "config.h"
 
 #include <memory>
 
@@ -14,6 +15,7 @@ struct BpListenerConfig;
 struct TaggedHttpStats;
 class TranslationService;
 class BpPrometheusExporter;
+namespace Avahi { struct Service; }
 
 /**
  * Listener for incoming HTTP connections.
@@ -33,6 +35,10 @@ class BPListener final : FilteredSocketListenerHandler {
 
 	FilteredSocketListener listener;
 
+#ifdef HAVE_AVAHI
+	const std::unique_ptr<Avahi::Service> avahi_service;
+#endif
+
 public:
 	BPListener(BpInstance &_instance,
 		   TaggedHttpStats &_http_stats,
@@ -44,6 +50,13 @@ public:
 	void Listen(UniqueSocketDescriptor &&_fd) noexcept {
 		listener.Listen(std::move(_fd));
 	}
+
+#ifdef HAVE_AVAHI
+	template<typename S>
+	void SetAvahiService(S &&_avahi_service) noexcept {
+		avahi_service = std::forward<S>(_avahi_service);
+	}
+#endif
 
 	auto GetLocalAddress() const noexcept {
 		return listener.GetLocalAddress();
@@ -74,6 +87,8 @@ public:
 	}
 
 private:
+	std::unique_ptr<Avahi::Service> MakeAvahiService(const BpListenerConfig &config) const noexcept;
+
 	/* virtual methods from class FilteredSocketListenerHandler */
 	void OnFilteredSocketConnect(PoolPtr pool,
 				     UniquePoolPtr<FilteredSocket> socket,
