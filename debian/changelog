@@ -1,5 +1,6 @@
 cm4all-beng-proxy (18.0.53) unstable; urgency=low
 
+  * enable/disable Zeroconf with files in "state" directories
   * was: fix assertion failure
   * lb: fix crash with "lua_handler"
   * systemd: depend on "cm4all-spawn-accessory.socket", not ".service"

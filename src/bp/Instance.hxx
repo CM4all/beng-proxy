@@ -22,6 +22,7 @@
 #include "event/net/control/Handler.hxx"
 #include "net/FailureManager.hxx"
 #include "io/FdCache.hxx"
+#include "io/StateDirectories.hxx"
 #include "util/Background.hxx"
 #include "util/IntrusiveList.hxx"
 
@@ -78,6 +79,8 @@ struct BpInstance final : PInstance, BengControl::Handler, SpawnServerClientHand
 
 	[[no_unique_address]]
 	UringGlue uring{event_loop, config.use_io_uring};
+
+	const StateDirectories state_directories;
 
 	FdCache fd_cache{
 		event_loop,
@@ -204,6 +207,8 @@ struct BpInstance final : PInstance, BengControl::Handler, SpawnServerClientHand
 	 */
 	void FadeChildren() noexcept;
 	void FadeTaggedChildren(std::string_view tag) noexcept;
+
+	void ReloadState() noexcept;
 
 	void ShutdownCallback() noexcept;
 

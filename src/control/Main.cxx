@@ -348,6 +348,10 @@ try {
 	} else if (StringIsEqual(command, "verbose")) {
 		Verbose(server, args);
 		return EXIT_SUCCESS;
+	} else if (StringIsEqual(command, "reload-state")) {
+		SimpleCommand(server, args,
+			      BengControl::Command::RELOAD_STATE);
+		return EXIT_SUCCESS;
 	} else if (StringIsEqual(command, "fade-children")) {
 		FadeChildren(server, args);
 		return EXIT_SUCCESS;
@@ -389,6 +393,7 @@ try {
 		"  fade-node NAME:PORT\n"
 		"  dump-pools\n"
 		"  verbose LEVEL\n"
+		"  reload-state\n"
 		"  fade-children [TAG]\n"
 		"  disable-zeroconf\n"
 		"  enable-zeroconf\n"

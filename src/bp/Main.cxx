@@ -205,6 +205,8 @@ BpInstance::ReloadEventCallback(int) noexcept
 	fd_cache.Flush();
 
 	Compress();
+
+	ReloadState();
 }
 
 void
@@ -535,6 +537,8 @@ try {
 		capabilities_post_setuid({});
 	}
 #endif // HAVE_LIBCAP
+
+	instance.ReloadState();
 
 #ifdef HAVE_LIBSYSTEMD
 	/* tell systemd we're ready */

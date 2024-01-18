@@ -24,7 +24,7 @@
 inline std::unique_ptr<Avahi::Service>
 LbListener::MakeAvahiService() const noexcept
 {
-	if (config.zeroconf_service.empty())
+	if (!config.HasZeroconfPublisher())
 		return {};
 
 	/* ask the kernel for the effective address via getsockname(),
@@ -172,6 +172,22 @@ LbListener::~LbListener() noexcept
 		instance.GetAvahiPublisher().RemoveService(*avahi_service);
 #endif
 }
+
+#ifdef HAVE_AVAHI
+
+void
+LbListener::SetZeroconfVisible(bool _visible) noexcept
+{
+	assert(avahi_service);
+
+	if (avahi_service->visible == _visible)
+		return;
+
+	avahi_service->visible = _visible;
+	instance.GetAvahiPublisher().UpdateServices();
+}
+
+#endif
 
 void
 LbListener::Scan(LbGotoMap &goto_map)

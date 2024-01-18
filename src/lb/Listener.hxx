@@ -54,6 +54,10 @@ public:
 		return listener.GetEventLoop();
 	}
 
+#ifdef HAVE_AVAHI
+	void SetZeroconfVisible(bool _visible) noexcept;
+#endif
+
 	auto GetLocalAddress() const noexcept {
 		return listener.GetLocalAddress();
 	}

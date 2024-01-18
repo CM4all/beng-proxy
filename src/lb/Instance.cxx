@@ -107,7 +107,24 @@ LbInstance::GetAvahiPublisher()
 	return *avahi_publisher;
 }
 
-#endif
+#endif // HAVE_AVAHI
+
+void
+LbInstance::ReloadState() noexcept
+{
+#ifdef HAVE_AVAHI
+	for (auto &i : listeners) {
+		const auto &c = i.GetConfig();
+		if (c.name.empty())
+			continue;
+
+		if (c.HasZeroconfPublisher()) {
+			const auto path = fmt::format("beng-lb/listener/{}/zeroconf", c.name);
+			i.SetZeroconfVisible(state_directories.GetBool(path.c_str(), true));
+		}
+	}
+#endif // HAVE_AVAHI
+}
 
 void
 LbInstance::Compress() noexcept

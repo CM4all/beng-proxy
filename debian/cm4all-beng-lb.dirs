@@ -1,2 +1,6 @@
 etc/cm4all/beng/lb/conf.d
 var/log/cm4all/beng-lb
+
+etc/cm4all/state/beng-lb
+lib/cm4all/state/beng-lb
+var/lib/cm4all/state/beng-lb

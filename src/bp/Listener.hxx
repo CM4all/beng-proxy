@@ -47,6 +47,25 @@ public:
 		   UniqueSocketDescriptor _socket);
 	~BpListener() noexcept;
 
+	/**
+	 * Returns the name used for loading settings from
+	 * #StateDirectories.
+	 */
+	std::string_view GetStateName() const noexcept {
+		if (tag != nullptr)
+			return tag;
+
+		return {};
+	}
+
+#ifdef HAVE_AVAHI
+	bool HasZeroconf() const noexcept {
+		return avahi_service != nullptr;
+	}
+
+	void SetZeroconfVisible(bool _visible) noexcept;
+#endif // HAVE_AVAHI
+
 	auto GetLocalAddress() const noexcept {
 		return listener.GetLocalAddress();
 	}

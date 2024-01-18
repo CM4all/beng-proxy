@@ -52,6 +52,11 @@ struct LbListenerConfig : SocketConfig {
 
 #ifdef HAVE_AVAHI
 	[[gnu::pure]]
+	bool HasZeroconfPublisher() const noexcept {
+		return !zeroconf_service.empty();
+	}
+
+	[[gnu::pure]]
 	bool HasZeroConf() const noexcept {
 		return destination.HasZeroConf();
 	}

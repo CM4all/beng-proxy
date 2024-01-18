@@ -225,6 +225,23 @@ BpInstance::FlushTranslationCaches() noexcept
 }
 
 void
+BpInstance::ReloadState() noexcept
+{
+#ifdef HAVE_AVAHI
+	for (auto &i : listeners) {
+		const auto name = i.GetStateName();
+		if (name.empty())
+			continue;
+
+		if (i.HasZeroconf()) {
+			const auto path = fmt::format("beng-proxy/listener/{}/zeroconf", name);
+			i.SetZeroconfVisible(state_directories.GetBool(path.c_str(), true));
+		}
+	}
+#endif // HAVE_AVAHI
+}
+
+void
 BpInstance::OnMemoryWarning(uint64_t memory_usage,
 			    uint64_t memory_max) noexcept
 {

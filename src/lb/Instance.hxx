@@ -14,6 +14,7 @@
 #include "event/ShutdownListener.hxx"
 #include "net/FailureManager.hxx"
 #include "io/Logger.hxx"
+#include "io/StateDirectories.hxx"
 #include "util/IntrusiveList.hxx"
 #include "lb_features.h"
 
@@ -46,6 +47,8 @@ struct LbInstance final : PInstance, Avahi::ErrorHandler {
 	SignalEvent sighup_event;
 
 	FarTimerEvent compress_event;
+
+	const StateDirectories state_directories;
 
 	HttpStats http_stats;
 
@@ -111,6 +114,8 @@ struct LbInstance final : PInstance, Avahi::ErrorHandler {
 
 	[[gnu::pure]]
 	BengControl::Stats GetStats() const noexcept;
+
+	void ReloadState() noexcept;
 
 	/**
 	 * Compress memory allocators, try to return unused memory areas

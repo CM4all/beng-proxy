@@ -90,6 +90,22 @@ BpListener::~BpListener() noexcept
 #endif
 }
 
+#ifdef HAVE_AVAHI
+
+void
+BpListener::SetZeroconfVisible(bool _visible) noexcept
+{
+	assert(avahi_service);
+
+	if (avahi_service->visible == _visible)
+		return;
+
+	avahi_service->visible = _visible;
+	instance.GetAvahiPublisher().UpdateServices();
+}
+
+#endif
+
 void
 BpListener::OnFilteredSocketConnect(PoolPtr pool,
 				    UniquePoolPtr<FilteredSocket> socket,
