@@ -47,10 +47,6 @@ public:
 		   UniqueSocketDescriptor _socket);
 	~BpListener() noexcept;
 
-	void Listen(UniqueSocketDescriptor &&_fd) noexcept {
-		listener.Listen(std::move(_fd));
-	}
-
 	auto GetLocalAddress() const noexcept {
 		return listener.GetLocalAddress();
 	}
