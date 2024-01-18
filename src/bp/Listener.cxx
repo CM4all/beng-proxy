@@ -21,7 +21,7 @@
 #include "lib/avahi/Publisher.hxx"
 
 inline std::unique_ptr<Avahi::Service>
-BPListener::MakeAvahiService(const BpListenerConfig &config) const noexcept
+BpListener::MakeAvahiService(const BpListenerConfig &config) const noexcept
 {
 	if (config.zeroconf_service.empty())
 		return {};
@@ -56,7 +56,7 @@ MakeSslFactory(const BpListenerConfig &config)
 	return ssl_factory;
 }
 
-BPListener::BPListener(BpInstance &_instance,
+BpListener::BpListener(BpInstance &_instance,
 		       TaggedHttpStats &_http_stats,
 		       std::shared_ptr<TranslationService> _translation_service,
 		       const BpListenerConfig &config,
@@ -82,7 +82,7 @@ BPListener::BPListener(BpInstance &_instance,
 #endif
 }
 
-BPListener::~BPListener() noexcept
+BpListener::~BpListener() noexcept
 {
 #ifdef HAVE_AVAHI
 	if (avahi_service)
@@ -91,7 +91,7 @@ BPListener::~BPListener() noexcept
 }
 
 void
-BPListener::OnFilteredSocketConnect(PoolPtr pool,
+BpListener::OnFilteredSocketConnect(PoolPtr pool,
 				    UniquePoolPtr<FilteredSocket> socket,
 				    SocketAddress address,
 				    const SslFilter *ssl_filter) noexcept
@@ -103,7 +103,7 @@ BPListener::OnFilteredSocketConnect(PoolPtr pool,
 }
 
 void
-BPListener::OnFilteredSocketError(std::exception_ptr ep) noexcept
+BpListener::OnFilteredSocketError(std::exception_ptr ep) noexcept
 {
 	LogConcat(2, "listener", ep);
 }

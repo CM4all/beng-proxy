@@ -62,7 +62,7 @@ class HttpCache;
 class FilterCache;
 class EncodingCache;
 class SessionManager;
-class BPListener;
+class BpListener;
 struct BpConnection;
 namespace NgHttp2 { class Stock; }
 namespace Avahi { class Client; class Publisher; }
@@ -88,7 +88,7 @@ struct BpInstance final : PInstance, BengControl::Handler, SpawnServerClientHand
 
 	std::map<std::string, TaggedHttpStats> listener_stats;
 
-	std::forward_list<BPListener> listeners;
+	std::forward_list<BpListener> listeners;
 
 	IntrusiveList<
 		BpConnection,

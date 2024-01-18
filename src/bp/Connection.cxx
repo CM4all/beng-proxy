@@ -32,7 +32,7 @@
 #include <assert.h>
 
 BpConnection::BpConnection(PoolPtr &&_pool, BpInstance &_instance,
-			   BPListener &_listener,
+			   BpListener &_listener,
 			   SocketAddress remote_address,
 			   const SslFilter *ssl_filter) noexcept
 	:PoolHolder(std::move(_pool)),
@@ -148,7 +148,7 @@ BpConnection::HttpConnectionClosed() noexcept
  */
 
 void
-new_connection(PoolPtr pool, BpInstance &instance, BPListener &listener,
+new_connection(PoolPtr pool, BpInstance &instance, BpListener &listener,
 	       HttpServerRequestHandler *request_handler,
 	       UniquePoolPtr<FilteredSocket> socket,
 	       const SslFilter *ssl_filter,

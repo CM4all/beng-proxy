@@ -15,7 +15,7 @@ class FilteredSocket;
 class SslFilter;
 struct BpConfig;
 struct BpInstance;
-class BPListener;
+class BpListener;
 class SocketAddress;
 struct HttpServerConnection;
 namespace NgHttp2 { class ServerConnection; }
@@ -28,7 +28,7 @@ struct BpConnection final
 	  public IntrusiveListHook<IntrusiveHookMode::NORMAL>
 {
 	BpInstance &instance;
-	BPListener &listener;
+	BpListener &listener;
 	const BpConfig &config;
 
 	/**
@@ -51,7 +51,7 @@ struct BpConnection final
 	const bool ssl;
 
 	BpConnection(PoolPtr &&_pool, BpInstance &_instance,
-		     BPListener &_listener,
+		     BpListener &_listener,
 		     SocketAddress remote_address,
 		     const SslFilter *_ssl_filter) noexcept;
 	~BpConnection() noexcept;
@@ -74,7 +74,7 @@ struct BpConnection final
 
 void
 new_connection(PoolPtr pool, BpInstance &instance,
-	       BPListener &listener,
+	       BpListener &listener,
 	       HttpServerRequestHandler *request_handler,
 	       UniquePoolPtr<FilteredSocket> socket,
 	       const SslFilter *ssl_filter,

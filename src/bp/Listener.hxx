@@ -20,7 +20,7 @@ namespace Avahi { struct Service; }
 /**
  * Listener for incoming HTTP connections.
  */
-class BPListener final : FilteredSocketListenerHandler {
+class BpListener final : FilteredSocketListenerHandler {
 	BpInstance &instance;
 
 	TaggedHttpStats &http_stats;
@@ -40,12 +40,12 @@ class BPListener final : FilteredSocketListenerHandler {
 #endif
 
 public:
-	BPListener(BpInstance &_instance,
+	BpListener(BpInstance &_instance,
 		   TaggedHttpStats &_http_stats,
 		   std::shared_ptr<TranslationService> _translation_service,
 		   const BpListenerConfig &config,
 		   UniqueSocketDescriptor _socket);
-	~BPListener() noexcept;
+	~BpListener() noexcept;
 
 	void Listen(UniqueSocketDescriptor &&_fd) noexcept {
 		listener.Listen(std::move(_fd));
