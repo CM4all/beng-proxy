@@ -35,7 +35,8 @@ MakeSslFactory(const BpListenerConfig &config)
 BPListener::BPListener(BpInstance &_instance,
 		       TaggedHttpStats &_http_stats,
 		       std::shared_ptr<TranslationService> _translation_service,
-		       const BpListenerConfig &config)
+		       const BpListenerConfig &config,
+		       UniqueSocketDescriptor _socket)
 	:instance(_instance),
 	 http_stats(_http_stats),
 	 translation_service(_translation_service),
@@ -46,7 +47,7 @@ BPListener::BPListener(BpInstance &_instance,
 	 auth_alt_host(config.auth_alt_host),
 	 listener(instance.root_pool, instance.event_loop,
 		  MakeSslFactory(config),
-		  *this)
+		  *this, std::move(_socket))
 {
 }
 

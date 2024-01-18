@@ -235,12 +235,10 @@ BpInstance::AddListener(const BpListenerConfig &c
 	listeners.emplace_front(*this,
 				listener_stats[c.tag],
 				std::move(ts),
-				c);
-	auto &listener = listeners.front();
-
-	listener.Listen(c.Create(SOCK_STREAM));
+				c, c.Create(SOCK_STREAM));
 
 #ifdef HAVE_AVAHI
+	auto &listener = listeners.front();
 	if (!c.zeroconf_service.empty()) {
 		const char *const interface = c.GetZeroconfInterface();
 
@@ -549,8 +547,8 @@ try {
 		instance.listeners.emplace_front(instance,
 						 instance.listener_stats[cmdline.debug_listener_tag],
 						 instance.translation_service,
-						 config);
-		instance.listeners.front().Listen(UniqueSocketDescriptor(STDIN_FILENO));
+						 config,
+						 UniqueSocketDescriptor{STDIN_FILENO});
 	}
 
 	/* daemonize II */

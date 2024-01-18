@@ -124,15 +124,13 @@ LbListener::LbListener(LbInstance &_instance,
 	:instance(_instance), config(_config),
 	 listener(instance.root_pool, instance.event_loop,
 		  MakeSslFactory(config, instance),
-		  *this),
+		  *this, config.Create(SOCK_STREAM)),
 	 logger("listener " + config.name),
 	 protocol(config.destination.GetProtocol())
 {
 	if (config.max_connections_per_ip > 0)
 		client_accounting = std::make_unique<ClientAccountingMap>(GetEventLoop(),
 									  config.max_connections_per_ip);
-
-	listener.Listen(config.Create(SOCK_STREAM));
 }
 
 LbListener::~LbListener() noexcept = default;

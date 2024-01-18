@@ -37,7 +37,8 @@ public:
 	BPListener(BpInstance &_instance,
 		   TaggedHttpStats &_http_stats,
 		   std::shared_ptr<TranslationService> _translation_service,
-		   const BpListenerConfig &config);
+		   const BpListenerConfig &config,
+		   UniqueSocketDescriptor _socket);
 	~BPListener() noexcept;
 
 	void Listen(UniqueSocketDescriptor &&_fd) noexcept {

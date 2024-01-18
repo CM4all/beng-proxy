@@ -95,8 +95,9 @@ private:
 FilteredSocketListener::FilteredSocketListener(struct pool &_pool,
 					       EventLoop &event_loop,
 					       std::unique_ptr<SslFactory> _ssl_factory,
-					       FilteredSocketListenerHandler &_handler) noexcept
-	:ServerSocket(event_loop),
+					       FilteredSocketListenerHandler &_handler,
+					       UniqueSocketDescriptor _socket) noexcept
+	:ServerSocket(event_loop, std::move(_socket)),
 	 parent_pool(_pool), ssl_factory(std::move(_ssl_factory)), handler(_handler)
 {
 }
