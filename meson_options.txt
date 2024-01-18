@@ -1,6 +1,8 @@
 option('documentation', type: 'feature',
   description: 'Build documentation')
 
+option('test', type: 'feature', description: 'Build unit tests')
+
 option('certdb', type: 'boolean', value: true, description: 'Build with certdb support')
 
 option('brotli', type: 'feature', description: 'Brotli support')

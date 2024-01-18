@@ -1,5 +1,7 @@
 gtest = dependency('gtest', main: true,
                    include_type: 'system',
+                   disabler: true,
+                   required: get_option('test'),
                    fallback: ['gtest', 'gtest_main_dep'])
 
 test_instance = static_library(
