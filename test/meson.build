@@ -1,4 +1,6 @@
-gtest = dependency('gtest', main: true, fallback: ['gtest', 'gtest_main_dep'])
+gtest = dependency('gtest', main: true,
+                   include_type: 'system',
+                   fallback: ['gtest', 'gtest_main_dep'])
 
 test_instance = static_library(
   'TestInstance',
