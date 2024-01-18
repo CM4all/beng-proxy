@@ -210,7 +210,8 @@ LbLuaHandler::LbLuaHandler(LuaInitHook &init_hook,
 	function.Set(Lua::StackIndex(-2));
 
 	LbLuaRequest::Register(L);
-	Lua::SetTable(L, -3, "__index", LbLuaRequestIndex);
+	Lua::SetTable(L, Lua::RelativeStackIndex{-1},
+		      "__index", LbLuaRequestIndex);
 	lua_pop(L, 1);
 }
 
