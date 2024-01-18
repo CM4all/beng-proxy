@@ -86,7 +86,7 @@ ExpansibleBuffer::Set(std::span<const std::byte> src) noexcept
 		return false;
 
 	size = src.size();
-	memcpy(buffer, src.data(), src.size());
+	std::copy(src.begin(), src.end(), buffer);
 	return true;
 }
 
@@ -133,7 +133,6 @@ char *
 ExpansibleBuffer::StringDup(struct pool &_pool) const noexcept
 {
 	char *p = (char *)p_malloc(&_pool, size + 1);
-	memcpy(p, buffer, size);
-	p[size] = 0;
+	*std::copy_n(reinterpret_cast<char *>(buffer), size, p) = 0;
 	return p;
 }
