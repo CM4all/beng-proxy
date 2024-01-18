@@ -51,13 +51,6 @@ public:
 		listener.Listen(std::move(_fd));
 	}
 
-#ifdef HAVE_AVAHI
-	template<typename S>
-	void SetAvahiService(S &&_avahi_service) noexcept {
-		avahi_service = std::forward<S>(_avahi_service);
-	}
-#endif
-
 	auto GetLocalAddress() const noexcept {
 		return listener.GetLocalAddress();
 	}
