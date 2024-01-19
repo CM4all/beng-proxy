@@ -82,6 +82,9 @@ Commands
   then this is a tag which fades only child processes with the given
   ``CHILD_TAG``.
 
+- ``TERMINATE_CHILDREN``: Kill child processes immediately.  The
+  payload is a ``CHILD_TAG`` value selecting the child processes.
+
 - ``TERMINATE_CHILDREN``: Terminate all child processes with the
   ``CHILD_TAG`` from the payload.  Unlike ``FADE_CHILDREN``, this does
   not wait for completion of the child's currently work.Fade out child
@@ -111,6 +114,13 @@ Commands
 
 - ``DISCARD_SESSION``: Discard the session with the given
   :ref:`ATTACH_SESSION <t_attach_session>` value.
+
+- ``ENABLE_QUEUE`` / ``DISABLE_QUEUE``: Enable the queue named in the
+  payload.  (This is used only by `Workshop
+  <https://github.com/CM4all/workshop>`__.)
+
+- ``RELOAD_STATE``: Reload state from the state directories and apply
+  it to the current process.
 
 Only ``TCACHE_INVALIDATE``,
 ``FLUSH_FILTER_CACHE``, ``STATS`` and ``NODE_STATUS`` are allowed when
