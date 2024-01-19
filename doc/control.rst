@@ -119,8 +119,10 @@ Commands
   payload.  (This is used only by `Workshop
   <https://github.com/CM4all/workshop>`__.)
 
-- ``RELOAD_STATE``: Reload state from the state directories and apply
-  it to the current process.
+.. _reload_state:
+
+- ``RELOAD_STATE``: Reload state from the :ref:`state directories
+  <state>` and apply it to the current process.
 
 Only ``TCACHE_INVALIDATE``,
 ``FLUSH_FILTER_CACHE``, ``STATS`` and ``NODE_STATUS`` are allowed when

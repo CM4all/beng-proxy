@@ -13,6 +13,7 @@ custom_target(
     'lb.rst',
     'log.rst',
     'control.rst',
+    'state.rst',
     'translation.rst',
     'certdb.rst',
   ],
