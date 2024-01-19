@@ -67,12 +67,13 @@ Commands
 
 - ``ENABLE_NODE``: Re-enable the specified node after a failure,
   remove all failure/fade states. The payload is the node name
-  according to lb.conf, followed by a colon and the port number.
+  according to :file:`lb.conf`, followed by a colon and the port
+  number.
 
 - ``FADE_NODE``: Fade out the specified node, preparing for its
   shutdown: the server will only be used for pre-existing sessions
   that refer to it. The payload is the node name according to
-  ``lb.conf``, followed by a colon and the port number. The effect
+  :file:`lb.conf`, followed by a colon and the port number. The effect
   lasts for 3 hours.
 
 .. _fade_children:
