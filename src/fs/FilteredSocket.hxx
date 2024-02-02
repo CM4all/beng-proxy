@@ -49,18 +49,21 @@ class FilteredSocket final : BufferedSocketHandler {
 	bool drained;
 
 public:
+	[[nodiscard]]
 	explicit FilteredSocket(EventLoop &_event_loop) noexcept
 		:base(_event_loop) {}
 
 	/**
 	 * Wrapper for InitDummy().
 	 */
+	[[nodiscard]]
 	FilteredSocket(EventLoop &_event_loop,
 		       UniqueSocketDescriptor _fd, FdType _fd_type,
 		       SocketFilterPtr _filter={});
 
 	~FilteredSocket() noexcept;
 
+	[[nodiscard]]
 	EventLoop &GetEventLoop() noexcept {
 		return base.GetEventLoop();
 	}
@@ -81,10 +84,12 @@ public:
 	void Reinit(Event::Duration write_timeout,
 		    BufferedSocketHandler &handler) noexcept;
 
+	[[nodiscard]]
 	bool HasFilter() const noexcept {
 		return filter != nullptr;
 	}
 
+	[[nodiscard]]
 	const SocketFilter *GetFilter() const noexcept {
 		return filter.get();
 	}
@@ -94,10 +99,12 @@ public:
 	 * obtain metadata (socket options, addresses).  Don't do
 	 * anything else with it.
 	 */
+	[[nodiscard]]
 	SocketDescriptor GetSocket() const noexcept {
 		return base.GetSocket();
 	}
 
+	[[nodiscard]]
 	FdType GetType() const noexcept {
 		return filter == nullptr
 			? base.GetType()
@@ -158,11 +165,13 @@ public:
 		base.Abandon();
 	}
 
+	[[nodiscard]]
 	auto ClosedByPeer() noexcept {
 		return base.ClosedByPeer();
 	}
 
 #ifndef NDEBUG
+	[[nodiscard]]
 	bool HasEnded() const noexcept {
 		return ended;
 	}
@@ -178,6 +187,7 @@ public:
 	 * Returns the socket descriptor and calls Abandon().  Returns -1
 	 * if the input buffer is not empty.
 	 */
+	[[nodiscard]]
 	int AsFD() noexcept {
 		return filter != nullptr
 			? -1
@@ -189,6 +199,7 @@ public:
 	 * whether the socket is connected, just whether it is known to be
 	 * closed.
 	 */
+	[[nodiscard]]
 	bool IsConnected() const noexcept {
 #ifndef NDEBUG
 		/* work around bogus assertion failure */
@@ -203,6 +214,7 @@ public:
 	 * Is the object still usable?  The socket may be closed already, but
 	 * the input buffer may still have data.
 	 */
+	[[nodiscard]]
 	bool IsValid() const noexcept {
 		return base.IsValid();
 	}
@@ -210,6 +222,7 @@ public:
 	/**
 	 * Accessor for #drained.
 	 */
+	[[nodiscard]]
 	bool IsDrained() const noexcept {
 		assert(IsValid());
 
@@ -219,21 +232,22 @@ public:
 	/**
 	 * Is the input buffer empty?
 	 */
-	[[gnu::pure]]
+	[[nodiscard]] [[gnu::pure]]
 	bool IsEmpty() const noexcept;
 
 	/**
 	 * Is the input buffer full?
 	 */
-	[[gnu::pure]]
+	[[nodiscard]] [[gnu::pure]]
 	bool IsFull() const noexcept;
 
 	/**
 	 * Returns the number of bytes in the input buffer.
 	 */
-	[[gnu::pure]]
+	[[nodiscard]] [[gnu::pure]]
 	std::size_t GetAvailable() const noexcept;
 
+	[[nodiscard]]
 	std::span<std::byte> ReadBuffer() const noexcept;
 
 	/**
@@ -259,16 +273,20 @@ public:
 	 * data available yet) an event gets scheduled and the
 	 * function returns immediately.
 	 */
+	[[nodiscard]]
 	BufferedReadResult Read() noexcept;
 
+	[[nodiscard]]
 	ssize_t Write(std::span<const std::byte> src) noexcept;
 
+	[[nodiscard]]
 	ssize_t WriteV(std::span<const struct iovec> v) noexcept {
 		assert(filter == nullptr);
 
 		return base.WriteV(v);
 	}
 
+	[[nodiscard]]
 	ssize_t WriteFrom(FileDescriptor fd, FdType fd_type, off_t *offset,
 			  std::size_t length) noexcept {
 		assert(filter == nullptr);
@@ -276,7 +294,7 @@ public:
 		return base.WriteFrom(fd, fd_type, offset, length);
 	}
 
-	[[gnu::pure]]
+	[[nodiscard]] [[gnu::pure]]
 	bool IsReadyForWriting() const noexcept {
 		assert(filter == nullptr);
 
@@ -324,27 +342,28 @@ public:
 			base.UnscheduleWrite();
 	}
 
-	[[gnu::pure]]
+	[[nodiscard]] [[gnu::pure]]
 	bool InternalIsEmpty() const noexcept {
 		assert(filter != nullptr);
 
 		return base.IsEmpty();
 	}
 
-	[[gnu::pure]]
+	[[nodiscard]] [[gnu::pure]]
 	bool InternalIsFull() const noexcept {
 		assert(filter != nullptr);
 
 		return base.IsFull();
 	}
 
-	[[gnu::pure]]
+	[[nodiscard]] [[gnu::pure]]
 	std::size_t InternalGetAvailable() const noexcept {
 		assert(filter != nullptr);
 
 		return base.GetAvailable();
 	}
 
+	[[nodiscard]]
 	std::span<std::byte> InternalReadBuffer() const noexcept {
 		assert(filter != nullptr);
 
@@ -363,26 +382,31 @@ public:
 		base.AfterConsumed();
 	}
 
+	[[nodiscard]]
 	DefaultFifoBuffer &InternalGetInputBuffer() noexcept {
 		return base.GetInputBuffer();
 	}
 
+	[[nodiscard]]
 	const DefaultFifoBuffer &GetInputBuffer() const noexcept {
 		return base.GetInputBuffer();
 	}
 
+	[[nodiscard]]
 	BufferedReadResult InternalRead() noexcept {
 		assert(filter != nullptr);
 
 		return base.Read();
 	}
 
+	[[nodiscard]]
 	ssize_t InternalDirectWrite(std::span<const std::byte> src) noexcept {
 		assert(filter != nullptr);
 
 		return base.DirectWrite(src);
 	}
 
+	[[nodiscard]]
 	ssize_t InternalWrite(std::span<const std::byte> src) noexcept {
 		assert(filter != nullptr);
 
@@ -404,6 +428,7 @@ public:
 	 * A #SocketFilter must call this function whenever its output buffer
 	 * drains (only if it implements such a buffer).
 	 */
+	[[nodiscard]]
 	bool InternalDrained() noexcept;
 
 	void InternalScheduleRead() noexcept {
@@ -430,6 +455,7 @@ public:
 		base.UnscheduleWrite();
 	}
 
+	[[nodiscard]]
 	BufferedResult InvokeData() noexcept {
 		assert(filter != nullptr);
 
@@ -441,12 +467,14 @@ public:
 		}
 	}
 
+	[[nodiscard]]
 	bool InvokeClosed() noexcept {
 		assert(filter != nullptr);
 
 		return handler->OnBufferedClosed();
 	}
 
+	[[nodiscard]]
 	bool InvokeRemaining(std::size_t remaining) noexcept {
 		assert(filter != nullptr);
 
@@ -465,6 +493,7 @@ public:
 		handler->OnBufferedEnd();
 	}
 
+	[[nodiscard]]
 	bool InvokeWrite() noexcept {
 		assert(filter != nullptr);
 
@@ -476,6 +505,7 @@ public:
 		}
 	}
 
+	[[nodiscard]]
 	bool InvokeTimeout() noexcept;
 
 	void InvokeError(std::exception_ptr e) noexcept {
