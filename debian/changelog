@@ -1,5 +1,6 @@
 cm4all-beng-proxy (18.0.54) unstable; urgency=low
 
+  * http_server: send TLS close alert before shutting down socket
   * zeroconf: fix bogus assertion failure
 
  --   

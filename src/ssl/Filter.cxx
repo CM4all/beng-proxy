@@ -191,6 +191,19 @@ ssl_encrypt(SSL *ssl, ForeignFifoBuffer<std::byte> &buffer)
 	}
 }
 
+static void
+ssl_shutdown(SSL &ssl)
+{
+	/* this puts a "TLS close alert" into the encrypted_output
+	   buffer */
+	int result = SSL_shutdown(&ssl);
+	if (result < 0) {
+		const int error = SSL_get_error(&ssl, result);
+		if (IsSslError(error))
+			throw SslError{"SSL_shutdown() failed"};
+	}
+}
+
 inline void
 SslFilter::Encrypt()
 {
@@ -216,6 +229,8 @@ SslFilter::Run(ThreadSocketFilterInternal &f)
 {
 	/* copy input (and output to make room for more output) */
 
+	bool shutting_down;
+
 	{
 		const std::scoped_lock lock{f.mutex};
 
@@ -237,6 +252,8 @@ SslFilter::Run(ThreadSocketFilterInternal &f)
 			f.again = true;
 			return;
 		}
+
+		shutting_down = f.shutting_down && f.plain_output.empty();
 	}
 
 	/* let OpenSSL work */
@@ -282,6 +299,9 @@ SslFilter::Run(ThreadSocketFilterInternal &f)
 			break;
 		}
 	}
+
+	if (shutting_down && plain_output.empty())
+		ssl_shutdown(*ssl);
 
 	/* copy output */
 
