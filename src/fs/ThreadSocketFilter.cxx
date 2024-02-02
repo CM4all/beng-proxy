@@ -634,6 +634,17 @@ ThreadSocketFilter::InternalWrite() noexcept
 }
 
 void
+ThreadSocketFilter::Shutdown() noexcept
+{
+	assert(connected);
+	assert(!shutting_down);
+
+	shutting_down = true;
+	socket->InternalUndrained();
+	Schedule();
+}
+
+void
 ThreadSocketFilter::OnClosed() noexcept
 {
 	assert(connected);

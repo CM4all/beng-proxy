@@ -110,6 +110,12 @@ struct ThreadSocketFilterInternal : ThreadJob {
 	 */
 	bool handshaking = true;
 
+	/**
+	 * True if Shutdown() should be handled by the
+	 * #ThreadSocketFilterHandler.
+	 */
+	bool shutting_down = false;
+
 	mutable std::mutex mutex;
 
 	/**
@@ -306,6 +312,7 @@ public:
 	void ScheduleWrite() noexcept override;
 	void UnscheduleWrite() noexcept override;
 	bool InternalWrite() noexcept override;
+	void Shutdown() noexcept override;
 	void OnClosed() noexcept override;
 	bool OnRemaining(std::size_t remaining) noexcept override;
 	void OnEnd() override;
