@@ -33,14 +33,19 @@ public:
 	 * FilteredSocket::InternalConsumed() to process data from the
 	 * buffer.
 	 */
+	[[nodiscard]]
 	virtual BufferedResult OnData() noexcept = 0;
 
+	[[nodiscard]] [[gnu::pure]]
 	virtual bool IsEmpty() const noexcept = 0;
 
+	[[nodiscard]] [[gnu::pure]]
 	virtual bool IsFull() const noexcept = 0;
 
+	[[nodiscard]] [[gnu::pure]]
 	virtual std::size_t GetAvailable() const noexcept = 0;
 
+	[[nodiscard]] [[gnu::pure]]
 	virtual std::span<std::byte> ReadBuffer() noexcept = 0;
 
 	virtual void Consumed(std::size_t nbytes) noexcept = 0;
@@ -51,6 +56,7 @@ public:
 	 * The client asks to read more data.  The filter shall call
 	 * FilteredSocket::InvokeData() again.
 	 */
+	[[nodiscard]]
 	virtual BufferedReadResult Read() noexcept = 0;
 
 	/**
@@ -58,6 +64,7 @@ public:
 	 * processes it, and may then call
 	 * FilteredSocket::InvokeWrite().
 	 */
+	[[nodiscard]]
 	virtual ssize_t Write(std::span<const std::byte> src) noexcept = 0;
 
 	/**
@@ -88,6 +95,7 @@ public:
 	 * This method must not destroy the socket.  If an error occurs,
 	 * it shall return false.
 	 */
+	[[nodiscard]]
 	virtual bool InternalWrite() noexcept = 0;
 
 	/**
@@ -97,6 +105,7 @@ public:
 	 */
 	virtual void OnClosed() noexcept {}
 
+	[[nodiscard]]
 	virtual bool OnRemaining(std::size_t remaining) noexcept = 0;
 
 	/**
