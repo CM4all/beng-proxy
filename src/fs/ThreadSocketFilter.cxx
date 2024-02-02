@@ -270,7 +270,7 @@ try {
 				/* don't care for the return value; the socket and
 				   this object are going to be closed anyway */
 				socket->InternalDirectWrite(r);
-				socket->Shutdown();
+				socket->InternalShutdown();
 			}
 		}
 

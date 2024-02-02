@@ -205,6 +205,10 @@ HttpServerConnection::ResponseIstreamFinished()
 		/* keepalive disabled and response is finished: we must close
 		   the connection */
 
+		/* shut down the socket gracefully to allow the TCP
+		   stack to transfer remaining response data */
+		socket->Shutdown();
+
 		if (socket->IsDrained()) {
 			Done();
 			return false;

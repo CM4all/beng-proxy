@@ -117,6 +117,7 @@ FilteredSocket::Init(SocketDescriptor fd, FdType fd_type,
 #endif
 
 	drained = true;
+	shutting_down = false;
 
 	if (filter != nullptr)
 		filter->Init(*this);
@@ -140,6 +141,7 @@ FilteredSocket::InitDummy(SocketDescriptor fd, FdType fd_type,
 #endif
 
 	drained = true;
+	shutting_down = false;
 
 	if (filter != nullptr)
 		filter->Init(*this);
@@ -240,6 +242,10 @@ FilteredSocket::InternalDrained() noexcept
 		return true;
 
 	drained = true;
+
+	if (shutting_down)
+		base.Shutdown();
+
 	return handler->OnBufferedDrained();
 }
 

@@ -48,6 +48,8 @@ class FilteredSocket final : BufferedSocketHandler {
 	 */
 	bool drained;
 
+	bool shutting_down;
+
 public:
 	[[nodiscard]]
 	explicit FilteredSocket(EventLoop &_event_loop) noexcept
@@ -126,7 +128,25 @@ public:
 			callback();
 	}
 
+	/**
+	 * Prepare for shutdown of the socket.  This may send data on
+	 * the socket.  After returning, check IsDrained() and wait
+	 * for the OnBufferedDrained() callback.
+	 *
+	 * This method cannot fail.
+	 */
 	void Shutdown() noexcept {
+		assert(!shutting_down);
+
+		if (filter != nullptr) {
+			filter->Shutdown();
+
+			if (!IsDrained()) {
+				shutting_down = true;
+				return;
+			}
+		}
+
 		base.Shutdown();
 	}
 
@@ -453,6 +473,10 @@ public:
 		assert(filter != nullptr);
 
 		base.UnscheduleWrite();
+	}
+
+	void InternalShutdown() noexcept {
+		base.Shutdown();
 	}
 
 	[[nodiscard]]

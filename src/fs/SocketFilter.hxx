@@ -99,6 +99,16 @@ public:
 	virtual bool InternalWrite() noexcept = 0;
 
 	/**
+	 * Prepare for shutdown of the socket.  This may send data on
+	 * the socket.  After returning, check
+	 * FilteredSocket::IsDrained() and wait for the
+	 * OnBufferedDrained() callback.
+	 *
+	 * This method cannot fail.
+	 */
+	virtual void Shutdown() noexcept {}
+
+	/**
 	 * Called after the socket has been closed/abandoned (either by
 	 * the peer or locally).  The filter shall update its internal
 	 * state, but not do any invasive actions.

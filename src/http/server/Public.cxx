@@ -375,10 +375,6 @@ HttpServerConnection::Done() noexcept
 	assert(handler != nullptr);
 	assert(request.read_state == Request::START);
 
-	/* shut down the socket gracefully to allow the TCP stack to
-	   transfer remaining response data */
-	socket->Shutdown();
-
 	auto *_handler = handler;
 	handler = nullptr;
 
