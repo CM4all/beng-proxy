@@ -140,17 +140,28 @@ VerifyPassword(const char *crypted_password,
 }
 
 static FILE *
-OpenSiblingFile(FileDescriptor directory, const char *path,
+OpenSiblingFile(FileDescriptor directory, std::string_view base_relative,
+		const char *path,
 		const char *sibling_name)
 {
 	char buffer[4096];
 
 	const char *slash = strrchr(path, '/');
-	if (slash != nullptr) {
-		if (size_t(slash + 1 - path) + strlen(sibling_name) >= sizeof(buffer))
+	if (slash != nullptr || !base_relative.empty()) {
+		const std::string_view parent = slash != nullptr
+			? std::string_view{path, slash + 1}
+			: std::string_view{};
+		const std::string_view sibling_name_v{sibling_name};
+
+		if (base_relative.size() + parent.size() + sibling_name_v.size() >= sizeof(buffer))
 			return nullptr;
 
-		strcpy((char *)mempcpy(buffer, path, slash + 1 - path), sibling_name);
+		char *i = buffer;
+		i = std::copy(base_relative.begin(), base_relative.end(), i);
+		i = std::copy(parent.begin(), parent.end(), i);
+		i = std::copy(sibling_name_v.begin(), sibling_name_v.end(), i);
+		*i = 0;
+
 		sibling_name = buffer;
 	}
 
@@ -162,10 +173,11 @@ OpenSiblingFile(FileDescriptor directory, const char *path,
 }
 
 static bool
-CheckAccessFileFor(FileDescriptor directory,
+CheckAccessFileFor(FileDescriptor directory, std::string_view base_relative,
 		   const StringMap &request_headers, const char *html_path)
 {
-	FILE *file = OpenSiblingFile(directory, html_path, ".access");
+	FILE *file = OpenSiblingFile(directory, base_relative,
+				     html_path, ".access");
 	if (file == nullptr)
 		return true;
 
@@ -198,7 +210,8 @@ Request::EmulateModAuthEasy(const FileAddress &address,
 			    UniqueFileDescriptor &fd,
 			    const struct statx &st) noexcept
 {
-	if (!CheckAccessFileFor(handler.file.base, request.headers,
+	if (!CheckAccessFileFor(handler.file.base, handler.file.base_relative,
+				request.headers,
 				address.path)) {
 		DispatchUnauthorized(*this);
 		return true;

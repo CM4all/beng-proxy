@@ -1,6 +1,6 @@
 cm4all-beng-proxy (18.0.55) unstable; urgency=low
 
-  * 
+  * bp/mod_auth_easy: fix ".access" lookup directory
 
  --   
 
