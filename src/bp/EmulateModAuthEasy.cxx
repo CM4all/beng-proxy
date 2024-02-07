@@ -167,7 +167,7 @@ OpenSiblingFile(FileDescriptor directory, std::string_view base_relative,
 	}
 
 	FileDescriptor fd;
-	if (!fd.Open(directory, sibling_name, O_RDONLY))
+	if (!fd.Open(directory, sibling_name, O_RDONLY|O_NOFOLLOW))
 		return nullptr;
 
 	return fdopen(fd.Get(), "r");
