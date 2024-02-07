@@ -157,7 +157,8 @@ OpenSiblingFile(FileDescriptor directory, std::string_view base_relative,
 			return nullptr;
 
 		char *i = buffer;
-		i = std::copy(base_relative.begin(), base_relative.end(), i);
+		if (*path != '/')
+			i = std::copy(base_relative.begin(), base_relative.end(), i);
 		i = std::copy(parent.begin(), parent.end(), i);
 		i = std::copy(sibling_name_v.begin(), sibling_name_v.end(), i);
 		*i = 0;

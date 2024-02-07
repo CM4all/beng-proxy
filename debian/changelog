@@ -1,6 +1,6 @@
 cm4all-beng-proxy (18.0.56) unstable; urgency=low
 
-  * 
+  * bp/mod_auth_easy: fix bug with absolute paths
 
  --   
 
