@@ -3,7 +3,7 @@ cm4all-beng-proxy (18.0.56) unstable; urgency=low
   * bp/mod_auth_easy: fix bug with absolute paths
   * bp/mod_auth_easy: do not follow ".access" symlinks
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Wed, 07 Feb 2024 12:06:15 +0100
 
 cm4all-beng-proxy (18.0.55) unstable; urgency=low
 
