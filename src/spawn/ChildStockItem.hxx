@@ -10,6 +10,7 @@
 #include "stock/Item.hxx"
 #include "io/UniqueFileDescriptor.hxx"
 #include "util/IntrusiveList.hxx"
+#include "util/SharedLease.hxx"
 
 #include <memory>
 #include <string>
@@ -35,6 +36,11 @@ class ChildStockItem
 	UniqueFileDescriptor stderr_fd;
 
 	std::unique_ptr<ChildProcessHandle> handle;
+
+	/**
+	 * A lease obtained from #ListenStreamSpawnStock.
+	 */
+	SharedLease listen_stream_lease;
 
 	bool busy = true;
 

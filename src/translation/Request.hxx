@@ -122,6 +122,10 @@ struct TranslateRequest {
 	std::span<const std::byte> error_document = {};
 #endif
 
+#if TRANSLATION_ENABLE_SPAWN
+	std::span<const std::byte> mount_listen_stream = {};
+#endif
+
 	std::span<const std::byte> probe_path_suffixes = {};
 	const char *probe_suffix = nullptr;
 

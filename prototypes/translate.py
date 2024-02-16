@@ -169,6 +169,17 @@ class Translation(Protocol):
         response.status(404)
         return response
 
+    def _handle_mount_listen_stream(self, mount_listen_stream):
+        log.msg(f"mount_listen_stream {mount_listen_stream!r}")
+
+        response = Response(protocol_version=2)
+
+        if b'php' in mount_listen_stream:
+            response.packet(TRANSLATE_EXECUTE, '/usr/bin/php-cgi')
+        else:
+            response.status(404)
+        return response
+
     def _handle_auth(self, auth, uri, session, alt_host):
         log.msg(f"auth {auth!r} uri={uri!r} session={session!r} alt_host={alt_host!r}")
 
@@ -618,6 +629,17 @@ class Translation(Protocol):
             response.packet(TRANSLATE_LHTTP_URI, uri[7:])
             response.packet(TRANSLATE_LHTTP_HOST, 'localhost:80')
             response.packet(TRANSLATE_CONCURRENCY, '\x04\x00')
+        elif uri.startswith('/apache-listen-stream/'):
+            response.packet(TRANSLATE_LHTTP_PATH, apache_lhttpd)
+            response.packet(TRANSLATE_APPEND, '-DFOREGROUND')
+            response.packet(TRANSLATE_LHTTP_URI, uri[21:])
+            response.packet(TRANSLATE_LHTTP_HOST, 'localhost:80')
+            response.packet(TRANSLATE_CONCURRENCY, '\x04\x00')
+            response.packet(TRANSLATE_NO_NEW_PRIVS)
+            response.packet(TRANSLATE_USER_NAMESPACE)
+            #response.packet(TRANSLATE_MOUNT_PROC)
+            response.packet(TRANSLATE_MOUNT_TMP_TMPFS)
+            response.packet(TRANSLATE_MOUNT_LISTEN_STREAM, '/tmp/php/socket')
         elif uri[:15] == '/ticket/create/':
             response.packet(TRANSLATE_FASTCGI, os.path.join(ticket_fastcgi_dir,
                                                             'create'))
@@ -1109,6 +1131,9 @@ class Translation(Protocol):
 
         if request.execute:
             return self._handle_execute(request.execute, request.param, request.service, request.listener_tag, request.plan)
+
+        if request.mount_listen_stream:
+            return self._handle_mount_listen_stream(request.mount_listen_stream)
 
         if request.auth is not None:
             return self._handle_auth(request.auth, request.uri, request.session, request.alt_host)

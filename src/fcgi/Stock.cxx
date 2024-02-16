@@ -355,6 +355,7 @@ FcgiStock::FcgiStock(unsigned limit, unsigned max_idle,
 	:hstock(event_loop, *this, limit, max_idle,
 		std::chrono::minutes(2)),
 	 child_stock(event_loop, spawn_service,
+		     nullptr, // TODO do we need ListenStreamSpawnStock here?
 		     *this,
 		     _log_socket, _log_options,
 		     limit, max_idle) {}

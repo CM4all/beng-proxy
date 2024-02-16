@@ -246,6 +246,7 @@ try {
 	       request.token_auth.data() != nullptr ||
 	       request.chain.data() != nullptr ||
 	       request.pool != nullptr ||
+	       request.mount_listen_stream.data() != nullptr ||
 	       (request.content_type_lookup.data() != nullptr &&
 		request.suffix != nullptr));
 

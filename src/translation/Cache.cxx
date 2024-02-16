@@ -39,11 +39,14 @@
 #include <sys/stat.h>
 #include <errno.h>
 
+using std::string_view_literals::operator""sv;
+
 static constexpr std::size_t MAX_CACHE_LAYOUT = 256;
 static constexpr std::size_t MAX_CACHE_CHECK = 256;
 static constexpr std::size_t MAX_CACHE_WFU = 256;
 static constexpr std::size_t MAX_CONTENT_TYPE_LOOKUP = 256;
 static constexpr std::size_t MAX_CHAIN = 256;
+static constexpr std::size_t MAX_MOUNT_LISTEN_STREAM = 256;
 static constexpr std::size_t MAX_PROBE_PATH_SUFFIXES = 256;
 static constexpr std::size_t MAX_FILE_NOT_FOUND = 256;
 static constexpr std::size_t MAX_DIRECTORY_INDEX = 256;
@@ -429,6 +432,14 @@ tcache_chain_key(AllocatorPtr alloc, const TranslateRequest &request) noexcept
 			    status_buffer);
 }
 
+static const char *
+tcache_mount_listen_stream_key(AllocatorPtr alloc, const TranslateRequest &request) noexcept
+{
+	char buffer[MAX_MOUNT_LISTEN_STREAM * 3];
+	std::size_t length = UriEscape(buffer, request.mount_listen_stream);
+	return alloc.Concat("MLS|"sv, std::string_view{buffer, length});
+}
+
 [[gnu::pure]]
 static const char *
 tcache_request_key(AllocatorPtr alloc, const TranslateRequest &request) noexcept
@@ -438,6 +449,9 @@ tcache_request_key(AllocatorPtr alloc, const TranslateRequest &request) noexcept
 
 	if (request.chain.data() != nullptr)
 		return tcache_chain_key(alloc, request);
+
+	if (request.mount_listen_stream.data() != nullptr)
+		return tcache_mount_listen_stream_key(alloc, request);
 
 	return request.uri != nullptr
 		? tcache_uri_key(alloc, request.uri, request.host,
@@ -467,6 +481,7 @@ tcache_request_evaluate(const TranslateRequest &request) noexcept
 		request.http_auth.data() == nullptr && // TODO: allow caching HTTP_AUTH
 		request.token_auth.data() == nullptr && // TODO: allow caching TOKEN_AUTH
 		request.auth.data() == nullptr &&
+		request.mount_listen_stream.size() < MAX_MOUNT_LISTEN_STREAM &&
 		request.check.size() < MAX_CACHE_CHECK &&
 		request.want_full_uri.size() <= MAX_CACHE_WFU &&
 		request.probe_path_suffixes.size() <= MAX_PROBE_PATH_SUFFIXES &&

@@ -50,6 +50,7 @@ class Request:
         self.http_auth = None
         self.token_auth = None
         self.auth_token = None
+        self.mount_listen_stream = None
         self.recover_session = None
         self.want_full_uri = None
         self.chain = None
@@ -134,6 +135,8 @@ class Request:
             self.token_auth = packet.payload
         elif packet.command == TRANSLATE_AUTH_TOKEN:
             self.auth_token = packet.payload
+        elif packet.command == TRANSLATE_MOUNT_LISTEN_STREAM:
+            self.mount_listen_stream = packet.payload
         elif packet.command == TRANSLATE_RECOVER_SESSION:
             self.recover_session = packet.payload
         elif packet.command == TRANSLATE_WANT_FULL_URI:

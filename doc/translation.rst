@@ -1203,6 +1203,20 @@ described in this section.
   (absolute within the old root) and the target path (absolute within
   the new root), separated by a null byte.
 
+- ``MOUNT_LISTEN_STREAM`` creates a stream listener socket and mounts
+  it at the specified path into the container.  Once the first process
+  connects to this socket, :program:`beng-proxy` sends a request to
+  the translation server echoing just this packet; its response may
+  contain ``EXECUTE``, describing a process to be spawned which starts
+  with the listener socket on stdin.
+
+  The payload is the socket path inside the new mount namespace; only
+  its parent directory will be mounted, therefore the directory can
+  contain only this socket and nothing else.  After the socket path, a
+  null byte may follow with opaque data which is ignored by
+  :program:`beng-proxy`, but which may be evaluated by the translation
+  server.
+
 - ``WRITE_FILE`` write a small text file in a mount namespace.
   Payload is the absolute path and the file contents separated by a
   null byte.  The file can either be written to a ``tmpfs`` that was

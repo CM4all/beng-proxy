@@ -4,6 +4,8 @@
 
 #include "ChildStockItem.hxx"
 #include "ChildStock.hxx"
+#include "ListenStreamSpawnStock.hxx"
+#include "pool/tpool.hxx"
 #include "spawn/Interface.hxx"
 #include "spawn/Prepared.hxx"
 #include "spawn/ProcessHandle.hxx"
@@ -11,6 +13,7 @@
 #include "net/EasyMessage.hxx"
 #include "net/UniqueSocketDescriptor.hxx"
 #include "util/StringList.hxx"
+#include "AllocatorPtr.hxx"
 
 #include <cassert>
 
@@ -40,6 +43,16 @@ ChildStockItem::Spawn(ChildStockClass &cls, void *info,
 {
 	PreparedChildProcess p;
 	Prepare(cls, info, p);
+
+	const TempPoolLease tpool;
+
+	if (p.ns.mount.mount_listen_stream.data() != nullptr) {
+		if (auto *listen_stream_spawn_stock = child_stock.GetListenStreamSpawnStock()) {
+			listen_stream_lease = listen_stream_spawn_stock->Apply(AllocatorPtr{tpool},
+									       p.ns.mount);
+		} else
+			throw std::runtime_error{"No ListenStreamSpawnStock"};
+	}
 
 	if (log_socket.IsDefined() && !p.stderr_fd.IsDefined() &&
 	    p.stderr_path == nullptr)

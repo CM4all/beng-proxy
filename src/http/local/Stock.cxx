@@ -31,6 +31,7 @@ class LhttpStock final : MultiStockClass, ListenChildStockClass {
 public:
 	LhttpStock(unsigned limit, unsigned max_idle,
 		   EventLoop &event_loop, SpawnService &spawn_service,
+		   ListenStreamSpawnStock *_listen_stream_spawn_stock,
 		   SocketDescriptor log_socket,
 		   const ChildErrorLogOptions &log_options) noexcept;
 
@@ -309,9 +310,11 @@ LhttpConnection::~LhttpConnection() noexcept
 inline
 LhttpStock::LhttpStock(unsigned limit, [[maybe_unused]] unsigned max_idle,
 		       EventLoop &event_loop, SpawnService &spawn_service,
+		       ListenStreamSpawnStock *_listen_stream_spawn_stock,
 		       SocketDescriptor log_socket,
 		       const ChildErrorLogOptions &log_options) noexcept
-	:child_stock(spawn_service, *this,
+	:child_stock(spawn_service, _listen_stream_spawn_stock,
+		     *this,
 		     log_socket, log_options),
 	 mchild_stock(event_loop, child_stock,
 		      limit,
@@ -333,10 +336,12 @@ LhttpStock::FadeTag(std::string_view tag) noexcept
 LhttpStock *
 lhttp_stock_new(unsigned limit, unsigned max_idle,
 		EventLoop &event_loop, SpawnService &spawn_service,
+		ListenStreamSpawnStock *listen_stream_spawn_stock,
 		SocketDescriptor log_socket,
 		const ChildErrorLogOptions &log_options) noexcept
 {
 	return new LhttpStock(limit, max_idle, event_loop, spawn_service,
+			      listen_stream_spawn_stock,
 			      log_socket, log_options);
 }
 

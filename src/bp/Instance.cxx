@@ -36,6 +36,7 @@
 #include "session/Manager.hxx"
 #include "session/Save.hxx"
 #include "spawn/Client.hxx"
+#include "spawn/ListenStreamSpawnStock.hxx"
 #include "access_log/Glue.hxx"
 #include "util/PrintException.hxx"
 
@@ -118,6 +119,8 @@ BpInstance::FreeStocksAndCaches() noexcept
 	delete std::exchange(remote_was_stock, nullptr);
 #endif
 
+	listen_stream_spawn_stock.reset();
+
 	delete std::exchange(fs_balancer, nullptr);
 	delete std::exchange(fs_stock, nullptr);
 #ifdef HAVE_NGHTTP2
@@ -193,6 +196,9 @@ BpInstance::FadeChildren() noexcept
 
 	if (delegate_stock != nullptr)
 		delegate_stock->FadeAll();
+
+	if (listen_stream_spawn_stock)
+		listen_stream_spawn_stock->FadeAll();
 }
 
 void
@@ -210,6 +216,9 @@ BpInstance::FadeTaggedChildren(std::string_view tag) noexcept
 	if (multi_was_stock != nullptr)
 		multi_was_stock->FadeTag(tag);
 #endif
+
+	if (listen_stream_spawn_stock)
+		listen_stream_spawn_stock->FadeTag(tag);
 
 	// TODO: delegate_stock
 }

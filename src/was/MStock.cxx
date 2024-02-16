@@ -106,6 +106,7 @@ MultiWasStock::MultiWasStock(unsigned limit, [[maybe_unused]] unsigned max_idle,
 			     SocketDescriptor log_socket,
 			     const ChildErrorLogOptions &log_options) noexcept
 	:child_stock(spawn_service,
+		     nullptr, // TODO do we need ListenStreamSpawnStock here?
 		     *this,
 		     log_socket, log_options),
 	 mchild_stock(event_loop, child_stock,
