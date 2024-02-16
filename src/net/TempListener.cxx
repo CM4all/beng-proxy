@@ -4,6 +4,7 @@
 
 #include "TempListener.hxx"
 #include "net/ConnectSocket.hxx"
+#include "net/SocketError.hxx"
 #include "net/UniqueSocketDescriptor.hxx"
 #include "system/Error.hxx"
 
@@ -41,16 +42,16 @@ TempListener::Create(int socket_type, int backlog)
 
 	UniqueSocketDescriptor fd;
 	if (!fd.Create(AF_LOCAL, socket_type, 0))
-		throw MakeErrno("failed to create local socket");
+		throw MakeSocketError("failed to create local socket");
 
 	/* allow only beng-proxy to connect to it */
 	fchmod(fd.Get(), 0600);
 
 	if (!fd.Bind(GetAddress()))
-		throw MakeErrno("failed to bind local socket");
+		throw MakeSocketError("failed to bind local socket");
 
 	if (!fd.Listen(backlog))
-		throw MakeErrno("failed to listen on local socket");
+		throw MakeSocketError("failed to listen on local socket");
 
 	return fd;
 }
