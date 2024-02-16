@@ -334,16 +334,6 @@ libcommon_enable_libsystemd = dependency('libsystemd', required: get_option('sys
 subdir('libcommon/src/was/async')
 subdir('libcommon/src/stock')
 
-stock2 = static_library(
-  'stock2',
-  'src/stock/Lease.cxx',
-  include_directories: inc,
-)
-stock_dep = declare_dependency(
-  link_with: stock2,
-  dependencies: [stock_dep, event_dep],
-)
-
 openssl_min_version = '3'
 openssl_api_compat = '0x30000000L'
 
