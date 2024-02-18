@@ -247,7 +247,9 @@ pool = static_library('pool',
   ],
 )
 pool_dep = declare_dependency(link_with: pool,
-                             dependencies: [memory_dep, io_dep])
+                              dependencies: [memory_dep, io_dep])
+
+alloc_dep = pool_dep
 
 putil = static_library('putil',
   'src/strmap.cxx',
