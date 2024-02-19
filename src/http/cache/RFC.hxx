@@ -27,7 +27,7 @@ struct HttpCacheResponseInfo;
  * @param obey_no_cache if false, then "no-cache" requests will be
  * ignored
  */
-[[gnu::pure]]
+[[nodiscard]] [[gnu::pure]]
 std::optional<HttpCacheRequestInfo>
 http_cache_request_evaluate(HttpMethod method,
 			    const ResourceAddress &address,
@@ -35,24 +35,25 @@ http_cache_request_evaluate(HttpMethod method,
 			    bool obey_no_cache,
 			    bool has_request_body) noexcept;
 
-[[gnu::pure]]
+[[nodiscard]] [[gnu::pure]]
 bool
 http_cache_vary_fits(const StringMap &vary, const StringMap &headers) noexcept;
 
-[[gnu::pure]]
+[[nodiscard]] [[gnu::pure]]
 bool
 http_cache_vary_fits(const StringMap *vary, const StringMap &headers) noexcept;
 
 /**
  * Check whether the request should invalidate the existing cache.
  */
+[[nodiscard]] [[gnu::const]]
 bool
 http_cache_request_invalidate(HttpMethod method) noexcept;
 
 /**
  * Check whether the HTTP response should be put into the cache.
  */
-[[gnu::pure]]
+[[nodiscard]] [[gnu::pure]]
 std::optional<HttpCacheResponseInfo>
 http_cache_response_evaluate(const HttpCacheRequestInfo &request_info,
 			     AllocatorPtr alloc,
@@ -72,7 +73,7 @@ http_cache_copy_vary(StringMap &dest, AllocatorPtr alloc, const char *vary,
  * The server sent us a non-"Not Modified" response.  Check if we want
  * to serve the cache item anyway, and discard the server's response.
  */
-[[gnu::pure]]
+[[nodiscard]] [[gnu::pure]]
 bool
 http_cache_prefer_cached(const HttpCacheDocument &document,
 			 const StringMap &response_headers) noexcept;
