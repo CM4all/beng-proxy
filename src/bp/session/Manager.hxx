@@ -57,7 +57,7 @@ class SessionManager {
 		bool operator()(std::span<const std::byte> a, std::span<const std::byte> b) const noexcept;
 	};
 
-	static constexpr unsigned N_BUCKETS = 65521;
+	static constexpr unsigned N_BUCKETS = 65536;
 
 	using Set = IntrusiveHashSet<
 		Session, N_BUCKETS,

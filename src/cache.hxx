@@ -126,7 +126,7 @@ class Cache {
 
 	CacheHandler *const handler;
 
-	using ItemSet = IntrusiveHashSet<CacheItem, 65521,
+	using ItemSet = IntrusiveHashSet<CacheItem, 65536,
 					 IntrusiveHashSetOperators<CacheItem::Hash,
 								   CacheItem::Equal,
 								   CacheItem::GetKeyFunction>,

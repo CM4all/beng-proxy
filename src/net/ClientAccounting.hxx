@@ -105,7 +105,7 @@ private:
 class ClientAccountingMap {
 	const std::size_t max_connections;
 
-	using Map = IntrusiveHashSet<PerClientAccounting, 65521,
+	using Map = IntrusiveHashSet<PerClientAccounting, 65536,
 				     IntrusiveHashSetOperators<std::hash<uint_least64_t>,
 							       std::equal_to<uint_least64_t>,
 							       PerClientAccounting::GetKey>>;

@@ -38,7 +38,7 @@ class HttpCacheHeap {
 	/**
 	 * Lookup table to speed up FlushTag().
 	 */
-	IntrusiveHashSet<HttpCacheItem, 65521,
+	IntrusiveHashSet<HttpCacheItem, 65536,
 			 IntrusiveHashSetOperators<HttpCacheItem::TagHash,
 						   std::equal_to<std::string_view>,
 						   HttpCacheItem::GetTagFunction>,

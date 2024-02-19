@@ -234,7 +234,7 @@ class FilterCache final : LeakDetector {
 	/**
 	 * Lookup table to speed up FlushTag().
 	 */
-	IntrusiveHashSet<FilterCacheItem, 65521,
+	IntrusiveHashSet<FilterCacheItem, 65536,
 			 IntrusiveHashSetOperators<FilterCacheItem::TagHash,
 						   std::equal_to<std::string_view>,
 						   FilterCacheItem::GetTag>,

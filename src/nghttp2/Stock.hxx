@@ -60,7 +60,7 @@ class Stock {
 	};
 
 	using Set =
-		IntrusiveHashSet<Item, 3779,
+		IntrusiveHashSet<Item, 4096,
 				 IntrusiveHashSetOperators<ItemHash, ItemEqual>>;
 	Set items;
 

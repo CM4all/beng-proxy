@@ -28,7 +28,7 @@ class FailureManager {
 		SocketAddress operator()(const Failure &f) const noexcept;
 	};
 
-	static constexpr size_t N_BUCKETS = 3779;
+	static constexpr size_t N_BUCKETS = 4096;
 
 	using FailureSet =
 		IntrusiveHashSet<Failure, N_BUCKETS,
