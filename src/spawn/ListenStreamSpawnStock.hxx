@@ -64,8 +64,7 @@ public:
 	 * only the last path component); optionally, an opaque tag
 	 * may be followed, separated by a null byte
 	 *
-	 * @return the absolute path of the temporary directory (which
-	 * contains a socket with the given name) and a lease which
+	 * @return the absolute path of the socket and a lease which
 	 * shall be released when the socket is no longer needed (and
 	 * all related processes can be terminated)
 	 */

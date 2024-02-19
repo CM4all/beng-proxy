@@ -17,7 +17,7 @@
 #include "lib/fmt/RuntimeError.hxx"
 #include "event/CoarseTimerEvent.hxx"
 #include "event/SocketEvent.hxx"
-#include "net/TempDirectoryListener.hxx"
+#include "net/TempListener.hxx"
 #include "net/UniqueSocketDescriptor.hxx"
 #include "util/Cancellable.hxx"
 #include "util/DeleteDisposer.hxx"
@@ -32,6 +32,7 @@
 #include <string>
 
 #include <sys/socket.h> // for SOCK_STREAM
+#include <sys/stat.h> // for chmod()
 
 class ListenStreamSpawnStock::Item final
 	: public IntrusiveHashSetHook<IntrusiveHookMode::AUTO_UNLINK>,
@@ -46,7 +47,7 @@ class ListenStreamSpawnStock::Item final
 
 	std::string tags;
 
-	TempDirectoryListener temp{0666};
+	TempListener temp;
 
 	SocketEvent socket;
 
@@ -73,14 +74,12 @@ public:
 		 socket(event_loop, BIND_THIS_METHOD(OnSocketReady)),
 		 idle_timer(event_loop, BIND_THIS_METHOD(OnIdleTimeout)) {
 
-		auto [path, tag] = Split(_key, '\0');
-		auto [directory, filename] = SplitLast(path, '/');
-		if (filename.empty())
-			throw std::invalid_argument{"Malformed MOUNT_LISTEN_STREAM path"};
-
-		auto s = temp.Create(filename, SOCK_STREAM, 16);
+		auto s = temp.Create(SOCK_STREAM, 16);
 		socket.Open(s.Release());
 		socket.ScheduleRead();
+
+		// TODO protect the socket against access from the host
+		chmod(temp.GetPath(), 0666);
 	}
 
 	~Item() noexcept {
@@ -116,8 +115,8 @@ public:
 		idle_timer.Cancel();
 	}
 
-	const char *GetDirectory() const noexcept {
-		return temp.GetDirectory();
+	const char *GetPath() const noexcept {
+		return temp.GetPath();
 	}
 
 private:
@@ -210,7 +209,7 @@ try {
 
 	tags = response->child_options.tag;
 
-	process = DoSpawn(spawn_service, temp.GetSocketName(),
+	process = DoSpawn(spawn_service, temp.GetPath(),
 			  UniqueSocketDescriptor{socket.ReleaseSocket()},
 			  *response);
 
@@ -293,7 +292,7 @@ ListenStreamSpawnStock::Get(std::string_view key)
 		it->Borrow();
 	}
 
-	return {it->GetDirectory(), *it};
+	return {it->GetPath(), *it};
 }
 
 SharedLease
@@ -304,13 +303,13 @@ ListenStreamSpawnStock::Apply(AllocatorPtr alloc, MountNamespaceOptions &mount_n
 		return {};
 
 	auto [path, tag] = Split(key, '\0');
-	auto [child_directory, filename] = SplitLast(path, '/');
-	if (child_directory.empty())
+	if (path.empty())
 		throw std::invalid_argument{"Malformed MOUNT_LISTEN_STREAM path"};
 
-	auto [local_directory, lease] = Get(key);
+	auto [local_path, lease] = Get(key);
 
-	auto *m = alloc.New<Mount>(local_directory + 1, alloc.DupZ(child_directory), true, false);
+	auto *m = alloc.New<Mount>(local_path + 1, alloc.DupZ(path), true, false);
+	m->type = Mount::Type::BIND_FILE;
 
 	auto i = mount_ns.mounts.before_begin();
 	while (std::next(i) != mount_ns.mounts.end())

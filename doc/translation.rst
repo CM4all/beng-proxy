@@ -1210,12 +1210,10 @@ described in this section.
   contain ``EXECUTE``, describing a process to be spawned which starts
   with the listener socket on stdin.
 
-  The payload is the socket path inside the new mount namespace; only
-  its parent directory will be mounted, therefore the directory can
-  contain only this socket and nothing else.  After the socket path, a
-  null byte may follow with opaque data which is ignored by
-  :program:`beng-proxy`, but which may be evaluated by the translation
-  server.
+  The payload is the socket path inside the new mount namespace.
+  After the socket path, a null byte may follow with opaque data which
+  is ignored by :program:`beng-proxy`, but which may be evaluated by
+  the translation server.
 
 - ``WRITE_FILE`` write a small text file in a mount namespace.
   Payload is the absolute path and the file contents separated by a
