@@ -288,7 +288,6 @@ net2 = static_library(
   'src/net/FailureInfo.cxx',
   'src/net/FailureRef.cxx',
   'src/net/TempListener.cxx',
-  'src/net/TempDirectoryListener.cxx',
   'src/net/ClientAccounting.cxx',
   include_directories: inc,
 )
