@@ -197,6 +197,9 @@ io2 = static_library(
   'src/io/RuntimeDirectory.cxx',
   'src/io/SpliceSupport.cxx',
   include_directories: inc,
+  dependencies: [
+    fmt_dep,
+  ],
 )
 io_dep = declare_dependency(
   link_with: io2,

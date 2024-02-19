@@ -5,10 +5,11 @@
 #include "RuntimeDirectory.hxx"
 #include "system/Error.hxx"
 
+#include <fmt/core.h>
+
 #include <cassert>
 #include <string_view>
 
-#include <stdio.h>
 #include <stdlib.h> // for mktemp()
 #include <string.h>
 #include <sys/stat.h> // for mkdir()
@@ -33,23 +34,40 @@ MakePrivateRuntimeDirectoryTemp(std::span<char> buffer,
 
 	const char *runtime_directory = getenv("RUNTIME_DIRECTORY");
 	if (runtime_directory != nullptr) {
-		int length = sprintf(buffer.data(), "%s/private", runtime_directory);
+		const auto r = fmt::format_to_n(buffer.begin(), buffer.size(),
+						"{}/private"sv, runtime_directory);
+		if (r.size >= buffer.size())
+			throw std::invalid_argument{"Buffer too small"};
+
+		*r.out = 0;
+
 		if (mkdir(path, 0700) < 0) {
 			const int e = errno;
 			if (e != EEXIST)
 				throw MakeErrno(e, "Failed to create private directory");
 		}
 
-		buffer = buffer.subspan(length);
+		buffer = buffer.subspan(r.size);
 	} else {
-		int length = sprintf(buffer.data(), "/tmp/%s", tmp_directory_template);
+		const auto r = fmt::format_to_n(buffer.begin(), buffer.size(),
+						"/tmp/{}"sv, tmp_directory_template);
+		if (r.size >= buffer.size())
+			throw std::invalid_argument{"Buffer too small"};
+
+		*r.out = 0;
+
 		if (mkdtemp(path) == nullptr)
 			throw MakeErrno("mkdtemp() failed");
 
-		buffer = buffer.subspan(length);
+		buffer = buffer.subspan(r.size);
 	}
 
-	sprintf(buffer.data(), "/%s", filename_template);
+	const auto r = fmt::format_to_n(buffer.begin(), buffer.size(),
+					"/{}"sv, filename_template);
+	if (r.size >= buffer.size())
+		throw std::invalid_argument{"Buffer too small"};
+
+	*r.out = 0;
 
 	if (*mktemp(path) == 0)
 		throw MakeErrno("mktemp() failed");
