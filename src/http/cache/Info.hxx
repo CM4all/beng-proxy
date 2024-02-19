@@ -20,6 +20,14 @@ struct HttpCacheRequestInfo {
 
 	/**
 	 * True if the "Cache-Control" request header contains
+	 * "no-cache".
+	 *
+	 * @see RFC 9111 5.2.1.4
+	 */
+	bool no_cache;
+
+	/**
+	 * True if the "Cache-Control" request header contains
 	 * "only-if-cached".
 	 *
 	 * @see RFC 9111 5.2.1.7

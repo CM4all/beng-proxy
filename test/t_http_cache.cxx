@@ -292,6 +292,21 @@ TEST(HttpCache, Basic)
 	   set) */
 	run_cache_test(instance, requests[3], false);
 	run_cache_test(instance, requests[3], true);
+
+	/* with "Cache-Control:no-cache"; not served from cache, but
+	   updates the cache */
+	auto no_cache_request = requests[0];
+	no_cache_request.request_headers = "cache-control: no-cache\n";
+	no_cache_request.response_body = "new_foo";
+
+	run_cache_test(instance, no_cache_request, false);
+
+	auto verify_no_cache_request = no_cache_request;
+	verify_no_cache_request.request_headers = nullptr;
+	run_cache_test(instance, verify_no_cache_request, true);
+
+	/* didn't flush the other "vary" cache item at the same URI */
+	run_cache_test(instance, requests[1], true);
 }
 
 TEST(HttpCache, CacheableWithoutResponseBody)

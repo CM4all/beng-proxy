@@ -44,18 +44,20 @@ http_cache_request_evaluate(HttpMethod method,
 	if (headers.Get("authorization") != nullptr)
 		return std::nullopt;
 
-	bool only_if_cached = false;
+	bool no_cache = false, only_if_cached = false;
 
 	if (const char *cache_control = headers.Get("cache-control")) {
 		for (std::string_view s : IterableSplitString(cache_control, ',')) {
 			s = Strip(s);
 
-			if (obey_no_cache &&
-			    (s == "no-cache"sv || s == "no-store"sv))
-				return std::nullopt;
-
 			if (s == "only-if-cached"sv)
 				only_if_cached = true;
+			else if (obey_no_cache) {
+				if (s == "no-cache"sv)
+					no_cache = true;
+				else if (s == "no-store"sv)
+					return std::nullopt;
+			}
 		}
 	} else if (obey_no_cache) {
 		if (const char *pragma = headers.Get("pragma");
@@ -65,6 +67,7 @@ http_cache_request_evaluate(HttpMethod method,
 
 	HttpCacheRequestInfo info;
 	info.is_remote = address.type == ResourceAddress::Type::HTTP;
+	info.no_cache = no_cache;
 	info.only_if_cached = only_if_cached;
 	info.has_query_string = address.HasQueryString();
 

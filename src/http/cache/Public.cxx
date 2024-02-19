@@ -1042,7 +1042,7 @@ http_cache_may_serve(EventLoop &event_loop,
 		     const HttpCacheDocument &document) noexcept
 {
 	return info.only_if_cached ||
-		document.info.expires >= event_loop.SystemNow();
+		(!info.no_cache && document.info.expires >= event_loop.SystemNow());
 }
 
 inline void
@@ -1058,7 +1058,7 @@ HttpCache::Found(const HttpCacheRequestInfo &info,
 		 HttpResponseHandler &handler,
 		 CancellablePointer &cancel_ptr) noexcept
 {
-	if (!CheckCacheRequest(caller_pool, info, document, handler))
+	if (!info.no_cache && !CheckCacheRequest(caller_pool, info, document, handler))
 		return;
 
 	if (http_cache_may_serve(GetEventLoop(), info, document))

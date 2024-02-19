@@ -1,6 +1,7 @@
 cm4all-beng-proxy (18.0.57) unstable; urgency=low
 
   * translation: add packet MOUNT_LISTEN_STREAM
+  * http_cache: store "no-cache" responses (and replace existing item)
   * spawn: don't kill on syscall get_mempolicy(), fail with ENOSYS
 
  --   
