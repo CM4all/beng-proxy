@@ -44,13 +44,6 @@ struct Request final {
 	const char *response_body;
 
 	bool auto_flush_cache = false;
-
-	constexpr Request(const char *_uri, const char *_request_headers,
-			  const char *_response_headers,
-			  const char *_response_body) noexcept
-		:uri(_uri), request_headers(_request_headers),
-		 response_headers(_response_headers),
-		 response_body(_response_body) {}
 };
 
 #define DATE "Fri, 30 Jan 2009 10:53:30 GMT"
@@ -59,30 +52,35 @@ struct Request final {
 #define EXPIRES "Fri, 20 Jan 2029 08:53:30 GMT"
 
 static constexpr Request requests[] = {
-	{ "/foo", nullptr,
-	  "date: " DATE "\n"
-	  "last-modified: " STAMP1 "\n"
-	  "expires: " EXPIRES "\n"
-	  "vary: x-foo\n",
-	  "foo",
+	{
+		.uri = "/foo",
+		.response_headers = "date: " DATE "\n"
+		"last-modified: " STAMP1 "\n"
+		"expires: " EXPIRES "\n"
+		"vary: x-foo\n",
+		.response_body = "foo",
 	},
-	{ "/foo", "x-foo: foo\n",
-	  "date: " DATE "\n"
-	  "last-modified: " STAMP2 "\n"
-	  "expires: " EXPIRES "\n"
-	  "vary: x-foo\n",
-	  "bar",
+	{
+		.uri = "/foo",
+		.request_headers = "x-foo: foo\n",
+		.response_headers = "date: " DATE "\n"
+		"last-modified: " STAMP2 "\n"
+		"expires: " EXPIRES "\n"
+		"vary: x-foo\n",
+		.response_body = "bar",
 	},
-	{ "/query?string", nullptr,
-	  "date: " DATE "\n"
-	  "last-modified: " STAMP1 "\n",
-	  "foo",
+	{
+		.uri = "/query?string",
+		.response_headers = "date: " DATE "\n"
+		"last-modified: " STAMP1 "\n",
+		.response_body = "foo",
 	},
-	{ "/query?string2", nullptr,
-	  "date: " DATE "\n"
-	  "last-modified: " STAMP1 "\n"
-	  "expires: " EXPIRES "\n",
-	  "foo",
+	{
+		.uri = "/query?string2",
+		.response_headers = "date: " DATE "\n"
+		"last-modified: " STAMP1 "\n"
+		"expires: " EXPIRES "\n",
+		.response_body = "foo",
 	},
 };
 
@@ -301,12 +299,11 @@ TEST(HttpCache, CacheableWithoutResponseBody)
 	Instance instance;
 
 	static constexpr Request r0{
-		"/cacheable-no-response-body", nullptr,
-		"date: " DATE "\n"
+		.uri = "/cacheable-no-response-body",
+		.response_headers = "date: " DATE "\n"
 		"last-modified: " STAMP1 "\n"
 		"expires: " EXPIRES "\n"
 		"vary: x-foo\n",
-		nullptr,
 	};
 
 	run_cache_test(instance, r0, false);
@@ -318,20 +315,19 @@ TEST(HttpCache, Uncacheable)
 	Instance instance;
 
 	static constexpr Request with_body{
-		"/uncacheable-body", nullptr,
-		"date: " DATE "\n"
+		.uri = "/uncacheable-body",
+		.response_headers = "date: " DATE "\n"
 		"cache-control: no-cache\n",
-		"foo",
+		.response_body = "foo",
 	};
 
 	run_cache_test(instance, with_body, false);
 	run_cache_test(instance, with_body, false);
 
 	static constexpr Request no_body{
-		"/uncacheable-empty", nullptr,
-		"date: " DATE "\n"
+		.uri = "/uncacheable-empty",
+		.response_headers = "date: " DATE "\n"
 		"cache-control: no-cache\n",
-		nullptr
 	};
 
 	run_cache_test(instance, no_body, false);
@@ -344,13 +340,13 @@ TEST(HttpCache, MultiVary)
 
 	/* request one resource, cold and warm cache */
 	static constexpr Request r0{
-		"/foo", nullptr,
-		"date: " DATE "\n"
+		.uri = "/foo",
+		.response_headers = "date: " DATE "\n"
 		"last-modified: " STAMP1 "\n"
 		"expires: " EXPIRES "\n"
 		"vary: x-foo\n"
 		"vary: x-bar, x-abc\n",
-		"1",
+		.response_body = "1",
 	};
 
 	run_cache_test(instance, r0, false);
@@ -358,14 +354,14 @@ TEST(HttpCache, MultiVary)
 
 	/* another resource, different header 1 */
 	static constexpr Request r1{
-		"/foo",
-		"x-foo: foo\n",
-		"date: " DATE "\n"
+		.uri = "/foo",
+		.request_headers = "x-foo: foo\n",
+		.response_headers = "date: " DATE "\n"
 		"last-modified: " STAMP1 "\n"
 		"expires: " EXPIRES "\n"
 		"vary: x-foo\n"
 		"vary: x-bar, x-abc\n",
-		"2",
+		.response_body = "2",
 	};
 
 	run_cache_test(instance, r1, false);
@@ -373,14 +369,14 @@ TEST(HttpCache, MultiVary)
 
 	/* another resource, different header 2 */
 	static constexpr Request r2{
-		"/foo",
-		"x-bar: bar\n",
-		"date: " DATE "\n"
+		.uri = "/foo",
+		.request_headers = "x-bar: bar\n",
+		.response_headers = "date: " DATE "\n"
 		"last-modified: " STAMP1 "\n"
 		"expires: " EXPIRES "\n"
 		"vary: x-foo\n"
 		"vary: x-bar, x-abc\n",
-		"3",
+		.response_body = "3",
 	};
 
 	run_cache_test(instance, r2, false);
@@ -388,14 +384,14 @@ TEST(HttpCache, MultiVary)
 
 	/* another resource, different header 3 */
 	static constexpr Request r3{
-		"/foo",
-		"x-abc: abc\n",
-		"date: " DATE "\n"
+		.uri = "/foo",
+		.request_headers = "x-abc: abc\n",
+		.response_headers = "date: " DATE "\n"
 		"last-modified: " STAMP1 "\n"
 		"expires: " EXPIRES "\n"
 		"vary: x-foo\n"
 		"vary: x-bar, x-abc\n",
-		"4",
+		.response_body = "4",
 	};
 
 	run_cache_test(instance, r3, false);
@@ -403,15 +399,15 @@ TEST(HttpCache, MultiVary)
 
 	/* another resource, different header combined 1+2 */
 	static constexpr Request r4{
-		"/foo",
-		"x-foo: foo\n"
+		.uri = "/foo",
+		.request_headers = "x-foo: foo\n"
 		"x-abc: abc\n",
-		"date: " DATE "\n"
+		.response_headers = "date: " DATE "\n"
 		"last-modified: " STAMP1 "\n"
 		"expires: " EXPIRES "\n"
 		"vary: x-foo\n"
 		"vary: x-bar, x-abc\n",
-		"5",
+		.response_body = "5",
 	};
 
 	run_cache_test(instance, r4, false);
@@ -419,44 +415,44 @@ TEST(HttpCache, MultiVary)
 
 	/* another resource, different header combined 2+3 */
 	static constexpr Request r5{
-		"/foo",
-		"x-bar: bar\n"
+		.uri = "/foo",
+		.request_headers = "x-bar: bar\n"
 		"x-abc: abc\n",
-		"date: " DATE "\n"
+		.response_headers = "date: " DATE "\n"
 		"last-modified: " STAMP1 "\n"
 		"expires: " EXPIRES "\n"
 		"vary: x-foo\n"
 		"vary: x-bar, x-abc\n",
-		"5",
+		.response_body = "5",
 	};
 
 	run_cache_test(instance, r5, false);
 	run_cache_test(instance, r5, true);
 
 	static constexpr Request r5b{
-		"/foo",
-		"x-abc: abc\n"
+		.uri = "/foo",
+		.request_headers = "x-abc: abc\n"
 		"x-bar: bar\n",
-		"date: " DATE "\n"
+		.response_headers = "date: " DATE "\n"
 		"last-modified: " STAMP1 "\n"
 		"expires: " EXPIRES "\n"
 		"vary: x-foo\n"
 		"vary: x-bar, x-abc\n",
-		"5",
+		.response_body = "5",
 	};
 
 	run_cache_test(instance, r5b, true);
 
 	/* another resource, different header 1 value */
 	static constexpr Request r6{
-		"/foo",
-		"x-foo: xyz\n",
-		"date: " DATE "\n"
+		.uri = "/foo",
+		.request_headers = "x-foo: xyz\n",
+		.response_headers = "date: " DATE "\n"
 		"last-modified: " STAMP1 "\n"
 		"expires: " EXPIRES "\n"
 		"vary: x-foo\n"
 		"vary: x-bar, x-abc\n",
-		"6",
+		.response_body = "6",
 	};
 
 	run_cache_test(instance, r6, false);
@@ -494,13 +490,12 @@ TEST(HttpCache, Tag)
 	/* AUTO_FLUSH_CACHE test (GET does not flush) */
 
 	Request r2{
-		"/bar", nullptr,
-		"",
-		"bar",
+		.tag = request.tag,
+		.uri = "/bar",
+		.response_headers = "",
+		.response_body = "bar",
+		.auto_flush_cache = true,
 	};
-
-	r2.tag = request.tag;
-	r2.auto_flush_cache = true;
 
 	run_cache_test(instance, r2, false);
 	run_cache_test(instance, request, true);
