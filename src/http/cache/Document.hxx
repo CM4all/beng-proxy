@@ -17,6 +17,7 @@ struct HttpCacheDocument {
 	HttpStatus status;
 	StringMap response_headers;
 
+	[[nodiscard]]
 	HttpCacheDocument(struct pool &pool,
 			  const HttpCacheResponseInfo &_info,
 			  const StringMap &request_headers,
@@ -30,6 +31,6 @@ struct HttpCacheDocument {
 	 * Checks whether the specified cache item fits the current request.
 	 * This is not true if the Vary headers mismatch.
 	 */
-	[[gnu::pure]]
+	[[nodiscard]] [[gnu::pure]]
 	bool VaryFits(const StringMap &request_headers) const noexcept;
 };
