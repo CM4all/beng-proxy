@@ -310,7 +310,7 @@ ListenStreamSpawnStock::Apply(AllocatorPtr alloc, MountNamespaceOptions &mount_n
 
 	auto [local_directory, lease] = Get(key);
 
-	auto *m = alloc.New<Mount>(local_directory, alloc.DupZ(child_directory), true, false);
+	auto *m = alloc.New<Mount>(local_directory + 1, alloc.DupZ(child_directory), true, false);
 
 	auto i = mount_ns.mounts.before_begin();
 	while (std::next(i) != mount_ns.mounts.end())
