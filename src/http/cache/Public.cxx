@@ -836,6 +836,7 @@ HttpCache::Miss(struct pool &caller_pool,
 		CancellablePointer &cancel_ptr) noexcept
 {
 	if (info.only_if_cached) {
+		/* see RFC 9111 5.2.1.7 */
 		handler.InvokeResponse(HttpStatus::GATEWAY_TIMEOUT,
 				       {}, UnusedIstreamPtr());
 		return;
