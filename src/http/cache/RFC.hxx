@@ -65,8 +65,9 @@ http_cache_response_evaluate(const HttpCacheRequestInfo &request_info,
  * Copy all request headers mentioned in the Vary response header to a
  * new strmap.
  */
-void
-http_cache_copy_vary(StringMap &dest, AllocatorPtr alloc, const char *vary,
+[[nodiscard]] [[gnu::pure]]
+StringMap
+http_cache_copy_vary(AllocatorPtr alloc, const char *vary,
 		     const StringMap &request_headers) noexcept;
 
 /**

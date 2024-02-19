@@ -271,10 +271,12 @@ http_cache_response_evaluate(const HttpCacheRequestInfo &request_info,
 	return info;
 }
 
-void
-http_cache_copy_vary(StringMap &dest, AllocatorPtr alloc, const char *vary,
+StringMap
+http_cache_copy_vary(AllocatorPtr alloc, const char *vary,
 		     const StringMap &request_headers) noexcept
 {
+	StringMap dest;
+
 	for (const char *const*list = http_list_split(alloc, vary);
 	     *list != nullptr; ++list) {
 		const char *name = *list;
@@ -285,6 +287,8 @@ http_cache_copy_vary(StringMap &dest, AllocatorPtr alloc, const char *vary,
 			value = alloc.Dup(value);
 		dest.Set(alloc, name, value);
 	}
+
+	return dest;
 }
 
 bool
