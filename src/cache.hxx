@@ -208,9 +208,10 @@ public:
 	 *
 	 * @return the number of items which were removed
 	 */
-	void RemoveMatch(const char *key,
-			 bool (*match)(const CacheItem *, void *),
-			 void *ctx) noexcept;
+	void RemoveKeyIf(const char *key,
+			 std::predicate<const CacheItem &> auto pred) noexcept {
+		items.remove_and_dispose_key_if(key, pred, ItemRemover{*this});
+	}
 
 	void Remove(CacheItem &item) noexcept;
 

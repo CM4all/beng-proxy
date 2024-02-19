@@ -10,7 +10,7 @@
 #include <assert.h>
 #include <string.h>
 
-inline size_t
+size_t
 CacheItem::Hash::operator()(const char *_key) const noexcept
 {
 	assert(_key != nullptr);
@@ -18,7 +18,7 @@ CacheItem::Hash::operator()(const char *_key) const noexcept
 	return djb_hash_string(_key);
 }
 
-inline bool
+bool
 CacheItem::Equal::operator()(const char *a, const char *b) const noexcept
 {
 	assert(a != nullptr);
@@ -265,16 +265,6 @@ void
 Cache::Remove(const char *key) noexcept
 {
 	items.remove_and_dispose_key(key, ItemRemover{*this});
-}
-
-void
-Cache::RemoveMatch(const char *key,
-		   bool (*match)(const CacheItem *, void *),
-		   void *ctx) noexcept
-{
-	items.remove_and_dispose_key_if(key, [match, ctx](const CacheItem &item){
-		return match(&item, ctx);
-	}, ItemRemover{*this});
 }
 
 void

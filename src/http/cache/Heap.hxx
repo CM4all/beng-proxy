@@ -69,7 +69,7 @@ public:
 		 RubberAllocation &&a, size_t size) noexcept;
 
 	void Remove(HttpCacheDocument &document) noexcept;
-	void RemoveURL(const char *url, StringMap &headers) noexcept;
+	void RemoveURL(const char *url, const StringMap &headers) noexcept;
 
 	void Compress() noexcept;
 	void Flush() noexcept;

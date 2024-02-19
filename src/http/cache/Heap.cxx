@@ -60,9 +60,12 @@ HttpCacheHeap::Remove(HttpCacheDocument &document) noexcept
 }
 
 void
-HttpCacheHeap::RemoveURL(const char *url, StringMap &headers) noexcept
+HttpCacheHeap::RemoveURL(const char *url, const StringMap &headers) noexcept
 {
-	cache.RemoveMatch(url, http_cache_item_match, &headers);
+	cache.RemoveKeyIf(url, [&headers](const CacheItem &_item){
+		const auto &item = static_cast<const HttpCacheItem &>(_item);
+		return item.VaryFits(headers);
+	});
 }
 
 void
