@@ -18,6 +18,12 @@ struct HttpCacheRequestInfo {
 	 */
 	bool is_remote;
 
+	/**
+	 * True if the "Cache-Control" request header contains
+	 * "only-if-cached".
+	 *
+	 * @see RFC 9111 5.2.1.7
+	 */
 	bool only_if_cached;
 
 	/** does the request URI have a query string?  This information is
