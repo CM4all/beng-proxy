@@ -17,8 +17,6 @@ struct HttpCacheDocument {
 	HttpStatus status;
 	StringMap response_headers;
 
-	HttpCacheDocument() = default;
-
 	HttpCacheDocument(struct pool &pool,
 			  const HttpCacheResponseInfo &_info,
 			  const StringMap &request_headers,
