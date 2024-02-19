@@ -13,13 +13,13 @@
  *
  * Throws on error.
  *
- * @param runtime_directory_template a filename template for
+ * @param filename_template a filename template for
  * $RUNTIME_DIRECTORY, ending with "XXXXXX"
- * @param tmp_directory_template a fallback filename template for
+ * @param tmp_directory_template a directory name template for
  * /tmp, ending with "XXXXXX"
  * @return the absolute path name (equals to buffer.data())
  */
 const char *
-MakeRuntimeDirectoryTemp(std::span<char> buffer,
-			 const char *runtime_directory_template,
-			 const char *tmp_directory_template);
+MakePrivateRuntimeDirectoryTemp(std::span<char> buffer,
+				const char *filename_template,
+				const char *tmp_directory_template);

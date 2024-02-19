@@ -11,30 +11,40 @@
 #include <stdio.h>
 #include <stdlib.h> // for mktemp()
 #include <string.h>
+#include <sys/stat.h> // for mkdir()
 
 using std::string_view_literals::operator""sv;
 
 const char *
-MakeRuntimeDirectoryTemp(std::span<char> buffer,
-			 const char *runtime_directory_template,
-			 const char *tmp_directory_template)
+MakePrivateRuntimeDirectoryTemp(std::span<char> buffer,
+				const char *filename_template,
+				const char *tmp_directory_template)
 {
 	assert(buffer.data() != nullptr);
 	assert(buffer.size() >= 2);
-	assert(runtime_directory_template != nullptr);
-	assert(strchr(runtime_directory_template, '/') == nullptr);
-	assert(std::string_view{runtime_directory_template}.ends_with("XXXXXX"sv));
+	assert(filename_template != nullptr);
+	assert(strchr(filename_template, '/') == nullptr);
+	assert(std::string_view{filename_template}.ends_with("XXXXXX"sv));
 	assert(tmp_directory_template != nullptr);
 	assert(strchr(tmp_directory_template, '/') == nullptr);
 	assert(std::string_view{tmp_directory_template}.ends_with("XXXXXX"sv));
 
 	const char *runtime_directory = getenv("RUNTIME_DIRECTORY");
 	if (runtime_directory != nullptr) {
-		sprintf(buffer.data(), "%s/%s",
-			runtime_directory, runtime_directory_template);
+		sprintf(buffer.data(), "%s/private", runtime_directory);
+		if (mkdir(buffer.data(), 0700) < 0) {
+			const int e = errno;
+			if (e != EEXIST)
+				throw MakeErrno(e, "Failed to create private directory");
+		}
 	} else {
 		sprintf(buffer.data(), "/tmp/%s", tmp_directory_template);
+		if (mkdtemp(buffer.data()) == nullptr)
+			throw MakeErrno("mkdtemp() failed");
 	}
+
+	const std::size_t length = strlen(buffer.data());
+	sprintf(buffer.data() + length, "/%s", filename_template);
 
 	if (*mktemp(buffer.data()) == 0)
 		throw MakeErrno("mktemp() failed");

@@ -16,9 +16,9 @@ make_child_socket_path(struct sockaddr_un *address)
 {
 	address->sun_family = AF_LOCAL;
 
-	return MakeRuntimeDirectoryTemp(std::span{address->sun_path},
-					"temp-socket-XXXXXX",
-					"cm4all-beng-proxy-socket-XXXXXX");
+	return MakePrivateRuntimeDirectoryTemp(std::span{address->sun_path},
+					       "temp-socket-XXXXXX",
+					       "cm4all-beng-proxy-XXXXXX");
 }
 
 TempListener::~TempListener() noexcept

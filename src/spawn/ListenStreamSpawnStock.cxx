@@ -78,7 +78,6 @@ public:
 		socket.Open(s.Release());
 		socket.ScheduleRead();
 
-		// TODO protect the socket against access from the host
 		chmod(temp.GetPath(), 0666);
 	}
 
