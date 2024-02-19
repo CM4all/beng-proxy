@@ -7,24 +7,18 @@
 #include "net/SocketError.hxx"
 #include "net/UniqueSocketDescriptor.hxx"
 #include "system/Error.hxx"
+#include "io/RuntimeDirectory.hxx"
 
-#include <stdlib.h>
 #include <sys/stat.h>
 
-static void
+static const char *
 make_child_socket_path(struct sockaddr_un *address)
 {
-	const char *runtime_directory = getenv("RUNTIME_DIRECTORY");
-	if (runtime_directory != nullptr)
-		sprintf(address->sun_path, "%s/temp-socket-XXXXXX",
-			runtime_directory);
-	else
-		strcpy(address->sun_path, "/tmp/cm4all-beng-proxy-socket-XXXXXX");
-
-	if (*mktemp(address->sun_path) == 0)
-		throw MakeErrno("mktemp() failed");
-
 	address->sun_family = AF_LOCAL;
+
+	return MakeRuntimeDirectoryTemp(std::span{address->sun_path},
+					"temp-socket-XXXXXX",
+					"cm4all-beng-proxy-socket-XXXXXX");
 }
 
 TempListener::~TempListener() noexcept
