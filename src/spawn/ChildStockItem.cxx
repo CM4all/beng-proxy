@@ -7,6 +7,7 @@
 #include "ListenStreamSpawnStock.hxx"
 #include "pool/tpool.hxx"
 #include "spawn/Interface.hxx"
+#include "spawn/Mount.hxx"
 #include "spawn/Prepared.hxx"
 #include "spawn/ProcessHandle.hxx"
 #include "system/Error.hxx"
@@ -44,11 +45,17 @@ ChildStockItem::Spawn(ChildStockClass &cls, void *info,
 	PreparedChildProcess p;
 	Prepare(cls, info, p);
 
-	const TempPoolLease tpool;
-
 	if (p.ns.mount.mount_listen_stream.data() != nullptr) {
+		const TempPoolLease tpool;
+		const AllocatorPtr alloc{tpool};
+
+		/* copy the mount list before editing it, which is
+		   currently a shallow copy pointing to inside the
+		   translation cache*/
+		p.ns.mount.mounts = Mount::CloneAll(alloc, p.ns.mount.mounts);
+
 		if (auto *listen_stream_spawn_stock = child_stock.GetListenStreamSpawnStock()) {
-			listen_stream_lease = listen_stream_spawn_stock->Apply(AllocatorPtr{tpool},
+			listen_stream_lease = listen_stream_spawn_stock->Apply(alloc,
 									       p.ns.mount);
 		} else
 			throw std::runtime_error{"No ListenStreamSpawnStock"};
