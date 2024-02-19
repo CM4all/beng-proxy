@@ -358,16 +358,3 @@ Cache::ExpireCallback() noexcept
 
 	return size > 0;
 }
-
-void
-Cache::EventAdd() noexcept
-{
-	if (size > 0)
-		cleanup_timer.Enable();
-}
-
-void
-Cache::EventDel() noexcept
-{
-	cleanup_timer.Disable();
-}

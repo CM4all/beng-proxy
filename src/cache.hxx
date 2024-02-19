@@ -159,9 +159,6 @@ public:
 	[[gnu::pure]]
 	std::chrono::system_clock::time_point SystemNow() const noexcept;
 
-	void EventAdd() noexcept;
-	void EventDel() noexcept;
-
 	[[gnu::pure]]
 	CacheItem *Get(const char *key) noexcept;
 
