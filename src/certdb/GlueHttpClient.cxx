@@ -7,18 +7,6 @@
 #include "lib/curl/Easy.hxx"
 #include "lib/curl/Slist.hxx"
 #include "lib/curl/StringGlue.hxx"
-#include "util/SpanCast.hxx"
-
-#include <exception>
-
-GlueHttpClient::GlueHttpClient(const char *_tls_ca)
-	:tls_ca(_tls_ca)
-{
-}
-
-GlueHttpClient::~GlueHttpClient()
-{
-}
 
 inline CurlEasy
 GlueHttpClient::PrepareRequest(HttpMethod method, const char *uri,

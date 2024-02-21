@@ -20,8 +20,8 @@ class GlueHttpClient {
 	bool verbose = false;
 
 public:
-	GlueHttpClient(const char *_tls_ca);
-	~GlueHttpClient();
+	explicit GlueHttpClient(const char *_tls_ca) noexcept
+		:tls_ca(_tls_ca) {}
 
 	GlueHttpClient(const GlueHttpClient &) = delete;
 	GlueHttpClient &operator=(const GlueHttpClient &) = delete;
