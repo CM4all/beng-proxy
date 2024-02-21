@@ -9,6 +9,19 @@
 #include "lib/openssl/GeneralName.hxx"
 #include "lib/openssl/UniqueX509.hxx"
 
+static UniqueX509_NAME
+MakeCommonName(const char *common_name)
+{
+	UniqueX509_NAME n(X509_NAME_new());
+	if (n == nullptr)
+		throw "X509_NAME_new() failed";
+
+	X509_NAME_add_entry_by_NID(n.get(), NID_commonName, MBSTRING_ASC,
+				   const_cast<unsigned char *>((const unsigned char *)common_name),
+				   -1, -1, 0);
+	return n;
+}
+
 static void
 CopyCommonName(X509_REQ &req, X509 &src)
 {
@@ -62,11 +75,14 @@ CopyDnsAltNames(X509_REQ &req, X509 &src)
 }
 
 static UniqueX509_REQ
-MakeCertRequest(EVP_PKEY &key, const auto &alt_hosts)
+MakeCertRequest(EVP_PKEY &key, const char *common_name, const auto &alt_hosts)
 {
 	UniqueX509_REQ req(X509_REQ_new());
 	if (req == nullptr)
 		throw "X509_REQ_new() failed";
+
+	if (common_name != nullptr)
+		X509_REQ_set_subject_name(req.get(), MakeCommonName(common_name).get());
 
 	if (!alt_hosts.empty())
 		AddDnsAltNames(*req, alt_hosts);

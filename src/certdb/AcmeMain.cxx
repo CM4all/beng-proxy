@@ -330,7 +330,7 @@ AcmeNewOrder(const CertDatabaseConfig &db_config, const AcmeConfig &config,
 		      identifiers, order.authorizations);
 
 	const auto cert_key = GenerateEcKey();
-	const auto req = MakeCertRequest(*cert_key, identifiers);
+	const auto req = MakeCertRequest(*cert_key, nullptr, identifiers);
 
 	order = client.FinalizeOrder(account_key, order, *req);
 	progress();
