@@ -888,6 +888,7 @@ if get_option('certdb')
     'src/certdb/AcmeJson.cxx',
     'src/certdb/AcmeKey.cxx',
     'src/certdb/AcmeMain.cxx',
+    'src/certdb/Puki.cxx',
     'src/certdb/Main.cxx',
     'src/access_log/ConfigParser.cxx',
     include_directories: inc,

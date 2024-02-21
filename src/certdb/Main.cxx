@@ -5,6 +5,7 @@
 #include "Main.hxx"
 #include "Progress.hxx"
 #include "AcmeMain.hxx"
+#include "Puki.hxx"
 #include "Config.hxx"
 #include "CertDatabase.hxx"
 #include "WrapKey.hxx"
@@ -506,6 +507,7 @@ static constexpr struct Command {
 	{ "monitor", nullptr, HandleMonitor },
 	{ "tail", nullptr, HandleTail },
 	{ "acme", "[OPTIONS] COMMAND ...", HandleAcme },
+	{ "puki", "[OPTIONS] COMMAND ...", HandlePuki },
 	{ "genwrap", "", HandleGenwrap },
 	{ "populate", "KEY SUFFIX COUNT", HandlePopulate, true },
 	{ "migrate", nullptr, HandleMigrate },
