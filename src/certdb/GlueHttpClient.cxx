@@ -4,10 +4,9 @@
 
 #include "GlueHttpClient.hxx"
 #include "http/Method.hxx"
-#include "lib/curl/Adapter.hxx"
 #include "lib/curl/Easy.hxx"
 #include "lib/curl/Slist.hxx"
-#include "lib/curl/StringHandler.hxx"
+#include "lib/curl/StringGlue.hxx"
 #include "util/SpanCast.hxx"
 
 #include <exception>
@@ -54,19 +53,5 @@ GlueHttpClient::Request(HttpMethod method, const char *uri,
 {
 	CurlSlist header_list;
 
-	StringCurlResponseHandler handler;
-	CurlResponseHandlerAdapter adapter{handler};
-
-	auto easy = PrepareRequest(method, uri, header_list, body);
-	adapter.Install(easy);
-
-	CURLcode code = curl_easy_perform(easy.Get());
-	adapter.Done(code);
-
-	handler.CheckRethrowError();
-
-	if (code != CURLE_OK)
-		throw Curl::MakeError(code, "CURL error");
-
-	return std::move(handler).GetResponse();
+	return StringCurlRequest(PrepareRequest(method, uri, header_list, body));
 }
