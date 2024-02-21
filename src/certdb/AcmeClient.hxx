@@ -102,22 +102,22 @@ private:
 	 */
 	void EnsureDirectory();
 
-	GlueHttpResponse FakeRequest(HttpMethod method, const char *uri,
-				     std::span<const std::byte> body);
+	StringCurlResponse FakeRequest(HttpMethod method, const char *uri,
+				       std::span<const std::byte> body);
 
-	GlueHttpResponse Request(HttpMethod method, const char *uri,
-				 std::span<const std::byte> body);
+	StringCurlResponse Request(HttpMethod method, const char *uri,
+				   std::span<const std::byte> body);
 
-	GlueHttpResponse Request(HttpMethod method, const char *uri,
-				 std::nullptr_t=nullptr) {
+	StringCurlResponse Request(HttpMethod method, const char *uri,
+				   std::nullptr_t=nullptr) {
 		return Request(method, uri, std::span<const std::byte>{});
 	}
 
-	GlueHttpResponse SignedRequest(EVP_PKEY &key,
-				       HttpMethod method, const char *uri,
-				       std::span<const std::byte> payload);
+	StringCurlResponse SignedRequest(EVP_PKEY &key,
+					 HttpMethod method, const char *uri,
+					 std::span<const std::byte> payload);
 
-	GlueHttpResponse SignedRequestRetry(EVP_PKEY &key,
-					    HttpMethod method, const char *uri,
-					    std::span<const std::byte> payload);
+	StringCurlResponse SignedRequestRetry(EVP_PKEY &key,
+					      HttpMethod method, const char *uri,
+					      std::span<const std::byte> payload);
 };

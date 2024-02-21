@@ -4,29 +4,15 @@
 
 #pragma once
 
-#include "lib/curl/Headers.hxx"
+#include "lib/curl/StringResponse.hxx"
 
 #include <cstdint>
 #include <span>
-#include <string>
 
 enum class HttpMethod : uint_least8_t;
 enum class HttpStatus : uint_least16_t;
 class CurlSlist;
 class CurlEasy;
-
-struct GlueHttpResponse {
-	HttpStatus status;
-
-	Curl::Headers headers;
-
-	std::string body;
-
-	GlueHttpResponse(HttpStatus _status,
-			 Curl::Headers &&_headers,
-			 std::string &&_body)
-		:status(_status), headers(std::move(_headers)), body(_body) {}
-};
 
 class GlueHttpClient {
 	const char *const tls_ca;
@@ -44,8 +30,8 @@ public:
 		verbose = true;
 	}
 
-	GlueHttpResponse Request(HttpMethod method, const char *uri,
-				 std::span<const std::byte> body);
+	StringCurlResponse Request(HttpMethod method, const char *uri,
+				   std::span<const std::byte> body);
 
 private:
 	CurlEasy PrepareRequest(HttpMethod method, const char *uri,

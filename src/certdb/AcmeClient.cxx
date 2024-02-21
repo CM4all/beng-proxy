@@ -32,7 +32,7 @@ using json = nlohmann::json;
 
 [[gnu::pure]]
 static bool
-IsJson(const GlueHttpResponse &response) noexcept
+IsJson(const StringCurlResponse &response) noexcept
 {
 	auto i = response.headers.find("content-type");
 	if (i == response.headers.end())
@@ -46,7 +46,7 @@ IsJson(const GlueHttpResponse &response) noexcept
 
 [[gnu::pure]]
 static json
-ParseJson(GlueHttpResponse &&response)
+ParseJson(StringCurlResponse &&response)
 {
 	if (!IsJson(response))
 		throw std::runtime_error("JSON expected");
@@ -74,7 +74,7 @@ CheckThrowError(const json &root, const char *msg)
  */
 [[noreturn]]
 static void
-ThrowError(GlueHttpResponse &&response, const char *msg)
+ThrowError(StringCurlResponse &&response, const char *msg)
 {
 	if (IsJson(response)) {
 		const auto root = json::parse(response.body);
@@ -90,7 +90,7 @@ ThrowError(GlueHttpResponse &&response, const char *msg)
  */
 [[noreturn]]
 static void
-ThrowStatusError(GlueHttpResponse &&response, const char *msg)
+ThrowStatusError(StringCurlResponse &&response, const char *msg)
 {
 	std::string what(msg);
 	what += " (";
@@ -205,7 +205,7 @@ MakeHeader(const EVP_PKEY &key, const char *url, const char *kid,
 	return root;
 }
 
-GlueHttpResponse
+StringCurlResponse
 AcmeClient::Request(HttpMethod method, const char *uri,
 		    std::span<const std::byte> body)
 {
@@ -221,7 +221,7 @@ AcmeClient::Request(HttpMethod method, const char *uri,
 	return response;
 }
 
-GlueHttpResponse
+StringCurlResponse
 AcmeClient::SignedRequest(EVP_PKEY &key,
 			  HttpMethod method, const char *uri,
 			  std::span<const std::byte> payload)
@@ -248,7 +248,7 @@ AcmeClient::SignedRequest(EVP_PKEY &key,
 	return Request(method, uri, AsBytes(root.dump()));
 }
 
-GlueHttpResponse
+StringCurlResponse
 AcmeClient::SignedRequestRetry(EVP_PKEY &key,
 			       HttpMethod method, const char *uri,
 			       std::span<const std::byte> payload)
@@ -277,7 +277,7 @@ AcmeClient::SignedRequestRetry(EVP_PKEY &key,
 
 template<typename T>
 static auto
-WithLocation(T &&t, const GlueHttpResponse &response) noexcept
+WithLocation(T &&t, const StringCurlResponse &response) noexcept
 {
 	auto location = response.headers.find("location");
 	if (location != response.headers.end())

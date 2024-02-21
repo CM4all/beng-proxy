@@ -35,7 +35,7 @@ public:
 			std::rethrow_exception(error);
 	}
 
-	GlueHttpResponse MoveResponse() {
+	StringCurlResponse MoveResponse() {
 		return {status, std::move(headers), std::move(body_string)};
 	}
 
@@ -86,7 +86,7 @@ GlueHttpClient::PrepareRequest(HttpMethod method, const char *uri,
 	return easy;
 }
 
-GlueHttpResponse
+StringCurlResponse
 GlueHttpClient::Request(HttpMethod method, const char *uri,
 			std::span<const std::byte> body)
 {
