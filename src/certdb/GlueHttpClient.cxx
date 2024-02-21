@@ -26,7 +26,7 @@ GlueHttpClient::PrepareRequest(HttpMethod method, const char *uri,
 		easy.SetPost();
 
 	if (body.data() != nullptr) {
-		easy.SetRequestBody(body.data(), body.size_bytes());
+		easy.SetRequestBody(body);
 		header_list.Append("Content-Type: application/jose+json");
 	}
 
