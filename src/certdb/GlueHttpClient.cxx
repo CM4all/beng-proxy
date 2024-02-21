@@ -6,8 +6,8 @@
 #include "http/Method.hxx"
 #include "lib/curl/Adapter.hxx"
 #include "lib/curl/Easy.hxx"
-#include "lib/curl/Handler.hxx"
 #include "lib/curl/Slist.hxx"
+#include "lib/curl/StringHandler.hxx"
 #include "util/SpanCast.hxx"
 
 #include <exception>
@@ -20,44 +20,6 @@ GlueHttpClient::GlueHttpClient(const char *_tls_ca)
 GlueHttpClient::~GlueHttpClient()
 {
 }
-
-class GlueHttpResponseHandler final : public CurlResponseHandler {
-	HttpStatus status;
-	Curl::Headers headers;
-
-	std::string body_string;
-
-	std::exception_ptr error;
-
-public:
-	void CheckThrowError() {
-		if (error)
-			std::rethrow_exception(error);
-	}
-
-	StringCurlResponse MoveResponse() {
-		return {status, std::move(headers), std::move(body_string)};
-	}
-
-public:
-	/* virtual methods from class CurlResponseHandler */
-
-	void OnHeaders(HttpStatus _status, Curl::Headers &&_headers) override {
-		status = _status;
-		headers = std::move(_headers);
-	}
-
-	void OnData(std::span<const std::byte> data) override {
-		body_string.append(ToStringView(data));
-	}
-
-	void OnEnd() override {
-	}
-
-	void OnError(std::exception_ptr e) noexcept override {
-		error = std::move(e);
-	}
-};
 
 inline CurlEasy
 GlueHttpClient::PrepareRequest(HttpMethod method, const char *uri,
@@ -92,7 +54,7 @@ GlueHttpClient::Request(HttpMethod method, const char *uri,
 {
 	CurlSlist header_list;
 
-	GlueHttpResponseHandler handler;
+	StringCurlResponseHandler handler;
 	CurlResponseHandlerAdapter adapter{handler};
 
 	auto easy = PrepareRequest(method, uri, header_list, body);
@@ -101,10 +63,10 @@ GlueHttpClient::Request(HttpMethod method, const char *uri,
 	CURLcode code = curl_easy_perform(easy.Get());
 	adapter.Done(code);
 
-	handler.CheckThrowError();
+	handler.CheckRethrowError();
 
 	if (code != CURLE_OK)
 		throw Curl::MakeError(code, "CURL error");
 
-	return handler.MoveResponse();
+	return std::move(handler).GetResponse();
 }
