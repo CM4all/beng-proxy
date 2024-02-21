@@ -5,7 +5,6 @@
 #pragma once
 
 #include "AcmeDirectory.hxx"
-#include "event/Loop.hxx"
 #include "GlueHttpClient.hxx"
 #include "lib/openssl/UniqueX509.hxx"
 
@@ -31,7 +30,6 @@ struct AcmeChallenge;
  * @see https://ietf-wg-acme.github.io/acme/
  */
 class AcmeClient {
-	EventLoop event_loop;
 	GlueHttpClient glue_http_client;
 	const char *const directory_url;
 

@@ -4,18 +4,16 @@
 
 #include "GlueHttpClient.hxx"
 #include "http/Method.hxx"
-#include "event/Loop.hxx"
-#include "lib/curl/Request.hxx"
+#include "lib/curl/Adapter.hxx"
+#include "lib/curl/Easy.hxx"
 #include "lib/curl/Handler.hxx"
 #include "lib/curl/Slist.hxx"
 #include "util/SpanCast.hxx"
 
 #include <exception>
 
-GlueHttpClient::GlueHttpClient(EventLoop &event_loop,
-			       const char *_tls_ca)
-	:curl_global(event_loop),
-	 tls_ca(_tls_ca)
+GlueHttpClient::GlueHttpClient(const char *_tls_ca)
+	:tls_ca(_tls_ca)
 {
 }
 
@@ -24,8 +22,6 @@ GlueHttpClient::~GlueHttpClient()
 }
 
 class GlueHttpResponseHandler final : public CurlResponseHandler {
-	EventLoop &event_loop;
-
 	HttpStatus status;
 	Curl::Headers headers;
 
@@ -33,16 +29,7 @@ class GlueHttpResponseHandler final : public CurlResponseHandler {
 
 	std::exception_ptr error;
 
-	bool done = false;
-
 public:
-	explicit GlueHttpResponseHandler(EventLoop &_event_loop) noexcept
-		:event_loop(_event_loop) {}
-
-	bool IsDone() const {
-		return done;
-	}
-
 	void CheckThrowError() {
 		if (error)
 			std::rethrow_exception(error);
@@ -65,14 +52,10 @@ public:
 	}
 
 	void OnEnd() override {
-		done = true;
-		event_loop.Break();
 	}
 
 	void OnError(std::exception_ptr e) noexcept override {
 		error = std::move(e);
-		done = true;
-		event_loop.Break();
 	}
 };
 
@@ -104,26 +87,24 @@ GlueHttpClient::PrepareRequest(HttpMethod method, const char *uri,
 }
 
 GlueHttpResponse
-GlueHttpClient::Request(EventLoop &event_loop,
-			HttpMethod method, const char *uri,
+GlueHttpClient::Request(HttpMethod method, const char *uri,
 			std::span<const std::byte> body)
 {
 	CurlSlist header_list;
 
-	GlueHttpResponseHandler handler{event_loop};
-	CurlRequest request{
-		curl_global,
-		PrepareRequest(method, uri, header_list, body),
-		handler,
-	};
+	GlueHttpResponseHandler handler;
+	CurlResponseHandlerAdapter adapter{handler};
 
-	request.Start();
+	auto easy = PrepareRequest(method, uri, header_list, body);
+	adapter.Install(easy);
 
-	if (!handler.IsDone())
-		event_loop.Run();
-
-	assert(handler.IsDone());
+	CURLcode code = curl_easy_perform(easy.Get());
+	adapter.Done(code);
 
 	handler.CheckThrowError();
+
+	if (code != CURLE_OK)
+		throw Curl::MakeError(code, "CURL error");
+
 	return handler.MoveResponse();
 }

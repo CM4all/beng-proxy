@@ -101,8 +101,7 @@ ThrowStatusError(GlueHttpResponse &&response, const char *msg)
 }
 
 AcmeClient::AcmeClient(const AcmeConfig &config)
-	:glue_http_client(event_loop,
-			  config.tls_ca.empty() ? nullptr : config.tls_ca.c_str()),
+	:glue_http_client(config.tls_ca.empty() ? nullptr : config.tls_ca.c_str()),
 	 directory_url(config.GetDirectoryURL()),
 	 account_key_id(config.account_key_id)
 {
@@ -117,8 +116,7 @@ AcmeClient::RequestDirectory()
 {
 	unsigned remaining_tries = 3;
 	while (true) {
-		auto response = glue_http_client.Request(event_loop,
-							 HttpMethod::GET,
+		auto response = glue_http_client.Request(HttpMethod::GET,
 							 directory_url,
 							 {});
 		if (response.status != HttpStatus::OK) {
@@ -156,8 +154,7 @@ AcmeClient::RequestNonce()
 
 	unsigned remaining_tries = 3;
 	while (true) {
-		auto response = glue_http_client.Request(event_loop,
-							 HttpMethod::HEAD,
+		auto response = glue_http_client.Request(HttpMethod::HEAD,
 							 directory.new_nonce.c_str(),
 							 {});
 		if (response.status != HttpStatus::OK) {
@@ -212,8 +209,7 @@ GlueHttpResponse
 AcmeClient::Request(HttpMethod method, const char *uri,
 		    std::span<const std::byte> body)
 {
-	auto response = glue_http_client.Request(event_loop,
-						 method, uri,
+	auto response = glue_http_client.Request(method, uri,
 						 body);
 
 	if (auto new_nonce = response.headers.find("replay-nonce");

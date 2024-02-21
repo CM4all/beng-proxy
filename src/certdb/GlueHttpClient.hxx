@@ -4,7 +4,6 @@
 
 #pragma once
 
-#include "lib/curl/Global.hxx"
 #include "lib/curl/Headers.hxx"
 
 #include <cstdint>
@@ -15,7 +14,6 @@ enum class HttpMethod : uint_least8_t;
 enum class HttpStatus : uint_least16_t;
 class CurlSlist;
 class CurlEasy;
-class EventLoop;
 
 struct GlueHttpResponse {
 	HttpStatus status;
@@ -31,15 +29,12 @@ struct GlueHttpResponse {
 };
 
 class GlueHttpClient {
-	CurlGlobal curl_global;
-
 	const char *const tls_ca;
 
 	bool verbose = false;
 
 public:
-	GlueHttpClient(EventLoop &event_loop,
-		       const char *_tls_ca);
+	GlueHttpClient(const char *_tls_ca);
 	~GlueHttpClient();
 
 	GlueHttpClient(const GlueHttpClient &) = delete;
@@ -49,8 +44,7 @@ public:
 		verbose = true;
 	}
 
-	GlueHttpResponse Request(EventLoop &event_loop,
-				 HttpMethod method, const char *uri,
+	GlueHttpResponse Request(HttpMethod method, const char *uri,
 				 std::span<const std::byte> body);
 
 private:
