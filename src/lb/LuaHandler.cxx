@@ -57,9 +57,7 @@ LbLuaHandler::LbLuaHandler(LuaInitHook &init_hook,
 	RegisterLuaRequest(L);
 }
 
-LbLuaHandler::~LbLuaHandler()
-{
-}
+LbLuaHandler::~LbLuaHandler() noexcept = default;
 
 const LbGoto *
 LbLuaHandler::HandleRequest(IncomingHttpRequest &request,

@@ -21,7 +21,7 @@ class LbLuaHandler final {
 
 public:
 	LbLuaHandler(LuaInitHook &init_hook, const LbLuaHandlerConfig &config);
-	~LbLuaHandler();
+	~LbLuaHandler() noexcept;
 
 	const LbLuaHandlerConfig &GetConfig() const {
 		return config;
