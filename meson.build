@@ -757,6 +757,7 @@ endif
 
 if lua_dep.found()
   lb_sources += [
+    'src/lb/LuaRequest.cxx',
     'src/lb/LuaHandler.cxx',
     'src/lb/LuaInitHook.cxx',
     'src/lb/LuaGoto.cxx',
