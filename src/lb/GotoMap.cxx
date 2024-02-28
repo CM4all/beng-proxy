@@ -142,7 +142,7 @@ LbGotoMap::GetInstance(const LbBranchConfig &config)
 LbLuaHandler &
 LbGotoMap::GetInstance(const LbLuaHandlerConfig &config)
 {
-	return lua_handlers.try_emplace(&config, lua_init_hook, config)
+	return lua_handlers.try_emplace(&config, event_loop, lua_init_hook, config)
 		.first->second;
 }
 

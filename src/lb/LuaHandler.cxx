@@ -14,6 +14,7 @@
 #include "lua/Error.hxx"
 #include "lua/InitHook.hxx"
 #include "lua/Resume.hxx"
+#include "lua/event/Init.hxx"
 #include "lib/fmt/RuntimeError.hxx"
 #include "util/ScopeExit.hxx"
 
@@ -22,7 +23,8 @@ extern "C" {
 #include <lualib.h>
 }
 
-LbLuaHandler::LbLuaHandler(LuaInitHook &init_hook,
+LbLuaHandler::LbLuaHandler(EventLoop &event_loop,
+			   LuaInitHook &init_hook,
 			   const LbLuaHandlerConfig &_config)
 	:config(_config),
 	 state(luaL_newstate()), function(state.get())
@@ -31,6 +33,8 @@ LbLuaHandler::LbLuaHandler(LuaInitHook &init_hook,
 	const Lua::ScopeCheckStack check_stack(L);
 
 	luaL_openlibs(L);
+
+	Lua::InitEvent(L, event_loop);
 
 	init_hook.PreInit(L);
 

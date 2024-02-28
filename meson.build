@@ -282,6 +282,12 @@ eutil = static_library('eutil',
 eutil_dep = declare_dependency(link_with: eutil,
                               dependencies: [event_dep])
 
+if lua_dep.found()
+  subdir('libcommon/src/lua/event')
+else
+  lua_event_dep = lua_dep
+endif
+
 subdir('libcommon/src/net')
 subdir('libcommon/src/net/control')
 subdir('libcommon/src/net/log')
@@ -859,6 +865,7 @@ executable(
     control_server_dep,
     odbus_dep,
     lua_dep,
+    lua_event_dep,
     pcre_dep,
     cluster_dep,
   ],

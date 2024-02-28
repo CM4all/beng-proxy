@@ -11,6 +11,7 @@ struct pool;
 struct LbGoto;
 struct LbLuaHandlerConfig;
 struct IncomingHttpRequest;
+class EventLoop;
 class HttpResponseHandler;
 class LuaInitHook;
 
@@ -21,7 +22,8 @@ class LbLuaHandler final {
 	Lua::Value function;
 
 public:
-	LbLuaHandler(LuaInitHook &init_hook, const LbLuaHandlerConfig &config);
+	LbLuaHandler(EventLoop &event_loop,
+		     LuaInitHook &init_hook, const LbLuaHandlerConfig &config);
 	~LbLuaHandler() noexcept;
 
 	const LbLuaHandlerConfig &GetConfig() const {
