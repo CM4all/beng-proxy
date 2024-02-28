@@ -10,13 +10,12 @@
 #include "http/Method.hxx"
 #include "http/ResponseHandler.hxx"
 #include "http/Status.hxx"
+#include "util/StringAPI.hxx"
 
 extern "C" {
 #include <lauxlib.h>
 #include <lualib.h>
 }
-
-#include <string.h>
 
 static constexpr char lua_request_class[] = "lb.http_request";
 typedef Lua::Class<LbLuaRequestData, lua_request_class> LbLuaRequest;
@@ -129,22 +128,22 @@ LbLuaRequestIndex(lua_State *L)
 	const char *name = lua_tostring(L, 2);
 
 	for (const auto *i = request_methods; i->name != nullptr; ++i) {
-		if (strcmp(i->name, name) == 0) {
+		if (StringIsEqual(i->name, name)) {
 			Lua::Push(L, i->func);
 			return 1;
 		}
 	}
 
-	if (strcmp(name, "uri") == 0) {
+	if (StringIsEqual(name, "uri")) {
 		Lua::Push(L, data.request.uri);
 		return 1;
-	} else if (strcmp(name, "method") == 0) {
+	} else if (StringIsEqual(name, "method")) {
 		Lua::Push(L, http_method_to_string(data.request.method));
 		return 1;
-	} else if (strcmp(name, "has_body") == 0) {
+	} else if (StringIsEqual(name, "has_body")) {
 		Lua::Push(L, data.request.HasBody());
 		return 1;
-	} else if (strcmp(name, "remote_host") == 0) {
+	} else if (StringIsEqual(name, "remote_host")) {
 		Lua::Push(L, data.request.remote_host);
 		return 1;
 	}
