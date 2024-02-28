@@ -7,6 +7,7 @@
 #include "lua/State.hxx"
 #include "lua/Value.hxx"
 
+struct pool;
 struct LbGoto;
 struct LbLuaHandlerConfig;
 struct IncomingHttpRequest;
@@ -27,6 +28,13 @@ public:
 		return config;
 	}
 
-	const LbGoto *HandleRequest(IncomingHttpRequest &request,
-				    HttpResponseHandler &handler);
+	lua_State *GetMainState() const noexcept {
+		return state.get();
+	}
+
+	void PushFunction(lua_State *L) {
+		function.Push(L);
+	}
+
+	const LbGoto *Finish(lua_State *L, struct pool &pool);
 };

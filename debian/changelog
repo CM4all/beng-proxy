@@ -1,5 +1,6 @@
 cm4all-beng-proxy (18.0.58) unstable; urgency=low
 
+  * lb: run lua_handler as coroutine
   * certdb/puki: client for the 1&1 Public Key Infrastructure (PUKI)
 
  --   

@@ -7,13 +7,13 @@
 #include "LuaRequest.hxx"
 #include "GotoConfig.hxx"
 #include "Goto.hxx"
-#include "http/IncomingRequest.hxx"
 #include "pool/pool.hxx"
 #include "lua/RunFile.hxx"
 #include "lua/Util.hxx"
 #include "lua/Assert.hxx"
 #include "lua/Error.hxx"
 #include "lua/InitHook.hxx"
+#include "lua/Resume.hxx"
 #include "lib/fmt/RuntimeError.hxx"
 #include "util/ScopeExit.hxx"
 
@@ -60,21 +60,8 @@ LbLuaHandler::LbLuaHandler(LuaInitHook &init_hook,
 LbLuaHandler::~LbLuaHandler() noexcept = default;
 
 const LbGoto *
-LbLuaHandler::HandleRequest(IncomingHttpRequest &request,
-			    HttpResponseHandler &handler)
+LbLuaHandler::Finish(lua_State *L, struct pool &pool)
 {
-	auto *L = state.get();
-	const Lua::ScopeCheckStack check_stack(L);
-
-	function.Push(L);
-	auto *data = NewLuaRequest(L, request, handler);
-	AtScopeExit(data) { data->stale = true; };
-
-	if (lua_pcall(L, 1, 1, 0))
-		throw Lua::PopError(L);
-
-	AtScopeExit(L) { lua_pop(L, 1); };
-
 	if (lua_isnil(L, -1))
 		return nullptr;
 
@@ -89,7 +76,7 @@ LbLuaHandler::HandleRequest(IncomingHttpRequest &request,
 		const char *resolve_connect = lua_tostring(L, -1);
 		if (resolve_connect != nullptr)
 			/* allocate a LbGoto instance from the request pool */
-			return NewFromPool<LbGoto>(request.pool, LbResolveConnect{p_strdup(request.pool, resolve_connect)});
+			return NewFromPool<LbGoto>(pool, LbResolveConnect{p_strdup(pool, resolve_connect)});
 	}
 
 	throw std::runtime_error("Wrong return type from Lua handler");

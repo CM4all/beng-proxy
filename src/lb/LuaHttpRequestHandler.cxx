@@ -4,32 +4,101 @@
 
 #include "HttpConnection.hxx"
 #include "LuaHandler.hxx"
+#include "LuaRequest.hxx"
+#include "lua/CoRunner.hxx"
+#include "lua/Resume.hxx"
+#include "lua/Ref.hxx"
 #include "http/IncomingRequest.hxx"
 #include "http/Headers.hxx"
 #include "http/Method.hxx"
 #include "http/ResponseHandler.hxx"
+#include "util/Cancellable.hxx"
+#include "stopwatch.hxx"
 
-class LbLuaResponseHandler final : public HttpResponseHandler {
+class LbLuaResponseHandler final
+	: public HttpResponseHandler, Lua::ResumeListener,
+	  Cancellable
+{
 	LbHttpConnection &connection;
 
 	IncomingHttpRequest &request;
+
+	CancellablePointer &caller_cancel_ptr;
+
+	[[no_unique_address]]
+	const StopwatchPtr stopwatch;
+
+	LbLuaHandler &handler;
+
+	/**
+	 * The Lua thread which runs the handler coroutine.
+	 */
+	Lua::CoRunner thread;
+
+	Lua::Ref lua_request_ref;
+
+	LbLuaRequestData *lua_request = nullptr;
 
 	bool finished = false;
 
 public:
 	LbLuaResponseHandler(LbHttpConnection &_connection,
-			     IncomingHttpRequest &_request) noexcept
-		:connection(_connection), request(_request) {}
+			     IncomingHttpRequest &_request,
+			     CancellablePointer &_caller_cancel_ptr,
+			     const StopwatchPtr &parent_stopwatch,
+			     LbLuaHandler &_handler) noexcept
+		:connection(_connection), request(_request),
+		 caller_cancel_ptr(_caller_cancel_ptr),
+		 stopwatch(parent_stopwatch, "lua"),
+		 handler(_handler),
+		 thread(handler.GetMainState())
+	{
+		caller_cancel_ptr = *this;
+	}
+
+	~LbLuaResponseHandler() noexcept {
+		if (lua_request != nullptr)
+			lua_request->stale = true;
+	}
 
 	bool IsFinished() const noexcept {
 		return finished;
+	}
+
+	void Start();
+
+private:
+	void Destroy() noexcept {
+		this->~LbLuaResponseHandler();
 	}
 
 	/* virtual methods from class HttpResponseHandler */
 	void OnHttpResponse(HttpStatus status, StringMap &&headers,
 			    UnusedIstreamPtr body) noexcept override;
 	void OnHttpError(std::exception_ptr ep) noexcept override;
+
+	/* virtual methods from class Lua::ResumeListener */
+	void OnLuaFinished(lua_State *L) noexcept override;
+	void OnLuaError(lua_State *L, std::exception_ptr e) noexcept override;
+
+	/* virtual methods from class Cancellable */
+	void Cancel() noexcept override;
 };
+
+inline void
+LbLuaResponseHandler::Start()
+{
+	assert(lua_request == nullptr);
+
+	lua_State *L = thread.CreateThread(*this);
+
+	handler.PushFunction(L);
+
+	lua_request = NewLuaRequest(L, request, *this);
+	lua_request_ref = {L, Lua::RelativeStackIndex{-1}};
+
+	Lua::Resume(L, 1);
+}
 
 void
 LbLuaResponseHandler::OnHttpResponse(HttpStatus status,
@@ -57,34 +126,61 @@ LbLuaResponseHandler::OnHttpError(std::exception_ptr ep) noexcept
 }
 
 void
+LbLuaResponseHandler::OnLuaFinished(lua_State *L) noexcept
+try {
+	const LbGoto *g = handler.Finish(L, request.pool);
+
+	if (IsFinished()) {
+		Destroy();
+		return;
+	}
+
+	if (g == nullptr) {
+		auto &_request = request;
+		Destroy();
+
+		_request.body.Clear();
+		_request.SendMessage(HttpStatus::BAD_GATEWAY,
+				     "No response from Lua handler");
+		return;
+	}
+
+	auto &_request = request;
+	auto &cancel_ptr = caller_cancel_ptr;
+	auto _stopwatch = std::move(stopwatch);
+	Destroy();
+
+	connection.HandleHttpRequest(*g, _request, _stopwatch, cancel_ptr);
+} catch (...) {
+	OnLuaError(L, std::current_exception());
+}
+
+void
+LbLuaResponseHandler::OnLuaError(lua_State *, std::exception_ptr e) noexcept
+{
+	if (IsFinished())
+		connection.logger(1, "Lua error: ", e);
+	else
+		InvokeError(std::move(e));
+	Destroy();
+}
+
+void
+LbLuaResponseHandler::Cancel() noexcept
+{
+	thread.Cancel();
+	Destroy();
+}
+
+void
 LbHttpConnection::InvokeLua(LbLuaHandler &handler,
 			    IncomingHttpRequest &request,
 			    const StopwatchPtr &parent_stopwatch,
 			    CancellablePointer &cancel_ptr) noexcept
 {
-	LbLuaResponseHandler response_handler(*this, request);
-	const LbGoto *g;
-
-	try {
-		g = handler.HandleRequest(request, response_handler);
-	} catch (...) {
-		if (response_handler.IsFinished())
-			logger(1, "Lua error: ", std::current_exception());
-		else
-			response_handler.InvokeError(std::current_exception());
-		return;
-	}
-
-	if (response_handler.IsFinished())
-		return;
-
-	if (g == nullptr) {
-		request.body.Clear();
-		request.SendMessage(HttpStatus::BAD_GATEWAY,
-				    "No response from Lua handler");
-		return;
-	}
-
-	HandleHttpRequest(*g, request, parent_stopwatch, cancel_ptr);
-	return;
+	auto *response_handler = NewFromPool<LbLuaResponseHandler>(request.pool, *this,
+								   request, cancel_ptr,
+								   parent_stopwatch,
+								   handler);
+	response_handler->Start();
 }
