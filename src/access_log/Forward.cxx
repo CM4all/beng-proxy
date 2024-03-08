@@ -9,6 +9,7 @@
 
 #include "net/UniqueSocketDescriptor.hxx"
 #include "net/RConnectSocket.hxx"
+#include "net/log/Protocol.hxx"
 #include "util/PrintException.hxx"
 
 #include <array>
@@ -40,7 +41,7 @@ try {
 	}
 
 	for (unsigned i = 0; i < num_destinations; ++i) {
-		destinations[i].fd = ResolveConnectDatagramSocket(argv[1 + i], 5479);
+		destinations[i].fd = ResolveConnectDatagramSocket(argv[1 + i], Net::Log::DEFAULT_PORT);
 	}
 
 	const SocketDescriptor src{STDIN_FILENO};

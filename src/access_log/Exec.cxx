@@ -13,6 +13,7 @@
 #include "net/SocketConfig.hxx"
 #include "net/Parser.hxx"
 #include "net/AllocatedSocketAddress.hxx"
+#include "net/log/Protocol.hxx"
 #include "util/PrintException.hxx"
 
 #include <stdlib.h>
@@ -38,7 +39,7 @@ try {
 		return EXIT_FAILURE;
 	}
 
-	config.bind_address = ParseSocketAddress(argv[i++], 5479, true);
+	config.bind_address = ParseSocketAddress(argv[i++], Net::Log::DEFAULT_PORT, true);
 
 	auto fd = config.Create(SOCK_DGRAM);
 

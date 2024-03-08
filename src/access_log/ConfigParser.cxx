@@ -4,6 +4,7 @@
 
 #include "ConfigParser.hxx"
 #include "net/Parser.hxx"
+#include "net/log/Protocol.hxx"
 #include "io/config/FileLineParser.hxx"
 
 #include <cstring>
@@ -23,7 +24,7 @@ AccessLogConfigParser::ParseLine(FileLineParser &line)
 		type_selected = true;
 		config.type = AccessLogConfig::Type::SEND;
 		config.send_to = ParseSocketAddress(line.ExpectValueAndEnd(),
-						    5479, false);
+						    Net::Log::DEFAULT_PORT, false);
 	} else if (strcmp(word, "shell") == 0) {
 		if (type_selected)
 			throw LineParser::Error("Access logger already defined");
