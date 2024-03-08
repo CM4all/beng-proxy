@@ -93,16 +93,20 @@ AccessLogGlue::Log(std::chrono::system_clock::time_point now,
 		}
 	}
 
-	Net::Log::Datagram d(Net::Log::FromSystem(now),
-			     request.method, request.uri,
-			     remote_host,
-			     host,
-			     site,
-			     referer, user_agent,
-			     status, content_length,
-			     bytes_received, bytes_sent,
-			     std::chrono::duration_cast<Net::Log::Duration>(duration));
-	d.forwarded_to = forwarded_to;
+	const auto d = Net::Log::Datagram{
+		.timestamp = Net::Log::FromSystem(now),
+		.remote_host = remote_host,
+		.host = host,
+		.site = site,
+		.forwarded_to = forwarded_to,
+		.http_uri = request.uri,
+		.http_referer = referer,
+		.user_agent = user_agent,
+		.http_method = request.method,
+		.http_status = status,
+	}.SetLength(content_length)
+		.SetTraffic(bytes_received, bytes_sent)
+		.SetDuration(std::chrono::duration_cast<Net::Log::Duration>(duration));
 
 	Log(d);
 }
