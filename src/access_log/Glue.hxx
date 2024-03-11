@@ -51,6 +51,7 @@ public:
 	 */
 	void Log(std::chrono::system_clock::time_point now,
 		 const IncomingHttpRequest &request, const char *site,
+		 const char *analytics_id,
 		 const char *forwarded_to,
 		 const char *host, const char *x_forwarded_for,
 		 const char *referer, const char *user_agent,
@@ -60,6 +61,7 @@ public:
 
 	void Log(std::chrono::system_clock::time_point now,
 		 const IncomingHttpRequest &request, const char *site,
+		 const char *analytics_id,
 		 const char *forwarded_to,
 		 const char *referer, const char *user_agent,
 		 HttpStatus status, int64_t length,

@@ -76,6 +76,9 @@ LbHttpRequest::OnTranslateResponse(UniquePoolPtr<TranslateResponse> _response) n
 	if (response.site != nullptr)
 		rl.site_name = p_strdup(request.pool, response.site);
 
+	if (response.analytics_id != nullptr)
+		rl.analytics_id = p_strdup(request.pool, response.analytics_id);
+
 	if (response.https_only != 0 && !c.IsEncrypted()) {
 		Destroy();
 

@@ -32,6 +32,7 @@ BpRequestLogger::LogHttpRequest(IncomingHttpRequest &request,
 	if (instance.access_log != nullptr)
 		instance.access_log->Log(instance.event_loop.SystemNow(),
 					 request, site_name,
+					 analytics_id,
 					 nullptr,
 					 request.headers.Get("referer"),
 					 request.headers.Get("user-agent"),

@@ -36,6 +36,7 @@ LbRequestLogger::LogHttpRequest(IncomingHttpRequest &request,
 	if (instance.access_log != nullptr)
 		instance.access_log->Log(instance.event_loop.SystemNow(),
 					 request, site_name,
+					 analytics_id,
 					 forwarded_to,
 					 host,
 					 x_forwarded_for,

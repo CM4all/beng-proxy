@@ -39,6 +39,11 @@ struct BpRequestLogger final : IncomingHttpRequestLogger {
 	const char *site_name = nullptr;
 
 	/**
+	 * @see TranslationCommand::ANALYTICS_ID
+	 */
+	const char *analytics_id = nullptr;
+
+	/**
 	 * From TranslationCommand::STATS_TAG
 	 */
 	std::string_view stats_tag{};

@@ -129,6 +129,11 @@ Request::HandleTranslatedRequest2(const TranslateResponse &response) noexcept
 		rl.site_name = response.site;
 	}
 
+	if (response.analytics_id != nullptr) {
+		auto &rl = *(BpRequestLogger *)request.logger;
+		rl.analytics_id = response.analytics_id;
+	}
+
 	if (response.stats_tag != nullptr) {
 		auto &rl = *(BpRequestLogger *)request.logger;
 		rl.stats_tag = response.stats_tag;
