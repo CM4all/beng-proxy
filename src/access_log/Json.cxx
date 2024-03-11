@@ -47,6 +47,9 @@ Dump(JsonWriter::Sink sink, const ReceivedAccessLogDatagram &d)
 	if (d.site != nullptr)
 		o.AddMember("site", d.site);
 
+	if (d.analytics_id != nullptr)
+		o.AddMember("analytics_id", d.analytics_id);
+
 	if (d.forwarded_to != nullptr)
 		o.AddMember("forwarded_to", d.forwarded_to);
 
