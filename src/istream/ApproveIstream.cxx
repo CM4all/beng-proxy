@@ -81,7 +81,7 @@ protected:
 	ConsumeBucketResult _ConsumeBucketList(std::size_t nbytes) noexcept override {
 		auto result = ForwardIstream::_ConsumeBucketList(nbytes);
 		if (result.consumed > 0){
-			assert(static_cast<off_t>(result.consumed) <= approved);
+			assert(std::cmp_less_equal(result.consumed, approved));
 			approved -= result.consumed;
 		}
 
@@ -89,7 +89,7 @@ protected:
 	}
 
 	void _ConsumeDirect(std::size_t nbytes) noexcept override {
-		assert(static_cast<off_t>(nbytes) <= approved);
+		assert(std::cmp_less_equal(nbytes, approved));
 		approved -= nbytes;
 
 		ForwardIstream::_ConsumeDirect(nbytes);
@@ -105,11 +105,11 @@ protected:
 		if (approved <= 0)
 			return 0;
 
-		if ((off_t)src.size() > approved)
+		if (std::cmp_greater(src.size(), approved))
 			src = src.first((std::size_t)approved);
 
 		auto nbytes = ForwardIstream::OnData(src);
-		assert(static_cast<off_t>(nbytes) <= approved);
+		assert(std::cmp_less_equal(nbytes, approved));
 		approved -= nbytes;
 		return nbytes;
 	}
@@ -120,7 +120,7 @@ protected:
 		if (approved <= 0)
 			return IstreamDirectResult::BLOCKING;
 
-		if ((off_t)max_length > approved) {
+		if (std::cmp_greater(max_length, approved)) {
 			max_length = (std::size_t)approved;
 			then_eof = false;
 		}

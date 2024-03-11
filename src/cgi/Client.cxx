@@ -293,7 +293,7 @@ CGIClient::OnDirect(FdType type, FileDescriptor fd, off_t offset,
 
 	bool then_eof = false;
 	if (parser.KnownLength() &&
-	    (off_t)max_length >= parser.GetAvailable()) {
+	    std::cmp_greater_equal(max_length, parser.GetAvailable())) {
 		max_length = (std::size_t)parser.GetAvailable();
 		then_eof = true;
 	}

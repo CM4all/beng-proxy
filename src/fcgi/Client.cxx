@@ -471,11 +471,11 @@ FcgiClient::Feed(std::span<const std::byte> src) noexcept
 	} else {
 		assert(!response.no_body);
 		assert(response.available < 0 ||
-		       (off_t)src.size() <= response.available);
+		       std::cmp_less_equal(src.size(), response.available));
 
 		std::size_t consumed = InvokeData(src);
 		if (consumed > 0 && response.available >= 0) {
-			assert((off_t)consumed <= response.available);
+			assert(std::cmp_less_equal(consumed, response.available));
 			response.available -= consumed;
 		}
 
@@ -635,7 +635,7 @@ FcgiClient::ConsumeInput(const std::byte *data0, std::size_t length0) noexcept
 			if (response.WasResponseSubmitted() &&
 			    !response.stderr &&
 			    response.available >= 0 &&
-			    (off_t)length > response.available) {
+			    std::cmp_greater(length, response.available)) {
 				/* the DATA packet was larger than the Content-Length
 				   declaration - fail */
 				AbortResponseBody(std::make_exception_ptr(FcgiClientError("excess data at end of body "
@@ -897,7 +897,7 @@ FcgiClient::_FillBucketList(IstreamBucketList &list)
 			assert(!current_stderr);
 
 			if (available >= 0 &&
-			    (off_t)current_content_length > available) {
+			    std::cmp_greater(current_content_length, available)) {
 				/* the DATA packet was larger than the Content-Length
 				   declaration - fail */
 
@@ -913,7 +913,7 @@ FcgiClient::_FillBucketList(IstreamBucketList &list)
 
 			std::size_t size = std::min(remaining, current_content_length);
 			if (available > 0) {
-				if ((off_t)size > available)
+				if (std::cmp_greater(size, available))
 					size = available;
 				available -= size;
 			}

@@ -292,7 +292,7 @@ ChunkedIstream::_GetAvailable(bool partial) noexcept
 		if (off_t available = input.GetAvailable(partial); available >= 0) {
 			result += available;
 
-			if (available > (off_t)missing_from_current_chunk)
+			if (std::cmp_greater(available, missing_from_current_chunk))
 				/* new chunk header and end */
 				result += CHUNK_START_SIZE + CHUNK_END_SIZE;
 		} else if (!partial)
@@ -355,7 +355,7 @@ ChunkedIstream::_FillBucketList(IstreamBucketList &list)
 		   chunk */
 
 		off_t available = input.GetAvailable(true);
-		if ((off_t)sub.GetTotalBufferSize() > available)
+		if (std::cmp_greater(sub.GetTotalBufferSize(), available))
 			available = sub.GetTotalBufferSize();
 
 		if (available > 0) {

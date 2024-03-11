@@ -8,6 +8,8 @@
 #include "istream/istream.hxx"
 #include "istream/Bucket.hxx"
 
+#include <utility> // for std::cmp_greater_equal()
+
 #include <assert.h>
 #include <stddef.h>
 
@@ -174,7 +176,8 @@ public:
 		if (IsChunked())
 			return end_seen;
 
-		return KnownLength() && (off_t)s.GetAvailable() >= rest;
+		return KnownLength() &&
+			std::cmp_greater_equal(s.GetAvailable(), rest);
 	}
 
 	/**

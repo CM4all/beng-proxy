@@ -77,7 +77,7 @@ CatchIstream::SendSpace() noexcept
 {
 	assert(!HasInput());
 	assert(available > 0);
-	assert((off_t)chunk <= available);
+	assert(std::cmp_less_equal(chunk, available));
 
 	if (chunk > sizeof(space) - 1) {
 		std::unique_ptr<char[]> buffer(new char[chunk]);
@@ -122,7 +122,7 @@ CatchIstream::_ConsumeDirect(std::size_t nbytes) noexcept
 {
 	ForwardIstream::_ConsumeDirect(nbytes);
 
-	if ((off_t)nbytes < available)
+	if (std::cmp_less(nbytes, available))
 		available -= (off_t)nbytes;
 	else
 		available = 0;
@@ -141,7 +141,7 @@ CatchIstream::_ConsumeDirect(std::size_t nbytes) noexcept
 std::size_t
 CatchIstream::OnData(std::span<const std::byte> src) noexcept
 {
-	if ((off_t)src.size() > available)
+	if (std::cmp_greater(src.size(), available))
 		available = src.size();
 
 	if (src.size() > chunk)
@@ -149,7 +149,7 @@ CatchIstream::OnData(std::span<const std::byte> src) noexcept
 
 	std::size_t nbytes = ForwardIstream::OnData(src);
 	if (nbytes > 0) {
-		if ((off_t)nbytes < available)
+		if (std::cmp_less(nbytes, available))
 			available -= (off_t)nbytes;
 		else
 			available = 0;

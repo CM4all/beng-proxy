@@ -8,6 +8,8 @@
 #include "Completion.hxx"
 #include "http/Status.hxx"
 
+#include <utility> // for std::cmp_greater()
+
 #include <assert.h>
 #include <stddef.h>
 #include <sys/types.h>
@@ -90,7 +92,7 @@ struct CGIParser {
 	}
 
 	bool IsTooMuch(std::size_t length) const {
-		return remaining != -1 && (off_t)length > remaining;
+		return remaining != -1 && std::cmp_greater(length, remaining);
 	}
 
 	/**
@@ -104,7 +106,7 @@ struct CGIParser {
 		if (remaining < 0)
 			return false;
 
-		assert((off_t)nbytes <= remaining);
+		assert(std::cmp_less_equal(nbytes, remaining));
 
 		remaining -= nbytes;
 		return remaining == 0;

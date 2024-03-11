@@ -19,7 +19,7 @@ HttpBodyReader::GetMaxRead(std::size_t length) const noexcept
 {
 	assert(rest != REST_EOF_CHUNK);
 
-	if (KnownLength() && rest < (off_t)length)
+	if (KnownLength() && std::cmp_less(rest, length))
 		/* content-length header was provided, return this value */
 		return (std::size_t)rest;
 	else
@@ -33,7 +33,7 @@ HttpBodyReader::Consumed(std::size_t nbytes) noexcept
 	if (!KnownLength())
 		return;
 
-	assert((off_t)nbytes <= rest);
+	assert(std::cmp_less_equal(nbytes, rest));
 
 	rest -= (off_t)nbytes;
 }
@@ -83,7 +83,7 @@ HttpBodyReader::SocketEOF(std::size_t remaining) noexcept
 		/* the socket is closed, which ends the body */
 		InvokeEof();
 		return false;
-	} else if (rest == (off_t)remaining) {
+	} else if (std::cmp_equal(rest, remaining)) {
 		if (remaining > 0)
 			/* serve the rest of the buffer, then end the body
 			   stream */

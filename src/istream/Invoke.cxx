@@ -44,7 +44,7 @@ Istream::InvokeData(std::span<const std::byte> src) noexcept
 	assert(!closing);
 	assert(src.size() >= data_available);
 	assert(!available_full_set ||
-	       (off_t)src.size() <= available_full);
+	       std::cmp_less_equal(src.size(), available_full));
 
 #ifndef NDEBUG
 	const DestructObserver destructed(*this);
@@ -84,9 +84,9 @@ Istream::InvokeDirect(FdType type, FileDescriptor fd, off_t offset,
 	assert(!eof);
 	assert(!closing);
 	assert(!available_full_set || !then_eof ||
-	       static_cast<off_t>(max_length) == available_full);
+	       std::cmp_equal(max_length, available_full));
 	assert(!then_eof ||
-	       static_cast<off_t>(max_length) >= available_partial);
+	       std::cmp_greater_equal(max_length, available_partial));
 
 #ifndef NDEBUG
 	const DestructObserver destructed(*this);

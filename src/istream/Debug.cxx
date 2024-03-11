@@ -43,12 +43,12 @@ Istream::FillBucketList(IstreamBucketList &list)
 	assert(new_size >= old_size);
 
 	const std::size_t total_size = new_size - old_size;
-	if ((off_t)total_size > available_partial)
+	if (std::cmp_greater(total_size, available_partial))
 		available_partial = total_size;
 
 	if (!list.HasMore() && !list.HasNonBuffer()) {
 		if (available_full_set)
-			assert((off_t)total_size == available_full);
+			assert(std::cmp_equal(total_size, available_full));
 		else {
 			available_full_set = true;
 			available_full = total_size;

@@ -96,13 +96,13 @@ protected:
 #ifndef NDEBUG
 		consumed_sum += nbytes;
 
-		if ((off_t)nbytes >= available_partial)
+		if (std::cmp_greater_equal(nbytes, available_partial))
 			available_partial = 0;
 		else
 			available_partial -= nbytes;
 
 		if (available_full_set) {
-			assert((off_t)nbytes <= available_full);
+			assert(std::cmp_less_equal(nbytes, available_full));
 
 			available_full -= (off_t)nbytes;
 		}

@@ -57,11 +57,11 @@ HeadIstream::OnData(std::span<const std::byte> src) noexcept
 		return 0;
 	}
 
-	if ((off_t)src.size() > rest)
+	if (std::cmp_greater(src.size(), rest))
 		src = src.first(rest);
 
 	std::size_t nbytes = InvokeData(src);
-	assert(nbytes == 0 || (off_t)nbytes <= rest);
+	assert(nbytes == 0 || std::cmp_less_equal(nbytes, rest));
 
 	if (nbytes > 0) {
 		rest -= nbytes;
@@ -84,7 +84,7 @@ HeadIstream::_FillBucketList(IstreamBucketList &list)
 	ForwardIstream::_FillBucketList(tmp1);
 
 	const auto nbytes = list.SpliceBuffersFrom(std::move(tmp1), rest, false);
-	if ((off_t)nbytes < rest && tmp1.HasMore()) {
+	if (std::cmp_less(nbytes, rest) && tmp1.HasMore()) {
 		list.SetMore();
 
 		if (tmp1.ShouldFallback())
@@ -95,7 +95,7 @@ HeadIstream::_FillBucketList(IstreamBucketList &list)
 Istream::ConsumeBucketResult
 HeadIstream::_ConsumeBucketList(std::size_t nbytes) noexcept
 {
-	if ((off_t)nbytes > rest)
+	if (std::cmp_greater(nbytes, rest))
 		nbytes = rest;
 
 	auto r = ForwardIstream::_ConsumeBucketList(nbytes);
@@ -107,7 +107,7 @@ HeadIstream::_ConsumeBucketList(std::size_t nbytes) noexcept
 void
 HeadIstream::_ConsumeDirect(std::size_t nbytes) noexcept
 {
-	assert((off_t)nbytes <= rest);
+	assert(std::cmp_less_equal(nbytes, rest));
 
 	rest -= nbytes;
 	ForwardIstream::_ConsumeDirect(nbytes);
@@ -122,7 +122,7 @@ HeadIstream::OnDirect(FdType type, FileDescriptor fd, off_t offset,
 		return IstreamDirectResult::CLOSED;
 	}
 
-	if ((off_t)max_length > rest) {
+	if (std::cmp_greater(max_length, rest)) {
 		max_length = rest;
 		then_eof = true;
 	}
@@ -148,7 +148,7 @@ HeadIstream::_GetAvailable(bool partial) noexcept
 	if (authoritative) {
 		assert(partial ||
 		       input.GetAvailable(partial) < 0 ||
-		       input.GetAvailable(partial) >= (off_t)rest);
+		       std::cmp_greater_equal(input.GetAvailable(partial), rest));
 		return rest;
 	}
 

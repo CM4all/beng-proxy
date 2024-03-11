@@ -32,19 +32,19 @@ LengthIstream::_FillBucketList(IstreamBucketList &list)
 	const bool maybe_more = tmp.HasMore() || has_non_buffer;
 	const std::size_t size = tmp.GetTotalBufferSize();
 
-	if ((off_t)size > remaining) {
+	if (std::cmp_greater(size, remaining)) {
 		Destroy();
 		throw std::runtime_error{"Too much data in stream"};
 	}
 
-	if (!maybe_more && (off_t)size < remaining) {
+	if (!maybe_more && std::cmp_less(size, remaining)) {
 		Destroy();
 		throw std::runtime_error{"Premature end of stream"};
 	}
 
 	list.SpliceBuffersFrom(std::move(tmp));
 
-	if (tmp.HasMore() && !has_non_buffer && (off_t)size == remaining) {
+	if (tmp.HasMore() && !has_non_buffer && std::cmp_equal(size, remaining)) {
 		/* our input isn't yet sure whether it has ended, but
 		   since we got just the right amount of data, let's
 		   pretend it's the end */
@@ -56,7 +56,7 @@ LengthIstream::_FillBucketList(IstreamBucketList &list)
 Istream::ConsumeBucketResult
 LengthIstream::_ConsumeBucketList(std::size_t nbytes) noexcept
 {
-	if ((off_t)nbytes > remaining)
+	if (std::cmp_greater(nbytes, remaining))
 		nbytes = remaining;
 
 	if (nbytes == 0)
@@ -87,7 +87,7 @@ LengthIstream::_ConsumeDirect(std::size_t nbytes) noexcept
 std::size_t
 LengthIstream::OnData(std::span<const std::byte> src) noexcept
 {
-	if ((off_t)src.size() > remaining) {
+	if (std::cmp_greater(src.size(), remaining)) {
 		DestroyError(std::make_exception_ptr(std::runtime_error("Too much data in stream")));
 		return 0;
 	}
