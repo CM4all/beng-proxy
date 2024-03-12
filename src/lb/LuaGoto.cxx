@@ -32,7 +32,7 @@ LuaGotoIndex(lua_State *L)
 
 	auto &g = CastLuaGoto(L, 1);
 
-	if (!lua_isstring(L, 2))
+	if (lua_type(L, 2) != LUA_TSTRING)
 		luaL_argerror(L, 2, "string expected");
 
 	const char *name = lua_tostring(L, 2);

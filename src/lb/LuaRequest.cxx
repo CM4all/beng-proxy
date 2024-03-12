@@ -38,7 +38,7 @@ GetHeader(lua_State *L)
 
 	auto &data = CastLuaRequestData(L, 1);
 
-	if (!lua_isstring(L, 2))
+	if (lua_type(L, 2) != LUA_TSTRING) 
 		return luaL_argerror(L, 2, "String expected");
 
 	const char *name = lua_tostring(L, 2);
@@ -76,7 +76,7 @@ SendMessage(lua_State *L)
 		++i;
 	}
 
-	if (!lua_isstring(L, i))
+	if (lua_type(L, i) != LUA_TSTRING)
 		return luaL_argerror(L, i, "Message expected");
 
 	msg = lua_tostring(L, i);
@@ -98,7 +98,7 @@ ResolveConnect(lua_State *L)
 
 	CastLuaRequestData(L, 1);
 
-	if (!lua_isstring(L, 2))
+	if (lua_type(L, 2) != LUA_TSTRING)
 		return luaL_argerror(L, 2, "String expected");
 
 	lua_newtable(L);
@@ -122,7 +122,7 @@ LbLuaRequestIndex(lua_State *L)
 
 	auto &data = CastLuaRequestData(L, 1);
 
-	if (!lua_isstring(L, 2))
+	if (lua_type(L, 2) != LUA_TSTRING)
 		luaL_argerror(L, 2, "string expected");
 
 	const char *name = lua_tostring(L, 2);
