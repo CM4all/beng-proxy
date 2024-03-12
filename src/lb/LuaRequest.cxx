@@ -21,6 +21,8 @@ extern "C" {
 #include <lualib.h>
 }
 
+using std::string_view_literals::operator""sv;
+
 static constexpr char lua_request_class[] = "lb.http_request";
 typedef Lua::Class<LbLuaRequestData, lua_request_class> LbLuaRequest;
 
@@ -160,6 +162,73 @@ SendRedirect(lua_State *L)
 }
 
 static int
+SendRedirectHost(lua_State *L)
+{
+	const unsigned top = lua_gettop(L);
+
+	auto &data = CastLuaRequestData(L, 1);
+
+	HttpStatus status = HttpStatus::FOUND;
+	std::string_view msg{};
+
+	unsigned i = 2;
+	if (i > top)
+		return luaL_error(L, "Not enough parameters");
+
+	if (lua_isnumber(L, i)) {
+		status = static_cast<HttpStatus>(lua_tointeger(L, i));
+		if (!http_status_is_valid(status))
+			return luaL_argerror(L, i, "Invalid HTTP status");
+
+		if (!http_status_is_redirect(status))
+			return luaL_argerror(L, i, "Invalid HTTP redirect status");
+
+		++i;
+		if (i > top)
+			return luaL_error(L, "Not enough parameters");
+	}
+
+	if (lua_type(L, i) != LUA_TSTRING)
+		return luaL_argerror(L, i, "URL expected");
+
+	const auto host = Lua::ToStringView(L, i);
+	if (!VerifyUriHostPort(host))
+		return luaL_argerror(L, i, "Malformed host");
+
+	++i;
+	if (i < top) {
+		if (lua_type(L, i) != LUA_TSTRING)
+			return luaL_argerror(L, i, "String expected");
+
+		msg = Lua::ToStringView(L, i);
+		++i;
+	}
+
+	if (i < top)
+		return luaL_error(L, "Too many parameters");
+
+	auto &pool = data.request.pool;
+	const AllocatorPtr alloc{pool};
+
+	StringMap response_headers;
+
+	// TODO hard-coded scheme - is "https://" always correct?
+	response_headers.Add(alloc, "location", alloc.Concat("https://"sv, host, data.request.uri));
+
+	UnusedIstreamPtr response_body;
+	if (!msg.empty() && !http_status_is_empty(status)) {
+		response_headers.Add(alloc, "content-type", "text/plain");
+		response_body = istream_string_new(pool, msg);
+	}
+
+	data.stale = true;
+	data.handler.InvokeResponse(status,
+				    std::move(response_headers),
+				    std::move(response_body));
+	return 0;
+}
+
+static int
 ResolveConnect(lua_State *L)
 {
 	if (lua_gettop(L) != 2)
@@ -180,6 +249,7 @@ static constexpr struct luaL_Reg request_methods [] = {
 	{"get_header", GetHeader},
 	{"send_message", SendMessage},
 	{"send_redirect", SendRedirect},
+	{"send_redirect_host", SendRedirectHost},
 	{"resolve_connect", ResolveConnect},
 	{nullptr, nullptr}
 };
