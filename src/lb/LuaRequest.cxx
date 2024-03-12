@@ -3,14 +3,18 @@
 // author: Max Kellermann <mk@cm4all.com>
 
 #include "LuaRequest.hxx"
+#include "istream/istream_string.hxx"
 #include "pool/pool.hxx"
 #include "lua/Class.hxx"
 #include "lua/StackIndex.hxx"
+#include "lua/StringView.hxx"
 #include "http/IncomingRequest.hxx"
 #include "http/Method.hxx"
 #include "http/ResponseHandler.hxx"
 #include "http/Status.hxx"
+#include "uri/Verify.hxx"
 #include "util/StringAPI.hxx"
+#include "AllocatorPtr.hxx"
 
 extern "C" {
 #include <lauxlib.h>
@@ -91,6 +95,71 @@ SendMessage(lua_State *L)
 }
 
 static int
+SendRedirect(lua_State *L)
+{
+	const unsigned top = lua_gettop(L);
+
+	auto &data = CastLuaRequestData(L, 1);
+
+	HttpStatus status = HttpStatus::FOUND;
+	std::string_view msg{};
+
+	unsigned i = 2;
+	if (i > top)
+		return luaL_error(L, "Not enough parameters");
+
+	if (lua_isnumber(L, i)) {
+		status = static_cast<HttpStatus>(lua_tointeger(L, i));
+		if (!http_status_is_valid(status))
+			return luaL_argerror(L, i, "Invalid HTTP status");
+
+		if (!http_status_is_redirect(status))
+			return luaL_argerror(L, i, "Invalid HTTP redirect status");
+
+		++i;
+		if (i > top)
+			return luaL_error(L, "Not enough parameters");
+	}
+
+	if (lua_type(L, i) != LUA_TSTRING)
+		return luaL_argerror(L, i, "URL expected");
+
+	const auto location = Lua::ToStringView(L, i);
+	if (!VerifyHttpUrl(location))
+		return luaL_argerror(L, i, "Malformed URL");
+
+	++i;
+	if (i < top) {
+		if (lua_type(L, i) != LUA_TSTRING)
+			return luaL_argerror(L, i, "String expected");
+
+		msg = Lua::ToStringView(L, i);
+		++i;
+	}
+
+	if (i < top)
+		return luaL_error(L, "Too many parameters");
+
+	auto &pool = data.request.pool;
+	const AllocatorPtr alloc{pool};
+
+	StringMap response_headers;
+	response_headers.Add(alloc, "location", alloc.DupZ(location));
+
+	UnusedIstreamPtr response_body;
+	if (!msg.empty() && !http_status_is_empty(status)) {
+		response_headers.Add(alloc, "content-type", "text/plain");
+		response_body = istream_string_new(pool, msg);
+	}
+
+	data.stale = true;
+	data.handler.InvokeResponse(status,
+				    std::move(response_headers),
+				    std::move(response_body));
+	return 0;
+}
+
+static int
 ResolveConnect(lua_State *L)
 {
 	if (lua_gettop(L) != 2)
@@ -110,6 +179,7 @@ ResolveConnect(lua_State *L)
 static constexpr struct luaL_Reg request_methods [] = {
 	{"get_header", GetHeader},
 	{"send_message", SendMessage},
+	{"send_redirect", SendRedirect},
 	{"resolve_connect", ResolveConnect},
 	{nullptr, nullptr}
 };

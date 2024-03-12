@@ -1,6 +1,6 @@
 cm4all-beng-proxy (18.0.59) unstable; urgency=low
 
-  * 
+  * lb/lua: add method "send_redirect"
 
  --   
 

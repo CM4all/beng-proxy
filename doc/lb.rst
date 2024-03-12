@@ -343,6 +343,10 @@ The following methods can be used to generate a response:
 - ``send_message(status, msg)``: Send a plain-text response with the
   given status.
 
+- ``send_redirect([status, ] location [, msg])``: Send a HTTP redirect
+  with the specified ``Location`` header.  The default HTTP status can
+  be overridden and a ``text/plain`` message can be specified.
+
 To forward the HTTP request to a configured pool, the Lua script
 should look up that pool in the ``pools`` table (which is, for
 performance reasons, only available during global initialization), and
