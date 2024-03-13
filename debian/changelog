@@ -1,6 +1,7 @@
 cm4all-beng-proxy (18.0.59) unstable; urgency=low
 
   * lb/lua: add methods "send_redirect", "send_redirect_host"
+  * lb: enable line buffering mode on stdout
 
  --   
 

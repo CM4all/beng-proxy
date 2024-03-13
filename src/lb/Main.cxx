@@ -152,6 +152,11 @@ try {
 
 	SetupProcess();
 
+	/* force line buffering so Lua "print" statements are flushed
+	   even if stdout is a pipe to systemd-journald */
+	setvbuf(stdout, nullptr, _IOLBF, 0);
+	setvbuf(stderr, nullptr, _IOLBF, 0);
+
 #ifdef HAVE_LIBCAP
 	capabilities_init();
 #endif // HAVE_LIBCAP
