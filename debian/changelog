@@ -1,6 +1,6 @@
 cm4all-beng-proxy (18.0.60) unstable; urgency=low
 
-  * 
+  * lb/lua: protect the request body reference while Lua runs
 
  --   
 

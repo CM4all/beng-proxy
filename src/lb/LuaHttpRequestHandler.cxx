@@ -8,6 +8,7 @@
 #include "lua/CoRunner.hxx"
 #include "lua/Resume.hxx"
 #include "lua/Ref.hxx"
+#include "istream/UnusedHoldPtr.hxx"
 #include "http/IncomingRequest.hxx"
 #include "http/Headers.hxx"
 #include "http/Method.hxx"
@@ -22,6 +23,11 @@ class LbLuaResponseHandler final
 	LbHttpConnection &connection;
 
 	IncomingHttpRequest &request;
+
+	/**
+	 * This object temporarily holds the request body
+	 */
+	UnusedHoldIstreamPtr request_body;
 
 	CancellablePointer &caller_cancel_ptr;
 
@@ -48,6 +54,7 @@ public:
 			     const StopwatchPtr &parent_stopwatch,
 			     LbLuaHandler &_handler) noexcept
 		:connection(_connection), request(_request),
+		 request_body(request.pool, std::move(request.body)),
 		 caller_cancel_ptr(_caller_cancel_ptr),
 		 stopwatch(parent_stopwatch, "lua"),
 		 handler(_handler),
@@ -106,6 +113,7 @@ LbLuaResponseHandler::OnHttpResponse(HttpStatus status,
 				     UnusedIstreamPtr response_body) noexcept
 {
 	finished = true;
+	request_body.Clear();
 
 	HttpHeaders headers(std::move(_headers));
 
@@ -121,6 +129,7 @@ void
 LbLuaResponseHandler::OnHttpError(std::exception_ptr ep) noexcept
 {
 	finished = true;
+	request_body.Clear();
 
 	connection.LogSendError(request, ep);
 }
@@ -144,6 +153,8 @@ try {
 				     "No response from Lua handler");
 		return;
 	}
+
+	request.body = std::move(request_body);
 
 	auto &_request = request;
 	auto &cancel_ptr = caller_cancel_ptr;
