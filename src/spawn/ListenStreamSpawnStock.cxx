@@ -52,6 +52,12 @@ class ListenStreamSpawnStock::Item final
 
 	SocketEvent socket;
 
+	/**
+	 * This re-enables polling the #socket after the child process
+	 * has exited.
+	 */
+	CoarseTimerEvent rearm_timer;
+
 	CoarseTimerEvent idle_timer;
 
 	PoolPtr translation_pool;
@@ -73,6 +79,7 @@ public:
 		 spawn_service(_spawn_service),
 		 key(_key),
 		 socket(event_loop, BIND_THIS_METHOD(OnSocketReady)),
+		 rearm_timer(event_loop, BIND_THIS_METHOD(OnRearmTimer)),
 		 idle_timer(event_loop, BIND_THIS_METHOD(OnIdleTimeout)) {
 
 		auto s = temp.Create(SOCK_STREAM, 16);
@@ -104,8 +111,10 @@ public:
 	void Fade() noexcept {
 		fade = true;
 
-		if (IsAbandoned())
+		if (IsAbandoned()) {
+			rearm_timer.Cancel();
 			idle_timer.Schedule({});
+		}
 	}
 
 	void Borrow() {
@@ -136,13 +145,22 @@ private:
 						{}, *this, translation_cancel_ptr);
 	}
 
+	void OnRearmTimer() noexcept {
+		assert(!idle_timer.IsPending());
+		assert(!translation_cancel_ptr);
+		assert(!process);
+
+		socket.ScheduleRead();
+	}
+
 	void OnIdleTimeout() noexcept {
+		assert(!rearm_timer.IsPending());
 		delete this;
 	}
 
 	// virtual methods from class SharedAnchor
 	void OnAbandoned() noexcept override {
-		if (fade || translation_cancel_ptr) {
+		if (fade || translation_cancel_ptr || rearm_timer.IsPending()) {
 			/* destroy immediately if we're in "fade" mode
 			   or if we're currently waiting for the
 			   translation server (which means the client
@@ -166,7 +184,7 @@ private:
 
 static std::unique_ptr<ChildProcessHandle>
 DoSpawn(SpawnService &service, const char *name,
-	UniqueSocketDescriptor socket,
+	SocketDescriptor socket,
 	const TranslateResponse &response)
 {
 	if (response.status != HttpStatus{}) {
@@ -211,7 +229,7 @@ try {
 	tags = response->child_options.tag;
 
 	process = DoSpawn(spawn_service, temp.GetPath(),
-			  UniqueSocketDescriptor{socket.ReleaseSocket()},
+			  socket.GetSocket(),
 			  *response);
 
 	/* free memory allocated by the translation client */
@@ -244,7 +262,19 @@ ListenStreamSpawnStock::Item::OnTranslateError(std::exception_ptr _error) noexce
 void
 ListenStreamSpawnStock::Item::OnChildProcessExit([[maybe_unused]] int status) noexcept
 {
-	Fade();
+	assert(!translation_cancel_ptr);
+
+	process = {};
+
+	if (IsAbandoned())
+		Fade();
+	else
+		/* there's still somebody who needs the socket;
+		   re-enable the SocketEvent, but only after some
+		   backoff time to avoid a busy loop with a child
+		   process that fails repeatedly */
+		// TODO do we need to give up eventually?
+		rearm_timer.Schedule(std::chrono::seconds{10});
 }
 
 inline std::size_t
