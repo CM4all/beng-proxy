@@ -1,6 +1,6 @@
 cm4all-beng-proxy (18.0.61) unstable; urgency=low
 
-  * 
+  * access_log: log a Content-Length only if one is known
 
  --   
 

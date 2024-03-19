@@ -94,7 +94,7 @@ AccessLogGlue::Log(std::chrono::system_clock::time_point now,
 		}
 	}
 
-	const auto d = Net::Log::Datagram{
+	auto d = Net::Log::Datagram{
 		.timestamp = Net::Log::FromSystem(now),
 		.remote_host = remote_host,
 		.host = host,
@@ -106,9 +106,12 @@ AccessLogGlue::Log(std::chrono::system_clock::time_point now,
 		.user_agent = user_agent,
 		.http_method = request.method,
 		.http_status = status,
-	}.SetLength(content_length)
+	}
 		.SetTraffic(bytes_received, bytes_sent)
 		.SetDuration(std::chrono::duration_cast<Net::Log::Duration>(duration));
+
+	if (content_length >= 0)
+		d.SetLength(content_length);
 
 	Log(d);
 }
