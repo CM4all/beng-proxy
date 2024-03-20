@@ -3,7 +3,7 @@ cm4all-beng-proxy (18.0.61) unstable; urgency=low
   * access_log: log a Content-Length only if one is known
   * spawn: respawn MOUNT_LISTEN_STREAM processes automatically
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Wed, 20 Mar 2024 12:07:37 +0100
 
 cm4all-beng-proxy (18.0.60) unstable; urgency=low
 
