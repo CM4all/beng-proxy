@@ -214,6 +214,10 @@ try {
 			  UniqueSocketDescriptor{socket.ReleaseSocket()},
 			  *response);
 
+	/* free memory allocated by the translation client */
+	response = {};
+	translation_pool = {};
+
 	process->SetExitListener(*this);
 } catch (...) {
 	// TODO log
@@ -228,6 +232,9 @@ ListenStreamSpawnStock::Item::OnTranslateError(std::exception_ptr _error) noexce
 	assert(translation_pool);
 
 	translation_cancel_ptr = {};
+
+	/* free memory allocated by the translation client */
+	translation_pool = {};
 
 	// TODO log
 	error = std::move(_error);
