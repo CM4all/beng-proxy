@@ -19,6 +19,7 @@
 #include "event/SocketEvent.hxx"
 #include "net/TempListener.hxx"
 #include "net/UniqueSocketDescriptor.hxx"
+#include "io/FdHolder.hxx"
 #include "util/Cancellable.hxx"
 #include "util/DeleteDisposer.hxx"
 #include "util/djb_hash.hxx"
@@ -182,7 +183,7 @@ DoSpawn(SpawnService &service, const char *name,
 		throw std::runtime_error("No EXECUTE from translation server");
 
 	PreparedChildProcess p;
-	p.SetStdin(std::move(socket));
+	p.stdin_fd = socket.ToFileDescriptor();
 	p.args.push_back(response.execute);
 
 	for (const char *arg : response.args) {
@@ -192,7 +193,8 @@ DoSpawn(SpawnService &service, const char *name,
 		p.args.push_back(arg);
 	}
 
-	response.child_options.CopyTo(p);
+	FdHolder close_fds;
+	response.child_options.CopyTo(p, close_fds);
 
 	return service.SpawnChildProcess(name, std::move(p));
 }

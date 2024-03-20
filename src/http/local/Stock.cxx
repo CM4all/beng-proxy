@@ -15,6 +15,7 @@
 #include "spawn/Prepared.hxx"
 #include "event/SocketEvent.hxx"
 #include "net/UniqueSocketDescriptor.hxx"
+#include "io/FdHolder.hxx"
 #include "io/Logger.hxx"
 #include "util/Exception.hxx"
 #include "util/StringList.hxx"
@@ -59,7 +60,8 @@ private:
 	/* virtual methods from class ChildStockClass */
 	bool WantStderrPond(void *info) const noexcept override;
 	std::string_view GetChildTag(void *info) const noexcept override;
-	void PrepareChild(void *info, PreparedChildProcess &p) override;
+	void PrepareChild(void *info, PreparedChildProcess &p,
+			  FdHolder &close_fds) override;
 
 	/* virtual methods from class ChildStockMapClass */
 	std::size_t GetChildLimit(const void *request,
@@ -70,7 +72,8 @@ private:
 	int GetChildSocketType(void *info) const noexcept override;
 	unsigned GetChildBacklog(void *info) const noexcept override;
 	void PrepareListenChild(void *info, UniqueSocketDescriptor fd,
-				PreparedChildProcess &p) override;
+				PreparedChildProcess &p,
+				FdHolder &close_fds) override;
 };
 
 class LhttpConnection final
@@ -269,18 +272,20 @@ LhttpStock::GetChildTag(void *info) const noexcept
 }
 
 void
-LhttpStock::PrepareChild(void *info, PreparedChildProcess &p)
+LhttpStock::PrepareChild(void *info, PreparedChildProcess &p,
+			 FdHolder &close_fds)
 {
 	const auto &address = *(const LhttpAddress *)info;
 
-	address.CopyTo(p);
+	address.CopyTo(p, close_fds);
 }
 
 void
 LhttpStock::PrepareListenChild(void *, UniqueSocketDescriptor fd,
-			       PreparedChildProcess &p)
+			       PreparedChildProcess &p,
+			       FdHolder &close_fds)
 {
-	p.SetStdin(std::move(fd));
+	p.stdin_fd = close_fds.Insert(std::move(fd).MoveToFileDescriptor());
 }
 
 /*

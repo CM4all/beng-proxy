@@ -408,25 +408,27 @@ SpawnChildProcess(EventLoop &event_loop, struct pool *pool, const char *name,
 		  PreparedChildProcess &&prepared,
 		  SpawnService &spawn_service)
 {
+	UniqueFileDescriptor stdin_r, stdin_pipe;
+
 	if (input) {
 		int fd = input.AsFd();
-		if (fd >= 0)
-			prepared.SetStdin(fd);
+		if (fd >= 0) {
+			stdin_r = UniqueFileDescriptor{fd};
+			prepared.stdin_fd = stdin_r;
+		}
 	}
 
-	UniqueFileDescriptor stdin_pipe;
 	if (input) {
-		UniqueFileDescriptor stdin_r;
 		std::tie(stdin_r, stdin_pipe) = CreatePipe();
 
-		prepared.SetStdin(std::move(stdin_r));
+		prepared.stdin_fd = stdin_r;
 
 		stdin_pipe.SetNonBlocking();
 	}
 
 	auto [stdout_pipe, stdout_w] = CreatePipe();
 
-	prepared.SetStdout(std::move(stdout_w));
+	prepared.stdout_fd = stdout_w;
 
 	stdout_pipe.SetNonBlocking();
 

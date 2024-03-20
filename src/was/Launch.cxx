@@ -7,6 +7,7 @@
 #include "spawn/Prepared.hxx"
 #include "spawn/ChildOptions.hxx"
 #include "net/SocketDescriptor.hxx"
+#include "io/FdHolder.hxx"
 
 static auto
 WasLaunch(SpawnService &spawn_service,
@@ -18,18 +19,19 @@ WasLaunch(SpawnService &spawn_service,
 	  WasSocket &&socket)
 {
 	PreparedChildProcess p;
-	p.SetControl(std::move(socket.control));
-	p.SetStdout(std::move(socket.output));
-	p.SetStdin(std::move(socket.input));
+	p.control_fd = socket.control.ToFileDescriptor();
+	p.stdout_fd = socket.output;
+	p.stdin_fd = socket.input;
 
 	p.Append(executable_path);
 	for (auto i : args)
 		p.Append(i);
 
-	options.CopyTo(p);
+	FdHolder close_fds;
+	options.CopyTo(p, close_fds);
 
-	if (!p.stderr_fd.IsDefined() && stderr_fd.IsDefined())
-		p.SetStderr(std::move(stderr_fd));
+	if (!p.stderr_fd.IsDefined())
+		p.stderr_fd = stderr_fd;
 
 	return spawn_service.SpawnChildProcess(name, std::move(p));
 }

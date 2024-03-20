@@ -10,6 +10,7 @@
 struct ChildErrorLogOptions;
 struct PreparedChildProcess;
 class EventLoop;
+class FdHolder;
 class SocketDescriptor;
 class UniqueFileDescriptor;
 namespace Net { namespace Log { struct Datagram; class PipeAdapter; }}
@@ -31,7 +32,7 @@ public:
 	 *
 	 * Throws on error.
 	 */
-	ChildErrorLog(PreparedChildProcess &p,
+	ChildErrorLog(PreparedChildProcess &p, FdHolder &close_fds,
 		      EventLoop &event_loop, SocketDescriptor socket,
 		      const ChildErrorLogOptions &options,
 		      bool force);
@@ -64,7 +65,7 @@ public:
 	/**
 	 * Throws on error.
 	 */
-	void EnableClient(PreparedChildProcess &p,
+	void EnableClient(PreparedChildProcess &p, FdHolder &close_fds,
 			  EventLoop &event_loop, SocketDescriptor socket,
 			  const ChildErrorLogOptions &log_options,
 			  bool force);

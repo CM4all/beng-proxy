@@ -17,6 +17,7 @@
 #include "lib/fmt/ToBuffer.hxx"
 #include "event/SocketEvent.hxx"
 #include "net/UniqueSocketDescriptor.hxx"
+#include "io/FdHolder.hxx"
 #include "io/UniqueFileDescriptor.hxx"
 #include "io/Logger.hxx"
 #include "util/StringList.hxx"
@@ -83,11 +84,13 @@ private:
 	}
 
 	std::string_view GetChildTag(void *info) const noexcept override;
-	void PrepareChild(void *info, PreparedChildProcess &p) override;
+	void PrepareChild(void *info, PreparedChildProcess &p,
+			  FdHolder &close_fds) override;
 
 	/* virtual methods from class ListenChildStockClass */
 	void PrepareListenChild(void *info, UniqueSocketDescriptor fd,
-				PreparedChildProcess &p) override;
+				PreparedChildProcess &p,
+				FdHolder &close_fds) override;
 };
 
 struct FcgiConnection final : StockItem {
@@ -222,7 +225,8 @@ FcgiStock::GetChildTag(void *info) const noexcept
 }
 
 void
-FcgiStock::PrepareChild(void *info, PreparedChildProcess &p)
+FcgiStock::PrepareChild(void *info, PreparedChildProcess &p,
+			FdHolder &close_fds)
 {
 	auto &params = *(CgiChildParams *)info;
 	const ChildOptions &options = params.options;
@@ -232,22 +236,23 @@ FcgiStock::PrepareChild(void *info, PreparedChildProcess &p)
 	   don't use the FastCGI protocol to send error messages, so we
 	   just keep it open */
 
-	UniqueFileDescriptor null_fd;
-	if (null_fd.Open("/dev/null", O_WRONLY))
-		p.SetStdout(std::move(null_fd));
+	if (UniqueFileDescriptor null_fd;
+	    null_fd.Open("/dev/null", O_WRONLY))
+		p.stdout_fd = close_fds.Insert(std::move(null_fd));
 
 	p.Append(params.executable_path);
 	for (auto i : params.args)
 		p.Append(i);
 
-	options.CopyTo(p);
+	options.CopyTo(p, close_fds);
 }
 
 void
 FcgiStock::PrepareListenChild(void *, UniqueSocketDescriptor fd,
-			      PreparedChildProcess &p)
+			      PreparedChildProcess &p,
+			      FdHolder &close_fds)
 {
-	p.SetStdin(std::move(fd));
+	p.stdin_fd = close_fds.Insert(std::move(fd).MoveToFileDescriptor());
 }
 
 /*

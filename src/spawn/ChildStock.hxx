@@ -16,6 +16,7 @@
 struct PreparedChildProcess;
 class UniqueFileDescriptor;
 class UniqueSocketDescriptor;
+class FdHolder;
 class EventLoop;
 class SpawnService;
 class ListenStreamSpawnStock;
@@ -52,7 +53,8 @@ public:
 	/**
 	 * Throws on error.
 	 */
-	virtual void PrepareChild(void *info, PreparedChildProcess &p) = 0;
+	virtual void PrepareChild(void *info, PreparedChildProcess &p,
+				  FdHolder &close_fds) = 0;
 };
 
 class ChildStockMapClass : public ChildStockClass {

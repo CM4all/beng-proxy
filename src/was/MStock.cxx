@@ -19,6 +19,7 @@
 #include "net/SocketPair.hxx"
 #include "net/UniqueSocketDescriptor.hxx"
 #include "system/Error.hxx"
+#include "io/FdHolder.hxx"
 #include "util/Exception.hxx"
 #include "util/StringList.hxx"
 
@@ -45,7 +46,7 @@ public:
 protected:
 	/* virtual methods from class ChildStockItem */
 	void Prepare(ChildStockClass &cls, void *info,
-		     PreparedChildProcess &p) override;
+		     PreparedChildProcess &p, FdHolder &close_fds) override;
 
 private:
 	/* virtual methods from class Was::MultiClientHandler */
@@ -63,15 +64,15 @@ private:
 
 void
 MultiWasChild::Prepare(ChildStockClass &cls, void *info,
-		       PreparedChildProcess &p)
+		       PreparedChildProcess &p, FdHolder &close_fds)
 {
 	assert(!client);
 
-	ChildStockItem::Prepare(cls, info, p);
+	ChildStockItem::Prepare(cls, info, p, close_fds);
 
 	auto [for_child, for_parent] = CreateSocketPair(SOCK_SEQPACKET);
 
-	p.SetStdin(std::move(for_child));
+	p.stdin_fd = close_fds.Insert(std::move(for_child).MoveToFileDescriptor());
 
 	Was::MultiClientHandler &client_handler = *this;
 	client.emplace(event_loop, std::move(for_parent), client_handler);
@@ -163,7 +164,8 @@ MultiWasStock::CreateChild(CreateStockItem c,
 }
 
 void
-MultiWasStock::PrepareChild(void *info, PreparedChildProcess &p)
+MultiWasStock::PrepareChild(void *info, PreparedChildProcess &p,
+			    FdHolder &close_fds)
 {
 	const auto &params = *(const CgiChildParams *)info;
 
@@ -171,7 +173,7 @@ MultiWasStock::PrepareChild(void *info, PreparedChildProcess &p)
 	for (auto i : params.args)
 		p.Append(i);
 
-	params.options.CopyTo(p);
+	params.options.CopyTo(p, close_fds);
 }
 
 StockItem *

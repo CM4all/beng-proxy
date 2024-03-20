@@ -10,6 +10,7 @@
 #include "spawn/IstreamSpawn.hxx"
 #include "spawn/Prepared.hxx"
 #include "http/Method.hxx"
+#include "io/FdHolder.hxx"
 #include "util/CharUtil.hxx"
 #include "AllocatorPtr.hxx"
 
@@ -43,6 +44,7 @@ StringFallback(const char *value, const char *fallback)
  */
 static void
 PrepareCgi(struct pool &pool, PreparedChildProcess &p,
+	   FdHolder &close_fds,
 	   HttpMethod method,
 	   const CgiAddress &address,
 	   const char *remote_addr,
@@ -127,7 +129,7 @@ PrepareCgi(struct pool &pool, PreparedChildProcess &p,
 	if (arg != nullptr)
 		p.Append(arg);
 
-	address.options.CopyTo(p);
+	address.options.CopyTo(p, close_fds);
 }
 
 UnusedIstreamPtr
@@ -138,8 +140,9 @@ cgi_launch(EventLoop &event_loop, struct pool *pool,
 	   const StringMap &headers, UnusedIstreamPtr body,
 	   SpawnService &spawn_service)
 {
+	FdHolder close_fds;
 	PreparedChildProcess p;
-	PrepareCgi(*pool, p, method,
+	PrepareCgi(*pool, p, close_fds, method,
 		   *address, remote_addr, headers,
 		   body ? body.GetAvailable(false) : -1);
 

@@ -12,6 +12,7 @@
 #include "spawn/ChildOptions.hxx"
 #include "spawn/IstreamSpawn.hxx"
 #include "spawn/Prepared.hxx"
+#include "io/FdHolder.hxx"
 #include "util/Base32.hxx"
 #include "util/djb_hash.hxx"
 
@@ -91,7 +92,8 @@ pipe_filter(SpawnService &spawn_service, EventLoop &event_loop,
 	UnusedIstreamPtr response;
 
 	try {
-		options.CopyTo(p);
+		FdHolder close_fds;
+		options.CopyTo(p, close_fds);
 		response = SpawnChildProcess(event_loop, &pool, path, std::move(body),
 					     std::move(p),
 					     spawn_service);

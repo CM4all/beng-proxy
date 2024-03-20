@@ -62,5 +62,6 @@ private:
 	std::unique_ptr<ChildStockItem> CreateChild(CreateStockItem c,
 						    void *info,
 						    ChildStock &child_stock) override;
-	void PrepareChild(void *info, PreparedChildProcess &p) override;
+	void PrepareChild(void *info, PreparedChildProcess &p,
+			  FdHolder &close_fds) override;
 };

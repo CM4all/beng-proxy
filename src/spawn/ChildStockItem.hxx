@@ -15,6 +15,7 @@
 #include <memory>
 #include <string>
 
+class FdHolder;
 class ChildProcessHandle;
 class ChildStock;
 class ChildStockClass;
@@ -103,5 +104,5 @@ protected:
 	 * Throws on error.
 	 */
 	virtual void Prepare(ChildStockClass &cls, void *info,
-			     PreparedChildProcess &p);
+			     PreparedChildProcess &p, FdHolder &close_fds);
 };

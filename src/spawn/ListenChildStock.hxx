@@ -22,7 +22,8 @@ public:
 	 * Throws on error.
 	 */
 	virtual void PrepareListenChild(void *info, UniqueSocketDescriptor fd,
-					PreparedChildProcess &p) = 0;
+					PreparedChildProcess &p,
+					FdHolder &close_fds) = 0;
 
 	/* virtual methods from class ChildStockMapClass */
 	std::unique_ptr<ChildStockItem> CreateChild(CreateStockItem c,
@@ -57,5 +58,5 @@ public:
 protected:
 	/* virtual methods from class ChildStockItem */
 	void Prepare(ChildStockClass &cls, void *info,
-		     PreparedChildProcess &p) override;
+		     PreparedChildProcess &p, FdHolder &close_fds) override;
 };

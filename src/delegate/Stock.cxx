@@ -17,6 +17,7 @@
 #include "AllocatorPtr.hxx"
 #include "pool/DisposablePointer.hxx"
 #include "pool/tpool.hxx"
+#include "io/FdHolder.hxx"
 #include "io/Logger.hxx"
 
 #include <unistd.h>
@@ -137,14 +138,15 @@ DelegateStock::Create(CreateStockItem c,
 {
 	auto &info = *(DelegateArgs *)request.get();
 
+	FdHolder close_fds;
 	PreparedChildProcess p;
 	p.Append(info.executable_path);
 
-	info.options.CopyTo(p);
+	info.options.CopyTo(p, close_fds);
 
 	auto [server_fd, client_fd] = CreateStreamSocketPair();
 
-	p.SetStdin(std::move(server_fd));
+	p.stdin_fd = server_fd.ToFileDescriptor();
 
 	auto handle = spawn_service.SpawnChildProcess(info.executable_path,
 						      std::move(p));

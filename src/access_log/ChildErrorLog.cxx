@@ -6,6 +6,7 @@
 #include "ChildErrorLogOptions.hxx"
 #include "spawn/Prepared.hxx"
 #include "event/net/log/PipeAdapter.hxx"
+#include "io/FdHolder.hxx"
 #include "io/Pipe.hxx"
 
 #include <cassert>
@@ -14,13 +15,14 @@ ChildErrorLog::ChildErrorLog() = default;
 ChildErrorLog::~ChildErrorLog() noexcept = default;
 ChildErrorLog &ChildErrorLog::operator=(ChildErrorLog &&) = default;
 
-ChildErrorLog::ChildErrorLog(PreparedChildProcess &p,
+ChildErrorLog::ChildErrorLog(PreparedChildProcess &p, FdHolder &close_fds,
 			     EventLoop &event_loop, SocketDescriptor socket,
 			     const ChildErrorLogOptions &options,
 			     bool force)
 {
 	if (socket.IsDefined())
-		EnableClient(p, event_loop, socket, options, force);
+		EnableClient(p, close_fds,
+			     event_loop, socket, options, force);
 }
 
 UniqueFileDescriptor
@@ -54,7 +56,7 @@ ChildErrorLog::EnableClient(EventLoop &event_loop, SocketDescriptor socket,
 }
 
 void
-ChildErrorLog::EnableClient(PreparedChildProcess &p,
+ChildErrorLog::EnableClient(PreparedChildProcess &p, FdHolder &close_fds,
 			    EventLoop &event_loop, SocketDescriptor socket,
 			    const ChildErrorLogOptions &options,
 			    bool force)
@@ -67,7 +69,7 @@ ChildErrorLog::EnableClient(PreparedChildProcess &p,
 
 	auto w = EnableClient(event_loop, socket, options, force);
 	if (w.IsDefined()) {
-		p.SetStderr(std::move(w));
+		p.stderr_fd = close_fds.Insert(std::move(w));
 
 		/* if there's nothing else on stdout (no pipe etc.),
 		   redirect it to Pond as well */

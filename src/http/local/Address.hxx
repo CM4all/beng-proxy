@@ -176,5 +176,5 @@ struct LhttpAddress {
 	/**
 	 * Throws std::runtime_error on error.
 	 */
-	void CopyTo(PreparedChildProcess &dest) const noexcept;
+	void CopyTo(PreparedChildProcess &dest, FdHolder &close_fds) const noexcept;
 };

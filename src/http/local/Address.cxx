@@ -212,12 +212,12 @@ LhttpAddress::Expand(AllocatorPtr alloc, const MatchData &match_data) noexcept
 }
 
 void
-LhttpAddress::CopyTo(PreparedChildProcess &dest) const noexcept
+LhttpAddress::CopyTo(PreparedChildProcess &dest, FdHolder &close_fds) const noexcept
 {
 	dest.Append(path);
 
 	for (const char *i : args)
 		dest.Append(i);
 
-	options.CopyTo(dest);
+	options.CopyTo(dest, close_fds);
 }

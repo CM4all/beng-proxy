@@ -13,6 +13,7 @@
 #include "system/Error.hxx"
 #include "net/EasyMessage.hxx"
 #include "net/UniqueSocketDescriptor.hxx"
+#include "io/FdHolder.hxx"
 #include "util/StringList.hxx"
 #include "AllocatorPtr.hxx"
 
@@ -32,9 +33,10 @@ ChildStockItem::~ChildStockItem() noexcept = default;
 
 void
 ChildStockItem::Prepare(ChildStockClass &cls, void *info,
-			PreparedChildProcess &p)
+			PreparedChildProcess &p,
+			FdHolder &close_fds)
 {
-	cls.PrepareChild(info, p);
+	cls.PrepareChild(info, p, close_fds);
 }
 
 void
@@ -42,8 +44,9 @@ ChildStockItem::Spawn(ChildStockClass &cls, void *info,
 		      SocketDescriptor log_socket,
 		      const ChildErrorLogOptions &log_options)
 {
+	FdHolder close_fds;
 	PreparedChildProcess p;
-	Prepare(cls, info, p);
+	Prepare(cls, info, p, close_fds);
 
 	if (p.ns.mount.mount_listen_stream.data() != nullptr) {
 		const TempPoolLease tpool;
@@ -63,7 +66,8 @@ ChildStockItem::Spawn(ChildStockClass &cls, void *info,
 
 	if (log_socket.IsDefined() && !p.stderr_fd.IsDefined() &&
 	    p.stderr_path == nullptr)
-		log.EnableClient(p, GetEventLoop(), log_socket, log_options,
+		log.EnableClient(p, close_fds,
+				 GetEventLoop(), log_socket, log_options,
 				 cls.WantStderrPond(info));
 
 	UniqueSocketDescriptor stderr_socket1;

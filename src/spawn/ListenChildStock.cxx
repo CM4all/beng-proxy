@@ -22,16 +22,18 @@ ListenChildStockClass::CreateChild(CreateStockItem c,
 
 void
 ListenChildStockItem::Prepare(ChildStockClass &_cls, void *info,
-			      PreparedChildProcess &p)
+			      PreparedChildProcess &p,
+			      FdHolder &close_fds)
 {
 	auto &cls = (ListenChildStockClass &)_cls;
 
-	ChildStockItem::Prepare(cls, info, p);
+	ChildStockItem::Prepare(cls, info, p, close_fds);
 
 	const int socket_type = cls.GetChildSocketType(info);
 	const unsigned backlog = cls.GetChildBacklog(info);
 
-	cls.PrepareListenChild(info, socket.Create(socket_type, backlog), p);
+	cls.PrepareListenChild(info, socket.Create(socket_type, backlog),
+			       p, close_fds);
 }
 
 UniqueSocketDescriptor
