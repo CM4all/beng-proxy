@@ -179,9 +179,10 @@ struct tcache final : private CacheHandler {
 	 */
 	using PerHostSet =
 		IntrusiveHashSet<TranslateCacheItem, N_BUCKETS,
-				 IntrusiveHashSetOperators<TranslateCacheItem::StringViewHash,
-							   std::equal_to<std::string_view>,
-							   TranslateCacheItem::GetHost>,
+				 IntrusiveHashSetOperators<TranslateCacheItem,
+							   TranslateCacheItem::GetHost,
+							   TranslateCacheItem::StringViewHash,
+							   std::equal_to<std::string_view>>,
 				 IntrusiveHashSetMemberHookTraits<&TranslateCacheItem::per_host_siblings>>;
 	PerHostSet per_host;
 
@@ -193,9 +194,10 @@ struct tcache final : private CacheHandler {
 	 */
 	using PerSiteSet =
 		IntrusiveHashSet<TranslateCacheItem, N_BUCKETS,
-				 IntrusiveHashSetOperators<TranslateCacheItem::StringViewHash,
-							   std::equal_to<std::string_view>,
-							   TranslateCacheItem::GetSite>,
+				 IntrusiveHashSetOperators<TranslateCacheItem,
+							   TranslateCacheItem::GetSite,
+							   TranslateCacheItem::StringViewHash,
+							   std::equal_to<std::string_view>>,
 				 IntrusiveHashSetMemberHookTraits<&TranslateCacheItem::per_site_siblings>>;
 	PerSiteSet per_site;
 

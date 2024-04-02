@@ -67,9 +67,10 @@ class StringMap {
 
 
 	using Map = IntrusiveHashArrayTrie<Item,
-					   IntrusiveHashArrayTrieOperators<Item::Hash,
-									   Item::Equal,
-									   Item::GetKey>>;
+					   IntrusiveHashArrayTrieOperators<Item,
+									   Item::GetKey,
+									   Item::Hash,
+									   Item::Equal>>;
 
 	Map map;
 

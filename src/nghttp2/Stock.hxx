@@ -61,7 +61,8 @@ class Stock {
 
 	using Set =
 		IntrusiveHashSet<Item, 4096,
-				 IntrusiveHashSetOperators<ItemHash, ItemEqual>>;
+				 IntrusiveHashSetOperators<Item, std::identity,
+							   ItemHash, ItemEqual>>;
 	Set items;
 
 public:

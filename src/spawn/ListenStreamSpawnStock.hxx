@@ -41,9 +41,8 @@ class ListenStreamSpawnStock {
 	};
 
 	IntrusiveHashSet<Item, 1024,
-			 IntrusiveHashSetOperators<ItemHash,
-						   std::equal_to<std::string_view>,
-						   ItemGetKey>> items;
+			 IntrusiveHashSetOperators<Item, ItemGetKey, ItemHash,
+						   std::equal_to<std::string_view>>> items;
 
 public:
 	ListenStreamSpawnStock(EventLoop &_event_loop,

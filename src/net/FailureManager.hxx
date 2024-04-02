@@ -5,6 +5,7 @@
 #pragma once
 
 #include "FailureStatus.hxx"
+#include "net/SocketAddress.hxx"
 #include "util/IntrusiveHashSet.hxx"
 
 class Expiry;
@@ -32,9 +33,8 @@ class FailureManager {
 
 	using FailureSet =
 		IntrusiveHashSet<Failure, N_BUCKETS,
-				 IntrusiveHashSetOperators<Hash,
-							   std::equal_to<SocketAddress>,
-							   GetKey>>;
+				 IntrusiveHashSetOperators<Failure, GetKey, Hash,
+							   std::equal_to<SocketAddress>>>;
 
 	FailureSet failures;
 

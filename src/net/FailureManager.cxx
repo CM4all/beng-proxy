@@ -5,7 +5,6 @@
 #include "FailureManager.hxx"
 #include "FailureRef.hxx"
 #include "net/AllocatedSocketAddress.hxx"
-#include "net/SocketAddress.hxx"
 #include "util/djb_hash.hxx"
 #include "util/LeakDetector.hxx"
 

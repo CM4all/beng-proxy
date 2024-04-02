@@ -80,9 +80,9 @@ private:
 	 * cache.
 	 */
 	IntrusiveHashSet<Item, N_BUCKETS,
-			 IntrusiveHashSetOperators<std::hash<std::string_view>,
-						   std::equal_to<std::string_view>,
-						   Item::GetSite>,
+			 IntrusiveHashSetOperators<Item, Item::GetSite,
+						   std::hash<std::string_view>,
+						   std::equal_to<std::string_view>>,
 			 IntrusiveHashSetMemberHookTraits<&Item::per_site_hook>> per_site;
 
 	using Cache = StaticCache<std::string, Item, 65536, N_BUCKETS,

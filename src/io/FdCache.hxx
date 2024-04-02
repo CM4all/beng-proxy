@@ -64,16 +64,16 @@ class FdCache final : InotifyHandler {
 	 * Map #Key (path and flags) to #Item.
 	 */
 	IntrusiveHashSet<Item, 8192,
-			 IntrusiveHashSetOperators<Key::Hash, std::equal_to<Key>,
-						   ItemGetKey>,
+			 IntrusiveHashSetOperators<Item, ItemGetKey,
+						   Key::Hash, std::equal_to<Key>>,
 			 IntrusiveHashSetBaseHookTraits<Item, KeyTag>> map;
 
 	/**
 	 * Map inotify watch descriptors to #Item.
 	 */
 	IntrusiveHashSet<Item, 2048,
-			 IntrusiveHashSetOperators<std::hash<int>, std::equal_to<int>,
-						   ItemGetInotify>,
+			 IntrusiveHashSetOperators<Item, ItemGetInotify,
+						   std::hash<int>, std::equal_to<int>>,
 			 IntrusiveHashSetBaseHookTraits<Item, InotifyTag>> inotify_map;
 
 	/**
