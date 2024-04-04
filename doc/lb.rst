@@ -377,10 +377,8 @@ because it may cause severe performance problems)::
    end
 
 Caution: while a Lua script runs, the whole :program:`beng-lb` process is
-blocked. It is very easy to make :program:`beng-lb` unusable with a Lua script.
-Each Lua invocation adds big amounts of overhead. This feature is only
-meant for development and quick’n’dirty hacks. Don’t use in production,
-and if you really must do, take extreme care to make the Lua code finish
+blocked. It is very easy to make :program:`beng-lb` unusable with a
+Lua script.  Take extreme care to make the Lua code finish
 quickly.
 
 Translation Request Handlers
