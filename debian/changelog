@@ -1,6 +1,6 @@
 cm4all-beng-proxy (18.0.62) unstable; urgency=low
 
-  * 
+  * state: implement (artificial) symlinks
 
  --   
 
