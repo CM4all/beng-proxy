@@ -2,7 +2,7 @@ cm4all-beng-proxy (18.0.62) unstable; urgency=low
 
   * state: implement (artificial) symlinks
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Tue, 09 Apr 2024 17:38:20 +0200
 
 cm4all-beng-proxy (18.0.61) unstable; urgency=low
 
