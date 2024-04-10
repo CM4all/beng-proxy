@@ -60,6 +60,9 @@ LhttpAddress::GetId(AllocatorPtr alloc) const noexcept
 {
 	const char *p = GetServerId(alloc);
 
+	if (host_and_port != nullptr)
+		p = alloc.Concat(p, ";h=", host_and_port);
+
 	if (uri != nullptr)
 		p = alloc.Concat(p, ";u=", uri);
 
