@@ -1,6 +1,7 @@
 cm4all-beng-proxy (18.0.63) unstable; urgency=low
 
   * event: fix assertion failure in timer list
+  * access_log: support network addresses in CIDR notation in "trust_xff"
 
  --   
 

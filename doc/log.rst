@@ -76,8 +76,9 @@ The following ``access_logger`` options are available:
 
 - ``trust_xff``: The specified IP address is a “trusted” proxy whose
   ``X-Forwarded-For`` value is used to determine the ``remote_host``.
-  This option can be specified multiple times.  (This setting is also
-  used for the FastCGI/WAS ``REMOTE_HOST`` parameter.)
+  This option can be specified multiple times.  Instead of a single IP
+  address, a network can be specified in CIDR notation.  (This setting
+  is also used for the FastCGI/WAS ``REMOTE_HOST`` parameter.)
 
 - ``trust_xff_interface``: Like ``trust_xff``, but trust all
   IPv6-link-local addresses on this network interface.  This is useful

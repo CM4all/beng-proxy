@@ -85,8 +85,10 @@ AccessLogGlue::Log(std::chrono::system_clock::time_point now,
 	const char *remote_host = request.remote_host;
 	std::string buffer;
 
-	if (remote_host != nullptr && x_forwarded_for != nullptr &&
-	    config.xff.IsTrustedHost(remote_host)) {
+	if (x_forwarded_for != nullptr &&
+	    ((remote_host != nullptr &&
+	      config.xff.IsTrustedHost(remote_host)) ||
+	     config.xff.IsTrustedAddress(request.remote_address))) {
 		auto r = config.xff.GetRealRemoteHost(x_forwarded_for);
 		if (!r.empty()) {
 			buffer.assign(r);

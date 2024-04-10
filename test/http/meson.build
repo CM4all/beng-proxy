@@ -43,6 +43,7 @@ test(
     include_directories: inc,
     dependencies: [
       http_util_dep,
+      net_dep,
       gtest,
     ],
   ),

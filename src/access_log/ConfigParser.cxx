@@ -36,7 +36,12 @@ AccessLogConfigParser::ParseLine(FileLineParser &line)
 		   !is_child_error_logger) {
 		config.ignore_localhost_200 = line.ExpectValueAndEnd();
 	} else if (strcmp(word, "trust_xff") == 0 && !is_child_error_logger) {
-		config.xff.trust.emplace(line.ExpectValueAndEnd());
+		const char *value = line.ExpectValueAndEnd();
+
+		if (*value != '/' && *value != '@' && strchr(value, '/') != nullptr)
+			config.xff.trust_networks.emplace_front(value);
+		else
+			config.xff.trust.emplace(value);
 	} else if (strcmp(word, "trust_xff_interface") == 0 && !is_child_error_logger) {
 		config.xff.trust_interfaces.emplace(line.ExpectValueAndEnd());
 	} else if (strcmp(word, "forward_child_errors") == 0 &&
