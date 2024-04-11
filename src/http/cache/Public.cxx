@@ -26,14 +26,19 @@
 #include "event/FarTimerEvent.hxx"
 #include "event/Loop.hxx"
 #include "io/Logger.hxx"
+#include "util/Base32.hxx"
 #include "util/Cancellable.hxx"
+#include "util/djb_hash.hxx"
 #include "util/Exception.hxx"
 #include "util/IntrusiveList.hxx"
+#include "util/StringAPI.hxx"
 
 #include <functional>
 
 #include <string.h>
 #include <stdio.h>
+
+using std::string_view_literals::operator""sv;
 
 static constexpr Event::Duration http_cache_compress_interval = std::chrono::minutes(10);
 
@@ -1098,6 +1103,14 @@ HttpCache::Use(struct pool &caller_pool,
 		      handler, cancel_ptr);
 }
 
+[[gnu::pure]]
+static bool
+IsHTTPS(const StringMap &headers) noexcept
+{
+	const char *https = headers.Get("x-cm4all-https");
+	return https != nullptr && StringIsEqual(https, "on");
+}
+
 inline void
 HttpCache::Start(struct pool &caller_pool,
 		 const StopwatchPtr &parent_stopwatch,
@@ -1123,6 +1136,31 @@ HttpCache::Start(struct pool &caller_pool,
 					    std::move(body), nullptr,
 					    handler, cancel_ptr);
 		return;
+	}
+
+	if (address.type == ResourceAddress::Type::LHTTP) {
+		/* special case for Local HTTP: include the headers
+		   "X-CM4all-HTTPS" and "X-CM4all-DocRoot" in the
+		   cache key because these are usually used by our
+		   modified LHTTP-Apache, but it doesn't set a "Vary"
+		   header */
+
+		const bool https = IsHTTPS(headers);
+		const char *docroot = headers.Get("x-cm4all-docroot");
+
+		if (https || docroot != nullptr) {
+			char buffer[32];
+			std::string_view docroot_base32{};
+
+			if (docroot != nullptr)
+				docroot_base32 = {buffer, FormatIntBase32(buffer, djb_hash_string(docroot))};
+
+			const AllocatorPtr alloc{caller_pool};
+			key = alloc.Concat(https ? "https;"sv : std::string_view{},
+					   docroot_base32,
+					   docroot != nullptr ? "=dr;"sv : std::string_view{},
+					   key);
+		}
 	}
 
 	if (auto info = http_cache_request_evaluate(method, address, headers,

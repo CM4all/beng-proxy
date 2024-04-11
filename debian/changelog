@@ -2,6 +2,7 @@ cm4all-beng-proxy (18.0.64) unstable; urgency=low
 
   * state: fix symlink bug
   * lhttp: add the "Host" header to the HTTP cache key
+  * http_cache: auto-"Vary" on headers "X-CM4all-{HTTPS,DocRoot}"
 
  --   
 
