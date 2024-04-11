@@ -4,7 +4,7 @@ cm4all-beng-proxy (18.0.64) unstable; urgency=low
   * lhttp: add the "Host" header to the HTTP cache key
   * http_cache: auto-"Vary" on headers "X-CM4all-{HTTPS,DocRoot}"
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Thu, 11 Apr 2024 10:26:08 +0200
 
 cm4all-beng-proxy (18.0.63) unstable; urgency=low
 
