@@ -5,7 +5,7 @@
 #include "FdCache.hxx"
 #include "event/Loop.hxx"
 #include "system/Error.hxx"
-#include "system/openat2.h"
+#include "system/linux/openat2.h"
 #include "io/FileAt.hxx"
 #include "io/UniqueFileDescriptor.hxx"
 #include "io/linux/ProcPath.hxx"

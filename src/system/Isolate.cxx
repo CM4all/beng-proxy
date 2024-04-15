@@ -4,7 +4,7 @@
 
 #include "Isolate.hxx"
 #include "system/Mount.hxx"
-#include "system/pivot_root.h"
+#include "system/linux/pivot_root.h"
 #include "io/FileDescriptor.hxx"
 #include "io/linux/UserNamespace.hxx"
 
