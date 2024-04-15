@@ -1,6 +1,6 @@
 cm4all-beng-proxy (18.0.65) unstable; urgency=low
 
-  * 
+  * http_cache: fix use-after-free bug
 
  --   
 

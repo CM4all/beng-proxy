@@ -575,10 +575,12 @@ HttpCacheRequest::OnHttpResponse(HttpStatus status, StringMap &&_headers,
 					GetEventLoop().SystemNow(),
 					_info->expires);
 
+			const AllocatorPtr item_alloc{item.GetPool()};
+
 			/* TODO: this leaks pool memory each time we update
 			   headers; how to fix this? */
-			UpdateHeader(alloc, document->response_headers, _headers, "expires");
-			UpdateHeader(alloc, document->response_headers, _headers, "cache-control");
+			UpdateHeader(item_alloc, document->response_headers, _headers, "expires");
+			UpdateHeader(item_alloc, document->response_headers, _headers, "cache-control");
 		}
 
 		LogConcat(5, "HttpCache", "not_modified ", key);
