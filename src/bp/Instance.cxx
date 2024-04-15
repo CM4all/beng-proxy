@@ -257,13 +257,18 @@ BpInstance::OnMemoryWarning(uint64_t memory_usage,
 	fmt::print(stderr, "Spawner memory warning: {} of {} bytes used\n",
 		   memory_usage, memory_max);
 
+	std::size_t n = 0;
+
 	if (lhttp_stock != nullptr)
-		lhttp_stock_discard_some(*lhttp_stock);
+		n += lhttp_stock_discard_some(*lhttp_stock);
 
 #ifdef HAVE_LIBWAS
 	if (multi_was_stock != nullptr)
-		multi_was_stock->DiscardSome();
+		n += multi_was_stock->DiscardSome();
 #endif
+
+	if (n > 0)
+		fmt::print(stderr, "Discarded {} child processes\n", n);
 
 	// TODO: stop unused child processes
 }

@@ -6,6 +6,7 @@
 
 #include "io/FdType.hxx"
 
+#include <cstddef>
 #include <string_view>
 
 struct pool;
@@ -36,7 +37,7 @@ lhttp_stock_free(LhttpStock *lhttp_stock) noexcept;
 /**
  * Discard one or more processes to free some memory.
  */
-void
+std::size_t
 lhttp_stock_discard_some(LhttpStock &ls) noexcept;
 
 void

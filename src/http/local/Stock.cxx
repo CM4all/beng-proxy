@@ -36,8 +36,8 @@ public:
 		   SocketDescriptor log_socket,
 		   const ChildErrorLogOptions &log_options) noexcept;
 
-	void DiscardSome() noexcept {
-		mchild_stock.DiscardOldestIdle(64);
+	std::size_t DiscardSome() noexcept {
+		return mchild_stock.DiscardOldestIdle(64);
 	}
 
 	void FadeAll() noexcept {
@@ -356,10 +356,10 @@ lhttp_stock_free(LhttpStock *ls) noexcept
 	delete ls;
 }
 
-void
+std::size_t
 lhttp_stock_discard_some(LhttpStock &ls) noexcept
 {
-	ls.DiscardSome();
+	return ls.DiscardSome();
 }
 
 void

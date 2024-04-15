@@ -27,8 +27,8 @@ public:
 		      SocketDescriptor log_socket,
 		      const ChildErrorLogOptions &log_options) noexcept;
 
-	void DiscardSome() noexcept {
-		mchild_stock.DiscardOldestIdle(64);
+	std::size_t DiscardSome() noexcept {
+		return mchild_stock.DiscardOldestIdle(64);
 	}
 
 	void FadeAll() noexcept {
