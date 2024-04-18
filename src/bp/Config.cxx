@@ -95,7 +95,7 @@ BpConfig::Finish(unsigned default_port)
 
 	if (translation_sockets.empty()) {
 		translation_sockets.emplace_front();
-		translation_sockets.front().SetLocal("@translation");
+		translation_sockets.front().SetLocal("@translation"sv);
 	} else
 		/* reverse the list because our ConfigParser always
 		   inserts at the front */

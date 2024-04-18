@@ -22,6 +22,8 @@
 
 #include <stdio.h>
 
+using std::string_view_literals::operator""sv;
+
 static void
 print_resource_address(const ResourceAddress *address)
 {
@@ -134,7 +136,7 @@ main(int argc, char **argv)
 	TestInstance instance;
 
 	AllocatedSocketAddress translation_socket;
-	translation_socket.SetLocal("@translation");
+	translation_socket.SetLocal("@translation"sv);
 
 	TranslationStock stock(instance.event_loop,
 			       translation_socket, 0);
