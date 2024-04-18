@@ -17,10 +17,11 @@
 #include "net/AllocatedSocketAddress.hxx"
 #include "util/Cancellable.hxx"
 #include "util/PrintException.hxx"
+#include "util/SpanCast.hxx"
 #include "stopwatch.hxx"
 #include "AllocatorPtr.hxx"
 
-#include <stdio.h>
+#include <fmt/core.h>
 
 using std::string_view_literals::operator""sv;
 
@@ -32,35 +33,35 @@ print_resource_address(const ResourceAddress *address)
 		break;
 
 	case ResourceAddress::Type::LOCAL:
-		printf("path=%s\n", address->GetFile().path);
+		fmt::print("path={:?}\n", address->GetFile().path);
 		if (address->GetFile().content_type != nullptr)
-			printf("content_type=%s\n",
-			       address->GetFile().content_type);
+			fmt::print("content_type={:?}\n",
+				   address->GetFile().content_type);
 		break;
 
 	case ResourceAddress::Type::HTTP:
-		printf("http=%s\n", address->GetHttp().path);
+		fmt::print("http={:?}\n", address->GetHttp().path);
 		break;
 
 	case ResourceAddress::Type::LHTTP:
-		printf("lhttp=%s|%s\n", address->GetLhttp().path,
+		fmt::print("lhttp={:?}|{:?}\n", address->GetLhttp().path,
 		       address->GetLhttp().uri);
 		break;
 
 	case ResourceAddress::Type::PIPE:
-		printf("pipe=%s\n", address->GetCgi().path);
+		fmt::print("pipe={:?}\n", address->GetCgi().path);
 		break;
 
 	case ResourceAddress::Type::CGI:
-		printf("cgi=%s\n", address->GetCgi().path);
+		fmt::print("cgi={:?}\n", address->GetCgi().path);
 		break;
 
 	case ResourceAddress::Type::FASTCGI:
-		printf("fastcgi=%s\n", address->GetCgi().path);
+		fmt::print("fastcgi={:?}\n", address->GetCgi().path);
 		break;
 
 	case ResourceAddress::Type::WAS:
-		printf("was=%s\n", address->GetCgi().path);
+		fmt::print("was={:?}\n", address->GetCgi().path);
 		break;
 	}
 }
@@ -78,30 +79,30 @@ MyHandler::OnTranslateResponse(UniquePoolPtr<TranslateResponse> _response) noexc
 	const auto &response = *_response;
 
 	if (response.status != HttpStatus{})
-		printf("status=%u\n", static_cast<unsigned>(response.status));
+		fmt::print("status=%u\n", static_cast<unsigned>(response.status));
 
 	print_resource_address(&response.address);
 
 	for (const auto &view : response.views) {
 		if (view.name != nullptr)
-			printf("view=%s\n", view.name);
+			fmt::print("view={:?}\n", view.name);
 
 		for (const auto &transformation : view.transformations) {
 			switch (transformation.type) {
 			case Transformation::Type::PROCESS:
-				printf("process\n");
+				fmt::print("process\n");
 				break;
 
 			case Transformation::Type::PROCESS_CSS:
-				printf("process_css\n");
+				fmt::print("process_css\n");
 				break;
 
 			case Transformation::Type::PROCESS_TEXT:
-				printf("process_text\n");
+				fmt::print("process_text\n");
 				break;
 
 			case Transformation::Type::FILTER:
-				printf("filter\n");
+				fmt::print("filter\n");
 				print_resource_address(&transformation.u.filter.address);
 				break;
 			}
@@ -109,12 +110,11 @@ MyHandler::OnTranslateResponse(UniquePoolPtr<TranslateResponse> _response) noexc
 	}
 
 	if (response.redirect != nullptr)
-		printf("redirect=%s\n", response.redirect);
+		fmt::print("redirect={:?}\n", response.redirect);
 	if (response.session.data() != nullptr)
-		printf("session=%.*s\n", (int)response.session.size(),
-		       (const char *)response.session.data());
+		fmt::print("session={:?}\n", ToStringView(response.session));
 	if (response.user != nullptr)
-		printf("user=%s\n", response.user);
+		fmt::print("user={:?}\n", response.user);
 }
 
 void

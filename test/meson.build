@@ -203,7 +203,8 @@ executable(
   ],
 )
 
-executable('request_translation',
+executable(
+  'request_translation',
   'request_translation.cxx',
   include_directories: inc,
   dependencies: [
@@ -213,7 +214,9 @@ executable('request_translation',
     stock_dep,
     http_dep,
     cookie_dep,
-  ])
+    fmt_dep,
+  ],
+)
 
 executable('run_subst',
   'run_subst.cxx',
