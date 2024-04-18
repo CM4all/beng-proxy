@@ -74,6 +74,11 @@ struct LbRequestLogger final : IncomingHttpRequestLogger {
 	const char *analytics_id = nullptr;
 
 	/**
+	 * @see TranslationCommand::GENERATOR
+	 */
+	const char *generator = nullptr;
+
+	/**
 	 * @see LOG_FORWARDED_TO
 	 */
 	const char *forwarded_to = nullptr;

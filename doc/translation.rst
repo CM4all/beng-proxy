@@ -606,6 +606,13 @@ Response
 - ``AUTO_FLUSH_CACHE``: All (successful) modifying requests (``POST``,
   ``PUT`` ...) flush the HTTP cache of the specified ``CACHE_TAG``.
 
+- ``GENERATOR``: A short symbolic identifier (alphanumeric,
+  underscore, dash) for the entity that generates the HTTP response
+  (according to the rest of this translation response).  If non-empty,
+  then this will set the ``GENERATOR`` attribute in access log
+  datagrams.  Without this packet, the value of the
+  ``X-CM4all-Generator`` response header is used.
+
 If the translation server does not provide the ``CONTENT_TYPE``
 header, :program:`beng-proxy` will attempt to discover the file type
 from its extended attributes (see :ref:`xattr`).
@@ -917,7 +924,7 @@ going to be forwarded:
 
 Group is one of:
 
-- ``IDENTITY``: headers ``Via`` and ``X-Forwarded-For``
+- ``IDENTITY``: headers ``Via``, ``X-Forwarded-For``, ``X-CM4all-Generator``
 
 - ``CAPABILITIES``: ``Server``, ``User-Agent``, ``Accept-*``
 

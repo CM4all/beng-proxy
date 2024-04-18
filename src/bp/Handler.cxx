@@ -380,6 +380,11 @@ Request::HandleTranslatedRequest(UniquePoolPtr<TranslateResponse> _response) noe
 	translate.address = {ShallowCopy(), response.address};
 	translate.transformations.clear();
 
+	if (response.generator != nullptr) {
+		auto &rl = *(BpRequestLogger *)request.logger;
+		rl.generator = p_strdup(request.pool, response.generator);
+	}
+
 	ApplyFileEnotdir();
 
 	if (!DoContentTypeLookup(response.address)) {

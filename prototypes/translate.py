@@ -629,6 +629,8 @@ class Translation(Protocol):
             response.packet(TRANSLATE_LHTTP_URI, uri[7:])
             response.packet(TRANSLATE_LHTTP_HOST, 'localhost:80')
             response.packet(TRANSLATE_CONCURRENCY, '\x04\x00')
+            response.packet(TRANSLATE_GENERATOR, 'apache')
+            response.response_header_forward((HEADER_GROUP_IDENTITY, HEADER_FORWARD_MANGLE))
         elif uri.startswith('/apache-listen-stream/'):
             response.packet(TRANSLATE_LHTTP_PATH, apache_lhttpd)
             response.packet(TRANSLATE_APPEND, '-DFOREGROUND')

@@ -298,6 +298,16 @@ LbRequest::OnHttpResponse(HttpStatus status, StringMap &&_headers,
 
 	SetForwardedTo();
 
+	if (auto &rl = *(LbRequestLogger *)request.logger; rl.generator == nullptr)
+		/* if there is a GENERATOR header, include it in the
+		   access log */
+		/* we remove the header here because usually the
+		   client isn't interested; but what if we have
+		   chained several beng-lb instances?  do we need to
+		   have a configuration setting for this? */
+		if (const auto *generator_header = _headers.Remove("x-cm4all-generator"))
+			rl.generator = generator_header;
+
 	HttpHeaders headers(std::move(_headers));
 	headers.generate_date_header = false;
 	headers.generate_server_header = false;

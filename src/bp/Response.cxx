@@ -1019,9 +1019,25 @@ Request::OnHttpResponse(HttpStatus status, StringMap &&_headers,
 		}
 	}
 
+	auto &rl = *(BpRequestLogger *)request.logger;
+	const auto identity_forward = translate.response->response_header_forward[BengProxy::HeaderGroup::IDENTITY];
+
+	const char *const generator = rl.generator;
+	if (generator == nullptr)
+		/* if there is a GENERATOR header, include it in the
+		   access log */
+		if (const auto *generator_header = headers.Get("x-cm4all-generator"))
+			rl.generator = generator_header;
+
 	auto new_headers = ForwardResponseHeaders(status, headers,
 						  RelocateCallback, this,
 						  translate.response->response_header_forward);
+
+	if (generator != nullptr &&
+	    identity_forward == BengProxy::HeaderForwardMode::MANGLE)
+		/* the GENERATOR value from the translation server
+		   overrides the header */
+		new_headers.Add(pool, "x-cm4all-generator", generator);
 
 	HttpHeaders headers2(std::move(new_headers));
 

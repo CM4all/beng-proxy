@@ -508,6 +508,8 @@ ClassifyResponseHeader(const char *name, const bool is_upgrade) noexcept
 					: HeaderGroup::SECURE;
 			} else if (StringIsEqual(c4, "https"))
 				return HeaderGroup::SSL;
+			else if (StringIsEqual(c4, "generator"))
+				return HeaderGroup::IDENTITY;
 			else if (StringIsEqual(c4, "view"))
 				return HeaderGroup::TRANSFORMATION;
 		} else if (StringIsEqual(name, "x-content-type-options"))
