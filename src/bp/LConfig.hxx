@@ -33,6 +33,11 @@ struct BpListenerConfig : SocketConfig {
 		PROMETHEUS_EXPORTER,
 	} handler = Handler::TRANSLATION;
 
+	/**
+	 * Enable or disable the access logger.
+	 */
+	bool access_logger = true;
+
 	bool auth_alt_host = false;
 
 	bool ssl = false;

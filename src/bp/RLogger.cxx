@@ -8,9 +8,11 @@
 #include "http/IncomingRequest.hxx"
 
 BpRequestLogger::BpRequestLogger(BpInstance &_instance,
-				 TaggedHttpStats &_http_stats) noexcept
+				 TaggedHttpStats &_http_stats,
+				 bool _access_logger) noexcept
 	:instance(_instance), http_stats(_http_stats),
-	 start_time(instance.event_loop.SteadyNow())
+	 start_time(instance.event_loop.SteadyNow()),
+	 access_logger(_access_logger)
 {
 }
 
@@ -29,7 +31,7 @@ BpRequestLogger::LogHttpRequest(IncomingHttpRequest &request,
 			      bytes_received, bytes_sent,
 			      duration);
 
-	if (instance.access_log != nullptr)
+	if (access_logger && instance.access_log != nullptr)
 		instance.access_log->Log(instance.event_loop.SystemNow(),
 					 request, site_name,
 					 analytics_id,

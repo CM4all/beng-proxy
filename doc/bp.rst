@@ -179,6 +179,9 @@ Known attributes:
 - ``tag``: a tag, to be passed to the translation server in a
   :ref:`LISTENER_TAG <t-listener_tag>` packet.
 
+- ``access_logger``: ``no`` disables the access logger on this
+  listener.
+
 - ``auth_alt_host``: ``yes`` forwards the value of the
   ``X-CM4all-AltHost`` request header to the translation server in
   ``AUTH`` requests.

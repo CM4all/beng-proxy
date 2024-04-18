@@ -9,13 +9,15 @@
 
 LbRequestLogger::LbRequestLogger(LbInstance &_instance,
 				 HttpStats &_http_stats,
+				 bool _access_logger,
 				 const IncomingHttpRequest &request) noexcept
 	:instance(_instance), http_stats(_http_stats),
 	 start_time(instance.event_loop.SteadyNow()),
 	 host(request.headers.Get("host")),
 	 x_forwarded_for(request.headers.Get("x-forwarded-for")),
 	 referer(request.headers.Get("referer")),
-	 user_agent(request.headers.Get("user-agent"))
+	 user_agent(request.headers.Get("user-agent")),
+	 access_logger(_access_logger)
 {
 }
 
@@ -33,7 +35,7 @@ LbRequestLogger::LogHttpRequest(IncomingHttpRequest &request,
 			      bytes_received, bytes_sent,
 			      duration);
 
-	if (instance.access_log != nullptr)
+	if (access_logger && instance.access_log != nullptr)
 		instance.access_log->Log(instance.event_loop.SystemNow(),
 					 request, site_name,
 					 analytics_id,

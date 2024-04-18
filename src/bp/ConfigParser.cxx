@@ -220,6 +220,9 @@ BpConfigParser::Listener::ParseLine(FileLineParser &line)
 									    0, false));
 	} else if (strcmp(word, "handler") == 0) {
 		config.handler = ParseListenerHandler(line.ExpectValueAndEnd());
+	} else if (StringIsEqual(word, "access_logger")) {
+		config.access_logger = line.NextBool();
+		line.ExpectEnd();
 	} else
 		throw LineParser::Error("Unknown option");
 }

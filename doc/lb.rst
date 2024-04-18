@@ -501,6 +501,9 @@ Known attributes:
 - ``max_connections_per_ip``: specifies the maximum number of
   connections from each IP address.
 
+- ``access_logger``: ``no`` disables the access logger on this
+  listener.
+
 - ``verbose_response``: ``yes`` exposes internal error messages in
   HTTP responses.
 

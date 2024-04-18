@@ -110,7 +110,8 @@ void
 BpConnection::RequestHeadersFinished(IncomingHttpRequest &request) noexcept
 {
 	request.logger = NewFromPool<BpRequestLogger>(request.pool, instance,
-						      listener.GetHttpStats());
+						      listener.GetHttpStats(),
+						      listener.GetAccessLogger());
 }
 
 void

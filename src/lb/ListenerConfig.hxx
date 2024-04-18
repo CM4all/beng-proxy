@@ -31,6 +31,11 @@ struct LbListenerConfig : SocketConfig {
 
 	SslConfig ssl_config;
 
+	/**
+	 * Enable or disable the access logger.
+	 */
+	bool access_logger = true;
+
 	bool verbose_response = false;
 
 #ifdef HAVE_NGHTTP2

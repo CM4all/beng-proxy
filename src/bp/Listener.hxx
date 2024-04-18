@@ -33,6 +33,8 @@ class BpListener final : FilteredSocketListenerHandler {
 
 	const bool auth_alt_host;
 
+	const bool access_logger;
+
 	FilteredSocketListener listener;
 
 #ifdef HAVE_AVAHI
@@ -88,6 +90,10 @@ public:
 
 	bool GetAuthAltHost() const noexcept {
 		return auth_alt_host;
+	}
+
+	bool GetAccessLogger() const noexcept {
+		return access_logger;
 	}
 
 	TranslationService &GetTranslationService() const noexcept {
