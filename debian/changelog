@@ -1,5 +1,6 @@
 cm4all-beng-proxy (18.0.67) unstable; urgency=low
 
+  * access_log: set type=http_access
   * add per-listener "access_logger" setting
 
  --   

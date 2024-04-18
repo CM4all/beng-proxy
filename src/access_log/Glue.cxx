@@ -108,6 +108,7 @@ AccessLogGlue::Log(std::chrono::system_clock::time_point now,
 		.user_agent = user_agent,
 		.http_method = request.method,
 		.http_status = status,
+		.type = Net::Log::Type::HTTP_ACCESS,
 	}
 		.SetTraffic(bytes_received, bytes_sent)
 		.SetDuration(std::chrono::duration_cast<Net::Log::Duration>(duration));
