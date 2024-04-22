@@ -182,6 +182,9 @@ Known attributes:
 - ``access_logger``: ``no`` disables the access logger on this
   listener.
 
+- ``access_logger_only_errors``: ``yes`` limits the access log to
+  failed requests (HTTP status 4xx and 5xx).
+
 - ``auth_alt_host``: ``yes`` forwards the value of the
   ``X-CM4all-AltHost`` request header to the translation server in
   ``AUTH`` requests.

@@ -70,6 +70,7 @@ BpListener::BpListener(BpInstance &_instance,
 	 tag(config.tag.empty() ? nullptr : config.tag.c_str()),
 	 auth_alt_host(config.auth_alt_host),
 	 access_logger(config.access_logger),
+	 access_logger_only_errors(config.access_logger_only_errors),
 	 listener(instance.root_pool, instance.event_loop,
 		  MakeSslFactory(config),
 		  *this, std::move(_socket))

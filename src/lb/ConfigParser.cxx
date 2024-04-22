@@ -1246,6 +1246,9 @@ LbConfigParser::Listener::ParseLine(FileLineParser &line)
 	} else if (StringIsEqual(word, "access_logger")) {
 		config.access_logger = line.NextBool();
 		line.ExpectEnd();
+	} else if (StringIsEqual(word, "access_logger_only_errors")) {
+		config.access_logger_only_errors = line.NextBool();
+		line.ExpectEnd();
 	} else if (StringIsEqual(word, "verbose_response")) {
 		bool value = line.NextBool();
 

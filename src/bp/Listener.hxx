@@ -33,7 +33,7 @@ class BpListener final : FilteredSocketListenerHandler {
 
 	const bool auth_alt_host;
 
-	const bool access_logger;
+	const bool access_logger, access_logger_only_errors;
 
 	FilteredSocketListener listener;
 
@@ -94,6 +94,10 @@ public:
 
 	bool GetAccessLogger() const noexcept {
 		return access_logger;
+	}
+
+	bool GetAccessLoggerOnlyErrors() const noexcept {
+		return access_logger_only_errors;
 	}
 
 	TranslationService &GetTranslationService() const noexcept {

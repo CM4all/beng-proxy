@@ -203,6 +203,7 @@ LbHttpConnection::RequestHeadersFinished(IncomingHttpRequest &request) noexcept
 						      instance,
 						      listener.GetHttpStats(),
 						      listener.GetConfig().access_logger,
+						      listener.GetConfig().access_logger_only_errors,
 						      request);
 }
 

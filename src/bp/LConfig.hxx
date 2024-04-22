@@ -38,6 +38,8 @@ struct BpListenerConfig : SocketConfig {
 	 */
 	bool access_logger = true;
 
+	bool access_logger_only_errors = false;
+
 	bool auth_alt_host = false;
 
 	bool ssl = false;

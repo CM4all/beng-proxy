@@ -504,6 +504,9 @@ Known attributes:
 - ``access_logger``: ``no`` disables the access logger on this
   listener.
 
+- ``access_logger_only_errors``: ``yes`` limits the access log to
+  failed requests (HTTP status 4xx and 5xx).
+
 - ``verbose_response``: ``yes`` exposes internal error messages in
   HTTP responses.
 

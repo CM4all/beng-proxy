@@ -56,11 +56,14 @@ struct BpRequestLogger final : IncomingHttpRequestLogger {
 	/**
 	 * Enable or disable the access logger.
 	 */
-	const bool access_logger = true;
+	const bool access_logger;
+
+	const bool access_logger_only_errors;
 
 	BpRequestLogger(BpInstance &_instance,
 			TaggedHttpStats &_http_stats,
-			bool _access_logger) noexcept;
+			bool _access_logger,
+			bool _access_logger_only_errors) noexcept;
 
 	std::chrono::steady_clock::duration GetDuration(std::chrono::steady_clock::time_point now) const noexcept {
 		return now - start_time;

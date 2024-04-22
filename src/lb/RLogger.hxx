@@ -86,10 +86,13 @@ struct LbRequestLogger final : IncomingHttpRequestLogger {
 	/**
 	 * Enable or disable the access logger.
 	 */
-	const bool access_logger = true;
+	const bool access_logger;
+
+	const bool access_logger_only_errors;
 
 	LbRequestLogger(LbInstance &_instance, HttpStats &_http_stats,
 			bool _access_logger,
+			bool _access_logger_only_errors,
 			const IncomingHttpRequest &request) noexcept;
 
 	const char *GetCanonicalHost() const {
