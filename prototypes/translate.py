@@ -740,6 +740,8 @@ class Translation(Protocol):
                 response.packet(TRANSLATE_CHILD_TAG, 'foo')
                 response.packet(TRANSLATE_CHILD_TAG, 'bar')
                 response.packet(TRANSLATE_NO_NEW_PRIVS)
+                response.request_header_forward((HEADER_GROUP_ALL, HEADER_FORWARD_YES))
+                response.response_header_forward((HEADER_GROUP_ALL, HEADER_FORWARD_YES))
             else:
                 response.status(404)
         elif uri[:15] == '/libcommon/was/':
