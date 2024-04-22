@@ -214,7 +214,7 @@ Response
   integer specifying the protocol version. The initial protocol version
   is 0.
 
-- ``ENDS``: Finishes the response.
+- ``END``: Finishes the response.
 
 - ``URI``: the “real” raw URI from the HTTP request (without the query
   string); this is used to override the URI, e.g. when :program:`beng-proxy` is
