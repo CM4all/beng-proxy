@@ -59,7 +59,7 @@ public:
 #endif
 
 	auto GetLocalAddress() const noexcept {
-		return listener.GetLocalAddress();
+		return listener.GetSocket().GetLocalAddress();
 	}
 
 	LbProtocol GetProtocol() const noexcept {

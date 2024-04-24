@@ -69,7 +69,7 @@ public:
 #endif // HAVE_AVAHI
 
 	auto GetLocalAddress() const noexcept {
-		return listener.GetLocalAddress();
+		return listener.GetSocket().GetLocalAddress();
 	}
 
 	auto &GetHttpStats() noexcept {
