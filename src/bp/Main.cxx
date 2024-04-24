@@ -119,20 +119,6 @@ BpInstance::GetAvahiPublisher()
 #endif
 
 void
-BpInstance::EnableListeners() noexcept
-{
-	for (auto &listener : listeners)
-		listener.AddEvent();
-}
-
-void
-BpInstance::DisableListeners() noexcept
-{
-	for (auto &listener : listeners)
-		listener.RemoveEvent();
-}
-
-void
 BpInstance::ShutdownCallback() noexcept
 {
 	uring.SetVolatile();

@@ -226,9 +226,6 @@ struct BpInstance final : PInstance, BengControl::Handler, SpawnServerClientHand
 
 	void AddListener(const BpListenerConfig &c);
 
-	void EnableListeners() noexcept;
-	void DisableListeners() noexcept;
-
 	[[gnu::pure]]
 	BengControl::Stats GetStats() const noexcept;
 
