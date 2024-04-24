@@ -72,14 +72,6 @@ public:
 		return listener.GetLocalAddress();
 	}
 
-	void AddEvent() noexcept {
-		listener.AddEvent();
-	}
-
-	void RemoveEvent() noexcept {
-		listener.RemoveEvent();
-	}
-
 	auto &GetHttpStats() noexcept {
 		return http_stats;
 	}
