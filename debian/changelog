@@ -3,6 +3,7 @@ cm4all-beng-proxy (18.0.67) unstable; urgency=low
   * spawn: fix STDERR_PATH regression
   * access_log: set type=http_access
   * translation: add packet GENERATOR
+  * event: fix crash in timer subsystem
   * add per-listener "access_logger" setting
   * add setting "access_logger_only_errors"
 
