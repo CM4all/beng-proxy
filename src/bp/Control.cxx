@@ -57,21 +57,6 @@ control_tcache_invalidate(BpInstance *instance, std::span<const std::byte> paylo
 }
 
 static void
-query_stats(BpInstance *instance, BengControl::Server *server,
-	    SocketAddress address)
-{
-	const auto stats = instance->GetStats();
-
-	try {
-		server->Reply(address,
-			      BengControl::Command::STATS,
-			      ReferenceAsBytes(stats));
-	} catch (...) {
-		LogConcat(3, "control", std::current_exception());
-	}
-}
-
-static void
 HandleStopwatchPipe(std::span<const std::byte> payload,
 		    std::span<UniqueFileDescriptor> fds)
 {
@@ -82,11 +67,11 @@ HandleStopwatchPipe(std::span<const std::byte> payload,
 }
 
 void
-BpInstance::OnControlPacket(BengControl::Server &control_server,
+BpInstance::OnControlPacket(BengControl::Server &,
 			    BengControl::Command command,
 			    std::span<const std::byte> payload,
 			    std::span<UniqueFileDescriptor> fds,
-			    SocketAddress address, int uid)
+			    SocketAddress, int uid)
 {
 	using namespace BengControl;
 
@@ -114,10 +99,6 @@ BpInstance::OnControlPacket(BengControl::Server &control_server,
 	case Command::FADE_NODE:
 	case Command::NODE_STATUS:
 		/* only for beng-lb */
-		break;
-
-	case Command::STATS:
-		query_stats(this, &control_server, address);
 		break;
 
 	case Command::VERBOSE:
@@ -153,6 +134,7 @@ BpInstance::OnControlPacket(BengControl::Server &control_server,
 		break;
 
 	case Command::FLUSH_NFS_CACHE:
+	case Command::STATS:
 		// deprecated
 		break;
 

@@ -167,57 +167,6 @@ NodeStatus(const char *server, ConstBuffer<const char *> args)
 }
 
 static void
-PrintStatsAttribute(const char *name, const uint32_t &value) noexcept
-{
-	if (value != 0)
-		printf("%s %" PRIu32 "\n", name, FromBE32(value));
-}
-
-static void
-PrintStatsAttribute(const char *name, const uint64_t &value) noexcept
-{
-	if (value != 0)
-		printf("%s %" PRIu64 "\n", name, FromBE64(value));
-}
-
-static void
-Stats(const char *server, ConstBuffer<const char *> args)
-{
-	if (!args.empty())
-		throw Usage{"Too many arguments"};
-
-	BengControl::Client client(server);
-	client.AutoBind();
-	client.Send(BengControl::Command::STATS);
-
-	const auto response = client.Receive();
-	if (response.first != BengControl::Command::STATS)
-		throw std::runtime_error("Wrong response command");
-
-	BengControl::Stats stats{};
-	memcpy(&stats, response.second.data(),
-	       std::min(sizeof(stats), response.second.size()));
-
-	PrintStatsAttribute("incoming_connections", stats.incoming_connections);
-	PrintStatsAttribute("outgoing_connections", stats.outgoing_connections);
-	PrintStatsAttribute("children", stats.children);
-	PrintStatsAttribute("sessions", stats.sessions);
-	PrintStatsAttribute("http_requests", stats.http_requests);
-	PrintStatsAttribute("translation_cache_size", stats.translation_cache_size);
-	PrintStatsAttribute("http_cache_size", stats.http_cache_size);
-	PrintStatsAttribute("filter_cache_size", stats.filter_cache_size);
-	PrintStatsAttribute("translation_cache_brutto_size", stats.translation_cache_brutto_size);
-	PrintStatsAttribute("http_cache_brutto_size", stats.http_cache_brutto_size);
-	PrintStatsAttribute("filter_cache_brutto_size", stats.filter_cache_brutto_size);
-	PrintStatsAttribute("nfs_cache_size", stats.nfs_cache_size);
-	PrintStatsAttribute("nfs_cache_brutto_size", stats.nfs_cache_brutto_size);
-	PrintStatsAttribute("io_buffers_size", stats.io_buffers_size);
-	PrintStatsAttribute("io_buffers_brutto_size", stats.io_buffers_brutto_size);
-	PrintStatsAttribute("http_traffic_received", stats.http_traffic_received);
-	PrintStatsAttribute("http_traffic_sent", stats.http_traffic_sent);
-}
-
-static void
 FadeChildren(const char *server, ConstBuffer<const char *> args)
 {
 	std::string_view tag{};
@@ -341,9 +290,6 @@ try {
 	} else if (StringIsEqual(command, "dump-pools")) {
 		SimpleCommand(server, args,
 			      BengControl::Command::DUMP_POOLS);
-		return EXIT_SUCCESS;
-	} else if (StringIsEqual(command, "stats")) {
-		Stats(server, args);
 		return EXIT_SUCCESS;
 	} else if (StringIsEqual(command, "verbose")) {
 		Verbose(server, args);

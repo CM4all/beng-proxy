@@ -1,6 +1,6 @@
 cm4all-beng-proxy (18.0.68) unstable; urgency=low
 
-  * 
+  * control: deprecate packet STATS
 
  --   
 

@@ -247,18 +247,6 @@ try {
 	logger(3, std::current_exception());
 }
 
-inline void
-LbControl::QueryStats(BengControl::Server &control_server,
-		      SocketAddress address)
-try {
-	const auto stats = instance.GetStats();
-	control_server.Reply(address,
-			     BengControl::Command::STATS,
-			     ReferenceAsBytes(stats));
-} catch (...) {
-	logger(3, std::current_exception());
-}
-
 void
 LbControl::OnControlPacket(BengControl::Server &control_server,
 			   BengControl::Command command,
@@ -320,10 +308,6 @@ LbControl::OnControlPacket(BengControl::Server &control_server,
 			pool_dump_tree(instance.root_pool);
 		break;
 
-	case Command::STATS:
-		QueryStats(control_server, address);
-		break;
-
 	case Command::VERBOSE:
 		if (is_privileged && payload.size() == 1) {
 			SetLogLevel(*(const uint8_t *)payload.data());
@@ -335,7 +319,6 @@ LbControl::OnControlPacket(BengControl::Server &control_server,
 		instance.ReloadState();
 		break;
 
-	case Command::FLUSH_NFS_CACHE:
 	case Command::FLUSH_FILTER_CACHE:
 	case Command::STOPWATCH_PIPE:
 	case Command::DISCARD_SESSION:
@@ -344,6 +327,11 @@ LbControl::OnControlPacket(BengControl::Server &control_server,
 	case Command::ENABLE_QUEUE:
 	case Command::DISABLE_QUEUE:
 		/* not applicable */
+		break;
+
+	case Command::FLUSH_NFS_CACHE:
+	case Command::STATS:
+		// deprecated
 		break;
 	}
 }
