@@ -4,7 +4,6 @@
 
 #include "Stats.hxx"
 #include "net/control/Protocol.hxx"
-#include "util/ByteOrder.hxx"
 #include "memory/GrowingBuffer.hxx"
 
 namespace Prometheus {
@@ -43,18 +42,18 @@ Write(GrowingBuffer &buffer, std::string_view process,
 	       "beng_proxy_cache_size{{process={:?},type=\"filter\",metric=\"brutto\"}} {}\n"
 	       "beng_proxy_buffer_size{{process={:?},type=\"io\",metric=\"netto\"}} {}\n"
 	       "beng_proxy_buffer_size{{process={:?},type=\"io\",metric=\"brutto\"}} {}\n",
-	       process, FromBE32(stats.incoming_connections),
-	       process, FromBE32(stats.outgoing_connections),
-	       process, FromBE32(stats.children),
-	       process, FromBE32(stats.sessions),
-	       process, FromBE64(stats.translation_cache_size),
-	       process, FromBE64(stats.translation_cache_brutto_size),
-	       process, FromBE64(stats.http_cache_size),
-	       process, FromBE64(stats.http_cache_brutto_size),
-	       process, FromBE64(stats.filter_cache_size),
-	       process, FromBE64(stats.filter_cache_brutto_size),
-	       process, FromBE64(stats.io_buffers_size),
-	       process, FromBE64(stats.io_buffers_brutto_size));
+	       process, stats.incoming_connections,
+	       process, stats.outgoing_connections,
+	       process, stats.children,
+	       process, stats.sessions,
+	       process, stats.translation_cache_size,
+	       process, stats.translation_cache_brutto_size,
+	       process, stats.http_cache_size,
+	       process, stats.http_cache_brutto_size,
+	       process, stats.filter_cache_size,
+	       process, stats.filter_cache_brutto_size,
+	       process, stats.io_buffers_size,
+	       process, stats.io_buffers_brutto_size);
 }
 
 } // namespace Prometheus

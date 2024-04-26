@@ -10,7 +10,6 @@
 #include "memory/SlicePool.hxx"
 #include "memory/AllocatorStats.hxx"
 #include "net/control/Protocol.hxx"
-#include "util/ByteOrder.hxx"
 
 Prometheus::Stats
 LbInstance::GetStats() const noexcept
@@ -21,17 +20,17 @@ LbInstance::GetStats() const noexcept
 
 	fs_stock->AddStats(tcp_stock_stats);
 
-	stats.incoming_connections = ToBE32(http_connections.size()
-					    + tcp_connections.size());
-	stats.outgoing_connections = ToBE32(tcp_stock_stats.busy
-					    + tcp_stock_stats.idle
-					    + tcp_connections.size());
+	stats.incoming_connections = http_connections.size() +
+		tcp_connections.size();
+	stats.outgoing_connections = tcp_stock_stats.busy +
+		tcp_stock_stats.idle +
+		tcp_connections.size();
 	stats.children = 0;
 	stats.sessions = 0;
-	stats.http_requests = ToBE64(http_stats.n_requests);
-	stats.http_traffic_received = ToBE64(http_stats.traffic_received);
-	stats.http_traffic_sent = ToBE64(http_stats.traffic_sent);
-	stats.translation_cache_size = ToBE64(goto_map.GetAllocatedTranslationCacheMemory());
+	stats.http_requests = http_stats.n_requests;
+	stats.http_traffic_received = http_stats.traffic_received;
+	stats.http_traffic_sent = http_stats.traffic_sent;
+	stats.translation_cache_size = goto_map.GetAllocatedTranslationCacheMemory();
 	stats.http_cache_size = 0;
 	stats.filter_cache_size = 0;
 	stats.translation_cache_brutto_size = stats.translation_cache_size;
@@ -40,8 +39,8 @@ LbInstance::GetStats() const noexcept
 	stats.nfs_cache_size = stats.nfs_cache_brutto_size = 0;
 
 	const auto io_buffers_stats = fb_pool_get().GetStats();
-	stats.io_buffers_size = ToBE64(io_buffers_stats.netto_size);
-	stats.io_buffers_brutto_size = ToBE64(io_buffers_stats.brutto_size);
+	stats.io_buffers_size = io_buffers_stats.netto_size;
+	stats.io_buffers_brutto_size = io_buffers_stats.brutto_size;
 
 	return stats;
 }

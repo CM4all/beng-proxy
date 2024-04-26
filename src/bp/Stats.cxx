@@ -14,7 +14,6 @@
 #include "http/cache/Public.hxx"
 #include "session/Manager.hxx"
 #include "net/control/Protocol.hxx"
-#include "util/ByteOrder.hxx"
 #include "tcp_stock.hxx"
 
 Prometheus::Stats
@@ -37,25 +36,24 @@ BpInstance::GetStats() const noexcept
 		? filter_cache_get_stats(*filter_cache)
 		: AllocatorStats::Zero();
 
-	stats.incoming_connections = ToBE32(connections.size());
-	stats.outgoing_connections = ToBE32(tcp_stock_stats.busy
-					    + tcp_stock_stats.idle);
+	stats.incoming_connections = connections.size();
+	stats.outgoing_connections = tcp_stock_stats.busy + tcp_stock_stats.idle;
 	stats.children = 0; // TODO
-	stats.sessions = ToBE32(session_manager->Count());
-	stats.http_requests = ToBE64(http_stats.n_requests);
-	stats.http_traffic_received = ToBE64(http_stats.traffic_received);
-	stats.http_traffic_sent = ToBE64(http_stats.traffic_sent);
-	stats.translation_cache_size = ToBE64(tcache_stats.netto_size);
-	stats.http_cache_size = ToBE64(http_cache_stats.netto_size);
-	stats.filter_cache_size = ToBE64(fcache_stats.netto_size);
+	stats.sessions = session_manager->Count();
+	stats.http_requests = http_stats.n_requests;
+	stats.http_traffic_received = http_stats.traffic_received;
+	stats.http_traffic_sent = http_stats.traffic_sent;
+	stats.translation_cache_size = tcache_stats.netto_size;
+	stats.http_cache_size = http_cache_stats.netto_size;
+	stats.filter_cache_size = fcache_stats.netto_size;
 
-	stats.translation_cache_brutto_size = ToBE64(tcache_stats.brutto_size);
-	stats.http_cache_brutto_size = ToBE64(http_cache_stats.brutto_size);
-	stats.filter_cache_brutto_size = ToBE64(fcache_stats.brutto_size);
+	stats.translation_cache_brutto_size = tcache_stats.brutto_size;
+	stats.http_cache_brutto_size = http_cache_stats.brutto_size;
+	stats.filter_cache_brutto_size = fcache_stats.brutto_size;
 
 	const auto io_buffers_stats = fb_pool_get().GetStats();
-	stats.io_buffers_size = ToBE64(io_buffers_stats.netto_size);
-	stats.io_buffers_brutto_size = ToBE64(io_buffers_stats.brutto_size);
+	stats.io_buffers_size = io_buffers_stats.netto_size;
+	stats.io_buffers_brutto_size = io_buffers_stats.brutto_size;
 
 	return stats;
 }
