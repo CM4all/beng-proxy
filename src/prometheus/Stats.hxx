@@ -16,62 +16,62 @@ struct Stats {
     /**
      * Number of open incoming connections.
      */
-    uint32_t incoming_connections;
+    uint_least32_t incoming_connections;
 
     /**
      * Number of open outgoing connections.
      */
-    uint32_t outgoing_connections;
+    uint_least32_t outgoing_connections;
 
     /**
      * Number of child processes.
      */
-    uint32_t children;
+    uint_least32_t children;
 
     /**
      * Number of sessions.
      */
-    uint32_t sessions;
+    uint_least32_t sessions;
 
     /**
      * Total number of incoming HTTP requests that were received since
      * the server was started.
      */
-    uint64_t http_requests;
+    uint_least64_t http_requests;
 
     /**
      * The total allocated size of the translation cache in the
      * server's memory [bytes].
      */
-    uint64_t translation_cache_size;
+    uint_least64_t translation_cache_size;
 
     /**
      * The total allocated size of the HTTP cache in the server's
      * memory [bytes].
      */
-    uint64_t http_cache_size;
+    uint_least64_t http_cache_size;
 
     /**
      * The total allocated size of the filter cache in the server's
      * memory [bytes].
      */
-    uint64_t filter_cache_size;
+    uint_least64_t filter_cache_size;
 
-    uint64_t translation_cache_brutto_size;
-    uint64_t http_cache_brutto_size;
-    uint64_t filter_cache_brutto_size;
+    uint_least64_t translation_cache_brutto_size;
+    uint_least64_t http_cache_brutto_size;
+    uint_least64_t filter_cache_brutto_size;
 
     /**
      * Total size of I/O buffers.
      */
-    uint64_t io_buffers_size, io_buffers_brutto_size;
+    uint_least64_t io_buffers_size, io_buffers_brutto_size;
 
     /**
      * In- and outgoing HTTP traffic since
      * the server was started.
      */
-    uint64_t http_traffic_received;
-    uint64_t http_traffic_sent;
+    uint_least64_t http_traffic_received;
+    uint_least64_t http_traffic_sent;
 };
 
 void
