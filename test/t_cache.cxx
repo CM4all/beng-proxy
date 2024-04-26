@@ -14,13 +14,13 @@
 static void *
 match_to_ptr(int match)
 {
-	return (void*)(long)match;
+	return (void*)(intptr_t)match;
 }
 
 static int
 ptr_to_match(void *p)
 {
-	return (int)(long)p;
+	return (int)(intptr_t)p;
 }
 
 struct MyCacheItem final : PoolHolder, CacheItem {

@@ -201,7 +201,7 @@ static constexpr size_t RUBBER_ALIGN = 0x20;
 static inline void *
 align_page_size_ptr(void *p) noexcept
 {
-	return (void *)(long)AlignHugePageUp((size_t)p);
+	return (void *)(intptr_t)AlignHugePageUp((size_t)p);
 }
 
 static constexpr size_t
