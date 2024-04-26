@@ -31,18 +31,18 @@ Write(GrowingBuffer &buffer, std::string_view process,
 # TYPE beng_proxy_buffer_size gauge
 
 )"
-	       "beng_proxy_connections{{process=\"{}\",direction=\"in\"}} {}\n"
-	       "beng_proxy_connections{{process=\"{}\",direction=\"out\"}} {}\n"
-	       "beng_proxy_children{{process=\"{}\"}} {}\n"
-	       "beng_proxy_sessions{{process=\"{}\"}} {}\n"
-	       "beng_proxy_cache_size{{process=\"{}\",type=\"translation\",metric=\"netto\"}} {}\n"
-	       "beng_proxy_cache_size{{process=\"{}\",type=\"translation\",metric=\"brutto\"}} {}\n"
-	       "beng_proxy_cache_size{{process=\"{}\",type=\"http\",metric=\"netto\"}} {}\n"
-	       "beng_proxy_cache_size{{process=\"{}\",type=\"http\",metric=\"brutto\"}} {}\n"
-	       "beng_proxy_cache_size{{process=\"{}\",type=\"filter\",metric=\"netto\"}} {}\n"
-	       "beng_proxy_cache_size{{process=\"{}\",type=\"filter\",metric=\"brutto\"}} {}\n"
-	       "beng_proxy_buffer_size{{process=\"{}\",type=\"io\",metric=\"netto\"}} {}\n"
-	       "beng_proxy_buffer_size{{process=\"{}\",type=\"io\",metric=\"brutto\"}} {}\n",
+	       "beng_proxy_connections{{process={:?},direction=\"in\"}} {}\n"
+	       "beng_proxy_connections{{process={:?},direction=\"out\"}} {}\n"
+	       "beng_proxy_children{{process={:?}}} {}\n"
+	       "beng_proxy_sessions{{process={:?}}} {}\n"
+	       "beng_proxy_cache_size{{process={:?},type=\"translation\",metric=\"netto\"}} {}\n"
+	       "beng_proxy_cache_size{{process={:?},type=\"translation\",metric=\"brutto\"}} {}\n"
+	       "beng_proxy_cache_size{{process={:?},type=\"http\",metric=\"netto\"}} {}\n"
+	       "beng_proxy_cache_size{{process={:?},type=\"http\",metric=\"brutto\"}} {}\n"
+	       "beng_proxy_cache_size{{process={:?},type=\"filter\",metric=\"netto\"}} {}\n"
+	       "beng_proxy_cache_size{{process={:?},type=\"filter\",metric=\"brutto\"}} {}\n"
+	       "beng_proxy_buffer_size{{process={:?},type=\"io\",metric=\"netto\"}} {}\n"
+	       "beng_proxy_buffer_size{{process={:?},type=\"io\",metric=\"brutto\"}} {}\n",
 	       process, FromBE32(stats.incoming_connections),
 	       process, FromBE32(stats.outgoing_connections),
 	       process, FromBE32(stats.children),

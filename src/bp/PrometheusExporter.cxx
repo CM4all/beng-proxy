@@ -27,8 +27,8 @@ BpPrometheusExporter::HandleHttpRequest(IncomingHttpRequest &request,
 
 	if (instance.encoding_cache) {
 		const auto stats = instance.encoding_cache->GetStats();
-		buffer.Fmt("beng_proxy_cache_size{{process=\"{}\",type=\"encoding\",metric=\"netto\"}} {}\n"
-			   "beng_proxy_cache_size{{process=\"{}\",type=\"encoding\",metric=\"brutto\"}} {}\n",
+		buffer.Fmt("beng_proxy_cache_size{{process={:?},type=\"encoding\",metric=\"netto\"}} {}\n"
+			   "beng_proxy_cache_size{{process={:?},type=\"encoding\",metric=\"brutto\"}} {}\n",
 			   process, stats.netto_size,
 			   process, stats.brutto_size);
 	}
@@ -41,7 +41,7 @@ BpPrometheusExporter::HandleHttpRequest(IncomingHttpRequest &request,
 		     "# TYPE beng_proxy_was_metric counter\n"sv);
 
 	for (const auto &[name, value] : instance.was_metrics)
-		buffer.Fmt("beng_proxy_was_metric{{name=\"{}\"}} {:e}\n",
+		buffer.Fmt("beng_proxy_was_metric{{name={:?}}} {:e}\n",
 			   name, value);
 #endif
 

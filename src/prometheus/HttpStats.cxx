@@ -55,7 +55,7 @@ void
 Write(GrowingBuffer &buffer, std::string_view process, std::string_view listener,
       const HttpStats &stats) noexcept
 {
-	const auto labels = FmtBuffer<256>("process=\"{}\",listener=\"{}\",",
+	const auto labels = FmtBuffer<256>("process={:?},listener={:?},",
 					   process, listener);
 
 	Write(buffer, labels.c_str(), stats);
@@ -66,7 +66,7 @@ Write(GrowingBuffer &buffer, std::string_view process, std::string_view listener
       const TaggedHttpStats &tagged_stats) noexcept
 {
 	for (const auto &[tag, stats] : tagged_stats.per_tag) {
-		const auto labels = FmtBuffer<256>("process=\"{}\",listener=\"{}\",tag=\"{}\",",
+		const auto labels = FmtBuffer<256>("process={:?},listener={:?},tag={:?},",
 						   process, listener, tag);
 
 		Write(buffer, labels.c_str(), stats);
