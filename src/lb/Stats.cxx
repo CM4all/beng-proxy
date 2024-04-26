@@ -28,8 +28,9 @@ LbInstance::GetStats() const noexcept
 	stats.http_requests = http_stats.n_requests;
 	stats.http_traffic_received = http_stats.traffic_received;
 	stats.http_traffic_sent = http_stats.traffic_sent;
-	stats.translation_cache_size = goto_map.GetAllocatedTranslationCacheMemory();
-	stats.translation_cache_brutto_size = stats.translation_cache_size;
+	stats.translation_cache.allocator.netto_size =
+		stats.translation_cache.allocator.brutto_size =
+		goto_map.GetAllocatedTranslationCacheMemory();
 
 	const auto io_buffers_stats = fb_pool_get().GetStats();
 	stats.io_buffers_size = io_buffers_stats.netto_size;

@@ -4,6 +4,8 @@
 
 #pragma once
 
+#include "stats/CacheStats.hxx"
+
 #include <cstdint>
 #include <string_view>
 
@@ -45,23 +47,7 @@ struct Stats {
 	 */
 	uint_least64_t http_traffic_received, http_traffic_sent;
 
-	/**
-	 * The total allocated size of the translation cache in the
-	 * server's memory [bytes].
-	 */
-	uint_least64_t translation_cache_brutto_size, translation_cache_size;
-
-	/**
-	 * The total allocated size of the HTTP cache in the server's
-	 * memory [bytes].
-	 */
-	uint_least64_t http_cache_brutto_size, http_cache_size;
-
-	/**
-	 * The total allocated size of the filter cache in the server's
-	 * memory [bytes].
-	 */
-	uint_least64_t filter_cache_brutto_size, filter_cache_size;
+	CacheStats translation_cache, http_cache, filter_cache;
 
 	/**
 	 * Total size of I/O buffers.

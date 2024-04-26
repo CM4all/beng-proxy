@@ -46,12 +46,12 @@ beng_proxy_buffer_size{{process={:?},type="io",metric="brutto"}} {}
 	       process, stats.outgoing_connections,
 	       process, stats.children,
 	       process, stats.sessions,
-	       process, stats.translation_cache_size,
-	       process, stats.translation_cache_brutto_size,
-	       process, stats.http_cache_size,
-	       process, stats.http_cache_brutto_size,
-	       process, stats.filter_cache_size,
-	       process, stats.filter_cache_brutto_size,
+	       process, stats.translation_cache.allocator.netto_size,
+	       process, stats.translation_cache.allocator.brutto_size,
+	       process, stats.http_cache.allocator.netto_size,
+	       process, stats.http_cache.allocator.brutto_size,
+	       process, stats.filter_cache.allocator.netto_size,
+	       process, stats.filter_cache.allocator.brutto_size,
 	       process, stats.io_buffers_size,
 	       process, stats.io_buffers_brutto_size);
 }

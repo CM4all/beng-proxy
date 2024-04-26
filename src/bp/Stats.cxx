@@ -43,13 +43,9 @@ BpInstance::GetStats() const noexcept
 	stats.http_requests = http_stats.n_requests;
 	stats.http_traffic_received = http_stats.traffic_received;
 	stats.http_traffic_sent = http_stats.traffic_sent;
-	stats.translation_cache_size = tcache_stats.netto_size;
-	stats.http_cache_size = http_cache_stats.netto_size;
-	stats.filter_cache_size = fcache_stats.netto_size;
-
-	stats.translation_cache_brutto_size = tcache_stats.brutto_size;
-	stats.http_cache_brutto_size = http_cache_stats.brutto_size;
-	stats.filter_cache_brutto_size = fcache_stats.brutto_size;
+	stats.translation_cache.allocator = tcache_stats;
+	stats.http_cache.allocator = http_cache_stats;
+	stats.filter_cache.allocator = fcache_stats;
 
 	const auto io_buffers_stats = fb_pool_get().GetStats();
 	stats.io_buffers_size = io_buffers_stats.netto_size;
