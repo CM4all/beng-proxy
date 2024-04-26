@@ -5,6 +5,7 @@
 #pragma once
 
 #include "stats/CacheStats.hxx"
+#include "memory/AllocatorStats.hxx"
 
 #include <cstdint>
 #include <string_view>
@@ -49,10 +50,7 @@ struct Stats {
 
 	CacheStats translation_cache, http_cache, filter_cache;
 
-	/**
-	 * Total size of I/O buffers.
-	 */
-	uint_least64_t io_buffers_brutto_size, io_buffers_size;
+	AllocatorStats io_buffers;
 };
 
 void

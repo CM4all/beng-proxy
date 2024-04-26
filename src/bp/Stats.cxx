@@ -46,10 +46,7 @@ BpInstance::GetStats() const noexcept
 	stats.translation_cache.allocator = tcache_stats;
 	stats.http_cache.allocator = http_cache_stats;
 	stats.filter_cache.allocator = fcache_stats;
-
-	const auto io_buffers_stats = fb_pool_get().GetStats();
-	stats.io_buffers_size = io_buffers_stats.netto_size;
-	stats.io_buffers_brutto_size = io_buffers_stats.brutto_size;
+	stats.io_buffers = fb_pool_get().GetStats();
 
 	return stats;
 }
