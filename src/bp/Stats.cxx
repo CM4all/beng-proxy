@@ -56,7 +56,5 @@ BpInstance::GetStats() const noexcept
 	stats.io_buffers_size = ToBE64(io_buffers_stats.netto_size);
 	stats.io_buffers_brutto_size = ToBE64(io_buffers_stats.brutto_size);
 
-	/* TODO: add stats from all worker processes;  */
-
 	return stats;
 }
