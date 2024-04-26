@@ -8,8 +8,6 @@
 #include "system/PageAllocator.hxx"
 #include "system/VmaName.hxx"
 
-#include <assert.h>
-#include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -27,18 +25,18 @@ struct RubberObject {
 	/**
 	 * The offset of this object within the memory map.
 	 */
-	size_t offset;
+	std::size_t offset;
 
 	/**
 	 * The size of this object.
 	 */
-	size_t size;
+	std::size_t size;
 
 #ifndef NDEBUG
 	bool allocated;
 #endif
 
-	void Init(size_t _offset, size_t _size) noexcept {
+	void Init(std::size_t _offset, std::size_t _size) noexcept {
 		offset = _offset;
 		size = _size;
 #ifndef NDEBUG
@@ -46,13 +44,13 @@ struct RubberObject {
 #endif
 	}
 
-	void InitHead(size_t _size) noexcept {
+	void InitHead(std::size_t _size) noexcept {
 		next = previous = 0;
 		offset = 0;
 		size = _size;
 	}
 
-	constexpr size_t GetEndOffset() const noexcept {
+	constexpr std::size_t GetEndOffset() const noexcept {
 		return offset + size;
 	}
 };
@@ -104,7 +102,7 @@ struct RubberTable {
 	 * given number of entries.
 	 */
 	[[gnu::const]]
-	static size_t RequiredSize(unsigned n) noexcept {
+	static std::size_t RequiredSize(unsigned n) noexcept {
 		assert(n > 0);
 
 		const RubberTable *dummy = nullptr;
@@ -116,7 +114,7 @@ struct RubberTable {
 	 * struct for the given size [in bytes].
 	 */
 	[[gnu::const]]
-	static unsigned Capacity(size_t size) noexcept {
+	static unsigned Capacity(std::size_t size) noexcept {
 		const RubberTable *dummy = nullptr;
 		assert(size >= sizeof(*dummy));
 
@@ -128,14 +126,14 @@ struct RubberTable {
 	 * this is the offset of the first allocation.
 	 */
 	[[gnu::pure]]
-	size_t GetSize() const noexcept {
+	std::size_t GetSize() const noexcept {
 		assert(entries[0].offset == 0);
 
 		return entries[0].size;
 	}
 
 	[[gnu::pure]]
-	size_t GetBruttoSize() const noexcept {
+	std::size_t GetBruttoSize() const noexcept {
 		return GetTail().GetEndOffset() - GetSize();
 	}
 
@@ -160,7 +158,7 @@ struct RubberTable {
 	}
 
 	[[gnu::pure]]
-	size_t GetTailOffset() const noexcept {
+	std::size_t GetTailOffset() const noexcept {
 		const auto &tail = GetTail();
 		assert(tail.next == 0);
 
@@ -177,35 +175,35 @@ struct RubberTable {
 	 */
 	void Link(unsigned id, unsigned previous_id, unsigned next_id) noexcept;
 
-	unsigned Add(size_t offset, size_t size) noexcept;
+	unsigned Add(std::size_t offset, std::size_t size) noexcept;
 
 	/**
 	 * Remove the object from the linked list.
 	 */
 	void Unlink(unsigned id) noexcept;
 
-	size_t Remove(unsigned id) noexcept;
+	std::size_t Remove(unsigned id) noexcept;
 
 	[[gnu::pure]]
-	size_t GetSizeOf(unsigned id) const noexcept;
+	std::size_t GetSizeOf(unsigned id) const noexcept;
 
 	[[gnu::pure]]
-	size_t GetOffsetOf(unsigned id) const noexcept;
+	std::size_t GetOffsetOf(unsigned id) const noexcept;
 
-	size_t Shrink(unsigned id, size_t new_size) noexcept;
+	std::size_t Shrink(unsigned id, std::size_t new_size) noexcept;
 };
 
-static constexpr size_t RUBBER_ALIGN = 0x20;
+static constexpr std::size_t RUBBER_ALIGN = 0x20;
 
 [[gnu::const]]
 static inline void *
 align_page_size_ptr(void *p) noexcept
 {
-	return (void *)(intptr_t)AlignHugePageUp((size_t)p);
+	return (void *)(intptr_t)AlignHugePageUp((std::size_t)p);
 }
 
-static constexpr size_t
-align_size(size_t size) noexcept
+static constexpr std::size_t
+align_size(std::size_t size) noexcept
 {
 	return ((size - 1) | (RUBBER_ALIGN - 1)) + 1;
 }
@@ -226,7 +224,7 @@ RubberTable::RubberTable(unsigned _max_entries) noexcept
 	   starts at a "huge page" boundary */
 	uint8_t *const table_end = (uint8_t *)
 		align_page_size_ptr(table_begin + RequiredSize(_max_entries));
-	const size_t table_size = table_end - table_begin;
+	const std::size_t table_size = table_end - table_begin;
 
 	entries[0].InitHead(table_size);
 
@@ -237,7 +235,7 @@ RubberTable::RubberTable(unsigned _max_entries) noexcept
 #endif
 }
 
-constexpr size_t Rubber::HOLE_THRESHOLDS[];
+constexpr std::size_t Rubber::HOLE_THRESHOLDS[];
 
 inline
 RubberTable::~RubberTable() noexcept
@@ -301,7 +299,7 @@ RubberTable::Link(unsigned id, unsigned previous_id, unsigned next_id) noexcept
 }
 
 unsigned
-RubberTable::Add(size_t offset, size_t size) noexcept
+RubberTable::Add(std::size_t offset, std::size_t size) noexcept
 {
 	unsigned id = AddId();
 	if (id == 0)
@@ -319,7 +317,7 @@ RubberTable::Add(size_t offset, size_t size) noexcept
 	return id;
 }
 
-size_t
+std::size_t
 RubberTable::GetSizeOf(unsigned id) const noexcept
 {
 	assert(entries[0].offset == 0);
@@ -334,8 +332,8 @@ RubberTable::GetSizeOf(unsigned id) const noexcept
 /**
  * @return the amount of memory that was freed
  */
-size_t
-RubberTable::Shrink(unsigned id, size_t new_size) noexcept
+std::size_t
+RubberTable::Shrink(unsigned id, std::size_t new_size) noexcept
 {
 	assert(entries[0].offset == 0);
 	assert(entries[0].size >= sizeof(*this));
@@ -344,7 +342,7 @@ RubberTable::Shrink(unsigned id, size_t new_size) noexcept
 	assert(entries[id].allocated);
 	assert(entries[id].size >= new_size);
 
-	size_t delta = entries[id].size - new_size;
+	std::size_t delta = entries[id].size - new_size;
 	entries[id].size = new_size;
 
 	return delta;
@@ -376,7 +374,7 @@ RubberTable::Unlink(unsigned id) noexcept
 /**
  * @return the size of the allocation
  */
-size_t
+std::size_t
 RubberTable::Remove(unsigned id) noexcept
 {
 	assert(GetSize() >= sizeof(*this));
@@ -400,7 +398,7 @@ RubberTable::Remove(unsigned id) noexcept
 	return o.size;
 }
 
-size_t
+std::size_t
 RubberTable::GetOffsetOf(unsigned id) const noexcept
 {
 	assert(GetSize() >= sizeof(*this));
@@ -425,10 +423,10 @@ RubberTable::GetOffsetOf(unsigned id) const noexcept
 
 #ifndef NDEBUG
 
-inline size_t
+inline std::size_t
 Rubber::GetTotalHoleSize(const HoleList &holes) noexcept
 {
-	size_t result = 0;
+	std::size_t result = 0;
 
 	for (const auto &hole : holes) {
 		assert(hole.size > 0);
@@ -440,10 +438,10 @@ Rubber::GetTotalHoleSize(const HoleList &holes) noexcept
 }
 
 [[gnu::pure]]
-size_t
+std::size_t
 Rubber::GetTotalHoleSize() const noexcept
 {
-	size_t result = 0;
+	std::size_t result = 0;
 
 	for (const auto &i : holes)
 		result += GetTotalHoleSize(i);
@@ -454,7 +452,7 @@ Rubber::GetTotalHoleSize() const noexcept
 #endif
 
 inline Rubber::Hole *
-Rubber::FindHole(Rubber::HoleList &holes, size_t size) noexcept
+Rubber::FindHole(Rubber::HoleList &holes, std::size_t size) noexcept
 {
 	assert(size >= RUBBER_ALIGN);
 
@@ -485,7 +483,7 @@ Rubber::FindHole(Rubber::HoleList &holes, size_t size) noexcept
 }
 
 Rubber::Hole *
-Rubber::FindHole(size_t size) noexcept
+Rubber::FindHole(std::size_t size) noexcept
 {
 	unsigned bucket = LookupHoleThreshold(size);
 
@@ -511,7 +509,7 @@ Rubber::AddToHoleList(Hole &hole) noexcept
 }
 
 void
-Rubber::AddHole(size_t offset, size_t size,
+Rubber::AddHole(std::size_t offset, std::size_t size,
 		unsigned previous_id, unsigned next_id) noexcept
 {
 	auto *hole = (Hole *)WriteAt(offset);
@@ -523,7 +521,7 @@ Rubber::AddHole(size_t offset, size_t size,
 }
 
 void
-Rubber::AddHoleAfter(unsigned reference_id, size_t offset, size_t size) noexcept
+Rubber::AddHoleAfter(unsigned reference_id, std::size_t offset, std::size_t size) noexcept
 {
 	const auto &o = table->entries[reference_id];
 	assert(o.allocated);
@@ -535,7 +533,7 @@ Rubber::AddHoleAfter(unsigned reference_id, size_t offset, size_t size) noexcept
 	assert(next.offset > offset);
 	assert(next.offset >= offset + size);
 
-	const size_t reference_end = o.GetEndOffset();
+	const std::size_t reference_end = o.GetEndOffset();
 
 	assert(offset >= reference_end);
 
@@ -583,7 +581,7 @@ Rubber::AddHoleAfter(unsigned reference_id, size_t offset, size_t size) noexcept
  *
  */
 
-Rubber::Rubber(size_t _max_size, const char *vma_name)
+Rubber::Rubber(std::size_t _max_size, const char *vma_name)
 	:table(HUGE_PAGE_SIZE + AlignHugePageUp(_max_size),
 	       (HUGE_PAGE_SIZE + AlignHugePageUp(_max_size)) / 1024u)
 {
@@ -592,7 +590,7 @@ Rubber::Rubber(size_t _max_size, const char *vma_name)
 	if (vma_name != nullptr)
 		SetVmaName(table.get(), table.size(), vma_name);
 
-	const size_t table_size = table->GetSize();
+	const std::size_t table_size = table->GetSize();
 	EnableHugePages(WriteAt(table_size),
 			AlignHugePageDown(table.size() - table_size));
 }
@@ -610,7 +608,7 @@ Rubber::ForkCow(bool inherit) noexcept
 }
 
 void
-Rubber::UseHole(Hole &hole, unsigned id, size_t size) noexcept
+Rubber::UseHole(Hole &hole, unsigned id, std::size_t size) noexcept
 {
 	const unsigned previous_id = hole.previous_id;
 	const unsigned next_id = hole.next_id;
@@ -634,7 +632,7 @@ Rubber::UseHole(Hole &hole, unsigned id, size_t size) noexcept
 }
 
 inline unsigned
-Rubber::AddInHole(Hole &hole, size_t size) noexcept
+Rubber::AddInHole(Hole &hole, std::size_t size) noexcept
 {
 	unsigned id = table->AddId();
 	if (id == 0)
@@ -651,7 +649,7 @@ Rubber::AddInHole(Hole &hole, size_t size) noexcept
 }
 
 unsigned
-Rubber::AddInHole(size_t size) noexcept
+Rubber::AddInHole(std::size_t size) noexcept
 {
 	auto *hole = FindHole(size);
 	return hole != nullptr
@@ -662,7 +660,7 @@ Rubber::AddInHole(size_t size) noexcept
 }
 
 inline bool
-Rubber::MoveLast(size_t max_object_size) noexcept
+Rubber::MoveLast(std::size_t max_object_size) noexcept
 {
 	const auto id = table->entries[0].previous;
 	const auto t = table.get();
@@ -710,7 +708,7 @@ Rubber::MoveLast(size_t max_object_size) noexcept
 }
 
 unsigned
-Rubber::Add(size_t size) noexcept
+Rubber::Add(std::size_t size) noexcept
 {
 	assert(netto_size + GetTotalHoleSize() == GetBruttoSize());
 	assert(size > 0);
@@ -733,7 +731,7 @@ Rubber::Add(size_t size) noexcept
 	else
 		while (MoveLast(size - 1)) {}
 
-	size_t offset = table->GetTailOffset();
+	std::size_t offset = table->GetTailOffset();
 	if (offset + size > table.size()) {
 		/* compress, then try again */
 		Compress();
@@ -754,7 +752,7 @@ Rubber::Add(size_t size) noexcept
 	return id;
 }
 
-size_t
+std::size_t
 Rubber::GetSizeOf(unsigned id) const noexcept
 {
 	assert(id > 0);
@@ -765,7 +763,7 @@ Rubber::GetSizeOf(unsigned id) const noexcept
 void *
 Rubber::Write(unsigned id) noexcept
 {
-	const size_t offset = table->GetOffsetOf(id);
+	const std::size_t offset = table->GetOffsetOf(id);
 	assert(offset < table.size());
 	return WriteAt(offset);
 }
@@ -773,13 +771,13 @@ Rubber::Write(unsigned id) noexcept
 const void *
 Rubber::Read(unsigned id) const noexcept
 {
-	const size_t offset = table->GetOffsetOf(id);
+	const std::size_t offset = table->GetOffsetOf(id);
 	assert(offset < table.size());
 	return ReadAt(offset);
 }
 
 void
-Rubber::Shrink(unsigned id, size_t new_size) noexcept
+Rubber::Shrink(unsigned id, std::size_t new_size) noexcept
 {
 	assert(netto_size + GetTotalHoleSize() == GetBruttoSize());
 	assert(new_size > 0);
@@ -793,10 +791,10 @@ Rubber::Shrink(unsigned id, size_t new_size) noexcept
 	if (new_size == o->size)
 		return;
 
-	const size_t hole_offset = o->offset + new_size;
-	const size_t hole_size = o->size - new_size;
+	const std::size_t hole_offset = o->offset + new_size;
+	const std::size_t hole_size = o->size - new_size;
 
-	size_t delta = table->Shrink(id, new_size);
+	std::size_t delta = table->Shrink(id, new_size);
 	netto_size -= delta;
 
 	if (o->next != 0)
@@ -852,7 +850,7 @@ Rubber::Remove(unsigned id) noexcept
 	const unsigned previous_id = o.previous;
 	const unsigned next_id = o.next;
 
-	size_t size = table->Remove(id);
+	std::size_t size = table->Remove(id);
 	assert(netto_size >= size);
 
 	netto_size -= size;
@@ -860,20 +858,20 @@ Rubber::Remove(unsigned id) noexcept
 	ReplaceWithHole(o, previous_id, next_id);
 }
 
-size_t
+std::size_t
 Rubber::GetMaxSize() const noexcept
 {
 	return table.size() - table->GetSize();
 }
 
-size_t
+std::size_t
 Rubber::GetBruttoSize() const noexcept
 {
 	return table->GetBruttoSize();
 }
 
 inline void
-Rubber::MoveData(RubberObject &o, size_t new_offset) noexcept
+Rubber::MoveData(RubberObject &o, std::size_t new_offset) noexcept
 {
 	assert(new_offset <= o.offset);
 	assert(o.size > 0);
@@ -915,7 +913,7 @@ Rubber::Compress() noexcept
 
 	RubberObject *o = table->GetHead();
 	assert(o->offset == 0);
-	size_t offset = o->size;
+	std::size_t offset = o->size;
 
 	while ((o = table->GetNext(o)) != nullptr) {
 		MoveData(*o, offset);
@@ -927,7 +925,7 @@ Rubber::Compress() noexcept
 
 	/* tell the kernel that we won't need the data after our last
 	   allocation */
-	const size_t allocated = AlignHugePageUp(offset);
+	const std::size_t allocated = AlignHugePageUp(offset);
 	if (allocated < table.size())
 		DiscardPages(WriteAt(allocated), table.size() - allocated);
 }

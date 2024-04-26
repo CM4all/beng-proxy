@@ -9,10 +9,9 @@
 
 #include <array>
 #include <algorithm>
+#include <cassert>
 #include <cstdint>
-
-#include <assert.h>
-#include <stddef.h>
+#include <cstddef>
 
 struct AllocatorStats;
 struct RubberObject;
@@ -27,7 +26,7 @@ class Rubber {
 	/**
 	 * The sum of all allocation sizes.
 	 */
-	size_t netto_size = 0;
+	std::size_t netto_size = 0;
 
 	/**
 	 * The table managing the allocations in the memory map.  At the
@@ -39,24 +38,24 @@ class Rubber {
 	 * The threshold for each hole list.  The goal is to reduce the cost
 	 * of searching a hole that fits.
 	 */
-	static constexpr size_t HOLE_THRESHOLDS[] = {
+	static constexpr std::size_t HOLE_THRESHOLDS[] = {
 		1024 * 1024, 64 * 1024, 32 * 1024, 16 * 1024, 8192, 4096, 2048, 1024, 64, 0
 	};
 
 	[[gnu::const]]
-	static unsigned LookupHoleThreshold(size_t size) noexcept {
+	static unsigned LookupHoleThreshold(std::size_t size) noexcept {
 		for (unsigned i = 0;; ++i)
 			if (size >= HOLE_THRESHOLDS[i])
 				return i;
 	}
 
-	static constexpr size_t N_HOLE_THRESHOLDS = std::size(HOLE_THRESHOLDS);
+	static constexpr std::size_t N_HOLE_THRESHOLDS = std::size(HOLE_THRESHOLDS);
 
 	struct Hole final : IntrusiveListHook<IntrusiveHookMode::NORMAL> {
 		/**
 		 * The size of this hole (including the size of this struct).
 		 */
-		size_t size;
+		std::size_t size;
 
 		/**
 		 * The allocated objects before and after this hole.
@@ -77,7 +76,7 @@ public:
 	/**
 	 * Throws std::bad_alloc on error.
 	 */
-	explicit Rubber(size_t _max_size, const char *vma_name);
+	explicit Rubber(std::size_t _max_size, const char *vma_name);
 
 	~Rubber() noexcept;
 
@@ -91,12 +90,12 @@ public:
 	 * Returns the maximum total size of all allocations.
 	 */
 	[[gnu::pure]]
-	size_t GetMaxSize() const noexcept;
+	std::size_t GetMaxSize() const noexcept;
 
 	/**
 	 * Returns the total size of all allocations.
 	 */
-	size_t GetNettoSize() const noexcept {
+	std::size_t GetNettoSize() const noexcept {
 		return netto_size;
 	}
 
@@ -105,7 +104,7 @@ public:
 	 * allocation table.
 	 */
 	[[gnu::pure]]
-	size_t GetBruttoSize() const noexcept;
+	std::size_t GetBruttoSize() const noexcept;
 
 	[[gnu::pure]]
 	AllocatorStats GetStats() const noexcept;
@@ -119,7 +118,7 @@ public:
 	 * @param size the size, must be positive
 	 * @return the object id, or 0 on error
 	 */
-	unsigned Add(size_t size) noexcept;
+	unsigned Add(std::size_t size) noexcept;
 	void Remove(unsigned id) noexcept;
 
 	/**
@@ -130,7 +129,7 @@ public:
 	 *
 	 * @param new_size the new size, must be positive
 	 */
-	void Shrink(unsigned id, size_t new_size) noexcept;
+	void Shrink(unsigned id, std::size_t new_size) noexcept;
 
 	/**
 	 * Returns the size of an allocation.  Due to padding, the
@@ -138,7 +137,7 @@ public:
 	 * passed to Add().
 	 */
 	[[gnu::pure]]
-	size_t GetSizeOf(unsigned id) const noexcept;
+	std::size_t GetSizeOf(unsigned id) const noexcept;
 
 	/**
 	 * Return a writable pointer to the object.
@@ -154,55 +153,55 @@ public:
 
 private:
 	[[gnu::pure]]
-	void *WriteAt(size_t offset) noexcept {
+	void *WriteAt(std::size_t offset) noexcept {
 		assert(offset <= table.size());
 
 		return (uint8_t *)table.get() + offset;
 	}
 
 	[[gnu::pure]]
-	const void *ReadAt(size_t offset) const noexcept {
+	const void *ReadAt(std::size_t offset) const noexcept {
 		assert(offset <= table.size());
 
 		return (const uint8_t *)table.get() + offset;
 	}
 
-	size_t OffsetOf(const void *p) const noexcept {
+	std::size_t OffsetOf(const void *p) const noexcept {
 		return (const uint8_t *)p - (const uint8_t *)table.get();
 	}
 
-	size_t OffsetOf(const Hole &hole) const noexcept {
+	std::size_t OffsetOf(const Hole &hole) const noexcept {
 		return OffsetOf(&hole);
 	}
 
 	[[gnu::pure]]
-	static size_t GetTotalHoleSize(const HoleList &holes) noexcept;
+	static std::size_t GetTotalHoleSize(const HoleList &holes) noexcept;
 
 #ifndef NDEBUG
-	size_t GetTotalHoleSize() const noexcept;
+	std::size_t GetTotalHoleSize() const noexcept;
 #endif
 
 	[[gnu::pure]]
-	static Hole *FindHole(HoleList &holes, size_t size) noexcept;
+	static Hole *FindHole(HoleList &holes, std::size_t size) noexcept;
 
 	[[gnu::pure]]
-	Hole *FindHole(size_t size) noexcept;
+	Hole *FindHole(std::size_t size) noexcept;
 
 	void AddToHoleList(Hole &hole) noexcept;
 
-	void AddHole(size_t offset, size_t size,
+	void AddHole(std::size_t offset, std::size_t size,
 		     unsigned previous_id, unsigned next_id) noexcept;
 	void AddHoleAfter(unsigned reference_id,
-			  size_t offset, size_t size) noexcept;
+			  std::size_t offset, std::size_t size) noexcept;
 
 	/**
 	 * Replace the hole with the specified object.  If there is unused
 	 * space after the object, create a new #Hole instance
 	 * there.
 	 */
-	void UseHole(Hole &hole, unsigned id, size_t size) noexcept;
+	void UseHole(Hole &hole, unsigned id, std::size_t size) noexcept;
 
-	unsigned AddInHole(Hole &hole, size_t size) noexcept;
+	unsigned AddInHole(Hole &hole, std::size_t size) noexcept;
 
 	/**
 	 * Try to find a hole between two objects, and insert a new object
@@ -210,7 +209,7 @@ private:
 	 *
 	 * @return the object id, or 0 on error
 	 */
-	unsigned AddInHole(size_t size) noexcept;
+	unsigned AddInHole(std::size_t size) noexcept;
 
 	/**
 	 * Attempt to move the last allocation into a hole.  This is some kind
@@ -219,7 +218,7 @@ private:
 	 *
 	 * @param max_object_size move it only if it's not larger than this size
 	 */
-	bool MoveLast(size_t max_object_size) noexcept;
+	bool MoveLast(std::size_t max_object_size) noexcept;
 
 	[[gnu::pure]]
 	Hole *FindHoleBetween(RubberObject &a, RubberObject &b) noexcept;
@@ -245,9 +244,9 @@ private:
 	void ReplaceWithHole(RubberObject &o,
 			     unsigned previous_id, unsigned next_id) noexcept;
 
-	void MoveData(RubberObject &o, size_t new_offset) noexcept;
+	void MoveData(RubberObject &o, std::size_t new_offset) noexcept;
 
-	HoleList &GetHoleList(size_t size) noexcept {
+	HoleList &GetHoleList(std::size_t size) noexcept {
 		return holes[LookupHoleThreshold(size)];
 	}
 
@@ -304,7 +303,7 @@ public:
 		return id;
 	}
 
-	void Shrink(size_t new_size) noexcept {
+	void Shrink(std::size_t new_size) noexcept {
 		assert(*this);
 
 		rubber->Shrink(id, new_size);
