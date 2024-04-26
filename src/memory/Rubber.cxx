@@ -7,6 +7,7 @@
 #include "system/HugePage.hxx"
 #include "system/PageAllocator.hxx"
 #include "system/VmaName.hxx"
+#include "util/RoundPowerOfTwo.hxx"
 
 #include <stdlib.h>
 #include <string.h>
@@ -205,7 +206,7 @@ align_page_size_ptr(void *p) noexcept
 static constexpr std::size_t
 align_size(std::size_t size) noexcept
 {
-	return ((size - 1) | (RUBBER_ALIGN - 1)) + 1;
+	return RoundUpToPowerOfTwo(size, RUBBER_ALIGN);
 }
 
 /*
