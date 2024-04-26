@@ -3,6 +3,7 @@
 // author: Max Kellermann <mk@cm4all.com>
 
 #include "Instance.hxx"
+#include "prometheus/Stats.hxx"
 #include "fs/Stock.hxx"
 #include "stock/Stats.hxx"
 #include "memory/fb_pool.hxx"
@@ -11,10 +12,10 @@
 #include "net/control/Protocol.hxx"
 #include "util/ByteOrder.hxx"
 
-BengControl::Stats
+Prometheus::Stats
 LbInstance::GetStats() const noexcept
 {
-	BengControl::Stats stats;
+	Prometheus::Stats stats;
 
 	StockStats tcp_stock_stats{};
 

@@ -68,6 +68,7 @@ class BpListener;
 struct BpConnection;
 namespace NgHttp2 { class Stock; }
 namespace Avahi { class Client; class Publisher; }
+namespace Prometheus { struct Stats; }
 
 struct BpInstance final : PInstance, BengControl::Handler, SpawnServerClientHandler,
 #ifdef HAVE_LIBWAS
@@ -227,7 +228,7 @@ struct BpInstance final : PInstance, BengControl::Handler, SpawnServerClientHand
 	void AddListener(const BpListenerConfig &c);
 
 	[[gnu::pure]]
-	BengControl::Stats GetStats() const noexcept;
+	Prometheus::Stats GetStats() const noexcept;
 
 	/* virtual methods from class BengControl::Handler */
 	void OnControlPacket(BengControl::Server &control_server,

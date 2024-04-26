@@ -37,6 +37,7 @@ class LbListener;
 class CertCache;
 namespace BengControl { struct Stats; }
 namespace Avahi { class Client; class Publisher; struct Service; }
+namespace Prometheus { struct Stats; }
 
 struct LbInstance final : PInstance, Avahi::ErrorHandler {
 	const LbConfig &config;
@@ -113,7 +114,7 @@ struct LbInstance final : PInstance, Avahi::ErrorHandler {
 	void DeinitAllControls() noexcept;
 
 	[[gnu::pure]]
-	BengControl::Stats GetStats() const noexcept;
+	Prometheus::Stats GetStats() const noexcept;
 
 	void ReloadState() noexcept;
 
