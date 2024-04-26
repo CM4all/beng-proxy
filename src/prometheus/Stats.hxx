@@ -40,38 +40,33 @@ struct Stats {
 	uint_least64_t http_requests;
 
 	/**
+	 * In- and outgoing HTTP traffic since
+	 * the server was started.
+	 */
+	uint_least64_t http_traffic_received, http_traffic_sent;
+
+	/**
 	 * The total allocated size of the translation cache in the
 	 * server's memory [bytes].
 	 */
-	uint_least64_t translation_cache_size;
+	uint_least64_t translation_cache_brutto_size, translation_cache_size;
 
 	/**
 	 * The total allocated size of the HTTP cache in the server's
 	 * memory [bytes].
 	 */
-	uint_least64_t http_cache_size;
+	uint_least64_t http_cache_brutto_size, http_cache_size;
 
 	/**
 	 * The total allocated size of the filter cache in the server's
 	 * memory [bytes].
 	 */
-	uint_least64_t filter_cache_size;
-
-	uint_least64_t translation_cache_brutto_size;
-	uint_least64_t http_cache_brutto_size;
-	uint_least64_t filter_cache_brutto_size;
+	uint_least64_t filter_cache_brutto_size, filter_cache_size;
 
 	/**
 	 * Total size of I/O buffers.
 	 */
-	uint_least64_t io_buffers_size, io_buffers_brutto_size;
-
-	/**
-	 * In- and outgoing HTTP traffic since
-	 * the server was started.
-	 */
-	uint_least64_t http_traffic_received;
-	uint_least64_t http_traffic_sent;
+	uint_least64_t io_buffers_brutto_size, io_buffers_size;
 };
 
 void
