@@ -1014,6 +1014,7 @@ tcache_store(TranslateCacheRequest &tcr, const TranslateResponse &response)
 	if (response.site != nullptr)
 		tcr.tcache->per_site.insert(*item);
 
+	++tcr.tcache->stats.stores;
 	TranslateCacheMatchContext match_ctx{tcr.request, tcr.find_base};
 	tcr.tcache->cache.PutMatch(key, *item, tcache_item_match, &match_ctx);
 	return item;
@@ -1283,11 +1284,14 @@ TranslationCache::SendRequest(AllocatorPtr alloc,
 	TranslateCacheItem *item = cacheable
 		? tcache_lookup(alloc, *cache, request, key)
 		: nullptr;
-	if (item != nullptr)
+	if (item != nullptr) {
+		++cache->stats.hits;
 		tcache_hit(alloc, request.uri, request.host, request.user, key,
 			   *item, handler);
-	else
+	} else {
+		++cache->stats.misses;
 		tcache_miss(alloc, *cache, request, key, cacheable,
 			    parent_stopwatch,
 			    handler, cancel_ptr);
+	}
 }

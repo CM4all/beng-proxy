@@ -162,12 +162,12 @@ LbTranslationCache::GetStats() const noexcept
 		size += key.length() + item.GetAllocatedMemory();
 	});
 
-	return {
-		.allocator = {
-			.brutto_size = size,
-			.netto_size = size,
-		},
+	stats.allocator = {
+		.brutto_size = size,
+		.netto_size = size,
 	};
+
+	return stats;
 }
 
 void
@@ -247,11 +247,13 @@ LbTranslationCache::Get(const IncomingHttpRequest &request,
 		const LbTranslationCache::Item *item = cache.Get(std::string_view{key});
 		if (item != nullptr) {
 			logger(4, "hit '", key, "'");
+			++stats.hits;
 			return item;
 		}
 	}
 
 	logger(5, "miss");
+	++stats.misses;
 	return nullptr;
 }
 
@@ -277,6 +279,7 @@ LbTranslationCache::Put(const IncomingHttpRequest &request,
 	const char *key = ki.FullKey();
 
 	logger(4, "store '", key, "'");
+	++stats.stores;
 
 	auto &item = cache.PutOrReplace(std::string_view{key}, response);
 	if (!item.site.empty())

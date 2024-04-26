@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include "stats/CacheStats.hxx"
 #include "io/Logger.hxx"
 #include "util/StaticCache.hxx"
 #include "util/IntrusiveList.hxx"
@@ -91,6 +92,8 @@ private:
 	Cache cache;
 
 	Vary seen_vary;
+
+	mutable CacheStats stats;
 
 public:
 	[[nodiscard]]

@@ -270,6 +270,8 @@ class HttpCache {
 	IntrusiveList<HttpCacheRequest,
 		      IntrusiveListMemberHookTraits<&HttpCacheRequest::siblings>> requests;
 
+	mutable CacheStats stats{};
+
 	const bool obey_no_cache;
 
 public:
@@ -296,9 +298,8 @@ public:
 	}
 
 	CacheStats GetStats() const noexcept {
-		return {
-			.allocator = heap.GetStats(),
-		};
+		stats.allocator = heap.GetStats();
+		return stats;
 	}
 
 	void Flush() noexcept {
@@ -333,6 +334,7 @@ public:
 		 const StringMap &response_headers,
 		 RubberAllocation &&a, size_t size) noexcept {
 		LogConcat(4, "HttpCache", "put ", url);
+		++stats.stores;
 
 		heap.Put(url, tag, info, request_headers,
 			 status, response_headers,
@@ -844,6 +846,8 @@ HttpCache::Miss(struct pool &caller_pool,
 		HttpResponseHandler &handler,
 		CancellablePointer &cancel_ptr) noexcept
 {
+	++stats.misses;
+
 	if (info.only_if_cached) {
 		/* see RFC 9111 5.2.1.7 */
 		handler.InvokeResponse(HttpStatus::GATEWAY_TIMEOUT,
@@ -1067,6 +1071,8 @@ HttpCache::Found(const HttpCacheRequestInfo &info,
 		 HttpResponseHandler &handler,
 		 CancellablePointer &cancel_ptr) noexcept
 {
+	++stats.hits;
+
 	if (!info.no_cache && !CheckCacheRequest(caller_pool, info, document, handler))
 		return;
 
@@ -1176,6 +1182,7 @@ HttpCache::Start(struct pool &caller_pool,
 		    handler, cancel_ptr);
 	} else if (params.auto_flush_cache && IsModifyingMethod(method)) {
 		LogConcat(4, "HttpCache", "auto_flush? ", key);
+		++stats.skips;
 
 		/* TODO merge IsModifyingMethod() and
 		   http_cache_request_invalidate()? */
@@ -1195,6 +1202,7 @@ HttpCache::Start(struct pool &caller_pool,
 			RemoveURL(key, headers);
 
 		LogConcat(4, "HttpCache", "ignore ", key);
+		++stats.skips;
 
 		resource_loader.SendRequest(caller_pool, parent_stopwatch,
 					    params,

@@ -29,6 +29,17 @@ Write(GrowingBuffer &buffer,
       const CacheStats &stats) noexcept
 {
 	Write(buffer, "beng_proxy_cache_size"sv, process, type, stats.allocator);
+
+	buffer.Fmt(R"(
+beng_proxy_cache_skips{{process={:?},type={:?}}} {}
+beng_proxy_cache_misses{{process={:?},type={:?}}} {}
+beng_proxy_cache_stores{{process={:?},type={:?}}} {}
+beng_proxy_cache_hits{{process={:?},type={:?}}} {}
+)",
+		   process, type, stats.skips,
+		   process, type, stats.misses,
+		   process, type, stats.stores,
+		   process, type, stats.hits);
 }
 
 void
@@ -48,6 +59,18 @@ Write(GrowingBuffer &buffer, std::string_view process,
 
 # HELP beng_proxy_cache_size Size of the cache in bytes
 # TYPE beng_proxy_cache_size gauge
+
+# HELP beng_proxy_cache_skips Number of times the cache was skipped
+# TYPE beng_proxy_cache_skips counter
+
+# HELP beng_proxy_cache_misses Number of cache misses
+# TYPE beng_proxy_cache_misses counter
+
+# HELP beng_proxy_cache_stores Number of cache stores
+# TYPE beng_proxy_cache_stores counter
+
+# HELP beng_proxy_cache_hits Number of cache hits
+# TYPE beng_proxy_cache_hits counter
 
 # HELP beng_proxy_buffer_size Size of buffers in bytes
 # TYPE beng_proxy_buffer_size gauge

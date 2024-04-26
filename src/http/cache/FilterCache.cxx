@@ -252,6 +252,8 @@ class FilterCache final : LeakDetector {
 	 */
 	FilterCacheRequest::List requests;
 
+	mutable CacheStats stats{};
+
 public:
 	FilterCache(struct pool &_pool, size_t max_size,
 		    EventLoop &_event_loop, ResourceLoader &_resource_loader);
@@ -268,9 +270,8 @@ public:
 	}
 
 	CacheStats GetStats() const noexcept {
-		return {
-			.allocator = slice_pool.GetStats() + rubber.GetStats(),
-		};
+		stats.allocator = slice_pool.GetStats() + rubber.GetStats();
+		return stats;
 	}
 
 	void Flush() noexcept {
@@ -542,6 +543,7 @@ FilterCacheRequest::OnHttpResponse(HttpStatus status, StringMap &&headers,
 					    status, headers, available)) {
 		/* don't cache response */
 		LogConcat(4, "FilterCache", "nocache ", info.key);
+		++cache.stats.skips;
 
 		if (body)
 			body = NewRefIstream(pool, std::move(body));
@@ -558,6 +560,8 @@ FilterCacheRequest::OnHttpResponse(HttpStatus status, StringMap &&headers,
 		Destroy();
 		return;
 	}
+
+	++cache.stats.stores;
 
 	/* copy the HttpResponseHandler reference to the stack, because
 	   the sink_rubber_new() call may destroy this object */
@@ -724,6 +728,7 @@ FilterCache::Miss(struct pool &caller_pool,
 						       *this, _handler, info);
 
 	LogConcat(4, "FilterCache", "miss ", info.key);
+	++stats.misses;
 
 	request->Start(resource_loader, parent_stopwatch, info.tag,
 		       address,
@@ -738,6 +743,7 @@ FilterCache::Serve(FilterCacheItem &item,
 		   HttpResponseHandler &handler) noexcept
 {
 	LogConcat(4, "FilterCache", "serve ", item.GetKey());
+	++stats.hits;
 
 	/* XXX hold reference on item */
 
@@ -791,6 +797,8 @@ FilterCache::Get(struct pool &caller_pool,
 			Hit(*item, caller_pool, handler);
 		}
 	} else {
+		++stats.skips;
+
 		resource_loader.SendRequest(caller_pool, parent_stopwatch,
 					    {0, false, false, false, cache_tag, nullptr},
 					    HttpMethod::POST, address,
