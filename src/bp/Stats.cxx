@@ -26,16 +26,6 @@ BpInstance::GetStats() const noexcept
 	tcp_stock->AddStats(tcp_stock_stats);
 	fs_stock->AddStats(tcp_stock_stats);
 
-	AllocatorStats tcache_stats = AllocatorStats::Zero();
-	if (translation_caches)
-		tcache_stats += translation_caches->GetStats();
-	const auto http_cache_stats = http_cache != nullptr
-		? http_cache_get_stats(*http_cache)
-		: AllocatorStats::Zero();
-	const auto fcache_stats = filter_cache != nullptr
-		? filter_cache_get_stats(*filter_cache)
-		: AllocatorStats::Zero();
-
 	stats.incoming_connections = connections.size();
 	stats.outgoing_connections = tcp_stock_stats.busy + tcp_stock_stats.idle;
 	stats.children = 0; // TODO
@@ -43,9 +33,16 @@ BpInstance::GetStats() const noexcept
 	stats.http_requests = http_stats.n_requests;
 	stats.http_traffic_received = http_stats.traffic_received;
 	stats.http_traffic_sent = http_stats.traffic_sent;
-	stats.translation_cache.allocator = tcache_stats;
-	stats.http_cache.allocator = http_cache_stats;
-	stats.filter_cache.allocator = fcache_stats;
+
+	if (translation_caches)
+		stats.translation_cache.allocator = translation_caches->GetStats();
+
+	if (http_cache != nullptr)
+		stats.http_cache.allocator = http_cache_get_stats(*http_cache);
+
+	if (filter_cache != nullptr)
+		stats.filter_cache.allocator = filter_cache_get_stats(*filter_cache);
+
 	stats.io_buffers = fb_pool_get().GetStats();
 
 	return stats;
