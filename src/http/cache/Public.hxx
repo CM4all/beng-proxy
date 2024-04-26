@@ -18,7 +18,7 @@ class ResourceLoader;
 struct ResourceAddress;
 class StringMap;
 class HttpResponseHandler;
-struct AllocatorStats;
+struct CacheStats;
 class HttpCache;
 class CancellablePointer;
 
@@ -38,7 +38,7 @@ void
 http_cache_fork_cow(HttpCache &cache, bool inherit) noexcept;
 
 [[gnu::pure]]
-AllocatorStats
+CacheStats
 http_cache_get_stats(const HttpCache &cache) noexcept;
 
 void

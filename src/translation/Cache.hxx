@@ -11,7 +11,7 @@
 
 enum class TranslationCommand : uint16_t;
 class EventLoop;
-struct AllocatorStats;
+struct CacheStats;
 
 struct tcache;
 
@@ -35,7 +35,7 @@ public:
 	void ForkCow(bool inherit) noexcept;
 
 	[[gnu::pure]]
-	AllocatorStats GetStats() const noexcept;
+	CacheStats GetStats() const noexcept;
 
 	/**
 	 * Flush all items from the cache.

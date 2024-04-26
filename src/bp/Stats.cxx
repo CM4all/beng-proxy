@@ -35,13 +35,13 @@ BpInstance::GetStats() const noexcept
 	stats.http_traffic_sent = http_stats.traffic_sent;
 
 	if (translation_caches)
-		stats.translation_cache.allocator = translation_caches->GetStats();
+		stats.translation_cache = translation_caches->GetStats();
 
 	if (http_cache != nullptr)
-		stats.http_cache.allocator = http_cache_get_stats(*http_cache);
+		stats.http_cache = http_cache_get_stats(*http_cache);
 
 	if (filter_cache != nullptr)
-		stats.filter_cache.allocator = filter_cache_get_stats(*filter_cache);
+		stats.filter_cache = filter_cache_get_stats(*filter_cache);
 
 	stats.io_buffers = fb_pool_get().GetStats();
 

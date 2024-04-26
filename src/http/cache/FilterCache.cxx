@@ -18,7 +18,7 @@
 #include "memory/Rubber.hxx"
 #include "memory/sink_rubber.hxx"
 #include "memory/SlicePool.hxx"
-#include "memory/AllocatorStats.hxx"
+#include "stats/CacheStats.hxx"
 #include "pool/pool.hxx"
 #include "pool/Ptr.hxx"
 #include "pool/Holder.hxx"
@@ -267,8 +267,10 @@ public:
 		slice_pool.ForkCow(inherit);
 	}
 
-	AllocatorStats GetStats() const noexcept {
-		return slice_pool.GetStats() + rubber.GetStats();
+	CacheStats GetStats() const noexcept {
+		return {
+			.allocator = slice_pool.GetStats() + rubber.GetStats(),
+		};
 	}
 
 	void Flush() noexcept {
@@ -677,7 +679,7 @@ filter_cache_fork_cow(FilterCache &cache, bool inherit) noexcept
 	cache.ForkCow(inherit);
 }
 
-AllocatorStats
+CacheStats
 filter_cache_get_stats(const FilterCache &cache) noexcept
 {
 	return cache.GetStats();

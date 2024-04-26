@@ -22,7 +22,7 @@
 #include "pool/StringBuilder.hxx"
 #include "pool/PSocketAddress.hxx"
 #include "memory/SlicePool.hxx"
-#include "memory/AllocatorStats.hxx"
+#include "stats/CacheStats.hxx"
 #include "lib/pcre/UniqueRegex.hxx"
 #include "io/Logger.hxx"
 #include "util/djb_hash.hxx"
@@ -203,7 +203,7 @@ struct tcache final : private CacheHandler {
 
 	Cache cache;
 
-	AllocatorStats stats{};
+	CacheStats stats{};
 
 	TranslationService &next;
 
@@ -236,12 +236,12 @@ private:
 	/* virtual methods from CacheHandler */
 	void OnCacheItemAdded(const CacheItem &_item) noexcept override {
 		const auto &item = (const TranslateCacheItem &)_item;
-		stats += item.stats;
+		stats.allocator += item.stats;
 	}
 
 	void OnCacheItemRemoved(const CacheItem &_item) noexcept override {
 		const auto &item = (const TranslateCacheItem &)_item;
-		stats -= item.stats;
+		stats.allocator -= item.stats;
 	}
 };
 
@@ -1252,7 +1252,7 @@ TranslationCache::ForkCow(bool inherit) noexcept
 	cache->slice_pool.ForkCow(inherit);
 }
 
-AllocatorStats
+CacheStats
 TranslationCache::GetStats() const noexcept
 {
 	return cache->stats;

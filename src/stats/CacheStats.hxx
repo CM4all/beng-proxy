@@ -8,4 +8,9 @@
 
 struct CacheStats {
 	AllocatorStats allocator;
+
+	constexpr CacheStats &operator+=(const CacheStats &other) noexcept {
+		allocator += other.allocator;
+		return *this;
+	}
 };

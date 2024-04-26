@@ -15,7 +15,7 @@
 #include <memory>
 #include <span>
 
-struct AllocatorStats;
+struct CacheStats;
 class EventLoop;
 class SocketAddress;
 class TranslationStock;
@@ -66,7 +66,8 @@ public:
 
 	void ForkCow(bool inherit) noexcept;
 
-	AllocatorStats GetStats() const noexcept;
+	[[gnu::pure]]
+	CacheStats GetStats() const noexcept;
 
 	void Flush() noexcept;
 

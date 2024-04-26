@@ -5,7 +5,7 @@
 #include "Builder.hxx"
 #include "Stock.hxx"
 #include "Cache.hxx"
-#include "memory/AllocatorStats.hxx"
+#include "stats/CacheStats.hxx"
 #include "net/SocketAddress.hxx"
 
 #include <cassert>
@@ -69,10 +69,10 @@ TranslationCacheBuilder::ForkCow(bool inherit) noexcept
 		i.second->ForkCow(inherit);
 }
 
-AllocatorStats
+CacheStats
 TranslationCacheBuilder::GetStats() const noexcept
 {
-	AllocatorStats stats{};
+	CacheStats stats{};
 
 	for (const auto &i : m)
 		stats += i.second->GetStats();

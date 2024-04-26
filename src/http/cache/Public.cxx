@@ -12,7 +12,7 @@
 #include "ResourceLoader.hxx"
 #include "ResourceAddress.hxx"
 #include "memory/sink_rubber.hxx"
-#include "memory/AllocatorStats.hxx"
+#include "stats/CacheStats.hxx"
 #include "http/Date.hxx"
 #include "http/List.hxx"
 #include "http/Method.hxx"
@@ -295,8 +295,10 @@ public:
 		heap.ForkCow(inherit);
 	}
 
-	AllocatorStats GetStats() const noexcept {
-		return heap.GetStats();
+	CacheStats GetStats() const noexcept {
+		return {
+			.allocator = heap.GetStats(),
+		};
 	}
 
 	void Flush() noexcept {
@@ -812,7 +814,7 @@ http_cache_fork_cow(HttpCache &cache, bool inherit) noexcept
 	cache.ForkCow(inherit);
 }
 
-AllocatorStats
+CacheStats
 http_cache_get_stats(const HttpCache &cache) noexcept
 {
 	return cache.GetStats();
