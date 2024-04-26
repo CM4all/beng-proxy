@@ -11,6 +11,7 @@
 #include <map>
 #include <memory>
 
+struct CacheStats;
 struct LbTranslationHandlerConfig;
 class LbGotoMap;
 struct IncomingHttpRequest;
@@ -35,7 +36,7 @@ public:
 	~LbTranslationHandler() noexcept;
 
 	[[gnu::pure]]
-	size_t GetAllocatedCacheMemory() const noexcept;
+	CacheStats GetCacheStats() const noexcept;
 
 	void FlushCache();
 	void InvalidateCache(const TranslationInvalidateRequest &request);

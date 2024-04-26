@@ -11,6 +11,7 @@
 #include "translation/Handler.hxx"
 #include "http/IncomingRequest.hxx"
 #include "pool/pool.hxx"
+#include "stats/CacheStats.hxx"
 #include "stopwatch.hxx"
 #include "AllocatorPtr.hxx"
 
@@ -36,10 +37,10 @@ LbTranslationHandler::LbTranslationHandler(EventLoop &event_loop,
 
 LbTranslationHandler::~LbTranslationHandler() noexcept = default;
 
-size_t
-LbTranslationHandler::GetAllocatedCacheMemory() const noexcept
+CacheStats
+LbTranslationHandler::GetCacheStats() const noexcept
 {
-	return cache ? cache->GetAllocatedMemory() : 0;
+	return cache ? cache->GetStats() : CacheStats{};
 }
 
 void

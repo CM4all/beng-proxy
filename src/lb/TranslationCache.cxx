@@ -7,6 +7,7 @@
 #include "translation/InvalidateParser.hxx"
 #include "translation/Response.hxx"
 #include "translation/Protocol.hxx"
+#include "stats/CacheStats.hxx"
 
 #include <memory>
 
@@ -152,16 +153,21 @@ LbTranslationCache::Item::Item(const TranslateResponse &response) noexcept
 		site = response.site;
 }
 
-size_t
-LbTranslationCache::GetAllocatedMemory() const noexcept
+CacheStats
+LbTranslationCache::GetStats() const noexcept
 {
-	size_t result = 0;
+	size_t size = 0;
 
-	cache.ForEach([&result](const std::string &key, const Item &item){
-		result += key.length() + item.GetAllocatedMemory();
+	cache.ForEach([&size](const std::string &key, const Item &item){
+		size += key.length() + item.GetAllocatedMemory();
 	});
 
-	return result;
+	return {
+		.allocator = {
+			.brutto_size = size,
+			.netto_size = size,
+		},
+	};
 }
 
 void

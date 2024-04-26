@@ -10,6 +10,7 @@
 #include "PrometheusExporter.hxx"
 #include "Config.hxx"
 #include "MonitorManager.hxx"
+#include "stats/CacheStats.hxx"
 
 #ifdef HAVE_LUA
 #include "LuaHandler.hxx"
@@ -55,13 +56,13 @@ LbGotoMap::InvalidateTranslationCaches(const TranslationInvalidateRequest &reque
 		i.second.InvalidateCache(request);
 }
 
-size_t
-LbGotoMap::GetAllocatedTranslationCacheMemory() const noexcept
+CacheStats
+LbGotoMap::GetTranslationCacheStats() const noexcept
 {
-	size_t result = 0;
+	CacheStats stats{};
 	for (const auto &i : translation_handlers)
-		result += i.second.GetAllocatedCacheMemory();
-	return result;
+		stats += i.second.GetCacheStats();
+	return stats;
 }
 
 LbGoto

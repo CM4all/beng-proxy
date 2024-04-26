@@ -14,6 +14,7 @@
 #include <cstddef>
 #include <map>
 
+struct CacheStats;
 struct LbConfig;
 struct LbGoto;
 struct LbGotoConfig;
@@ -73,7 +74,7 @@ public:
 	void InvalidateTranslationCaches(const TranslationInvalidateRequest &request) noexcept;
 
 	[[gnu::pure]]
-	std::size_t GetAllocatedTranslationCacheMemory() const noexcept;
+	CacheStats GetTranslationCacheStats() const noexcept;
 
 	LbGoto GetInstance(const char *name);
 	LbGoto GetInstance(const LbGotoConfig &config);

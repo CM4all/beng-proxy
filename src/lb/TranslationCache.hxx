@@ -14,6 +14,7 @@ enum class HttpStatus : uint_least16_t;
 struct IncomingHttpRequest;
 struct TranslationInvalidateRequest;
 struct TranslateResponse;
+struct CacheStats;
 
 class LbTranslationCache final {
 	static constexpr std::size_t N_BUCKETS = 131071;
@@ -97,7 +98,7 @@ public:
 		:logger("tcache") {}
 
 	[[gnu::pure]]
-	size_t GetAllocatedMemory() const noexcept;
+	CacheStats GetStats() const noexcept;
 
 	void Clear() noexcept;
 	void Invalidate(const TranslationInvalidateRequest &request) noexcept;
