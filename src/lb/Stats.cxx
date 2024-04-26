@@ -14,7 +14,7 @@
 Prometheus::Stats
 LbInstance::GetStats() const noexcept
 {
-	Prometheus::Stats stats;
+	Prometheus::Stats stats{};
 
 	StockStats tcp_stock_stats{};
 
@@ -25,18 +25,11 @@ LbInstance::GetStats() const noexcept
 	stats.outgoing_connections = tcp_stock_stats.busy +
 		tcp_stock_stats.idle +
 		tcp_connections.size();
-	stats.children = 0;
-	stats.sessions = 0;
 	stats.http_requests = http_stats.n_requests;
 	stats.http_traffic_received = http_stats.traffic_received;
 	stats.http_traffic_sent = http_stats.traffic_sent;
 	stats.translation_cache_size = goto_map.GetAllocatedTranslationCacheMemory();
-	stats.http_cache_size = 0;
-	stats.filter_cache_size = 0;
 	stats.translation_cache_brutto_size = stats.translation_cache_size;
-	stats.http_cache_brutto_size = 0;
-	stats.filter_cache_brutto_size = 0;
-	stats.nfs_cache_size = stats.nfs_cache_brutto_size = 0;
 
 	const auto io_buffers_stats = fb_pool_get().GetStats();
 	stats.io_buffers_size = io_buffers_stats.netto_size;
