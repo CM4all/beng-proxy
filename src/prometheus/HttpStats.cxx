@@ -31,12 +31,12 @@ Write(GrowingBuffer &buffer, std::string_view labels,
 # HELP beng_proxy_http_traffic Number of bytes transferred
 # TYPE beng_proxy_http_traffic counter
 
-)"
-	       "beng_proxy_http_requests_delayed{{{}}} {}\n"
-	       "beng_proxy_http_invalid_frames{{{}}} {}\n"
-	       "beng_proxy_http_total_duration{{{}}} {:e}\n"
-	       "beng_proxy_http_traffic{{{}direction=\"in\"}} {}\n"
-	       "beng_proxy_http_traffic{{{}direction=\"out\"}} {}\n",
+beng_proxy_http_requests_delayed{{{}}} {}
+beng_proxy_http_invalid_frames{{{}}} {}
+beng_proxy_http_total_duration{{{}}} {:e}
+beng_proxy_http_traffic{{{}direction="in"}} {}
+beng_proxy_http_traffic{{{}direction="out"}} {}
+)",
 	       labels, stats.n_delayed,
 	       labels, stats.n_invalid_frames,
 	       labels, std::chrono::duration_cast<std::chrono::duration<double>>(stats.total_duration).count(),

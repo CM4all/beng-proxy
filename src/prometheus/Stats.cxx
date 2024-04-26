@@ -29,19 +29,19 @@ Write(GrowingBuffer &buffer, std::string_view process,
 # HELP beng_proxy_buffer_size Size of buffers in bytes
 # TYPE beng_proxy_buffer_size gauge
 
-)"
-	       "beng_proxy_connections{{process={:?},direction=\"in\"}} {}\n"
-	       "beng_proxy_connections{{process={:?},direction=\"out\"}} {}\n"
-	       "beng_proxy_children{{process={:?}}} {}\n"
-	       "beng_proxy_sessions{{process={:?}}} {}\n"
-	       "beng_proxy_cache_size{{process={:?},type=\"translation\",metric=\"netto\"}} {}\n"
-	       "beng_proxy_cache_size{{process={:?},type=\"translation\",metric=\"brutto\"}} {}\n"
-	       "beng_proxy_cache_size{{process={:?},type=\"http\",metric=\"netto\"}} {}\n"
-	       "beng_proxy_cache_size{{process={:?},type=\"http\",metric=\"brutto\"}} {}\n"
-	       "beng_proxy_cache_size{{process={:?},type=\"filter\",metric=\"netto\"}} {}\n"
-	       "beng_proxy_cache_size{{process={:?},type=\"filter\",metric=\"brutto\"}} {}\n"
-	       "beng_proxy_buffer_size{{process={:?},type=\"io\",metric=\"netto\"}} {}\n"
-	       "beng_proxy_buffer_size{{process={:?},type=\"io\",metric=\"brutto\"}} {}\n",
+beng_proxy_connections{{process={:?},direction="in"}} {}
+beng_proxy_connections{{process={:?},direction="out"}} {}
+beng_proxy_children{{process={:?}}} {}
+beng_proxy_sessions{{process={:?}}} {}
+beng_proxy_cache_size{{process={:?},type="translation",metric="netto"}} {}
+beng_proxy_cache_size{{process={:?},type="translation",metric="brutto"}} {}
+beng_proxy_cache_size{{process={:?},type="http",metric="netto"}} {}
+beng_proxy_cache_size{{process={:?},type="http",metric="brutto"}} {}
+beng_proxy_cache_size{{process={:?},type="filter",metric="netto"}} {}
+beng_proxy_cache_size{{process={:?},type="filter",metric="brutto"}} {}
+beng_proxy_buffer_size{{process={:?},type="io",metric="netto"}} {}
+beng_proxy_buffer_size{{process={:?},type="io",metric="brutto"}} {}
+)",
 	       process, stats.incoming_connections,
 	       process, stats.outgoing_connections,
 	       process, stats.children,
