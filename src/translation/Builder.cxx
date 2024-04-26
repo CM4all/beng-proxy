@@ -72,7 +72,7 @@ TranslationCacheBuilder::ForkCow(bool inherit) noexcept
 AllocatorStats
 TranslationCacheBuilder::GetStats() const noexcept
 {
-	AllocatorStats stats = AllocatorStats::Zero();
+	AllocatorStats stats{};
 
 	for (const auto &i : m)
 		stats += i.second->GetStats();
