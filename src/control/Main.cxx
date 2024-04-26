@@ -366,9 +366,6 @@ try {
 		SimpleCommand(server, args,
 			      BengControl::Command::ENABLE_ZEROCONF);
 		return EXIT_SUCCESS;
-	} else if (StringIsEqual(command, "flush-nfs-cache")) {
-		SimpleCommand(server, args, BengControl::Command::FLUSH_NFS_CACHE);
-		return EXIT_SUCCESS;
 	} else if (StringIsEqual(command, "flush-filter-cache")) {
 		FlushFilterCache(server, args);
 		return EXIT_SUCCESS;
@@ -397,7 +394,6 @@ try {
 		"  fade-children [TAG]\n"
 		"  disable-zeroconf\n"
 		"  enable-zeroconf\n"
-		"  flush-nfs-cache\n"
 		"  flush-filter-cache [TAG]\n"
 		"  discard-session ATTACH_ID\n"
 		"  stopwatch\n"
