@@ -47,3 +47,11 @@ TEST(CookieExtract, Invalid2)
 	constexpr auto input = "invalid2=foo |[bar] ,"sv;
 	ASSERT_EQ(ExtractCookieRaw(input, "invalid2"), "foo |[bar] ,");
 }
+
+/**
+ * Other cookies are RFC-ignorant.
+ */
+TEST(CookieExtract, Invalid3)
+{
+	ASSERT_EQ(ExtractCookieRaw("xyz=[{(,)}];foo=bar;abc=(,)", "foo"), "bar");
+}

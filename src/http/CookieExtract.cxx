@@ -4,26 +4,28 @@
 
 #include "CookieExtract.hxx"
 #include "CookieString.hxx"
+#include "Tokenizer.hxx"
+#include "util/IterableSplitString.hxx"
 #include "util/StringStrip.hxx"
 
 std::string_view
 ExtractCookieRaw(std::string_view cookie_header, std::string_view name) noexcept
 {
-	std::string_view input = cookie_header;
+	for (std::string_view i : IterableSplitString(cookie_header, ';')) {
+		i = StripLeft(i);
 
-	while (true) {
-		const auto [current_name, current_value] =
-			    cookie_next_name_value(input, true);
-		if (current_name.empty())
-			return {};
+		const auto current_name = http_next_token(i);
+		if (current_name == name) {
+			if (i.empty())
+				return i;
 
-		if (current_name == name)
-			return current_value;
+			if (i.front() != '=')
+				return {};
 
-		input = StripLeft(input);
-		if (input.empty() || input.front() != ';')
-			return {};
-
-		input = StripLeft(input.substr(1));
+			i.remove_prefix(1);
+			return cookie_next_rfc_ignorant_value(i);
+		}
 	}
+
+	return {};
 }

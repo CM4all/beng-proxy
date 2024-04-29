@@ -22,7 +22,7 @@ TEST(CookieServerTest, Exclude)
 
 	ASSERT_STREQ(cookie_exclude("a=b", "foo", alloc), "a=b");
 	ASSERT_STREQ(cookie_exclude("foo=bar;a=b", "foo", alloc), "a=b");
-	ASSERT_STREQ(cookie_exclude("a=b;foo=bar", "foo", alloc), "a=b;");
+	ASSERT_STREQ(cookie_exclude("a=b;foo=bar", "foo", alloc), "a=b");
 
 	ASSERT_STREQ(cookie_exclude("a=\"b\"; foo=\"bar\"; c=\"d\"", "foo", alloc),
 		     "a=\"b\"; c=\"d\"");
@@ -35,5 +35,5 @@ TEST(CookieServerTest, Exclude)
 
 	ASSERT_STREQ(cookie_exclude("foo=\"duplicate\"; a=\"b\"; foo=\"bar\"; c=\"d\"",
 				    "foo", alloc),
-		     "a=\"b\"; c=\"d\"");
+		     "a=\"b\";c=\"d\"");
 }

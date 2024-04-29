@@ -50,7 +50,7 @@ cookie_next_value(std::string_view &input) noexcept
 		return cookie_next_unquoted_value(input);
 }
 
-static std::string_view
+std::string_view
 cookie_next_rfc_ignorant_value(std::string_view &input) noexcept
 {
 	if (!input.empty() && input.front() == '"')

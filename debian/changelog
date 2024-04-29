@@ -1,6 +1,7 @@
 cm4all-beng-proxy (18.0.68) unstable; urgency=low
 
   * cookie: do not unescape cookie values
+  * cookie: simplified tokenizer skipping RFC-violating cookies
   * control: deprecate packet STATS
   * prometheus: show cache counters
 
