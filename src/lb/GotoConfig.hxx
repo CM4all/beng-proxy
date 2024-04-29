@@ -7,7 +7,7 @@
 #include "ConditionConfig.hxx"
 #include "Protocol.hxx"
 #include "SimpleHttpResponse.hxx"
-#include "net/AllocatedSocketAddress.hxx"
+#include "net/LocalSocketAddress.hxx"
 #include "util/StringLess.hxx"
 #include "config.h"
 
@@ -149,7 +149,7 @@ struct LbLuaHandlerConfig {
 struct LbTranslationHandlerConfig {
 	std::string name;
 
-	AllocatedSocketAddress address;
+	LocalSocketAddress address;
 
 	std::map<const char *, LbGotoConfig, StringLess> destinations;
 

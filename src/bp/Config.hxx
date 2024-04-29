@@ -8,6 +8,7 @@
 #include "access_log/Config.hxx"
 #include "ssl/Config.hxx"
 #include "http/CookieSameSite.hxx"
+#include "net/LocalSocketAddress.hxx"
 #include "net/SocketConfig.hxx"
 #include "spawn/Config.hxx"
 #include "config.h"
@@ -47,7 +48,7 @@ struct BpConfig {
 
 	std::forward_list<ControlListener> control_listen;
 
-	std::forward_list<AllocatedSocketAddress> translation_sockets;
+	std::forward_list<LocalSocketAddress> translation_sockets;
 
 	/** maximum number of simultaneous connections */
 	unsigned max_connections = 32768;

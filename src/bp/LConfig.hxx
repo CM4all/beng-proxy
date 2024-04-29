@@ -5,6 +5,7 @@
 #pragma once
 
 #include "ssl/Config.hxx"
+#include "net/LocalSocketAddress.hxx"
 #include "net/SocketConfig.hxx"
 #include "config.h"
 
@@ -24,7 +25,7 @@ struct BpListenerConfig : SocketConfig {
 	 * translation server(s) and doesn't use the global
 	 * server.
 	 */
-	std::forward_list<AllocatedSocketAddress> translation_sockets;
+	std::forward_list<LocalSocketAddress> translation_sockets;
 
 	SslConfig ssl_config;
 

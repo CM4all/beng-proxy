@@ -180,7 +180,7 @@ ParseCommandLine(BpCmdLine &cmdline, BpConfig &config, int argc, char **argv)
 			break;
 
 		case 't':
-			config.translation_sockets.emplace_front(ParseSocketAddress(optarg, 0, false));
+			config.translation_sockets.emplace_front(optarg);
 			break;
 
 		case 'C':

@@ -216,8 +216,7 @@ BpConfigParser::Listener::ParseLine(FileLineParser &line)
 		else
 			throw LineParser::Error("yes/no expected");
 	} else if (StringIsEqual(word, "translation_socket")) {
-		config.translation_sockets.emplace_front(ParseSocketAddress(line.ExpectValueAndEnd(),
-									    0, false));
+		config.translation_sockets.emplace_front(line.ExpectValueAndEnd());
 	} else if (strcmp(word, "handler") == 0) {
 		config.handler = ParseListenerHandler(line.ExpectValueAndEnd());
 	} else if (StringIsEqual(word, "access_logger")) {
@@ -327,8 +326,7 @@ BpConfigParser::ParseLine2(FileLineParser &line)
 		config.emulate_mod_auth_easy = line.NextBool();
 		line.ExpectEnd();
 	} else if (StringIsEqual(word, "translation_socket")) {
-		config.translation_sockets.emplace_front(ParseSocketAddress(line.ExpectValueAndEnd(),
-									    0, false));
+		config.translation_sockets.emplace_front(line.ExpectValueAndEnd());
 	} else
 		throw LineParser::Error("Unknown option");
 }

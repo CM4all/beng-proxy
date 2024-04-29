@@ -14,7 +14,7 @@
 #include "http/Address.hxx"
 #include "file/Address.hxx"
 #include "cgi/Address.hxx"
-#include "net/AllocatedSocketAddress.hxx"
+#include "net/LocalSocketAddress.hxx"
 #include "util/Cancellable.hxx"
 #include "util/PrintException.hxx"
 #include "util/SpanCast.hxx"
@@ -135,8 +135,7 @@ main(int argc, char **argv)
 
 	TestInstance instance;
 
-	AllocatedSocketAddress translation_socket;
-	translation_socket.SetLocal("@translation"sv);
+	static constexpr LocalSocketAddress translation_socket{"@translation"sv};
 
 	TranslationStock stock(instance.event_loop,
 			       translation_socket, 0);

@@ -138,7 +138,9 @@ class LbConfigParser final : public NestedConfigParser {
 
 	public:
 		TranslationHandler(LbConfigParser &_parent, const char *_name)
-			:parent(_parent), config(_name) {}
+			:parent(_parent), config(_name) {
+			config.address.Clear();
+		}
 
 	protected:
 		/* virtual methods from class ConfigParser */
@@ -1029,7 +1031,7 @@ LbConfigParser::TranslationHandler::ParseLine(FileLineParser &line)
 	const char *word = line.ExpectWord();
 
 	if (StringIsEqual(word, "connect")) {
-		if (!config.address.IsNull())
+		if (config.address.IsDefined())
 			throw LineParser::Error("Duplicate 'connect'");
 
 		config.address.SetLocal(line.ExpectValueAndEnd());
@@ -1058,7 +1060,7 @@ LbConfigParser::TranslationHandler::ParseLine(FileLineParser &line)
 void
 LbConfigParser::TranslationHandler::Finish()
 {
-	if (config.address.IsNull())
+	if (!config.address.IsDefined())
 		throw LineParser::Error("translation_handler has no 'connect'");
 
 	if (config.destinations.empty())

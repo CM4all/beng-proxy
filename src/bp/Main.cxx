@@ -215,7 +215,7 @@ BpInstance::DisableSignals() noexcept
 
 static std::shared_ptr<TranslationService>
 MakeTranslationService(EventLoop &event_loop, TranslationServiceBuilder &b,
-		       const std::forward_list<AllocatedSocketAddress> &l)
+		       const std::forward_list<LocalSocketAddress> &l)
 {
 	auto multi = std::make_shared<MultiTranslationService>();
 	for (const SocketAddress a : l)
