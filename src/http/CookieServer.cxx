@@ -4,34 +4,10 @@
 
 #include "CookieServer.hxx"
 #include "PCookieString.hxx"
-#include "strmap.hxx"
 #include "util/StringStrip.hxx"
 #include "AllocatorPtr.hxx"
 
-StringMap
-cookie_map_parse(AllocatorPtr alloc, std::string_view _input) noexcept
-{
-	StringMap cookies;
-
-	std::string_view input = _input;
-
-	while (true) {
-		const auto [name, value] =
-			cookie_next_name_value(alloc, input, true);
-		if (name.empty())
-			break;
-
-		cookies.Add(alloc, alloc.DupZ(name), alloc.DupZ(value));
-
-		input = StripLeft(input);
-		if (input.empty() || input.front() != ';')
-			break;
-
-		input = StripLeft(input.substr(1));
-	}
-
-	return cookies;
-}
+#include <cassert>
 
 const char *
 cookie_exclude(const char *p, const char *_exclude,

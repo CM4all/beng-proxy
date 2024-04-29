@@ -11,15 +11,6 @@
 #include <string_view>
 
 class AllocatorPtr;
-class StringMap;
-
-/**
- * Parse a Cookie request header and store all cookies in the
- * specified strmap.
- */
-[[gnu::pure]]
-StringMap
-cookie_map_parse(AllocatorPtr alloc, std::string_view input) noexcept;
 
 /**
  * Remove cookies with the specified name from a Cookie request

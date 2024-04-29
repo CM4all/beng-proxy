@@ -18,15 +18,6 @@ executable(
 )
 
 executable(
-  'run_cookie_server',
-  'run_cookie_server.cxx',
-  include_directories: inc,
-  dependencies: [
-    cookie_dep,
-  ],
-)
-
-executable(
   'run_header_parser',
   'run_header_parser.cxx',
   include_directories: inc,
