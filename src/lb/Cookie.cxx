@@ -13,7 +13,7 @@
 #include <stdlib.h>
 
 sticky_hash_t
-lb_cookie_get(const StringMap &request_headers)
+lb_cookie_get(const StringMap &request_headers) noexcept
 {
 	const TempPoolLease tpool;
 
@@ -40,7 +40,7 @@ lb_cookie_get(const StringMap &request_headers)
 }
 
 sticky_hash_t
-lb_cookie_generate(unsigned n)
+lb_cookie_generate(unsigned n) noexcept
 {
 	assert(n >= 2);
 

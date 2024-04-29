@@ -10,7 +10,7 @@
 
 #include "cluster/StickyHash.hxx"
 
-#include <assert.h>
+#include <cassert>
 
 class StringMap;
 
@@ -18,7 +18,7 @@ class StringMap;
  * Extract a node cookie from the request headers.
  */
 sticky_hash_t
-lb_cookie_get(const StringMap &request_headers);
+lb_cookie_get(const StringMap &request_headers) noexcept;
 
 /**
  * Select a random worker.
@@ -27,13 +27,13 @@ lb_cookie_get(const StringMap &request_headers);
  * @return a random number between 1 and n (both including)
  */
 sticky_hash_t
-lb_cookie_generate(unsigned n);
+lb_cookie_generate(unsigned n) noexcept;
 
 /**
  * Calculate the next worker number.
  */
 static inline unsigned
-lb_cookie_next(unsigned n, unsigned i)
+lb_cookie_next(unsigned n, unsigned i) noexcept
 {
 	assert(n >= 2);
 	assert(i >= 1 && i <= n);
