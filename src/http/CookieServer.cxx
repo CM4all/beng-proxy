@@ -26,8 +26,7 @@ cookie_exclude(const char *p, const std::string_view exclude,
 	bool empty = true, found = false;
 
 	while (true) {
-		const auto [name, value] =
-			    cookie_next_name_value_raw(input, true);
+		const auto [name, value] = cookie_next_name_value(input, true);
 		if (name.empty())
 			break;
 

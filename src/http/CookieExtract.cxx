@@ -13,7 +13,7 @@ ExtractCookieRaw(std::string_view cookie_header, std::string_view name) noexcept
 
 	while (true) {
 		const auto [current_name, current_value] =
-			    cookie_next_name_value_raw(input, true);
+			    cookie_next_name_value(input, true);
 		if (current_name.empty())
 			return {};
 
