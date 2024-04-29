@@ -3,40 +3,25 @@
 // author: Max Kellermann <mk@cm4all.com>
 
 #include "Cookie.hxx"
-#include "pool/tpool.hxx"
-#include "http/CookieServer.hxx"
+#include "http/CookieExtract.hxx"
+#include "util/NumberParser.hxx"
 #include "util/StringCompare.hxx"
-#include "AllocatorPtr.hxx"
 #include "strmap.hxx"
 
-#include <assert.h>
-#include <stdlib.h>
+using std::string_view_literals::operator""sv;
 
 sticky_hash_t
 lb_cookie_get(const StringMap &request_headers) noexcept
 {
-	const TempPoolLease tpool;
-
 	const char *cookie = request_headers.Get("cookie");
 	if (cookie == NULL)
 		return 0;
 
-	const auto jar = cookie_map_parse(*tpool, cookie);
-
-	const char *p = jar.Get("beng_lb_node");
-	if (p == nullptr)
+	std::string_view s = ExtractCookieRaw(cookie, "beng_lb_node"sv);
+	if (!SkipPrefix(s, "0-"sv))
 		return 0;
 
-	p = StringAfterPrefix(p, "0-");
-	if (p == nullptr)
-		return 0;
-
-	char *endptr;
-	unsigned long id = strtoul(p, &endptr, 16);
-	if (endptr == p || *endptr != 0)
-		return 0;
-
-	return (sticky_hash_t)id;
+	return ParseInteger<sticky_hash_t>(s, 16).value_or(0);
 }
 
 sticky_hash_t
