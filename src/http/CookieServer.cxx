@@ -3,7 +3,7 @@
 // author: Max Kellermann <mk@cm4all.com>
 
 #include "CookieServer.hxx"
-#include "PCookieString.hxx"
+#include "CookieString.hxx"
 #include "util/StringStrip.hxx"
 #include "AllocatorPtr.hxx"
 
@@ -27,7 +27,7 @@ cookie_exclude(const char *p, const std::string_view exclude,
 
 	while (true) {
 		const auto [name, value] =
-			    cookie_next_name_value(alloc, input, true);
+			    cookie_next_name_value_raw(input, true);
 		if (name.empty())
 			break;
 

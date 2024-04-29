@@ -4,7 +4,7 @@
 
 #include "CookieClient.hxx"
 #include "CookieJar.hxx"
-#include "PCookieString.hxx"
+#include "CookieString.hxx"
 #include "Quote.hxx"
 #include "PTokenizer.hxx"
 #include "strmap.hxx"
@@ -70,7 +70,7 @@ static std::unique_ptr<Cookie>
 parse_next_cookie(struct pool &tpool,
 		  std::string_view &input) noexcept
 {
-	auto [name, value] = cookie_next_name_value(tpool, input, false);
+	auto [name, value] = cookie_next_name_value_raw(input, false);
 	if (name.empty())
 		return nullptr;
 

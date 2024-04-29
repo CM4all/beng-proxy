@@ -36,7 +36,6 @@ cookie = static_library(
   'CookieSameSite.cxx',
   'CookieServer.cxx',
   'CookieString.cxx',
-  'PCookieString.cxx',
   include_directories: inc,
 )
 

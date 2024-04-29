@@ -17,7 +17,7 @@ char_is_cookie_octet(char ch) noexcept
 		(ch >= 0x5d && ch <= 0x7e);
 }
 
-std::string_view
+static std::string_view
 cookie_next_unquoted_value(std::string_view &input) noexcept
 {
 	auto p = SplitWhile(input, char_is_cookie_octet);
@@ -33,7 +33,7 @@ char_is_rfc_ignorant_cookie_octet(char ch) noexcept
 		ch == ' ' || ch == ',';
 }
 
-std::string_view
+static std::string_view
 cookie_next_rfc_ignorant_value(std::string_view &input) noexcept
 {
 	auto p = SplitWhile(input, char_is_rfc_ignorant_cookie_octet);
