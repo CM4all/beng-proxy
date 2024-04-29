@@ -10,11 +10,10 @@
 #include <cassert>
 
 const char *
-cookie_exclude(const char *p, const char *_exclude,
+cookie_exclude(const char *p, const std::string_view exclude,
 	       AllocatorPtr alloc) noexcept
 {
 	assert(p != nullptr);
-	assert(_exclude != nullptr);
 
 	const char *const p0 = p;
 	char *const dest0 = alloc.NewArray<char>(strlen(p) + 1);
@@ -22,7 +21,6 @@ cookie_exclude(const char *p, const char *_exclude,
 
 	std::string_view input = p;
 
-	const std::string_view exclude = _exclude;
 	const char *src = p;
 
 	bool empty = true, found = false;

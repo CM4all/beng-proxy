@@ -19,5 +19,5 @@ class AllocatorPtr;
  * remain after removing the excluded cookie.
  */
 const char *
-cookie_exclude(const char *p, const char *exclude,
+cookie_exclude(const char *p, std::string_view exclude,
 	       AllocatorPtr alloc) noexcept;
