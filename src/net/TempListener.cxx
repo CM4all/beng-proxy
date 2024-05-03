@@ -53,5 +53,5 @@ TempListener::Create(int socket_type, int backlog)
 UniqueSocketDescriptor
 TempListener::Connect() const
 {
-	return CreateConnectSocket(GetAddress(), SOCK_STREAM);
+	return CreateConnectSocketNonBlock(GetAddress(), SOCK_STREAM);
 }

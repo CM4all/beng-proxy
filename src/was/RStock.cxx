@@ -103,8 +103,8 @@ RemoteWasStock::MultiClientStockClass::Create(CreateStockItem c,
 
 	auto *connection =
 		new RemoteMultiWasConnection(c,
-					     CreateConnectSocket(params.address,
-								 SOCK_SEQPACKET));
+					     CreateConnectSocketNonBlock(params.address,
+									 SOCK_SEQPACKET));
 	connection->InvokeCreateSuccess(handler);
 }
 
