@@ -31,6 +31,8 @@ struct ResourceRequestParams {
 	 */
 	sticky_hash_t sticky_hash;
 
+	bool ignore_no_cache;
+
 	bool eager_cache;
 
 	bool auto_flush_cache;

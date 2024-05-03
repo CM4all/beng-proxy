@@ -1174,7 +1174,8 @@ HttpCache::Start(struct pool &caller_pool,
 	}
 
 	if (auto info = http_cache_request_evaluate(method, address, headers,
-						    obey_no_cache, body)) {
+						    obey_no_cache && !params.ignore_no_cache,
+						    body)) {
 		assert(!body);
 
 		Use(caller_pool, parent_stopwatch, key, params,

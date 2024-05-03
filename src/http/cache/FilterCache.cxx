@@ -187,7 +187,7 @@ public:
 		   CancellablePointer &caller_cancel_ptr) noexcept {
 		caller_cancel_ptr = *this;
 		resource_loader.SendRequest(pool, parent_stopwatch,
-					    {0, false, false, false, cache_tag, nullptr},
+					    {0, false, false, false, false, cache_tag, nullptr},
 					    HttpMethod::POST, address,
 					    status, std::move(headers),
 					    std::move(body), body_etag,
@@ -800,7 +800,7 @@ FilterCache::Get(struct pool &caller_pool,
 		++stats.skips;
 
 		resource_loader.SendRequest(caller_pool, parent_stopwatch,
-					    {0, false, false, false, cache_tag, nullptr},
+					    {0, false, false, false, false, cache_tag, nullptr},
 					    HttpMethod::POST, address,
 					    status, std::move(headers),
 					    std::move(body), source_id,

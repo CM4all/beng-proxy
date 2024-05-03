@@ -105,6 +105,7 @@ Request::HandleProxyAddress() noexcept
 	rl.SendRequest(pool, stopwatch,
 		       {
 			       session_id.GetClusterHash(),
+			       tr.ignore_no_cache,
 			       tr.eager_cache,
 			       tr.auto_flush_cache,
 			       translate.enable_metrics,

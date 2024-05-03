@@ -596,6 +596,9 @@ Response
 
 - ``UNCACHED``: Disable the HTTP cache for the given resource address.
 
+- ``IGNORE_NO_CACHE``: Ignore the ``Cache-Control:no-cache`` request
+  header, i.e. don't allow the client to circumvent the HTTP cache.
+
 - ``EAGER_CACHE``: Enable caching for the given resource address, even
   if it is not declared to be cacheable.
 
