@@ -3,9 +3,9 @@
 // author: Max Kellermann <mk@cm4all.com>
 
 #include "Ping.hxx"
-#include "system/Error.hxx"
 #include "net/IPv4Address.hxx"
 #include "net/SocketAddress.hxx"
+#include "net/SocketError.hxx"
 #include "net/SendMessage.hxx"
 #include "io/Iovec.hxx"
 
@@ -101,12 +101,11 @@ PingClient::Read() noexcept
 			handler.PingResponse();
 		} else
 			ScheduleRead();
-	} else if (errno == EAGAIN || errno == EINTR) {
+	} else if (const auto e = GetSocketError(); IsSocketErrorReceiveWouldBlock(e)) {
 		ScheduleRead();
 	} else {
-		const int e = errno;
 		fd.Close();
-		handler.PingError(std::make_exception_ptr(MakeErrno(e, "Failed to receive ping reply")));
+		handler.PingError(std::make_exception_ptr(MakeSocketError(e, "Failed to receive ping reply")));
 	}
 }
 
@@ -153,7 +152,7 @@ CreateIcmp()
 {
 	UniqueSocketDescriptor fd;
 	if (!fd.CreateNonBlock(AF_INET, SOCK_DGRAM, IPPROTO_ICMP))
-		throw MakeErrno("Failed to create ICMP socket");
+		throw MakeSocketError("Failed to create ICMP socket");
 
 	return fd;
 }
@@ -162,7 +161,7 @@ static uint16_t
 MakeIdent(SocketDescriptor fd)
 {
 	if (!fd.Bind(IPv4Address(0)))
-		throw MakeErrno("Failed to bind ICMP socket");
+		throw MakeSocketError("Failed to bind ICMP socket");
 
 	struct sockaddr_in sin;
 	sin.sin_family = AF_INET;
@@ -170,7 +169,7 @@ MakeIdent(SocketDescriptor fd)
 	socklen_t sin_length = sizeof(sin);
 
 	if (getsockname(fd.Get(), (struct sockaddr *)&sin, &sin_length) < 0)
-		throw MakeErrno("Failed to inspect ICMP socket");
+		throw MakeSocketError("Failed to inspect ICMP socket");
 
 	return sin.sin_port;
 }
