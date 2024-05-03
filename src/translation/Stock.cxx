@@ -13,6 +13,7 @@
 #include "pool/LeakDetector.hxx"
 #include "lib/fmt/SocketAddressFormatter.hxx"
 #include "lib/fmt/SystemError.hxx"
+#include "net/ConnectSocket.hxx"
 #include "net/UniqueSocketDescriptor.hxx"
 #include "event/SocketEvent.hxx"
 #include "io/Logger.hxx"
@@ -22,19 +23,6 @@
 
 #include <string.h>
 #include <errno.h>
-
-static UniqueSocketDescriptor
-CreateConnectStreamSocket(const SocketAddress address)
-{
-	UniqueSocketDescriptor fd;
-	if (!fd.CreateNonBlock(address.GetFamily(), SOCK_STREAM, 0))
-		throw MakeErrno("Failed to create socket");
-
-	if (!fd.Connect(address))
-		throw FmtErrno("Failed to connect to {}", address);
-
-	return fd;
-}
 
 class TranslationStock::Connection final : public StockItem {
 	UniqueSocketDescriptor s;
@@ -183,8 +171,7 @@ TranslationStock::Create(CreateStockItem c, StockRequest,
 			 StockGetHandler &handler,
 			 CancellablePointer &)
 {
-	auto *connection = new Connection(c,
-					  CreateConnectStreamSocket(address));
+	auto *connection = new Connection(c, CreateConnectSocketNonBlock(address, SOCK_STREAM));
 	connection->InvokeCreateSuccess(handler);
 }
 
