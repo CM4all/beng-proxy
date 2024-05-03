@@ -6,9 +6,9 @@
 #include "MonitorHandler.hxx"
 #include "MonitorClass.hxx"
 #include "MonitorConfig.hxx"
-#include "system/Error.hxx"
 #include "net/UniqueSocketDescriptor.hxx"
 #include "net/SocketAddress.hxx"
+#include "net/SocketError.hxx"
 #include "event/net/ConnectSocket.hxx"
 #include "event/SocketEvent.hxx"
 #include "event/CoarseTimerEvent.hxx"
@@ -141,7 +141,7 @@ ExpectMonitor::DelayCallback() noexcept
 
 	ssize_t nbytes = fd.Receive(buffer, MSG_DONTWAIT);
 	if (nbytes < 0) {
-		auto e = MakeErrno("Failed to receive");
+		auto e = MakeSocketError("Failed to receive");
 		fd.Close();
 		handler.Error(std::make_exception_ptr(e));
 	} else if (!config.fade_expect.empty() &&
@@ -173,7 +173,7 @@ ExpectMonitor::OnSocketConnectSuccess(UniqueSocketDescriptor new_fd) noexcept
 	if (!config.send.empty()) {
 		ssize_t nbytes = new_fd.Send(AsBytes(config.send), MSG_DONTWAIT);
 		if (nbytes < 0) {
-			handler.Error(std::make_exception_ptr(MakeErrno("Failed to send")));
+			handler.Error(std::make_exception_ptr(MakeSocketError("Failed to send")));
 			delete this;
 			return;
 		}
