@@ -48,6 +48,7 @@ struct BpListenerConfig : SocketConfig {
 	BpListenerConfig() noexcept {
 		listen = 64;
 		tcp_defer_accept = 10;
+		tcp_no_delay = true;
 	}
 
 	explicit BpListenerConfig(SocketAddress _address) noexcept
