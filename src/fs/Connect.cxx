@@ -9,10 +9,10 @@
 #include "event/CoarseTimerEvent.hxx"
 #include "event/DeferEvent.hxx"
 #include "net/SocketAddress.hxx"
+#include "net/SocketError.hxx"
 #include "net/SocketProtocolError.hxx"
 #include "net/TimeoutError.hxx"
 #include "net/UniqueSocketDescriptor.hxx"
-#include "system/Error.hxx"
 #include "util/LeakDetector.hxx"
 #include "stopwatch.hxx"
 
@@ -119,14 +119,14 @@ try {
 	UniqueSocketDescriptor fd;
 
 	if (!fd.CreateNonBlock(address_family, SOCK_STREAM, 0))
-		throw MakeErrno("Failed to create socket");
+		throw MakeSocketError("Failed to create socket");
 
 	if ((address_family == PF_INET || address_family == PF_INET6) &&
 	    !fd.SetNoDelay())
-		throw MakeErrno("Failed to set TCP_NODELAY");
+		throw MakeSocketError("Failed to set TCP_NODELAY");
 
 	if (ip_transparent && !fd.SetBoolOption(SOL_IP, IP_TRANSPARENT, true))
-		throw MakeErrno("Failed to set IP_TRANSPARENT");
+		throw MakeSocketError("Failed to set IP_TRANSPARENT");
 
 	if (!bind_address.IsNull() && bind_address.IsDefined()) {
 		if (bind_address.HasPort() && bind_address.GetPort() == 0)
@@ -136,7 +136,7 @@ try {
 					 true);
 
 		if (!fd.Bind(bind_address))
-			throw MakeErrno("Failed to bind socket");
+			throw MakeSocketError("Failed to bind socket");
 	}
 
 	if (fd.Connect(address)) {
@@ -144,8 +144,9 @@ try {
 		return;
 	}
 
-	if (errno != EINPROGRESS)
-		throw MakeErrno("Failed to connect");
+	const auto e = GetSocketError();
+	if (!IsSocketErrorConnectWouldBlock(e))
+		throw MakeSocketError(e, "Failed to connect");
 
 	connect_socket.WaitConnected(std::move(fd), Event::Duration(-1));
 	timeout_event.Schedule(timeout);
