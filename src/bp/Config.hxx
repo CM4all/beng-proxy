@@ -36,13 +36,19 @@ struct BpConfig {
 	std::string session_save_path;
 
 	struct ControlListener : SocketConfig {
-		ControlListener() {
-			pass_cred = true;
+		ControlListener()
+			:SocketConfig{
+				.pass_cred = true,
+			}
+		{
 		}
 
 		explicit ControlListener(SocketAddress _bind_address)
-			:SocketConfig(_bind_address) {
-			pass_cred = true;
+			:SocketConfig{
+				.bind_address = AllocatedSocketAddress{_bind_address},
+				.pass_cred = true,
+			}
+		{
 		}
 	};
 

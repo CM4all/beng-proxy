@@ -45,18 +45,23 @@ struct BpListenerConfig : SocketConfig {
 
 	bool ssl = false;
 
-	BpListenerConfig() noexcept {
-		listen = 64;
-		tcp_defer_accept = 10;
-		tcp_no_delay = true;
+	BpListenerConfig() noexcept
+		:SocketConfig{
+			.listen = 64,
+			.tcp_defer_accept = 10,
+			.tcp_no_delay = true,
+		}
+	{
 	}
 
 	explicit BpListenerConfig(SocketAddress _address) noexcept
-		:SocketConfig(_address)
+		:SocketConfig{
+			.bind_address = AllocatedSocketAddress{_address},
+			.listen = 64,
+			.tcp_defer_accept = 10,
+			.tcp_no_delay = true,
+		}
 	{
-		listen = 64;
-		tcp_defer_accept = 10;
-		tcp_no_delay = true;
 	}
 
 #ifdef HAVE_AVAHI
