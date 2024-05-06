@@ -5,6 +5,7 @@
 #include "Launch.hxx"
 #include "spawn/UidGid.hxx"
 #include "system/Error.hxx"
+#include "net/SocketError.hxx"
 #include "util/PrintException.hxx"
 #include "util/ConstBuffer.hxx"
 
@@ -44,7 +45,7 @@ LaunchLogger(const char *command,
 
 	if (!UniqueSocketDescriptor::CreateSocketPair(AF_LOCAL, SOCK_SEQPACKET, 0,
 						      server_fd, p.fd))
-		throw MakeErrno("socketpair() failed");
+		throw MakeSocketError("socketpair() failed");
 
 	/* we need an unidirectional socket only */
 	p.fd.ShutdownRead();
@@ -96,7 +97,7 @@ LaunchLogger(ConstBuffer<const char *> args)
 
 	if (!UniqueSocketDescriptor::CreateSocketPair(AF_LOCAL, SOCK_SEQPACKET, 0,
 						      child_fd, parent_fd))
-		throw MakeErrno("socketpair() failed");
+		throw MakeSocketError("socketpair() failed");
 
 	/* we need an unidirectional socket only */
 	parent_fd.ShutdownRead();
