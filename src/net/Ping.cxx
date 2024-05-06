@@ -7,6 +7,7 @@
 #include "net/SocketAddress.hxx"
 #include "net/SocketError.hxx"
 #include "net/SendMessage.hxx"
+#include "net/UniqueSocketDescriptor.hxx"
 #include "io/Iovec.hxx"
 
 #include <cassert>
@@ -94,17 +95,17 @@ PingClient::Read() noexcept
 	msg.msg_control = ans_data;
 	msg.msg_controllen = sizeof(ans_data);
 
-	int cc = recvmsg(fd.Get(), &msg, MSG_DONTWAIT);
+	int cc = recvmsg(event.GetSocket().Get(), &msg, MSG_DONTWAIT);
 	if (cc >= 0) {
 		if (parse_reply(&msg, cc, ident)) {
-			fd.Close();
+			event.Close();
 			handler.PingResponse();
 		} else
 			ScheduleRead();
 	} else if (const auto e = GetSocketError(); IsSocketErrorReceiveWouldBlock(e)) {
 		ScheduleRead();
 	} else {
-		fd.Close();
+		event.Close();
 		handler.PingError(std::make_exception_ptr(MakeSocketError(e, "Failed to receive ping reply")));
 	}
 }
@@ -118,7 +119,7 @@ PingClient::Read() noexcept
 inline void
 PingClient::EventCallback(unsigned) noexcept
 {
-	assert(fd.IsDefined());
+	assert(event.IsDefined());
 
 	Read();
 }
@@ -126,9 +127,9 @@ PingClient::EventCallback(unsigned) noexcept
 inline void
 PingClient::OnTimeout() noexcept
 {
-	assert(fd.IsDefined());
+	assert(event.IsDefined());
 
-	fd.Close();
+	event.Close();
 	handler.PingTimeout();
 }
 
@@ -201,10 +202,9 @@ void
 PingClient::Start(SocketAddress address) noexcept
 {
 	try {
-		fd = CreateIcmp();
-		event.Open(fd);
-		ident = MakeIdent(fd);
-		SendPing(fd, address, ident);
+		event.Open(CreateIcmp().Release());
+		ident = MakeIdent(event.GetSocket());
+		SendPing(event.GetSocket(), address, ident);
 	} catch (...) {
 		handler.PingError(std::current_exception());
 		return;

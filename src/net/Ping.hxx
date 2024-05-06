@@ -6,7 +6,6 @@
 
 #include "event/SocketEvent.hxx"
 #include "event/CoarseTimerEvent.hxx"
-#include "net/UniqueSocketDescriptor.hxx"
 
 #include <exception>
 
@@ -22,8 +21,6 @@ public:
  * reply.
  */
 class PingClient final {
-	UniqueSocketDescriptor fd;
-
 	uint16_t ident;
 
 	SocketEvent event;
@@ -35,14 +32,15 @@ public:
 	PingClient(EventLoop &event_loop,
 		   PingClientHandler &_handler) noexcept;
 
+	~PingClient() noexcept {
+		event.Close();
+	}
+
 	void Start(SocketAddress address) noexcept;
 
 	void Cancel() noexcept {
-		if (fd.IsDefined()) {
-			timeout_event.Cancel();
-			event.Cancel();
-			fd.Close();
-		}
+		timeout_event.Cancel();
+		event.Close();
 	}
 
 private:
