@@ -12,6 +12,7 @@
 #include "net/SendMessage.hxx"
 #include "net/ScmRightsBuilder.hxx"
 #include "net/SocketDescriptor.hxx"
+#include "net/SocketError.hxx"
 #include "net/SocketProtocolError.hxx"
 #include "io/Iovec.hxx"
 #include "io/UniqueFileDescriptor.hxx"
@@ -34,7 +35,7 @@ delegate_send(SocketDescriptor s, std::span<const std::byte> src)
 {
 	ssize_t nbytes = s.Send(src);
 	if (nbytes < 0)
-		throw MakeErrno("send() on delegate socket failed");
+		throw MakeSocketError("send() on delegate socket failed");
 
 	if ((size_t)nbytes != src.size())
 		throw std::runtime_error{"short send() on delegate socket"};
@@ -105,7 +106,7 @@ ReceiveFull(SocketDescriptor s, std::span<std::byte> dest)
 	while (!dest.empty()) {
 		auto nbytes = s.Receive(dest);
 		if (nbytes < 0)
-			throw MakeErrno("Failed to receive");
+			throw MakeSocketError("Failed to receive");
 
 		if (nbytes == 0)
 			throw SocketClosedPrematurelyError{};
@@ -123,7 +124,7 @@ try {
 		DelegateRequestHeader header;
 		ssize_t nbytes = s.Receive(std::as_writable_bytes(std::span{&header, 1}));
 		if (nbytes < 0)
-			throw MakeErrno("recv() on delegate socket failed");
+			throw MakeSocketError("recv() on delegate socket failed");
 
 		if (nbytes == 0)
 			break;
