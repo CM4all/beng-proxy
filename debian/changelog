@@ -4,7 +4,7 @@ cm4all-beng-proxy (18.0.69) unstable; urgency=low
   * lb: fix the defunct "ping" monitor
   * zeroconf: append the host name to the service name
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Mon, 06 May 2024 10:59:52 +0200
 
 cm4all-beng-proxy (18.0.68) unstable; urgency=low
 
