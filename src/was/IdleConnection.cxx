@@ -3,7 +3,7 @@
 // author: Max Kellermann <mk@cm4all.com>
 
 #include "IdleConnection.hxx"
-#include "system/Error.hxx"
+#include "net/SocketError.hxx"
 
 #include <was/protocol.h>
 
@@ -23,15 +23,15 @@ WasIdleConnection::ReceiveControl(std::span<std::byte> dest)
 	if (nbytes == (ssize_t)dest.size())
 		return ReceiveResult::SUCCESS;
 
-	if (nbytes < 0 && errno == EAGAIN) {
-		/* the WAS application didn't send enough data (yet); don't
-		   bother waiting for more, just give up on this process */
-		return ReceiveResult::AGAIN;
-	}
+	if (nbytes < 0) {
+		const auto e = GetSocketError();
+		if (IsSocketErrorReceiveWouldBlock(e))
+			/* the WAS application didn't send enough data (yet); don't
+			   bother waiting for more, just give up on this process */
+			return ReceiveResult::AGAIN;
 
-	if (nbytes < 0)
-		throw MakeErrno("error on idle WAS control connection");
-	else if (nbytes > 0)
+		throw MakeSocketError(e, "error on idle WAS control connection");
+	} else if (nbytes > 0)
 		throw std::runtime_error("unexpected data from idle WAS control connection");
 	else
 		throw std::runtime_error("WAS control socket closed unexpectedly");
@@ -48,7 +48,7 @@ WasIdleConnection::DiscardControl(size_t size)
 
 		ssize_t nbytes = socket.control.Receive(dest, MSG_DONTWAIT);
 		if (nbytes < 0)
-			throw MakeErrno("error on idle WAS control connection");
+			throw MakeSocketError("error on idle WAS control connection");
 		else if (nbytes == 0)
 			throw std::runtime_error("WAS control socket closed unexpectedly");
 
@@ -64,7 +64,7 @@ WasIdleConnection::DiscardInput(uint64_t remaining)
 		size_t size = std::min(remaining, uint64_t(sizeof(buffer)));
 		ssize_t nbytes = socket.input.Read(buffer, size);
 		if (nbytes < 0)
-			throw MakeErrno("error on idle WAS input pipe");
+			throw MakeSocketError("error on idle WAS input pipe");
 		else if (nbytes == 0)
 			throw std::runtime_error("WAS input pipe closed unexpectedly");
 
@@ -147,7 +147,7 @@ try {
 	std::byte buffer[1];
 	ssize_t nbytes = socket.control.Receive(buffer, MSG_DONTWAIT);
 	if (nbytes < 0)
-		throw MakeErrno("error on idle WAS control connection");
+		throw MakeSocketError("error on idle WAS control connection");
 	else if (nbytes > 0)
 		throw std::runtime_error("unexpected data from idle WAS control connection");
 	else
