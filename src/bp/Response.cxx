@@ -155,6 +155,7 @@ MaybeCacheEncoded(EncodingCache *cache, AllocatorPtr alloc,
 
 static void
 MaybeAutoCompress(EncodingCache *cache, AllocatorPtr alloc,
+		  const StringMap &request_headers,
 		  const char *resource_tag,
 		  HttpHeaders &response_headers,
 		  UnusedIstreamPtr &response_body,
@@ -168,6 +169,9 @@ MaybeAutoCompress(EncodingCache *cache, AllocatorPtr alloc,
 	if (auto available = response_body.GetAvailable(false);
 	    available >= 0 && available < 512)
 		/* too small, not worth it */
+		return;
+
+	if (!http_client_accepts_encoding(request_headers, encoding))
 		return;
 
 	response_headers.contains_content_encoding = true;
@@ -201,9 +205,10 @@ Request::AutoDeflate(HttpHeaders &response_headers,
 #ifdef HAVE_BROTLI
 	} else if ((translate.response->auto_brotli ||
 		    translate.auto_brotli) &&
-		   http_client_accepts_encoding(request.headers, "br") &&
 		   !response_headers.ContainsContentEncoding()) {
-		MaybeAutoCompress(instance.encoding_cache.get(), pool, resource_tag,
+		MaybeAutoCompress(instance.encoding_cache.get(), pool,
+				  request.headers,
+				  resource_tag,
 				  response_headers, response_body, "br",
 				  [this, &response_headers](auto &&i){
 					  auto b = NewBrotliEncoderIstream(pool, std::move(i));
@@ -213,9 +218,10 @@ Request::AutoDeflate(HttpHeaders &response_headers,
 				  });
 #endif
 	} else if (translate.response->auto_gzip &&
-		   http_client_accepts_encoding(request.headers, "gzip") &&
 		   !response_headers.ContainsContentEncoding()) {
-		MaybeAutoCompress(instance.encoding_cache.get(), pool, resource_tag,
+		MaybeAutoCompress(instance.encoding_cache.get(), pool,
+				  request.headers,
+				  resource_tag,
 				  response_headers, response_body, "gzip",
 				  [this](auto &&i){
 					  return NewGzipIstream(pool, std::move(i));
