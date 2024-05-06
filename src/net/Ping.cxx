@@ -202,6 +202,7 @@ PingClient::Start(SocketAddress address) noexcept
 {
 	try {
 		fd = CreateIcmp();
+		event.Open(fd);
 		ident = MakeIdent(fd);
 		SendPing(fd, address, ident);
 	} catch (...) {
