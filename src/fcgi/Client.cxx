@@ -22,6 +22,7 @@
 #include "pool/pool.hxx"
 #include "system/Error.hxx"
 #include "event/net/BufferedSocket.hxx"
+#include "net/SocketError.hxx"
 #include "io/UniqueFileDescriptor.hxx"
 #include "io/SpliceSupport.hxx"
 #include "util/DestructObserver.hxx"
@@ -740,7 +741,7 @@ FcgiClient::OnData(std::span<const std::byte> src) noexcept
 	else if (nbytes == WRITE_BLOCKING || nbytes == WRITE_DESTROYED) [[likely]]
 		return 0;
 	else if (nbytes < 0) {
-		AbortResponse(NestException(std::make_exception_ptr(MakeErrno("Write error")),
+		AbortResponse(NestException(std::make_exception_ptr(MakeSocketError("Write error")),
 					    FcgiClientError("write to FastCGI application failed")));
 		return 0;
 	}
