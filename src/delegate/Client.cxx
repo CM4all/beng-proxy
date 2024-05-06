@@ -9,6 +9,7 @@
 #include "event/SocketEvent.hxx"
 #include "net/SocketDescriptor.hxx"
 #include "net/SendMessage.hxx"
+#include "net/SocketError.hxx"
 #include "net/MsgHdr.hxx"
 #include "io/Iovec.hxx"
 #include "io/UniqueFileDescriptor.hxx"
@@ -133,9 +134,11 @@ DelegateClient::HandleErrno(size_t length)
 
 		ep = std::make_exception_ptr(MakeErrno(e, "Error from delegate"));
 	} else {
+		const auto error = GetSocketError();
+
 		ReleaseSocket(PutAction::DESTROY);
 
-		ep = std::make_exception_ptr(std::runtime_error("Failed to receive errno"));
+		ep = std::make_exception_ptr(MakeSocketError(error, "Failed to receive errno"));
 	}
 
 	auto &_handler = handler;
@@ -173,7 +176,7 @@ DelegateClient::TryRead()
 
 	nbytes = recvmsg(s.Get(), &msg, MSG_CMSG_CLOEXEC);
 	if (nbytes < 0) {
-		DestroyError(std::make_exception_ptr(MakeErrno("recvmsg() failed")));
+		DestroyError(std::make_exception_ptr(MakeSocketError("recvmsg() failed")));
 		return;
 	}
 
