@@ -5,6 +5,7 @@
 #include "RLogger.hxx"
 #include "Instance.hxx"
 #include "access_log/Glue.hxx"
+#include "http/CommonHeaders.hxx"
 #include "http/IncomingRequest.hxx"
 
 LbRequestLogger::LbRequestLogger(LbInstance &_instance,
@@ -14,10 +15,10 @@ LbRequestLogger::LbRequestLogger(LbInstance &_instance,
 				 const IncomingHttpRequest &request) noexcept
 	:instance(_instance), http_stats(_http_stats),
 	 start_time(instance.event_loop.SteadyNow()),
-	 host(request.headers.Get("host")),
-	 x_forwarded_for(request.headers.Get("x-forwarded-for")),
-	 referer(request.headers.Get("referer")),
-	 user_agent(request.headers.Get("user-agent")),
+	 host(request.headers.Get(host_header)),
+	 x_forwarded_for(request.headers.Get(x_forwarded_for_header)),
+	 referer(request.headers.Get(referer_header)),
+	 user_agent(request.headers.Get(user_agent_header)),
 	 access_logger(_access_logger),
 	 access_logger_only_errors(_access_logger_only_errors)
 {

@@ -8,6 +8,7 @@
 #include "Instance.hxx"
 #include "session/Lease.hxx"
 #include "session/Session.hxx"
+#include "http/CommonHeaders.hxx"
 #include "http/IncomingRequest.hxx"
 #include "http/Headers.hxx"
 
@@ -15,7 +16,7 @@ bool
 Request::HasValidCsrfToken() noexcept
 {
 	CsrfToken given_csrf_token;
-	if (!given_csrf_token.Parse(request.headers.Get("x-cm4all-csrf-token")))
+	if (!given_csrf_token.Parse(request.headers.Get(x_cm4all_csrf_token_header)))
 		return false;
 
 	constexpr std::chrono::system_clock::duration max_age =

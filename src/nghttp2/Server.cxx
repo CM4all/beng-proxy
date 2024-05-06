@@ -12,6 +12,7 @@
 #include "pool/pool.hxx"
 #include "pool/PSocketAddress.hxx"
 #include "http/server/Handler.hxx"
+#include "http/CommonHeaders.hxx"
 #include "http/Date.hxx"
 #include "http/IncomingRequest.hxx"
 #include "http/Headers.hxx"
@@ -297,7 +298,7 @@ ServerConnection::Request::OnHeaderCallback(std::string_view name,
 		   we concatenate all Cookie headers with a semicolon
 		   here before Apache does the wrong thing */
 		if (StringIsEqual(allocated_name, "cookie")) {
-			const char *old_value = headers.Remove("cookie");
+			const char *old_value = headers.Remove(cookie_header);
 			if (old_value != nullptr)
 				allocated_value = alloc.Concat(old_value, "; ",
 							       value);
@@ -386,7 +387,7 @@ ServerConnection::Request::OnReceiveRequest(bool has_request_body) noexcept
 		request_body_control = NewFromPool<MultiFifoBufferIstream>(pool, pool, fbi_handler);
 		body = UnusedIstreamPtr(request_body_control);
 
-		const char *content_length = headers.Remove("content-length");
+		const char *content_length = headers.Remove(content_length_header);
 		if (content_length != nullptr) {
 			char *endptr;
 			auto length = strtoul(content_length, &endptr, 10);

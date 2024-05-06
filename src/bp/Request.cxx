@@ -10,6 +10,7 @@
 #include "Instance.hxx"
 #include "PendingResponse.hxx"
 #include "session/Lease.hxx"
+#include "http/CommonHeaders.hxx"
 #include "http/IncomingRequest.hxx"
 #include "widget/Context.hxx"
 #include "translation/Vary.hxx"
@@ -83,7 +84,7 @@ Request::IsHttps() const noexcept
 		   SSL/TLS-encrypted */
 		return true;
 
-	const char *https = request.headers.Get("x-cm4all-https");
+	const char *https = request.headers.Get(x_cm4all_https_header);
 	return https != nullptr && StringIsEqual(https, "on");
 }
 
@@ -105,7 +106,7 @@ Request::GetExternalUriHost(const TranslateResponse &tr) const noexcept
 	if (tr.host != nullptr)
 		return tr.host;
 
-	const char *host = request.headers.Get("host");
+	const char *host = request.headers.Get(host_header);
 	if (host == nullptr)
 		/* lousy fallback for an RFC-ignorant browser */
 		host = "localhost";
@@ -158,9 +159,9 @@ Request::ForwardResponseHeaders(HttpStatus status,
 
 	add_translation_vary_header(pool, headers, *translate.response);
 
-	product_token = headers.Remove("server");
+	product_token = headers.Remove(server_header);
 
-	date = headers.Remove("date");
+	date = headers.Remove(date_header);
 
 	return headers;
 }

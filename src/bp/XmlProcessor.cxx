@@ -26,6 +26,7 @@
 #include "istream/istream_memory.hxx"
 #include "istream/istream_string.hxx"
 #include "pool/pool.hxx"
+#include "http/CommonHeaders.hxx"
 #include "lib/fmt/RuntimeError.hxx"
 #include "util/StringCompare.hxx"
 #include "util/StringSplit.hxx"
@@ -1097,7 +1098,7 @@ XmlProcessor::OnError(std::exception_ptr ep) noexcept
 bool
 processable(const StringMap &headers) noexcept
 {
-	const char *content_type = headers.Get("content-type");
+	const char *content_type = headers.Get(content_type_header);
 	return content_type != nullptr &&
 		(strncmp(content_type, "text/html", 9) == 0 ||
 		 strncmp(content_type, "text/xml", 8) == 0 ||

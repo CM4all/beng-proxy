@@ -9,6 +9,7 @@
 #include "translation/Request.hxx"
 #include "translation/Response.hxx"
 #include "translation/Handler.hxx"
+#include "http/CommonHeaders.hxx"
 #include "http/IncomingRequest.hxx"
 #include "pool/pool.hxx"
 #include "stats/CacheStats.hxx"
@@ -63,7 +64,7 @@ Fill(TranslateRequest &t, const char *name,
 {
 	t.pool = name;
 	t.listener_tag = listener_tag;
-	t.host = request.headers.Get("host");
+	t.host = request.headers.Get(host_header);
 }
 
 struct LbTranslateHandlerRequest final : TranslateHandler {

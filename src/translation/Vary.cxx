@@ -7,6 +7,7 @@
 #include "translation/Protocol.hxx"
 #include "strmap.hxx"
 #include "memory/GrowingBuffer.hxx"
+#include "http/CommonHeaders.hxx"
 #include "http/HeaderWriter.hxx"
 #include "AllocatorPtr.hxx"
 
@@ -66,7 +67,7 @@ add_translation_vary_header(AllocatorPtr alloc, StringMap &headers,
 	if (value == nullptr)
 		return;
 
-	const char *old = headers.Get("vary");
+	const char *old = headers.Get(vary_header);
 	if (old != nullptr)
 		value = alloc.Concat(old, ",", value);
 

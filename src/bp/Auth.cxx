@@ -12,6 +12,7 @@
 #include "Instance.hxx"
 #include "session/Lease.hxx"
 #include "session/Session.hxx"
+#include "http/CommonHeaders.hxx"
 #include "http/IncomingRequest.hxx"
 #include "pool/pool.hxx"
 #include "translation/Handler.hxx"
@@ -126,7 +127,7 @@ Request::HandleAuth(UniquePoolPtr<TranslateResponse> _response)
 	t->listener_tag = translate.request.listener_tag;
 
 	if (connection.listener.GetAuthAltHost())
-		t->alt_host = request.headers.Get("x-cm4all-althost");
+		t->alt_host = request.headers.Get(x_cm4all_althost_header);
 
 	translate.previous = std::move(_response);
 

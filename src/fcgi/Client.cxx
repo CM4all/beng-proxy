@@ -14,6 +14,7 @@
 #include "istream/UnusedPtr.hxx"
 #include "istream/ConcatIstream.hxx"
 #include "istream/Bucket.hxx"
+#include "http/CommonHeaders.hxx"
 #include "http/HeaderLimits.hxx"
 #include "http/Method.hxx"
 #include "http/HeaderParser.hxx"
@@ -491,7 +492,7 @@ FcgiClient::SubmitResponse() noexcept
 
 	HttpStatus status = HttpStatus::OK;
 
-	const char *p = response.headers.Remove("status");
+	const char *p = response.headers.Remove(status_header);
 	if (p != nullptr) {
 		int i = atoi(p);
 		if (http_status_is_valid(static_cast<HttpStatus>(i)))
@@ -513,7 +514,7 @@ FcgiClient::SubmitResponse() noexcept
 	}
 
 	response.available = -1;
-	p = response.headers.Remove("content-length");
+	p = response.headers.Remove(content_length_header);
 	if (p != nullptr) {
 		char *endptr;
 		unsigned long long l = strtoull(p, &endptr, 10);
@@ -1277,7 +1278,7 @@ fcgi_client_request(struct pool *pool, EventLoop &event_loop,
 	if (available >= 0) {
 		const fmt::format_int value{available};
 
-		const char *content_type = headers.Get("content-type");
+		const char *content_type = headers.Get(content_type_header);
 
 		ps("HTTP_CONTENT_LENGTH", value.c_str())
 			/* PHP wants the parameter without
@@ -1290,7 +1291,7 @@ fcgi_client_request(struct pool *pool, EventLoop &event_loop,
 			ps("CONTENT_TYPE", content_type);
 	}
 
-	const char *https = headers.Remove("x-cm4all-https");
+	const char *https = headers.Remove(x_cm4all_https_header);
 	if (https != nullptr && strcmp(https, "on") == 0)
 		ps("HTTPS", https);
 

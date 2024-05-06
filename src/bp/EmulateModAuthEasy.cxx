@@ -7,6 +7,7 @@
 #include "AprMd5.hxx"
 #include "FileHeaders.hxx"
 #include "file/Address.hxx"
+#include "http/CommonHeaders.hxx"
 #include "http/Headers.hxx"
 #include "http/IncomingRequest.hxx"
 #include "translation/Vary.hxx"
@@ -184,7 +185,7 @@ CheckAccessFileFor(FileDescriptor directory, std::string_view base_relative,
 
 	AtScopeExit(file) { fclose(file); };
 
-	const char *authorization = request_headers.Get("authorization");
+	const char *authorization = request_headers.Get(authorization_header);
 	if (authorization == nullptr)
 		return false;
 
@@ -239,7 +240,7 @@ Request::EmulateModAuthEasy(const FileAddress &address,
 	if (!IsWhitespaceNotNull(*s))
 		return false;
 
-	const char *authorization = request.headers.Get("authorization");
+	const char *authorization = request.headers.Get(authorization_header);
 	if (authorization == nullptr) {
 		DispatchUnauthorized(*this);
 		return true;

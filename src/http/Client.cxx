@@ -4,6 +4,7 @@
 
 #include "Client.hxx"
 #include "Body.hxx"
+#include "CommonHeaders.hxx"
 #include "Upgrade.hxx"
 #include "ResponseHandler.hxx"
 #include "HeaderParser.hxx"
@@ -773,7 +774,7 @@ HttpClient::HeadersFinished()
 
 	auto &response_headers = response.headers;
 
-	if (const char *header_connection = response_headers.Remove("connection");
+	if (const char *header_connection = response_headers.Remove(connection_header);
 	    header_connection != nullptr &&
 	    http_list_contains_i(header_connection, "close"))
 		keep_alive = false;
@@ -790,12 +791,12 @@ HttpClient::HeadersFinished()
 	}
 
 	const char *transfer_encoding =
-		response_headers.Remove("transfer-encoding");
+		response_headers.Remove(transfer_encoding_header);
 	const char *content_length_string =
-		response_headers.Remove("content-length");
+		response_headers.Remove(content_length_header);
 
 	/* remove the other hop-by-hop response headers */
-	response_headers.Remove("proxy-authenticate");
+	response_headers.Remove(proxy_authenticate_header);
 
 	const bool upgrade =
 		transfer_encoding == nullptr && content_length_string == nullptr &&
@@ -1491,7 +1492,7 @@ HttpClient::HttpClient(struct pool &_pool, struct pool &_caller_pool,
 		   upgrade */
 		header_write(headers2, "connection", "upgrade");
 
-		const char *value = headers.Get("upgrade");
+		const char *value = headers.Get(upgrade_header);
 		if (value != nullptr)
 			header_write(headers2, "upgrade", value);
 	} else if (body) {

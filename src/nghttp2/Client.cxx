@@ -17,6 +17,7 @@
 #include "net/SocketProtocolError.hxx"
 #include "util/Cancellable.hxx"
 #include "util/StaticVector.hxx"
+#include "http/CommonHeaders.hxx"
 #include "http/Method.hxx"
 #include "http/ResponseHandler.hxx"
 #include "stopwatch.hxx"
@@ -274,7 +275,7 @@ ClientConnection::Request::SendRequest(HttpMethod method, const char *uri,
 	hdrs.push_back(MakeNv(":method", http_method_to_string(method)));
 	hdrs.push_back(MakeNv(":scheme", "http")); // TODO
 
-	const char *host = headers.Remove("host");
+	const char *host = headers.Remove(host_header);
 	if (host != nullptr)
 		hdrs.push_back(MakeNv(":authority", host));
 
@@ -379,7 +380,7 @@ ClientConnection::Request::SubmitResponse(bool has_response_body) noexcept
 		UnusedIstreamPtr body{response_body_control};
 
 		const char *content_length =
-			response_headers.Remove("content-length");
+			response_headers.Remove(content_length_header);
 		if (content_length != nullptr) {
 			char *endptr;
 			auto length = strtoul(content_length, &endptr, 10);

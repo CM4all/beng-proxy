@@ -13,6 +13,7 @@
 #include "ResourceAddress.hxx"
 #include "memory/sink_rubber.hxx"
 #include "stats/CacheStats.hxx"
+#include "http/CommonHeaders.hxx"
 #include "http/Date.hxx"
 #include "http/List.hxx"
 #include "http/Method.hxx"
@@ -887,7 +888,7 @@ CheckETagList(const char *list, const StringMap &response_headers) noexcept
 	if (strcmp(list, "*") == 0)
 		return true;
 
-	const char *etag = response_headers.Get("etag");
+	const char *etag = response_headers.Get(etag_header);
 	return etag != nullptr && http_list_contains(list, etag);
 }
 
@@ -929,7 +930,7 @@ CheckCacheRequest(struct pool &pool, const HttpCacheRequestInfo &info,
 	}
 
 	if (info.if_modified_since && !ignore_if_modified_since) {
-		const char *last_modified = document.response_headers.Get("last-modified");
+		const char *last_modified = document.response_headers.Get(last_modified_header);
 		if (last_modified != nullptr) {
 			if (strcmp(info.if_modified_since, last_modified) == 0) {
 				/* common fast path: client sends the previous
@@ -950,7 +951,7 @@ CheckCacheRequest(struct pool &pool, const HttpCacheRequestInfo &info,
 	}
 
 	if (info.if_unmodified_since) {
-		const char *last_modified = document.response_headers.Get("last-modified");
+		const char *last_modified = document.response_headers.Get(last_modified_header);
 		if (last_modified != nullptr) {
 			const auto iums = http_date_parse(info.if_unmodified_since);
 			const auto lm = http_date_parse(last_modified);
@@ -1117,7 +1118,7 @@ HttpCache::Use(struct pool &caller_pool,
 static bool
 IsHTTPS(const StringMap &headers) noexcept
 {
-	const char *https = headers.Get("x-cm4all-https");
+	const char *https = headers.Get(x_cm4all_https_header);
 	return https != nullptr && StringIsEqual(https, "on");
 }
 
@@ -1156,7 +1157,7 @@ HttpCache::Start(struct pool &caller_pool,
 		   header */
 
 		const bool https = IsHTTPS(headers);
-		const char *docroot = headers.Get("x-cm4all-docroot");
+		const char *docroot = headers.Get(x_cm4all_docroot_header);
 
 		if (https || docroot != nullptr) {
 			char buffer[32];

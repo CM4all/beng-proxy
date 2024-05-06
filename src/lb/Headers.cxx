@@ -5,12 +5,13 @@
 #include "Headers.hxx"
 #include "strmap.hxx"
 #include "AllocatorPtr.hxx"
+#include "http/CommonHeaders.hxx"
 
 static void
 forward_via(AllocatorPtr alloc, StringMap &headers,
 	    const char *local_host) noexcept
 {
-	const char *p = headers.Remove("via");
+	const char *p = headers.Remove(via_header);
 	if (p == nullptr) {
 		if (local_host != nullptr)
 			headers.Add(alloc, "via", alloc.Concat("1.1 ", local_host));
@@ -26,7 +27,7 @@ static void
 forward_xff(AllocatorPtr alloc, StringMap &headers,
 	    const char *remote_host) noexcept
 {
-	const char *p = headers.Remove("x-forwarded-for");
+	const char *p = headers.Remove(x_forwarded_for_header);
 	if (p == nullptr) {
 		if (remote_host != nullptr)
 			headers.Add(alloc, "x-forwarded-for", remote_host);

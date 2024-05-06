@@ -10,6 +10,7 @@
 #include "Connection.hxx"
 #include "Instance.hxx"
 #include "pool/pool.hxx"
+#include "http/CommonHeaders.hxx"
 #include "http/IncomingRequest.hxx"
 #include "translation/Handler.hxx"
 #include "translation/Service.hxx"
@@ -61,7 +62,7 @@ Request::HandleHttpAuth(UniquePoolPtr<TranslateResponse> _response) noexcept
 
 	assert(response.http_auth.data() != nullptr);
 
-	const char *authorization = request.headers.Get("authorization");
+	const char *authorization = request.headers.Get(authorization_header);
 
 	if (authorization == nullptr) {
 		DispatchError(HttpStatus::UNAUTHORIZED, "Unauthorized");

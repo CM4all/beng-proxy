@@ -8,6 +8,7 @@
 #include "strmap.hxx"
 #include "ResourceAddress.hxx"
 #include "io/Logger.hxx"
+#include "http/CommonHeaders.hxx"
 #include "http/Date.hxx"
 #include "http/PHeaderUtil.hxx"
 #include "http/PList.hxx"
@@ -34,19 +35,19 @@ http_cache_request_evaluate(HttpMethod method,
 		/* RFC 2616 13.11 "Write-Through Mandatory" */
 		return std::nullopt;
 
-	if (headers.Contains("range"))
+	if (headers.Contains(range_header))
 		return std::nullopt;
 
 	/* RFC 2616 14.8: "When a shared cache receives a request
 	   containing an Authorization field, it MUST NOT return the
 	   corresponding response as a reply to any other request
 	   [...] */
-	if (headers.Get("authorization") != nullptr)
+	if (headers.Contains(authorization_header))
 		return std::nullopt;
 
 	bool no_cache = false, only_if_cached = false;
 
-	if (const char *cache_control = headers.Get("cache-control")) {
+	if (const char *cache_control = headers.Get(cache_control_header)) {
 		for (std::string_view s : IterableSplitString(cache_control, ',')) {
 			s = Strip(s);
 
@@ -60,7 +61,7 @@ http_cache_request_evaluate(HttpMethod method,
 			}
 		}
 	} else if (obey_no_cache) {
-		if (const char *pragma = headers.Get("pragma");
+		if (const char *pragma = headers.Get(pragma_header);
 		    pragma != nullptr && strcmp(pragma, "no-cache") == 0)
 			return std::nullopt;
 	}
@@ -71,10 +72,10 @@ http_cache_request_evaluate(HttpMethod method,
 	info.only_if_cached = only_if_cached;
 	info.has_query_string = address.HasQueryString();
 
-	info.if_match = headers.Get("if-match");
-	info.if_none_match = headers.Get("if-none-match");
-	info.if_modified_since = headers.Get("if-modified-since");
-	info.if_unmodified_since = headers.Get("if-unmodified-since");
+	info.if_match = headers.Get(if_match_header);
+	info.if_none_match = headers.Get(if_none_match_header);
+	info.if_modified_since = headers.Get(if_modified_since_header);
+	info.if_unmodified_since = headers.Get(if_unmodified_since_header);
 
 	return info;
 }
@@ -179,7 +180,7 @@ http_cache_response_evaluate(const HttpCacheRequestInfo &request_info,
 
 	HttpCacheResponseInfo info;
 	info.expires = std::chrono::system_clock::from_time_t(-1);
-	if (const char *cache_control = headers.Get("cache-control")) {
+	if (const char *cache_control = headers.Get(cache_control_header)) {
 		for (std::string_view s : IterableSplitString(cache_control, ',')) {
 			s = Strip(s);
 
@@ -217,7 +218,7 @@ http_cache_response_evaluate(const HttpCacheRequestInfo &request_info,
 		   header and a max-age directive, the max-age directive
 		   overrides the Expires header" */
 
-		info.expires = parse_translate_time(headers.Get("expires"), offset);
+		info.expires = parse_translate_time(headers.Get(expires_header), offset);
 		if (info.expires != std::chrono::system_clock::from_time_t(-1) &&
 		    info.expires < now)
 			LogConcat(4, "HttpCache", "invalid 'expires' header");
@@ -234,11 +235,11 @@ http_cache_response_evaluate(const HttpCacheRequestInfo &request_info,
 		   explicit expiration time" */
 		return std::nullopt;
 
-	info.last_modified = headers.Get("last-modified");
-	info.etag = headers.Get("etag");
+	info.last_modified = headers.Get(last_modified_header);
+	info.etag = headers.Get(etag_header);
 
 	info.vary = nullptr;
-	const auto vary = headers.EqualRange("vary");
+	const auto vary = headers.EqualRange(vary_header);
 	for (auto i = vary.first; i != vary.second; ++i) {
 		const char *value = i->value;
 		if (*value == 0)
@@ -298,7 +299,7 @@ http_cache_prefer_cached(const HttpCacheDocument &document,
 	if (document.info.etag == nullptr)
 		return false;
 
-	const char *etag = response_headers.Get("etag");
+	const char *etag = response_headers.Get(etag_header);
 
 	/* if the ETags are the same, then the resource hasn't changed,
 	   but the server was too lazy to check that properly */

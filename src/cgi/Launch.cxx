@@ -9,6 +9,7 @@
 #include "product.h"
 #include "spawn/IstreamSpawn.hxx"
 #include "spawn/Prepared.hxx"
+#include "http/CommonHeaders.hxx"
 #include "http/Method.hxx"
 #include "io/FdHolder.hxx"
 #include "util/CharUtil.hxx"
@@ -119,7 +120,7 @@ PrepareCgi(struct pool &pool, PreparedChildProcess &p,
 		p.SetEnv("CONTENT_LENGTH", fmt::format_int{content_length}.c_str());
 	}
 
-	const char *https = headers.Get("x-cm4all-https");
+	const char *https = headers.Get(x_cm4all_https_header);
 	if (https != nullptr && strcmp(https, "on") == 0)
 		p.SetEnv("HTTPS", "on");
 

@@ -14,6 +14,18 @@ struct pool;
 class AllocatorPtr;
 
 /**
+ * A key string plus a precalculated hash.  This can be used to
+ * calculate hashes of well-known keys at compile time.
+ */
+struct StringMapKey {
+	std::size_t hash;
+	const char *string;
+
+	constexpr StringMapKey(const char *s) noexcept
+		:hash(djb_hash_string(s)), string(s) {}
+};
+
+/**
  * String hash map.
  */
 class StringMap {
@@ -33,11 +45,19 @@ class StringMap {
 			std::size_t operator()(const char *k) const noexcept {
 				return djb_hash_string(k);
 			}
+
+			constexpr std::size_t operator()(StringMapKey k) const noexcept {
+				return k.hash;
+			}
 		};
 
 		struct Equal {
 			[[gnu::pure]]
 			bool operator()(const char *a, const char *b) const noexcept;
+
+			std::size_t operator()(StringMapKey a, const char *b) const noexcept {
+				return operator()(a.string, b);
+			}
 		};
 
 		struct GetKey {
@@ -128,7 +148,7 @@ public:
 	void Add(AllocatorPtr alloc, const char *key, const char *value) noexcept;
 	const char *Set(AllocatorPtr alloc,
 			const char *key, const char *value) noexcept;
-	const char *Remove(const char *key) noexcept;
+	const char *Remove(StringMapKey key) noexcept;
 
 	/**
 	 * Remove all values with the specified key.
@@ -146,12 +166,15 @@ public:
 	const char *Get(const char *key) const noexcept;
 
 	[[gnu::pure]]
-	bool Contains(const char *key) const noexcept {
+	const char *Get(StringMapKey key) const noexcept;
+
+	[[gnu::pure]]
+	bool Contains(const auto &key) const noexcept {
 		return Get(key) != nullptr;
 	}
 
 	[[gnu::pure]]
-	std::pair<equal_iterator, equal_iterator> EqualRange(const char *key) const noexcept;
+	std::pair<equal_iterator, equal_iterator> EqualRange(StringMapKey key) const noexcept;
 
 	void ForEach(const char *key, std::invocable<const char *> auto f) const {
 		map.for_each(key, [&f](const Item &item){

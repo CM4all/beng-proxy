@@ -8,6 +8,7 @@
 #include "net/ConnectSocket.hxx"
 #include "net/log/Datagram.hxx"
 #include "net/log/OneLine.hxx"
+#include "http/CommonHeaders.hxx"
 #include "http/IncomingRequest.hxx"
 #include "http/Method.hxx"
 #include "http/Status.hxx"
@@ -134,8 +135,8 @@ AccessLogGlue::Log(std::chrono::system_clock::time_point now,
 {
 	Log(now, request, site, analytics_id, generator,
 	    forwarded_to,
-	    request.headers.Get("host"),
-	    request.headers.Get("x-forwarded-for"),
+	    request.headers.Get(host_header),
+	    request.headers.Get(x_forwarded_for_header),
 	    referer, user_agent,
 	    status, content_length,
 	    bytes_received, bytes_sent,

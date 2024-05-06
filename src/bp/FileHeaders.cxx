@@ -6,6 +6,7 @@
 #include "Request.hxx"
 #include "Instance.hxx"
 #include "file/Headers.hxx"
+#include "http/CommonHeaders.hxx"
 #include "http/HeaderWriter.hxx"
 #include "http/IncomingRequest.hxx"
 #include "http/Headers.hxx"
@@ -158,23 +159,23 @@ Request::EvaluateFileRequest(FileDescriptor fd, const struct statx &st,
 
 	if (tr.status == HttpStatus{} && request.method == HttpMethod::GET &&
 	    !IsTransformationEnabled()) {
-		const char *p = request_headers.Get("range");
+		const char *p = request_headers.Get(range_header);
 
 		if (p != nullptr &&
-		    check_if_range(request_headers.Get("if-range"), fd, st,
+		    check_if_range(request_headers.Get(if_range_header), fd, st,
 				   use_xattr))
 			file_request.range.ParseRangeHeader(p);
 	}
 
 	if (!IsTransformationEnabled()) {
-		const char *p = request_headers.Get("if-match");
+		const char *p = request_headers.Get(if_match_header);
 		if (p != nullptr && !CheckETagList(p, fd, st, use_xattr)) {
 			DispatchError(HttpStatus::PRECONDITION_FAILED,
 				      {}, nullptr);
 			return false;
 		}
 
-		p = request_headers.Get("if-none-match");
+		p = request_headers.Get(if_none_match_header);
 		if (p != nullptr) {
 			if (CheckETagList(p, fd, st, use_xattr)) {
 				DispatchNotModified(*this, tr, fd, st,
@@ -194,7 +195,7 @@ Request::EvaluateFileRequest(FileDescriptor fd, const struct statx &st,
 	if (!IsProcessorEnabled()) {
 		const char *p = ignore_if_modified_since
 			? nullptr
-			: request_headers.Get("if-modified-since");
+			: request_headers.Get(if_modified_since_header);
 		if (p != nullptr) {
 			const auto t = http_date_parse(p);
 			if (t != std::chrono::system_clock::from_time_t(-1) &&
@@ -204,7 +205,7 @@ Request::EvaluateFileRequest(FileDescriptor fd, const struct statx &st,
 			}
 		}
 
-		p = request_headers.Get("if-unmodified-since");
+		p = request_headers.Get(if_unmodified_since_header);
 		if (p != nullptr) {
 			const auto t = http_date_parse(p);
 			if (t != std::chrono::system_clock::from_time_t(-1) &&

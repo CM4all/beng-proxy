@@ -15,6 +15,7 @@
 #include "session/Session.hxx"
 #include "ExternalSession.hxx"
 #include "translation/AddressSuffixRegistry.hxx"
+#include "http/CommonHeaders.hxx"
 #include "http/IncomingRequest.hxx"
 #include "http/Method.hxx"
 #include "istream/istream_memory.hxx"
@@ -424,14 +425,14 @@ static void
 fill_translate_request_user_agent(TranslateRequest &t,
 				  const StringMap &headers) noexcept
 {
-	t.user_agent = headers.Get("user-agent");
+	t.user_agent = headers.Get(user_agent_header);
 }
 
 static void
 fill_translate_request_language(TranslateRequest &t,
 				const StringMap &headers) noexcept
 {
-	t.accept_language = headers.Get("accept-language");
+	t.accept_language = headers.Get(accept_language_header);
 }
 
 static void
@@ -539,7 +540,7 @@ Request::RepeatTranslation(UniquePoolPtr<TranslateResponse> _response) noexcept
 		} else
 			translate.request.check_header = nullptr;
 
-		translate.request.authorization = request.headers.Get("authorization");
+		translate.request.authorization = request.headers.Get(authorization_header);
 	}
 
 	if (response.internal_redirect.data() != nullptr) {
@@ -763,7 +764,7 @@ Request::OnTranslateResponse(UniquePoolPtr<TranslateResponse> _response) noexcep
 	if (response.https_only != 0 && !IsHttps()) {
 		/* not encrypted: redirect to https:// */
 
-		const char *host = request.headers.Get("host");
+		const char *host = request.headers.Get(host_header);
 		if (host == nullptr) {
 			DispatchError(HttpStatus::BAD_REQUEST, "No Host header");
 			return;
@@ -808,7 +809,7 @@ Request::OnTranslateResponse(UniquePoolPtr<TranslateResponse> _response) noexcep
 		 /* allow combining HTTP_AUTH and TOKEN_AUTH; in that
 		    case, use HTTP_AUTH only if an "Authorization"
 		    header was received */
-		 (request.headers.Get("authorization") != nullptr ||
+		 (request.headers.Contains(authorization_header) ||
 		  response.token_auth.data() == nullptr))
 		HandleHttpAuth(std::move(_response));
 	else if (response.token_auth.data() != nullptr)
@@ -1015,7 +1016,7 @@ fill_translate_request(TranslateRequest &t,
 {
 	const AllocatorPtr alloc(request.pool);
 
-	t.host = request.headers.Get("host");
+	t.host = request.headers.Get(host_header);
 	t.uri = alloc.DupZ(uri.base);
 
 	t.listener_tag = listener_tag;

@@ -4,6 +4,7 @@
 
 #include "DirectResourceLoader.hxx"
 #include "ResourceAddress.hxx"
+#include "http/CommonHeaders.hxx"
 #include "http/XForwardedFor.hxx"
 #include "http/ResponseHandler.hxx"
 #include "file/Address.hxx"
@@ -33,7 +34,7 @@ static const char *
 GetRemoteHost(const XForwardedForConfig &config, AllocatorPtr alloc,
 	      const StringMap &headers) noexcept
 {
-	const char *xff = headers.Get("x-forwarded-for");
+	const char *xff = headers.Get(x_forwarded_for_header);
 	if (xff == nullptr)
 		return nullptr;
 

@@ -12,6 +12,7 @@
 #include "PendingResponse.hxx"
 #include "Instance.hxx"
 #include "ClassifyMimeType.hxx"
+#include "http/CommonHeaders.hxx"
 #include "http/IncomingRequest.hxx"
 #include "http/Headers.hxx"
 #include "http/PHeaderUtil.hxx"
@@ -51,6 +52,7 @@
 
 using std::string_view_literals::operator""sv;
 
+[[gnu::noinline]]
 static const char *
 request_absolute_uri(const IncomingHttpRequest &request,
 		     const char *scheme, const char *host,
@@ -62,7 +64,7 @@ request_absolute_uri(const IncomingHttpRequest &request,
 		scheme = "http";
 
 	if (host == nullptr)
-		host = request.headers.Get("host");
+		host = request.headers.Get(host_header);
 
 	if (host == nullptr || !VerifyUriHostPort(host))
 		return nullptr;
@@ -400,7 +402,7 @@ Request::InvokeXmlProcessor(HttpStatus status,
 static bool
 css_processable(const StringMap &headers) noexcept
 {
-	const char *content_type = headers.Get("content-type");
+	const char *content_type = headers.Get(content_type_header);
 	return content_type != nullptr &&
 		strncmp(content_type, "text/css", 8) == 0;
 }
@@ -993,7 +995,7 @@ Request::OnHttpResponse(HttpStatus status, StringMap &&_headers,
 		/* get the X-CM4all-Chain header from the unfiltered
 		   response headers, to be sent to the translation
 		   server later when CHAIN is evaluated */
-		translate.chain_header = headers.Remove("x-cm4all-chain");
+		translate.chain_header = headers.Remove(x_cm4all_chain_header);
 
 	if (http_status_is_success(status)) {
 		using namespace BengProxy;
@@ -1001,7 +1003,7 @@ Request::OnHttpResponse(HttpStatus status, StringMap &&_headers,
 		if (!transformed &&
 		    (translate.response->response_header_forward[HeaderGroup::TRANSFORMATION] == HeaderForwardMode::MANGLE)) {
 			/* handle the response header "x-cm4all-view" */
-			const char *view_name = headers.Get("x-cm4all-view");
+			const char *view_name = headers.Get(x_cm4all_view_header);
 			if (view_name != nullptr) {
 				const WidgetView *view =
 					FindByName(translate.response->views, view_name);
@@ -1035,7 +1037,7 @@ Request::OnHttpResponse(HttpStatus status, StringMap &&_headers,
 	if (generator == nullptr)
 		/* if there is a GENERATOR header, include it in the
 		   access log */
-		if (const auto *generator_header = headers.Get("x-cm4all-generator"))
+		if (const auto *generator_header = headers.Get(x_cm4all_generator_header))
 			rl.generator = generator_header;
 
 	auto new_headers = ForwardResponseHeaders(status, headers,

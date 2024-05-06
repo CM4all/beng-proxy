@@ -4,6 +4,7 @@
 
 #include "Session.hxx"
 #include "strmap.hxx"
+#include "http/CommonHeaders.hxx"
 #include "http/CookieExtract.hxx"
 #include "util/HexParse.hxx"
 #include "util/StringSplit.hxx"
@@ -11,7 +12,7 @@
 sticky_hash_t
 lb_session_get(const StringMap &request_headers, const char *cookie_name)
 {
-	const char *cookie = request_headers.Get("cookie");
+	const char *cookie = request_headers.Get(cookie_header);
 	if (cookie == NULL)
 		return 0;
 

@@ -3,6 +3,7 @@
 // author: Max Kellermann <mk@cm4all.com>
 
 #include "SimpleHttpResponse.hxx"
+#include "http/CommonHeaders.hxx"
 #include "http/IncomingRequest.hxx"
 #include "uri/RedirectHttps.hxx"
 #include "http/Status.hxx"
@@ -20,7 +21,7 @@ SendResponse(IncomingHttpRequest &request,
 		: response.message.c_str();
 
 	if (response.redirect_https) {
-		const char *host = request.headers.Get("host");
+		const char *host = request.headers.Get(host_header);
 		if (host == nullptr) {
 			request.SendSimpleResponse(HttpStatus::BAD_REQUEST,
 						   nullptr,

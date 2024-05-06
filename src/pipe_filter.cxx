@@ -3,6 +3,7 @@
 // author: Max Kellermann <mk@cm4all.com>
 
 #include "pipe_filter.hxx"
+#include "http/CommonHeaders.hxx"
 #include "http/ResponseHandler.hxx"
 #include "stopwatch.hxx"
 #include "istream_stopwatch.hxx"
@@ -104,7 +105,7 @@ pipe_filter(SpawnService &spawn_service, EventLoop &event_loop,
 
 	stopwatch.RecordEvent("fork");
 
-	etag = headers.Remove("etag");
+	etag = headers.Remove(etag_header);
 	if (etag != nullptr) {
 		/* we cannot pass the original ETag to the client, because the
 		   pipe has modified the resource (which is what the pipe is
@@ -120,7 +121,7 @@ pipe_filter(SpawnService &spawn_service, EventLoop &event_loop,
 
 	/* contents change, digest changes: discard the header if it
 	   exists */
-	headers.Remove("digest");
+	headers.Remove(digest_header);
 
 	response = istream_stopwatch_new(pool, std::move(response),
 					 std::move(stopwatch));

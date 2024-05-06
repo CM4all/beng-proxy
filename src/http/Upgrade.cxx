@@ -3,13 +3,14 @@
 // author: Max Kellermann <mk@cm4all.com>
 
 #include "Upgrade.hxx"
+#include "CommonHeaders.hxx"
 #include "Headers.hxx"
 #include "strmap.hxx"
 
 bool
 http_is_upgrade(const StringMap &headers) noexcept
 {
-	return headers.Contains("upgrade");
+	return headers.Contains(upgrade_header);
 }
 
 bool

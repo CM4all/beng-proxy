@@ -18,6 +18,7 @@
 #include "http/IncomingRequest.hxx"
 #include "http/Client.hxx"
 #include "fs/Handler.hxx"
+#include "http/CommonHeaders.hxx"
 #include "http/ResponseHandler.hxx"
 #include "http/Headers.hxx"
 #include "http/Method.hxx"
@@ -160,7 +161,7 @@ LbRequest::GetHostHash() const noexcept
 inline sticky_hash_t
 LbRequest::GetXHostHash() const noexcept
 {
-	const char *host = request.headers.Get("x-cm4all-host");
+	const char *host = request.headers.Get(x_cm4all_host_header);
 	if (host == nullptr)
 		return 0;
 
@@ -270,7 +271,7 @@ LbRequest::GetStickySource() const noexcept
 	case StickyMode::XHOST:
 		/* calculate the sticky hash from "X-CM4all-Host" request
 		   header */
-		if (const char *host = request.headers.Get("x-cm4all-host"))
+		if (const char *host = request.headers.Get(x_cm4all_host_header))
 			return AsBytes(std::string_view{host});
 
 		break;
@@ -305,7 +306,7 @@ LbRequest::OnHttpResponse(HttpStatus status, StringMap &&_headers,
 		   client isn't interested; but what if we have
 		   chained several beng-lb instances?  do we need to
 		   have a configuration setting for this? */
-		if (const auto *generator_header = _headers.Remove("x-cm4all-generator"))
+		if (const auto *generator_header = _headers.Remove(x_cm4all_generator_header))
 			rl.generator = generator_header;
 
 	HttpHeaders headers(std::move(_headers));

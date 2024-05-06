@@ -8,6 +8,7 @@
 #include "Widget.hxx"
 #include "Context.hxx"
 #include "Resolver.hxx"
+#include "http/CommonHeaders.hxx"
 #include "http/HeaderUtil.hxx"
 #include "http/ResponseHandler.hxx"
 #include "strmap.hxx"
@@ -135,12 +136,12 @@ widget_response_format(struct pool &pool, const Widget &widget,
 {
 	assert(body);
 
-	const char *p = headers.Get("content-encoding");
+	const char *p = headers.Get(content_encoding_header);
 	if (p != nullptr && strcmp(p, "identity") != 0)
 		throw WidgetError(widget, WidgetErrorCode::UNSUPPORTED_ENCODING,
 				  "widget sent non-identity response, cannot embed");
 
-	const char *content_type = headers.Get("content-type");
+	const char *content_type = headers.Get(content_type_header);
 
 	if (plain_text) {
 		if (content_type == nullptr ||

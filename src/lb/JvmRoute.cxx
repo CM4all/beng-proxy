@@ -4,6 +4,7 @@
 
 #include "JvmRoute.hxx"
 #include "ClusterConfig.hxx"
+#include "http/CommonHeaders.hxx"
 #include "http/CookieExtract.hxx"
 #include "util/StringSplit.hxx"
 #include "strmap.hxx"
@@ -14,7 +15,7 @@ sticky_hash_t
 lb_jvm_route_get(const StringMap &request_headers,
 		 const LbClusterConfig &cluster) noexcept
 {
-	const char *cookie = request_headers.Get("cookie");
+	const char *cookie = request_headers.Get(cookie_header);
 	if (cookie == NULL)
 		return 0;
 

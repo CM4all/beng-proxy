@@ -79,7 +79,7 @@ StringMap::Set(AllocatorPtr alloc, const char *key, const char *value) noexcept
 }
 
 const char *
-StringMap::Remove(const char *key) noexcept
+StringMap::Remove(const StringMapKey key) noexcept
 {
 	auto i = map.find(key);
 	if (i == map.end())
@@ -128,8 +128,18 @@ StringMap::Get(const char *key) const noexcept
 	return i->value;
 }
 
+const char *
+StringMap::Get(const StringMapKey key) const noexcept
+{
+	auto i = map.find(key);
+	if (i == map.end())
+		return nullptr;
+
+	return i->value;
+}
+
 std::pair<StringMap::equal_iterator, StringMap::equal_iterator>
-StringMap::EqualRange(const char *key) const noexcept
+StringMap::EqualRange(const StringMapKey key) const noexcept
 {
 	return map.equal_range(key);
 }

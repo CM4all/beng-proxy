@@ -4,6 +4,7 @@
 
 #include "Parser.hxx"
 #include "Error.hxx"
+#include "http/CommonHeaders.hxx"
 #include "http/HeaderParser.hxx"
 #include "util/ForeignFifoBuffer.hxx"
 #include "util/StringStrip.hxx"
@@ -16,7 +17,7 @@ inline Completion
 CGIParser::Finish(ForeignFifoBuffer<std::byte> &buffer)
 {
 	/* parse the status */
-	const char *p = headers.Remove("status");
+	const char *p = headers.Remove(status_header);
 	if (p != nullptr) {
 		int i = atoi(p);
 		if (http_status_is_valid((HttpStatus)i))
@@ -27,7 +28,7 @@ CGIParser::Finish(ForeignFifoBuffer<std::byte> &buffer)
 		/* there cannot be a response body */
 		remaining = 0;
 	} else {
-		p = headers.Remove("content-length");
+		p = headers.Remove(content_length_header);
 		if (p != nullptr) {
 			/* parse the Content-Length response header */
 			char *endptr;

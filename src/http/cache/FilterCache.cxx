@@ -5,6 +5,7 @@
 #include "FilterCache.hxx"
 #include "cache.hxx"
 #include "strmap.hxx"
+#include "http/CommonHeaders.hxx"
 #include "http/ResponseHandler.hxx"
 #include "AllocatorPtr.hxx"
 #include "ResourceAddress.hxx"
@@ -365,7 +366,7 @@ filter_cache_request_evaluate(AllocatorPtr alloc,
 	if (source_id == nullptr)
 		return nullptr;
 
-	const char *user = headers.Get("x-cm4all-beng-user");
+	const char *user = headers.Get(x_cm4all_beng_user_header);
 	if (user == nullptr)
 		user = "";
 
@@ -437,14 +438,14 @@ filter_cache_response_evaluate(EventLoop &event_loop, FilterCacheInfo &info,
 		/* too large for the cache */
 		return false;
 
-	p = headers.Get("cache-control");
+	p = headers.Get(cache_control_header);
 	if (p != nullptr && http_list_contains(p, "no-store"))
 		return false;
 
 	const auto now = event_loop.SystemNow();
 	std::chrono::system_clock::duration offset = std::chrono::system_clock::duration::zero();
 
-	p = headers.Get("date");
+	p = headers.Get(date_header);
 	if (p != nullptr) {
 		auto date = http_date_parse(p);
 		if (date != std::chrono::system_clock::from_time_t(-1))
@@ -452,14 +453,14 @@ filter_cache_response_evaluate(EventLoop &event_loop, FilterCacheInfo &info,
 	}
 
 	if (info.expires == std::chrono::system_clock::from_time_t(-1)) {
-		info.expires = parse_translate_time(headers.Get("expires"), offset);
+		info.expires = parse_translate_time(headers.Get(expires_header), offset);
 		if (info.expires != std::chrono::system_clock::from_time_t(-1) &&
 		    info.expires < now)
 			LogConcat(2, "FilterCache", "invalid 'expires' header");
 	}
 
 	/*
-	  info.out_etag = headers.Get("etag");
+	  info.out_etag = headers.Get(etag_header);
 	*/
 
 	return true;

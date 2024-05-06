@@ -10,6 +10,7 @@
 #include "session/Manager.hxx"
 #include "session/Session.hxx"
 #include "http/IncomingRequest.hxx"
+#include "http/CommonHeaders.hxx"
 #include "http/CookieExtract.hxx"
 #include "util/djb_hash.hxx"
 #include "util/HexFormat.hxx"
@@ -22,7 +23,7 @@
 static std::string_view
 ExtractCookieRaw(const StringMap &headers, std::string_view name) noexcept
 {
-	const auto r = headers.EqualRange("cookie");
+	const auto r = headers.EqualRange(cookie_header);
 
 	for (auto i = r.first; i != r.second; ++i) {
 		const auto value = ExtractCookieRaw(i->value, name);
@@ -71,7 +72,7 @@ build_session_cookie_name(AllocatorPtr alloc, const BpConfig *config,
 	if (!config->dynamic_session_cookie)
 		return config->session_cookie.c_str();
 
-	const char *host = headers.Get("host");
+	const char *host = headers.Get(host_header);
 	if (host == nullptr || *host == 0)
 		return config->session_cookie.c_str();
 
@@ -97,7 +98,7 @@ Request::GetCookieSessionId() noexcept
 void
 Request::DetermineSession() noexcept
 {
-	const char *user_agent = request.headers.Get("user-agent");
+	const char *user_agent = request.headers.Get(user_agent_header);
 
 	/* note: this method is called very early in the request handler,
 	   and the "stateless" flag may later be updated by
@@ -227,7 +228,7 @@ get_request_realm(AllocatorPtr alloc, const StringMap &request_headers,
 		return alloc.DupZ(ToStringView(auth_base));
 	}
 
-	const char *host = request_headers.Get("host");
+	const char *host = request_headers.Get(host_header);
 	if (host != nullptr)
 		return alloc.DupToLower(host);
 

@@ -102,7 +102,7 @@ try {
 	if (!http_status_is_success(status))
 		throw std::runtime_error("HTTP request not sucessful");
 
-	const char *content_type = headers.Get("content-type");
+	const char *content_type = headers.Get(content_type_header);
 	if (content_type == nullptr ||
 	    GetMimeTypeBase(content_type) != "text/plain")
 		throw std::runtime_error("Not text/plain");

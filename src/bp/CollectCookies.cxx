@@ -6,6 +6,7 @@
 #include "strmap.hxx"
 #include "session/Lease.hxx"
 #include "session/Session.hxx"
+#include "http/CommonHeaders.hxx"
 #include "http/CookieClient.hxx"
 
 const char *
@@ -31,9 +32,9 @@ ParseSetCookie(CookieJar &cookies,
 void
 Request::CollectCookies(const StringMap &headers) noexcept
 {
-	auto r = headers.EqualRange("set-cookie2");
+	auto r = headers.EqualRange(set_cookie2_header);
 	if (r.first == r.second) {
-		r = headers.EqualRange("set-cookie");
+		r = headers.EqualRange(set_cookie_header);
 		if (r.first == r.second)
 			return;
 	}

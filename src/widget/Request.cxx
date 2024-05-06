@@ -18,6 +18,7 @@
 #include "bp/TextProcessor.hxx"
 #include "bp/session/Lease.hxx"
 #include "bp/session/Session.hxx"
+#include "http/CommonHeaders.hxx"
 #include "http/CookieClient.hxx"
 #include "ResourceLoader.hxx"
 #include "bp/Global.hxx"
@@ -358,7 +359,7 @@ WidgetRequest::ProcessResponse(HttpStatus status,
 static bool
 css_processable(const StringMap &headers) noexcept
 {
-	const char *content_type = headers.Get("content-type");
+	const char *content_type = headers.Get(content_type_header);
 	return content_type != nullptr &&
 		strncmp(content_type, "text/css", 8) == 0;
 }
@@ -454,7 +455,7 @@ WidgetRequest::TransformResponse(HttpStatus status,
 				 StringMap &&headers, UnusedIstreamPtr body,
 				 const Transformation &t) noexcept
 {
-	const char *p = headers.Get("content-encoding");
+	const char *p = headers.Get(content_encoding_header);
 	if (p != nullptr && strcmp(p, "identity") != 0) {
 		body.Clear();
 		DispatchError(WidgetErrorCode::UNSUPPORTED_ENCODING,
@@ -539,9 +540,9 @@ static void
 widget_collect_cookies(CookieJar &jar, const StringMap &headers,
 		       const char *host_and_port)
 {
-	auto r = headers.EqualRange("set-cookie2");
+	auto r = headers.EqualRange(set_cookie2_header);
 	if (r.first == r.second)
-		r = headers.EqualRange("set-cookie");
+		r = headers.EqualRange(set_cookie_header);
 
 	for (auto i = r.first; i != r.second; ++i)
 		cookie_jar_set_cookie2(jar, i->value, host_and_port, nullptr);
@@ -550,7 +551,7 @@ widget_collect_cookies(CookieJar &jar, const StringMap &headers,
 void
 WidgetRequest::UpdateView(StringMap &headers)
 {
-	const char *view_name = headers.Get("x-cm4all-view");
+	const char *view_name = headers.Get(x_cm4all_view_header);
 	if (view_name != nullptr) {
 		/* yes, look it up in the class */
 
@@ -611,9 +612,9 @@ WidgetRequest::OnHttpResponse(HttpStatus status, StringMap &&headers,
 						       host_and_port);
 		} else {
 #ifndef NDEBUG
-			auto r = headers.EqualRange("set-cookie2");
+			auto r = headers.EqualRange(set_cookie2_header);
 			if (r.first == r.second)
-				r = headers.EqualRange("set-cookie");
+				r = headers.EqualRange(set_cookie_header);
 			if (r.first != r.second)
 				widget.logger(4, "ignoring Set-Cookie from widget: no host");
 #endif
@@ -621,7 +622,7 @@ WidgetRequest::OnHttpResponse(HttpStatus status, StringMap &&headers,
 	}
 
 	if (http_status_is_redirect(status)) {
-		const char *location = headers.Get("location");
+		const char *location = headers.Get(location_header);
 		if (location != nullptr && HandleRedirect(location, body)) {
 			return;
 		}

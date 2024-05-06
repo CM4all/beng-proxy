@@ -12,6 +12,7 @@
 #include "widget/Class.hxx"
 #include "widget/Context.hxx"
 #include "pool/pool.hxx"
+#include "http/CommonHeaders.hxx"
 #include "util/CharUtil.hxx"
 #include "util/HexFormat.hxx"
 #include "util/StringCompare.hxx"
@@ -24,7 +25,7 @@ using std::string_view_literals::operator""sv;
 bool
 text_processor_allowed(const StringMap &headers) noexcept
 {
-	const char *content_type = headers.Get("content-type");
+	const char *content_type = headers.Get(content_type_header);
 	return content_type != nullptr && IsTextMimeType(content_type);
 }
 

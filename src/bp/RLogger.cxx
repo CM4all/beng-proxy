@@ -5,6 +5,7 @@
 #include "RLogger.hxx"
 #include "Instance.hxx"
 #include "access_log/Glue.hxx"
+#include "http/CommonHeaders.hxx"
 #include "http/IncomingRequest.hxx"
 
 BpRequestLogger::BpRequestLogger(BpInstance &_instance,
@@ -40,8 +41,8 @@ BpRequestLogger::LogHttpRequest(IncomingHttpRequest &request,
 					 analytics_id,
 					 generator != nullptr && *generator != 0 ? generator : nullptr,
 					 nullptr,
-					 request.headers.Get("referer"),
-					 request.headers.Get("user-agent"),
+					 request.headers.Get(referer_header),
+					 request.headers.Get(user_agent_header),
 					 status, length,
 					 bytes_received, bytes_sent,
 					 duration);

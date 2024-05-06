@@ -3,6 +3,7 @@
 // author: Max Kellermann <mk@cm4all.com>
 
 #include "TranslationCache.hxx"
+#include "http/CommonHeaders.hxx"
 #include "http/IncomingRequest.hxx"
 #include "translation/InvalidateParser.hxx"
 #include "translation/Response.hxx"
@@ -59,7 +60,7 @@ public:
 				      const IncomingHttpRequest &request,
 				      const char *_listener_tag) noexcept
 		:host(vary.host
-		      ? WithVary(request.headers.Get("host"), vary.host)
+		      ? WithVary(request.headers.Get(host_header), vary.host)
 		      : std::string_view{}),
 		 listener_tag(WithVary(_listener_tag, vary.listener_tag)),
 		 buffer(new char[CalculateKeyIteratorBufferSize(host, listener_tag)]) {}

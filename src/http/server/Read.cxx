@@ -5,6 +5,7 @@
 #include "Internal.hxx"
 #include "Request.hxx"
 #include "Handler.hxx"
+#include "http/CommonHeaders.hxx"
 #include "http/HeaderLimits.hxx"
 #include "http/Method.hxx"
 #include "http/Upgrade.hxx"
@@ -190,23 +191,23 @@ HttpServerConnection::HeadersFinished() noexcept
 	   be tracked by FilteredSocket (auto-refreshing) */
 	idle_timer.Cancel();
 
-	const char *value = r.headers.Get("expect");
+	const char *value = r.headers.Get(expect_header);
 	request.expect_100_continue = value != nullptr &&
 		StringIsEqual(value, "100-continue");
 	if (value != nullptr && !StringIsEqual(value, "100-continue"))
 		request.SetError(HttpStatus::EXPECTATION_FAILED, "Unrecognized expectation\n");
 
-	value = r.headers.Get("connection");
+	value = r.headers.Get(connection_header);
 	keep_alive = value == nullptr || !http_list_contains_i(value, "close");
 
 	request.upgrade = http_is_upgrade(r.headers);
 
-	value = r.headers.Get("transfer-encoding");
+	value = r.headers.Get(transfer_encoding_header);
 
 	off_t content_length = -1;
 	const bool chunked = value != nullptr && StringIsEqualIgnoreCase(value, "chunked");
 	if (!chunked) {
-		value = r.headers.Get("content-length");
+		value = r.headers.Get(content_length_header);
 
 		if (request.upgrade) {
 			if (value != nullptr) {
