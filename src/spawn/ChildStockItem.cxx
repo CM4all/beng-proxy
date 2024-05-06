@@ -10,8 +10,8 @@
 #include "spawn/Mount.hxx"
 #include "spawn/Prepared.hxx"
 #include "spawn/ProcessHandle.hxx"
-#include "system/Error.hxx"
 #include "net/EasyMessage.hxx"
+#include "net/SocketError.hxx"
 #include "net/UniqueSocketDescriptor.hxx"
 #include "io/FdHolder.hxx"
 #include "util/StringList.hxx"
@@ -75,7 +75,7 @@ ChildStockItem::Spawn(ChildStockClass &cls, void *info,
 	    cls.WantStderrFd(info) &&
 	    !UniqueSocketDescriptor::CreateSocketPair(AF_LOCAL, SOCK_SEQPACKET, 0,
 						      stderr_socket1, p.return_stderr))
-		throw MakeErrno("socketpair() failed");
+		throw MakeSocketError("socketpair() failed");
 
 	if (p.stderr_fd.IsDefined() && cls.WantStderrFd(info))
 		stderr_fd = p.stderr_fd.Duplicate();
