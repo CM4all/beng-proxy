@@ -1,6 +1,7 @@
 cm4all-beng-proxy (18.0.70) unstable; urgency=low
 
   * translation: fix crash bug with debug logging
+  * translation: add packet AUTO_COMPRESS_ONLY_TEXT
   * bp: send "Vary: Accept-Encoding" for auto-compressed response
 
  --   

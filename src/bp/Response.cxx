@@ -153,9 +153,17 @@ MaybeCacheEncoded(EncodingCache *cache, AllocatorPtr alloc,
 	response_body = cache->Put(alloc.GetPool(), key, std::move(response_body));
 }
 
+[[gnu::pure]]
+static bool
+IsTextMimeType(const HttpHeaders &response_headers) noexcept
+{
+	return IsTextMimeType(response_headers.GetSloppy("content-type"));
+}
+
 static void
 MaybeAutoCompress(EncodingCache *cache, AllocatorPtr alloc,
 		  const StringMap &request_headers,
+		  const bool text_only,
 		  const char *resource_tag,
 		  HttpHeaders &response_headers,
 		  UnusedIstreamPtr &response_body,
@@ -164,6 +172,9 @@ MaybeAutoCompress(EncodingCache *cache, AllocatorPtr alloc,
 {
 	if (response_headers.ContainsContentEncoding())
 		/* already compressed */
+		return;
+
+	if (text_only && !IsTextMimeType(response_headers))
 		return;
 
 	if (auto available = response_body.GetAvailable(false);
@@ -184,17 +195,6 @@ MaybeAutoCompress(EncodingCache *cache, AllocatorPtr alloc,
 			  response_headers, response_body);
 }
 
-#ifdef HAVE_BROTLI
-
-[[gnu::pure]]
-static bool
-IsTextMimeType(const HttpHeaders &response_headers) noexcept
-{
-	return IsTextMimeType(response_headers.GetSloppy("content-type"));
-}
-
-#endif
-
 inline UnusedIstreamPtr
 Request::AutoDeflate(HttpHeaders &response_headers,
 		     UnusedIstreamPtr response_body) noexcept
@@ -209,6 +209,7 @@ Request::AutoDeflate(HttpHeaders &response_headers,
 		   translate.auto_brotli) {
 		MaybeAutoCompress(instance.encoding_cache.get(), pool,
 				  request.headers,
+				  translate.response->auto_compress_only_text,
 				  resource_tag,
 				  response_headers, response_body, "br",
 				  [this, &response_headers](auto &&i){
@@ -221,6 +222,7 @@ Request::AutoDeflate(HttpHeaders &response_headers,
 	} else if (translate.response->auto_gzip) {
 		MaybeAutoCompress(instance.encoding_cache.get(), pool,
 				  request.headers,
+				  translate.response->auto_compress_only_text,
 				  resource_tag,
 				  response_headers, response_body, "gzip",
 				  [this](auto &&i){
