@@ -171,6 +171,8 @@ MaybeAutoCompress(EncodingCache *cache, AllocatorPtr alloc,
 		/* too small, not worth it */
 		return;
 
+	response_headers.Write("vary"sv, "accept-encoding"sv);
+
 	if (!http_client_accepts_encoding(request_headers, encoding))
 		return;
 
