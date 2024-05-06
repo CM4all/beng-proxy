@@ -1,6 +1,6 @@
 cm4all-beng-proxy (18.0.70) unstable; urgency=low
 
-  * 
+  * translation: fix crash bug with debug logging
 
  --   
 

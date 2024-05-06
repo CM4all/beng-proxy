@@ -1059,7 +1059,8 @@ try {
 				   nullptr);
 
 	if (!cacheable) {
-		LogConcat(4, "TranslationCache", "ignore ", key);
+		if (key != nullptr)
+			LogConcat(4, "TranslationCache", "ignore ", key);
 	} else if (tcache_response_evaluate(response)) {
 		tcache_store(*this, response);
 	} else {
