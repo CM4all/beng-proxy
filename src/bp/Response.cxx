@@ -203,9 +203,8 @@ Request::AutoDeflate(HttpHeaders &response_headers,
 		/* no TranslateResponse, i.e. there are no "auto_"
 		   flags for us to check */
 #ifdef HAVE_BROTLI
-	} else if ((translate.response->auto_brotli ||
-		    translate.auto_brotli) &&
-		   !response_headers.ContainsContentEncoding()) {
+	} else if (translate.response->auto_brotli ||
+		   translate.auto_brotli) {
 		MaybeAutoCompress(instance.encoding_cache.get(), pool,
 				  request.headers,
 				  resource_tag,
@@ -217,8 +216,7 @@ Request::AutoDeflate(HttpHeaders &response_headers,
 					  return b;
 				  });
 #endif
-	} else if (translate.response->auto_gzip &&
-		   !response_headers.ContainsContentEncoding()) {
+	} else if (translate.response->auto_gzip) {
 		MaybeAutoCompress(instance.encoding_cache.get(), pool,
 				  request.headers,
 				  resource_tag,
