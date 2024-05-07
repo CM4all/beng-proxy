@@ -40,16 +40,12 @@ jobs:
         with:
           submodules: recursive
 
-      - id: cache-ccache
-        uses: hendrikmuhs/ccache-action@v1
-        with:
-          key: ${{github.job}}
-
       - name: Install dependencies
         run: |
           sudo apt-get update
           sudo apt-get install -y --no-install-recommends \
             meson \
+            ccache \
             libavahi-client-dev \
             libbrotli-dev \
             libcap-dev \
@@ -64,6 +60,11 @@ jobs:
             libsodium-dev \
             libssl-dev \
             libsystemd-dev
+
+      - id: cache-ccache
+        uses: hendrikmuhs/ccache-action@v1
+        with:
+          key: ${{github.job}}
 
       - name: Configure
         run: |
@@ -96,20 +97,21 @@ jobs:
         with:
           submodules: recursive
 
-      - id: cache-ccache
-        uses: hendrikmuhs/ccache-action@v1
-        with:
-          key: ${{github.job}}
-
       - name: Install dependencies
         run: |
           sudo apt-get update
           sudo apt-get install -y --no-install-recommends \
             meson \
+            ccache \
             libgtest-dev \
             libpcre2-dev \
             libsodium-dev \
             libssl-dev
+
+      - id: cache-ccache
+        uses: hendrikmuhs/ccache-action@v1
+        with:
+          key: ${{github.job}}
 
       - name: Configure
         run: |
@@ -138,16 +140,12 @@ jobs:
         with:
           submodules: recursive
 
-      - id: cache-ccache
-        uses: hendrikmuhs/ccache-action@v1
-        with:
-          key: ${{github.job}}
-
       - name: Install dependencies
         run: |
           sudo apt-get update
           sudo apt-get install -y --no-install-recommends \
             meson \
+            ccache \
             libsystemd-dev libdbus-1-dev \
             libcurl4-openssl-dev \
             libgtest-dev \
@@ -156,6 +154,11 @@ jobs:
             libssl-dev \
             libpq-dev \
             pebble
+
+      - id: cache-ccache
+        uses: hendrikmuhs/ccache-action@v1
+        with:
+          key: ${{github.job}}
 
       - name: Configure
         run: |
