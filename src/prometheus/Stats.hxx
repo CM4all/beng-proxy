@@ -48,7 +48,7 @@ struct Stats {
 	 */
 	uint_least64_t http_traffic_received, http_traffic_sent;
 
-	CacheStats translation_cache, http_cache, filter_cache;
+	CacheStats translation_cache, http_cache, filter_cache, encoding_cache;
 
 	AllocatorStats io_buffers;
 };

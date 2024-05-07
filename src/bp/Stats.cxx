@@ -10,6 +10,7 @@
 #include "memory/SlicePool.hxx"
 #include "memory/AllocatorStats.hxx"
 #include "translation/Builder.hxx"
+#include "http/cache/EncodingCache.hxx"
 #include "http/cache/FilterCache.hxx"
 #include "http/cache/Public.hxx"
 #include "session/Manager.hxx"
@@ -42,6 +43,9 @@ BpInstance::GetStats() const noexcept
 
 	if (filter_cache != nullptr)
 		stats.filter_cache = filter_cache_get_stats(*filter_cache);
+
+	if (encoding_cache)
+		stats.encoding_cache = encoding_cache->GetStats();
 
 	stats.io_buffers = fb_pool_get().GetStats();
 

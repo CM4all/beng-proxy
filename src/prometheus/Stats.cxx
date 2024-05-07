@@ -88,6 +88,7 @@ beng_proxy_sessions{{process={:?}}} {}
 	Write(buffer, process, "translation"sv, stats.translation_cache);
 	Write(buffer, process, "http"sv, stats.http_cache);
 	Write(buffer, process, "filter"sv, stats.filter_cache);
+	Write(buffer, process, "encoding"sv, stats.encoding_cache);
 	Write(buffer, "beng_proxy_buffer_size"sv, process, "io"sv, stats.io_buffers);
 }
 

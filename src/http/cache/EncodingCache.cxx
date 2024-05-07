@@ -135,6 +135,7 @@ EncodingCache::Store::RubberOutOfMemory() noexcept
 	rubber_cancel_ptr = nullptr;
 
 	LogConcat(4, "EncodingCache", "nocache oom ", key);
+	++cache.stats.skips;
 	Destroy();
 }
 
@@ -144,6 +145,7 @@ EncodingCache::Store::RubberTooLarge() noexcept
 	rubber_cancel_ptr = nullptr;
 
 	LogConcat(4, "EncodingCache", "nocache too large", key);
+	++cache.stats.skips;
 	Destroy();
 }
 
@@ -153,6 +155,7 @@ EncodingCache::Store::RubberError(std::exception_ptr ep) noexcept
 	rubber_cancel_ptr = nullptr;
 
 	LogConcat(4, "EncodingCache", "body_error ", key, ": ", ep);
+	++cache.stats.skips;
 	Destroy();
 }
 
@@ -162,10 +165,12 @@ EncodingCache::Get(struct pool &pool, const char *key) noexcept
 	auto *item = (EncodingCache::Item *)cache.Get(key);
 	if (item == nullptr) {
 		LogConcat(6, "EncodingCache", "miss ", key);
+		++stats.misses;
 		return {};
 	}
 
 	LogConcat(5, "EncodingCache", "hit ", key);
+	++stats.hits;
 
 	return NewSharedLeaseIstream(pool,
 				     istream_rubber_new(pool, rubber, item->allocation.GetId(),
@@ -185,6 +190,7 @@ EncodingCache::Put(struct pool &pool,
 	    available > cacheable_size_limit) {
 		/* too large for the cache */
 		LogConcat(4, "EncodingCache", "nocache too large", key);
+		++stats.skips;
 		return src;
 	}
 
@@ -209,6 +215,7 @@ EncodingCache::Add(const char *key,
 		   RubberAllocation &&a, std::size_t size) noexcept
 {
 	LogConcat(4, "EncodingCache", "add ", key);
+	++stats.stores;
 
 	auto item = new Item(key,
 			     cache.SteadyNow(),

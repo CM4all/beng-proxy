@@ -9,7 +9,6 @@
 #include "http/Headers.hxx"
 #include "http/IncomingRequest.hxx"
 #include "http/ResponseHandler.hxx"
-#include "http/cache/EncodingCache.hxx"
 #include "memory/istream_gb.hxx"
 #include "memory/GrowingBuffer.hxx"
 
@@ -24,14 +23,6 @@ BpPrometheusExporter::HandleHttpRequest(IncomingHttpRequest &request,
 
 	constexpr auto process = "bp"sv;
 	Prometheus::Write(buffer, process, instance.GetStats());
-
-	if (instance.encoding_cache) {
-		const auto stats = instance.encoding_cache->GetStats();
-		buffer.Fmt("beng_proxy_cache_size{{process={:?},type=\"encoding\",metric=\"netto\"}} {}\n"
-			   "beng_proxy_cache_size{{process={:?},type=\"encoding\",metric=\"brutto\"}} {}\n",
-			   process, stats.netto_size,
-			   process, stats.brutto_size);
-	}
 
 	for (const auto &[name, stats] : instance.listener_stats)
 		Prometheus::Write(buffer, process, name, stats);

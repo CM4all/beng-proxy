@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include "memory/AllocatorStats.hxx"
+#include "stats/CacheStats.hxx"
 #include "memory/Rubber.hxx"
 #include "event/FarTimerEvent.hxx"
 #include "util/IntrusiveList.hxx"
@@ -26,6 +26,8 @@ class EncodingCache final {
 
 	IntrusiveList<Store> stores;
 
+	mutable CacheStats stats{};
+
 public:
 	EncodingCache(EventLoop &_event_loop, std::size_t max_size);
 
@@ -39,8 +41,9 @@ public:
 		rubber.ForkCow(inherit);
 	}
 
-	AllocatorStats GetStats() const noexcept {
-		return rubber.GetStats();
+	CacheStats GetStats() const noexcept {
+		stats.allocator = rubber.GetStats();
+		return stats;
 	}
 
 	void Flush() noexcept {
