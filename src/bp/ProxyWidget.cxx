@@ -106,7 +106,7 @@ ProxyWidget::OnHttpResponse(HttpStatus status, StringMap &&_headers,
 	if (request.request.method == HttpMethod::HEAD)
 		/* pass Content-Length, even though there is no response body
 		   (RFC 2616 14.13) */
-		headers2.CopyToBuffer(_headers, "content-length");
+		headers2.CopyToBuffer(_headers, content_length_header);
 
 	if (body)
 		body = NewAutoPipeIstream(&request.pool, std::move(body),

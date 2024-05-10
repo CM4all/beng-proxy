@@ -11,11 +11,13 @@
 
 constexpr StringMapKey accept_encoding_header{"accept-encoding"};
 constexpr StringMapKey accept_language_header{"accept-language"};
+constexpr StringMapKey access_control_allow_origin_header{"access-control-allow-origin"};
 constexpr StringMapKey authorization_header{"authorization"};
 constexpr StringMapKey cache_control_header{"cache-control"};
 constexpr StringMapKey connection_header{"connection"};
 constexpr StringMapKey content_encoding_header{"content-encoding"};
 constexpr StringMapKey content_length_header{"content-length"};
+constexpr StringMapKey content_range_header{"content-range"};
 constexpr StringMapKey content_type_header{"content-type"};
 constexpr StringMapKey cookie_header{"cookie"};
 constexpr StringMapKey date_header{"date"};

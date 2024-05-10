@@ -146,7 +146,7 @@ HttpServerConnection::SubmitResponse(HttpStatus status,
 	const bool upgrade = body && http_is_upgrade(status, headers);
 	if (upgrade) {
 		headers.Write("connection", "upgrade");
-		headers.MoveToBuffer("upgrade");
+		headers.MoveToBuffer(upgrade_header);
 	} else if (!keep_alive)
 		headers.Write("connection", "close");
 

@@ -197,7 +197,7 @@ LbResolveConnectRequest::OnHttpResponse(HttpStatus status, StringMap &&_headers,
 	if (request.method == HttpMethod::HEAD && !connection.IsHTTP2())
 		/* pass Content-Length, even though there is no response body
 		   (RFC 2616 14.13) */
-		headers.MoveToBuffer("content-length");
+		headers.MoveToBuffer(content_length_header);
 
 	if (CheckRelease()) {
 		/* the connection lease was already released by the

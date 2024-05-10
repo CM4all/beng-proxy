@@ -4,12 +4,13 @@
 
 #pragma once
 
-#include "AllocatorPtr.hxx"
-#include "strmap.hxx"
+#include "CommonHeaders.hxx"
+#include "HeaderParser.hxx"
+#include "HeaderWriter.hxx"
 #include "memory/GrowingBuffer.hxx"
 #include "util/SpanCast.hxx"
-#include "HeaderWriter.hxx"
-#include "HeaderParser.hxx"
+#include "AllocatorPtr.hxx"
+#include "strmap.hxx"
 
 /**
  * A class that stores HTTP headers in a map and a buffer.  Some
@@ -73,16 +74,16 @@ public:
 	 * name?
 	 */
 	[[gnu::pure]]
-	bool MapContains(const char *key) const noexcept {
+	bool MapContains(StringMapKey key) const noexcept {
 		return map.Contains(key);
 	}
 
 	bool ContainsContentEncoding() const noexcept {
-		return contains_content_encoding || MapContains("content-encoding");
+		return contains_content_encoding || MapContains(content_encoding_header);
 	}
 
 	bool ContainsContentRange() const noexcept {
-		return contains_content_range || MapContains("content-range");
+		return contains_content_range || MapContains(content_range_header);
 	}
 
 	/**
@@ -92,11 +93,11 @@ public:
 	 * buffer.
 	 */
 	[[gnu::pure]]
-	std::string_view GetSloppy(const char *key) const noexcept {
+	std::string_view GetSloppy(StringMapKey key) const noexcept {
 		if (const char *value = map.Get(key); value != nullptr)
 			return value;
 
-		return header_parse_find(ToStringView(buffer.Read()), key);
+		return header_parse_find(ToStringView(buffer.Read()), key.string);
 	}
 
 	GrowingBuffer &GetBuffer() noexcept {
@@ -125,16 +126,16 @@ public:
 	/**
 	 * Copy a (hop-by-hop) header from a map to the buffer.
 	 */
-	void CopyToBuffer(const StringMap &src, const char *name) noexcept {
+	void CopyToBuffer(const StringMap &src, StringMapKey name) noexcept {
 		const char *value = src.Get(name);
 		if (value != nullptr)
-			Write(name, value);
+			Write(name.string, value);
 	}
 
 	/**
 	 * Move a (hop-by-hop) header from the map to the buffer.
 	 */
-	void MoveToBuffer(const char *name) noexcept {
+	void MoveToBuffer(StringMapKey name) noexcept {
 		CopyToBuffer(map, name);
 	}
 

@@ -316,7 +316,7 @@ LbRequest::OnHttpResponse(HttpStatus status, StringMap &&_headers,
 	if (request.method == HttpMethod::HEAD && !connection.IsHTTP2())
 		/* pass Content-Length, even though there is no response body
 		   (RFC 2616 14.13) */
-		headers.MoveToBuffer("content-length");
+		headers.MoveToBuffer(content_length_header);
 
 	if (new_cookie != 0) {
 		headers.Write("cookie2", "$Version=\"1\"");

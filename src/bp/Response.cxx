@@ -113,7 +113,7 @@ GetEncodingCacheKey(AllocatorPtr alloc,
 		    const char *encoding,
 		    const HttpHeaders &response_headers) noexcept
 {
-	if (const auto digest = response_headers.GetSloppy("digest");
+	if (const auto digest = response_headers.GetSloppy(digest_header);
 	    digest.data() != nullptr)
 		/* if there's a "Digest" response header, use that,
 		   because it distinctly identifiesd the data to be
@@ -124,7 +124,7 @@ GetEncodingCacheKey(AllocatorPtr alloc,
 		return alloc.Concat(digest, "."sv, encoding);
 
 	if (resource_tag != nullptr)
-		if (const auto etag = response_headers.GetSloppy("etag");
+		if (const auto etag = response_headers.GetSloppy(etag_header);
 		    etag.data() != nullptr)
 			return alloc.Concat(resource_tag, "|etag="sv, etag,
 					    "."sv, encoding);
@@ -159,7 +159,7 @@ MaybeCacheEncoded(EncodingCache *cache, AllocatorPtr alloc,
 static bool
 IsTextMimeType(const HttpHeaders &response_headers) noexcept
 {
-	return IsTextMimeType(response_headers.GetSloppy("content-type"));
+	return IsTextMimeType(response_headers.GetSloppy(content_type_header));
 }
 
 static void
@@ -669,7 +669,7 @@ Request::DispatchResponseDirect(HttpStatus status, HttpHeaders headers,
 
 	if (translate.response &&
 	    translate.response->send_csrf_token) {
-		if (headers.MapContains("access-control-allow-origin")) {
+		if (headers.MapContains(access_control_allow_origin_header)) {
 			/* if this CORS header indicates that other origins may
 			   send requests, then this undermindes our CSRF
 			   protection; thus, enabling both CORS headers and
@@ -1055,7 +1055,7 @@ Request::OnHttpResponse(HttpStatus status, StringMap &&_headers,
 	if (request.method == HttpMethod::HEAD)
 		/* pass Content-Length, even though there is no response body
 		   (RFC 2616 14.13) */
-		headers2.CopyToBuffer(headers, "content-length");
+		headers2.CopyToBuffer(headers, content_length_header);
 
 	DispatchResponse(status, std::move(headers2), std::move(body));
 }

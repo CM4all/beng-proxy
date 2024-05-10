@@ -120,7 +120,7 @@ LbLuaResponseHandler::OnHttpResponse(HttpStatus status,
 	if (request.method == HttpMethod::HEAD && !connection.IsHTTP2())
 		/* pass Content-Length, even though there is no response body
 		   (RFC 2616 14.13) */
-		headers.MoveToBuffer("content-length");
+		headers.MoveToBuffer(content_length_header);
 
 	request.SendResponse(status, std::move(headers), std::move(response_body));
 }
