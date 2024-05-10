@@ -138,11 +138,6 @@ public:
 		CopyToBuffer(map, name);
 	}
 
-	void MoveToBuffer(const char *const*names) noexcept {
-		for (; *names != nullptr; ++names)
-			MoveToBuffer(*names);
-	}
-
 	GrowingBuffer &&ToBuffer() noexcept {
 		headers_copy_most(map, buffer);
 		return std::move(buffer);
