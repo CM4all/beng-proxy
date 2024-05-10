@@ -231,15 +231,7 @@ private:
 				return true;
 #endif
 
-			if (!response)
-				return false;
-
-#ifdef HAVE_BROTLI
-			if (response->auto_brotli)
-				return true;
-#endif
-
-			return response->auto_gzip;
+			return response && response->HasAutoCompress();
 		}
 	} translate;
 
