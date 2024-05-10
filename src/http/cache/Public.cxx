@@ -497,7 +497,7 @@ HttpCacheRequest::RubberDone(RubberAllocation &&a, size_t size) noexcept
 {
 	RubberStoreFinished();
 
-	if (eager_cache && !response.headers->Contains("digest")) {
+	if (eager_cache && !response.headers->Contains(digest_header)) {
 		const std::span<const std::byte> src(static_cast<const std::byte *>(a.Read()),
 						     size);
 		const AllocatorPtr alloc{GetPool()};
