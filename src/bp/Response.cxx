@@ -162,6 +162,14 @@ IsTextMimeType(const HttpHeaders &response_headers) noexcept
 	return IsTextMimeType(response_headers.GetSloppy(content_type_header));
 }
 
+[[nodiscard]] [[gnu::pure]]
+static bool
+IsShorterThan(const UnusedIstreamPtr &i, off_t length) noexcept
+{
+	const off_t available = i.GetAvailable(false);
+	return available >= 0 && available < length;
+}
+
 static void
 MaybeAutoCompress(EncodingCache *cache, AllocatorPtr alloc,
 		  const StringMap &request_headers,
@@ -179,8 +187,7 @@ MaybeAutoCompress(EncodingCache *cache, AllocatorPtr alloc,
 	if (text_only && !IsTextMimeType(response_headers))
 		return;
 
-	if (auto available = response_body.GetAvailable(false);
-	    available >= 0 && available < 512)
+	if (IsShorterThan(response_body, 512))
 		/* too small, not worth it */
 		return;
 
