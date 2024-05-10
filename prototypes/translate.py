@@ -292,6 +292,7 @@ class Translation(Protocol):
             response.packet(TRANSLATE_FILE_NOT_FOUND, '404')
             response.packet(TRANSLATE_ENOTDIR, 'foo')
             response.packet(TRANSLATE_AUTO_BROTLI)
+            response.packet(TRANSLATE_AUTO_GZIP)
             response.packet(TRANSLATE_AUTO_COMPRESS_ONLY_TEXT)
         elif uri[-3:] == '.py':
             # run Python-CGI
