@@ -8,12 +8,6 @@
 #include "http/IncomingRequest.hxx"
 #include "http/Method.hxx"
 
-static constexpr bool
-HasAutoCompress(const TranslateResponse &tr) noexcept
-{
-	return tr.auto_gzip || tr.auto_brotli;
-}
-
 ForwardRequest
 Request::ForwardRequest(const HeaderForwardSettings &header_forward,
 			bool exclude_host) noexcept
@@ -52,7 +46,7 @@ Request::ForwardRequest(const HeaderForwardSettings &header_forward,
 				      exclude_host,
 				      has_body,
 				      !IsProcessorEnabled(),
-				      !IsTransformationEnabled() && !HasAutoCompress(*translate.response),
+				      !IsTransformationEnabled() && !translate.response->HasAutoCompress(),
 				      !IsTransformationEnabled(),
 				      header_forward,
 				      GetCookieHost(), GetCookieURI()),
