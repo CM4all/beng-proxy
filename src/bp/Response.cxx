@@ -170,31 +170,19 @@ IsShorterThan(const UnusedIstreamPtr &i, off_t length) noexcept
 	return available >= 0 && available < length;
 }
 
-static void
+static bool
 MaybeAutoCompress(EncodingCache *cache, AllocatorPtr alloc,
 		  const StringMap &request_headers,
-		  const bool text_only,
 		  const char *resource_tag,
 		  HttpHeaders &response_headers,
 		  UnusedIstreamPtr &response_body,
 		  const char *encoding,
 		  auto &&factory) noexcept
 {
-	if (response_headers.ContainsContentEncoding())
-		/* already compressed */
-		return;
-
-	if (text_only && !IsTextMimeType(response_headers))
-		return;
-
-	if (IsShorterThan(response_body, 512))
-		/* too small, not worth it */
-		return;
-
-	response_headers.Write("vary"sv, "accept-encoding"sv);
+	assert(!response_headers.ContainsContentEncoding());
 
 	if (!http_client_accepts_encoding(request_headers, encoding))
-		return;
+		return false;
 
 	response_headers.contains_content_encoding = true;
 	response_headers.Write("content-encoding", encoding);
@@ -202,41 +190,57 @@ MaybeAutoCompress(EncodingCache *cache, AllocatorPtr alloc,
 
 	MaybeCacheEncoded(cache, alloc, resource_tag, encoding,
 			  response_headers, response_body);
+	return true;
+}
+
+inline void
+Request::ApplyAutoCompress(HttpHeaders &response_headers,
+			   UnusedIstreamPtr &response_body) noexcept
+{
+#ifdef HAVE_BROTLI
+	if ((translate.response->auto_brotli ||
+	     translate.auto_brotli) &&
+	    MaybeAutoCompress(instance.encoding_cache.get(), pool,
+			      request.headers,
+			      resource_tag,
+			      response_headers, response_body, "br",
+			      [this, &response_headers](auto &&i){
+				      auto b = NewBrotliEncoderIstream(pool, std::move(i));
+				      if (IsTextMimeType(response_headers))
+					      SetBrotliModeText(b);
+				      return b;
+			      }))
+		return;
+#endif
+
+	if (translate.response->auto_gzip)
+		MaybeAutoCompress(instance.encoding_cache.get(), pool,
+				  request.headers,
+				  resource_tag,
+				  response_headers, response_body, "gzip",
+				  [this](auto &&i){
+					  return NewGzipIstream(pool, std::move(i));
+				  });
 }
 
 inline UnusedIstreamPtr
 Request::AutoDeflate(HttpHeaders &response_headers,
 		     UnusedIstreamPtr response_body) noexcept
 {
-	if (!response_body) {
-		/* nothing to compress */
-	} else if (!translate.response) {
-		/* no TranslateResponse, i.e. there are no "auto_"
-		   flags for us to check */
-#ifdef HAVE_BROTLI
-	} else if (translate.response->auto_brotli ||
-		   translate.auto_brotli) {
-		MaybeAutoCompress(instance.encoding_cache.get(), pool,
-				  request.headers,
-				  translate.response->auto_compress_only_text,
-				  resource_tag,
-				  response_headers, response_body, "br",
-				  [this, &response_headers](auto &&i){
-					  auto b = NewBrotliEncoderIstream(pool, std::move(i));
-					  if (IsTextMimeType(response_headers))
-						  SetBrotliModeText(b);
-					  return b;
-				  });
-#endif
-	} else if (translate.response->auto_gzip) {
-		MaybeAutoCompress(instance.encoding_cache.get(), pool,
-				  request.headers,
-				  translate.response->auto_compress_only_text,
-				  resource_tag,
-				  response_headers, response_body, "gzip",
-				  [this](auto &&i){
-					  return NewGzipIstream(pool, std::move(i));
-				  });
+	if (/* is there something to compress? */
+	    response_body &&
+	    /* is auto-compression enabled? */
+	    translate.response &&
+	    translate.HasAutoCompress() &&
+	    /* already compressed? */
+	    !response_headers.ContainsContentEncoding() &&
+	    /* compress only text? */
+	    (!translate.response->auto_compress_only_text ||
+	     IsTextMimeType(response_headers)) &&
+	    /* long enough for compression to be worth the overhead? */
+	    !IsShorterThan(response_body, 512)) {
+		response_headers.Write("vary"sv, "accept-encoding"sv);
+		ApplyAutoCompress(response_headers, response_body);
 	}
 
 	return response_body;

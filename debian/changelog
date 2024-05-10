@@ -1,5 +1,6 @@
 cm4all-beng-proxy (18.0.71) unstable; urgency=low
 
+  * bp: fix AUTO_GZIP when AUTO_BROTLI is also enabled
   * http: more header lookup optimizations
 
  --   

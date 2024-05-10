@@ -807,6 +807,8 @@ private:
 
 	SharedPoolPtr<WidgetContext> MakeWidgetContext() noexcept;
 
+	void ApplyAutoCompress(HttpHeaders &response_headers,
+			       UnusedIstreamPtr &response_body) noexcept;
 	UnusedIstreamPtr AutoDeflate(HttpHeaders &response_headers,
 				     UnusedIstreamPtr response_body) noexcept;
 
