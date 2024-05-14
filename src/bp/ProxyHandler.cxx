@@ -12,7 +12,6 @@
 #include "CsrfProtection.hxx"
 #include "ResourceLoader.hxx"
 #include "http/IncomingRequest.hxx"
-#include "cgi/Address.hxx"
 #include "istream/AutoPipeIstream.hxx"
 #include "uri/Recompose.hxx"
 #include "AllocatorPtr.hxx"
@@ -29,7 +28,7 @@ ForwardURI(AllocatorPtr alloc, DissectedUri uri) noexcept
 	return RecomposeUri(alloc, uri);
 }
 
-inline const char *
+const char *
 Request::ForwardURI() const noexcept
 {
 	const TranslateResponse &t = *translate.response;
@@ -54,30 +53,11 @@ void
 Request::HandleProxyAddress() noexcept
 {
 	const TranslateResponse &tr = *translate.response;
-	ResourceAddress address(ShallowCopy(), translate.address);
+	const ResourceAddress &address = translate.address;
 
 	assert(address.type == ResourceAddress::Type::HTTP ||
 	       address.type == ResourceAddress::Type::LHTTP ||
 	       address.IsCgiAlike());
-
-	if (tr.transparent &&
-	    (dissected_uri.args.data() != nullptr ||
-	     !dissected_uri.path_info.empty()))
-		address = address.WithArgs(pool,
-					   dissected_uri.args,
-					   dissected_uri.path_info);
-
-	if (!processor_focus)
-		/* forward query string */
-		address = address.WithQueryStringFrom(pool, request.uri);
-
-	if (address.IsCgiAlike() &&
-	    (address.GetCgi().request_uri_verbatim ||
-	     address.GetCgi().script_name == nullptr) &&
-	    address.GetCgi().uri == nullptr)
-		/* pass the "real" request URI to the CGI (but without the
-		   "args", unless the request is "transparent") */
-		address.GetCgi().uri = ForwardURI();
 
 	cookie_uri = address.GetUriPath();
 

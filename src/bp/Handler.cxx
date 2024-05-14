@@ -11,6 +11,7 @@
 #include "Instance.hxx"
 #include "load_file.hxx"
 #include "file/Address.hxx"
+#include "cgi/Address.hxx"
 #include "session/Lease.hxx"
 #include "session/Session.hxx"
 #include "ExternalSession.hxx"
@@ -149,16 +150,6 @@ Request::HandleTranslatedRequest2(const TranslateResponse &response) noexcept
 			RefreshExternalSession(connection.instance,
 					       session->parent);
 	}
-
-	resource_tag = translate.address.GetId(pool);
-
-	processor_focus =
-		/* the IsProcessorEnabled() check was disabled because the
-		   response may include a X-CM4all-View header that enables
-		   the processor; with this check, the request body would be
-		   consumed already */
-		//IsProcessorEnabled() &&
-		args.Get("focus") != nullptr;
 
 	if (translate.address.IsDefined()) {
 		HandleAddress(translate.address);
@@ -376,7 +367,45 @@ Request::HandleTranslatedRequest(UniquePoolPtr<TranslateResponse> _response) noe
 {
 	translate.response = std::move(_response);
 	const auto &response = *translate.response;
-	translate.address = {ShallowCopy(), response.address};
+
+	/* copy the ResourceAddress from the TranslateResponse and
+	   complete it with data which wasn't passed to the
+	   translation server (e.g. the query string) */
+	auto &address = translate.address;
+	address = {ShallowCopy(), response.address};
+	if (address.IsDefined()) {
+		if (response.transparent &&
+		    (dissected_uri.args.data() != nullptr ||
+		     !dissected_uri.path_info.empty()))
+			address = address.WithArgs(pool,
+						   dissected_uri.args,
+						   dissected_uri.path_info);
+
+		processor_focus =
+			/* the IsProcessorEnabled() check was disabled
+			   because the response may include a
+			   X-CM4all-View header that enables the
+			   processor; with this check, the request
+			   body would be consumed already */
+			//IsProcessorEnabled() &&
+			args.Get("focus") != nullptr;
+
+		if (!processor_focus)
+			/* forward query string */
+			address = address.WithQueryStringFrom(pool, request.uri);
+
+		if (address.IsCgiAlike() &&
+		    (address.GetCgi().request_uri_verbatim ||
+		     address.GetCgi().script_name == nullptr) &&
+		    address.GetCgi().uri == nullptr)
+			/* pass the "real" request URI to the CGI (but
+			   without the "args", unless the request is
+			   "transparent") */
+			address.GetCgi().uri = ForwardURI();
+
+		resource_tag = address.GetId(pool);
+	}
+
 	translate.transformations.clear();
 
 	if (response.generator != nullptr) {

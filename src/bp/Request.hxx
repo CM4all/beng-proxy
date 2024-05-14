@@ -356,7 +356,7 @@ private:
 	 * transformation.  This is used by the filter cache to address
 	 * resources.
 	 */
-	const char *resource_tag;
+	const char *resource_tag = nullptr;
 
 	/**
 	 * The RECOVER_COOKIE value parsed from the session cookie.
