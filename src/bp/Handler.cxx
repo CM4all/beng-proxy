@@ -96,8 +96,6 @@ Request::HandleAddress(const ResourceAddress &address)
 void
 Request::HandleTranslatedRequest2(const TranslateResponse &response) noexcept
 {
-	const ResourceAddress address(ShallowCopy(), translate.address);
-
 	if (!response.views.empty())
 		translate.transformations = {ShallowCopy{}, response.views.front().transformations};
 	else
@@ -152,7 +150,7 @@ Request::HandleTranslatedRequest2(const TranslateResponse &response) noexcept
 					       session->parent);
 	}
 
-	resource_tag = address.GetId(pool);
+	resource_tag = translate.address.GetId(pool);
 
 	processor_focus =
 		/* the IsProcessorEnabled() check was disabled because the
@@ -162,8 +160,8 @@ Request::HandleTranslatedRequest2(const TranslateResponse &response) noexcept
 		//IsProcessorEnabled() &&
 		args.Get("focus") != nullptr;
 
-	if (address.IsDefined()) {
-		HandleAddress(address);
+	if (translate.address.IsDefined()) {
+		HandleAddress(translate.address);
 	} else if (CheckHandleRedirectBounceStatus(response)) {
 		/* done */
 	} else if (response.www_authenticate != nullptr &&
