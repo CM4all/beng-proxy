@@ -78,7 +78,7 @@ Request::ApplyTranslateResponseSession(const TranslateResponse &response) noexce
 	return ApplyTranslateSession(response);
 }
 
-void
+inline void
 Request::HandleAddress(const ResourceAddress &address)
 {
 	assert(address.IsDefined());
