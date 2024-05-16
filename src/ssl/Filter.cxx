@@ -247,6 +247,8 @@ SslFilter::Run(ThreadSocketFilterInternal &f)
 
 		f.encrypted_output.MoveFromAllowNull(encrypted_output);
 
+		f.drained = plain_output.empty() && encrypted_output.empty();
+
 		if (decrypted_input.IsNull() || encrypted_output.IsNull()) {
 			/* retry, let PreRun() allocate the missing buffer */
 			f.again = true;
