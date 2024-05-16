@@ -151,11 +151,6 @@ public:
 	const char *Remove(StringMapKey key) noexcept;
 
 	/**
-	 * Remove all values with the specified key.
-	 */
-	void RemoveAll(const char *key) noexcept;
-
-	/**
 	 * Remove all existing values with the specified key and
 	 * (optionally, if not nullptr) add a new value.
 	 */
