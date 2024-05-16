@@ -35,6 +35,7 @@ test(
     'TestAutoPipeIstream.cxx',
     'TestBufferedIstream.cxx',
     'TestLengthIstream.cxx',
+    'TestThreadIstream.cxx',
     istream_test_sources,
     include_directories: inc,
     dependencies: [
@@ -43,6 +44,7 @@ test(
       istream_extra_dep,
       stock_dep,
       zlib,
+      thread_pool_dep,
     ],
   ),
 )
