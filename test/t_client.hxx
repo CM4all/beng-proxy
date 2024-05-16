@@ -3,6 +3,7 @@
 // author: Max Kellermann <mk@cm4all.com>
 
 #include "TestInstance.hxx"
+#include "http/CommonHeaders.hxx"
 #include "http/Method.hxx"
 #include "http/ResponseHandler.hxx"
 #include "lease.hxx"
@@ -715,7 +716,7 @@ TYPED_TEST_P(ClientTest, DataBlocking2)
 	Context c{instance};
 
 	StringMap request_headers;
-	request_headers.Add(*c.pool, "connection", "close");
+	request_headers.Add(*c.pool, connection_header, "close");
 
 	constexpr size_t body_size = 256;
 

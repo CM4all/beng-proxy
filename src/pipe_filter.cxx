@@ -116,7 +116,7 @@ pipe_filter(SpawnService &spawn_service, EventLoop &event_loop,
 				      options.env);
 		assert(etag != nullptr);
 
-		headers.Add(pool, "etag", etag);
+		headers.Add(pool, etag_header, etag);
 	}
 
 	/* contents change, digest changes: discard the header if it

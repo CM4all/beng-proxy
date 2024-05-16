@@ -275,7 +275,7 @@ ServerConnection::Request::OnHeaderCallback(std::string_view name,
 			return 0;
 		}
 
-		headers.Add(alloc, "host", alloc.DupZ(value));
+		headers.Add(alloc, host_header, alloc.DupZ(value));
 	} else if (name.size() >= 2 && name.front() != ':') {
 		if (value.size() >= 8192) {
 			SetError(HttpStatus::REQUEST_HEADER_FIELDS_TOO_LARGE,

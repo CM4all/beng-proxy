@@ -378,7 +378,7 @@ LbRequest::OnFilteredSocketReady(Lease &lease,
 				   cluster_config.mangle_via);
 
 	if (!cluster_config.http_host.empty())
-		headers.SecureSet(pool, "host",
+		headers.SecureSet(pool, host_header,
 				  cluster_config.http_host.c_str());
 
 	http_client_request(pool, nullptr,

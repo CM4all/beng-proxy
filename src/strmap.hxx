@@ -145,9 +145,9 @@ public:
 
 	void Clear() noexcept;
 
-	void Add(AllocatorPtr alloc, const char *key, const char *value) noexcept;
+	void Add(AllocatorPtr alloc, StringMapKey key, const char *value) noexcept;
 	const char *Set(AllocatorPtr alloc,
-			const char *key, const char *value) noexcept;
+			StringMapKey key, const char *value) noexcept;
 	const char *Remove(StringMapKey key) noexcept;
 
 	/**
@@ -155,7 +155,7 @@ public:
 	 * (optionally, if not nullptr) add a new value.
 	 */
 	void SecureSet(AllocatorPtr alloc,
-		       const char *key, const char *value) noexcept;
+		       StringMapKey key, const char *value) noexcept;
 
 	[[gnu::pure]]
 	const char *Get(const char *key) const noexcept;

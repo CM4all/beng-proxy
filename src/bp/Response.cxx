@@ -1059,7 +1059,7 @@ Request::OnHttpResponse(HttpStatus status, StringMap &&_headers,
 	    identity_forward == BengProxy::HeaderForwardMode::MANGLE)
 		/* the GENERATOR value from the translation server
 		   overrides the header */
-		new_headers.Add(pool, "x-cm4all-generator", generator);
+		new_headers.Add(pool, x_cm4all_generator_header, generator);
 
 	HttpHeaders headers2(std::move(new_headers));
 

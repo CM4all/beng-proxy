@@ -5,6 +5,7 @@
 #include "TestInstance.hxx"
 #include "strmap.hxx"
 #include "http/Client.hxx"
+#include "http/CommonHeaders.hxx"
 #include "http/Headers.hxx"
 #include "http/Method.hxx"
 #include "http/ResponseHandler.hxx"
@@ -324,7 +325,7 @@ try {
 	idle = false;
 
 	StringMap headers;
-	headers.Add(*pool, "host", url.host.c_str());
+	headers.Add(*pool, host_header, url.host.c_str());
 
 	SocketFilterPtr socket_filter;
 	if (url.ssl) {

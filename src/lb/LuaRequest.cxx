@@ -8,6 +8,7 @@
 #include "lua/Class.hxx"
 #include "lua/StackIndex.hxx"
 #include "lua/StringView.hxx"
+#include "http/CommonHeaders.hxx"
 #include "http/IncomingRequest.hxx"
 #include "http/Method.hxx"
 #include "http/ResponseHandler.hxx"
@@ -146,11 +147,11 @@ SendRedirect(lua_State *L)
 	const AllocatorPtr alloc{pool};
 
 	StringMap response_headers;
-	response_headers.Add(alloc, "location", alloc.DupZ(location));
+	response_headers.Add(alloc, location_header, alloc.DupZ(location));
 
 	UnusedIstreamPtr response_body;
 	if (!msg.empty() && !http_status_is_empty(status)) {
-		response_headers.Add(alloc, "content-type", "text/plain");
+		response_headers.Add(alloc, content_type_header, "text/plain");
 		response_body = istream_string_new(pool, msg);
 	}
 
@@ -213,11 +214,12 @@ SendRedirectHost(lua_State *L)
 	StringMap response_headers;
 
 	// TODO hard-coded scheme - is "https://" always correct?
-	response_headers.Add(alloc, "location", alloc.Concat("https://"sv, host, data.request.uri));
+	response_headers.Add(alloc, location_header,
+			     alloc.Concat("https://"sv, host, data.request.uri));
 
 	UnusedIstreamPtr response_body;
 	if (!msg.empty() && !http_status_is_empty(status)) {
-		response_headers.Add(alloc, "content-type", "text/plain");
+		response_headers.Add(alloc, content_type_header, "text/plain");
 		response_body = istream_string_new(pool, msg);
 	}
 

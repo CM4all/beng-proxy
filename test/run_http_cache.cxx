@@ -7,6 +7,7 @@
 #include "pool/tpool.hxx"
 #include "pool/Ptr.hxx"
 #include "cache.hxx"
+#include "http/CommonHeaders.hxx"
 #include "http/Status.hxx"
 #include "http/cache/Heap.hxx"
 #include "http/cache/Info.hxx"
@@ -54,7 +55,7 @@ put_random(HttpCacheHeap *cache)
 	}
 
 	auto *response_headers = strmap_new(tpool);
-	response_headers->Add(*tpool, "content-type", "text/plain");
+	response_headers->Add(*tpool, content_type_header, "text/plain");
 	response_headers->Add(*tpool, "x-foo", "bar");
 	response_headers->Add(*tpool, "x-bar", "foo");
 

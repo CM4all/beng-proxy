@@ -38,7 +38,7 @@ fcgi_server_mirror(struct pool &pool, FcgiServer &server)
 	char buffer[32];
 	if (request.length > 0) {
 		sprintf(buffer, "%llu", (unsigned long long)request.length);
-		request.headers.Add(pool, "content-length", buffer);
+		request.headers.Add(pool, content_length_header, buffer);
 	}
 
 	server.WriteResponseHeaders(request, status, request.headers);

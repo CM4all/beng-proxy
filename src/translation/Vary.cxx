@@ -71,7 +71,7 @@ add_translation_vary_header(AllocatorPtr alloc, StringMap &headers,
 	if (old != nullptr)
 		value = alloc.Concat(old, ",", value);
 
-	headers.Add(alloc, "vary", value);
+	headers.Add(alloc, vary_header, value);
 }
 
 void

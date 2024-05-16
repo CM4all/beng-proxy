@@ -14,12 +14,12 @@ forward_via(AllocatorPtr alloc, StringMap &headers,
 	const char *p = headers.Remove(via_header);
 	if (p == nullptr) {
 		if (local_host != nullptr)
-			headers.Add(alloc, "via", alloc.Concat("1.1 ", local_host));
+			headers.Add(alloc, via_header, alloc.Concat("1.1 ", local_host));
 	} else {
 		if (local_host == nullptr)
-			headers.Add(alloc, "via", p);
+			headers.Add(alloc, via_header, p);
 		else
-			headers.Add(alloc, "via", alloc.Concat(p, ", 1.1 ", local_host));
+			headers.Add(alloc, via_header, alloc.Concat(p, ", 1.1 ", local_host));
 	}
 }
 
@@ -30,12 +30,12 @@ forward_xff(AllocatorPtr alloc, StringMap &headers,
 	const char *p = headers.Remove(x_forwarded_for_header);
 	if (p == nullptr) {
 		if (remote_host != nullptr)
-			headers.Add(alloc, "x-forwarded-for", remote_host);
+			headers.Add(alloc, x_forwarded_for_header, remote_host);
 	} else {
 		if (remote_host == nullptr)
-			headers.Add(alloc, "x-forwarded-for", p);
+			headers.Add(alloc, x_forwarded_for_header, p);
 		else
-			headers.Add(alloc, "x-forwarded-for",
+			headers.Add(alloc, x_forwarded_for_header,
 				    alloc.Concat(p, ", ", remote_host));
 	}
 }
@@ -56,10 +56,10 @@ lb_forward_request_headers(AllocatorPtr alloc, StringMap &headers,
 			   const char *peer_issuer_subject,
 			   bool mangle_via) noexcept
 {
-	headers.SecureSet(alloc, "x-cm4all-https", https ? "on" : nullptr);
+	headers.SecureSet(alloc, x_cm4all_https_header, https ? "on" : nullptr);
 
-	headers.SecureSet(alloc, "x-cm4all-beng-peer-subject", peer_subject);
-	headers.SecureSet(alloc, "x-cm4all-beng-peer-issuer-subject",
+	headers.SecureSet(alloc, x_cm4all_beng_peer_subject_header, peer_subject);
+	headers.SecureSet(alloc, x_cm4all_beng_peer_issuer_subject_header,
 			  peer_issuer_subject);
 
 	if (mangle_via)

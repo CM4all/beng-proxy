@@ -501,7 +501,7 @@ HttpCacheRequest::RubberDone(RubberAllocation &&a, size_t size) noexcept
 		const std::span<const std::byte> src(static_cast<const std::byte *>(a.Read()),
 						     size);
 		const AllocatorPtr alloc{GetPool()};
-		response.headers->Add(alloc, "digest", GenerateDigestHeader(alloc, src));
+		response.headers->Add(alloc, digest_header, GenerateDigestHeader(alloc, src));
 	}
 
 	/* the request was successful, and all of the body data has been
@@ -1037,11 +1037,11 @@ HttpCache::Revalidate(struct pool &caller_pool,
 
 	if (document.info.last_modified != nullptr)
 		headers.Set(request->GetPool(),
-			    "if-modified-since", document.info.last_modified);
+			    if_modified_since_header, document.info.last_modified);
 
 	if (document.info.etag != nullptr)
 		headers.Set(request->GetPool(),
-			    "if-none-match", document.info.etag);
+			    if_none_match_header, document.info.etag);
 
 	request->Start(resource_loader, parent_stopwatch,
 		       params,

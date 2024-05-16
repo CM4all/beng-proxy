@@ -6,6 +6,7 @@
 #include "Stock.hxx"
 #include "Client.hxx"
 #include "http/Address.hxx"
+#include "http/CommonHeaders.hxx"
 #include "http/PendingRequest.hxx"
 #include "util/Cancellable.hxx"
 #include "AllocatorPtr.hxx"
@@ -75,7 +76,7 @@ private:
 			alpn_handler->OnAlpnNoMismatch();
 
 		if (address.host_and_port != nullptr)
-			pending_request.headers.Add(alloc, "host",
+			pending_request.headers.Add(alloc, host_header,
 						    address.host_and_port);
 
 		const auto _alloc = alloc;

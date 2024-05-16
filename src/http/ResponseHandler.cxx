@@ -3,6 +3,7 @@
 // author: Max Kellermann <mk@cm4all.com>
 
 #include "ResponseHandler.hxx"
+#include "CommonHeaders.hxx"
 #include "istream/istream_string.hxx"
 #include "istream/UnusedPtr.hxx"
 #include "AllocatorPtr.hxx"
@@ -17,7 +18,7 @@ HttpResponseHandler::InvokeResponse(struct pool &pool,
 	assert(msg != nullptr);
 
 	StringMap headers;
-	headers.Add(pool, "content-type", "text/plain; charset=utf-8");
+	headers.Add(pool, content_type_header, "text/plain; charset=utf-8");
 	InvokeResponse(status, std::move(headers),
 		       istream_string_new(pool, msg));
 }

@@ -6,6 +6,7 @@
 #include "TestPool.hxx"
 #include "strmap.hxx"
 #include "product.h"
+#include "http/CommonHeaders.hxx"
 #include "http/Status.hxx"
 #include "util/StringCompare.hxx"
 #include "AllocatorPtr.hxx"
@@ -313,7 +314,7 @@ TEST(HeaderForwardTest, RequestHeaders)
 		     "via=1.1 192.168.0.2;x-forwarded-for=192.168.0.3;");
 
 	/* basic test */
-	headers.Add(alloc, "user-agent", "firesomething");
+	headers.Add(alloc, user_agent_header, "firesomething");
 	auto b = forward_request_headers(*pool, headers,
 					 false, false, false, false, false,
 					 settings);

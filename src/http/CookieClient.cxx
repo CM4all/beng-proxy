@@ -5,6 +5,7 @@
 #include "CookieClient.hxx"
 #include "CookieJar.hxx"
 #include "CookieString.hxx"
+#include "CommonHeaders.hxx"
 #include "Quote.hxx"
 #include "PTokenizer.hxx"
 #include "strmap.hxx"
@@ -232,7 +233,7 @@ cookie_jar_http_header(const CookieJar &jar,
 		cookie_jar_http_header_value(jar, domain, path, alloc);
 
 	if (cookie != nullptr) {
-		headers.Add(alloc, "cookie2", "$Version=\"1\"");
-		headers.Add(alloc, "cookie", cookie);
+		headers.Add(alloc, cookie2_header, "$Version=\"1\"");
+		headers.Add(alloc, cookie_header, cookie);
 	}
 }

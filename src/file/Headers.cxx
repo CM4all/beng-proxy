@@ -5,6 +5,7 @@
 #include "Headers.hxx"
 #include "strmap.hxx"
 #include "pool/pool.hxx"
+#include "http/CommonHeaders.hxx"
 #include "http/Date.hxx"
 #include "io/FileDescriptor.hxx"
 #include "util/Base32.hxx"
@@ -100,13 +101,13 @@ static_response_headers(struct pool &pool,
 			? p_strdup(&pool, buffer)
 			: "application/octet-stream";
 
-	headers.Add(pool, "content-type", content_type);
+	headers.Add(pool, content_type_header, content_type);
 
-	headers.Add(pool, "last-modified",
+	headers.Add(pool, last_modified_header,
 		    p_strdup(&pool, http_date_format(std::chrono::system_clock::from_time_t(st.stx_mtime.tv_sec))));
 
 	GetAnyETag(buffer, sizeof(buffer), fd, st, use_xattr);
-	headers.Add(pool, "etag", p_strdup(&pool, buffer));
+	headers.Add(pool, etag_header, p_strdup(&pool, buffer));
 
 	return headers;
 }

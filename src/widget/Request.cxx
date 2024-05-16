@@ -9,6 +9,7 @@
 #include "Context.hxx"
 #include "Error.hxx"
 #include "LookupHandler.hxx"
+#include "http/CommonHeaders.hxx"
 #include "http/ResponseHandler.hxx"
 #include "FilterStatus.hxx"
 #include "bp/ProcessorHeaders.hxx"
@@ -229,14 +230,14 @@ WidgetRequest::MakeRequestHeaders(const WidgetView &a_view,
 
 	if (widget.cls->info_headers) {
 		if (widget.id != nullptr)
-			headers.Add(alloc, "x-cm4all-widget-id", widget.id);
+			headers.Add(alloc, x_cm4all_widget_id_header, widget.id);
 
 		if (widget.class_name != nullptr)
-			headers.Add(alloc, "x-cm4all-widget-type", widget.class_name);
+			headers.Add(alloc, x_cm4all_widget_type_header, widget.class_name);
 
 		const char *prefix = widget.GetPrefix();
 		if (prefix != nullptr)
-			headers.Add(alloc, "x-cm4all-widget-prefix", prefix);
+			headers.Add(alloc, x_cm4all_widget_prefix_header, prefix);
 	}
 
 	if (widget.from_template.headers != nullptr)
@@ -640,7 +641,7 @@ WidgetRequest::OnHttpResponse(HttpStatus status, StringMap &&headers,
 	}
 
 	if (content_type != nullptr)
-		headers.Set(pool, "content-type", content_type);
+		headers.Set(pool, content_type_header, content_type);
 
 	if (widget.session_save_pending &&
 	    Transformation::HasProcessor(transformations)) {

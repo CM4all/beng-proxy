@@ -58,14 +58,14 @@ StringMap::Clear() noexcept
 
 void
 StringMap::Add(AllocatorPtr alloc,
-	       const char *key, const char *value) noexcept
+	       StringMapKey key, const char *value) noexcept
 {
-	Item *item = alloc.New<Item>(key, value);
-	map.insert(*item);
+	Item *item = alloc.New<Item>(key.string, value);
+	map.insert(key, *item);
 }
 
 const char *
-StringMap::Set(AllocatorPtr alloc, const char *key, const char *value) noexcept
+StringMap::Set(AllocatorPtr alloc, StringMapKey key, const char *value) noexcept
 {
 	if (auto i = map.find(key); i != map.end()) {
 		const char *old_value = i->value;
@@ -92,7 +92,7 @@ StringMap::Remove(const StringMapKey key) noexcept
 
 void
 StringMap::SecureSet(AllocatorPtr alloc,
-		     const char *key, const char *value) noexcept
+		     StringMapKey key, const char *value) noexcept
 {
 	/* remove all items with the specified key, but reuse one of
 	   them */
@@ -105,11 +105,11 @@ StringMap::SecureSet(AllocatorPtr alloc,
 		return;
 
 	if (item == nullptr)
-		item = alloc.New<Item>(key, value);
+		item = alloc.New<Item>(key.string, value);
 	else
 		item->value = value;
 
-	map.insert(*item);
+	map.insert(key, *item);
 }
 
 const char *

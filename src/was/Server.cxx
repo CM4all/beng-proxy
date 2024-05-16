@@ -9,6 +9,7 @@
 #include "istream/istream_null.hxx"
 #include "strmap.hxx"
 #include "lib/fmt/ToBuffer.hxx"
+#include "http/CommonHeaders.hxx"
 #include "http/Method.hxx"
 #include "http/Status.hxx"
 #include "pool/pool.hxx"
@@ -436,7 +437,7 @@ WasServer::SendResponse(HttpStatus status,
 			off_t available = body.GetAvailable(false);
 			if (available >= 0)
 				headers.Add(AllocatorPtr{request.pool},
-					    "content-length",
+					    content_length_header,
 					    FmtToBuffer(response.content_length_buffer,
 							 "{}", available));
 		}

@@ -3,6 +3,7 @@
 // author: Max Kellermann <mk@cm4all.com>
 
 #include "ForwardHeaders.hxx"
+#include "http/CommonHeaders.hxx"
 #include "http/Upgrade.hxx"
 #include "strmap.hxx"
 #include "session/Session.hxx"
@@ -594,7 +595,5 @@ void
 forward_reveal_user(AllocatorPtr alloc, StringMap &headers,
 		    const char *user) noexcept
 {
-	headers.SecureSet(alloc,
-			  "x-cm4all-beng-user",
-			  user);
+	headers.SecureSet(alloc, x_cm4all_beng_user_header, user);
 }
