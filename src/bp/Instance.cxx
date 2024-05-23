@@ -251,15 +251,8 @@ BpInstance::ReloadState() noexcept
 }
 
 void
-BpInstance::OnMemoryWarning(uint_least64_t memory_usage,
-			    uint_least64_t memory_high,
-			    uint_least64_t memory_max) noexcept
+BpInstance::HandleMemoryWarning() noexcept
 {
-	const uint_least64_t memory_limit = memory_high > 0 ? memory_high : memory_max;
-
-	fmt::print(stderr, "Spawner memory warning: {} of {} bytes used\n",
-		   memory_usage, memory_limit);
-
 	std::size_t n = 0;
 
 	if (lhttp_stock != nullptr)
@@ -272,8 +265,45 @@ BpInstance::OnMemoryWarning(uint_least64_t memory_usage,
 
 	if (n > 0)
 		fmt::print(stderr, "Discarded {} child processes\n", n);
+}
 
-	// TODO: stop unused child processes
+void
+BpInstance::OnMemoryWarning(uint_least64_t memory_usage,
+			    uint_least64_t memory_high,
+			    uint_least64_t memory_max) noexcept
+{
+	memory_limit = memory_high > 0 ? memory_high : memory_max;
+
+	fmt::print(stderr, "Spawner memory warning: {} of {} bytes used\n",
+		   memory_usage, memory_limit);
+
+	HandleMemoryWarning();
+
+	memory_warning_timer.ScheduleEarlier(std::chrono::seconds{2});
+}
+
+void
+BpInstance::OnMemoryWarningTimer() noexcept
+{
+	try {
+		const auto memory_usage = spawn->GetMemoryUsage();
+		if (memory_usage < memory_limit * 15 / 16)
+			return;
+
+		/* repeat until we have a safe margin below the
+		   configured memory limit to avoid too much kernel
+		   shrinker contention */
+
+		fmt::print(stderr, "Spawner memory warning (repeat): {} of {} bytes used\n",
+			   memory_usage, memory_limit);
+	} catch (...) {
+		PrintException(std::current_exception());
+		return;
+	}
+
+	HandleMemoryWarning();
+
+	memory_warning_timer.Schedule(std::chrono::seconds{2});
 }
 
 #ifdef HAVE_LIBWAS

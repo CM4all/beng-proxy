@@ -119,6 +119,14 @@ struct BpInstance final : PInstance, BengControl::Handler, SpawnServerClientHand
 
 	std::unique_ptr<SpawnServerClient> spawn;
 
+	CoarseTimerEvent memory_warning_timer{event_loop, BIND_THIS_METHOD(OnMemoryWarningTimer)};
+
+	/**
+	 * This field remembers the configured memory limit; set by
+	 * OnMemoryWarning() and used by OnMemoryWarningTimer().
+	 */
+	uint_least64_t memory_limit;
+
 	std::unique_ptr<SessionManager> session_manager;
 
 	/**
@@ -253,6 +261,9 @@ struct BpInstance final : PInstance, BengControl::Handler, SpawnServerClientHand
 #endif
 
 private:
+	void HandleMemoryWarning() noexcept;
+	void OnMemoryWarningTimer() noexcept;
+
 	bool AllocatorCompressCallback() noexcept;
 
 	void SaveSessions() noexcept;

@@ -1,6 +1,7 @@
 cm4all-beng-proxy (18.0.73) unstable; urgency=low
 
   * spawn: release child processes faster under memory pressure
+  * spawn: continuously watch memory usage after memory warning
 
  --   
 
