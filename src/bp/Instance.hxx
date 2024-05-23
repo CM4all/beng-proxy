@@ -240,8 +240,8 @@ struct BpInstance final : PInstance, BengControl::Handler, SpawnServerClientHand
 	void OnControlError(std::exception_ptr ep) noexcept override;
 
 	/* virtual methods from class SpawnServerClientHandler */
-	void OnMemoryWarning(uint64_t memory_usage,
-			     uint64_t memory_max) noexcept override;
+	void OnMemoryWarning(uint_least64_t memory_usage,
+			     uint_least64_t memory_max) noexcept override;
 
 	/* virtual methods from class Avahi::ErrorHandler */
 	bool OnAvahiError(std::exception_ptr e) noexcept override;

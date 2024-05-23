@@ -251,8 +251,8 @@ BpInstance::ReloadState() noexcept
 }
 
 void
-BpInstance::OnMemoryWarning(uint64_t memory_usage,
-			    uint64_t memory_max) noexcept
+BpInstance::OnMemoryWarning(uint_least64_t memory_usage,
+			    uint_least64_t memory_max) noexcept
 {
 	fmt::print(stderr, "Spawner memory warning: {} of {} bytes used\n",
 		   memory_usage, memory_max);
