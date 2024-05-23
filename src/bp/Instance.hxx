@@ -241,6 +241,7 @@ struct BpInstance final : PInstance, BengControl::Handler, SpawnServerClientHand
 
 	/* virtual methods from class SpawnServerClientHandler */
 	void OnMemoryWarning(uint_least64_t memory_usage,
+			     uint_least64_t memory_high,
 			     uint_least64_t memory_max) noexcept override;
 
 	/* virtual methods from class Avahi::ErrorHandler */
