@@ -116,8 +116,6 @@ struct HttpServerConnection final
 	 */
 	CoarseTimerEvent read_timer;
 
-	enum http_server_score score = HTTP_SERVER_NEW;
-
 	/* handler */
 	HttpServerConnectionHandler *handler;
 
@@ -132,6 +130,17 @@ struct HttpServerConnection final
 
 	/* request */
 	struct Request {
+		/**
+		 * The response body if #error_status is set.
+		 */
+		const char *error_message;
+
+		HttpServerRequest *request = nullptr;
+
+		CancellablePointer cancel_ptr;
+
+		uint64_t bytes_received = 0;
+
 		/**
 		 * If this is set, the this library rejects the
 		 * request with this HTTP status instead of letting
@@ -189,17 +198,6 @@ struct HttpServerConnection final
 		/** did the client send an "Expect: 100-continue" header? */
 		bool expect_100_continue;
 
-		/**
-		 * The response body if #error_status is set.
-		 */
-		const char *error_message;
-
-		HttpServerRequest *request = nullptr;
-
-		CancellablePointer cancel_ptr;
-
-		uint64_t bytes_received = 0;
-
 		void Reset() noexcept {
 			error_status = {};
 			read_state = START;
@@ -236,6 +234,14 @@ struct HttpServerConnection final
 	/** the response; this struct is only valid if
 	    read_state==READ_BODY||read_state==READ_END */
 	struct Response {
+		char status_buffer[64];
+		char content_length_buffer[32];
+		off_t length;
+
+		uint64_t bytes_sent = 0;
+
+		HttpStatus status;
+
 		bool want_write;
 
 		/**
@@ -246,14 +252,9 @@ struct HttpServerConnection final
 		 * @see http_server_socket_drained()
 		 */
 		bool pending_drained = false;
-
-		HttpStatus status;
-		char status_buffer[64];
-		char content_length_buffer[32];
-		off_t length;
-
-		uint64_t bytes_sent = 0;
 	} response;
+
+	enum http_server_score score = HTTP_SERVER_NEW;
 
 	bool date_header;
 
