@@ -26,7 +26,9 @@ LbRequestLogger::LbRequestLogger(LbInstance &_instance,
 
 void
 LbRequestLogger::LogHttpRequest(IncomingHttpRequest &request,
-				HttpStatus status, int64_t length,
+				HttpStatus status,
+				Net::Log::ContentType content_type,
+				int64_t length,
 				uint64_t bytes_received, uint64_t bytes_sent) noexcept
 {
 	const auto duration = GetDuration(instance.event_loop.SteadyNow());
@@ -49,7 +51,7 @@ LbRequestLogger::LogHttpRequest(IncomingHttpRequest &request,
 					 x_forwarded_for,
 					 referer,
 					 user_agent,
-					 status, length,
+					 status, content_type, length,
 					 bytes_received, bytes_sent,
 					 duration);
 }

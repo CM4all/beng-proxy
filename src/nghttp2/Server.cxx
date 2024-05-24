@@ -26,6 +26,7 @@
 #include "lib/fmt/ToBuffer.hxx"
 #include "event/Loop.hxx"
 #include "net/StaticSocketAddress.hxx"
+#include "net/log/ContentType.hxx"
 #include "util/Cancellable.hxx"
 #include "util/StaticVector.hxx"
 #include "util/StringAPI.hxx"
@@ -80,6 +81,8 @@ class ServerConnection::Request final
 	 */
 	HttpStatus error_status{};
 
+	Net::Log::ContentType content_type{};
+
 	/**
 	 * This is set to true after at least one byte of the request
 	 * body has been consumed.
@@ -116,7 +119,7 @@ public:
 			if (response_body)
 				length = response_body->GetTransmitted();
 
-			logger->LogHttpRequest(*this, the_status, length,
+			logger->LogHttpRequest(*this, the_status, content_type, length,
 					       /* TODO: */ 0, length);
 		}
 	}
@@ -459,7 +462,11 @@ ServerConnection::Request::SendResponse(HttpStatus status,
 			_response_body.Clear();
 	}
 
-	for (const auto &i : std::move(response_headers).ToMap(AllocatorPtr{pool})) {
+	const auto response_header_map = std::move(response_headers).ToMap(AllocatorPtr{pool});
+	if (const char *ct = response_header_map.Get(content_type_header))
+		content_type = Net::Log::ParseContentType(ct);
+
+	for (const auto &i : response_header_map) {
 		if (hdrs.full())
 			// TODO: what now?
 			break;

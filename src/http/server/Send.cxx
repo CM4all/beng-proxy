@@ -15,6 +15,7 @@
 #include "istream/istream_memory.hxx"
 #include "http/Date.hxx"
 #include "event/Loop.hxx"
+#include "net/log/ContentType.hxx"
 #include "util/DecimalFormat.hxx"
 #include "util/SpanCast.hxx"
 #include "product.h"
@@ -104,6 +105,10 @@ HttpServerConnection::SubmitResponse(HttpStatus status,
 	auto &request_pool = request.request->pool;
 
 	response.status = status;
+
+	if (const auto content_type = headers.GetSloppy(content_type_header);
+	    !content_type.empty())
+		response.content_type = Net::Log::ParseContentType(content_type);
 
 	const std::string_view status_line{
 		response.status_buffer,

@@ -11,6 +11,7 @@
 #include "http/Method.hxx"
 #include "http/Status.hxx"
 #include "net/FormatAddress.hxx"
+#include "net/log/ContentType.hxx"
 #include "net/log/String.hxx"
 #include "time/Cast.hxx"
 #include "time/ISO8601.hxx"
@@ -77,6 +78,10 @@ Dump(JsonWriter::Sink sink, const ReceivedAccessLogDatagram &d)
 
 	if (d.valid_length)
 		o.AddMember("length", d.length);
+
+	if (const auto content_type = ToString(d.content_type);
+	    !content_type.empty())
+		o.AddMember("content_type", content_type);
 
 	if (d.valid_traffic) {
 		o.AddMember("traffic_received", d.traffic_received);

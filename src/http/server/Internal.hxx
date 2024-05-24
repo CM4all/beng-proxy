@@ -24,6 +24,7 @@
 enum class HttpMethod : uint_least8_t;
 struct HttpServerRequest;
 class HttpHeaders;
+namespace Net::Log { enum class ContentType : uint8_t; }
 
 struct HttpServerConnection final
 	: BufferedSocketHandler, IstreamSink, DestructAnchor {
@@ -241,6 +242,8 @@ struct HttpServerConnection final
 		uint64_t bytes_sent = 0;
 
 		HttpStatus status;
+
+		Net::Log::ContentType content_type = {};
 
 		bool want_write;
 

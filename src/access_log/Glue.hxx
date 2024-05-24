@@ -18,7 +18,7 @@
 enum class HttpStatus : uint_least16_t;
 struct UidGid;
 struct AccessLogConfig;
-namespace Net { namespace Log { struct Datagram; }}
+namespace Net::Log { enum class ContentType : uint8_t; struct Datagram; }
 struct IncomingHttpRequest;
 class SocketDescriptor;
 class LogClient;
@@ -56,7 +56,9 @@ public:
 		 const char *forwarded_to,
 		 const char *host, const char *x_forwarded_for,
 		 const char *referer, const char *user_agent,
-		 HttpStatus status, int64_t length,
+		 HttpStatus status,
+		 Net::Log::ContentType content_type,
+		 int64_t length,
 		 uint64_t bytes_received, uint64_t bytes_sent,
 		 std::chrono::steady_clock::duration duration) noexcept;
 
@@ -66,7 +68,9 @@ public:
 		 const char *generator,
 		 const char *forwarded_to,
 		 const char *referer, const char *user_agent,
-		 HttpStatus status, int64_t length,
+		 HttpStatus status,
+		 Net::Log::ContentType content_type,
+		 int64_t length,
 		 uint64_t bytes_received, uint64_t bytes_sent,
 		 std::chrono::steady_clock::duration duration) noexcept;
 

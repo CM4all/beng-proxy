@@ -6,6 +6,7 @@
 #include "Launch.hxx"
 #include "Client.hxx"
 #include "net/ConnectSocket.hxx"
+#include "net/log/ContentType.hxx"
 #include "net/log/Datagram.hxx"
 #include "net/log/OneLine.hxx"
 #include "http/CommonHeaders.hxx"
@@ -77,7 +78,9 @@ AccessLogGlue::Log(std::chrono::system_clock::time_point now,
 		   const char *forwarded_to,
 		   const char *host, const char *x_forwarded_for,
 		   const char *referer, const char *user_agent,
-		   HttpStatus status, int64_t content_length,
+		   HttpStatus status,
+		   Net::Log::ContentType content_type,
+		   int64_t content_length,
 		   uint64_t bytes_received, uint64_t bytes_sent,
 		   std::chrono::steady_clock::duration duration) noexcept
 {
@@ -112,6 +115,7 @@ AccessLogGlue::Log(std::chrono::system_clock::time_point now,
 		.http_method = request.method,
 		.http_status = status,
 		.type = Net::Log::Type::HTTP_ACCESS,
+		.content_type = content_type,
 	}
 		.SetTraffic(bytes_received, bytes_sent)
 		.SetDuration(std::chrono::duration_cast<Net::Log::Duration>(duration));
@@ -129,7 +133,9 @@ AccessLogGlue::Log(std::chrono::system_clock::time_point now,
 		   const char *generator,
 		   const char *forwarded_to,
 		   const char *referer, const char *user_agent,
-		   HttpStatus status, int64_t content_length,
+		   HttpStatus status,
+		   Net::Log::ContentType content_type,
+		   int64_t content_length,
 		   uint64_t bytes_received, uint64_t bytes_sent,
 		   std::chrono::steady_clock::duration duration) noexcept
 {
@@ -138,7 +144,7 @@ AccessLogGlue::Log(std::chrono::system_clock::time_point now,
 	    request.headers.Get(host_header),
 	    request.headers.Get(x_forwarded_for_header),
 	    referer, user_agent,
-	    status, content_length,
+	    status, content_type, content_length,
 	    bytes_received, bytes_sent,
 	    duration);
 }

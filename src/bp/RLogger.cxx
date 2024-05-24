@@ -21,7 +21,9 @@ BpRequestLogger::BpRequestLogger(BpInstance &_instance,
 
 void
 BpRequestLogger::LogHttpRequest(IncomingHttpRequest &request,
-				HttpStatus status, int64_t length,
+				HttpStatus status,
+				Net::Log::ContentType content_type,
+				int64_t length,
 				uint64_t bytes_received, uint64_t bytes_sent) noexcept
 {
 	const auto duration = GetDuration(instance.event_loop.SteadyNow());
@@ -43,7 +45,7 @@ BpRequestLogger::LogHttpRequest(IncomingHttpRequest &request,
 					 nullptr,
 					 request.headers.Get(referer_header),
 					 request.headers.Get(user_agent_header),
-					 status, length,
+					 status, content_type, length,
 					 bytes_received, bytes_sent,
 					 duration);
 }

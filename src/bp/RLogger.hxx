@@ -71,7 +71,9 @@ struct BpRequestLogger final : IncomingHttpRequestLogger {
 
 	/* virtual methods from class IncomingHttpRequestLogger */
 	void LogHttpRequest(IncomingHttpRequest &request,
-			    HttpStatus status, int64_t length,
+			    HttpStatus status,
+			    Net::Log::ContentType content_type,
+			    int64_t length,
 			    uint64_t bytes_received,
 			    uint64_t bytes_sent) noexcept override;
 };

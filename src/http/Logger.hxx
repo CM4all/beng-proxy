@@ -7,6 +7,7 @@
 #include <cstdint>
 
 enum class HttpStatus : uint_least16_t;
+namespace Net::Log { enum class ContentType : uint8_t; }
 struct IncomingHttpRequest;
 
 class IncomingHttpRequestLogger {
@@ -24,6 +25,8 @@ public:
 	 * encoding overhead such as chunk headers)
 	 */
 	virtual void LogHttpRequest(IncomingHttpRequest &request,
-				    HttpStatus status, int64_t length,
+				    HttpStatus status,
+				    Net::Log::ContentType content_type,
+				    int64_t length,
 				    uint64_t bytes_received, uint64_t bytes_sent) noexcept = 0;
 };
