@@ -17,6 +17,7 @@
 #include "http/Method.hxx"
 #include "net/FormatAddress.hxx"
 #include "net/UniqueSocketDescriptor.hxx"
+#include "net/log/ContentType.hxx"
 #include "net/log/String.hxx"
 #include "system/Error.hxx"
 #include "time/Cast.hxx"
@@ -131,6 +132,12 @@ try {
 	if (d.site != nullptr)
 		SetTable(L, RelativeStackIndex{-1}, "site", d.site);
 
+	if (d.analytics_id != nullptr)
+		SetTable(L, RelativeStackIndex{-1}, "analytics_id", d.analytics_id);
+
+	if (d.generator != nullptr)
+		SetTable(L, RelativeStackIndex{-1}, "generator", d.generator);
+
 	if (d.forwarded_to != nullptr)
 		SetTable(L, RelativeStackIndex{-1},
 			 "forwarded_to", d.forwarded_to);
@@ -160,6 +167,11 @@ try {
 	if (d.valid_length)
 		SetTable(L, RelativeStackIndex{-1},
 			 "length", double(d.length));
+
+	if (const auto content_type = ToString(d.content_type);
+	    !content_type.empty())
+		SetTable(L, RelativeStackIndex{-1},
+			 "content_type", content_type);
 
 	if (d.valid_traffic) {
 		SetTable(L, RelativeStackIndex{-1},
