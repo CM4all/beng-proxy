@@ -41,7 +41,23 @@ class ClientConnection::Request final
 {
 	const AllocatorPtr alloc;
 
-	enum class State {
+	const StopwatchPtr stopwatch;
+
+	ClientConnection &connection;
+
+	HttpResponseHandler &handler;
+
+	StringMap response_headers;
+
+	MultiFifoBufferIstream *response_body_control = nullptr;
+
+	std::unique_ptr<IstreamDataSource> request_body;
+
+	int32_t id = -1;
+
+	HttpStatus status = HttpStatus::OK;
+
+	enum class State : uint_least8_t {
 		INITIAL,
 
 		/**
@@ -55,22 +71,6 @@ class ClientConnection::Request final
 		 */
 		BODY,
 	} state = State::INITIAL;
-
-	const StopwatchPtr stopwatch;
-
-	ClientConnection &connection;
-
-	HttpResponseHandler &handler;
-
-	int32_t id = -1;
-
-	HttpStatus status = HttpStatus::OK;
-
-	StringMap response_headers;
-
-	MultiFifoBufferIstream *response_body_control = nullptr;
-
-	std::unique_ptr<IstreamDataSource> request_body;
 
 public:
 	explicit Request(AllocatorPtr _alloc,

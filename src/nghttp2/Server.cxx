@@ -52,14 +52,6 @@ class ServerConnection::Request final
 {
 	ServerConnection &connection;
 
-	const uint32_t id;
-
-	/**
-	 * The response body status.  This is set by SendResponse(),
-	 * and is used later for the access logger.
-	 */
-	HttpStatus the_status{};
-
 	CancellablePointer cancel_ptr;
 
 	MultiFifoBufferIstream *request_body_control = nullptr;
@@ -72,6 +64,14 @@ class ServerConnection::Request final
 	std::unique_ptr<IstreamDataSource> response_body;
 
 	RootStopwatchPtr stopwatch;
+
+	const uint32_t id;
+
+	/**
+	 * The response body status.  This is set by SendResponse(),
+	 * and is used later for the access logger.
+	 */
+	HttpStatus the_status{};
 
 	/**
 	 * If this is set, the this library rejects the request with
