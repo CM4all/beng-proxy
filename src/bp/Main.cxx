@@ -315,6 +315,7 @@ try {
 	instance.spawn = std::make_unique<SpawnServerClient>
 		(instance.event_loop,
 		 instance.config.spawn, std::move(spawner.socket),
+		 spawner.cgroup,
 		 true);
 
 	spawner = {}; // close the pidfd
