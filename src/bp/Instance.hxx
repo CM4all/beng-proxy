@@ -18,7 +18,6 @@
 #include "event/ShutdownListener.hxx"
 #include "event/FarTimerEvent.hxx"
 #include "spawn/ZombieReaper.hxx"
-#include "spawn/Handler.hxx"
 #include "event/net/control/Handler.hxx"
 #include "net/FailureManager.hxx"
 #include "io/FdCache.hxx"
@@ -50,6 +49,7 @@ class SpawnService;
 namespace BengControl { class Server; }
 class SpawnServerClient;
 struct LaunchSpawnServerResult;
+class CgroupMemoryWatch;
 class TranslationStock;
 class TranslationCache;
 class TranslationService;
@@ -71,7 +71,7 @@ namespace NgHttp2 { class Stock; }
 namespace Avahi { class Client; class Publisher; }
 namespace Prometheus { struct Stats; }
 
-struct BpInstance final : PInstance, BengControl::Handler, SpawnServerClientHandler,
+struct BpInstance final : PInstance, BengControl::Handler,
 #ifdef HAVE_LIBWAS
 			  WasMetricsHandler,
 #endif
@@ -120,13 +120,12 @@ struct BpInstance final : PInstance, BengControl::Handler, SpawnServerClientHand
 	const std::unique_ptr<SpawnServerClient> spawn;
 	SpawnService *const spawn_service;
 
-	CoarseTimerEvent memory_warning_timer{event_loop, BIND_THIS_METHOD(OnMemoryWarningTimer)};
+#ifdef HAVE_LIBSYSTEMD
+	const uint_least64_t memory_limit;
 
-	/**
-	 * This field remembers the configured memory limit; set by
-	 * OnMemoryWarning() and used by OnMemoryWarningTimer().
-	 */
-	uint_least64_t memory_limit;
+	std::unique_ptr<CgroupMemoryWatch> cgroup_memory_watch;
+	CoarseTimerEvent memory_warning_timer{event_loop, BIND_THIS_METHOD(OnMemoryWarningTimer)};
+#endif
 
 	std::unique_ptr<SessionManager> session_manager;
 
@@ -249,11 +248,6 @@ struct BpInstance final : PInstance, BengControl::Handler, SpawnServerClientHand
 
 	void OnControlError(std::exception_ptr ep) noexcept override;
 
-	/* virtual methods from class SpawnServerClientHandler */
-	void OnMemoryWarning(uint_least64_t memory_usage,
-			     uint_least64_t memory_high,
-			     uint_least64_t memory_max) noexcept override;
-
 	/* virtual methods from class Avahi::ErrorHandler */
 	bool OnAvahiError(std::exception_ptr e) noexcept override;
 
@@ -263,8 +257,11 @@ struct BpInstance final : PInstance, BengControl::Handler, SpawnServerClientHand
 #endif
 
 private:
+#ifdef HAVE_LIBSYSTEMD
 	void HandleMemoryWarning() noexcept;
+	void OnMemoryWarning(uint_least64_t memory_usage) noexcept;
 	void OnMemoryWarningTimer() noexcept;
+#endif
 
 	bool AllocatorCompressCallback() noexcept;
 

@@ -35,6 +35,7 @@
 #include "stock/MapStock.hxx"
 #include "session/Manager.hxx"
 #include "session/Save.hxx"
+#include "spawn/CgroupWatch.hxx"
 #include "spawn/Client.hxx"
 #include "spawn/Launch.hxx"
 #include "spawn/ListenStreamSpawnStock.hxx"
@@ -56,6 +57,18 @@
 
 static constexpr auto COMPRESS_INTERVAL = std::chrono::minutes(10);
 
+#ifdef HAVE_LIBSYSTEMD
+
+static constexpr uint_least64_t
+GetMemoryLimit(const SystemdUnitProperties &properties) noexcept
+{
+	return properties.memory_high > 0
+		? properties.memory_high
+		: properties.memory_max;
+}
+
+#endif
+
 BpInstance::BpInstance(BpConfig &&_config,
 		       LaunchSpawnServerResult &&spawner) noexcept
 	:config(std::move(_config)),
@@ -64,13 +77,20 @@ BpInstance::BpInstance(BpConfig &&_config,
 	 compress_timer(event_loop, BIND_THIS_METHOD(OnCompressTimer)),
 	 spawn(std::make_unique<SpawnServerClient>(event_loop,
 						   config.spawn, std::move(spawner.socket),
-						   spawner.cgroup,
+						   spawner.cgroup.IsDefined(),
 						   true)),
 	 spawn_service(spawn.get()),
+#ifdef HAVE_LIBSYSTEMD
+	 memory_limit(GetMemoryLimit(config.spawn.systemd_scope_properties)),
+	 cgroup_memory_watch(spawner.cgroup.IsDefined() &&
+			     config.spawn.systemd_scope_properties.HaveMemoryLimit()
+			     ? std::make_unique<CgroupMemoryWatch>(event_loop,
+								   spawner.cgroup,
+								   BIND_THIS_METHOD(OnMemoryWarning))
+			     : nullptr),
+#endif
 	 session_save_timer(event_loop, BIND_THIS_METHOD(SaveSessions))
 {
-	spawn->SetHandler(*this);
-
 	ForkCow(false);
 	ScheduleCompress();
 }
@@ -259,6 +279,8 @@ BpInstance::ReloadState() noexcept
 #endif // HAVE_AVAHI
 }
 
+#ifdef HAVE_LIBSYSTEMD
+
 void
 BpInstance::HandleMemoryWarning() noexcept
 {
@@ -277,12 +299,8 @@ BpInstance::HandleMemoryWarning() noexcept
 }
 
 void
-BpInstance::OnMemoryWarning(uint_least64_t memory_usage,
-			    uint_least64_t memory_high,
-			    uint_least64_t memory_max) noexcept
+BpInstance::OnMemoryWarning(uint_least64_t memory_usage) noexcept
 {
-	memory_limit = memory_high > 0 ? memory_high : memory_max;
-
 	fmt::print(stderr, "Spawner memory warning: {} of {} bytes used\n",
 		   memory_usage, memory_limit);
 
@@ -294,8 +312,10 @@ BpInstance::OnMemoryWarning(uint_least64_t memory_usage,
 void
 BpInstance::OnMemoryWarningTimer() noexcept
 {
+	assert(cgroup_memory_watch);
+
 	try {
-		const auto memory_usage = spawn->GetMemoryUsage();
+		const auto memory_usage = cgroup_memory_watch->GetMemoryUsage();
 		if (memory_usage < memory_limit * 15 / 16)
 			return;
 
@@ -314,6 +334,8 @@ BpInstance::OnMemoryWarningTimer() noexcept
 
 	memory_warning_timer.Schedule(std::chrono::seconds{2});
 }
+
+#endif // HAVE_LIBSYSTEMD
 
 #ifdef HAVE_LIBWAS
 
