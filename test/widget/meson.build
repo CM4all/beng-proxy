@@ -14,6 +14,7 @@ test(
       putil_dep,
       widget_dep,
       istream_dep,
+      translation_dep,
     ],
   ),
 )
@@ -25,11 +26,10 @@ test(
     't_widget_registry.cxx',
     '../../src/PInstance.cxx',
     '../../src/widget/Registry.cxx',
-    '../../src/widget/Class.cxx',
     include_directories: inc,
     dependencies: [
       gtest,
-      widget_dep,
+      widget_class_dep,
     ],
   ),
 )
