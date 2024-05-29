@@ -210,7 +210,7 @@ executable(
   dependencies: [
     test_instance_dep,
     translation_dep,
-    widget_dep,
+    widget_class_dep,
     stock_dep,
     http_dep,
     cookie_dep,
@@ -315,7 +315,7 @@ test(
       eutil_dep,
       raddress_dep,
       stopwatch_dep,
-      widget_dep,
+      widget_class_dep,
     ],
   ),
 )
