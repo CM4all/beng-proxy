@@ -301,6 +301,12 @@ BpInstance::HandleMemoryWarning() noexcept
 void
 BpInstance::OnMemoryWarning(uint_least64_t memory_usage) noexcept
 {
+	if (memory_limit > 0 &&
+	    memory_usage < memory_limit / 16 * 15)
+		/* false alarm - we're well below the configured
+		   limit */
+		return;
+
 	fmt::print(stderr, "Spawner memory warning: {} of {} bytes used\n",
 		   memory_usage, memory_limit);
 
