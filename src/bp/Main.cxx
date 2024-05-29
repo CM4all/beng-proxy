@@ -283,7 +283,7 @@ try {
 
 	SetupProcess();
 
-	auto spawner_socket = LaunchSpawnServer(_config.spawn, nullptr);
+	auto spawner = LaunchSpawnServer(_config.spawn, nullptr);
 
 #if defined(HAVE_LIBSYSTEMD) || defined(HAVE_AVAHI)
 	const ODBus::ScopeInit dbus_init;
@@ -314,8 +314,10 @@ try {
 	   after ~BpInstance() has been called */
 	instance.spawn = std::make_unique<SpawnServerClient>
 		(instance.event_loop,
-		 instance.config.spawn, std::move(spawner_socket),
+		 instance.config.spawn, std::move(spawner.socket),
 		 true);
+
+	spawner = {}; // close the pidfd
 
 	instance.spawn->SetHandler(instance);
 	instance.spawn_service = instance.spawn.get();
