@@ -36,6 +36,7 @@
 #include "session/Manager.hxx"
 #include "session/Save.hxx"
 #include "spawn/Client.hxx"
+#include "spawn/Launch.hxx"
 #include "spawn/ListenStreamSpawnStock.hxx"
 #include "access_log/Glue.hxx"
 #include "util/PrintException.hxx"
@@ -55,13 +56,21 @@
 
 static constexpr auto COMPRESS_INTERVAL = std::chrono::minutes(10);
 
-BpInstance::BpInstance(BpConfig &&_config) noexcept
+BpInstance::BpInstance(BpConfig &&_config,
+		       LaunchSpawnServerResult &&spawner) noexcept
 	:config(std::move(_config)),
 	 shutdown_listener(event_loop, BIND_THIS_METHOD(ShutdownCallback)),
 	 sighup_event(event_loop, SIGHUP, BIND_THIS_METHOD(ReloadEventCallback)),
 	 compress_timer(event_loop, BIND_THIS_METHOD(OnCompressTimer)),
+	 spawn(std::make_unique<SpawnServerClient>(event_loop,
+						   config.spawn, std::move(spawner.socket),
+						   spawner.cgroup,
+						   true)),
+	 spawn_service(spawn.get()),
 	 session_save_timer(event_loop, BIND_THIS_METHOD(SaveSessions))
 {
+	spawn->SetHandler(*this);
+
 	ForkCow(false);
 	ScheduleCompress();
 }

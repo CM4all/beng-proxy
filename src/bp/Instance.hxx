@@ -49,6 +49,7 @@ class FilteredSocketBalancer;
 class SpawnService;
 namespace BengControl { class Server; }
 class SpawnServerClient;
+struct LaunchSpawnServerResult;
 class TranslationStock;
 class TranslationCache;
 class TranslationService;
@@ -115,9 +116,9 @@ struct BpInstance final : PInstance, BengControl::Handler, SpawnServerClientHand
 
 	/* child management */
 	ZombieReaper zombie_reaper{event_loop};
-	SpawnService *spawn_service;
 
-	std::unique_ptr<SpawnServerClient> spawn;
+	const std::unique_ptr<SpawnServerClient> spawn;
+	SpawnService *const spawn_service;
 
 	CoarseTimerEvent memory_warning_timer{event_loop, BIND_THIS_METHOD(OnMemoryWarningTimer)};
 
@@ -197,7 +198,8 @@ struct BpInstance final : PInstance, BengControl::Handler, SpawnServerClientHand
 	/* session */
 	FarTimerEvent session_save_timer;
 
-	explicit BpInstance(BpConfig &&_config) noexcept;
+	BpInstance(BpConfig &&_config,
+		   LaunchSpawnServerResult &&spawner) noexcept;
 	~BpInstance() noexcept;
 
 	[[gnu::pure]]

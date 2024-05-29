@@ -293,7 +293,10 @@ try {
 
 	const ScopeFbPoolInit fb_pool_init;
 
-	BpInstance instance(std::move(_config));
+	BpInstance instance{
+		std::move(_config),
+		std::move(spawner),
+	};
 
 #ifdef HAVE_LIBCAP
 	capabilities_init();
@@ -309,16 +312,7 @@ try {
 
 	global_control_handler_init(&instance);
 
-	instance.spawn = std::make_unique<SpawnServerClient>
-		(instance.event_loop,
-		 instance.config.spawn, std::move(spawner.socket),
-		 spawner.cgroup,
-		 true);
-
 	spawner = {}; // close the pidfd
-
-	instance.spawn->SetHandler(instance);
-	instance.spawn_service = instance.spawn.get();
 
 	instance.session_manager =
 		std::make_unique<SessionManager>(instance.event_loop,
