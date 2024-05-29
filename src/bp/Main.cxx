@@ -128,6 +128,7 @@ BpInstance::ShutdownCallback() noexcept
 	thread_pool_stop();
 
 	spawn->Shutdown();
+	memory_warning_timer.Cancel();
 
 	listeners.clear();
 
