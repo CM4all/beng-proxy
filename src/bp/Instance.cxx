@@ -306,12 +306,14 @@ BpInstance::OnMemoryWarning(uint_least64_t memory_usage) noexcept
 
 	HandleMemoryWarning();
 
-	memory_warning_timer.ScheduleEarlier(std::chrono::seconds{2});
+	if (memory_limit > 0)
+		memory_warning_timer.ScheduleEarlier(std::chrono::seconds{2});
 }
 
 void
 BpInstance::OnMemoryWarningTimer() noexcept
 {
+	assert(memory_limit > 0);
 	assert(cgroup_memory_watch);
 
 	try {
