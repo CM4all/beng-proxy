@@ -309,9 +309,6 @@ try {
 
 	global_control_handler_init(&instance);
 
-	/* note: this function call passes a temporary SpawnConfig copy,
-	   because the reference will be evaluated in the child process
-	   after ~BpInstance() has been called */
 	instance.spawn = std::make_unique<SpawnServerClient>
 		(instance.event_loop,
 		 instance.config.spawn, std::move(spawner.socket),
