@@ -173,7 +173,7 @@ widget_response_format(struct pool &pool, const Widget &widget,
 					  FmtBuffer<64>("widget sent unknown charset '{}'",
 							charset2));
 
-		widget.logger(6, "charset conversion '", charset2, "' -> utf-8");
+		widget.logger.Fmt(6, "charset conversion {:?} -> UTF-8", charset);
 		body = std::move(ic);
 	}
 

@@ -225,7 +225,7 @@ do_rewrite_widget_uri(AllocatorPtr alloc, WidgetContext &ctx,
 		else if (widget.GetIdPath() == nullptr)
 			widget.logger(4, "Cannot rewrite URI: broken widget id chain");
 		else
-			widget.logger(4, "Base mismatch: ", value);
+			widget.logger.Fmt(4, "Base mismatch: {:?}", value);
 		return nullptr;
 	}
 

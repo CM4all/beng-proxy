@@ -596,7 +596,7 @@ WidgetRequest::OnHttpResponse(HttpStatus status, StringMap &&headers,
 		widget.logger(4, "response headers from widget");
 
 		for (const auto &i : headers)
-			widget.logger(4, "  ", i.key, ": ", i.value);
+			widget.logger.Fmt(4, "  {:?}: {:?}", i.key, i.value);
 	}
 
 	/* TODO shall the address view or the transformation view be used
@@ -698,7 +698,7 @@ WidgetRequest::SendRequest() noexcept
 		widget.logger(4, "request headers for widget");
 
 		for (const auto &i : headers)
-			widget.logger(4, "  ", i.key, ": ", i.value);
+			widget.logger.Fmt(4, "  {:?}: {:?}", i.key, i.value);
 	}
 
 	ctx->resource_loader.SendRequest(pool, parent_stopwatch,
