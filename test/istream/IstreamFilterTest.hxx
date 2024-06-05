@@ -52,14 +52,17 @@ struct IstreamFilterTestOptions {
 	bool forwards_errors = true;
 };
 
+struct Instance : TestInstance {
+};
+
 template<typename T>
 class IstreamFilterTest : public ::testing::Test {
+protected:
+	T traits_;
+	Instance instance_;
 };
 
 TYPED_TEST_SUITE_P(IstreamFilterTest);
-
-struct Instance : TestInstance {
-};
 
 struct Context final : IstreamSink {
 	using IstreamSink::input;
@@ -225,8 +228,8 @@ run_istream(const IstreamFilterTestOptions &options,
 /** normal run */
 TYPED_TEST_P(IstreamFilterTest, Normal)
 {
-	TypeParam traits;
-	Instance instance;
+	auto &traits = this->traits_;
+	auto &instance = this->instance_;
 
 	auto pool = pool_new_linear(instance.root_pool, "test", 8192);
 	auto input_pool = pool_new_linear(instance.root_pool, "input", 8192);
@@ -242,8 +245,8 @@ TYPED_TEST_P(IstreamFilterTest, Normal)
 /** suspend the first half of the input */
 TYPED_TEST_P(IstreamFilterTest, HalfSuspend)
 {
-	TypeParam traits;
-	Instance instance;
+	auto &traits = this->traits_;
+	auto &instance = this->instance_;
 
 	auto pool = pool_new_linear(instance.root_pool, "test", 8192);
 	auto input_pool = pool_new_linear(instance.root_pool, "input", 8192);
@@ -262,11 +265,11 @@ TYPED_TEST_P(IstreamFilterTest, HalfSuspend)
 /** normal run */
 TYPED_TEST_P(IstreamFilterTest, NoBucket)
 {
-	TypeParam traits;
+	auto &traits = this->traits_;
+	auto &instance = this->instance_;
+
 	if (!traits.options.enable_buckets)
 		GTEST_SKIP();
-
-	Instance instance;
 
 	auto pool = pool_new_linear(instance.root_pool, "test", 8192);
 	auto input_pool = pool_new_linear(instance.root_pool, "input", 8192);
@@ -322,11 +325,11 @@ TYPED_TEST_P(IstreamFilterTest, NoBucket)
 /** test with Istream::FillBucketList() */
 TYPED_TEST_P(IstreamFilterTest, Bucket)
 {
-	TypeParam traits;
+	auto &traits = this->traits_;
+	auto &instance = this->instance_;
+
 	if (!traits.options.enable_buckets)
 		GTEST_SKIP();
-
-	Instance instance;
 
 	auto pool = pool_new_linear(instance.root_pool, "test", 8192);
 	auto input_pool = pool_new_linear(instance.root_pool, "input", 8192);
@@ -351,11 +354,11 @@ TYPED_TEST_P(IstreamFilterTest, Bucket)
 /** suspend the first half of the input */
 TYPED_TEST_P(IstreamFilterTest, BucketHalfSuspend)
 {
-	TypeParam traits;
+	auto &traits = this->traits_;
+	auto &instance = this->instance_;
+
 	if (!traits.options.enable_buckets)
 		GTEST_SKIP();
-
-	Instance instance;
 
 	auto pool = pool_new_linear(instance.root_pool, "test", 8192);
 	auto input_pool = pool_new_linear(instance.root_pool, "input", 8192);
@@ -383,11 +386,11 @@ TYPED_TEST_P(IstreamFilterTest, BucketHalfSuspend)
     to the next Istream */
 TYPED_TEST_P(IstreamFilterTest, BucketMore)
 {
-	TypeParam traits;
+	auto &traits = this->traits_;
+	auto &instance = this->instance_;
+
 	if (!traits.options.enable_buckets)
 		GTEST_SKIP();
-
-	Instance instance;
 
 	auto pool = pool_new_linear(instance.root_pool, "test", 8192);
 	auto input_pool = pool_new_linear(instance.root_pool, "input", 8192);
@@ -412,11 +415,11 @@ TYPED_TEST_P(IstreamFilterTest, BucketMore)
 /** test with Istream::FillBucketList() */
 TYPED_TEST_P(IstreamFilterTest, SmallBucket)
 {
-	TypeParam traits;
+	auto &traits = this->traits_;
+	auto &instance = this->instance_;
+
 	if (!traits.options.enable_buckets)
 		GTEST_SKIP();
-
-	Instance instance;
 
 	auto pool = pool_new_linear(instance.root_pool, "test", 8192);
 	auto input_pool = pool_new_linear(instance.root_pool, "input", 8192);
@@ -441,11 +444,11 @@ TYPED_TEST_P(IstreamFilterTest, SmallBucket)
 /** Istream::FillBucketList() throws */
 TYPED_TEST_P(IstreamFilterTest, BucketError)
 {
-	TypeParam traits;
+	auto &traits = this->traits_;
+	auto &instance = this->instance_;
+
 	if (!traits.options.enable_buckets)
 		GTEST_SKIP();
-
-	Instance instance;
 
 	auto pool = pool_new_linear(instance.root_pool, "test", 8192);
 
@@ -477,8 +480,8 @@ TYPED_TEST_P(IstreamFilterTest, BucketError)
 /** invoke Istream::Skip(1) */
 TYPED_TEST_P(IstreamFilterTest, Skip)
 {
-	TypeParam traits;
-	Instance instance;
+	auto &traits = this->traits_;
+	auto &instance = this->instance_;
 
 	auto pool = pool_new_linear(instance.root_pool, "test", 8192);
 	auto input_pool = pool_new_linear(instance.root_pool, "input", 8192);
@@ -499,11 +502,11 @@ TYPED_TEST_P(IstreamFilterTest, Skip)
 /** block once after n data() invocations */
 TYPED_TEST_P(IstreamFilterTest, Block)
 {
-	TypeParam traits;
+	auto &traits = this->traits_;
+	auto &instance = this->instance_;
+
 	if (!traits.options.enable_blocking)
 		GTEST_SKIP();
-
-	Instance instance;
 
 	for (int n = 0; n < 8; ++n) {
 		auto pool = pool_new_linear(instance.root_pool, "test", 8192);
@@ -523,11 +526,11 @@ TYPED_TEST_P(IstreamFilterTest, Block)
 /** test with istream_byte */
 TYPED_TEST_P(IstreamFilterTest, Byte)
 {
-	TypeParam traits;
+	auto &traits = this->traits_;
+	auto &instance = this->instance_;
+
 	if (!traits.options.enable_blocking)
 		GTEST_SKIP();
-
-	Instance instance;
 
 	auto pool = pool_new_linear(instance.root_pool, "test", 8192);
 	auto input_pool = pool_new_linear(instance.root_pool, "input", 8192);
@@ -545,11 +548,11 @@ TYPED_TEST_P(IstreamFilterTest, Byte)
 /** block and consume one byte at a time */
 TYPED_TEST_P(IstreamFilterTest, BlockByte)
 {
-	TypeParam traits;
+	auto &traits = this->traits_;
+	auto &instance = this->instance_;
+
 	if (!traits.options.enable_blocking)
 		GTEST_SKIP();
-
-	Instance instance;
 
 	auto pool = pool_new_linear(instance.root_pool, "test", 8192);
 	auto input_pool = pool_new_linear(instance.root_pool, "input", 8192);
@@ -572,11 +575,11 @@ TYPED_TEST_P(IstreamFilterTest, BlockByte)
 /** error occurs while blocking */
 TYPED_TEST_P(IstreamFilterTest, BlockInject)
 {
-	TypeParam traits;
+	auto &traits = this->traits_;
+	auto &instance = this->instance_;
+
 	if (!traits.options.enable_blocking)
 		GTEST_SKIP();
-
-	Instance instance;
 
 	auto pool = pool_new_linear(instance.root_pool, "test", 8192);
 	auto input_pool = pool_new_linear(instance.root_pool, "input", 8192);
@@ -601,8 +604,8 @@ TYPED_TEST_P(IstreamFilterTest, BlockInject)
 /** accept only half of the data */
 TYPED_TEST_P(IstreamFilterTest, Half)
 {
-	TypeParam traits;
-	Instance instance;
+	auto &traits = this->traits_;
+	auto &instance = this->instance_;
 
 	auto pool = pool_new_linear(instance.root_pool, "test", 8192);
 	auto input_pool = pool_new_linear(instance.root_pool, "input", 8192);
@@ -624,8 +627,8 @@ TYPED_TEST_P(IstreamFilterTest, Half)
 /** input fails */
 TYPED_TEST_P(IstreamFilterTest, Fail)
 {
-	TypeParam traits;
-	Instance instance;
+	auto &traits = this->traits_;
+	auto &instance = this->instance_;
 
 	auto pool = pool_new_linear(instance.root_pool, "test", 8192);
 
@@ -649,8 +652,8 @@ TYPED_TEST_P(IstreamFilterTest, Fail)
 /** input fails after the first byte */
 TYPED_TEST_P(IstreamFilterTest, FailAfterFirstByte)
 {
-	TypeParam traits;
-	Instance instance;
+	auto &traits = this->traits_;
+	auto &instance = this->instance_;
 
 	auto pool = pool_new_linear(instance.root_pool, "test", 8192);
 	auto input_pool = pool_new_linear(instance.root_pool, "input", 8192);
@@ -681,8 +684,8 @@ TYPED_TEST_P(IstreamFilterTest, FailAfterFirstByte)
 
 TYPED_TEST_P(IstreamFilterTest, CloseInHandler)
 {
-	TypeParam traits;
-	Instance instance;
+	auto &traits = this->traits_;
+	auto &instance = this->instance_;
 
 	auto pool = pool_new_linear(instance.root_pool, "test", 8192);
 	auto input_pool = pool_new_linear(instance.root_pool, "input", 8192);
@@ -703,8 +706,8 @@ TYPED_TEST_P(IstreamFilterTest, CloseInHandler)
 /** abort without handler */
 TYPED_TEST_P(IstreamFilterTest, AbortWithoutHandler)
 {
-	TypeParam traits;
-	Instance instance;
+	auto &traits = this->traits_;
+	auto &instance = this->instance_;
 
 	auto pool = pool_new_linear(instance.root_pool, "test", 8192);
 	auto input_pool = pool_new_linear(instance.root_pool, "input", 8192);
@@ -719,11 +722,11 @@ TYPED_TEST_P(IstreamFilterTest, AbortWithoutHandler)
 /** abort in handler */
 TYPED_TEST_P(IstreamFilterTest, AbortInHandler)
 {
-	TypeParam traits;
+	auto &traits = this->traits_;
+	auto &instance = this->instance_;
+
 	if (!traits.options.enable_abort_istream)
 		GTEST_SKIP();
-
-	Instance instance;
 
 	auto pool = pool_new_linear(instance.root_pool, "test", 8192);
 	auto input_pool = pool_new_linear(instance.root_pool, "input", 8192);
@@ -747,11 +750,11 @@ TYPED_TEST_P(IstreamFilterTest, AbortInHandler)
 /** abort in handler, with some data consumed */
 TYPED_TEST_P(IstreamFilterTest, AbortInHandlerHalf)
 {
-	TypeParam traits;
+	auto &traits = this->traits_;
+	auto &instance = this->instance_;
+
 	if (!traits.options.enable_abort_istream || !traits.options.enable_blocking)
 		GTEST_SKIP();
-
-	Instance instance;
 
 	auto pool = pool_new_linear(instance.root_pool, "test", 8192);
 	auto input_pool = pool_new_linear(instance.root_pool, "input", 8192);
@@ -779,8 +782,8 @@ TYPED_TEST_P(IstreamFilterTest, AbortInHandlerHalf)
 /** abort after 1 byte of output */
 TYPED_TEST_P(IstreamFilterTest, AbortAfter1Byte)
 {
-	TypeParam traits;
-	Instance instance;
+	auto &traits = this->traits_;
+	auto &instance = this->instance_;
 
 	auto pool = pool_new_linear(instance.root_pool, "test", 8192);
 	auto input_pool = pool_new_linear(instance.root_pool, "input", 8192);
@@ -798,8 +801,8 @@ TYPED_TEST_P(IstreamFilterTest, AbortAfter1Byte)
 /** test with istream_later filter */
 TYPED_TEST_P(IstreamFilterTest, Later)
 {
-	TypeParam traits;
-	Instance instance;
+	auto &traits = this->traits_;
+	auto &instance = this->instance_;
 
 	auto pool = pool_new_linear(instance.root_pool, "test", 8192);
 	auto input_pool = pool_new_linear(instance.root_pool, "input", 8192);
@@ -817,8 +820,8 @@ TYPED_TEST_P(IstreamFilterTest, Later)
 /** call Istream::AsFd() */
 TYPED_TEST_P(IstreamFilterTest, AsFd)
 {
-	TypeParam traits;
-	Instance instance;
+	auto &traits = this->traits_;
+	auto &instance = this->instance_;
 
 	auto pool = pool_new_linear(instance.root_pool, "test", 8192);
 
@@ -837,11 +840,11 @@ TYPED_TEST_P(IstreamFilterTest, AsFd)
 /** test with large input and blocking handler */
 TYPED_TEST_P(IstreamFilterTest, BigHold)
 {
-	TypeParam traits;
+	auto &traits = this->traits_;
+	auto &instance = this->instance_;
+
 	if (!traits.options.enable_big || traits.options.expected_result.data() == nullptr)
 		GTEST_SKIP();
-
-	Instance instance;
 
 	auto pool = pool_new_linear(instance.root_pool, "test", 8192);
 	auto input_pool = pool_new_linear(instance.root_pool, "input", 8192);
