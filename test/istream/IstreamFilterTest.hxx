@@ -58,8 +58,8 @@ struct Instance : TestInstance {
 template<typename T>
 class IstreamFilterTest : public ::testing::Test {
 protected:
-	T traits_;
 	Instance instance_;
+	T traits_;
 };
 
 TYPED_TEST_SUITE_P(IstreamFilterTest);
