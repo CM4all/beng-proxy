@@ -9,7 +9,6 @@
 #include "net/AllocatedSocketAddress.hxx"
 
 #include <string>
-#include <set>
 
 /**
  * Configuration which describes whether and how to log HTTP requests.
