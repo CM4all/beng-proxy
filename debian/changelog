@@ -1,6 +1,7 @@
 cm4all-beng-proxy (18.0.74) unstable; urgency=low
 
   * spawn: watch cgroup "memory.pressure"
+  * control: fix socket deregistration bug after malformed packet
 
  --   
 
