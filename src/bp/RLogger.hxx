@@ -7,9 +7,8 @@
 #include "http/Logger.hxx"
 
 #include <chrono>
+#include <cstdint>
 #include <string_view>
-
-#include <stdint.h>
 
 struct BpInstance;
 struct TaggedHttpStats;
@@ -73,7 +72,7 @@ struct BpRequestLogger final : IncomingHttpRequestLogger {
 	void LogHttpRequest(IncomingHttpRequest &request,
 			    HttpStatus status,
 			    Net::Log::ContentType content_type,
-			    int64_t length,
-			    uint64_t bytes_received,
-			    uint64_t bytes_sent) noexcept override;
+			    int_least64_t length,
+			    uint_least64_t bytes_received,
+			    uint_least64_t bytes_sent) noexcept override;
 };

@@ -23,8 +23,8 @@ void
 BpRequestLogger::LogHttpRequest(IncomingHttpRequest &request,
 				HttpStatus status,
 				Net::Log::ContentType content_type,
-				int64_t length,
-				uint64_t bytes_received, uint64_t bytes_sent) noexcept
+				int_least64_t length,
+				uint_least64_t bytes_received, uint_least64_t bytes_sent) noexcept
 {
 	const auto duration = GetDuration(instance.event_loop.SteadyNow());
 
