@@ -1504,8 +1504,7 @@ LbConfigParser::ParseLine2(FileLineParser &line)
 
 			SetChild(std::make_unique<AccessLogConfigParser>());
 		} else
-			/* <12.0.32 legacy */
-			config.access_log.SetLegacy(line.ExpectValueAndEnd());
+			throw LineParser::Error{"'{' expected"};
 	} else if (StringIsEqual(word, "set")) {
 		const char *name = line.ExpectWord();
 		line.ExpectSymbol('=');

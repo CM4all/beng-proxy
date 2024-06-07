@@ -306,8 +306,7 @@ BpConfigParser::ParseLine2(FileLineParser &line)
 
 			SetChild(std::make_unique<AccessLogConfigParser>());
 		} else
-			/* <12.0.32 legacy */
-			config.access_log.SetLegacy(line.ExpectValueAndEnd());
+			throw LineParser::Error{"'{' expected"};
 	} else if (strcmp(word, "child_error_logger") == 0) {
 		line.ExpectSymbolAndEol('{');
 		SetChild(std::make_unique<AccessLogConfigParser>(true));

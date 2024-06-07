@@ -51,19 +51,4 @@ struct AccessLogConfig {
 	 * stderr pipe to the Pond server?
 	 */
 	bool forward_child_errors = false;
-
-	/**
-	 * Setter for the deprecated "--access-logger" command-line
-	 * option, which has a few special cases.
-	 */
-	void SetLegacy(const char *new_value) {
-		command = new_value;
-
-		if (command.empty() || command == "internal")
-			type = Type::INTERNAL;
-		else if (command == "null")
-			type = Type::DISABLED;
-		else
-			type = Type::EXECUTE;
-	}
 };
