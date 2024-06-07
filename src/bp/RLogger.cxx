@@ -13,8 +13,8 @@ BpRequestLogger::BpRequestLogger(BpInstance &_instance,
 				 bool _access_logger,
 				 bool _access_logger_only_errors) noexcept
 	:instance(_instance), http_stats(_http_stats),
+	 access_logger(_access_logger ? instance.access_log.get() : nullptr),
 	 start_time(instance.event_loop.SteadyNow()),
-	 access_logger(_access_logger),
 	 access_logger_only_errors(_access_logger_only_errors)
 {
 }
@@ -36,16 +36,16 @@ BpRequestLogger::LogHttpRequest(IncomingHttpRequest &request,
 			      bytes_received, bytes_sent,
 			      duration);
 
-	if (access_logger && instance.access_log != nullptr &&
+	if (access_logger != nullptr &&
 	    (!access_logger_only_errors || http_status_is_error(status)))
-		instance.access_log->Log(instance.event_loop.SystemNow(),
-					 request, site_name,
-					 analytics_id,
-					 generator != nullptr && *generator != 0 ? generator : nullptr,
-					 nullptr,
-					 request.headers.Get(referer_header),
-					 request.headers.Get(user_agent_header),
-					 status, content_type, length,
-					 bytes_received, bytes_sent,
-					 duration);
+		access_logger->Log(instance.event_loop.SystemNow(),
+				   request, site_name,
+				   analytics_id,
+				   generator != nullptr && *generator != 0 ? generator : nullptr,
+				   nullptr,
+				   request.headers.Get(referer_header),
+				   request.headers.Get(user_agent_header),
+				   status, content_type, length,
+				   bytes_received, bytes_sent,
+				   duration);
 }

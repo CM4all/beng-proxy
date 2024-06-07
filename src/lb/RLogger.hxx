@@ -11,6 +11,7 @@
 
 struct HttpStats;
 struct LbInstance;
+class AccessLogGlue;
 
 /**
  * Attributes which are specific to the current request.  They are
@@ -27,6 +28,8 @@ struct LbRequestLogger final : IncomingHttpRequestLogger {
 	LbInstance &instance;
 
 	HttpStats &http_stats;
+
+	AccessLogGlue *const access_logger;
 
 	/**
 	 * The time stamp at the start of the request.  Used to calculate
@@ -81,11 +84,6 @@ struct LbRequestLogger final : IncomingHttpRequestLogger {
 	 * @see LOG_FORWARDED_TO
 	 */
 	const char *forwarded_to = nullptr;
-
-	/**
-	 * Enable or disable the access logger.
-	 */
-	const bool access_logger;
 
 	const bool access_logger_only_errors;
 

@@ -12,6 +12,7 @@
 
 struct BpInstance;
 struct TaggedHttpStats;
+class AccessLogGlue;
 
 /**
  * Attributes which are specific to the current request.  They are
@@ -23,6 +24,8 @@ struct BpRequestLogger final : IncomingHttpRequestLogger {
 	BpInstance &instance;
 
 	TaggedHttpStats &http_stats;
+
+	AccessLogGlue *const access_logger;
 
 	/**
 	 * The time stamp at the start of the request.  Used to calculate
@@ -51,11 +54,6 @@ struct BpRequestLogger final : IncomingHttpRequestLogger {
 	 * From TranslationCommand::STATS_TAG
 	 */
 	std::string_view stats_tag{};
-
-	/**
-	 * Enable or disable the access logger.
-	 */
-	const bool access_logger;
 
 	const bool access_logger_only_errors;
 
