@@ -7,6 +7,7 @@
 #include "PInstance.hxx"
 #include "GotoMap.hxx"
 #include "MonitorManager.hxx"
+#include "access_log/Multi.hxx"
 #include "stats/HttpStats.hxx"
 #include "lib/avahi/ErrorHandler.hxx"
 #include "event/FarTimerEvent.hxx"
@@ -22,7 +23,7 @@
 #include <memory>
 #include <map>
 
-class AccessLogGlue;
+struct UidGid;
 class PipeStock;
 class BalancerMap;
 class FilteredSocketStock;
@@ -91,7 +92,7 @@ struct LbInstance final : PInstance, Avahi::ErrorHandler {
 		IntrusiveListBaseHookTraits<LbTcpConnection>,
 		IntrusiveListOptions{.constant_time_size = true}> tcp_connections;
 
-	std::unique_ptr<AccessLogGlue> access_log;
+	MultiAccessLogGlue access_log;
 
 	explicit LbInstance(const LbConfig &_config);
 	~LbInstance() noexcept;
@@ -106,7 +107,7 @@ struct LbInstance final : PInstance, Avahi::ErrorHandler {
 	 */
 	void InitWorker();
 
-	void InitAllListeners();
+	void InitAllListeners(const UidGid *logger_user);
 	void DeinitAllListeners() noexcept;
 
 	void InitAllControls();

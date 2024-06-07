@@ -58,18 +58,19 @@ MakeSslFactory(const BpListenerConfig &config)
 
 BpListener::BpListener(BpInstance &_instance,
 		       TaggedHttpStats &_http_stats,
+		       AccessLogGlue *_access_logger,
 		       std::shared_ptr<TranslationService> _translation_service,
 		       const BpListenerConfig &config,
 		       UniqueSocketDescriptor _socket)
 	:instance(_instance),
 	 http_stats(_http_stats),
+	 access_logger(_access_logger),
 	 translation_service(_translation_service),
 	 prometheus_exporter(config.handler == BpListenerConfig::Handler::PROMETHEUS_EXPORTER
 			     ? new BpPrometheusExporter(instance)
 			     : nullptr),
 	 tag(config.tag.empty() ? nullptr : config.tag.c_str()),
 	 auth_alt_host(config.auth_alt_host),
-	 access_logger(config.access_logger),
 	 access_logger_only_errors(config.access_logger_only_errors),
 	 listener(instance.root_pool, instance.event_loop,
 		  MakeSslFactory(config),

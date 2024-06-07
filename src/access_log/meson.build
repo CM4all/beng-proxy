@@ -3,6 +3,7 @@ access_log_client = static_library(
   'Client.cxx',
   'Launch.cxx',
   'Glue.cxx',
+  'Multi.cxx',
   'ConfigParser.cxx',
   include_directories: inc,
   dependencies: [

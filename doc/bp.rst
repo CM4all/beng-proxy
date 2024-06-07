@@ -180,7 +180,8 @@ Known attributes:
   :ref:`LISTENER_TAG <t-listener_tag>` packet.
 
 - ``access_logger``: ``no`` disables the access logger on this
-  listener.
+  listener.  A value other than ``yes`` or ``no`` selects a named
+  ``access_logger`` block (see :ref:`log`).
 
 - ``access_logger_only_errors``: ``yes`` limits the access log to
   failed requests (HTTP status 4xx and 5xx).

@@ -13,11 +13,11 @@
 
 #include <memory>
 
-struct HttpStats;
 struct LbListenerConfig;
 struct LbInstance;
 class LbGotoMap;
 class ClientAccountingMap;
+class AccessLogGlue;
 namespace Avahi { struct Service; }
 
 /**
@@ -29,6 +29,8 @@ class LbListener final : FilteredSocketListenerHandler {
 	const LbListenerConfig &config;
 
 	HttpStats http_stats;
+
+	AccessLogGlue *const access_logger;
 
 	FilteredSocketListener listener;
 
@@ -46,6 +48,7 @@ class LbListener final : FilteredSocketListenerHandler {
 
 public:
 	LbListener(LbInstance &_instance,
+		   AccessLogGlue *_access_logger,
 		   const LbListenerConfig &_config);
 
 	~LbListener() noexcept;
@@ -76,6 +79,10 @@ public:
 
 	const HttpStats *GetHttpStats() const noexcept {
 		return protocol == LbProtocol::HTTP ? &http_stats : nullptr;
+	}
+
+	AccessLogGlue *GetAccessLogger() const noexcept {
+		return access_logger;
 	}
 
 	void Scan(LbGotoMap &goto_map);

@@ -13,8 +13,9 @@
 #include "spawn/Config.hxx"
 #include "config.h"
 
-#include <forward_list>
 #include <chrono>
+#include <forward_list>
+#include <map>
 #include <string_view>
 
 #include <stddef.h>
@@ -25,7 +26,7 @@
 struct BpConfig {
 	std::forward_list<BpListenerConfig> listen;
 
-	AccessLogConfig access_log;
+	MultiAccessLogConfig access_log;
 
 	AccessLogConfig child_error_log;
 

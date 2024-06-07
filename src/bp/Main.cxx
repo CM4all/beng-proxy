@@ -230,8 +230,26 @@ MakeTranslationService(EventLoop &event_loop, TranslationServiceBuilder &b,
 	return multi;
 }
 
+inline SocketDescriptor
+BpInstance::GetChildLogSocket(const UidGid *logger_user)
+{
+	if (config.child_error_log.type != AccessLogConfig::Type::INTERNAL) {
+		if (!child_error_log)
+			child_error_log.reset(AccessLogGlue::Create(config.child_error_log,
+								    logger_user));
+
+		if (child_error_log)
+			return child_error_log->GetChildSocket();
+	}
+
+	if (auto *access_logger = access_log.Make(config.access_log, logger_user, {}))
+		return access_logger->GetChildSocket();
+
+	return SocketDescriptor::Undefined();
+}
+
 void
-BpInstance::AddListener(const BpListenerConfig &c)
+BpInstance::AddListener(const BpListenerConfig &c, const UidGid *logger_user)
 {
 	auto ts = c.translation_sockets.empty()
 		? translation_service
@@ -241,6 +259,8 @@ BpInstance::AddListener(const BpListenerConfig &c)
 
 	listeners.emplace_front(*this,
 				listener_stats[c.tag],
+				access_log.Make(config.access_log, logger_user,
+						c.access_logger_name),
 				std::move(ts),
 				c, c.Create(SOCK_STREAM));
 }
@@ -334,22 +354,11 @@ try {
 
 	/* launch the access logger */
 
-	instance.access_log.reset(AccessLogGlue::Create(instance.config.access_log,
-							&cmdline.logger_user));
-
-	if (instance.config.child_error_log.type != AccessLogConfig::Type::INTERNAL)
-		instance.child_error_log.reset(AccessLogGlue::Create(instance.config.child_error_log,
-								     &cmdline.logger_user));
-
-	const auto child_log_socket = instance.child_error_log
-		? instance.child_error_log->GetChildSocket()
-		: (instance.access_log
-		   ? instance.access_log->GetChildSocket()
-		   : SocketDescriptor::Undefined());
+	const auto child_log_socket = instance.GetChildLogSocket(&cmdline.logger_user);
 
 	const auto &child_log_options = instance.config.child_error_log.type != AccessLogConfig::Type::INTERNAL
 		? instance.config.child_error_log.child_error_options
-		: instance.config.access_log.child_error_options;
+		: instance.config.access_log.main.child_error_options;
 
 	/* initialize ResourceLoader and all its dependencies */
 
@@ -470,7 +479,11 @@ try {
 #endif
 					 instance.delegate_stock,
 					 instance.ssl_client_factory.get(),
-					 instance.config.access_log.xff);
+
+					 /* TODO how to support
+					    per-listener XFF
+					    setting? */
+					 instance.config.access_log.main.xff);
 
 	if (instance.config.http_cache_size > 0) {
 		instance.http_cache = http_cache_new(instance.root_pool,
@@ -510,7 +523,7 @@ try {
 
 	if (cmdline.debug_listener_tag == nullptr) {
 		for (const auto &i : instance.config.listen)
-			instance.AddListener(i);
+			instance.AddListener(i, &cmdline.logger_user);
 	} else {
 		BpListenerConfig config;
 		if (!StringIsEmpty(cmdline.debug_listener_tag))
@@ -518,6 +531,9 @@ try {
 
 		instance.listeners.emplace_front(instance,
 						 instance.listener_stats[cmdline.debug_listener_tag],
+						 instance.access_log.Make(instance.config.access_log,
+									  &cmdline.logger_user,
+									  {}),
 						 instance.translation_service,
 						 config,
 						 UniqueSocketDescriptor{STDIN_FILENO});

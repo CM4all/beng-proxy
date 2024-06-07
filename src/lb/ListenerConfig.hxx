@@ -25,6 +25,8 @@ struct LbListenerConfig : SocketConfig {
 	std::string zeroconf_interface;
 #endif
 
+	std::string access_logger_name;
+
 	std::size_t max_connections_per_ip = 0;
 
 	const LbCertDatabaseConfig *cert_db = nullptr;

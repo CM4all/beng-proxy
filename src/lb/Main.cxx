@@ -177,12 +177,7 @@ try {
 	init_signals(&instance);
 
 	instance.InitAllControls();
-	instance.InitAllListeners();
-
-	/* launch the access logger */
-
-	instance.access_log.reset(AccessLogGlue::Create(config.access_log,
-							&cmdline.logger_user));
+	instance.InitAllListeners(&cmdline.logger_user);
 
 	/* daemonize II */
 

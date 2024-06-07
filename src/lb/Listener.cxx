@@ -144,8 +144,10 @@ LbListener::OnFilteredSocketError(std::exception_ptr ep) noexcept
  */
 
 LbListener::LbListener(LbInstance &_instance,
+		       AccessLogGlue *_access_logger,
 		       const LbListenerConfig &_config)
 	:instance(_instance), config(_config),
+	 access_logger(_access_logger),
 	 listener(instance.root_pool, instance.event_loop,
 		  MakeSslFactory(config, instance),
 		  *this, config.Create(SOCK_STREAM)),

@@ -29,6 +29,8 @@
 class LbConfigParser final : public NestedConfigParser {
 	LbConfig &config;
 
+	AccessLogConfig *current_access_log;
+
 	class Control final : public ConfigParser {
 		LbConfigParser &parent;
 		LbControlConfig config;
@@ -1246,8 +1248,18 @@ LbConfigParser::Listener::ParseLine(FileLineParser &line)
 		config.destination = LbGotoConfig{HttpStatus::MOVED_PERMANENTLY};
 		std::get<LbSimpleHttpResponse>(config.destination.destination).redirect_https = true;
 	} else if (StringIsEqual(word, "access_logger")) {
-		config.access_logger = line.NextBool();
-		line.ExpectEnd();
+		const char *value = line.ExpectValueAndEnd();
+
+		if (StringIsEqual(value, "yes"))
+			config.access_logger = true;
+		else if (StringIsEqual(value, "no"))
+			config.access_logger = false;
+		else {
+			config.access_logger_name = value;
+
+			if (parent.config.access_log.named.find(config.access_logger_name) == parent.config.access_log.named.end())
+				throw LineParser::Error("No such access_logger");
+		}
 	} else if (StringIsEqual(word, "access_logger_only_errors")) {
 		config.access_logger_only_errors = line.NextBool();
 		line.ExpectEnd();
@@ -1502,9 +1514,19 @@ LbConfigParser::ParseLine2(FileLineParser &line)
 		if (line.SkipSymbol('{')) {
 			line.ExpectEnd();
 
+			current_access_log = &config.access_log.main;
 			SetChild(std::make_unique<AccessLogConfigParser>());
-		} else
-			throw LineParser::Error{"'{' expected"};
+		} else {
+			std::string name = line.ExpectValue();
+			line.ExpectSymbolAndEol('{');
+
+			auto [it, inserted] = config.access_log.named.try_emplace(std::move(name));
+			if (!inserted)
+				throw LineParser::Error{"An access_log with that name already exists"};
+
+			current_access_log = &it->second;
+			SetChild(std::make_unique<AccessLogConfigParser>());
+		}
 	} else if (StringIsEqual(word, "set")) {
 		const char *name = line.ExpectWord();
 		line.ExpectSymbol('=');
@@ -1518,7 +1540,7 @@ void
 LbConfigParser::FinishChild(std::unique_ptr<ConfigParser> &&c)
 {
 	if (auto *al = dynamic_cast<AccessLogConfigParser *>(c.get())) {
-		config.access_log = al->GetConfig();
+		*current_access_log = al->GetConfig();
 	}
 }
 

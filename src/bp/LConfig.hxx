@@ -20,6 +20,8 @@ struct BpListenerConfig : SocketConfig {
 	std::string zeroconf_interface;
 #endif
 
+	std::string access_logger_name;
+
 	/**
 	 * If non-empty, then this listener has its own
 	 * translation server(s) and doesn't use the global

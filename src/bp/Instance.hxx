@@ -9,6 +9,7 @@
 #include "CommandLine.hxx"
 #include "UringGlue.hxx"
 #include "Config.hxx"
+#include "access_log/Multi.hxx"
 #include "stats/TaggedHttpStats.hxx"
 #include "lib/avahi/ErrorHandler.hxx"
 #ifdef HAVE_LIBWAS
@@ -33,6 +34,7 @@
 #include <unordered_map>
 #endif
 
+struct UidGid;
 class AccessLogGlue;
 class WasStock;
 class MultiWasStock;
@@ -101,7 +103,9 @@ struct BpInstance final : PInstance, BengControl::Handler,
 		IntrusiveListBaseHookTraits<BpConnection>,
 		IntrusiveListOptions{.constant_time_size = true}> connections;
 
-	std::unique_ptr<AccessLogGlue> access_log, child_error_log;
+	MultiAccessLogGlue access_log;
+
+	std::unique_ptr<AccessLogGlue> child_error_log;
 
 	ShutdownListener shutdown_listener;
 	SignalEvent sighup_event;
@@ -204,6 +208,8 @@ struct BpInstance final : PInstance, BengControl::Handler,
 	[[gnu::pure]]
 	TranslationServiceBuilder &GetTranslationServiceBuilder() const noexcept;
 
+	SocketDescriptor GetChildLogSocket(const UidGid *logger_user);
+
 	void EnableSignals() noexcept;
 	void DisableSignals() noexcept;
 
@@ -234,7 +240,7 @@ struct BpInstance final : PInstance, BengControl::Handler,
 	Avahi::Publisher &GetAvahiPublisher();
 #endif
 
-	void AddListener(const BpListenerConfig &c);
+	void AddListener(const BpListenerConfig &c, const UidGid *logger_user);
 
 	[[gnu::pure]]
 	Prometheus::Stats GetStats() const noexcept;

@@ -10,11 +10,11 @@
 
 LbRequestLogger::LbRequestLogger(LbInstance &_instance,
 				 HttpStats &_http_stats,
-				 bool _access_logger,
+				 AccessLogGlue *_access_logger,
 				 bool _access_logger_only_errors,
 				 const IncomingHttpRequest &request) noexcept
 	:instance(_instance), http_stats(_http_stats),
-	 access_logger(_access_logger ? instance.access_log.get() : nullptr),
+	 access_logger(_access_logger),
 	 start_time(instance.event_loop.SteadyNow()),
 	 host(request.headers.Get(host_header)),
 	 x_forwarded_for(request.headers.Get(x_forwarded_for_header)),

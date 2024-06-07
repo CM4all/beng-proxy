@@ -88,7 +88,7 @@ struct LbRequestLogger final : IncomingHttpRequestLogger {
 	const bool access_logger_only_errors;
 
 	LbRequestLogger(LbInstance &_instance, HttpStats &_http_stats,
-			bool _access_logger,
+			AccessLogGlue *_access_logger,
 			bool _access_logger_only_errors,
 			const IncomingHttpRequest &request) noexcept;
 

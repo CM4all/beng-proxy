@@ -202,7 +202,7 @@ LbHttpConnection::RequestHeadersFinished(IncomingHttpRequest &request) noexcept
 	request.logger = NewFromPool<LbRequestLogger>(request.pool,
 						      instance,
 						      listener.GetHttpStats(),
-						      listener.GetConfig().access_logger,
+						      listener.GetAccessLogger(),
 						      listener.GetConfig().access_logger_only_errors,
 						      request);
 }

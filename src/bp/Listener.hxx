@@ -14,6 +14,7 @@ struct BpInstance;
 struct BpListenerConfig;
 struct TaggedHttpStats;
 class TranslationService;
+class AccessLogGlue;
 class BpPrometheusExporter;
 namespace Avahi { struct Service; }
 
@@ -25,6 +26,8 @@ class BpListener final : FilteredSocketListenerHandler {
 
 	TaggedHttpStats &http_stats;
 
+	AccessLogGlue *const access_logger;
+
 	const std::shared_ptr<TranslationService> translation_service;
 
 	const std::unique_ptr<BpPrometheusExporter> prometheus_exporter;
@@ -33,7 +36,7 @@ class BpListener final : FilteredSocketListenerHandler {
 
 	const bool auth_alt_host;
 
-	const bool access_logger, access_logger_only_errors;
+	const bool access_logger_only_errors;
 
 	FilteredSocketListener listener;
 
@@ -44,6 +47,7 @@ class BpListener final : FilteredSocketListenerHandler {
 public:
 	BpListener(BpInstance &_instance,
 		   TaggedHttpStats &_http_stats,
+		   AccessLogGlue *_access_logger,
 		   std::shared_ptr<TranslationService> _translation_service,
 		   const BpListenerConfig &config,
 		   UniqueSocketDescriptor _socket);
@@ -84,7 +88,7 @@ public:
 		return auth_alt_host;
 	}
 
-	bool GetAccessLogger() const noexcept {
+	AccessLogGlue *GetAccessLogger() const noexcept {
 		return access_logger;
 	}
 

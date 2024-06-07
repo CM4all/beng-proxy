@@ -59,7 +59,7 @@ struct BpRequestLogger final : IncomingHttpRequestLogger {
 
 	BpRequestLogger(BpInstance &_instance,
 			TaggedHttpStats &_http_stats,
-			bool _access_logger,
+			AccessLogGlue *_access_logger,
 			bool _access_logger_only_errors) noexcept;
 
 	std::chrono::steady_clock::duration GetDuration(std::chrono::steady_clock::time_point now) const noexcept {

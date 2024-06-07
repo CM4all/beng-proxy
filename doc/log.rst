@@ -63,6 +63,15 @@ The following example disables access logging completely::
 
 The default is to log to the journal.
 
+Additional non-default ``access_logger`` blocks can be added, each
+with a unique name::
+
+   access_logger "foo" {
+     send_to "ff02:c0:ffee"
+   }
+
+These access loggers can then be selected in each ``listener`` block.
+
 The following ``access_logger`` options are available:
 
 - ``enabled``: “no” disables access logging completely.

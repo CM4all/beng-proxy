@@ -8,6 +8,7 @@
 #include "http/XForwardedFor.hxx"
 #include "net/AllocatedSocketAddress.hxx"
 
+#include <map>
 #include <string>
 
 /**
@@ -51,4 +52,26 @@ struct AccessLogConfig {
 	 * stderr pipe to the Pond server?
 	 */
 	bool forward_child_errors = false;
+};
+
+/**
+ * Helper structure which holds the configuration of a "main" (or
+ * "default") access logger and an arbitrary number of named access
+ * loggers.
+ */
+struct MultiAccessLogConfig {
+	AccessLogConfig main;
+
+	std::map<std::string, AccessLogConfig, std::less<>> named;
+
+	[[gnu::pure]]
+	const AccessLogConfig *Find(std::string_view name) const noexcept {
+		if (name.empty())
+			return &main;
+
+		if (auto i = named.find(name); i != named.end())
+			return &i->second;
+
+		return nullptr;
+	}
 };

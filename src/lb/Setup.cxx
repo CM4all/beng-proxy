@@ -9,11 +9,15 @@
 #include "lib/fmt/RuntimeError.hxx"
 
 void
-LbInstance::InitAllListeners()
+LbInstance::InitAllListeners(const UidGid *logger_user)
 {
 	for (const auto &i : config.listeners) {
 		try {
-			listeners.emplace_front(*this, i);
+			listeners.emplace_front(*this,
+						access_log.Make(config.access_log,
+								logger_user,
+								i.access_logger_name),
+						i);
 		} catch (...) {
 			std::throw_with_nested(FmtRuntimeError("Failed to set up listener '{}'",
 							       i.name));

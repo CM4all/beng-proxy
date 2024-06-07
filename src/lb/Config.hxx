@@ -45,7 +45,7 @@ struct LbCertDatabaseConfig : CertDatabaseConfig {
 };
 
 struct LbConfig {
-	AccessLogConfig access_log;
+	MultiAccessLogConfig access_log;
 
 	std::list<LbControlConfig> controls;
 
