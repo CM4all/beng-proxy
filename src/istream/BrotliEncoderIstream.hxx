@@ -7,14 +7,16 @@
 struct pool;
 class UnusedIstreamPtr;
 
+struct BrotliEncoderIstreamParams {
+	/**
+	 * Set BROTLI_MODE_TEXT.
+	 */
+	bool text_mode = false;
+};
+
 /**
  * An #Istream filter which compresses data on-the-fly with Brotli.
  */
 UnusedIstreamPtr
-NewBrotliEncoderIstream(struct pool &pool, UnusedIstreamPtr input) noexcept;
-
-/**
- * Set BROTLI_MODE_TEXT.
- */
-void
-SetBrotliModeText(UnusedIstreamPtr &brotli) noexcept;
+NewBrotliEncoderIstream(struct pool &pool, UnusedIstreamPtr input,
+			BrotliEncoderIstreamParams params={}) noexcept;

@@ -205,10 +205,8 @@ Request::ApplyAutoCompress(HttpHeaders &response_headers,
 			      resource_tag,
 			      response_headers, response_body, "br",
 			      [this, &response_headers](auto &&i){
-				      auto b = NewBrotliEncoderIstream(pool, std::move(i));
-				      if (IsTextMimeType(response_headers))
-					      SetBrotliModeText(b);
-				      return b;
+				      return NewBrotliEncoderIstream(pool, std::move(i),
+								     {.text_mode = IsTextMimeType(response_headers)});
 			      }))
 		return;
 #endif

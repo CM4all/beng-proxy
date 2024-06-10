@@ -32,7 +32,7 @@ class BrotliEncoderIstream final : public FacadeIstream, DestructAnchor {
 	 */
 	std::span<const std::byte> pending{};
 
-	BrotliEncoderMode mode = BROTLI_MODE_GENERIC;
+	const BrotliEncoderMode mode;
 
 	/**
 	 * Do we expect to get data from the encoder?  That is, did we
@@ -44,20 +44,16 @@ class BrotliEncoderIstream final : public FacadeIstream, DestructAnchor {
 	bool had_input, had_output;
 
 public:
-	BrotliEncoderIstream(struct pool &_pool, UnusedIstreamPtr _input) noexcept
-		:FacadeIstream(_pool, std::move(_input))
+	BrotliEncoderIstream(struct pool &_pool, UnusedIstreamPtr _input,
+			     BrotliEncoderIstreamParams params) noexcept
+		:FacadeIstream(_pool, std::move(_input)),
+		 mode(params.text_mode ? BROTLI_MODE_TEXT : BROTLI_MODE_GENERIC)
 	{
 	}
 
 	~BrotliEncoderIstream() noexcept override {
 		if (state != nullptr)
 			BrotliEncoderDestroyInstance(state);
-	}
-
-	void SetMode(BrotliEncoderMode _mode) noexcept {
-		assert(state == nullptr);
-
-		mode = _mode;
 	}
 
 private:
@@ -352,15 +348,9 @@ BrotliEncoderIstream::OnError(std::exception_ptr ep) noexcept
 }
 
 UnusedIstreamPtr
-NewBrotliEncoderIstream(struct pool &pool, UnusedIstreamPtr input) noexcept
+NewBrotliEncoderIstream(struct pool &pool, UnusedIstreamPtr input,
+			BrotliEncoderIstreamParams params) noexcept
 {
-	return NewIstreamPtr<BrotliEncoderIstream>(pool, std::move(input));
+	return NewIstreamPtr<BrotliEncoderIstream>(pool, std::move(input), params);
 
-}
-
-void
-SetBrotliModeText(UnusedIstreamPtr &_brotli) noexcept
-{
-	auto &brotli = _brotli.StaticCast<BrotliEncoderIstream>();
-	brotli.SetMode(BROTLI_MODE_TEXT);
 }
