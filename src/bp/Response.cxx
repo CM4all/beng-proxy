@@ -42,6 +42,7 @@
 #include "translation/Transformation.hxx"
 #include "translation/Service.hxx"
 #include "http/Address.hxx"
+#include "thread/Pool.hxx"
 #include "co/Task.hxx"
 #include "uri/Relocate.hxx"
 #include "uri/Verify.hxx"
@@ -205,7 +206,9 @@ Request::ApplyAutoCompress(HttpHeaders &response_headers,
 			      resource_tag,
 			      response_headers, response_body, "br",
 			      [this, &response_headers](auto &&i){
-				      return NewBrotliEncoderIstream(pool, std::move(i),
+				      return NewBrotliEncoderIstream(pool,
+								     thread_pool_get_queue(instance.event_loop),
+								     std::move(i),
 								     {.text_mode = IsTextMimeType(response_headers)});
 			      }))
 		return;

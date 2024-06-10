@@ -10,6 +10,7 @@ cm4all-beng-proxy (19.1) unstable; urgency=low
   * {http,nghttp2}/server: use optimized per-request memory allocator
   * access_log: send multiple log datagrams with sendmmsg()
   * translation/cache: reduce CPU and memory overhead
+  * brotli: offload to worker thread
 
  --   
 

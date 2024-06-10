@@ -3,26 +3,18 @@
 // author: Max Kellermann <mk@cm4all.com>
 
 #include "BrotliEncoderIstream.hxx"
+#include "ThreadIstream.hxx"
 #include "UnusedPtr.hxx"
-#include "New.hxx"
-#include "FacadeIstream.hxx"
-#include "util/DestructObserver.hxx"
 
 #include <brotli/encode.h>
 
 #include <cassert>
 #include <stdexcept>
 
-static std::span<const std::byte>
-BrotliEncoderTakeOutput(BrotliEncoderState *state) noexcept
-{
-	std::size_t size;
-	const uint8_t *data = BrotliEncoderTakeOutput(state, &size);
-	return {reinterpret_cast<const std::byte *>(data), size};
-}
-
-class BrotliEncoderIstream final : public FacadeIstream, DestructAnchor {
+class BrotliEncoderFilter final : public ThreadIstreamFilter {
 	BrotliEncoderState *state = nullptr;
+
+	SliceFifoBuffer input, output;
 
 	/**
 	 * Pending output data from the encoder.  Since this buffer
@@ -34,74 +26,29 @@ class BrotliEncoderIstream final : public FacadeIstream, DestructAnchor {
 
 	const BrotliEncoderMode mode;
 
-	/**
-	 * Do we expect to get data from the encoder?  That is, did we
-	 * feed data into it without getting anything back yet?  This
-	 * is used to decide whether to flush.
-	 */
-	bool expected = false;
-
-	bool had_input, had_output;
+	BrotliEncoderOperation operation = BROTLI_OPERATION_PROCESS;
 
 public:
-	BrotliEncoderIstream(struct pool &_pool, UnusedIstreamPtr _input,
-			     BrotliEncoderIstreamParams params) noexcept
-		:FacadeIstream(_pool, std::move(_input)),
-		 mode(params.text_mode ? BROTLI_MODE_TEXT : BROTLI_MODE_GENERIC)
+	explicit BrotliEncoderFilter(BrotliEncoderParams params) noexcept
+		:mode(params.text_mode ? BROTLI_MODE_TEXT : BROTLI_MODE_GENERIC)
 	{
 	}
 
-	~BrotliEncoderIstream() noexcept override {
+	~BrotliEncoderFilter() noexcept override {
 		if (state != nullptr)
 			BrotliEncoderDestroyInstance(state);
 	}
 
-private:
-	enum class WriteResult {
-		EMPTY,
-		BLOCKING,
-		CONSUMED_SOME,
-		CONSUMED_ALL,
-		CLOSED,
-	};
-
-	/**
-	 * Submit data from #pending to our #IstreamHandler.
-	 */
-	WriteResult SubmitPending(const DestructObserver &destructed) noexcept;
-
-	/**
-	 * Submit data from the buffer to our #IstreamHandler.
-	 */
-	WriteResult SubmitEncoded() noexcept;
-
-	/**
-	 * Read from our input until we have submitted some bytes to our
-	 * istream handler.
-	 */
-	void ForceRead() noexcept;
-
 protected:
 	void CreateEncoder() noexcept;
 
-	/* virtual methods from class Istream */
-
-	off_t _GetAvailable(bool partial) noexcept override {
-		return partial
-			? pending.size()
-			: -1;
-	}
-
-	void _Read() noexcept override;
-
-	/* virtual methods from class IstreamHandler */
-	std::size_t OnData(std::span<const std::byte> src) noexcept override;
-	void OnEof() noexcept override;
-	void OnError(std::exception_ptr ep) noexcept override;
+	/* virtual methods from class ThreadIstreamFilter */
+	void Run(ThreadIstreamInternal &i) override;
+	void PostRun(ThreadIstreamInternal &i) noexcept override;
 };
 
-void
-BrotliEncoderIstream::CreateEncoder() noexcept
+inline void
+BrotliEncoderFilter::CreateEncoder() noexcept
 {
 	assert(state == nullptr);
 
@@ -115,242 +62,67 @@ BrotliEncoderIstream::CreateEncoder() noexcept
 	BrotliEncoderSetParameter(state, BROTLI_PARAM_MODE, mode);
 }
 
-inline BrotliEncoderIstream::WriteResult
-BrotliEncoderIstream::SubmitPending(const DestructObserver &destructed) noexcept
-{
-	if (pending.empty())
-		return WriteResult::EMPTY;
-
-	had_output = true;
-
-	size_t consumed = InvokeData(pending);
-	if (destructed) {
-		assert(consumed == 0);
-		return WriteResult::CLOSED;
-	}
-
-	if (consumed == 0)
-		return WriteResult::BLOCKING;
-
-	pending = pending.subspan(consumed);
-	return pending.empty() ? WriteResult::CONSUMED_ALL : WriteResult::CONSUMED_SOME;
-}
-
-BrotliEncoderIstream::WriteResult
-BrotliEncoderIstream::SubmitEncoded() noexcept
-{
-	assert(state != nullptr);
-
-	const DestructObserver destructed{*this};
-
-	bool consumed_some = false;
-
-	while (true) {
-		switch (const auto r = SubmitPending(destructed)) {
-		case WriteResult::EMPTY:
-			break;
-
-		case WriteResult::CONSUMED_ALL:
-			consumed_some = true;
-			break;
-
-		case WriteResult::BLOCKING:
-			return consumed_some
-				? WriteResult::CONSUMED_SOME
-				: WriteResult::BLOCKING;
-
-		case WriteResult::CONSUMED_SOME:
-		case WriteResult::CLOSED:
-			return r;
-		}
-
-		pending = BrotliEncoderTakeOutput(state);
-		if (pending.empty()) {
-			if (HasInput())
-				return consumed_some
-					? WriteResult::CONSUMED_ALL
-					: WriteResult::EMPTY;
-
-			size_t available_in = 0, available_out = 0;
-			const uint8_t *next_in = nullptr;
-			uint8_t *next_out = nullptr;
-
-			if (!BrotliEncoderCompressStream(state, BROTLI_OPERATION_FINISH,
-							 &available_in, &next_in,
-							 &available_out, &next_out,
-							 nullptr)) {
-				DestroyError(std::make_exception_ptr(std::runtime_error{"Brotli finish error"}));
-				return WriteResult::CLOSED;
-			}
-
-			pending = BrotliEncoderTakeOutput(state);
-			if (pending.empty()) {
-				DestroyEof();
-				return WriteResult::CLOSED;
-			}
-		}
-
-		expected = false;
-	}
-}
-
-inline void
-BrotliEncoderIstream::ForceRead() noexcept
-{
-	assert(HasInput());
-
-	const DestructObserver destructed{*this};
-
-	had_output = false;
-
-	do {
-		had_input = false;
-		input.Read();
-		if (destructed)
-			return;
-	} while (HasInput() && had_input && !had_output);
-
-	if (HasInput() && !had_output && expected) {
-		/* we didn't get any encoded data, even though the
-		   encoder got raw data - to obey the Istream API,
-		   flush the encoder */
-		// TODO can we optimize this away?
-
-		size_t available_in = 0, available_out = 0;
-		const uint8_t *next_in = nullptr;
-		uint8_t *next_out = nullptr;
-
-		if (!BrotliEncoderCompressStream(state, BROTLI_OPERATION_FLUSH,
-						 &available_in, &next_in,
-						 &available_out, &next_out,
-						 nullptr)) {
-			DestroyError(std::make_exception_ptr(std::runtime_error{"Brotli flush error"}));
-			return;
-		}
-
-		SubmitEncoded();
-	}
-}
-
 void
-BrotliEncoderIstream::_Read() noexcept
+BrotliEncoderFilter::Run(ThreadIstreamInternal &i)
 {
-	if (state != nullptr) {
-		switch (SubmitEncoded()) {
-		case WriteResult::EMPTY:
-		case WriteResult::CONSUMED_ALL:
-			/* the libbrotli output buffer is empty and is
-			   ready for the next
-			   BrotliEncoderCompressStream() call, so
-			   let's obtain data from our input */
-			assert(!BrotliEncoderHasMoreOutput(state));
-			assert(pending.empty());
-			assert(HasInput());
-			break;
-
-		case WriteResult::BLOCKING:
-		case WriteResult::CONSUMED_SOME:
-			/* our handler did not consume everything */
-			assert(!pending.empty());
-			return;
-
-		case WriteResult::CLOSED:
-			/* bail out without touching anything */
-			return;
-		}
-	}
-
-	ForceRead();
-}
-
-std::size_t
-BrotliEncoderIstream::OnData(const std::span<const std::byte> src) noexcept
-{
-	assert(HasInput());
-
-	had_input = true;
+	using std::swap;
 
 	if (state == nullptr)
 		CreateEncoder();
 
-	size_t available_in = src.size();
-	const uint8_t *next_in = reinterpret_cast<const uint8_t *>(src.data());
+	{
+		const std::scoped_lock lock{i.mutex};
+		input.MoveFromAllowBothNull(i.input);
 
-	/* for the first iteration, pretend the encoder consumed some
-	   input data */
-	bool has_consumed_input = true;
+		if (!i.has_input && i.input.empty())
+			operation = BROTLI_OPERATION_FINISH;
 
-	while (true) {
-		bool has_consumed_output;
-
-		/* first submit pending data because the
-		   BrotliEncoderCompressStream() call below would
-		   invalidat the #pending buffer */
-		switch (SubmitEncoded()) {
-		case WriteResult::EMPTY:
-			has_consumed_output = false;
-			break;
-
-		case WriteResult::CONSUMED_ALL:
-			has_consumed_output = true;
-			break;
-
-		case WriteResult::BLOCKING:
-		case WriteResult::CONSUMED_SOME:
-			return src.size() - available_in;
-
-		case WriteResult::CLOSED:
-			return 0;
-		}
-
-		if (available_in == 0 ||
-		    (!has_consumed_input && !has_consumed_output))
-			return src.size() - available_in;
-
-		const size_t old_available_in = available_in;
-
-		size_t available_out = 0;
-		uint8_t *next_out = nullptr;
-
-		if (!BrotliEncoderCompressStream(state, BROTLI_OPERATION_PROCESS,
-						 &available_in, &next_in,
-						 &available_out, &next_out,
-						 nullptr)) {
-			DestroyError(std::make_exception_ptr(std::runtime_error{"Brotli error"}));
-			return 0;
-		}
-
-		has_consumed_input = available_in != old_available_in;
-
-		expected = true;
+		if (!output.IsNull())
+			i.output.MoveFromAllowNull(output);
+		else if (i.output.empty())
+			swap(output, i.output);
 	}
 
-	return src.size() - available_in;
+	const auto r = input.Read();
+	const auto w = output.Write();
+
+	std::size_t available_in = r.size();
+	const uint8_t *next_in = reinterpret_cast<const uint8_t *>(r.data());
+
+	std::size_t available_out = w.size();
+	uint8_t *next_out = reinterpret_cast<uint8_t *>(w.data());
+
+	if (!BrotliEncoderCompressStream(state, operation,
+					 &available_in, &next_in,
+					 &available_out, &next_out,
+					 nullptr))
+		throw std::runtime_error{"Brotli error"};
+
+	input.Consume(reinterpret_cast<const std::byte *>(next_in) - r.data());
+	output.Append(reinterpret_cast<std::byte *>(next_out) - w.data());
+
+	if (available_out == 0)
+		i.again = true;
+
+	{
+		const std::scoped_lock lock{i.mutex};
+		i.output.MoveFromAllowSrcNull(output);
+		i.drained = output.empty();
+	}
 }
 
 void
-BrotliEncoderIstream::OnEof() noexcept
+BrotliEncoderFilter::PostRun(ThreadIstreamInternal &) noexcept
 {
-	ClearInput();
-
-	if (state == nullptr)
-		CreateEncoder();
-
-	SubmitEncoded();
-}
-
-void
-BrotliEncoderIstream::OnError(std::exception_ptr ep) noexcept
-{
-	ClearInput();
-
-	DestroyError(std::move(ep));
+	input.FreeIfEmpty();
+	output.FreeIfEmpty();
 }
 
 UnusedIstreamPtr
-NewBrotliEncoderIstream(struct pool &pool, UnusedIstreamPtr input,
-			BrotliEncoderIstreamParams params) noexcept
+NewBrotliEncoderIstream(struct pool &pool, ThreadQueue &queue,
+			UnusedIstreamPtr input,
+			BrotliEncoderParams params) noexcept
 {
-	return NewIstreamPtr<BrotliEncoderIstream>(pool, std::move(input), params);
-
+	return NewThreadIstream(pool, queue, std::move(input),
+				std::make_unique<BrotliEncoderFilter>(params));
 }

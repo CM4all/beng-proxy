@@ -6,8 +6,9 @@
 
 struct pool;
 class UnusedIstreamPtr;
+class ThreadQueue;
 
-struct BrotliEncoderIstreamParams {
+struct BrotliEncoderParams {
 	/**
 	 * Set BROTLI_MODE_TEXT.
 	 */
@@ -18,5 +19,6 @@ struct BrotliEncoderIstreamParams {
  * An #Istream filter which compresses data on-the-fly with Brotli.
  */
 UnusedIstreamPtr
-NewBrotliEncoderIstream(struct pool &pool, UnusedIstreamPtr input,
-			BrotliEncoderIstreamParams params={}) noexcept;
+NewBrotliEncoderIstream(struct pool &pool, ThreadQueue &queue,
+			UnusedIstreamPtr input,
+			BrotliEncoderParams params={}) noexcept;
