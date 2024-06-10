@@ -184,7 +184,7 @@ private:
 };
 
 void
-run_istream_ctx(const IstreamFilterTestOptions &options, Context &ctx);
+run_istream_ctx(Context &ctx);
 
 void
 run_istream_block(const IstreamFilterTestOptions &options,
@@ -326,7 +326,7 @@ TYPED_TEST_P(IstreamFilterTest, Bucket)
 	while (ctx.ReadBuckets(1024 * 1024)) {}
 
 	if (ctx.input.IsDefined())
-		run_istream_ctx(traits.options, ctx);
+		run_istream_ctx(ctx);
 }
 
 /** suspend the first half of the input */
@@ -357,7 +357,7 @@ TYPED_TEST_P(IstreamFilterTest, BucketHalfSuspend)
 	while (ctx.ReadBuckets(1024 * 1024)) {}
 
 	if (ctx.input.IsDefined())
-		run_istream_ctx(traits.options, ctx);
+		run_istream_ctx(ctx);
 }
 
 /** consume one more byte, expect _ConsumeBucketList() to assign this
@@ -387,7 +387,7 @@ TYPED_TEST_P(IstreamFilterTest, BucketMore)
 	while (ctx.ReadBuckets(1024 * 1024, true)) {}
 
 	if (ctx.input.IsDefined())
-		run_istream_ctx(traits.options, ctx);
+		run_istream_ctx(ctx);
 }
 
 /** test with Istream::FillBucketList() */
@@ -416,7 +416,7 @@ TYPED_TEST_P(IstreamFilterTest, SmallBucket)
 	while (ctx.ReadBuckets(3)) {}
 
 	if (ctx.input.IsDefined())
-		run_istream_ctx(traits.options, ctx);
+		run_istream_ctx(ctx);
 }
 
 /** Istream::FillBucketList() throws */
@@ -474,7 +474,7 @@ TYPED_TEST_P(IstreamFilterTest, Skip)
 	ctx.record = ctx.options.expected_result.data() != nullptr;
 	ctx.Skip(1);
 
-	run_istream_ctx(traits.options, ctx);
+	run_istream_ctx(ctx);
 }
 
 /** block once after n data() invocations */
@@ -547,7 +547,7 @@ TYPED_TEST_P(IstreamFilterTest, BlockByte)
 	if (ctx.options.expected_result.data() != nullptr)
 		ctx.record = true;
 
-	run_istream_ctx(traits.options, ctx);
+	run_istream_ctx(ctx);
 }
 
 /** error occurs while blocking */
@@ -574,7 +574,7 @@ TYPED_TEST_P(IstreamFilterTest, BlockInject)
 		    std::move(istream));
 	ctx.block_inject = &inject.second;
 
-	run_istream_ctx(traits.options, ctx);
+	run_istream_ctx(ctx);
 
 	ASSERT_TRUE(ctx.eof);
 }
@@ -599,7 +599,7 @@ TYPED_TEST_P(IstreamFilterTest, Half)
 	if (ctx.options.expected_result.data() != nullptr)
 		ctx.record = true;
 
-	run_istream_ctx(traits.options, ctx);
+	run_istream_ctx(ctx);
 }
 
 /** input fails */
@@ -620,7 +620,7 @@ TYPED_TEST_P(IstreamFilterTest, Fail)
 		std::move(istream),
 	};
 
-	run_istream_ctx(traits.options, ctx);
+	run_istream_ctx(ctx);
 
 	if (traits.options.forwards_errors) {
 		EXPECT_TRUE(ctx.error);
@@ -653,7 +653,7 @@ TYPED_TEST_P(IstreamFilterTest, FailAfterFirstByte)
 		std::move(istream),
 	};
 
-	run_istream_ctx(traits.options, ctx);
+	run_istream_ctx(ctx);
 
 	if (traits.options.forwards_errors) {
 		EXPECT_TRUE(ctx.error);
@@ -678,7 +678,7 @@ TYPED_TEST_P(IstreamFilterTest, CloseInHandler)
 		    std::move(istream));
 	ctx.close_after = 0;
 
-	run_istream_ctx(traits.options, ctx);
+	run_istream_ctx(ctx);
 }
 
 /** abort without handler */

@@ -360,13 +360,13 @@ Context::OnError(std::exception_ptr) noexcept
 }
 
 void
-run_istream_ctx(const IstreamFilterTestOptions &options, Context &ctx)
+run_istream_ctx(Context &ctx)
 {
 	const AutoPoolCommit auto_pool_commit;
 
 	ctx.eof = false;
 
-	if (options.call_available) {
+	if (ctx.options.call_available) {
 		[[maybe_unused]] off_t a1 = ctx.input.GetAvailable(false);
 		[[maybe_unused]] off_t a2 = ctx.input.GetAvailable(true);
 	}
@@ -395,7 +395,7 @@ run_istream_block(const IstreamFilterTestOptions &options,
 	ctx.block_after = block_after;
 	ctx.record = ctx.options.expected_result.data() != nullptr && record;
 
-	run_istream_ctx(options, ctx);
+	run_istream_ctx(ctx);
 }
 
 void
