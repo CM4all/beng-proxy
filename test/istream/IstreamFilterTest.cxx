@@ -99,9 +99,12 @@ Context::ReadBuckets2(std::size_t limit, bool consume_more)
 
 		if (options.expected_result.data() != nullptr && record) {
 			assert(skipped + buffer.size() == offset);
-			assert(offset + b.size() <= options.expected_result.size());
-			assert(memcmp(options.expected_result.data() + skipped + buffer.size(),
-				      b.data(), b.size()) == 0);
+
+			if (options.transform_result == nullptr) {
+				assert(offset + b.size() <= options.expected_result.size());
+				assert(memcmp(options.expected_result.data() + skipped + buffer.size(),
+					      b.data(), b.size()) == 0);
+			}
 
 			buffer.append((const char *)b.data(), size);
 		}
@@ -246,9 +249,12 @@ Context::OnData(const std::span<const std::byte> src) noexcept
 
 	if (options.expected_result.data() != nullptr && record) {
 		assert(skipped + buffer.size() == offset);
-		assert(offset + length <= options.expected_result.size());
-		assert(memcmp(options.expected_result.data() + skipped + buffer.size(),
-			      src.data(), src.size()) == 0);
+
+		if (options.transform_result == nullptr) {
+			assert(offset + length <= options.expected_result.size());
+			assert(memcmp(options.expected_result.data() + skipped + buffer.size(),
+				      src.data(), src.size()) == 0);
+		}
 
 		buffer.append(ToStringView(src.first(length)));
 	}
@@ -304,9 +310,12 @@ Context::OnDirect(FdType, FileDescriptor fd, off_t,
 
 	if (options.expected_result.data() != nullptr && record) {
 		assert(skipped + buffer.size() == offset);
-		assert(offset + nbytes <= options.expected_result.size());
-		assert(memcmp(options.expected_result.data() + skipped + buffer.size(),
-			      src.data(), src.size()) == 0);
+
+		if (options.transform_result == nullptr) {
+			assert(offset + nbytes <= options.expected_result.size());
+			assert(memcmp(options.expected_result.data() + skipped + buffer.size(),
+				      src.data(), src.size()) == 0);
+		}
 
 		buffer.append(ToStringView(src));
 	}
@@ -373,12 +382,19 @@ run_istream_ctx(Context &ctx)
 
 	ctx.WaitForEndOfStream();
 
-	if (ctx.options.expected_result.data() != nullptr && ctx.record) {
-		ASSERT_EQ(ctx.buffer.size() + ctx.skipped,
+	if (ctx.options.expected_result.data() != nullptr && ctx.record &&
+	    (ctx.options.transform_result == nullptr || ctx.skipped == 0)) {
+		std::string_view result = ctx.buffer;
+
+		std::string transformed;
+		if (ctx.options.transform_result != nullptr)
+			result = transformed = ctx.options.transform_result(result);
+
+		ASSERT_EQ(result.size() + ctx.skipped,
 			  ctx.options.expected_result.size());
-		ASSERT_EQ(memcmp(ctx.buffer.data(),
+		ASSERT_EQ(memcmp(result.data(),
 				 ctx.options.expected_result.data() + ctx.skipped,
-				 ctx.buffer.size()),
+				 result.size()),
 			  0);
 	}
 }

@@ -35,6 +35,10 @@
 
 struct IstreamFilterTestOptions {
 	std::string_view expected_result{};
+
+	using TransformResult = std::string (*)(std::string_view src);
+	TransformResult transform_result = nullptr;
+
 	bool call_available = true;
 	bool enable_blocking = true;
 	bool enable_abort_istream = true;

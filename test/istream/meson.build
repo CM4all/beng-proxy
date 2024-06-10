@@ -7,6 +7,7 @@ t_istream_filter_deps = [
 istream_test_sources = []
 if libbrotlienc.found()
   istream_test_sources += 'TestBrotliEncoderIstream.cxx'
+  t_istream_filter_deps += dependency('libbrotlidec')
 endif
 
 test(
