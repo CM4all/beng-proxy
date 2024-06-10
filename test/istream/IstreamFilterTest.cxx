@@ -3,7 +3,34 @@
 // author: Max Kellermann <mk@cm4all.com>
 
 #include "IstreamFilterTest.hxx"
+
 #include "util/SpanCast.hxx"
+
+void
+Context::DeferInject(InjectIstreamControl &inject,
+		     std::exception_ptr ep) noexcept
+{
+	assert(ep);
+	assert(defer_inject_istream == nullptr);
+	assert(!defer_inject_error);
+
+	defer_inject_istream = &inject;
+	defer_inject_error = ep;
+	defer_inject_event.Schedule();
+}
+
+void
+Context::DeferredInject() noexcept
+{
+	assert(defer_inject_istream != nullptr);
+	assert(defer_inject_error);
+
+	auto &i = *defer_inject_istream;
+	defer_inject_istream = nullptr;
+
+	i.InjectFault(std::exchange(defer_inject_error,
+				    std::exception_ptr()));
+}
 
 std::pair<IstreamReadyResult, bool>
 Context::ReadBuckets2(std::size_t limit, bool consume_more)
@@ -100,6 +127,26 @@ bool
 Context::ReadBuckets(std::size_t limit, bool consume_more)
 {
 	return ReadBuckets2(limit, consume_more).second;
+}
+
+void
+Context::WaitForEndOfStream() noexcept
+{
+	assert(!break_eof);
+	break_eof = true;
+
+	while (!eof) {
+		if (HasInput())
+			input.Read();
+
+		if (!eof)
+			instance.event_loop.Run();
+	}
+
+	break_eof = false;
+
+	assert(!HasInput());
+	assert(eof);
 }
 
 /*

@@ -153,47 +153,14 @@ struct Context final : IstreamSink {
 	}
 
 	void DeferInject(InjectIstreamControl &inject,
-			 std::exception_ptr ep) noexcept {
-		assert(ep);
-		assert(defer_inject_istream == nullptr);
-		assert(!defer_inject_error);
+			 std::exception_ptr ep) noexcept;
 
-		defer_inject_istream = &inject;
-		defer_inject_error = ep;
-		defer_inject_event.Schedule();
-	}
-
-	void DeferredInject() noexcept {
-		assert(defer_inject_istream != nullptr);
-		assert(defer_inject_error);
-
-		auto &i = *defer_inject_istream;
-		defer_inject_istream = nullptr;
-
-		i.InjectFault(std::exchange(defer_inject_error,
-					    std::exception_ptr()));
-	}
+	void DeferredInject() noexcept;
 
 	std::pair<IstreamReadyResult, bool> ReadBuckets2(std::size_t limit, bool consume_more);
 	bool ReadBuckets(std::size_t limit, bool consume_more=false);
 
-	void WaitForEndOfStream() noexcept {
-		assert(!break_eof);
-		break_eof = true;
-
-		while (!eof) {
-			if (HasInput())
-				input.Read();
-
-			if (!eof)
-				instance.event_loop.Run();
-		}
-
-		break_eof = false;
-
-		assert(!HasInput());
-		assert(eof);
-	}
+	void WaitForEndOfStream() noexcept;
 
 	/* virtual methods from class IstreamHandler */
 	IstreamReadyResult OnIstreamReady() noexcept override;
