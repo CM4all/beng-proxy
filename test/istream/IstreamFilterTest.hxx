@@ -125,11 +125,11 @@ struct Context final : IstreamSink {
 
 	template<typename I>
 	explicit Context(Instance &_instance, PoolPtr &&_test_pool,
-			 std::string_view _expected_result,
+			 const IstreamFilterTestOptions &options,
 			 I &&_input) noexcept
 		:IstreamSink(std::forward<I>(_input)), instance(_instance),
 		 test_pool(std::move(_test_pool)),
-		 expected_result(_expected_result),
+		 expected_result(options.expected_result),
 		 defer_inject_event(instance.event_loop,
 				    BIND_THIS_METHOD(DeferredInject))
 	{
@@ -271,7 +271,7 @@ TYPED_TEST_P(IstreamFilterTest, NoBucket)
 	input_pool.reset();
 
 	Context ctx(instance, std::move(pool),
-		    traits.options.expected_result, std::move(istream));
+		    traits.options, std::move(istream));
 	ctx.on_ready_buckets = true;
 	if (ctx.expected_result.data() != nullptr)
 		ctx.record = true;
@@ -307,7 +307,7 @@ TYPED_TEST_P(IstreamFilterTest, Bucket)
 	input_pool.reset();
 
 	Context ctx(instance, std::move(pool),
-		    traits.options.expected_result, std::move(istream));
+		    traits.options, std::move(istream));
 	ctx.on_ready_buckets = true;
 	if (ctx.expected_result.data() != nullptr)
 		ctx.record = true;
@@ -338,7 +338,7 @@ TYPED_TEST_P(IstreamFilterTest, BucketHalfSuspend)
 	input_pool.reset();
 
 	Context ctx(instance, std::move(pool),
-		    traits.options.expected_result, std::move(istream));
+		    traits.options, std::move(istream));
 	ctx.on_ready_buckets = true;
 	if (ctx.expected_result.data() != nullptr)
 		ctx.record = true;
@@ -368,7 +368,7 @@ TYPED_TEST_P(IstreamFilterTest, BucketMore)
 	input_pool.reset();
 
 	Context ctx(instance, std::move(pool),
-		    traits.options.expected_result, std::move(istream));
+		    traits.options, std::move(istream));
 	ctx.on_ready_buckets = true;
 	if (ctx.expected_result.data() != nullptr)
 		ctx.record = true;
@@ -397,7 +397,7 @@ TYPED_TEST_P(IstreamFilterTest, SmallBucket)
 	input_pool.reset();
 
 	Context ctx(instance, std::move(pool),
-		    traits.options.expected_result, std::move(istream));
+		    traits.options, std::move(istream));
 	ctx.on_ready_buckets = true;
 	if (ctx.expected_result.data() != nullptr)
 		ctx.record = true;
@@ -425,7 +425,7 @@ TYPED_TEST_P(IstreamFilterTest, BucketError)
 	ASSERT_TRUE(!!istream);
 
 	Context ctx(instance, std::move(pool),
-		    traits.options.expected_result, std::move(istream));
+		    traits.options, std::move(istream));
 	ctx.on_ready_buckets = true;
 	if (ctx.expected_result.data() != nullptr)
 		ctx.record = true;
@@ -459,7 +459,7 @@ TYPED_TEST_P(IstreamFilterTest, Skip)
 	input_pool.reset();
 
 	Context ctx(instance, std::move(pool),
-		    traits.options.expected_result, std::move(istream));
+		    traits.options, std::move(istream));
 	ctx.record = ctx.expected_result.data() != nullptr;
 	ctx.Skip(1);
 
@@ -530,7 +530,7 @@ TYPED_TEST_P(IstreamFilterTest, BlockByte)
 	input_pool.reset();
 
 	Context ctx(instance, std::move(pool),
-		    traits.options.expected_result,
+		    traits.options,
 		    std::move(istream));
 	ctx.block_byte = true;
 	if (ctx.expected_result.data() != nullptr)
@@ -559,7 +559,7 @@ TYPED_TEST_P(IstreamFilterTest, BlockInject)
 					 std::move(inject.first));
 
 	Context ctx(instance, std::move(pool),
-		    traits.options.expected_result,
+		    traits.options,
 		    std::move(istream));
 	ctx.block_inject = &inject.second;
 
@@ -582,7 +582,7 @@ TYPED_TEST_P(IstreamFilterTest, Half)
 	input_pool.reset();
 
 	Context ctx(instance, std::move(pool),
-		    traits.options.expected_result,
+		    traits.options,
 		    std::move(istream));
 	ctx.half = true;
 	if (ctx.expected_result.data() != nullptr)
@@ -605,7 +605,7 @@ TYPED_TEST_P(IstreamFilterTest, Fail)
 
 	Context ctx{
 		instance, std::move(pool),
-		traits.options.expected_result,
+		traits.options,
 		std::move(istream),
 	};
 
@@ -638,7 +638,7 @@ TYPED_TEST_P(IstreamFilterTest, FailAfterFirstByte)
 
 	Context ctx{
 		instance, std::move(pool),
-		traits.options.expected_result,
+		traits.options,
 		std::move(istream),
 	};
 
@@ -663,7 +663,7 @@ TYPED_TEST_P(IstreamFilterTest, CloseInHandler)
 	auto istream = traits.CreateTest(instance.event_loop, pool, std::move(input));
 
 	Context ctx(instance, std::move(pool),
-		    traits.options.expected_result,
+		    traits.options,
 		    std::move(istream));
 	ctx.close_after = 0;
 
@@ -704,7 +704,7 @@ TYPED_TEST_P(IstreamFilterTest, AbortInHandler)
 	auto istream = traits.CreateTest(instance.event_loop, pool, std::move(inject.first));
 
 	Context ctx(instance, std::move(pool),
-		    traits.options.expected_result,
+		    traits.options,
 		    std::move(istream));
 	ctx.block_after = -1;
 	ctx.abort_istream = &inject.second;
@@ -735,7 +735,7 @@ TYPED_TEST_P(IstreamFilterTest, AbortInHandlerHalf)
 					 istream_byte_new(pool, std::move(inject.first)));
 
 	Context ctx(instance, std::move(pool),
-		    traits.options.expected_result,
+		    traits.options,
 		    std::move(istream));
 	ctx.half = true;
 	ctx.abort_after = 2;

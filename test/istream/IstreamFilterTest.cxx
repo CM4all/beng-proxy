@@ -368,7 +368,7 @@ run_istream_block(const IstreamFilterTestOptions &options,
 		  int block_after)
 {
 	Context ctx(instance, std::move(pool),
-		    options.expected_result, std::move(istream));
+		    options, std::move(istream));
 	ctx.block_after = block_after;
 	ctx.record = ctx.expected_result.data() != nullptr && record;
 
