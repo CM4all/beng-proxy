@@ -43,6 +43,7 @@ test(
       istream_pipe_dep,
       istream_extra_dep,
       stock_dep,
+      zlib,
     ],
   ),
 )
