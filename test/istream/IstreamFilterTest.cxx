@@ -6,6 +6,18 @@
 
 #include "util/SpanCast.hxx"
 
+bool
+Context::HandleBlockInject() noexcept
+{
+	if (block_inject == nullptr)
+		return false;
+
+	DeferInject(*block_inject,
+		    std::make_exception_ptr(std::runtime_error{"block_inject"}));
+	block_inject = nullptr;
+	return true;
+}
+
 void
 Context::DeferInject(InjectIstreamControl &inject,
 		     std::exception_ptr ep) noexcept
@@ -139,6 +151,21 @@ Context::WaitForEndOfStream() noexcept
 		if (HasInput())
 			input.Read();
 
+		if (late_finish) {
+			/* check a few options just in case OnData()
+			   never gets called */
+
+			if (HandleBlockInject())
+				continue;
+
+			if (abort_istream != nullptr && abort_after == 0) {
+				DeferInject(*abort_istream,
+					    std::make_exception_ptr(std::runtime_error{"abort_istream"}));
+				abort_istream = nullptr;
+				continue;
+			}
+		}
+
 		if (!eof)
 			instance.event_loop.Run();
 	}
@@ -186,12 +213,8 @@ Context::OnData(const std::span<const std::byte> src) noexcept
 
 	got_data = true;
 
-	if (block_inject != nullptr) {
-		DeferInject(*block_inject,
-			    std::make_exception_ptr(std::runtime_error("block_inject")));
-		block_inject = nullptr;
+	if (HandleBlockInject())
 		return 0;
-	}
 
 	if (block_byte) {
 		block_byte_state = !block_byte_state;

@@ -50,6 +50,13 @@ struct IstreamFilterTestOptions {
 	 * input?  (e.g. #CatchIstream does not)
 	 */
 	bool forwards_errors = true;
+
+	/**
+	 * If true, then the Istream implementation can buffer a lot
+	 * and finish late, so OnData() gets called only after input
+	 * EOF is reached.  This requires relaxing a few tests.
+	 */
+	bool late_finish = false;
 };
 
 struct Instance : TestInstance {
@@ -123,6 +130,8 @@ struct Context final : IstreamSink {
 	InjectIstreamControl *defer_inject_istream = nullptr;
 	std::exception_ptr defer_inject_error;
 
+	const bool late_finish;
+
 	template<typename I>
 	explicit Context(Instance &_instance, PoolPtr &&_test_pool,
 			 const IstreamFilterTestOptions &options,
@@ -131,7 +140,8 @@ struct Context final : IstreamSink {
 		 test_pool(std::move(_test_pool)),
 		 expected_result(options.expected_result),
 		 defer_inject_event(instance.event_loop,
-				    BIND_THIS_METHOD(DeferredInject))
+				    BIND_THIS_METHOD(DeferredInject)),
+		 late_finish(options.late_finish)
 	{
 		assert(test_pool);
 	}
@@ -170,6 +180,9 @@ struct Context final : IstreamSink {
 				     bool then_eof) noexcept override;
 	void OnEof() noexcept override;
 	void OnError(std::exception_ptr ep) noexcept override;
+
+private:
+	bool HandleBlockInject() noexcept;
 };
 
 void
