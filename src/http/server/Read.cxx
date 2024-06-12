@@ -358,7 +358,7 @@ HttpServerConnection::FeedHeaders(const std::string_view b) noexcept
 }
 
 inline bool
-HttpServerConnection::SubmitRequest()
+HttpServerConnection::SubmitRequest() noexcept
 {
 	const DestructObserver destructed(*this);
 
@@ -446,7 +446,7 @@ HttpServerConnection::Feed(std::span<const std::byte> b) noexcept
 }
 
 DirectResult
-HttpServerConnection::TryRequestBodyDirect(SocketDescriptor fd, FdType fd_type)
+HttpServerConnection::TryRequestBodyDirect(SocketDescriptor fd, FdType fd_type) noexcept
 {
 	assert(IsValid());
 	assert(request.read_state == Request::BODY);

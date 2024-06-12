@@ -25,7 +25,7 @@
 using std::string_view_literals::operator""sv;
 
 bool
-HttpServerConnection::MaybeSend100Continue()
+HttpServerConnection::MaybeSend100Continue() noexcept
 {
 	assert(IsValid());
 	assert(request.read_state == Request::BODY);
@@ -58,7 +58,7 @@ HttpServerConnection::MaybeSend100Continue()
 }
 
 static std::size_t
-format_status_line(char *p, HttpStatus status)
+format_status_line(char *p, HttpStatus status) noexcept
 {
 	assert(http_status_is_valid(status));
 

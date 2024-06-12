@@ -85,7 +85,7 @@ struct HttpServerConnection final
 		HttpServerConnection &connection;
 
 		RequestBodyReader(struct pool &_pool,
-				  HttpServerConnection &_connection)
+				  HttpServerConnection &_connection) noexcept
 			:HttpBodyReader(_pool),
 			 connection(_connection) {}
 
@@ -279,7 +279,7 @@ struct HttpServerConnection final
 	}
 
 	[[gnu::pure]]
-	bool IsValid() const {
+	bool IsValid() const noexcept {
 		return socket->IsValid() && socket->IsConnected();
 	}
 
@@ -308,7 +308,7 @@ struct HttpServerConnection final
 	/**
 	 * @return false if the connection has been closed
 	 */
-	bool SubmitRequest();
+	bool SubmitRequest() noexcept;
 
 	/**
 	 * @return false if the connection has been closed
@@ -325,7 +325,7 @@ struct HttpServerConnection final
 	 * Attempt a "direct" transfer of the request body.  Caller must
 	 * hold an additional pool reference.
 	 */
-	DirectResult TryRequestBodyDirect(SocketDescriptor fd, FdType fd_type);
+	DirectResult TryRequestBodyDirect(SocketDescriptor fd, FdType fd_type) noexcept;
 
 	/**
 	 * The request body is not needed anymore.  This method discards
@@ -341,9 +341,9 @@ struct HttpServerConnection final
 	/**
 	 * @return false if the connection has been closed
 	 */
-	bool MaybeSend100Continue();
+	bool MaybeSend100Continue() noexcept;
 
-	void SetResponseIstream(UnusedIstreamPtr r);
+	void SetResponseIstream(UnusedIstreamPtr r) noexcept;
 
 	/**
 	 * To be called after the response istream has seen end-of-file,
@@ -351,7 +351,7 @@ struct HttpServerConnection final
 	 *
 	 * @return false if the connection has been closed
 	 */
-	bool ResponseIstreamFinished();
+	bool ResponseIstreamFinished() noexcept;
 
 	void SubmitResponse(HttpStatus status,
 			    HttpHeaders &&headers,
@@ -369,7 +369,7 @@ struct HttpServerConnection final
 		socket->DeferWrite();
 	}
 
-	void ScheduleWrite() {
+	void ScheduleWrite() noexcept {
 		response.want_write = true;
 		socket->ScheduleWrite();
 	}
@@ -378,7 +378,12 @@ struct HttpServerConnection final
 	 * @return false if the connection has been closed
 	 */
 	bool TryWrite() noexcept;
+
+	/**
+	 * Throws on error.
+	 */
 	BucketResult TryWriteBuckets2();
+
 	BucketResult TryWriteBuckets() noexcept;
 
 	void CloseRequest() noexcept;

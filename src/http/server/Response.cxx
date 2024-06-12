@@ -137,14 +137,14 @@ HttpServerConnection::OnError(std::exception_ptr ep) noexcept
 }
 
 void
-HttpServerConnection::SetResponseIstream(UnusedIstreamPtr r)
+HttpServerConnection::SetResponseIstream(UnusedIstreamPtr r) noexcept
 {
 	SetInput(std::move(r));
 	input.SetDirect(istream_direct_mask_to(socket->GetType()));
 }
 
 bool
-HttpServerConnection::ResponseIstreamFinished()
+HttpServerConnection::ResponseIstreamFinished() noexcept
 {
 	socket->UnscheduleWrite();
 
