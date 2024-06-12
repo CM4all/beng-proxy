@@ -21,7 +21,7 @@ HttpServerConnection::OnIstreamReady() noexcept
 
 	case BucketResult::MORE:
 		/* it's our responsibility now to ask for more data */
-		socket->ScheduleWrite();
+		ScheduleWrite();
 		return IstreamReadyResult::OK;
 
 	case BucketResult::LATER:
