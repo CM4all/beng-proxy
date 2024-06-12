@@ -4,6 +4,8 @@
 
 #pragma once
 
+#include "event/Chrono.hxx"
+
 #include <cstdint>
 
 enum class HttpStatus : uint_least16_t;
@@ -15,6 +17,9 @@ public:
 	virtual ~IncomingHttpRequestLogger() noexcept = default;
 
 	/**
+	 * @param wait_duration the total duration waiting for the
+	 * client (either request body data or response body)
+	 *
 	 * @param length the number of response body (payload) bytes sent
 	 * to our HTTP client, or negative if there was no response body
 	 * (which is different from "empty response body")
@@ -25,6 +30,7 @@ public:
 	 * encoding overhead such as chunk headers)
 	 */
 	virtual void LogHttpRequest(IncomingHttpRequest &request,
+				    Event::Duration wait_duration,
 				    HttpStatus status,
 				    Net::Log::ContentType content_type,
 				    int64_t length,

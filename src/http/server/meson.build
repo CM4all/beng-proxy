@@ -10,6 +10,7 @@ http_server = static_library('http_server',
   dependencies: [
     memory_dep,
     net_log_dep,
+    http_extra_dep,
   ],
 )
 

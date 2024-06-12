@@ -46,6 +46,9 @@ public:
 
 	~ServerConnection() noexcept;
 
+	[[gnu::const]]
+	EventLoop &GetEventLoop() noexcept;
+
 	void Consume(std::size_t nbytes) noexcept {
 		nghttp2_session_consume_connection(session.get(),
 						   nbytes);

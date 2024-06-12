@@ -13,6 +13,7 @@ namespace NgHttp2 {
 
 class IstreamDataSourceHandler {
 public:
+	virtual void OnIstreamDataSourceWaiting() noexcept {}
 	virtual void OnIstreamDataSourceReady() noexcept = 0;
 };
 

@@ -19,6 +19,7 @@
 #include "http/Logger.hxx"
 #include "http/Method.hxx"
 #include "http/Status.hxx"
+#include "http/WaitTracker.hxx"
 #include "istream/LengthIstream.hxx"
 #include "istream/MultiFifoBufferIstream.hxx"
 #include "istream/New.hxx"
@@ -56,6 +57,11 @@ class ServerConnection::Request final
 	CancellablePointer cancel_ptr;
 
 	MultiFifoBufferIstream *request_body_control = nullptr;
+
+	WaitTracker wait_tracker;
+
+	static constexpr WaitTracker::mask_t WAIT_RECEIVE_REQUEST = 1 << 0;
+	static constexpr WaitTracker::mask_t WAIT_SEND_RESPONSE = 1 << 1;
 
 	/**
 	 * The response body if #error_status is set.
@@ -119,7 +125,9 @@ public:
 			if (response_body)
 				length = response_body->GetTransmitted();
 
-			logger->LogHttpRequest(*this, the_status, content_type, length,
+			logger->LogHttpRequest(*this,
+					       wait_tracker.GetDuration(GetEventLoop()),
+					       the_status, content_type, length,
 					       /* TODO: */ 0, length);
 		}
 	}
@@ -127,6 +135,11 @@ public:
 	void Destroy() noexcept {
 		pool_trash(pool);
 		this->~Request();
+	}
+
+	[[gnu::const]]
+	EventLoop &GetEventLoop() noexcept {
+		return connection.GetEventLoop();
 	}
 
 	nghttp2_data_provider MakeResponseDataProvider(UnusedIstreamPtr &&istream) noexcept {
@@ -147,6 +160,7 @@ public:
 		if (request_body_control) {
 			request_body_control->DestroyError(std::make_exception_ptr(MakeError(error_code, "Stream closed")));
 			request_body_control = nullptr;
+			wait_tracker.Clear(GetEventLoop(), WAIT_RECEIVE_REQUEST);
 		}
 
 		Destroy();
@@ -231,6 +245,7 @@ private:
 	void OnFifoBufferIstreamClosed() noexcept override;
 
 	/* virtual methods from class IstreamDataSourceHandler */
+	void OnIstreamDataSourceWaiting() noexcept override;
 	void OnIstreamDataSourceReady() noexcept override;
 
 	/* virtual methods from class IncomingHttpRequest */
@@ -331,6 +346,8 @@ ServerConnection::Request::OnFifoBufferIstreamConsumed(size_t nbytes) noexcept
 	}
 
 	Consume(nbytes);
+
+	wait_tracker.Set(GetEventLoop(), WAIT_RECEIVE_REQUEST);
 }
 
 void
@@ -339,6 +356,17 @@ ServerConnection::Request::OnFifoBufferIstreamClosed() noexcept
 	assert(request_body_control);
 
 	request_body_control = nullptr;
+
+	wait_tracker.Clear(GetEventLoop(), WAIT_RECEIVE_REQUEST);
+}
+
+void
+ServerConnection::Request::OnIstreamDataSourceWaiting() noexcept
+{
+	assert(response_body);
+	assert(connection.socket);
+
+	wait_tracker.Clear(GetEventLoop(), WAIT_SEND_RESPONSE);
 }
 
 void
@@ -346,6 +374,8 @@ ServerConnection::Request::OnIstreamDataSourceReady() noexcept
 {
 	assert(response_body);
 	assert(connection.socket);
+
+	wait_tracker.Set(GetEventLoop(), WAIT_SEND_RESPONSE);
 
 	nghttp2_session_resume_data(connection.session.get(), id);
 	DeferWrite();
@@ -357,6 +387,8 @@ ServerConnection::Request::OnDataChunkReceivedCallback(std::span<const std::byte
 	// TODO: limit the MultiFifoBuffer size
 
 	if (request_body_control) {
+		wait_tracker.Clear(GetEventLoop(), WAIT_RECEIVE_REQUEST);
+
 		request_body_control->Push(data);
 		request_body_control->SubmitBuffer();
 	}
@@ -399,6 +431,8 @@ ServerConnection::Request::OnReceiveRequest(bool has_request_body) noexcept
 								    std::move(body),
 								    length);
 		}
+
+		wait_tracker.Set(GetEventLoop(), WAIT_RECEIVE_REQUEST);
 	}
 
 	stopwatch = RootStopwatchPtr(uri);
@@ -417,6 +451,7 @@ ServerConnection::Request::OnEndDataFrame() noexcept
 		return 0;
 
 	std::exchange(request_body_control, nullptr)->SetEof();
+	wait_tracker.Clear(GetEventLoop(), WAIT_RECEIVE_REQUEST);
 	return 0;
 }
 
@@ -553,6 +588,12 @@ ServerConnection::ServerConnection(struct pool &_pool,
 ServerConnection::~ServerConnection() noexcept
 {
 	requests.clear_and_dispose([](Request *request) { request->Destroy(); });
+}
+
+inline EventLoop &
+ServerConnection::GetEventLoop() noexcept
+{
+	return socket->GetEventLoop();
 }
 
 inline void

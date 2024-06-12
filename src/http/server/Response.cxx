@@ -101,8 +101,11 @@ HttpServerConnection::OnDirect(FdType type, FileDescriptor fd, off_t offset,
 	else if (nbytes == WRITE_SOURCE_EOF)
 		return IstreamDirectResult::END;
 	else {
-		if (errno == EAGAIN)
+		if (errno == EAGAIN) {
 			socket->UnscheduleWrite();
+			wait_tracker.Clear(GetEventLoop(), WAIT_SEND_RESPONSE);
+		}
+
 		return IstreamDirectResult::ERRNO;
 	}
 }
@@ -147,6 +150,7 @@ bool
 HttpServerConnection::ResponseIstreamFinished() noexcept
 {
 	socket->UnscheduleWrite();
+	wait_tracker.Clear(GetEventLoop(), WAIT_SEND_RESPONSE);
 
 	if (handler != nullptr)
 		handler->ResponseFinished();

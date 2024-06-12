@@ -28,6 +28,19 @@ http_util_dep = declare_dependency(
   ],
 )
 
+http_extra = static_library(
+  'http_extra',
+  'WaitTracker.cxx',
+  include_directories: inc,
+  dependencies: [
+    event_dep,
+  ],
+)
+
+http_extra_dep = declare_dependency(
+  link_with: http_extra,
+)
+
 cookie = static_library(
   'cookie',
   'CookieJar.cxx',

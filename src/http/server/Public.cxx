@@ -28,6 +28,7 @@ HttpServerConnection::Log(HttpServerRequest &r) noexcept
 		return;
 
 	logger->LogHttpRequest(r,
+			       wait_tracker.GetDuration(GetEventLoop()),
 			       response.status,
 			       response.content_type,
 			       response.status != HttpStatus{} ? response.length : -1,
@@ -233,8 +234,10 @@ HttpServerConnection::OnBufferedWrite()
 	if (!TryWrite())
 		return false;
 
-	if (!response.want_write)
+	if (!response.want_write) {
 		socket->UnscheduleWrite();
+		wait_tracker.Clear(GetEventLoop(), WAIT_SEND_RESPONSE);
+	}
 
 	return true;
 }

@@ -21,12 +21,15 @@ BpRequestLogger::BpRequestLogger(BpInstance &_instance,
 
 void
 BpRequestLogger::LogHttpRequest(IncomingHttpRequest &request,
+				Event::Duration wait_duration,
 				HttpStatus status,
 				Net::Log::ContentType content_type,
 				int_least64_t length,
 				uint_least64_t bytes_received, uint_least64_t bytes_sent) noexcept
 {
-	const auto duration = GetDuration(instance.event_loop.SteadyNow());
+	const auto total_duration = GetDuration(instance.event_loop.SteadyNow());
+	assert(total_duration >= wait_duration);
+	const auto duration = total_duration - wait_duration;
 
 	instance.http_stats.AddRequest(status,
 				       bytes_received, bytes_sent,

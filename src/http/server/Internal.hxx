@@ -8,6 +8,7 @@
 #include "Public.hxx"
 #include "http/Body.hxx"
 #include "http/Status.hxx"
+#include "http/WaitTracker.hxx"
 #include "fs/FilteredSocket.hxx"
 #include "net/SocketProtocolError.hxx"
 #include "net/SocketAddress.hxx"
@@ -128,6 +129,11 @@ struct HttpServerConnection final
 
 	const char *const local_host_and_port;
 	const char *const remote_host;
+
+	WaitTracker wait_tracker;
+
+	static constexpr WaitTracker::mask_t WAIT_RECEIVE_REQUEST = 1 << 0;
+	static constexpr WaitTracker::mask_t WAIT_SEND_RESPONSE = 1 << 1;
 
 	/* request */
 	struct Request {
@@ -360,12 +366,15 @@ struct HttpServerConnection final
 	void ScheduleReadTimeoutTimer() noexcept {
 		assert(request.read_state == Request::BODY);
 
-		if (request.ShouldEnableReadTimeout())
+		if (request.ShouldEnableReadTimeout()) {
 			read_timer.Schedule(read_timeout);
+			wait_tracker.Set(GetEventLoop(), WAIT_RECEIVE_REQUEST);
+		}
 	}
 
 	void CancelReadTimeoutTimer() noexcept {
 		read_timer.Cancel();
+		wait_tracker.Clear(GetEventLoop(), WAIT_RECEIVE_REQUEST);
 	}
 
 	void DeferWrite() noexcept {
@@ -376,6 +385,7 @@ struct HttpServerConnection final
 	void ScheduleWrite() noexcept {
 		response.want_write = true;
 		socket->ScheduleWrite();
+		wait_tracker.Set(GetEventLoop(), WAIT_SEND_RESPONSE);
 	}
 
 	/**

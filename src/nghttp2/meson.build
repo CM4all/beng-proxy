@@ -43,6 +43,7 @@ nghttp2_server = static_library(
     net_log_dep,
     socket_dep,
     stopwatch_dep,
+    http_extra_dep,
   ],
 )
 

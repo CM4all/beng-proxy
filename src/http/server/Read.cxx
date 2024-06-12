@@ -185,6 +185,8 @@ HttpServerConnection::HeadersFinished() noexcept
 	auto &r = *request.request;
 	r.stopwatch.RecordEvent("request_headers");
 
+	wait_tracker.Reset();
+
 	handler->RequestHeadersFinished(r);
 
 	/* disable the idle+headers timeout; the request body timeout will

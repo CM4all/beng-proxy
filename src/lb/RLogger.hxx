@@ -104,6 +104,7 @@ struct LbRequestLogger final : IncomingHttpRequestLogger {
 
 	/* virtual methods from class IncomingHttpRequestLogger */
 	void LogHttpRequest(IncomingHttpRequest &request,
+			    Event::Duration wait_duration,
 			    HttpStatus status,
 			    Net::Log::ContentType content_type,
 			    int_least64_t length,

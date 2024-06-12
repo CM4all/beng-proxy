@@ -24,6 +24,7 @@ IstreamDataSource::ReadCallback(uint8_t *buf, size_t length,
 			data_flags |= NGHTTP2_DATA_FLAG_EOF;
 			return 0;
 		} else {
+			handler.OnIstreamDataSourceWaiting();
 			sink.Read();
 			if (error) {
 				// TODO
