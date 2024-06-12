@@ -19,7 +19,7 @@ HttpServerConnection::FeedRequestBody(std::span<const std::byte> src) noexcept
 		if (destructed)
 			return BufferedResult::DESTROYED;
 
-		read_timer.Cancel();
+		CancelReadTimeoutTimer();
 		return BufferedResult::OK;
 	}
 
@@ -34,7 +34,7 @@ HttpServerConnection::FeedRequestBody(std::span<const std::byte> src) noexcept
 		request.body_state = Request::BodyState::CLOSED;
 #endif
 
-		read_timer.Cancel();
+		CancelReadTimeoutTimer();
 
 		if (socket->IsConnected())
 			socket->SetDirect(false);
@@ -72,7 +72,7 @@ HttpServerConnection::DiscardRequestBody() noexcept
 	request.body_state = Request::BodyState::CLOSED;
 #endif
 
-	read_timer.Cancel();
+	CancelReadTimeoutTimer();
 
 	if (socket->IsConnected())
 		socket->SetDirect(false);

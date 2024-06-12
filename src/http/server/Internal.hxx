@@ -364,6 +364,10 @@ struct HttpServerConnection final
 			read_timer.Schedule(read_timeout);
 	}
 
+	void CancelReadTimeoutTimer() noexcept {
+		read_timer.Cancel();
+	}
+
 	void DeferWrite() noexcept {
 		response.want_write = true;
 		socket->DeferWrite();

@@ -161,7 +161,7 @@ HttpServerConnection::ResponseIstreamFinished() noexcept
 		request.body_state = Request::BodyState::CLOSED;
 #endif
 
-		read_timer.Cancel();
+		CancelReadTimeoutTimer();
 
 		if (socket->IsConnected())
 			socket->SetDirect(false);

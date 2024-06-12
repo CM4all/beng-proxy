@@ -460,7 +460,7 @@ HttpServerConnection::TryRequestBodyDirect(SocketDescriptor fd, FdType fd_type) 
 	switch (request_body_reader->TryDirect(fd, fd_type)) {
 	case IstreamDirectResult::BLOCKING:
 		/* the destination fd blocks */
-		read_timer.Cancel();
+		CancelReadTimeoutTimer();
 		return DirectResult::BLOCKING;
 
 	case IstreamDirectResult::CLOSED:
@@ -486,7 +486,7 @@ HttpServerConnection::TryRequestBodyDirect(SocketDescriptor fd, FdType fd_type) 
 			request.body_state = Request::BodyState::CLOSED;
 #endif
 
-			read_timer.Cancel();
+			CancelReadTimeoutTimer();
 
 			if (socket->IsConnected())
 				socket->SetDirect(false);
