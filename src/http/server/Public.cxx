@@ -148,7 +148,6 @@ HttpServerConnection::TryWriteBuckets() noexcept
 	case BucketResult::MORE:
 	case BucketResult::BLOCKING:
 		assert(HasInput());
-		response.want_write = true;
 		ScheduleWrite();
 		break;
 
