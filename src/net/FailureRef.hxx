@@ -28,7 +28,7 @@ public:
 	};
 
 protected:
-	virtual void Destroy() = 0;
+	virtual void Destroy() noexcept = 0;
 };
 
 /**
@@ -80,7 +80,7 @@ public:
 	FailurePtr(const FailurePtr &) = delete;
 	FailurePtr &operator=(const FailurePtr &) = delete;
 
-	operator bool() const {
+	operator bool() const noexcept {
 		return info != nullptr;
 	}
 

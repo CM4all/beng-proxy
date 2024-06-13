@@ -26,7 +26,7 @@ public:
 	}
 
 protected:
-	void Destroy() override {
+	void Destroy() noexcept override {
 		delete this;
 	}
 };
