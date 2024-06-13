@@ -1,5 +1,6 @@
 cm4all-beng-proxy (18.0.75) unstable; urgency=low
 
+  * lb: reduce connect timeout to 10 seconds
   * http_server, nghttp2: report request duration without client wait
   * access_log: support per-listener access loggers
 

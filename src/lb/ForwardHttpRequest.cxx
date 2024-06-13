@@ -37,7 +37,7 @@
 #include "stopwatch.hxx"
 
 static constexpr Event::Duration LB_HTTP_CONNECT_TIMEOUT =
-	std::chrono::seconds(20);
+	std::chrono::seconds{10};
 
 class LbRequest final
 	: LeakDetector, Cancellable, FilteredSocketBalancerHandler, HttpResponseHandler {
