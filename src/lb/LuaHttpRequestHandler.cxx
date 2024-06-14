@@ -16,6 +16,8 @@
 #include "util/Cancellable.hxx"
 #include "stopwatch.hxx"
 
+using std::string_view_literals::operator""sv;
+
 class LbLuaResponseHandler final
 	: public HttpResponseHandler, Lua::ResumeListener,
 	  Cancellable
@@ -150,7 +152,7 @@ try {
 
 		_request.body.Clear();
 		_request.SendMessage(HttpStatus::BAD_GATEWAY,
-				     "No response from Lua handler");
+				     "No response from Lua handler"sv);
 		return;
 	}
 

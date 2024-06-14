@@ -36,6 +36,8 @@
 
 #include <assert.h>
 
+using std::string_view_literals::operator""sv;
+
 inline
 LbHttpConnection::LbHttpConnection(PoolPtr &&_pool, LbInstance &_instance,
 				   LbListener &_listener,
@@ -227,18 +229,18 @@ LbHttpConnection::HandleHttpRequest(IncomingHttpRequest &request,
 
 	if (!uri_path_verify_quick(request.uri)) {
 		request.body.Clear();
-		request.SendMessage(HttpStatus::BAD_REQUEST, "Malformed URI");
+		request.SendMessage(HttpStatus::BAD_REQUEST, "Malformed URI"sv);
 		return;
 	}
 
 	auto &rl = *(LbRequestLogger *)request.logger;
 	if (rl.host == nullptr) {
 		request.body.Clear();
-		request.SendMessage(HttpStatus::BAD_REQUEST, "No Host header");
+		request.SendMessage(HttpStatus::BAD_REQUEST, "No Host header"sv);
 		return;
 	} else if (!VerifyUriHostPort(rl.host)) {
 		request.body.Clear();
-		request.SendMessage(HttpStatus::BAD_REQUEST, "Malformed Host header");
+		request.SendMessage(HttpStatus::BAD_REQUEST, "Malformed Host header"sv);
 		return;
 	}
 
@@ -249,7 +251,7 @@ LbHttpConnection::HandleHttpRequest(IncomingHttpRequest &request,
 
 		if (instance.config.global_http_check->Check())
 			request.SendMessage(HttpStatus::OK,
-					    instance.config.global_http_check->success_message.c_str());
+					    instance.config.global_http_check->success_message);
 		else
 			request.SendSimpleResponse(HttpStatus::NOT_FOUND,
 						   nullptr, nullptr);

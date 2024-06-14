@@ -89,7 +89,7 @@ public:
 	void SendSimpleResponse(HttpStatus status, const char *location,
 				const char *msg) noexcept;
 
-	void SendMessage(HttpStatus status, const char *msg) noexcept;
+	void SendMessage(HttpStatus status, std::string_view msg) noexcept;
 
 	void SendRedirect(HttpStatus status, const char *location,
 			  const char *msg) noexcept;

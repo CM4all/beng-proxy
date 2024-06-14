@@ -15,6 +15,8 @@
 #include "pool/RootPool.hxx"
 #include "memory/fb_pool.hxx"
 
+using std::string_view_literals::operator""sv;
+
 class Connection final
 	: public AutoUnlinkIntrusiveListHook,
 	  HttpServerConnectionHandler, HttpServerRequestHandler
@@ -41,7 +43,7 @@ public:
 			request.SendResponse(HttpStatus::OK, {},
 					     std::move(request.body));
 		else
-			request.SendMessage(HttpStatus::OK, "Hello, world!\n");
+			request.SendMessage(HttpStatus::OK, "Hello, world!\n"sv);
 	}
 
 	void HttpConnectionError(std::exception_ptr e) noexcept override {

@@ -18,6 +18,8 @@
 #include "AllocatorPtr.hxx"
 #include "stopwatch.hxx"
 
+using std::string_view_literals::operator""sv;
+
 /*
  * TranslateHandler
  *
@@ -87,7 +89,7 @@ LbHttpRequest::OnTranslateResponse(UniquePoolPtr<TranslateResponse> _response) n
 
 		const char *host = rl.host;
 		if (host == nullptr) {
-			_request.SendMessage(HttpStatus::BAD_REQUEST, "No Host header");
+			_request.SendMessage(HttpStatus::BAD_REQUEST, "No Host header"sv);
 			return;
 		}
 

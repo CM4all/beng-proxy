@@ -76,7 +76,7 @@ IncomingHttpRequest::SendSimpleResponse(HttpStatus status,
 }
 
 void
-IncomingHttpRequest::SendMessage(HttpStatus status, const char *msg) noexcept
+IncomingHttpRequest::SendMessage(HttpStatus status, std::string_view msg) noexcept
 {
 	HttpHeaders response_headers;
 

@@ -20,6 +20,8 @@
 #include <assert.h>
 #include <unistd.h>
 
+using std::string_view_literals::operator""sv;
+
 void
 HttpServerConnection::Log(HttpServerRequest &r) noexcept
 {
@@ -293,7 +295,7 @@ HttpServerConnection::OnReadTimeout() noexcept
 		request.read_state = Request::END;
 		keep_alive = false;
 		request.request->SendMessage(HttpStatus::REQUEST_TIMEOUT,
-					     "Request header timeout");
+					     "Request header timeout"sv);
 		return;
 
 	case Request::BODY:
@@ -304,7 +306,7 @@ HttpServerConnection::OnReadTimeout() noexcept
 			request.cancel_ptr.Cancel();
 
 			request.request->SendMessage(HttpStatus::REQUEST_TIMEOUT,
-						     "Request body timeout");
+						     "Request body timeout"sv);
 			return;
 		}
 
