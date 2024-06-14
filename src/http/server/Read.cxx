@@ -182,6 +182,9 @@ HttpServerConnection::HeadersFinished() noexcept
 {
 	assert(request.body_state == Request::BodyState::START);
 
+	/* cancel the request_header_timeout */
+	read_timer.Cancel();
+
 	auto &r = *request.request;
 	r.stopwatch.RecordEvent("request_headers");
 
@@ -403,6 +406,9 @@ HttpServerConnection::Feed(std::span<const std::byte> b) noexcept
 	case Request::START:
 		if (score == HTTP_SERVER_NEW)
 			score = HTTP_SERVER_FIRST;
+
+		if (!read_timer.IsPending())
+			read_timer.Schedule(request_header_timeout);
 
 		[[fallthrough]];
 

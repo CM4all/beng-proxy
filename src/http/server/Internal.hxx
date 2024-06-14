@@ -37,6 +37,12 @@ struct HttpServerConnection final
 	static constexpr Event::Duration idle_timeout = std::chrono::seconds{30};
 
 	/**
+	 * The timeout for reading all request headers.  It is enabled
+	 * as soon as the first byte of the request line is received.
+	 */
+	static constexpr Event::Duration request_header_timeout = std::chrono::seconds{10};
+
+	/**
 	 * The timeout for reading more request data (READ_BODY).
 	 */
 	static constexpr Event::Duration read_timeout = std::chrono::seconds{30};

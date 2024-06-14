@@ -285,12 +285,16 @@ HttpServerConnection::IdleTimeoutCallback() noexcept
 inline void
 HttpServerConnection::OnReadTimeout() noexcept
 {
-	assert(request.read_state == Request::BODY);
-
 	switch (request.read_state) {
 	case Request::START:
-	case Request::HEADERS:
 		break;
+
+	case Request::HEADERS:
+		request.read_state = Request::END;
+		keep_alive = false;
+		request.request->SendMessage(HttpStatus::REQUEST_TIMEOUT,
+					     "Request header timeout");
+		return;
 
 	case Request::BODY:
 		if (!HasInput()) {
