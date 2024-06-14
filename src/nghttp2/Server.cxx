@@ -302,7 +302,7 @@ ServerConnection::Request::OnHeaderCallback(std::string_view name,
 			return 0;
 		}
 
-		const char *allocated_name = alloc.DupToLower(name);
+		const char *allocated_name = alloc.DupZ(name);
 		const char *allocated_value;
 
 		/* the Cookie request header is special: multiple
