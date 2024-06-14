@@ -8,7 +8,7 @@ cm4all-beng-proxy (18.0.75) unstable; urgency=low
   * nghttp2: implement traffic counters
   * access_log: support per-listener access loggers
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Fri, 14 Jun 2024 17:07:10 +0200
 
 cm4all-beng-proxy (18.0.74) unstable; urgency=low
 
