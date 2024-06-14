@@ -88,11 +88,10 @@ private:
 	}
 
 	void SetForwardedTo() noexcept {
-		// TODO: optimize this operation
+		assert(failure);
+
 		auto &rl = *(LbRequestLogger *)request.logger;
-		rl.forwarded_to =
-			address_to_string(pool,
-					  GetFailureManager().GetAddress(*failure));
+		rl.forwarded_to = GetFailureManager().GetAddressString(*failure);
 	}
 
 	const char *GetCanonicalHost() const noexcept {

@@ -56,6 +56,9 @@ public:
 	static SocketAddress GetAddress(const FailureInfo &info) noexcept;
 
 	[[gnu::pure]]
+	static const char *GetAddressString(FailureInfo &info) noexcept;
+
+	[[gnu::pure]]
 	FailureStatus Get(Expiry now, SocketAddress address) const noexcept;
 
 	[[gnu::pure]]

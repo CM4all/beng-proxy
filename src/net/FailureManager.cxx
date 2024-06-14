@@ -5,6 +5,7 @@
 #include "FailureManager.hxx"
 #include "FailureRef.hxx"
 #include "net/AllocatedSocketAddress.hxx"
+#include "net/ToString.hxx"
 #include "util/djb_hash.hxx"
 #include "util/LeakDetector.hxx"
 
@@ -17,12 +18,21 @@ class FailureManager::Failure final
 
 	const AllocatedSocketAddress address;
 
+	std::string address_string;
+
 public:
 	explicit Failure(SocketAddress _address) noexcept
 		:address(_address) {}
 
 	SocketAddress GetAddress() const noexcept {
 		return address;
+	}
+
+	[[gnu::pure]]
+	const char *GetAddressString() noexcept {
+		if (address_string.empty())
+			address_string = ToString(address);
+		return address_string.c_str();
 	}
 
 protected:
@@ -72,6 +82,13 @@ FailureManager::GetAddress(const FailureInfo &info) noexcept
 {
 	const auto &f = (const Failure &)info;
 	return f.GetAddress();
+}
+
+const char *
+FailureManager::GetAddressString(FailureInfo &info) noexcept
+{
+	auto &f = static_cast<Failure &>(info);
+	return f.GetAddressString();
 }
 
 FailureStatus
