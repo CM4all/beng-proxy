@@ -68,7 +68,7 @@ FailureManager::Make(SocketAddress address) noexcept
 }
 
 SocketAddress
-FailureManager::GetAddress(const FailureInfo &info) const noexcept
+FailureManager::GetAddress(const FailureInfo &info) noexcept
 {
 	const auto &f = (const Failure &)info;
 	return f.GetAddress();
