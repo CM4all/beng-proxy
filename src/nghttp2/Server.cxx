@@ -48,6 +48,8 @@ namespace NgHttp2 {
 
 static constexpr Event::Duration write_timeout = std::chrono::seconds(30);
 
+static constexpr std::size_t FRAME_HEADER_SIZE = 9;
+
 class ServerConnection::Request final
 	: public IncomingHttpRequest, MultiFifoBufferIstreamHandler,
 	  IstreamDataSourceHandler,
@@ -97,6 +99,8 @@ class ServerConnection::Request final
 	bool request_body_used = false;
 
 public:
+	uint_least64_t traffic_received = 0, traffic_sent = 0;
+
 	explicit Request(PoolPtr &&_pool,
 			 ServerConnection &_connection, uint32_t _id) noexcept
 		:IncomingHttpRequest(std::move(_pool),
@@ -129,7 +133,7 @@ public:
 			logger->LogHttpRequest(*this,
 					       wait_tracker.GetDuration(GetEventLoop()),
 					       the_status, content_type, length,
-					       /* TODO: */ 0, length);
+					       traffic_received, traffic_sent);
 		}
 	}
 
@@ -544,6 +548,8 @@ ServerConnection::ServerConnection(struct pool &_pool,
 	nghttp2_session_callbacks_set_send_callback(callbacks.get(), SendCallback);
 	nghttp2_session_callbacks_set_on_frame_recv_callback(callbacks.get(),
 							     OnFrameRecvCallback);
+	nghttp2_session_callbacks_set_on_frame_send_callback(callbacks.get(),
+							     OnFrameSendCallback);
 	nghttp2_session_callbacks_set_on_stream_close_callback(callbacks.get(),
 							       Request::OnStreamCloseCallback);
 	nghttp2_session_callbacks_set_on_header_callback(callbacks.get(),
@@ -612,28 +618,28 @@ ServerConnection::SendCallback(std::span<const std::byte> src) noexcept
 int
 ServerConnection::OnFrameRecvCallback(const nghttp2_frame &frame) noexcept
 {
+	Request *request = frame.hd.stream_id != 0
+		? static_cast<Request *>(nghttp2_session_get_stream_user_data(session.get(), frame.hd.stream_id))
+		: nullptr;
+	if (request != nullptr)
+		request->traffic_received += FRAME_HEADER_SIZE + frame.hd.length;
+
 	switch (frame.hd.type) {
 	case NGHTTP2_HEADERS:
 		if (frame.hd.flags & NGHTTP2_FLAG_END_HEADERS) {
-			void *stream_data = nghttp2_session_get_stream_user_data(session.get(),
-										 frame.hd.stream_id);
-			if (stream_data == nullptr)
+			if (request == nullptr)
 				return 0;
 
-			auto &request = *(Request *)stream_data;
-			return request.OnReceiveRequest((frame.hd.flags & NGHTTP2_FLAG_END_STREAM) == 0);
+			return request->OnReceiveRequest((frame.hd.flags & NGHTTP2_FLAG_END_STREAM) == 0);
 		}
 		break;
 
 	case NGHTTP2_DATA:
 		if (frame.hd.flags & NGHTTP2_FLAG_END_STREAM) {
-			void *stream_data = nghttp2_session_get_stream_user_data(session.get(),
-										 frame.hd.stream_id);
-			if (stream_data == nullptr)
+			if (request == nullptr)
 				return 0;
 
-			auto &request = *(Request *)stream_data;
-			return request.OnEndDataFrame();
+			return request->OnEndDataFrame();
 		}
 
 		break;
@@ -641,6 +647,19 @@ ServerConnection::OnFrameRecvCallback(const nghttp2_frame &frame) noexcept
 	default:
 		break;
 	}
+	return 0;
+}
+
+int
+ServerConnection::OnFrameSendCallback(const nghttp2_frame &frame) noexcept
+{
+	if (frame.hd.stream_id != 0) {
+		Request *request = static_cast<Request *>(nghttp2_session_get_stream_user_data(session.get(),
+											       frame.hd.stream_id));
+		if (request != nullptr)
+			request->traffic_sent += FRAME_HEADER_SIZE + frame.hd.length;
+	}
+
 	return 0;
 }
 
@@ -656,6 +675,7 @@ ServerConnection::OnBeginHeaderCallback(const nghttp2_frame &frame) noexcept
 
 		auto *request = NewFromPool<Request>(std::move(stream_pool),
 						     *this, frame.hd.stream_id);
+		request->traffic_received += FRAME_HEADER_SIZE + frame.hd.length;
 		requests.push_front(*request);
 		nghttp2_session_set_stream_user_data(session.get(),
 						     frame.hd.stream_id,

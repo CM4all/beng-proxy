@@ -76,6 +76,15 @@ private:
 		return c.OnFrameRecvCallback(*frame);
 	}
 
+	int OnFrameSendCallback(const nghttp2_frame &frame) noexcept;
+
+	static int OnFrameSendCallback(nghttp2_session *,
+				       const nghttp2_frame *frame,
+				       void *user_data) noexcept {
+		auto &c = *static_cast<ServerConnection *>(user_data);
+		return c.OnFrameSendCallback(*frame);
+	}
+
 	int OnBeginHeaderCallback(const nghttp2_frame &frame) noexcept;
 
 	static int OnBeginHeaderCallback(nghttp2_session *,
