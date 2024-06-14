@@ -158,7 +158,7 @@ LbHttpConnection::SendError(IncomingHttpRequest &request, std::exception_ptr ep)
 	}
 
 	const char *msg = listener_config.verbose_response
-		? p_strdup(request.pool, GetFullMessage(ep).c_str())
+		? p_strdup(request.pool, GetFullMessage(ep))
 		: "Bad gateway";
 
 	request.SendMessage(HttpStatus::BAD_GATEWAY, msg);

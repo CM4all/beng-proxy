@@ -166,7 +166,7 @@ Request::LogDispatchError(std::exception_ptr ep) noexcept
 
 	auto response = ToResponse(pool, ep);
 	if (instance.config.verbose_response)
-		response.message = p_strdup(&pool, GetFullMessage(ep).c_str());
+		response.message = p_strdup(pool, GetFullMessage(ep));
 
 	logger(response.status == HttpStatus::INTERNAL_SERVER_ERROR ? 1 : 2,
 	       "error on '", request.uri, "': ", ep);
@@ -186,7 +186,7 @@ Request::LogDispatchError(HttpStatus status, const char *msg,
 	logger(log_level, "error on '", request.uri, "': ", ep);
 
 	if (instance.config.verbose_response)
-		msg = p_strdup(&pool, GetFullMessage(ep).c_str());
+		msg = p_strdup(pool, GetFullMessage(ep));
 
 	DispatchError(status, msg);
 }
