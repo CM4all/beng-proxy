@@ -9,6 +9,7 @@
 #include "pool/pool.hxx"
 #include "memory/fb_pool.hxx"
 #include "memory/SliceFifoBuffer.hxx"
+#include "lib/zlib/Error.hxx"
 #include "util/DestructObserver.hxx"
 
 #include <zlib.h>
@@ -16,18 +17,6 @@
 #include <stdexcept>
 
 #include <assert.h>
-
-class ZlibError : public std::runtime_error {
-	int code;
-
-public:
-	explicit ZlibError(int _code, const char *_msg)
-		:std::runtime_error(_msg), code(_code) {}
-
-	int GetCode() const noexcept {
-		return code;
-	}
-};
 
 class GzipIstream final : public FacadeIstream, DestructAnchor {
 	z_stream z;
@@ -51,7 +40,7 @@ public:
 	bool InitZlib() noexcept;
 
 	void Abort(int code, const char *msg) noexcept {
-		DestroyError(std::make_exception_ptr(ZlibError(code, msg)));
+		DestroyError(std::make_exception_ptr(MakeZlibError(code, msg)));
 	}
 
 	/**
