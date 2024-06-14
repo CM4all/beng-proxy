@@ -287,7 +287,28 @@ HttpServerConnection::OnReadTimeout() noexcept
 {
 	assert(request.read_state == Request::BODY);
 
-	// TODO send "408 Request Timeout"?
+	switch (request.read_state) {
+	case Request::START:
+	case Request::HEADERS:
+		break;
+
+	case Request::BODY:
+		if (!HasInput()) {
+			assert(request.cancel_ptr);
+
+			/* this cancellation disables keep-alive */
+			request.cancel_ptr.Cancel();
+
+			request.request->SendMessage(HttpStatus::REQUEST_TIMEOUT,
+						     "Request body timeout");
+			return;
+		}
+
+		break;
+
+	case Request::END:
+		assert(false);
+	}
 
 	SocketError(TimeoutError{});
 }
