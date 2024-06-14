@@ -49,8 +49,10 @@ public:
 	 * Looks up a #FailureInfo instance or creates a new one.  The
 	 * return value should be passed to the #FailureRef constructor.
 	 */
+	[[gnu::pure]]
 	ReferencedFailureInfo &Make(SocketAddress address) noexcept;
 
+	[[gnu::pure]]
 	SocketAddress GetAddress(const FailureInfo &info) const noexcept;
 
 	[[gnu::pure]]
