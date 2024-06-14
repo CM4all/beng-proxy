@@ -1,6 +1,7 @@
 cm4all-beng-proxy (18.0.75) unstable; urgency=low
 
   * lb: reduce connect timeout to 10 seconds
+  * lb: log the "forwarded_to" attribute on protocol failures
   * http_server, nghttp2: report request duration without client wait
   * http_server: implement 10s timeout for request headers
   * http_server: send "408 Request Timeout" if request body stalls for too long

@@ -296,8 +296,6 @@ LbRequest::OnHttpResponse(HttpStatus status, StringMap &&_headers,
 {
 	failure->UnsetProtocol();
 
-	SetForwardedTo();
-
 	if (auto &rl = *(LbRequestLogger *)request.logger; rl.generator == nullptr)
 		/* if there is a GENERATOR header, include it in the
 		   access log */
@@ -339,8 +337,6 @@ LbRequest::OnHttpError(std::exception_ptr ep) noexcept
 		failure->SetProtocol(GetEventLoop().SteadyNow(),
 				     std::chrono::seconds(20));
 
-	SetForwardedTo();
-
 	connection.logger(2, ep);
 
 	auto &_connection = connection;
@@ -360,6 +356,8 @@ LbRequest::OnFilteredSocketReady(Lease &lease,
 				 ReferencedFailureInfo &_failure) noexcept
 {
 	failure = _failure;
+
+	SetForwardedTo();
 
 	const char *peer_subject = connection.ssl_filter != nullptr
 		? ssl_filter_get_peer_subject(*connection.ssl_filter)
