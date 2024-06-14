@@ -15,6 +15,7 @@
 #include "http/CommonHeaders.hxx"
 #include "http/Date.hxx"
 #include "http/IncomingRequest.hxx"
+#include "http/HeaderLimits.hxx"
 #include "http/Headers.hxx"
 #include "http/Logger.hxx"
 #include "http/Method.hxx"
@@ -279,7 +280,7 @@ ServerConnection::Request::OnHeaderCallback(std::string_view name,
 			SetError(HttpStatus::BAD_REQUEST,
 				 "Unsupported request method\n");
 	} else if (name == ":path"sv) {
-		if (value.size() >= 8192) {
+		if (value.size() >= MAX_HTTP_HEADER_SIZE) {
 			SetError(HttpStatus::REQUEST_URI_TOO_LONG,
 				 "Request URI is too long\n");
 			return 0;
