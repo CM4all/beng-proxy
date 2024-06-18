@@ -55,6 +55,8 @@ public:
 		DeferWrite();
 	}
 
+	void RemoveRequest(Request &request) noexcept;
+
 private:
 	void DeferWrite() noexcept;
 

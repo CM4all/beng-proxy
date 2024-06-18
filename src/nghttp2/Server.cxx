@@ -53,7 +53,7 @@ static constexpr std::size_t FRAME_HEADER_SIZE = 9;
 class ServerConnection::Request final
 	: public IncomingHttpRequest, MultiFifoBufferIstreamHandler,
 	  IstreamDataSourceHandler,
-	  public AutoUnlinkIntrusiveListHook
+	  public IntrusiveListHook<>
 {
 	ServerConnection &connection;
 
@@ -135,6 +135,8 @@ public:
 					       the_status, content_type, length,
 					       traffic_received, traffic_sent);
 		}
+
+		connection.RemoveRequest(*this);
 	}
 
 	void Destroy() noexcept {
@@ -594,13 +596,22 @@ ServerConnection::ServerConnection(struct pool &_pool,
 
 ServerConnection::~ServerConnection() noexcept
 {
-	requests.clear_and_dispose([](Request *request) { request->Destroy(); });
+	while (!requests.empty())
+		requests.front().Destroy();
 }
 
 inline EventLoop &
 ServerConnection::GetEventLoop() noexcept
 {
 	return socket->GetEventLoop();
+}
+
+inline void
+ServerConnection::RemoveRequest(Request &request) noexcept
+{
+	assert(!requests.empty());
+
+	request.unlink();
 }
 
 inline void
