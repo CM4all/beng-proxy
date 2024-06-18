@@ -37,6 +37,16 @@ class ServerConnection final : BufferedSocketHandler {
 
 	RequestList requests;
 
+	/**
+	 * A timer which closes the connection if there is no request
+	 * (HTTP/2 stream) for some time.  The timer is scheduled when
+	 * the #requests list becomes empty (and is canceled when a
+	 * new request is added to #requests).
+	 */
+	CoarseTimerEvent idle_timer;
+
+	static constexpr Event::Duration idle_timeout = std::chrono::minutes{2};
+
 public:
 	ServerConnection(struct pool &_pool,
 			 UniquePoolPtr<FilteredSocket> _socket,
@@ -106,6 +116,8 @@ private:
 		auto &c = *(ServerConnection *)user_data;
 		return c.OnInvalidFrameReceivedCallback(*frame, lib_error_code);
 	}
+
+	void OnIdleTimeout() noexcept;
 
 	/* virtual methods from class BufferedSocketHandler */
 	BufferedResult OnBufferedData() override;

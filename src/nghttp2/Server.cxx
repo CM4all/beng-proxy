@@ -538,7 +538,8 @@ ServerConnection::ServerConnection(struct pool &_pool,
 	 local_address(DupAddress(pool, socket->GetSocket().GetLocalAddress())),
 	 remote_address(DupAddress(pool, _remote_address)),
 	 local_host_and_port(address_to_string(pool, local_address)),
-	 remote_host(address_to_host_string(pool, remote_address))
+	 remote_host(address_to_host_string(pool, remote_address)),
+	 idle_timer(socket->GetEventLoop(), BIND_THIS_METHOD(OnIdleTimeout))
 {
 	socket->Reinit(write_timeout, *this);
 
@@ -588,7 +589,7 @@ ServerConnection::ServerConnection(struct pool &_pool,
 					      NGHTTP2_NV_FLAG_NONE,
 					      0, 256 * 1024);
 
-	// TODO: idle_timeout.Schedule(http_server_idle_timeout);
+	idle_timer.Schedule(idle_timeout);
 
 	DeferWrite();
 	socket->ScheduleRead();
@@ -607,11 +608,23 @@ ServerConnection::GetEventLoop() noexcept
 }
 
 inline void
+ServerConnection::OnIdleTimeout() noexcept
+{
+	// TODO send HTTP/2 GOAWAY and TLS close alert?
+
+	handler.HttpConnectionClosed();
+}
+
+inline void
 ServerConnection::RemoveRequest(Request &request) noexcept
 {
 	assert(!requests.empty());
+	assert(!idle_timer.IsPending());
 
 	request.unlink();
+
+	if (requests.empty())
+		idle_timer.Schedule(idle_timeout);
 }
 
 inline void
@@ -683,6 +696,9 @@ ServerConnection::OnBeginHeaderCallback(const nghttp2_frame &frame) noexcept
 		auto stream_pool = pool_new_linear(&pool,
 						   "NgHttp2ServerRequest", 8192);
 		pool_set_major(stream_pool);
+
+		assert(requests.empty() == idle_timer.IsPending());
+		idle_timer.Cancel();
 
 		auto *request = NewFromPool<Request>(std::move(stream_pool),
 						     *this, frame.hd.stream_id);
