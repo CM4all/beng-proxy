@@ -69,7 +69,7 @@ class EncodingCache;
 class SessionManager;
 class BpListener;
 struct BpConnection;
-struct TaggedHttpStats;
+struct BpListenerStats;
 namespace NgHttp2 { class Stock; }
 namespace Avahi { class Client; class Publisher; }
 namespace Prometheus { struct Stats; }
@@ -95,7 +95,7 @@ struct BpInstance final : PInstance, BengControl::Handler,
 #endif
 	};
 
-	std::map<std::string, TaggedHttpStats> listener_stats;
+	std::map<std::string, BpListenerStats> listener_stats;
 
 	std::forward_list<BpListener> listeners;
 

@@ -12,7 +12,7 @@
 
 struct BpInstance;
 struct BpListenerConfig;
-struct TaggedHttpStats;
+struct BpListenerStats;
 class TranslationService;
 class AccessLogGlue;
 class BpPrometheusExporter;
@@ -24,7 +24,7 @@ namespace Avahi { struct Service; }
 class BpListener final : FilteredSocketListenerHandler {
 	BpInstance &instance;
 
-	TaggedHttpStats &http_stats;
+	BpListenerStats &http_stats;
 
 	AccessLogGlue *const access_logger;
 
@@ -46,7 +46,7 @@ class BpListener final : FilteredSocketListenerHandler {
 
 public:
 	BpListener(BpInstance &_instance,
-		   TaggedHttpStats &_http_stats,
+		   BpListenerStats &_http_stats,
 		   AccessLogGlue *_access_logger,
 		   std::shared_ptr<TranslationService> _translation_service,
 		   const BpListenerConfig &config,

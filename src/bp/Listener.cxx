@@ -57,7 +57,7 @@ MakeSslFactory(const BpListenerConfig &config)
 }
 
 BpListener::BpListener(BpInstance &_instance,
-		       TaggedHttpStats &_http_stats,
+		       BpListenerStats &_http_stats,
 		       AccessLogGlue *_access_logger,
 		       std::shared_ptr<TranslationService> _translation_service,
 		       const BpListenerConfig &config,

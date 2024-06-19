@@ -4,6 +4,7 @@
 
 #include "Instance.hxx"
 #include "Listener.hxx"
+#include "LStats.hxx"
 #include "Connection.hxx"
 #include "memory/fb_pool.hxx"
 #include "event/net/control/Server.hxx"
@@ -39,7 +40,6 @@
 #include "spawn/Client.hxx"
 #include "spawn/Launch.hxx"
 #include "spawn/ListenStreamSpawnStock.hxx"
-#include "stats/TaggedHttpStats.hxx"
 #include "access_log/Glue.hxx"
 #include "util/PrintException.hxx"
 

@@ -11,7 +11,7 @@
 #include <string_view>
 
 struct BpInstance;
-struct TaggedHttpStats;
+struct BpListenerStats;
 class AccessLogGlue;
 
 /**
@@ -23,7 +23,7 @@ class AccessLogGlue;
 struct BpRequestLogger final : IncomingHttpRequestLogger {
 	BpInstance &instance;
 
-	TaggedHttpStats &http_stats;
+	BpListenerStats &http_stats;
 
 	AccessLogGlue *const access_logger;
 
@@ -58,7 +58,7 @@ struct BpRequestLogger final : IncomingHttpRequestLogger {
 	const bool access_logger_only_errors;
 
 	BpRequestLogger(BpInstance &_instance,
-			TaggedHttpStats &_http_stats,
+			BpListenerStats &_http_stats,
 			AccessLogGlue *_access_logger,
 			bool _access_logger_only_errors) noexcept;
 

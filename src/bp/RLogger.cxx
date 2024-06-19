@@ -4,13 +4,13 @@
 
 #include "RLogger.hxx"
 #include "Instance.hxx"
-#include "stats/TaggedHttpStats.hxx"
+#include "LStats.hxx"
 #include "access_log/Glue.hxx"
 #include "http/CommonHeaders.hxx"
 #include "http/IncomingRequest.hxx"
 
 BpRequestLogger::BpRequestLogger(BpInstance &_instance,
-				 TaggedHttpStats &_http_stats,
+				 BpListenerStats &_http_stats,
 				 AccessLogGlue *_access_logger,
 				 bool _access_logger_only_errors) noexcept
 	:instance(_instance), http_stats(_http_stats),

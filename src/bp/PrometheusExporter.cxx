@@ -4,6 +4,7 @@
 
 #include "PrometheusExporter.hxx"
 #include "Instance.hxx"
+#include "LStats.hxx"
 #include "prometheus/Stats.hxx"
 #include "prometheus/HttpStats.hxx"
 #include "http/Headers.hxx"
@@ -14,6 +15,18 @@
 #include "memory/GrowingBuffer.hxx"
 
 using std::string_view_literals::operator""sv;
+
+namespace Prometheus {
+
+static void
+Write(GrowingBuffer &buffer, std::string_view process,
+      std::string_view listener,
+      const BpListenerStats &stats) noexcept
+{
+	Prometheus::Write(buffer, process, listener, stats.tagged);
+}
+
+} // namespace Prometheus
 
 void
 BpPrometheusExporter::HandleHttpRequest(IncomingHttpRequest &request,
