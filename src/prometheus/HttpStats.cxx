@@ -8,7 +8,22 @@
 #include "memory/GrowingBuffer.hxx"
 #include "lib/fmt/ToBuffer.hxx"
 
+using std::string_view_literals::operator""sv;
+
 namespace Prometheus {
+
+static void
+Write(GrowingBuffer &buffer,
+      std::string_view name, std::string_view labels,
+      const PerHttpStatusCounters &per_status) noexcept
+{
+	for (std::size_t i = 0; i < per_status.size(); ++i)
+		if (per_status[i] > 0)
+			buffer.Fmt("{}{{{}status=\"{}\"}} {}\n",
+				   name, labels,
+				   static_cast<unsigned>(IndexToHttpStatus(i)),
+				   per_status[i]);
+}
 
 static void
 Write(GrowingBuffer &buffer, std::string_view labels,
@@ -43,12 +58,7 @@ beng_proxy_http_traffic{{{}direction="out"}} {}
 	       labels, stats.traffic_received,
 	       labels, stats.traffic_sent);
 
-	for (std::size_t i = 0; i < stats.n_per_status.size(); ++i)
-		if (stats.n_per_status[i] > 0)
-			buffer.Fmt("beng_proxy_http_requests{{{}status=\"{}\"}} {}\n",
-				   labels,
-				   static_cast<unsigned>(IndexToHttpStatus(i)),
-				   stats.n_per_status[i]);
+	Write(buffer, "beng_proxy_http_requests"sv, labels, stats.n_per_status);
 }
 
 void
