@@ -221,8 +221,7 @@ class ThreadSocketFilter final : public SocketFilter, ThreadSocketFilterInternal
 	std::exception_ptr error;
 
 public:
-	ThreadSocketFilter(EventLoop &_event_loop,
-			   ThreadQueue &queue,
+	ThreadSocketFilter(ThreadQueue &queue,
 			   std::unique_ptr<ThreadSocketFilterHandler> _handler) noexcept;
 
 	ThreadSocketFilter(const ThreadSocketFilter &) = delete;

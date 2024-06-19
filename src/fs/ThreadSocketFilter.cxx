@@ -11,13 +11,12 @@
 
 #include <algorithm>
 
-ThreadSocketFilter::ThreadSocketFilter(EventLoop &_event_loop,
-				       ThreadQueue &_queue,
+ThreadSocketFilter::ThreadSocketFilter(ThreadQueue &_queue,
 				       std::unique_ptr<ThreadSocketFilterHandler> _handler) noexcept
 	:queue(_queue),
 	 handler(std::move(_handler)),
-	 defer_event(_event_loop, BIND_THIS_METHOD(OnDeferred)),
-	 handshake_timeout_event(_event_loop,
+	 defer_event(queue.GetEventLoop(), BIND_THIS_METHOD(OnDeferred)),
+	 handshake_timeout_event(queue.GetEventLoop(),
 				 BIND_THIS_METHOD(HandshakeTimeoutCallback))
 {
 	assert(handler);

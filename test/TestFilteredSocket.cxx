@@ -54,8 +54,7 @@ struct Instance final {
 
 	auto NewThreadSocketFilter(std::unique_ptr<ThreadSocketFilterHandler> handler) {
 		return SocketFilterPtr{
-			new ThreadSocketFilter(event_loop,
-					       thread_pool_get_queue(event_loop),
+			new ThreadSocketFilter(thread_pool_get_queue(event_loop),
 					       std::move(handler))
 		};
 	}

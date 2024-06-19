@@ -139,8 +139,7 @@ try {
 	auto f = ssl_filter_new(ssl_factory->Make());
 	auto &ssl_filter = ssl_filter_cast_from(*f);
 
-	SocketFilterPtr filter(new ThreadSocketFilter(event_loop,
-						      thread_pool_get_queue(event_loop),
+	SocketFilterPtr filter(new ThreadSocketFilter(thread_pool_get_queue(event_loop),
 						      std::move(f)));
 
 	auto socket = UniquePoolPtr<FilteredSocket>::Make(connection_pool,

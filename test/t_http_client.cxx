@@ -507,8 +507,7 @@ public:
 
 	SocketFilterPtr CreateFilter() override {
 		return SocketFilterPtr{
-			new ThreadSocketFilter(event_loop,
-					       thread_pool_get_queue(event_loop),
+			new ThreadSocketFilter(thread_pool_get_queue(event_loop),
 					       std::make_unique<NopThreadSocketFilter>())
 		};
 	}
