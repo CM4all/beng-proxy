@@ -4,9 +4,8 @@
 
 #pragma once
 
-#include "http/StatusIndex.hxx"
+#include "PerHttpStatusCounters.hxx"
 
-#include <array>
 #include <chrono>
 #include <cstdint>
 
@@ -31,7 +30,7 @@ struct HttpStats {
 
 	std::chrono::steady_clock::duration total_duration{};
 
-	std::array<uint_least64_t, valid_http_status_array.size()> n_per_status{};
+	PerHttpStatusCounters n_per_status{};
 
 	void AddRequest(HttpStatus status,
 			uint_least64_t bytes_received,
