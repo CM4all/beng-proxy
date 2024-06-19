@@ -39,6 +39,7 @@
 #include "spawn/Client.hxx"
 #include "spawn/Launch.hxx"
 #include "spawn/ListenStreamSpawnStock.hxx"
+#include "stats/TaggedHttpStats.hxx"
 #include "access_log/Glue.hxx"
 #include "util/PrintException.hxx"
 

@@ -10,7 +10,7 @@
 #include "UringGlue.hxx"
 #include "Config.hxx"
 #include "access_log/Multi.hxx"
-#include "stats/TaggedHttpStats.hxx"
+#include "stats/HttpStats.hxx"
 #include "lib/avahi/ErrorHandler.hxx"
 #ifdef HAVE_LIBWAS
 #include "was/MetricsHandler.hxx"
@@ -69,6 +69,7 @@ class EncodingCache;
 class SessionManager;
 class BpListener;
 struct BpConnection;
+struct TaggedHttpStats;
 namespace NgHttp2 { class Stock; }
 namespace Avahi { class Client; class Publisher; }
 namespace Prometheus { struct Stats; }

@@ -4,6 +4,7 @@
 
 #include "RLogger.hxx"
 #include "Instance.hxx"
+#include "stats/TaggedHttpStats.hxx"
 #include "access_log/Glue.hxx"
 #include "http/CommonHeaders.hxx"
 #include "http/IncomingRequest.hxx"

@@ -9,6 +9,7 @@
 #include "http/Headers.hxx"
 #include "http/IncomingRequest.hxx"
 #include "http/ResponseHandler.hxx"
+#include "stats/TaggedHttpStats.hxx"
 #include "memory/istream_gb.hxx"
 #include "memory/GrowingBuffer.hxx"
 

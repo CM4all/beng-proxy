@@ -47,6 +47,7 @@
 #include "spawn/Launch.hxx"
 #include "spawn/Client.hxx"
 #include "spawn/ListenStreamSpawnStock.hxx"
+#include "stats/TaggedHttpStats.hxx"
 #include "net/SocketAddress.hxx"
 #include "net/StaticSocketAddress.hxx"
 #include "io/Logger.hxx"
