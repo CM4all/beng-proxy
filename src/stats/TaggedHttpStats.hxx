@@ -23,6 +23,7 @@ struct TaggedHttpStats {
 	}
 
 private:
+	[[gnu::pure]]
 	HttpStats &FindOrEmplace(std::string_view tag) noexcept {
 		if (auto i = per_tag.find(tag); i != per_tag.end())
 			return i->second;
