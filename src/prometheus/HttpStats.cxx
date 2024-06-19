@@ -5,6 +5,7 @@
 #include "HttpStats.hxx"
 #include "stats/HttpStats.hxx"
 #include "stats/TaggedHttpStats.hxx"
+#include "stats/PerGeneratorStats.hxx"
 #include "memory/GrowingBuffer.hxx"
 #include "lib/fmt/ToBuffer.hxx"
 
@@ -81,6 +82,32 @@ Write(GrowingBuffer &buffer, std::string_view process, std::string_view listener
 
 		Write(buffer, labels.c_str(), stats);
 	}
+}
+
+static void
+Write(GrowingBuffer &buffer, std::string_view process,
+      std::string_view listener, std::string_view generator,
+      const PerGeneratorStats &stats) noexcept
+{
+	const auto labels = FmtBuffer<256>("process={:?},listener={:?},generator={:?},",
+					   process, listener, generator);
+
+	Write(buffer, "beng_proxy_http_requests_per_generator"sv,
+	      labels.c_str(), stats.n_per_status);
+}
+
+void
+Write(GrowingBuffer &buffer, std::string_view process,
+      std::string_view listener,
+      const PerGeneratorStatsMap &per_generator) noexcept
+{
+	buffer.Write(R"(
+# HELP beng_proxy_http_requests_per_generator Number of HTTP requests per GENERATOR
+# TYPE beng_proxy_http_requests_per_generator counter
+)"sv);
+
+	for (const auto &[generator, stats] : per_generator.per_generator)
+		Write(buffer, process, listener, generator, stats);
 }
 
 } // namespace Prometheus

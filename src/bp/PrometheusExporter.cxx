@@ -24,6 +24,7 @@ Write(GrowingBuffer &buffer, std::string_view process,
       const BpListenerStats &stats) noexcept
 {
 	Prometheus::Write(buffer, process, listener, stats.tagged);
+	Prometheus::Write(buffer, process, listener, stats.per_generator);
 }
 
 } // namespace Prometheus

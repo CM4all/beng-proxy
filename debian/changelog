@@ -1,6 +1,7 @@
 cm4all-beng-proxy (18.0.76) unstable; urgency=low
 
   * nghttp2: close idle connections after a timeout
+  * bp/prometheus: show number of requests per GENERATOR and HTTP status
 
  --   
 

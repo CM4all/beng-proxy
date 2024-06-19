@@ -36,7 +36,9 @@ BpRequestLogger::LogHttpRequest(IncomingHttpRequest &request,
 				       bytes_received, bytes_sent,
 				       duration);
 
-	http_stats.AddRequest(stats_tag, status,
+	http_stats.AddRequest(stats_tag,
+			      generator != nullptr ? std::string_view{generator} : std::string_view{},
+			      status,
 			      bytes_received, bytes_sent,
 			      duration);
 

@@ -5,6 +5,7 @@
 #pragma once
 
 #include "stats/TaggedHttpStats.hxx"
+#include "stats/PerGeneratorStats.hxx"
 
 /**
  * Per-listener statistics.
@@ -12,7 +13,10 @@
 struct BpListenerStats {
 	TaggedHttpStats tagged;
 
+	PerGeneratorStatsMap per_generator;
+
 	void AddRequest(std::string_view tag,
+			std::string_view generator,
 			HttpStatus status,
 			uint64_t bytes_received,
 			uint64_t bytes_sent,
@@ -20,5 +24,7 @@ struct BpListenerStats {
 		tagged.AddRequest(tag, status,
 				  bytes_received, bytes_sent,
 				  duration);
+
+		per_generator.AddRequest(generator, status);
 	}
 };
