@@ -568,7 +568,8 @@ tcache_expand_response(AllocatorPtr alloc, TranslateResponse &response,
 					  "Malformed Host header");
 
 	uri = tcache_regex_input(AllocatorPtr{tpool}, uri, host, user, response);
-	uri = NormalizeUriPath(AllocatorPtr{tpool}, uri);
+	if (!response.regex_raw)
+		uri = NormalizeUriPath(AllocatorPtr{tpool}, uri);
 	if (uri == nullptr || (!response.unsafe_base &&
 			       !uri_path_verify_paranoid(uri)))
 		throw HttpMessageResponse(HttpStatus::BAD_REQUEST,

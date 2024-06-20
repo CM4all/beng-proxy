@@ -680,6 +680,15 @@ response packets allow reusing cache items for different requests:
   suffix following ``BASE`` instead of the whole request URI. (Since
   version 4.0.21)
 
+- ``REGEX_RAW``: By default, URI paths are normalized when expanding a
+  cached translation response (i.e. mutliple consecutive slashes are
+  compressed to one and occurrences of ``/./`` are compressed to
+  ``/``).  This option disables the URI path normalization.
+
+  Apply ``REGEX`` and ``INVERSE_REGEX`` to the URI
+  suffix following ``BASE`` instead of the whole request URI. (Since
+  version 4.0.21)
+
 - ``REGEX_UNESCAPE``: Unescape the URI for ``REGEX``.
 
 - ``INVERSE_REGEX_UNESCAPE``: Unescape the URI for ``INVERSE_REGEX``.
