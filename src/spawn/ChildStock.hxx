@@ -81,6 +81,8 @@ class ChildStock final : public StockClass {
 
 	const ChildErrorLogOptions log_options;
 
+	class QueueItem;
+
 	/**
 	 * A list of idle items, the most recently used at the end.
 	 * This is used by DiscardOldestIdle().
@@ -128,6 +130,9 @@ public:
 	bool DiscardOldestIdle() noexcept;
 
 private:
+	void DoSpawn(CreateStockItem c, StockRequest request,
+		     StockGetHandler &handler) noexcept;
+
 	/* virtual methods from class StockClass */
 	void Create(CreateStockItem c, StockRequest request,
 		    StockGetHandler &handler,

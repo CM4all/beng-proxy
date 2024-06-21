@@ -4,8 +4,10 @@
 
 #include "ChildStock.hxx"
 #include "ChildStockItem.hxx"
+#include "spawn/Interface.hxx"
 #include "net/UniqueSocketDescriptor.hxx"
 #include "io/UniqueFileDescriptor.hxx"
+#include "util/Cancellable.hxx"
 
 #include <cassert>
 
@@ -36,6 +38,63 @@ ChildStock::ChildStock(SpawnService &_spawn_service,
 
 ChildStock::~ChildStock() noexcept = default;
 
+/**
+ * An object waiting for SpawnService::Enqueue() to finish.  This
+ * throttles SpawnService::SpawnChildProcess() calls if the spawner is
+ * under heavy pressure.
+ */
+class ChildStock::QueueItem final : Cancellable {
+	ChildStock &stock;
+	CreateStockItem create;
+	StockRequest request;
+	StockGetHandler &handler;
+
+	CancellablePointer cancel_ptr;
+
+public:
+	QueueItem(ChildStock &_stock,
+		  CreateStockItem &&_create,
+		  StockRequest &&_request,
+		  StockGetHandler &_handler) noexcept
+		:stock(_stock),
+		 create(std::move(_create)), request(std::move(_request)),
+		 handler(_handler)
+	{
+	}
+
+	void Start(SpawnService &spawner,
+		   CancellablePointer &caller_cancel_ptr) noexcept {
+		caller_cancel_ptr = *this;
+		spawner.Enqueue(BIND_THIS_METHOD(OnSpawnerReady), cancel_ptr);
+	}
+
+private:
+	void OnSpawnerReady() noexcept;
+
+	void Cancel() noexcept override {
+		cancel_ptr.Cancel();
+		delete this;
+	}
+};
+
+inline void
+ChildStock::QueueItem::OnSpawnerReady() noexcept
+{
+	stock.DoSpawn(create, std::move(request), handler);
+	delete this;
+}
+
+inline void
+ChildStock::DoSpawn(CreateStockItem c, StockRequest request,
+		    StockGetHandler &handler) noexcept
+{
+	auto item = cls.CreateChild(c, request.get(), *this);
+	item->Spawn(cls, request.get(),
+		    log_socket, log_options);
+
+	item.release()->InvokeCreateSuccess(handler);
+}
+
 /*
  * stock class
  *
@@ -44,13 +103,10 @@ ChildStock::~ChildStock() noexcept = default;
 void
 ChildStock::Create(CreateStockItem c, StockRequest request,
 		   StockGetHandler &handler,
-		   CancellablePointer &)
+		   CancellablePointer &cancel_ptr)
 {
-	auto item = cls.CreateChild(c, request.get(), *this);
-	item->Spawn(cls, request.get(),
-		    log_socket, log_options);
-
-	item.release()->InvokeCreateSuccess(handler);
+	auto *queue_item = new QueueItem(*this, std::move(c), std::move(request), handler);
+	queue_item->Start(spawn_service, cancel_ptr);
 }
 
 /*
