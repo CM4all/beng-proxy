@@ -197,6 +197,21 @@ TerminateChildren(const char *server, ConstBuffer<const char *> args)
 }
 
 static void
+FlushHttpCache(const char *server, ConstBuffer<const char *> args)
+{
+	std::string_view tag{};
+
+	if (!args.empty())
+		tag = args.shift();
+
+	if (!args.empty())
+		throw Usage{"Too many arguments"};
+
+	BengControl::Client client(server);
+	client.Send(BengControl::Command::FLUSH_HTTP_CACHE, tag);
+}
+
+static void
 FlushFilterCache(const char *server, ConstBuffer<const char *> args)
 {
 	std::string_view tag{};
@@ -312,6 +327,9 @@ try {
 		SimpleCommand(server, args,
 			      BengControl::Command::ENABLE_ZEROCONF);
 		return EXIT_SUCCESS;
+	} else if (StringIsEqual(command, "flush-http-cache")) {
+		FlushHttpCache(server, args);
+		return EXIT_SUCCESS;
 	} else if (StringIsEqual(command, "flush-filter-cache")) {
 		FlushFilterCache(server, args);
 		return EXIT_SUCCESS;
@@ -340,6 +358,7 @@ try {
 		"  fade-children [TAG]\n"
 		"  disable-zeroconf\n"
 		"  enable-zeroconf\n"
+		"  flush-http-cache [TAG]\n"
 		"  flush-filter-cache [TAG]\n"
 		"  discard-session ATTACH_ID\n"
 		"  stopwatch\n"
