@@ -356,6 +356,7 @@ try {
 		"  verbose LEVEL\n"
 		"  reload-state\n"
 		"  fade-children [TAG]\n"
+		"  terminate-children TAG\n"
 		"  disable-zeroconf\n"
 		"  enable-zeroconf\n"
 		"  flush-http-cache [TAG]\n"
