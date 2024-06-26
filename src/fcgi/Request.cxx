@@ -6,7 +6,7 @@
 #include "Stock.hxx"
 #include "Client.hxx"
 #include "http/ResponseHandler.hxx"
-#include "lease.hxx"
+#include "cgi/Address.hxx"
 #include "stock/Item.hxx"
 #include "istream/UnusedPtr.hxx"
 #include "pool/pool.hxx"
@@ -14,6 +14,8 @@
 #include "net/SocketDescriptor.hxx"
 #include "io/UniqueFileDescriptor.hxx"
 #include "util/Cancellable.hxx"
+#include "AllocatorPtr.hxx"
+#include "lease.hxx"
 #include "stopwatch.hxx"
 
 #include <sys/socket.h>
@@ -34,11 +36,8 @@ public:
 
 	void Start(EventLoop &event_loop, StopwatchPtr &&stopwatch,
 		   const char *site_name,
-		   const char *path,
-		   HttpMethod method, const char *uri,
-		   const char *script_name, const char *path_info,
-		   const char *query_string,
-		   const char *document_root,
+		   const CgiAddress &address,
+		   HttpMethod method,
 		   const char *remote_addr,
 		   StringMap &&headers, UnusedIstreamPtr body,
 		   std::span<const char *const> params,
@@ -47,13 +46,15 @@ public:
 		   CancellablePointer &caller_cancel_ptr) noexcept {
 		caller_cancel_ptr = *this;
 
+		const char *uri = address.GetURI(pool);
+
 		fcgi_stock_item_set_site(*stock_item, site_name);
 		fcgi_stock_item_set_uri(*stock_item, uri);
 
 		if (!stderr_fd.IsDefined())
 			stderr_fd = fcgi_stock_item_get_stderr(*stock_item);
 
-		const char *script_filename = path;
+		const char *script_filename = address.path;
 
 		fcgi_client_request(&pool, event_loop, std::move(stopwatch),
 				    fcgi_stock_item_get(*stock_item),
@@ -62,9 +63,9 @@ public:
 				    *this,
 				    method, uri,
 				    script_filename,
-				    script_name, path_info,
-				    query_string,
-				    document_root,
+				    address.script_name, address.path_info,
+				    address.query_string,
+				    address.document_root,
 				    remote_addr,
 				    std::move(headers), std::move(body),
 				    params,
@@ -97,31 +98,26 @@ fcgi_request(struct pool *pool, EventLoop &event_loop,
 	     FcgiStock *fcgi_stock,
 	     const StopwatchPtr &parent_stopwatch,
 	     const char *site_name,
-	     const ChildOptions &options,
-	     const char *action,
-	     const char *path,
-	     std::span<const char *const> args,
-	     unsigned parallelism,
-	     HttpMethod method, const char *uri,
-	     const char *script_name, const char *path_info,
-	     const char *query_string,
-	     const char *document_root,
+	     const CgiAddress &address,
+	     HttpMethod method,
 	     const char *remote_addr,
 	     StringMap &&headers, UnusedIstreamPtr body,
-	     std::span<const char *const> params,
 	     UniqueFileDescriptor &&stderr_fd,
 	     HttpResponseHandler &handler,
 	     CancellablePointer &cancel_ptr) noexcept
 {
+	const char *action = address.action;
 	if (action == nullptr)
-		action = path;
+		action = address.path;
 
 	StopwatchPtr stopwatch(parent_stopwatch, "fcgi", action);
 
 	StockItem *stock_item;
 	try {
-		stock_item = fcgi_stock_get(fcgi_stock, options,
-					    action, args, parallelism);
+		stock_item = fcgi_stock_get(fcgi_stock, address.options,
+					    action,
+					    address.args.ToArray(*pool),
+					    address.parallelism);
 	} catch (...) {
 		stopwatch.RecordEvent("launch_error");
 		body.Clear();
@@ -134,10 +130,9 @@ fcgi_request(struct pool *pool, EventLoop &event_loop,
 	auto request = NewFromPool<FcgiRequest>(*pool, *pool, *stock_item);
 
 	request->Start(event_loop, std::move(stopwatch),
-		       site_name, path, method, uri,
-		       script_name, path_info,
-		       query_string, document_root, remote_addr,
+		       site_name, address, method, remote_addr,
 		       std::move(headers), std::move(body),
-		       params, std::move(stderr_fd),
+		       address.params.ToArray(*pool),
+		       std::move(stderr_fd),
 		       handler, cancel_ptr);
 }

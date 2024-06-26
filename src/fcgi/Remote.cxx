@@ -4,6 +4,7 @@
 
 #include "Remote.hxx"
 #include "Client.hxx"
+#include "cgi/Address.hxx"
 #include "http/PendingRequest.hxx"
 #include "http/ResponseHandler.hxx"
 #include "lease.hxx"
@@ -24,22 +25,17 @@ class FcgiRemoteRequest final : StockGetHandler, Cancellable, Lease, PoolLeakDet
 	struct pool &pool;
 	EventLoop &event_loop;
 
-	StopwatchPtr stopwatch;
-
 	StockItem *stock_item;
+
+	const CgiAddress &address;
 
 	PendingHttpRequest pending_request;
 
-	const char *const script_filename;
-	const char *const script_name;
-	const char *const path_info;
-	const char *const query_string;
-	const char *const document_root;
 	const char *const remote_addr;
 
-	const std::span<const char *const> params;
-
 	UniqueFileDescriptor stderr_fd;
+
+	StopwatchPtr stopwatch;
 
 	HttpResponseHandler &handler;
 	CancellablePointer &caller_cancel_ptr;
@@ -48,29 +44,22 @@ class FcgiRemoteRequest final : StockGetHandler, Cancellable, Lease, PoolLeakDet
 public:
 	FcgiRemoteRequest(struct pool &_pool, EventLoop &_event_loop,
 			  const StopwatchPtr &parent_stopwatch,
-			  HttpMethod _method, const char *_uri,
-			  const char *_script_filename,
-			  const char *_script_name, const char *_path_info,
-			  const char *_query_string,
-			  const char *_document_root,
+			  const CgiAddress &_address,
+			  HttpMethod _method,
 			  const char *_remote_addr,
 			  StringMap &&_headers,
 			  UnusedIstreamPtr _body,
-			  std::span<const char *const> _params,
 			  UniqueFileDescriptor &&_stderr_fd,
 			  HttpResponseHandler &_handler,
 			  CancellablePointer &_cancel_ptr)
 	:PoolLeakDetector(_pool),
 	 pool(_pool), event_loop(_event_loop),
-	 stopwatch(parent_stopwatch, "fcgi", _uri),
-	 pending_request(_pool, _method, _uri,
+	 address(_address),
+	 pending_request(_pool, _method, address.GetURI(pool),
 			 std::move(_headers), std::move(_body)),
-	 script_filename(_script_filename), script_name(_script_name),
-	 path_info(_path_info), query_string(_query_string),
-	 document_root(_document_root),
 	 remote_addr(_remote_addr),
-	 params(_params),
 	 stderr_fd(std::move(_stderr_fd)),
+	 stopwatch(parent_stopwatch, "fcgi", pending_request.uri),
 	 handler(_handler), caller_cancel_ptr(_cancel_ptr) {
 		caller_cancel_ptr = *this;
 	}
@@ -123,14 +112,14 @@ FcgiRemoteRequest::OnStockItemReady(StockItem &item) noexcept
 			    ? FdType::FD_SOCKET : FdType::FD_TCP,
 			    *this,
 			    pending_request.method, pending_request.uri,
-			    script_filename,
-			    script_name, path_info,
-			    query_string,
-			    document_root,
+			    address.path,
+			    address.script_name, address.path_info,
+			    address.query_string,
+			    address.document_root,
 			    remote_addr,
 			    std::move(pending_request.headers),
 			    std::move(pending_request.body),
-			    params,
+			    address.params.ToArray(pool),
 			    std::move(stderr_fd),
 			    handler,
 			    caller_cancel_ptr);
@@ -158,15 +147,10 @@ void
 fcgi_remote_request(struct pool *pool, EventLoop &event_loop,
 		    TcpBalancer *tcp_balancer,
 		    const StopwatchPtr &parent_stopwatch,
-		    const AddressList *address_list,
-		    const char *path,
-		    HttpMethod method, const char *uri,
-		    const char *script_name, const char *path_info,
-		    const char *query_string,
-		    const char *document_root,
+		    const CgiAddress &address,
+		    HttpMethod method,
 		    const char *remote_addr,
 		    StringMap &&headers, UnusedIstreamPtr body,
-		    std::span<const char *const> params,
 		    UniqueFileDescriptor stderr_fd,
 		    HttpResponseHandler &handler,
 		    CancellablePointer &_cancel_ptr)
@@ -175,15 +159,13 @@ fcgi_remote_request(struct pool *pool, EventLoop &event_loop,
 
 	auto request = NewFromPool<FcgiRemoteRequest>(*pool, *pool, event_loop,
 						      parent_stopwatch,
-						      method, uri, path,
-						      script_name, path_info,
-						      query_string, document_root,
+						      address,
+						      method,
 						      remote_addr,
 						      std::move(headers),
 						      std::move(body),
-						      params,
 						      std::move(stderr_fd),
 						      handler, *cancel_ptr);
 
-	request->Start(*tcp_balancer, *address_list);
+	request->Start(*tcp_balancer, address.address_list);
 }
