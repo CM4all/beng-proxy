@@ -118,9 +118,9 @@ struct FcgiConnection final : StockItem {
 	 */
 	bool aborted = false;
 
-	explicit FcgiConnection(EventLoop &event_loop, CreateStockItem c) noexcept
+	explicit FcgiConnection(CreateStockItem c) noexcept
 		:StockItem(c), logger(GetStockName()),
-		 event(event_loop, BIND_THIS_METHOD(OnSocketEvent)) {}
+		 event(GetStock().GetEventLoop(), BIND_THIS_METHOD(OnSocketEvent)) {}
 
 	~FcgiConnection() noexcept override;
 
@@ -268,7 +268,7 @@ FcgiStock::Create(CreateStockItem c, StockRequest request,
 	[[maybe_unused]] auto &params = *(CgiChildParams *)request.get();
 	assert(params.executable_path != nullptr);
 
-	auto *connection = new FcgiConnection(GetEventLoop(), c);
+	auto *connection = new FcgiConnection(c);
 
 	const char *key = c.GetStockName();
 
