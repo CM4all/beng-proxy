@@ -3,7 +3,7 @@ cm4all-beng-proxy (18.0.79) unstable; urgency=low
   * fcgi: fix assertion failure (18.0.78 regression)
   * fcgi: do not try to reuse exited FastCGI processes
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Wed, 26 Jun 2024 18:04:54 +0200
 
 cm4all-beng-proxy (18.0.78) unstable; urgency=low
 
