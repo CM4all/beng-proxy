@@ -98,7 +98,6 @@ struct FcgiConnection final : StockItem {
 
 	ListenChildStockItem *child = nullptr;
 
-	UniqueSocketDescriptor fd;
 	SocketEvent event;
 
 	UniqueFileDescriptor stderr_fd;
@@ -132,8 +131,8 @@ struct FcgiConnection final : StockItem {
 	}
 
 	SocketDescriptor GetSocket() const noexcept {
-		assert(fd.IsDefined());
-		return fd;
+		assert(event.IsDefined());
+		return event.GetSocket();
 	}
 
 	UniqueFileDescriptor GetStderr() const noexcept {
@@ -175,7 +174,7 @@ void
 FcgiConnection::OnSocketEvent(unsigned) noexcept
 {
 	std::byte buffer[1];
-	ssize_t nbytes = fd.ReadNoWait(buffer);
+	ssize_t nbytes = GetSocket().ReadNoWait(buffer);
 	if (nbytes < 0)
 		logger(2, "error on idle FastCGI connection: ", strerror(errno));
 	else if (nbytes > 0)
@@ -292,15 +291,14 @@ FcgiStock::Create(CreateStockItem c, StockRequest request,
 	}
 
 	try {
-		connection->fd = connection->child->Connect();
+		auto fd = connection->child->Connect();
+		connection->event.Open(fd.Release());
 	} catch (...) {
 		connection->kill = true;
 		delete connection;
 		std::throw_with_nested(FcgiClientError(FmtBuffer<256>("Failed to connect to FastCGI server '{}'",
 								      key)));
 	}
-
-	connection->event.Open(connection->fd);
 
 	connection->InvokeCreateSuccess(handler);
 }
@@ -312,7 +310,7 @@ FcgiConnection::Borrow() noexcept
 	   FastCGI server has decided to close the connection before
 	   fcgi_connection_event_callback() got invoked */
 	std::byte buffer[1];
-	ssize_t nbytes = fd.ReadNoWait(buffer);
+	ssize_t nbytes = GetSocket().ReadNoWait(buffer);
 	if (nbytes > 0) {
 		logger(2, "unexpected data from idle FastCGI connection");
 		return false;
@@ -339,10 +337,7 @@ FcgiConnection::Release() noexcept
 
 FcgiConnection::~FcgiConnection() noexcept
 {
-	if (fd.IsDefined()) {
-		event.Cancel();
-		fd.Close();
-	}
+	event.Close();
 
 	if (fresh && aborted)
 		/* the fcgi_client caller has aborted the request before the
