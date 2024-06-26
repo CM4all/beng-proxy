@@ -131,6 +131,11 @@ struct FcgiConnection final : StockItem {
 		return child->GetTag();
 	}
 
+	SocketDescriptor GetSocket() const noexcept {
+		assert(fd.IsDefined());
+		return fd;
+	}
+
 	UniqueFileDescriptor GetStderr() const noexcept {
 		assert(child != nullptr);
 
@@ -147,6 +152,10 @@ struct FcgiConnection final : StockItem {
 		assert(child != nullptr);
 
 		child->SetUri(uri);
+	}
+
+	void SetAborted() noexcept {
+		aborted = true;
 	}
 
 	/* virtual methods from class StockItem */
@@ -468,9 +477,7 @@ fcgi_stock_item_get(const StockItem &item) noexcept
 {
 	const auto *connection = (const FcgiConnection *)&item;
 
-	assert(connection->fd.IsDefined());
-
-	return connection->fd;
+	return connection->GetSocket();
 }
 
 void
@@ -478,5 +485,5 @@ fcgi_stock_aborted(StockItem &item) noexcept
 {
 	auto *connection = (FcgiConnection *)&item;
 
-	connection->aborted = true;
+	connection->SetAborted();
 }
