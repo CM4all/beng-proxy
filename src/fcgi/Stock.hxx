@@ -7,8 +7,10 @@
 #include <span>
 #include <string_view>
 
+class CancellablePointer;
 struct ChildErrorLogOptions;
 class StockItem;
+class StockGetHandler;
 class FcgiStock;
 struct ChildOptions;
 class EventLoop;
@@ -39,16 +41,16 @@ void
 fcgi_stock_fade_tag(FcgiStock &fs, std::string_view tag) noexcept;
 
 /**
- * Throws exception on error.
- *
  * @param args command-line arguments
  */
-StockItem *
+void
 fcgi_stock_get(FcgiStock *fcgi_stock,
 	       const ChildOptions &options,
 	       const char *executable_path,
 	       std::span<const char *const> args,
-	       unsigned parallelism);
+	       unsigned parallelism,
+	       StockGetHandler &handler,
+	       CancellablePointer &cancel_ptr) noexcept;
 
 void
 fcgi_stock_item_set_site(StockItem &item, const char *site) noexcept;

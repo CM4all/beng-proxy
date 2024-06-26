@@ -7,6 +7,7 @@
 #include "stock/MapStock.hxx"
 #include "stock/Stock.hxx"
 #include "stock/Class.hxx"
+#include "stock/GetHandler.hxx"
 #include "stock/Item.hxx"
 #include "cgi/ChildParams.hxx"
 #include "spawn/ListenChildStock.hxx"
@@ -20,6 +21,7 @@
 #include "io/FdHolder.hxx"
 #include "io/UniqueFileDescriptor.hxx"
 #include "io/Logger.hxx"
+#include "util/Cancellable.hxx"
 #include "util/StringList.hxx"
 
 #include <assert.h>
@@ -36,6 +38,37 @@
 class FcgiStock final : StockClass, ListenChildStockClass {
 	StockMap hstock;
 	ChildStockMap child_stock;
+
+	class CreateRequest final : StockGetHandler, Cancellable {
+		CreateStockItem create;
+		StockGetHandler &handler;
+		CancellablePointer cancel_ptr;
+
+	public:
+		CreateRequest(const CreateStockItem &_create,
+			      StockGetHandler &_handler) noexcept
+			:create(_create), handler(_handler) {}
+
+		void Start(StockMap &child_stock_map,
+			   StockRequest &&request,
+			   CancellablePointer &caller_cancel_ptr) noexcept {
+			caller_cancel_ptr = *this;
+			child_stock_map.Get(create.GetStockName(),
+					    std::move(request),
+					    *this, cancel_ptr);
+		}
+
+	private:
+		/* virtual methods from class StockGetHandler */
+		void OnStockItemReady(StockItem &item) noexcept override;
+		void OnStockItemError(std::exception_ptr error) noexcept override;
+
+		/* virtual methods from class Cancellable */
+		void Cancel() noexcept override {
+			cancel_ptr.Cancel();
+			delete this;
+		}
+	};
 
 public:
 	FcgiStock(unsigned limit, unsigned max_idle,
@@ -54,10 +87,12 @@ public:
 		return hstock.GetEventLoop();
 	}
 
-	StockItem *Get(const ChildOptions &options,
-		       const char *executable_path,
-		       std::span<const char *const> args,
-		       unsigned parallelism);
+	void Get(const ChildOptions &options,
+		 const char *executable_path,
+		 std::span<const char *const> args,
+		 unsigned parallelism,
+		 StockGetHandler &handler,
+		 CancellablePointer &cancel_ptr) noexcept;
 
 	void FadeAll() noexcept {
 		hstock.FadeAll();
@@ -93,10 +128,10 @@ private:
 				FdHolder &close_fds) override;
 };
 
-struct FcgiConnection final : StockItem {
+class FcgiConnection final : public StockItem {
 	const LLogger logger;
 
-	ListenChildStockItem *child = nullptr;
+	ListenChildStockItem &child;
 
 	SocketEvent event;
 
@@ -117,17 +152,19 @@ struct FcgiConnection final : StockItem {
 	 */
 	bool aborted = false;
 
-	explicit FcgiConnection(CreateStockItem c) noexcept
+public:
+	explicit FcgiConnection(CreateStockItem c, ListenChildStockItem &_child,
+				UniqueSocketDescriptor &&socket) noexcept
 		:StockItem(c), logger(GetStockName()),
-		 event(GetStock().GetEventLoop(), BIND_THIS_METHOD(OnSocketEvent)) {}
+		 child(_child),
+		 event(GetStock().GetEventLoop(), BIND_THIS_METHOD(OnSocketEvent),
+		       socket.Release()) {}
 
 	~FcgiConnection() noexcept override;
 
 	[[gnu::pure]]
 	std::string_view GetTag() const noexcept {
-		assert(child != nullptr);
-
-		return child->GetTag();
+		return child.GetTag();
 	}
 
 	SocketDescriptor GetSocket() const noexcept {
@@ -136,21 +173,15 @@ struct FcgiConnection final : StockItem {
 	}
 
 	UniqueFileDescriptor GetStderr() const noexcept {
-		assert(child != nullptr);
-
-		return child->GetStderr();
+		return child.GetStderr();
 	}
 
 	void SetSite(const char *site) noexcept {
-		assert(child != nullptr);
-
-		child->SetSite(site);
+		child.SetSite(site);
 	}
 
 	void SetUri(const char *uri) noexcept {
-		assert(child != nullptr);
-
-		child->SetUri(uri);
+		child.SetUri(uri);
 	}
 
 	void SetAborted() noexcept {
@@ -263,6 +294,35 @@ FcgiStock::PrepareListenChild(void *, UniqueSocketDescriptor fd,
 	p.stdin_fd = close_fds.Insert(std::move(fd).MoveToFileDescriptor());
 }
 
+void
+FcgiStock::CreateRequest::OnStockItemReady(StockItem &item) noexcept
+{
+	auto &child = static_cast<ListenChildStockItem &>(item);
+
+	try {
+		auto *connection = new FcgiConnection(create, child, child.Connect());
+		connection->InvokeCreateSuccess(handler);
+	} catch (...) {
+		child.Put(PutAction::DESTROY);
+
+		try {
+			std::throw_with_nested(FcgiClientError(FmtBuffer<256>("Failed to connect to FastCGI server '{}'",
+									      create.GetStockName())));
+		} catch (...) {
+			create.InvokeCreateError(handler, std::current_exception());
+		}
+	}
+
+	delete this;
+}
+
+void
+FcgiStock::CreateRequest::OnStockItemError(std::exception_ptr error) noexcept
+{
+	handler.OnStockItemError(std::move(error));
+	delete this;
+}
+
 /*
  * stock class
  *
@@ -276,31 +336,8 @@ FcgiStock::Create(CreateStockItem c, StockRequest request,
 	[[maybe_unused]] auto &params = *(CgiChildParams *)request.get();
 	assert(params.executable_path != nullptr);
 
-	auto *connection = new FcgiConnection(c);
-
-	const char *key = c.GetStockName();
-
-	try {
-		connection->child = (ListenChildStockItem *)
-			child_stock.GetStockMap().GetNow(key,
-							 std::move(request));
-	} catch (...) {
-		delete connection;
-		std::throw_with_nested(FcgiClientError(FmtBuffer<256>("Failed to start FastCGI server '{}'",
-								      key)));
-	}
-
-	try {
-		auto fd = connection->child->Connect();
-		connection->event.Open(fd.Release());
-	} catch (...) {
-		connection->kill = true;
-		delete connection;
-		std::throw_with_nested(FcgiClientError(FmtBuffer<256>("Failed to connect to FastCGI server '{}'",
-								      key)));
-	}
-
-	connection->InvokeCreateSuccess(handler);
+	auto *create = new CreateRequest(c, handler);
+	create->Start(child_stock.GetStockMap(), std::move(request), cancel_ptr);
 }
 
 bool
@@ -346,8 +383,7 @@ FcgiConnection::~FcgiConnection() noexcept
 		   completely */
 		kill = true;
 
-	if (child != nullptr)
-		child->Put(kill ? PutAction::DESTROY : PutAction::REUSE);
+	child.Put(kill ? PutAction::DESTROY : PutAction::REUSE);
 }
 
 
@@ -414,30 +450,36 @@ fcgi_stock_fade_tag(FcgiStock &fs, std::string_view tag) noexcept
 	fs.FadeTag(tag);
 }
 
-inline StockItem *
+inline void
 FcgiStock::Get(const ChildOptions &options,
 	       const char *executable_path,
 	       std::span<const char *const> args,
-	       unsigned parallelism)
+	       unsigned parallelism,
+	       StockGetHandler &handler,
+	       CancellablePointer &cancel_ptr) noexcept
 {
 	const TempPoolLease tpool;
 
-	auto r = NewDisposablePointer<CgiChildParams>(*tpool, executable_path,
-						      args, options,
-						      parallelism, 0, false);
+	auto r = ToDeletePointer(new CgiChildParams(executable_path,
+	args, options,
+	parallelism, 0, false));
 	const char *key = r->GetStockKey(*tpool);
-	return hstock.GetNow(key, std::move(r));
+	hstock.Get(key, std::move(r),
+		   handler, cancel_ptr);
 }
 
-StockItem *
+void
 fcgi_stock_get(FcgiStock *fcgi_stock,
 	       const ChildOptions &options,
 	       const char *executable_path,
 	       std::span<const char *const> args,
-	       unsigned parallelism)
+	       unsigned parallelism,
+	       StockGetHandler &handler,
+	       CancellablePointer &cancel_ptr) noexcept
 {
-	return fcgi_stock->Get(options, executable_path, args,
-			       parallelism);
+	fcgi_stock->Get(options, executable_path, args,
+			parallelism,
+			handler, cancel_ptr);
 }
 
 int
