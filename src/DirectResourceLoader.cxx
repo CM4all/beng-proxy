@@ -123,7 +123,7 @@ try {
 		const char *remote_ip = GetRemoteHost(xff, pool, headers);
 
 		if (cgi->address_list.empty())
-			fcgi_request(&pool, event_loop, fcgi_stock, parent_stopwatch,
+			fcgi_request(&pool, fcgi_stock, parent_stopwatch,
 				     params.site_name,
 				     *cgi,
 				     method,

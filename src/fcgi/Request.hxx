@@ -9,7 +9,6 @@
 enum class HttpMethod : uint_least8_t;
 struct pool;
 struct CgiAddress;
-class EventLoop;
 class UnusedIstreamPtr;
 class FcgiStock;
 class StringMap;
@@ -24,7 +23,7 @@ class StopwatchPtr;
  * @param args command-line arguments
  */
 void
-fcgi_request(struct pool *pool, EventLoop &event_loop,
+fcgi_request(struct pool *pool,
 	     FcgiStock *fcgi_stock,
 	     const StopwatchPtr &parent_stopwatch,
 	     const char *site_name,

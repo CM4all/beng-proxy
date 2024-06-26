@@ -392,6 +392,12 @@ fcgi_stock_free(FcgiStock *fcgi_stock) noexcept
 	delete fcgi_stock;
 }
 
+EventLoop &
+fcgi_stock_get_event_loop(const FcgiStock &fs) noexcept
+{
+	return fs.GetEventLoop();
+}
+
 void
 fcgi_stock_fade_all(FcgiStock &fs) noexcept
 {

@@ -94,7 +94,7 @@ private:
 };
 
 void
-fcgi_request(struct pool *pool, EventLoop &event_loop,
+fcgi_request(struct pool *pool,
 	     FcgiStock *fcgi_stock,
 	     const StopwatchPtr &parent_stopwatch,
 	     const char *site_name,
@@ -129,7 +129,8 @@ fcgi_request(struct pool *pool, EventLoop &event_loop,
 
 	auto request = NewFromPool<FcgiRequest>(*pool, *pool, *stock_item);
 
-	request->Start(event_loop, std::move(stopwatch),
+	request->Start(fcgi_stock_get_event_loop(*fcgi_stock),
+		       std::move(stopwatch),
 		       site_name, address, method, remote_addr,
 		       std::move(headers), std::move(body),
 		       address.params.ToArray(*pool),
