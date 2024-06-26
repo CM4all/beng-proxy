@@ -50,7 +50,7 @@ public:
 		hstock.FadeAll();
 	}
 
-	EventLoop &GetEventLoop() noexcept {
+	EventLoop &GetEventLoop() const noexcept {
 		return hstock.GetEventLoop();
 	}
 
