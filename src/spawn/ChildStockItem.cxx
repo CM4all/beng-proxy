@@ -141,8 +141,10 @@ ChildStockItem::OnChildProcessExit(int) noexcept
 	assert(handle);
 	handle.reset();
 
-	/* don't attempt to use this child process again */
-	Fade();
+	if (busy)
+		InvokeBusyDisconnect();
+	else
+		InvokeIdleDisconnect();
 }
 
 void
