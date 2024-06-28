@@ -66,6 +66,15 @@ public:
 		return NewFromPool<T>(pool, std::forward<Args>(args)...);
 	}
 
+	/**
+	 * Allocate and construct a variable-size object.
+	 */
+	template<typename T, typename... Args>
+	T *NewVar(std::size_t size, Args&&... args) const noexcept {
+		void *p = p_malloc(&pool, size);
+		return ::new(p) T(std::forward<Args>(args)...);
+	}
+
 	template<typename T>
 	T *NewArray(size_t n) const noexcept {
 		static_assert(std::is_trivial_v<T>);
