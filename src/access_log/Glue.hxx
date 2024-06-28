@@ -37,6 +37,10 @@ public:
 	static AccessLogGlue *Create(const AccessLogConfig &config,
 				     const UidGid *user);
 
+	const XForwardedForConfig &GetXForwardedForConfig() const noexcept {
+		return config.xff;
+	}
+
 	void Log(const Net::Log::Datagram &d) noexcept;
 
 	/**

@@ -32,6 +32,10 @@ struct XForwardedForConfig {
 	 */
 	std::set<std::string, std::less<>> trust_interfaces;
 
+	bool empty() const noexcept {
+		return trust.empty() && trust_networks.empty() && trust_interfaces.empty();
+	}
+
 	[[gnu::pure]]
 	bool IsTrustedHost(std::string_view host) const noexcept;
 

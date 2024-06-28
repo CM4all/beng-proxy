@@ -334,3 +334,10 @@ class Response:
 
     def external_session_keepalive(self, interval):
         return self.packet(TRANSLATE_EXTERNAL_SESSION_KEEPALIVE, struct.pack('H', interval))
+
+    def allow_remote_network(self, address, prefix_length):
+        import socket
+        octets = map(int, address.split('.'))
+        payload = struct.pack('B', prefix_length) + struct.pack('HHBBBBxxxxxxxx', socket.AF_INET, 0, *octets)
+        print(repr(payload))
+        return self.packet(TRANSLATE_ALLOW_REMOTE_NETWORK, payload)

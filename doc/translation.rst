@@ -229,6 +229,12 @@ Response
 - ``SCHEME``: the scheme for generating absolute URLs; default is
   ``http``. This packet is useful if :program:`beng-proxy` is behind ``stunnel``
 
+- ``ALLOW_REMOTE_NETWORK``: Allow only clients with addresses in the
+  specified network; all other addresses get a "403 Forbidden"
+  response.  The payload is a ``struct sockaddr_in`` or ``struct
+  sockaddr_in6`` plus one byte specifying the prefix length (in bits).
+  This packet may be sent more than once.
+
 - ``UNTRUSTED``: sets the “untrusted” host name for this request: only
   untrusted widgets matching this host name are allowed. Trusted widgets
   are rejected.

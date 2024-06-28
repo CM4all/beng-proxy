@@ -1113,6 +1113,9 @@ class Translation(Protocol):
                 response.path('/var/www/')
             else:
                 response.status(request.status)
+        elif uri == '/allow_remote_network':
+            response.message('Hello world')
+            response.allow_remote_network('127.0.0.0', 8)
         else:
             self._handle_local_file('/var/www' + uri, response,
                                     error_document=True)

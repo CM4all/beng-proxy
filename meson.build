@@ -497,6 +497,7 @@ libcommon_translation_dep = translation_dep
 
 translation2 = static_library(
   'translation2',
+  'src/net/NetworkList.cxx',
   'src/translation/Builder.cxx',
   'src/translation/Multi.cxx',
   'src/translation/Cache.cxx',
@@ -648,6 +649,7 @@ executable(
   'src/bp/ProxyWidget.cxx',
   'src/bp/ForwardRequest.cxx',
   'src/bp/Request.cxx',
+  'src/bp/RAddress.cxx',
   'src/bp/RSession.cxx',
   'src/bp/ExternalSession.cxx',
   'src/bp/CollectCookies.cxx',

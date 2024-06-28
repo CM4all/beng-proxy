@@ -788,6 +788,14 @@ Request::OnTranslateResponse(UniquePoolPtr<TranslateResponse> _response) noexcep
 		return;
 	}
 
+	if (!response.allow_remote_networks.empty()) {
+		if (const auto remote_address = GetRemoteAdress();
+		    !response.allow_remote_networks.Contains(remote_address)) {
+			DispatchError(HttpStatus::FORBIDDEN, "Forbidden");
+			return;
+		}
+	}
+
 	if (response.https_only != 0 && !IsHttps()) {
 		/* not encrypted: redirect to https:// */
 

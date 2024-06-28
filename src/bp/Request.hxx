@@ -467,6 +467,9 @@ public:
 		return !dissected_uri.query.empty();
 	}
 
+	[[gnu::pure]]
+	SocketAddress GetRemoteAdress() const noexcept;
+
 	void HandleHttpRequest(CancellablePointer &caller_cancel_ptr) noexcept;
 
 private:
