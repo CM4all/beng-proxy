@@ -3,7 +3,6 @@
 // author: Max Kellermann <mk@cm4all.com>
 
 #include "XForwardedFor.hxx"
-#include "net/IPv4Address.hxx"
 #include "util/StringSplit.hxx"
 #include "util/StringStrip.hxx"
 
@@ -26,12 +25,6 @@ XForwardedForConfig::IsTrustedHost(std::string_view host) const noexcept
 bool
 XForwardedForConfig::IsTrustedAddress(SocketAddress address) const noexcept
 {
-	IPv4Address ipv4;
-	if (address.IsV4Mapped()) {
-		ipv4 = address.UnmapV4();
-		address = ipv4;
-	}
-
 	return std::any_of(trust_networks.begin(), trust_networks.end(), [address](const auto &i){
 		return i.Matches(address);
 	});

@@ -42,8 +42,6 @@ TEST(HttpUtil, XFF)
 	EXPECT_FALSE(config.IsTrustedAddress(ParseSocketAddress("10.41.0.0", 0, true)));
 	EXPECT_FALSE(config.IsTrustedAddress(ParseSocketAddress("10.43.0.0", 0, true)));
 	EXPECT_FALSE(config.IsTrustedAddress(ParseSocketAddress("127.0.0.1", 0, true)));
-	EXPECT_TRUE(config.IsTrustedAddress(ParseSocketAddress("::ffff:a2a:0", 0, true))); // v4 mapped
-	EXPECT_TRUE(config.IsTrustedAddress(ParseSocketAddress("::ffff:a2a:ffff", 0, true))); // v4 mapped
 
 	EXPECT_TRUE(config.IsTrustedAddress(ParseSocketAddress("192.168.128.255", 0, true)));
 	EXPECT_TRUE(config.IsTrustedAddress(ParseSocketAddress("192.168.129.1", 0, true)));

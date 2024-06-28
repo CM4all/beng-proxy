@@ -13,6 +13,7 @@
 #include "ssl/Factory.hxx"
 #include "ssl/Filter.hxx"
 #include "thread/Pool.hxx"
+#include "net/IPv4Address.hxx"
 #include "net/SocketAddress.hxx"
 #include "io/FdType.hxx"
 
@@ -111,6 +112,10 @@ void
 FilteredSocketListener::OnAccept(UniqueSocketDescriptor s,
 				 SocketAddress address) noexcept
 try {
+	IPv4Address ipv4_buffer;
+	if (address.IsDefined() && address.IsV4Mapped())
+		address = ipv4_buffer = address.UnmapV4();
+
 	s = handler.OnFilteredSocketAccept(std::move(s), address);
 	if (!s.IsDefined())
 		return;
