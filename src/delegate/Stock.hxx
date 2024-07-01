@@ -25,5 +25,6 @@ delegate_stock_get(StockMap *delegate_stock,
 		   const char *path,
 		   const ChildOptions &options);
 
+[[gnu::pure]]
 SocketDescriptor
 delegate_stock_item_get(StockItem &item) noexcept;
