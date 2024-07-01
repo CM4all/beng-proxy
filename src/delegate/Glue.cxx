@@ -17,9 +17,15 @@ struct DelegateGlue final : Lease {
 
 	explicit DelegateGlue(StockItem &_item):item(_item) {}
 
+	void Destroy() noexcept {
+		this->~DelegateGlue();
+	}
+
 	/* virtual methods from class Lease */
 	PutAction ReleaseLease(PutAction action) noexcept override {
-		return item.Put(action);
+		auto &_item = item;
+		Destroy();
+		return _item.Put(action);
 	}
 };
 
