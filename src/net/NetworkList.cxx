@@ -86,8 +86,11 @@ NetworkList::Add(AllocatorPtr alloc, SocketAddress address, uint_least8_t prefix
 	if (address_size != address.GetSize())
 		throw std::invalid_argument{"Bad address size"};
 
-	// TODO check if prefix_length is in range
-	// TODO check if all other bits are zero
+	if (prefix_length > MaskedSocketAddress::MaximumPrefixLength(address))
+		throw std::invalid_argument{"Bad network prefix length"};
+
+	if (!MaskedSocketAddress::IsValidPrefixLength(address, prefix_length))
+		throw std::invalid_argument{"Bad network address"};
 
 	auto *item = alloc.NewVar<Item>(Item::ObjectSize(address_size), address, prefix_length);
 	list.push_front(*item);
