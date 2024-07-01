@@ -44,8 +44,11 @@ struct DelegateGlue final : Cancellable, StockGetHandler, Lease {
 
 	/* virtual methods from class Cancellable */
 	void Cancel() noexcept override {
-		cancel_ptr.Cancel();
-		Destroy();
+		if (item == nullptr) {
+			cancel_ptr.Cancel();
+			Destroy();
+		} else
+			cancel_ptr.Cancel();
 	}
 
 	/* virtual methods from class StockGetHandler */
