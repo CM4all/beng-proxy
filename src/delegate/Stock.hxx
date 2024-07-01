@@ -10,6 +10,9 @@ class EventLoop;
 class SpawnService;
 class SocketDescriptor;
 class StockItem;
+class StockGetHandler;
+class AllocatorPtr;
+class CancellablePointer;
 
 StockMap *
 delegate_stock_new(EventLoop &event_loop, SpawnService &spawn_service) noexcept;
@@ -17,13 +20,12 @@ delegate_stock_new(EventLoop &event_loop, SpawnService &spawn_service) noexcept;
 void
 delegate_stock_free(StockMap *stock) noexcept;
 
-/**
- * Throws exception on error.
- */
-StockItem *
-delegate_stock_get(StockMap *delegate_stock,
+void
+delegate_stock_get(StockMap &delegate_stock, AllocatorPtr alloc,
 		   const char *path,
-		   const ChildOptions &options);
+		   const ChildOptions &options,
+		   StockGetHandler &handler,
+		   CancellablePointer &cancel_ptr) noexcept;
 
 [[gnu::pure]]
 SocketDescriptor

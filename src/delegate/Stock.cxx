@@ -16,7 +16,6 @@
 #include "spawn/ProcessHandle.hxx"
 #include "AllocatorPtr.hxx"
 #include "pool/DisposablePointer.hxx"
-#include "pool/tpool.hxx"
 #include "io/FdHolder.hxx"
 #include "io/Logger.hxx"
 
@@ -181,16 +180,16 @@ delegate_stock_free(StockMap *_stock) noexcept
 	delete stock;
 }
 
-StockItem *
-delegate_stock_get(StockMap *delegate_stock,
+void
+delegate_stock_get(StockMap &delegate_stock, AllocatorPtr alloc,
 		   const char *helper,
-		   const ChildOptions &options)
+		   const ChildOptions &options,
+		   StockGetHandler &handler,
+		   CancellablePointer &cancel_ptr) noexcept
 {
-	const TempPoolLease tpool;
-	const AllocatorPtr alloc(tpool);
 	auto r = NewDisposablePointer<DelegateArgs>(alloc, helper, options);
 	const char *key = r->GetStockKey(alloc);
-	return delegate_stock->GetNow(key, std::move(r));
+	delegate_stock.Get(key, std::move(r), handler, cancel_ptr);
 }
 
 SocketDescriptor
