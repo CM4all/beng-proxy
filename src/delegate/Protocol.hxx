@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include <stdint.h>
+#include <cstdint>
 
 enum class DelegateRequestCommand : uint16_t {
 	/**
