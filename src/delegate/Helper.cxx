@@ -141,7 +141,6 @@ try {
 		payload[header.length] = 0;
 
 		delegate_handle(s, header.command, payload, header.length);
-			return 2;
 	}
 
 	return EXIT_SUCCESS;
