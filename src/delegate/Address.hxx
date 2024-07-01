@@ -20,17 +20,17 @@ struct DelegateAddress {
 	 */
 	ChildOptions child_options;
 
-	DelegateAddress(const char *_delegate);
+	DelegateAddress(const char *_delegate) noexcept;
 
 	constexpr DelegateAddress(ShallowCopy shallow_copy,
-				  const DelegateAddress &src)
+				  const DelegateAddress &src) noexcept
 		:delegate(src.delegate),
 		 child_options(shallow_copy, src.child_options) {}
 
-	constexpr DelegateAddress(DelegateAddress &&src)
+	constexpr DelegateAddress(DelegateAddress &&src) noexcept
 		:DelegateAddress(ShallowCopy(), src) {}
 
-	DelegateAddress(AllocatorPtr alloc, const DelegateAddress &src);
+	DelegateAddress(AllocatorPtr alloc, const DelegateAddress &src) noexcept;
 
 	DelegateAddress &operator=(const DelegateAddress &) = delete;
 
@@ -45,7 +45,7 @@ struct DelegateAddress {
 	 * Does this object need to be expanded with Expand()?
 	 */
 	[[gnu::pure]]
-	bool IsExpandable() const {
+	bool IsExpandable() const noexcept {
 		return child_options.IsExpandable();
 	}
 

@@ -5,12 +5,12 @@
 #include "Address.hxx"
 #include "AllocatorPtr.hxx"
 
-DelegateAddress::DelegateAddress(const char *_delegate)
+DelegateAddress::DelegateAddress(const char *_delegate) noexcept
 	:delegate(_delegate)
 {
 }
 
-DelegateAddress::DelegateAddress(AllocatorPtr alloc, const DelegateAddress &src)
+DelegateAddress::DelegateAddress(AllocatorPtr alloc, const DelegateAddress &src) noexcept
 	:delegate(alloc.Dup(src.delegate)),
 	 child_options(alloc, src.child_options) {}
 
