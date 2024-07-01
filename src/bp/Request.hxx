@@ -1032,8 +1032,8 @@ private:
 	void OnHttpError(std::exception_ptr ep) noexcept override;
 
 	/* virtual methods from class DelegateHandler */
-	void OnDelegateSuccess(UniqueFileDescriptor fd) override;
-	void OnDelegateError(std::exception_ptr ep) override;
+	void OnDelegateSuccess(UniqueFileDescriptor fd) noexcept override;
+	void OnDelegateError(std::exception_ptr ep) noexcept override;
 
 	/* handler methods for UringOpenStat() */
 	void OnOpenStat(UniqueFileDescriptor fd,

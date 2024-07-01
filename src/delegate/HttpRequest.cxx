@@ -46,15 +46,15 @@ public:
 
 private:
 	/* virtual methods from class DelegateHandler */
-	void OnDelegateSuccess(UniqueFileDescriptor fd) override;
+	void OnDelegateSuccess(UniqueFileDescriptor fd) noexcept override;
 
-	void OnDelegateError(std::exception_ptr ep) override {
+	void OnDelegateError(std::exception_ptr ep) noexcept override {
 		handler.InvokeError(ep);
 	}
 };
 
 void
-DelegateHttpRequest::OnDelegateSuccess(UniqueFileDescriptor fd)
+DelegateHttpRequest::OnDelegateSuccess(UniqueFileDescriptor fd) noexcept
 {
 	struct statx st;
 	if (statx(fd.Get(), "", AT_EMPTY_PATH,

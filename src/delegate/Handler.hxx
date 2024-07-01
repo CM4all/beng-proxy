@@ -10,6 +10,6 @@ class UniqueFileDescriptor;
 
 class DelegateHandler {
 public:
-	virtual void OnDelegateSuccess(UniqueFileDescriptor fd) = 0;
-	virtual void OnDelegateError(std::exception_ptr ep) = 0;
+	virtual void OnDelegateSuccess(UniqueFileDescriptor fd) noexcept = 0;
+	virtual void OnDelegateError(std::exception_ptr ep) noexcept = 0;
 };

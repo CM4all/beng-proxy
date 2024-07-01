@@ -38,11 +38,11 @@ public:
 		delegate_stock_free(delegate_stock);
 	}
 
-	void OnDelegateSuccess(UniqueFileDescriptor) override {
+	void OnDelegateSuccess(UniqueFileDescriptor) noexcept override {
 		defer_stop.Schedule();
 	}
 
-	void OnDelegateError(std::exception_ptr ep) override {
+	void OnDelegateError(std::exception_ptr ep) noexcept override {
 		PrintException(ep);
 
 		defer_stop.Schedule();

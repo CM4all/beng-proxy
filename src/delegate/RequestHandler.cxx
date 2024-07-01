@@ -21,7 +21,7 @@
  */
 
 void
-Request::OnDelegateSuccess(UniqueFileDescriptor fd)
+Request::OnDelegateSuccess(UniqueFileDescriptor fd) noexcept
 {
 	/* check request method */
 
@@ -60,7 +60,7 @@ Request::OnDelegateSuccess(UniqueFileDescriptor fd)
 }
 
 void
-Request::OnDelegateError(std::exception_ptr ep)
+Request::OnDelegateError(std::exception_ptr ep) noexcept
 {
 	LogDispatchError(ep);
 }
