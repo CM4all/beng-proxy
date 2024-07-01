@@ -21,6 +21,12 @@ struct DelegateGlue final : Lease {
 		this->~DelegateGlue();
 	}
 
+	void Start(EventLoop &event_loop, AllocatorPtr alloc, const char *path,
+		   DelegateHandler &handler, CancellablePointer &cancel_ptr) noexcept {
+		delegate_open(event_loop, delegate_stock_item_get(item), *this,
+			      alloc, path, handler, cancel_ptr);
+	}
+
 	/* virtual methods from class Lease */
 	PutAction ReleaseLease(PutAction action) noexcept override {
 		auto &_item = item;
@@ -47,7 +53,5 @@ delegate_stock_open(StockMap *stock, AllocatorPtr alloc,
 	}
 
 	auto glue = alloc.New<DelegateGlue>(*item);
-	delegate_open(stock->GetEventLoop(), delegate_stock_item_get(*item), *glue,
-		      alloc, path,
-		      handler, cancel_ptr);
+	glue->Start(stock->GetEventLoop(), alloc, path, handler, cancel_ptr);
 }
