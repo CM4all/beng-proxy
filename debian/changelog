@@ -1,6 +1,7 @@
 cm4all-beng-proxy (18.0.80) unstable; urgency=low
 
   * was, lhttp: fix assertion failure
+  * translation: add packet ALLOW_REMOTE_NETWORK
 
  --   
 
