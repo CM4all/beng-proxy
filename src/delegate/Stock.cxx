@@ -29,10 +29,10 @@ struct DelegateArgs {
 	const ChildOptions &options;
 
 	DelegateArgs(const char *_executable_path,
-		     const ChildOptions &_options)
+		     const ChildOptions &_options) noexcept
 		:executable_path(_executable_path), options(_options) {}
 
-	const char *GetStockKey(AllocatorPtr alloc) const {
+	const char *GetStockKey(AllocatorPtr alloc) const noexcept {
 		const char *key = executable_path;
 
 		char options_buffer[16384];
@@ -91,12 +91,13 @@ class DelegateStock final : StockClass {
 	StockMap stock;
 
 public:
-	explicit DelegateStock(EventLoop &event_loop, SpawnService &_spawn_service)
+	explicit DelegateStock(EventLoop &event_loop,
+			       SpawnService &_spawn_service) noexcept
 		:spawn_service(_spawn_service),
 		 stock(event_loop, *this, 0, 16,
 		       std::chrono::minutes(2)) {}
 
-	StockMap &GetStock() {
+	StockMap &GetStock() noexcept {
 		return stock;
 	}
 
@@ -166,14 +167,14 @@ DelegateStock::Create(CreateStockItem c,
  */
 
 StockMap *
-delegate_stock_new(EventLoop &event_loop, SpawnService &spawn_service)
+delegate_stock_new(EventLoop &event_loop, SpawnService &spawn_service) noexcept
 {
 	auto *stock = new DelegateStock(event_loop, spawn_service);
 	return &stock->GetStock();
 }
 
 void
-delegate_stock_free(StockMap *_stock)
+delegate_stock_free(StockMap *_stock) noexcept
 {
 	auto *stock = (DelegateStock *)&_stock->GetClass();
 	delete stock;

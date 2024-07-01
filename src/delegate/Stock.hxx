@@ -12,10 +12,10 @@ class SocketDescriptor;
 class StockItem;
 
 StockMap *
-delegate_stock_new(EventLoop &event_loop, SpawnService &spawn_service);
+delegate_stock_new(EventLoop &event_loop, SpawnService &spawn_service) noexcept;
 
 void
-delegate_stock_free(StockMap *stock);
+delegate_stock_free(StockMap *stock) noexcept;
 
 /**
  * Throws exception on error.
