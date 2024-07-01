@@ -4,7 +4,7 @@ cm4all-beng-proxy (18.0.80) unstable; urgency=low
   * translation: add packet ALLOW_REMOTE_NETWORK
   * delegate: fix keep-alive bug
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Mon, 01 Jul 2024 21:57:17 +0200
 
 cm4all-beng-proxy (18.0.79) unstable; urgency=low
 
