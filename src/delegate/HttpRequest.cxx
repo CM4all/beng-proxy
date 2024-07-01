@@ -30,7 +30,7 @@ public:
 	DelegateHttpRequest(EventLoop &_event_loop, struct pool &_pool,
 			    const char *_path, const char *_content_type,
 			    bool _use_xattr,
-			    HttpResponseHandler &_handler)
+			    HttpResponseHandler &_handler) noexcept
 		:event_loop(_event_loop), pool(_pool),
 		 path(_path), content_type(_content_type),
 		 handler(_handler),
@@ -38,7 +38,7 @@ public:
 
 	void Open(StockMap &stock, const char *helper,
 		  const ChildOptions &options,
-		  CancellablePointer &cancel_ptr) {
+		  CancellablePointer &cancel_ptr) noexcept {
 		delegate_stock_open(&stock, pool,
 				    helper, options, path,
 				    *this, cancel_ptr);
@@ -90,7 +90,7 @@ delegate_stock_request(EventLoop &event_loop, StockMap &stock,
 		       const char *path, const char *content_type,
 		       bool use_xattr,
 		       HttpResponseHandler &handler,
-		       CancellablePointer &cancel_ptr)
+		       CancellablePointer &cancel_ptr) noexcept
 {
 	auto get = NewFromPool<DelegateHttpRequest>(pool, event_loop, pool,
 						    path, content_type, use_xattr,

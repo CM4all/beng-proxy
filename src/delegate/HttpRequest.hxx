@@ -23,4 +23,4 @@ delegate_stock_request(EventLoop &event_loop, StockMap &stock,
 		       const char *path, const char *content_type,
 		       bool use_xattr,
 		       HttpResponseHandler &handler,
-		       CancellablePointer &cancel_ptr);
+		       CancellablePointer &cancel_ptr) noexcept;
