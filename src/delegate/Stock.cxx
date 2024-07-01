@@ -50,8 +50,6 @@ class DelegateProcess final : public StockItem {
 
 	std::unique_ptr<ChildProcessHandle> handle;
 
-	UniqueSocketDescriptor fd;
-
 	SocketEvent event;
 
 public:
@@ -61,14 +59,17 @@ public:
 		:StockItem(c),
 		 logger(c.GetStockName()),
 		 handle(std::move(_handle)),
-		 fd(std::move(_fd)),
 		 event(c.stock.GetEventLoop(),
-		       BIND_THIS_METHOD(SocketEventCallback), fd)
+		       BIND_THIS_METHOD(SocketEventCallback), _fd.Release())
 	{
 	}
 
+	~DelegateProcess() noexcept {
+		event.Close();
+	}
+
 	SocketDescriptor GetSocket() const noexcept {
-		return fd;
+		return event.GetSocket();
 	}
 
 	/* virtual methods from class StockItem */
@@ -117,7 +118,7 @@ inline void
 DelegateProcess::SocketEventCallback(unsigned) noexcept
 {
 	std::byte buffer[1];
-	ssize_t nbytes = fd.Receive(buffer, MSG_DONTWAIT);
+	ssize_t nbytes = GetSocket().Receive(buffer, MSG_DONTWAIT);
 	if (nbytes < 0)
 		logger(2, "error on idle delegate process: ", strerror(errno));
 	else if (nbytes > 0)
