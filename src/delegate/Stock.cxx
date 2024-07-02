@@ -63,7 +63,7 @@ public:
 	{
 	}
 
-	~DelegateProcess() noexcept {
+	~DelegateProcess() noexcept override {
 		event.Close();
 	}
 
