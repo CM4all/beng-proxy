@@ -14,7 +14,7 @@
 #include "util/Cancellable.hxx"
 #include "AllocatorPtr.hxx"
 
-struct DelegateGlue final : Cancellable, StockGetHandler, Lease {
+class DelegateGlue final : Cancellable, StockGetHandler, Lease {
 	EventLoop &event_loop;
 	const AllocatorPtr alloc;
 	const char *const path;
@@ -24,15 +24,18 @@ struct DelegateGlue final : Cancellable, StockGetHandler, Lease {
 
 	StockItem *item = nullptr;
 
+public:
 	DelegateGlue(EventLoop &_event_loop, AllocatorPtr _alloc,
 		     const char *_path, DelegateHandler &_handler) noexcept
 		:event_loop(_event_loop), alloc(_alloc),
 		 path(_path), handler(_handler) {}
 
+private:
 	void Destroy() noexcept {
 		this->~DelegateGlue();
 	}
 
+public:
 	void Start(StockMap &stock,
 		   const char *helper, const ChildOptions &options,
 		   CancellablePointer &caller_cancel_ptr) noexcept {
