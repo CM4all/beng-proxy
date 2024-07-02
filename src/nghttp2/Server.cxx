@@ -601,12 +601,6 @@ ServerConnection::~ServerConnection() noexcept
 		requests.front().Destroy();
 }
 
-inline EventLoop &
-ServerConnection::GetEventLoop() noexcept
-{
-	return socket->GetEventLoop();
-}
-
 inline void
 ServerConnection::OnIdleTimeout() noexcept
 {

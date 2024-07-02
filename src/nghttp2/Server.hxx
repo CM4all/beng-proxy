@@ -56,8 +56,9 @@ public:
 
 	~ServerConnection() noexcept;
 
-	[[gnu::const]]
-	EventLoop &GetEventLoop() noexcept;
+	EventLoop &GetEventLoop() const noexcept {
+		return idle_timer.GetEventLoop();
+	}
 
 	void Consume(std::size_t nbytes) noexcept {
 		nghttp2_session_consume_connection(session.get(),
