@@ -260,6 +260,7 @@ BpInstance::AddListener(const BpListenerConfig &c, const UidGid *logger_user)
 
 	listeners.emplace_front(*this,
 				listener_stats[c.tag],
+				config.access_log.FindXForwardedForConfig(c.access_logger_name),
 				access_log.Make(config.access_log, logger_user,
 						c.access_logger_name),
 				std::move(ts),
@@ -532,6 +533,7 @@ try {
 
 		instance.listeners.emplace_front(instance,
 						 instance.listener_stats[cmdline.debug_listener_tag],
+						 instance.config.access_log.FindXForwardedForConfig({}),
 						 instance.access_log.Make(instance.config.access_log,
 									  &cmdline.logger_user,
 									  {}),

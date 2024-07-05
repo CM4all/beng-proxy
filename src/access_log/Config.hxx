@@ -74,4 +74,11 @@ struct MultiAccessLogConfig {
 
 		return nullptr;
 	}
+
+	const XForwardedForConfig *FindXForwardedForConfig(std::string_view name) const noexcept {
+		if (const auto *i = Find(name); i != nullptr && !i->xff.empty())
+			return &i->xff;
+
+		return nullptr;
+	}
 };

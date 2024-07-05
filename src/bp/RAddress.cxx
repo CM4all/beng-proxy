@@ -4,6 +4,8 @@
 
 #include "Request.hxx"
 #include "RLogger.hxx"
+#include "Connection.hxx"
+#include "Listener.hxx"
 #include "access_log/Glue.hxx"
 #include "http/CommonHeaders.hxx"
 #include "http/IncomingRequest.hxx"
@@ -13,16 +15,11 @@
 SocketAddress
 Request::GetRemoteAdress() const noexcept
 {
-	if (request.logger == nullptr)
+	const auto *const _config = connection.listener.GetXForwardedForConfig();
+	if (_config == nullptr)
 		return request.remote_address;
 
-	const BpRequestLogger *l = static_cast<const BpRequestLogger *>(request.logger);
-	if (l->access_logger == nullptr)
-		return request.remote_address;
-
-	const auto &config = l->access_logger->GetXForwardedForConfig();
-	if (config.empty())
-		return request.remote_address;
+	const auto &config = *_config;
 
 	const char *x_forwarded_for = request.headers.Get(x_forwarded_for_header);
 	if (x_forwarded_for == nullptr)

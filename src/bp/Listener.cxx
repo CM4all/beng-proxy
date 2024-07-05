@@ -58,12 +58,14 @@ MakeSslFactory(const BpListenerConfig &config)
 
 BpListener::BpListener(BpInstance &_instance,
 		       BpListenerStats &_http_stats,
+		       const XForwardedForConfig *_xff_config,
 		       AccessLogGlue *_access_logger,
 		       std::shared_ptr<TranslationService> _translation_service,
 		       const BpListenerConfig &config,
 		       UniqueSocketDescriptor _socket)
 	:instance(_instance),
 	 http_stats(_http_stats),
+	 xff_config(_xff_config),
 	 access_logger(_access_logger),
 	 translation_service(_translation_service),
 	 prometheus_exporter(config.handler == BpListenerConfig::Handler::PROMETHEUS_EXPORTER

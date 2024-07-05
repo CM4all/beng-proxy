@@ -13,6 +13,7 @@
 struct BpInstance;
 struct BpListenerConfig;
 struct BpListenerStats;
+struct XForwardedForConfig;
 class TranslationService;
 class AccessLogGlue;
 class BpPrometheusExporter;
@@ -25,6 +26,8 @@ class BpListener final : FilteredSocketListenerHandler {
 	BpInstance &instance;
 
 	BpListenerStats &http_stats;
+
+	const XForwardedForConfig *const xff_config;
 
 	AccessLogGlue *const access_logger;
 
@@ -47,11 +50,16 @@ class BpListener final : FilteredSocketListenerHandler {
 public:
 	BpListener(BpInstance &_instance,
 		   BpListenerStats &_http_stats,
+		   const XForwardedForConfig *_xff_config,
 		   AccessLogGlue *_access_logger,
 		   std::shared_ptr<TranslationService> _translation_service,
 		   const BpListenerConfig &config,
 		   UniqueSocketDescriptor _socket);
 	~BpListener() noexcept;
+
+	const XForwardedForConfig *GetXForwardedForConfig() const noexcept {
+		return xff_config;
+	}
 
 	/**
 	 * Returns the name used for loading settings from
