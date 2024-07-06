@@ -2,7 +2,7 @@ cm4all-beng-proxy (18.0.81) unstable; urgency=low
 
   * bp: fix ALLOW_REMOTE_NETWORK behind proxy with disabled access_logger
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Sat, 06 Jul 2024 13:44:12 +0200
 
 cm4all-beng-proxy (18.0.80) unstable; urgency=low
 
