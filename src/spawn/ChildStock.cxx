@@ -87,12 +87,14 @@ ChildStock::QueueItem::OnSpawnerReady() noexcept
 inline void
 ChildStock::DoSpawn(CreateStockItem c, StockRequest request,
 		    StockGetHandler &handler) noexcept
-{
+try {
 	auto item = cls.CreateChild(c, request.get(), *this);
 	item->Spawn(cls, request.get(),
 		    log_socket, log_options);
 
 	item.release()->InvokeCreateSuccess(handler);
+} catch (...) {
+	c.InvokeCreateError(handler, std::current_exception());
 }
 
 /*

@@ -1,5 +1,6 @@
 cm4all-beng-proxy (18.0.82) unstable; urgency=low
 
+  * was, lhttp: fix spawner crash bug
   * access_log: match X-Forwarded-For entries with networks from trust_xff
 
  --   
