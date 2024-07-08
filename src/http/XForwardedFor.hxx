@@ -43,5 +43,5 @@ struct XForwardedForConfig {
 	bool IsTrustedAddress(SocketAddress address) const noexcept;
 
 	[[gnu::pure]]
-	std::string_view GetRealRemoteHost(const char *xff) const noexcept;
+	std::string_view GetRealRemoteHost(std::string_view xff) const noexcept;
 };

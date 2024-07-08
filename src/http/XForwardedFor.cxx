@@ -54,9 +54,8 @@ LastListItem(std::string_view list) noexcept
 }
 
 std::string_view
-XForwardedForConfig::GetRealRemoteHost(const char *xff) const noexcept
+XForwardedForConfig::GetRealRemoteHost(std::string_view list) const noexcept
 {
-	std::string_view list{xff};
 	std::string_view result{};
 
 	while (true) {
