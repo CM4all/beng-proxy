@@ -69,4 +69,18 @@ TEST(HttpUtil, XFF)
 	EXPECT_EQ(config.GetRealRemoteHost("localhost"sv), "localhost"sv);
 	EXPECT_EQ(config.GetRealRemoteHost(",localhost"sv), "localhost"sv);
 	EXPECT_EQ(config.GetRealRemoteHost(" ,localhost"sv), "localhost"sv);
+
+	/* trust_networks in XFF header */
+	EXPECT_EQ(config.GetRealRemoteHost("foo, c0ff:ef::1"sv), "c0ff:ef::1"sv);
+	EXPECT_EQ(config.GetRealRemoteHost("foo, c0ff:ee::1"sv), "foo"sv);
+	EXPECT_EQ(config.GetRealRemoteHost("foo, c0ff:ee:1:2:3:4:5:6"sv), "foo"sv);
+	EXPECT_EQ(config.GetRealRemoteHost("foo, c0ff:ee:fff1:fff2:fff3:fff4:fff5:fff6"sv), "foo"sv);
+	EXPECT_EQ(config.GetRealRemoteHost("foo, [c0ff:ee::1]"sv), "foo"sv);
+	EXPECT_EQ(config.GetRealRemoteHost("foo, [c0ff:ee::1]:1234"sv), "foo"sv);
+	EXPECT_EQ(config.GetRealRemoteHost("foo, 10.41.0.0"sv), "10.41.0.0"sv);
+	EXPECT_EQ(config.GetRealRemoteHost("foo, 10.42.0.1"sv), "foo"sv);
+	EXPECT_EQ(config.GetRealRemoteHost("foo, 10.42.0.1:0"sv), "foo"sv);
+	EXPECT_EQ(config.GetRealRemoteHost("foo, 10.42.0.1:1234"sv), "foo"sv);
+	EXPECT_EQ(config.GetRealRemoteHost("foo, 10.42.0.256"sv), "10.42.0.256"sv);
+	EXPECT_EQ(config.GetRealRemoteHost("foo, 10.42.255.255"sv), "foo"sv);
 }

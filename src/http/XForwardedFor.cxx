@@ -3,6 +3,7 @@
 // author: Max Kellermann <mk@cm4all.com>
 
 #include "XForwardedFor.hxx"
+#include "net/Parser.hxx"
 #include "util/StringSplit.hxx"
 #include "util/StringStrip.hxx"
 
@@ -28,6 +29,24 @@ XForwardedForConfig::IsTrustedAddress(SocketAddress address) const noexcept
 	return std::any_of(trust_networks.begin(), trust_networks.end(), [address](const auto &i){
 		return i.Matches(address);
 	});
+}
+
+bool
+XForwardedForConfig::IsTrustedHostOrAddress(std::string_view host) const noexcept
+{
+	if (IsTrustedHost(host))
+		return true;
+
+	if (!trust_networks.empty()) {
+		try {
+			const auto address = ParseSocketAddress(std::string{host}.c_str(), 0, false);
+			if (!address.IsNull() && IsTrustedAddress(address))
+				return true;
+		} catch (...) {
+		}
+	}
+
+	return false;
 }
 
 /**
@@ -66,7 +85,7 @@ XForwardedForConfig::GetRealRemoteHost(std::string_view list) const noexcept
 			return result;
 
 		result = l.second;
-		if (!IsTrustedHost(result))
+		if (!IsTrustedHostOrAddress(result))
 			/* this address is not a trusted proxy; return it */
 			return result;
 

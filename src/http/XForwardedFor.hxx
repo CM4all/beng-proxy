@@ -42,6 +42,14 @@ struct XForwardedForConfig {
 	[[gnu::pure]]
 	bool IsTrustedAddress(SocketAddress address) const noexcept;
 
+	/**
+	 * Wrapper which calls both IsTrustedHost() and
+	 * IsTrustedAddress(); if calling the latter is needed, the
+	 * specified host string is parsed.
+	 */
+	[[gnu::pure]]
+	bool IsTrustedHostOrAddress(std::string_view host) const noexcept;
+
 	[[gnu::pure]]
 	std::string_view GetRealRemoteHost(std::string_view xff) const noexcept;
 };

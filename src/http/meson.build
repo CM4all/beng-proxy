@@ -15,6 +15,7 @@ http_util = static_library(
   include_directories: inc,
   dependencies: [
     memory_dep,
+    net_dep,
     fmt_dep,
   ],
 )
