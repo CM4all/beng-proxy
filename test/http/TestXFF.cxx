@@ -7,6 +7,8 @@
 
 #include <gtest/gtest.h>
 
+using std::string_view_literals::operator""sv;
+
 TEST(HttpUtil, XFF)
 {
 	const XForwardedForConfig config{
@@ -18,13 +20,13 @@ TEST(HttpUtil, XFF)
 		},
 	};
 
-	EXPECT_TRUE(config.IsTrustedHost("127.0.0.1"));
-	EXPECT_TRUE(config.IsTrustedHost("192.168.0.1"));
-	EXPECT_TRUE(config.IsTrustedHost("::1"));
-	EXPECT_TRUE(config.IsTrustedHost("dead::beef"));
-	EXPECT_TRUE(config.IsTrustedHost("localhost"));
-	EXPECT_FALSE(config.IsTrustedHost("127.0.0.2"));
-	EXPECT_FALSE(config.IsTrustedHost("dead::bee"));
+	EXPECT_TRUE(config.IsTrustedHost("127.0.0.1"sv));
+	EXPECT_TRUE(config.IsTrustedHost("192.168.0.1"sv));
+	EXPECT_TRUE(config.IsTrustedHost("::1"sv));
+	EXPECT_TRUE(config.IsTrustedHost("dead::beef"sv));
+	EXPECT_TRUE(config.IsTrustedHost("localhost"sv));
+	EXPECT_FALSE(config.IsTrustedHost("127.0.0.2"sv));
+	EXPECT_FALSE(config.IsTrustedHost("dead::bee"sv));
 
 	EXPECT_TRUE(config.IsTrustedAddress(ParseSocketAddress("c0ff:ee::", 0, true)));
 	EXPECT_TRUE(config.IsTrustedAddress(ParseSocketAddress("c0ff:ee::1", 0, true)));
@@ -52,18 +54,18 @@ TEST(HttpUtil, XFF)
 	EXPECT_FALSE(config.IsTrustedAddress(ParseSocketAddress("192.168.127.1", 0, true)));
 	EXPECT_FALSE(config.IsTrustedAddress(ParseSocketAddress("192.168.0.1", 0, true)));
 
-	EXPECT_EQ(config.GetRealRemoteHost(""), "");
-	EXPECT_EQ(config.GetRealRemoteHost(" "), "");
-	EXPECT_EQ(config.GetRealRemoteHost("foo, bar"), "bar");
-	EXPECT_EQ(config.GetRealRemoteHost("foo, bar "), "bar");
-	EXPECT_EQ(config.GetRealRemoteHost("foo,bar "), "bar");
-	EXPECT_EQ(config.GetRealRemoteHost(" foo,bar"), "bar");
-	EXPECT_EQ(config.GetRealRemoteHost(" foo,bar,localhost"), "bar");
-	EXPECT_EQ(config.GetRealRemoteHost(" foo,bar, localhost  "), "bar");
-	EXPECT_EQ(config.GetRealRemoteHost("foo,bar,dead::beef"), "bar");
-	EXPECT_EQ(config.GetRealRemoteHost("foo,bar,127.0.0.1"), "bar");
-	EXPECT_EQ(config.GetRealRemoteHost("foo,bar,192.168.0.1"), "bar");
-	EXPECT_EQ(config.GetRealRemoteHost("localhost"), "localhost");
-	EXPECT_EQ(config.GetRealRemoteHost(",localhost"), "localhost");
-	EXPECT_EQ(config.GetRealRemoteHost(" ,localhost"), "localhost");
+	EXPECT_EQ(config.GetRealRemoteHost(""), ""sv);
+	EXPECT_EQ(config.GetRealRemoteHost(" "), ""sv);
+	EXPECT_EQ(config.GetRealRemoteHost("foo, bar"), "bar"sv);
+	EXPECT_EQ(config.GetRealRemoteHost("foo, bar "), "bar"sv);
+	EXPECT_EQ(config.GetRealRemoteHost("foo,bar "), "bar"sv);
+	EXPECT_EQ(config.GetRealRemoteHost(" foo,bar"), "bar"sv);
+	EXPECT_EQ(config.GetRealRemoteHost(" foo,bar,localhost"), "bar"sv);
+	EXPECT_EQ(config.GetRealRemoteHost(" foo,bar, localhost  "), "bar"sv);
+	EXPECT_EQ(config.GetRealRemoteHost("foo,bar,dead::beef"), "bar"sv);
+	EXPECT_EQ(config.GetRealRemoteHost("foo,bar,127.0.0.1"), "bar"sv);
+	EXPECT_EQ(config.GetRealRemoteHost("foo,bar,192.168.0.1"), "bar"sv);
+	EXPECT_EQ(config.GetRealRemoteHost("localhost"), "localhost"sv);
+	EXPECT_EQ(config.GetRealRemoteHost(",localhost"), "localhost"sv);
+	EXPECT_EQ(config.GetRealRemoteHost(" ,localhost"), "localhost"sv);
 }
