@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include "spawn/CompletionHandler.hxx"
 #include "spawn/ExitListener.hxx"
 #include "access_log/ChildErrorLog.hxx"
 #include "stock/AbstractStock.hxx"
@@ -26,7 +27,7 @@ class ChildStockClass;
 class ChildStockItem
 	: public StockItem,
 	  public AutoUnlinkIntrusiveListHook,
-	  ExitListener
+	  SpawnCompletionHandler, ExitListener
 {
 	ChildStock &child_stock;
 
@@ -37,6 +38,8 @@ class ChildStockItem
 	UniqueFileDescriptor stderr_fd;
 
 	std::unique_ptr<ChildProcessHandle> handle;
+
+	StockGetHandler *handler;
 
 	/**
 	 * A lease obtained from #ListenStreamSpawnStock.
@@ -62,6 +65,14 @@ public:
 	void Spawn(ChildStockClass &cls, void *info,
 		   SocketDescriptor log_socket,
 		   const ChildErrorLogOptions &log_options);
+
+	/**
+	 * Register the #SpawnCompletionHandler with the
+	 * #ChildProcessHandle which was obtained by Spawn().  The
+	 * completion handler will then invoke the specified
+	 * #StockGetHandler.
+	 */
+	void RegisterCompletionHandler(StockGetHandler &_handler) noexcept;
 
 	[[gnu::pure]]
 	std::string_view GetTag() const noexcept {
@@ -90,6 +101,10 @@ public:
 
 
 private:
+	/* virtual methods from class SpawnCompletionHandler */
+	void OnSpawnSuccess() noexcept override;
+	void OnSpawnError(std::exception_ptr error) noexcept override;
+
 	/* virtual methods from class ExitListener */
 	void OnChildProcessExit(int status) noexcept override;
 

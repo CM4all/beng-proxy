@@ -92,6 +92,15 @@ ChildStockItem::Spawn(ChildStockClass &cls, void *info,
 	}
 }
 
+void
+ChildStockItem::RegisterCompletionHandler(StockGetHandler &_handler) noexcept
+{
+	assert(handle);
+
+	handler = &_handler;
+	handle->SetCompletionHandler(*this);
+}
+
 bool
 ChildStockItem::IsTag(std::string_view _tag) const noexcept
 {
@@ -133,6 +142,18 @@ ChildStockItem::Release() noexcept
 	child_stock.AddIdle(*this);
 
 	return true;
+}
+
+void
+ChildStockItem::OnSpawnSuccess() noexcept
+{
+	InvokeCreateSuccess(*handler);
+}
+
+void
+ChildStockItem::OnSpawnError(std::exception_ptr error) noexcept
+{
+	InvokeCreateError(*handler, std::move(error));
 }
 
 void

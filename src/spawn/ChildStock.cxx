@@ -92,7 +92,7 @@ try {
 	item->Spawn(cls, request.get(),
 		    log_socket, log_options);
 
-	item.release()->InvokeCreateSuccess(handler);
+	item.release()->RegisterCompletionHandler(handler);
 } catch (...) {
 	c.InvokeCreateError(handler, std::current_exception());
 }
