@@ -158,7 +158,6 @@ libcommon_require_lua = get_option('lua')
 subdir('libcommon/src/util')
 subdir('libcommon/src/lib/cap')
 subdir('libcommon/src/lib/fmt')
-subdir('libcommon/src/lib/nlohmann_json')
 subdir('libcommon/src/uri')
 
 util2 = static_library(
@@ -352,12 +351,13 @@ openssl_min_version = '3'
 openssl_api_compat = '0x30000000L'
 
 subdir('libcommon/src/lib/openssl')
-subdir('libcommon/src/jwt')
 
 ssl2_sources = []
 
 if get_option('certdb')
   subdir('libcommon/src/pg')
+  subdir('libcommon/src/lib/nlohmann_json')
+  subdir('libcommon/src/jwt')
 
   ssl2_sources += [
     '../certdb/CertDatabase.cxx',
