@@ -74,6 +74,7 @@ jobs:
             -Dcertdb=true \
             -Dio_uring=disabled \
             --force-fallback-for=fmt,nlohmann_json,libcm4all-was-protocol,libcm4all-http \
+            -Dwrap_mode=nofallback \
             output
         # Note: io_uring is disabled because the liburing version in
         # Ubuntu is broken; it redefines "struct open_how"
@@ -119,6 +120,7 @@ jobs:
             -Dauto_features=disabled \
             -Dcertdb=false \
             --force-fallback-for=fmt \
+            -Dwrap_mode=nofallback \
             output
 
       - name: Build
@@ -168,6 +170,7 @@ jobs:
             -Dcertdb=true \
             -Dio_uring=disabled \
             --force-fallback-for=fmt,nlohmann_json \
+            -Dwrap_mode=nofallback \
             output
 
       - name: Build
