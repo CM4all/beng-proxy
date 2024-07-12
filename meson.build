@@ -685,6 +685,7 @@ executable(
   'src/widget/Frame.cxx',
   'src/access_log/ChildErrorLog.cxx',
   'src/PInstance.cxx',
+  'src/bp/PerSite.cxx',
   'src/bp/UringGlue.cxx',
   'src/bp/Instance.cxx',
   'src/bp/Main.cxx',

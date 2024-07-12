@@ -9,6 +9,7 @@
 #include "Config.hxx"
 #include "RLogger.hxx"
 #include "Instance.hxx"
+#include "PerSite.hxx"
 #include "load_file.hxx"
 #include "file/Address.hxx"
 #include "cgi/Address.hxx"
@@ -32,6 +33,7 @@
 #include "translation/Service.hxx"
 #include "translation/Protocol.hxx"
 #include "translation/Layout.hxx"
+#include "time/Cast.hxx" // for ToFloatSeconds()
 #include "util/SpanCast.hxx"
 #include "util/StringCompare.hxx"
 #include "HttpMessageResponse.hxx"
@@ -137,6 +139,19 @@ Request::HandleTranslatedRequest2(const TranslateResponse &response) noexcept
 	if (response.stats_tag != nullptr) {
 		auto &rl = *(BpRequestLogger *)request.logger;
 		rl.stats_tag = response.stats_tag;
+	}
+
+	if (response.rate_limit_site_requests.IsDefined()) {
+		assert(response.site != nullptr);
+
+		auto &per_site = instance.MakePerSite(response.site);
+		if (!per_site.CheckRequestCount(ToFloatSeconds(instance.event_loop.SteadyNow().time_since_epoch()),
+						response.rate_limit_site_requests.rate,
+						response.rate_limit_site_requests.burst)) {
+			DispatchError(HttpStatus::TOO_MANY_REQUESTS,
+				      "Too many requests");
+			return;
+		}
 	}
 
 	{

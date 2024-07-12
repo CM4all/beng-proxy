@@ -6,6 +6,7 @@
 #include "Listener.hxx"
 #include "LStats.hxx"
 #include "Connection.hxx"
+#include "PerSite.hxx"
 #include "memory/fb_pool.hxx"
 #include "event/net/control/Server.hxx"
 #include "cluster/TcpBalancer.hxx"
@@ -41,6 +42,7 @@
 #include "spawn/Launch.hxx"
 #include "spawn/ListenStreamSpawnStock.hxx"
 #include "access_log/Glue.hxx"
+#include "time/Cast.hxx" // for ToFloatSeconds()
 #include "util/PrintException.hxx"
 
 #ifdef HAVE_URING
@@ -193,6 +195,9 @@ void
 BpInstance::Compress() noexcept
 {
 	fb_pool_compress();
+
+	if (per_site)
+		per_site->Expire(ToFloatSeconds(event_loop.SteadyNow().time_since_epoch()));
 }
 
 void
@@ -376,4 +381,13 @@ BpInstance::ScheduleSaveSessions() noexcept
 {
 	/* save all sessions every 2 minutes */
 	session_save_timer.Schedule(std::chrono::minutes(2));
+}
+
+BpPerSite &
+BpInstance::MakePerSite(std::string_view site) noexcept
+{
+	if (!per_site)
+		per_site = std::make_unique<BpPerSiteMap>();
+
+	return per_site->Make(site);
 }

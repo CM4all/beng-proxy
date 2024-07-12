@@ -68,6 +68,8 @@ class FilterCache;
 class EncodingCache;
 class SessionManager;
 class BpListener;
+class BpPerSite;
+class BpPerSiteMap;
 struct BpConnection;
 struct BpListenerStats;
 namespace NgHttp2 { class Stock; }
@@ -202,6 +204,8 @@ struct BpInstance final : PInstance, BengControl::Handler,
 	/* session */
 	FarTimerEvent session_save_timer;
 
+	std::unique_ptr<BpPerSiteMap> per_site;
+
 	BpInstance(BpConfig &&_config,
 		   LaunchSpawnServerResult &&spawner) noexcept;
 	~BpInstance() noexcept;
@@ -262,6 +266,8 @@ struct BpInstance final : PInstance, BengControl::Handler,
 	/* virtual methods from class WasMetricsHandler */
 	void OnWasMetric(std::string_view name, float value) noexcept override;
 #endif
+
+	BpPerSite &MakePerSite(std::string_view site) noexcept;
 
 private:
 #ifdef HAVE_LIBSYSTEMD
