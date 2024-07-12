@@ -146,8 +146,8 @@ Request::HandleTranslatedRequest2(const TranslateResponse &response) noexcept
 
 		auto &per_site = instance.MakePerSite(response.site);
 		if (!per_site.CheckRequestCount(ToFloatSeconds(instance.event_loop.SteadyNow().time_since_epoch()),
-						response.rate_limit_site_requests.rate,
-						response.rate_limit_site_requests.burst)) {
+						(double)response.rate_limit_site_requests.rate,
+						(double)response.rate_limit_site_requests.burst)) {
 			DispatchError(HttpStatus::TOO_MANY_REQUESTS,
 				      "Too many requests");
 			return;
