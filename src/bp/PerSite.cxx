@@ -8,9 +8,9 @@
 #include "util/SpanCast.hxx"
 
 inline std::size_t
-BpPerSite::Hash::operator()(std::string_view site) const noexcept
+BpPerSite::Hash::operator()(std::string_view _site) const noexcept
 {
-	return djb_hash(AsBytes(site));
+	return djb_hash(AsBytes(_site));
 }
 
 BpPerSiteMap::~BpPerSiteMap() noexcept
