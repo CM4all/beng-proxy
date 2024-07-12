@@ -18,7 +18,7 @@ struct TranslateResponse;
 struct CacheStats;
 
 class LbTranslationCache final {
-	static constexpr std::size_t N_BUCKETS = 131071;
+	static constexpr std::size_t N_BUCKETS = 128 * 1024;
 
 	const LLogger logger;
 

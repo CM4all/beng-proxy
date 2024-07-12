@@ -169,7 +169,7 @@ struct tcache final : private CacheHandler {
 	const PoolPtr pool;
 	SlicePool slice_pool;
 
-	static constexpr std::size_t N_BUCKETS = 131071;
+	static constexpr std::size_t N_BUCKETS = 128 * 1024;
 
 	/**
 	 * This hash table maps each host name to the
