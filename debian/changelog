@@ -1,6 +1,6 @@
 cm4all-beng-proxy (18.0.83) unstable; urgency=low
 
-  * 
+  * istream/dechunk: fix assertion failure
 
  --   
 
