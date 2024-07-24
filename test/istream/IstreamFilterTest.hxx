@@ -17,6 +17,7 @@
 #include "istream/istream_null.hxx"
 #include "istream/istream_later.hxx"
 #include "istream/HalfSuspendIstream.hxx"
+#include "istream/ReadyIstream.hxx"
 #include "istream/UnusedHoldPtr.hxx"
 #include "istream/ForwardIstream.hxx"
 #include "istream/New.hxx"
@@ -105,6 +106,12 @@ struct Context final : IstreamSink {
 	 * Should OnIstreamReady() try to read buckets?
 	 */
 	bool on_ready_buckets = false;
+
+	/**
+	 * OnReady() does not close #Istream on end-of-file, but
+         * instead returns IstreamReadyResult::OK.
+	 */
+	bool ready_eof_ok = false;
 
 	int close_after = -1;
 
@@ -457,6 +464,67 @@ TYPED_TEST_P(IstreamFilterTest, BucketError)
 	} catch (...) {
 		ASSERT_FALSE(ctx.input.IsDefined());
 	}
+}
+
+/** with ReadyIstream */
+TYPED_TEST_P(IstreamFilterTest, Ready)
+{
+	auto &traits = this->traits_;
+	auto &instance = this->instance_;
+
+	if (!traits.options.enable_buckets)
+		GTEST_SKIP();
+
+	auto pool = pool_new_linear(instance.root_pool, "test", 8192);
+	auto input_pool = pool_new_linear(instance.root_pool, "input", 8192);
+
+	auto istream = traits.CreateTest(instance.event_loop, pool, NewReadyIstream(instance.event_loop, input_pool, traits.CreateInput(input_pool)));
+	ASSERT_TRUE(!!istream);
+	input_pool.reset();
+
+	Context ctx{
+		instance,
+		std::move(pool),
+		traits.options,
+		std::move(istream),
+	};
+
+	ctx.on_ready_buckets = true;
+	if (ctx.options.expected_result.data() != nullptr)
+		ctx.record = true;
+
+	run_istream_ctx(ctx);
+}
+
+/** with ReadyIstream and ready_eof_ok */
+TYPED_TEST_P(IstreamFilterTest, ReadyOk)
+{
+	auto &traits = this->traits_;
+	auto &instance = this->instance_;
+
+	if (!traits.options.enable_buckets)
+		GTEST_SKIP();
+
+	auto pool = pool_new_linear(instance.root_pool, "test", 8192);
+	auto input_pool = pool_new_linear(instance.root_pool, "input", 8192);
+
+	auto istream = traits.CreateTest(instance.event_loop, pool, NewReadyIstream(instance.event_loop, input_pool, traits.CreateInput(input_pool)));
+	ASSERT_TRUE(!!istream);
+	input_pool.reset();
+
+	Context ctx{
+		instance,
+		std::move(pool),
+		traits.options,
+		std::move(istream),
+	};
+
+	ctx.on_ready_buckets = true;
+	ctx.ready_eof_ok = true;
+	if (ctx.options.expected_result.data() != nullptr)
+		ctx.record = true;
+
+	run_istream_ctx(ctx);
 }
 
 /** invoke Istream::Skip(1) */
@@ -855,6 +923,8 @@ REGISTER_TYPED_TEST_SUITE_P(IstreamFilterTest,
 			    BucketMore,
 			    SmallBucket,
 			    BucketError,
+			    Ready,
+			    ReadyOk,
 			    Skip,
 			    Block,
 			    Byte,

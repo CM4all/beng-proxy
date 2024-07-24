@@ -83,6 +83,7 @@ istream = static_library(
   'FileIstream.cxx',
   'MultiFifoBufferIstream.cxx',
   'OpenFileIstream.cxx',
+  'ReadyIstream.cxx',
   'ReplaceIstream.cxx',
   'SliceIstream.cxx',
   'SocketPairIstream.cxx',

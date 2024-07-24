@@ -130,6 +130,9 @@ Context::ReadBuckets2(std::size_t limit, bool consume_more)
 	IstreamReadyResult rresult = IstreamReadyResult::OK;
 
 	if (result && !list.HasMore()) {
+		if (ready_eof_ok)
+			return {IstreamReadyResult::OK, result};
+
 		CloseInput();
 		result = false;
 		rresult = IstreamReadyResult::CLOSED;
@@ -169,8 +172,12 @@ Context::WaitForEndOfStream() noexcept
 			}
 		}
 
-		if (!eof)
+		if (!eof) {
 			instance.event_loop.Run();
+
+			if (eof && HasInput() && ready_eof_ok)
+				CloseInput();
+		}
 	}
 
 	break_eof = false;
