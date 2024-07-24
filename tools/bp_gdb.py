@@ -55,18 +55,36 @@ def find_field(t, name):
             return i
     return None
 
+def find_intrusive_base_hook(container_type_name, t, tag):
+    prefix = f'{container_type_name}Hook<'
+    for i in t.fields():
+        if i.is_base_class and not i.artificial:
+            b = i.type.strip_typedefs()
+            if b.tag.startswith(prefix) and b.template_argument(1) == tag:
+                return b
+    return None
+
 class IntrusiveContainerType:
     def __init__(self, list_type, member_hook=None):
         self.list_type = get_basic_type(list_type)
         self.value_type = list_type.template_argument(0)
         self.value_pointer_type = self.value_type.pointer()
 
-        hook_traits = list_type.template_argument(1).strip_typedefs().name
+        container_type_name = re.match(r'^(Intrusive\w+)<', list_type.strip_typedefs().tag).group(1)
+
+        hook_traits_type = list_type.template_argument(1).strip_typedefs()
+        hook_traits = hook_traits_type.name
         if m := re.match(r'Intrusive\w+MemberHookTraits<&(\w+)::(\w+)>$', hook_traits):
             field = find_field(self.value_type, m.group(2))
             if field is None: raise RuntimeError('Field not found')
             self.__offset = field.bitpos // 8
-        else:
+        elif m := re.match(r'Intrusive\w+BaseHookTraits<', hook_traits):
+            tag = hook_traits_type.template_argument(1)
+            base_hook = find_intrusive_base_hook(container_type_name, self.value_type, tag)
+            if base_hook is None:
+                raise('No base hook found')
+
+            self.__base_hook_pointer = base_hook.pointer()
             self.__offset = None
 
     def get_header(self, l):
@@ -74,7 +92,7 @@ class IntrusiveContainerType:
 
     def node_to_value(self, node):
         if self.__offset is None:
-            return node.cast(self.value_pointer_type)
+            return node.cast(self.__base_hook_pointer).cast(self.value_pointer_type)
         else:
             return (node.reinterpret_cast(gdb.lookup_type('void').pointer()) - self.__offset).reinterpret_cast(self.value_pointer_type)
 
