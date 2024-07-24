@@ -183,7 +183,7 @@ protected:
 	void OnError(std::exception_ptr ep) noexcept override;
 };
 
-void
+inline void
 DechunkIstream::Abort(std::exception_ptr ep) noexcept
 {
 	assert(!parser.HasEnded());
@@ -193,7 +193,7 @@ DechunkIstream::Abort(std::exception_ptr ep) noexcept
 	DestroyError(ep);
 }
 
-void
+inline void
 DechunkIstream::DeferredEof() noexcept
 {
 	assert(parser.HasEnded());
@@ -202,7 +202,7 @@ DechunkIstream::DeferredEof() noexcept
 	DestroyEof();
 }
 
-DechunkHandler::DechunkInputAction
+inline DechunkHandler::DechunkInputAction
 DechunkIstream::InvokeDechunkEnd() noexcept
 {
 
@@ -225,7 +225,7 @@ DechunkIstream::InvokeDechunkEnd() noexcept
 	return action;
 }
 
-DechunkHandler::DechunkInputAction
+inline DechunkHandler::DechunkInputAction
 DechunkIstream::EofDetected() noexcept
 {
 	defer_eof_event.Schedule();
