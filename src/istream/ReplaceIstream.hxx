@@ -249,19 +249,12 @@ protected:
 
 public:
 	/* virtual methods from class IstreamHandler */
+	IstreamReadyResult OnIstreamReady() noexcept override;
 	size_t OnData(std::span<const std::byte> src) noexcept override;
 	void OnEof() noexcept override;
 	void OnError(std::exception_ptr ep) noexcept override;
 
 	/* virtual methods from class Istream */
-
-	IstreamReadyResult OnIstreamReady() noexcept override {
-		if (GetBufferEndOffsetUntil(first_substitution) > position)
-			return InvokeReady();
-		else
-			return IstreamReadyResult::OK;
-	}
-
 	off_t _GetAvailable(bool partial) noexcept override;
 	void _Read() noexcept override;
 	void _FillBucketList(IstreamBucketList &list) override;

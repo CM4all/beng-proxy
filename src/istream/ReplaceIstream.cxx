@@ -262,6 +262,15 @@ ReplaceIstream::AppendToBuffer(const std::span<const std::byte> src)
  *
  */
 
+IstreamReadyResult
+ReplaceIstream::OnIstreamReady() noexcept
+{
+	if (GetBufferEndOffsetUntil(first_substitution) > position)
+		return InvokeReady();
+	else
+		return IstreamReadyResult::OK;
+}
+
 size_t
 ReplaceIstream::OnData(const std::span<const std::byte> src) noexcept
 {
