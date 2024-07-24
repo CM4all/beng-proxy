@@ -268,7 +268,7 @@ ReplaceIstream::OnIstreamReady() noexcept
 	if (GetBufferEndOffsetUntil(first_substitution) > position)
 		return InvokeReady();
 	else
-		return IstreamReadyResult::OK;
+		return IstreamReadyResult::FALLBACK;
 }
 
 size_t
