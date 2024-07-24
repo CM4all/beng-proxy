@@ -54,8 +54,8 @@ PrepareCgi(struct pool &pool, PreparedChildProcess &p,
 {
 	const char *path = address.path;
 
-	p.SetEnv("GATEWAY_INTERFACE", "CGI/1.1");
-	p.SetEnv("SERVER_PROTOCOL", "HTTP/1.1");
+	p.PutEnv("GATEWAY_INTERFACE=CGI/1.1");
+	p.PutEnv("SERVER_PROTOCOL=HTTP/1.1");
 	p.SetEnv("REQUEST_METHOD", http_method_to_string(method));
 	p.SetEnv("SCRIPT_FILENAME", path);
 	p.SetEnv("PATH_TRANSLATED", path);
@@ -122,7 +122,7 @@ PrepareCgi(struct pool &pool, PreparedChildProcess &p,
 
 	const char *https = headers.Get(x_cm4all_https_header);
 	if (https != nullptr && strcmp(https, "on") == 0)
-		p.SetEnv("HTTPS", "on");
+		p.PutEnv("HTTPS=on");
 
 	p.Append(path);
 	for (auto i : address.args)
