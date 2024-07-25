@@ -77,27 +77,29 @@ class IntrusiveCastHookTraits:
     def node_to_value(self, node):
         return node.cast(self.__base_hook_pointer_type).cast(self.__value_pointer_type)
 
+def GuessIntrusiveHookTraits(container_type):
+    value_type = container_type.template_argument(0)
+    container_type_name = container_type.strip_typedefs().tag.split('<', 1)[0]
+    hook_traits_type = container_type.template_argument(1).strip_typedefs()
+    hook_traits_name = hook_traits_type.tag.split('<', 1)[0]
+    if hook_traits_name == f'{container_type_name}MemberHookTraits':
+        member_ptr = hook_traits_type.template_argument(0)
+        assert(member_ptr.type.code == gdb.TYPE_CODE_MEMBERPTR)
+
+        field_name = str(member_ptr).rsplit('::', 1)[1]
+        return MakeIntrusiveMemberHookTraits(value_type, field_name)
+    elif hook_traits_name == f'{container_type_name}BaseHookTraits':
+        tag = hook_traits_type.template_argument(1)
+        base_hook = find_intrusive_base_hook(container_type_name, value_type, tag)
+        if base_hook is None:
+            raise RuntimeError('No base hook found')
+
+        return IntrusiveCastHookTraits(value_type, base_hook)
+
 class IntrusiveContainerType:
     def __init__(self, list_type, member_hook=None):
         self.value_type = list_type.template_argument(0)
-
-        container_type_name = list_type.strip_typedefs().tag.split('<', 1)[0]
-
-        hook_traits_type = list_type.template_argument(1).strip_typedefs()
-        hook_traits_name = hook_traits_type.tag.split('<', 1)[0]
-        if hook_traits_name == f'{container_type_name}MemberHookTraits':
-            member_ptr = hook_traits_type.template_argument(0)
-            assert(member_ptr.type.code == gdb.TYPE_CODE_MEMBERPTR)
-
-            field_name = str(member_ptr).rsplit('::', 1)[1]
-            self.__hook_traits = MakeIntrusiveMemberHookTraits(self.value_type, field_name)
-        elif hook_traits_name == f'{container_type_name}BaseHookTraits':
-            tag = hook_traits_type.template_argument(1)
-            base_hook = find_intrusive_base_hook(container_type_name, self.value_type, tag)
-            if base_hook is None:
-                raise RuntimeError('No base hook found')
-
-            self.__hook_traits = IntrusiveCastHookTraits(self.value_type, base_hook)
+        self.__hook_traits = GuessIntrusiveHookTraits(list_type)
 
     def get_header(self, l):
         return l['head']
