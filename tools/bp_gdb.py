@@ -95,7 +95,7 @@ class IntrusiveContainerType:
             tag = hook_traits_type.template_argument(1)
             base_hook = find_intrusive_base_hook(container_type_name, self.value_type, tag)
             if base_hook is None:
-                raise('No base hook found')
+                raise RuntimeError('No base hook found')
 
             self.__hook_traits = IntrusiveCastHookTraits(self.value_type, base_hook)
 
