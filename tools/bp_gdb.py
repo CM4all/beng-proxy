@@ -73,6 +73,13 @@ class IntrusiveOffsetHookTraits:
     def node_to_value(self, node):
         return (node.reinterpret_cast(self.__void_pointer_type) - self.__offset).reinterpret_cast(self.__value_pointer_type)
 
+def MakeIntrusiveMemberHookTraits(value_type, member_name):
+    field = find_field(value_type, member_name)
+    if field is None:
+        raise RuntimeError('Field not found')
+
+    return IntrusiveOffsetHookTraits(value_type, field.bitpos // 8)
+
 class IntrusiveCastHookTraits:
     def __init__(self, value_type, base_hook_type):
         self.__value_pointer_type = value_type.pointer()
@@ -90,9 +97,7 @@ class IntrusiveContainerType:
         hook_traits_type = list_type.template_argument(1).strip_typedefs()
         hook_traits = hook_traits_type.name
         if m := re.match(r'Intrusive\w+MemberHookTraits<&(\w+)::(\w+)>$', hook_traits):
-            field = find_field(self.value_type, m.group(2))
-            if field is None: raise RuntimeError('Field not found')
-            self.__hook_traits = IntrusiveOffsetHookTraits(self.value_type, field.bitpos // 8)
+            self.__hook_traits = MakeIntrusiveMemberHookTraits(self.value_type, m.group(2))
         elif m := re.match(r'Intrusive\w+BaseHookTraits<', hook_traits):
             tag = hook_traits_type.template_argument(1)
             base_hook = find_intrusive_base_hook(container_type_name, self.value_type, tag)
