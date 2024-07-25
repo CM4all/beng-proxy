@@ -7,10 +7,12 @@
 #include "LStats.hxx"
 #include "prometheus/Stats.hxx"
 #include "prometheus/HttpStats.hxx"
+#include "prometheus/SpawnStats.hxx"
 #include "http/Headers.hxx"
 #include "http/IncomingRequest.hxx"
 #include "http/ResponseHandler.hxx"
 #include "stats/TaggedHttpStats.hxx"
+#include "spawn/Client.hxx"
 #include "memory/istream_gb.hxx"
 #include "memory/GrowingBuffer.hxx"
 
@@ -38,6 +40,9 @@ BpPrometheusExporter::HandleHttpRequest(IncomingHttpRequest &request,
 
 	constexpr auto process = "bp"sv;
 	Prometheus::Write(buffer, process, instance.GetStats());
+
+	if (instance.spawn)
+		Prometheus::Write(buffer, process, instance.spawn->GetStats());
 
 	for (const auto &[name, stats] : instance.listener_stats)
 		Prometheus::Write(buffer, process, name, stats);

@@ -27,11 +27,6 @@ struct Stats {
 	uint_least32_t outgoing_connections;
 
 	/**
-	 * Number of child processes.
-	 */
-	uint_least32_t children;
-
-	/**
 	 * Number of sessions.
 	 */
 	uint_least32_t sessions;

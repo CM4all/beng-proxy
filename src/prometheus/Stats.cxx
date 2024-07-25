@@ -51,9 +51,6 @@ Write(GrowingBuffer &buffer, std::string_view process,
 # HELP beng_proxy_connections Number of connections
 # TYPE beng_proxy_connections gauge
 
-# HELP beng_proxy_children Number of child processes
-# TYPE beng_proxy_children gauge
-
 # HELP beng_proxy_sessions Number of sessions
 # TYPE beng_proxy_sessions gauge
 
@@ -77,12 +74,10 @@ Write(GrowingBuffer &buffer, std::string_view process,
 
 beng_proxy_connections{{process={:?},direction="in"}} {}
 beng_proxy_connections{{process={:?},direction="out"}} {}
-beng_proxy_children{{process={:?}}} {}
 beng_proxy_sessions{{process={:?}}} {}
 )",
 	       process, stats.incoming_connections,
 	       process, stats.outgoing_connections,
-	       process, stats.children,
 	       process, stats.sessions);
 
 	Write(buffer, process, "translation"sv, stats.translation_cache);
