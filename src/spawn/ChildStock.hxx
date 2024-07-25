@@ -131,7 +131,8 @@ public:
 
 private:
 	void DoSpawn(CreateStockItem c, StockRequest request,
-		     StockGetHandler &handler) noexcept;
+		     StockGetHandler &handler,
+		     CancellablePointer &caller_cancel_ptr) noexcept;
 
 	/* virtual methods from class StockClass */
 	void Create(CreateStockItem c, StockRequest request,

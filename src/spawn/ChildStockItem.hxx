@@ -10,6 +10,7 @@
 #include "stock/AbstractStock.hxx"
 #include "stock/Item.hxx"
 #include "io/UniqueFileDescriptor.hxx"
+#include "util/Cancellable.hxx"
 #include "util/IntrusiveList.hxx"
 #include "util/SharedLease.hxx"
 
@@ -27,7 +28,7 @@ class ChildStockClass;
 class ChildStockItem
 	: public StockItem,
 	  public AutoUnlinkIntrusiveListHook,
-	  SpawnCompletionHandler, ExitListener
+	  SpawnCompletionHandler, Cancellable, ExitListener
 {
 	ChildStock &child_stock;
 
@@ -72,7 +73,8 @@ public:
 	 * completion handler will then invoke the specified
 	 * #StockGetHandler.
 	 */
-	void RegisterCompletionHandler(StockGetHandler &_handler) noexcept;
+	void RegisterCompletionHandler(StockGetHandler &_handler,
+				       CancellablePointer &cancel_ptr) noexcept;
 
 	[[gnu::pure]]
 	std::string_view GetTag() const noexcept {
@@ -104,6 +106,9 @@ private:
 	/* virtual methods from class SpawnCompletionHandler */
 	void OnSpawnSuccess() noexcept override;
 	void OnSpawnError(std::exception_ptr error) noexcept override;
+
+	/* virtual methods from class Cancellable */
+	void Cancel() noexcept override;
 
 	/* virtual methods from class ExitListener */
 	void OnChildProcessExit(int status) noexcept override;

@@ -93,9 +93,12 @@ ChildStockItem::Spawn(ChildStockClass &cls, void *info,
 }
 
 void
-ChildStockItem::RegisterCompletionHandler(StockGetHandler &_handler) noexcept
+ChildStockItem::RegisterCompletionHandler(StockGetHandler &_handler,
+					  CancellablePointer &cancel_ptr) noexcept
 {
 	assert(handle);
+
+	cancel_ptr = *this;
 
 	handler = &_handler;
 	handle->SetCompletionHandler(*this);
@@ -154,6 +157,16 @@ void
 ChildStockItem::OnSpawnError(std::exception_ptr error) noexcept
 {
 	InvokeCreateError(*handler, std::move(error));
+}
+
+void
+ChildStockItem::Cancel() noexcept
+{
+	assert(!is_idle);
+	assert(busy);
+	assert(handle);
+
+	delete this;
 }
 
 void

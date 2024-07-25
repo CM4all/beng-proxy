@@ -48,6 +48,7 @@ class ChildStock::QueueItem final : Cancellable {
 	CreateStockItem create;
 	StockRequest request;
 	StockGetHandler &handler;
+	CancellablePointer &caller_cancel_ptr;
 
 	CancellablePointer cancel_ptr;
 
@@ -55,15 +56,15 @@ public:
 	QueueItem(ChildStock &_stock,
 		  CreateStockItem &&_create,
 		  StockRequest &&_request,
-		  StockGetHandler &_handler) noexcept
+		  StockGetHandler &_handler,
+		  CancellablePointer &_caller_cancel_ptr) noexcept
 		:stock(_stock),
 		 create(std::move(_create)), request(std::move(_request)),
-		 handler(_handler)
+		 handler(_handler), caller_cancel_ptr(_caller_cancel_ptr)
 	{
 	}
 
-	void Start(SpawnService &spawner,
-		   CancellablePointer &caller_cancel_ptr) noexcept {
+	void Start(SpawnService &spawner) noexcept {
 		caller_cancel_ptr = *this;
 		spawner.Enqueue(BIND_THIS_METHOD(OnSpawnerReady), cancel_ptr);
 	}
@@ -80,19 +81,20 @@ private:
 inline void
 ChildStock::QueueItem::OnSpawnerReady() noexcept
 {
-	stock.DoSpawn(create, std::move(request), handler);
+	stock.DoSpawn(create, std::move(request), handler, caller_cancel_ptr);
 	delete this;
 }
 
 inline void
 ChildStock::DoSpawn(CreateStockItem c, StockRequest request,
-		    StockGetHandler &handler) noexcept
+		    StockGetHandler &handler,
+		    CancellablePointer &caller_cancel_ptr) noexcept
 try {
 	auto item = cls.CreateChild(c, request.get(), *this);
 	item->Spawn(cls, request.get(),
 		    log_socket, log_options);
 
-	item.release()->RegisterCompletionHandler(handler);
+	item.release()->RegisterCompletionHandler(handler, caller_cancel_ptr);
 } catch (...) {
 	c.InvokeCreateError(handler, std::current_exception());
 }
@@ -107,8 +109,9 @@ ChildStock::Create(CreateStockItem c, StockRequest request,
 		   StockGetHandler &handler,
 		   CancellablePointer &cancel_ptr)
 {
-	auto *queue_item = new QueueItem(*this, std::move(c), std::move(request), handler);
-	queue_item->Start(spawn_service, cancel_ptr);
+	auto *queue_item = new QueueItem(*this, std::move(c), std::move(request),
+					 handler, cancel_ptr);
+	queue_item->Start(spawn_service);
 }
 
 /*
