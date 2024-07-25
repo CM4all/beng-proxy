@@ -6,18 +6,7 @@
 
 import re
 import gdb
-
-try:
-    from gdb.types import get_basic_type
-except ImportError:
-    # from libstdcxx printers
-    def get_basic_type(type):
-        # If it points to a reference, get the reference.
-        if type.code == gdb.TYPE_CODE_REF:
-            type = type.target()
-        # Get the unqualified type, stripped of typedefs.
-        type = type.unqualified().strip_typedefs()
-        return type
+from gdb.types import get_basic_type
 
 def is_null(p):
     return str(p) == '0x0'
