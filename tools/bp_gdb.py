@@ -64,11 +64,26 @@ def find_intrusive_base_hook(container_type_name, t, tag):
                 return b
     return None
 
+class IntrusiveOffsetHookTraits:
+    def __init__(self, value_type, offset):
+        self.__void_pointer_type = gdb.lookup_type('void').pointer()
+        self.__value_pointer_type = value_type.pointer()
+        self.__offset = offset
+
+    def node_to_value(self, node):
+        return (node.reinterpret_cast(self.__void_pointer_type) - self.__offset).reinterpret_cast(self.__value_pointer_type)
+
+class IntrusiveCastHookTraits:
+    def __init__(self, value_type, base_hook_type):
+        self.__value_pointer_type = value_type.pointer()
+        self.__base_hook_pointer_type = base_hook_type.pointer()
+
+    def node_to_value(self, node):
+        return node.cast(self.__base_hook_pointer_type).cast(self.__value_pointer_type)
+
 class IntrusiveContainerType:
     def __init__(self, list_type, member_hook=None):
-        self.list_type = get_basic_type(list_type)
         self.value_type = list_type.template_argument(0)
-        self.value_pointer_type = self.value_type.pointer()
 
         container_type_name = re.match(r'^(Intrusive\w+)<', list_type.strip_typedefs().tag).group(1)
 
@@ -77,24 +92,20 @@ class IntrusiveContainerType:
         if m := re.match(r'Intrusive\w+MemberHookTraits<&(\w+)::(\w+)>$', hook_traits):
             field = find_field(self.value_type, m.group(2))
             if field is None: raise RuntimeError('Field not found')
-            self.__offset = field.bitpos // 8
+            self.__hook_traits = IntrusiveOffsetHookTraits(self.value_type, field.bitpos // 8)
         elif m := re.match(r'Intrusive\w+BaseHookTraits<', hook_traits):
             tag = hook_traits_type.template_argument(1)
             base_hook = find_intrusive_base_hook(container_type_name, self.value_type, tag)
             if base_hook is None:
                 raise('No base hook found')
 
-            self.__base_hook_pointer = base_hook.pointer()
-            self.__offset = None
+            self.__hook_traits = IntrusiveCastHookTraits(self.value_type, base_hook)
 
     def get_header(self, l):
         return l['head']
 
     def node_to_value(self, node):
-        if self.__offset is None:
-            return node.cast(self.__base_hook_pointer).cast(self.value_pointer_type)
-        else:
-            return (node.reinterpret_cast(gdb.lookup_type('void').pointer()) - self.__offset).reinterpret_cast(self.value_pointer_type)
+        return self.__hook_traits.node_to_value(node)
 
     def iter_nodes(self, l):
         root = self.get_header(l)
