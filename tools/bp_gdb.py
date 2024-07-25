@@ -124,22 +124,6 @@ class IntrusiveContainerType:
             node = node['prev']
 
 class IntrusiveListPrinter:
-    class Iterator:
-        def __init__(self, t, head):
-            self.t = t
-            self.head_address = head.address
-            self.i = head['next']
-
-        def __iter__(self):
-            return self
-
-        def __next__(self):
-            if self.i == self.head_address:
-                raise StopIteration
-            result = self.t.node_to_value(self.i)
-            self.i = self.i['next']
-            return '', result.dereference()
-
     def __init__(self, val):
         self.t = IntrusiveContainerType(val.type)
         self.val = val
@@ -148,7 +132,8 @@ class IntrusiveListPrinter:
         return 'array'
 
     def children(self):
-        return self.Iterator(self.t, self.t.get_header(self.val))
+        for i in self.t.iter_nodes(self.val):
+            yield '', i
 
     def to_string(self):
         return f"ilist<{self.t.value_type}>"
