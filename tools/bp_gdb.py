@@ -149,6 +149,35 @@ def for_each_intrusive_list_item_reverse(l, member_hook=None):
     for node in t.iter_nodes_reverse(l):
         yield t.node_to_value(node).dereference()
 
+class IntrusiveHashSetHookTraits:
+    def __init__(self, container_type):
+        self.__next = GuessIntrusiveHookTraits(container_type, container_type.template_argument(3).strip_typedefs())
+
+    def node_to_value(self, node):
+        return self.__next.node_to_value(node)
+
+class IntrusiveHashSetPrinter:
+    def __init__(self, val):
+        self.__val = val
+        self.__hook_traits = IntrusiveHashSetHookTraits(get_basic_type(val.type))
+
+    def display_hint(self):
+        return 'array'
+
+    def children(self):
+        table = self.__val['table']
+
+        table_size = int(table.type.template_argument(1))
+        for i in range(table_size):
+            bucket = table['_M_elems'][i]
+            list_type = get_basic_type(bucket.type)
+            t = IntrusiveContainerType(list_type, self.__hook_traits)
+            for i in t.iter_nodes(bucket):
+                yield '', self.__hook_traits.node_to_value(i).dereference()
+
+    def to_string(self):
+        return f"ihset<{self.__val.type.strip_typedefs().template_argument(0)}>"
+
 class IntrusiveHashArrayTriePrinter:
     def __init__(self, val):
         self.__val = val
@@ -810,6 +839,7 @@ def build_pretty_printer():
     pp.add_printer('StaticArray', '^StaticArray<', StaticArrayPrinter)
     pp.add_printer('StaticVector', '^StaticVector<', StaticVectorPrinter)
     pp.add_printer('IntrusiveList', '^Intrusive(Forward)?List<', IntrusiveListPrinter)
+    pp.add_printer('IntrusiveHashSet', '^IntrusiveHashSet<', IntrusiveHashSetPrinter)
     pp.add_printer('IntrusiveHashArrayTrie', '^IntrusiveHashArrayTrie<', IntrusiveHashArrayTriePrinter)
     pp.add_printer('StringMap::Item', '^StringMap::Item$', StringMapItemPrinter)
     pp.add_printer('StringMap', '^StringMap$', StringMapPrinter)
