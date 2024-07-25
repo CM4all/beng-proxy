@@ -86,7 +86,11 @@ class IntrusiveContainerType:
         hook_traits_type = list_type.template_argument(1).strip_typedefs()
         hook_traits = hook_traits_type.name
         if m := re.match(r'Intrusive\w+MemberHookTraits<&(\w+)::(\w+)>$', hook_traits):
-            self.__hook_traits = MakeIntrusiveMemberHookTraits(self.value_type, m.group(2))
+            member_ptr = hook_traits_type.template_argument(0)
+            assert(member_ptr.type.code == gdb.TYPE_CODE_MEMBERPTR)
+
+            field_name = str(member_ptr).rsplit('::', 1)[1]
+            self.__hook_traits = MakeIntrusiveMemberHookTraits(self.value_type, field_name)
         elif m := re.match(r'Intrusive\w+BaseHookTraits<', hook_traits):
             tag = hook_traits_type.template_argument(1)
             base_hook = find_intrusive_base_hook(container_type_name, self.value_type, tag)
