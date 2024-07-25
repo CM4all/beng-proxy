@@ -77,10 +77,9 @@ class IntrusiveCastHookTraits:
     def node_to_value(self, node):
         return node.cast(self.__base_hook_pointer_type).cast(self.__value_pointer_type)
 
-def GuessIntrusiveHookTraits(container_type):
+def GuessIntrusiveHookTraits(container_type, hook_traits_type):
     value_type = container_type.template_argument(0)
     container_type_name = container_type.strip_typedefs().tag.split('<', 1)[0]
-    hook_traits_type = container_type.template_argument(1).strip_typedefs()
     hook_traits_name = hook_traits_type.tag.split('<', 1)[0]
     if hook_traits_name == f'{container_type_name}MemberHookTraits':
         member_ptr = hook_traits_type.template_argument(0)
@@ -101,7 +100,7 @@ def GuessIntrusiveHookTraits(container_type):
 class IntrusiveContainerType:
     def __init__(self, list_type, member_hook=None):
         self.value_type = list_type.template_argument(0)
-        self.__hook_traits = GuessIntrusiveHookTraits(list_type)
+        self.__hook_traits = GuessIntrusiveHookTraits(list_type, list_type.template_argument(1).strip_typedefs())
 
     def get_header(self, l):
         return l['head']
