@@ -98,9 +98,9 @@ def GuessIntrusiveHookTraits(container_type, hook_traits_type):
         raise RuntimeError('Could not determine hook traits')
 
 class IntrusiveContainerType:
-    def __init__(self, list_type, member_hook=None):
+    def __init__(self, list_type, hook_traits=None):
         self.value_type = list_type.template_argument(0)
-        self.__hook_traits = GuessIntrusiveHookTraits(list_type, list_type.template_argument(1).strip_typedefs())
+        self.__hook_traits = hook_traits if hook_traits else GuessIntrusiveHookTraits(list_type, list_type.template_argument(1).strip_typedefs())
 
     def get_header(self, l):
         return l['head']
