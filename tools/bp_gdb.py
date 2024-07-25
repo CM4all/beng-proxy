@@ -95,6 +95,8 @@ def GuessIntrusiveHookTraits(container_type):
             raise RuntimeError('No base hook found')
 
         return IntrusiveCastHookTraits(value_type, base_hook)
+    else:
+        raise RuntimeError('Could not determine hook traits')
 
 class IntrusiveContainerType:
     def __init__(self, list_type, member_hook=None):
