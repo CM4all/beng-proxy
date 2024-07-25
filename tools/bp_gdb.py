@@ -133,7 +133,7 @@ class IntrusiveListPrinter:
 
     def children(self):
         for i in self.t.iter_nodes(self.val):
-            yield '', i
+            yield '', i.dereference()
 
     def to_string(self):
         return f"ilist<{self.t.value_type}>"
