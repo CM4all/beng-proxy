@@ -7,6 +7,7 @@
 #include "istream/istream_string.hxx"
 #include "istream/UnusedPtr.hxx"
 #include "lib/zlib/Error.hxx"
+#include "util/ScopeExit.hxx"
 
 #include <zlib.h>
 
@@ -18,6 +19,8 @@ GunzipString(std::string_view src)
 	z_stream z{};
 	if (int result = inflateInit2(&z, 16 + MAX_WBITS); result != Z_OK)
 		throw MakeZlibError(result, "inflateInit2() failed");
+
+	AtScopeExit(&z) { inflateEnd(&z); };
 
 	std::array<char, 8192> dest_buffer;
 	z.next_in = const_cast<Bytef *>(reinterpret_cast<const Bytef *>(src.data()));
