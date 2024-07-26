@@ -120,7 +120,7 @@ private:
 	}
 
 	bool IsCurrent(const Input &input) const noexcept {
-		return &GetCurrent() == &input;
+		return !inputs.empty() && &GetCurrent() == &input;
 	}
 
 	bool IsLast() const noexcept {
