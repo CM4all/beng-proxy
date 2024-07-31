@@ -16,12 +16,14 @@ struct pool;
 struct ChildOptions;
 struct WasSocket;
 class SpawnService;
+class ListenStreamSpawnStock;
 
 /**
  * Launch and manage WAS child processes.
  */
 class WasStock final : StockClass {
 	SpawnService &spawn_service;
+	ListenStreamSpawnStock *const listen_stream_spawn_stock;
 	const SocketDescriptor log_socket;
 	const ChildErrorLogOptions log_options;
 
@@ -38,16 +40,22 @@ class WasStock final : StockClass {
 
 public:
 	explicit WasStock(EventLoop &event_loop, SpawnService &_spawn_service,
+			  ListenStreamSpawnStock *_listen_stream_spawn_stock,
 			  const SocketDescriptor _log_socket,
 			  const ChildErrorLogOptions &_log_options,
 			  unsigned limit, unsigned max_idle) noexcept
 		:spawn_service(_spawn_service),
+		 listen_stream_spawn_stock(_listen_stream_spawn_stock),
 		 log_socket(_log_socket), log_options(_log_options),
 		 stock(event_loop, *this, limit, max_idle,
 		       std::chrono::minutes(10)) {}
 
 	auto &GetSpawnService() const noexcept {
 		return spawn_service;
+	}
+
+	auto *GetListenStreamSpawnStock() const noexcept {
+		return listen_stream_spawn_stock;
 	}
 
 	void FadeAll() noexcept {

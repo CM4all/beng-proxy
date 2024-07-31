@@ -6,16 +6,23 @@
 
 #include "was/async/Socket.hxx"
 #include "spawn/ProcessHandle.hxx"
+#include "util/SharedLease.hxx"
 
 #include <memory>
 #include <span>
 
 class SpawnService;
+class ListenStreamSpawnStock;
 class ChildProcessHandle;
 struct ChildOptions;
 
 struct WasProcess : WasSocket {
 	std::unique_ptr<ChildProcessHandle> handle;
+
+	/**
+	 * A lease obtained from #ListenStreamSpawnStock.
+	 */
+	SharedLease listen_stream_lease;
 
 	WasProcess() = default;
 
@@ -30,6 +37,7 @@ struct WasProcess : WasSocket {
  */
 WasProcess
 was_launch(SpawnService &spawn_service,
+	   ListenStreamSpawnStock *listen_stream_spawn_stock,
 	   const char *name,
 	   const char *executable_path,
 	   std::span<const char *const> args,

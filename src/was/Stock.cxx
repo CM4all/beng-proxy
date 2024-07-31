@@ -37,6 +37,8 @@ class WasChild final : public WasStockConnection, ExitListener {
 
 	std::unique_ptr<ChildProcessHandle> handle;
 
+	SharedLease listen_stream_lease;
+
 	const bool disposable;
 
 public:
@@ -63,6 +65,7 @@ public:
 		    const ChildErrorLogOptions &log_options) {
 		auto process =
 			was_launch(was_stock.GetSpawnService(),
+				   was_stock.GetListenStreamSpawnStock(),
 				   GetStockName(),
 				   params.executable_path,
 				   params.args,
@@ -73,6 +76,8 @@ public:
 
 		handle = std::move(process.handle);
 		handle->SetExitListener(*this);
+
+		listen_stream_lease = std::move(process.listen_stream_lease);
 
 		WasSocket &socket = process;
 		Open(std::move(socket));

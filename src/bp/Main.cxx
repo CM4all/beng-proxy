@@ -442,6 +442,7 @@ try {
 #ifdef HAVE_LIBWAS
 	instance.was_stock = new WasStock(instance.event_loop,
 					  *instance.spawn_service,
+					  instance.listen_stream_spawn_stock.get(),
 					  child_log_socket, child_log_options,
 					  instance.config.was_stock_limit,
 					  instance.config.was_stock_max_idle);

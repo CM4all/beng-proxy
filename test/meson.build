@@ -166,6 +166,7 @@ if libwas.found()
   executable(
     'run_was',
     'run_was.cxx',
+    '../src/spawn/ListenStreamSpawnStock.cxx',
     include_directories: inc,
     dependencies: [
       test_instance_dep,

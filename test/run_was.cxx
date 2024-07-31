@@ -204,7 +204,7 @@ try {
 	LocalSpawnService spawn_service(spawn_config, context.event_loop,
 					child_process_registry);
 
-	context.process = was_launch(spawn_service, "was",
+	context.process = was_launch(spawn_service, nullptr, "was",
 				     argv[1], {},
 				     child_options, {});
 
