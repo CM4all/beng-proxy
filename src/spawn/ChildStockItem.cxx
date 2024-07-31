@@ -48,8 +48,8 @@ ChildStockItem::Spawn(ChildStockClass &cls, void *info,
 	PreparedChildProcess p;
 	Prepare(cls, info, p, close_fds);
 
+	const TempPoolLease tpool;
 	if (p.ns.mount.mount_listen_stream.data() != nullptr) {
-		const TempPoolLease tpool;
 		const AllocatorPtr alloc{tpool};
 
 		/* copy the mount list before editing it, which is
