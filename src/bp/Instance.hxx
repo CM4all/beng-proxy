@@ -26,6 +26,7 @@
 #include "util/Background.hxx"
 
 #include <forward_list>
+#include <list>
 #include <map>
 #include <memory>
 
@@ -98,7 +99,7 @@ struct BpInstance final : PInstance, BengControl::Handler,
 
 	std::map<std::string, BpListenerStats> listener_stats;
 
-	std::forward_list<BpListener> listeners;
+	std::list<BpListener> listeners;
 
 	MultiAccessLogGlue access_log;
 

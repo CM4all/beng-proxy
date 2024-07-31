@@ -4,6 +4,8 @@
 
 #include "LSSHandler.hxx"
 #include "Instance.hxx"
+#include "Listener.hxx"
+#include "LStats.hxx"
 #include "spawn/ExitListener.hxx"
 #include "spawn/Interface.hxx"
 #include "spawn/Prepared.hxx"
@@ -38,6 +40,40 @@ public:
 	// virtual methods from class ExitListener
 	void OnChildProcessExit([[maybe_unused]] int status) noexcept override {
 		handler.OnListenStreamExit();
+	}
+};
+
+class BpListenStreamStockHandler::HttpListener final
+{
+	BpInstance &instance;
+
+	BpListenerConfig config;
+
+	std::list<BpListener>::iterator iterator;
+
+public:
+	HttpListener(BpInstance &_instance,
+		     SocketDescriptor socket,
+		     const TranslateResponse &response) noexcept
+		:instance(_instance)
+	{
+		if (response.listener_tag != nullptr)
+			config.tag = response.listener_tag;
+
+		config.access_logger = false; // TODO?
+
+		instance.listeners.emplace_front(instance,
+						 instance.listener_stats[config.tag],
+						 nullptr,
+						 nullptr, // TODO?
+						 instance.translation_service,
+						 config,
+						 socket.Duplicate());
+		iterator = instance.listeners.begin();
+	}
+
+	~HttpListener() noexcept {
+		instance.listeners.erase(iterator);
 	}
 };
 
@@ -82,6 +118,8 @@ BpListenStreamStockHandler::Handle(const char *socket_path,
 	} else if (response.execute != nullptr) {
 		auto process = DoSpawn(*instance.spawn_service, socket_path, socket, response);
 		return ToDeletePointer(new Process(handler, std::move(process)));
+	} else if (response.accept_http) {
+		return ToDeletePointer(new HttpListener(instance, socket, response));
 	} else
 		throw std::runtime_error("No EXECUTE from translation server");
 }

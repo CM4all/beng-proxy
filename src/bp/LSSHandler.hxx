@@ -12,6 +12,7 @@ class BpListenStreamStockHandler final : public TranslationListenStreamStockHand
 	BpInstance &instance;
 
 	class Process;
+	class HttpListener;
 
 public:
 	explicit BpListenStreamStockHandler(BpInstance &instance) noexcept;

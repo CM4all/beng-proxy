@@ -176,6 +176,9 @@ class Translation(Protocol):
 
         if b'php' in mount_listen_stream:
             response.packet(TRANSLATE_EXECUTE, '/usr/bin/php-cgi')
+        elif b'http' in mount_listen_stream:
+            response.packet(TRANSLATE_ACCEPT_HTTP)
+            response.packet(TRANSLATE_LISTENER_TAG, 'xyz')
         else:
             response.status(404)
         return response
@@ -644,6 +647,21 @@ class Translation(Protocol):
             #response.packet(TRANSLATE_MOUNT_PROC)
             response.packet(TRANSLATE_MOUNT_TMP_TMPFS)
             response.packet(TRANSLATE_MOUNT_LISTEN_STREAM, '/tmp/php/socket')
+        elif uri.startswith('/php-listen-stream/'):
+            document_root = '/var/www'
+            response.packet(TRANSLATE_BASE, '/php-listen-stream/')
+            response.packet(TRANSLATE_EASY_BASE)
+            response.packet(TRANSLATE_REGEX, r'^(.*\.php)$')
+            response.packet(TRANSLATE_REGEX_TAIL)
+            response.packet(TRANSLATE_FASTCGI, document_root + '/')
+            response.packet(TRANSLATE_EXPAND_PATH, document_root + r'/\1')
+            #response.packet(TRANSLATE_SCRIPT_NAME, '/php-listen-stream/')
+            #response.packet(TRANSLATE_PATH_INFO, '')
+            response.packet(TRANSLATE_ACTION, '/usr/bin/php-cgi')
+            response.packet(TRANSLATE_NO_NEW_PRIVS)
+            response.packet(TRANSLATE_USER_NAMESPACE)
+            response.packet(TRANSLATE_MOUNT_TMP_TMPFS)
+            response.packet(TRANSLATE_MOUNT_LISTEN_STREAM, '/tmp/http/socket')
         elif uri[:15] == '/ticket/create/':
             response.packet(TRANSLATE_FASTCGI, os.path.join(ticket_fastcgi_dir,
                                                             'create'))

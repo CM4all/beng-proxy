@@ -1231,8 +1231,17 @@ described in this section.
   it at the specified path into the container.  Once the first process
   connects to this socket, :program:`beng-proxy` sends a request to
   the translation server echoing just this packet; its response may
-  contain ``EXECUTE``, describing a process to be spawned which starts
-  with the listener socket on stdin.
+  contain one of:
+
+  - ``STATUS``: an error condition.
+
+  - ``EXECUTE``: a process to be spawned which starts with the
+    listener socket on stdin.
+
+  - ``ACCEPT_HTTP``: create a transient HTTP listener which receives
+    HTTP requests from the child process; a ``LISTENER_TAG`` packet
+    may be present which will be echoed on all translation requests
+    for this listener.
 
   The payload is the socket path inside the new mount namespace.
   After the socket path, a null byte may follow with opaque data which
