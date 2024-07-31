@@ -319,7 +319,7 @@ FcgiStock::CreateRequest::OnStockItemReady(StockItem &item) noexcept
 void
 FcgiStock::CreateRequest::OnStockItemError(std::exception_ptr error) noexcept
 {
-	handler.OnStockItemError(std::move(error));
+	create.InvokeCreateError(handler, std::move(error));
 	delete this;
 }
 
