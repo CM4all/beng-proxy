@@ -29,7 +29,7 @@ WasStock::WasStockMap::GetLimit(const void *request,
 }
 
 class WasChild final : public WasStockConnection, ExitListener {
-	SpawnService &spawn_service;
+	WasStock &was_stock;
 
 	const std::string tag;
 
@@ -40,9 +40,11 @@ class WasChild final : public WasStockConnection, ExitListener {
 	const bool disposable;
 
 public:
-	explicit WasChild(CreateStockItem c, SpawnService &_spawn_service,
+	explicit WasChild(CreateStockItem c,
+			  WasStock &_was_stock,
 			  std::string_view _tag, bool _disposable) noexcept
-		:WasStockConnection(c), spawn_service(_spawn_service),
+		:WasStockConnection(c),
+		 was_stock(_was_stock),
 		 tag(_tag),
 		 disposable(_disposable)
 	{
@@ -60,7 +62,7 @@ public:
 	void Launch(const CgiChildParams &params, SocketDescriptor log_socket,
 		    const ChildErrorLogOptions &log_options) {
 		auto process =
-			was_launch(spawn_service,
+			was_launch(was_stock.GetSpawnService(),
 				   GetStockName(),
 				   params.executable_path,
 				   params.args,
@@ -120,7 +122,7 @@ WasStock::Create(CreateStockItem c, StockRequest _request,
 
 	assert(params.executable_path != nullptr);
 
-	auto *child = new WasChild(c, spawn_service, params.options.tag, params.disposable);
+	auto *child = new WasChild(c, *this, params.options.tag, params.disposable);
 
 	try {
 		child->Launch(params, log_socket, log_options);
