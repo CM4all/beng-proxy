@@ -436,6 +436,7 @@ try {
 					     instance.config.fcgi_stock_max_idle,
 					     instance.event_loop,
 					     *instance.spawn_service,
+					     instance.listen_stream_spawn_stock.get(),
 					     child_log_socket, child_log_options);
 
 #ifdef HAVE_LIBWAS
