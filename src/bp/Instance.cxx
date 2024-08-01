@@ -40,7 +40,8 @@
 #include "spawn/CgroupWatch.hxx"
 #include "spawn/Client.hxx"
 #include "spawn/Launch.hxx"
-#include "spawn/ListenStreamSpawnStock.hxx"
+#include "spawn/ListenStreamStockHandler.hxx"
+#include "net/ListenStreamStock.hxx"
 #include "access_log/Glue.hxx"
 #include "time/Cast.hxx" // for ToFloatSeconds()
 #include "util/PrintException.hxx"
@@ -151,7 +152,8 @@ BpInstance::FreeStocksAndCaches() noexcept
 	delete std::exchange(remote_was_stock, nullptr);
 #endif
 
-	listen_stream_spawn_stock.reset();
+	listen_stream_stock.reset();
+	spawn_listen_stream_stock_handler.reset();
 
 	delete std::exchange(fs_balancer, nullptr);
 	delete std::exchange(fs_stock, nullptr);
@@ -232,8 +234,8 @@ BpInstance::FadeChildren() noexcept
 	if (delegate_stock != nullptr)
 		delegate_stock->FadeAll();
 
-	if (listen_stream_spawn_stock)
-		listen_stream_spawn_stock->FadeAll();
+	if (listen_stream_stock)
+		listen_stream_stock->FadeAll();
 }
 
 void
@@ -252,8 +254,8 @@ BpInstance::FadeTaggedChildren(std::string_view tag) noexcept
 		multi_was_stock->FadeTag(tag);
 #endif
 
-	if (listen_stream_spawn_stock)
-		listen_stream_spawn_stock->FadeTag(tag);
+	if (listen_stream_stock)
+		listen_stream_stock->FadeTag(tag);
 
 	// TODO: delegate_stock
 }

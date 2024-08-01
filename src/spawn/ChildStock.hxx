@@ -19,7 +19,7 @@ class UniqueSocketDescriptor;
 class FdHolder;
 class EventLoop;
 class SpawnService;
-class ListenStreamSpawnStock;
+class ListenStreamStock;
 class ChildStock;
 class ChildStockItem;
 
@@ -73,7 +73,7 @@ public:
 class ChildStock final : public StockClass {
 	SpawnService &spawn_service;
 
-	ListenStreamSpawnStock *const listen_stream_spawn_stock;
+	ListenStreamStock *const listen_stream_stock;
 
 	ChildStockClass &cls;
 
@@ -91,7 +91,7 @@ class ChildStock final : public StockClass {
 
 public:
 	ChildStock(SpawnService &_spawn_service,
-		   ListenStreamSpawnStock *_listen_stream_spawn_stock,
+		   ListenStreamStock *_listen_stream_stock,
 		   ChildStockClass &_cls,
 		   SocketDescriptor _log_socket,
 		   const ChildErrorLogOptions &_log_options) noexcept;
@@ -101,8 +101,8 @@ public:
 		return spawn_service;
 	}
 
-	auto *GetListenStreamSpawnStock() const noexcept {
-		return listen_stream_spawn_stock;
+	auto *GetListenStreamStock() const noexcept {
+		return listen_stream_stock;
 	}
 
 	auto &GetClass() const noexcept {
@@ -176,7 +176,7 @@ class ChildStockMap final {
 
 public:
 	ChildStockMap(EventLoop &event_loop, SpawnService &_spawn_service,
-		      ListenStreamSpawnStock *_listen_stream_spawn_stock,
+		      ListenStreamStock *_listen_stream_stock,
 		      ChildStockMapClass &_cls,
 		      SocketDescriptor _log_socket,
 		      const ChildErrorLogOptions &_log_options,

@@ -65,7 +65,7 @@ public:
 		    const ChildErrorLogOptions &log_options) {
 		auto process =
 			was_launch(was_stock.GetSpawnService(),
-				   was_stock.GetListenStreamSpawnStock(),
+				   was_stock.GetListenStreamStock(),
 				   GetStockName(),
 				   params.executable_path,
 				   params.args,

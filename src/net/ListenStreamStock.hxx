@@ -7,14 +7,33 @@
 #include "util/IntrusiveHashSet.hxx"
 
 #include <cstddef>
+#include <exception>
 #include <string_view>
 
 struct MountNamespaceOptions;
 class AllocatorPtr;
 class EventLoop;
 class SharedLease;
-class SpawnService;
-class TranslationService;
+class DisposablePointer;
+class CancellablePointer;
+class SocketDescriptor;
+
+class ListenStreamReadyHandler {
+public:
+	virtual void OnListenStreamSuccess(DisposablePointer server,
+					   std::string_view tags) noexcept = 0;
+	virtual void OnListenStreamError(std::exception_ptr error) noexcept = 0;
+	virtual void OnListenStreamExit() noexcept = 0;
+};
+
+class ListenStreamStockHandler {
+public:
+	virtual void OnListenStreamReady(std::string_view key,
+					 const char *socket_path,
+					 SocketDescriptor socket,
+					 ListenStreamReadyHandler &handler,
+					 CancellablePointer &cancel_ptr) noexcept = 0;
+};
 
 /**
  * Manages stream listener sockets and when one becomes ready (because
@@ -23,10 +42,9 @@ class TranslationService;
  *
  * @see TranslationCommand::MOUNT_LISTEN_STREAM
  */
-class ListenStreamSpawnStock {
+class ListenStreamStock {
 	EventLoop &event_loop;
-	TranslationService &translation_service;
-	SpawnService &spawn_service;
+	ListenStreamStockHandler &handler;
 
 	class Item;
 
@@ -45,11 +63,10 @@ class ListenStreamSpawnStock {
 						   std::equal_to<std::string_view>>> items;
 
 public:
-	ListenStreamSpawnStock(EventLoop &_event_loop,
-			       TranslationService &_translation_service,
-			       SpawnService &_spawn_service) noexcept;
+	ListenStreamStock(EventLoop &_event_loop,
+			  ListenStreamStockHandler &_handler) noexcept;
 
-	~ListenStreamSpawnStock() noexcept;
+	~ListenStreamStock() noexcept;
 
 	void FadeAll() noexcept;
 	void FadeTag(std::string_view tag) noexcept;

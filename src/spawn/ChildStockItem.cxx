@@ -4,12 +4,12 @@
 
 #include "ChildStockItem.hxx"
 #include "ChildStock.hxx"
-#include "ListenStreamSpawnStock.hxx"
 #include "pool/tpool.hxx"
 #include "spawn/Interface.hxx"
 #include "spawn/Mount.hxx"
 #include "spawn/Prepared.hxx"
 #include "spawn/ProcessHandle.hxx"
+#include "net/ListenStreamStock.hxx"
 #include "net/EasyMessage.hxx"
 #include "net/SocketError.hxx"
 #include "net/UniqueSocketDescriptor.hxx"
@@ -57,9 +57,8 @@ ChildStockItem::Spawn(ChildStockClass &cls, void *info,
 		   translation cache*/
 		p.ns.mount.mounts = Mount::CloneAll(alloc, p.ns.mount.mounts);
 
-		if (auto *listen_stream_spawn_stock = child_stock.GetListenStreamSpawnStock()) {
-			listen_stream_lease = listen_stream_spawn_stock->Apply(alloc,
-									       p.ns.mount);
+		if (auto *listen_stream_stock = child_stock.GetListenStreamStock()) {
+			listen_stream_lease = listen_stream_stock->Apply(alloc, p.ns.mount);
 		} else
 			throw std::runtime_error{"No ListenStreamSpawnStock"};
 	}

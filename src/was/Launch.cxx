@@ -5,17 +5,17 @@
 #include "Launch.hxx"
 #include "pool/tpool.hxx"
 #include "spawn/Interface.hxx"
-#include "spawn/ListenStreamSpawnStock.hxx"
 #include "spawn/Mount.hxx"
 #include "spawn/Prepared.hxx"
 #include "spawn/ChildOptions.hxx"
+#include "net/ListenStreamStock.hxx"
 #include "net/SocketDescriptor.hxx"
 #include "io/FdHolder.hxx"
 #include "AllocatorPtr.hxx"
 
 static auto
 WasLaunch(SpawnService &spawn_service,
-	  ListenStreamSpawnStock *listen_stream_spawn_stock,
+	  ListenStreamStock *listen_stream_stock,
 	  SharedLease &listen_stream_lease,
 	  const char *name,
 	  const char *executable_path,
@@ -31,8 +31,8 @@ WasLaunch(SpawnService &spawn_service,
 
 	const TempPoolLease tpool;
 	if (p.ns.mount.mount_listen_stream.data() != nullptr) {
-		if (listen_stream_spawn_stock == nullptr)
-			throw std::runtime_error{"No ListenStreamSpawnStock"};
+		if (listen_stream_stock == nullptr)
+			throw std::runtime_error{"No ListenStreamStock"};
 
 		const AllocatorPtr alloc{tpool};
 
@@ -41,8 +41,7 @@ WasLaunch(SpawnService &spawn_service,
 		   translation cache*/
 		p.ns.mount.mounts = Mount::CloneAll(alloc, p.ns.mount.mounts);
 
-		listen_stream_lease = listen_stream_spawn_stock->Apply(alloc,
-								       p.ns.mount);
+		listen_stream_lease = listen_stream_stock->Apply(alloc, p.ns.mount);
 	}
 
 	p.Append(executable_path);
@@ -60,7 +59,7 @@ WasLaunch(SpawnService &spawn_service,
 
 WasProcess
 was_launch(SpawnService &spawn_service,
-	   ListenStreamSpawnStock *listen_stream_spawn_stock,
+	   ListenStreamStock *listen_stream_stock,
 	   const char *name,
 	   const char *executable_path,
 	   std::span<const char *const> args,
@@ -73,7 +72,7 @@ was_launch(SpawnService &spawn_service,
 	process.input.SetNonBlocking();
 	process.output.SetNonBlocking();
 
-	process.handle = WasLaunch(spawn_service, listen_stream_spawn_stock,
+	process.handle = WasLaunch(spawn_service, listen_stream_stock,
 				   process.listen_stream_lease,
 				   name, executable_path, args,
 				   options, std::move(stderr_fd),

@@ -47,7 +47,8 @@
 #include "spawn/CgroupWatch.hxx"
 #include "spawn/Launch.hxx"
 #include "spawn/Client.hxx"
-#include "spawn/ListenStreamSpawnStock.hxx"
+#include "spawn/ListenStreamStockHandler.hxx"
+#include "net/ListenStreamStock.hxx"
 #include "net/SocketAddress.hxx"
 #include "net/StaticSocketAddress.hxx"
 #include "io/Logger.hxx"
@@ -196,8 +197,8 @@ BpInstance::ReloadEventCallback(int) noexcept
 		remote_was_stock->FadeAll();
 #endif
 
-	if (listen_stream_spawn_stock)
-		listen_stream_spawn_stock->FadeAll();
+	if (listen_stream_stock)
+		listen_stream_stock->FadeAll();
 
 	fd_cache.Flush();
 
@@ -418,17 +419,20 @@ try {
 		new WidgetRegistry(instance.root_pool,
 				   *instance.uncached_translation_service);
 
-	if (instance.translation_service != nullptr)
-		instance.listen_stream_spawn_stock = std::make_unique<ListenStreamSpawnStock>(instance.event_loop,
-											      *instance.translation_service,
-											      *instance.spawn_service);
+	if (instance.translation_service != nullptr) {
+		instance.spawn_listen_stream_stock_handler =
+			std::make_unique<SpawnListenStreamStockHandler>(*instance.translation_service,
+									*instance.spawn_service);
+		instance.listen_stream_stock = std::make_unique<ListenStreamStock>(instance.event_loop,
+										   *instance.spawn_listen_stream_stock_handler);
+	}
 
 
 	instance.lhttp_stock = lhttp_stock_new(instance.config.lhttp_stock_limit,
 					       instance.config.lhttp_stock_max_idle,
 					       instance.event_loop,
 					       *instance.spawn_service,
-					       instance.listen_stream_spawn_stock.get(),
+					       instance.listen_stream_stock.get(),
 					       child_log_socket,
 					       child_log_options);
 
@@ -436,13 +440,13 @@ try {
 					     instance.config.fcgi_stock_max_idle,
 					     instance.event_loop,
 					     *instance.spawn_service,
-					     instance.listen_stream_spawn_stock.get(),
+					     instance.listen_stream_stock.get(),
 					     child_log_socket, child_log_options);
 
 #ifdef HAVE_LIBWAS
 	instance.was_stock = new WasStock(instance.event_loop,
 					  *instance.spawn_service,
-					  instance.listen_stream_spawn_stock.get(),
+					  instance.listen_stream_stock.get(),
 					  child_log_socket, child_log_options,
 					  instance.config.was_stock_limit,
 					  instance.config.was_stock_max_idle);

@@ -12,7 +12,7 @@
 #include <span>
 
 class SpawnService;
-class ListenStreamSpawnStock;
+class ListenStreamStock;
 class ChildProcessHandle;
 struct ChildOptions;
 
@@ -20,7 +20,7 @@ struct WasProcess : WasSocket {
 	std::unique_ptr<ChildProcessHandle> handle;
 
 	/**
-	 * A lease obtained from #ListenStreamSpawnStock.
+	 * A lease obtained from #ListenStreamStock.
 	 */
 	SharedLease listen_stream_lease;
 
@@ -37,7 +37,7 @@ struct WasProcess : WasSocket {
  */
 WasProcess
 was_launch(SpawnService &spawn_service,
-	   ListenStreamSpawnStock *listen_stream_spawn_stock,
+	   ListenStreamStock *listen_stream_stock,
 	   const char *name,
 	   const char *executable_path,
 	   std::span<const char *const> args,

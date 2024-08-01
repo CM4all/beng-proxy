@@ -19,7 +19,7 @@ struct LhttpAddress;
 class SocketDescriptor;
 class EventLoop;
 class SpawnService;
-class ListenStreamSpawnStock;
+class ListenStreamStock;
 
 /**
  * Launch and manage "Local HTTP" child processes.
@@ -27,7 +27,7 @@ class ListenStreamSpawnStock;
 LhttpStock *
 lhttp_stock_new(unsigned limit, unsigned max_idle,
 		EventLoop &event_loop, SpawnService &spawn_service,
-		ListenStreamSpawnStock *listen_stream_spawn_stock,
+		ListenStreamStock *listen_stream_stock,
 		SocketDescriptor log_socket,
 		const ChildErrorLogOptions &log_options) noexcept;
 

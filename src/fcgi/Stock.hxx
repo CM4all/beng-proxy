@@ -15,7 +15,7 @@ class FcgiStock;
 struct ChildOptions;
 class EventLoop;
 class SpawnService;
-class ListenStreamSpawnStock;
+class ListenStreamStock;
 class SocketDescriptor;
 class UniqueFileDescriptor;
 
@@ -25,7 +25,7 @@ class UniqueFileDescriptor;
 FcgiStock *
 fcgi_stock_new(unsigned limit, unsigned max_idle,
 	       EventLoop &event_loop, SpawnService &spawn_service,
-	       ListenStreamSpawnStock *listen_stream_spawn_stock,
+	       ListenStreamStock *listen_stream_stock,
 	       SocketDescriptor log_socket,
 	       const ChildErrorLogOptions &log_options) noexcept;
 

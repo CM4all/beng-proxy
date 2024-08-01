@@ -300,6 +300,7 @@ net2 = static_library(
   'src/net/FailureRef.cxx',
   'src/net/TempListener.cxx',
   'src/net/ClientAccounting.cxx',
+  'src/net/ListenStreamStock.cxx',
   include_directories: inc,
 )
 net_dep = declare_dependency(
@@ -437,7 +438,7 @@ istream_spawn = static_library(
   'src/spawn/ChildStock.cxx',
   'src/spawn/ChildStockItem.cxx',
   'src/spawn/ListenChildStock.cxx',
-  'src/spawn/ListenStreamSpawnStock.cxx',
+  'src/spawn/ListenStreamStockHandler.cxx',
   include_directories: inc,
   dependencies: [
     io_dep,

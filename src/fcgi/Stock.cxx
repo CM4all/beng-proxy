@@ -73,7 +73,7 @@ class FcgiStock final : StockClass, ListenChildStockClass {
 public:
 	FcgiStock(unsigned limit, unsigned max_idle,
 		  EventLoop &event_loop, SpawnService &spawn_service,
-		  ListenStreamSpawnStock *listen_stream_spawn_stock,
+		  ListenStreamStock *listen_stream_stock,
 		  SocketDescriptor _log_socket,
 		  const ChildErrorLogOptions &_log_options) noexcept;
 
@@ -396,13 +396,13 @@ FcgiConnection::~FcgiConnection() noexcept
 inline
 FcgiStock::FcgiStock(unsigned limit, unsigned max_idle,
 		     EventLoop &event_loop, SpawnService &spawn_service,
-		     ListenStreamSpawnStock *listen_stream_spawn_stock,
+		     ListenStreamStock *listen_stream_stock,
 		     SocketDescriptor _log_socket,
 		     const ChildErrorLogOptions &_log_options) noexcept
 	:hstock(event_loop, *this, limit, max_idle,
 		std::chrono::minutes(2)),
 	 child_stock(event_loop, spawn_service,
-		     listen_stream_spawn_stock,
+		     listen_stream_stock,
 		     *this,
 		     _log_socket, _log_options,
 		     limit, max_idle) {}
@@ -421,12 +421,12 @@ FcgiStock::FadeTag(std::string_view tag) noexcept
 FcgiStock *
 fcgi_stock_new(unsigned limit, unsigned max_idle,
 	       EventLoop &event_loop, SpawnService &spawn_service,
-	       ListenStreamSpawnStock *listen_stream_spawn_stock,
+	       ListenStreamStock *listen_stream_stock,
 	       SocketDescriptor log_socket,
 	       const ChildErrorLogOptions &log_options) noexcept
 {
 	return new FcgiStock(limit, max_idle, event_loop,
-			     spawn_service, listen_stream_spawn_stock,
+			     spawn_service, listen_stream_stock,
 			     log_socket, log_options);
 }
 
