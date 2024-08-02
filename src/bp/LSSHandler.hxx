@@ -6,18 +6,15 @@
 
 #include "translation/ListenStreamStockHandler.hxx"
 
-class SpawnService;
+struct BpInstance;
 
 class BpListenStreamStockHandler final : public TranslationListenStreamStockHandler {
-	SpawnService &spawn_service;
+	BpInstance &instance;
 
 	class Process;
 
 public:
-	BpListenStreamStockHandler(TranslationService &_translation_service,
-				      SpawnService &_spawn_service) noexcept
-		:TranslationListenStreamStockHandler(_translation_service),
-		 spawn_service(_spawn_service) {}
+	explicit BpListenStreamStockHandler(BpInstance &instance) noexcept;
 
 	// virtual methods from class TranslationListenStreamStockHandler
 	DisposablePointer Handle(const char *socket_path,

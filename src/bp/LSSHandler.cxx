@@ -3,6 +3,7 @@
 // author: Max Kellermann <mk@cm4all.com>
 
 #include "LSSHandler.hxx"
+#include "Instance.hxx"
 #include "spawn/ExitListener.hxx"
 #include "spawn/Interface.hxx"
 #include "spawn/Prepared.hxx"
@@ -12,6 +13,12 @@
 #include "net/SocketDescriptor.hxx"
 #include "io/FdHolder.hxx"
 #include "util/DisposablePointer.hxx"
+
+BpListenStreamStockHandler::BpListenStreamStockHandler(BpInstance &_instance) noexcept
+	:TranslationListenStreamStockHandler(*_instance.translation_service),
+	 instance(_instance)
+{
+}
 
 class BpListenStreamStockHandler::Process final
 	: ExitListener
@@ -73,7 +80,7 @@ BpListenStreamStockHandler::Handle(const char *socket_path,
 		throw FmtRuntimeError("Status {} from translation server",
 				      static_cast<unsigned>(response.status));
 	} else if (response.execute != nullptr) {
-		auto process = DoSpawn(spawn_service, socket_path, socket, response);
+		auto process = DoSpawn(*instance.spawn_service, socket_path, socket, response);
 		return ToDeletePointer(new Process(handler, std::move(process)));
 	} else
 		throw std::runtime_error("No EXECUTE from translation server");
