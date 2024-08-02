@@ -511,6 +511,7 @@ translation2 = static_library(
   'src/translation/Vary.cxx',
   'src/translation/InvalidateParser.cxx',
   'src/translation/CoTranslate.cxx',
+  'src/translation/ListenStreamStockHandler.cxx',
   include_directories: inc,
   dependencies: [
     coroutines_dep,

@@ -4,29 +4,24 @@
 
 #pragma once
 
-#include "net/ListenStreamStock.hxx"
+#include "translation/ListenStreamStockHandler.hxx"
 
-class CancellablePointer;
-class SocketDescriptor;
 class SpawnService;
-class TranslationService;
 
-class SpawnListenStreamStockHandler final : public ListenStreamStockHandler {
-	TranslationService &translation_service;
+class SpawnListenStreamStockHandler final : public TranslationListenStreamStockHandler {
 	SpawnService &spawn_service;
 
 	class Process;
-	class Request;
 
 public:
 	SpawnListenStreamStockHandler(TranslationService &_translation_service,
 				      SpawnService &_spawn_service) noexcept
-		:translation_service(_translation_service),
-		spawn_service(_spawn_service) {}
+		:TranslationListenStreamStockHandler(_translation_service),
+		 spawn_service(_spawn_service) {}
 
-	// virtual methods from class ListenStreamStockHandler
-	void OnListenStreamReady(std::string_view key,
-				 const char *socket_path, SocketDescriptor socket,
-				 ListenStreamReadyHandler &handler,
-				 CancellablePointer &cancel_ptr) noexcept override;
+	// virtual methods from class TranslationListenStreamStockHandler
+	DisposablePointer Handle(const char *socket_path,
+				 SocketDescriptor socket,
+				 const TranslateResponse &response,
+				 ListenStreamReadyHandler &handler) override;
 };
