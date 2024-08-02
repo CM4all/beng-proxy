@@ -47,7 +47,10 @@ class ChildStockItem
 	 */
 	SharedLease listen_stream_lease;
 
-	bool busy = true;
+	enum class State : uint_least8_t {
+		IDLE,
+		BUSY,
+	} state = State::BUSY;
 
 public:
 	ChildStockItem(CreateStockItem c,

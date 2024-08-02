@@ -120,8 +120,8 @@ ChildStockItem::GetStderr() const noexcept
 bool
 ChildStockItem::Borrow() noexcept
 {
-	assert(!busy);
-	busy = true;
+	assert(state == State::IDLE);
+	state = State::BUSY;
 
 	/* remove from ChildStock::idle list */
 	assert(AutoUnlinkIntrusiveListHook::is_linked());
@@ -133,8 +133,8 @@ ChildStockItem::Borrow() noexcept
 bool
 ChildStockItem::Release() noexcept
 {
-	assert(busy);
-	busy = false;
+	assert(state == State::BUSY);
+	state = State::IDLE;
 
 	/* reuse this item only if the child process hasn't exited */
 	if (!handle)
@@ -162,7 +162,7 @@ void
 ChildStockItem::Cancel() noexcept
 {
 	assert(!is_idle);
-	assert(busy);
+	assert(state == State::BUSY);
 	assert(handle);
 
 	delete this;
@@ -174,10 +174,15 @@ ChildStockItem::OnChildProcessExit(int) noexcept
 	assert(handle);
 	handle.reset();
 
-	if (busy)
-		InvokeBusyDisconnect();
-	else
+	switch (state) {
+	case State::IDLE:
 		InvokeIdleDisconnect();
+		break;
+
+	case State::BUSY:
+		InvokeBusyDisconnect();
+		break;
+	}
 }
 
 void
@@ -185,8 +190,13 @@ ChildStockItem::Disconnected() noexcept
 {
 	Fade();
 
-	if (busy)
-		InvokeBusyDisconnect();
-	else
+	switch (state) {
+	case State::IDLE:
 		InvokeIdleDisconnect();
+		break;
+
+	case State::BUSY:
+		InvokeBusyDisconnect();
+		break;
+	}
 }
