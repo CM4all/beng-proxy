@@ -39,18 +39,7 @@ DoSpawn(SpawnService &service, const char *name,
 	SocketDescriptor socket,
 	const TranslateResponse &response)
 {
-	if (response.status != HttpStatus{}) {
-		if (response.message != nullptr)
-			throw FmtRuntimeError("Status {} from translation server: {}",
-					      static_cast<unsigned>(response.status),
-					      response.message);
-
-		throw FmtRuntimeError("Status {} from translation server",
-				      static_cast<unsigned>(response.status));
-	}
-
-	if (response.execute == nullptr)
-		throw std::runtime_error("No EXECUTE from translation server");
+	assert(response.execute != nullptr);
 
 	PreparedChildProcess p;
 	p.stdin_fd = socket.ToFileDescriptor();
@@ -75,6 +64,17 @@ BpListenStreamStockHandler::Handle(const char *socket_path,
 				   const TranslateResponse &response,
 				   ListenStreamReadyHandler &handler)
 {
-	auto process = DoSpawn(spawn_service, socket_path, socket, response);
-	return ToDeletePointer(new Process(handler, std::move(process)));
+	if (response.status != HttpStatus{}) {
+		if (response.message != nullptr)
+			throw FmtRuntimeError("Status {} from translation server: {}",
+					      static_cast<unsigned>(response.status),
+					      response.message);
+
+		throw FmtRuntimeError("Status {} from translation server",
+				      static_cast<unsigned>(response.status));
+	} else if (response.execute != nullptr) {
+		auto process = DoSpawn(spawn_service, socket_path, socket, response);
+		return ToDeletePointer(new Process(handler, std::move(process)));
+	} else
+		throw std::runtime_error("No EXECUTE from translation server");
 }
