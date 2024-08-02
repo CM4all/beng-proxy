@@ -7,6 +7,7 @@
 #include "LStats.hxx"
 #include "Connection.hxx"
 #include "PerSite.hxx"
+#include "LSSHandler.hxx"
 #include "memory/fb_pool.hxx"
 #include "event/net/control/Server.hxx"
 #include "cluster/TcpBalancer.hxx"
@@ -40,7 +41,6 @@
 #include "spawn/CgroupWatch.hxx"
 #include "spawn/Client.hxx"
 #include "spawn/Launch.hxx"
-#include "spawn/ListenStreamStockHandler.hxx"
 #include "net/ListenStreamStock.hxx"
 #include "access_log/Glue.hxx"
 #include "time/Cast.hxx" // for ToFloatSeconds()

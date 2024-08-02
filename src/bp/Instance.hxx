@@ -60,7 +60,7 @@ class TranslationStockBuilder;
 class TranslationCacheBuilder;
 class MultiTranslationService;
 class WidgetRegistry;
-class SpawnListenStreamStockHandler;
+class BpListenStreamStockHandler;
 class ListenStreamStock;
 class LhttpStock;
 class FcgiStock;
@@ -180,7 +180,7 @@ struct BpInstance final : PInstance, BengControl::Handler,
 
 	std::unique_ptr<EncodingCache> encoding_cache;
 
-	std::unique_ptr<SpawnListenStreamStockHandler> spawn_listen_stream_stock_handler;
+	std::unique_ptr<BpListenStreamStockHandler> spawn_listen_stream_stock_handler;
 	std::unique_ptr<ListenStreamStock> listen_stream_stock;
 
 	LhttpStock *lhttp_stock = nullptr;

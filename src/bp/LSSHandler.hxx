@@ -8,13 +8,13 @@
 
 class SpawnService;
 
-class SpawnListenStreamStockHandler final : public TranslationListenStreamStockHandler {
+class BpListenStreamStockHandler final : public TranslationListenStreamStockHandler {
 	SpawnService &spawn_service;
 
 	class Process;
 
 public:
-	SpawnListenStreamStockHandler(TranslationService &_translation_service,
+	BpListenStreamStockHandler(TranslationService &_translation_service,
 				      SpawnService &_spawn_service) noexcept
 		:TranslationListenStreamStockHandler(_translation_service),
 		 spawn_service(_spawn_service) {}

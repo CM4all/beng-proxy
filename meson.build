@@ -438,7 +438,6 @@ istream_spawn = static_library(
   'src/spawn/ChildStock.cxx',
   'src/spawn/ChildStockItem.cxx',
   'src/spawn/ListenChildStock.cxx',
-  'src/spawn/ListenStreamStockHandler.cxx',
   include_directories: inc,
   dependencies: [
     io_dep,
@@ -621,6 +620,7 @@ executable(
   'src/bp/Connection.cxx',
   'src/bp/RLogger.cxx',
   'src/bp/drop.cxx',
+  'src/bp/LSSHandler.cxx',
   'src/uri/Relocate.cxx',
   'src/http/cache/FilterCache.cxx',
   'src/http/cache/EncodingCache.cxx',

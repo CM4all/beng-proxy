@@ -2,7 +2,7 @@
 // Copyright CM4all GmbH
 // author: Max Kellermann <mk@cm4all.com>
 
-#include "ListenStreamStockHandler.hxx"
+#include "LSSHandler.hxx"
 #include "spawn/ExitListener.hxx"
 #include "spawn/Interface.hxx"
 #include "spawn/Prepared.hxx"
@@ -13,7 +13,7 @@
 #include "io/FdHolder.hxx"
 #include "util/DisposablePointer.hxx"
 
-class SpawnListenStreamStockHandler::Process final
+class BpListenStreamStockHandler::Process final
 	: ExitListener
 {
 	ListenStreamReadyHandler &handler;
@@ -69,12 +69,11 @@ DoSpawn(SpawnService &service, const char *name,
 	return service.SpawnChildProcess(name, std::move(p));
 }
 
-
 DisposablePointer
-SpawnListenStreamStockHandler::Handle(const char *socket_path,
-				      SocketDescriptor socket,
-				      const TranslateResponse &response,
-				      ListenStreamReadyHandler &handler)
+BpListenStreamStockHandler::Handle(const char *socket_path,
+				   SocketDescriptor socket,
+				   const TranslateResponse &response,
+				   ListenStreamReadyHandler &handler)
 {
 	auto process = DoSpawn(spawn_service, socket_path, socket, response);
 	return ToDeletePointer(new Process(handler, std::move(process)));
