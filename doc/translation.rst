@@ -1241,7 +1241,8 @@ described in this section.
   - ``ACCEPT_HTTP``: create a transient HTTP listener which receives
     HTTP requests from the child process; a ``LISTENER_TAG`` packet
     may be present which will be echoed on all translation requests
-    for this listener.
+    for this listener.  If ``STATS_TAG`` is present, it will be used
+    instead of ``LISTENER_TAG`` for Prometheus metrics.
 
   The payload is the socket path inside the new mount namespace.
   After the socket path, a null byte may follow with opaque data which

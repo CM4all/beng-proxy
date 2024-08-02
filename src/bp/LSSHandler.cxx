@@ -63,7 +63,7 @@ public:
 		config.access_logger = false; // TODO?
 
 		instance.listeners.emplace_front(instance,
-						 instance.listener_stats[config.tag],
+						 response.stats_tag != nullptr ? instance.listener_stats[response.stats_tag] : instance.listener_stats[config.tag],
 						 nullptr,
 						 nullptr, // TODO?
 						 instance.translation_service,
