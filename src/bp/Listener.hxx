@@ -6,10 +6,12 @@
 
 #include "fs/Listener.hxx"
 #include "net/StaticSocketAddress.hxx"
+#include "util/IntrusiveList.hxx"
 #include "config.h"
 
 #include <memory>
 
+struct BpConnection;
 struct BpInstance;
 struct BpListenerConfig;
 struct BpListenerStats;
@@ -46,6 +48,11 @@ class BpListener final : FilteredSocketListenerHandler {
 #ifdef HAVE_AVAHI
 	const std::unique_ptr<Avahi::Service> avahi_service;
 #endif
+
+	IntrusiveList<
+		BpConnection,
+		IntrusiveListBaseHookTraits<BpConnection>,
+		IntrusiveListOptions{.constant_time_size = true}> connections;
 
 public:
 	BpListener(BpInstance &_instance,
@@ -107,6 +114,22 @@ public:
 	TranslationService &GetTranslationService() const noexcept {
 		return *translation_service;
 	}
+
+	std::size_t GetConnectionCount() const noexcept {
+		return connections.size();
+	}
+
+	void CloseConnection(BpConnection &connection) noexcept;
+
+	/**
+	 * Drop client connections, starting with the lowest score
+	 * (see http_server_connection_score()).  This is used to
+	 * relieve some of the load on an overloaded machine
+	 * (e.g. when the number of connections exceeds the configured
+	 * limit).
+	 *
+	 * @return the number of connections which were dropped
+ */	std::size_t DropSomeConnections() noexcept;
 
 private:
 	std::unique_ptr<Avahi::Service> MakeAvahiService(const BpListenerConfig &config) const noexcept;

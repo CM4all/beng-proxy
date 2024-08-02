@@ -89,6 +89,8 @@ BpListener::BpListener(BpInstance &_instance,
 
 BpListener::~BpListener() noexcept
 {
+	connections.clear_and_dispose(BpConnection::Disposer());
+
 #ifdef HAVE_AVAHI
 	if (avahi_service)
 		instance.GetAvahiPublisher().RemoveService(*avahi_service);
@@ -117,14 +119,35 @@ BpListener::OnFilteredSocketConnect(PoolPtr pool,
 				    SocketAddress address,
 				    const SslFilter *ssl_filter) noexcept
 {
-	new_connection(std::move(pool), instance, *this,
-		       prometheus_exporter.get(),
-		       std::move(socket), ssl_filter,
-		       address);
+	if (GetConnectionCount() >= instance.config.max_connections) {
+		unsigned num_dropped = DropSomeConnections();
+
+		if (num_dropped == 0) {
+			LogConcat(1, "connection", "too many connections (",
+				  unsigned(GetConnectionCount()),
+				  ", dropping");
+			return;
+		}
+	}
+
+	auto *connection = new_connection(std::move(pool), instance, *this,
+					  prometheus_exporter.get(),
+					  std::move(socket), ssl_filter,
+					  address);
+	connections.push_front(*connection);
 }
 
 void
 BpListener::OnFilteredSocketError(std::exception_ptr ep) noexcept
 {
 	LogConcat(2, "listener", ep);
+}
+
+void
+BpListener::CloseConnection(BpConnection &connection) noexcept
+{
+	assert(!connections.empty());
+
+	connections.erase_and_dispose(connections.iterator_to(connection),
+				      BpConnection::Disposer{});
 }

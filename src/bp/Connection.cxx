@@ -11,7 +11,6 @@
 #include "http/server/Public.hxx"
 #include "http/server/Handler.hxx"
 #include "http/server/Error.hxx"
-#include "drop.hxx"
 #include "address_string.hxx"
 #include "pool/UniquePtr.hxx"
 #include "fs/FilteredSocket.hxx"
@@ -65,15 +64,6 @@ void
 BpConnection::Disposer::operator()(BpConnection *c) noexcept
 {
 	c->~BpConnection();
-}
-
-void
-close_connection(BpConnection *connection) noexcept
-{
-	auto &connections = connection->instance.connections;
-	assert(!connections.empty());
-	connections.erase_and_dispose(connections.iterator_to(*connection),
-				      BpConnection::Disposer());
 }
 
 [[gnu::pure]]
@@ -133,7 +123,7 @@ BpConnection::HttpConnectionError(std::exception_ptr e) noexcept
 
 	logger(HttpServerLogLevel(e), e);
 
-	close_connection(this);
+	listener.CloseConnection(*this);
 }
 
 void
@@ -141,7 +131,7 @@ BpConnection::HttpConnectionClosed() noexcept
 {
 	http = nullptr;
 
-	close_connection(this);
+	listener.CloseConnection(*this);
 }
 
 /*
@@ -149,31 +139,19 @@ BpConnection::HttpConnectionClosed() noexcept
  *
  */
 
-void
+BpConnection *
 new_connection(PoolPtr pool, BpInstance &instance, BpListener &listener,
 	       HttpServerRequestHandler *request_handler,
 	       UniquePoolPtr<FilteredSocket> socket,
 	       const SslFilter *ssl_filter,
 	       SocketAddress address) noexcept
 {
-	if (instance.connections.size() >= instance.config.max_connections) {
-		unsigned num_dropped = drop_some_connections(&instance);
-
-		if (num_dropped == 0) {
-			LogConcat(1, "connection", "too many connections (",
-				  unsigned(instance.connections.size()),
-				  ", dropping");
-			return;
-		}
-	}
-
 	/* determine the local socket address */
 	const auto local_address = socket->GetSocket().GetLocalAddress();
 
 	auto *connection = NewFromPool<BpConnection>(std::move(pool), instance,
 						     listener,
 						     address, ssl_filter);
-	instance.connections.push_front(*connection);
 
 	if (request_handler == nullptr)
 		request_handler = connection;
@@ -198,4 +176,6 @@ new_connection(PoolPtr pool, BpInstance &instance, BpListener &listener,
 						   true,
 						   *connection,
 						   *request_handler);
+
+	return connection;
 }

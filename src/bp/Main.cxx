@@ -139,8 +139,6 @@ BpInstance::ShutdownCallback() noexcept
 
 	listeners.clear();
 
-	connections.clear_and_dispose(BpConnection::Disposer());
-
 	pool_commit();
 
 #ifdef HAVE_AVAHI

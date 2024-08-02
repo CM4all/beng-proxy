@@ -24,7 +24,6 @@
 #include "io/FdCache.hxx"
 #include "io/StateDirectories.hxx"
 #include "util/Background.hxx"
-#include "util/IntrusiveList.hxx"
 
 #include <forward_list>
 #include <map>
@@ -71,7 +70,6 @@ class SessionManager;
 class BpListener;
 class BpPerSite;
 class BpPerSiteMap;
-struct BpConnection;
 struct BpListenerStats;
 namespace NgHttp2 { class Stock; }
 namespace Avahi { class Client; class Publisher; }
@@ -101,11 +99,6 @@ struct BpInstance final : PInstance, BengControl::Handler,
 	std::map<std::string, BpListenerStats> listener_stats;
 
 	std::forward_list<BpListener> listeners;
-
-	IntrusiveList<
-		BpConnection,
-		IntrusiveListBaseHookTraits<BpConnection>,
-		IntrusiveListOptions{.constant_time_size = true}> connections;
 
 	MultiAccessLogGlue access_log;
 

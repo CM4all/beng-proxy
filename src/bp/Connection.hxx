@@ -72,13 +72,10 @@ struct BpConnection final
 	void HttpConnectionClosed() noexcept override;
 };
 
-void
+BpConnection *
 new_connection(PoolPtr pool, BpInstance &instance,
 	       BpListener &listener,
 	       HttpServerRequestHandler *request_handler,
 	       UniquePoolPtr<FilteredSocket> socket,
 	       const SslFilter *ssl_filter,
 	       SocketAddress address) noexcept;
-
-void
-close_connection(BpConnection *connection) noexcept;
