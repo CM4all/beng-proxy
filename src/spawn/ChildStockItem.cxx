@@ -149,12 +149,25 @@ ChildStockItem::Release() noexcept
 void
 ChildStockItem::OnSpawnSuccess() noexcept
 {
+	assert(state == State::CREATE);
+
+	if (!handle || IsFading()) {
+		/* meanwhile, OnChildProcessExit() or Disconnected()
+                   has been called; we can't use this process */
+		InvokeCreateError(*handler, std::make_exception_ptr(std::runtime_error{"Child process exited prematurely"}));
+		return;
+	}
+
+	state = State::BUSY;
+
 	InvokeCreateSuccess(*handler);
 }
 
 void
 ChildStockItem::OnSpawnError(std::exception_ptr error) noexcept
 {
+	assert(state == State::CREATE);
+
 	InvokeCreateError(*handler, std::move(error));
 }
 
@@ -175,6 +188,10 @@ ChildStockItem::OnChildProcessExit(int) noexcept
 	handle.reset();
 
 	switch (state) {
+	case State::CREATE:
+		// will be handled by OnSpawnSuccess()
+		break;
+
 	case State::IDLE:
 		InvokeIdleDisconnect();
 		break;
@@ -191,6 +208,10 @@ ChildStockItem::Disconnected() noexcept
 	Fade();
 
 	switch (state) {
+	case State::CREATE:
+		// will be handled by OnSpawnSuccess()
+		break;
+
 	case State::IDLE:
 		InvokeIdleDisconnect();
 		break;

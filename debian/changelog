@@ -2,6 +2,7 @@ cm4all-beng-proxy (18.0.85) unstable; urgency=low
 
   * fcgi: fix crash bug on error during early process initialization
   * fcgi, was: add MOUNT_LISTEN_STREAM support
+  * fcgi, was, lhttp: fix assertion failure
   * translation: add packet ACCEPT_HTTP
 
  --   
