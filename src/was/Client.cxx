@@ -377,11 +377,11 @@ private:
 	void OnWasControlDone() noexcept override {
 		assert(request.body == nullptr);
 		assert(response.body == nullptr);
-		assert(!control.IsDefined());
+		assert(control.IsDefined());
 	}
 
 	void OnWasControlError(std::exception_ptr ep) noexcept override {
-		assert(!control.IsDefined());
+		assert(control.IsDefined());
 
 		if (ignore_control_errors) {
 			ClearUnused();

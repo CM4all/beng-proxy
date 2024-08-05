@@ -409,13 +409,13 @@ WasServer::OnWasControlDrained() noexcept
 void
 WasServer::OnWasControlDone() noexcept
 {
-	assert(!control.IsDefined());
+	assert(control.IsDefined());
 }
 
 void
 WasServer::OnWasControlError(std::exception_ptr ep) noexcept
 {
-	assert(!control.IsDefined());
+	assert(control.IsDefined());
 
 	AbortError(ep);
 }
