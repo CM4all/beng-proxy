@@ -1,5 +1,6 @@
 cm4all-beng-proxy (18.0.86) unstable; urgency=low
 
+  * http_server: fix assertion failure on malformed request line
   * certdb: fix assertion failure after database error
 
  --   

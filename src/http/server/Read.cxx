@@ -135,14 +135,14 @@ HttpServerConnection::ParseRequestLine(std::string_view line) noexcept
 	}
 
 	const auto [method, rest] = ParseHttpMethod(line.data());
-	line.remove_prefix(rest - line.data());
-
 	if (method == HttpMethod{}) {
 		/* invalid request method */
 
 		ProtocolError("unrecognized request method");
 		return false;
 	}
+
+	line.remove_prefix(rest - line.data());
 
 	const auto space = line.find(' ');
 	if (space == line.npos || space + 6 > line.size() ||
