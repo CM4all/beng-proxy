@@ -465,11 +465,11 @@ FcgiStock::Get(const ChildOptions &options,
 	const TempPoolLease tpool;
 
 	auto r = ToDeletePointer(new CgiChildParams(executable_path,
-	args, options,
-	parallelism, 0, false));
+						    args, options,
+						    parallelism, 0, false));
 	const char *key = r->GetStockKey(*tpool);
 	hstock.Get(key, std::move(r),
-		   handler, cancel_ptr);
+			handler, cancel_ptr);
 }
 
 void
