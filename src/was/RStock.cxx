@@ -148,11 +148,9 @@ RemoteWasStock::Get(AllocatorPtr alloc, SocketAddress address,
 	r->parallelism = parallelism;
 	r->concurrency = concurrency;
 
-	char buffer[1024];
-	if (!ToString(buffer, address))
-		buffer[0] = 0;
-
-	const char *key = alloc.Dup(buffer);
+	char key[1024];
+	if (!ToString(key, address))
+		key[0] = 0;
 
 	multi_stock.Get(key, std::move(r), concurrency, handler, cancel_ptr);
 }
