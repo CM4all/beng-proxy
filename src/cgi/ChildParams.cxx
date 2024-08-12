@@ -9,6 +9,7 @@
 
 CgiChildParams::CgiChildParams(AllocatorPtr alloc, const CgiChildParams &src) noexcept
 	:executable_path(alloc.Dup(src.executable_path)),
+	 args(alloc.CloneStringArray(src.args)),
 	 options(*alloc.New<ChildOptions>(alloc, src.options)),
 	 parallelism(src.parallelism),
 	 concurrency(src.concurrency),
