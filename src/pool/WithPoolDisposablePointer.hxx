@@ -7,6 +7,7 @@
 #include "Holder.hxx"
 #include "util/Cast.hxx"
 #include "util/DisposablePointer.hxx"
+#include "util/LeakDetector.hxx"
 
 /**
  * Helper class which creates a #DisposablePointer pointing to an
@@ -15,7 +16,7 @@
  * unreferences the pool.
  */
 template<typename T>
-class WithPoolDisposablePointer final : PoolHolder {
+class WithPoolDisposablePointer final : PoolHolder, LeakDetector {
 	[[no_unique_address]]
 	T value;
 
