@@ -162,7 +162,7 @@ CgiAddress::Check(bool is_was) const
 	options.Check();
 }
 
-CgiAddress *
+inline CgiAddress *
 CgiAddress::Clone(AllocatorPtr alloc) const noexcept
 {
 	return alloc.New<CgiAddress>(alloc, *this);
