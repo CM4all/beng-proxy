@@ -194,6 +194,7 @@ public:
 	bool Release() noexcept override;
 
 private:
+	void Read() noexcept;
 	void OnSocketEvent(unsigned events) noexcept;
 };
 
@@ -202,8 +203,8 @@ private:
  *
  */
 
-void
-FcgiConnection::OnSocketEvent(unsigned) noexcept
+inline void
+FcgiConnection::Read() noexcept
 {
 	std::byte buffer[1];
 	ssize_t nbytes = GetSocket().ReadNoWait(buffer);
@@ -211,7 +212,12 @@ FcgiConnection::OnSocketEvent(unsigned) noexcept
 		logger(2, "error on idle FastCGI connection: ", strerror(errno));
 	else if (nbytes > 0)
 		logger(2, "unexpected data from idle FastCGI connection");
+}
 
+inline void
+FcgiConnection::OnSocketEvent(unsigned) noexcept
+{
+	Read();
 	InvokeIdleDisconnect();
 }
 
