@@ -175,7 +175,7 @@ void
 ChildStockItem::Cancel() noexcept
 {
 	assert(!is_idle);
-	assert(state == State::BUSY);
+	assert(state == State::CREATE);
 	assert(handle);
 
 	delete this;
