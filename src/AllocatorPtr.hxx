@@ -145,6 +145,18 @@ public:
 		return {dest, src.size()};
 	}
 
+	std::span<const char *const> CloneStringArray(std::span<const char *const> src) const noexcept {
+		if (src.data() == nullptr)
+			return {};
+
+		auto *dest = NewArray<const char *>(src.size());
+		std::transform(src.begin(), src.end(), dest, [this](const char *s){
+			return CheckDup(s);
+		});
+
+		return {dest, src.size()};
+	}
+
 	std::string_view Dup(std::string_view src) const noexcept;
 	const char *DupZ(std::string_view src) const noexcept;
 
