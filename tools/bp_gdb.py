@@ -102,11 +102,12 @@ class IntrusiveContainerType:
         self.value_type = list_type.template_argument(0)
         self.__hook_traits = hook_traits if hook_traits else GuessIntrusiveHookTraits(list_type, list_type.template_argument(1).strip_typedefs())
 
-    def get_header(self, l):
-        return l['head']
-
     def node_to_value(self, node):
         return self.__hook_traits.node_to_value(node)
+
+class IntrusiveListType(IntrusiveContainerType):
+    def get_header(self, l):
+        return l['head']
 
     def iter_nodes(self, l):
         root = self.get_header(l)
@@ -126,7 +127,7 @@ class IntrusiveContainerType:
 
 class IntrusiveListPrinter:
     def __init__(self, val):
-        self.t = IntrusiveContainerType(val.type)
+        self.t = IntrusiveListType(val.type)
         self.val = val
 
     def display_hint(self):
@@ -145,7 +146,7 @@ def for_each_intrusive_list_item(l, member_hook=None):
         yield t.node_to_value(node).dereference()
 
 def for_each_intrusive_list_item_reverse(l, member_hook=None):
-    t = IntrusiveContainerType(l.type, member_hook=member_hook)
+    t = IntrusiveListType(l.type, member_hook=member_hook)
     for node in t.iter_nodes_reverse(l):
         yield t.node_to_value(node).dereference()
 
@@ -171,7 +172,7 @@ class IntrusiveHashSetPrinter:
         for i in range(table_size):
             bucket = table['_M_elems'][i]
             list_type = get_basic_type(bucket.type)
-            t = IntrusiveContainerType(list_type, self.__hook_traits)
+            t = IntrusiveListType(list_type, self.__hook_traits)
             for i in t.iter_nodes(bucket):
                 yield '', self.__hook_traits.node_to_value(i).dereference()
 
