@@ -8,8 +8,8 @@
 #include "event/net/ConnectSocket.hxx"
 #include "event/CoarseTimerEvent.hxx"
 #include "event/DeferEvent.hxx"
+#include "net/ConnectSocketX.hxx"
 #include "net/SocketAddress.hxx"
-#include "net/SocketError.hxx"
 #include "net/SocketProtocolError.hxx"
 #include "net/TimeoutError.hxx"
 #include "net/UniqueSocketDescriptor.hxx"
@@ -116,40 +116,16 @@ try {
 		? FD_SOCKET
 		: FD_TCP;
 
-	UniqueSocketDescriptor fd;
-
-	if (!fd.CreateNonBlock(address_family, SOCK_STREAM, 0))
-		throw MakeSocketError("Failed to create socket");
-
-	if ((address_family == PF_INET || address_family == PF_INET6) &&
-	    !fd.SetNoDelay())
-		throw MakeSocketError("Failed to set TCP_NODELAY");
-
-	if (ip_transparent && !fd.SetBoolOption(SOL_IP, IP_TRANSPARENT, true))
-		throw MakeSocketError("Failed to set IP_TRANSPARENT");
-
-	if (!bind_address.IsNull() && bind_address.IsDefined()) {
-		if (bind_address.HasPort() && bind_address.GetPort() == 0)
-			/* delay port allocation to avoid running out
-			   of ports (EADDRINUSE) */
-			fd.SetBoolOption(SOL_IP, IP_BIND_ADDRESS_NO_PORT,
-					 true);
-
-		if (!fd.Bind(bind_address))
-			throw MakeSocketError("Failed to bind socket");
-	}
-
-	if (fd.Connect(address)) {
+	auto [fd, completed] = CreateConnectSocketNonBlock(address_family, SOCK_STREAM, 0,
+							   ip_transparent,
+							   bind_address,
+							   address);
+	if (completed) {
 		OnSocketConnectSuccess(std::move(fd));
-		return;
+	} else {
+		connect_socket.WaitConnected(std::move(fd), Event::Duration(-1));
+		timeout_event.Schedule(timeout);
 	}
-
-	const auto e = GetSocketError();
-	if (!IsSocketErrorConnectWouldBlock(e))
-		throw MakeSocketError(e, "Failed to connect");
-
-	connect_socket.WaitConnected(std::move(fd), Event::Duration(-1));
-	timeout_event.Schedule(timeout);
 } catch (...) {
 	stopwatch.RecordEvent("error");
 	handler.OnConnectFilteredSocketError(std::current_exception());

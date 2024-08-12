@@ -301,6 +301,7 @@ net2 = static_library(
   'src/net/TempListener.cxx',
   'src/net/ClientAccounting.cxx',
   'src/net/ListenStreamStock.cxx',
+  'src/net/ConnectSocketX.cxx',
   include_directories: inc,
 )
 net_dep = declare_dependency(

@@ -3,19 +3,14 @@
 // author: Max Kellermann <mk@cm4all.com>
 
 #include "PConnectSocket.hxx"
+#include "ConnectSocketX.hxx"
 #include "net/SocketAddress.hxx"
-#include "net/SocketError.hxx"
 #include "net/UniqueSocketDescriptor.hxx"
 #include "stopwatch.hxx"
 #include "AllocatorPtr.hxx"
 #include "util/Cancellable.hxx"
 
 #include <assert.h>
-#include <stddef.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <string.h>
-#include <unistd.h>
 
 class PConnectSocket final : Cancellable, ConnectSocketHandler {
 	ConnectSocket connect;
@@ -122,51 +117,22 @@ client_socket_new(EventLoop &event_loop, AllocatorPtr alloc,
 		  Event::Duration timeout,
 		  ConnectSocketHandler &handler,
 		  CancellablePointer &cancel_ptr)
-{
-	assert(!address.IsNull());
+try {
+	auto [fd, completed] = CreateConnectSocketNonBlock(domain, type, protocol,
+							   ip_transparent,
+							   bind_address, address);
 
-	UniqueSocketDescriptor fd;
-	if (!fd.CreateNonBlock(domain, type, protocol)) {
-		handler.OnSocketConnectError(std::make_exception_ptr(MakeSocketError("Failed to create socket")));
-		return;
-	}
-
-	if ((domain == PF_INET || domain == PF_INET6) && type == SOCK_STREAM &&
-	    !fd.SetNoDelay()) {
-		handler.OnSocketConnectError(std::make_exception_ptr(MakeSocketError("Failed to set TCP_NODELAY")));
-		return;
-	}
-
-	if (ip_transparent && !fd.SetBoolOption(SOL_IP, IP_TRANSPARENT, true)) {
-		handler.OnSocketConnectError(std::make_exception_ptr(MakeSocketError("Failed to set IP_TRANSPARENT")));
-		return;
-	}
-
-	if (!bind_address.IsNull() && bind_address.IsDefined()) {
-		if (bind_address.HasPort() && bind_address.GetPort() == 0)
-			/* delay port allocation to avoid running out
-			   of ports (EADDRINUSE) */
-			fd.SetBoolOption(SOL_IP, IP_BIND_ADDRESS_NO_PORT,
-					 true);
-
-		if (!fd.Bind(bind_address)) {
-			handler.OnSocketConnectError(std::make_exception_ptr(MakeSocketError("Failed to bind socket")));
-			return;
-		}
-	}
-
-	if (fd.Connect(address)) {
+	if (completed) {
 		stopwatch.RecordEvent("connect");
 
 		handler.OnSocketConnectSuccess(std::move(fd));
 	} else {
-		const auto e = GetSocketError();
-		if (IsSocketErrorConnectWouldBlock(e))
-			alloc.New<PConnectSocket>(event_loop,
-						  std::move(fd), timeout,
-						  std::move(stopwatch),
-						  handler, cancel_ptr);
-		else
-			handler.OnSocketConnectError(std::make_exception_ptr(MakeSocketError(e, "Failed to connect")));
+		alloc.New<PConnectSocket>(event_loop,
+					  std::move(fd),
+					  timeout,
+					  std::move(stopwatch),
+					  handler, cancel_ptr);
 	}
+} catch (...) {
+	handler.OnSocketConnectError(std::current_exception());
 }
