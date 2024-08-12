@@ -109,9 +109,6 @@ private:
 		    CancellablePointer &cancel_ptr) override;
 
 	/* virtual methods from class ChildStockClass */
-	std::size_t GetChildLimit(const void *request,
-				  std::size_t _limit) const noexcept override;
-	Event::Duration GetChildClearInterval(const void *info) const noexcept override;
 	bool WantStderrFd(const void *info) const noexcept override;
 	bool WantStderrPond(const void *info) const noexcept override;
 
@@ -122,6 +119,11 @@ private:
 	std::string_view GetChildTag(const void *info) const noexcept override;
 	void PrepareChild(const void *info, PreparedChildProcess &p,
 			  FdHolder &close_fds) override;
+
+	/* virtual methods from class ChildStockMapClass */
+	std::size_t GetChildLimit(const void *request,
+				  std::size_t _limit) const noexcept override;
+	Event::Duration GetChildClearInterval(const void *info) const noexcept override;
 
 	/* virtual methods from class ListenChildStockClass */
 	void PrepareListenChild(const void *info, UniqueSocketDescriptor fd,
