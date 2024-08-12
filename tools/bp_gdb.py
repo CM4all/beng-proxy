@@ -125,6 +125,14 @@ class IntrusiveListType(IntrusiveContainerType):
             yield node
             node = node['prev']
 
+    def iter_items(self, l):
+        for node in self.iter_nodes(l):
+            yield self.node_to_value(node).dereference()
+
+    def iter_items_reverse(self, l):
+        for node in self.iter_nodes_reverse(l):
+            yield self.node_to_value(node).dereference()
+
 class IntrusiveListPrinter:
     def __init__(self, val):
         self.t = IntrusiveListType(val.type)
@@ -134,21 +142,19 @@ class IntrusiveListPrinter:
         return 'array'
 
     def children(self):
-        for i in self.t.iter_nodes(self.val):
-            yield '', self.t.node_to_value(i).dereference()
+        for i in self.t.iter_items(self.val):
+            yield '', i
 
     def to_string(self):
         return f"ilist<{self.t.value_type}>"
 
 def for_each_intrusive_list_item(l, member_hook=None):
     t = IntrusiveContainerType(l.type, member_hook=member_hook)
-    for node in t.iter_nodes(l):
-        yield t.node_to_value(node).dereference()
+    yield from t.iter_items(l)
 
 def for_each_intrusive_list_item_reverse(l, member_hook=None):
     t = IntrusiveListType(l.type, member_hook=member_hook)
-    for node in t.iter_nodes_reverse(l):
-        yield t.node_to_value(node).dereference()
+    yield from t.iter_items_reverse(l)
 
 class IntrusiveHashSetHookTraits:
     def __init__(self, container_type):
@@ -173,8 +179,8 @@ class IntrusiveHashSetPrinter:
             bucket = table['_M_elems'][i]
             list_type = get_basic_type(bucket.type)
             t = IntrusiveListType(list_type, self.__hook_traits)
-            for i in t.iter_nodes(bucket):
-                yield '', self.__hook_traits.node_to_value(i).dereference()
+            for i in t.iter_items(bucket):
+                yield '', i
 
     def to_string(self):
         return f"ihset<{self.__val.type.strip_typedefs().template_argument(0)}>"
