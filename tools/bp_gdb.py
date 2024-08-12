@@ -163,24 +163,32 @@ class IntrusiveHashSetHookTraits:
     def node_to_value(self, node):
         return self.__next.node_to_value(node)
 
+class IntrusiveHashSetType:
+    def __init__(self, container_type):
+        self.value_type = container_type.template_argument(0)
+        self.__table_size = int(container_type.template_argument(1))
+        self.__hook_traits = IntrusiveHashSetHookTraits(container_type)
+
+    def iter_items(self, container):
+        elems = container['table']['_M_elems']
+
+        for i in range(self.__table_size):
+            bucket = elems[i]
+            list_type = get_basic_type(bucket.type)
+            t = IntrusiveListType(list_type, self.__hook_traits)
+            yield from t.iter_items(bucket)
+
 class IntrusiveHashSetPrinter:
     def __init__(self, val):
         self.__val = val
-        self.__hook_traits = IntrusiveHashSetHookTraits(get_basic_type(val.type))
+        self.__type = IntrusiveHashSetType(get_basic_type(val.type))
 
     def display_hint(self):
         return 'array'
 
     def children(self):
-        table = self.__val['table']
-
-        table_size = int(table.type.template_argument(1))
-        for i in range(table_size):
-            bucket = table['_M_elems'][i]
-            list_type = get_basic_type(bucket.type)
-            t = IntrusiveListType(list_type, self.__hook_traits)
-            for i in t.iter_items(bucket):
-                yield '', i
+        for i in self.__type.iter_items(self.__val):
+            yield '', i
 
     def to_string(self):
         return f"ihset<{self.__val.type.strip_typedefs().template_argument(0)}>"
