@@ -45,7 +45,7 @@ public:
 
 protected:
 	/* virtual methods from class ChildStockItem */
-	void Prepare(ChildStockClass &cls, void *info,
+	void Prepare(ChildStockClass &cls, const void *info,
 		     PreparedChildProcess &p, FdHolder &close_fds) override;
 
 private:
@@ -63,7 +63,7 @@ private:
 };
 
 void
-MultiWasChild::Prepare(ChildStockClass &cls, void *info,
+MultiWasChild::Prepare(ChildStockClass &cls, const void *info,
 		       PreparedChildProcess &p, FdHolder &close_fds)
 {
 	assert(!client);
@@ -140,14 +140,14 @@ MultiWasStock::GetClearInterval(const void *info) const noexcept
 }
 
 bool
-MultiWasStock::WantStderrPond(void *info) const noexcept
+MultiWasStock::WantStderrPond(const void *info) const noexcept
 {
 	const auto &params = *(const CgiChildParams *)info;
 	return params.options.stderr_pond;
 }
 
 std::string_view
-MultiWasStock::GetChildTag(void *info) const noexcept
+MultiWasStock::GetChildTag(const void *info) const noexcept
 {
 	const auto &params = *(const CgiChildParams *)info;
 
@@ -156,7 +156,7 @@ MultiWasStock::GetChildTag(void *info) const noexcept
 
 std::unique_ptr<ChildStockItem>
 MultiWasStock::CreateChild(CreateStockItem c,
-			   void *info,
+			   const void *info,
 			   ChildStock &_child_stock)
 {
 	return std::make_unique<MultiWasChild>(c, _child_stock,
@@ -164,7 +164,7 @@ MultiWasStock::CreateChild(CreateStockItem c,
 }
 
 void
-MultiWasStock::PrepareChild(void *info, PreparedChildProcess &p,
+MultiWasStock::PrepareChild(const void *info, PreparedChildProcess &p,
 			    FdHolder &close_fds)
 {
 	const auto &params = *(const CgiChildParams *)info;

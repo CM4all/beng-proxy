@@ -6,14 +6,14 @@
 #include "net/UniqueSocketDescriptor.hxx"
 
 int
-ListenChildStockClass::GetChildSocketType(void *) const noexcept
+ListenChildStockClass::GetChildSocketType(const void *) const noexcept
 {
 	return SOCK_STREAM;
 }
 
 std::unique_ptr<ChildStockItem>
 ListenChildStockClass::CreateChild(CreateStockItem c,
-				   void *info,
+				   const void *info,
 				   ChildStock &child_stock)
 {
 	return std::make_unique<ListenChildStockItem>(c, child_stock,
@@ -21,7 +21,7 @@ ListenChildStockClass::CreateChild(CreateStockItem c,
 }
 
 void
-ListenChildStockItem::Prepare(ChildStockClass &_cls, void *info,
+ListenChildStockItem::Prepare(ChildStockClass &_cls, const void *info,
 			      PreparedChildProcess &p,
 			      FdHolder &close_fds)
 {

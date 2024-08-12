@@ -112,19 +112,19 @@ private:
 	std::size_t GetChildLimit(const void *request,
 				  std::size_t _limit) const noexcept override;
 	Event::Duration GetChildClearInterval(const void *info) const noexcept override;
-	bool WantStderrFd(void *info) const noexcept override;
-	bool WantStderrPond(void *info) const noexcept override;
+	bool WantStderrFd(const void *info) const noexcept override;
+	bool WantStderrPond(const void *info) const noexcept override;
 
-	unsigned GetChildBacklog(void *) const noexcept override {
+	unsigned GetChildBacklog(const void *) const noexcept override {
 		return 4;
 	}
 
-	std::string_view GetChildTag(void *info) const noexcept override;
-	void PrepareChild(void *info, PreparedChildProcess &p,
+	std::string_view GetChildTag(const void *info) const noexcept override;
+	void PrepareChild(const void *info, PreparedChildProcess &p,
 			  FdHolder &close_fds) override;
 
 	/* virtual methods from class ListenChildStockClass */
-	void PrepareListenChild(void *info, UniqueSocketDescriptor fd,
+	void PrepareListenChild(const void *info, UniqueSocketDescriptor fd,
 				PreparedChildProcess &p,
 				FdHolder &close_fds) override;
 };
@@ -244,20 +244,20 @@ FcgiStock::GetChildClearInterval(const void *info) const noexcept
 }
 
 bool
-FcgiStock::WantStderrFd(void *) const noexcept
+FcgiStock::WantStderrFd(const void *) const noexcept
 {
 	return true;
 }
 
 bool
-FcgiStock::WantStderrPond(void *info) const noexcept
+FcgiStock::WantStderrPond(const void *info) const noexcept
 {
 	const auto &params = *(const CgiChildParams *)info;
 	return params.options.stderr_pond;
 }
 
 std::string_view
-FcgiStock::GetChildTag(void *info) const noexcept
+FcgiStock::GetChildTag(const void *info) const noexcept
 {
 	const auto &params = *(const CgiChildParams *)info;
 
@@ -265,10 +265,10 @@ FcgiStock::GetChildTag(void *info) const noexcept
 }
 
 void
-FcgiStock::PrepareChild(void *info, PreparedChildProcess &p,
+FcgiStock::PrepareChild(const void *info, PreparedChildProcess &p,
 			FdHolder &close_fds)
 {
-	auto &params = *(CgiChildParams *)info;
+	const auto &params = *(const CgiChildParams *)info;
 	const ChildOptions &options = params.options;
 
 	/* the FastCGI protocol defines a channel for stderr, so we could
@@ -288,7 +288,7 @@ FcgiStock::PrepareChild(void *info, PreparedChildProcess &p,
 }
 
 void
-FcgiStock::PrepareListenChild(void *, UniqueSocketDescriptor fd,
+FcgiStock::PrepareListenChild(const void *, UniqueSocketDescriptor fd,
 			      PreparedChildProcess &p,
 			      FdHolder &close_fds)
 {

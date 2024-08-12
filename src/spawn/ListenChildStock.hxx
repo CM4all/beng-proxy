@@ -15,19 +15,19 @@
  */
 class ListenChildStockClass : public ChildStockMapClass {
 public:
-	virtual int GetChildSocketType(void *info) const noexcept;
-	virtual unsigned GetChildBacklog(void *info) const noexcept = 0;
+	virtual int GetChildSocketType(const void *info) const noexcept;
+	virtual unsigned GetChildBacklog(const void *info) const noexcept = 0;
 
 	/**
 	 * Throws on error.
 	 */
-	virtual void PrepareListenChild(void *info, UniqueSocketDescriptor fd,
+	virtual void PrepareListenChild(const void *info, UniqueSocketDescriptor fd,
 					PreparedChildProcess &p,
 					FdHolder &close_fds) = 0;
 
 	/* virtual methods from class ChildStockMapClass */
 	std::unique_ptr<ChildStockItem> CreateChild(CreateStockItem c,
-						    void *info,
+						    const void *info,
 						    ChildStock &child_stock) override;
 };
 
@@ -57,6 +57,6 @@ public:
 
 protected:
 	/* virtual methods from class ChildStockItem */
-	void Prepare(ChildStockClass &cls, void *info,
+	void Prepare(ChildStockClass &cls, const void *info,
 		     PreparedChildProcess &p, FdHolder &close_fds) override;
 };

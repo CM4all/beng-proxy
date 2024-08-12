@@ -58,9 +58,9 @@ private:
 	StockItem *Create(CreateStockItem c, StockItem &shared_item) override;
 
 	/* virtual methods from class ChildStockClass */
-	bool WantStderrPond(void *info) const noexcept override;
-	std::string_view GetChildTag(void *info) const noexcept override;
-	void PrepareChild(void *info, PreparedChildProcess &p,
+	bool WantStderrPond(const void *info) const noexcept override;
+	std::string_view GetChildTag(const void *info) const noexcept override;
+	void PrepareChild(const void *info, PreparedChildProcess &p,
 			  FdHolder &close_fds) override;
 
 	/* virtual methods from class ChildStockMapClass */
@@ -69,9 +69,9 @@ private:
 	Event::Duration GetChildClearInterval(const void *info) const noexcept override;
 
 	/* virtual methods from class ListenChildStockClass */
-	int GetChildSocketType(void *info) const noexcept override;
-	unsigned GetChildBacklog(void *info) const noexcept override;
-	void PrepareListenChild(void *info, UniqueSocketDescriptor fd,
+	int GetChildSocketType(const void *info) const noexcept override;
+	unsigned GetChildBacklog(const void *info) const noexcept override;
+	void PrepareListenChild(const void *info, UniqueSocketDescriptor fd,
 				PreparedChildProcess &p,
 				FdHolder &close_fds) override;
 };
@@ -232,14 +232,14 @@ LhttpStock::GetChildClearInterval(const void *info) const noexcept
 }
 
 bool
-LhttpStock::WantStderrPond(void *info) const noexcept
+LhttpStock::WantStderrPond(const void *info) const noexcept
 {
 	const auto &address = *(const LhttpAddress *)info;
 	return address.options.stderr_pond;
 }
 
 int
-LhttpStock::GetChildSocketType(void *info) const noexcept
+LhttpStock::GetChildSocketType(const void *info) const noexcept
 {
 	const auto &address = *(const LhttpAddress *)info;
 
@@ -251,7 +251,7 @@ LhttpStock::GetChildSocketType(void *info) const noexcept
 }
 
 unsigned
-LhttpStock::GetChildBacklog(void *info) const noexcept
+LhttpStock::GetChildBacklog(const void *info) const noexcept
 {
 	const auto &address = *(const LhttpAddress *)info;
 
@@ -264,7 +264,7 @@ LhttpStock::GetChildBacklog(void *info) const noexcept
 }
 
 std::string_view
-LhttpStock::GetChildTag(void *info) const noexcept
+LhttpStock::GetChildTag(const void *info) const noexcept
 {
 	const auto &address = *(const LhttpAddress *)info;
 
@@ -272,7 +272,7 @@ LhttpStock::GetChildTag(void *info) const noexcept
 }
 
 void
-LhttpStock::PrepareChild(void *info, PreparedChildProcess &p,
+LhttpStock::PrepareChild(const void *info, PreparedChildProcess &p,
 			 FdHolder &close_fds)
 {
 	const auto &address = *(const LhttpAddress *)info;
@@ -281,7 +281,7 @@ LhttpStock::PrepareChild(void *info, PreparedChildProcess &p,
 }
 
 void
-LhttpStock::PrepareListenChild(void *, UniqueSocketDescriptor fd,
+LhttpStock::PrepareListenChild(const void *, UniqueSocketDescriptor fd,
 			       PreparedChildProcess &p,
 			       FdHolder &close_fds)
 {

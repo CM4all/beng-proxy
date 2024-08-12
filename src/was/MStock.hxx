@@ -57,11 +57,11 @@ private:
 	StockItem *Create(CreateStockItem c, StockItem &shared_item) override;
 
 	/* virtual methods from class ChildStockClass */
-	bool WantStderrPond(void *info) const noexcept override;
-	std::string_view GetChildTag(void *info) const noexcept override;
+	bool WantStderrPond(const void *info) const noexcept override;
+	std::string_view GetChildTag(const void *info) const noexcept override;
 	std::unique_ptr<ChildStockItem> CreateChild(CreateStockItem c,
-						    void *info,
+						    const void *info,
 						    ChildStock &child_stock) override;
-	void PrepareChild(void *info, PreparedChildProcess &p,
+	void PrepareChild(const void *info, PreparedChildProcess &p,
 			  FdHolder &close_fds) override;
 };

@@ -32,7 +32,7 @@ ChildStockItem::ChildStockItem(CreateStockItem c,
 ChildStockItem::~ChildStockItem() noexcept = default;
 
 void
-ChildStockItem::Prepare(ChildStockClass &cls, void *info,
+ChildStockItem::Prepare(ChildStockClass &cls, const void *info,
 			PreparedChildProcess &p,
 			FdHolder &close_fds)
 {
@@ -40,7 +40,7 @@ ChildStockItem::Prepare(ChildStockClass &cls, void *info,
 }
 
 void
-ChildStockItem::Spawn(ChildStockClass &cls, void *info,
+ChildStockItem::Spawn(ChildStockClass &cls, const void *info,
 		      SocketDescriptor log_socket,
 		      const ChildErrorLogOptions &log_options)
 {

@@ -67,7 +67,7 @@ public:
 	/**
 	 * Throws on error.
 	 */
-	void Spawn(ChildStockClass &cls, void *info,
+	void Spawn(ChildStockClass &cls, const void *info,
 		   SocketDescriptor log_socket,
 		   const ChildErrorLogOptions &log_options);
 
@@ -127,6 +127,6 @@ protected:
 	/**
 	 * Throws on error.
 	 */
-	virtual void Prepare(ChildStockClass &cls, void *info,
+	virtual void Prepare(ChildStockClass &cls, const void *info,
 			     PreparedChildProcess &p, FdHolder &close_fds);
 };

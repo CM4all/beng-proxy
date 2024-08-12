@@ -34,26 +34,26 @@ public:
 	 * stderr file descriptor, and if necessary, will ask the
 	 * spawner to return it through a socket pair.
 	 */
-	virtual bool WantStderrFd(void *) const noexcept {
+	virtual bool WantStderrFd(const void *) const noexcept {
 		return false;
 	}
 
 	/**
 	 * Obtain the value of #ChildOptions::stderr_pond.
 	 */
-	virtual bool WantStderrPond(void *) const noexcept = 0;
+	virtual bool WantStderrPond(const void *) const noexcept = 0;
 
 	[[gnu::pure]]
-	virtual std::string_view GetChildTag(void *info) const noexcept;
+	virtual std::string_view GetChildTag(const void *info) const noexcept;
 
 	virtual std::unique_ptr<ChildStockItem> CreateChild(CreateStockItem c,
-							    void *info,
+							    const void *info,
 							    ChildStock &child_stock);
 
 	/**
 	 * Throws on error.
 	 */
-	virtual void PrepareChild(void *info, PreparedChildProcess &p,
+	virtual void PrepareChild(const void *info, PreparedChildProcess &p,
 				  FdHolder &close_fds) = 0;
 };
 

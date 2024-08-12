@@ -12,13 +12,13 @@
 #include <cassert>
 
 std::string_view
-ChildStockClass::GetChildTag(void *) const noexcept
+ChildStockClass::GetChildTag(const void *) const noexcept
 {
 	return {};
 }
 
 std::unique_ptr<ChildStockItem>
-ChildStockClass::CreateChild(CreateStockItem c, void *info,
+ChildStockClass::CreateChild(CreateStockItem c, const void *info,
 			     ChildStock &child_stock)
 {
 	return std::make_unique<ChildStockItem>(c, child_stock,
