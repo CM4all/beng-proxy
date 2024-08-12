@@ -14,6 +14,7 @@
 #include "spawn/Prepared.hxx"
 #include "spawn/ChildOptions.hxx"
 #include "pool/DisposablePointer.hxx"
+#include "pool/WithPoolDisposablePointer.hxx"
 #include "pool/tpool.hxx"
 #include "lib/fmt/ToBuffer.hxx"
 #include "event/SocketEvent.hxx"
@@ -36,6 +37,7 @@
 #endif
 
 class FcgiStock final : StockClass, ListenChildStockClass {
+	PoolPtr pool{pool_new_dummy(nullptr, "FcgiStock")};
 	StockMap hstock;
 	ChildStockMap child_stock;
 
@@ -109,6 +111,8 @@ private:
 		    CancellablePointer &cancel_ptr) override;
 
 	/* virtual methods from class ChildStockClass */
+	StockRequest PreserveRequest(StockRequest request) noexcept override;
+
 	bool WantStderrFd(const void *info) const noexcept override;
 	bool WantStderrPond(const void *info) const noexcept override;
 
@@ -249,6 +253,13 @@ FcgiStock::GetChildClearInterval(const void *info) const noexcept
 		/* lower clear_interval for jailed (per-account?)
 		   processes */
 		: std::chrono::minutes(5);
+}
+
+StockRequest
+FcgiStock::PreserveRequest(StockRequest request) noexcept
+{
+	const auto &src = *reinterpret_cast<const CgiChildParams *>(request.get());
+	return WithPoolDisposablePointer<CgiChildParams>::New(pool_new_linear(pool, "CgiChildParams", 4096), src);
 }
 
 bool

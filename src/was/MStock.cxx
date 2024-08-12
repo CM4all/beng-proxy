@@ -10,6 +10,7 @@
 #include "stock/Stock.hxx"
 #include "stock/MapStock.hxx"
 #include "pool/DisposablePointer.hxx"
+#include "pool/WithPoolDisposablePointer.hxx"
 #include "pool/tpool.hxx"
 #include "AllocatorPtr.hxx"
 #include "cgi/ChildParams.hxx"
@@ -106,7 +107,8 @@ MultiWasStock::MultiWasStock(unsigned limit, [[maybe_unused]] unsigned max_idle,
 			     EventLoop &event_loop, SpawnService &spawn_service,
 			     SocketDescriptor log_socket,
 			     const ChildErrorLogOptions &log_options) noexcept
-	:child_stock(spawn_service,
+	:pool(pool_new_dummy(nullptr, "MultiWasStock")),
+	 child_stock(spawn_service,
 		     nullptr, // TODO do we need ListenStreamSpawnStock here?
 		     *this,
 		     log_socket, log_options),
@@ -137,6 +139,13 @@ MultiWasStock::GetClearInterval(const void *info) const noexcept
 		/* lower clear_interval for jailed (per-account?)
 		   processes */
 		: std::chrono::minutes(5);
+}
+
+StockRequest
+MultiWasStock::PreserveRequest(StockRequest request) noexcept
+{
+	const auto &src = *reinterpret_cast<const CgiChildParams *>(request.get());
+	return WithPoolDisposablePointer<CgiChildParams>::New(pool_new_linear(pool, "CgiChildParams", 4096), src);
 }
 
 bool

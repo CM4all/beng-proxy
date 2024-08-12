@@ -109,7 +109,8 @@ ChildStock::Create(CreateStockItem c, StockRequest request,
 		   StockGetHandler &handler,
 		   CancellablePointer &cancel_ptr)
 {
-	auto *queue_item = new QueueItem(*this, std::move(c), std::move(request),
+	auto *queue_item = new QueueItem(*this, std::move(c),
+					 cls.PreserveRequest(std::move(request)),
 					 handler, cancel_ptr);
 	queue_item->Start(spawn_service);
 }

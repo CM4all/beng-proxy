@@ -32,6 +32,8 @@ struct CgiChildParams {
 		 concurrency(_concurrency),
 		 disposable(_disposable) {}
 
+	CgiChildParams(AllocatorPtr alloc, const CgiChildParams &src) noexcept;
+
 	/**
 	 * Generates a string identifying the process.  This can be
 	 * used as a key in a hash table.  The string will be

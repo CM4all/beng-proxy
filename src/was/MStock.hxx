@@ -6,6 +6,7 @@
 
 #include "spawn/ChildStock.hxx"
 #include "stock/MultiStock.hxx"
+#include "pool/Ptr.hxx"
 
 #include <span>
 
@@ -18,6 +19,7 @@ class EventLoop;
 class SpawnService;
 
 class MultiWasStock final : MultiStockClass, ChildStockClass {
+	PoolPtr pool;
 	ChildStock child_stock;
 	MultiStock mchild_stock;
 
@@ -57,6 +59,7 @@ private:
 	StockItem *Create(CreateStockItem c, StockItem &shared_item) override;
 
 	/* virtual methods from class ChildStockClass */
+	StockRequest PreserveRequest(StockRequest request) noexcept override;
 	bool WantStderrPond(const void *info) const noexcept override;
 	std::string_view GetChildTag(const void *info) const noexcept override;
 	std::unique_ptr<ChildStockItem> CreateChild(CreateStockItem c,

@@ -9,6 +9,7 @@
 #include "stock/Class.hxx"
 #include "stock/Item.hxx"
 #include "pool/tpool.hxx"
+#include "pool/WithPoolDisposablePointer.hxx"
 #include "AllocatorPtr.hxx"
 #include "lease.hxx"
 #include "spawn/ListenChildStock.hxx"
@@ -26,6 +27,7 @@
 #include <string.h>
 
 class LhttpStock final : MultiStockClass, ListenChildStockClass {
+	PoolPtr pool{pool_new_dummy(nullptr, "LhttpStock")};
 	ChildStock child_stock;
 	MultiStock mchild_stock;
 
@@ -58,6 +60,7 @@ private:
 	StockItem *Create(CreateStockItem c, StockItem &shared_item) override;
 
 	/* virtual methods from class ChildStockClass */
+	StockRequest PreserveRequest(StockRequest request) noexcept override;
 	bool WantStderrPond(const void *info) const noexcept override;
 	std::string_view GetChildTag(const void *info) const noexcept override;
 	void PrepareChild(const void *info, PreparedChildProcess &p,
@@ -229,6 +232,13 @@ Event::Duration
 LhttpStock::GetChildClearInterval(const void *info) const noexcept
 {
 	return GetClearInterval(info);
+}
+
+StockRequest
+LhttpStock::PreserveRequest(StockRequest request) noexcept
+{
+	const auto &src = *reinterpret_cast<const LhttpAddress *>(request.get());
+	return WithPoolDisposablePointer<LhttpAddress>::New(pool_new_linear(pool, "LhttpAddress", 4096), src);
 }
 
 bool

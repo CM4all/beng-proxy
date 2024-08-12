@@ -29,6 +29,12 @@ class ChildStockItem;
 class ChildStockClass {
 public:
 	/**
+	 * Transform a #StockRequest so that it can be preserved
+         * across asynchronous calls.
+	 */
+	virtual StockRequest PreserveRequest(StockRequest request) noexcept = 0;
+
+	/**
 	 * Implement this if you need to use
 	 * ChildStockItem::GetStderr().  This will keep a copy of the
 	 * stderr file descriptor, and if necessary, will ask the

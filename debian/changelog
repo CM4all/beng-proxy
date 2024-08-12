@@ -1,6 +1,6 @@
 cm4all-beng-proxy (18.0.87) unstable; urgency=low
 
-  * 
+  * fcgi, was, lhttp: fix use-after-free on cancel during spawner throttle
 
  --   
 

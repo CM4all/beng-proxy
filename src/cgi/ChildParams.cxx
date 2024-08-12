@@ -7,6 +7,15 @@
 #include "pool/StringBuilder.hxx"
 #include "AllocatorPtr.hxx"
 
+CgiChildParams::CgiChildParams(AllocatorPtr alloc, const CgiChildParams &src) noexcept
+	:executable_path(alloc.Dup(src.executable_path)),
+	 options(*alloc.New<ChildOptions>(alloc, src.options)),
+	 parallelism(src.parallelism),
+	 concurrency(src.concurrency),
+	 disposable(src.disposable)
+{
+}
+
 const char *
 CgiChildParams::GetStockKey(AllocatorPtr alloc) const noexcept
 {
