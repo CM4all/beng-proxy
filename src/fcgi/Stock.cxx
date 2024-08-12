@@ -350,19 +350,12 @@ FcgiStock::Create(CreateStockItem c, StockRequest request,
 bool
 FcgiConnection::Borrow() noexcept
 {
-	/* check the connection status before using it, just in case the
-	   FastCGI server has decided to close the connection before
-	   fcgi_connection_event_callback() got invoked */
-	std::byte buffer[1];
-	ssize_t nbytes = GetSocket().ReadNoWait(buffer);
-	if (nbytes > 0) {
-		logger(2, "unexpected data from idle FastCGI connection");
-		return false;
-	} else if (nbytes == 0) {
-		/* connection closed (not worth a log message) */
-		return false;
-	} else if (errno != EAGAIN) {
-		logger(2, "error on idle FastCGI connection: ", strerror(errno));
+	if (event.GetReadyFlags() != 0) [[unlikely]] {
+		/* this connection was probably closed, but our
+		   SocketEvent callback hasn't been invoked yet;
+		   refuse to use this item; the caller will destroy
+		   the connection */
+		Read();
 		return false;
 	}
 
