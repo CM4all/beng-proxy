@@ -29,6 +29,10 @@ public:
 		      SocketDescriptor log_socket,
 		      const ChildErrorLogOptions &log_options) noexcept;
 
+	auto &GetEventLoop() const noexcept {
+		return mchild_stock.GetEventLoop();
+	}
+
 	std::size_t DiscardSome() noexcept {
 		return mchild_stock.DiscardOldestIdle(64);
 	}
