@@ -33,18 +33,18 @@ class DirectResourceLoader final : public ResourceLoader {
 #ifdef HAVE_URING
 	Uring::Queue *const uring;
 #endif
-	TcpBalancer *tcp_balancer;
+	TcpBalancer *const tcp_balancer;
 	AnyHttpClient any_http_client;
 	SpawnService &spawn_service;
-	LhttpStock *lhttp_stock;
-	FcgiStock *fcgi_stock;
+	LhttpStock *const lhttp_stock;
+	FcgiStock *const fcgi_stock;
 #ifdef HAVE_LIBWAS
-	WasStock *was_stock;
+	WasStock *const was_stock;
 	MultiWasStock *const multi_was_stock;
 	RemoteWasStock *const remote_was_stock;
 	WasMetricsHandler *const metrics_handler;
 #endif
-	StockMap *delegate_stock;
+	StockMap *const delegate_stock;
 
 	const XForwardedForConfig &xff;
 
