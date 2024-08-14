@@ -27,6 +27,10 @@ public:
 	RemoteWasStock(unsigned limit, unsigned max_idle,
 		       EventLoop &event_loop) noexcept;
 
+	auto &GetEventLoop() const noexcept {
+		return multi_stock.GetEventLoop();
+	}
+
 	void FadeAll() noexcept {
 		multi_stock.FadeAll();
 	}
