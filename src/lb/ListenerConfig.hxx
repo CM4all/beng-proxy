@@ -55,7 +55,7 @@ struct LbListenerConfig : SocketConfig {
 	explicit LbListenerConfig(const char *_name) noexcept
 		:name(_name)
 	{
-		listen = 64;
+		listen = 4096;
 		tcp_no_delay = true;
 	}
 

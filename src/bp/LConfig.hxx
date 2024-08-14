@@ -49,7 +49,7 @@ struct BpListenerConfig : SocketConfig {
 
 	BpListenerConfig() noexcept
 		:SocketConfig{
-			.listen = 64,
+			.listen = 4096,
 			.tcp_defer_accept = 10,
 			.tcp_no_delay = true,
 		}
@@ -59,7 +59,7 @@ struct BpListenerConfig : SocketConfig {
 	explicit BpListenerConfig(SocketAddress _address) noexcept
 		:SocketConfig{
 			.bind_address = AllocatedSocketAddress{_address},
-			.listen = 64,
+			.listen = 4096,
 			.tcp_defer_accept = 10,
 			.tcp_no_delay = true,
 		}

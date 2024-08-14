@@ -1,6 +1,6 @@
 cm4all-beng-proxy (18.0.88) unstable; urgency=low
 
-  * 
+  * increase listener backlog to 4096
 
  --   
 
