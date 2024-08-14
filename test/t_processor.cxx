@@ -3,7 +3,7 @@
 // author: Max Kellermann <mk@cm4all.com>
 
 #include "TestInstance.hxx"
-#include "FailingResourceLoader.hxx"
+#include "http/rl/FailingResourceLoader.hxx"
 #include "bp/XmlProcessor.hxx"
 #include "bp/WidgetLookupProcessor.hxx"
 #include "widget/Inline.hxx"

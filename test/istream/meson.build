@@ -54,7 +54,6 @@ test(
     't_istream_processor',
     't_istream_processor.cxx',
     'IstreamFilterTest.cxx',
-    '../FailingResourceLoader.cxx',
     '../../src/widget/FromSession.cxx',
     '../../src/widget/FromRequest.cxx',
     '../../src/widget/Resolver.cxx',
@@ -67,6 +66,7 @@ test(
       processor_dep,
       widget_dep,
       session_dep,
+      debug_resource_loader_dep,
     ] + t_istream_filter_deps,
   ),
 )
@@ -77,7 +77,6 @@ test(
     'TestCssProcessor',
     'TestCssProcessor.cxx',
     'IstreamFilterTest.cxx',
-    '../FailingResourceLoader.cxx',
     '../../src/widget/FromSession.cxx',
     '../../src/widget/FromRequest.cxx',
     '../../src/widget/Resolver.cxx',
@@ -90,6 +89,7 @@ test(
       processor_dep,
       widget_dep,
       session_dep,
+      debug_resource_loader_dep,
     ] + t_istream_filter_deps,
   ),
 )

@@ -3,7 +3,6 @@ test(
   executable(
     't_rewrite_uri',
     't_rewrite_uri.cxx',
-    '../FailingResourceLoader.cxx',
     '../../src/PInstance.cxx',
     '../../src/widget/RewriteUri.cxx',
     '../../src/bp/session/Lease.cxx',
@@ -15,6 +14,7 @@ test(
       widget_dep,
       istream_dep,
       translation_dep,
+      debug_resource_loader_dep,
     ],
   ),
 )
@@ -57,7 +57,6 @@ test(
   executable(
     't_wembed',
     't_wembed.cxx',
-    '../FailingResourceLoader.cxx',
     '../../src/widget/Inline.cxx',
     '../../src/istream_html_escape.cxx',
     '../../src/escape/Istream.cxx',
@@ -69,6 +68,7 @@ test(
       widget_dep,
       istream_dep,
       http_util_dep,
+      debug_resource_loader_dep,
     ],
   ),
 )

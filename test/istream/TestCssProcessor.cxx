@@ -3,7 +3,7 @@
 // author: Max Kellermann <mk@cm4all.com>
 
 #include "IstreamFilterTest.hxx"
-#include "../FailingResourceLoader.hxx"
+#include "http/rl/FailingResourceLoader.hxx"
 #include "istream/istream_string.hxx"
 #include "istream/istream.hxx"
 #include "pool/pool.hxx"

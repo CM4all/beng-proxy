@@ -3,7 +3,6 @@
 // author: Max Kellermann <mk@cm4all.com>
 
 #include "StdioSink.hxx"
-#include "FailingResourceLoader.hxx"
 #include "TestInstance.hxx"
 #include "bp/XmlProcessor.hxx"
 #include "widget/Context.hxx"
@@ -11,6 +10,7 @@
 #include "widget/Widget.hxx"
 #include "widget/Ptr.hxx"
 #include "widget/RewriteUri.hxx"
+#include "http/rl/FailingResourceLoader.hxx"
 #include "istream/OpenFileIstream.hxx"
 #include "istream/istream_string.hxx"
 #include "pool/SharedPtr.hxx"

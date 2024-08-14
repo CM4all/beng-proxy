@@ -2,8 +2,8 @@
 // Copyright CM4all GmbH
 // author: Max Kellermann <mk@cm4all.com>
 
-#include "BlockingResourceLoader.hxx"
-#include "MirrorResourceLoader.hxx"
+#include "http/rl/BlockingResourceLoader.hxx"
+#include "http/rl/MirrorResourceLoader.hxx"
 #include "http/cache/FilterCache.hxx"
 #include "strmap.hxx"
 #include "http/ResponseHandler.hxx"

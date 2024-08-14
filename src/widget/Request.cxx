@@ -21,7 +21,7 @@
 #include "bp/session/Session.hxx"
 #include "http/CommonHeaders.hxx"
 #include "http/CookieClient.hxx"
-#include "ResourceLoader.hxx"
+#include "http/rl/ResourceLoader.hxx"
 #include "bp/Global.hxx"
 #include "translation/Transformation.hxx"
 #include "translation/SuffixRegistry.hxx"

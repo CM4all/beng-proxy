@@ -5,7 +5,7 @@
 #pragma once
 
 #include "http/CoResponseHandler.hxx"
-#include "ResourceLoader.hxx"
+#include "http/rl/ResourceLoader.hxx"
 
 class CoLoadResource final : public CoHttpResponseHandler {
 public:

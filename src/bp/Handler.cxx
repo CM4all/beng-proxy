@@ -20,6 +20,7 @@
 #include "http/CommonHeaders.hxx"
 #include "http/IncomingRequest.hxx"
 #include "http/Method.hxx"
+#include "http/rl/ResourceLoader.hxx"
 #include "istream/istream_memory.hxx"
 #include "istream/istream_string.hxx"
 #include "AllocatorPtr.hxx"
@@ -37,7 +38,6 @@
 #include "util/SpanCast.hxx"
 #include "util/StringCompare.hxx"
 #include "HttpMessageResponse.hxx"
-#include "ResourceLoader.hxx"
 
 #include <assert.h>
 #include <fcntl.h> // for AT_*

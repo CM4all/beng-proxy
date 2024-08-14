@@ -9,7 +9,7 @@
 #include "Heap.hxx"
 #include "strmap.hxx"
 #include "http/ResponseHandler.hxx"
-#include "ResourceLoader.hxx"
+#include "http/rl/ResourceLoader.hxx"
 #include "ResourceAddress.hxx"
 #include "memory/sink_rubber.hxx"
 #include "stats/CacheStats.hxx"

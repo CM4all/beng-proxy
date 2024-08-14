@@ -394,6 +394,7 @@ endif
 subdir('src/http')
 subdir('src/pipe')
 subdir('src/istream')
+subdir('src/http/rl')
 
 memory_istream = static_library(
   'memory_istream',
@@ -681,10 +682,10 @@ executable(
   'src/escape/Istream.cxx',
   'src/istream_html_escape.cxx',
   'src/ssl/SslSocketFilterFactory.cxx',
-  'src/DirectResourceLoader.cxx',
-  'src/CachedResourceLoader.cxx',
-  'src/FilterResourceLoader.cxx',
-  'src/BufferedResourceLoader.cxx',
+  'src/http/rl/DirectResourceLoader.cxx',
+  'src/http/rl/CachedResourceLoader.cxx',
+  'src/http/rl/FilterResourceLoader.cxx',
+  'src/http/rl/BufferedResourceLoader.cxx',
   'src/widget/Frame.cxx',
   'src/access_log/ChildErrorLog.cxx',
   'src/PInstance.cxx',

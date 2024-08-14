@@ -244,7 +244,6 @@ executable('run_html_escape',
 
 executable('run_processor',
   'run_processor.cxx',
-  'FailingResourceLoader.cxx',
   '../src/widget/FromSession.cxx',
   '../src/widget/FromRequest.cxx',
   '../src/escape/Istream.cxx',
@@ -255,6 +254,7 @@ executable('run_processor',
     processor_dep,
     widget_dep,
     session_dep,
+    debug_resource_loader_dep,
   ])
 
 executable('run_client_balancer',
@@ -453,8 +453,6 @@ test('t_http_cache', executable('t_http_cache',
 
 test('t_fcache', executable('t_fcache',
   't_fcache.cxx',
-  'BlockingResourceLoader.cxx',
-  'MirrorResourceLoader.cxx',
   '../src/http/cache/FilterCache.cxx',
   '../src/cache.cxx',
   include_directories: inc,
@@ -465,6 +463,7 @@ test('t_fcache', executable('t_fcache',
     raddress_dep,
     http_dep,
     stopwatch_dep,
+    debug_resource_loader_dep,
   ]))
 
 test('t_session', executable('t_session',
@@ -491,7 +490,6 @@ test('t_escape', executable('t_escape',
   ]))
 
 test('t_processor', executable('t_processor',
-  'FailingResourceLoader.cxx',
   '../src/widget/FromSession.cxx',
   '../src/widget/FromRequest.cxx',
   '../src/escape/Istream.cxx',
@@ -504,6 +502,7 @@ test('t_processor', executable('t_processor',
     processor_dep,
     widget_dep,
     session_dep,
+    debug_resource_loader_dep,
   ]))
 
 test(
@@ -511,11 +510,8 @@ test(
   executable(
     'TestBufferedResourceLoader',
     'TestBufferedResourceLoader.cxx',
-    'FailingResourceLoader.cxx',
-    'BlockingResourceLoader.cxx',
-    'MirrorResourceLoader.cxx',
     'RecordingHttpResponseHandler.cxx',
-    '../src/BufferedResourceLoader.cxx',
+    '../src/http/rl/BufferedResourceLoader.cxx',
     include_directories: inc,
     dependencies: [
       gtest,
@@ -526,6 +522,7 @@ test(
       stock_dep,
       stopwatch_dep,
       http_dep,
+      debug_resource_loader_dep,
     ],
   ),
 )  

@@ -3,12 +3,12 @@
 // author: Max Kellermann <mk@cm4all.com>
 
 #include "TestInstance.hxx"
-#include "BufferedResourceLoader.hxx"
 #include "RecordingHttpResponseHandler.hxx"
-#include "BlockingResourceLoader.hxx"
-#include "FailingResourceLoader.hxx"
-#include "MirrorResourceLoader.hxx"
 #include "ResourceAddress.hxx"
+#include "http/rl/BufferedResourceLoader.hxx"
+#include "http/rl/BlockingResourceLoader.hxx"
+#include "http/rl/FailingResourceLoader.hxx"
+#include "http/rl/MirrorResourceLoader.hxx"
 #include "istream/BlockIstream.hxx"
 #include "istream/ConcatIstream.hxx"
 #include "istream/DelayedIstream.hxx"

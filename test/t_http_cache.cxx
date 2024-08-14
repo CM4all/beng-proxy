@@ -5,7 +5,7 @@
 #include "TestInstance.hxx"
 #include "tconstruct.hxx"
 #include "http/cache/Public.hxx"
-#include "ResourceLoader.hxx"
+#include "http/rl/ResourceLoader.hxx"
 #include "ResourceAddress.hxx"
 #include "RecordingHttpResponseHandler.hxx"
 #include "DeferHttpResponseHandler.hxx"
