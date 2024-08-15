@@ -2,7 +2,7 @@ cm4all-beng-proxy (18.0.88) unstable; urgency=low
 
   * increase listener backlog to 4096
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Thu, 15 Aug 2024 14:20:37 +0200
 
 cm4all-beng-proxy (18.0.87) unstable; urgency=low
 
