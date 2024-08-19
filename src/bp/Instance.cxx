@@ -119,7 +119,7 @@ BpInstance::FreeStocksAndCaches() noexcept
 	cached_translation_service.reset();
 	translation_caches.reset();
 	uncached_translation_service.reset();
-	translation_stocks.reset();
+	translation_clients.reset();
 
 	if (http_cache != nullptr) {
 		delete (CachedResourceLoader *)cached_resource_loader;

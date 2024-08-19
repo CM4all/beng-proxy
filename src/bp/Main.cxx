@@ -89,7 +89,7 @@ BpInstance::GetTranslationServiceBuilder() const noexcept
 {
 	return translation_caches
 		? (TranslationServiceBuilder &)*translation_caches
-		: *translation_stocks;
+		: *translation_clients;
 }
 
 #ifdef HAVE_AVAHI
@@ -381,14 +381,14 @@ try {
 
 	assert(!instance.config.translation_sockets.empty());
 
-	instance.translation_stocks =
+	instance.translation_clients =
 		std::make_unique<TranslationStockBuilder>(instance.config.translate_stock_limit);
 	instance.uncached_translation_service =
 		std::make_unique<MultiTranslationService>();
 
 	if (instance.config.translate_cache_size > 0) {
 		instance.translation_caches =
-			std::make_unique<TranslationCacheBuilder>(*instance.translation_stocks,
+			std::make_unique<TranslationCacheBuilder>(*instance.translation_clients,
 								  instance.root_pool,
 								  instance.config.translate_cache_size);
 		instance.cached_translation_service =
@@ -397,8 +397,8 @@ try {
 
 	for (const auto &config : instance.config.translation_sockets) {
 		instance.uncached_translation_service
-			->Add(instance.translation_stocks->Get(config,
-							       instance.event_loop));
+			->Add(instance.translation_clients->Get(config,
+								instance.event_loop));
 
 		if (instance.config.translate_cache_size > 0)
 			instance.cached_translation_service

@@ -146,7 +146,7 @@ struct BpInstance final : PInstance, BengControl::Handler,
 	/* stock */
 	FailureManager failure_manager;
 
-	std::unique_ptr<TranslationStockBuilder> translation_stocks;
+	std::unique_ptr<TranslationStockBuilder> translation_clients;
 	std::shared_ptr<MultiTranslationService> uncached_translation_service;
 
 	std::unique_ptr<TranslationCacheBuilder> translation_caches;
