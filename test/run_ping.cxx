@@ -2,9 +2,7 @@
 // Copyright CM4all GmbH
 // author: Max Kellermann <mk@cm4all.com>
 
-#include "PInstance.hxx"
-#include "pool/pool.hxx"
-#include "pool/Ptr.hxx"
+#include "event/Loop.hxx"
 #include "net/Ping.hxx"
 #include "net/AllocatedSocketAddress.hxx"
 #include "net/Parser.hxx"
@@ -39,16 +37,15 @@ try {
 		return EXIT_FAILURE;
 	}
 
-	PInstance instance;
-	const auto pool = pool_new_linear(instance.root_pool, "test", 8192);
-
 	const auto address = ParseSocketAddress(argv[1], 0, false);
 
+	EventLoop event_loop;
+
 	MyPingClientHandler handler;
-	PingClient client(instance.event_loop, handler);
+	PingClient client(event_loop, handler);
 	client.Start(address);
 
-	instance.event_loop.Run();
+	event_loop.Run();
 
 	return success ? EXIT_SUCCESS : EXIT_FAILURE;
 } catch (const std::exception &e) {

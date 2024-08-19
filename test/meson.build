@@ -155,10 +155,8 @@ endif
 
 executable('run_ping',
   'run_ping.cxx',
-  '../src/PInstance.cxx',
   include_directories: inc,
   dependencies: [
-    pool_dep,
     event_net_dep,
   ])
 
