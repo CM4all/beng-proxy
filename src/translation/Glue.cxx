@@ -26,6 +26,7 @@ class TranslationGlue::Request final
 {
 	const AllocatorPtr alloc;
 
+	[[no_unique_address]]
 	StopwatchPtr stopwatch;
 
 	StockItem *item;
