@@ -8,6 +8,7 @@
 #include "stats/CacheStats.hxx"
 #include "net/SocketAddress.hxx"
 
+#include <algorithm> // for std::lexicographical_compare()
 #include <cassert>
 #include <cstring>
 
@@ -22,15 +23,10 @@ SocketAddressCompare::operator()(SocketAddress a,
 	assert(!a.IsNull());
 	assert(!b.IsNull());
 
-	auto ad = (const std::byte *)a.GetAddress();
-	auto bd = (const std::byte *)b.GetAddress();
+	std::span<const std::byte> as{a};
+	std::span<const std::byte> bs{b};
 
-	const auto size = std::min(a.GetSize(), b.GetSize());
-	int cmp = memcmp(ad, bd, size);
-	if (cmp != 0)
-		return cmp < 0;
-
-	return a.GetSize() < b.GetSize();
+	return std::lexicographical_compare(as.begin(), as.end(), bs.begin(), bs.end());
 }
 
 TranslationStockBuilder::TranslationStockBuilder(unsigned _limit) noexcept
