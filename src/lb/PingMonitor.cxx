@@ -5,7 +5,7 @@
 #include "PingMonitor.hxx"
 #include "MonitorHandler.hxx"
 #include "MonitorClass.hxx"
-#include "net/Ping.hxx"
+#include "event/net/PingClient.hxx"
 #include "net/SocketAddress.hxx"
 #include "util/Cancellable.hxx"
 

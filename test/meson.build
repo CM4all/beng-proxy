@@ -153,13 +153,6 @@ if libnghttp2.found()
   )
 endif
 
-executable('run_ping',
-  'run_ping.cxx',
-  include_directories: inc,
-  dependencies: [
-    event_net_dep,
-  ])
-
 if libwas.found()
   executable(
     'run_was',
