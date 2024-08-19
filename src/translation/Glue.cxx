@@ -28,7 +28,6 @@ class TranslationGlue::Request final
 
 	StopwatchPtr stopwatch;
 
-	TranslationStock &stock;
 	StockItem *item;
 
 	const TranslateRequest &request;
@@ -39,7 +38,7 @@ class TranslationGlue::Request final
 	CancellablePointer cancel_ptr;
 
 public:
-	Request(TranslationStock &_stock, AllocatorPtr _alloc,
+	Request(AllocatorPtr _alloc,
 		const TranslateRequest &_request,
 		const StopwatchPtr &parent_stopwatch,
 		TranslateHandler &_handler,
@@ -48,7 +47,6 @@ public:
 		 alloc(_alloc),
 		 stopwatch(parent_stopwatch, "translate",
 			   _request.GetDiagnosticName()),
-		 stock(_stock),
 		 request(_request),
 		 handler(_handler),
 		 caller_cancel_ptr(_cancel_ptr)
@@ -56,8 +54,8 @@ public:
 		_cancel_ptr = *this;
 	}
 
-	void Start() noexcept {
-		stock.Get(*this, cancel_ptr);
+	void Start(TranslationStock &_stock) noexcept {
+		_stock.Get(*this, cancel_ptr);
 	}
 
 private:
@@ -80,10 +78,9 @@ private:
 
 	/* virtual methods from class Lease */
 	PutAction ReleaseLease(PutAction action) noexcept override {
-		auto &_stock = stock;
 		auto &_item = *item;
 		Destroy();
-		return _stock.Put(_item, action);
+		return _item.Put(action);
 	}
 };
 
@@ -97,8 +94,8 @@ TranslationGlue::Request::OnStockItemReady(StockItem &_item) noexcept
 	/* cancellation will not be handled by this class from here on;
 	   instead, we pass the caller's CancellablePointer to
 	   translate() */
-	translate(alloc, stock.GetEventLoop(), std::move(stopwatch),
-		  stock.GetSocket(_item),
+	translate(alloc, _item.GetStock().GetEventLoop(), std::move(stopwatch),
+		  TranslationStock::GetSocket(_item),
 		  *this,
 		  request, handler,
 		  caller_cancel_ptr);
@@ -123,8 +120,8 @@ TranslationGlue::SendRequest(AllocatorPtr alloc,
 			      TranslateHandler &handler,
 			      CancellablePointer &cancel_ptr) noexcept
 {
-	auto r = alloc.New<Request>(stock, alloc, request,
+	auto r = alloc.New<Request>(alloc, request,
 				    parent_stopwatch,
 				    handler, cancel_ptr);
-	r->Start();
+	r->Start(stock);
 }
