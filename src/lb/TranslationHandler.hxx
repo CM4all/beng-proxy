@@ -5,7 +5,7 @@
 #pragma once
 
 #include "Goto.hxx"
-#include "translation/Stock.hxx"
+#include "translation/Glue.hxx"
 #include "util/StringLess.hxx"
 
 #include <map>
@@ -24,7 +24,7 @@ class LbTranslationCache;
 class LbTranslationHandler final {
 	const char *const name;
 
-	TranslationStock stock;
+	TranslationGlue stock;
 
 	const std::map<const char *, LbGoto, StringLess> destinations;
 

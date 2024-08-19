@@ -3,7 +3,7 @@
 // author: Max Kellermann <mk@cm4all.com>
 
 #include "TestInstance.hxx"
-#include "translation/Stock.hxx"
+#include "translation/Glue.hxx"
 #include "translation/Handler.hxx"
 #include "translation/Request.hxx"
 #include "translation/Response.hxx"
@@ -137,8 +137,11 @@ main(int argc, char **argv)
 
 	static constexpr LocalSocketAddress translation_socket{"@translation"sv};
 
-	TranslationStock stock(instance.event_loop,
-			       translation_socket, 0);
+	TranslationGlue stock{
+		instance.event_loop,
+		translation_socket,
+		0,
+	};
 
 	const AllocatorPtr alloc(instance.root_pool);
 

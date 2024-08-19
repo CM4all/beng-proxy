@@ -4,17 +4,14 @@
 
 #pragma once
 
-#include "Service.hxx"
 #include "stock/Stock.hxx"
 #include "stock/Class.hxx"
 #include "net/AllocatedSocketAddress.hxx"
 
-struct TranslateRequest;
-class TranslateHandler;
+class SocketDescriptor;
 
-class TranslationStock final : public TranslationService, StockClass {
+class TranslationStock final : StockClass {
 	class Connection;
-	class Request;
 
 	Stock stock;
 
@@ -42,12 +39,8 @@ public:
 		return stock.Put(item, action);
 	}
 
-	/* virtual methods from class TranslationService */
-	void SendRequest(AllocatorPtr alloc,
-			 const TranslateRequest &request,
-			 const StopwatchPtr &parent_stopwatch,
-			 TranslateHandler &handler,
-			 CancellablePointer &cancel_ptr) noexcept override;
+	[[gnu::pure]]
+	static SocketDescriptor GetSocket(const StockItem &item) noexcept;
 
 private:
 	/* virtual methods from class StockClass */

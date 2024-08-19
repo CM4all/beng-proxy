@@ -12,7 +12,7 @@
 struct CacheStats;
 class EventLoop;
 class SocketAddress;
-class TranslationStock;
+class TranslationGlue;
 class TranslationCache;
 class TranslationService;
 struct TranslateRequest;
@@ -31,7 +31,7 @@ public:
 class TranslationStockBuilder final : public TranslationServiceBuilder {
 	const unsigned limit;
 
-	std::map<SocketAddress, std::shared_ptr<TranslationStock>,
+	std::map<SocketAddress, std::shared_ptr<TranslationGlue>,
 		 SocketAddressCompare> m;
 
 public:

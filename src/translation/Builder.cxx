@@ -3,7 +3,7 @@
 // author: Max Kellermann <mk@cm4all.com>
 
 #include "Builder.hxx"
-#include "Stock.hxx"
+#include "Glue.hxx"
 #include "Cache.hxx"
 #include "stats/CacheStats.hxx"
 #include "net/SocketAddress.hxx"
@@ -42,7 +42,7 @@ TranslationStockBuilder::Get(SocketAddress address,
 {
 	auto e = m.try_emplace(address, nullptr);
 	if (e.second)
-		e.first->second = std::make_shared<TranslationStock>
+		e.first->second = std::make_shared<TranslationGlue>
 			(event_loop, address, limit);
 
 	return e.first->second;
