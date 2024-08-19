@@ -4,12 +4,6 @@
 
 #pragma once
 
-#ifdef __GNUC__
-#if __GNUC__ < 10
-#include "net/SocketAddress.hxx"
-#endif
-#endif
-
 #include <cstdint>
 #include <map>
 #include <memory>
