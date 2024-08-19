@@ -99,6 +99,7 @@ PingClient::Read() noexcept
 	if (cc >= 0) {
 		if (parse_reply(&msg, cc, ident)) {
 			event.Close();
+			timeout_event.Cancel();
 			handler.PingResponse();
 		} else
 			ScheduleRead();
@@ -106,6 +107,7 @@ PingClient::Read() noexcept
 		ScheduleRead();
 	} else {
 		event.Close();
+		timeout_event.Cancel();
 		handler.PingError(std::make_exception_ptr(MakeSocketError(e, "Failed to receive ping reply")));
 	}
 }
