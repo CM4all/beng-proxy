@@ -1,6 +1,6 @@
 cm4all-beng-proxy (18.0.89) unstable; urgency=low
 
-  * 
+  * lb/ping: verify the checksum of received packets
 
  --   
 
