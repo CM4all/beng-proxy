@@ -6,25 +6,36 @@
 #include "MonitorHandler.hxx"
 #include "MonitorClass.hxx"
 #include "event/net/PingClient.hxx"
+#include "event/CoarseTimerEvent.hxx"
 #include "net/SocketAddress.hxx"
 #include "util/Cancellable.hxx"
 
 class LbPingMonitor final : PingClientHandler, Cancellable {
 	PingClient ping;
 
+	CoarseTimerEvent timeout_event;
+
 	LbMonitorHandler &handler;
 
 public:
 	explicit LbPingMonitor(EventLoop &event_loop,
 			       LbMonitorHandler &_handler)
-		:ping(event_loop, *this), handler(_handler) {}
+		:ping(event_loop, *this),
+		 timeout_event(event_loop, BIND_THIS_METHOD(OnTimeout)),
+		 handler(_handler) {}
 
 	void Start(SocketAddress address, CancellablePointer &cancel_ptr) {
 		cancel_ptr = *this;
+		timeout_event.Schedule(std::chrono::seconds{10});
 		ping.Start(address);
 	}
 
 private:
+	void OnTimeout() noexcept {
+		handler.Timeout();
+		delete this;
+	}
+
 	/* virtual methods from class Cancellable */
 	void Cancel() noexcept override {
 		delete this;
@@ -33,11 +44,6 @@ private:
 	/* virtual methods from class PingClientHandler */
 	void PingResponse() noexcept override {
 		handler.Success();
-		delete this;
-	}
-
-	void PingTimeout() noexcept override {
-		handler.Timeout();
 		delete this;
 	}
 
