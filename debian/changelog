@@ -3,7 +3,7 @@ cm4all-beng-proxy (18.0.89) unstable; urgency=low
   * lb/ping: verify the checksum of received packets
   * spawn: retry if clone3() fails with ENOENT (race with spawn-reaper)
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Wed, 21 Aug 2024 14:26:45 +0200
 
 cm4all-beng-proxy (18.0.88) unstable; urgency=low
 
