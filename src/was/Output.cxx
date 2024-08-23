@@ -3,10 +3,10 @@
 // author: Max Kellermann <mk@cm4all.com>
 
 #include "Output.hxx"
-#include "was/async/Error.hxx"
 #include "event/PipeEvent.hxx"
 #include "event/DeferEvent.hxx"
 #include "event/CoarseTimerEvent.hxx"
+#include "net/TimeoutError.hxx"
 #include "io/Iovec.hxx"
 #include "io/Splice.hxx"
 #include "io/SpliceSupport.hxx"
@@ -118,7 +118,7 @@ private:
 	void OnDeferredWrite() noexcept;
 
 	void OnTimeout() noexcept {
-		DestroyError(std::make_exception_ptr(WasError("send timeout")));
+		DestroyError(std::make_exception_ptr(TimeoutError{"Send timeout"}));
 	}
 
 	/* virtual methods from class IstreamHandler */

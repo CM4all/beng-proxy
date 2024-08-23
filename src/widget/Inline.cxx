@@ -25,6 +25,7 @@
 #include "pool/LeakDetector.hxx"
 #include "lib/fmt/ToBuffer.hxx"
 #include "event/CoarseTimerEvent.hxx"
+#include "net/TimeoutError.hxx"
 #include "util/Cancellable.hxx"
 #include "util/Compiler.h"
 #include "util/LimitedConcurrencyQueue.hxx"
@@ -107,7 +108,7 @@ private:
 	void OnHeaderTimeout() noexcept {
 		widget.Cancel();
 		cancel_ptr.Cancel();
-		Fail(std::make_exception_ptr(std::runtime_error("Header timeout")));
+		Fail(std::make_exception_ptr(TimeoutError{"Header timeout"}));
 	}
 
 	/* LimitedConcurrencyJob callback */

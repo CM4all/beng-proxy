@@ -24,6 +24,7 @@
 #include "system/Error.hxx"
 #include "event/net/BufferedSocket.hxx"
 #include "net/SocketError.hxx"
+#include "net/TimeoutError.hxx"
 #include "io/UniqueFileDescriptor.hxx"
 #include "io/SpliceSupport.hxx"
 #include "util/DestructObserver.hxx"
@@ -1161,7 +1162,7 @@ FcgiClient::OnBufferedTimeout() noexcept
 {
 	stopwatch.RecordEvent("timeout");
 
-	AbortResponse(std::make_exception_ptr(FcgiClientError("timeout")));
+	AbortResponse(std::make_exception_ptr(TimeoutError{}));
 	return false;
 }
 

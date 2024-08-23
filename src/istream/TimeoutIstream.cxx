@@ -8,9 +8,8 @@
 #include "Bucket.hxx"
 #include "New.hxx"
 #include "event/CoarseTimerEvent.hxx"
+#include "net/TimeoutError.hxx"
 #include "io/FileDescriptor.hxx"
-
-#include <stdexcept>
 
 class TimeoutIstream final : public ForwardIstream {
 	CoarseTimerEvent timeout_event;
@@ -27,7 +26,7 @@ public:
 
 private:
 	void OnTimeout() noexcept {
-		DestroyError(std::make_exception_ptr(std::runtime_error("timeout")));
+		DestroyError(std::make_exception_ptr(TimeoutError{}));
 	}
 
 public:
