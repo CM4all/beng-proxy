@@ -4,7 +4,6 @@
 
 #include "Server.hxx"
 #include "Map.hxx"
-#include "was/async/Error.hxx"
 #include "istream/UnusedPtr.hxx"
 #include "istream/istream_null.hxx"
 #include "strmap.hxx"
@@ -13,6 +12,7 @@
 #include "http/Method.hxx"
 #include "http/Status.hxx"
 #include "pool/pool.hxx"
+#include "net/SocketProtocolError.hxx"
 #include "util/SpanCast.hxx"
 #include "util/StringSplit.hxx"
 #include "util/Unaligned.hxx"
@@ -58,7 +58,7 @@ WasServer::ReleaseError(std::exception_ptr ep) noexcept
 void
 WasServer::ReleaseError(const char *msg) noexcept
 {
-	ReleaseError(std::make_exception_ptr(WasProtocolError(msg)));
+	ReleaseError(std::make_exception_ptr(SocketProtocolError{msg}));
 }
 
 void
@@ -92,7 +92,7 @@ WasServer::AbortError(std::exception_ptr ep) noexcept
 void
 WasServer::AbortProtocolError(const char *msg) noexcept
 {
-	AbortError(std::make_exception_ptr(WasProtocolError(msg)));
+	AbortError(std::make_exception_ptr(SocketProtocolError{msg}));
 }
 
 void

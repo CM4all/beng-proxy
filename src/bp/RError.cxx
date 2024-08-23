@@ -11,7 +11,6 @@
 #include "http/Client.hxx"
 #include "cgi/Error.hxx"
 #include "fcgi/Error.hxx"
-#include "was/async/Error.hxx"
 #include "widget/Error.hxx"
 #include "lib/openssl/Error.hxx"
 #include "http/IncomingRequest.hxx"
@@ -119,8 +118,7 @@ ToResponse(struct pool &pool, std::exception_ptr ep) noexcept
 	    FindNested<SslError>(ep))
 		return {HttpStatus::BAD_GATEWAY, "Upstream server failed"};
 
-	if (FindNested<WasError>(ep) ||
-	    FindNested<FcgiClientError>(ep) ||
+	if (FindNested<FcgiClientError>(ep) ||
 	    FindNested<CgiError>(ep))
 		return {HttpStatus::BAD_GATEWAY, "Script failed"};
 

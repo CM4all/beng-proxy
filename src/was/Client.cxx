@@ -9,7 +9,6 @@
 #include "Input.hxx"
 #include "Lease.hxx"
 #include "was/async/Control.hxx"
-#include "was/async/Error.hxx"
 #include "http/ResponseHandler.hxx"
 #include "istream/istream_null.hxx"
 #include "istream/UnusedPtr.hxx"
@@ -18,6 +17,7 @@
 #include "pool/LeakDetector.hxx"
 #include "stopwatch.hxx"
 #include "lib/fmt/ToBuffer.hxx"
+#include "net/SocketProtocolError.hxx"
 #include "io/FileDescriptor.hxx"
 #include "event/FineTimerEvent.hxx"
 #include "http/HeaderLimits.hxx"
@@ -474,7 +474,7 @@ ParseHeaderPacket(AllocatorPtr alloc, StringMap &headers,
 
 	if (value.data() == nullptr || !http_header_name_valid(name) ||
 	    !IsValidHeaderValue(value))
-		throw WasProtocolError("Malformed WAS HEADER packet");
+		throw SocketProtocolError{"Malformed WAS HEADER packet"};
 
 	headers.Add(alloc, alloc.DupToLower(name), alloc.DupZ(value));
 }
@@ -528,24 +528,24 @@ WasClient::OnWasControlPacket(enum was_command cmd,
 	case WAS_COMMAND_PARAMETER:
 	case WAS_COMMAND_REMOTE_HOST:
 		stopwatch.RecordEvent("control_error");
-		AbortResponse(std::make_exception_ptr(WasProtocolError(FmtBuffer<64>("Unexpected WAS packet {}",
+		AbortResponse(std::make_exception_ptr(SocketProtocolError(FmtBuffer<64>("Unexpected WAS packet {}",
 										     static_cast<unsigned>(cmd)))));
 		return false;
 
 	case WAS_COMMAND_HEADER:
 		if (!response.IsReceivingMetadata()) {
 			stopwatch.RecordEvent("control_error");
-			AbortResponse(std::make_exception_ptr(WasProtocolError("response header was too late")));
+			AbortResponse(std::make_exception_ptr(SocketProtocolError{"response header was too late"}));
 			return false;
 		}
 
 		try {
 			if (payload.size() >= MAX_HTTP_HEADER_SIZE)
-				throw WasProtocolError{"Response header is too long"};
+				throw SocketProtocolError{"Response header is too long"};
 
 			response.total_header_size += payload.size();
 			if (response.total_header_size >= MAX_TOTAL_HTTP_HEADER_SIZE)
-				throw WasProtocolError{"Too many response headers"};
+				throw SocketProtocolError{"Too many response headers"};
 
 			ParseHeaderPacket(alloc, response.headers,
 					  ToStringView(payload));
@@ -563,7 +563,7 @@ WasClient::OnWasControlPacket(enum was_command cmd,
 			/* note: using AbortResponse() instead of
 			   AbortResponseBody() because the response may be still
 			   "pending" */
-			AbortResponse(std::make_exception_ptr(WasProtocolError("STATUS after body start")));
+			AbortResponse(std::make_exception_ptr(SocketProtocolError("STATUS after body start")));
 			return false;
 		}
 
@@ -573,13 +573,13 @@ WasClient::OnWasControlPacket(enum was_command cmd,
 			status = static_cast<HttpStatus>(LoadUnaligned<uint16_t>(payload.data()));
 		else {
 			stopwatch.RecordEvent("control_error");
-			AbortResponseHeaders(std::make_exception_ptr(WasProtocolError("malformed STATUS")));
+			AbortResponseHeaders(std::make_exception_ptr(SocketProtocolError("malformed STATUS")));
 			return false;
 		}
 
 		if (!http_status_is_valid(status)) {
 			stopwatch.RecordEvent("control_error");
-			AbortResponseHeaders(std::make_exception_ptr(WasProtocolError("malformed STATUS")));
+			AbortResponseHeaders(std::make_exception_ptr(SocketProtocolError("malformed STATUS")));
 			return false;
 		}
 
@@ -596,7 +596,7 @@ WasClient::OnWasControlPacket(enum was_command cmd,
 	case WAS_COMMAND_NO_DATA:
 		if (!response.IsReceivingMetadata()) {
 			stopwatch.RecordEvent("control_error");
-			AbortResponseBody(std::make_exception_ptr(WasProtocolError("NO_DATA after body start")));
+			AbortResponseBody(std::make_exception_ptr(SocketProtocolError("NO_DATA after body start")));
 			return false;
 		}
 
@@ -617,13 +617,13 @@ WasClient::OnWasControlPacket(enum was_command cmd,
 	case WAS_COMMAND_DATA:
 		if (!response.IsReceivingMetadata()) {
 			stopwatch.RecordEvent("control_error");
-			AbortResponseBody(std::make_exception_ptr(WasProtocolError("DATA after body start")));
+			AbortResponseBody(std::make_exception_ptr(SocketProtocolError("DATA after body start")));
 			return false;
 		}
 
 		if (response.body == nullptr) {
 			stopwatch.RecordEvent("control_error");
-			AbortResponseHeaders(std::make_exception_ptr(WasProtocolError("no response body allowed")));
+			AbortResponseHeaders(std::make_exception_ptr(SocketProtocolError("no response body allowed")));
 			return false;
 		}
 
@@ -633,19 +633,19 @@ WasClient::OnWasControlPacket(enum was_command cmd,
 	case WAS_COMMAND_LENGTH:
 		if (response.IsReceivingMetadata()) {
 			stopwatch.RecordEvent("control_error");
-			AbortResponseHeaders(std::make_exception_ptr(WasProtocolError("LENGTH before DATA")));
+			AbortResponseHeaders(std::make_exception_ptr(SocketProtocolError("LENGTH before DATA")));
 			return false;
 		}
 
 		if (response.body == nullptr) {
 			stopwatch.RecordEvent("control_error");
-			AbortResponseBody(std::make_exception_ptr(WasProtocolError("LENGTH after NO_DATA")));
+			AbortResponseBody(std::make_exception_ptr(SocketProtocolError("LENGTH after NO_DATA")));
 			return false;
 		}
 
 		if (payload.size() != sizeof(uint64_t)) {
 			stopwatch.RecordEvent("control_error");
-			AbortResponseBody(std::make_exception_ptr(WasProtocolError("malformed LENGTH packet")));
+			AbortResponseBody(std::make_exception_ptr(SocketProtocolError("malformed LENGTH packet")));
 			return false;
 		}
 
@@ -680,13 +680,13 @@ WasClient::OnWasControlPacket(enum was_command cmd,
 	case WAS_COMMAND_PREMATURE:
 		if (response.IsReceivingMetadata()) {
 			stopwatch.RecordEvent("control_error");
-			AbortResponseHeaders(std::make_exception_ptr(WasProtocolError("PREMATURE before DATA")));
+			AbortResponseHeaders(std::make_exception_ptr(SocketProtocolError("PREMATURE before DATA")));
 			return false;
 		}
 
 		if (payload.size() != sizeof(uint64_t)) {
 			stopwatch.RecordEvent("control_error");
-			AbortResponseBody(std::make_exception_ptr(WasProtocolError("malformed PREMATURE packet")));
+			AbortResponseBody(std::make_exception_ptr(SocketProtocolError("malformed PREMATURE packet")));
 			return false;
 		}
 
@@ -715,7 +715,7 @@ WasClient::OnWasControlPacket(enum was_command cmd,
 		if (metrics_handler != nullptr &&
 		    !HandleMetric(*metrics_handler, payload)) {
 			stopwatch.RecordEvent("control_error");
-			AbortResponse(std::make_exception_ptr(WasProtocolError{"Malformed METRIC packet"}));
+			AbortResponse(std::make_exception_ptr(SocketProtocolError{"Malformed METRIC packet"}));
 			return false;
 		}
 

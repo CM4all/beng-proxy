@@ -3,7 +3,6 @@
 // author: Max Kellermann <mk@cm4all.com>
 
 #include "Input.hxx"
-#include "was/async/Error.hxx"
 #include "event/PipeEvent.hxx"
 #include "event/DeferEvent.hxx"
 #include "istream/istream.hxx"
@@ -14,6 +13,7 @@
 #include "pool/pool.hxx"
 #include "memory/fb_pool.hxx"
 #include "memory/SliceFifoBuffer.hxx"
+#include "net/SocketProtocolError.hxx"
 #include "io/Buffered.hxx"
 #include "io/SpliceSupport.hxx"
 #include "system/Error.hxx"
@@ -136,7 +136,7 @@ private:
 	}
 
 	void AbortError(const char *msg) noexcept {
-		AbortError(std::make_exception_ptr(WasProtocolError(msg)));
+		AbortError(std::make_exception_ptr(SocketProtocolError{msg}));
 	}
 
 	void Eof() noexcept {
@@ -291,7 +291,7 @@ WasInput::ReadToBuffer()
 	assert(nbytes != -2);
 
 	if (nbytes == 0)
-		throw WasProtocolError("server closed the data connection");
+		throw SocketClosedPrematurelyError{"server closed the data connection"};
 
 	if (nbytes < 0) {
 		const int e = errno;
@@ -516,10 +516,10 @@ WasInput::PrematureThrow(uint64_t _length)
 	event.Cancel();
 
 	if (known_length && _length > length)
-		throw WasProtocolError("announced premature length is too large");
+		throw SocketProtocolError{"announced premature length is too large"};
 
 	if (_length < received)
-		throw WasProtocolError("announced premature length is too small");
+		throw SocketProtocolError{"announced premature length is too small"};
 
 	uint64_t remaining = _length - received;
 
@@ -529,10 +529,10 @@ WasInput::PrematureThrow(uint64_t _length)
 		ssize_t nbytes = GetPipe().Read(discard_buffer, size);
 		if (nbytes < 0)
 			throw NestException(std::make_exception_ptr(MakeErrno("Read error")),
-					    WasError("read error on WAS data connection"));
+					    SocketProtocolError{"read error on WAS data connection"});
 
 		if (nbytes == 0)
-			throw WasProtocolError("server closed the WAS data connection");
+			throw SocketClosedPrematurelyError("server closed the WAS data connection");
 
 		remaining -= nbytes;
 	}
@@ -565,7 +565,7 @@ WasInput::Premature(uint64_t _length) noexcept
 
 	/* finall let our IstreamHandler know that the stream was
 	   closed prematurely */
-	DestroyError(std::make_exception_ptr(WasProtocolError("premature end of WAS response")));
+	DestroyError(std::make_exception_ptr(SocketProtocolError{"premature end of WAS response"}));
 }
 
 void
@@ -579,7 +579,7 @@ was_input_premature_throw(WasInput *input, uint64_t length)
 {
 	AtScopeExit(input) { input->Destroy(); };
 	input->PrematureThrow(length);
-	throw WasProtocolError("premature end of WAS response");
+	throw SocketProtocolError{"premature end of WAS response"};
 }
 
 void
