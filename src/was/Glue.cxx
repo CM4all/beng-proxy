@@ -5,11 +5,11 @@
 #include "Glue.hxx"
 #include "Stock.hxx"
 #include "SConnection.hxx"
+#include "SLease.hxx"
 #include "Client.hxx"
 #include "was/async/Socket.hxx"
 #include "http/PendingRequest.hxx"
 #include "http/ResponseHandler.hxx"
-#include "Lease.hxx"
 #include "stock/GetHandler.hxx"
 #include "stock/Stock.hxx"
 #include "stock/Item.hxx"
@@ -22,7 +22,7 @@
 #include <assert.h>
 #include <string.h>
 
-class WasRequest final : StockGetHandler, Cancellable, WasLease, PoolLeakDetector {
+class WasRequest final : StockGetHandler, Cancellable, HttpResponseHandler, PoolLeakDetector {
 	struct pool &pool;
 
 	StopwatchPtr stopwatch;
@@ -30,8 +30,6 @@ class WasRequest final : StockGetHandler, Cancellable, WasLease, PoolLeakDetecto
 	const char *const site_name;
 
 	const char *const remote_host;
-
-	WasStockConnection *connection;
 
 	PendingHttpRequest pending_request;
 	const char *script_name;
@@ -42,8 +40,7 @@ class WasRequest final : StockGetHandler, Cancellable, WasLease, PoolLeakDetecto
 
 	WasMetricsHandler *const metrics_handler;
 	HttpResponseHandler &handler;
-	CancellablePointer &caller_cancel_ptr;
-	CancellablePointer stock_cancel_ptr;
+	CancellablePointer cancel_ptr;
 
 public:
 	WasRequest(struct pool &_pool,
@@ -57,8 +54,7 @@ public:
 		   UnusedIstreamPtr _body,
 		   std::span<const char *const> _parameters,
 		   WasMetricsHandler *_metrics_handler,
-		   HttpResponseHandler &_handler,
-		   CancellablePointer &_cancel_ptr)
+		   HttpResponseHandler &_handler)
 		:PoolLeakDetector(_pool),
 		 pool(_pool),
 		 stopwatch(std::move(_stopwatch)),
@@ -70,9 +66,7 @@ public:
 		 path_info(_path_info), query_string(_query_string),
 		 parameters(_parameters),
 		 metrics_handler(_metrics_handler),
-		 handler(_handler), caller_cancel_ptr(_cancel_ptr) {
-		caller_cancel_ptr = *this;
-	}
+		 handler(_handler) {}
 
 	void Destroy() noexcept {
 		DeleteFromPool(pool, this);
@@ -80,12 +74,15 @@ public:
 
 	void Start(WasStock &was_stock, const ChildOptions &options,
 		   const char *action, std::span<const char *const> args,
-		   unsigned parallelism, bool disposable) noexcept {
+		   unsigned parallelism, bool disposable,
+		   CancellablePointer &caller_cancel_ptr) noexcept {
+		caller_cancel_ptr = *this;
+
 		was_stock.Get(pool,
 			      options,
 			      action, args,
 			      parallelism, disposable,
-			      *this, stock_cancel_ptr);
+			      *this, cancel_ptr);
 	}
 
 private:
@@ -93,23 +90,16 @@ private:
 	void OnStockItemReady(StockItem &item) noexcept override;
 	void OnStockItemError(std::exception_ptr ep) noexcept override;
 
+	/* virtual methods from class HttpResponseHandler */
+	void OnHttpResponse(HttpStatus status, StringMap &&headers,
+			    UnusedIstreamPtr body) noexcept override;
+	void OnHttpError(std::exception_ptr error) noexcept override;
+
 	/* virtual methods from class Cancellable */
 	void Cancel() noexcept override {
-		auto c = std::move(stock_cancel_ptr);
+		auto c = std::move(cancel_ptr);
 		Destroy();
 		c.Cancel();
-	}
-
-	/* virtual methods from class WasLease */
-	void ReleaseWas(PutAction action) noexcept override {
-		connection->Put(action);
-		Destroy();
-	}
-
-	void ReleaseWasStop(uint_least64_t input_received) noexcept override {
-		connection->Stop(input_received);
-		connection->Put(PutAction::REUSE);
-		Destroy();
 	}
 };
 
@@ -121,17 +111,18 @@ private:
 void
 WasRequest::OnStockItemReady(StockItem &item) noexcept
 {
-	connection = (WasStockConnection *)&item;
-	connection->SetSite(site_name);
-	connection->SetUri(pending_request.uri);
+	auto &connection = static_cast<WasStockConnection &>(item);
+	connection.SetSite(site_name);
+	connection.SetUri(pending_request.uri);
 
-	const auto &process = connection->GetSocket();
+	const auto &process = connection.GetSocket();
+	auto &lease = *NewFromPool<WasStockLease>(pool, connection);
 
 	was_client_request(pool, item.GetStock().GetEventLoop(),
 			   std::move(stopwatch),
 			   process.control,
 			   process.input, process.output,
-			   *this,
+			   lease,
 			   remote_host,
 			   pending_request.method, pending_request.uri,
 			   script_name, path_info,
@@ -140,7 +131,7 @@ WasRequest::OnStockItemReady(StockItem &item) noexcept
 			   std::move(pending_request.body),
 			   parameters,
 			   metrics_handler,
-			   handler, caller_cancel_ptr);
+			   *this, cancel_ptr);
 }
 
 void
@@ -149,6 +140,23 @@ WasRequest::OnStockItemError(std::exception_ptr ep) noexcept
 	auto &_handler = handler;
 	Destroy();
 	_handler.InvokeError(ep);
+}
+
+void
+WasRequest::OnHttpResponse(HttpStatus status, StringMap &&_headers,
+			   UnusedIstreamPtr _body) noexcept
+{
+	auto &_handler = handler;
+	Destroy();
+	_handler.InvokeResponse(status, std::move(_headers), std::move(_body));
+}
+
+void
+WasRequest::OnHttpError(std::exception_ptr error) noexcept
+{
+	auto &_handler = handler;
+	Destroy();
+	_handler.InvokeError(std::move(error));
 }
 
 /*
@@ -248,7 +256,7 @@ was_request(struct pool &pool, WasStock &was_stock,
 					       std::move(body),
 					       parameters,
 					       metrics_handler,
-					       handler, cancel_ptr);
+					       handler);
 	request->Start(was_stock, options, action, args,
-		       parallelism, disposable);
+		       parallelism, disposable, cancel_ptr);
 }
