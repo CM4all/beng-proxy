@@ -52,6 +52,7 @@ was_stock = static_library(
   'SConnection.cxx',
   'Stock.cxx',
   'SLease.cxx',
+  'SRequest.cxx',
   'Glue.cxx',
   'MStock.cxx',
   'MGlue.cxx',
