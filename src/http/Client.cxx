@@ -32,6 +32,7 @@
 #include "lib/fmt/ToBuffer.hxx"
 #include "event/DeferEvent.hxx"
 #include "system/Error.hxx"
+#include "net/SocketProtocolError.hxx"
 #include "io/Iovec.hxx"
 #include "io/Logger.hxx"
 #include "io/SpliceSupport.hxx"
@@ -67,6 +68,9 @@ IsHttpClientServerFailure(std::exception_ptr ep) noexcept
 bool
 IsHttpClientRetryFailure(std::exception_ptr ep) noexcept
 {
+	if (FindNested<SocketClosedPrematurelyError>(ep))
+		return true;
+
 	const auto *e = FindNested<HttpClientError>(ep);
 	if (e == nullptr)
 		return false;
