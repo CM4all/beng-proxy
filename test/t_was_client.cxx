@@ -372,11 +372,11 @@ private:
 	}
 
 	/* virtual methods from class WasLease */
-	void ReleaseWas(PutAction action) override {
+	void ReleaseWas(PutAction action) noexcept override {
 		lease->ReleaseLease(action);
 	}
 
-	void ReleaseWasStop(uint64_t) override {
+	void ReleaseWasStop(uint64_t) noexcept override {
 		ReleaseWas(PutAction::DESTROY);
 	}
 };

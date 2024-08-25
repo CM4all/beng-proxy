@@ -10,6 +10,6 @@
 
 class WasLease {
 public:
-	virtual void ReleaseWas(PutAction action) = 0;
-	virtual void ReleaseWasStop(uint64_t input_received) = 0;
+	virtual void ReleaseWas(PutAction action) noexcept = 0;
+	virtual void ReleaseWasStop(uint64_t input_received) noexcept = 0;
 };

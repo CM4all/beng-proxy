@@ -57,12 +57,12 @@ struct Context final
 	}
 
 	/* virtual methods from class Lease */
-	void ReleaseWas([[maybe_unused]] PutAction action) override {
+	void ReleaseWas([[maybe_unused]] PutAction action) noexcept override {
 		process.handle.reset();
 		process.Close();
 	}
 
-	void ReleaseWasStop([[maybe_unused]] uint64_t input_received) override {
+	void ReleaseWasStop([[maybe_unused]] uint64_t input_received) noexcept override {
 		ReleaseWas(PutAction::DESTROY);
 	}
 

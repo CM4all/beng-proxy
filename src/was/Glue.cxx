@@ -101,12 +101,12 @@ private:
 	}
 
 	/* virtual methods from class WasLease */
-	void ReleaseWas(PutAction action) override {
+	void ReleaseWas(PutAction action) noexcept override {
 		connection->Put(action);
 		Destroy();
 	}
 
-	void ReleaseWasStop(uint64_t input_received) override {
+	void ReleaseWasStop(uint64_t input_received) noexcept override {
 		connection->Stop(input_received);
 		connection->Put(PutAction::REUSE);
 		Destroy();
