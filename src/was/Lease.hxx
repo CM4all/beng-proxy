@@ -6,10 +6,10 @@
 
 #include "stock/PutAction.hxx"
 
-#include <stdint.h>
+#include <cstdint>
 
 class WasLease {
 public:
 	virtual void ReleaseWas(PutAction action) noexcept = 0;
-	virtual void ReleaseWasStop(uint64_t input_received) noexcept = 0;
+	virtual void ReleaseWasStop(uint_least64_t input_received) noexcept = 0;
 };

@@ -117,7 +117,7 @@ private:
 		Destroy();
 	}
 
-	void ReleaseWasStop(uint64_t input_received) noexcept override {
+	void ReleaseWasStop(uint_least64_t input_received) noexcept override {
 		connection->Stop(input_received);
 		connection->Put(PutAction::REUSE);
 		Destroy();

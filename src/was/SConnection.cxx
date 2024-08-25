@@ -13,7 +13,7 @@ WasStockConnection::WasStockConnection(CreateStockItem c) noexcept
 	 connection(c.stock.GetEventLoop(), *this) {}
 
 void
-WasStockConnection::Stop(uint64_t _received) noexcept
+WasStockConnection::Stop(uint_least64_t _received) noexcept
 {
 	assert(!is_idle);
 

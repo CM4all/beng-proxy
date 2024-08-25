@@ -62,7 +62,7 @@ struct Context final
 		process.Close();
 	}
 
-	void ReleaseWasStop([[maybe_unused]] uint64_t input_received) noexcept override {
+	void ReleaseWasStop([[maybe_unused]] uint_least64_t input_received) noexcept override {
 		ReleaseWas(PutAction::DESTROY);
 	}
 

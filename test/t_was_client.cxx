@@ -376,7 +376,7 @@ private:
 		lease->ReleaseLease(action);
 	}
 
-	void ReleaseWasStop(uint64_t) noexcept override {
+	void ReleaseWasStop(uint_least64_t) noexcept override {
 		ReleaseWas(PutAction::DESTROY);
 	}
 };
