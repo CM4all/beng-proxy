@@ -18,25 +18,93 @@
 
 class MultiWasRequest final : WasStockRequest
 {
-public:
-	using WasStockRequest::WasStockRequest;
+	MultiWasStock &stock;
+	const ChildOptions &options;
+	const char *const action;
+	const std::span<const char *const> args;
+	const unsigned parallelism, concurrency;
 
-	void Start(MultiWasStock &stock, const ChildOptions &options,
-		   const char *action, std::span<const char *const> args,
-		   unsigned parallelism, unsigned concurrency,
-		   CancellablePointer &caller_cancel_ptr) noexcept {
+public:
+	MultiWasRequest(struct pool &_pool, MultiWasStock &_stock,
+			StopwatchPtr &&_stopwatch,
+			const char *_site_name,
+			const ChildOptions &_options,
+			const char *_action,
+			std::span<const char *const> _args,
+			unsigned _parallelism, unsigned _concurrency,
+			const char *_remote_host,
+			HttpMethod _method, const char *_uri,
+			const char *_script_name, const char *_path_info,
+			const char *_query_string,
+			StringMap &&_headers,
+			UnusedIstreamPtr _body,
+			std::span<const char *const> _parameters,
+			WasMetricsHandler *_metrics_handler,
+			::HttpResponseHandler &_handler) noexcept
+		:WasStockRequest(_pool, std::move(_stopwatch),
+				 _site_name, _remote_host,
+				 _method, _uri,
+				 _script_name, _path_info, _query_string,
+				 std::move(_headers), std::move(_body),
+				 _parameters, _metrics_handler, _handler),
+		 stock(_stock),
+		 options(_options),
+		 action(_action), args(_args),
+		 parallelism(_parallelism), concurrency(_concurrency) {}
+
+	void Start(CancellablePointer &caller_cancel_ptr) noexcept {
 		caller_cancel_ptr = *this;
+		GetStockItem();
+	}
+
+protected:
+	void GetStockItem() noexcept override {
 		stock.Get(pool,
 			  options,
 			  action, args,
 			  parallelism, concurrency,
 			  *this, cancel_ptr);
 	}
+};
 
-	void Start(RemoteWasStock &stock, SocketAddress address,
-		   unsigned parallelism, unsigned concurrency,
-		   CancellablePointer &caller_cancel_ptr) noexcept {
+class RemoteWasRequest final : WasStockRequest
+{
+	RemoteWasStock &stock;
+	const SocketAddress address;
+	const unsigned parallelism, concurrency;
+
+public:
+	RemoteWasRequest(struct pool &_pool, RemoteWasStock &_stock,
+			 StopwatchPtr &&_stopwatch,
+			 const char *_site_name,
+			 SocketAddress _address,
+			 unsigned _parallelism, unsigned _concurrency,
+			 const char *_remote_host,
+			 HttpMethod _method, const char *_uri,
+			 const char *_script_name, const char *_path_info,
+			 const char *_query_string,
+			 StringMap &&_headers,
+			 UnusedIstreamPtr _body,
+			 std::span<const char *const> _parameters,
+			 WasMetricsHandler *_metrics_handler,
+			 ::HttpResponseHandler &_handler) noexcept
+		:WasStockRequest(_pool, std::move(_stopwatch),
+				 _site_name, _remote_host,
+				 _method, _uri,
+				 _script_name, _path_info, _query_string,
+				 std::move(_headers), std::move(_body),
+				 _parameters, _metrics_handler, _handler),
+		 stock(_stock),
+		 address(_address),
+		 parallelism(_parallelism), concurrency(_concurrency) {}
+
+	void Start(CancellablePointer &caller_cancel_ptr) noexcept {
 		caller_cancel_ptr = *this;
+		GetStockItem();
+	}
+
+protected:
+	void GetStockItem() noexcept override {
 		stock.Get(pool, address, parallelism, concurrency,
 			  *this, cancel_ptr);
 	}
@@ -127,12 +195,14 @@ SendMultiWasRequest(struct pool &pool, MultiWasStock &stock,
 	if (action == nullptr)
 		action = path;
 
-	auto request = NewFromPool<MultiWasRequest>(pool, pool,
+	auto request = NewFromPool<MultiWasRequest>(pool, pool, stock,
 						    stopwatch_new_was(parent_stopwatch,
 								      path, uri,
 								      path_info,
 								      parameters),
 						    site_name,
+						    options, action, args,
+						    parallelism, concurrency,
 						    remote_host,
 						    method, uri, script_name,
 						    path_info, query_string,
@@ -141,7 +211,7 @@ SendMultiWasRequest(struct pool &pool, MultiWasStock &stock,
 						    parameters,
 						    metrics_handler,
 						    handler);
-	request->Start(stock, options, action, args, parallelism, concurrency, cancel_ptr);
+	request->Start(cancel_ptr);
 }
 
 static StopwatchPtr
@@ -210,19 +280,21 @@ SendRemoteWasRequest(struct pool &pool, RemoteWasStock &stock,
 		     HttpResponseHandler &handler,
 		     CancellablePointer &cancel_ptr) noexcept
 {
-	auto request = NewFromPool<MultiWasRequest>(pool, pool,
-						    stopwatch_new_was(parent_stopwatch,
+	auto request = NewFromPool<RemoteWasRequest>(pool, pool, stock,
+						     stopwatch_new_was(parent_stopwatch,
 								      address, uri,
 								      path_info,
 								      parameters),
-						    nullptr,
-						    remote_host,
-						    method, uri, script_name,
-						    path_info, query_string,
-						    std::move(headers),
-						    std::move(body),
-						    parameters,
-						    metrics_handler,
-						    handler);
-	request->Start(stock, address, parallelism, concurrency, cancel_ptr);
+						     nullptr,
+						     address,
+						     parallelism, concurrency,
+						     remote_host,
+						     method, uri, script_name,
+						     path_info, query_string,
+						     std::move(headers),
+						     std::move(body),
+						     parameters,
+						     metrics_handler,
+						     handler);
+	request->Start(cancel_ptr);
 }

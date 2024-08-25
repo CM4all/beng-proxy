@@ -13,15 +13,51 @@
 #include <string.h>
 
 class WasRequest final : WasStockRequest {
+	WasStock &was_stock;
+	const ChildOptions &options;
+	const char *const action;
+	const std::span<const char *const> args;
+	const unsigned parallelism;
+	const bool disposable;
+
 public:
+	WasRequest(struct pool &_pool, WasStock &_was_stock,
+		   StopwatchPtr &&_stopwatch,
+		   const char *_site_name,
+		   const ChildOptions &_options,
+		   const char *_action,
+		   std::span<const char *const> _args,
+		   unsigned _parallelism, bool _disposable,
+		   const char *_remote_host,
+		   HttpMethod _method, const char *_uri,
+		   const char *_script_name, const char *_path_info,
+		   const char *_query_string,
+		   StringMap &&_headers,
+		   UnusedIstreamPtr _body,
+		   std::span<const char *const> _parameters,
+		   WasMetricsHandler *_metrics_handler,
+		   ::HttpResponseHandler &_handler) noexcept
+		:WasStockRequest(_pool, std::move(_stopwatch),
+				 _site_name, _remote_host,
+				 _method, _uri,
+				 _script_name, _path_info, _query_string,
+				 std::move(_headers), std::move(_body),
+				 _parameters, _metrics_handler, _handler),
+		 was_stock(_was_stock),
+		 options(_options),
+		 action(_action), args(_args),
+		 parallelism(_parallelism),
+		 disposable(_disposable) {}
+
 	using WasStockRequest::WasStockRequest;
 
-	void Start(WasStock &was_stock, const ChildOptions &options,
-		   const char *action, std::span<const char *const> args,
-		   unsigned parallelism, bool disposable,
-		   CancellablePointer &caller_cancel_ptr) noexcept {
+	void Start(CancellablePointer &caller_cancel_ptr) noexcept {
 		caller_cancel_ptr = *this;
+		GetStockItem();
+	}
 
+protected:
+	void GetStockItem() noexcept override {
 		was_stock.Get(pool,
 			      options,
 			      action, args,
@@ -114,12 +150,14 @@ was_request(struct pool &pool, WasStock &was_stock,
 	if (action == nullptr)
 		action = path;
 
-	auto request = NewFromPool<WasRequest>(pool, pool,
+	auto request = NewFromPool<WasRequest>(pool, pool, was_stock,
 					       stopwatch_new_was(parent_stopwatch,
 								 path, uri,
 								 path_info,
 								 parameters),
 					       site_name,
+					       options, action, args,
+					       parallelism, disposable,
 					       remote_host,
 					       method, uri, script_name,
 					       path_info, query_string,
@@ -128,6 +166,5 @@ was_request(struct pool &pool, WasStock &was_stock,
 					       parameters,
 					       metrics_handler,
 					       handler);
-	request->Start(was_stock, options, action, args,
-		       parallelism, disposable, cancel_ptr);
+	request->Start(cancel_ptr);
 }

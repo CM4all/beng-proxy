@@ -5,6 +5,7 @@
 #pragma once
 
 #include <cstdint>
+#include <exception>
 #include <span>
 
 enum class HttpMethod : uint_least8_t;
@@ -19,6 +20,13 @@ class StringMap;
 class WasMetricsHandler;
 class HttpResponseHandler;
 class CancellablePointer;
+
+/**
+ * Is it worth retrying after this error?
+ */
+[[gnu::pure]]
+bool
+IsWasClientRetryFailure(std::exception_ptr error) noexcept;
 
 /**
  * Web Application Socket client.

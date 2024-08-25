@@ -39,6 +39,15 @@
 #include <cassert>
 #include <cmath> // for std::isnormal()
 
+bool
+IsWasClientRetryFailure(std::exception_ptr error) noexcept
+{
+	if (FindNested<SocketClosedPrematurelyError>(error))
+		return true;
+
+	return false;
+}
+
 class WasClient final
 	: Was::ControlHandler, WasOutputHandler, WasInputHandler,
 	  DestructAnchor, PoolLeakDetector,

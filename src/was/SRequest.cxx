@@ -56,6 +56,16 @@ WasStockRequest::OnHttpResponse(HttpStatus status, StringMap &&_headers,
 void
 WasStockRequest::OnHttpError(std::exception_ptr error) noexcept
 {
+	if (retries > 0 && IsWasClientRetryFailure(error)) {
+		/* the server has closed the connection prematurely, maybe
+		   because it didn't want to get any further requests on that
+		   WAS connection.  Let's try again. */
+
+		--retries;
+		GetStockItem();
+		return;
+	}
+
 	auto &_handler = handler;
 	Destroy();
 	_handler.InvokeError(std::move(error));

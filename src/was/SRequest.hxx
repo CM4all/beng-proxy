@@ -39,6 +39,8 @@ public:
 	HttpResponseHandler &handler;
 	CancellablePointer cancel_ptr;
 
+	unsigned retries;
+
 public:
 	WasStockRequest(struct pool &_pool,
 			StopwatchPtr &&_stopwatch,
@@ -63,7 +65,8 @@ public:
 		 path_info(_path_info), query_string(_query_string),
 		 parameters(_parameters),
 		 metrics_handler(_metrics_handler),
-		 handler(_handler) {}
+		 handler(_handler),
+		 retries(pending_request.body ? 0 : 2) {}
 
 	virtual ~WasStockRequest() noexcept = default;
 
@@ -71,6 +74,8 @@ protected:
 	void Destroy() noexcept {
 		this->~WasStockRequest();
 	}
+
+	virtual void GetStockItem() noexcept = 0;
 
 private:
 	/* virtual methods from class StockGetHandler */
