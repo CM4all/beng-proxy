@@ -153,16 +153,19 @@ BufferedIstream::ReadToBuffer(FileDescriptor fd, off_t offset,
 	if (!buffer.IsDefined())
 		buffer = fb_pool_get().Alloc();
 
-	const auto w = buffer.Write();
+	auto w = buffer.Write();
 	if (w.empty())
 		/* buffer is full - the "ready" call is pending */
 		return IstreamDirectResult::BLOCKING;
 
-	const std::size_t n_try = std::min(w.size(), max_length);
+	const std::size_t buffer_space = w.size();
+
+	if (w.size() > max_length)
+		w = w.first(max_length);
 
 	ssize_t nbytes = HasOffset(offset)
-		? fd.ReadAt(offset, w.data(), n_try)
-		: fd.Read(w.data(), n_try);
+		? fd.ReadAt(offset, w)
+		: fd.Read(w);
 	if (nbytes <= 0)
 		return nbytes < 0
 			? IstreamDirectResult::ERRNO
@@ -171,7 +174,7 @@ BufferedIstream::ReadToBuffer(FileDescriptor fd, off_t offset,
 	input.ConsumeDirect(nbytes);
 	buffer.Append(nbytes);
 
-	if ((std::size_t)nbytes == w.size())
+	if ((std::size_t)nbytes == buffer_space)
 		/* buffer has become full - we can report to handler */
 		defer_ready.Schedule();
 

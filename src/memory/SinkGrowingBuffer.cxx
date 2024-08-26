@@ -6,8 +6,6 @@
 #include "istream/Bucket.hxx"
 #include "io/FileDescriptor.hxx"
 
-#include <algorithm>
-
 IstreamReadyResult
 GrowingBufferSink::OnIstreamReady() noexcept
 {
@@ -60,11 +58,12 @@ GrowingBufferSink::OnDirect(FdType, FileDescriptor fd, off_t offset,
 			    [[maybe_unused]] bool then_eof) noexcept
 {
 	auto w = buffer.BeginWrite();
-	const std::size_t n = std::min(w.size(), max_length);
+	if (w.size() > max_length)
+		w = w.first(max_length);
 
 	ssize_t nbytes = HasOffset(offset)
-		? fd.ReadAt(offset, w.data(), n)
-		: fd.Read(w.data(), n);
+		? fd.ReadAt(offset, w)
+		: fd.Read(w);
 	if (nbytes <= 0)
 		return nbytes < 0
 			? IstreamDirectResult::ERRNO

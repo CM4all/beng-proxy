@@ -39,10 +39,10 @@ ReadToBufferAt(FileDescriptor fd, off_t offset,
 	if (w.empty())
 		return -2;
 
-	if (length > w.size())
-		length = w.size();
+	if (w.size() > length)
+		w = w.first(length);
 
-	ssize_t nbytes = fd.ReadAt(offset, w.data(), length);
+	ssize_t nbytes = fd.ReadAt(offset, w);
 	if (nbytes > 0)
 		buffer.Append((size_t)nbytes);
 

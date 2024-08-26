@@ -112,13 +112,14 @@ Context::OnDirect(FdType, FileDescriptor fd, off_t offset,
 		return IstreamDirectResult::BLOCKING;
 	}
 
-	char buffer[256];
-	if (max_length > sizeof(buffer))
-		max_length = sizeof(buffer);
+	std::byte buffer[256];
+	std::span<std::byte> w{buffer};
+	if (w.size() > max_length)
+		w = w.first(max_length);
 
 	ssize_t nbytes = HasOffset(offset)
-		? fd.ReadAt(offset, buffer, max_length)
-		: fd.Read(buffer, max_length);
+		? fd.ReadAt(offset, w)
+		: fd.Read(w);
 	if (nbytes <= 0)
 		return nbytes < 0
 			? IstreamDirectResult::ERRNO

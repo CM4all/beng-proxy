@@ -71,7 +71,7 @@ fd_read(FdType type, FileDescriptor fd, off_t offset,
 	return IsAnySocket(type)
 		? SocketDescriptor::FromFileDescriptor(fd).ReadNoWait(dest)
 		: (IstreamHandler::HasOffset(offset)
-		   ? fd.ReadAt(offset, dest.data(), dest.size())
+		   ? fd.ReadAt(offset, dest)
 		   : fd.Read(dest));
 }
 

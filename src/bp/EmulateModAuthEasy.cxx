@@ -114,7 +114,7 @@ ParseBasicAuth(const char *authorization) noexcept
 static char *
 ReadFirstLine(FileDescriptor fd, char *buffer, size_t size) noexcept
 {
-	ssize_t nbytes = fd.ReadAt(0, buffer, size - 1);
+	ssize_t nbytes = fd.ReadAt(0, std::as_writable_bytes(std::span{buffer, size - 1}));
 	if (nbytes <= 0)
 		return nullptr;
 

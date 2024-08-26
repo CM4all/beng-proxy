@@ -142,7 +142,7 @@ FileIstream::TryData()
 	if (GetRemaining() < off_t(w.size()))
 		w = w.first(GetRemaining());
 
-	ssize_t nbytes = fd.ReadAt(offset, w.data(), w.size());
+	ssize_t nbytes = fd.ReadAt(offset, w);
 	if (nbytes == 0) {
 		throw FmtRuntimeError("premature end of file in '{}'", path);
 	} else if (nbytes == -1) {
