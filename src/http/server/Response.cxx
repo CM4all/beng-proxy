@@ -15,6 +15,8 @@
 IstreamReadyResult
 HttpServerConnection::OnIstreamReady() noexcept
 {
+	assert(!request.cancel_ptr);
+
 	switch (TryWriteBuckets()) {
 	case BucketResult::FALLBACK:
 		return IstreamReadyResult::FALLBACK;
@@ -41,6 +43,7 @@ HttpServerConnection::OnData(std::span<const std::byte> src) noexcept
 {
 	assert(socket->IsConnected() || request.request == nullptr);
 	assert(HasInput());
+	assert(!request.cancel_ptr);
 	assert(!response.pending_drained);
 
 	if (!socket->IsConnected())
@@ -73,6 +76,7 @@ HttpServerConnection::OnDirect(FdType type, FileDescriptor fd, off_t offset,
 {
 	assert(socket->IsConnected() || request.request == nullptr);
 	assert(HasInput());
+	assert(!request.cancel_ptr);
 	assert(!response.pending_drained);
 
 	if (!socket->IsConnected())
@@ -128,12 +132,9 @@ void
 HttpServerConnection::OnError(std::exception_ptr ep) noexcept
 {
 	assert(HasInput());
+	assert(!request.cancel_ptr);
 
 	ClearInput();
-
-	/* we clear this cancel_ptr here so http_server_request_close()
-	   won't think we havn't sent a response yet */
-	request.cancel_ptr = nullptr;
 
 	Error(NestException(ep,
 			    std::runtime_error("error on HTTP response stream")));

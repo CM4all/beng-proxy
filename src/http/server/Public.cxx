@@ -68,6 +68,7 @@ HttpServerConnection::TryWriteBuckets2()
 	       request.read_state != Request::HEADERS);
 	assert(request.request != nullptr);
 	assert(HasInput());
+	assert(!request.cancel_ptr);
 
 	if (socket->HasFilter())
 		return BucketResult::FALLBACK;
@@ -133,10 +134,6 @@ HttpServerConnection::TryWriteBuckets() noexcept
 		result = TryWriteBuckets2();
 	} catch (...) {
 		assert(!HasInput());
-
-		/* we clear this CancellablePointer here so CloseRequest()
-		   won't think we havn't sent a response yet */
-		request.cancel_ptr = nullptr;
 
 		Error(std::current_exception());
 		return BucketResult::DESTROYED;

@@ -86,6 +86,8 @@ HttpServerConnection::SubmitResponse(HttpStatus status,
 	assert(request.read_state == Request::END ||
 	       request.body_state == Request::BodyState::READING);
 
+	request.cancel_ptr = nullptr;
+
 	request.request->stopwatch.RecordEvent("response_headers");
 
 	if (http_status_is_success(status)) {
