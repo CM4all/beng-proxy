@@ -21,8 +21,10 @@
 #include "AllocatorPtr.hxx"
 
 inline void
-Request::OnAuthTranslateResponse(const TranslateResponse &response) noexcept
+Request::OnAuthTranslateResponse(UniquePoolPtr<TranslateResponse> &&_response) noexcept
 {
+	const auto &response = *_response;
+
 	bool is_authenticated = false;
 	{
 		auto session = ApplyTranslateSession(response);
@@ -38,11 +40,13 @@ Request::OnAuthTranslateResponse(const TranslateResponse &response) noexcept
 		   REDIRECT/BOUNCE/STATUS, but we still don't have a user -
 		   this should not happen; bail out, don't dare to accept the
 		   client */
+		_response.reset();
 		DispatchError(HttpStatus::FORBIDDEN, "Forbidden");
 		return;
 	}
 
 	translate.user_modified = response.user != nullptr;
+	_response.reset();
 
 	OnTranslateResponseAfterAuth(std::move(translate.previous));
 }
@@ -63,7 +67,7 @@ public:
 
 	/* virtual methods from TranslateHandler */
 	void OnTranslateResponse(UniquePoolPtr<TranslateResponse> response) noexcept override {
-		request.OnAuthTranslateResponse(*response);
+		request.OnAuthTranslateResponse(std::move(response));
 	}
 
 	void OnTranslateError(std::exception_ptr error) noexcept override {

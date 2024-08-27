@@ -534,6 +534,7 @@ Request::RepeatTranslation(UniquePoolPtr<TranslateResponse> _response) noexcept
 		assert(response.layout_items);
 
 		if (++translate.n_layout > 4) {
+			_response.reset();
 			LogDispatchError(HttpStatus::BAD_GATEWAY,
 					 "Too many consecutive LAYOUT packets",
 					 1);
@@ -544,6 +545,7 @@ Request::RepeatTranslation(UniquePoolPtr<TranslateResponse> _response) noexcept
 		if (response.regex_tail && response.base != nullptr) {
 			uri = StringAfterPrefix(uri, response.base);
 			if (uri == nullptr) {
+				_response.reset();
 				LogDispatchError(HttpStatus::BAD_GATEWAY,
 						 "Base mismatch", 1);
 				return;
@@ -562,6 +564,7 @@ Request::RepeatTranslation(UniquePoolPtr<TranslateResponse> _response) noexcept
 		/* repeat request with CHECK set */
 
 		if (++translate.n_checks > 4) {
+			_response.reset();
 			LogDispatchError(HttpStatus::BAD_GATEWAY,
 					 "Too many consecutive CHECK packets",
 					 1);
@@ -591,6 +594,7 @@ Request::RepeatTranslation(UniquePoolPtr<TranslateResponse> _response) noexcept
 		assert(response.want_full_uri.data() == nullptr);
 
 		if (++translate.n_internal_redirects > 4) {
+			_response.reset();
 			LogDispatchError(HttpStatus::BAD_GATEWAY,
 					 "Too many consecutive INTERNAL_REDIRECT packets",
 					 1);
@@ -617,6 +621,7 @@ Request::RepeatTranslation(UniquePoolPtr<TranslateResponse> _response) noexcept
 		/* repeat request with the given HOST */
 
 		if (++translate.n_like_host > 4) {
+			_response.reset();
 			LogDispatchError(HttpStatus::BAD_GATEWAY,
 					 "Too many consecutive LIKE_HOST packets",
 					 1);
@@ -632,6 +637,7 @@ Request::RepeatTranslation(UniquePoolPtr<TranslateResponse> _response) noexcept
 		translate.request.want = response.want;
 
 	if (response.Wants(TranslationCommand::LISTENER_TAG)) {
+		_response.reset();
 		LogDispatchError(HttpStatus::BAD_GATEWAY,
 				 "Translation protocol 2 doesn't allow WANT/LISTENER_TAG",
 				 1);
@@ -694,6 +700,8 @@ Request::RepeatTranslation(UniquePoolPtr<TranslateResponse> _response) noexcept
 
 	if (save_previous)
 		translate.previous = std::move(_response);
+	else
+		_response.reset();
 
 	SubmitTranslateRequest();
 }
@@ -706,6 +714,7 @@ Request::HandleChainResponse(UniquePoolPtr<TranslateResponse> _response) noexcep
 	const auto &response = *_response;
 
 	if (response.break_chain) {
+		_response.reset();
 		DispatchResponse(std::move(pending_chain_response));
 		return;
 	}
@@ -721,6 +730,7 @@ Request::HandleChainResponse(UniquePoolPtr<TranslateResponse> _response) noexcep
 		return;
 
 	if (!response.address.IsDefined()) {
+		_response.reset();
 		LogDispatchError(HttpStatus::BAD_GATEWAY,
 				 "Empty CHAIN response", 1);
 		return;
@@ -733,6 +743,7 @@ Request::HandleChainResponse(UniquePoolPtr<TranslateResponse> _response) noexcep
 
 	translate.chain = response.chain;
 	if (translate.chain.data() != nullptr && ++translate.n_chain > 4) {
+		_response.reset();
 		LogDispatchError(HttpStatus::BAD_GATEWAY,
 				 "Too many consecutive CHAIN packets", 1);
 		return;
@@ -781,6 +792,7 @@ Request::OnTranslateResponse(UniquePoolPtr<TranslateResponse> _response) noexcep
 	const auto &response = *_response;
 
 	if (response.protocol_version < 2) {
+		_response.reset();
 		LogDispatchError(HttpStatus::BAD_GATEWAY,
 				 "Unsupported configuration server",
 				 "Unsupported translation protocol version",
@@ -792,6 +804,7 @@ Request::OnTranslateResponse(UniquePoolPtr<TranslateResponse> _response) noexcep
 		translate.request.listener_tag = response.listener_tag;
 
 	if (response.defer) {
+		_response.reset();
 		LogDispatchError(HttpStatus::BAD_GATEWAY,
 				 "Unexpected DEFER", 1);
 		return;
@@ -806,6 +819,7 @@ Request::OnTranslateResponse(UniquePoolPtr<TranslateResponse> _response) noexcep
 	if (!response.allow_remote_networks.empty()) {
 		if (const auto remote_address = GetRemoteAdress();
 		    !response.allow_remote_networks.Contains(remote_address)) {
+			_response.reset();
 			DispatchError(HttpStatus::FORBIDDEN, "Forbidden");
 			return;
 		}
@@ -816,14 +830,15 @@ Request::OnTranslateResponse(UniquePoolPtr<TranslateResponse> _response) noexcep
 
 		const char *host = request.headers.Get(host_header);
 		if (host == nullptr) {
+			_response.reset();
 			DispatchError(HttpStatus::BAD_REQUEST, "No Host header");
 			return;
 		}
 
+		const char *redirect = MakeHttpsRedirect(pool, host, response.https_only, request.uri);
+		_response.reset();
 		DispatchRedirect(HttpStatus::MOVED_PERMANENTLY,
-				 MakeHttpsRedirect(pool, host,
-						   response.https_only,
-						   request.uri),
+				 redirect,
 				 "This page requires \"https\"");
 		return;
 	}
@@ -901,6 +916,7 @@ Request::OnTranslateResponseAfterAuth(UniquePoolPtr<TranslateResponse> _response
 
 	if (response.previous) {
 		if (!translate.previous) {
+			_response.reset();
 			LogDispatchError(HttpStatus::BAD_GATEWAY,
 					 "No previous translation response", 1);
 			return;

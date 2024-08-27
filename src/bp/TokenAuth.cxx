@@ -43,8 +43,10 @@ GetTokenAuthRedirectUri(AllocatorPtr alloc,
 }
 
 inline void
-Request::OnTokenAuthTranslateResponse(const TranslateResponse &response) noexcept
+Request::OnTokenAuthTranslateResponse(UniquePoolPtr<TranslateResponse> &&_response) noexcept
 {
+	const auto &response = *_response;
+
 	assert(translate.previous);
 
 	if (response.discard_session)
@@ -67,11 +69,14 @@ Request::OnTokenAuthTranslateResponse(const TranslateResponse &response) noexcep
 		   REDIRECT/BOUNCE/STATUS, but we still don't have a user -
 		   this should not happen; bail out, don't dare to accept the
 		   client */
+		_response.reset();
 		DispatchError(HttpStatus::FORBIDDEN, "Forbidden");
 		return;
 	}
 
 	translate.user_modified = response.user != nullptr;
+
+	_response.reset();
 
 	if (!had_auth_token) {
 		OnTranslateResponseAfterAuth(std::move(translate.previous));
@@ -115,7 +120,7 @@ public:
 
 	/* virtual methods from TranslateHandler */
 	void OnTranslateResponse(UniquePoolPtr<TranslateResponse> response) noexcept override {
-		request.OnTokenAuthTranslateResponse(*response);
+		request.OnTokenAuthTranslateResponse(std::move(response));
 	}
 
 	void OnTranslateError(std::exception_ptr error) noexcept override {

@@ -546,13 +546,13 @@ private:
 	bool DoContentTypeLookup(const ResourceAddress &address) noexcept;
 
 public:
-	void OnAuthTranslateResponse(const TranslateResponse &response) noexcept;
+	void OnAuthTranslateResponse(UniquePoolPtr<TranslateResponse> &&response) noexcept;
 	void OnAuthTranslateError(std::exception_ptr ep) noexcept;
 
-	void OnHttpAuthTranslateResponse(const TranslateResponse &response) noexcept;
+	void OnHttpAuthTranslateResponse(UniquePoolPtr<TranslateResponse> &&response) noexcept;
 	void OnHttpAuthTranslateError(std::exception_ptr ep) noexcept;
 
-	void OnTokenAuthTranslateResponse(const TranslateResponse &response) noexcept;
+	void OnTokenAuthTranslateResponse(UniquePoolPtr<TranslateResponse> &&response) noexcept;
 	void OnTokenAuthTranslateError(std::exception_ptr ep) noexcept;
 
 private:

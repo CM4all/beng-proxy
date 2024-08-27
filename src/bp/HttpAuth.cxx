@@ -17,16 +17,21 @@
 #include "AllocatorPtr.hxx"
 
 inline void
-Request::OnHttpAuthTranslateResponse(const TranslateResponse &response) noexcept
+Request::OnHttpAuthTranslateResponse(UniquePoolPtr<TranslateResponse> &&_response) noexcept
 {
+	const auto &response = *_response;
+
 	if (CheckHandleRedirectBounceStatus(response))
 		return;
 
 	user = response.user;
 	if (user == nullptr) {
+		_response.reset();
 		DispatchError(HttpStatus::UNAUTHORIZED, "Unauthorized");
 		return;
 	}
+
+	_response.reset();
 
 	OnTranslateResponseAfterAuth(std::move(translate.previous));
 }
@@ -47,7 +52,7 @@ public:
 
 	/* virtual methods from TranslateHandler */
 	void OnTranslateResponse(UniquePoolPtr<TranslateResponse> response) noexcept override {
-		request.OnHttpAuthTranslateResponse(*response);
+		request.OnHttpAuthTranslateResponse(std::move(response));
 	}
 
 	void OnTranslateError(std::exception_ptr error) noexcept override {
