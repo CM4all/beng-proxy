@@ -70,7 +70,7 @@ Request::OnTokenAuthTranslateResponse(UniquePoolPtr<TranslateResponse> &&_respon
 		   this should not happen; bail out, don't dare to accept the
 		   client */
 		_response.reset();
-		DispatchError(HttpStatus::FORBIDDEN, "Forbidden");
+		DispatchError(HttpStatus::FORBIDDEN);
 		return;
 	}
 

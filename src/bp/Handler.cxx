@@ -148,8 +148,7 @@ Request::HandleTranslatedRequest2(const TranslateResponse &response) noexcept
 		if (!per_site.CheckRequestCount(ToFloatSeconds(instance.event_loop.SteadyNow().time_since_epoch()),
 						(double)response.rate_limit_site_requests.rate,
 						(double)response.rate_limit_site_requests.burst)) {
-			DispatchError(HttpStatus::TOO_MANY_REQUESTS,
-				      "Too many requests");
+			DispatchError(HttpStatus::TOO_MANY_REQUESTS);
 			return;
 		}
 	}
@@ -174,7 +173,7 @@ Request::HandleTranslatedRequest2(const TranslateResponse &response) noexcept
 		   /* disable the deprecated HTTP-auth if the new
 		      HTTP_AUTH is enabled: */
 		   response.http_auth.data() == nullptr) {
-		DispatchError(HttpStatus::UNAUTHORIZED, "Unauthorized");
+		DispatchError(HttpStatus::UNAUTHORIZED);
 	} else if (response.break_chain) {
 		LogDispatchError(HttpStatus::BAD_GATEWAY,
 				 "BREAK_CHAIN without CHAIN", 1);
@@ -820,7 +819,7 @@ Request::OnTranslateResponse(UniquePoolPtr<TranslateResponse> _response) noexcep
 		if (const auto remote_address = GetRemoteAdress();
 		    !response.allow_remote_networks.Contains(remote_address)) {
 			_response.reset();
-			DispatchError(HttpStatus::FORBIDDEN, "Forbidden");
+			DispatchError(HttpStatus::FORBIDDEN);
 			return;
 		}
 	}

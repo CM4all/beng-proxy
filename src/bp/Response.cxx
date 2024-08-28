@@ -355,7 +355,7 @@ Request::InvokeXmlProcessor(HttpStatus status,
 		       translate.response->untrusted, "'");
 		ctx.reset();
 		response_body.Clear();
-		DispatchError(HttpStatus::FORBIDDEN, "Forbidden");
+		DispatchError(HttpStatus::FORBIDDEN);
 		return;
 	}
 
@@ -450,7 +450,7 @@ Request::InvokeCssProcessor(HttpStatus status,
 		       translate.response->untrusted, "'");
 		response_body.Clear();
 		ctx.reset();
-		DispatchError(HttpStatus::FORBIDDEN, "Forbidden");
+		DispatchError(HttpStatus::FORBIDDEN);
 		return;
 	}
 
@@ -498,7 +498,7 @@ Request::InvokeTextProcessor(HttpStatus status,
 		       translate.response->untrusted, "'");
 		response_body.Clear();
 		ctx.reset();
-		DispatchError(HttpStatus::FORBIDDEN, "Forbidden");
+		DispatchError(HttpStatus::FORBIDDEN);
 		return;
 	}
 
@@ -906,6 +906,12 @@ void
 Request::DispatchError(HttpStatus status, const char *msg) noexcept
 {
 	DispatchError(status, {}, msg);
+}
+
+void
+Request::DispatchError(HttpStatus status) noexcept
+{
+	DispatchError(status, http_status_to_string(status));
 }
 
 void

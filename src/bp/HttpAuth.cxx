@@ -27,7 +27,7 @@ Request::OnHttpAuthTranslateResponse(UniquePoolPtr<TranslateResponse> &&_respons
 	user = response.user;
 	if (user == nullptr) {
 		_response.reset();
-		DispatchError(HttpStatus::UNAUTHORIZED, "Unauthorized");
+		DispatchError(HttpStatus::UNAUTHORIZED);
 		return;
 	}
 
@@ -70,7 +70,7 @@ Request::HandleHttpAuth(UniquePoolPtr<TranslateResponse> _response) noexcept
 	const char *authorization = request.headers.Get(authorization_header);
 
 	if (authorization == nullptr) {
-		DispatchError(HttpStatus::UNAUTHORIZED, "Unauthorized");
+		DispatchError(HttpStatus::UNAUTHORIZED);
 		return;
 	}
 

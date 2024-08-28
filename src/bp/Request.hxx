@@ -796,6 +796,8 @@ public:
 
 	void DispatchError(HttpStatus status, const char *msg) noexcept;
 
+	void DispatchError(HttpStatus status) noexcept;
+
 	void DispatchError(HttpStatus status, HttpHeaders &&headers,
 			   const char *msg) noexcept;
 
