@@ -522,6 +522,9 @@ ErrnoToHttpStatus(int e) noexcept
 	case ETIMEDOUT:
 		return HttpStatus::BAD_GATEWAY;
 
+	case ENAMETOOLONG:
+		return HttpStatus::REQUEST_URI_TOO_LONG;
+
 	default:
 		return HttpStatus::INTERNAL_SERVER_ERROR;
 	}
