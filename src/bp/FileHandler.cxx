@@ -34,6 +34,70 @@
 
 using std::string_view_literals::operator""sv;
 
+inline bool
+Request::CheckFilePath(const char *path, bool relative) noexcept
+{
+	assert(path != nullptr);
+
+	const std::size_t path_length = strlen(path);
+
+	if (path_length >= PATH_MAX) [[unlikely]] {
+		DispatchError(HttpStatus::REQUEST_URI_TOO_LONG);
+		return false;
+	}
+
+	if (relative) {
+		if (path_length == 0 || *path == '/') [[unlikely]] {
+			DispatchError(HttpStatus::NOT_FOUND);
+			return false;
+		}
+	} else {
+		if (path_length < 2 || *path != '/') [[unlikely]] {
+			DispatchError(HttpStatus::NOT_FOUND);
+			return false;
+		}
+	}
+
+	if (path[path_length - 1] == '/') [[unlikely]] {
+		DispatchError(HttpStatus::NOT_FOUND);
+		return false;
+	}
+
+	return true;
+}
+
+inline bool
+Request::CheckDirectoryPath(const char *path) noexcept
+{
+	assert(path != nullptr);
+
+	const std::size_t path_length = strlen(path);
+
+	if (path_length >= PATH_MAX) [[unlikely]] {
+		DispatchError(HttpStatus::REQUEST_URI_TOO_LONG);
+		return false;
+	}
+
+	if (path_length == 0 || *path != '/') {
+		DispatchError(HttpStatus::NOT_FOUND);
+		return false;
+	}
+
+	return true;
+}
+
+bool
+Request::CheckFileAddress(const FileAddress &address) noexcept
+{
+	if (address.beneath != nullptr && !CheckDirectoryPath(address.beneath))
+		return false;
+
+	if (address.base != nullptr && !CheckDirectoryPath(address.base))
+		return false;
+
+	return CheckFilePath(address.path, address.base != nullptr);
+}
+
 inline void
 Request::Handler::File::Close(UringGlue &uring) noexcept
 {
@@ -345,6 +409,9 @@ Request::OnOpenStatError(int error) noexcept
 void
 Request::HandleFileAddress(const FileAddress &address) noexcept
 {
+	if (!CheckFileAddress(address))
+		return;
+
 	handler.file.address = &address;
 
 	assert(address.path != nullptr);

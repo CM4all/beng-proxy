@@ -5,6 +5,7 @@ cm4all-beng-proxy (18.0.90) unstable; urgency=low
   * was: fail if the Multi-WAS socket buffer is full
   * bp: fix several use-after-free bugs on translation responses
   * bp: map ENAMETOOLONG to "414 Request-URI Too Long"
+  * bp: check the path before opening a file
 
  --   
 

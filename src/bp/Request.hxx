@@ -568,6 +568,23 @@ private:
 
 	void HandleTokenAuth(UniquePoolPtr<TranslateResponse> response) noexcept;
 
+	/**
+	 * Do formal checks on a #FileAddress and send an error
+	 * response if the address is not acceptable.
+	 *
+	 * @return true if the address is acceptable, false if an
+	 * error response has been submitted (this #Request instance
+	 * may be destroyed)
+	 */
+	[[nodiscard]]
+	bool CheckFileAddress(const FileAddress &address) noexcept;
+
+	[[nodiscard]]
+	bool CheckFilePath(const char *path, bool relative) noexcept;
+
+	[[nodiscard]]
+	bool CheckDirectoryPath(const char *path) noexcept;
+
 	bool EvaluateFileRequest(FileDescriptor fd, const struct statx &st,
 				 struct file_request &file_request) noexcept;
 
