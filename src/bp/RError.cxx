@@ -72,6 +72,10 @@ ErrnoToResponse(int e) noexcept
 		return {HttpStatus::BAD_GATEWAY,
 			"Upstream server timed out"};
 
+	case ENAMETOOLONG:
+		return {HttpStatus::REQUEST_URI_TOO_LONG,
+			"414 Request-URI Too Long"};
+
 	default:
 		return {};
 	}
