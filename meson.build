@@ -958,3 +958,4 @@ if get_option('certdb')
 endif
 subdir('libcommon/test/sodium')
 subdir('libcommon/test/stock')
+subdir('libcommon/test/was')
