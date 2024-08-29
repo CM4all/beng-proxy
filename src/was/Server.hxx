@@ -138,6 +138,7 @@ private:
 				std::span<const std::byte> payload) noexcept override;
 	bool OnWasControlDrained() noexcept override;
 	void OnWasControlDone() noexcept override;
+	void OnWasControlHangup() noexcept;
 	void OnWasControlError(std::exception_ptr ep) noexcept override;
 
 	/* virtual methods from class WasOutputHandler */
