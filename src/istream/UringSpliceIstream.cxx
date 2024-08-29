@@ -75,7 +75,7 @@ public:
 		/* enlarge the pipe buffer to 256 kB to reduce the
 		   number of splice() system calls */
 		constexpr int PIPE_BUFFER_SIZE = 256 * 1024;
-		fcntl(w.Get(), F_SETPIPE_SZ, PIPE_BUFFER_SIZE);
+		w.SetPipeCapacity(PIPE_BUFFER_SIZE);
 	}
 
 	~UringSpliceIstream() noexcept override;
