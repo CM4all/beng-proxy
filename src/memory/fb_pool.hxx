@@ -19,20 +19,20 @@ static constexpr size_t FB_SIZE = 32768;
  * Global initialization.
  */
 void
-fb_pool_init();
+fb_pool_init() noexcept;
 
 /**
  * Global deinitialization.
  */
 void
-fb_pool_deinit();
+fb_pool_deinit() noexcept;
 
 void
-fb_pool_fork_cow(bool inherit);
+fb_pool_fork_cow(bool inherit) noexcept;
 
 [[gnu::const]]
 SlicePool &
-fb_pool_get();
+fb_pool_get() noexcept;
 
 /**
  * Give free memory back to the kernel.  The library will
@@ -40,15 +40,15 @@ fb_pool_get();
  * cleanup.
  */
 void
-fb_pool_compress(void);
+fb_pool_compress() noexcept;
 
 class ScopeFbPoolInit {
 public:
-	ScopeFbPoolInit() {
+	ScopeFbPoolInit() noexcept {
 		fb_pool_init();
 	}
 
-	~ScopeFbPoolInit() {
+	~ScopeFbPoolInit() noexcept {
 		fb_pool_deinit();
 	}
 };

@@ -10,7 +10,7 @@
 static SlicePool *fb_pool;
 
 void
-fb_pool_init()
+fb_pool_init() noexcept
 {
 	assert(fb_pool == nullptr);
 
@@ -18,7 +18,7 @@ fb_pool_init()
 }
 
 void
-fb_pool_deinit(void)
+fb_pool_deinit() noexcept
 {
 	assert(fb_pool != nullptr);
 
@@ -27,7 +27,7 @@ fb_pool_deinit(void)
 }
 
 void
-fb_pool_fork_cow(bool inherit)
+fb_pool_fork_cow(bool inherit) noexcept
 {
 	assert(fb_pool != nullptr);
 
@@ -35,7 +35,7 @@ fb_pool_fork_cow(bool inherit)
 }
 
 SlicePool &
-fb_pool_get()
+fb_pool_get() noexcept
 {
 	assert(fb_pool != nullptr);
 
@@ -43,7 +43,7 @@ fb_pool_get()
 }
 
 void
-fb_pool_compress(void)
+fb_pool_compress() noexcept
 {
 	assert(fb_pool != nullptr);
 
