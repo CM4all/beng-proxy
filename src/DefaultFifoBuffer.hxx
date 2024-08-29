@@ -26,3 +26,5 @@ public:
 		SliceFifoBuffer::CycleIfEmpty(fb_pool_get());
 	}
 };
+
+using ScopeInitDefaultFifoBuffer = ScopeFbPoolInit;
