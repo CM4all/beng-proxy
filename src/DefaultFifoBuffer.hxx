@@ -2,10 +2,10 @@
 // Copyright CM4all GmbH
 // author: Max Kellermann <mk@cm4all.com>
 
-#ifndef BENG_PROXY_DEFAULT_FIFO_BUFFER_HXX
-#define BENG_PROXY_DEFAULT_FIFO_BUFFER_HXX
+#pragma once
 
 #include "memory/SliceFifoBuffer.hxx"
+#include "memory/fb_pool.hxx"
 
 /**
  * A frontend for #SliceFifoBuffer which allows to replace it with a
@@ -14,9 +14,15 @@
  */
 class DefaultFifoBuffer : public SliceFifoBuffer {
 public:
-	void Allocate() noexcept;
-	void AllocateIfNull() noexcept;
-	void CycleIfEmpty() noexcept;
-};
+	void Allocate() noexcept {
+		SliceFifoBuffer::Allocate(fb_pool_get());
+	}
 
-#endif
+	void AllocateIfNull() noexcept {
+		SliceFifoBuffer::AllocateIfNull(fb_pool_get());
+	}
+
+	void CycleIfEmpty() noexcept {
+		SliceFifoBuffer::CycleIfEmpty(fb_pool_get());
+	}
+};

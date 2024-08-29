@@ -2,7 +2,6 @@ memory = static_library(
   'memory',
   'fb_pool.cxx',
   'MultiFifoBuffer.cxx',
-  '../DefaultFifoBuffer.cxx',
   'DefaultChunkAllocator.cxx',
   'ExpansibleBuffer.cxx',
   'GrowingBuffer.cxx',
