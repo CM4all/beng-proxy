@@ -211,7 +211,7 @@ protected:
 		return true;
 	}
 	void OnWasControlDone() noexcept override {}
-	void OnWasControlHangup() noexcept {
+	void OnWasControlHangup() noexcept override {
 		AbortError();
 	}
 	void OnWasControlError(std::exception_ptr) noexcept override {

@@ -380,7 +380,7 @@ private:
 		assert(control.IsDefined());
 	}
 
-	void OnWasControlHangup() noexcept {
+	void OnWasControlHangup() noexcept override {
 		assert(control.IsDefined());
 
 		OnWasControlError(std::make_exception_ptr(SocketClosedPrematurelyError{}));
