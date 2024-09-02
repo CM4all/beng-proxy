@@ -44,12 +44,12 @@ class FdCache final : InotifyHandler {
 
 	struct ItemGetKey {
 		[[gnu::pure]]
-		Key operator()(const Item &item) noexcept;
+		Key operator()(const Item &item) const noexcept;
 	};
 
 	struct ItemGetInotify {
 		[[gnu::pure]]
-		int operator()(const Item &item) noexcept;
+		int operator()(const Item &item) const noexcept;
 	};
 
 	CoarseTimerEvent expire_timer;

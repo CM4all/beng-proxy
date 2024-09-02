@@ -296,13 +296,13 @@ FdCache::Item::Get(SuccessCallback on_success,
 }
 
 inline FdCache::Key
-FdCache::ItemGetKey::operator()(const Item &item) noexcept
+FdCache::ItemGetKey::operator()(const Item &item) const noexcept
 {
 	return {item.path, item.flags};
 }
 
 inline int
-FdCache::ItemGetInotify::operator()(const Item &item) noexcept
+FdCache::ItemGetInotify::operator()(const Item &item) const noexcept
 {
 	return item.watch_descriptor;
 }
