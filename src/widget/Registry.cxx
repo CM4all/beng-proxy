@@ -66,6 +66,7 @@ WidgetRegistryLookup::OnTranslateResponse(UniquePoolPtr<TranslateResponse> _resp
 	assert(!response.views.empty());
 
 	if (response.status != HttpStatus{}) {
+		_response.reset();
 		callback(nullptr);
 		return;
 	}
@@ -89,6 +90,8 @@ WidgetRegistryLookup::OnTranslateResponse(UniquePoolPtr<TranslateResponse> _resp
 	cls->info_headers = response.widget_info;
 	cls->dump_headers = response.dump_headers;
 	cls->views = Clone(widget_pool, response.views);
+
+	_response.reset();
 
 	cache.Put(name, *cls);
 
