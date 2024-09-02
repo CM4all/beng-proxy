@@ -4,7 +4,7 @@ cm4all-beng-proxy (18.2) unstable; urgency=low
   * lb/translation: store ANALYTICS_ID and GENERATOR in the cache
   * lb/translation: dynamic cache allocation
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Mon, 02 Sep 2024 22:22:06 +0200
 
 cm4all-beng-proxy (18.1) unstable; urgency=low
 
