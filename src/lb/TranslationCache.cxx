@@ -152,6 +152,12 @@ LbTranslationCache::Item::Item(const TranslateResponse &response) noexcept
 
 	if (response.site != nullptr)
 		site = response.site;
+
+	if (response.analytics_id != nullptr)
+		analytics_id = response.analytics_id;
+
+	if (response.generator != nullptr)
+		generator = response.generator;
 }
 
 CacheStats

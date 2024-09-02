@@ -127,6 +127,8 @@ LbTranslationHandler::Pick(struct pool &pool, const IncomingHttpRequest &request
 			response.message = item->message.empty() ? nullptr : item->message.c_str();
 			response.pool = item->pool.empty() ? nullptr : item->pool.c_str();
 			response.canonical_host = item->canonical_host.empty() ? nullptr : item->canonical_host.c_str();
+			response.analytics_id = item->analytics_id.empty() ? nullptr : item->analytics_id.c_str();
+			response.generator = item->generator.empty() ? nullptr : item->generator.c_str();
 
 			handler.OnTranslateResponse(std::move(_response));
 			return;

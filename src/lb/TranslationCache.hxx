@@ -28,7 +28,7 @@ public:
 
 		HttpStatus status = {};
 		uint16_t https_only = 0;
-		std::string redirect, message, pool, canonical_host, site;
+		std::string redirect, message, pool, canonical_host, site, analytics_id, generator;
 
 		[[nodiscard]]
 		explicit Item(const TranslateResponse &response) noexcept;
@@ -36,7 +36,8 @@ public:
 		[[gnu::pure]]
 		size_t GetAllocatedMemory() const noexcept {
 			return sizeof(*this) + redirect.length() + message.length() +
-				pool.length() + canonical_host.length() + site.length();
+				pool.length() + canonical_host.length() + site.length() +
+				analytics_id.length() + generator.length();
 		}
 
 		struct GetSite {
