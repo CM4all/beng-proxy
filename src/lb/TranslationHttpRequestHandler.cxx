@@ -89,6 +89,7 @@ LbHttpRequest::OnTranslateResponse(UniquePoolPtr<TranslateResponse> _response) n
 
 		const char *host = rl.host;
 		if (host == nullptr) {
+			_response.reset();
 			_request.SendMessage(HttpStatus::BAD_REQUEST, "No Host header"sv);
 			return;
 		}
@@ -101,10 +102,13 @@ LbHttpRequest::OnTranslateResponse(UniquePoolPtr<TranslateResponse> _response) n
 		if (msg == nullptr)
 			msg = "This page requires \"https\"";
 
+		const auto https_only = response.https_only;
+		_response.reset();
+
 		_request.SendRedirect(status,
 				      MakeHttpsRedirect(AllocatorPtr{_request.pool},
 							host,
-							response.https_only,
+							https_only,
 							_request.uri),
 				      msg);
 	} else if (response.status != HttpStatus{} ||
@@ -124,6 +128,7 @@ LbHttpRequest::OnTranslateResponse(UniquePoolPtr<TranslateResponse> _response) n
 	} else if (response.pool != nullptr) {
 		auto *destination = handler.FindDestination(response.pool);
 		if (destination == nullptr) {
+			_response.reset();
 			Destroy();
 
 			c.LogSendError(_request,
@@ -135,6 +140,8 @@ LbHttpRequest::OnTranslateResponse(UniquePoolPtr<TranslateResponse> _response) n
 		if (response.canonical_host != nullptr)
 			rl.canonical_host = response.canonical_host;
 
+		_response.reset();
+
 		request.body = std::move(request_body);
 
 		auto &_caller_cancel_ptr = caller_cancel_ptr;
@@ -142,6 +149,7 @@ LbHttpRequest::OnTranslateResponse(UniquePoolPtr<TranslateResponse> _response) n
 
 		c.HandleHttpRequest(*destination, _request, {}, _caller_cancel_ptr);
 	} else {
+		_response.reset();
 		Destroy();
 
 		c.LogSendError(_request,
