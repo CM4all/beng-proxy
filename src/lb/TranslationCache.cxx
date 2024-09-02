@@ -134,8 +134,9 @@ private:
 	}
 };
 
-LbTranslationCache::Item::Item(const TranslateResponse &response) noexcept
-	:status(response.status),
+LbTranslationCache::Item::Item(const char *_key, const TranslateResponse &response) noexcept
+	:key(_key),
+	 status(response.status),
 	 https_only(response.https_only)
 {
 	if (response.redirect != nullptr)
@@ -163,11 +164,7 @@ LbTranslationCache::Item::Item(const TranslateResponse &response) noexcept
 CacheStats
 LbTranslationCache::GetStats() const noexcept
 {
-	size_t size = 0;
-
-	cache.ForEach([&size](const std::string &key, const Item &item){
-		size += key.length() + item.GetAllocatedMemory();
-	});
+	const std::size_t size = cache.GetTotalSize();
 
 	stats.allocator = {
 		.brutto_size = size,
@@ -180,7 +177,7 @@ LbTranslationCache::GetStats() const noexcept
 void
 LbTranslationCache::Clear() noexcept
 {
-	cache.Clear();
+	cache.clear();
 	seen_vary.Clear();
 }
 
@@ -232,15 +229,14 @@ LbTranslationCache::Invalidate(const TranslationInvalidateRequest &request) noex
 		return;
 
 	if (request.site != nullptr)
-		per_site.remove_and_dispose_key_if(request.site, [this, &request](const Item &item){
-			const auto &key = cache.KeyOf(item);
-			return MatchKey(key.c_str(), request) && MatchItem(item, request);
+		per_site.remove_and_dispose_key_if(request.site, [&request](const Item &item){
+			return MatchKey(item.key.c_str(), request) && MatchItem(item, request);
 		}, [this](Item *item){
 			cache.RemoveItem(*item);
 		});
 	else
-		cache.RemoveIf([&request](const std::string &key, const Item &item){
-			return MatchKey(key.c_str(), request) && MatchItem(item, request);
+		cache.RemoveIf([&request](const Item &item){
+			return MatchKey(item.key.c_str(), request) && MatchItem(item, request);
 		});
 }
 
@@ -275,7 +271,7 @@ LbTranslationCache::Put(const IncomingHttpRequest &request,
 
 	const Vary vary(response);
 
-	if (!vary && !cache.IsEmpty()) {
+	if (!vary && !cache.empty()) {
 		logger(4, "VARY disappeared, clearing cache");
 		Clear();
 	}
@@ -288,7 +284,8 @@ LbTranslationCache::Put(const IncomingHttpRequest &request,
 	logger(4, "store '", key, "'");
 	++stats.stores;
 
-	auto &item = cache.PutOrReplace(std::string_view{key}, response);
-	if (!item.site.empty())
-		per_site.insert(item);
+	auto *item = new Item(key, response);
+	if (!item->site.empty())
+		per_site.insert(*item);
+	cache.Put(*item);
 }

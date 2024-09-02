@@ -6,7 +6,8 @@
 
 #include "stats/CacheStats.hxx"
 #include "io/Logger.hxx"
-#include "util/StaticCache.hxx"
+#include "util/DeleteDisposer.hxx"
+#include "util/IntrusiveCache.hxx"
 #include "util/IntrusiveList.hxx"
 
 #include <string>
@@ -24,26 +25,44 @@ class LbTranslationCache final {
 
 public:
 	struct Item {
+		IntrusiveCacheHook cache_hook;
 		IntrusiveHashSetHook<IntrusiveHookMode::AUTO_UNLINK> per_site_hook;
+
+		std::string key;
 
 		HttpStatus status = {};
 		uint16_t https_only = 0;
 		std::string redirect, message, pool, canonical_host, site, analytics_id, generator;
 
 		[[nodiscard]]
-		explicit Item(const TranslateResponse &response) noexcept;
+		explicit Item(const char *_key, const TranslateResponse &response) noexcept;
 
 		[[gnu::pure]]
 		size_t GetAllocatedMemory() const noexcept {
-			return sizeof(*this) + redirect.length() + message.length() +
+			return sizeof(*this) + key.length() +
+				redirect.length() + message.length() +
 				pool.length() + canonical_host.length() + site.length() +
 				analytics_id.length() + generator.length();
 		}
+
+		struct GetKey {
+			[[gnu::pure]]
+			std::string_view operator()(const Item &item) const noexcept {
+				return item.key;
+			}
+		};
 
 		struct GetSite {
 			[[gnu::pure]]
 			std::string_view operator()(const Item &item) const noexcept {
 				return item.site;
+			}
+		};
+
+		struct SizeOf {
+			[[gnu::pure]]
+			std::size_t operator()(const Item &item) const noexcept {
+				return item.GetAllocatedMemory();
 			}
 		};
 	};
@@ -88,8 +107,17 @@ private:
 						   std::equal_to<std::string_view>>,
 			 IntrusiveHashSetMemberHookTraits<&Item::per_site_hook>> per_site;
 
-	using Cache = StaticCache<std::string, Item, 65536, N_BUCKETS,
-		std::hash<std::string_view>, std::equal_to<std::string_view>>;
+	using Cache =
+		IntrusiveCache<Item,
+			       N_BUCKETS,
+			       IntrusiveCacheOperators<Item,
+						       Item::GetKey,
+						       std::hash<std::string_view>,
+						       std::equal_to<std::string_view>,
+						       Item::SizeOf,
+						       DeleteDisposer>,
+			       IntrusiveCacheMemberHookTraits<&Item::cache_hook>>;
+
 	Cache cache;
 
 	Vary seen_vary;
@@ -98,8 +126,8 @@ private:
 
 public:
 	[[nodiscard]]
-	LbTranslationCache() noexcept
-		:logger("tcache") {}
+	explicit LbTranslationCache(std::size_t max_size) noexcept
+		:logger("tcache"), cache(max_size) {}
 
 	[[gnu::pure]]
 	CacheStats GetStats() const noexcept;

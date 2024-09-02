@@ -154,7 +154,8 @@ LbTranslationHandler::PutCache(const IncomingHttpRequest &request,
 		return;
 
 	if (!cache)
-		cache.reset(new LbTranslationCache());
+		// TODO configurable cache size
+		cache.reset(new LbTranslationCache(256 * std::size_t{1024 * 1024}));
 
 	cache->Put(request, listener_tag, response);
 }
