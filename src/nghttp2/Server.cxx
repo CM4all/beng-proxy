@@ -439,7 +439,7 @@ ServerConnection::Request::OnFrameSendCallback(const nghttp2_frame &frame) noexc
 	return 0;
 }
 
-int
+inline int
 ServerConnection::Request::OnReceiveRequest(bool has_request_body) noexcept
 {
 	if (error_status != HttpStatus{}) {
@@ -487,7 +487,7 @@ ServerConnection::Request::OnReceiveRequest(bool has_request_body) noexcept
 	return 0;
 }
 
-int
+inline int
 ServerConnection::Request::OnEndDataFrame() noexcept
 {
 	if (!request_body_control)
