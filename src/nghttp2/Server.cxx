@@ -227,6 +227,9 @@ public:
 		return request->OnDataChunkReceivedCallback(std::as_bytes(std::span{data, len}));
 	}
 
+	int OnFrameRecvCallback(const nghttp2_frame &frame) noexcept;
+	int OnFrameSendCallback(const nghttp2_frame &frame) noexcept;
+
 private:
 	void SetError(HttpStatus _status, const char *_msg) noexcept {
 		if (error_status != HttpStatus::UNDEFINED)
@@ -399,6 +402,39 @@ ServerConnection::Request::OnDataChunkReceivedCallback(std::span<const std::byte
 		request_body_control->Push(data);
 		request_body_control->SubmitBuffer();
 	}
+
+	return 0;
+}
+
+inline int
+ServerConnection::Request::OnFrameRecvCallback(const nghttp2_frame &frame) noexcept
+{
+	traffic_received += FRAME_HEADER_SIZE + frame.hd.length;
+
+	switch (frame.hd.type) {
+	case NGHTTP2_HEADERS:
+		if (frame.hd.flags & NGHTTP2_FLAG_END_HEADERS)
+			return OnReceiveRequest((frame.hd.flags & NGHTTP2_FLAG_END_STREAM) == 0);
+
+		break;
+
+	case NGHTTP2_DATA:
+		if (frame.hd.flags & NGHTTP2_FLAG_END_STREAM)
+			return OnEndDataFrame();
+
+		break;
+
+	default:
+		break;
+	}
+
+	return 0;
+}
+
+inline int
+ServerConnection::Request::OnFrameSendCallback(const nghttp2_frame &frame) noexcept
+{
+	traffic_sent += FRAME_HEADER_SIZE + frame.hd.length;
 
 	return 0;
 }
@@ -636,35 +672,13 @@ ServerConnection::SendCallback(std::span<const std::byte> src) noexcept
 int
 ServerConnection::OnFrameRecvCallback(const nghttp2_frame &frame) noexcept
 {
-	Request *request = frame.hd.stream_id != 0
-		? static_cast<Request *>(nghttp2_session_get_stream_user_data(session.get(), frame.hd.stream_id))
-		: nullptr;
-	if (request != nullptr)
-		request->traffic_received += FRAME_HEADER_SIZE + frame.hd.length;
-
-	switch (frame.hd.type) {
-	case NGHTTP2_HEADERS:
-		if (frame.hd.flags & NGHTTP2_FLAG_END_HEADERS) {
-			if (request == nullptr)
-				return 0;
-
-			return request->OnReceiveRequest((frame.hd.flags & NGHTTP2_FLAG_END_STREAM) == 0);
-		}
-		break;
-
-	case NGHTTP2_DATA:
-		if (frame.hd.flags & NGHTTP2_FLAG_END_STREAM) {
-			if (request == nullptr)
-				return 0;
-
-			return request->OnEndDataFrame();
-		}
-
-		break;
-
-	default:
-		break;
+	if (frame.hd.stream_id != 0) {
+		Request *request = static_cast<Request *>(nghttp2_session_get_stream_user_data(session.get(),
+											       frame.hd.stream_id));
+		if (request != nullptr)
+			return request->OnFrameRecvCallback(frame);
 	}
+
 	return 0;
 }
 
@@ -675,7 +689,7 @@ ServerConnection::OnFrameSendCallback(const nghttp2_frame &frame) noexcept
 		Request *request = static_cast<Request *>(nghttp2_session_get_stream_user_data(session.get(),
 											       frame.hd.stream_id));
 		if (request != nullptr)
-			request->traffic_sent += FRAME_HEADER_SIZE + frame.hd.length;
+			return request->OnFrameSendCallback(frame);
 	}
 
 	return 0;
