@@ -1,6 +1,7 @@
 cm4all-beng-proxy (18.3) unstable; urgency=low
 
   * translation: add packet CAP_SYS_RESOURCE
+  * nghttp/server: send RST_STREAM to cancel unused request body
 
  --   
 

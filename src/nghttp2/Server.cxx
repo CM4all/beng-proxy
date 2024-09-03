@@ -98,6 +98,19 @@ class ServerConnection::Request final
 	 */
 	bool request_body_used = false;
 
+	/**
+	 * True after we have received a DATA frame with the
+	 * END_STREAM flag.
+	 */
+	bool request_body_eof = false;
+
+	/**
+	 * Has the request body #Istream been closed?  If yes and its
+         * end was not yet received, we need to send RST_STREAM to
+         * cancel the rest of it.
+	 */
+	bool request_body_closed = false;
+
 public:
 	uint_least64_t traffic_received = 0, traffic_sent = 0;
 
@@ -366,6 +379,7 @@ ServerConnection::Request::OnFifoBufferIstreamClosed() noexcept
 	assert(request_body_control);
 
 	request_body_control = nullptr;
+	request_body_closed = true;
 
 	wait_tracker.Clear(GetEventLoop(), WAIT_RECEIVE_REQUEST);
 }
@@ -436,6 +450,24 @@ ServerConnection::Request::OnFrameSendCallback(const nghttp2_frame &frame) noexc
 {
 	traffic_sent += FRAME_HEADER_SIZE + frame.hd.length;
 
+	switch (frame.hd.type) {
+	case NGHTTP2_DATA:
+		if ((frame.hd.flags & NGHTTP2_FLAG_END_STREAM) != 0 &&
+		    request_body_closed && !request_body_eof) {
+			/* this is the last frame of the response, but
+                           we havn't fully received the request body
+                           yet; send RST_STREAM to cancel it, or else
+                           the client may wait indefinitely for window
+                           updates to be able to finish sending it */
+			nghttp2_submit_rst_stream(connection.session.get(),
+						  NGHTTP2_FLAG_NONE,
+						  id, NGHTTP2_NO_ERROR);
+			DeferWrite();
+		}
+
+		break;
+	}
+
 	return 0;
 }
 
@@ -490,6 +522,8 @@ ServerConnection::Request::OnReceiveRequest(bool has_request_body) noexcept
 inline int
 ServerConnection::Request::OnEndDataFrame() noexcept
 {
+	request_body_eof = true;
+
 	if (!request_body_control)
 		return 0;
 
