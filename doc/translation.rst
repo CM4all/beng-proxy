@@ -1322,6 +1322,11 @@ Other Child Process Options
   visible inside the user namespace.  Currently, only the uid is
   implemented, therefore the payload must be a 32-bit integer.
 
+- ``CAP_SYS_RESOURCE`` grants the new child process the
+  CAP_SYS_RESOURCE capability, allowing it to ignore filesystem
+  quotas.  It is not possible to use it together with user namespaces
+  (``USER_NAMESPACE``).
+
 - ``NO_NEW_PRIVS`` permanently disables new privileges for the child
   process. That is, ``setuid`` and ``setgid`` bits are ignored on
   executed programs. It is recommended to set this flag on **all**

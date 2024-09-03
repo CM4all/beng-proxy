@@ -60,6 +60,9 @@ AmbientCapabilities=CAP_KILL
 # things that could probably be fixed)
 AmbientCapabilities=CAP_SYS_ADMIN
 
+# For the CAP_SYS_RESOURCE spawner option
+AmbientCapabilities=CAP_SYS_RESOURCE
+
 # This allows the kernel to merge CPU wakeups, the default of 50ns is
 # too fine.
 TimerSlackNSec=10ms
