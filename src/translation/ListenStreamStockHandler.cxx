@@ -83,6 +83,8 @@ try {
 
 	delete this;
 } catch (...) {
+	response.reset();
+
 	auto &_handler = handler;
 	delete this;
 	_handler.OnListenStreamError(std::current_exception());

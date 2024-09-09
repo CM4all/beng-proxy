@@ -1,6 +1,6 @@
 cm4all-beng-proxy (18.4) unstable; urgency=low
 
-  * 
+  * bp: fix another use-after-free bug on translation responses
 
  --   
 
