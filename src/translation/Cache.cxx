@@ -1089,6 +1089,8 @@ try {
 
 	handler->OnTranslateResponse(std::move(_response));
 } catch (...) {
+	_response.reset();
+
 	handler->OnTranslateError(std::current_exception());
 }
 
