@@ -41,7 +41,7 @@ WasStockRequest::OnStockItemError(std::exception_ptr ep) noexcept
 {
 	auto &_handler = handler;
 	Destroy();
-	_handler.InvokeError(ep);
+	_handler.InvokeError(std::move(ep));
 }
 
 void
