@@ -10,12 +10,6 @@
 #include "stock/Item.hxx"
 #include "stock/Stock.hxx"
 
-inline void
-WasStockRequest::Destroy() noexcept
-{
-	DeleteFromPool(pool, this);
-}
-
 void
 WasStockRequest::OnStockItemReady(StockItem &item) noexcept
 {

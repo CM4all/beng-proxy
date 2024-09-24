@@ -68,7 +68,9 @@ public:
 	virtual ~WasStockRequest() noexcept = default;
 
 protected:
-	void Destroy() noexcept;
+	void Destroy() noexcept {
+		this->~WasStockRequest();
+	}
 
 private:
 	/* virtual methods from class StockGetHandler */
