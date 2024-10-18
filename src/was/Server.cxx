@@ -415,7 +415,7 @@ WasServer::OnWasControlDone() noexcept
 void
 WasServer::OnWasControlHangup() noexcept
 {
-	assert(control.IsDefined());
+	assert(!control.IsDefined());
 
 	OnWasControlError(std::make_exception_ptr(SocketClosedPrematurelyError{}));
 }
