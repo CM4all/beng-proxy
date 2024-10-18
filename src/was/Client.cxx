@@ -182,7 +182,7 @@ private:
 	void DestroyInvokeError(std::exception_ptr ep) noexcept {
 		auto &_handler = handler;
 		Destroy();
-		_handler.InvokeError(ep);
+		_handler.InvokeError(std::move(ep));
 	}
 
 	/**
@@ -277,7 +277,7 @@ private:
 
 		ClearUnused();
 
-		DestroyInvokeError(ep);
+		DestroyInvokeError(std::move(ep));
 	}
 
 	/**
@@ -330,7 +330,7 @@ private:
 
 		ClearUnused();
 
-		DestroyInvokeError(ep);
+		DestroyInvokeError(std::move(ep));
 	}
 
 	/**
@@ -338,11 +338,11 @@ private:
 	 */
 	void AbortResponse(std::exception_ptr ep) noexcept {
 		if (response.IsReceivingMetadata())
-			AbortResponseHeaders(ep);
+			AbortResponseHeaders(std::move(ep));
 		else if (response.WasSubmitted())
-			AbortResponseBody(ep);
+			AbortResponseBody(std::move(ep));
 		else
-			AbortPending(ep);
+			AbortPending(std::move(ep));
 	}
 
 	/**
@@ -406,7 +406,7 @@ private:
 
 		stopwatch.RecordEvent("control_error");
 
-		AbortResponse(NestException(ep,
+		AbortResponse(NestException(std::move(ep),
 					    std::runtime_error("Error on WAS control channel")));
 	}
 
@@ -783,7 +783,7 @@ WasClient::WasOutputPremature(uint64_t length, std::exception_ptr ep) noexcept
 	/* XXX send PREMATURE, recover */
 	(void)length;
 
-	AbortResponse(ep);
+	AbortResponse(std::move(ep));
 	return false;
 }
 
@@ -806,7 +806,7 @@ WasClient::WasOutputError(std::exception_ptr ep) noexcept
 
 	request.body = nullptr;
 
-	AbortResponse(ep);
+	AbortResponse(std::move(ep));
 }
 
 /*

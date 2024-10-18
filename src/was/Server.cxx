@@ -85,7 +85,7 @@ void
 WasServer::AbortError(std::exception_ptr ep) noexcept
 {
 	auto &handler2 = handler;
-	ReleaseError(ep);
+	ReleaseError(std::move(ep));
 	handler2.OnWasClosed();
 }
 
@@ -147,7 +147,7 @@ WasServer::WasOutputError(std::exception_ptr ep) noexcept
 	assert(response.body != nullptr);
 
 	response.body = nullptr;
-	AbortError(ep);
+	AbortError(std::move(ep));
 }
 
 /*
@@ -425,7 +425,7 @@ WasServer::OnWasControlError(std::exception_ptr ep) noexcept
 {
 	assert(control.IsDefined());
 
-	AbortError(ep);
+	AbortError(std::move(ep));
 }
 
 void
