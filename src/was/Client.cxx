@@ -345,6 +345,19 @@ private:
 			AbortPending(std::move(ep));
 	}
 
+	void AbortControlError(std::exception_ptr error) noexcept {
+		if (ignore_control_errors) {
+			ClearUnused();
+			Destroy();
+			return;
+		}
+
+		stopwatch.RecordEvent("control_error");
+
+		AbortResponse(NestException(std::move(error),
+					    std::runtime_error("Error on WAS control channel")));
+	}
+
 	/**
 	 * Submit the pending response to our handler.
 	 *
@@ -392,22 +405,13 @@ private:
 	void OnWasControlHangup() noexcept override {
 		assert(control.IsDefined());
 
-		OnWasControlError(std::make_exception_ptr(SocketClosedPrematurelyError{}));
+		AbortControlError(std::make_exception_ptr(SocketClosedPrematurelyError{}));
 	}
 
 	void OnWasControlError(std::exception_ptr ep) noexcept override {
 		assert(control.IsDefined());
 
-		if (ignore_control_errors) {
-			ClearUnused();
-			Destroy();
-			return;
-		}
-
-		stopwatch.RecordEvent("control_error");
-
-		AbortResponse(NestException(std::move(ep),
-					    std::runtime_error("Error on WAS control channel")));
+		AbortControlError(std::move(ep));
 	}
 
 	/* virtual methods from class WasOutputHandler */
