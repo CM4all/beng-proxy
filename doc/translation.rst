@@ -1170,6 +1170,10 @@ described in this section.
   top-level directory called ``mnt``. It will be mounted read-only and
   with option ``nosuid``.
 
+- ``CHROOT`` is plain old ``chroot()``.  Can be combined with
+  ``PIVOT_ROOT``; and unlike that command, it does not need a
+  top-level ``mnt`` directory.
+
 - ``MOUNT_ROOT_TMPFS`` creates an empty read-only ``tmpfs`` as the
   filesystem root. All required mountpoints will be created, but the
   filesystem will contain nothing else.
