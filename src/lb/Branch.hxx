@@ -25,10 +25,10 @@ public:
 		return config;
 	}
 
-	template<typename R>
+	template<typename C, typename R>
 	[[gnu::pure]]
-	bool MatchRequest(const R &request) const noexcept {
-		return config.condition.MatchRequest(request);
+	bool MatchRequest(const C &connection, const R &request) const noexcept {
+		return config.condition.MatchRequest(connection, request);
 	}
 
 	const LbGoto &GetDestination() const noexcept {
@@ -50,13 +50,13 @@ public:
 		return config;
 	}
 
-	template<typename R>
+	template<typename C, typename R>
 	[[gnu::pure]]
-	const LbGoto &FindRequestLeaf(const R &request) const noexcept {
+	const LbGoto &FindRequestLeaf(const C &connection, const R &request) const noexcept {
 		for (const auto &i : conditions)
-			if (i.MatchRequest(request))
-				return i.GetDestination().FindRequestLeaf(request);
+			if (i.MatchRequest(connection, request))
+				return i.GetDestination().FindRequestLeaf(connection, request);
 
-		return fallback.FindRequestLeaf(request);
+		return fallback.FindRequestLeaf(connection, request);
 	}
 };

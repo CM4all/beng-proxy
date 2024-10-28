@@ -287,7 +287,7 @@ LbHttpConnection::HandleHttpRequest(const LbGoto &destination,
 				    const StopwatchPtr &parent_stopwatch,
 				    CancellablePointer &cancel_ptr) noexcept
 {
-	const auto &goto_ = destination.FindRequestLeaf(request);
+	const auto &goto_ = destination.FindRequestLeaf(*this, request);
 
 	std::visit([&](const auto &value){
                 using T = std::decay_t<decltype(value)>;

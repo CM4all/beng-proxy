@@ -7,12 +7,12 @@
 #include "Goto.hxx"
 #include "Branch.hxx"
 
-template<typename R>
+template<typename C, typename R>
 const LbGoto &
-LbGoto::FindRequestLeaf(const R &request) const noexcept
+LbGoto::FindRequestLeaf(const C &connection, const R &request) const noexcept
 {
 	if (auto *branch = std::get_if<LbBranch *>(&destination))
-		return (*branch)->FindRequestLeaf(request);
+		return (*branch)->FindRequestLeaf(connection, request);
 
 	return *this;
 }

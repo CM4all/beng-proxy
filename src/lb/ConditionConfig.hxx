@@ -16,6 +16,8 @@
 struct LbAttributeReference {
 	enum class Type {
 		REMOTE_ADDRESS,
+		PEER_SUBJECT,
+		PEER_ISSUER_SUBJECT,
 		METHOD,
 		URI,
 		HEADER,
@@ -34,13 +36,19 @@ struct LbAttributeReference {
 		return type == Type::REMOTE_ADDRESS;
 	}
 
-	template<typename R>
+	template<typename C, typename R>
 	[[gnu::pure]]
-	const char *GetRequestAttribute(const R &request) const noexcept {
+	const char *GetRequestAttribute(const C &connection, const R &request) const noexcept {
 		switch (type) {
 		case Type::REMOTE_ADDRESS:
 			/* unreachable - handled as a special case */
 			break;
+
+		case Type::PEER_SUBJECT:
+			return connection.GetPeerSubject();
+
+		case Type::PEER_ISSUER_SUBJECT:
+			return connection.GetPeerIssuerSubject();
 
 		case Type::METHOD:
 			return http_method_to_string(request.method);
@@ -90,13 +98,13 @@ struct LbConditionConfig {
 		return std::visit(MatchHelper{s}, value) ^ negate;
 	}
 
-	template<typename R>
+	template<typename C, typename R>
 	[[gnu::pure]]
-	bool MatchRequest(const R &request) const noexcept {
+	bool MatchRequest(const C &connection, const R &request) const noexcept {
 		if (attribute_reference.type == LbAttributeReference::Type::REMOTE_ADDRESS)
 			return MatchAddress(request.remote_address);
 
-		const char *s = attribute_reference.GetRequestAttribute(request);
+		const char *s = attribute_reference.GetRequestAttribute(connection, request);
 		if (s == nullptr)
 			s = "";
 

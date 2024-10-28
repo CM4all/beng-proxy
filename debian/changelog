@@ -1,6 +1,6 @@
 cm4all-beng-proxy (18.6) unstable; urgency=low
 
-  * 
+  * lb: add variables $peer_subject, $peer_issuer_subject
 
  --   
 

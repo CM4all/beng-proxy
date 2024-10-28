@@ -794,6 +794,10 @@ ParseAttributeReference(const char *p)
 		return LbAttributeReference::Type::URI;
 	} else if (StringIsEqual(p, "remote_address")) {
 		return LbAttributeReference::Type::REMOTE_ADDRESS;
+	} else if (StringIsEqual(p, "peer_subject")) {
+		return LbAttributeReference::Type::PEER_SUBJECT;
+	} else if (StringIsEqual(p, "peer_issuer_subject")) {
+		return LbAttributeReference::Type::PEER_ISSUER_SUBJECT;
 	} else if (auto header = StringAfterPrefix(p, "http_")) {
 		LbAttributeReference a(LbAttributeReference::Type::HEADER, header);
 		if (a.name.empty())

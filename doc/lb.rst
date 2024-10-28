@@ -269,6 +269,8 @@ another branch.
 The following “variables” are available:
 
 - ``$remote_address``: the client address.
+- ``$peer_subject``, ``$peer_issuer_subject``: the subject of the
+  (issuer of the) client certificate (see :ref:`ssl_verify`).
 - ``$request_method``: the HTTP request method (``GET``, ``POST``,
   ...)
 - ``$request_uri``: the HTTP request URI

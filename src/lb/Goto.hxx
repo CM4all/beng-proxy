@@ -64,7 +64,7 @@ struct LbGoto {
 		return destination.index() != 0;
 	}
 
-	template<typename R>
+	template<typename C, typename R>
 	[[gnu::pure]]
-	const LbGoto &FindRequestLeaf(const R &request) const noexcept;
+	const LbGoto &FindRequestLeaf(const C &connection, const R &request) const noexcept;
 };
