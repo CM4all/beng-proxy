@@ -12,7 +12,6 @@
 #include "Cookie.hxx"
 #include "JvmRoute.hxx"
 #include "Headers.hxx"
-#include "ssl/Filter.hxx"
 #include "cluster/AddressSticky.hxx"
 #include "address_string.hxx"
 #include "http/IncomingRequest.hxx"
@@ -359,19 +358,13 @@ LbRequest::OnFilteredSocketReady(Lease &lease,
 
 	SetForwardedTo();
 
-	const char *peer_subject = connection.ssl_filter != nullptr
-		? ssl_filter_get_peer_subject(*connection.ssl_filter)
-		: nullptr;
-	const char *peer_issuer_subject = connection.ssl_filter != nullptr
-		? ssl_filter_get_peer_issuer_subject(*connection.ssl_filter)
-		: nullptr;
-
 	auto &headers = request.headers;
 	lb_forward_request_headers(pool, headers,
 				   request.local_host_and_port,
 				   request.remote_host,
 				   connection.IsEncrypted(),
-				   peer_subject, peer_issuer_subject,
+				   connection.GetPeerSubject(),
+				   connection.GetPeerIssuerSubject(),
 				   cluster_config.mangle_via);
 
 	if (!cluster_config.http_host.empty())

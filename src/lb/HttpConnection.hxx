@@ -71,6 +71,12 @@ struct LbHttpConnection final
 		return ssl_filter != nullptr;
 	}
 
+	[[gnu::pure]]
+	const char *GetPeerSubject() const noexcept;
+
+	[[gnu::pure]]
+	const char *GetPeerIssuerSubject() const noexcept;
+
 	bool IsHTTP2() const noexcept {
 #ifdef HAVE_NGHTTP2
 		return http2;

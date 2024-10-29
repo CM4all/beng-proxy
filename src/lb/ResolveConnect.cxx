@@ -13,7 +13,6 @@
 #include "http/Client.hxx"
 #include "http/Headers.hxx"
 #include "http/Method.hxx"
-#include "ssl/Filter.hxx"
 #include "istream/UnusedHoldPtr.hxx"
 #include "fs/Stock.hxx"
 #include "stock/GetHandler.hxx"
@@ -126,19 +125,13 @@ LbResolveConnectRequest::OnStockItemReady(StockItem &item) noexcept
 	stock_item = &item;
 	lease_state = LeaseState::BUSY;
 
-	const char *peer_subject = connection.ssl_filter != nullptr
-		? ssl_filter_get_peer_subject(*connection.ssl_filter)
-		: nullptr;
-	const char *peer_issuer_subject = connection.ssl_filter != nullptr
-		? ssl_filter_get_peer_issuer_subject(*connection.ssl_filter)
-		: nullptr;
-
 	auto &headers = request.headers;
 	lb_forward_request_headers(pool, headers,
 				   request.local_host_and_port,
 				   request.remote_host,
 				   connection.IsEncrypted(),
-				   peer_subject, peer_issuer_subject,
+				   connection.GetPeerSubject(),
+				   connection.GetPeerIssuerSubject(),
 				   false);
 
 	http_client_request(pool, nullptr,

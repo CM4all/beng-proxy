@@ -21,6 +21,7 @@
 #include "pool/pool.hxx"
 #include "fs/FilteredSocket.hxx"
 #include "ssl/AlpnCompare.hxx"
+#include "ssl/Filter.hxx"
 #include "uri/Verify.hxx"
 #include "lib/fmt/SocketAddressFormatter.hxx"
 #include "net/SocketProtocolError.hxx"
@@ -173,6 +174,22 @@ LbHttpConnection::LogSendError(IncomingHttpRequest &request,
 {
 	logger(log_level, ep);
 	SendError(request, ep);
+}
+
+const char *
+LbHttpConnection::GetPeerSubject() const noexcept
+{
+	return ssl_filter != nullptr
+		? ssl_filter_get_peer_subject(*ssl_filter)
+		: nullptr;
+}
+
+const char *
+LbHttpConnection::GetPeerIssuerSubject() const noexcept
+{
+	return ssl_filter != nullptr
+		? ssl_filter_get_peer_issuer_subject(*ssl_filter)
+		: nullptr;
 }
 
 void
