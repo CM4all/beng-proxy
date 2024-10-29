@@ -333,6 +333,8 @@ following attributes are available:
 - ``method``: the request method
 - ``has_body``: ``true`` if a request body is present
 - ``remote_host``: the client’s IP address
+- ``peer_subject``, ``peer_issuer_subject``: the subject of the
+  (issuer of the) client certificate (see :ref:`ssl_verify`)
 
 Read-only methods:
 
