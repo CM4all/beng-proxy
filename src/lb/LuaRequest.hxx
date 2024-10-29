@@ -6,21 +6,25 @@
 
 struct lua_State;
 struct IncomingHttpRequest;
+struct LbHttpConnection;
 class HttpResponseHandler;
 
 struct LbLuaRequestData {
+	const LbHttpConnection &connection;
 	IncomingHttpRequest &request;
 	HttpResponseHandler &handler;
 	bool stale = false;
 
-	explicit LbLuaRequestData(IncomingHttpRequest &_request,
-				  HttpResponseHandler &_handler)
-		:request(_request), handler(_handler) {}
+	explicit LbLuaRequestData(const LbHttpConnection &_connection,
+				  IncomingHttpRequest &_request,
+				  HttpResponseHandler &_handler) noexcept
+		:connection(_connection), request(_request), handler(_handler) {}
 };
 
 void
 RegisterLuaRequest(lua_State *L);
 
 LbLuaRequestData *
-NewLuaRequest(lua_State *L, IncomingHttpRequest &request,
+NewLuaRequest(lua_State *L, const LbHttpConnection &connection,
+	      IncomingHttpRequest &request,
 	      HttpResponseHandler &handler);

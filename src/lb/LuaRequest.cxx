@@ -3,6 +3,7 @@
 // author: Max Kellermann <mk@cm4all.com>
 
 #include "LuaRequest.hxx"
+#include "HttpConnection.hxx"
 #include "istream/istream_string.hxx"
 #include "pool/pool.hxx"
 #include "lua/Class.hxx"
@@ -288,6 +289,20 @@ LbLuaRequestIndex(lua_State *L)
 	} else if (StringIsEqual(name, "remote_host")) {
 		Lua::Push(L, data.request.remote_host);
 		return 1;
+	} else if (StringIsEqual(name, "peer_subject")) {
+		if (const char *value = data.connection.GetPeerSubject()) {
+			Lua::Push(L, value);
+			return 1;
+		}
+
+		return 0;
+	} else if (StringIsEqual(name, "peer_issuer_subject")) {
+		if (const char *value = data.connection.GetPeerIssuerSubject()) {
+			Lua::Push(L, value);
+			return 1;
+		}
+
+		return 0;
 	}
 
 	return luaL_error(L, "Unknown attribute");
@@ -303,8 +318,9 @@ RegisterLuaRequest(lua_State *L)
 }
 
 LbLuaRequestData *
-NewLuaRequest(lua_State *L, IncomingHttpRequest &request,
+NewLuaRequest(lua_State *L, const LbHttpConnection &connection,
+	      IncomingHttpRequest &request,
 	      HttpResponseHandler &handler)
 {
-	return LbLuaRequest::New(L, request, handler);
+	return LbLuaRequest::New(L, connection, request, handler);
 }

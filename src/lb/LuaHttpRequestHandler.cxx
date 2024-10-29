@@ -103,7 +103,7 @@ LbLuaResponseHandler::Start()
 
 	handler.PushFunction(L);
 
-	lua_request = NewLuaRequest(L, request, *this);
+	lua_request = NewLuaRequest(L, connection, request, *this);
 	lua_request_ref = {L, Lua::RelativeStackIndex{-1}};
 
 	Lua::Resume(L, 1);
