@@ -1,13 +1,13 @@
 project('CM4all beng-proxy', 'cpp', version: '18.7',
   meson_version: '>= 1.0',
   default_options: [
-    'cpp_std=c++2a',
+    'cpp_std=c++20',
     'warning_level=3',
 
     # This is only here to build subprojects as static libraries
     'default_library=static',
 
-    'fmt:cpp_std=c++2a',
+    'fmt:cpp_std=c++20',
 
     'libwas:apreq2=disabled',
     'libwas:xios=disabled',
