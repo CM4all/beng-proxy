@@ -72,7 +72,7 @@ class BpListenStreamStockHandler::HttpListener final
 {
 	BpInstance &instance;
 
-	BpListenerConfig config;
+	const BpListenerConfig config;
 
 	std::list<BpListener>::iterator iterator;
 
@@ -80,13 +80,9 @@ public:
 	HttpListener(BpInstance &_instance,
 		     SocketDescriptor socket,
 		     const TranslateResponse &response) noexcept
-		:instance(_instance)
+		:instance(_instance),
+		 config(MakeConfig(response))
 	{
-		if (response.listener_tag != nullptr)
-			config.tag = response.listener_tag;
-
-		config.access_logger = false; // TODO?
-
 		instance.listeners.emplace_front(instance,
 						 response.stats_tag != nullptr ? instance.listener_stats[response.stats_tag] : instance.listener_stats[config.tag],
 						 nullptr,
@@ -99,6 +95,19 @@ public:
 
 	~HttpListener() noexcept {
 		instance.listeners.erase(iterator);
+	}
+
+private:
+	[[gnu::pure]]
+	static BpListenerConfig MakeConfig(const TranslateResponse &response) noexcept {
+		BpListenerConfig config;
+
+		if (response.listener_tag != nullptr)
+			config.tag = response.listener_tag;
+
+		config.access_logger = false; // TODO
+
+		return config;
 	}
 };
 
