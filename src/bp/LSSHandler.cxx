@@ -70,31 +70,23 @@ public:
 
 class BpListenStreamStockHandler::HttpListener final
 {
-	BpInstance &instance;
-
 	const BpListenerConfig config;
 
-	std::list<BpListener>::iterator iterator;
+	BpListener listener;
 
 public:
-	HttpListener(BpInstance &_instance,
+	HttpListener(BpInstance &instance,
 		     SocketDescriptor socket,
 		     const TranslateResponse &response) noexcept
-		:instance(_instance),
-		 config(MakeConfig(response))
+		:config(MakeConfig(response)),
+		 listener(instance,
+			  response.stats_tag != nullptr ? instance.listener_stats[response.stats_tag] : instance.listener_stats[config.tag],
+			  nullptr,
+			  nullptr, // TODO?
+			  instance.translation_service,
+			  config,
+			  socket.Duplicate())
 	{
-		instance.listeners.emplace_front(instance,
-						 response.stats_tag != nullptr ? instance.listener_stats[response.stats_tag] : instance.listener_stats[config.tag],
-						 nullptr,
-						 nullptr, // TODO?
-						 instance.translation_service,
-						 config,
-						 socket.Duplicate());
-		iterator = instance.listeners.begin();
-	}
-
-	~HttpListener() noexcept {
-		instance.listeners.erase(iterator);
 	}
 
 private:
