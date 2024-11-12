@@ -29,5 +29,6 @@ protected:
 	virtual void Handle(const char *socket_path,
 			    SocketDescriptor socket,
 			    UniquePoolPtr<TranslateResponse> response,
-			    ListenStreamReadyHandler &handler) = 0;
+			    ListenStreamReadyHandler &handler,
+			    CancellablePointer &cancel_ptr) = 0;
 };

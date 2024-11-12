@@ -26,6 +26,7 @@ class TranslationListenStreamStockHandler::Request final
 	const SocketDescriptor socket;
 
 	ListenStreamReadyHandler &handler;
+	CancellablePointer &caller_cancel_ptr;
 
 	PoolPtr translation_pool;
 
@@ -35,14 +36,14 @@ public:
 	Request(TranslationListenStreamStockHandler &_parent,
 		const char *_socket_path,
 		SocketDescriptor _socket,
-		ListenStreamReadyHandler &_handler) noexcept
+		ListenStreamReadyHandler &_handler,
+		CancellablePointer &_caller_cancel_ptr) noexcept
 		:parent(_parent),
 		 socket_path(_socket_path), socket(_socket),
-		 handler(_handler) {}
+		 handler(_handler), caller_cancel_ptr(_caller_cancel_ptr) {}
 
 	void Start(TranslationService &_translation_service,
-		   std::string_view key,
-		   CancellablePointer &caller_cancel_ptr) noexcept {
+		   std::string_view key) noexcept {
 		caller_cancel_ptr = *this;
 
 		translation_pool = pool_new_libc(nullptr, "TranslationListenStreamStockHandler::Request::Translation");
@@ -74,7 +75,8 @@ try {
 	assert(translation_cancel_ptr);
 	assert(translation_pool);
 
-	parent.Handle(socket_path, socket, std::move(response), handler);
+	parent.Handle(socket_path, socket, std::move(response),
+		      handler, caller_cancel_ptr);
 	delete this;
 } catch (...) {
 	response.reset();
@@ -102,6 +104,6 @@ TranslationListenStreamStockHandler::OnListenStreamReady(std::string_view key,
 							 ListenStreamReadyHandler &handler,
 							 CancellablePointer &cancel_ptr) noexcept
 {
-	auto *request = new Request(*this, socket_path, socket, handler);
-	request->Start(translation_service, key, cancel_ptr);
+	auto *request = new Request(*this, socket_path, socket, handler, cancel_ptr);
+	request->Start(translation_service, key);
 }

@@ -106,7 +106,8 @@ void
 BpListenStreamStockHandler::Handle(const char *socket_path,
 				   SocketDescriptor socket,
 				   UniquePoolPtr<TranslateResponse> _response,
-				   ListenStreamReadyHandler &handler)
+				   ListenStreamReadyHandler &handler,
+				   CancellablePointer &cancel_ptr)
 {
 	const auto &response = *_response;
 
@@ -119,6 +120,7 @@ BpListenStreamStockHandler::Handle(const char *socket_path,
 		throw FmtRuntimeError("Status {} from translation server",
 				      static_cast<unsigned>(response.status));
 	} else if (response.execute != nullptr) {
+		(void)cancel_ptr; // TODO
 		auto process = DoSpawn(*instance.spawn_service, socket_path, socket, response);
 		auto ptr = ToDeletePointer(new Process(handler, std::move(process)));
 

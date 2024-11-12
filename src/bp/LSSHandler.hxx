@@ -21,5 +21,6 @@ public:
 	void Handle(const char *socket_path,
 		    SocketDescriptor socket,
 		    UniquePoolPtr<TranslateResponse> response,
-		    ListenStreamReadyHandler &handler) override;
+		    ListenStreamReadyHandler &handler,
+		    CancellablePointer &cancel_ptr) override;
 };
