@@ -343,9 +343,6 @@ test('t_resource_address', executable('t_resource_address',
   dependencies: [
     gtest,
     raddress_dep,
-
-    # TODO remove this kludge that only exists to fix a linker failure
-    event_dep,
   ]))
 
 test('t_balancer', executable('t_balancer',

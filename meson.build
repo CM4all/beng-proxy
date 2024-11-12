@@ -479,7 +479,7 @@ raddress_dep = declare_dependency(
   link_with: raddress,
   dependencies: [
     net_dep,
-    spawn_dep,
+    spawn_options_dep,
     adata_dep,
     expand_dep,
     pcre_dep,

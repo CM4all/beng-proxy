@@ -50,7 +50,7 @@ if lua_dep.found()
     dependencies: [
       lua_dep,
       fmt_dep,
-      spawn_dep,
+      spawn_options_dep,
       net_log_dep,
       http_dep,
       liblua,
@@ -111,7 +111,7 @@ executable(
   'Tee.cxx',
   include_directories: inc,
   dependencies: [
-    spawn_dep,
+    spawn_options_dep,
     system_dep,
     net_log_dep,
   ],
