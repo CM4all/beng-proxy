@@ -304,7 +304,10 @@ Context::OnDirect(FdType, FileDescriptor fd, off_t,
 	}
 
 	std::array<std::byte, 1024> tmp;
-	const auto _nbytes = fd.Read(tmp.data(), std::min(tmp.size(), max_length));
+	std::span<std::byte> dest{tmp};
+	if (dest.size() > max_length)
+		dest = dest.first(max_length);
+	const auto _nbytes = fd.Read(dest);
 	if (_nbytes <= 0)
 		return _nbytes < 0
 			? IstreamDirectResult::ERRNO
@@ -313,7 +316,7 @@ Context::OnDirect(FdType, FileDescriptor fd, off_t,
 	const std::size_t nbytes = _nbytes;
 	input.ConsumeDirect(nbytes);
 
-	const std::span<const std::byte> src = std::span{tmp}.first(nbytes);
+	const std::span<const std::byte> src = dest.first(nbytes);
 
 	if (options.expected_result.data() != nullptr && record) {
 		assert(skipped + buffer.size() == offset);

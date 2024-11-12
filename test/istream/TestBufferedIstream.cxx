@@ -12,6 +12,9 @@
 #include "istream/UnusedHoldPtr.hxx"
 #include "util/Cancellable.hxx"
 #include "util/Compiler.h"
+#include "util/SpanCast.hxx"
+
+using std::string_view_literals::operator""sv;
 
 class BufferedIstreamAdapter final : public BufferedIstreamHandler, Cancellable {
 	DelayedIstreamControl &delayed;
@@ -82,7 +85,7 @@ public:
 	UnusedIstreamPtr CreateInput(struct pool &pool) const noexcept {
 		PipeLease pl(nullptr);
 		pl.Create();
-		pl.GetWriteFd().Write("bar", 3);
+		pl.GetWriteFd().Write(AsBytes("bar"sv));
 
 		return NewConcatIstream(pool,
 					istream_string_new(pool, "foo"),

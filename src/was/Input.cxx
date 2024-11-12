@@ -524,9 +524,11 @@ WasInput::PrematureThrow(uint64_t _length)
 	uint64_t remaining = _length - received;
 
 	while (remaining > 0) {
-		uint8_t discard_buffer[4096];
-		std::size_t size = std::min(remaining, uint64_t(sizeof(discard_buffer)));
-		ssize_t nbytes = GetPipe().Read(discard_buffer, size);
+		std::array<std::byte, 4096> discard_buffer;
+		std::span<std::byte> dest{discard_buffer};
+		if (dest.size() > remaining)
+			dest = dest.first(remaining);
+		ssize_t nbytes = GetPipe().Read(dest);
 		if (nbytes < 0)
 			throw NestException(std::make_exception_ptr(MakeErrno("Read error")),
 					    SocketProtocolError{"read error on WAS data connection"});

@@ -5,6 +5,7 @@
 #include "stopwatch.hxx"
 #include "io/UniqueFileDescriptor.hxx"
 #include "util/LeakDetector.hxx"
+#include "util/SpanCast.hxx"
 #include "util/StaticVector.hxx"
 #include "util/StringBuilder.hxx"
 
@@ -200,7 +201,7 @@ try {
 
 	b.Append('\n');
 
-	if (stopwatch_fd.Write(message, strlen(message)) < 0) {
+	if (stopwatch_fd.Write(AsBytes(std::string_view{message})) < 0) {
 		stopwatch_fd.Close();
 		return;
 	}

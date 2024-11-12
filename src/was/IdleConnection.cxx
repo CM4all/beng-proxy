@@ -7,6 +7,8 @@
 
 #include <was/protocol.h>
 
+#include <array>
+
 #include <sys/socket.h>
 
 WasIdleConnection::WasIdleConnection(EventLoop &event_loop,
@@ -60,9 +62,11 @@ inline void
 WasIdleConnection::DiscardInput(uint64_t remaining)
 {
 	while (remaining > 0) {
-		uint8_t buffer[16384];
-		size_t size = std::min(remaining, uint64_t(sizeof(buffer)));
-		ssize_t nbytes = socket.input.Read(buffer, size);
+		std::array<std::byte, 16384> buffer;
+		std::span<std::byte> dest = buffer;
+		if (dest.size() > remaining)
+			dest = dest.first(remaining);
+		ssize_t nbytes = socket.input.Read(dest);
 		if (nbytes < 0)
 			throw MakeSocketError("error on idle WAS input pipe");
 		else if (nbytes == 0)

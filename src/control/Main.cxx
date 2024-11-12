@@ -257,8 +257,8 @@ Stopwatch(const char *server, ConstBuffer<const char *> args)
 	w.Close();
 
 	while (true) {
-		char buffer[8192];
-		ssize_t nbytes = r.Read(buffer, sizeof(buffer));
+		std::byte buffer[8192];
+		ssize_t nbytes = r.Read(buffer);
 		if (nbytes <= 0)
 			break;
 

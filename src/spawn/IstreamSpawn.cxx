@@ -162,7 +162,7 @@ SpawnIstream::OnData(std::span<const std::byte> src) noexcept
 {
 	assert(input_fd.IsDefined());
 
-	ssize_t nbytes = input_fd.Write(src.data(), src.size());
+	ssize_t nbytes = input_fd.Write(src);
 	if (nbytes > 0)
 		input_event.ScheduleWrite();
 	else if (nbytes < 0) {

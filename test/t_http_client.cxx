@@ -395,7 +395,7 @@ FillPipeLease(struct pool &pool, PipeStock *stock,
 	pl.Create();
 
 	char *data = RandomString(pool, length);
-	auto nbytes = pl.GetWriteFd().Write(data, length);
+	auto nbytes = pl.GetWriteFd().Write(std::as_bytes(std::span{data, length}));
 	if (nbytes < 0)
 		throw MakeErrno("Failed to write to pipe");
 
