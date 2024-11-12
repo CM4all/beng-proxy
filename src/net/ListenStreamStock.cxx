@@ -4,10 +4,7 @@
 
 #include "ListenStreamStock.hxx"
 #include "spawn/Mount.hxx"
-#include "translation/Handler.hxx"
-#include "translation/Request.hxx"
-#include "translation/Response.hxx"
-#include "translation/Service.hxx"
+#include "spawn/MountNamespaceOptions.hxx"
 #include "event/CoarseTimerEvent.hxx"
 #include "event/SocketEvent.hxx"
 #include "net/TempListener.hxx"
