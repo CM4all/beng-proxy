@@ -30,7 +30,7 @@ BpInstance::GetStats() const noexcept
 
 	stats.incoming_connections = 0;
 	for (const auto &i : listeners)
-	stats.incoming_connections += i.GetConnectionCount();
+		stats.incoming_connections += i.GetConnectionCount();
 
 	stats.outgoing_connections = tcp_stock_stats.busy + tcp_stock_stats.idle;
 	stats.sessions = session_manager->Count();
