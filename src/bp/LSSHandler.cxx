@@ -6,6 +6,7 @@
 #include "Instance.hxx"
 #include "Listener.hxx"
 #include "LStats.hxx"
+#include "spawn/CompletionHandler.hxx"
 #include "spawn/ExitListener.hxx"
 #include "spawn/Interface.hxx"
 #include "spawn/Prepared.hxx"
@@ -24,18 +25,41 @@ BpListenStreamStockHandler::BpListenStreamStockHandler(BpInstance &_instance) no
 }
 
 class BpListenStreamStockHandler::Process final
-	: ExitListener
+	: Cancellable, SpawnCompletionHandler, ExitListener
 {
 	ListenStreamReadyHandler &handler;
 
 	std::unique_ptr<ChildProcessHandle> process;
 
+	const std::string tags;
+
 public:
 	Process(ListenStreamReadyHandler &_handler,
-		std::unique_ptr<ChildProcessHandle> &&_process) noexcept
-		:handler(_handler), process(std::move(_process))
+		std::unique_ptr<ChildProcessHandle> &&_process,
+		std::string_view _tags) noexcept
+		:handler(_handler), process(std::move(_process)), tags(_tags)
 	{
 		process->SetExitListener(*this);
+	}
+
+	void Start(CancellablePointer &cancel_ptr) noexcept {
+		cancel_ptr = *this;
+		process->SetCompletionHandler(*this);
+	}
+
+	// virtual methods from class Cancellable
+	void Cancel() noexcept override {
+		delete this;
+	}
+
+	// virtual methods from class SpawnCompletionHandler
+	void OnSpawnSuccess() noexcept override {
+		handler.OnListenStreamSuccess(ToDeletePointer(this), tags);
+	}
+
+	void OnSpawnError(std::exception_ptr error) noexcept {
+		handler.OnListenStreamError(std::move(error));
+		delete this;
 	}
 
 	// virtual methods from class ExitListener
@@ -120,14 +144,12 @@ BpListenStreamStockHandler::Handle(const char *socket_path,
 		throw FmtRuntimeError("Status {} from translation server",
 				      static_cast<unsigned>(response.status));
 	} else if (response.execute != nullptr) {
-		(void)cancel_ptr; // TODO
 		auto process = DoSpawn(*instance.spawn_service, socket_path, socket, response);
-		auto ptr = ToDeletePointer(new Process(handler, std::move(process)));
+		auto *process2 = new Process(handler, std::move(process), response.child_options.tag);
 
-		const std::string_view tags = response.child_options.tag;
 		_response = {};
 
-		handler.OnListenStreamSuccess(std::move(ptr), tags);
+		process2->Start(cancel_ptr);
 	} else if (response.accept_http) {
 		auto ptr = ToDeletePointer(new HttpListener(instance, socket, response));
 
