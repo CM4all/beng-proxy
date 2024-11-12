@@ -112,16 +112,7 @@ public:
 	}
 
 private:
-	void OnSocketReady(unsigned) noexcept {
-		assert(!server);
-		assert(!start_cancel_ptr);
-
-		socket.Cancel();
-
-		handler.OnListenStreamReady(key,
-					    temp.GetPath(), socket.GetSocket(),
-					    *this, start_cancel_ptr);
-	}
+	void OnSocketReady(unsigned events) noexcept;
 
 	void OnRearmTimer() noexcept {
 		assert(!idle_timer.IsPending());
@@ -158,6 +149,19 @@ private:
 	void OnListenStreamError(std::exception_ptr error) noexcept override;
 	void OnListenStreamExit() noexcept override;
 };
+
+inline void
+ListenStreamStock::Item::OnSocketReady(unsigned) noexcept
+{
+	assert(!server);
+	assert(!start_cancel_ptr);
+
+	socket.Cancel();
+
+	handler.OnListenStreamReady(key,
+				    temp.GetPath(), socket.GetSocket(),
+				    *this, start_cancel_ptr);
+}
 
 void
 ListenStreamStock::Item::OnListenStreamSuccess(DisposablePointer _server,
