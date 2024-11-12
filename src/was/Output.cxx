@@ -239,7 +239,7 @@ WasOutput::OnIstreamReady() noexcept
 
 	/* write this struct iovec array */
 
-	ssize_t nbytes = writev(GetPipe().Get(), v.data(), v.size());
+	ssize_t nbytes = GetPipe().Write(v);
 	if (nbytes < 0) {
 		int e = errno;
 		if (e == EAGAIN) {
