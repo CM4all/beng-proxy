@@ -21,6 +21,8 @@ class TranslationListenStreamStockHandler::Request final
 {
 	TranslationListenStreamStockHandler &parent;
 
+	const TranslateRequest request;
+
 	const char *const socket_path;
 
 	const SocketDescriptor socket;
@@ -34,23 +36,20 @@ class TranslationListenStreamStockHandler::Request final
 
 public:
 	Request(TranslationListenStreamStockHandler &_parent,
+		std::string_view key,
 		const char *_socket_path,
 		SocketDescriptor _socket,
 		ListenStreamReadyHandler &_handler,
 		CancellablePointer &_caller_cancel_ptr) noexcept
 		:parent(_parent),
+		 request{.mount_listen_stream = AsBytes(key)},
 		 socket_path(_socket_path), socket(_socket),
 		 handler(_handler), caller_cancel_ptr(_caller_cancel_ptr) {}
 
-	void Start(TranslationService &_translation_service,
-		   std::string_view key) noexcept {
+	void Start(TranslationService &_translation_service) noexcept {
 		caller_cancel_ptr = *this;
 
 		translation_pool = pool_new_libc(nullptr, "TranslationListenStreamStockHandler::Request::Translation");
-
-		const TranslateRequest request{
-			.mount_listen_stream = AsBytes(key),
-		};
 
 		_translation_service.SendRequest(AllocatorPtr{translation_pool}, request,
 						 {}, *this, translation_cancel_ptr);
@@ -104,6 +103,6 @@ TranslationListenStreamStockHandler::OnListenStreamReady(std::string_view key,
 							 ListenStreamReadyHandler &handler,
 							 CancellablePointer &cancel_ptr) noexcept
 {
-	auto *request = new Request(*this, socket_path, socket, handler, cancel_ptr);
-	request->Start(translation_service, key);
+	auto *request = new Request(*this, key, socket_path, socket, handler, cancel_ptr);
+	request->Start(translation_service);
 }
