@@ -74,13 +74,7 @@ try {
 	assert(translation_cancel_ptr);
 	assert(translation_pool);
 
-	const std::string_view tags = response->child_options.tag;
-	auto process = parent.Handle(socket_path, socket, *response, handler);
-
-	response = {};
-
-	handler.OnListenStreamSuccess(std::move(process), tags);
-
+	parent.Handle(socket_path, socket, std::move(response), handler);
 	delete this;
 } catch (...) {
 	response.reset();

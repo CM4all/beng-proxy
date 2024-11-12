@@ -18,8 +18,8 @@ public:
 	explicit BpListenStreamStockHandler(BpInstance &instance) noexcept;
 
 	// virtual methods from class TranslationListenStreamStockHandler
-	DisposablePointer Handle(const char *socket_path,
-				 SocketDescriptor socket,
-				 const TranslateResponse &response,
-				 ListenStreamReadyHandler &handler) override;
+	void Handle(const char *socket_path,
+		    SocketDescriptor socket,
+		    UniquePoolPtr<TranslateResponse> response,
+		    ListenStreamReadyHandler &handler) override;
 };

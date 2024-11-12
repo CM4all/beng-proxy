@@ -6,6 +6,7 @@
 
 #include "net/ListenStreamStock.hxx"
 
+template<typename T> class UniquePoolPtr;
 struct TranslateResponse;
 class TranslationService;
 
@@ -25,8 +26,8 @@ public:
 				 CancellablePointer &cancel_ptr) noexcept final;
 
 protected:
-	virtual DisposablePointer Handle(const char *socket_path,
-					 SocketDescriptor socket,
-					 const TranslateResponse &response,
-					 ListenStreamReadyHandler &handler) = 0;
+	virtual void Handle(const char *socket_path,
+			    SocketDescriptor socket,
+			    UniquePoolPtr<TranslateResponse> response,
+			    ListenStreamReadyHandler &handler) = 0;
 };

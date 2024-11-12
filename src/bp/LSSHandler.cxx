@@ -11,6 +11,7 @@
 #include "spawn/Prepared.hxx"
 #include "spawn/ProcessHandle.hxx"
 #include "translation/Response.hxx"
+#include "pool/UniquePtr.hxx"
 #include "lib/fmt/RuntimeError.hxx"
 #include "net/SocketDescriptor.hxx"
 #include "io/FdHolder.hxx"
@@ -101,12 +102,14 @@ DoSpawn(SpawnService &service, const char *name,
 	return service.SpawnChildProcess(name, std::move(p));
 }
 
-DisposablePointer
+void
 BpListenStreamStockHandler::Handle(const char *socket_path,
 				   SocketDescriptor socket,
-				   const TranslateResponse &response,
+				   UniquePoolPtr<TranslateResponse> _response,
 				   ListenStreamReadyHandler &handler)
 {
+	const auto &response = *_response;
+
 	if (response.status != HttpStatus{}) {
 		if (response.message != nullptr)
 			throw FmtRuntimeError("Status {} from translation server: {}",
@@ -117,9 +120,19 @@ BpListenStreamStockHandler::Handle(const char *socket_path,
 				      static_cast<unsigned>(response.status));
 	} else if (response.execute != nullptr) {
 		auto process = DoSpawn(*instance.spawn_service, socket_path, socket, response);
-		return ToDeletePointer(new Process(handler, std::move(process)));
+		auto ptr = ToDeletePointer(new Process(handler, std::move(process)));
+
+		const std::string_view tags = response.child_options.tag;
+		_response = {};
+
+		handler.OnListenStreamSuccess(std::move(ptr), tags);
 	} else if (response.accept_http) {
-		return ToDeletePointer(new HttpListener(instance, socket, response));
+		auto ptr = ToDeletePointer(new HttpListener(instance, socket, response));
+
+		const std::string_view tags = response.child_options.tag;
+		_response = {};
+
+		handler.OnListenStreamSuccess(std::move(ptr), tags);
 	} else
 		throw std::runtime_error("No EXECUTE from translation server");
 }
