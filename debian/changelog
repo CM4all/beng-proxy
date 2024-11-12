@@ -1,6 +1,6 @@
 cm4all-beng-proxy (18.7) unstable; urgency=low
 
-  * 
+  * bp: accept and discard connections after MOUNT_LISTEN_STREAM error
 
  --   
 

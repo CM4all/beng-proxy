@@ -156,6 +156,16 @@ ListenStreamStock::Item::OnSocketReady(unsigned) noexcept
 	assert(!server);
 	assert(!start_cancel_ptr);
 
+	if (error) {
+		/* after a fatal error, accept and discard all
+		   incoming connections */
+
+		UniqueSocketDescriptor connection{socket.GetSocket().AcceptNonBlock()};
+		if (!connection.IsDefined())
+			socket.Cancel();
+		return;
+	}
+
 	socket.Cancel();
 
 	handler.OnListenStreamReady(key,
@@ -187,6 +197,10 @@ ListenStreamStock::Item::OnListenStreamError(std::exception_ptr _error) noexcept
 	// TODO log
 	error = std::move(_error);
 	Fade();
+
+	/* there's no hope; from now on, accept and discard all
+	   incoming connections */
+	socket.ScheduleRead();
 }
 
 void
