@@ -144,7 +144,7 @@ struct pool final
 	bool major;
 #endif
 
-	Type type;
+	const Type type;
 
 	const char *const name;
 
@@ -178,8 +178,8 @@ struct pool final
 	 */
 	size_t netto_size = 0;
 
-	explicit pool(const char *_name) noexcept
-		:name(_name) {
+	pool(Type _type, const char *_name) noexcept
+		:type(_type), name(_name) {
 	}
 
 	pool(struct pool &&) = delete;
@@ -342,9 +342,9 @@ pool_remove_child([[maybe_unused]] struct pool *pool, struct pool *child) noexce
 
 [[gnu::malloc]]
 static struct pool *
-pool_new(struct pool *parent, const char *name) noexcept
+pool_new(struct pool *parent, pool::Type type, const char *name) noexcept
 {
-	auto *pool = recycler.pools.Get(name);
+	auto *pool = recycler.pools.Get(type, name);
 
 #ifndef NDEBUG
 	pool->major = parent == nullptr;
@@ -363,16 +363,14 @@ pool_new(struct pool *parent, const char *name) noexcept
 PoolPtr
 pool_new_dummy(struct pool *parent, const char *name) noexcept
 {
-	struct pool *pool = pool_new(parent, name);
-	pool->type = pool::Type::DUMMY;
+	struct pool *pool = pool_new(parent, pool::Type::DUMMY, name);
 	return PoolPtr(PoolPtr::donate, *pool);
 }
 
 PoolPtr
 pool_new_libc(struct pool *parent, const char *name) noexcept
 {
-	struct pool *pool = pool_new(parent, name);
-	pool->type = pool::Type::LIBC;
+	struct pool *pool = pool_new(parent, pool::Type::LIBC, name);
 	return PoolPtr(PoolPtr::donate, *pool);
 }
 
@@ -438,8 +436,7 @@ pool_new_linear(struct pool *parent, const char *name,
 		   valgrind */
 		return pool_new_libc(parent, name);
 
-	struct pool *pool = pool_new(parent, name);
-	pool->type = pool::Type::LINEAR;
+	struct pool *pool = pool_new(parent, pool::Type::LINEAR, name);
 	pool->area_size = initial_size;
 	pool->slice_pool = nullptr;
 	pool->current_area.linear = nullptr;
@@ -461,8 +458,7 @@ pool_new_slice(struct pool &parent, const char *name,
 		   valgrind */
 		return pool_new_libc(&parent, name);
 
-	struct pool *pool = pool_new(&parent, name);
-	pool->type = pool::Type::LINEAR;
+	struct pool *pool = pool_new(&parent, pool::Type::LINEAR, name);
 	pool->area_size = slice_pool.GetSliceSize() - LINEAR_POOL_AREA_HEADER;
 	pool->slice_pool = &slice_pool;
 	pool->current_area.linear = nullptr;
