@@ -185,6 +185,20 @@ struct pool final
 	pool(struct pool &&) = delete;
 	pool &operator=(struct pool &&) = delete;
 
+	void AddChild(struct pool &child) noexcept {
+		assert(child.parent == nullptr);
+
+		child.parent = this;
+		children.push_back(child);
+	}
+
+	void RemoveChild(struct pool &child) noexcept {
+		assert(child.parent == this);
+
+		child.unlink();
+		child.parent = nullptr;
+	}
+
 	/* virtual methods from class LoggerDomainFactory */
 	std::string MakeLoggerDomain() const noexcept override {
 		return fmt::format("pool {}", name);
@@ -321,25 +335,6 @@ pool_dispose_linear_area(struct pool *pool,
 		pool_free_linear_area(area);
 }
 
-static inline void
-pool_add_child(struct pool *pool, struct pool *child) noexcept
-{
-	assert(child->parent == nullptr);
-
-	child->parent = pool;
-
-	pool->children.push_back(*child);
-}
-
-static inline void
-pool_remove_child([[maybe_unused]] struct pool *pool, struct pool *child) noexcept
-{
-	assert(child->parent == pool);
-
-	child->unlink();
-	child->parent = nullptr;
-}
-
 [[gnu::malloc]]
 static struct pool *
 pool_new(struct pool *parent, pool::Type type, const char *name) noexcept
@@ -351,7 +346,7 @@ pool_new(struct pool *parent, pool::Type type, const char *name) noexcept
 #endif
 
 	if (parent != nullptr)
-		pool_add_child(parent, pool);
+		parent->AddChild(*pool);
 
 #ifndef NDEBUG
 	pool->major = parent == nullptr;
@@ -528,7 +523,7 @@ pool_destroy(struct pool *pool, struct pool *reparent_to) noexcept
 
 	while (!pool->children.empty()) {
 		struct pool *child = &pool->children.front();
-		pool_remove_child(pool, child);
+		pool->RemoveChild(*child);
 		assert(child->ref > 0);
 
 		if (reparent_to == nullptr) {
@@ -549,7 +544,7 @@ pool_destroy(struct pool *pool, struct pool *reparent_to) noexcept
 
 			assert(!pool->major && !pool->trashed);
 
-			pool_add_child(reparent_to, child);
+			reparent_to->AddChild(*child);
 		}
 	}
 
@@ -641,7 +636,7 @@ pool_unref(struct pool *pool TRACE_ARGS_DECL) noexcept
 		struct pool *reparent_to = pool->major ? nullptr : parent;
 #endif
 		if (parent != nullptr)
-			pool_remove_child(parent, pool);
+			parent->RemoveChild(*pool);
 #ifdef DUMP_POOL_UNREF
 		pool_dump_refs(*pool);
 #endif
@@ -707,7 +702,7 @@ pool_trash(struct pool *pool) noexcept
 
 	assert(pool->parent != nullptr);
 
-	pool_remove_child(pool->parent, pool);
+	pool->parent->RemoveChild(*pool);
 	trash.push_front(*pool);
 	pool->trashed = true;
 }
