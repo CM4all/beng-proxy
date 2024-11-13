@@ -12,6 +12,7 @@
 #include "pool/tpool.hxx"
 #include "pool/pool.hxx"
 #include "util/DeleteDisposer.hxx"
+#include "util/NumberParser.hxx"
 #include "util/StringCompare.hxx"
 #include "util/StringStrip.hxx"
 #include "AllocatorPtr.hxx"
@@ -20,7 +21,6 @@
 #include <memory>
 #include <string_view>
 
-#include <stdlib.h>
 #include <string.h>
 
 using std::string_view_literals::operator""sv;
@@ -89,15 +89,11 @@ parse_next_cookie(struct pool &tpool,
 		else if (StringIsEqualIgnoreCase(name, "path"sv))
 			cookie->path = value;
 		else if (StringIsEqualIgnoreCase(name, "max-age"sv)) {
-			unsigned long seconds;
-			char *endptr;
-
-			seconds = strtoul(p_strdup(tpool, value), &endptr, 10);
-			if (*endptr == 0) {
-				if (seconds == 0)
+			if (auto seconds = ParseInteger<unsigned>(value)) {
+				if (*seconds == 0)
 					cookie->expires = Expiry::AlreadyExpired();
 				else
-					cookie->expires.Touch(std::chrono::seconds(seconds));
+					cookie->expires.Touch(std::chrono::seconds(*seconds));
 			}
 		}
 
