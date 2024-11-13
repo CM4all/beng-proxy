@@ -9,14 +9,13 @@
 #include "Server.hxx"
 #include "net/log/Datagram.hxx"
 
-#include <stdio.h>
+#include <fmt/core.h>
 
 static void
 dump(const Net::Log::Datagram &d)
 {
 	if (d.site != nullptr && d.valid_traffic)
-		printf("%s %llu\n", d.site,
-		       (unsigned long long)(d.traffic_received + d.traffic_sent));
+		fmt::print("{} {}\n", d.site, d.traffic_received + d.traffic_sent);
 }
 
 int main(int argc, char **argv)

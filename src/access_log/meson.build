@@ -67,6 +67,7 @@ executable(
   dependencies: [
     net_log_dep,
     http_dep,
+    fmt_dep,
   ],
   install: true,
 )
