@@ -12,7 +12,8 @@
 #include "http/HeaderUtil.hxx"
 #include "http/ResponseHandler.hxx"
 #include "strmap.hxx"
-#include "istream_html_escape.hxx"
+#include "escape/HTML.hxx"
+#include "escape/Istream.hxx"
 #include "istream/ConcatIstream.hxx"
 #include "istream/DelayedIstream.hxx"
 #include "istream/istream_iconv.hxx"
@@ -185,7 +186,7 @@ widget_response_format(struct pool &pool, const Widget &widget,
 
 		widget.logger(6, "converting text to HTML");
 
-		auto i = istream_html_escape_new(pool, std::move(body));
+		auto i = istream_escape_new(pool, std::move(body), html_escape_class);
 		body = NewConcatIstream(pool,
 					istream_string_new(pool,
 							   "<pre class=\"beng_text_widget\">"),

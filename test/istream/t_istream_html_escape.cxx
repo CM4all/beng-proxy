@@ -3,7 +3,8 @@
 // author: Max Kellermann <mk@cm4all.com>
 
 #include "IstreamFilterTest.hxx"
-#include "istream_html_escape.hxx"
+#include "escape/HTML.hxx"
+#include "escape/Istream.hxx"
 #include "istream/istream_string.hxx"
 #include "istream/UnusedPtr.hxx"
 
@@ -20,7 +21,7 @@ public:
 
 	UnusedIstreamPtr CreateTest(EventLoop &, struct pool &pool,
 				    UnusedIstreamPtr input) const noexcept {
-		return istream_html_escape_new(pool, std::move(input));
+		return istream_escape_new(pool, std::move(input), html_escape_class);
 	}
 };
 

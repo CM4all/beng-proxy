@@ -17,8 +17,8 @@
 #include "widget/RewriteUri.hxx"
 #include "memory/ExpansibleBuffer.hxx"
 #include "escape/HTML.hxx"
+#include "escape/Istream.hxx"
 #include "strmap.hxx"
-#include "istream_html_escape.hxx"
 #include "istream/istream.hxx"
 #include "istream/ReplaceIstream.hxx"
 #include "istream/ConcatIstream.hxx"
@@ -595,7 +595,7 @@ XmlProcessor::TransformUriAttribute(const XmlParserAttribute &attr,
 						    p_strdup(GetPool(), fragment),
 						    fragment.size(),
 					    });
-		s = istream_html_escape_new(GetPool(), std::move(s));
+		s = istream_escape_new(GetPool(), std::move(s), html_escape_class);
 
 		istream = NewConcatIstream(GetPool(), std::move(istream), std::move(s));
 	}

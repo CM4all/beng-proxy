@@ -680,7 +680,6 @@ executable(
   'src/widget/Request.cxx',
   'src/widget/Inline.cxx',
   'src/escape/Istream.cxx',
-  'src/istream_html_escape.cxx',
   'src/ssl/SslSocketFilterFactory.cxx',
   'src/http/rl/DirectResourceLoader.cxx',
   'src/http/rl/CachedResourceLoader.cxx',

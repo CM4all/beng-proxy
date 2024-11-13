@@ -27,7 +27,6 @@ test(
     't_istream_hold.cxx',
     't_istream_html_escape.cxx',
     '../../src/escape/Istream.cxx',
-    '../../src/istream_html_escape.cxx',
     '../../src/istream/sink_close.cxx',
     't_istream_iconv.cxx',
     't_istream_replace.cxx',
@@ -59,7 +58,6 @@ test(
     '../../src/widget/Resolver.cxx',
     '../../src/widget/RewriteUri.cxx',
     '../../src/escape/Istream.cxx',
-    '../../src/istream_html_escape.cxx',
     include_directories: inc,
     dependencies: [
       gtest,
@@ -82,7 +80,6 @@ test(
     '../../src/widget/Resolver.cxx',
     '../../src/widget/RewriteUri.cxx',
     '../../src/escape/Istream.cxx',
-    '../../src/istream_html_escape.cxx',
     include_directories: inc,
     dependencies: [
       gtest,

@@ -58,7 +58,6 @@ test(
     't_wembed',
     't_wembed.cxx',
     '../../src/widget/Inline.cxx',
-    '../../src/istream_html_escape.cxx',
     '../../src/escape/Istream.cxx',
     '../../src/bp/Global.cxx',
     include_directories: inc,
