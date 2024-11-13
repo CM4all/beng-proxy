@@ -35,19 +35,13 @@
 
 using std::string_view_literals::operator""sv;
 
-#if defined(__x86_64__) || defined(__PPC64__)
-static constexpr unsigned ALIGN_BITS = 3;
-#else
-static constexpr unsigned ALIGN_BITS = 2;
-#endif
-
-static constexpr size_t ALIGN_SIZE = 1 << ALIGN_BITS;
+static constexpr size_t ALIGN_SIZE = RoundUpToPowerOfTwo(alignof(std::max_align_t));
 
 static constexpr unsigned RECYCLER_MAX_POOLS = 256;
 static constexpr unsigned RECYCLER_MAX_LINEAR_AREAS = 256;
 
 #ifndef NDEBUG
-struct allocation_info {
+struct alignas(std::max_align_t) allocation_info {
 	IntrusiveListHook<IntrusiveHookMode::NORMAL> siblings;
 
 	size_t size;
