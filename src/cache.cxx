@@ -103,11 +103,8 @@ Cache::Flush() noexcept
 }
 
 void
-Cache::RefreshItem(CacheItem &item,
-		   std::chrono::steady_clock::time_point now) noexcept
+Cache::RefreshItem(CacheItem &item) noexcept
 {
-	item.last_accessed = now;
-
 	/* move to the front of the linked list */
 	sorted_items.erase(sorted_items.iterator_to(item));
 	sorted_items.push_back(item);
@@ -138,7 +135,7 @@ Cache::Get(const char *key) noexcept
 		return nullptr;
 	}
 
-	RefreshItem(*item, now);
+	RefreshItem(*item);
 	return item;
 }
 
@@ -161,7 +158,7 @@ Cache::GetMatch(const char *key,
 		return nullptr;
 
 	/* this one matches: return it to the caller */
-	RefreshItem(*i, now);
+	RefreshItem(*i);
 	return &*i;
 }
 
@@ -203,7 +200,6 @@ Cache::Add(const char *key, CacheItem &item) noexcept
 	sorted_items.push_back(item);
 
 	size += item.size;
-	item.last_accessed = SteadyNow();
 
 	if (handler != nullptr)
 		handler->OnCacheItemAdded(item);
@@ -233,7 +229,6 @@ Cache::Put(const char *key, CacheItem &item) noexcept
 		RemoveItem(*i);
 
 	size += item.size;
-	item.last_accessed = SteadyNow();
 
 	items.insert(item);
 	sorted_items.push_back(item);

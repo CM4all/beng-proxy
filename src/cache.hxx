@@ -24,7 +24,7 @@ class CacheItem : public SharedAnchor {
 	friend class Cache;
 
 	/**
-	 * This item's siblings, sorted by #last_accessed.
+	 * This item's siblings, sorted by last access.
 	 */
 	IntrusiveListHook<IntrusiveHookMode::NORMAL> sorted_siblings;
 
@@ -38,8 +38,6 @@ class CacheItem : public SharedAnchor {
 	std::chrono::steady_clock::time_point expires;
 
 	const size_t size;
-
-	std::chrono::steady_clock::time_point last_accessed{};
 
 	/**
 	 * If true, then this item has been removed from the cache, but
@@ -136,7 +134,7 @@ class Cache {
 	ItemSet items;
 
 	/**
-	 * A linked list of all cache items, sorted by last_accessed,
+	 * A linked list of all cache items, sorted by last access,
 	 * oldest first.
 	 */
 	IntrusiveList<CacheItem,
@@ -243,8 +241,7 @@ private:
 
 	void RemoveItem(CacheItem &item) noexcept;
 
-	void RefreshItem(CacheItem &item,
-			 std::chrono::steady_clock::time_point now) noexcept;
+	void RefreshItem(CacheItem &item) noexcept;
 
 	void DestroyOldestItem() noexcept;
 
