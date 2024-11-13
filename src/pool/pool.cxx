@@ -691,40 +691,6 @@ pool_brutto_size(const struct pool *pool) noexcept
 	return 0;
 }
 
-size_t
-pool_recursive_netto_size(const struct pool *pool) noexcept
-{
-	return pool_netto_size(pool) + pool_children_netto_size(pool);
-}
-
-size_t
-pool_recursive_brutto_size(const struct pool *pool) noexcept
-{
-	return pool_brutto_size(pool) + pool_children_brutto_size(pool);
-}
-
-size_t
-pool_children_netto_size(const struct pool *pool) noexcept
-{
-	size_t size = 0;
-
-	for (const auto &child : pool->children)
-		size += pool_recursive_netto_size(&child);
-
-	return size;
-}
-
-size_t
-pool_children_brutto_size(const struct pool *pool) noexcept
-{
-	size_t size = 0;
-
-	for (const auto &child : pool->children)
-		size += pool_recursive_brutto_size(&child);
-
-	return size;
-}
-
 AllocatorStats
 pool_stats(const struct pool &pool) noexcept
 {
@@ -732,15 +698,6 @@ pool_stats(const struct pool &pool) noexcept
 		.brutto_size = pool_brutto_size(&pool),
 		.netto_size = pool_netto_size(&pool),
 	};
-}
-
-AllocatorStats
-pool_children_stats(const struct pool &pool) noexcept
-{
-	AllocatorStats stats;
-	stats.netto_size = pool_children_netto_size(&pool);
-	stats.brutto_size = pool_children_brutto_size(&pool);
-	return stats;
 }
 
 static const char *

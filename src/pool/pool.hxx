@@ -83,36 +83,9 @@ pool_netto_size(const struct pool *pool) noexcept;
 size_t
 pool_brutto_size(const struct pool *pool) noexcept;
 
-/**
- * Returns the total size of this pool and all of its descendants
- * (recursively).
- */
-[[gnu::pure]]
-size_t
-pool_recursive_netto_size(const struct pool *pool) noexcept;
-
-[[gnu::pure]]
-size_t
-pool_recursive_brutto_size(const struct pool *pool) noexcept;
-
-/**
- * Returns the total size of all descendants of this pool (recursively).
- */
-[[gnu::pure]]
-size_t
-pool_children_netto_size(const struct pool *pool) noexcept;
-
-[[gnu::pure]]
-size_t
-pool_children_brutto_size(const struct pool *pool) noexcept;
-
 [[gnu::pure]]
 AllocatorStats
 pool_stats(const struct pool &pool) noexcept;
-
-[[gnu::pure]]
-AllocatorStats
-pool_children_stats(const struct pool &pool) noexcept;
 
 void
 pool_dump_tree(const struct pool &pool) noexcept;
