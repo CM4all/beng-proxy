@@ -186,7 +186,7 @@ struct pool final
 
 	/* virtual methods from class LoggerDomainFactory */
 	std::string MakeLoggerDomain() const noexcept override {
-		return std::string("pool ") + name;
+		return fmt::format("pool {}", name);
 	}
 };
 
