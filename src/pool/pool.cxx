@@ -12,6 +12,7 @@
 #include "util/Compiler.h"
 #include "util/IntrusiveList.hxx"
 #include "util/Recycler.hxx"
+#include "util/RoundPowerOfTwo.hxx"
 #include "util/Poison.hxx"
 
 #include <fmt/format.h>
@@ -41,7 +42,6 @@ static constexpr unsigned ALIGN_BITS = 2;
 #endif
 
 static constexpr size_t ALIGN_SIZE = 1 << ALIGN_BITS;
-static constexpr size_t ALIGN_MASK = ALIGN_SIZE - 1;
 
 static constexpr unsigned RECYCLER_MAX_POOLS = 256;
 static constexpr unsigned RECYCLER_MAX_LINEAR_AREAS = 256;
@@ -231,7 +231,7 @@ xmalloc(size_t size) noexcept
 static constexpr size_t
 align_size(size_t size) noexcept
 {
-	return ((size - 1) | ALIGN_MASK) + 1;
+	return RoundUpToPowerOfTwo(size, ALIGN_SIZE);
 }
 
 #ifndef NDEBUG
