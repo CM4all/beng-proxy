@@ -91,8 +91,7 @@ BpInstance::OnControlPacket(BengControl::Server &,
 		break;
 
 	case Command::DUMP_POOLS:
-		if (is_privileged)
-			pool_dump_tree(root_pool);
+		// deprecated
 		break;
 
 	case Command::ENABLE_NODE:

@@ -87,9 +87,6 @@ pool_brutto_size(const struct pool *pool) noexcept;
 AllocatorStats
 pool_stats(const struct pool &pool) noexcept;
 
-void
-pool_dump_tree(const struct pool &pool) noexcept;
-
 class ScopePoolRef {
 	struct pool &pool;
 

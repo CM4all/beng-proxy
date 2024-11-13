@@ -700,44 +700,6 @@ pool_stats(const struct pool &pool) noexcept
 	};
 }
 
-static const char *
-pool_type_string(enum pool_type type) noexcept
-{
-	switch (type) {
-	case POOL_DUMMY:
-		return "dummy";
-
-	case POOL_LIBC:
-		return "libc";
-
-	case POOL_LINEAR:
-		return "linear";
-	}
-
-	assert(false);
-	return nullptr;
-}
-
-static void
-pool_dump_node(int indent, const struct pool &pool) noexcept
-{
-	pool.logger.Fmt(2, "{:{}}pool '{}' type={} ref={} size={} p={}"sv,
-			""sv, indent,
-			pool.name, pool_type_string(pool.type),
-			pool.ref, pool.netto_size,
-			fmt::ptr(&pool));
-
-	indent += 2;
-	for (const auto &child : pool.children)
-		pool_dump_node(indent, child);
-}
-
-void
-pool_dump_tree(const struct pool &pool) noexcept
-{
-	pool_dump_node(0, pool);
-}
-
 #ifndef NDEBUG
 
 void

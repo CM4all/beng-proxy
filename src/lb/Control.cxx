@@ -304,8 +304,7 @@ LbControl::OnControlPacket(BengControl::Server &control_server,
 		break;
 
 	case Command::DUMP_POOLS:
-		if (is_privileged)
-			pool_dump_tree(instance.root_pool);
+		// deprecated
 		break;
 
 	case Command::VERBOSE:
