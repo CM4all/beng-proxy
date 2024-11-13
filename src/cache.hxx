@@ -26,7 +26,7 @@ class CacheItem : public SharedAnchor {
 	/**
 	 * This item's siblings, sorted by last access.
 	 */
-	IntrusiveListHook<IntrusiveHookMode::NORMAL> sorted_siblings;
+	IntrusiveListHook<IntrusiveHookMode::TRACK> sorted_siblings;
 
 	IntrusiveHashSetHook<IntrusiveHookMode::NORMAL> set_hook;
 
@@ -38,12 +38,6 @@ class CacheItem : public SharedAnchor {
 	std::chrono::steady_clock::time_point expires;
 
 	const size_t size;
-
-	/**
-	 * If true, then this item has been removed from the cache, but
-	 * could not be destroyed yet, because it is locked.
-	 */
-	bool removed = false;
 
 public:
 	CacheItem(std::chrono::steady_clock::time_point _expires,
@@ -59,6 +53,14 @@ public:
 		  std::chrono::seconds max_age, size_t _size) noexcept;
 
 	CacheItem(const CacheItem &) = delete;
+
+	/**
+	 * If true, then this item has been removed from the cache, but
+	 * could not be destroyed yet, because it is locked.
+	 */
+	bool IsRemoved() const noexcept {
+		return !sorted_siblings.is_linked();
+	}
 
 	void Release() noexcept;
 
