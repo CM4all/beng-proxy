@@ -65,12 +65,6 @@ static constexpr size_t LINEAR_PREFIX = sizeof(struct allocation_info);
 static constexpr size_t LINEAR_PREFIX = 0;
 #endif
 
-enum pool_type {
-	POOL_DUMMY,
-	POOL_LIBC,
-	POOL_LINEAR,
-};
-
 struct libc_pool_chunk {
 	IntrusiveListHook<IntrusiveHookMode::NORMAL> siblings;
 
@@ -125,6 +119,12 @@ struct pool final
 	: IntrusiveListHook<IntrusiveHookMode::NORMAL>,
 	  LoggerDomainFactory {
 
+	enum class Type : uint_least8_t {
+		DUMMY,
+		LIBC,
+		LINEAR,
+	};
+
 	const LazyDomainLogger logger{*this};
 
 	using List = IntrusiveList<struct pool>;
@@ -144,7 +144,8 @@ struct pool final
 	bool major;
 #endif
 
-	enum pool_type type;
+	Type type;
+
 	const char *const name;
 
 	union CurrentArea {
@@ -363,7 +364,7 @@ PoolPtr
 pool_new_dummy(struct pool *parent, const char *name) noexcept
 {
 	struct pool *pool = pool_new(parent, name);
-	pool->type = POOL_DUMMY;
+	pool->type = pool::Type::DUMMY;
 	return PoolPtr(PoolPtr::donate, *pool);
 }
 
@@ -371,7 +372,7 @@ PoolPtr
 pool_new_libc(struct pool *parent, const char *name) noexcept
 {
 	struct pool *pool = pool_new(parent, name);
-	pool->type = POOL_LIBC;
+	pool->type = pool::Type::LIBC;
 	return PoolPtr(PoolPtr::donate, *pool);
 }
 
@@ -438,7 +439,7 @@ pool_new_linear(struct pool *parent, const char *name,
 		return pool_new_libc(parent, name);
 
 	struct pool *pool = pool_new(parent, name);
-	pool->type = POOL_LINEAR;
+	pool->type = pool::Type::LINEAR;
 	pool->area_size = initial_size;
 	pool->slice_pool = nullptr;
 	pool->current_area.linear = nullptr;
@@ -461,7 +462,7 @@ pool_new_slice(struct pool &parent, const char *name,
 		return pool_new_libc(&parent, name);
 
 	struct pool *pool = pool_new(&parent, name);
-	pool->type = POOL_LINEAR;
+	pool->type = pool::Type::LINEAR;
 	pool->area_size = slice_pool.GetSliceSize() - LINEAR_POOL_AREA_HEADER;
 	pool->slice_pool = &slice_pool;
 	pool->current_area.linear = nullptr;
@@ -677,13 +678,13 @@ size_t
 pool_brutto_size(const struct pool *pool) noexcept
 {
 	switch (pool->type) {
-	case POOL_DUMMY:
+	case pool::Type::DUMMY:
 		return 0;
 
-	case POOL_LIBC:
+	case pool::Type::LIBC:
 		return pool_netto_size(pool);
 
-	case POOL_LINEAR:
+	case pool::Type::LINEAR:
 		return pool_linear_brutto_size(pool);
 	}
 
@@ -749,7 +750,7 @@ pool_contains(const struct pool &pool, const void *ptr, size_t size) noexcept
 	assert(ptr != nullptr);
 	assert(size > 0);
 
-	if (pool.type != POOL_LINEAR)
+	if (pool.type != pool::Type::LINEAR)
 		return true;
 
 	for (const struct linear_pool_area *area = pool.current_area.linear;
@@ -772,14 +773,14 @@ pool_clear(struct pool &pool) noexcept
 #endif
 
 	switch (pool.type) {
-	case POOL_DUMMY:
+	case pool::Type::DUMMY:
 		break;
 
-	case POOL_LIBC:
+	case pool::Type::LIBC:
 		pool.current_area.libc.clear_and_dispose(libc_pool_chunk::Disposer());
 		break;
 
-	case POOL_LINEAR:
+	case pool::Type::LINEAR:
 		while (pool.current_area.linear != nullptr) {
 			struct linear_pool_area *area = pool.current_area.linear;
 			pool.current_area.linear = area->prev;
@@ -906,10 +907,10 @@ internal_malloc(struct pool *pool, size_t size TYPE_ARG_DECL TRACE_ARGS_DECL) no
 
 	pool->netto_size += size;
 
-	if (pool->type == POOL_LINEAR) [[likely]]
+	if (pool->type == pool::Type::LINEAR) [[likely]]
 		return p_malloc_linear(pool, size TYPE_ARG_FWD TRACE_ARGS_FWD);
 
-	assert(pool->type == POOL_LIBC);
+	assert(pool->type == pool::Type::LIBC);
 	return p_malloc_libc(pool, size TYPE_ARG_FWD TRACE_ARGS_FWD);
 }
 
@@ -944,15 +945,15 @@ p_free(struct pool *pool, const void *cptr, size_t size) noexcept
 	assert(pool_contains(*pool, ptr, size));
 
 	switch (pool->type) {
-	case POOL_DUMMY:
+	case pool::Type::DUMMY:
 		assert(false);
 		gcc_unreachable();
 
-	case POOL_LIBC:
+	case pool::Type::LIBC:
 		p_free_libc(pool, ptr);
 		break;
 
-	case POOL_LINEAR:
+	case pool::Type::LINEAR:
 #ifndef NDEBUG
 		{
 			struct allocation_info *info = get_linear_allocation_info(ptr);
