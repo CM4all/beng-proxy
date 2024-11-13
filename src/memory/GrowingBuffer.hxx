@@ -88,8 +88,8 @@ class GrowingBuffer {
 			return buffer;
 		}
 
-		template<typename F>
-		void ForEachBuffer(size_type skip, F &&f) const;
+		void ForEachBuffer(size_type skip,
+				   std::invocable<std::span<const std::byte>> auto f) const;
 	};
 
 	struct Buffer {
@@ -232,9 +232,8 @@ private:
 
 	void CopyTo(void *dest) const noexcept;
 
-	template<typename F>
-	void ForEachBuffer(F &&f) const {
-		head.ForEachBuffer(position, std::forward<F>(f));
+	void ForEachBuffer(std::invocable<std::span<const std::byte>> auto f) const {
+		head.ForEachBuffer(position, f);
 	}
 };
 
@@ -246,9 +245,9 @@ GrowingBuffer::BufferPtr::Check() const noexcept
 		buffer->Check();
 }
 
-template<typename F>
 void
-GrowingBuffer::BufferPtr::ForEachBuffer(size_type skip, F &&f) const
+GrowingBuffer::BufferPtr::ForEachBuffer(size_type skip,
+					std::invocable<std::span<const std::byte>> auto f) const
 {
 	for (const auto *i = get(); i != nullptr; i = i->next.get()) {
 		i->Check();
@@ -302,8 +301,7 @@ public:
 	size_type ConsumeBucketList(size_type nbytes) noexcept;
 
 private:
-	template<typename F>
-	void ForEachBuffer(F &&f) const {
-		buffer.ForEachBuffer(position, std::forward<F>(f));
+	void ForEachBuffer(std::invocable<std::span<const std::byte>> auto f) const {
+		buffer.ForEachBuffer(position, f);
 	}
 };
