@@ -932,7 +932,7 @@ p_free(struct pool *pool, const void *cptr, size_t size) noexcept
 
 	assert(pool != nullptr);
 	assert(ptr != nullptr);
-	assert((reinterpret_cast<intptr_t>(ptr) & ALIGN_MASK) == 0);
+	assert(reinterpret_cast<intptr_t>(ptr) % ALIGN_SIZE == 0);
 	assert(pool_contains(*pool, ptr, size));
 
 	switch (pool->type) {
