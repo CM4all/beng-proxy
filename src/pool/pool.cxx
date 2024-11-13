@@ -125,7 +125,7 @@ struct pool final
 	: IntrusiveListHook<IntrusiveHookMode::NORMAL>,
 	  LoggerDomainFactory {
 
-	const LazyDomainLogger logger;
+	const LazyDomainLogger logger{*this};
 
 	using List = IntrusiveList<struct pool>;
 
@@ -178,7 +178,7 @@ struct pool final
 	size_t netto_size = 0;
 
 	explicit pool(const char *_name) noexcept
-		:logger(*this), name(_name) {
+		:name(_name) {
 	}
 
 	pool(struct pool &&) = delete;
