@@ -913,8 +913,8 @@ tcache_store(TranslateCacheRequest &tcr, const TranslateResponse &response)
 		/* limit to one day */
 		max_age = max_max_age;
 
-	auto item = NewFromPool<TranslateCacheItem>(pool_new_slice(tcr.tcache->pool, "tcache_item",
-								   &tcr.tcache->slice_pool),
+	auto item = NewFromPool<TranslateCacheItem>(pool_new_slice(*tcr.tcache->pool, "tcache_item",
+								   tcr.tcache->slice_pool),
 						    tcr.tcache->cache.SteadyNow(),
 						    max_age);
 

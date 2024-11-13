@@ -389,7 +389,7 @@ FilterCache::Put(const FilterCacheInfo &info,
 	else
 		expires = info.expires;
 
-	auto item = NewFromPool<FilterCacheItem>(pool_new_slice(pool, "FilterCacheItem", &slice_pool),
+	auto item = NewFromPool<FilterCacheItem>(pool_new_slice(*pool, "FilterCacheItem", slice_pool),
 						 cache.SteadyNow(),
 						 cache.SystemNow(),
 						 info.tag,

@@ -449,22 +449,21 @@ pool_new_linear(struct pool *parent, const char *name,
 }
 
 PoolPtr
-pool_new_slice(struct pool *parent, const char *name,
-	       SlicePool *slice_pool) noexcept
+pool_new_slice(struct pool &parent, const char *name,
+	       SlicePool &slice_pool) noexcept
 {
-	assert(parent != nullptr);
-	assert(slice_pool->GetSliceSize() > LINEAR_POOL_AREA_HEADER);
+	assert(slice_pool.GetSliceSize() > LINEAR_POOL_AREA_HEADER);
 
 	if (HaveMemoryChecker())
 		/* Valgrind cannot verify allocations and memory accesses with
 		   this library; therefore use the "libc" pool when running on
 		   valgrind */
-		return pool_new_libc(parent, name);
+		return pool_new_libc(&parent, name);
 
-	struct pool *pool = pool_new(parent, name);
+	struct pool *pool = pool_new(&parent, name);
 	pool->type = POOL_LINEAR;
-	pool->area_size = slice_pool->GetSliceSize() - LINEAR_POOL_AREA_HEADER;
-	pool->slice_pool = slice_pool;
+	pool->area_size = slice_pool.GetSliceSize() - LINEAR_POOL_AREA_HEADER;
+	pool->slice_pool = &slice_pool;
 	pool->current_area.linear = nullptr;
 
 	return PoolPtr(PoolPtr::donate, *pool);

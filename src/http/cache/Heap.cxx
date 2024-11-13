@@ -34,7 +34,7 @@ HttpCacheHeap::Put(const char *url, const char *tag,
 		   const StringMap &response_headers,
 		   RubberAllocation &&a, size_t size) noexcept
 {
-	auto item = NewFromPool<HttpCacheItem>(pool_new_slice(&pool, "http_cache_item", &slice_pool),
+	auto item = NewFromPool<HttpCacheItem>(pool_new_slice(pool, "http_cache_item", slice_pool),
 					       cache.SteadyNow(),
 					       cache.SystemNow(),
 					       tag,

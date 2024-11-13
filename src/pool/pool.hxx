@@ -41,8 +41,8 @@ pool_new_linear(struct pool *parent, const char *name,
 		size_t initial_size) noexcept;
 
 PoolPtr
-pool_new_slice(struct pool *parent, const char *name,
-	       SlicePool *slice_pool) noexcept;
+pool_new_slice(struct pool &parent, const char *name,
+	       SlicePool &slice_pool) noexcept;
 
 #ifdef NDEBUG
 
