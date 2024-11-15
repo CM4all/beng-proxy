@@ -154,20 +154,23 @@ try {
 	SetLogLevel(5);
 
 	if (argc < 3) {
-		fmt::print(stderr, "Usage: run_was PATH URI [--parameter a=b ...]\n");
+		fmt::print(stderr, "Usage: run_was PATH URI [--parameter a=b ...] -- ARGS...\n");
 		return EXIT_FAILURE;
 	}
 
 	Context context;
 
+	const char *path = argv[1];
 	const char *uri = argv[2];
 	StaticVector<const char *, 64> params;
+	bool collect_args = false;
+	StaticVector<const char *, 64> args;
 
 	StringMap headers;
 
 	for (int i = 3; i < argc;) {
-		if (StringIsEqual(argv[i], "--parameter") ||
-		    StringIsEqual(argv[i], "-p")) {
+		if (!collect_args && (StringIsEqual(argv[i], "--parameter") ||
+				      StringIsEqual(argv[i], "-p"))) {
 			++i;
 			if (i >= argc)
 				throw std::runtime_error("Parameter value missing");
@@ -176,8 +179,8 @@ try {
 				throw std::runtime_error("Too many parameters");
 
 			params.push_back(argv[i++]);
-		} else if (StringIsEqual(argv[i], "--header") ||
-			   StringIsEqual(argv[i], "-H")) {
+		} else if (!collect_args && (StringIsEqual(argv[i], "--header") ||
+					     StringIsEqual(argv[i], "-H"))) {
 			++i;
 			if (i >= argc)
 				throw std::runtime_error("Header value missing");
@@ -191,8 +194,17 @@ try {
 
 			AllocatorPtr alloc(context.root_pool);
 			headers.Add(alloc, alloc.DupToLower(name), alloc.DupZ(value));
-		} else
-			throw std::runtime_error("Unrecognized parameter");
+		} else if (StringIsEqual(argv[i], "--")) {
+			collect_args = true;
+			i++;
+		} else if (collect_args) {
+			if (args.full()) {
+				throw std::runtime_error("Too many arguments");
+			}
+			args.push_back(argv[i++]);
+		} else {
+			throw std::runtime_error(fmt::format("Unrecognized parameter '{}'", argv[i]));
+		}
 	}
 
 	SpawnConfig spawn_config;
@@ -205,7 +217,7 @@ try {
 					child_process_registry);
 
 	context.process = was_launch(spawn_service, nullptr, "was",
-				     argv[1], {},
+				     path, args,
 				     child_options,
 				     UniqueFileDescriptor(::dup(STDERR_FILENO)));
 
