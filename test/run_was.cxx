@@ -206,7 +206,8 @@ try {
 
 	context.process = was_launch(spawn_service, nullptr, "was",
 				     argv[1], {},
-				     child_options, {});
+				     child_options,
+				     UniqueFileDescriptor(::dup(STDERR_FILENO)));
 
 	was_client_request(context.root_pool, context.event_loop, nullptr,
 			   context.process.control,
