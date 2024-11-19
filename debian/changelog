@@ -2,7 +2,7 @@ cm4all-beng-proxy (18.8) unstable; urgency=low
 
   * bp: use open(O_NONBLOCK) to fix FIFO DoS vulnerability
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Tue, 19 Nov 2024 12:48:00 +0100
 
 cm4all-beng-proxy (18.7) unstable; urgency=low
 
