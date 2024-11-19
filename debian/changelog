@@ -1,6 +1,6 @@
 cm4all-beng-proxy (18.8) unstable; urgency=low
 
-  * 
+  * bp: use open(O_NONBLOCK) to fix FIFO DoS vulnerability
 
  --   
 
