@@ -1,6 +1,6 @@
 cm4all-beng-proxy (18.9) unstable; urgency=low
 
-  * 
+  * was: fix stall bug caused by memory pressure
 
  --   
 
