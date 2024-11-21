@@ -124,8 +124,7 @@ add_global_arguments(compiler.get_supported_arguments(test_global_cxxflags), lan
 add_project_arguments(compiler.get_supported_arguments(test_cxxflags), language: 'cpp')
 
 if debug
-  debug_flags = ['-DPOISON', '-DENABLE_TRACE']
-  debug_flags += ['-DDEBUG_POOL_REF']
+  debug_flags = ['-DPOISON']
 else
   debug_flags = []
 endif
