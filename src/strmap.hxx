@@ -146,8 +146,25 @@ public:
 	void Clear() noexcept;
 
 	void Add(AllocatorPtr alloc, StringMapKey key, const char *value) noexcept;
+
+	/**
+	 * Like Add(), but replace an existing header with that value,
+	 * if one exists.
+	 *
+	 * If multiple headers with this key exist, the others are
+	 * left untouched.
+	 */
 	const char *Set(AllocatorPtr alloc,
 			StringMapKey key, const char *value) noexcept;
+
+	/**
+	 * Remove (at most) one header with the specified key.
+	 * Returns the existing value or nullptr if this key did not
+	 * exist.
+	 *
+	 * If multiple headers with this key exist, only one is
+	 * removed and returned.
+	 */
 	const char *Remove(StringMapKey key) noexcept;
 
 	/**
