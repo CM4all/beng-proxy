@@ -1,6 +1,6 @@
 cm4all-beng-proxy (18.11) unstable; urgency=low
 
-  * 
+  * lb: discard duplicate Via/X-Forwarded-For headers
 
  --   
 
