@@ -168,6 +168,13 @@ public:
 	const char *Remove(StringMapKey key) noexcept;
 
 	/**
+	 * Like Remove(), but remove all instances of the specified
+	 * key.  Returns the value of an unspecified one of these
+	 * headers (or nullptr).
+	 */
+	const char *RemoveAll(StringMapKey key) noexcept;
+
+	/**
 	 * Remove all existing values with the specified key and
 	 * (optionally, if not nullptr) add a new value.
 	 */

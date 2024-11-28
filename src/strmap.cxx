@@ -90,6 +90,17 @@ StringMap::Remove(const StringMapKey key) noexcept
 	return value;
 }
 
+const char *
+StringMap::RemoveAll(const StringMapKey key) noexcept
+{
+	const char *value = nullptr;
+	map.remove_and_dispose_key(key, [&value](const Item *i){
+		value = i->value;
+	});
+
+	return value;
+}
+
 void
 StringMap::SecureSet(AllocatorPtr alloc,
 		     StringMapKey key, const char *value) noexcept
