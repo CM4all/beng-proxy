@@ -1,6 +1,7 @@
 cm4all-beng-proxy (18.11) unstable; urgency=low
 
   * lb: discard duplicate Via/X-Forwarded-For headers
+  * spawn: forbid the "listmount" and "statmount" system calls
   * translation: limit the payload size of VARY, INVALIDATE
 
  --   
