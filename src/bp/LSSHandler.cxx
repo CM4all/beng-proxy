@@ -57,7 +57,7 @@ public:
 		handler.OnListenStreamSuccess(ToDeletePointer(this), tags);
 	}
 
-	void OnSpawnError(std::exception_ptr error) noexcept {
+	void OnSpawnError(std::exception_ptr error) noexcept override {
 		handler.OnListenStreamError(std::move(error));
 		delete this;
 	}
