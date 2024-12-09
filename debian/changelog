@@ -4,7 +4,7 @@ cm4all-beng-proxy (18.11) unstable; urgency=low
   * spawn: forbid the "listmount" and "statmount" system calls
   * translation: limit the payload size of VARY, INVALIDATE
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Mon, 09 Dec 2024 18:43:40 +0100
 
 cm4all-beng-proxy (18.10) unstable; urgency=low
 
