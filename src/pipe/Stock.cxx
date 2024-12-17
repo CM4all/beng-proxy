@@ -58,11 +58,10 @@ PipeStockItem::Release() noexcept
  *
  */
 
-void
-pipe_stock_item_get(StockItem *_item, FileDescriptor fds[2]) noexcept
+std::pair<FileDescriptor, FileDescriptor>
+pipe_stock_item_get(StockItem *_item) noexcept
 {
 	auto *item = (PipeStockItem *)_item;
 
-	fds[0] = item->fds[0];
-	fds[1] = item->fds[1];
+	return {item->fds[0], item->fds[1]};
 }

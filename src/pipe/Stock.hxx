@@ -7,6 +7,8 @@
 #include "stock/Stock.hxx"
 #include "stock/Class.hxx"
 
+#include <utility> // for std::pair
+
 class FileDescriptor;
 
 /**
@@ -25,5 +27,6 @@ private:
 		    CancellablePointer &cancel_ptr) override;
 };
 
-void
-pipe_stock_item_get(StockItem *item, FileDescriptor fds[2]) noexcept;
+[[gnu::pure]]
+std::pair<FileDescriptor, FileDescriptor>
+pipe_stock_item_get(StockItem *item) noexcept;

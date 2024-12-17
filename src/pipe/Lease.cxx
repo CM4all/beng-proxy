@@ -40,10 +40,7 @@ PipeLease::Create()
 
 		item = stock->GetNow(nullptr);
 
-		FileDescriptor fds[2];
-		pipe_stock_item_get(item, fds);
-		read_fd = fds[0];
-		write_fd = fds[1];
+		std::tie(read_fd, write_fd) = pipe_stock_item_get(item);
 	} else {
 		if (!FileDescriptor::CreatePipeNonBlock(read_fd, write_fd))
 			throw MakeErrno("pipe() failed");
