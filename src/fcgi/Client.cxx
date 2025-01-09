@@ -1279,18 +1279,17 @@ fcgi_client_request(struct pool *pool, EventLoop &event_loop,
 	if (available >= 0) {
 		const fmt::format_int value{available};
 
-		const char *content_type = headers.Get(content_type_header);
-
 		ps("HTTP_CONTENT_LENGTH", value.c_str())
 			/* PHP wants the parameter without
 			   "HTTP_" */
 			("CONTENT_LENGTH", value.c_str());
+	}
 
+	if (const char *content_type = headers.Get(content_type_header);
+	    content_type != nullptr)
 		/* same for the "Content-Type" request
 		   header */
-		if (content_type != nullptr)
-			ps("CONTENT_TYPE", content_type);
-	}
+		ps("CONTENT_TYPE", content_type);
 
 	const char *https = headers.Remove(x_cm4all_https_header);
 	if (https != nullptr && strcmp(https, "on") == 0)
