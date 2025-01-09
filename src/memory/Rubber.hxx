@@ -268,7 +268,7 @@ class RubberAllocation {
 	unsigned id = 0;
 
 public:
-	RubberAllocation() = default;
+	RubberAllocation() noexcept = default;
 
 	RubberAllocation(Rubber &_rubber, unsigned _id) noexcept
 		:rubber(&_rubber), id(_id) {}
@@ -277,7 +277,7 @@ public:
 		:rubber(std::exchange(src.rubber, nullptr)),
 		 id(std::exchange(src.id, 0)) {}
 
-	~RubberAllocation() {
+	~RubberAllocation() noexcept {
 		if (id != 0)
 			rubber->Remove(id);
 	}
