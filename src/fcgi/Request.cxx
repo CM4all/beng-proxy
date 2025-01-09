@@ -101,6 +101,8 @@ private:
 void
 FcgiRequest::Cancel() noexcept
 {
+	assert(cancel_ptr);
+
 	if (stock_item == nullptr) {
 		auto _cancel_ptr = std::move(cancel_ptr);
 		Destroy();
