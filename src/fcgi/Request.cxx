@@ -14,6 +14,7 @@
 #include "istream/UnusedPtr.hxx"
 #include "pool/pool.hxx"
 #include "pool/LeakDetector.hxx"
+#include "event/FineTimerEvent.hxx"
 #include "net/SocketDescriptor.hxx"
 #include "io/UniqueFileDescriptor.hxx"
 #include "util/Cancellable.hxx"
@@ -27,6 +28,15 @@ class FcgiRequest final
 	: Lease, Cancellable, StockGetHandler, HttpResponseHandler, PoolLeakDetector
 {
 	struct pool &pool;
+	FcgiStock &fcgi_stock;
+
+	/**
+	 * This timer delays retry attempts a bit to avoid the load
+         * getting too heavy for retries and to handle child process
+         * exit messages in the meantime; the latter avoids opening a
+         * new connection to a dying child process.
+	 */
+	FineTimerEvent retry_timer;
 
 	StopwatchPtr stopwatch;
 
@@ -35,6 +45,7 @@ class FcgiRequest final
 	PendingHttpRequest pending_request;
 
 	const char *const site_name;
+	const char *const action;
 	const char *const remote_addr;
 
 	UniqueFileDescriptor stderr_fd;
@@ -44,34 +55,41 @@ class FcgiRequest final
 	HttpResponseHandler &handler;
 	CancellablePointer cancel_ptr;
 
+	unsigned retries;
+
 public:
 	FcgiRequest(struct pool &_pool,
+		    FcgiStock &_fcgi_stock,
 		    const StopwatchPtr &parent_stopwatch,
 		    const char *_site_name,
 		    const CgiAddress &_address,
-		    const char *action,
+		    const char *_action,
 		    HttpMethod _method,
 		    const char *_remote_addr,
 		    StringMap &&_headers, UnusedIstreamPtr &&_body,
 		    UniqueFileDescriptor &&_stderr_fd,
-		    HttpResponseHandler &_handler) noexcept
+		    HttpResponseHandler &_handler,
+		    CancellablePointer &caller_cancel_ptr) noexcept
 		:PoolLeakDetector(_pool),
 		 pool(_pool),
-		 stopwatch(parent_stopwatch, "fcgi", action),
+		 fcgi_stock(_fcgi_stock),
+		 retry_timer(fcgi_stock_get_event_loop(fcgi_stock), BIND_THIS_METHOD(BeginConnect)),
+		 stopwatch(parent_stopwatch, "fcgi", _action),
 		 address(_address),
 		 pending_request(_pool, _method, address.GetURI(pool),
 				 std::move(_headers), std::move(_body)),
 		 site_name(_site_name),
+		 action(_action),
 		 remote_addr(_remote_addr),
 		 stderr_fd(std::move(_stderr_fd)),
-		 handler(_handler)
+		 handler(_handler),
+		 /* can only retry if there is no request body */
+		 retries(pending_request.body ? 0 : 2)
 	{
+		caller_cancel_ptr = *this;
 	}
 
-	void Start(FcgiStock &fcgi_stock, const char *action,
-		   CancellablePointer &caller_cancel_ptr) noexcept {
-		caller_cancel_ptr = *this;
-
+	void BeginConnect() noexcept {
 		fcgi_stock_get(&fcgi_stock, address.options,
 			       action, address.args.ToArray(pool),
 			       address.parallelism,
@@ -96,7 +114,7 @@ private:
 	void OnHttpError(std::exception_ptr error) noexcept override;
 
 	/* virtual methods from class Lease */
-	PutAction ReleaseLease(PutAction action) noexcept override {
+	PutAction ReleaseLease(PutAction put_action) noexcept override {
 		auto &_item = *stock_item;
 		stock_item = nullptr;
 
@@ -105,15 +123,13 @@ private:
 		if (!cancel_ptr)
 			Destroy();
 
-		return _item.Put(action);
+		return _item.Put(put_action);
 	}
 };
 
 void
 FcgiRequest::Cancel() noexcept
 {
-	assert(cancel_ptr);
-
 	if (stock_item != nullptr)
 		fcgi_stock_aborted(*stock_item);
 
@@ -124,7 +140,8 @@ FcgiRequest::Cancel() noexcept
 	if (stock_item == nullptr)
 		Destroy();
 
-	_cancel_ptr.Cancel();
+	if (_cancel_ptr)
+		_cancel_ptr.Cancel();
 }
 
 void
@@ -139,8 +156,10 @@ FcgiRequest::OnStockItemReady(StockItem &item) noexcept
 	fcgi_stock_item_set_site(*stock_item, site_name);
 	fcgi_stock_item_set_uri(*stock_item, pending_request.uri);
 
-	if (!stderr_fd.IsDefined())
-		stderr_fd = fcgi_stock_item_get_stderr(*stock_item);
+	/* duplicate the stderr_fd to leave the original for retry */
+	UniqueFileDescriptor stderr_fd2 = stderr_fd.IsDefined()
+		? stderr_fd.Duplicate()
+		: fcgi_stock_item_get_stderr(*stock_item);
 
 	const char *script_filename = address.path;
 
@@ -158,7 +177,7 @@ FcgiRequest::OnStockItemReady(StockItem &item) noexcept
 			    pending_request.headers,
 			    std::move(pending_request.body),
 			    address.params.ToArray(pool),
-			    std::move(stderr_fd),
+			    std::move(stderr_fd2),
 			    *this, cancel_ptr);
 }
 
@@ -168,6 +187,16 @@ FcgiRequest::OnStockItemError(std::exception_ptr error) noexcept
 	assert(stock_item == nullptr);
 
 	cancel_ptr = {};
+
+	if (retries > 0 && IsFcgiClientRetryFailure(error)) {
+		/* the server has closed the connection prematurely,
+		   maybe because it didn't want to get any further
+		   requests on that connection.  Let's try again. */
+
+		--retries;
+		retry_timer.Schedule(std::chrono::milliseconds{100});
+		return;
+	}
 
 	stopwatch.RecordEvent("launch_error");
 
@@ -181,6 +210,10 @@ FcgiRequest::OnHttpResponse(HttpStatus status, StringMap &&_headers,
 			    UnusedIstreamPtr _body) noexcept
 {
 	cancel_ptr = {};
+
+	/* from here on, no retry is ever going to happen, so we don't
+	   need stderr_fd anymore */
+	stderr_fd.Close();
 
 	auto &_handler = handler;
 
@@ -196,6 +229,16 @@ void
 FcgiRequest::OnHttpError(std::exception_ptr error) noexcept
 {
 	cancel_ptr = {};
+
+	if (retries > 0 && IsFcgiClientRetryFailure(error)) {
+		/* the server has closed the connection prematurely,
+		   maybe because it didn't want to get any further
+		   requests on that connection.  Let's try again. */
+
+		--retries;
+		retry_timer.Schedule(std::chrono::milliseconds{20});
+		return;
+	}
 
 	auto &_handler = handler;
 
@@ -224,11 +267,11 @@ fcgi_request(struct pool *pool,
 	if (action == nullptr)
 		action = address.path;
 
-	auto *request = NewFromPool<FcgiRequest>(*pool, *pool, parent_stopwatch,
+	auto *request = NewFromPool<FcgiRequest>(*pool, *pool, *fcgi_stock, parent_stopwatch,
 						 site_name, address, action, method,
 						 remote_addr,
 						 std::move(headers), std::move(body),
 						 std::move(stderr_fd),
-						 handler);
-	request->Start(*fcgi_stock, action, cancel_ptr);
+						 handler, cancel_ptr);
+	request->BeginConnect();
 }

@@ -24,6 +24,7 @@
 #include "system/Error.hxx"
 #include "event/net/BufferedSocket.hxx"
 #include "net/SocketError.hxx"
+#include "net/SocketProtocolError.hxx"
 #include "net/TimeoutError.hxx"
 #include "io/UniqueFileDescriptor.hxx"
 #include "io/SpliceSupport.hxx"
@@ -43,6 +44,27 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <unistd.h>
+
+bool
+IsFcgiClientRetryFailure(std::exception_ptr error) noexcept
+{
+	if (FindNested<SocketClosedPrematurelyError>(error))
+		return true;
+	else if (const auto *e = FindNested<FcgiClientError>(error)) {
+		switch (e->GetCode()) {
+		case FcgiClientErrorCode::UNSPECIFIED:
+		case FcgiClientErrorCode::GARBAGE:
+			return false;
+
+		case FcgiClientErrorCode::REFUSED:
+		case FcgiClientErrorCode::IO:
+			return true;
+		}
+
+		return false;
+	} else
+		return false;
+}
 
 class FcgiClient final
 	: BufferedSocketHandler, Cancellable, Istream, IstreamSink,

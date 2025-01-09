@@ -7,6 +7,7 @@
 #include "io/FdType.hxx"
 
 #include <cstdint>
+#include <exception>
 #include <span>
 
 enum class HttpMethod : uint_least8_t;
@@ -20,6 +21,13 @@ class StringMap;
 class HttpResponseHandler;
 class CancellablePointer;
 class StopwatchPtr;
+
+/**
+ * Is it worth retrying after this error?
+ */
+[[gnu::pure]]
+bool
+IsFcgiClientRetryFailure(std::exception_ptr error) noexcept;
 
 /**
  * Sends a HTTP request on a socket to an FastCGI server, and passes
