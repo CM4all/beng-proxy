@@ -21,11 +21,13 @@
 #include "AllocatorPtr.hxx"
 #include "stopwatch.hxx"
 
-class FcgiRemoteRequest final : StockGetHandler, Cancellable, Lease, PoolLeakDetector {
+class FcgiRemoteRequest final
+	: Lease, Cancellable, StockGetHandler, HttpResponseHandler, PoolLeakDetector
+{
 	struct pool &pool;
 	EventLoop &event_loop;
 
-	StockItem *stock_item;
+	StockItem *stock_item = nullptr;
 
 	const CgiAddress &address;
 
@@ -38,8 +40,7 @@ class FcgiRemoteRequest final : StockGetHandler, Cancellable, Lease, PoolLeakDet
 	StopwatchPtr stopwatch;
 
 	HttpResponseHandler &handler;
-	CancellablePointer &caller_cancel_ptr;
-	CancellablePointer connect_cancel_ptr;
+	CancellablePointer cancel_ptr;
 
 public:
 	FcgiRemoteRequest(struct pool &_pool, EventLoop &_event_loop,
@@ -50,8 +51,7 @@ public:
 			  StringMap &&_headers,
 			  UnusedIstreamPtr _body,
 			  UniqueFileDescriptor &&_stderr_fd,
-			  HttpResponseHandler &_handler,
-			  CancellablePointer &_cancel_ptr)
+			  HttpResponseHandler &_handler)
 	:PoolLeakDetector(_pool),
 	 pool(_pool), event_loop(_event_loop),
 	 address(_address),
@@ -60,17 +60,19 @@ public:
 	 remote_addr(_remote_addr),
 	 stderr_fd(std::move(_stderr_fd)),
 	 stopwatch(parent_stopwatch, "fcgi", pending_request.uri),
-	 handler(_handler), caller_cancel_ptr(_cancel_ptr) {
-		caller_cancel_ptr = *this;
-	}
+	 handler(_handler) {}
 
 	void Start(TcpBalancer &tcp_balancer,
-		   const AddressList &address_list) noexcept {
+		   const AddressList &address_list,
+		   CancellablePointer &caller_cancel_ptr) noexcept
+	{
+		caller_cancel_ptr = *this;
+
 		tcp_balancer.Get(pool,
 				 stopwatch,
 				 false, SocketAddress::Null(),
 				 0, address_list, std::chrono::seconds(20),
-				 *this, connect_cancel_ptr);
+				 *this, cancel_ptr);
 	}
 
 private:
@@ -85,10 +87,21 @@ private:
 	/* virtual methods from class Cancellable */
 	void Cancel() noexcept override;
 
+	/* virtual methods from class HttpResponseHandler */
+	void OnHttpResponse(HttpStatus status, StringMap &&headers,
+			    UnusedIstreamPtr body) noexcept override;
+	void OnHttpError(std::exception_ptr error) noexcept override;
+
 	/* virtual methods from class Lease */
 	PutAction ReleaseLease(PutAction action) noexcept override {
 		auto &_item = *stock_item;
-		Destroy();
+		stock_item = nullptr;
+
+		/* if an operation is still in progress, Destroy()
+                   will be called upon completion*/
+		if (!cancel_ptr)
+			Destroy();
+
 		return _item.Put(action);
 	}
 };
@@ -96,19 +109,24 @@ private:
 void
 FcgiRemoteRequest::Cancel() noexcept
 {
-	connect_cancel_ptr.Cancel();
-	Destroy();
-}
+	assert(cancel_ptr);
 
-/*
- * stock callback
- *
- */
+	auto _cancel_ptr = std::move(cancel_ptr);
+
+	/* if the stock item has not yet been released, Destroy() will
+           be called by ReleaseLease() */
+	if (stock_item == nullptr)
+		Destroy();
+
+	_cancel_ptr.Cancel();
+}
 
 void
 FcgiRemoteRequest::OnStockItemReady(StockItem &item) noexcept
 {
+	assert(stock_item == nullptr);
 	stock_item = &item;
+	cancel_ptr = {};
 
 	fcgi_client_request(&pool, event_loop, std::move(stopwatch),
 			    tcp_stock_item_get(item),
@@ -125,13 +143,15 @@ FcgiRemoteRequest::OnStockItemReady(StockItem &item) noexcept
 			    std::move(pending_request.body),
 			    address.params.ToArray(pool),
 			    std::move(stderr_fd),
-			    handler,
-			    caller_cancel_ptr);
+			    *this, cancel_ptr);
 }
 
 void
 FcgiRemoteRequest::OnStockItemError(std::exception_ptr ep) noexcept
 {
+	assert(stock_item == nullptr);
+	cancel_ptr = {};
+
 	stopwatch.RecordEvent("connect_error");
 
 	auto &_handler = handler;
@@ -139,10 +159,36 @@ FcgiRemoteRequest::OnStockItemError(std::exception_ptr ep) noexcept
 	_handler.InvokeError(ep);
 }
 
-/*
- * constructor
- *
- */
+void
+FcgiRemoteRequest::OnHttpResponse(HttpStatus status, StringMap &&_headers,
+				  UnusedIstreamPtr _body) noexcept
+{
+	cancel_ptr = {};
+
+	auto &_handler = handler;
+
+	/* if the stock item has not yet been released, Destroy() will
+           be called by ReleaseLease() */
+	if (stock_item == nullptr)
+		Destroy();
+
+	_handler.InvokeResponse(status, std::move(_headers), std::move(_body));
+}
+
+void
+FcgiRemoteRequest::OnHttpError(std::exception_ptr error) noexcept
+{
+	cancel_ptr = {};
+
+	auto &_handler = handler;
+
+	/* if the stock item has not yet been released, Destroy() will
+           be called by ReleaseLease() */
+	if (stock_item == nullptr)
+		Destroy();
+
+	_handler.InvokeError(std::move(error));
+}
 
 void
 fcgi_remote_request(struct pool *pool, EventLoop &event_loop,
@@ -166,7 +212,7 @@ fcgi_remote_request(struct pool *pool, EventLoop &event_loop,
 						      std::move(headers),
 						      std::move(body),
 						      std::move(stderr_fd),
-						      handler, *cancel_ptr);
+						      handler);
 
-	request->Start(*tcp_balancer, address.address_list);
+	request->Start(*tcp_balancer, address.address_list, *cancel_ptr);
 }
