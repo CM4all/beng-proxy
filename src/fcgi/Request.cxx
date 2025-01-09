@@ -84,15 +84,7 @@ private:
 	}
 
 	/* virtual methods from class Cancellable */
-	void Cancel() noexcept override {
-		if (stock_item == nullptr) {
-			cancel_ptr.Cancel();
-			Destroy();
-		} else {
-			fcgi_stock_aborted(*stock_item);
-			cancel_ptr.Cancel();
-		}
-	}
+	void Cancel() noexcept override;
 
 	/* virtual methods from class StockGetHandler */
 	void OnStockItemReady(StockItem &item) noexcept override;
@@ -105,6 +97,18 @@ private:
 		return _item.Put(action);
 	}
 };
+
+void
+FcgiRequest::Cancel() noexcept
+{
+	if (stock_item == nullptr) {
+		cancel_ptr.Cancel();
+		Destroy();
+	} else {
+		fcgi_stock_aborted(*stock_item);
+		cancel_ptr.Cancel();
+	}
+}
 
 void
 FcgiRequest::OnStockItemReady(StockItem &item) noexcept
