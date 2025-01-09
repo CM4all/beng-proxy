@@ -315,7 +315,7 @@ public:
 		return rubber->Write(id);
 	}
 
-	const void *Read() noexcept {
+	const void *Read() const noexcept {
 		assert(*this);
 
 		return rubber->Read(id);
