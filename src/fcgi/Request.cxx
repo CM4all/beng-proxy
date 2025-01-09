@@ -103,14 +103,17 @@ FcgiRequest::Cancel() noexcept
 {
 	assert(cancel_ptr);
 
-	if (stock_item == nullptr) {
-		auto _cancel_ptr = std::move(cancel_ptr);
-		Destroy();
-		_cancel_ptr.Cancel();
-	} else {
+	if (stock_item != nullptr)
 		fcgi_stock_aborted(*stock_item);
-		cancel_ptr.Cancel();
-	}
+
+	auto _cancel_ptr = std::move(cancel_ptr);
+
+	/* if the stock item has not yet been released, Destroy() will
+           be called by ReleaseLease() */
+	if (stock_item == nullptr)
+		Destroy();
+
+	_cancel_ptr.Cancel();
 }
 
 void
