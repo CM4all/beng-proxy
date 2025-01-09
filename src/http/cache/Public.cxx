@@ -496,6 +496,12 @@ HttpCacheRequest::Put(RubberAllocation &&a, size_t size) noexcept
 static std::span<const std::byte>
 ToSpan(const RubberAllocation &allocation, std::size_t size) noexcept
 {
+	if (size == 0)
+		/* this needs to be a special case because it is not
+                   allowed to call Read() on an empty
+                   RubberAllocation */
+		return {};
+
 	return {
 		reinterpret_cast<const std::byte *>(allocation.Read()),
 		size,

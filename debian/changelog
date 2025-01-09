@@ -1,6 +1,6 @@
 cm4all-beng-proxy (18.12) unstable; urgency=low
 
-  * 
+  * http_cache: fix crash with EAGER_CACHE and empty response body
 
  --   
 
