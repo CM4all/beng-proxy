@@ -70,22 +70,20 @@ IsHttpClientRetryFailure(std::exception_ptr ep) noexcept
 {
 	if (FindNested<SocketClosedPrematurelyError>(ep))
 		return true;
+	else if (const auto *e = FindNested<HttpClientError>(ep)) {
+		switch (e->GetCode()) {
+		case HttpClientErrorCode::UNSPECIFIED:
+			return false;
 
-	const auto *e = FindNested<HttpClientError>(ep);
-	if (e == nullptr)
+		case HttpClientErrorCode::REFUSED:
+		case HttpClientErrorCode::IO:
+		case HttpClientErrorCode::GARBAGE:
+			return true;
+		}
+
 		return false;
-
-	switch (e->GetCode()) {
-	case HttpClientErrorCode::UNSPECIFIED:
+	} else
 		return false;
-
-	case HttpClientErrorCode::REFUSED:
-	case HttpClientErrorCode::IO:
-	case HttpClientErrorCode::GARBAGE:
-		return true;
-	}
-
-	return false;
 }
 
 /**
