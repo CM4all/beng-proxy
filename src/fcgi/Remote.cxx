@@ -83,10 +83,7 @@ private:
 	void OnStockItemError(std::exception_ptr ep) noexcept override;
 
 	/* virtual methods from class Cancellable */
-	void Cancel() noexcept override {
-		connect_cancel_ptr.Cancel();
-		Destroy();
-	}
+	void Cancel() noexcept override;
 
 	/* virtual methods from class Lease */
 	PutAction ReleaseLease(PutAction action) noexcept override {
@@ -95,6 +92,13 @@ private:
 		return _item.Put(action);
 	}
 };
+
+void
+FcgiRemoteRequest::Cancel() noexcept
+{
+	connect_cancel_ptr.Cancel();
+	Destroy();
+}
 
 /*
  * stock callback
