@@ -68,6 +68,7 @@ IsHttpClientServerFailure(std::exception_ptr ep) noexcept;
 /**
  * Is it worth retrying after this error?
  */
+[[gnu::pure]]
 bool
 IsHttpClientRetryFailure(std::exception_ptr ep) noexcept;
 
