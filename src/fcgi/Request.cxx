@@ -155,7 +155,7 @@ FcgiRequest::OnStockItemReady(StockItem &item) noexcept
 			    address.query_string,
 			    address.document_root,
 			    remote_addr,
-			    std::move(pending_request.headers),
+			    pending_request.headers,
 			    std::move(pending_request.body),
 			    address.params.ToArray(pool),
 			    std::move(stderr_fd),

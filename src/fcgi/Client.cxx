@@ -1233,7 +1233,7 @@ fcgi_client_request(struct pool *pool, EventLoop &event_loop,
 		    const char *query_string,
 		    const char *document_root,
 		    const char *remote_addr,
-		    StringMap &&headers, UnusedIstreamPtr body,
+		    const StringMap &headers, UnusedIstreamPtr body,
 		    std::span<const char *const> params,
 		    UniqueFileDescriptor &&stderr_fd,
 		    HttpResponseHandler &handler,
@@ -1291,8 +1291,8 @@ fcgi_client_request(struct pool *pool, EventLoop &event_loop,
 		   header */
 		ps("CONTENT_TYPE", content_type);
 
-	const char *https = headers.Remove(x_cm4all_https_header);
-	if (https != nullptr && strcmp(https, "on") == 0)
+	if (const char *https = headers.Get(x_cm4all_https_header);
+	    https != nullptr && strcmp(https, "on") == 0)
 		ps("HTTPS", https);
 
 	ps.Headers(headers);

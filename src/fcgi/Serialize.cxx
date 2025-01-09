@@ -8,6 +8,7 @@
 #include "strmap.hxx"
 #include "util/ByteOrder.hxx"
 #include "util/CharUtil.hxx"
+#include "util/StringAPI.hxx"
 
 #include <cassert>
 #include <cstdint>
@@ -78,6 +79,10 @@ FcgiParamsSerializer::Headers(const StringMap &headers) noexcept
 	char buffer[512] = "HTTP_";
 
 	for (const auto &pair : headers) {
+		if (StringIsEqual(pair.key, "x-cm4all-https"))
+			/* this will be translated to HTTPS */
+			continue;
+
 		size_t i;
 
 		for (i = 0; 5 + i < sizeof(buffer) - 1 && pair.key[i] != 0; ++i) {
