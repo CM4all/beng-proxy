@@ -7,7 +7,8 @@
 #include "stock/Item.hxx"
 #include "system/Error.hxx"
 
-#include <assert.h>
+#include <cassert>
+#include <tuple> // for std::tie()
 
 void
 PipeLease::Release(PutAction action) noexcept
