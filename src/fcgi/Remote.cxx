@@ -130,9 +130,6 @@ FcgiRemoteRequest::OnStockItemError(std::exception_ptr ep) noexcept
 {
 	stopwatch.RecordEvent("connect_error");
 
-	if (stderr_fd.IsDefined())
-		stderr_fd.Close();
-
 	auto &_handler = handler;
 	Destroy();
 	_handler.InvokeError(ep);
