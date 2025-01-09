@@ -24,7 +24,7 @@
 #include <sys/socket.h>
 
 class FcgiRequest final
-	: Lease, Cancellable, StockGetHandler, PoolLeakDetector
+	: Lease, Cancellable, StockGetHandler, HttpResponseHandler, PoolLeakDetector
 {
 	struct pool &pool;
 
@@ -90,10 +90,21 @@ private:
 	void OnStockItemReady(StockItem &item) noexcept override;
 	void OnStockItemError(std::exception_ptr error) noexcept override;
 
+	/* virtual methods from class HttpResponseHandler */
+	void OnHttpResponse(HttpStatus status, StringMap &&headers,
+			    UnusedIstreamPtr body) noexcept override;
+	void OnHttpError(std::exception_ptr error) noexcept override;
+
 	/* virtual methods from class Lease */
 	PutAction ReleaseLease(PutAction action) noexcept override {
 		auto &_item = *stock_item;
-		Destroy();
+		stock_item = nullptr;
+
+		/* if an operation is still in progress, Destroy()
+                   will be called upon completion*/
+		if (!cancel_ptr)
+			Destroy();
+
 		return _item.Put(action);
 	}
 };
@@ -121,6 +132,7 @@ FcgiRequest::OnStockItemReady(StockItem &item) noexcept
 {
 	assert(stock_item == nullptr);
 	stock_item = &item;
+	cancel_ptr = {};
 
 	stopwatch.RecordEvent("launch");
 
@@ -147,7 +159,7 @@ FcgiRequest::OnStockItemReady(StockItem &item) noexcept
 			    std::move(pending_request.body),
 			    address.params.ToArray(pool),
 			    std::move(stderr_fd),
-			    handler, cancel_ptr);
+			    *this, cancel_ptr);
 }
 
 void
@@ -155,10 +167,43 @@ FcgiRequest::OnStockItemError(std::exception_ptr error) noexcept
 {
 	assert(stock_item == nullptr);
 
+	cancel_ptr = {};
+
 	stopwatch.RecordEvent("launch_error");
 
 	auto &_handler = handler;
 	Destroy();
+	_handler.InvokeError(std::move(error));
+}
+
+void
+FcgiRequest::OnHttpResponse(HttpStatus status, StringMap &&_headers,
+			    UnusedIstreamPtr _body) noexcept
+{
+	cancel_ptr = {};
+
+	auto &_handler = handler;
+
+	/* if the stock item has not yet been released, Destroy() will
+           be called by ReleaseLease() */
+	if (stock_item == nullptr)
+		Destroy();
+
+	_handler.InvokeResponse(status, std::move(_headers), std::move(_body));
+}
+
+void
+FcgiRequest::OnHttpError(std::exception_ptr error) noexcept
+{
+	cancel_ptr = {};
+
+	auto &_handler = handler;
+
+	/* if the stock item has not yet been released, Destroy() will
+           be called by ReleaseLease() */
+	if (stock_item == nullptr)
+		Destroy();
+
 	_handler.InvokeError(std::move(error));
 }
 
