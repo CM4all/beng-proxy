@@ -1309,12 +1309,12 @@ fcgi_client_request(struct pool *pool, EventLoop &event_loop,
 	header.content_length = 0;
 	buffer.WriteT(header);
 
-	UnusedIstreamPtr request;
+	UnusedIstreamPtr request = istream_gb_new(*pool, std::move(buffer));
 
 	if (body)
 		/* format the request body */
 		request = NewConcatIstream(*pool,
-					   istream_gb_new(*pool, std::move(buffer)),
+					   std::move(request),
 					   istream_fcgi_new(*pool, std::move(body),
 							    header.request_id));
 	else {
@@ -1322,8 +1322,6 @@ fcgi_client_request(struct pool *pool, EventLoop &event_loop,
 		header.type = FcgiRecordType::STDIN;
 		header.content_length = 0;
 		buffer.WriteT(header);
-
-		request = istream_gb_new(*pool, std::move(buffer));
 	}
 
 	auto client = NewFromPool<FcgiClient>(*pool, *pool, event_loop,
