@@ -142,8 +142,6 @@ class FcgiConnection final : public StockItem {
 
 	SocketEvent event;
 
-	UniqueFileDescriptor stderr_fd;
-
 	/**
 	 * Is this a fresh connection to the FastCGI child process?
 	 */
