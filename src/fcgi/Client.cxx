@@ -404,14 +404,14 @@ FcgiClient::HandleLine(std::string_view line)
 
 	if (!line.empty()) {
 		if (line.size() >= MAX_HTTP_HEADER_SIZE)
-			throw FcgiClientError{"Response header is too long"};
+			throw FcgiClientError{FcgiClientErrorCode::GARBAGE, "Response header is too long"};
 
 		response.total_header_size += line.size();
 		if (response.total_header_size >= MAX_TOTAL_HTTP_HEADER_SIZE)
-			throw FcgiClientError{"Too many response headers"};
+			throw FcgiClientError{FcgiClientErrorCode::GARBAGE, "Too many response headers"};
 
 		if (!header_parse_line(GetPool(), response.headers, line))
-			throw FcgiClientError("Malformed FastCGI response header");
+			throw FcgiClientError(FcgiClientErrorCode::GARBAGE, "Malformed FastCGI response header");
 		return false;
 	} else {
 		stopwatch.RecordEvent("response_headers");
@@ -563,11 +563,13 @@ FcgiClient::HandleEnd() noexcept
 	stopwatch.RecordEvent("end");
 
 	if (response.receiving_headers) {
-		AbortResponseHeaders(std::make_exception_ptr(FcgiClientError("premature end of headers "
+		AbortResponseHeaders(std::make_exception_ptr(FcgiClientError(FcgiClientErrorCode::GARBAGE,
+									     "premature end of headers "
 									     "from FastCGI application")));
 		return false;
 	} else if (!response.no_body && response.available > 0) {
-		AbortResponseBody(std::make_exception_ptr(FcgiClientError("premature end of body "
+		AbortResponseBody(std::make_exception_ptr(FcgiClientError(FcgiClientErrorCode::GARBAGE,
+									  "premature end of body "
 									  "from FastCGI application")));
 		return false;
 	}
@@ -641,7 +643,8 @@ FcgiClient::ConsumeInput(const std::byte *data0, std::size_t length0) noexcept
 			    std::cmp_greater(length, response.available)) {
 				/* the DATA packet was larger than the Content-Length
 				   declaration - fail */
-				AbortResponseBody(std::make_exception_ptr(FcgiClientError("excess data at end of body "
+				AbortResponseBody(std::make_exception_ptr(FcgiClientError(FcgiClientErrorCode::GARBAGE,
+											  "excess data at end of body "
 											  "from FastCGI application")));
 				return BufferedResult::DESTROYED;
 			}
@@ -744,7 +747,8 @@ FcgiClient::OnData(std::span<const std::byte> src) noexcept
 		return 0;
 	else if (nbytes < 0) {
 		AbortResponse(NestException(std::make_exception_ptr(MakeSocketError("Write error")),
-					    FcgiClientError("write to FastCGI application failed")));
+					    FcgiClientError(FcgiClientErrorCode::IO,
+							    "write to FastCGI application failed")));
 		return 0;
 	}
 
@@ -906,7 +910,8 @@ FcgiClient::_FillBucketList(IstreamBucketList &list)
 
 				Destroy();
 
-				throw FcgiClientError("excess data at end of body "
+				throw FcgiClientError(FcgiClientErrorCode::GARBAGE,
+						      "excess data at end of body "
 						      "from FastCGI application");
 			}
 
@@ -964,7 +969,8 @@ FcgiClient::_FillBucketList(IstreamBucketList &list)
 
 			if (available > 0) {
 				Destroy();
-				throw FcgiClientError("premature end of body "
+				throw FcgiClientError(FcgiClientErrorCode::GARBAGE,
+						      "premature end of body "
 						      "from FastCGI application");
 			} else if (response.available < 0) {
 				/* now we know how much data remains */
@@ -1171,7 +1177,7 @@ FcgiClient::OnBufferedError(std::exception_ptr ep) noexcept
 {
 	stopwatch.RecordEvent("socket_error");
 
-	AbortResponse(NestException(ep, FcgiClientError("FastCGI socket error")));
+	AbortResponse(NestException(ep, FcgiClientError(FcgiClientErrorCode::IO, "FastCGI socket error")));
 }
 
 /*
