@@ -35,11 +35,6 @@ enum class HttpClientErrorCode {
 	REFUSED,
 
 	/**
-	 * The server has closed the connection prematurely.
-	 */
-	PREMATURE,
-
-	/**
 	 * A socket I/O error has occurred.
 	 */
 	IO,

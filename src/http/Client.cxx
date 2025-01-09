@@ -80,7 +80,6 @@ IsHttpClientRetryFailure(std::exception_ptr ep) noexcept
 		return false;
 
 	case HttpClientErrorCode::REFUSED:
-	case HttpClientErrorCode::PREMATURE:
 	case HttpClientErrorCode::IO:
 	case HttpClientErrorCode::GARBAGE:
 		return true;
