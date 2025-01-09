@@ -102,8 +102,9 @@ void
 FcgiRequest::Cancel() noexcept
 {
 	if (stock_item == nullptr) {
-		cancel_ptr.Cancel();
+		auto _cancel_ptr = std::move(cancel_ptr);
 		Destroy();
+		_cancel_ptr.Cancel();
 	} else {
 		fcgi_stock_aborted(*stock_item);
 		cancel_ptr.Cancel();
