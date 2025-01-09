@@ -492,16 +492,24 @@ HttpCacheRequest::Put(RubberAllocation &&a, size_t size) noexcept
  *
  */
 
+[[gnu::pure]]
+static std::span<const std::byte>
+ToSpan(const RubberAllocation &allocation, std::size_t size) noexcept
+{
+	return {
+		reinterpret_cast<const std::byte *>(allocation.Read()),
+		size,
+	};
+}
+
 void
 HttpCacheRequest::RubberDone(RubberAllocation &&a, size_t size) noexcept
 {
 	RubberStoreFinished();
 
 	if (eager_cache && !response.headers->Contains(digest_header)) {
-		const std::span<const std::byte> src(static_cast<const std::byte *>(a.Read()),
-						     size);
 		const AllocatorPtr alloc{GetPool()};
-		response.headers->Add(alloc, digest_header, GenerateDigestHeader(alloc, src));
+		response.headers->Add(alloc, digest_header, GenerateDigestHeader(alloc, ToSpan(a, size)));
 	}
 
 	/* the request was successful, and all of the body data has been
