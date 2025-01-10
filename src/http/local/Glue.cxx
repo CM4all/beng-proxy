@@ -17,6 +17,7 @@
 #include "http/HeaderWriter.hxx"
 #include "pool/pool.hxx"
 #include "pool/LeakDetector.hxx"
+#include "event/FineTimerEvent.hxx"
 #include "net/SocketDescriptor.hxx"
 #include "util/Cancellable.hxx"
 #include "stopwatch.hxx"
@@ -71,8 +72,15 @@ class LhttpRequest final
 	: Cancellable, StockGetHandler, HttpResponseHandler, PoolLeakDetector
 {
 	struct pool &pool;
-	EventLoop &event_loop;
 	LhttpStock &stock;
+
+	/**
+	 * This timer delays retry attempts a bit to avoid the load
+	 * getting too heavy for retries and to handle child process
+	 * exit messages in the meantime; the latter avoids opening a
+	 * new connection to a dying child process.
+	 */
+	FineTimerEvent retry_timer;
 
 	StopwatchPtr stopwatch;
 
@@ -99,8 +107,9 @@ public:
 			      UnusedIstreamPtr &&_body,
 			      HttpResponseHandler &_handler,
 			      CancellablePointer &_cancel_ptr) noexcept
-		:PoolLeakDetector(_pool), pool(_pool), event_loop(_event_loop),
+		:PoolLeakDetector(_pool), pool(_pool),
 		 stock(_stock),
+		 retry_timer(_event_loop, BIND_THIS_METHOD(Start)),
 		 stopwatch(std::move(_stopwatch)),
 		 site_name(_site_name),
 		 /* can only retry if there is no request body */
@@ -113,6 +122,10 @@ public:
 		_cancel_ptr = *this;
 	}
 
+	auto &GetEventLoop() const noexcept {
+		return retry_timer.GetEventLoop();
+	}
+
 	void Start() noexcept;
 
 private:
@@ -122,7 +135,8 @@ private:
 
 	/* virtual methods from class Cancellable */
 	void Cancel() noexcept override {
-		cancel_ptr.Cancel();
+		if (cancel_ptr)
+			cancel_ptr.Cancel();
 		Destroy();
 	}
 
@@ -146,6 +160,8 @@ LhttpRequest::Start() noexcept
 void
 LhttpRequest::OnStockItemReady(StockItem &item) noexcept
 {
+	cancel_ptr = {};
+
 	stopwatch.RecordEvent("launch");
 
 	lhttp_stock_item_set_site(item, site_name);
@@ -156,7 +172,7 @@ LhttpRequest::OnStockItemReady(StockItem &item) noexcept
 		header_write(more_headers, "host",
 			     address.host_and_port);
 
-	auto *lease = NewFromPool<LhttpLease>(pool, pool, event_loop,
+	auto *lease = NewFromPool<LhttpLease>(pool, pool, GetEventLoop(),
 					      item);
 
 	http_client_request(pool, std::move(stopwatch),
@@ -171,6 +187,8 @@ LhttpRequest::OnStockItemReady(StockItem &item) noexcept
 void
 LhttpRequest::OnStockItemError(std::exception_ptr error) noexcept
 {
+	cancel_ptr = {};
+
 	stopwatch.RecordEvent("launch_error");
 
 	auto &_handler = handler;
@@ -182,6 +200,8 @@ void
 LhttpRequest::OnHttpResponse(HttpStatus status, StringMap &&_headers,
 			    UnusedIstreamPtr _body) noexcept
 {
+	cancel_ptr = {};
+
 	auto &_handler = handler;
 	Destroy();
 	_handler.InvokeResponse(status, std::move(_headers), std::move(_body));
@@ -190,6 +210,8 @@ LhttpRequest::OnHttpResponse(HttpStatus status, StringMap &&_headers,
 void
 LhttpRequest::OnHttpError(std::exception_ptr ep) noexcept
 {
+	cancel_ptr = {};
+
 	if (retries > 0 && IsHttpClientRetryFailure(ep)) {
 		/* the server has closed the connection prematurely, maybe
 		   because it didn't want to get any further requests on that
@@ -199,7 +221,7 @@ LhttpRequest::OnHttpError(std::exception_ptr ep) noexcept
 
 		/* passing no request body; retry is only ever enabled
 		   if there is no request body */
-		Start();
+		retry_timer.Schedule(std::chrono::milliseconds{20});
 	} else {
 		auto &_handler = handler;
 		Destroy();
