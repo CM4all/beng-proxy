@@ -168,7 +168,7 @@ HttpServerConnection::ParseRequestLine(std::string_view line) noexcept
 		uri = uri.substr(0, 1024);
 	}
 
-	request.request = http_server_request_new(this, method, uri);
+	request.request = NewRequest(method, uri);
 	request.read_state = Request::HEADERS;
 
 	return true;

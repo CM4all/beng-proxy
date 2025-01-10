@@ -406,6 +406,9 @@ struct HttpServerConnection final
 
 	BucketResult TryWriteBuckets() noexcept;
 
+	HttpServerRequest *NewRequest(HttpMethod method,
+				      std::string_view uri) noexcept;
+
 	void CloseRequest() noexcept;
 
 	/**
@@ -467,8 +470,3 @@ struct HttpServerConnection final
 	void OnEof() noexcept override;
 	void OnError(std::exception_ptr ep) noexcept override;
 };
-
-HttpServerRequest *
-http_server_request_new(HttpServerConnection *connection,
-			HttpMethod method,
-			std::string_view uri) noexcept;

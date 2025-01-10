@@ -39,24 +39,20 @@ HttpServerConnection::Log(HttpServerRequest &r) noexcept
 }
 
 HttpServerRequest *
-http_server_request_new(HttpServerConnection *connection,
-			HttpMethod method,
-			std::string_view uri) noexcept
+HttpServerConnection::NewRequest(HttpMethod method,
+				 std::string_view uri) noexcept
 {
-	assert(connection != nullptr);
+	response.status = {};
 
-	connection->response.status = {};
+	auto request_pool = pool_new_linear(pool, "http_server_request", 8192);
+	pool_set_major(request_pool);
 
-	auto pool = pool_new_linear(connection->pool,
-				    "http_server_request", 8192);
-	pool_set_major(pool);
-
-	return NewFromPool<HttpServerRequest>(std::move(pool),
-					      *connection,
-					      connection->local_address,
-					      connection->remote_address,
-					      connection->local_host_and_port,
-					      connection->remote_host,
+	return NewFromPool<HttpServerRequest>(std::move(request_pool),
+					      *this,
+					      local_address,
+					      remote_address,
+					      local_host_and_port,
+					      remote_host,
 					      method, uri);
 }
 
