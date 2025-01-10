@@ -3,12 +3,12 @@
 // author: Max Kellermann <mk@cm4all.com>
 
 #include "Stock.hxx"
+#include "Connection.hxx"
 #include "Error.hxx"
 #include "stock/MapStock.hxx"
 #include "stock/Stock.hxx"
 #include "stock/Class.hxx"
 #include "stock/GetHandler.hxx"
-#include "stock/Item.hxx"
 #include "cgi/ChildParams.hxx"
 #include "spawn/ListenChildStock.hxx"
 #include "spawn/Prepared.hxx"
@@ -17,7 +17,6 @@
 #include "pool/WithPoolDisposablePointer.hxx"
 #include "pool/tpool.hxx"
 #include "lib/fmt/ToBuffer.hxx"
-#include "event/SocketEvent.hxx"
 #include "net/UniqueSocketDescriptor.hxx"
 #include "io/FdHolder.hxx"
 #include "io/UniqueFileDescriptor.hxx"
@@ -134,96 +133,6 @@ private:
 				PreparedChildProcess &p,
 				FdHolder &close_fds) override;
 };
-
-class FcgiConnection final : public StockItem {
-	const LLogger logger;
-
-	ListenChildStockItem &child;
-
-	SocketEvent event;
-
-	/**
-	 * Is this a fresh connection to the FastCGI child process?
-	 */
-	bool fresh = true;
-
-	/**
-	 * Shall the FastCGI child process be killed?
-	 */
-	bool kill = false;
-
-	/**
-	 * Was the current request aborted by the fcgi_client caller?
-	 */
-	bool aborted = false;
-
-public:
-	explicit FcgiConnection(CreateStockItem c, ListenChildStockItem &_child,
-				UniqueSocketDescriptor &&socket) noexcept
-		:StockItem(c), logger(GetStockName()),
-		 child(_child),
-		 event(GetStock().GetEventLoop(), BIND_THIS_METHOD(OnSocketEvent),
-		       socket.Release()) {}
-
-	~FcgiConnection() noexcept override;
-
-	[[gnu::pure]]
-	std::string_view GetTag() const noexcept {
-		return child.GetTag();
-	}
-
-	SocketDescriptor GetSocket() const noexcept {
-		assert(event.IsDefined());
-		return event.GetSocket();
-	}
-
-	UniqueFileDescriptor GetStderr() const noexcept {
-		return child.GetStderr();
-	}
-
-	void SetSite(const char *site) noexcept {
-		child.SetSite(site);
-	}
-
-	void SetUri(const char *uri) noexcept {
-		child.SetUri(uri);
-	}
-
-	void SetAborted() noexcept {
-		aborted = true;
-	}
-
-	/* virtual methods from class StockItem */
-	bool Borrow() noexcept override;
-	bool Release() noexcept override;
-
-private:
-	void Read() noexcept;
-	void OnSocketEvent(unsigned events) noexcept;
-};
-
-/*
- * libevent callback
- *
- */
-
-inline void
-FcgiConnection::Read() noexcept
-{
-	std::byte buffer[1];
-	ssize_t nbytes = GetSocket().ReadNoWait(buffer);
-	if (nbytes < 0)
-		logger(2, "error on idle FastCGI connection: ", strerror(errno));
-	else if (nbytes > 0)
-		logger(2, "unexpected data from idle FastCGI connection");
-}
-
-inline void
-FcgiConnection::OnSocketEvent(unsigned) noexcept
-{
-	Read();
-	InvokeIdleDisconnect();
-}
 
 /*
  * child_stock class
@@ -359,46 +268,6 @@ FcgiStock::Create(CreateStockItem c, StockRequest request,
 	create->Start(child_stock.GetStockMap(), std::move(request), cancel_ptr);
 }
 
-bool
-FcgiConnection::Borrow() noexcept
-{
-	if (event.GetReadyFlags() != 0) [[unlikely]] {
-		/* this connection was probably closed, but our
-		   SocketEvent callback hasn't been invoked yet;
-		   refuse to use this item; the caller will destroy
-		   the connection */
-		Read();
-		return false;
-	}
-
-	event.Cancel();
-	aborted = false;
-	return true;
-}
-
-bool
-FcgiConnection::Release() noexcept
-{
-	fresh = false;
-	event.ScheduleRead();
-	return true;
-}
-
-FcgiConnection::~FcgiConnection() noexcept
-{
-	event.Close();
-
-	if (fresh && aborted)
-		/* the fcgi_client caller has aborted the request before the
-		   first response on a fresh connection was received: better
-		   kill the child process, it may be failing on us
-		   completely */
-		kill = true;
-
-	child.Put(kill ? PutAction::DESTROY : PutAction::REUSE);
-}
-
-
 /*
  * interface
  *
@@ -501,41 +370,4 @@ int
 fcgi_stock_item_get_domain([[maybe_unused]] const StockItem &item) noexcept
 {
 	return AF_LOCAL;
-}
-
-UniqueFileDescriptor
-fcgi_stock_item_get_stderr(const StockItem &item) noexcept
-{
-	const auto &connection = (const FcgiConnection &)item;
-	return connection.GetStderr();
-}
-
-void
-fcgi_stock_item_set_site(StockItem &item, const char *site) noexcept
-{
-	auto &connection = (FcgiConnection &)item;
-	connection.SetSite(site);
-}
-
-void
-fcgi_stock_item_set_uri(StockItem &item, const char *uri) noexcept
-{
-	auto &connection = (FcgiConnection &)item;
-	connection.SetUri(uri);
-}
-
-SocketDescriptor
-fcgi_stock_item_get(const StockItem &item) noexcept
-{
-	const auto *connection = (const FcgiConnection *)&item;
-
-	return connection->GetSocket();
-}
-
-void
-fcgi_stock_aborted(StockItem &item) noexcept
-{
-	auto *connection = (FcgiConnection *)&item;
-
-	connection->SetAborted();
 }

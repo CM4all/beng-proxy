@@ -53,31 +53,3 @@ fcgi_stock_get(FcgiStock *fcgi_stock,
 	       unsigned parallelism,
 	       StockGetHandler &handler,
 	       CancellablePointer &cancel_ptr) noexcept;
-
-void
-fcgi_stock_item_set_site(StockItem &item, const char *site) noexcept;
-
-void
-fcgi_stock_item_set_uri(StockItem &item, const char *uri) noexcept;
-
-/**
- * Returns the socket descriptor of the specified stock item.
- */
-SocketDescriptor
-fcgi_stock_item_get(const StockItem &item) noexcept;
-
-int
-fcgi_stock_item_get_domain(const StockItem &item) noexcept;
-
-UniqueFileDescriptor
-fcgi_stock_item_get_stderr(const StockItem &item) noexcept;
-
-/**
- * Let the fcgi_stock know that the client is being aborted.  The
- * fcgi_stock may then figure out that the client process is faulty
- * and kill it at the next chance.  Note that this function will not
- * release the process - fcgi_stock_put() stil needs to be called
- * after this function.
- */
-void
-fcgi_stock_aborted(StockItem &item) noexcept;

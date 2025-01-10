@@ -4,6 +4,7 @@
 
 #include "Request.hxx"
 #include "Stock.hxx"
+#include "Connection.hxx"
 #include "Client.hxx"
 #include "http/PendingRequest.hxx"
 #include "http/ResponseHandler.hxx"

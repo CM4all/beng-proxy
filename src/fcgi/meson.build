@@ -25,6 +25,7 @@ fcgi_stock = static_library(
   'Remote.cxx',
   'Request.cxx',
   'Stock.cxx',
+  'Connection.cxx',
   include_directories: inc,
   dependencies: [
     fcgi_client_dep,
