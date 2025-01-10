@@ -189,6 +189,16 @@ LhttpRequest::OnStockItemError(std::exception_ptr error) noexcept
 {
 	cancel_ptr = {};
 
+	if (retries > 0 && IsHttpClientRetryFailure(error)) {
+		/* the server has closed the connection prematurely,
+		   maybe because it didn't want to get any further
+		   requests on that connection.  Let's try again. */
+
+		--retries;
+		retry_timer.Schedule(std::chrono::milliseconds{100});
+		return;
+	}
+
 	stopwatch.RecordEvent("launch_error");
 
 	auto &_handler = handler;

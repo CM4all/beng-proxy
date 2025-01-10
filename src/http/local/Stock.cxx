@@ -4,6 +4,7 @@
 
 #include "Stock.hxx"
 #include "Address.hxx"
+#include "http/Client.hxx" // for class HttpClientError
 #include "stock/Stock.hxx"
 #include "stock/MultiStock.hxx"
 #include "stock/Class.hxx"
@@ -12,6 +13,7 @@
 #include "pool/WithPoolDisposablePointer.hxx"
 #include "AllocatorPtr.hxx"
 #include "lease.hxx"
+#include "lib/fmt/ToBuffer.hxx"
 #include "spawn/ListenChildStock.hxx"
 #include "spawn/Prepared.hxx"
 #include "event/SocketEvent.hxx"
@@ -308,7 +310,13 @@ LhttpStock::Create(CreateStockItem c, StockItem &shared_item)
 {
 	auto &child = (ListenChildStockItem &)shared_item;
 
-	return new LhttpConnection(c, child);
+	try {
+		return new LhttpConnection(c, child);
+	} catch (...) {
+		std::throw_with_nested(HttpClientError(HttpClientErrorCode::REFUSED,
+						       FmtBuffer<256>("Failed to connect to LHTTP server {:?}",
+								      c.GetStockName())));
+	}
 }
 
 LhttpConnection::~LhttpConnection() noexcept
