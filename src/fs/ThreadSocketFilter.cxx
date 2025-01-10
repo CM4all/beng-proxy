@@ -8,6 +8,7 @@
 #include "thread/Queue.hxx"
 #include "system/Error.hxx"
 #include "net/SocketProtocolError.hxx"
+#include "util/Compiler.h" // for gcc_unreachable
 
 #include <algorithm>
 

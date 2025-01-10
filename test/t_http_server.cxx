@@ -35,6 +35,7 @@
 #include "net/UniqueSocketDescriptor.hxx"
 #include "system/Error.hxx"
 #include "util/Cancellable.hxx"
+#include "util/Compiler.h" // for gcc_unreachable
 #include "util/Exception.hxx"
 #include "util/PrintException.hxx"
 #include "stopwatch.hxx"
