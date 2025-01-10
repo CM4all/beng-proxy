@@ -325,7 +325,7 @@ FcgiStock::CreateRequest::OnStockItemReady(StockItem &item) noexcept
 
 		try {
 			std::throw_with_nested(FcgiClientError(FcgiClientErrorCode::REFUSED,
-							       FmtBuffer<256>("Failed to connect to FastCGI server '{}'",
+							       FmtBuffer<256>("Failed to connect to FastCGI server {:?}",
 									      create.GetStockName())));
 		} catch (...) {
 			create.InvokeCreateError(handler, std::current_exception());
