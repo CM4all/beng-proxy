@@ -178,7 +178,7 @@ struct BpInstance final : PInstance, BengControl::Handler,
 	std::unique_ptr<ListenStreamStock> listen_stream_stock;
 
 	LhttpStock *lhttp_stock = nullptr;
-	FcgiStock *fcgi_stock = nullptr;
+	std::unique_ptr<FcgiStock> fcgi_stock;
 
 #ifdef HAVE_LIBWAS
 	WasStock *was_stock = nullptr;

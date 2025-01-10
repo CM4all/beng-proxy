@@ -4,6 +4,10 @@
 
 #pragma once
 
+#include "pool/Ptr.hxx"
+#include "spawn/ListenChildStock.hxx"
+#include "stock/MapStock.hxx"
+
 #include <span>
 #include <string_view>
 
@@ -19,37 +23,75 @@ class ListenStreamStock;
 class SocketDescriptor;
 class UniqueFileDescriptor;
 
-/**
- * Launch and manage FastCGI child processes.
- */
-FcgiStock *
-fcgi_stock_new(unsigned limit, unsigned max_idle,
-	       EventLoop &event_loop, SpawnService &spawn_service,
-	       ListenStreamStock *listen_stream_stock,
-	       SocketDescriptor log_socket,
-	       const ChildErrorLogOptions &log_options) noexcept;
+class FcgiStock final : StockClass, ListenChildStockClass {
+	PoolPtr pool;
+	StockMap hstock;
+	ChildStockMap child_stock;
 
-void
-fcgi_stock_free(FcgiStock *fcgi_stock) noexcept;
+	class CreateRequest;
 
-[[gnu::const]]
-EventLoop &
-fcgi_stock_get_event_loop(const FcgiStock &fs) noexcept;
+public:
+	FcgiStock(unsigned limit, unsigned max_idle,
+		  EventLoop &event_loop, SpawnService &spawn_service,
+		  ListenStreamStock *listen_stream_stock,
+		  SocketDescriptor _log_socket,
+		  const ChildErrorLogOptions &_log_options) noexcept;
 
-void
-fcgi_stock_fade_all(FcgiStock &fs) noexcept;
+	~FcgiStock() noexcept {
+		/* this one must be cleared before #child_stock; FadeAll()
+		   calls ClearIdle(), so this method is the best match for
+		   what we want to do (though a kludge) */
+		hstock.FadeAll();
+	}
 
-void
-fcgi_stock_fade_tag(FcgiStock &fs, std::string_view tag) noexcept;
+	EventLoop &GetEventLoop() const noexcept {
+		return hstock.GetEventLoop();
+	}
 
-/**
- * @param args command-line arguments
- */
-void
-fcgi_stock_get(FcgiStock *fcgi_stock,
-	       const ChildOptions &options,
-	       const char *executable_path,
-	       std::span<const char *const> args,
-	       unsigned parallelism,
-	       StockGetHandler &handler,
-	       CancellablePointer &cancel_ptr) noexcept;
+	/**
+	 * @param args command-line arguments
+	 */
+	void Get(const ChildOptions &options,
+		 const char *executable_path,
+		 std::span<const char *const> args,
+		 unsigned parallelism,
+		 StockGetHandler &handler,
+		 CancellablePointer &cancel_ptr) noexcept;
+
+	void FadeAll() noexcept {
+		hstock.FadeAll();
+		child_stock.GetStockMap().FadeAll();
+	}
+
+	void FadeTag(std::string_view tag) noexcept;
+
+private:
+	/* virtual methods from class StockClass */
+	void Create(CreateStockItem c, StockRequest request,
+		    StockGetHandler &handler,
+		    CancellablePointer &cancel_ptr) override;
+
+	/* virtual methods from class ChildStockClass */
+	StockRequest PreserveRequest(StockRequest request) noexcept override;
+
+	bool WantStderrFd(const void *info) const noexcept override;
+	bool WantStderrPond(const void *info) const noexcept override;
+
+	unsigned GetChildBacklog(const void *) const noexcept override {
+		return 4;
+	}
+
+	std::string_view GetChildTag(const void *info) const noexcept override;
+	void PrepareChild(const void *info, PreparedChildProcess &p,
+			  FdHolder &close_fds) override;
+
+	/* virtual methods from class ChildStockMapClass */
+	std::size_t GetChildLimit(const void *request,
+				  std::size_t _limit) const noexcept override;
+	Event::Duration GetChildClearInterval(const void *info) const noexcept override;
+
+	/* virtual methods from class ListenChildStockClass */
+	void PrepareListenChild(const void *info, UniqueSocketDescriptor fd,
+				PreparedChildProcess &p,
+				FdHolder &close_fds) override;
+};

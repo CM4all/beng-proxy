@@ -74,7 +74,7 @@ public:
 		:PoolLeakDetector(_pool),
 		 pool(_pool),
 		 fcgi_stock(_fcgi_stock),
-		 retry_timer(fcgi_stock_get_event_loop(fcgi_stock), BIND_THIS_METHOD(BeginConnect)),
+		 retry_timer(fcgi_stock.GetEventLoop(), BIND_THIS_METHOD(BeginConnect)),
 		 stopwatch(parent_stopwatch, "fcgi", _action),
 		 address(_address),
 		 pending_request(_pool, _method, address.GetURI(pool),
@@ -91,7 +91,7 @@ public:
 	}
 
 	void BeginConnect() noexcept {
-		fcgi_stock_get(&fcgi_stock, address.options,
+		fcgi_stock.Get(address.options,
 			       action, address.args.ToArray(pool),
 			       address.parallelism,
 			       *this, cancel_ptr);
@@ -166,8 +166,7 @@ FcgiRequest::OnStockItemReady(StockItem &item) noexcept
 
 	fcgi_client_request(&pool, item.GetStock().GetEventLoop(), std::move(stopwatch),
 			    fcgi_stock_item_get(*stock_item),
-			    fcgi_stock_item_get_domain(*stock_item) == AF_LOCAL
-			    ? FdType::FD_SOCKET : FdType::FD_TCP,
+			    FdType::FD_SOCKET,
 			    *this,
 			    pending_request.method, pending_request.uri,
 			    script_filename,

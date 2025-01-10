@@ -5,12 +5,10 @@
 #include "Stock.hxx"
 #include "Connection.hxx"
 #include "Error.hxx"
-#include "stock/MapStock.hxx"
 #include "stock/Stock.hxx"
 #include "stock/Class.hxx"
 #include "stock/GetHandler.hxx"
 #include "cgi/ChildParams.hxx"
-#include "spawn/ListenChildStock.hxx"
 #include "spawn/Prepared.hxx"
 #include "spawn/ChildOptions.hxx"
 #include "pool/DisposablePointer.hxx"
@@ -35,103 +33,35 @@
 #include <sched.h>
 #endif
 
-class FcgiStock final : StockClass, ListenChildStockClass {
-	PoolPtr pool{pool_new_dummy(nullptr, "FcgiStock")};
-	StockMap hstock;
-	ChildStockMap child_stock;
-
-	class CreateRequest final : StockGetHandler, Cancellable {
-		CreateStockItem create;
-		StockGetHandler &handler;
-		CancellablePointer cancel_ptr;
-
-	public:
-		CreateRequest(const CreateStockItem &_create,
-			      StockGetHandler &_handler) noexcept
-			:create(_create), handler(_handler) {}
-
-		void Start(StockMap &child_stock_map,
-			   StockRequest &&request,
-			   CancellablePointer &caller_cancel_ptr) noexcept {
-			caller_cancel_ptr = *this;
-			child_stock_map.Get(create.GetStockName(),
-					    std::move(request),
-					    *this, cancel_ptr);
-		}
-
-	private:
-		/* virtual methods from class StockGetHandler */
-		void OnStockItemReady(StockItem &item) noexcept override;
-		void OnStockItemError(std::exception_ptr error) noexcept override;
-
-		/* virtual methods from class Cancellable */
-		void Cancel() noexcept override {
-			cancel_ptr.Cancel();
-			delete this;
-		}
-	};
+class FcgiStock::CreateRequest final : StockGetHandler, Cancellable {
+	CreateStockItem create;
+	StockGetHandler &handler;
+	CancellablePointer cancel_ptr;
 
 public:
-	FcgiStock(unsigned limit, unsigned max_idle,
-		  EventLoop &event_loop, SpawnService &spawn_service,
-		  ListenStreamStock *listen_stream_stock,
-		  SocketDescriptor _log_socket,
-		  const ChildErrorLogOptions &_log_options) noexcept;
+	CreateRequest(const CreateStockItem &_create,
+		      StockGetHandler &_handler) noexcept
+		:create(_create), handler(_handler) {}
 
-	~FcgiStock() noexcept {
-		/* this one must be cleared before #child_stock; FadeAll()
-		   calls ClearIdle(), so this method is the best match for
-		   what we want to do (though a kludge) */
-		hstock.FadeAll();
-	}
-
-	EventLoop &GetEventLoop() const noexcept {
-		return hstock.GetEventLoop();
-	}
-
-	void Get(const ChildOptions &options,
-		 const char *executable_path,
-		 std::span<const char *const> args,
-		 unsigned parallelism,
-		 StockGetHandler &handler,
-		 CancellablePointer &cancel_ptr) noexcept;
-
-	void FadeAll() noexcept {
-		hstock.FadeAll();
-		child_stock.GetStockMap().FadeAll();
-	}
-
-	void FadeTag(std::string_view tag) noexcept;
+	void Start(StockMap &child_stock_map,
+		   StockRequest &&request,
+		   CancellablePointer &caller_cancel_ptr) noexcept {
+			   caller_cancel_ptr = *this;
+			   child_stock_map.Get(create.GetStockName(),
+					       std::move(request),
+					       *this, cancel_ptr);
+		   }
 
 private:
-	/* virtual methods from class StockClass */
-	void Create(CreateStockItem c, StockRequest request,
-		    StockGetHandler &handler,
-		    CancellablePointer &cancel_ptr) override;
+	/* virtual methods from class StockGetHandler */
+	void OnStockItemReady(StockItem &item) noexcept override;
+	void OnStockItemError(std::exception_ptr error) noexcept override;
 
-	/* virtual methods from class ChildStockClass */
-	StockRequest PreserveRequest(StockRequest request) noexcept override;
-
-	bool WantStderrFd(const void *info) const noexcept override;
-	bool WantStderrPond(const void *info) const noexcept override;
-
-	unsigned GetChildBacklog(const void *) const noexcept override {
-		return 4;
+	/* virtual methods from class Cancellable */
+	void Cancel() noexcept override {
+		cancel_ptr.Cancel();
+		delete this;
 	}
-
-	std::string_view GetChildTag(const void *info) const noexcept override;
-	void PrepareChild(const void *info, PreparedChildProcess &p,
-			  FdHolder &close_fds) override;
-
-	/* virtual methods from class ChildStockMapClass */
-	std::size_t GetChildLimit(const void *request,
-				  std::size_t _limit) const noexcept override;
-	Event::Duration GetChildClearInterval(const void *info) const noexcept override;
-
-	/* virtual methods from class ListenChildStockClass */
-	void PrepareListenChild(const void *info, UniqueSocketDescriptor fd,
-				PreparedChildProcess &p,
-				FdHolder &close_fds) override;
 };
 
 /*
@@ -273,14 +203,14 @@ FcgiStock::Create(CreateStockItem c, StockRequest request,
  *
  */
 
-inline
 FcgiStock::FcgiStock(unsigned limit, unsigned max_idle,
 		     EventLoop &event_loop, SpawnService &spawn_service,
 		     ListenStreamStock *listen_stream_stock,
 		     SocketDescriptor _log_socket,
 		     const ChildErrorLogOptions &_log_options) noexcept
-	:hstock(event_loop, *this, limit, max_idle,
-		std::chrono::minutes(2)),
+	:pool(pool_new_dummy(nullptr, "FcgiStock")),
+	 hstock(event_loop, *this, limit, max_idle,
+	 std::chrono::minutes(2)),
 	 child_stock(event_loop, spawn_service,
 		     listen_stream_stock,
 		     *this,
@@ -298,43 +228,7 @@ FcgiStock::FadeTag(std::string_view tag) noexcept
 	child_stock.FadeTag(tag);
 }
 
-FcgiStock *
-fcgi_stock_new(unsigned limit, unsigned max_idle,
-	       EventLoop &event_loop, SpawnService &spawn_service,
-	       ListenStreamStock *listen_stream_stock,
-	       SocketDescriptor log_socket,
-	       const ChildErrorLogOptions &log_options) noexcept
-{
-	return new FcgiStock(limit, max_idle, event_loop,
-			     spawn_service, listen_stream_stock,
-			     log_socket, log_options);
-}
-
 void
-fcgi_stock_free(FcgiStock *fcgi_stock) noexcept
-{
-	delete fcgi_stock;
-}
-
-EventLoop &
-fcgi_stock_get_event_loop(const FcgiStock &fs) noexcept
-{
-	return fs.GetEventLoop();
-}
-
-void
-fcgi_stock_fade_all(FcgiStock &fs) noexcept
-{
-	fs.FadeAll();
-}
-
-void
-fcgi_stock_fade_tag(FcgiStock &fs, std::string_view tag) noexcept
-{
-	fs.FadeTag(tag);
-}
-
-inline void
 FcgiStock::Get(const ChildOptions &options,
 	       const char *executable_path,
 	       std::span<const char *const> args,
@@ -350,24 +244,4 @@ FcgiStock::Get(const ChildOptions &options,
 	const char *key = r->GetStockKey(*tpool);
 	hstock.Get(key, std::move(r),
 			handler, cancel_ptr);
-}
-
-void
-fcgi_stock_get(FcgiStock *fcgi_stock,
-	       const ChildOptions &options,
-	       const char *executable_path,
-	       std::span<const char *const> args,
-	       unsigned parallelism,
-	       StockGetHandler &handler,
-	       CancellablePointer &cancel_ptr) noexcept
-{
-	fcgi_stock->Get(options, executable_path, args,
-			parallelism,
-			handler, cancel_ptr);
-}
-
-int
-fcgi_stock_item_get_domain([[maybe_unused]] const StockItem &item) noexcept
-{
-	return AF_LOCAL;
 }
