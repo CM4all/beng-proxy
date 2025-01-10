@@ -46,11 +46,11 @@ public:
 	void Start(StockMap &child_stock_map,
 		   StockRequest &&request,
 		   CancellablePointer &caller_cancel_ptr) noexcept {
-			   caller_cancel_ptr = *this;
-			   child_stock_map.Get(create.GetStockName(),
-					       std::move(request),
-					       *this, cancel_ptr);
-		   }
+		caller_cancel_ptr = *this;
+		child_stock_map.Get(create.GetStockName(),
+				    std::move(request),
+				    *this, cancel_ptr);
+	}
 
 private:
 	/* virtual methods from class StockGetHandler */
