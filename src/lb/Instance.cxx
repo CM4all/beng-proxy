@@ -130,6 +130,7 @@ void
 LbInstance::Compress() noexcept
 {
 	fb_pool_compress();
+	request_slice_pool.Compress();
 
 #ifdef ENABLE_CERTDB
 	for (auto &i : cert_dbs)

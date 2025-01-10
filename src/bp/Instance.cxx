@@ -194,6 +194,7 @@ void
 BpInstance::Compress() noexcept
 {
 	fb_pool_compress();
+	request_slice_pool.Compress();
 
 	if (per_site)
 		per_site->Expire(ToFloatSeconds(event_loop.SteadyNow().time_since_epoch()));

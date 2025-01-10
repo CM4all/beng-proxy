@@ -22,6 +22,7 @@
 #include <cassert>
 #include <string_view>
 
+class SlicePool;
 enum class HttpMethod : uint_least8_t;
 struct HttpServerRequest;
 class HttpHeaders;
@@ -105,6 +106,8 @@ struct HttpServerConnection final
 	};
 
 	struct pool *const pool;
+
+	SlicePool &request_slice_pool;
 
 	/* I/O */
 	UniquePoolPtr<FilteredSocket> socket;
@@ -281,6 +284,7 @@ struct HttpServerConnection final
 			     SocketAddress _local_address,
 			     SocketAddress _remote_address,
 			     bool _date_header,
+			     SlicePool &_request_slice_pool,
 			     HttpServerConnectionHandler &_handler,
 			     HttpServerRequestHandler &_request_handler) noexcept;
 

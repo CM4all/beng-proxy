@@ -44,7 +44,7 @@ HttpServerConnection::NewRequest(HttpMethod method,
 {
 	response.status = {};
 
-	auto request_pool = pool_new_linear(pool, "http_server_request", 8192);
+	auto request_pool = pool_new_slice(*pool, "HttpServerRequest", request_slice_pool);
 	pool_set_major(request_pool);
 
 	return NewFromPool<HttpServerRequest>(std::move(request_pool),
@@ -318,9 +318,11 @@ HttpServerConnection::HttpServerConnection(struct pool &_pool,
 					   SocketAddress _local_address,
 					   SocketAddress _remote_address,
 					   bool _date_header,
+					   SlicePool &_request_slice_pool,
 					   HttpServerConnectionHandler &_handler,
 					   HttpServerRequestHandler &_request_handler) noexcept
-	:pool(&_pool), socket(std::move(_socket)),
+	:pool(&_pool), request_slice_pool(_request_slice_pool),
+	 socket(std::move(_socket)),
 	 idle_timer(socket->GetEventLoop(),
 		    BIND_THIS_METHOD(IdleTimeoutCallback)),
 	 read_timer(socket->GetEventLoop(),
@@ -354,6 +356,7 @@ http_server_connection_new(struct pool &pool,
 			   SocketAddress local_address,
 			   SocketAddress remote_address,
 			   bool date_header,
+			   SlicePool &slice_pool,
 			   HttpServerConnectionHandler &handler,
 			   HttpServerRequestHandler &request_handler) noexcept
 {
@@ -363,6 +366,7 @@ http_server_connection_new(struct pool &pool,
 						 std::move(socket),
 						 local_address, remote_address,
 						 date_header,
+						 slice_pool,
 						 handler, request_handler);
 }
 

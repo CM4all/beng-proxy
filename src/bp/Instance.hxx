@@ -15,6 +15,7 @@
 #ifdef HAVE_LIBWAS
 #include "was/MetricsHandler.hxx"
 #endif
+#include "memory/SlicePool.hxx"
 #include "event/SignalEvent.hxx"
 #include "event/ShutdownListener.hxx"
 #include "event/FarTimerEvent.hxx"
@@ -96,6 +97,11 @@ struct BpInstance final : PInstance, BengControl::Handler,
 		uring.get(),
 #endif
 	};
+
+	/**
+	 * An allocator for per-request memory.
+	 */
+	SlicePool request_slice_pool{16384, 4096, "Requests"};
 
 	std::map<std::string, BpListenerStats> listener_stats;
 

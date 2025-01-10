@@ -109,6 +109,7 @@ NewLbHttpConnection(LbInstance &instance,
 										   connection->GetPool(),
 										   std::move(socket),
 										   address,
+										   instance.request_slice_pool,
 										   *connection,
 										   *connection);
 	else
@@ -120,6 +121,7 @@ NewLbHttpConnection(LbInstance &instance,
 							      : nullptr,
 							      address,
 							      false,
+							      instance.request_slice_pool,
 							      *connection,
 							      *connection);
 

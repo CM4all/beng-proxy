@@ -26,6 +26,7 @@
 #include "istream/Sink.hxx"
 #include "memory/GrowingBuffer.hxx"
 #include "memory/SinkGrowingBuffer.hxx"
+#include "memory/SlicePool.hxx"
 #include "memory/istream_gb.hxx"
 #include "fs/FilteredSocket.hxx"
 #include "lib/fmt/RuntimeError.hxx"
@@ -48,6 +49,8 @@ class Server final
 	  HttpServerConnectionHandler, HttpServerRequestHandler,
 	  Lease, BufferedSocketHandler
 {
+	SlicePool request_slice_pool{8192, 256, "Requests"};
+
 	HttpServerConnection *connection = nullptr;
 
 	std::function<void(IncomingHttpRequest &request,
@@ -278,7 +281,9 @@ Server::Server(struct pool &_pool, EventLoop &event_loop)
 										    std::move(server_socket),
 										    FdType::FD_SOCKET),
 						nullptr, nullptr,
-						true, *this, *this);
+						true,
+						request_slice_pool,
+						*this, *this);
 
 	client_fs.InitDummy(client_socket.Release(), FdType::FD_SOCKET);
 }

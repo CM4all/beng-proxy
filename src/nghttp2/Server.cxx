@@ -601,9 +601,11 @@ ServerConnection::Request::SendResponse(HttpStatus status,
 ServerConnection::ServerConnection(struct pool &_pool,
 				   UniquePoolPtr<FilteredSocket> _socket,
 				   SocketAddress _remote_address,
+				   SlicePool &_request_slice_pool,
 				   HttpServerConnectionHandler &_handler,
 				   HttpServerRequestHandler &_request_handler)
-	:pool(_pool), socket(std::move(_socket)),
+	:pool(_pool), request_slice_pool(_request_slice_pool),
+	socket(std::move(_socket)),
 	 handler(_handler), request_handler(_request_handler),
 	 local_address(DupAddress(pool, socket->GetSocket().GetLocalAddress())),
 	 remote_address(DupAddress(pool, _remote_address)),
@@ -735,8 +737,7 @@ ServerConnection::OnBeginHeaderCallback(const nghttp2_frame &frame) noexcept
 	if (frame.hd.type == NGHTTP2_HEADERS &&
 	    frame.headers.cat == NGHTTP2_HCAT_REQUEST) {
 
-		auto stream_pool = pool_new_linear(&pool,
-						   "NgHttp2ServerRequest", 8192);
+		auto stream_pool = pool_new_slice(pool, "NgHttp2ServerRequest", request_slice_pool);
 		pool_set_major(stream_pool);
 
 		assert(requests.empty() == idle_timer.IsPending());

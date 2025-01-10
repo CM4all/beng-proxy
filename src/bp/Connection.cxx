@@ -162,6 +162,7 @@ new_connection(PoolPtr pool, BpInstance &instance, BpListener &listener,
 										   connection->GetPool(),
 										   std::move(socket),
 										   address,
+										   instance.request_slice_pool,
 										   *connection,
 										   *request_handler);
 	else
@@ -174,6 +175,7 @@ new_connection(PoolPtr pool, BpInstance &instance, BpListener &listener,
 						   : nullptr,
 						   address,
 						   true,
+						   instance.request_slice_pool,
 						   *connection,
 						   *request_handler);
 

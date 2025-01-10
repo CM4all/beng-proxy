@@ -10,6 +10,7 @@
 #include "access_log/Multi.hxx"
 #include "stats/HttpStats.hxx"
 #include "lib/avahi/ErrorHandler.hxx"
+#include "memory/SlicePool.hxx"
 #include "event/FarTimerEvent.hxx"
 #include "event/SignalEvent.hxx"
 #include "event/ShutdownListener.hxx"
@@ -55,6 +56,11 @@ struct LbInstance final : PInstance, Avahi::ErrorHandler {
 	HttpStats http_stats;
 
 	std::forward_list<LbControl> controls;
+
+	/**
+	 * An allocator for per-request memory.
+	 */
+	SlicePool request_slice_pool{8192, 8192, "Requests"};
 
 	/* stock */
 	FailureManager failure_manager;

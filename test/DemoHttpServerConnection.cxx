@@ -31,6 +31,7 @@ DemoHttpServerConnection::DemoHttpServerConnection(struct pool &pool,
 					       nullptr,
 					       address,
 					       true,
+					       request_slice_pool,
 					       *this, *this)),
 	 response_timer(event_loop, BIND_THIS_METHOD(OnResponseTimer)),
 	 mode(_mode) {}

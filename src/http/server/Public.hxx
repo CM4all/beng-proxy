@@ -4,6 +4,7 @@
 
 #pragma once
 
+class SlicePool;
 struct pool;
 template<typename T> class UniquePoolPtr;
 class FilteredSocket;
@@ -50,6 +51,7 @@ http_server_connection_new(struct pool &pool,
 			   SocketAddress local_address,
 			   SocketAddress remote_address,
 			   bool date_header,
+			   SlicePool &request_slice_pool,
 			   HttpServerConnectionHandler &handler,
 			   HttpServerRequestHandler &request_handler) noexcept;
 

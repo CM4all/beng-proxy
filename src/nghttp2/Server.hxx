@@ -10,6 +10,7 @@
 #include "net/SocketAddress.hxx"
 #include "util/IntrusiveList.hxx"
 
+class SlicePool;
 struct pool;
 class FilteredSocket;
 class HttpServerConnectionHandler;
@@ -19,6 +20,8 @@ namespace NgHttp2 {
 
 class ServerConnection final : BufferedSocketHandler {
 	struct pool &pool;
+
+	SlicePool &request_slice_pool;
 
 	const UniquePoolPtr<FilteredSocket> socket;
 
@@ -51,6 +54,7 @@ public:
 	ServerConnection(struct pool &_pool,
 			 UniquePoolPtr<FilteredSocket> _socket,
 			 SocketAddress remote_address,
+			 SlicePool &_request_slice_pool,
 			 HttpServerConnectionHandler &_handler,
 			 HttpServerRequestHandler &request_handler);
 

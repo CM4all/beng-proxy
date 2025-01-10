@@ -8,6 +8,7 @@
 #include "http/IncomingRequest.hxx"
 #include "http/server/Handler.hxx"
 #include "fs/FilteredSocket.hxx"
+#include "memory/SlicePool.hxx"
 #include "event/Loop.hxx"
 #include "event/net/TemplateServerSocket.hxx"
 #include "net/UniqueSocketDescriptor.hxx"
@@ -25,11 +26,13 @@ class Connection final
 
 public:
 	Connection(struct pool &pool, EventLoop &event_loop,
+		   SlicePool &request_slice_pool,
 		   UniqueSocketDescriptor fd, SocketAddress address)
 		:http(pool,
 		      UniquePoolPtr<FilteredSocket>::Make(pool, event_loop,
 							  std::move(fd), FD_TCP),
 		      address,
+		      request_slice_pool,
 		      *this, *this) {}
 
 	/* virtual methods from class HttpServerConnectionHandler */
@@ -57,7 +60,7 @@ public:
 };
 
 typedef TemplateServerSocket<Connection, struct pool &,
-			     EventLoop &> Listener;
+			     EventLoop &, SlicePool &> Listener;
 
 int
 main(int, char **) noexcept
@@ -66,7 +69,8 @@ try {
 	RootPool pool;
 	EventLoop event_loop;
 
-	Listener listener(event_loop, pool.get(), event_loop);
+	SlicePool request_slice_pool{8192, 256, "Requests"};
+	Listener listener{event_loop, pool.get(), event_loop, request_slice_pool};
 	listener.ListenTCP(8000);
 
 	event_loop.Run();

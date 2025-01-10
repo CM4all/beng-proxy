@@ -6,6 +6,7 @@
 
 #include "http/server/Handler.hxx"
 #include "istream/UnusedHoldPtr.hxx"
+#include "memory/SlicePool.hxx"
 #include "event/DeferEvent.hxx"
 #include "event/FineTimerEvent.hxx"
 #include "io/FdType.hxx"
@@ -52,6 +53,8 @@ public:
 	};
 
 private:
+	SlicePool request_slice_pool{8192, 256, "Requests"};
+
 	HttpServerConnection *connection;
 
 	IncomingHttpRequest *current_request;
