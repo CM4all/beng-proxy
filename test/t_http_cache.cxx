@@ -200,7 +200,7 @@ run_cache_test(Instance &instance, const Request &request, bool cached)
 {
 	auto pool = pool_new_linear(instance.root_pool, "t_http_cache", 8192);
 	const AllocatorPtr alloc{pool};
-	const auto uwa = MakeHttpAddress(request.uri).Host("foo");
+	auto uwa = MakeHttpAddress(request.uri).Host("foo");
 	const ResourceAddress address(uwa);
 
 	CancellablePointer cancel_ptr;

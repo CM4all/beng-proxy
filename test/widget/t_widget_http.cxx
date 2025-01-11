@@ -253,7 +253,7 @@ TEST(WidgetHttpTest, CookieClient)
 				       std::chrono::minutes(30),
 				       0, 0);
 
-	const auto address = MakeHttpAddress("/bar/").Host("foo");
+	auto address = MakeHttpAddress("/bar/").Host("foo");
 	WidgetClass cls;
 	cls.views.push_front(*NewFromPool<WidgetView>(*pool, address));
 	cls.stateful = true;

@@ -151,7 +151,7 @@ struct MakeResponse : TranslateResponse {
 		return std::move(*this);
 	}
 
-	MakeResponse &&File(const FileAddress &_file) {
+	MakeResponse &&File(FileAddress &_file) {
 		address = _file;
 		return std::move(*this);
 	}
@@ -168,7 +168,7 @@ struct MakeResponse : TranslateResponse {
 		return std::move(*this);
 	}
 
-	MakeResponse &&Http(const HttpAddress &_http) {
+	MakeResponse &&Http(HttpAddress &_http) {
 		address = _http;
 		return std::move(*this);
 	}
@@ -177,7 +177,7 @@ struct MakeResponse : TranslateResponse {
 		return Http(*alloc.New<HttpAddress>(alloc, _http));
 	}
 
-	MakeResponse &&Cgi(const CgiAddress &_cgi) {
+	MakeResponse &&Cgi(CgiAddress &_cgi) {
 		address = ResourceAddress(ResourceAddress::Type::CGI, _cgi);
 		return std::move(*this);
 	}
@@ -207,7 +207,7 @@ struct MakeResponse : TranslateResponse {
 		view.transformations.insert_after(i, *t);
 	}
 
-	MakeResponse &&Filter(const CgiAddress &_cgi) {
+	MakeResponse &&Filter(CgiAddress &_cgi) {
 		auto t = alloc.New<Transformation>(FilterTransformation{});
 		t->u.filter.address = ResourceAddress(ResourceAddress::Type::CGI, _cgi);
 		AppendTransformation(t);

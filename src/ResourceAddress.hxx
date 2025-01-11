@@ -38,20 +38,20 @@ struct ResourceAddress {
 
 private:
 	union U {
-		const FileAddress *file;
+		FileAddress *file;
 
-		const HttpAddress *http;
+		HttpAddress *http;
 
-		const LhttpAddress *lhttp;
+		LhttpAddress *lhttp;
 
-		const CgiAddress *cgi;
+		 CgiAddress *cgi;
 
 		U() = default;
 		constexpr U(std::nullptr_t n) noexcept:file(n) {}
-		constexpr U(const FileAddress &_file) noexcept:file(&_file) {}
-		constexpr U(const HttpAddress &_http) noexcept:http(&_http) {}
-		constexpr U(const LhttpAddress &_lhttp) noexcept:lhttp(&_lhttp) {}
-		constexpr U(const CgiAddress &_cgi) noexcept:cgi(&_cgi) {}
+		constexpr U(FileAddress &_file) noexcept:file(&_file) {}
+		constexpr U(HttpAddress &_http) noexcept:http(&_http) {}
+		constexpr U(LhttpAddress &_lhttp) noexcept:lhttp(&_lhttp) {}
+		constexpr U(CgiAddress &_cgi) noexcept:cgi(&_cgi) {}
 	} u;
 
 public:
@@ -60,17 +60,17 @@ public:
 	constexpr ResourceAddress(std::nullptr_t n) noexcept
 		:type(Type::NONE), u(n) {}
 
-	constexpr ResourceAddress(const FileAddress &file) noexcept
+	constexpr ResourceAddress(FileAddress &file) noexcept
 		:type(Type::LOCAL), u(file) {}
 
-	constexpr ResourceAddress(const HttpAddress &http) noexcept
+	constexpr ResourceAddress(HttpAddress &http) noexcept
 		:type(Type::HTTP), u(http) {}
 
-	constexpr ResourceAddress(const LhttpAddress &lhttp) noexcept
+	constexpr ResourceAddress(LhttpAddress &lhttp) noexcept
 		:type(Type::LHTTP), u(lhttp) {}
 
 	constexpr ResourceAddress(Type _type,
-				  const CgiAddress &cgi) noexcept
+				  CgiAddress &cgi) noexcept
 		:type(_type), u(cgi) {}
 
 	constexpr ResourceAddress(ShallowCopy, const ResourceAddress &src) noexcept
