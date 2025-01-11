@@ -8,6 +8,7 @@
 #include "istream/istream_null.hxx"
 #include "strmap.hxx"
 #include "lib/fmt/ToBuffer.hxx"
+#include "lib/fmt/Unsafe.hxx"
 #include "http/CommonHeaders.hxx"
 #include "http/Method.hxx"
 #include "http/Status.hxx"
@@ -21,6 +22,8 @@
 #include <was/protocol.h>
 
 #include <unistd.h>
+
+using std::string_view_literals::operator""sv;
 
 WasServer::WasServer(struct pool &_pool, EventLoop &event_loop,
 		     WasSocket &&_socket,
@@ -446,8 +449,8 @@ WasServer::SendResponse(HttpStatus status,
 			if (available >= 0)
 				headers.Add(AllocatorPtr{request.pool},
 					    content_length_header,
-					    FmtToBuffer(response.content_length_buffer,
-							 "{}", available));
+					    FmtUnsafeC(response.content_length_buffer,
+						       "{}"sv, available));
 		}
 
 		body.Clear();

@@ -13,7 +13,7 @@
 #include "istream/MultiFifoBufferIstream.hxx"
 #include "istream/New.hxx"
 #include "fs/FilteredSocket.hxx"
-#include "lib/fmt/ToBuffer.hxx"
+#include "lib/fmt/Unsafe.hxx"
 #include "net/SocketProtocolError.hxx"
 #include "util/Cancellable.hxx"
 #include "util/StaticVector.hxx"
@@ -281,15 +281,15 @@ ClientConnection::Request::SendRequest(HttpMethod method, const char *uri,
 
 	hdrs.push_back(MakeNv(":path", uri));
 
-	StringBuffer<32> content_length_buffer;
+	char content_length_buffer[32];
 	if (body) {
 		const auto content_length = body.GetAvailable(false);
 		if (content_length >= 0) {
 			/* can't use fmt::format_int because it
 			   doesn't have a default constructor */
-			FmtToBuffer<32>(content_length_buffer, "{}", content_length);
-			hdrs.push_back(MakeNv("content-length",
-					      content_length_buffer.c_str()));
+			hdrs.push_back(MakeNv("content-length"sv,
+					      FmtUnsafeSV(content_length_buffer,
+							  "{}"sv, content_length)));
 		}
 	}
 

@@ -25,7 +25,7 @@
 #include "istream/MultiFifoBufferIstream.hxx"
 #include "istream/New.hxx"
 #include "fs/FilteredSocket.hxx"
-#include "lib/fmt/ToBuffer.hxx"
+#include "lib/fmt/Unsafe.hxx"
 #include "event/Loop.hxx"
 #include "net/StaticSocketAddress.hxx"
 #include "net/log/ContentType.hxx"
@@ -559,15 +559,15 @@ ServerConnection::Request::SendResponse(HttpStatus status,
 		   this should probably be configurable */
 		hdrs.push_back(MakeNv("strict-transport-security", "max-age=7776000"));
 
-	StringBuffer<32> content_length_buffer;
+	char content_length_buffer[32];
 	if (_response_body) {
 		const auto content_length = _response_body.GetAvailable(false);
 		if (content_length >= 0) {
 			/* can't use fmt::format_int because it
 			   doesn't have a default constructor */
-			FmtToBuffer<32>(content_length_buffer, "{}", content_length);
-			hdrs.push_back(MakeNv("content-length",
-					      content_length_buffer.c_str()));
+			hdrs.push_back(MakeNv("content-length"sv,
+					      FmtUnsafeSV(content_length_buffer,
+							  "{}"sv, content_length)));
 		}
 
 		if (http_method_is_empty(method))
