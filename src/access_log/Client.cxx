@@ -23,7 +23,7 @@ try {
 	assert(n_vecs < vecs.size());
 
 	const auto w = std::span{buffer}.subspan(buffer_fill);
-	const auto size = Serialize(w.data(), w.size(), d);
+	const auto size = Serialize(w, d);
 	assert(size > 0);
 
 	buffer_fill += size;
