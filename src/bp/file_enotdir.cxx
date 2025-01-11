@@ -130,7 +130,9 @@ Request::ApplyFileEnotdir() noexcept
 
 		auto address =
 			translate.address.Apply(pool, translate.enotdir_path_info);
-		if (address.IsDefined())
+		if (address.IsDefined()) {
 			translate.address = std::move(address);
+			translate.address_id = nullptr;
+		}
 	}
 }

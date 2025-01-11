@@ -451,7 +451,8 @@ UpdateHeader(AllocatorPtr alloc, StringMap &dest,
 }
 
 static const char *
-http_cache_key(struct pool &pool, const ResourceAddress &address) noexcept
+http_cache_key(struct pool &pool, const ResourceAddress &address,
+	       const char *id) noexcept
 {
 	switch (address.type) {
 	case ResourceAddress::Type::NONE:
@@ -465,7 +466,9 @@ http_cache_key(struct pool &pool, const ResourceAddress &address) noexcept
 	case ResourceAddress::Type::CGI:
 	case ResourceAddress::Type::FASTCGI:
 	case ResourceAddress::Type::WAS:
-		return address.GetId(pool);
+		return id != nullptr
+			? id
+			: address.GetId(pool);
 	}
 
 	/* unreachable */
@@ -1146,7 +1149,7 @@ HttpCache::Start(struct pool &caller_pool,
 		 HttpResponseHandler &handler,
 		 CancellablePointer &cancel_ptr) noexcept
 {
-	const char *key = http_cache_key(caller_pool, address);
+	const char *key = http_cache_key(caller_pool, address, params.address_id);
 	if (/* this address type cannot be cached; skip the rest of this
 	       library */
 	    key == nullptr ||

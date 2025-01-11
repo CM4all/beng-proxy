@@ -40,6 +40,13 @@ struct ResourceRequestParams {
 	bool want_metrics;
 
 	/**
+	 * If this is set, then the caller has already invoked
+	 * ResourceAddress::GetId() and the cache doesn't need to do
+	 * it again.
+	 */
+	const char *address_id;
+
+	/**
 	 * An opaque tag string to be assigned to the cache
 	 * item (if the response is going to be cached by the
 	 * #ResourceLoader); may be nullptr.

@@ -117,6 +117,13 @@ private:
 		ResourceAddress address;
 
 		/**
+		 * The result of address.GetId().  This is remembered
+                 * to be passed to the HTTP cache to avoid calling
+                 * GetId() again.
+		 */
+		const char *address_id = nullptr;
+
+		/**
 		 * The next transformation.
 		 */
 		IntrusiveForwardList<Transformation> transformations;
