@@ -4,6 +4,8 @@
 
 #pragma once
 
+#include "util/TagStructs.hxx"
+
 #include <cstddef>
 #include <span>
 #include <string_view>
@@ -51,6 +53,9 @@ struct FileAddress {
 	{
 	}
 
+	FileAddress(ShallowCopy, const FileAddress &src) noexcept
+		:FileAddress(src) {}
+
 	/**
 	 * Copy from an existing #FileAddress instance, but override the
 	 * path.
@@ -62,7 +67,10 @@ struct FileAddress {
 
 	FileAddress(AllocatorPtr alloc, const FileAddress &src) noexcept;
 
-	FileAddress(const FileAddress &) = delete;
+private:
+	constexpr FileAddress(const FileAddress &) noexcept = default;
+
+public:
 	FileAddress &operator=(const FileAddress &) = delete;
 
 	[[gnu::pure]]
