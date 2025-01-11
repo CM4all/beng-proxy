@@ -312,13 +312,10 @@ UnescapeApplyPathInfo(AllocatorPtr alloc, const char *base_path_info,
 			    {unescaped, unescaped_length});
 }
 
-const CgiAddress *
+CgiAddress *
 CgiAddress::Apply(AllocatorPtr alloc,
 		  std::string_view relative) const noexcept
 {
-	if (relative.empty())
-		return this;
-
 	const char *new_path_info = UnescapeApplyPathInfo(alloc, path_info,
 							  relative);
 	if (new_path_info == nullptr)

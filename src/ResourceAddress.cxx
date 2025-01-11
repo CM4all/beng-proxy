@@ -345,6 +345,9 @@ ResourceAddress
 ResourceAddress::Apply(AllocatorPtr alloc,
 		       std::string_view relative) const noexcept
 {
+	if (relative.empty())
+		return {ShallowCopy(), *this};
+
 	switch (type) {
 	case Type::NONE:
 		return nullptr;

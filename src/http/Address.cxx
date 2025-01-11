@@ -213,13 +213,10 @@ HttpAddress::LoadBase(AllocatorPtr alloc,
 					  alloc.Concat(path, suffix));
 }
 
-const HttpAddress *
+HttpAddress *
 HttpAddress::Apply(AllocatorPtr alloc,
 		   std::string_view relative) const noexcept
 {
-	if (relative.empty())
-		return this;
-
 	if (UriHasScheme(relative)) {
 		HttpAddress *other;
 		try {

@@ -142,11 +142,10 @@ struct LhttpAddress {
 			       std::string_view suffix) const noexcept;
 
 	/**
-	 * @return a new object on success, src if no change is needed, nullptr
-	 * on error
+	 * @return a new object on success, nullptr on error
 	 */
-	const LhttpAddress *Apply(AllocatorPtr alloc,
-				  std::string_view relative) const noexcept;
+	LhttpAddress *Apply(AllocatorPtr alloc,
+			    std::string_view relative) const noexcept;
 
 	[[gnu::pure]]
 	std::string_view RelativeTo(const LhttpAddress &base) const noexcept;

@@ -164,12 +164,9 @@ ApplyUri(AllocatorPtr alloc, const char *base_uri,
 	return uri_absolute(alloc, base_uri, relative);
 }
 
-const LhttpAddress *
+LhttpAddress *
 LhttpAddress::Apply(AllocatorPtr alloc, std::string_view relative) const noexcept
 {
-	if (relative.empty())
-		return this;
-
 	const char *new_uri = ApplyUri(alloc, uri, relative);
 	if (new_uri == nullptr)
 		return nullptr;

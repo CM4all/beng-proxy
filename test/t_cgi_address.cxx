@@ -77,7 +77,12 @@ TEST(CgiAddressTest, Apply)
 	auto a = MakeCgiAddress("/usr/bin/cgi", nullptr, "/test.pl", "/foo");
 
 	auto b = a.Apply(alloc, "");
-	ASSERT_EQ((const CgiAddress *)&a, b);
+	ASSERT_NE(b, nullptr);
+	ASSERT_NE(b, &a);
+	ASSERT_FALSE(b->IsValidBase());
+	ASSERT_STREQ(b->path, a.path);
+	ASSERT_STREQ(b->script_name, a.script_name);
+	ASSERT_STREQ(b->path_info, "/foo");
 
 	b = a.Apply(alloc, "bar");
 	ASSERT_NE(b, nullptr);

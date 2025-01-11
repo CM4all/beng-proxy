@@ -135,8 +135,8 @@ struct HttpAddress {
 	HttpAddress *LoadBase(AllocatorPtr alloc,
 			      std::string_view suffix) const noexcept;
 
-	const HttpAddress *Apply(AllocatorPtr alloc,
-				 std::string_view relative) const noexcept;
+	HttpAddress *Apply(AllocatorPtr alloc,
+			   std::string_view relative) const noexcept;
 
 	/**
 	 * Does this address need to be expanded with http_address_expand()?

@@ -169,11 +169,10 @@ struct CgiAddress {
 			     std::string_view suffix) const noexcept;
 
 	/**
-	 * @return a new object on success, src if no change is needed,
-	 * nullptr on error
+	 * @return a new object on success, nullptr on error
 	 */
-	const CgiAddress *Apply(AllocatorPtr alloc,
-				std::string_view relative) const noexcept;
+	CgiAddress *Apply(AllocatorPtr alloc,
+			  std::string_view relative) const noexcept;
 
 	/**
 	 * Check if this instance is relative to the base, and return the
