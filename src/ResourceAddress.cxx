@@ -89,11 +89,7 @@ ResourceAddress
 ResourceAddress::WithQueryStringFrom(AllocatorPtr alloc,
 				     const char *uri) const noexcept
 {
-	const char *query_string;
-
 	switch (type) {
-		CgiAddress *cgi;
-
 	case Type::NONE:
 	case Type::LOCAL:
 	case Type::PIPE:
@@ -103,36 +99,33 @@ ResourceAddress::WithQueryStringFrom(AllocatorPtr alloc,
 	case Type::HTTP:
 		assert(u.http != nullptr);
 
-		query_string = UriQuery(uri);
-		if (query_string == nullptr)
+		if (const char *query_string = UriQuery(uri); query_string != nullptr)
+			return *u.http->InsertQueryString(alloc, query_string);
+		else
 			/* no query string in URI */
 			return {ShallowCopy(), *this};
-
-		return *u.http->InsertQueryString(alloc, query_string);
 
 	case Type::LHTTP:
 		assert(u.lhttp != nullptr);
 
-		query_string = UriQuery(uri);
-		if (query_string == nullptr)
+		if (const char *query_string = UriQuery(uri); query_string != nullptr)
+			return *u.lhttp->InsertQueryString(alloc, query_string);
+		else
 			/* no query string in URI */
 			return {ShallowCopy(), *this};
-
-		return *u.lhttp->InsertQueryString(alloc, query_string);
 
 	case Type::CGI:
 	case Type::FASTCGI:
 	case Type::WAS:
 		assert(u.cgi->path != nullptr);
 
-		query_string = UriQuery(uri);
-		if (query_string == nullptr)
+		if (const char *query_string = UriQuery(uri); query_string != nullptr) {
+			auto *cgi = alloc.New<CgiAddress>(ShallowCopy(), GetCgi());
+			cgi->InsertQueryString(alloc, query_string);
+			return {type, *cgi};
+		} else
 			/* no query string in URI */
 			return {ShallowCopy(), *this};
-
-		cgi = alloc.New<CgiAddress>(ShallowCopy(), GetCgi());
-		cgi->InsertQueryString(alloc, query_string);
-		return ResourceAddress(type, *cgi);
 	}
 
 	assert(false);
@@ -214,40 +207,28 @@ ResourceAddress::SaveBase(AllocatorPtr alloc,
 	case Type::CGI:
 	case Type::FASTCGI:
 	case Type::WAS:
-		{
-			auto *cgi = GetCgi().SaveBase(alloc, suffix);
-			if (cgi == nullptr)
-				return nullptr;
-
-			return ResourceAddress(type, *cgi);
-		}
+		if (auto *cgi = GetCgi().SaveBase(alloc, suffix); cgi != nullptr)
+			return {type, *cgi};
+		else
+			return nullptr;
 
 	case Type::LOCAL:
-		{
-			auto *file = GetFile().SaveBase(alloc, suffix);
-			if (file == nullptr)
-				return nullptr;
-
+		if (auto *file = GetFile().SaveBase(alloc, suffix); file != nullptr)
 			return *file;
-		}
+		else
+			return nullptr;
 
 	case Type::HTTP:
-		{
-			auto *http = GetHttp().SaveBase(alloc, suffix);
-			if (http == nullptr)
-				return nullptr;
-
+		if (auto *http = GetHttp().SaveBase(alloc, suffix); http != nullptr)
 			return *http;
-		}
+		else
+			return nullptr;
 
 	case Type::LHTTP:
-		{
-			auto *lhttp = GetLhttp().SaveBase(alloc, suffix);
-			if (lhttp == nullptr)
-				return nullptr;
-
+		if (auto *lhttp = GetLhttp().SaveBase(alloc, suffix); lhttp != nullptr)
 			return *lhttp;
-		}
+		else
+			return nullptr;
 	}
 
 	assert(false);
@@ -306,40 +287,28 @@ ResourceAddress::LoadBase(AllocatorPtr alloc,
 	case Type::CGI:
 	case Type::FASTCGI:
 	case Type::WAS:
-		{
-			auto *cgi = GetCgi().LoadBase(alloc, suffix);
-			if (cgi == nullptr)
-				return nullptr;
-
-			return ResourceAddress(type, *cgi);
-		}
+		if (auto *cgi = GetCgi().LoadBase(alloc, suffix); cgi != nullptr)
+			return {type, *cgi};
+		else
+			return nullptr;
 
 	case Type::LOCAL:
-		{
-			auto *file = GetFile().LoadBase(alloc, suffix);
-			if (file == nullptr)
-				return nullptr;
-
+		if (auto *file = GetFile().LoadBase(alloc, suffix); file != nullptr)
 			return *file;
-		}
+		else
+			return nullptr;
 
 	case Type::HTTP:
-		{
-			auto *http = GetHttp().LoadBase(alloc, suffix);
-			if (http == nullptr)
-				return nullptr;
-
+		if (auto *http = GetHttp().LoadBase(alloc, suffix); http != nullptr)
 			return *http;
-		}
+		else
+			return nullptr;
 
 	case Type::LHTTP:
-		{
-			auto *lhttp = GetLhttp().LoadBase(alloc, suffix);
-			if (lhttp == nullptr)
-				return nullptr;
-
+		if (auto *lhttp = GetLhttp().LoadBase(alloc, suffix); lhttp != nullptr)
 			return *lhttp;
-		}
+		else
+			return nullptr;
 	}
 
 	assert(false);
@@ -376,10 +345,6 @@ ResourceAddress
 ResourceAddress::Apply(AllocatorPtr alloc,
 		       std::string_view relative) const noexcept
 {
-	const HttpAddress *uwa;
-	const CgiAddress *cgi;
-	const LhttpAddress *lhttp;
-
 	switch (type) {
 	case Type::NONE:
 		return nullptr;
@@ -389,27 +354,25 @@ ResourceAddress::Apply(AllocatorPtr alloc,
 		return {ShallowCopy(), *this};
 
 	case Type::HTTP:
-		uwa = u.http->Apply(alloc, relative);
-		if (uwa == nullptr)
+		if (auto *http = u.http->Apply(alloc, relative); http != nullptr)
+			return *http;
+		else
 			return nullptr;
-
-		return *uwa;
 
 	case Type::LHTTP:
-		lhttp = u.lhttp->Apply(alloc, relative);
-		if (lhttp == nullptr)
+		if (auto *lhttp = u.lhttp->Apply(alloc, relative); lhttp != nullptr)
+			return *lhttp;
+		else
 			return nullptr;
-
-		return *lhttp;
 
 	case Type::CGI:
 	case Type::FASTCGI:
 	case Type::WAS:
-		cgi = u.cgi->Apply(alloc, relative);
-		if (cgi == nullptr)
+		if (auto *cgi = u.cgi->Apply(alloc, relative); cgi != nullptr)
+			return {type, *cgi};
+		else
 			return nullptr;
 
-		return ResourceAddress(type, *cgi);
 	}
 
 	assert(false);
