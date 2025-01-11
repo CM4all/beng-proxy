@@ -61,7 +61,7 @@ public:
 	/**
 	 * Throws on error.
 	 */
-	void Launch(const CgiChildParams &params, SocketDescriptor log_socket,
+	void Launch(const CgiChildParams &params, Net::Log::Sink *log_sink,
 		    const ChildErrorLogOptions &log_options) {
 		auto process =
 			was_launch(was_stock.GetSpawnService(),
@@ -71,7 +71,7 @@ public:
 				   params.args,
 				   params.options,
 				   log.EnableClient(GetEventLoop(),
-						    log_socket, log_options,
+						    log_sink, log_options,
 						    params.options.stderr_pond));
 
 		handle = std::move(process.handle);
@@ -130,7 +130,7 @@ WasStock::Create(CreateStockItem c, StockRequest _request,
 	auto *child = new WasChild(c, *this, params.options.tag, params.disposable);
 
 	try {
-		child->Launch(params, log_socket, log_options);
+		child->Launch(params, log_sink, log_options);
 	} catch (...) {
 		delete child;
 		throw;

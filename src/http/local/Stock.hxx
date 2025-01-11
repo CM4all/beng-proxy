@@ -9,6 +9,7 @@
 #include <cstddef>
 #include <string_view>
 
+namespace Net::Log { class Sink; }
 struct pool;
 struct ChildErrorLogOptions;
 class LhttpStock;
@@ -28,7 +29,7 @@ LhttpStock *
 lhttp_stock_new(unsigned limit, unsigned max_idle,
 		EventLoop &event_loop, SpawnService &spawn_service,
 		ListenStreamStock *listen_stream_stock,
-		SocketDescriptor log_socket,
+		Net::Log::Sink *log_sink,
 		const ChildErrorLogOptions &log_options) noexcept;
 
 void

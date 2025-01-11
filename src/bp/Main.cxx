@@ -230,8 +230,8 @@ MakeTranslationService(EventLoop &event_loop, TranslationServiceBuilder &b,
 	return multi;
 }
 
-inline SocketDescriptor
-BpInstance::GetChildLogSocket(const UidGid *logger_user)
+inline Net::Log::Sink *
+BpInstance::GetChildLogSink(const UidGid *logger_user)
 {
 	if (config.child_error_log.type != AccessLogConfig::Type::INTERNAL) {
 		if (!child_error_log)
@@ -239,13 +239,13 @@ BpInstance::GetChildLogSocket(const UidGid *logger_user)
 								    logger_user));
 
 		if (child_error_log)
-			return child_error_log->GetChildSocket();
+			return child_error_log->GetChildSink();
 	}
 
 	if (auto *access_logger = access_log.Make(config.access_log, logger_user, {}))
-		return access_logger->GetChildSocket();
+		return access_logger->GetChildSink();
 
-	return SocketDescriptor::Undefined();
+	return nullptr;
 }
 
 void
@@ -355,7 +355,7 @@ try {
 
 	/* launch the access logger */
 
-	const auto child_log_socket = instance.GetChildLogSocket(&cmdline.logger_user);
+	Net::Log::Sink *const child_log_sink = instance.GetChildLogSink(&cmdline.logger_user);
 
 	const auto &child_log_options = instance.config.child_error_log.type != AccessLogConfig::Type::INTERNAL
 		? instance.config.child_error_log.child_error_options
@@ -430,7 +430,7 @@ try {
 					       instance.event_loop,
 					       *instance.spawn_service,
 					       instance.listen_stream_stock.get(),
-					       child_log_socket,
+					       child_log_sink,
 					       child_log_options);
 
 	instance.fcgi_stock = std::make_unique<FcgiStock>(instance.config.fcgi_stock_limit,
@@ -438,13 +438,13 @@ try {
 							  instance.event_loop,
 							  *instance.spawn_service,
 							  instance.listen_stream_stock.get(),
-							  child_log_socket, child_log_options);
+							  child_log_sink, child_log_options);
 
 #ifdef HAVE_LIBWAS
 	instance.was_stock = new WasStock(instance.event_loop,
 					  *instance.spawn_service,
 					  instance.listen_stream_stock.get(),
-					  child_log_socket, child_log_options,
+					  child_log_sink, child_log_options,
 					  instance.config.was_stock_limit,
 					  instance.config.was_stock_max_idle);
 	instance.multi_was_stock =
@@ -452,7 +452,7 @@ try {
 				  instance.config.multi_was_stock_max_idle,
 				  instance.event_loop,
 				  *instance.spawn_service,
-				  child_log_socket,
+				  child_log_sink,
 				  child_log_options);
 	instance.remote_was_stock =
 		new RemoteWasStock(instance.config.remote_was_stock_limit,

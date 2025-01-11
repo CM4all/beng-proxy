@@ -65,7 +65,7 @@ AccessLogGlue::Log(const Net::Log::Datagram &d) noexcept
 		return;
 
 	if (client != nullptr)
-		client->Send(d);
+		client->Log(d);
 	else
 		LogOneLine(FileDescriptor(STDOUT_FILENO), d, {});
 }
@@ -149,10 +149,8 @@ AccessLogGlue::Log(std::chrono::system_clock::time_point now,
 	    duration);
 }
 
-SocketDescriptor
-AccessLogGlue::GetChildSocket() noexcept
+Net::Log::Sink *
+AccessLogGlue::GetChildSink() noexcept
 {
-	return config.forward_child_errors && client
-		? client->GetSocket()
-		: SocketDescriptor::Undefined();
+	return config.forward_child_errors ? client.get() : nullptr;
 }

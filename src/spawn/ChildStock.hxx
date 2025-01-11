@@ -7,15 +7,14 @@
 #include "stock/Class.hxx"
 #include "stock/MapStock.hxx"
 #include "access_log/ChildErrorLogOptions.hxx"
-#include "net/SocketDescriptor.hxx"
 #include "util/IntrusiveList.hxx"
 
 #include <memory>
 #include <string_view>
 
+namespace Net::Log { class Sink; }
 struct PreparedChildProcess;
 class UniqueFileDescriptor;
-class UniqueSocketDescriptor;
 class FdHolder;
 class EventLoop;
 class SpawnService;
@@ -83,7 +82,7 @@ class ChildStock final : public StockClass {
 
 	ChildStockClass &cls;
 
-	const SocketDescriptor log_socket;
+	Net::Log::Sink *const log_sink;
 
 	const ChildErrorLogOptions log_options;
 
@@ -99,7 +98,7 @@ public:
 	ChildStock(SpawnService &_spawn_service,
 		   ListenStreamStock *_listen_stream_stock,
 		   ChildStockClass &_cls,
-		   SocketDescriptor _log_socket,
+		   Net::Log::Sink *_log_sink,
 		   const ChildErrorLogOptions &_log_options) noexcept;
 	~ChildStock() noexcept;
 
@@ -115,8 +114,8 @@ public:
 		return cls;
 	}
 
-	SocketDescriptor GetLogSocket() const noexcept {
-		return log_socket;
+	Net::Log::Sink *GetLogSink() const noexcept {
+		return log_sink;
 	}
 
 	const auto &GetLogOptions() const noexcept {
@@ -184,7 +183,7 @@ public:
 	ChildStockMap(EventLoop &event_loop, SpawnService &_spawn_service,
 		      ListenStreamStock *_listen_stream_stock,
 		      ChildStockMapClass &_cls,
-		      SocketDescriptor _log_socket,
+		      Net::Log::Sink *_log_sink,
 		      const ChildErrorLogOptions &_log_options,
 		      unsigned _limit, unsigned _max_idle) noexcept;
 
@@ -192,8 +191,8 @@ public:
 		return map;
 	}
 
-	auto GetLogSocket() const noexcept {
-		return cls.GetLogSocket();
+	Net::Log::Sink *GetLogSink() const noexcept {
+		return cls.GetLogSink();
 	}
 
 	const auto &GetLogOptions() const noexcept {

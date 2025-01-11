@@ -28,12 +28,12 @@ ChildStockClass::CreateChild(CreateStockItem c, const void *info,
 ChildStock::ChildStock(SpawnService &_spawn_service,
 		       ListenStreamStock *_listen_stream_stock,
 		       ChildStockClass &_cls,
-		       SocketDescriptor _log_socket,
+		       Net::Log::Sink *_log_sink,
 		       const ChildErrorLogOptions &_log_options) noexcept
 	:spawn_service(_spawn_service),
 	 listen_stream_stock(_listen_stream_stock),
 	 cls(_cls),
-	 log_socket(_log_socket),
+	 log_sink(_log_sink),
 	 log_options(_log_options) {}
 
 ChildStock::~ChildStock() noexcept = default;
@@ -92,7 +92,7 @@ ChildStock::DoSpawn(CreateStockItem c, StockRequest request,
 try {
 	auto item = cls.CreateChild(c, request.get(), *this);
 	item->Spawn(cls, request.get(),
-		    log_socket, log_options);
+		    log_sink, log_options);
 
 	item.release()->RegisterCompletionHandler(handler, caller_cancel_ptr);
 } catch (...) {
@@ -123,11 +123,11 @@ ChildStock::Create(CreateStockItem c, StockRequest request,
 ChildStockMap::ChildStockMap(EventLoop &event_loop, SpawnService &_spawn_service,
 			     ListenStreamStock *_listen_stream_stock,
 			     ChildStockMapClass &_cls,
-			     SocketDescriptor _log_socket,
+			     Net::Log::Sink *_log_sink,
 			     const ChildErrorLogOptions &_log_options,
 			     unsigned _limit, unsigned _max_idle) noexcept
 	:cls(_spawn_service, _listen_stream_stock,
-	     _cls, _log_socket, _log_options),
+	     _cls, _log_sink, _log_options),
 	 map(event_loop, cls, _cls, _limit, _max_idle)
 {
 }

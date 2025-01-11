@@ -68,7 +68,7 @@ public:
 	 * Throws on error.
 	 */
 	void Spawn(ChildStockClass &cls, const void *info,
-		   SocketDescriptor log_socket,
+		   Net::Log::Sink *log_sink,
 		   const ChildErrorLogOptions &log_options);
 
 	/**

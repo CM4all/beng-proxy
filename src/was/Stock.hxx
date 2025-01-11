@@ -12,6 +12,7 @@
 #include <span>
 #include <string_view>
 
+namespace Net::Log { class Sink; }
 struct pool;
 struct ChildOptions;
 struct WasSocket;
@@ -24,7 +25,7 @@ class ListenStreamStock;
 class WasStock final : StockClass {
 	SpawnService &spawn_service;
 	ListenStreamStock *const listen_stream_stock;
-	const SocketDescriptor log_socket;
+	Net::Log::Sink *const log_sink;
 	const ChildErrorLogOptions log_options;
 
 	class WasStockMap final : public StockMap {
@@ -41,12 +42,12 @@ class WasStock final : StockClass {
 public:
 	explicit WasStock(EventLoop &event_loop, SpawnService &_spawn_service,
 			  ListenStreamStock *_listen_stream_stock,
-			  const SocketDescriptor _log_socket,
+			  Net::Log::Sink *_log_sink,
 			  const ChildErrorLogOptions &_log_options,
 			  unsigned limit, unsigned max_idle) noexcept
 		:spawn_service(_spawn_service),
 		 listen_stream_stock(_listen_stream_stock),
-		 log_socket(_log_socket), log_options(_log_options),
+		 log_sink(_log_sink), log_options(_log_options),
 		 stock(event_loop, *this, limit, max_idle,
 		       std::chrono::minutes(10)) {}
 

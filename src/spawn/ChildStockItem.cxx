@@ -41,7 +41,7 @@ ChildStockItem::Prepare(ChildStockClass &cls, const void *info,
 
 void
 ChildStockItem::Spawn(ChildStockClass &cls, const void *info,
-		      SocketDescriptor log_socket,
+		      Net::Log::Sink *log_sink,
 		      const ChildErrorLogOptions &log_options)
 {
 	FdHolder close_fds;
@@ -63,10 +63,10 @@ ChildStockItem::Spawn(ChildStockClass &cls, const void *info,
 			throw std::runtime_error{"No ListenStreamSpawnStock"};
 	}
 
-	if (log_socket.IsDefined() && !p.stderr_fd.IsDefined() &&
+	if (log_sink != nullptr && !p.stderr_fd.IsDefined() &&
 	    p.stderr_path == nullptr)
 		log.EnableClient(p, close_fds,
-				 GetEventLoop(), log_socket, log_options,
+				 GetEventLoop(), log_sink, log_options,
 				 cls.WantStderrPond(info));
 
 	UniqueSocketDescriptor stderr_socket1;

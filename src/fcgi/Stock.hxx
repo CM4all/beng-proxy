@@ -20,8 +20,8 @@ struct ChildOptions;
 class EventLoop;
 class SpawnService;
 class ListenStreamStock;
-class SocketDescriptor;
 class UniqueFileDescriptor;
+class UniqueSocketDescriptor;
 
 class FcgiStock final : StockClass, ListenChildStockClass {
 	PoolPtr pool;
@@ -34,7 +34,7 @@ public:
 	FcgiStock(unsigned limit, unsigned max_idle,
 		  EventLoop &event_loop, SpawnService &spawn_service,
 		  ListenStreamStock *listen_stream_stock,
-		  SocketDescriptor _log_socket,
+		  Net::Log::Sink *log_sink,
 		  const ChildErrorLogOptions &_log_options) noexcept;
 
 	~FcgiStock() noexcept {

@@ -16,17 +16,16 @@ ChildErrorLog::~ChildErrorLog() noexcept = default;
 ChildErrorLog &ChildErrorLog::operator=(ChildErrorLog &&) = default;
 
 ChildErrorLog::ChildErrorLog(PreparedChildProcess &p, FdHolder &close_fds,
-			     EventLoop &event_loop, SocketDescriptor socket,
+			     EventLoop &event_loop, Net::Log::Sink *sink,
 			     const ChildErrorLogOptions &options,
 			     bool force)
 {
-	if (socket.IsDefined())
-		EnableClient(p, close_fds,
-			     event_loop, socket, options, force);
+	EnableClient(p, close_fds,
+		     event_loop, sink, options, force);
 }
 
 UniqueFileDescriptor
-ChildErrorLog::EnableClient(EventLoop &event_loop, SocketDescriptor socket,
+ChildErrorLog::EnableClient(EventLoop &event_loop, Net::Log::Sink *sink,
 			    const ChildErrorLogOptions &options,
 			    bool force)
 {
@@ -35,8 +34,8 @@ ChildErrorLog::EnableClient(EventLoop &event_loop, SocketDescriptor socket,
 	if (!options.is_default && !force)
 		return UniqueFileDescriptor{};
 
-	if (!socket.IsDefined())
-		return UniqueFileDescriptor();
+	if (sink == nullptr)
+		return UniqueFileDescriptor{};
 
 	auto [r, w] = CreatePipe();
 
@@ -48,7 +47,7 @@ ChildErrorLog::EnableClient(EventLoop &event_loop, SocketDescriptor socket,
 	r.SetNonBlocking();
 
 	adapter = std::make_unique<Net::Log::PipeAdapter>(event_loop, std::move(r),
-							  socket,
+							  *sink,
 							  Net::Log::Type::HTTP_ERROR);
 	if (options.rate_limit > 0)
 		adapter->SetRateLimit(options.rate_limit, options.burst);
@@ -57,7 +56,7 @@ ChildErrorLog::EnableClient(EventLoop &event_loop, SocketDescriptor socket,
 
 void
 ChildErrorLog::EnableClient(PreparedChildProcess &p, FdHolder &close_fds,
-			    EventLoop &event_loop, SocketDescriptor socket,
+			    EventLoop &event_loop, Net::Log::Sink *sink,
 			    const ChildErrorLogOptions &options,
 			    bool force)
 {
@@ -67,7 +66,7 @@ ChildErrorLog::EnableClient(PreparedChildProcess &p, FdHolder &close_fds,
 		/* already set */
 		return;
 
-	auto w = EnableClient(event_loop, socket, options, force);
+	auto w = EnableClient(event_loop, sink, options, force);
 	if (w.IsDefined()) {
 		p.stderr_fd = close_fds.Insert(std::move(w));
 

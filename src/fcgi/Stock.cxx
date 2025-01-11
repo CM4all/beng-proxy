@@ -206,7 +206,7 @@ FcgiStock::Create(CreateStockItem c, StockRequest request,
 FcgiStock::FcgiStock(unsigned limit, unsigned max_idle,
 		     EventLoop &event_loop, SpawnService &spawn_service,
 		     ListenStreamStock *listen_stream_stock,
-		     SocketDescriptor _log_socket,
+		     Net::Log::Sink *log_sink,
 		     const ChildErrorLogOptions &_log_options) noexcept
 	:pool(pool_new_dummy(nullptr, "FcgiStock")),
 	 hstock(event_loop, *this, limit, max_idle,
@@ -214,7 +214,7 @@ FcgiStock::FcgiStock(unsigned limit, unsigned max_idle,
 	 child_stock(event_loop, spawn_service,
 		     listen_stream_stock,
 		     *this,
-		     _log_socket, _log_options,
+		     log_sink, _log_options,
 		     limit, max_idle) {}
 
 void

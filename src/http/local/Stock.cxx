@@ -37,7 +37,7 @@ public:
 	LhttpStock(unsigned limit, unsigned max_idle,
 		   EventLoop &event_loop, SpawnService &spawn_service,
 		   ListenStreamStock *_listen_stream_stock,
-		   SocketDescriptor log_socket,
+		   Net::Log::Sink *log_sink,
 		   const ChildErrorLogOptions &log_options) noexcept;
 
 	std::size_t DiscardSome() noexcept {
@@ -334,11 +334,11 @@ inline
 LhttpStock::LhttpStock(unsigned limit, [[maybe_unused]] unsigned max_idle,
 		       EventLoop &event_loop, SpawnService &spawn_service,
 		       ListenStreamStock *_listen_stream_stock,
-		       SocketDescriptor log_socket,
+		       Net::Log::Sink *log_sink,
 		       const ChildErrorLogOptions &log_options) noexcept
 	:child_stock(spawn_service, _listen_stream_stock,
 		     *this,
-		     log_socket, log_options),
+		     log_sink, log_options),
 	 mchild_stock(event_loop, child_stock,
 		      limit,
 		      // TODO max_idle,
@@ -360,12 +360,12 @@ LhttpStock *
 lhttp_stock_new(unsigned limit, unsigned max_idle,
 		EventLoop &event_loop, SpawnService &spawn_service,
 		ListenStreamStock *listen_stream_stock,
-		SocketDescriptor log_socket,
+		Net::Log::Sink *log_sink,
 		const ChildErrorLogOptions &log_options) noexcept
 {
 	return new LhttpStock(limit, max_idle, event_loop, spawn_service,
 			      listen_stream_stock,
-			      log_socket, log_options);
+			      log_sink, log_options);
 }
 
 void

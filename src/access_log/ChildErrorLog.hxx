@@ -13,7 +13,7 @@ class EventLoop;
 class FdHolder;
 class SocketDescriptor;
 class UniqueFileDescriptor;
-namespace Net { namespace Log { struct Datagram; class PipeAdapter; }}
+namespace Net::Log { struct Datagram; class PipeAdapter; class Sink; }
 
 /**
  * A glue class which manages where a child process logs its "stderr".
@@ -33,7 +33,7 @@ public:
 	 * Throws on error.
 	 */
 	ChildErrorLog(PreparedChildProcess &p, FdHolder &close_fds,
-		      EventLoop &event_loop, SocketDescriptor socket,
+		      EventLoop &event_loop, Net::Log::Sink *sink,
 		      const ChildErrorLogOptions &options,
 		      bool force);
 
@@ -58,7 +58,7 @@ public:
 	 * Throws on error.
 	 */
 	UniqueFileDescriptor EnableClient(EventLoop &event_loop,
-					  SocketDescriptor socket,
+					  Net::Log::Sink *sink,
 					  const ChildErrorLogOptions &options,
 					  bool force);
 
@@ -66,7 +66,7 @@ public:
 	 * Throws on error.
 	 */
 	void EnableClient(PreparedChildProcess &p, FdHolder &close_fds,
-			  EventLoop &event_loop, SocketDescriptor socket,
+			  EventLoop &event_loop, Net::Log::Sink *sink,
 			  const ChildErrorLogOptions &log_options,
 			  bool force);
 };

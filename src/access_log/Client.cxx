@@ -7,14 +7,12 @@
 
 using namespace Net::Log;
 
-bool
-LogClient::Send(const Datagram &d) noexcept
+void
+LogClient::Log(const Datagram &d) noexcept
 {
 	try {
 		Net::Log::Send(fd, d);
-		return true;
 	} catch (...) {
 		logger(1, std::current_exception());
-		return false;
 	}
 }

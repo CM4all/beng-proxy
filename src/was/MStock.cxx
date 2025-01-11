@@ -105,13 +105,13 @@ public:
 
 MultiWasStock::MultiWasStock(unsigned limit, [[maybe_unused]] unsigned max_idle,
 			     EventLoop &event_loop, SpawnService &spawn_service,
-			     SocketDescriptor log_socket,
+			     Net::Log::Sink *log_sink,
 			     const ChildErrorLogOptions &log_options) noexcept
 	:pool(pool_new_dummy(nullptr, "MultiWasStock")),
 	 child_stock(spawn_service,
 		     nullptr, // TODO do we need ListenStreamSpawnStock here?
 		     *this,
-		     log_socket, log_options),
+		     log_sink, log_options),
 	 mchild_stock(event_loop, child_stock,
 		      limit,
 		      // TODO max_idle,

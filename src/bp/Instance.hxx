@@ -76,6 +76,7 @@ struct BpListenerStats;
 namespace NgHttp2 { class Stock; }
 namespace Avahi { class Client; class Publisher; }
 namespace Prometheus { struct Stats; }
+namespace Net::Log { class Sink; }
 
 struct BpInstance final : PInstance, BengControl::Handler,
 #ifdef HAVE_LIBWAS
@@ -215,7 +216,7 @@ struct BpInstance final : PInstance, BengControl::Handler,
 	[[gnu::pure]]
 	TranslationServiceBuilder &GetTranslationServiceBuilder() const noexcept;
 
-	SocketDescriptor GetChildLogSocket(const UidGid *logger_user);
+	Net::Log::Sink *GetChildLogSink(const UidGid *logger_user);
 
 	void EnableSignals() noexcept;
 	void DisableSignals() noexcept;

@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include "net/log/Sink.hxx"
 #include "net/UniqueSocketDescriptor.hxx"
 #include "io/Logger.hxx"
 
@@ -12,7 +13,7 @@ namespace Net { namespace Log { struct Datagram; }}
 /**
  * A client for the logging protocol.
  */
-class LogClient {
+class LogClient final : public Net::Log::Sink {
 	const LLogger logger;
 
 	UniqueSocketDescriptor fd;
@@ -25,5 +26,6 @@ public:
 		return fd;
 	}
 
-	bool Send(const Net::Log::Datagram &d) noexcept;
+	// virtual methods from class Net::Log::Sink
+	void Log(const Net::Log::Datagram &d) noexcept override;
 };

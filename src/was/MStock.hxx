@@ -26,7 +26,7 @@ class MultiWasStock final : MultiStockClass, ChildStockClass {
 public:
 	MultiWasStock(unsigned limit, unsigned max_idle,
 		      EventLoop &event_loop, SpawnService &spawn_service,
-		      SocketDescriptor log_socket,
+		      Net::Log::Sink *log_sink,
 		      const ChildErrorLogOptions &log_options) noexcept;
 
 	auto &GetEventLoop() const noexcept {

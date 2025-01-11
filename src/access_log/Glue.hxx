@@ -18,7 +18,7 @@
 enum class HttpStatus : uint_least16_t;
 struct UidGid;
 struct AccessLogConfig;
-namespace Net::Log { enum class ContentType : uint8_t; struct Datagram; }
+namespace Net::Log { enum class ContentType : uint8_t; struct Datagram; class Sink; }
 struct IncomingHttpRequest;
 class SocketDescriptor;
 class LogClient;
@@ -75,9 +75,9 @@ public:
 		 std::chrono::steady_clock::duration duration) noexcept;
 
 	/**
-	 * Returns the connected logger socket to be used to send child
+	 * Returns the connected log sink to be used to send child
 	 * process error messages.  Returns SocketDescriptor::Undefined()
 	 * if the feature is disabled.
 	 */
-	SocketDescriptor GetChildSocket() noexcept;
+	Net::Log::Sink *GetChildSink() noexcept;
 };
