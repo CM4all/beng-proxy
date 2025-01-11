@@ -25,7 +25,8 @@ AccessLogGlue::AccessLogGlue(const AccessLogConfig &_config,
 AccessLogGlue::~AccessLogGlue() noexcept = default;
 
 AccessLogGlue *
-AccessLogGlue::Create(const AccessLogConfig &config,
+AccessLogGlue::Create(EventLoop &event_loop,
+		      const AccessLogConfig &config,
 		      const UidGid *user)
 {
 	switch (config.type) {
@@ -37,7 +38,7 @@ AccessLogGlue::Create(const AccessLogConfig &config,
 
 	case AccessLogConfig::Type::SEND:
 		return new AccessLogGlue(config,
-					 std::make_unique<LogClient>(CreateConnectDatagramSocket(config.send_to)));
+					 std::make_unique<LogClient>(event_loop, CreateConnectDatagramSocket(config.send_to)));
 
 	case AccessLogConfig::Type::EXECUTE:
 		{
@@ -45,7 +46,7 @@ AccessLogGlue::Create(const AccessLogConfig &config,
 			assert(lp.fd.IsDefined());
 
 			return new AccessLogGlue(config,
-						 std::make_unique<LogClient>(std::move(lp.fd)));
+						 std::make_unique<LogClient>(event_loop, std::move(lp.fd)));
 		}
 	}
 

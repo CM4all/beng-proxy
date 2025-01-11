@@ -7,6 +7,7 @@
 #include <map>
 #include <memory>
 
+class EventLoop;
 struct MultiAccessLogConfig;
 struct UidGid;
 class AccessLogGlue;
@@ -27,6 +28,7 @@ public:
 	 * created.  Returns nullptr if no configuration with this
 	 * name exists.
 	 */
-	AccessLogGlue *Make(const MultiAccessLogConfig &config, const UidGid *user,
+	AccessLogGlue *Make(EventLoop &event_loop,
+			    const MultiAccessLogConfig &config, const UidGid *user,
 			    std::string_view name);
 };

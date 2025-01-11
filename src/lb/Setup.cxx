@@ -14,7 +14,8 @@ LbInstance::InitAllListeners(const UidGid *logger_user)
 	for (const auto &i : config.listeners) {
 		try {
 			listeners.emplace_front(*this,
-						access_log.Make(config.access_log,
+						access_log.Make(event_loop,
+								config.access_log,
 								logger_user,
 								i.access_logger_name),
 						i);

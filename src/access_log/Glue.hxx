@@ -21,6 +21,7 @@ struct AccessLogConfig;
 namespace Net::Log { enum class ContentType : uint8_t; struct Datagram; class Sink; }
 struct IncomingHttpRequest;
 class SocketDescriptor;
+class EventLoop;
 class LogClient;
 
 class AccessLogGlue {
@@ -34,7 +35,8 @@ class AccessLogGlue {
 public:
 	~AccessLogGlue() noexcept;
 
-	static AccessLogGlue *Create(const AccessLogConfig &config,
+	static AccessLogGlue *Create(EventLoop &event_loop,
+				     const AccessLogConfig &config,
 				     const UidGid *user);
 
 	void Log(const Net::Log::Datagram &d) noexcept;

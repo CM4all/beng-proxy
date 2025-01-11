@@ -235,14 +235,15 @@ BpInstance::GetChildLogSink(const UidGid *logger_user)
 {
 	if (config.child_error_log.type != AccessLogConfig::Type::INTERNAL) {
 		if (!child_error_log)
-			child_error_log.reset(AccessLogGlue::Create(config.child_error_log,
+			child_error_log.reset(AccessLogGlue::Create(event_loop,
+								    config.child_error_log,
 								    logger_user));
 
 		if (child_error_log)
 			return child_error_log->GetChildSink();
 	}
 
-	if (auto *access_logger = access_log.Make(config.access_log, logger_user, {}))
+	if (auto *access_logger = access_log.Make(event_loop, config.access_log, logger_user, {}))
 		return access_logger->GetChildSink();
 
 	return nullptr;
@@ -260,7 +261,8 @@ BpInstance::AddListener(const BpListenerConfig &c, const UidGid *logger_user)
 	listeners.emplace_front(*this,
 				listener_stats[c.tag],
 				config.access_log.FindXForwardedForConfig(c.access_logger_name),
-				access_log.Make(config.access_log, logger_user,
+				access_log.Make(event_loop,
+						config.access_log, logger_user,
 						c.access_logger_name),
 				std::move(ts),
 				c, c.Create(SOCK_STREAM));
@@ -537,7 +539,8 @@ try {
 		instance.listeners.emplace_front(instance,
 						 instance.listener_stats[cmdline.debug_listener_tag],
 						 instance.config.access_log.FindXForwardedForConfig({}),
-						 instance.access_log.Make(instance.config.access_log,
+						 instance.access_log.Make(instance.event_loop,
+									  instance.config.access_log,
 									  &cmdline.logger_user,
 									  {}),
 						 instance.translation_service,

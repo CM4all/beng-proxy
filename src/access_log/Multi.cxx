@@ -10,7 +10,8 @@ MultiAccessLogGlue::MultiAccessLogGlue() noexcept = default;
 MultiAccessLogGlue::~MultiAccessLogGlue() noexcept = default;
 
 AccessLogGlue *
-MultiAccessLogGlue::Make(const MultiAccessLogConfig &multi_config, const UidGid *user,
+MultiAccessLogGlue::Make(EventLoop &event_loop,
+			 const MultiAccessLogConfig &multi_config, const UidGid *user,
 			 std::string_view name)
 {
 	if (auto i = map.find(name); i != map.end())
@@ -20,7 +21,7 @@ MultiAccessLogGlue::Make(const MultiAccessLogConfig &multi_config, const UidGid 
 	if (config == nullptr)
 		return nullptr;
 
-	auto *glue = AccessLogGlue::Create(*config, user);
+	auto *glue = AccessLogGlue::Create(event_loop, *config, user);
 	map.emplace(name, glue);
 	return glue;
 }
