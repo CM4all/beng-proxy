@@ -91,6 +91,12 @@ WidgetRegistryLookup::OnTranslateResponse(UniquePoolPtr<TranslateResponse> _resp
 	cls->dump_headers = response.dump_headers;
 	cls->views = Clone(widget_pool, response.views);
 
+	if (auto &view = cls->views.front();
+	    !view.address.IsDefined() && response.address.IsDefined()) {
+		view.address.CopyFrom(widget_pool, response.address);
+		view.filter_4xx = response.filter_4xx;
+	}
+
 	_response.reset();
 
 	cache.Put(name, *cls);
