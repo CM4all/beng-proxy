@@ -173,6 +173,9 @@ util2 = static_library(
   'src/escape/HTML.cxx',
   'src/escape/CSS.cxx',
   include_directories: inc,
+  dependencies: [
+    fmt_dep,
+  ],
 )
 util_dep = declare_dependency(
   link_with: util2,
