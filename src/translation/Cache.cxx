@@ -23,6 +23,7 @@
 #include "pool/PSocketAddress.hxx"
 #include "memory/SlicePool.hxx"
 #include "stats/CacheStats.hxx"
+#include "lib/fmt/Unsafe.hxx"
 #include "lib/pcre/UniqueRegex.hxx"
 #include "io/Logger.hxx"
 #include "util/djb_hash.hxx"
@@ -383,11 +384,8 @@ tcache_uri_key(AllocatorPtr alloc, const char *uri, const char *host,
 	}
 
 	char status_buffer[32];
-	if (status != HttpStatus{}) {
-		snprintf(status_buffer, sizeof(status_buffer),
-			 "ERR%u_", static_cast<unsigned>(status));
-		b.push_back(status_buffer);
-	}
+	if (status != HttpStatus{})
+		b.push_back(FmtUnsafeSV(status_buffer, "ERR{}_"sv, static_cast<unsigned>(status)));
 
 	b.push_back(uri);
 
@@ -423,15 +421,14 @@ tcache_chain_key(AllocatorPtr alloc, const TranslateRequest &request) noexcept
 	std::size_t length = UriEscape(buffer, request.chain);
 
 	char status_buffer[32];
+	std::string_view status{};
 	if (unsigned(request.status) != 0)
-		sprintf(status_buffer, "%u", unsigned(request.status));
-	else
-		*status_buffer = 0;
+		status = FmtUnsafeSV(status_buffer, "{}", unsigned(request.status));
 
 	return alloc.Concat("CHAIN|",
 			    std::string_view{buffer, length},
 			    '=',
-			    status_buffer);
+			    status);
 }
 
 static const char *
