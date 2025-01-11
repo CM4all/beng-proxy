@@ -678,39 +678,26 @@ void
 ResourceAddress::Expand(AllocatorPtr alloc, const MatchData &match_data)
 {
 	switch (type) {
-		FileAddress *file;
-		CgiAddress *cgi;
-		HttpAddress *uwa;
-		LhttpAddress *lhttp;
-
 	case Type::NONE:
 		break;
 
 	case Type::LOCAL:
-		u.file = file = alloc.New<FileAddress>(alloc, *u.file);
-		file->Expand(alloc, match_data);
+		u.file->Expand(alloc, match_data);
 		break;
 
 	case Type::PIPE:
 	case Type::CGI:
 	case Type::FASTCGI:
 	case Type::WAS:
-		u.cgi = cgi = u.cgi->Clone(alloc);
-		cgi->Expand(alloc, match_data);
+		u.cgi->Expand(alloc, match_data);
 		break;
 
 	case Type::HTTP:
-		/* copy the http_address object (it's a pointer, not
-		   in-line) and expand it */
-		u.http = uwa = alloc.New<HttpAddress>(alloc, *u.http);
-		uwa->Expand(alloc, match_data);
+		u.http->Expand(alloc, match_data);
 		break;
 
 	case Type::LHTTP:
-		/* copy the lhttp_address object (it's a pointer, not
-		   in-line) and expand it */
-		u.lhttp = lhttp = u.lhttp->Dup(alloc);
-		lhttp->Expand(alloc, match_data);
+		u.lhttp->Expand(alloc, match_data);
 		break;
 	}
 }
