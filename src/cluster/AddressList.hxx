@@ -42,9 +42,6 @@ struct AddressList {
 	{
 	}
 
-	AddressList(ShallowCopy, AllocatorPtr alloc,
-		    const AddressInfoList &src) noexcept;
-
 	AddressList(AllocatorPtr alloc, const AddressList &src) noexcept;
 
 	constexpr
