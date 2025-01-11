@@ -768,13 +768,8 @@ Request::HandleChainResponse(UniquePoolPtr<TranslateResponse> _response) noexcep
 
 	rl.SendRequest(pool, stopwatch,
 		       {
-			       session_id.GetClusterHash(),
-			       false,
-			       false,
-			       false,
-			       translate.enable_metrics,
-			       nullptr,
-			       nullptr,
+			       .sticky_hash = session_id.GetClusterHash(),
+			       .want_metrics = translate.enable_metrics,
 		       },
 		       method, response.address,
 		       pr.status,

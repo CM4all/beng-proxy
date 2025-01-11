@@ -225,7 +225,10 @@ run_cache_test(Instance &instance, const Request &request, bool cached)
 					       handler);
 
 	http_cache_request(*instance.cache, pool, nullptr,
-			   {0, false, false, request.auto_flush_cache, false, request.tag, nullptr},
+			   {
+				   .auto_flush_cache = request.auto_flush_cache,
+				   .cache_tag = request.tag,
+			   },
 			   request.method, address,
 			   std::move(headers), nullptr,
 			   defer_handler, cancel_ptr);
