@@ -44,13 +44,13 @@ struct HttpAddress {
 	AddressList addresses;
 
 	HttpAddress(bool _ssl,
-		    const char *_host_and_port, const char *_path);
+		    const char *_host_and_port, const char *_path) noexcept;
 
 	HttpAddress(ShallowCopy, bool _ssl,
 		    const char *_host_and_port, const char *_path,
-		    const AddressList &_addresses);
+		    const AddressList &_addresses) noexcept;
 
-	constexpr HttpAddress(ShallowCopy shallow_copy, const HttpAddress &src)
+	constexpr HttpAddress(ShallowCopy shallow_copy, const HttpAddress &src) noexcept
 		:ssl(src.ssl), http2(src.http2),
 		 expand_path(src.expand_path),
 		 certificate(src.certificate),
@@ -60,13 +60,14 @@ struct HttpAddress {
 	{
 	}
 
-	constexpr HttpAddress(HttpAddress &&src):HttpAddress(ShallowCopy(), src) {}
+	constexpr HttpAddress(HttpAddress &&src) noexcept
+		:HttpAddress(ShallowCopy(), src) {}
 
-	HttpAddress(AllocatorPtr alloc, const HttpAddress &src);
-	HttpAddress(AllocatorPtr alloc, const HttpAddress &src, const char *_path);
+	HttpAddress(AllocatorPtr alloc, const HttpAddress &src) noexcept;
+	HttpAddress(AllocatorPtr alloc, const HttpAddress &src, const char *_path) noexcept;
 
 	constexpr HttpAddress(ShallowCopy shallow_copy, const HttpAddress &src,
-			      const char *_path)
+			      const char *_path) noexcept
 		:ssl(src.ssl), http2(src.http2),
 		 certificate(src.certificate),
 		 host_and_port(src.host_and_port),
@@ -82,7 +83,7 @@ struct HttpAddress {
 	 * relative part.  Returns nullptr if both URIs do not match.
 	 */
 	[[gnu::pure]]
-	std::string_view RelativeTo(const HttpAddress &base) const;
+	std::string_view RelativeTo(const HttpAddress &base) const noexcept;
 
 	/**
 	 * Throws std::runtime_error on error.
@@ -104,7 +105,7 @@ struct HttpAddress {
 	char *GetAbsoluteURI(AllocatorPtr alloc) const noexcept;
 
 	[[gnu::pure]]
-	bool HasQueryString() const;
+	bool HasQueryString() const noexcept;
 
 	/**
 	 * Duplicates this #http_address object and inserts the specified
@@ -112,7 +113,7 @@ struct HttpAddress {
 	 */
 	[[gnu::malloc]]
 	HttpAddress *InsertQueryString(AllocatorPtr alloc,
-				       const char *query_string) const;
+				       const char *query_string) const noexcept;
 
 	/**
 	 * Duplicates this #http_address object and inserts the specified
@@ -121,10 +122,10 @@ struct HttpAddress {
 	[[gnu::malloc]]
 	HttpAddress *InsertArgs(AllocatorPtr alloc,
 				std::string_view args,
-				std::string_view path_info) const;
+				std::string_view path_info) const noexcept;
 
 	[[gnu::pure]]
-	bool IsValidBase() const;
+	bool IsValidBase() const noexcept;
 
 	[[gnu::malloc]]
 	HttpAddress *SaveBase(AllocatorPtr alloc,
@@ -141,7 +142,7 @@ struct HttpAddress {
 	 * Does this address need to be expanded with http_address_expand()?
 	 */
 	[[gnu::pure]]
-	bool IsExpandable() const {
+	bool IsExpandable() const noexcept {
 		return expand_path;
 	}
 
@@ -150,8 +151,7 @@ struct HttpAddress {
 	 */
 	void Expand(AllocatorPtr alloc, const MatchData &match_data);
 
-	[[gnu::pure]]
-	int GetDefaultPort() const {
+	constexpr int GetDefaultPort() const noexcept {
 		return ssl ? 443 : 80;
 	}
 };
@@ -175,7 +175,7 @@ http_address_parse(AllocatorPtr alloc, const char *uri);
 HttpAddress *
 http_address_with_path(AllocatorPtr alloc,
 		       const HttpAddress *uwa,
-		       const char *path);
+		       const char *path) noexcept;
 
 /**
  * Create a new #http_address object from the specified one, but
@@ -186,4 +186,4 @@ http_address_with_path(AllocatorPtr alloc,
 HttpAddress *
 http_address_dup_with_path(AllocatorPtr alloc,
 			   const HttpAddress *uwa,
-			   const char *path);
+			   const char *path) noexcept;

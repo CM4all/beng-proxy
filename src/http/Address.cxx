@@ -18,7 +18,7 @@
 #include <string.h>
 
 HttpAddress::HttpAddress(bool _ssl,
-			 const char *_host_and_port, const char *_path)
+			 const char *_host_and_port, const char *_path) noexcept
 	:ssl(_ssl),
 	 host_and_port(_host_and_port),
 	 path(_path)
@@ -28,7 +28,7 @@ HttpAddress::HttpAddress(bool _ssl,
 HttpAddress::HttpAddress(ShallowCopy shallow_copy,
 			 bool _ssl,
 			 const char *_host_and_port, const char *_path,
-			 const AddressList &_addresses)
+			 const AddressList &_addresses) noexcept
 	:ssl(_ssl),
 	 host_and_port(_host_and_port),
 	 path(_path),
@@ -36,7 +36,7 @@ HttpAddress::HttpAddress(ShallowCopy shallow_copy,
 {
 }
 
-HttpAddress::HttpAddress(AllocatorPtr alloc, const HttpAddress &src)
+HttpAddress::HttpAddress(AllocatorPtr alloc, const HttpAddress &src) noexcept
 	:ssl(src.ssl), http2(src.http2),
 	 expand_path(src.expand_path),
 	 certificate(alloc.CheckDup(src.certificate)),
@@ -47,7 +47,7 @@ HttpAddress::HttpAddress(AllocatorPtr alloc, const HttpAddress &src)
 }
 
 HttpAddress::HttpAddress(AllocatorPtr alloc, const HttpAddress &src,
-			 const char *_path)
+			 const char *_path) noexcept
 	:ssl(src.ssl), http2(src.http2),
 	 certificate(alloc.CheckDup(src.certificate)),
 	 host_and_port(alloc.CheckDup(src.host_and_port)),
@@ -58,7 +58,7 @@ HttpAddress::HttpAddress(AllocatorPtr alloc, const HttpAddress &src,
 
 static HttpAddress *
 http_address_new(AllocatorPtr alloc, bool ssl,
-		 const char *host_and_port, const char *path)
+		 const char *host_and_port, const char *path) noexcept
 {
 	assert(path != nullptr);
 
@@ -109,7 +109,7 @@ http_address_parse(AllocatorPtr alloc, const char *uri)
 
 HttpAddress *
 http_address_with_path(AllocatorPtr alloc, const HttpAddress *uwa,
-		       const char *path)
+		       const char *path) noexcept
 {
 	auto *p = alloc.New<HttpAddress>(ShallowCopy(), *uwa);
 	p->path = path;
@@ -119,7 +119,7 @@ http_address_with_path(AllocatorPtr alloc, const HttpAddress *uwa,
 HttpAddress *
 http_address_dup_with_path(AllocatorPtr alloc,
 			   const HttpAddress *uwa,
-			   const char *path)
+			   const char *path) noexcept
 {
 	assert(uwa != nullptr);
 
@@ -159,14 +159,14 @@ HttpAddress::GetAbsoluteURI(AllocatorPtr alloc) const noexcept
 }
 
 bool
-HttpAddress::HasQueryString() const
+HttpAddress::HasQueryString() const noexcept
 {
 	return strchr(path, '?') != nullptr;
 }
 
 HttpAddress *
 HttpAddress::InsertQueryString(AllocatorPtr alloc,
-			       const char *query_string) const
+			       const char *query_string) const noexcept
 {
 	return http_address_with_path(alloc, this,
 				      uri_insert_query_string(alloc, path,
@@ -176,7 +176,7 @@ HttpAddress::InsertQueryString(AllocatorPtr alloc,
 HttpAddress *
 HttpAddress::InsertArgs(AllocatorPtr alloc,
 			std::string_view args,
-			std::string_view path_info) const
+			std::string_view path_info) const noexcept
 {
 	return http_address_with_path(alloc, this,
 				      uri_insert_args(alloc, path,
@@ -184,7 +184,7 @@ HttpAddress::InsertArgs(AllocatorPtr alloc,
 }
 
 bool
-HttpAddress::IsValidBase() const
+HttpAddress::IsValidBase() const noexcept
 {
 	return IsExpandable() || is_base(path);
 }
@@ -249,7 +249,7 @@ HttpAddress::Apply(AllocatorPtr alloc,
 }
 
 std::string_view
-HttpAddress::RelativeTo(const HttpAddress &base) const
+HttpAddress::RelativeTo(const HttpAddress &base) const noexcept
 {
 	const char *my_host = host_and_port != nullptr ? host_and_port : "";
 	const char *base_host = base.host_and_port != nullptr
