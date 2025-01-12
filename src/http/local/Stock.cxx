@@ -3,6 +3,7 @@
 // author: Max Kellermann <mk@cm4all.com>
 
 #include "Stock.hxx"
+#include "Connection.hxx"
 #include "Address.hxx"
 #include "http/Client.hxx" // for class HttpClientError
 #include "stock/Stock.hxx"
@@ -12,11 +13,9 @@
 #include "pool/tpool.hxx"
 #include "pool/WithPoolDisposablePointer.hxx"
 #include "AllocatorPtr.hxx"
-#include "lease.hxx"
 #include "lib/fmt/ToBuffer.hxx"
 #include "spawn/ListenChildStock.hxx"
 #include "spawn/Prepared.hxx"
-#include "event/SocketEvent.hxx"
 #include "net/UniqueSocketDescriptor.hxx"
 #include "io/FdHolder.hxx"
 #include "io/Logger.hxx"
@@ -81,111 +80,10 @@ private:
 				FdHolder &close_fds) override;
 };
 
-class LhttpConnection final
-	: LoggerDomainFactory, public StockItem
-{
-	LazyDomainLogger logger;
-
-	ListenChildStockItem &child;
-
-	LeasePtr lease_ref;
-
-	SocketEvent event;
-
-public:
-	explicit LhttpConnection(CreateStockItem c,
-				 ListenChildStockItem &_child)
-		:StockItem(c),
-		 logger(*this),
-		 child(_child),
-		 event(c.stock.GetEventLoop(),
-		       BIND_THIS_METHOD(EventCallback),
-		       _child.Connect().Release()) {}
-
-	~LhttpConnection() noexcept override;
-
-	SocketDescriptor GetSocket() const noexcept {
-		assert(event.IsDefined());
-		return event.GetSocket();
-	}
-
-	void AbandonSocket() noexcept {
-		assert(event.IsDefined());
-		assert(event.GetScheduledFlags() == 0);
-
-		event.Abandon();
-	}
-
-	[[gnu::pure]]
-	std::string_view GetTag() const noexcept {
-		return child.GetTag();
-	}
-
-	void SetSite(const char *site) noexcept {
-		child.SetSite(site);
-	}
-
-	void SetUri(const char *uri) noexcept {
-		child.SetUri(uri);
-	}
-
-private:
-	void Read() noexcept;
-	void EventCallback(unsigned events) noexcept;
-
-	/* virtual methods from LoggerDomainFactory */
-	std::string MakeLoggerDomain() const noexcept override {
-		return GetStockName();
-	}
-
-	/* virtual methods from class StockItem */
-	bool Borrow() noexcept override {
-		if (event.GetReadyFlags() != 0) [[unlikely]] {
-			/* this connection was probably closed, but
-			   our SocketEvent callback hasn't been
-			   invoked yet; refuse to use this item; the
-			   caller will destroy the connection */
-			Read();
-			return false;
-		}
-
-		event.Cancel();
-		return true;
-	}
-
-	bool Release() noexcept override {
-		event.ScheduleRead();
-		return true;
-	}
-};
-
 static const char *
 lhttp_stock_key(struct pool *pool, const LhttpAddress *address) noexcept
 {
 	return address->GetServerId(AllocatorPtr(*pool));
-}
-
-inline void
-LhttpConnection::Read() noexcept
-{
-	std::byte buffer[1];
-	ssize_t nbytes = GetSocket().ReadNoWait(buffer);
-	if (nbytes < 0)
-		logger(2, "error on idle LHTTP connection: ", strerror(errno));
-	else if (nbytes > 0)
-		logger(2, "unexpected data from idle LHTTP connection");
-}
-
-/*
- * libevent callback
- *
- */
-
-inline void
-LhttpConnection::EventCallback(unsigned) noexcept
-{
-	Read();
-	InvokeIdleDisconnect();
 }
 
 /*
@@ -319,11 +217,6 @@ LhttpStock::Create(CreateStockItem c, StockItem &shared_item)
 	}
 }
 
-LhttpConnection::~LhttpConnection() noexcept
-{
-	event.Close();
-}
-
 
 /*
  * interface
@@ -411,40 +304,4 @@ lhttp_stock_get(LhttpStock *lhttp_stock,
 		CancellablePointer &cancel_ptr) noexcept
 {
 	lhttp_stock->Get(*address, handler, cancel_ptr);
-}
-
-SocketDescriptor
-lhttp_stock_item_get_socket(const StockItem &item) noexcept
-{
-	const auto *connection = (const LhttpConnection *)&item;
-
-	return connection->GetSocket();
-}
-
-void
-lhttp_stock_item_abandon_socket(StockItem &item) noexcept
-{
-	auto &connection = static_cast<LhttpConnection &>(item);
-
-	connection.AbandonSocket();
-}
-
-FdType
-lhttp_stock_item_get_type([[maybe_unused]] const StockItem &item) noexcept
-{
-	return FdType::FD_SOCKET;
-}
-
-void
-lhttp_stock_item_set_site(StockItem &item, const char *site) noexcept
-{
-	auto &connection = (LhttpConnection &)item;
-	connection.SetSite(site);
-}
-
-void
-lhttp_stock_item_set_uri(StockItem &item, const char *uri) noexcept
-{
-	auto &connection = (LhttpConnection &)item;
-	connection.SetUri(uri);
 }

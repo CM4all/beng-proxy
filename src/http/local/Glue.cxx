@@ -4,6 +4,7 @@
 
 #include "Glue.hxx"
 #include "Stock.hxx"
+#include "Connection.hxx"
 #include "Address.hxx"
 #include "http/Client.hxx"
 #include "http/PendingRequest.hxx"

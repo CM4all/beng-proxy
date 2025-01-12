@@ -673,6 +673,7 @@ executable(
   'src/translation/AddressSuffixRegistry.cxx',
   'src/tcp_stock.cxx',
   'src/http/local/Stock.cxx',
+  'src/http/local/Connection.cxx',
   'src/http/local/Glue.cxx',
   'src/bp/errdoc.cxx',
   'src/widget/FromRequest.cxx',

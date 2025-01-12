@@ -4,20 +4,15 @@
 
 #pragma once
 
-#include "io/FdType.hxx"
-
 #include <cstddef>
 #include <string_view>
 
 namespace Net::Log { class Sink; }
-struct pool;
 struct ChildErrorLogOptions;
 class LhttpStock;
 class StockGetHandler;
 class CancellablePointer;
-class StockItem;
 struct LhttpAddress;
-class SocketDescriptor;
 class EventLoop;
 class SpawnService;
 class ListenStreamStock;
@@ -52,27 +47,3 @@ lhttp_stock_get(LhttpStock *lhttp_stock,
 		const LhttpAddress *address,
 		StockGetHandler &handler,
 		CancellablePointer &cancel_ptr) noexcept;
-
-/**
- * Returns the socket descriptor of the specified stock item.
- */
-[[gnu::pure]]
-SocketDescriptor
-lhttp_stock_item_get_socket(const StockItem &item) noexcept;
-
-/**
- * Abandon the socket.  Invoke this if the socket returned by
- * lhttp_stock_item_get_socket() has been closed by its caller.
- */
-void
-lhttp_stock_item_abandon_socket(StockItem &item) noexcept;
-
-[[gnu::pure]]
-FdType
-lhttp_stock_item_get_type(const StockItem &item) noexcept;
-
-void
-lhttp_stock_item_set_site(StockItem &item, const char *site) noexcept;
-
-void
-lhttp_stock_item_set_uri(StockItem &item, const char *uri) noexcept;
