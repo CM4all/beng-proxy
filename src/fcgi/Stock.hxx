@@ -6,7 +6,7 @@
 
 #include "pool/Ptr.hxx"
 #include "spawn/ListenChildStock.hxx"
-#include "stock/MapStock.hxx"
+#include "stock/MultiStock.hxx"
 
 #include <span>
 #include <string_view>
@@ -23,10 +23,10 @@ class ListenStreamStock;
 class UniqueFileDescriptor;
 class UniqueSocketDescriptor;
 
-class FcgiStock final : StockClass, ListenChildStockClass {
+class FcgiStock final : MultiStockClass, ListenChildStockClass {
 	PoolPtr pool;
-	StockMap hstock;
-	ChildStockMap child_stock;
+	ChildStock child_stock;
+	MultiStock mchild_stock;
 
 	class CreateRequest;
 
@@ -37,15 +37,10 @@ public:
 		  Net::Log::Sink *log_sink,
 		  const ChildErrorLogOptions &_log_options) noexcept;
 
-	~FcgiStock() noexcept {
-		/* this one must be cleared before #child_stock; FadeAll()
-		   calls ClearIdle(), so this method is the best match for
-		   what we want to do (though a kludge) */
-		hstock.FadeAll();
-	}
+	~FcgiStock() noexcept;
 
 	EventLoop &GetEventLoop() const noexcept {
-		return hstock.GetEventLoop();
+		return mchild_stock.GetEventLoop();
 	}
 
 	/**
@@ -54,22 +49,22 @@ public:
 	void Get(const ChildOptions &options,
 		 const char *executable_path,
 		 std::span<const char *const> args,
-		 unsigned parallelism,
+		 unsigned parallelism, unsigned concurrency,
 		 StockGetHandler &handler,
 		 CancellablePointer &cancel_ptr) noexcept;
 
 	void FadeAll() noexcept {
-		hstock.FadeAll();
-		child_stock.GetStockMap().FadeAll();
+		mchild_stock.FadeAll();
 	}
 
 	void FadeTag(std::string_view tag) noexcept;
 
 private:
-	/* virtual methods from class StockClass */
-	void Create(CreateStockItem c, StockRequest request,
-		    StockGetHandler &handler,
-		    CancellablePointer &cancel_ptr) override;
+	/* virtual methods from class MultiStockClass */
+	std::size_t GetLimit(const void *request,
+			     std::size_t _limit) const noexcept override;
+	Event::Duration GetClearInterval(const void *request) const noexcept override;
+	StockItem *Create(CreateStockItem c, StockItem &shared_item) override;
 
 	/* virtual methods from class ChildStockClass */
 	StockRequest PreserveRequest(StockRequest request) noexcept override;
@@ -85,10 +80,7 @@ private:
 	Event::Duration GetChildClearInterval(const void *info) const noexcept override;
 
 	/* virtual methods from class ListenChildStockClass */
-	unsigned GetChildBacklog(const void *) const noexcept override {
-		return 4;
-	}
-
+	unsigned GetChildBacklog(const void *info) const noexcept override;
 	void PrepareListenChild(const void *info, UniqueSocketDescriptor fd,
 				PreparedChildProcess &p,
 				FdHolder &close_fds) override;

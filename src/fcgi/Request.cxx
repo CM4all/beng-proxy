@@ -93,7 +93,7 @@ public:
 	void BeginConnect() noexcept {
 		fcgi_stock.Get(address.options,
 			       action, address.args.ToArray(pool),
-			       address.parallelism,
+			       address.parallelism, address.concurrency,
 			       *this, cancel_ptr);
 	}
 

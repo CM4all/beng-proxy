@@ -70,8 +70,8 @@ private:
  */
 
 std::size_t
-FcgiStock::GetChildLimit(const void *request,
-			 std::size_t _limit) const noexcept
+FcgiStock::GetLimit(const void *request,
+		    std::size_t _limit) const noexcept
 {
 	const auto &params = *(const CgiChildParams *)request;
 	if (params.parallelism > 0)
@@ -81,7 +81,7 @@ FcgiStock::GetChildLimit(const void *request,
 }
 
 Event::Duration
-FcgiStock::GetChildClearInterval(const void *info) const noexcept
+FcgiStock::GetClearInterval(const void *info) const noexcept
 {
 	const auto &params = *(const CgiChildParams *)info;
 
@@ -90,6 +90,25 @@ FcgiStock::GetChildClearInterval(const void *info) const noexcept
 		/* lower clear_interval for jailed (per-account?)
 		   processes */
 		: std::chrono::minutes(5);
+}
+
+/* TODO: this method is unreachable we don't use ChildStockMap, but we
+   must implemented it because ListenChildStockClass is based on
+   ChildStockMapClass */
+std::size_t
+FcgiStock::GetChildLimit(const void *request,
+			 std::size_t _limit) const noexcept
+{
+	return GetLimit(request, _limit);
+}
+
+/* TODO: this method is unreachable we don't use ChildStockMap, but we
+   must implemented it because ListenChildStockClass is based on
+   ChildStockMapClass */
+Event::Duration
+FcgiStock::GetChildClearInterval(const void *info) const noexcept
+{
+	return GetClearInterval(info);
 }
 
 StockRequest
@@ -110,6 +129,19 @@ FcgiStock::WantStderrPond(const void *info) const noexcept
 {
 	const auto &params = *(const CgiChildParams *)info;
 	return params.options.stderr_pond;
+}
+
+unsigned
+FcgiStock::GetChildBacklog(const void *info) const noexcept
+{
+	const auto &address = *(const CgiChildParams *)info;
+
+	/* use the concurrency for the listener backlog to ensure that
+	   we'll never get ECONNREFUSED/EAGAIN while the child process
+	   initializes itself */
+	/* use a factor of 2 because cancelled requests during child
+	   process startup count towards the backlog */
+	return address.concurrency * 2;
 }
 
 std::string_view
@@ -186,16 +218,18 @@ FcgiStock::CreateRequest::OnStockItemError(std::exception_ptr error) noexcept
  *
  */
 
-void
-FcgiStock::Create(CreateStockItem c, StockRequest request,
-		  StockGetHandler &handler,
-		  [[maybe_unused]] CancellablePointer &cancel_ptr)
+StockItem *
+FcgiStock::Create(CreateStockItem c, StockItem &shared_item)
 {
-	[[maybe_unused]] auto &params = *(CgiChildParams *)request.get();
-	assert(params.executable_path != nullptr);
+	auto &child = (ListenChildStockItem &)shared_item;
 
-	auto *create = new CreateRequest(c, handler);
-	create->Start(child_stock.GetStockMap(), std::move(request), cancel_ptr);
+	try {
+		return new FcgiConnection(c, child, child.Connect());
+	} catch (...) {
+		std::throw_with_nested(FcgiClientError(FcgiClientErrorCode::REFUSED,
+						       FmtBuffer<256>("Failed to connect to FastCGI server {:?}",
+								      c.GetStockName())));
+	}
 }
 
 /*
@@ -203,45 +237,52 @@ FcgiStock::Create(CreateStockItem c, StockRequest request,
  *
  */
 
-FcgiStock::FcgiStock(unsigned limit, unsigned max_idle,
+FcgiStock::FcgiStock(unsigned limit, [[maybe_unused]] unsigned max_idle,
 		     EventLoop &event_loop, SpawnService &spawn_service,
 		     ListenStreamStock *listen_stream_stock,
 		     Net::Log::Sink *log_sink,
 		     const ChildErrorLogOptions &_log_options) noexcept
 	:pool(pool_new_dummy(nullptr, "FcgiStock")),
-	 hstock(event_loop, *this, limit, max_idle,
-	 std::chrono::minutes(2)),
-	 child_stock(event_loop, spawn_service,
-		     listen_stream_stock,
+	 child_stock(spawn_service, listen_stream_stock,
 		     *this,
-		     log_sink, _log_options,
-		     limit, max_idle) {}
+		     log_sink, _log_options),
+	 mchild_stock(event_loop, child_stock,
+		      limit,
+		      // TODO max_idle,
+		      *this)
+{
+}
+
+FcgiStock::~FcgiStock() noexcept = default;
 
 void
 FcgiStock::FadeTag(std::string_view tag) noexcept
 {
-	hstock.FadeIf([tag](const StockItem &item){
-		const auto &connection = (const FcgiConnection &)item;
-		return StringListContains(connection.GetTag(), '\0', tag);
+	mchild_stock.FadeIf([tag](const StockItem &_item){
+		auto &item = (const ChildStockItem &)_item;
+		return StringListContains(item.GetTag(), '\0', tag);
 	});
-
-	child_stock.FadeTag(tag);
 }
 
 void
 FcgiStock::Get(const ChildOptions &options,
 	       const char *executable_path,
 	       std::span<const char *const> args,
-	       unsigned parallelism,
+	       unsigned parallelism, unsigned concurrency,
 	       StockGetHandler &handler,
 	       CancellablePointer &cancel_ptr) noexcept
 {
+	if (concurrency <= 1)
+		/* no concurrency by default */
+		concurrency = 1;
+
 	const TempPoolLease tpool;
 
 	auto r = ToDeletePointer(new CgiChildParams(executable_path,
 						    args, options,
-						    parallelism, 0, false));
+						    parallelism, concurrency, false));
 	const char *key = r->GetStockKey(*tpool);
-	hstock.Get(key, std::move(r),
-			handler, cancel_ptr);
+	mchild_stock.Get(key, std::move(r),
+			 concurrency,
+			 handler, cancel_ptr);
 }

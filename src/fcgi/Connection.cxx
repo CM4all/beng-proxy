@@ -69,7 +69,6 @@ FcgiConnection::Release() noexcept
 FcgiConnection::~FcgiConnection() noexcept
 {
 	event.Close();
-	child.Put(PutAction::REUSE);
 }
 
 UniqueFileDescriptor

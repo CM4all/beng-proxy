@@ -263,7 +263,7 @@ Response
 - ``LHTTP_HOST``: the “Host” request header for ``LHTTP_PATH``
 
 - ``CONCURRENCY``: a 16 bit integer specifying the maximum number of
-  concurrent requests to this server (LHTTP and Multi-WAS only)
+  concurrent requests to this server (FastCGI, LHTTP and Multi-WAS only)
 
 - ``PARALLELISM``: a 16 bit integer specifying the maximum number of
   parallel child processes of this kind (FastCGI, WAS, Multi-WAS, LHTTP)
