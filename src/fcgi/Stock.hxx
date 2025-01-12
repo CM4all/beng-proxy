@@ -73,14 +73,8 @@ private:
 
 	/* virtual methods from class ChildStockClass */
 	StockRequest PreserveRequest(StockRequest request) noexcept override;
-
 	bool WantStderrFd(const void *info) const noexcept override;
 	bool WantStderrPond(const void *info) const noexcept override;
-
-	unsigned GetChildBacklog(const void *) const noexcept override {
-		return 4;
-	}
-
 	std::string_view GetChildTag(const void *info) const noexcept override;
 	void PrepareChild(const void *info, PreparedChildProcess &p,
 			  FdHolder &close_fds) override;
@@ -91,6 +85,10 @@ private:
 	Event::Duration GetChildClearInterval(const void *info) const noexcept override;
 
 	/* virtual methods from class ListenChildStockClass */
+	unsigned GetChildBacklog(const void *) const noexcept override {
+		return 4;
+	}
+
 	void PrepareListenChild(const void *info, UniqueSocketDescriptor fd,
 				PreparedChildProcess &p,
 				FdHolder &close_fds) override;
