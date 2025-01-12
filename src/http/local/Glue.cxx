@@ -154,8 +154,7 @@ private:
 inline void
 LhttpRequest::Start() noexcept
 {
-	lhttp_stock_get(&stock, &address,
-			*this, cancel_ptr);
+	stock.Get(address, *this, cancel_ptr);
 }
 
 void

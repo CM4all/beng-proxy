@@ -427,13 +427,13 @@ try {
 	}
 
 
-	instance.lhttp_stock = lhttp_stock_new(instance.config.lhttp_stock_limit,
-					       instance.config.lhttp_stock_max_idle,
-					       instance.event_loop,
-					       *instance.spawn_service,
-					       instance.listen_stream_stock.get(),
-					       child_log_sink,
-					       child_log_options);
+	instance.lhttp_stock = std::make_unique<LhttpStock>(instance.config.lhttp_stock_limit,
+							    instance.config.lhttp_stock_max_idle,
+							    instance.event_loop,
+							    *instance.spawn_service,
+							    instance.listen_stream_stock.get(),
+							    child_log_sink,
+							    child_log_options);
 
 	instance.fcgi_stock = std::make_unique<FcgiStock>(instance.config.fcgi_stock_limit,
 							  instance.config.fcgi_stock_max_idle,
@@ -476,7 +476,7 @@ try {
 					 *instance.nghttp2_stock,
 #endif
 					 *instance.spawn_service,
-					 instance.lhttp_stock,
+					 instance.lhttp_stock.get(),
 					 instance.fcgi_stock.get(),
 #ifdef HAVE_LIBWAS
 					 instance.was_stock,

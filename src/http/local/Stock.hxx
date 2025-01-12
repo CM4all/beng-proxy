@@ -4,6 +4,10 @@
 
 #pragma once
 
+#include "pool/Ptr.hxx"
+#include "spawn/ListenChildStock.hxx"
+#include "stock/MultiStock.hxx"
+
 #include <cstddef>
 #include <string_view>
 
@@ -17,33 +21,59 @@ class EventLoop;
 class SpawnService;
 class ListenStreamStock;
 
-/**
- * Launch and manage "Local HTTP" child processes.
- */
-LhttpStock *
-lhttp_stock_new(unsigned limit, unsigned max_idle,
-		EventLoop &event_loop, SpawnService &spawn_service,
-		ListenStreamStock *listen_stream_stock,
-		Net::Log::Sink *log_sink,
-		const ChildErrorLogOptions &log_options) noexcept;
+class LhttpStock final : MultiStockClass, ListenChildStockClass {
+	PoolPtr pool;
+	ChildStock child_stock;
+	MultiStock mchild_stock;
 
-void
-lhttp_stock_free(LhttpStock *lhttp_stock) noexcept;
+public:
+	LhttpStock(unsigned limit, unsigned max_idle,
+		   EventLoop &event_loop, SpawnService &spawn_service,
+		   ListenStreamStock *_listen_stream_stock,
+		   Net::Log::Sink *log_sink,
+		   const ChildErrorLogOptions &log_options) noexcept;
+	~LhttpStock() noexcept;
 
-/**
- * Discard one or more processes to free some memory.
- */
-std::size_t
-lhttp_stock_discard_some(LhttpStock &ls) noexcept;
+	/**
+	 * Discard one or more processes to free some memory.
+	 */
+	std::size_t DiscardSome() noexcept {
+		return mchild_stock.DiscardOldestIdle(64);
+	}
 
-void
-lhttp_stock_fade_all(LhttpStock &ls) noexcept;
+	void FadeAll() noexcept {
+		mchild_stock.FadeAll();
+	}
 
-void
-lhttp_stock_fade_tag(LhttpStock &ls, std::string_view tag) noexcept;
+	void FadeTag(std::string_view tag) noexcept;
 
-void
-lhttp_stock_get(LhttpStock *lhttp_stock,
-		const LhttpAddress *address,
-		StockGetHandler &handler,
-		CancellablePointer &cancel_ptr) noexcept;
+	void Get(const LhttpAddress &address,
+		 StockGetHandler &handler,
+		 CancellablePointer &cancel_ptr) noexcept;
+
+private:
+	/* virtual methods from class MultiStockClass */
+	std::size_t GetLimit(const void *request,
+			     std::size_t _limit) const noexcept override;
+	Event::Duration GetClearInterval(const void *request) const noexcept override;
+	StockItem *Create(CreateStockItem c, StockItem &shared_item) override;
+
+	/* virtual methods from class ChildStockClass */
+	StockRequest PreserveRequest(StockRequest request) noexcept override;
+	bool WantStderrPond(const void *info) const noexcept override;
+	std::string_view GetChildTag(const void *info) const noexcept override;
+	void PrepareChild(const void *info, PreparedChildProcess &p,
+			  FdHolder &close_fds) override;
+
+	/* virtual methods from class ChildStockMapClass */
+	std::size_t GetChildLimit(const void *request,
+				  std::size_t _limit) const noexcept override;
+	Event::Duration GetChildClearInterval(const void *info) const noexcept override;
+
+	/* virtual methods from class ListenChildStockClass */
+	int GetChildSocketType(const void *info) const noexcept override;
+	unsigned GetChildBacklog(const void *info) const noexcept override;
+	void PrepareListenChild(const void *info, UniqueSocketDescriptor fd,
+				PreparedChildProcess &p,
+				FdHolder &close_fds) override;
+};

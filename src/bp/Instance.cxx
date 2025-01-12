@@ -136,11 +136,7 @@ BpInstance::FreeStocksAndCaches() noexcept
 
 	encoding_cache.reset();
 
-	if (lhttp_stock != nullptr) {
-		lhttp_stock_free(lhttp_stock);
-		lhttp_stock = nullptr;
-	}
-
+	lhttp_stock.reset();
 	fcgi_stock.reset();
 
 #ifdef HAVE_LIBWAS
@@ -217,7 +213,7 @@ void
 BpInstance::FadeChildren() noexcept
 {
 	if (lhttp_stock != nullptr)
-		lhttp_stock_fade_all(*lhttp_stock);
+		lhttp_stock->FadeAll();
 
 	if (fcgi_stock != nullptr)
 		fcgi_stock->FadeAll();
@@ -240,7 +236,7 @@ void
 BpInstance::FadeTaggedChildren(std::string_view tag) noexcept
 {
 	if (lhttp_stock != nullptr)
-		lhttp_stock_fade_tag(*lhttp_stock, tag);
+		lhttp_stock->FadeTag(tag);
 
 	if (fcgi_stock != nullptr)
 		fcgi_stock->FadeTag(tag);
@@ -293,7 +289,7 @@ BpInstance::HandleMemoryWarning() noexcept
 	std::size_t n = 0;
 
 	if (lhttp_stock != nullptr)
-		n += lhttp_stock_discard_some(*lhttp_stock);
+		n += lhttp_stock->DiscardSome();
 
 #ifdef HAVE_LIBWAS
 	if (multi_was_stock != nullptr)
