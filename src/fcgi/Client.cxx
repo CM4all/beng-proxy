@@ -738,10 +738,11 @@ FcgiClient::ConsumeInput(std::span<const std::byte> src) noexcept
 			break;
 
 		src = src.subspan(sizeof(*header));
-		socket.KeepConsumed(sizeof(*header));
 
 		if (!HandleHeader(*header))
 			return BufferedResult::DESTROYED;
+
+		socket.DisposeConsumed(sizeof(*header));
 	}
 
 	return BufferedResult::MORE;
