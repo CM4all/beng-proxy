@@ -652,7 +652,7 @@ FcgiClient::ConsumeInput(std::span<const std::byte> src) noexcept
 
 	const DestructObserver destructed(*this);
 
-	do {
+	while (true) {
 		if (content_length > 0) {
 			const bool at_headers = response.receiving_headers;
 
@@ -735,14 +735,14 @@ FcgiClient::ConsumeInput(std::span<const std::byte> src) noexcept
 		const FcgiRecordHeader *header =
 			(const FcgiRecordHeader *)src.data();
 		if (src.size() < sizeof(*header))
-			return BufferedResult::MORE;
+			break;
 
 		src = src.subspan(sizeof(*header));
 		socket.KeepConsumed(sizeof(*header));
 
 		if (!HandleHeader(*header))
 			return BufferedResult::DESTROYED;
-	} while (!src.empty());
+	}
 
 	return BufferedResult::MORE;
 }
