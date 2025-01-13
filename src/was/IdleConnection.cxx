@@ -14,6 +14,8 @@
 WasIdleConnection::WasIdleConnection(EventLoop &event_loop,
 				     WasIdleConnectionHandler &_handler) noexcept
 	:event(event_loop, BIND_THIS_METHOD(OnSocket)),
+	 defer_schedule_read(event_loop,
+			     BIND_THIS_METHOD(DeferredScheduleRead)),
 	 handler(_handler)
 {
 }

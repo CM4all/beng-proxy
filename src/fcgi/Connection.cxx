@@ -13,7 +13,9 @@ FcgiConnection::FcgiConnection(CreateStockItem c, ListenChildStockItem &_child,
 	:StockItem(c), logger(GetStockName()),
 	 child(_child),
 	 event(GetStock().GetEventLoop(), BIND_THIS_METHOD(OnSocketEvent),
-	       socket.Release())
+	       socket.Release()),
+	 defer_schedule_read(GetStock().GetEventLoop(),
+			     BIND_THIS_METHOD(DeferredScheduleRead))
 {
 }
 
@@ -55,6 +57,7 @@ FcgiConnection::Borrow() noexcept
 	}
 
 	event.Cancel();
+	defer_schedule_read.Cancel();
 	return true;
 }
 
@@ -62,7 +65,7 @@ bool
 FcgiConnection::Release() noexcept
 {
 	fresh = false;
-	event.ScheduleRead();
+	defer_schedule_read.ScheduleIdle();
 	return true;
 }
 

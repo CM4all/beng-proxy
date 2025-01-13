@@ -7,6 +7,7 @@
 #include "spawn/ListenChildStock.hxx"
 #include "stock/Item.hxx"
 #include "event/SocketEvent.hxx"
+#include "event/DeferEvent.hxx"
 #include "io/Logger.hxx"
 
 class UniqueSocketDescriptor;
@@ -17,6 +18,14 @@ class FcgiConnection final : public StockItem {
 	ListenChildStockItem &child;
 
 	SocketEvent event;
+
+	/**
+	 * This postpones the ScheduleRead() call, just in case the
+	 * connection gets borrowed immediately by the next waiter (in
+	 * which case the deferred ScheduleRead() call is canceled).
+	 * This reduces the number of epoll_ctl() system calls.
+	 */
+	DeferEvent defer_schedule_read;
 
 	/**
 	 * Is this a fresh connection to the FastCGI child process?
@@ -58,6 +67,10 @@ public:
 	bool Release() noexcept override;
 
 private:
+	void DeferredScheduleRead() noexcept {
+		event.ScheduleRead();
+	}
+
 	void Read() noexcept;
 	void OnSocketEvent(unsigned events) noexcept;
 };

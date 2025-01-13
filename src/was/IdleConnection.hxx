@@ -6,6 +6,7 @@
 
 #include "was/async/Socket.hxx"
 #include "event/SocketEvent.hxx"
+#include "event/DeferEvent.hxx"
 
 #include <exception>
 #include <utility>
@@ -28,6 +29,14 @@ class WasIdleConnection {
 	WasSocket socket;
 
 	SocketEvent event;
+
+	/**
+	 * This postpones the ScheduleRead() call, just in case the
+	 * connection gets borrowed immediately by the next waiter (in
+	 * which case the deferred ScheduleRead() call is canceled).
+	 * This reduces the number of epoll_ctl() system calls.
+	 */
+	DeferEvent defer_schedule_read;
 
 	WasIdleConnectionHandler &handler;
 
@@ -82,7 +91,7 @@ public:
 	}
 
 	void Release() noexcept {
-		event.ScheduleRead();
+		defer_schedule_read.Schedule();
 	}
 
 private:
@@ -119,6 +128,10 @@ private:
 	 * Throws on error.
 	 */
 	void RecoverStop();
+
+	void DeferredScheduleRead() noexcept {
+		event.ScheduleRead();
+	}
 
 	void OnSocket(unsigned events) noexcept;
 };
