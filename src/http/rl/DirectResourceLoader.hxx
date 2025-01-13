@@ -2,11 +2,11 @@
 // Copyright CM4all GmbH
 // author: Max Kellermann <mk@cm4all.com>
 
-#ifndef BENG_PROXY_DIRECT_RESOURCE_LOADER_HXX
-#define BENG_PROXY_DIRECT_RESOURCE_LOADER_HXX
+#pragma once
 
 #include "ResourceLoader.hxx"
 #include "http/AnyClient.hxx"
+#include "io/uring/config.h" // for HAVE_URING
 
 class EventLoop;
 class SpawnService;
@@ -105,5 +105,3 @@ public:
 			 HttpResponseHandler &handler,
 			 CancellablePointer &cancel_ptr) noexcept override;
 };
-
-#endif

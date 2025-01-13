@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include "io/uring/config.h" // for HAVE_URING
 #include "io/FileDescriptor.hxx"
 #include "util/BindMethod.hxx"
 

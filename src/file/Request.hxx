@@ -4,6 +4,8 @@
 
 #pragma once
 
+#include "io/uring/config.h" // for HAVE_URING
+
 struct pool;
 class HttpResponseHandler;
 class EventLoop;

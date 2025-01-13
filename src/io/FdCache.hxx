@@ -11,6 +11,8 @@
 #include "util/IntrusiveList.hxx"
 #include "util/SharedLease.hxx"
 
+#include "io/uring/config.h" // for HAVE_URING
+
 #include <cstdint>
 #include <string_view>
 
@@ -18,7 +20,10 @@ struct open_how;
 class FileDescriptor;
 class SharedLease;
 class CancellablePointer;
+
+#ifdef HAVE_URING
 namespace Uring { class Queue; }
+#endif
 
 /**
  * A cache for file descriptors.

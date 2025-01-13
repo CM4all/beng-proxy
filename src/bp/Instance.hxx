@@ -22,6 +22,7 @@
 #include "spawn/ZombieReaper.hxx"
 #include "event/net/control/Handler.hxx"
 #include "net/FailureManager.hxx"
+#include "io/uring/config.h" // for HAVE_URING
 #include "io/FdCache.hxx"
 #include "io/StateDirectories.hxx"
 #include "util/Background.hxx"

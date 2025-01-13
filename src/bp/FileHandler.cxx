@@ -18,6 +18,7 @@
 #include "pool/pool.hxx"
 #include "translation/Vary.hxx"
 #include "lib/fmt/SystemError.hxx"
+#include "io/uring/config.h" // for HAVE_URING
 #include "io/FileAt.hxx"
 #include "io/Open.hxx"
 #include "util/StringCompare.hxx"
