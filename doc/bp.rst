@@ -75,7 +75,7 @@ your choice.
 Configuration
 =============
 
-The file :file:`/etc/cm4all/beng/lb.conf` contains
+The file :file:`/etc/cm4all/beng/proxy/beng-proxy.conf` contains
 :program:`beng-proxy`'s configuration. The following options are
 available:
 
