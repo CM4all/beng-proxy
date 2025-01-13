@@ -294,7 +294,7 @@ private:
 	/**
 	 * Consume data from the input buffer.
 	 */
-	BufferedResult ConsumeInput(const std::byte *data, std::size_t length) noexcept;
+	BufferedResult ConsumeInput(std::span<const std::byte> src) noexcept;
 
 	/* virtual methods from class BufferedSocketHandler */
 	BufferedResult OnBufferedData() override;
@@ -646,23 +646,24 @@ FcgiClient::HandleHeader(const FcgiRecordHeader &header) noexcept
 }
 
 inline BufferedResult
-FcgiClient::ConsumeInput(const std::byte *data0, std::size_t length0) noexcept
+FcgiClient::ConsumeInput(std::span<const std::byte> src) noexcept
 {
+	assert(!src.empty());
+
 	const DestructObserver destructed(*this);
-	const std::byte *data = data0, *const end = data0 + length0;
 
 	do {
 		if (content_length > 0) {
 			const bool at_headers = response.receiving_headers;
 
-			std::size_t length = end - data;
-			if (length > content_length)
-				length = content_length;
+			auto payload = src;
+			if (payload.size() > content_length)
+				payload = payload.first(content_length);
 
 			if (response.WasResponseSubmitted() &&
 			    !response.stderr &&
 			    response.available >= 0 &&
-			    std::cmp_greater(length, response.available)) {
+			    std::cmp_greater(payload.size(), response.available)) {
 				/* the DATA packet was larger than the Content-Length
 				   declaration - fail */
 				AbortResponseBody(std::make_exception_ptr(FcgiClientError(FcgiClientErrorCode::GARBAGE,
@@ -671,7 +672,7 @@ FcgiClient::ConsumeInput(const std::byte *data0, std::size_t length0) noexcept
 				return BufferedResult::DESTROYED;
 			}
 
-			std::size_t nbytes = Feed({data, length});
+			std::size_t nbytes = Feed(payload);
 			if (nbytes == 0) {
 				if (destructed)
 					return BufferedResult::DESTROYED;
@@ -688,7 +689,7 @@ FcgiClient::ConsumeInput(const std::byte *data0, std::size_t length0) noexcept
 				return BufferedResult::OK;
 			}
 
-			data += nbytes;
+			src = src.subspan(nbytes);
 			content_length -= nbytes;
 			socket.DisposeConsumed(nbytes);
 
@@ -704,21 +705,19 @@ FcgiClient::ConsumeInput(const std::byte *data0, std::size_t length0) noexcept
 			}
 
 			if (content_length > 0)
-				return data < end && !response.receiving_headers
-					/* some was consumed, try again later */
-					? BufferedResult::OK
+				return src.empty() || response.receiving_headers
 					/* all input was consumed, want more */
-					: BufferedResult::MORE;
+					? BufferedResult::MORE
+					/* some was consumed, try again later */
+					: BufferedResult::OK;
 
 			continue;
 		}
 
 		if (skip_length > 0) {
-			std::size_t nbytes = end - data;
-			if (nbytes > skip_length)
-				nbytes = skip_length;
+			std::size_t nbytes = std::min(src.size(), skip_length);
 
-			data += nbytes;
+			src = src.subspan(nbytes);
 			skip_length -= nbytes;
 			socket.DisposeConsumed(nbytes);
 
@@ -734,17 +733,16 @@ FcgiClient::ConsumeInput(const std::byte *data0, std::size_t length0) noexcept
 		}
 
 		const FcgiRecordHeader *header =
-			(const FcgiRecordHeader *)data;
-		const std::size_t remaining = end - data;
-		if (remaining < sizeof(*header))
+			(const FcgiRecordHeader *)src.data();
+		if (src.size() < sizeof(*header))
 			return BufferedResult::MORE;
 
-		data += sizeof(*header);
+		src = src.subspan(sizeof(*header));
 		socket.KeepConsumed(sizeof(*header));
 
 		if (!HandleHeader(*header))
 			return BufferedResult::DESTROYED;
-	} while (data != end);
+	} while (!src.empty());
 
 	return BufferedResult::MORE;
 }
@@ -1156,7 +1154,7 @@ FcgiClient::OnBufferedData()
 				      : PutAction::DESTROY);
 	}
 
-	return ConsumeInput(r.data(), r.size());
+	return ConsumeInput(r);
 }
 
 bool
