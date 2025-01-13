@@ -114,6 +114,11 @@ private:
 		timeout_event.Schedule(was_output_timeout);
 	}
 
+	void DeferNextWrite() noexcept {
+		defer_write.ScheduleNext();
+		timeout_event.Schedule(was_output_timeout);
+	}
+
 	void WriteEventCallback(unsigned events) noexcept;
 	void OnDeferredWrite() noexcept;
 
@@ -285,7 +290,10 @@ WasOutput::OnData(const std::span<const std::byte> src) noexcept
 			return 0;
 		}
 
-		ScheduleWrite();
+		if (static_cast<std::size_t>(nbytes) < src.size())
+			ScheduleWrite();
+		else
+			DeferNextWrite();
 	} else if (nbytes < 0) {
 		if (errno == EAGAIN) {
 			ScheduleWrite();
