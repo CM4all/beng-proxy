@@ -18,6 +18,13 @@ FcgiConnection::FcgiConnection(CreateStockItem c, ListenChildStockItem &_child,
 }
 
 inline void
+FcgiConnection::SetAborted() noexcept
+{
+	if (fresh)
+		child.Fade();
+}
+
+inline void
 FcgiConnection::Read() noexcept
 {
 	std::byte buffer[1];
@@ -48,7 +55,6 @@ FcgiConnection::Borrow() noexcept
 	}
 
 	event.Cancel();
-	aborted = false;
 	return true;
 }
 
@@ -63,17 +69,7 @@ FcgiConnection::Release() noexcept
 FcgiConnection::~FcgiConnection() noexcept
 {
 	event.Close();
-
-	bool kill = false;
-
-	if (fresh && aborted)
-		/* the fcgi_client caller has aborted the request before the
-		   first response on a fresh connection was received: better
-		   kill the child process, it may be failing on us
-		   completely */
-		kill = true;
-
-	child.Put(kill ? PutAction::DESTROY : PutAction::REUSE);
+	child.Put(PutAction::REUSE);
 }
 
 UniqueFileDescriptor

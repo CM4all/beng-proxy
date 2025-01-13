@@ -23,11 +23,6 @@ class FcgiConnection final : public StockItem {
 	 */
 	bool fresh = true;
 
-	/**
-	 * Was the current request aborted by the fcgi_client caller?
-	 */
-	bool aborted = false;
-
 public:
 	explicit FcgiConnection(CreateStockItem c, ListenChildStockItem &_child,
 				UniqueSocketDescriptor &&socket) noexcept;
@@ -56,9 +51,7 @@ public:
 		child.SetUri(uri);
 	}
 
-	void SetAborted() noexcept {
-		aborted = true;
-	}
+	void SetAborted() noexcept;
 
 	/* virtual methods from class StockItem */
 	bool Borrow() noexcept override;
