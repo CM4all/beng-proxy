@@ -681,7 +681,7 @@ FcgiClient::ConsumeInput(std::span<const std::byte> src) noexcept
 					/* incomplete header line received, want more
 					   data */
 					assert(response.receiving_headers);
-					return BufferedResult::MORE;
+					break;
 				}
 
 				/* the response body handler blocks, wait for it to
@@ -704,12 +704,14 @@ FcgiClient::ConsumeInput(std::span<const std::byte> src) noexcept
 					: BufferedResult::DESTROYED;
 			}
 
-			if (content_length > 0)
-				return src.empty() || response.receiving_headers
+			if (content_length > 0) {
+				if (src.empty() || response.receiving_headers)
 					/* all input was consumed, want more */
-					? BufferedResult::MORE
-					/* some was consumed, try again later */
-					: BufferedResult::OK;
+					break;
+
+				/* some was consumed, try again later */
+				return BufferedResult::OK;
+			}
 
 			continue;
 		}
