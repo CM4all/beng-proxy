@@ -125,9 +125,6 @@ deinit_signals(LbInstance *instance)
 int
 main(int argc, char **argv)
 try {
-	if (geteuid() == 0)
-		throw "Refusing to run as root";
-
 	const ScopeFbPoolInit fb_pool_init;
 
 	/* configuration */
@@ -136,6 +133,9 @@ try {
 	LbConfig config;
 
 	ParseCommandLine(cmdline, config, argc, argv);
+
+	if (geteuid() == 0)
+		throw "Refusing to run as root";
 
 	LoadConfigFile(config, cmdline.config_path);
 

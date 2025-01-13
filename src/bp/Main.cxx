@@ -287,9 +287,6 @@ try {
 	if (!IsKernelVersionOrNewer({5, 12}))
 		throw "Your Linux kernel is too old; this program requires at least 5.12";
 
-	if (geteuid() == 0)
-		throw "Refusing to run as root";
-
 	InitProcessName(argc, argv);
 
 #ifndef NDEBUG
@@ -302,6 +299,9 @@ try {
 	BpCmdLine cmdline;
 	BpConfig _config;
 	ParseCommandLine(cmdline, _config, argc, argv);
+
+	if (geteuid() == 0)
+		throw "Refusing to run as root";
 
 	if (cmdline.config_file != nullptr)
 		LoadConfigFile(_config, cmdline.config_file);
