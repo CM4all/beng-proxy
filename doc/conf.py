@@ -50,7 +50,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = 'beng-proxy'
-copyright = '2007-2021 CM4all GmbH'
+copyright = '2007-2025 CM4all GmbH'
 author = 'Max Kellermann'
 
 # The version info for the project you're documenting, acts as replacement for
