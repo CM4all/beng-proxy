@@ -64,6 +64,8 @@ FcgiConnection::~FcgiConnection() noexcept
 {
 	event.Close();
 
+	bool kill = false;
+
 	if (fresh && aborted)
 		/* the fcgi_client caller has aborted the request before the
 		   first response on a fresh connection was received: better

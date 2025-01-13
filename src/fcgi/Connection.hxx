@@ -24,11 +24,6 @@ class FcgiConnection final : public StockItem {
 	bool fresh = true;
 
 	/**
-	 * Shall the FastCGI child process be killed?
-	 */
-	bool kill = false;
-
-	/**
 	 * Was the current request aborted by the fcgi_client caller?
 	 */
 	bool aborted = false;
