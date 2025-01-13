@@ -87,9 +87,6 @@ fcgi_stock_item_set_uri(StockItem &item, const char *uri) noexcept;
 SocketDescriptor
 fcgi_stock_item_get(const StockItem &item) noexcept;
 
-int
-fcgi_stock_item_get_domain(const StockItem &item) noexcept;
-
 UniqueFileDescriptor
 fcgi_stock_item_get_stderr(const StockItem &item) noexcept;
 
