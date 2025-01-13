@@ -269,7 +269,7 @@ private:
 	 *
 	 * @return false if the connection was closed
 	 */
-	bool SubmitResponse() noexcept;
+	bool SubmitResponse(const DestructObserver &destructed) noexcept;
 
 	/**
 	 * The END_REQUEST packet was received completely.  This
@@ -509,7 +509,7 @@ FcgiClient::Feed(std::span<const std::byte> src) noexcept
 }
 
 inline bool
-FcgiClient::SubmitResponse() noexcept
+FcgiClient::SubmitResponse(const DestructObserver &destructed) noexcept
 {
 	assert(!response.receiving_headers);
 
@@ -544,8 +544,6 @@ FcgiClient::SubmitResponse() noexcept
 		if (endptr > p && *endptr == 0)
 			response.available = l;
 	}
-
-	const DestructObserver destructed(*this);
 
 	response.in_handler = true;
 	handler.InvokeResponse(status, std::move(response.headers),
@@ -697,7 +695,7 @@ FcgiClient::ConsumeInput(std::span<const std::byte> src) noexcept
 				/* the read_state has been switched from HEADERS to
 				   BODY: we have to deliver the response now */
 
-				return SubmitResponse()
+				return SubmitResponse(destructed)
 					/* continue parsing the response body from the
 					   buffer */
 					? BufferedResult::AGAIN
