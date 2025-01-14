@@ -52,7 +52,9 @@ struct alignas(std::max_align_t) allocation_info {
 
 	size_t size;
 
+#ifdef ENABLE_TYPE_ARG
 	const char *type;
+#endif
 
 #ifdef ENABLE_TRACE
 	const char *file;
@@ -790,7 +792,9 @@ p_malloc_libc(struct pool *pool, size_t size TYPE_ARG_DECL TRACE_ARGS_DECL) noex
 
 #ifndef NDEBUG
 	pool->allocations.push_back(chunk->info);
+#ifdef ENABLE_TYPE_ARG
 	chunk->info.type = type;
+#endif
 #ifdef ENABLE_TRACE
 	chunk->info.file = file;
 	chunk->info.line = line;
@@ -879,7 +883,9 @@ p_malloc_linear(struct pool *pool, const size_t original_size
 
 #ifndef NDEBUG
 	struct allocation_info *info = (struct allocation_info *)p;
+#ifdef ENABLE_TYPE_ARG
 	info->type = type;
+#endif
 #ifdef ENABLE_TRACE
 	info->file = file;
 	info->line = line;

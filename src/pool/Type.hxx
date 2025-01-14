@@ -4,7 +4,9 @@
 
 #pragma once
 
-#ifdef NDEBUG
+//#define ENABLE_TYPE_ARG
+
+#ifndef ENABLE_TYPE_ARG
 
 #define TYPE_ARG_DECL
 #define TYPE_ARG_FWD

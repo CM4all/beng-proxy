@@ -167,7 +167,7 @@ p_malloc_type(struct pool &pool, size_t size TYPE_ARG_DECL TRACE_ARGS_DEFAULT) n
 	return p_malloc(&pool, size TYPE_ARG_FWD TRACE_ARGS_FWD);
 }
 
-#ifndef NDEBUG
+#ifdef ENABLE_TYPE_ARG
 
 [[gnu::malloc]] [[gnu::returns_nonnull]]
 static inline void *
