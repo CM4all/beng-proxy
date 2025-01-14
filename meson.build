@@ -123,10 +123,9 @@ add_global_arguments(common_flags, language: 'cpp')
 add_global_arguments(compiler.get_supported_arguments(test_global_cxxflags), language: 'cpp')
 add_project_arguments(compiler.get_supported_arguments(test_cxxflags), language: 'cpp')
 
-if debug
+debug_flags = []
+if get_option('poison')
   debug_flags = ['-DPOISON']
-else
-  debug_flags = []
 endif
 
 stopwatch = get_option('stopwatch')

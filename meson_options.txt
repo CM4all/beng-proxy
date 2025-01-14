@@ -15,3 +15,6 @@ option('stopwatch', type: 'boolean', value: true, description: 'enable stopwatch
 option('systemd', type: 'feature', description: 'systemd support (using libsystemd)')
 option('was', type: 'feature', description: 'WAS support')
 option('zeroconf', type: 'feature', description: 'Zeroconf support (using Avahi)')
+
+# debugging options
+option('poison', type: 'boolean', value: false, description: 'Poison freed memory (for debugging)')
