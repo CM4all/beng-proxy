@@ -12,6 +12,7 @@ cm4all-beng-proxy (19.1) unstable; urgency=low
   * translation/cache: reduce CPU and memory overhead
   * brotli: offload to worker thread
   * disable memory poisoning by default
+  * debian: disable the "stopwatch" feature
 
  --   
 

@@ -9,6 +9,7 @@ MESON_OPTIONS = \
 	-Dio_uring=enabled \
 	-Dlua=enabled \
 	-Dseccomp=enabled \
+	-Dstopwatch=false \
 	-Dsystemd=enabled \
 	-Dwas=enabled \
 	-Dzeroconf=enabled
