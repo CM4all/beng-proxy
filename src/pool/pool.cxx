@@ -28,6 +28,7 @@
 
 // historic debugging features:
 //#define DEBUG_POOL_REF
+//#define DEBUG_POOL_ALLOC
 //#define DEBUG_POOL_GROW
 //#define DUMP_POOL_ALLOC_ALL
 
@@ -46,7 +47,7 @@ static constexpr size_t ALIGN_SIZE = RoundUpToPowerOfTwo(alignof(std::max_align_
 static constexpr unsigned RECYCLER_MAX_POOLS = 256;
 static constexpr unsigned RECYCLER_MAX_LINEAR_AREAS = 256;
 
-#ifndef NDEBUG
+#ifdef DEBUG_POOL_ALLOC
 struct alignas(std::max_align_t) allocation_info {
 	IntrusiveListHook<IntrusiveHookMode::NORMAL> siblings;
 
@@ -73,7 +74,7 @@ struct libc_pool_chunk {
 #ifdef POISON
 	size_t size;
 #endif
-#ifndef NDEBUG
+#ifdef DEBUG_POOL_ALLOC
 	struct allocation_info info;
 #endif
 	unsigned char data[sizeof(size_t)];
@@ -160,10 +161,12 @@ struct pool final
 		~CurrentArea() {}
 	} current_area;
 
-#ifndef NDEBUG
+#ifdef DEBUG_POOL_ALLOC
 	IntrusiveList<struct allocation_info,
 		      IntrusiveListMemberHookTraits<&allocation_info::siblings>> allocations;
+#endif
 
+#ifndef NDEBUG
 	IntrusiveList<PoolLeakDetector> leaks;
 #endif
 
@@ -236,7 +239,7 @@ align_size(size_t size) noexcept
 	return RoundUpToPowerOfTwo(size, ALIGN_SIZE);
 }
 
-#ifndef NDEBUG
+#ifdef DEBUG_POOL_ALLOC
 static struct allocation_info *
 get_linear_allocation_info(void *p) noexcept
 {
@@ -761,7 +764,7 @@ pool_clear(struct pool &pool) noexcept
 {
 	assert(pool.leaks.empty());
 
-#ifndef NDEBUG
+#ifdef DEBUG_POOL_ALLOC
 	pool.allocations.clear();
 #endif
 
@@ -790,7 +793,7 @@ p_malloc_libc(struct pool *pool, size_t size TYPE_ARG_DECL TRACE_ARGS_DECL) noex
 	struct libc_pool_chunk *chunk = (struct libc_pool_chunk *)
 		xmalloc(sizeof(*chunk) - sizeof(chunk->data) + aligned_size);
 
-#ifndef NDEBUG
+#ifdef DEBUG_POOL_ALLOC
 	pool->allocations.push_back(chunk->info);
 #ifdef ENABLE_TYPE_ARG
 	chunk->info.type = type;
@@ -881,7 +884,7 @@ p_malloc_linear(struct pool *pool, const size_t original_size
 
 	PoisonUndefined(p, size);
 
-#ifndef NDEBUG
+#ifdef DEBUG_POOL_ALLOC
 	struct allocation_info *info = (struct allocation_info *)p;
 #ifdef ENABLE_TYPE_ARG
 	info->type = type;
@@ -923,7 +926,7 @@ p_free_libc(struct pool *pool, void *ptr)
 	void *q = (char *)ptr - offsetof(struct libc_pool_chunk, data);
 	struct libc_pool_chunk *chunk = (struct libc_pool_chunk *)q;
 
-#ifndef NDEBUG
+#ifdef DEBUG_POOL_ALLOC
 	pool->allocations.erase(pool->allocations.iterator_to(chunk->info));
 #endif
 
@@ -951,7 +954,7 @@ p_free(struct pool *pool, const void *cptr, size_t size) noexcept
 		break;
 
 	case pool::Type::LINEAR:
-#ifndef NDEBUG
+#ifdef DEBUG_POOL_ALLOC
 		{
 			struct allocation_info *info = get_linear_allocation_info(ptr);
 			assert(size == info->size);
