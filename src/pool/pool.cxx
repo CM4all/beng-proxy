@@ -17,9 +17,6 @@
 
 #include <fmt/format.h>
 
-#include <forward_list>
-#include <typeinfo>
-
 #include <assert.h>
 #include <stdlib.h>
 #include <string.h>
@@ -33,6 +30,10 @@
 //#define DEBUG_POOL_REF
 //#define DEBUG_POOL_GROW
 //#define DUMP_POOL_ALLOC_ALL
+
+#ifdef DEBUG_POOL_REF
+#include <forward_list>
+#endif
 
 #if defined(DEBUG_POOL_GROW) || defined(DUMP_POOL_ALLOC_ALL)
 #define DUMP_POOL_ALLOC
