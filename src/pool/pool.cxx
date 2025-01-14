@@ -29,6 +29,11 @@
 #undef major
 #endif
 
+// historic debugging features:
+//#define DEBUG_POOL_REF
+//#define DEBUG_POOL_GROW
+//#define DUMP_POOL_ALLOC_ALL
+
 #if defined(DEBUG_POOL_GROW) || defined(DUMP_POOL_ALLOC_ALL)
 #define DUMP_POOL_ALLOC
 #endif
