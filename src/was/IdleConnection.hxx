@@ -87,6 +87,7 @@ public:
 			return false;
 
 		event.Cancel();
+		defer_schedule_read.Cancel();
 		return true;
 	}
 
