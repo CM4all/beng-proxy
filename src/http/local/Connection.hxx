@@ -24,8 +24,11 @@ class LhttpConnection final
 	SocketEvent event;
 
 public:
+	/**
+	 * Throws on connect error.
+	 */
 	explicit LhttpConnection(CreateStockItem c,
-				 ListenChildStockItem &_child) noexcept;
+				 ListenChildStockItem &_child);
 	~LhttpConnection() noexcept override;
 
 	SocketDescriptor GetSocket() const noexcept {

@@ -7,7 +7,7 @@
 #include "net/UniqueSocketDescriptor.hxx"
 
 LhttpConnection::LhttpConnection(CreateStockItem c,
-				 ListenChildStockItem &_child) noexcept
+				 ListenChildStockItem &_child)
 	:StockItem(c),
 	 logger(*this),
 	 child(_child),
