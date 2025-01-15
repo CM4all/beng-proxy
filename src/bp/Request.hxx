@@ -412,7 +412,7 @@ private:
 	 * disabled?  This is initialized by DetermineSession(), and
 	 * may be disabled later by HandleTranslatedRequest().
 	 */
-	bool stateless;
+	bool stateless = true;
 
 	bool send_session_cookie = false;
 
