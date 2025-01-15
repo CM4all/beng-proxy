@@ -79,10 +79,12 @@ BpInstance::BpInstance(BpConfig &&_config,
 	 shutdown_listener(event_loop, BIND_THIS_METHOD(ShutdownCallback)),
 	 sighup_event(event_loop, SIGHUP, BIND_THIS_METHOD(ReloadEventCallback)),
 	 compress_timer(event_loop, BIND_THIS_METHOD(OnCompressTimer)),
-	 spawn(std::make_unique<SpawnServerClient>(event_loop,
-						   config.spawn, std::move(spawner.socket),
-						   spawner.cgroup.IsDefined(),
-						   true)),
+	 spawn(spawner.socket.IsDefined()
+	       ? std::make_unique<SpawnServerClient>(event_loop,
+						     config.spawn, std::move(spawner.socket),
+						     spawner.cgroup.IsDefined(),
+						     true)
+	       : nullptr),
 	 spawn_service(spawn.get()),
 #ifdef HAVE_LIBSYSTEMD
 	 memory_limit(GetMemoryLimit(config.spawn.systemd_scope_properties)),

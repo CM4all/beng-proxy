@@ -55,6 +55,7 @@
 #include "io/SpliceSupport.hxx"
 #include "util/StringCompare.hxx"
 #include "util/PrintException.hxx"
+#include "util/Valgrind.hxx"
 
 #ifdef HAVE_LIBCAP
 #include "lib/cap/Glue.hxx"
@@ -130,7 +131,8 @@ BpInstance::ShutdownCallback() noexcept
 	DisableSignals();
 	thread_pool_stop();
 
-	spawn->Shutdown();
+	if (spawn)
+		spawn->Shutdown();
 
 #ifdef HAVE_LIBSYSTEMD
 	cgroup_memory_watch.reset();
@@ -312,7 +314,12 @@ try {
 
 	SetupProcess();
 
-	auto spawner = LaunchSpawnServer(_config.spawn, nullptr);
+	auto spawner = HaveValgrind()
+		/* if we're running under Valgrind, don't launch the
+		   spawner; it doesn't work currently with Valgrind
+		   because clone3() is not supported by Valgrind */
+		? LaunchSpawnServerResult{}
+		: LaunchSpawnServer(_config.spawn, nullptr);
 
 #if defined(HAVE_LIBSYSTEMD) || defined(HAVE_AVAHI)
 	const ODBus::ScopeInit dbus_init;
