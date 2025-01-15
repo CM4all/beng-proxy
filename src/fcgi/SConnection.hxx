@@ -12,7 +12,7 @@
 
 class UniqueSocketDescriptor;
 
-class FcgiConnection final : public StockItem {
+class FcgiStockConnection final : public StockItem {
 	const LLogger logger;
 
 	ListenChildStockItem &child;
@@ -33,10 +33,10 @@ class FcgiConnection final : public StockItem {
 	bool fresh = true;
 
 public:
-	explicit FcgiConnection(CreateStockItem c, ListenChildStockItem &_child,
-				UniqueSocketDescriptor &&socket) noexcept;
+	explicit FcgiStockConnection(CreateStockItem c, ListenChildStockItem &_child,
+				     UniqueSocketDescriptor &&socket) noexcept;
 
-	~FcgiConnection() noexcept override;
+	~FcgiStockConnection() noexcept override;
 
 	[[gnu::pure]]
 	std::string_view GetTag() const noexcept {

@@ -2,14 +2,14 @@
 // Copyright CM4all GmbH
 // author: Max Kellermann <mk@cm4all.com>
 
-#include "Connection.hxx"
+#include "SConnection.hxx"
 #include "net/UniqueSocketDescriptor.hxx"
 
 #include <errno.h>
 #include <string.h>
 
-FcgiConnection::FcgiConnection(CreateStockItem c, ListenChildStockItem &_child,
-			       UniqueSocketDescriptor &&socket) noexcept
+FcgiStockConnection::FcgiStockConnection(CreateStockItem c, ListenChildStockItem &_child,
+					 UniqueSocketDescriptor &&socket) noexcept
 	:StockItem(c), logger(GetStockName()),
 	 child(_child),
 	 event(GetStock().GetEventLoop(), BIND_THIS_METHOD(OnSocketEvent),
@@ -20,14 +20,14 @@ FcgiConnection::FcgiConnection(CreateStockItem c, ListenChildStockItem &_child,
 }
 
 inline void
-FcgiConnection::SetAborted() noexcept
+FcgiStockConnection::SetAborted() noexcept
 {
 	if (fresh)
 		child.Fade();
 }
 
 inline void
-FcgiConnection::Read() noexcept
+FcgiStockConnection::Read() noexcept
 {
 	std::byte buffer[1];
 	ssize_t nbytes = GetSocket().ReadNoWait(buffer);
@@ -38,14 +38,14 @@ FcgiConnection::Read() noexcept
 }
 
 inline void
-FcgiConnection::OnSocketEvent(unsigned) noexcept
+FcgiStockConnection::OnSocketEvent(unsigned) noexcept
 {
 	Read();
 	InvokeIdleDisconnect();
 }
 
 bool
-FcgiConnection::Borrow() noexcept
+FcgiStockConnection::Borrow() noexcept
 {
 	if (event.GetReadyFlags() != 0) [[unlikely]] {
 		/* this connection was probably closed, but our
@@ -62,14 +62,14 @@ FcgiConnection::Borrow() noexcept
 }
 
 bool
-FcgiConnection::Release() noexcept
+FcgiStockConnection::Release() noexcept
 {
 	fresh = false;
 	defer_schedule_read.ScheduleIdle();
 	return true;
 }
 
-FcgiConnection::~FcgiConnection() noexcept
+FcgiStockConnection::~FcgiStockConnection() noexcept
 {
 	event.Close();
 }
@@ -77,28 +77,28 @@ FcgiConnection::~FcgiConnection() noexcept
 UniqueFileDescriptor
 fcgi_stock_item_get_stderr(const StockItem &item) noexcept
 {
-	const auto &connection = (const FcgiConnection &)item;
+	const auto &connection = (const FcgiStockConnection &)item;
 	return connection.GetStderr();
 }
 
 void
 fcgi_stock_item_set_site(StockItem &item, const char *site) noexcept
 {
-	auto &connection = (FcgiConnection &)item;
+	auto &connection = (FcgiStockConnection &)item;
 	connection.SetSite(site);
 }
 
 void
 fcgi_stock_item_set_uri(StockItem &item, const char *uri) noexcept
 {
-	auto &connection = (FcgiConnection &)item;
+	auto &connection = (FcgiStockConnection &)item;
 	connection.SetUri(uri);
 }
 
 SocketDescriptor
 fcgi_stock_item_get(const StockItem &item) noexcept
 {
-	const auto *connection = (const FcgiConnection *)&item;
+	const auto *connection = (const FcgiStockConnection *)&item;
 
 	return connection->GetSocket();
 }
@@ -106,7 +106,7 @@ fcgi_stock_item_get(const StockItem &item) noexcept
 void
 fcgi_stock_aborted(StockItem &item) noexcept
 {
-	auto *connection = (FcgiConnection *)&item;
+	auto *connection = (FcgiStockConnection *)&item;
 
 	connection->SetAborted();
 }

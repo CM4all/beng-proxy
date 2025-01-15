@@ -3,7 +3,7 @@
 // author: Max Kellermann <mk@cm4all.com>
 
 #include "Stock.hxx"
-#include "Connection.hxx"
+#include "SConnection.hxx"
 #include "Error.hxx"
 #include "stock/Stock.hxx"
 #include "stock/Class.hxx"
@@ -189,7 +189,7 @@ FcgiStock::CreateRequest::OnStockItemReady(StockItem &item) noexcept
 	auto &child = static_cast<ListenChildStockItem &>(item);
 
 	try {
-		auto *connection = new FcgiConnection(create, child, child.Connect());
+		auto *connection = new FcgiStockConnection(create, child, child.Connect());
 		connection->InvokeCreateSuccess(handler);
 	} catch (...) {
 		child.Put(PutAction::DESTROY);
@@ -224,7 +224,7 @@ FcgiStock::Create(CreateStockItem c, StockItem &shared_item)
 	auto &child = (ListenChildStockItem &)shared_item;
 
 	try {
-		return new FcgiConnection(c, child, child.Connect());
+		return new FcgiStockConnection(c, child, child.Connect());
 	} catch (...) {
 		std::throw_with_nested(FcgiClientError(FcgiClientErrorCode::REFUSED,
 						       FmtBuffer<256>("Failed to connect to FastCGI server {:?}",
