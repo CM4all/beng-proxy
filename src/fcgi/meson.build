@@ -1,6 +1,7 @@
 fcgi_client = static_library(
   'fcgi_client',
   'Client.cxx',
+  'Parser.cxx',
   'Serialize.cxx',
   'istream_fcgi.cxx',
   include_directories: inc,
