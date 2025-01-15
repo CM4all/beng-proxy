@@ -945,8 +945,7 @@ FcgiClient::_FillBucketList(IstreamBucketList &list)
 
 			std::size_t size = std::min(remaining, current_content_length);
 			if (available > 0) {
-				if (std::cmp_greater(size, available))
-					size = available;
+				asert(std::cmp_less_equal(size, available));
 				available -= size;
 			}
 
