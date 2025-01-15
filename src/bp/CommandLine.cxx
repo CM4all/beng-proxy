@@ -47,10 +47,6 @@ PrintUsage()
 #endif
 	     " -U name        execute the error logger program with this user id\n"
 #ifdef __GLIBC__
-	     " --document-root DIR\n"
-#endif
-	     " -r DIR         set the document root\n"
-#ifdef __GLIBC__
 	     " --translation-socket PATH\n"
 #endif
 	     " -t PATH        set the path to the translation server socket\n"
