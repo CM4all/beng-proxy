@@ -27,12 +27,12 @@
 #include "fs/FilteredSocket.hxx"
 #include "lib/fmt/Unsafe.hxx"
 #include "event/Loop.hxx"
+#include "net/PToString.hxx"
 #include "net/StaticSocketAddress.hxx"
 #include "net/log/ContentType.hxx"
 #include "util/Cancellable.hxx"
 #include "util/StaticVector.hxx"
 #include "util/StringAPI.hxx"
-#include "address_string.hxx"
 #include "stopwatch.hxx"
 #include "product.h" // for BRIEF_PRODUCT_TOKEN
 

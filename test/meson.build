@@ -130,7 +130,7 @@ executable('run_http_cache',
 executable('run_http_server',
   'run_http_server.cxx',
   'DemoHttpServerConnection.cxx',
-  '../src/address_string.cxx',
+  '../src/net/PToString.cxx',
   include_directories: inc,
   dependencies: [
     test_instance_dep,
@@ -142,7 +142,7 @@ if libnghttp2.found()
   executable(
     'RunNgHttp2Server',
     'RunNgHttp2Server.cxx',
-    '../src/address_string.cxx',
+    '../src/net/PToString.cxx',
     '../src/http/IncomingRequest.cxx',
     include_directories: inc,
     dependencies: [
@@ -400,7 +400,7 @@ test(
     't_fcgi_client.cxx',
     'fcgi_server.cxx',
     'DemoHttpServerConnection.cxx',
-    '../src/address_string.cxx',
+    '../src/net/PToString.cxx',
     t_client_sources,
     include_directories: inc,
     dependencies: [
@@ -420,7 +420,7 @@ test(
 
 test('t_http_server', executable('t_http_server',
   't_http_server.cxx',
-  '../src/address_string.cxx',
+  '../src/net/PToString.cxx',
   include_directories: inc,
   dependencies: [
     test_instance_dep,

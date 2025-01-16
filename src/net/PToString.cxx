@@ -2,7 +2,7 @@
 // Copyright CM4all GmbH
 // author: Max Kellermann <mk@cm4all.com>
 
-#include "address_string.hxx"
+#include "PToString.hxx"
 #include "pool/pool.hxx"
 #include "net/SocketAddress.hxx"
 #include "net/FormatAddress.hxx"

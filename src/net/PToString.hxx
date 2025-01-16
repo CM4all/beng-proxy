@@ -2,8 +2,7 @@
 // Copyright CM4all GmbH
 // author: Max Kellermann <mk@cm4all.com>
 
-#ifndef BENG_ADDRESS_STRING_HXX
-#define BENG_ADDRESS_STRING_HXX
+#pragma once
 
 struct pool;
 class SocketAddress;
@@ -23,5 +22,3 @@ address_to_string(struct pool &pool, SocketAddress address);
 [[gnu::pure]]
 const char *
 address_to_host_string(struct pool &pool, SocketAddress address);
-
-#endif
