@@ -1,6 +1,5 @@
-cm4all-beng-proxy (19.2) unstable; urgency=low
+cm4all-beng-proxy (19.3) unstable; urgency=low
 
-  * http/local: fix crash bug (19.0 regression)
   * http/server: receive using io_uring
   * was: reduce the number of epoll_ctl() system calls again
   * was: receive from control channel using io_uring
@@ -8,6 +7,12 @@ cm4all-beng-proxy (19.2) unstable; urgency=low
   * do not resolve IPv6 scope ids to interface names
 
  --   
+
+cm4all-beng-proxy (19.2) unstable; urgency=low
+
+  * http/local: fix crash bug (19.0 regression)
+
+ -- Max Kellermann <mk@cm4all.com>  Thu, 16 Jan 2025 17:26:56 +0100
 
 cm4all-beng-proxy (19.1) unstable; urgency=low
 
