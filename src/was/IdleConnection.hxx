@@ -53,15 +53,11 @@ class WasIdleConnection {
 
 public:
 	WasIdleConnection(EventLoop &event_loop,
+			  WasSocket &&_socket,
 			  WasIdleConnectionHandler &_handler) noexcept;
 
 	auto &GetEventLoop() const noexcept {
 		return event.GetEventLoop();
-	}
-
-	void Open(WasSocket &&_socket) noexcept {
-		socket = std::move(_socket);
-		event.Open(socket.control);
 	}
 
 	const auto &GetSocket() const noexcept {

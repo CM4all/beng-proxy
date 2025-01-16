@@ -12,8 +12,10 @@
 #include <sys/socket.h>
 
 WasIdleConnection::WasIdleConnection(EventLoop &event_loop,
+				     WasSocket &&_socket,
 				     WasIdleConnectionHandler &_handler) noexcept
-	:event(event_loop, BIND_THIS_METHOD(OnSocket)),
+	:socket(std::move(_socket)),
+	 event(event_loop, BIND_THIS_METHOD(OnSocket), socket.control),
 	 defer_schedule_read(event_loop,
 			     BIND_THIS_METHOD(DeferredScheduleRead)),
 	 handler(_handler)
