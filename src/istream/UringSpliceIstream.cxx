@@ -62,8 +62,8 @@ class UringSpliceIstream final : public Istream, Uring::Operation {
 
 public:
 	UringSpliceIstream(struct pool &p, Uring::Queue &_uring,
-		     const char *_path, UniqueFileDescriptor &&_fd,
-		     off_t _start_offset, off_t _end_offset)
+			   const char *_path, UniqueFileDescriptor &&_fd,
+			   off_t _start_offset, off_t _end_offset)
 		:Istream(p), uring(_uring),
 		 path(_path),
 		 fd(std::move(_fd)),
