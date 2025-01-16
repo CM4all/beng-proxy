@@ -15,6 +15,7 @@
 #include "strmap.hxx"
 
 #include <functional>
+#include <optional>
 
 static void
 RunNull(WasServer &server, struct pool &,
@@ -264,11 +265,13 @@ MalformedPrematureWasServer::OnWasControlPacket(enum was_command cmd,
 	return true;
 }
 
-class WasConnection final : public ClientConnection, WasServerHandler, WasLease
+class WasConnection final
+	: public ClientConnection, WasServerHandler, WasLease, Was::ControlHandler
 {
 	EventLoop &event_loop;
 
 	WasSocket socket;
+	std::optional<Was::Control> control;
 
 	WasServer *server = nullptr;
 
@@ -326,8 +329,8 @@ public:
 		     HttpResponseHandler &handler,
 		     CancellablePointer &cancel_ptr) noexcept override {
 		lease = &_lease;
-		was_client_request(pool, GetEventLoop(), nullptr,
-				   socket.control, socket.input, socket.output,
+		was_client_request(pool, nullptr,
+				   *control, socket.input, socket.output,
 				   *this,
 				   nullptr,
 				   method, uri, uri, nullptr, nullptr,
@@ -361,6 +364,7 @@ private:
 		socket = std::move(s.first);
 		socket.input.SetNonBlocking();
 		socket.output.SetNonBlocking();
+		control.emplace(event_loop, socket.control, static_cast<Was::ControlHandler &>(*this));
 
 		s.second.input.SetNonBlocking();
 		s.second.output.SetNonBlocking();
@@ -382,6 +386,18 @@ private:
 	void ReleaseWasStop(uint_least64_t) noexcept override {
 		ReleaseWas(PutAction::DESTROY);
 	}
+
+	/* virtual methods from class WasControlHandler */
+	bool OnWasControlPacket(enum was_command,
+				std::span<const std::byte>) noexcept override {
+		return true;
+	}
+	bool OnWasControlDrained() noexcept override {
+		return true;
+	}
+	void OnWasControlDone() noexcept override {}
+	void OnWasControlHangup() noexcept override {}
+	void OnWasControlError(std::exception_ptr) noexcept override {}
 };
 
 struct WasFactory {

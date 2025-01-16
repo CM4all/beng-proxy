@@ -20,9 +20,9 @@ WasStockRequest::OnStockItemReady(StockItem &item) noexcept
 	const auto &process = connection.GetSocket();
 	auto &lease = *NewFromPool<WasStockLease>(pool, connection);
 
-	was_client_request(pool, item.GetStock().GetEventLoop(),
+	was_client_request(pool,
 			   std::move(stopwatch),
-			   process.control,
+			   connection.GetControl(),
 			   process.input, process.output,
 			   lease,
 			   remote_host,

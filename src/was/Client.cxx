@@ -60,7 +60,7 @@ class WasClient final
 
 	WasLease &lease;
 
-	Was::Control control;
+	Was::Control &control;
 
 	WasMetricsHandler *const metrics_handler;
 
@@ -140,6 +140,8 @@ class WasClient final
 		}
 	} response;
 
+	bool lease_released = false;
+
 	/**
 	 * This is set to true while the final STOP is being sent to avoid
 	 * recursive errors.
@@ -148,9 +150,8 @@ class WasClient final
 
 public:
 	WasClient(struct pool &_pool, struct pool &_caller_pool,
-		  EventLoop &event_loop,
 		  StopwatchPtr &&_stopwatch,
-		  SocketDescriptor control_fd,
+		  Was::Control &_control,
 		  FileDescriptor input_fd, FileDescriptor output_fd,
 		  WasLease &_lease,
 		  HttpMethod method, UnusedIstreamPtr body,
@@ -196,12 +197,11 @@ private:
 			return true;
 
 		uint64_t sent = was_output_free_p(&request.body);
-		return control.SendUint64(WAS_COMMAND_PREMATURE, sent) &&
-			control.FlushOutput();
+		return control.SendUint64(WAS_COMMAND_PREMATURE, sent);
 	}
 
 	bool IsControlReleased() const noexcept {
-		return !control.IsDefined();
+		return lease_released;
 	}
 
 	/**
@@ -220,14 +220,9 @@ private:
 			/* already released */
 			return;
 
-		const PutAction action = control.empty()
-			? PutAction::REUSE
-			: PutAction::DESTROY;
-
-		control.ReleaseSocket();
-
-		lease.ReleaseWas(action);
-	}
+		lease.ReleaseWas(PutAction::REUSE);
+		lease_released = true;
+}
 
 	/**
 	 * @return false on error (OnWasControlError() has been called).
@@ -245,13 +240,11 @@ private:
 		   handler - he's not interested anymore */
 		ignore_control_errors = true;
 
-		if (!control.Send(WAS_COMMAND_STOP) ||
-		    !control.FlushOutput())
+		if (!control.Send(WAS_COMMAND_STOP))
 			return false;
 
-		control.ReleaseSocket();
-
 		lease.ReleaseWasStop(received);
+		lease_released = true;
 
 		return true;
 	}
@@ -267,10 +260,8 @@ private:
 		if (response.body != nullptr)
 			was_input_free_unused_p(&response.body);
 
-		if (control.IsDefined())
-			control.ReleaseSocket();
-
 		lease.ReleaseWas(PutAction::DESTROY);
+		lease_released = true;
 	}
 
 	/**
@@ -298,10 +289,8 @@ private:
 			   process lease */
 			was_input_disable(*response_body);
 
-		if (control.IsDefined())
-			control.ReleaseSocket();
-
 		lease.ReleaseWas(PutAction::DESTROY);
+		lease_released = true;
 
 		Destroy();
 
@@ -881,10 +870,8 @@ WasClient::WasInputError() noexcept
 
 	response.body = nullptr;
 
-	if (control.IsDefined())
-		control.ReleaseSocket();
-
 	lease.ReleaseWas(PutAction::DESTROY);
+	lease_released = true;
 
 	Destroy();
 }
@@ -896,9 +883,8 @@ WasClient::WasInputError() noexcept
 
 inline
 WasClient::WasClient(struct pool &_pool, struct pool &_caller_pool,
-		     EventLoop &event_loop,
 		     StopwatchPtr &&_stopwatch,
-		     SocketDescriptor control_fd,
+		     Was::Control &_control,
 		     FileDescriptor input_fd, FileDescriptor output_fd,
 		     WasLease &_lease,
 		     HttpMethod method, UnusedIstreamPtr body,
@@ -909,20 +895,22 @@ WasClient::WasClient(struct pool &_pool, struct pool &_caller_pool,
 	 alloc(_pool), caller_pool(_caller_pool),
 	 stopwatch(std::move(_stopwatch)),
 	 lease(_lease),
-	 control(event_loop, control_fd, *this),
+	 control(_control),
 	 metrics_handler(_metrics_handler),
 	 handler(_handler),
-	 submit_response_timer(event_loop,
+	 submit_response_timer(control.GetEventLoop(),
 			       BIND_THIS_METHOD(OnSubmitResponseTimer)),
 	 request(body
-		 ? was_output_new(_pool, event_loop, output_fd,
+		 ? was_output_new(_pool, control.GetEventLoop(), output_fd,
 				  std::move(body), *this)
 		 : nullptr),
 	 response(http_method_is_empty(method)
 		  ? nullptr
-		  : was_input_new(_pool, event_loop, input_fd, *this))
+		  : was_input_new(_pool, control.GetEventLoop(), input_fd, *this))
 {
 	cancel_ptr = *this;
+
+	control.SetHandler(*this);
 }
 
 static bool
@@ -974,9 +962,9 @@ WasClient::SendRequest(const char *remote_host,
 }
 
 void
-was_client_request(struct pool &caller_pool, EventLoop &event_loop,
+was_client_request(struct pool &caller_pool,
 		   StopwatchPtr stopwatch,
-		   SocketDescriptor control_fd,
+		   Was::Control &control,
 		   FileDescriptor input_fd, FileDescriptor output_fd,
 		   WasLease &lease,
 		   const char *remote_host,
@@ -993,8 +981,8 @@ was_client_request(struct pool &caller_pool, EventLoop &event_loop,
 	assert(uri != nullptr);
 
 	auto client = NewFromPool<WasClient>(caller_pool, caller_pool, caller_pool,
-					     event_loop, std::move(stopwatch),
-					     control_fd, input_fd, output_fd,
+					     std::move(stopwatch),
+					     control, input_fd, output_fd,
 					     lease, method, std::move(body),
 					     metrics_handler,
 					     handler, cancel_ptr);

@@ -1,6 +1,7 @@
 cm4all-beng-proxy (19.2) unstable; urgency=low
 
   * http/local: fix crash bug (19.0 regression)
+  * was: reduce the number of epoll_ctl() system calls again
 
  --   
 

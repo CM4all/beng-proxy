@@ -5,8 +5,7 @@
 #pragma once
 
 #include "was/async/Socket.hxx"
-#include "event/SocketEvent.hxx"
-#include "event/DeferEvent.hxx"
+#include "was/async/Control.hxx"
 
 #include <exception>
 #include <utility>
@@ -25,18 +24,10 @@ public:
  * It may be in the progress of "stopping", waiting for the peer's
  * PREMATURE confirmation.
  */
-class WasIdleConnection {
+class WasIdleConnection final : Was::ControlHandler {
 	WasSocket socket;
 
-	SocketEvent event;
-
-	/**
-	 * This postpones the ScheduleRead() call, just in case the
-	 * connection gets borrowed immediately by the next waiter (in
-	 * which case the deferred ScheduleRead() call is canceled).
-	 * This reduces the number of epoll_ctl() system calls.
-	 */
-	DeferEvent defer_schedule_read;
+	Was::Control control;
 
 	WasIdleConnectionHandler &handler;
 
@@ -57,11 +48,15 @@ public:
 			  WasIdleConnectionHandler &_handler) noexcept;
 
 	auto &GetEventLoop() const noexcept {
-		return event.GetEventLoop();
+		return control.GetEventLoop();
 	}
 
 	const auto &GetSocket() const noexcept {
 		return socket;
+	}
+
+	auto &GetControl() noexcept {
+		return control;
 	}
 
 	void Stop(uint64_t _received) noexcept {
@@ -82,33 +77,17 @@ public:
 			// TODO: improve recovery for this case
 			return false;
 
-		event.Cancel();
-		defer_schedule_read.Cancel();
 		return true;
 	}
 
 	void Release() noexcept {
-		defer_schedule_read.Schedule();
+		control.SetHandler(*this);
 	}
 
 private:
 	enum class ReceiveResult {
 		SUCCESS, AGAIN,
 	};
-
-	/**
-	 * Receive data on the control channel.
-	 *
-	 * Throws on error.
-	 */
-	ReceiveResult ReceiveControl(std::span<std::byte> dest);
-
-	/**
-	 * Receive and discard data on the control channel.
-	 *
-	 * Throws on error.
-	 */
-	void DiscardControl(size_t size);
 
 	/**
 	 * Discard the given amount of data from the input pipe.
@@ -119,16 +98,18 @@ private:
 
 	/**
 	 * Attempt to recover after the WAS client sent STOP to the
-	 * application.  This method waits for PREMATURE and discards
+	 * application.  Handles a PREMATURE packet and discards
 	 * excess data from the pipe.
 	 *
 	 * Throws on error.
 	 */
-	void RecoverStop();
+	bool OnPrematureControlPacket(std::span<const std::byte> payload);
 
-	void DeferredScheduleRead() noexcept {
-		event.ScheduleRead();
-	}
-
-	void OnSocket(unsigned events) noexcept;
+	/* virtual methods from class WasControlHandler */
+	bool OnWasControlPacket(enum was_command cmd,
+				std::span<const std::byte> payload) noexcept override;
+	bool OnWasControlDrained() noexcept override;
+	void OnWasControlDone() noexcept override;
+	void OnWasControlHangup() noexcept override;
+	void OnWasControlError(std::exception_ptr error) noexcept override;
 };

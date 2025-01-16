@@ -6,6 +6,7 @@
 #include "system/Error.hxx"
 #include "net/SocketError.hxx"
 #include "net/SocketProtocolError.hxx"
+#include "util/Unaligned.hxx"
 
 #include <was/protocol.h>
 
@@ -17,51 +18,9 @@ WasIdleConnection::WasIdleConnection(EventLoop &event_loop,
 				     WasSocket &&_socket,
 				     WasIdleConnectionHandler &_handler) noexcept
 	:socket(std::move(_socket)),
-	 event(event_loop, BIND_THIS_METHOD(OnSocket), socket.control),
-	 defer_schedule_read(event_loop,
-			     BIND_THIS_METHOD(DeferredScheduleRead)),
+	 control(event_loop, socket.control, *this),
 	 handler(_handler)
 {
-}
-
-WasIdleConnection::ReceiveResult
-WasIdleConnection::ReceiveControl(std::span<std::byte> dest)
-{
-	ssize_t nbytes = socket.control.Receive(dest, MSG_DONTWAIT);
-	if (nbytes == (ssize_t)dest.size())
-		return ReceiveResult::SUCCESS;
-
-	if (nbytes < 0) {
-		const auto e = GetSocketError();
-		if (IsSocketErrorReceiveWouldBlock(e))
-			/* the WAS application didn't send enough data (yet); don't
-			   bother waiting for more, just give up on this process */
-			return ReceiveResult::AGAIN;
-
-		throw MakeSocketError(e, "error on idle WAS control connection");
-	} else if (nbytes > 0)
-		throw std::runtime_error("unexpected data from idle WAS control connection");
-	else
-		throw std::runtime_error("WAS control socket closed unexpectedly");
-}
-
-inline void
-WasIdleConnection::DiscardControl(size_t size)
-{
-	while (size > 0) {
-		std::byte buffer[1024];
-		std::span<std::byte> dest{buffer};
-		if (size < dest.size())
-			dest = dest.first(size);
-
-		ssize_t nbytes = socket.control.Receive(dest, MSG_DONTWAIT);
-		if (nbytes < 0)
-			throw MakeSocketError("error on idle WAS control connection");
-		else if (nbytes == 0)
-			throw SocketClosedPrematurelyError{"WAS control socket closed unexpectedly"};
-
-		size -= nbytes;
-	}
 }
 
 inline void
@@ -82,26 +41,33 @@ WasIdleConnection::DiscardInput(uint64_t remaining)
 	}
 }
 
-inline void
-WasIdleConnection::RecoverStop()
+inline bool
+WasIdleConnection::OnPrematureControlPacket(std::span<const std::byte> payload)
 {
 	uint64_t premature;
+	if (payload.size() != sizeof(premature))
+		throw SocketProtocolError{"Malformed PREMATURE payload"};
 
-	while (true) {
-		struct was_header header;
-		switch (ReceiveControl(std::as_writable_bytes(std::span{&header, 1}))) {
-		case ReceiveResult::SUCCESS:
-			break;
+	premature = LoadUnaligned<uint64_t>(payload.data());
+	if (premature < input_received)
+		throw SocketProtocolError{"Bogus PREMATURE payload"};
 
-		case ReceiveResult::AGAIN:
-			/* wait for more data */
-			return;
-		}
+	DiscardInput(premature - input_received);
 
-		switch ((enum was_command)header.command) {
+	stopping = false;
+	handler.OnWasIdleConnectionClean();
+	return true;
+}
+
+bool
+WasIdleConnection::OnWasControlPacket(enum was_command cmd,
+				      std::span<const std::byte> payload) noexcept
+try {
+	if (stopping) {
+		switch (cmd) {
 		case WAS_COMMAND_NOP:
 			/* ignore */
-			continue;
+			return true;
 
 		case WAS_COMMAND_HEADER:
 		case WAS_COMMAND_STATUS:
@@ -111,8 +77,7 @@ WasIdleConnection::RecoverStop()
 		case WAS_COMMAND_STOP:
 		case WAS_COMMAND_METRIC:
 			/* discard & ignore */
-			DiscardControl(header.length);
-			continue;
+			return true;
 
 		case WAS_COMMAND_REQUEST:
 		case WAS_COMMAND_METHOD:
@@ -126,42 +91,42 @@ WasIdleConnection::RecoverStop()
 
 		case WAS_COMMAND_PREMATURE:
 			/* this is what we're waiting for */
-			break;
+			return OnPrematureControlPacket(payload);
 		}
-
-		if (ReceiveControl(std::as_writable_bytes(std::span{&premature, 1})) != ReceiveResult::SUCCESS)
-			throw SocketProtocolError{"Missing PREMATURE payload"};
-
-		break;
 	}
 
-	if (premature < input_received)
-		throw SocketProtocolError{"Bogus PREMATURE payload"};
+	switch (cmd) {
+	case WAS_COMMAND_NOP:
+		/* ignore */
+		return true;
 
-	DiscardInput(premature - input_received);
-
-	stopping = false;
-	handler.OnWasIdleConnectionClean();
-}
-
-inline void
-WasIdleConnection::OnSocket(unsigned events) noexcept
-try {
-	(void)events; // TODO
-
-	if (stopping) {
-		RecoverStop();
-		return;
-	}
-
-	std::byte buffer[1];
-	ssize_t nbytes = socket.control.Receive(buffer, MSG_DONTWAIT);
-	if (nbytes < 0)
-		throw MakeSocketError("error on idle WAS control connection");
-	else if (nbytes > 0)
+	default:
 		throw std::runtime_error("unexpected data from idle WAS control connection");
-	else
-		throw SocketClosedPrematurelyError{"WAS control socket closed unexpectedly"};
+	}
 } catch (...) {
 	handler.OnWasIdleConnectionError(std::current_exception());
+	return false;
+}
+
+bool
+WasIdleConnection::OnWasControlDrained() noexcept
+{
+	return true;
+}
+
+void
+WasIdleConnection::OnWasControlDone() noexcept
+{
+}
+
+void
+WasIdleConnection::OnWasControlHangup() noexcept
+{
+	handler.OnWasIdleConnectionError(std::make_exception_ptr(SocketClosedPrematurelyError{"WAS control socket closed unexpectedly"}));
+}
+
+void
+WasIdleConnection::OnWasControlError(std::exception_ptr error) noexcept
+{
+	handler.OnWasIdleConnectionError(std::move(error));
 }

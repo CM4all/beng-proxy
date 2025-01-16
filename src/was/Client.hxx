@@ -12,14 +12,13 @@ enum class HttpMethod : uint_least8_t;
 struct pool;
 class StopwatchPtr;
 class FileDescriptor;
-class SocketDescriptor;
-class EventLoop;
 class UnusedIstreamPtr;
 class WasLease;
 class StringMap;
 class WasMetricsHandler;
 class HttpResponseHandler;
 class CancellablePointer;
+namespace Was { class Control; }
 
 /**
  * Is it worth retrying after this error?
@@ -36,7 +35,7 @@ IsWasClientRetryFailure(std::exception_ptr error) noexcept;
  *
  * @param pool the memory pool; this client holds a reference until
  * the response callback has returned and the response body is closed
- * @param control_fd a control socket to the WAS server
+ * @param control a control socket to the WAS server
  * @param input_fd a data pipe for the response body
  * @param output_fd a data pipe for the request body
  * @param lease the lease for both sockets
@@ -54,9 +53,9 @@ IsWasClientRetryFailure(std::exception_ptr error) noexcept;
  * @param cancel_ptr a handle which may be used to abort the operation
  */
 void
-was_client_request(struct pool &pool, EventLoop &event_loop,
+was_client_request(struct pool &pool,
 		   StopwatchPtr stopwatch,
-		   SocketDescriptor control_fd,
+		   Was::Control &control,
 		   FileDescriptor input_fd, FileDescriptor output_fd,
 		   WasLease &lease,
 		   const char *remote_host,

@@ -26,6 +26,10 @@ public:
 		return connection.GetSocket();
 	}
 
+	auto &GetControl() noexcept {
+		return connection.GetControl();
+	}
+
 	/**
 	 * Set the "stopping" flag.  Call this after sending
 	 * #WAS_COMMAND_STOP, before calling hstock_put().  This will

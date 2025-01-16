@@ -7,6 +7,7 @@
 #include "was/Launch.hxx"
 #include "was/Lease.hxx"
 #include "was/MetricsHandler.hxx"
+#include "was/async/Control.hxx"
 #include "stopwatch.hxx"
 #include "lease.hxx"
 #include "http/ResponseHandler.hxx"
@@ -32,6 +33,8 @@
 
 #include <fmt/core.h>
 
+#include <optional>
+
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <stdio.h>
@@ -40,9 +43,10 @@
 #include <signal.h>
 
 struct Context final
-	: TestInstance, WasLease, WasMetricsHandler, HttpResponseHandler, SinkFdHandler {
+	: TestInstance, WasLease, WasMetricsHandler, HttpResponseHandler, SinkFdHandler, Was::ControlHandler {
 
 	WasProcess process;
+	std::optional<Was::Control> control;
 
 	SinkFd *body = nullptr;
 	bool error;
@@ -75,6 +79,20 @@ struct Context final
 	void OnInputEof() noexcept override;
 	void OnInputError(std::exception_ptr ep) noexcept override;
 	bool OnSendError(int error) noexcept override;
+
+	/* virtual methods from class WasControlHandler */
+	bool OnWasControlPacket(enum was_command,
+				std::span<const std::byte>) noexcept {
+		return true;
+	}
+
+	bool OnWasControlDrained() noexcept {
+		return true;
+	}
+
+	void OnWasControlDone() noexcept {}
+	void OnWasControlHangup() noexcept override {}
+	void OnWasControlError(std::exception_ptr) noexcept override {}
 };
 
 /*
@@ -220,9 +238,10 @@ try {
 				     path, args,
 				     child_options,
 				     UniqueFileDescriptor(::dup(STDERR_FILENO)));
+	context.control.emplace(context.event_loop, context.process.control, context);
 
-	was_client_request(context.root_pool, context.event_loop, nullptr,
-			   context.process.control,
+	was_client_request(context.root_pool, nullptr,
+			   *context.control,
 			   context.process.input,
 			   context.process.output,
 			   context,
