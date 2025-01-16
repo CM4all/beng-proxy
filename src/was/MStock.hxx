@@ -7,6 +7,7 @@
 #include "spawn/ChildStock.hxx"
 #include "stock/MultiStock.hxx"
 #include "pool/Ptr.hxx"
+#include "io/uring/config.h" // for HAVE_URING
 
 #include <span>
 
@@ -18,10 +19,18 @@ class SocketDescriptor;
 class EventLoop;
 class SpawnService;
 
+#ifdef HAVE_URING
+namespace Uring { class Queue; }
+#endif
+
 class MultiWasStock final : MultiStockClass, ChildStockClass {
 	PoolPtr pool;
 	ChildStock child_stock;
 	MultiStock mchild_stock;
+
+#ifdef HAVE_URING
+	Uring::Queue *uring_queue = nullptr;
+#endif
 
 public:
 	MultiWasStock(unsigned limit, unsigned max_idle,
@@ -32,6 +41,12 @@ public:
 	auto &GetEventLoop() const noexcept {
 		return mchild_stock.GetEventLoop();
 	}
+
+#ifdef HAVE_URING
+	void EnableUring(Uring::Queue &_uring_queue) noexcept {
+		uring_queue = &_uring_queue;
+	}
+#endif
 
 	std::size_t DiscardSome() noexcept {
 		return mchild_stock.DiscardOldestIdle(64);

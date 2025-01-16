@@ -120,6 +120,11 @@ WasStock::Create(CreateStockItem c, StockRequest _request,
 	   callback, because the latter may destroy the pool */
 	_request.reset();
 
+#ifdef HAVE_URING
+	if (uring_queue != nullptr)
+		child->EnableUring(*uring_queue);
+#endif
+
 	child->InvokeCreateSuccess(handler);
 }
 

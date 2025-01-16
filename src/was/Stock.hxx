@@ -8,6 +8,7 @@
 #include "stock/Class.hxx"
 #include "stock/MapStock.hxx"
 #include "net/SocketDescriptor.hxx"
+#include "io/uring/config.h" // for HAVE_URING
 
 #include <span>
 #include <string_view>
@@ -18,6 +19,10 @@ struct ChildOptions;
 struct WasSocket;
 class SpawnService;
 class ListenStreamStock;
+
+#ifdef HAVE_URING
+namespace Uring { class Queue; }
+#endif
 
 /**
  * Launch and manage WAS child processes.
@@ -39,6 +44,10 @@ class WasStock final : StockClass {
 
 	WasStockMap stock;
 
+#ifdef HAVE_URING
+	Uring::Queue *uring_queue = nullptr;
+#endif
+
 public:
 	explicit WasStock(EventLoop &event_loop, SpawnService &_spawn_service,
 			  ListenStreamStock *_listen_stream_stock,
@@ -54,6 +63,12 @@ public:
 	auto &GetEventLoop() const noexcept {
 		return stock.GetEventLoop();
 	}
+
+#ifdef HAVE_URING
+	void EnableUring(Uring::Queue &_uring_queue) noexcept {
+		uring_queue = &_uring_queue;
+	}
+#endif
 
 	void FadeAll() noexcept {
 		stock.FadeAll();

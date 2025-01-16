@@ -132,7 +132,14 @@ RemoteWasStock::Create(CreateStockItem c, StockItem &shared_item)
 {
 	auto &multi_connection = (RemoteMultiWasConnection &)shared_item;
 
-	return new WasStockConnection(c, multi_connection.Connect());
+	auto *connection = new WasStockConnection(c, multi_connection.Connect());
+
+#ifdef HAVE_URING
+	if (uring_queue != nullptr)
+		connection->EnableUring(*uring_queue);
+#endif
+
+	return connection;
 }
 
 void

@@ -6,9 +6,14 @@
 
 #include "stock/Class.hxx"
 #include "stock/MultiStock.hxx"
+#include "io/uring/config.h" // for HAVE_URING
 
 class AllocatorPtr;
 class SocketAddress;
+
+#ifdef HAVE_URING
+namespace Uring { class Queue; }
+#endif
 
 class RemoteWasStock final : MultiStockClass {
 	class MultiClientStockClass final : public StockClass {
@@ -23,6 +28,10 @@ class RemoteWasStock final : MultiStockClass {
 
 	MultiStock multi_stock;
 
+#ifdef HAVE_URING
+	Uring::Queue *uring_queue = nullptr;
+#endif
+
 public:
 	RemoteWasStock(unsigned limit, unsigned max_idle,
 		       EventLoop &event_loop) noexcept;
@@ -30,6 +39,12 @@ public:
 	auto &GetEventLoop() const noexcept {
 		return multi_stock.GetEventLoop();
 	}
+
+#ifdef HAVE_URING
+	void EnableUring(Uring::Queue &_uring_queue) noexcept {
+		uring_queue = &_uring_queue;
+	}
+#endif
 
 	void FadeAll() noexcept {
 		multi_stock.FadeAll();

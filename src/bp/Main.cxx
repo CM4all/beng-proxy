@@ -460,7 +460,15 @@ try {
 		new RemoteWasStock(instance.config.remote_was_stock_limit,
 				   instance.config.remote_was_stock_max_idle,
 				   instance.event_loop);
-#endif
+
+#ifdef HAVE_URING
+	if (instance.uring) {
+		instance.was_stock->EnableUring(*instance.uring);
+		instance.multi_was_stock->EnableUring(*instance.uring);
+		instance.remote_was_stock->EnableUring(*instance.uring);
+	}
+#endif // HAVE_URING
+#endif // HAVE_LIBWAS
 
 	instance.delegate_stock = delegate_stock_new(instance.event_loop,
 						     *instance.spawn_service);

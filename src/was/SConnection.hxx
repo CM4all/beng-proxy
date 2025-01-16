@@ -18,6 +18,12 @@ class WasStockConnection
 public:
 	WasStockConnection(CreateStockItem c, WasSocket &&_socket) noexcept;
 
+#ifdef HAVE_URING
+	void EnableUring(Uring::Queue &uring_queue) {
+		connection.EnableUring(uring_queue);
+	}
+#endif
+
 	auto &GetEventLoop() const noexcept {
 		return connection.GetEventLoop();
 	}

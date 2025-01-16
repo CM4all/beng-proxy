@@ -47,6 +47,12 @@ public:
 			  WasSocket &&_socket,
 			  WasIdleConnectionHandler &_handler) noexcept;
 
+#ifdef HAVE_URING
+	void EnableUring(Uring::Queue &uring_queue) {
+		control.EnableUring(uring_queue);
+	}
+#endif
+
 	auto &GetEventLoop() const noexcept {
 		return control.GetEventLoop();
 	}

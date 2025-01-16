@@ -190,7 +190,14 @@ MultiWasStock::Create(CreateStockItem c, StockItem &shared_item)
 {
 	auto &child = (MultiWasChild &)shared_item;
 
-	return new MultiWasConnection(c, child);
+	auto *connection = new MultiWasConnection(c, child);
+
+#ifdef HAVE_URING
+	if (uring_queue != nullptr)
+		connection->EnableUring(*uring_queue);
+#endif
+
+	return connection;
 }
 
 void
