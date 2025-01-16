@@ -664,7 +664,9 @@ ServerConnection::ServerConnection(struct pool &_pool,
 	idle_timer.Schedule(idle_timeout);
 
 	DeferWrite();
-	socket->ScheduleRead();
+
+	if (!socket->HasUring())
+		socket->ScheduleRead();
 }
 
 ServerConnection::~ServerConnection() noexcept

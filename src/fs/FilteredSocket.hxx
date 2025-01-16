@@ -70,6 +70,16 @@ public:
 		return base.GetEventLoop();
 	}
 
+#ifdef HAVE_URING
+	void EnableUring(Uring::Queue &uring_queue) noexcept {
+		base.EnableUring(uring_queue);
+	}
+#endif
+
+	bool HasUring() const noexcept {
+		return base.HasUring();
+	}
+
 	void Init(SocketDescriptor fd, FdType fd_type,
 		  Event::Duration write_timeout,
 		  SocketFilterPtr filter,

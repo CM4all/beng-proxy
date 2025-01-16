@@ -341,7 +341,8 @@ HttpServerConnection::HttpServerConnection(struct pool &_pool,
 	/* read the first request, but not in this stack frame, because a
 	   failure may destroy the HttpServerConnection before it gets
 	   passed to the caller */
-	socket->DeferRead();
+	if (!socket->HasUring())
+		socket->DeferRead();
 }
 
 void

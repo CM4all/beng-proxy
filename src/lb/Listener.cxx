@@ -150,6 +150,9 @@ LbListener::LbListener(LbInstance &_instance,
 	 access_logger(_access_logger),
 	 listener(instance.root_pool, instance.event_loop,
 		  MakeSslFactory(config, instance),
+#ifdef HAVE_URING
+		  nullptr, // TODO io_uring support
+#endif
 		  *this, config.Create(SOCK_STREAM)),
 #ifdef HAVE_AVAHI
 	 avahi_service(MakeAvahiService()),

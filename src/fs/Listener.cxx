@@ -96,10 +96,18 @@ private:
 FilteredSocketListener::FilteredSocketListener(struct pool &_pool,
 					       EventLoop &event_loop,
 					       std::unique_ptr<SslFactory> _ssl_factory,
+#ifdef HAVE_URING
+					       Uring::Queue *_uring_queue,
+#endif
 					       FilteredSocketListenerHandler &_handler,
 					       UniqueSocketDescriptor _socket) noexcept
 	:ServerSocket(event_loop, std::move(_socket)),
-	 parent_pool(_pool), ssl_factory(std::move(_ssl_factory)), handler(_handler)
+	 parent_pool(_pool),
+	 ssl_factory(std::move(_ssl_factory)),
+#ifdef HAVE_URING
+	 uring_queue(_uring_queue),
+#endif
+	 handler(_handler)
 {
 }
 
@@ -134,6 +142,11 @@ try {
 								  std::move(s), fd_type,
 								  nullptr);
 
+#ifdef HAVE_URING
+		if (uring_queue != nullptr)
+			socket->EnableUring(*uring_queue);
+#endif
+
 		handler.OnFilteredSocketConnect(std::move(connection_pool),
 						std::move(socket),
 						address,
@@ -151,6 +164,10 @@ try {
 							  event_loop,
 							  std::move(s), fd_type,
 							  std::move(filter));
+#ifdef HAVE_URING
+	if (uring_queue != nullptr)
+		socket->EnableUring(*uring_queue);
+#endif
 
 	auto *p = NewFromPool<Pending>(std::move(connection_pool),
 				       std::move(socket),

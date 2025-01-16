@@ -5,6 +5,7 @@
 #pragma once
 
 #include "event/net/ServerSocket.hxx"
+#include "io/uring/config.h" // for HAVE_URING
 #include "util/IntrusiveList.hxx"
 
 #include <memory>
@@ -14,6 +15,10 @@ template<typename T> class UniquePoolPtr;
 class FilteredSocket;
 class SslFactory;
 class SslFilter;
+
+#ifdef HAVE_URING
+namespace Uring { class Queue; }
+#endif
 
 class FilteredSocketListenerHandler {
 public:
@@ -45,6 +50,10 @@ class FilteredSocketListener final : public ServerSocket {
 
 	std::unique_ptr<SslFactory> ssl_factory;
 
+#ifdef HAVE_URING
+	Uring::Queue *const uring_queue;
+#endif
+
 	FilteredSocketListenerHandler &handler;
 
 	class Pending;
@@ -53,6 +62,9 @@ class FilteredSocketListener final : public ServerSocket {
 public:
 	FilteredSocketListener(struct pool &_pool, EventLoop &event_loop,
 			       std::unique_ptr<SslFactory> _ssl_factory,
+#ifdef HAVE_URING
+			       Uring::Queue *uring_queue,
+#endif
 			       FilteredSocketListenerHandler &_handler,
 			       UniqueSocketDescriptor _socket) noexcept;
 	~FilteredSocketListener() noexcept;

@@ -1,6 +1,7 @@
 cm4all-beng-proxy (19.2) unstable; urgency=low
 
   * http/local: fix crash bug (19.0 regression)
+  * http/server: receive using io_uring
   * was: reduce the number of epoll_ctl() system calls again
   * was: receive from control channel using io_uring
 

@@ -76,6 +76,9 @@ BpListener::BpListener(BpInstance &_instance,
 	 access_logger_only_errors(config.access_logger_only_errors),
 	 listener(instance.root_pool, instance.event_loop,
 		  MakeSslFactory(config),
+#ifdef HAVE_URING
+		  instance.uring.get(),
+#endif
 		  *this, std::move(_socket))
 #ifdef HAVE_AVAHI
 	, avahi_service(MakeAvahiService(config))
