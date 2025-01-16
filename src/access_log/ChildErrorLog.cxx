@@ -12,8 +12,9 @@
 #include <cassert>
 
 ChildErrorLog::ChildErrorLog() = default;
+ChildErrorLog::ChildErrorLog(ChildErrorLog &&) noexcept = default;
 ChildErrorLog::~ChildErrorLog() noexcept = default;
-ChildErrorLog &ChildErrorLog::operator=(ChildErrorLog &&) = default;
+ChildErrorLog &ChildErrorLog::operator=(ChildErrorLog &&) noexcept = default;
 
 ChildErrorLog::ChildErrorLog(PreparedChildProcess &p, FdHolder &close_fds,
 			     EventLoop &event_loop, Net::Log::Sink *sink,

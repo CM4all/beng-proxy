@@ -39,8 +39,8 @@ public:
 
 	~ChildErrorLog() noexcept;
 
-	ChildErrorLog(ChildErrorLog &&) = default;
-	ChildErrorLog &operator=(ChildErrorLog &&);
+	ChildErrorLog(ChildErrorLog &&) noexcept;
+	ChildErrorLog &operator=(ChildErrorLog &&) noexcept;
 
 	operator bool() const {
 		return adapter != nullptr;
