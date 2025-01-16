@@ -82,15 +82,15 @@ struct Context final
 
 	/* virtual methods from class WasControlHandler */
 	bool OnWasControlPacket(enum was_command,
-				std::span<const std::byte>) noexcept {
+				std::span<const std::byte>) noexcept override {
 		return true;
 	}
 
-	bool OnWasControlDrained() noexcept {
+	bool OnWasControlDrained() noexcept override {
 		return true;
 	}
 
-	void OnWasControlDone() noexcept {}
+	void OnWasControlDone() noexcept override {}
 	void OnWasControlHangup() noexcept override {}
 	void OnWasControlError(std::exception_ptr) noexcept override {}
 };
