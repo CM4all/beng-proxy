@@ -4,6 +4,7 @@
 
 #include "IdleConnection.hxx"
 #include "net/SocketError.hxx"
+#include "net/SocketProtocolError.hxx"
 
 #include <was/protocol.h>
 
@@ -56,7 +57,7 @@ WasIdleConnection::DiscardControl(size_t size)
 		if (nbytes < 0)
 			throw MakeSocketError("error on idle WAS control connection");
 		else if (nbytes == 0)
-			throw std::runtime_error("WAS control socket closed unexpectedly");
+			throw SocketClosedPrematurelyError{"WAS control socket closed unexpectedly"};
 
 		size -= nbytes;
 	}
@@ -74,7 +75,7 @@ WasIdleConnection::DiscardInput(uint64_t remaining)
 		if (nbytes < 0)
 			throw MakeSocketError("error on idle WAS input pipe");
 		else if (nbytes == 0)
-			throw std::runtime_error("WAS input pipe closed unexpectedly");
+			throw SocketClosedPrematurelyError{"WAS input pipe closed unexpectedly"};
 
 		remaining -= nbytes;
 	}
@@ -120,7 +121,7 @@ WasIdleConnection::RecoverStop()
 		case WAS_COMMAND_QUERY_STRING:
 		case WAS_COMMAND_PARAMETER:
 		case WAS_COMMAND_REMOTE_HOST:
-			throw std::runtime_error("unexpected data from idle WAS control connection");
+			throw SocketProtocolError{"unexpected data from idle WAS control connection"};
 
 		case WAS_COMMAND_PREMATURE:
 			/* this is what we're waiting for */
@@ -128,13 +129,13 @@ WasIdleConnection::RecoverStop()
 		}
 
 		if (ReceiveControl(std::as_writable_bytes(std::span{&premature, 1})) != ReceiveResult::SUCCESS)
-			throw std::runtime_error("Missing PREMATURE payload");
+			throw SocketProtocolError{"Missing PREMATURE payload"};
 
 		break;
 	}
 
 	if (premature < input_received)
-		throw std::runtime_error("Bogus PREMATURE payload");
+		throw SocketProtocolError{"Bogus PREMATURE payload"};
 
 	DiscardInput(premature - input_received);
 
@@ -159,7 +160,7 @@ try {
 	else if (nbytes > 0)
 		throw std::runtime_error("unexpected data from idle WAS control connection");
 	else
-		throw std::runtime_error("WAS control socket closed unexpectedly");
+		throw SocketClosedPrematurelyError{"WAS control socket closed unexpectedly"};
 } catch (...) {
 	handler.OnWasIdleConnectionError(std::current_exception());
 }
