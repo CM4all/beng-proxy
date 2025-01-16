@@ -45,6 +45,9 @@ was_client = static_library(
 )
 was_client_dep = declare_dependency(
   link_with: was_client,
+  dependencies: [
+    libwas,
+  ],
 )
 
 was_stock = static_library(
