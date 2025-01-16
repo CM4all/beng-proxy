@@ -329,7 +329,7 @@ private:
 	FrameResult OnFrameEnd() override;
 };
 
-static constexpr auto fcgi_client_timeout = std::chrono::minutes(2);
+static constexpr auto fcgi_client_timeout = std::chrono::minutes{1};
 
 inline FcgiClient::~FcgiClient() noexcept
 {
