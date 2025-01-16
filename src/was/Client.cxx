@@ -200,6 +200,10 @@ private:
 			control.FlushOutput();
 	}
 
+	bool IsControlReleased() const noexcept {
+		return !control.IsDefined();
+	}
+
 	/**
 	 * Release the control channel and invoke WasLease::ReleaseWas().
 	 * If the control channel is clean (i.e. buffers are empty), it
@@ -212,7 +216,7 @@ private:
 		assert(request.body == nullptr);
 		assert(response.body == nullptr || response.released);
 
-		if (!control.IsDefined())
+		if (IsControlReleased())
 			/* already released */
 			return;
 
@@ -231,7 +235,7 @@ private:
 	bool ReleaseControlStop(uint64_t received) noexcept {
 		assert(response.body == nullptr);
 
-		if (!control.IsDefined())
+		if (IsControlReleased())
 			/* already released */
 			return true;
 
@@ -399,17 +403,17 @@ private:
 	void OnWasControlDone() noexcept override {
 		assert(request.body == nullptr);
 		assert(response.body == nullptr);
-		assert(control.IsDefined());
+		assert(!IsControlReleased());
 	}
 
 	void OnWasControlHangup() noexcept override {
-		assert(!control.IsDefined());
+		assert(IsControlReleased());
 
 		AbortControlError(std::make_exception_ptr(SocketClosedPrematurelyError{}));
 	}
 
 	void OnWasControlError(std::exception_ptr ep) noexcept override {
-		assert(control.IsDefined());
+		assert(!IsControlReleased());
 
 		AbortControlError(std::move(ep));
 	}
@@ -455,7 +459,7 @@ WasClient::SubmitPendingResponse() noexcept
 		const DestructObserver destructed(*this);
 		handler.InvokeResponse(response.status, std::move(response.headers),
 				       was_input_enable(*response.body));
-		return !destructed && control.IsDefined();
+		return !destructed && !IsControlReleased();
 	}
 }
 
@@ -672,7 +676,7 @@ WasClient::OnWasControlPacket(enum was_command cmd,
 					  LoadUnaligned<uint64_t>(payload.data())))
 			return false;
 
-		if (!control.IsDefined()) {
+		if (IsControlReleased()) {
 			/* through WasInputRelease(), the above
 			   was_input_set_length() call may have disposed the
 			   Was::Control instance; this condition needs to be
@@ -768,7 +772,7 @@ WasClient::OnWasControlDrained() noexcept
 bool
 WasClient::WasOutputLength(uint64_t length) noexcept
 {
-	assert(control.IsDefined());
+	assert(!IsControlReleased());
 	assert(request.body != nullptr);
 
 	return control.SendUint64(WAS_COMMAND_LENGTH, length);
@@ -777,7 +781,7 @@ WasClient::WasOutputLength(uint64_t length) noexcept
 bool
 WasClient::WasOutputPremature(uint64_t length, std::exception_ptr ep) noexcept
 {
-	assert(control.IsDefined());
+	assert(!IsControlReleased());
 	assert(request.body != nullptr);
 
 	stopwatch.RecordEvent("request_error");
