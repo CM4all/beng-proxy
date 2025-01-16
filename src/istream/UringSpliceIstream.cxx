@@ -5,9 +5,9 @@
 #include "UringSpliceIstream.hxx"
 #include "istream.hxx"
 #include "New.hxx"
+#include "pipe/Lease.hxx"
 #include "lib/fmt/RuntimeError.hxx"
 #include "lib/fmt/SystemError.hxx"
-#include "io/Pipe.hxx"
 #include "io/UniqueFileDescriptor.hxx"
 #include "io/uring/Close.hxx"
 #include "io/uring/Operation.hxx"
@@ -32,10 +32,7 @@ class UringSpliceIstream final : public Istream, Uring::Operation {
 	 */
 	UniqueFileDescriptor fd;
 
-	/**
-	 * The read and write end of the pipe.
-	 */
-	UniqueFileDescriptor r, w;
+	PipeLease pipe;
 
 	/**
 	 * The number of bytes currently in the pipe.  It may be
@@ -62,20 +59,15 @@ class UringSpliceIstream final : public Istream, Uring::Operation {
 
 public:
 	UringSpliceIstream(struct pool &p, Uring::Queue &_uring,
+			   PipeStock *_pipe_stock,
 			   const char *_path, UniqueFileDescriptor &&_fd,
 			   off_t _start_offset, off_t _end_offset)
 		:Istream(p), uring(_uring),
 		 path(_path),
 		 fd(std::move(_fd)),
+		 pipe(_pipe_stock),
 		 offset(_start_offset), end_offset(_end_offset)
 	{
-		// TODO use PipeStock
-		std::tie(r, w) = CreatePipe();
-
-		/* enlarge the pipe buffer to 256 kB to reduce the
-		   number of splice() system calls */
-		constexpr int PIPE_BUFFER_SIZE = 256 * 1024;
-		w.SetPipeCapacity(PIPE_BUFFER_SIZE);
 	}
 
 	~UringSpliceIstream() noexcept override;
@@ -146,8 +138,7 @@ private:
 UringSpliceIstream::~UringSpliceIstream() noexcept
 {
 	Uring::Close(&uring, fd.Release());
-	Uring::Close(&uring, r.Release());
-	Uring::Close(&uring, w.Release());
+	pipe.Release(PutAction::DESTROY);
 }
 
 inline bool
@@ -162,8 +153,10 @@ try {
 	if (in_pipe <= 0)
 		return true;
 
+	assert(pipe.IsDefined());
+
 	const auto [max_size, then_eof] = CalcMaxDirect(GetRemainingWithPipe());
-	switch (InvokeDirect(FdType::FD_PIPE, r, -1, max_size, then_eof)) {
+	switch (InvokeDirect(FdType::FD_PIPE, pipe.GetReadFd(), -1, max_size, then_eof)) {
 	case IstreamDirectResult::CLOSED:
 		return false;
 
@@ -174,6 +167,7 @@ try {
 		if (offset >= end_offset && in_pipe <= 0) {
 			assert(in_pipe == 0);
 
+			pipe.Release(PutAction::REUSE);
 			DestroyEof();
 			return false;
 		}
@@ -211,9 +205,18 @@ UringSpliceIstream::StartRead() noexcept
 		return true;
 	}
 
+	if (!pipe.IsDefined()) {
+		try {
+			pipe.Create();
+		} catch (...) {
+			DestroyError(std::current_exception());
+			return false;
+		}
+	}
+
 	auto &s = uring.RequireSubmitEntry();
 	io_uring_prep_splice(&s, fd.Get(), offset,
-			     w.Get(), -1,
+			     pipe.GetWriteFd().Get(), -1,
 			     max_read, SPLICE_F_MOVE);
 	uring.Push(s, *this);
 
@@ -250,6 +253,9 @@ void
 UringSpliceIstream::_ConsumeDirect(std::size_t nbytes) noexcept
 {
 	in_pipe -= nbytes;
+
+	if (!IsUringPending() && in_pipe == 0)
+		pipe.Release(PutAction::REUSE);
 }
 
 void
@@ -267,13 +273,15 @@ UringSpliceIstream::_Read() noexcept
  */
 
 UnusedIstreamPtr
-NewUringSpliceIstream(Uring::Queue &uring, struct pool &pool,
+NewUringSpliceIstream(Uring::Queue &uring, PipeStock *pipe_stock,
+		      struct pool &pool,
 		      const char *path, UniqueFileDescriptor fd,
 		      off_t start_offset, off_t end_offset) noexcept
 {
 	assert(fd.IsDefined());
 	assert(start_offset <= end_offset);
 
-	return NewIstreamPtr<UringSpliceIstream>(pool, uring, path, std::move(fd),
+	return NewIstreamPtr<UringSpliceIstream>(pool, uring, pipe_stock,
+						 path, std::move(fd),
 						 start_offset, end_offset);
 }
