@@ -288,24 +288,24 @@ public:
 		      Callback &&_callback)
 		:event_loop(_event_loop),
 		 callback(std::move(_callback))
-		{
-			WasServerHandler &handler = *this;
-			server = NewFromPool<WasServer>(pool, pool, event_loop,
-							MakeWasSocket(),
-							handler);
-		}
+	{
+		WasServerHandler &handler = *this;
+		server = NewFromPool<WasServer>(pool, pool, event_loop,
+						MakeWasSocket(),
+						handler);
+	}
 
 	struct MalformedPremature{};
 
 	WasConnection(struct pool &pool, EventLoop &_event_loop,
 		      MalformedPremature)
 		:event_loop(_event_loop)
-		{
-			WasServerHandler &handler = *this;
-			server2 = NewFromPool<MalformedPrematureWasServer>(pool, event_loop,
-									   MakeWasSocket(),
-									   handler);
-		}
+	{
+		WasServerHandler &handler = *this;
+		server2 = NewFromPool<MalformedPrematureWasServer>(pool, event_loop,
+								   MakeWasSocket(),
+								   handler);
+	}
 
 	~WasConnection() noexcept override {
 		if (server != nullptr)
