@@ -3,6 +3,7 @@
 // author: Max Kellermann <mk@cm4all.com>
 
 #include "IdleConnection.hxx"
+#include "system/Error.hxx"
 #include "net/SocketError.hxx"
 #include "net/SocketProtocolError.hxx"
 
@@ -73,7 +74,7 @@ WasIdleConnection::DiscardInput(uint64_t remaining)
 			dest = dest.first(remaining);
 		ssize_t nbytes = socket.input.Read(dest);
 		if (nbytes < 0)
-			throw MakeSocketError("error on idle WAS input pipe");
+			throw MakeErrno("error on idle WAS input pipe");
 		else if (nbytes == 0)
 			throw SocketClosedPrematurelyError{"WAS input pipe closed unexpectedly"};
 
