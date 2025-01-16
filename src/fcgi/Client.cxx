@@ -1047,7 +1047,7 @@ struct FcgiClient::ConsumeBucketHandler final : FcgiFrameHandler {
 		:client(_client), nbytes(_nbytes) {}
 
 	// virtual methods from class FcgiFrameHandler
-	void OnFrameConsumed(std::size_t n) noexcept;
+	void OnFrameConsumed(std::size_t n) noexcept override;
 	FrameResult OnFrameHeader(FcgiRecordType type, uint_least16_t request_id) override;
 	std::pair<FrameResult, std::size_t> OnFramePayload(std::span<const std::byte> src) override;
 	FrameResult OnFrameEnd() override;
