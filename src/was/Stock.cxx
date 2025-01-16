@@ -29,8 +29,6 @@ WasStock::WasStockMap::GetLimit(const void *request,
 }
 
 class WasChild final : public WasStockConnection, ExitListener {
-	WasStock &was_stock;
-
 	const std::string tag;
 
 	ChildErrorLog log;
@@ -43,44 +41,23 @@ class WasChild final : public WasStockConnection, ExitListener {
 
 public:
 	explicit WasChild(CreateStockItem c,
-			  WasStock &_was_stock,
+			  ChildErrorLog &&_log,
+			  WasProcess &&process,
 			  std::string_view _tag, bool _disposable) noexcept
-		:WasStockConnection(c),
-		 was_stock(_was_stock),
+		:WasStockConnection(c, std::move(process)),
 		 tag(_tag),
+		 log(std::move(_log)),
+		 handle(std::move(process.handle)),
+		 listen_stream_lease(std::move(process.listen_stream_lease)),
 		 disposable(_disposable)
 	{
+		handle->SetExitListener(*this);
 	}
 
 	~WasChild() noexcept override;
 
 	bool IsTag(std::string_view other_tag) const noexcept {
 		return StringListContains(tag, '\0', other_tag);
-	}
-
-	/**
-	 * Throws on error.
-	 */
-	void Launch(const CgiChildParams &params, Net::Log::Sink *log_sink,
-		    const ChildErrorLogOptions &log_options) {
-		auto process =
-			was_launch(was_stock.GetSpawnService(),
-				   was_stock.GetListenStreamStock(),
-				   GetStockName(),
-				   params.executable_path,
-				   params.args,
-				   params.options,
-				   log.EnableClient(GetEventLoop(),
-						    log_sink, log_options,
-						    params.options.stderr_pond));
-
-		handle = std::move(process.handle);
-		handle->SetExitListener(*this);
-
-		listen_stream_lease = std::move(process.listen_stream_lease);
-
-		WasSocket &socket = process;
-		Open(std::move(socket));
 	}
 
 	void SetSite(const char *_site) noexcept override {
@@ -127,14 +104,17 @@ WasStock::Create(CreateStockItem c, StockRequest _request,
 
 	assert(params.executable_path != nullptr);
 
-	auto *child = new WasChild(c, *this, params.options.tag, params.disposable);
+	ChildErrorLog log;
+	auto process = was_launch(spawn_service, listen_stream_stock,
+				  c.GetStockName(),
+				  params.executable_path,
+				  params.args,
+				  params.options,
+				  log.EnableClient(GetEventLoop(),
+						   log_sink, log_options,
+						   params.options.stderr_pond));
 
-	try {
-		child->Launch(params, log_sink, log_options);
-	} catch (...) {
-		delete child;
-		throw;
-	}
+	auto *child = new WasChild(c, std::move(log), std::move(process), params.options.tag, params.disposable);
 
 	/* invoke the CgiChildParams destructor before invoking the
 	   callback, because the latter may destroy the pool */

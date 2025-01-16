@@ -16,13 +16,7 @@ class WasStockConnection
 	WasIdleConnection connection;
 
 public:
-	explicit WasStockConnection(CreateStockItem c) noexcept;
-
-	WasStockConnection(CreateStockItem c, WasSocket &&_socket) noexcept
-		:WasStockConnection(c)
-	{
-		Open(std::move(_socket));
-	}
+	WasStockConnection(CreateStockItem c, WasSocket &&_socket) noexcept;
 
 	auto &GetEventLoop() const noexcept {
 		return connection.GetEventLoop();
@@ -43,10 +37,6 @@ public:
 	virtual void SetUri([[maybe_unused]] const char *uri) noexcept {}
 
 protected:
-	void Open(WasSocket &&_socket) noexcept {
-		connection.Open(std::move(_socket));
-	}
-
 	/* virtual methods from class StockItem */
 	bool Borrow() noexcept override;
 	bool Release() noexcept override;

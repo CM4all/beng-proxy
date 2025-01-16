@@ -51,12 +51,8 @@ public:
 		 stock(event_loop, *this, limit, max_idle,
 		       std::chrono::minutes(10)) {}
 
-	auto &GetSpawnService() const noexcept {
-		return spawn_service;
-	}
-
-	auto *GetListenStreamStock() const noexcept {
-		return listen_stream_stock;
+	auto &GetEventLoop() const noexcept {
+		return stock.GetEventLoop();
 	}
 
 	void FadeAll() noexcept {

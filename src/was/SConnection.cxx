@@ -7,10 +7,10 @@
 
 #include <cassert>
 
-WasStockConnection::WasStockConnection(CreateStockItem c) noexcept
+WasStockConnection::WasStockConnection(CreateStockItem c, WasSocket &&_socket) noexcept
 	:StockItem(c),
 	 logger(GetStockName()),
-	 connection(c.stock.GetEventLoop(), *this) {}
+	 connection(c.stock.GetEventLoop(), std::move(_socket), *this) {}
 
 void
 WasStockConnection::Stop(uint_least64_t _received) noexcept
