@@ -22,6 +22,12 @@ class HttpHeaders {
 
 	GrowingBuffer buffer;
 
+	/**
+	 * Reserve this number of bytes at the beginning (for the
+	 * status line which the HTTP/1.1 server will prepend here).
+	 */
+	static constexpr std::size_t RESERVE = 64;
+
 public:
 	/**
 	 * Does #buffer contain "Content-Encoding"?
@@ -49,10 +55,15 @@ public:
 	 */
 	bool generate_server_header = true;
 
-	HttpHeaders() = default;
+	HttpHeaders() noexcept {
+		buffer.Reserve(RESERVE);
+	}
 
 	explicit HttpHeaders(StringMap &&_map) noexcept
-		:map(std::move(_map)) {}
+		:map(std::move(_map))
+	{
+		buffer.Reserve(RESERVE);
+	}
 
 	HttpHeaders(HttpHeaders &&) = default;
 	HttpHeaders &operator=(HttpHeaders &&) = default;
