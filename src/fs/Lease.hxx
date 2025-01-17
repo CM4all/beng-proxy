@@ -84,6 +84,13 @@ public:
 	}
 
 	[[gnu::pure]]
+	SocketDescriptor GetSocket() const noexcept {
+		assert(!IsReleased());
+
+		return socket->GetSocket();
+	}
+
+	[[gnu::pure]]
 	FdType GetType() const noexcept {
 		assert(!IsReleased());
 
