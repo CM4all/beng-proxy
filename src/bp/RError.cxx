@@ -21,6 +21,7 @@
 #include "net/SocketProtocolError.hxx"
 #include "net/TimeoutError.hxx"
 #include "util/Exception.hxx"
+#include "AllocatorPtr.hxx"
 
 #include <string.h> // for strerror()
 
@@ -139,19 +140,21 @@ ToResponse(struct pool &pool, std::exception_ptr ep) noexcept
 
 void
 Request::LogDispatchError(HttpStatus status,
-			  const char *msg, const char *log_msg,
+			  std::string_view msg, std::string_view log_msg,
 			  unsigned log_level) noexcept
 {
 	logger(log_level, "error on '", request.uri, "': ", log_msg);
 
-	if (instance.config.verbose_response)
-		msg = p_strdup(&pool, log_msg);
+	if (instance.config.verbose_response) {
+		AllocatorPtr alloc{pool};
+		msg = alloc.Dup(log_msg);
+	}
 
 	DispatchError(status, msg);
 }
 
 void
-Request::LogDispatchError(HttpStatus status, const char *log_msg,
+Request::LogDispatchError(HttpStatus status, std::string_view log_msg,
 			  unsigned log_level) noexcept
 {
 	LogDispatchError(status, http_status_to_string(status),
@@ -177,7 +180,7 @@ Request::LogDispatchError(std::exception_ptr ep) noexcept
 }
 
 void
-Request::LogDispatchError(HttpStatus status, const char *msg,
+Request::LogDispatchError(HttpStatus status, std::string_view msg,
 			  std::exception_ptr ep, unsigned log_level) noexcept
 {
 	if (DispatchHttpMessageResponse(ep))
@@ -194,7 +197,7 @@ Request::LogDispatchError(HttpStatus status, const char *msg,
 }
 
 void
-Request::LogDispatchErrno(int error, const char *msg) noexcept
+Request::LogDispatchErrno(int error, std::string_view msg) noexcept
 {
 	auto response = ErrnoToResponse(error);
 	if (response.status == HttpStatus{})

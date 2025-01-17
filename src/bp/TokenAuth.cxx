@@ -101,7 +101,7 @@ Request::OnTokenAuthTranslateResponse(UniquePoolPtr<TranslateResponse> &&_respon
 					dissected_uri,
 					tr);
 
-	DispatchRedirect(HttpStatus::SEE_OTHER, redirect_uri, nullptr);
+	DispatchRedirect(HttpStatus::SEE_OTHER, redirect_uri, {});
 }
 
 inline void

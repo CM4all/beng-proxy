@@ -818,15 +818,15 @@ public:
 		DispatchError(status, std::move(headers), UnusedIstreamPtr());
 	}
 
-	void DispatchError(HttpStatus status, const char *msg) noexcept;
+	void DispatchError(HttpStatus status, std::string_view msg) noexcept;
 
 	void DispatchError(HttpStatus status) noexcept;
 
 	void DispatchError(HttpStatus status, HttpHeaders &&headers,
-			   const char *msg) noexcept;
+			   std::string_view msg) noexcept;
 
-	void DispatchRedirect(HttpStatus status, const char *location,
-			      const char *msg) noexcept;
+	void DispatchRedirect(HttpStatus status, std::string_view location,
+			      std::string_view msg) noexcept;
 
 	void DispatchMethodNotAllowed(const char *allow) noexcept;
 
@@ -895,20 +895,20 @@ private:
 	bool DispatchHttpMessageResponse(std::exception_ptr e) noexcept;
 
 public:
-	void LogDispatchError(HttpStatus status, const char *log_msg,
+	void LogDispatchError(HttpStatus status, std::string_view log_msg,
 			      unsigned log_level=2) noexcept;
 
-	void LogDispatchError(HttpStatus status, const char *msg,
-			      const char *log_msg,
+	void LogDispatchError(HttpStatus status, std::string_view msg,
+			      std::string_view log_msg,
 			      unsigned log_level=2) noexcept;
 
 	void LogDispatchError(std::exception_ptr ep) noexcept;
 
-	void LogDispatchError(HttpStatus status, const char *msg,
+	void LogDispatchError(HttpStatus status, std::string_view msg,
 			      std::exception_ptr ep,
 			      unsigned log_level=2) noexcept;
 
-	void LogDispatchErrno(int error, const char *msg) noexcept;
+	void LogDispatchErrno(int error, std::string_view msg) noexcept;
 
 private:
 	/**

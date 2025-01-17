@@ -268,7 +268,7 @@ ProxyWidget::ResolverCallback() noexcept
 		Destroy();
 		_request.LogDispatchError(HttpStatus::BAD_GATEWAY,
 					  "No such widget type",
-					  log_msg);
+					  log_msg.c_str());
 		return;
 	}
 
@@ -306,7 +306,8 @@ ProxyWidget::WidgetNotFound() noexcept
 
 	auto &_request = request;
 	Destroy();
-	_request.LogDispatchError(HttpStatus::NOT_FOUND, "No such widget", log_msg);
+	_request.LogDispatchError(HttpStatus::NOT_FOUND, "No such widget",
+				  log_msg.c_str());
 }
 
 void

@@ -891,10 +891,9 @@ Request::DispatchError(HttpStatus status, HttpHeaders &&headers,
 
 void
 Request::DispatchError(HttpStatus status,
-		       HttpHeaders &&headers, const char *msg) noexcept
+		       HttpHeaders &&headers, std::string_view msg) noexcept
 {
 	assert(http_status_is_valid(status));
-	assert(msg != nullptr);
 
 	headers.Write("content-type", "text/plain");
 
@@ -903,7 +902,7 @@ Request::DispatchError(HttpStatus status,
 }
 
 void
-Request::DispatchError(HttpStatus status, const char *msg) noexcept
+Request::DispatchError(HttpStatus status, std::string_view msg) noexcept
 {
 	DispatchError(status, {}, msg);
 }
@@ -916,12 +915,11 @@ Request::DispatchError(HttpStatus status) noexcept
 
 void
 Request::DispatchRedirect(HttpStatus status,
-			  const char *location, const char *msg) noexcept
+			  std::string_view location, std::string_view msg) noexcept
 {
 	assert(http_status_is_redirect(status));
-	assert(location != nullptr);
 
-	if (msg == nullptr)
+	if (msg.data() == nullptr)
 		msg = "redirection";
 
 	HttpHeaders headers;

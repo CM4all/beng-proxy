@@ -829,7 +829,7 @@ Request::OnTranslateResponse(UniquePoolPtr<TranslateResponse> _response) noexcep
 			return;
 		}
 
-		const char *redirect = MakeHttpsRedirect(pool, host, response.https_only, request.uri);
+		std::string_view redirect = MakeHttpsRedirect(pool, host, response.https_only, request.uri);
 		_response.reset();
 		DispatchRedirect(HttpStatus::MOVED_PERMANENTLY,
 				 redirect,
