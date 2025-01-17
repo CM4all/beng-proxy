@@ -6,6 +6,7 @@ http_server = static_library('http_server',
   'Request.cxx',
   'Read.cxx',
   'Response.cxx',
+  'Uring.cxx',
   include_directories: inc,
   dependencies: [
     memory_dep,

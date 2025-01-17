@@ -19,6 +19,11 @@
 #include "util/DestructObserver.hxx"
 #include "util/Exception.hxx"
 
+#ifdef HAVE_URING
+#include "io/uring/Operation.hxx"
+#include <optional>
+#endif
+
 #include <cassert>
 #include <string_view>
 
@@ -270,6 +275,35 @@ struct HttpServerConnection final
 		 */
 		bool pending_drained = false;
 	} response;
+
+#ifdef HAVE_URING
+	class UringSplice final : Uring::Operation {
+		HttpServerConnection &parent;
+		Uring::Queue &queue;
+
+		std::size_t max_length;
+		bool then_eof;
+
+	public:
+		UringSplice(HttpServerConnection &_parent,
+			    Uring::Queue &_queue) noexcept
+			:parent(_parent), queue(_queue) {}
+
+		~UringSplice() noexcept;
+
+		using Uring::Operation::IsUringPending;
+
+		void Start(FileDescriptor src, off_t offset, std::size_t _max_length, bool _then_eof);
+
+	private:
+		void OnUringCompletion(int res) noexcept override;
+	};
+
+	void OnUringSpliceCompletion(int res, std::size_t max_length, bool then_eof) noexcept;
+
+	std::optional<UringSplice> uring_splice;
+	bool uring_splice_then_eof;
+#endif
 
 	enum http_server_score score = HTTP_SERVER_NEW;
 

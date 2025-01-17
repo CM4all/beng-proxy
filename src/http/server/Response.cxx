@@ -82,6 +82,16 @@ HttpServerConnection::OnDirect(FdType type, FileDescriptor fd, off_t offset,
 	if (!socket->IsConnected())
 		return IstreamDirectResult::BLOCKING;
 
+#ifdef HAVE_URING
+	if (uring_splice) {
+		if (uring_splice->IsUringPending())
+			return IstreamDirectResult::BLOCKING;
+
+		uring_splice->Start(fd, offset, max_length, then_eof);
+		return IstreamDirectResult::OK;
+	}
+#endif
+
 	ssize_t nbytes = socket->WriteFrom(fd, type, ToOffsetPointer(offset),
 					   max_length);
 	if (nbytes > 0) [[likely]] {

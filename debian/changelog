@@ -1,6 +1,6 @@
 cm4all-beng-proxy (19.3) unstable; urgency=low
 
-  * http/server: receive using io_uring
+  * http/server: receive and splice using io_uring
   * was: reduce the number of epoll_ctl() system calls again
   * was: receive from control channel using io_uring
   * bp: reuse pipes for service static files with io_uring

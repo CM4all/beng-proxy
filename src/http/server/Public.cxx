@@ -338,6 +338,12 @@ HttpServerConnection::HttpServerConnection(struct pool &_pool,
 {
 	socket->Reinit(write_timeout, *this);
 
+#ifdef HAVE_URING
+	if (auto *uring_queue = socket->GetUringQueue()) {
+		uring_splice.emplace(*this, *uring_queue);
+	}
+#endif
+
 	idle_timer.Schedule(idle_timeout);
 
 	/* read the first request, but not in this stack frame, because a
