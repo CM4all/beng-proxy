@@ -22,14 +22,19 @@
 #include <sys/stat.h>
 
 UringGlue::UringGlue([[maybe_unused]] EventLoop &event_loop,
-		     [[maybe_unused]] bool enable) noexcept
+		     [[maybe_unused]] bool enable,
+		     [[maybe_unused]] bool sqpoll) noexcept
 {
 #ifdef HAVE_URING
 	if (!enable)
 		return;
 
+	unsigned flags = 0;
+	if (sqpoll)
+		flags |= IORING_SETUP_SQPOLL;
+
 	try {
-		uring.emplace(event_loop, 16384);
+		uring.emplace(event_loop, 16384, flags);
 	} catch (...) {
 		fprintf(stderr, "Failed to initialize io_uring: ");
 		PrintException(std::current_exception());

@@ -33,7 +33,8 @@ class UringGlue {
 #endif
 
 public:
-	explicit UringGlue(EventLoop &event_loop, bool enable) noexcept;
+	explicit UringGlue(EventLoop &event_loop, bool enable,
+			   bool sqpoll) noexcept;
 
 	void SetVolatile() noexcept;
 

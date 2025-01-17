@@ -419,6 +419,11 @@ The following settings are available:
   which can make debugging with ``strace`` easier, because ``strace``
   cannot see ``io_uring`` operations.
 
+- ``io_uring_sqpoll``: Enables ``io_uring`` submit-queue polling.
+  This reduces the number of ``io_uring_enter()`` system calls at the
+  cost of a kernel thread running at 100% all the time, busy-polling
+  for new entries.
+
 - ``verbose_response``: Set to ``yes`` to reveal internal error
   messages in HTTP responses.
 

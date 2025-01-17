@@ -89,7 +89,11 @@ struct BpInstance final : PInstance, BengControl::Handler,
 	HttpStats http_stats;
 
 	[[no_unique_address]]
-	UringGlue uring{event_loop, config.use_io_uring};
+	UringGlue uring{
+		event_loop,
+		config.use_io_uring,
+		config.io_uring_sqpoll,
+	};
 
 	const StateDirectories state_directories;
 

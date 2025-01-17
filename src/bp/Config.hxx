@@ -95,6 +95,8 @@ struct BpConfig {
 
 	bool use_io_uring = true;
 
+	bool io_uring_sqpoll = false;
+
 	SpawnConfig spawn;
 
 	SslClientConfig ssl_client;
