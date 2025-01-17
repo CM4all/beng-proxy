@@ -120,11 +120,15 @@ LbHttpRequest::OnTranslateResponse(UniquePoolPtr<TranslateResponse> _response) n
 		if (status == HttpStatus{})
 			status = HttpStatus::SEE_OTHER;
 
-		const char *body = response.message;
-		if (body == nullptr)
-			body = http_status_to_string(status);
+		const std::string_view location = response.redirect != nullptr
+			? std::string_view{response.redirect}
+			: std::string_view{};
 
-		_request.SendSimpleResponse(status, response.redirect, body);
+		const std::string_view body = response.message != nullptr
+			? std::string_view{response.message}
+			: std::string_view{http_status_to_string(status)};
+
+		_request.SendSimpleResponse(status, location, body);
 	} else if (response.pool != nullptr) {
 		auto *destination = handler.FindDestination(response.pool);
 		if (destination == nullptr) {

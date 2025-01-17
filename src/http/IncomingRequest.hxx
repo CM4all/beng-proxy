@@ -86,11 +86,11 @@ public:
 	 * Generate a "simple" response with an optional plain-text body and
 	 * an optional "Location" redirect header.
 	 */
-	void SendSimpleResponse(HttpStatus status, const char *location,
-				const char *msg) noexcept;
+	void SendSimpleResponse(HttpStatus status, std::string_view location,
+				std::string_view msg) noexcept;
 
 	void SendMessage(HttpStatus status, std::string_view msg) noexcept;
 
-	void SendRedirect(HttpStatus status, const char *location,
-			  const char *msg) noexcept;
+	void SendRedirect(HttpStatus status, std::string_view location,
+			  std::string_view msg) noexcept;
 };

@@ -9,30 +9,32 @@
 #include "http/Status.hxx"
 #include "AllocatorPtr.hxx"
 
+using std::string_view_literals::operator""sv;
+
 void
 SendResponse(IncomingHttpRequest &request,
 	     const LbSimpleHttpResponse &response) noexcept
 {
 	assert(response.IsDefined());
 
-	const char *location = nullptr;
-	const char *message = response.message.empty()
-		? nullptr
-		: response.message.c_str();
+	std::string_view location{};
+	std::string_view message = response.message;
+	if (message.empty())
+		message = {};
 
 	if (response.redirect_https) {
 		const char *host = request.headers.Get(host_header);
 		if (host == nullptr) {
 			request.SendSimpleResponse(HttpStatus::BAD_REQUEST,
-						   nullptr,
-						   "No Host header");
+						   {},
+						   "No Host header"sv);
 			return;
 		}
 
 		location = MakeHttpsRedirect(AllocatorPtr{request.pool},
 					     host, 443, request.uri);
-		if (message == nullptr)
-			message = "This page requires \"https\"";
+		if (message.data() == nullptr)
+			message = "This page requires \"https\""sv;
 	} else if (!response.location.empty())
 		location = response.location.c_str();
 

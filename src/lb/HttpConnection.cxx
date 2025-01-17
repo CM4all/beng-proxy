@@ -273,7 +273,7 @@ LbHttpConnection::HandleHttpRequest(IncomingHttpRequest &request,
 					    instance.config.global_http_check->success_message);
 		else
 			request.SendSimpleResponse(HttpStatus::NOT_FOUND,
-						   nullptr, nullptr);
+						   {}, {});
 
 		return;
 	}

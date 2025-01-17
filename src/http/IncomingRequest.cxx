@@ -50,23 +50,23 @@ IncomingHttpRequest::~IncomingHttpRequest() noexcept
 
 void
 IncomingHttpRequest::SendSimpleResponse(HttpStatus status,
-					const char *location,
-					const char *msg) noexcept
+					std::string_view location,
+					std::string_view msg) noexcept
 {
 	assert(http_status_is_valid(status));
 
 	if (http_status_is_empty(status))
-		msg = nullptr;
-	else if (msg == nullptr)
+		msg = {};
+	else if (msg.data() == nullptr)
 		msg = http_status_to_string(status);
 
 	HttpHeaders response_headers;
 
-	if (location != nullptr)
+	if (location.data() != nullptr)
 		response_headers.Write("location", location);
 
 	UnusedIstreamPtr response_body;
-	if (msg != nullptr) {
+	if (msg.data() != nullptr) {
 		response_headers.Write("content-type", "text/plain");
 		response_body = istream_string_new(pool, msg);
 	}
@@ -87,15 +87,14 @@ IncomingHttpRequest::SendMessage(HttpStatus status, std::string_view msg) noexce
 }
 
 void
-IncomingHttpRequest::SendRedirect(HttpStatus status, const char *location,
-				  const char *msg) noexcept
+IncomingHttpRequest::SendRedirect(HttpStatus status, std::string_view location,
+				  std::string_view msg) noexcept
 {
 	assert(http_status_is_redirect(status));
-	assert(location != nullptr);
 
 	if (http_status_is_empty(status))
-		msg = nullptr;
-	else if (msg == nullptr)
+		msg = {};
+	else if (msg.data() == nullptr)
 		msg = http_status_to_string(status);
 
 	HttpHeaders response_headers;
