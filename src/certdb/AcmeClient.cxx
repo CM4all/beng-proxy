@@ -23,6 +23,7 @@
 #include "util/MimeType.hxx"
 #include "util/SpanCast.hxx"
 
+#include <fmt/core.h>
 #include <nlohmann/json.hpp>
 
 #include <memory>
@@ -92,12 +93,8 @@ ThrowError(StringCurlResponse &&response, const char *msg)
 static void
 ThrowStatusError(StringCurlResponse &&response, const char *msg)
 {
-	std::string what(msg);
-	what += " (";
-	what += http_status_to_string(response.status);
-	what += ")";
-
-	ThrowError(std::move(response), what.c_str());
+	ThrowError(std::move(response),
+		   fmt::format("{} ({})"sv, msg, http_status_to_string(response.status)).c_str());
 }
 
 AcmeClient::AcmeClient(const AcmeConfig &config)
