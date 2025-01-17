@@ -243,7 +243,7 @@ GrowingBuffer::Skip(size_type length) noexcept
 }
 
 GrowingBufferReader::GrowingBufferReader(GrowingBuffer &&gb) noexcept
-	:buffer(std::move(gb.head))
+	:buffer(std::move(gb.head)), position(gb.position)
 {
 	assert(!buffer || buffer->fill > 0);
 }
