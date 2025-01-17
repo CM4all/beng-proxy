@@ -31,6 +31,7 @@ class SlicePool;
 enum class HttpMethod : uint_least8_t;
 struct HttpServerRequest;
 class HttpHeaders;
+class GrowingBuffer;
 namespace Net::Log { enum class ContentType : uint8_t; }
 
 struct HttpServerConnection final
@@ -277,6 +278,15 @@ struct HttpServerConnection final
 	} response;
 
 #ifdef HAVE_URING
+	class UringSend;
+
+	void StartUringSend(Uring::Queue &queue, GrowingBuffer &&src);
+	void CancelUringSend() noexcept;
+	void OnUringSendDone() noexcept;
+	void OnUringSendError(int error) noexcept;
+
+	UringSend *uring_send = nullptr;
+
 	class UringSplice final : Uring::Operation {
 		HttpServerConnection &parent;
 		Uring::Queue &queue;
@@ -305,6 +315,14 @@ struct HttpServerConnection final
 	bool uring_splice_then_eof;
 #endif
 
+	bool HaveUringSend() const noexcept {
+#ifdef HAVE_URING
+		return uring_send != nullptr;
+#else
+		return false;
+#endif
+	}
+
 	enum http_server_score score = HTTP_SERVER_NEW;
 
 	bool date_header;
@@ -320,6 +338,7 @@ struct HttpServerConnection final
 			     SlicePool &_request_slice_pool,
 			     HttpServerConnectionHandler &_handler,
 			     HttpServerRequestHandler &_request_handler) noexcept;
+	~HttpServerConnection() noexcept;
 
 	void Delete() noexcept;
 

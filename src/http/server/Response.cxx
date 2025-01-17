@@ -49,6 +49,10 @@ HttpServerConnection::OnData(std::span<const std::byte> src) noexcept
 	if (!socket->IsConnected())
 		return 0;
 
+	if (HaveUringSend())
+		// wait for io_uring to complete
+		return 0;
+
 	ssize_t nbytes = socket->Write(src);
 
 	if (nbytes >= 0) [[likely]] {
@@ -80,6 +84,10 @@ HttpServerConnection::OnDirect(FdType type, FileDescriptor fd, off_t offset,
 	assert(!response.pending_drained);
 
 	if (!socket->IsConnected())
+		return IstreamDirectResult::BLOCKING;
+
+	if (HaveUringSend())
+		// wait for io_uring to complete
 		return IstreamDirectResult::BLOCKING;
 
 #ifdef HAVE_URING
@@ -135,7 +143,8 @@ HttpServerConnection::OnEof() noexcept
 
 	ClearInput();
 
-	ResponseIstreamFinished();
+	if (!HaveUringSend())
+		ResponseIstreamFinished();
 }
 
 void

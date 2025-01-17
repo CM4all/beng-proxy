@@ -353,6 +353,14 @@ HttpServerConnection::HttpServerConnection(struct pool &_pool,
 		socket->DeferRead();
 }
 
+inline
+HttpServerConnection::~HttpServerConnection() noexcept
+{
+#ifdef HAVE_URING
+	CancelUringSend();
+#endif
+}
+
 void
 HttpServerConnection::Delete() noexcept
 {

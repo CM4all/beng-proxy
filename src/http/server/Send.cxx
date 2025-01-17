@@ -164,13 +164,23 @@ HttpServerConnection::SubmitResponse(HttpStatus status,
 
 	GrowingBuffer headers3 = headers.ToBuffer();
 	headers3.Write("\r\n"sv);
-	auto header_stream = istream_gb_new(request_pool, std::move(headers3));
-
-	response.length = - header_stream.GetAvailable(false);
 
 	/* make sure the access logger gets a negative value if there
 	   is no response body */
 	response.length -= !body;
+
+#ifdef HAVE_URING
+	if (auto *uring_queue = socket->GetUringQueue()) {
+		assert(uring_send == nullptr);
+
+		SetResponseIstream(std::move(body));
+		StartUringSend(*uring_queue, std::move(headers3));
+		return;
+	}
+#endif
+	auto header_stream = istream_gb_new(request_pool, std::move(headers3));
+
+	response.length = - header_stream.GetAvailable(false);
 
 	SetResponseIstream(NewConcatIstream(request_pool, std::move(header_stream),
 					    std::move(body)));
