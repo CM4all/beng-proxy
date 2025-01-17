@@ -7,6 +7,7 @@
 #include <sys/types.h>
 
 struct pool;
+class EventLoop;
 class PipeStock;
 class UnusedIstreamPtr;
 class UniqueFileDescriptor;
@@ -22,7 +23,7 @@ namespace Uring { class Queue; }
  * disk (or network filesystem) I/O is slow.
  */
 UnusedIstreamPtr
-NewUringSpliceIstream(Uring::Queue &uring, PipeStock *_pipe_stock,
+NewUringSpliceIstream(EventLoop &event_loop, Uring::Queue &uring, PipeStock *_pipe_stock,
 		      struct pool &pool,
 		      const char *path, UniqueFileDescriptor fd,
 		      off_t start_offset, off_t end_offset) noexcept;

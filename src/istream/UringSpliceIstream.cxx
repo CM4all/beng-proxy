@@ -8,6 +8,7 @@
 #include "pipe/Lease.hxx"
 #include "lib/fmt/RuntimeError.hxx"
 #include "lib/fmt/SystemError.hxx"
+#include "event/DeferEvent.hxx"
 #include "io/UniqueFileDescriptor.hxx"
 #include "io/uring/Close.hxx"
 #include "io/uring/Operation.hxx"
@@ -21,6 +22,13 @@
 
 class UringSpliceIstream final : public Istream, Uring::Operation {
 	Uring::Queue &uring;
+
+	/**
+	 * This allows the StartRead() call to be called from a "safe"
+	 * stack frame.  This is necessary because _ConsumeDirect() is
+	 * not allowed to fail.
+	 */
+	DeferEvent defer_start;
 
 	/**
 	 * The path name.  Only used for error messages.
@@ -58,11 +66,12 @@ class UringSpliceIstream final : public Istream, Uring::Operation {
 #endif
 
 public:
-	UringSpliceIstream(struct pool &p, Uring::Queue &_uring,
+	UringSpliceIstream(struct pool &p, EventLoop &event_loop, Uring::Queue &_uring,
 			   PipeStock *_pipe_stock,
 			   const char *_path, UniqueFileDescriptor &&_fd,
 			   off_t _start_offset, off_t _end_offset)
 		:Istream(p), uring(_uring),
+		 defer_start(event_loop, BIND_THIS_METHOD(OnDeferredStart)),
 		 path(_path),
 		 fd(std::move(_fd)),
 		 pipe(_pipe_stock),
@@ -113,6 +122,10 @@ private:
 	 * @return false if the object was closed
 	 */
 	bool StartRead() noexcept;
+
+	void OnDeferredStart() noexcept {
+		StartRead();
+	}
 
 	/* virtual methods from class Uring::Operation */
 	void OnUringCompletion(int res) noexcept override;
@@ -245,8 +258,7 @@ try {
 
 	assert(in_pipe >= 0);
 
-	if (StartRead())
-		TryDirect();
+	TryDirect();
 } catch (...) {
 	DestroyError(std::current_exception());
 }
@@ -262,8 +274,18 @@ UringSpliceIstream::_ConsumeDirect(std::size_t nbytes) noexcept
 {
 	in_pipe -= nbytes;
 
-	if (!IsUringPending() && in_pipe == 0)
-		pipe.Release(PutAction::REUSE);
+	/* we trigger the next io_uring read call from here because
+           only here we know the pipe is not full */
+	if (offset < end_offset) {
+		if (!IsUringPending()) {
+			defer_start.Schedule();
+		}
+	} else {
+		if (in_pipe == 0) {
+			assert(!IsUringPending());
+			pipe.Release(PutAction::REUSE);
+		}
+	}
 }
 
 void
@@ -271,8 +293,16 @@ UringSpliceIstream::_Read() noexcept
 {
 	assert(direct);
 
-	if (IsUringPending() || StartRead())
-		TryDirect();
+	if (in_pipe == 0) {
+		if (!IsUringPending()) {
+			defer_start.Cancel();
+			StartRead();
+		}
+
+		return;
+	}
+
+	TryDirect();
 }
 
 /*
@@ -281,7 +311,7 @@ UringSpliceIstream::_Read() noexcept
  */
 
 UnusedIstreamPtr
-NewUringSpliceIstream(Uring::Queue &uring, PipeStock *pipe_stock,
+NewUringSpliceIstream(EventLoop &event_loop, Uring::Queue &uring, PipeStock *pipe_stock,
 		      struct pool &pool,
 		      const char *path, UniqueFileDescriptor fd,
 		      off_t start_offset, off_t end_offset) noexcept
@@ -289,7 +319,7 @@ NewUringSpliceIstream(Uring::Queue &uring, PipeStock *pipe_stock,
 	assert(fd.IsDefined());
 	assert(start_offset <= end_offset);
 
-	return NewIstreamPtr<UringSpliceIstream>(pool, uring, pipe_stock,
+	return NewIstreamPtr<UringSpliceIstream>(pool, event_loop, uring, pipe_stock,
 						 path, std::move(fd),
 						 start_offset, end_offset);
 }

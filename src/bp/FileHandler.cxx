@@ -183,7 +183,7 @@ Request::DispatchFile(const char *path, UniqueFileDescriptor fd,
 			       io_uring instead of sendfile() to avoid
 			       getting blocked by slow disk (or
 			       network filesystem) I/O */
-			    ? NewUringSpliceIstream(*instance.uring, instance.pipe_stock,
+			    ? NewUringSpliceIstream(instance.event_loop, *instance.uring, instance.pipe_stock,
 						    pool, path,
 						    std::move(fd),
 						    start_offset, end_offset)
