@@ -127,7 +127,8 @@ public:
 	GrowingBuffer() = default;
 
 	GrowingBuffer(GrowingBuffer &&src) noexcept
-		:head(std::move(src.head)), tail(std::exchange(src.tail, nullptr)) {}
+		:head(std::move(src.head)), tail(std::exchange(src.tail, nullptr)),
+		 position(src.position) {}
 
 	GrowingBuffer &operator=(GrowingBuffer &&src) noexcept {
 		using std::swap;
