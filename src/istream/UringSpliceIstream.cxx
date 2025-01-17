@@ -188,6 +188,10 @@ try {
 
 		break;
 
+	case IstreamDirectResult::ASYNC:
+		assert(offset < end_offset || in_pipe > 0);
+		break;
+
 	case IstreamDirectResult::END:
 		throw FmtRuntimeError("premature end of file in '{}'", path);
 

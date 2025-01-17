@@ -96,7 +96,7 @@ HttpServerConnection::OnDirect(FdType type, FileDescriptor fd, off_t offset,
 			return IstreamDirectResult::BLOCKING;
 
 		uring_splice->Start(fd, offset, max_length, then_eof);
-		return IstreamDirectResult::OK;
+		return IstreamDirectResult::ASYNC;
 	}
 #endif
 

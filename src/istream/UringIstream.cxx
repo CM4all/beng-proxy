@@ -165,6 +165,10 @@ try {
 			DestroyEof();
 		break;
 
+	case IstreamDirectResult::ASYNC:
+		assert(offset < end_offset);
+		break;
+
 	case IstreamDirectResult::END:
 		throw FmtRuntimeError("premature end of file in '{}'", path);
 

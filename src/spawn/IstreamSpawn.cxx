@@ -308,6 +308,10 @@ SpawnIstream::ReadFromOutput() noexcept
 			output_event.ScheduleRead();
 			break;
 
+		case IstreamDirectResult::ASYNC:
+			output_event.CancelRead();
+			break;
+
 		case IstreamDirectResult::END:
 			Cancel();
 			DestroyEof();

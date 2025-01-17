@@ -136,6 +136,7 @@ FdIstream::TryDirect()
 			     INT_MAX, false)) {
 	case IstreamDirectResult::CLOSED:
 	case IstreamDirectResult::OK:
+	case IstreamDirectResult::ASYNC:
 	case IstreamDirectResult::BLOCKING:
 		break;
 

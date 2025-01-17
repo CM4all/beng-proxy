@@ -509,6 +509,10 @@ HttpServerConnection::TryRequestBodyDirect(SocketDescriptor fd, FdType fd_type) 
 		ScheduleReadTimeoutTimer();
 
 		return DirectResult::OK;
+
+	case IstreamDirectResult::ASYNC:
+		assert(!request_body_reader->IsEOF());
+		return DirectResult::OK;
 	}
 
 	gcc_unreachable();

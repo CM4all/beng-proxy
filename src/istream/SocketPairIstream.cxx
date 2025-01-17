@@ -110,6 +110,9 @@ SocketPairIstream::Consume() noexcept
 			r.ScheduleRead();
 
 		break;
+
+	case IstreamDirectResult::ASYNC:
+		break;
 	}
 
 	return result;

@@ -1103,6 +1103,10 @@ HttpClient::TryResponseDirect(SocketDescriptor fd, FdType fd_type) noexcept
 		}
 
 		return DirectResult::OK;
+
+	case IstreamDirectResult::ASYNC:
+		assert(!response_body_reader.IsEOF());
+		return DirectResult::OK;
 	}
 
 	gcc_unreachable();

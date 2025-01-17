@@ -113,6 +113,9 @@ AutoPipeIstream::Consume() noexcept
 		}
 
 		break;
+
+	case IstreamDirectResult::ASYNC:
+		break;
 	}
 
 	return result;

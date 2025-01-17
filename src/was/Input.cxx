@@ -380,6 +380,10 @@ WasInput::TryDirect() noexcept
 
 		ScheduleRead();
 		return true;
+
+	case IstreamDirectResult::ASYNC:
+		CancelRead();
+		return true;
 	}
 
 	gcc_unreachable();

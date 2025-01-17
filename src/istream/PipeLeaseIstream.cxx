@@ -79,6 +79,7 @@ PipeLeaseIstream::_Read() noexcept
 				return;
 
 			case IstreamDirectResult::OK:
+			case IstreamDirectResult::ASYNC:
 				break;
 			}
 		} else {
