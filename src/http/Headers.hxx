@@ -54,9 +54,6 @@ public:
 	explicit HttpHeaders(StringMap &&_map) noexcept
 		:map(std::move(_map)) {}
 
-	HttpHeaders(GrowingBuffer &&_buffer) noexcept
-		:buffer(std::move(_buffer)) {}
-
 	HttpHeaders(HttpHeaders &&) = default;
 	HttpHeaders &operator=(HttpHeaders &&) = default;
 
