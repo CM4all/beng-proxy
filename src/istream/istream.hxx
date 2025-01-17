@@ -59,6 +59,8 @@ class Istream : PoolHolder, LeakDetector, IstreamDestructAnchor {
 
 	bool in_data = false, available_full_set = false;
 
+	bool in_direct = false;
+
 	/** how much data was available in the previous invocation? */
 	std::size_t data_available = 0;
 
@@ -264,6 +266,7 @@ public:
 
 		const DestructObserver destructed(*this);
 		reading = true;
+		in_direct = false;
 #endif
 
 		off_t nbytes = _Skip(length);
@@ -316,6 +319,7 @@ public:
 
 		const DestructObserver destructed(*this);
 		reading = true;
+		in_direct = false;
 #endif
 
 		_Read();
@@ -422,7 +426,7 @@ public:
 		assert(!closing);
 		assert(!eof);
 		assert(!bucket_eof);
-		assert(in_data);
+		assert(in_direct);
 
 		consumed_sum = 0;
 #endif

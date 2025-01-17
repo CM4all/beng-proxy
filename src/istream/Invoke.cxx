@@ -49,6 +49,7 @@ Istream::InvokeData(std::span<const std::byte> src) noexcept
 #ifndef NDEBUG
 	const DestructObserver destructed(*this);
 	in_data = true;
+	in_direct = false;
 #endif
 
 	std::size_t nbytes = handler->OnData(src);
@@ -91,6 +92,7 @@ Istream::InvokeDirect(FdType type, FileDescriptor fd, off_t offset,
 #ifndef NDEBUG
 	const DestructObserver destructed(*this);
 	in_data = true;
+	in_direct = true;
 #endif
 
 	const auto result = handler->OnDirect(type, fd, offset, max_length, then_eof);
@@ -123,6 +125,7 @@ Istream::PrepareEof() noexcept
 
 #ifndef NDEBUG
 	eof = true;
+	in_direct = false;
 #endif
 
 	return *handler;
@@ -152,6 +155,7 @@ Istream::PrepareError() noexcept
 
 #ifndef NDEBUG
 	eof = true;
+	in_direct = false;
 #endif
 
 	return *handler;

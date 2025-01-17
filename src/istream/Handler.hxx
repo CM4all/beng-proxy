@@ -70,7 +70,9 @@ public:
 	 * descriptor, it must call Istream::ConsumeDirect().
 	 *
 	 * @param type what kind of file descriptor?
-	 * @param fd the file descriptor
+	 * @param fd the file descriptor; it may be used for
+	 * asynchronous operations and is guaranteed to remain valid
+	 * until the next call to/from this #Istream
 	 * @param offset read from the file descriptor at the given
 	 * offset; pass #NO_OFFSET to read from the current offset or if not
 	 * applicable (e.g. pipes, sockets)
