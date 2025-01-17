@@ -57,7 +57,7 @@ HttpServerConnection::MaybeSend100Continue() noexcept
 	return false;
 }
 
-static std::size_t
+static char *
 format_status_line(char *p, HttpStatus status) noexcept
 {
 	assert(http_status_is_valid(status));
@@ -66,13 +66,12 @@ format_status_line(char *p, HttpStatus status) noexcept
 	assert(status_string != nullptr);
 	std::size_t length = strlen(status_string);
 
-	memcpy(p, "HTTP/1.1 ", 9);
-	memcpy(p + 9, status_string, length);
-	length += 9;
-	p[length++] = '\r';
-	p[length++] = '\n';
+	p = (char *)mempcpy(p, "HTTP/1.1 ", 9);
+	p = (char *)mempcpy(p, status_string, length);
+	*p++ = '\r';
+	*p++ = '\n';
 
-	return length;
+	return p;
 }
 
 inline void
