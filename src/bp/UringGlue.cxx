@@ -29,7 +29,7 @@ UringGlue::UringGlue([[maybe_unused]] EventLoop &event_loop,
 		return;
 
 	try {
-		uring.emplace(event_loop);
+		uring.emplace(event_loop, 16384);
 	} catch (...) {
 		fprintf(stderr, "Failed to initialize io_uring: ");
 		PrintException(std::current_exception());
