@@ -7,7 +7,7 @@
 #include "net/HostParser.hxx"
 #include "AllocatorPtr.hxx"
 
-const char *
+std::string_view
 MakeHttpsRedirect(AllocatorPtr alloc, const char *_host, uint16_t port,
 		  const char *uri) noexcept
 {
@@ -27,10 +27,10 @@ MakeHttpsRedirect(AllocatorPtr alloc, const char *_host, uint16_t port,
 		std::find(eh.host.begin(), eh.host.end(), ':') != eh.host.end();
 	const size_t need_brackets = is_ipv6 && !port_sv.empty();
 
-	return alloc.Concat("https://",
-			    std::string_view{&a, need_brackets},
-			    host,
-			    std::string_view{&b, need_brackets},
-			    port_sv,
-			    uri);
+	return alloc.ConcatView("https://",
+				std::string_view{&a, need_brackets},
+				host,
+				std::string_view{&b, need_brackets},
+				port_sv,
+				uri);
 }

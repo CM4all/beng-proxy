@@ -4,7 +4,8 @@
 
 #pragma once
 
-#include <stdint.h>
+#include <cstdint>
+#include <string_view>
 
 class AllocatorPtr;
 
@@ -15,6 +16,6 @@ class AllocatorPtr;
  * @param port the new port; 0 means default
  * @param uri the request URI
  */
-const char *
+std::string_view
 MakeHttpsRedirect(AllocatorPtr alloc, const char *host, uint16_t port,
 		  const char *uri) noexcept;

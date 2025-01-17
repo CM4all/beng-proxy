@@ -15,17 +15,17 @@ TEST(TestRedirectHttps, Basic)
 	TestPool pool;
 	const AllocatorPtr alloc(pool);
 
-	ASSERT_STREQ(MakeHttpsRedirect(alloc, "localhost", 0, "/foo"),
-		     "https://localhost/foo");
+	ASSERT_EQ(MakeHttpsRedirect(alloc, "localhost", 0, "/foo"),
+		  "https://localhost/foo");
 
-	ASSERT_STREQ(MakeHttpsRedirect(alloc, "localhost:80", 0, "/foo"),
-		     "https://localhost/foo");
+	ASSERT_EQ(MakeHttpsRedirect(alloc, "localhost:80", 0, "/foo"),
+		  "https://localhost/foo");
 
-	ASSERT_STREQ(MakeHttpsRedirect(alloc, "localhost:80", 443, "/foo"),
-		     "https://localhost/foo");
+	ASSERT_EQ(MakeHttpsRedirect(alloc, "localhost:80", 443, "/foo"),
+		  "https://localhost/foo");
 
-	ASSERT_STREQ(MakeHttpsRedirect(alloc, "localhost:80", 444, "/foo"),
-		     "https://localhost:444/foo");
+	ASSERT_EQ(MakeHttpsRedirect(alloc, "localhost:80", 444, "/foo"),
+		  "https://localhost:444/foo");
 }
 
 TEST(TestRedirectHttps, IPv6)
@@ -33,12 +33,12 @@ TEST(TestRedirectHttps, IPv6)
 	TestPool pool;
 	const AllocatorPtr alloc(pool);
 
-	ASSERT_STREQ(MakeHttpsRedirect(alloc, "::", 0, "/foo"),
-		     "https://::/foo");
+	ASSERT_EQ(MakeHttpsRedirect(alloc, "::", 0, "/foo"),
+		  "https://::/foo");
 
-	ASSERT_STREQ(MakeHttpsRedirect(alloc, "[::]:80", 0, "/foo"),
-		     "https://::/foo");
+	ASSERT_EQ(MakeHttpsRedirect(alloc, "[::]:80", 0, "/foo"),
+		  "https://::/foo");
 
-	ASSERT_STREQ(MakeHttpsRedirect(alloc, "::", 444, "/foo"),
-		     "https://[::]:444/foo");
+	ASSERT_EQ(MakeHttpsRedirect(alloc, "::", 444, "/foo"),
+		  "https://[::]:444/foo");
 }
