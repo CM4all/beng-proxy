@@ -62,12 +62,10 @@ format_status_line(char *p, HttpStatus status) noexcept
 {
 	assert(http_status_is_valid(status));
 
-	const char *status_string = http_status_to_string(status);
-	assert(status_string != nullptr);
-	std::size_t length = strlen(status_string);
+	const std::string_view status_string = http_status_to_string(status);
 
 	p = (char *)mempcpy(p, "HTTP/1.1 ", 9);
-	p = (char *)mempcpy(p, status_string, length);
+	p = std::copy(status_string.begin(), status_string.end(), p);
 	*p++ = '\r';
 	*p++ = '\n';
 

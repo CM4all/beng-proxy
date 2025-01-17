@@ -126,7 +126,7 @@ LbHttpRequest::OnTranslateResponse(UniquePoolPtr<TranslateResponse> _response) n
 
 		const std::string_view body = response.message != nullptr
 			? std::string_view{response.message}
-			: std::string_view{http_status_to_string(status)};
+			: http_status_to_string(status);
 
 		_request.SendSimpleResponse(status, location, body);
 	} else if (response.pool != nullptr) {
