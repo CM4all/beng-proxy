@@ -226,11 +226,12 @@ UringSpliceIstream::StartRead() noexcept
 void
 UringSpliceIstream::OnUringCompletion(int res) noexcept
 try {
-	if (res < 0)
-		throw FmtErrno(-res, "Failed to read from '{}'", path);
+	if (res <= 0) [[unlikely]] {
+		if (res == 0) [[unlikely]]
+			throw FmtRuntimeError("Premature end of file in '{}'", path);
 
-	if (res == 0)
-		throw FmtRuntimeError("Premature end of file in '{}'", path);
+		throw FmtErrno(-res, "Failed to read from '{}'", path);
+	}
 
 	in_pipe += res;
 	offset += res;
