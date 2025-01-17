@@ -74,6 +74,11 @@ public:
 	void EnableUring(Uring::Queue &uring_queue) noexcept {
 		base.EnableUring(uring_queue);
 	}
+
+	[[gnu::pure]]
+	Uring::Queue *GetUringQueue() const noexcept {
+		return base.GetUringQueue();
+	}
 #endif
 
 	bool HasUring() const noexcept {
