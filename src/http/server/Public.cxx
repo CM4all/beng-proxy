@@ -96,7 +96,9 @@ HttpServerConnection::TryWriteBuckets2()
 			: BucketResult::DEPLETED;
 	}
 
-	ssize_t nbytes = socket->WriteV(v);
+	ssize_t nbytes = v.size() == 1
+		? socket->Write(ToSpan(v.front()))
+		: socket->WriteV(v);
 	if (nbytes < 0) {
 		if (nbytes == WRITE_BLOCKING) [[likely]]
 			return BucketResult::BLOCKING;
