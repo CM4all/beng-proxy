@@ -230,6 +230,13 @@ try {
 		if (res == 0) [[unlikely]]
 			throw FmtRuntimeError("Premature end of file in '{}'", path);
 
+		if (res == -EAGAIN)
+			/* this can happen if the pipe is full; this
+			   is surprising, because io_uring is supposed
+			   to handle EAGAIN, but it does not with
+			   non-blocking pipes */
+			return;
+
 		throw FmtErrno(-res, "Failed to read from '{}'", path);
 	}
 
