@@ -16,9 +16,10 @@
 #include "http/Date.hxx"
 #include "event/Loop.hxx"
 #include "net/log/ContentType.hxx"
-#include "util/DecimalFormat.hxx"
 #include "util/SpanCast.hxx"
 #include "product.h"
+
+#include <fmt/format.h> // for fmt::format_int
 
 #include <string.h>
 
@@ -144,8 +145,7 @@ HttpServerConnection::SubmitResponse(HttpStatus status,
 		assert(content_length == 0);
 	} else if (got_body || !http_method_is_empty(request.request->method)) {
 		/* fixed body size */
-		format_uint64(response.content_length_buffer, content_length);
-		headers.Write("content-length", response.content_length_buffer);
+		headers.Write("content-length", fmt::format_int{content_length}.c_str());
 	}
 
 	const bool upgrade = body && http_is_upgrade(status, headers);
