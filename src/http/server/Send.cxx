@@ -58,20 +58,20 @@ HttpServerConnection::MaybeSend100Continue() noexcept
 	return false;
 }
 
-static char *
-format_status_line(char *p, HttpStatus status) noexcept
+static void
+PrependStatusLine(GrowingBuffer &buffer, HttpStatus status) noexcept
 {
 	assert(http_status_is_valid(status));
 
 	static constexpr std::string_view protocol = "HTTP/1.1 "sv;
 	const std::string_view status_string = http_status_to_string(status);
+	const std::size_t status_line_length = protocol.size() + status_string.size() + 2;
 
+	char *p = (char *)buffer.Prepend(status_line_length);
 	p = std::copy(protocol.begin(), protocol.end(), p);
 	p = std::copy(status_string.begin(), status_string.end(), p);
 	*p++ = '\r';
 	*p++ = '\n';
-
-	return p;
 }
 
 inline void
@@ -111,13 +111,7 @@ HttpServerConnection::SubmitResponse(HttpStatus status,
 	    !content_type.empty())
 		response.content_type = Net::Log::ParseContentType(content_type);
 
-	const std::string_view status_line{
-		response.status_buffer,
-		format_status_line(response.status_buffer, status),
-	};
-
-	auto status_stream
-		= istream_memory_new(request_pool, AsBytes(status_line));
+	PrependStatusLine(headers.GetBuffer(), status);
 
 	/* how will we transfer the body?  determine length and
 	   transfer-encoding */
@@ -172,15 +166,13 @@ HttpServerConnection::SubmitResponse(HttpStatus status,
 	headers3.Write("\r\n"sv);
 	auto header_stream = istream_gb_new(request_pool, std::move(headers3));
 
-	response.length = - status_stream.GetAvailable(false)
-		- header_stream.GetAvailable(false);
+	response.length = - header_stream.GetAvailable(false);
 
 	/* make sure the access logger gets a negative value if there
 	   is no response body */
 	response.length -= !body;
 
-	SetResponseIstream(NewConcatIstream(request_pool, std::move(status_stream),
-					    std::move(header_stream),
+	SetResponseIstream(NewConcatIstream(request_pool, std::move(header_stream),
 					    std::move(body)));
 	DeferWrite();
 }
