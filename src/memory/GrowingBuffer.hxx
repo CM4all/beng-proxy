@@ -9,6 +9,7 @@
 
 #include <fmt/core.h>
 
+#include <cassert>
 #include <cstddef>
 #include <cstdint>
 #include <span>
@@ -221,6 +222,36 @@ public:
 	 * Consume data returned by Read().
 	 */
 	void Consume(size_type length) noexcept;
+
+	/**
+	 * Reserve space at the beginning of an empty buffer, to be
+	 * filled by Prepend().
+	 */
+	void Reserve(size_type length) noexcept {
+		assert(IsEmpty());
+		assert(!head);
+		assert(position == 0);
+
+		BeginWrite(length);
+		CommitWrite(length);
+		position = length;
+	}
+
+	/**
+	 * Insert data at the beginning.  This requires a Reserve()
+	 * call with at least the specified length.  Returns a pointer
+	 * to the new beginning of the buffer where the caller shall
+	 * write data.
+	 */
+	[[nodiscard]]
+	void *Prepend(size_type length) noexcept {
+		assert(position >= length);
+		assert(head);
+		assert(head->fill >= position);
+
+		position -= length;
+		return head->data + position;
+	}
 
 	void FillBucketList(IstreamBucketList &list,
 			    size_type skip) const noexcept;
