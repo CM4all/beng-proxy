@@ -223,17 +223,17 @@ private:
 	 * Prior to calling this method, the #WasInput and the #WasOutput
 	 * must be released already.
 	 */
-	void ReleaseControl() noexcept {
+	PutAction ReleaseControl() noexcept {
 		assert(request.body == nullptr);
 		assert(response.body == nullptr || response.released);
 
 		if (IsControlReleased())
 			/* already released */
-			return;
+			return PutAction::REUSE;
 
-		lease.ReleaseWas(PutAction::REUSE);
 		lease_released = true;
-}
+		return lease.ReleaseWas(PutAction::REUSE);
+	}
 
 	/**
 	 * @return false on error (OnWasControlError() has been called).
@@ -564,6 +564,7 @@ WasClient::OnWasControlPacket(enum was_command cmd,
 {
 	switch (cmd) {
 		HttpStatus status;
+		PutAction put_action;
 
 	case WAS_COMMAND_NOP:
 		break;
@@ -657,11 +658,11 @@ WasClient::OnWasControlPacket(enum was_command cmd,
 		if (!CancelRequestBody())
 			return false;
 
-		ReleaseControl();
+		put_action = ReleaseControl();
 
 		DestroyInvokeResponse(response.status, std::move(response.headers),
 				      UnusedIstreamPtr());
-		return false;
+		return put_action == PutAction::REUSE;
 
 	case WAS_COMMAND_DATA:
 		if (!response.IsReceivingMetadata()) {
