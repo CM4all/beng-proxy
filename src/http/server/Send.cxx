@@ -173,7 +173,9 @@ HttpServerConnection::SubmitResponse(HttpStatus status,
 	if (auto *uring_queue = socket->GetUringQueue()) {
 		assert(uring_send == nullptr);
 
-		SetResponseIstream(std::move(body));
+		if (body)
+			SetResponseIstream(std::move(body));
+
 		StartUringSend(*uring_queue, std::move(headers3));
 		return;
 	}
