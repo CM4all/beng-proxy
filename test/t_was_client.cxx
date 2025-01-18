@@ -379,12 +379,12 @@ private:
 	}
 
 	/* virtual methods from class WasLease */
-	void ReleaseWas(PutAction action) noexcept override {
-		lease->ReleaseLease(action);
+	PutAction ReleaseWas(PutAction action) noexcept override {
+		return lease->ReleaseLease(action);
 	}
 
-	void ReleaseWasStop(uint_least64_t) noexcept override {
-		ReleaseWas(PutAction::DESTROY);
+	PutAction ReleaseWasStop(uint_least64_t) noexcept override {
+		return ReleaseWas(PutAction::DESTROY);
 	}
 
 	/* virtual methods from class WasControlHandler */

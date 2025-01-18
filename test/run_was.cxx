@@ -61,13 +61,14 @@ struct Context final
 	}
 
 	/* virtual methods from class Lease */
-	void ReleaseWas([[maybe_unused]] PutAction action) noexcept override {
+	PutAction ReleaseWas([[maybe_unused]] PutAction action) noexcept override {
 		process.handle.reset();
 		process.Close();
+		return PutAction::DESTROY;
 	}
 
-	void ReleaseWasStop([[maybe_unused]] uint_least64_t input_received) noexcept override {
-		ReleaseWas(PutAction::DESTROY);
+	PutAction ReleaseWasStop([[maybe_unused]] uint_least64_t input_received) noexcept override {
+		return ReleaseWas(PutAction::DESTROY);
 	}
 
 	/* virtual methods from class HttpResponseHandler */

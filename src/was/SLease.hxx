@@ -18,8 +18,8 @@ public:
 	WasStockLease(const WasStockLease &) = delete;
 	WasStockLease &operator=(const WasStockLease &) = delete;
 
-	void ReleaseWas(PutAction action) noexcept override;
-	void ReleaseWasStop(uint_least64_t input_received) noexcept override;
+	PutAction ReleaseWas(PutAction action) noexcept override;
+	PutAction ReleaseWasStop(uint_least64_t input_received) noexcept override;
 
 private:
 	void Destroy() noexcept {

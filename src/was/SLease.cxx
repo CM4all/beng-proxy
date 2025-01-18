@@ -5,17 +5,19 @@
 #include "SLease.hxx"
 #include "SConnection.hxx"
 
-void
+PutAction
 WasStockLease::ReleaseWas(PutAction action) noexcept
 {
-	connection.Put(action);
+	action = connection.Put(action);
 	Destroy();
+	return action;
 }
 
-void
+PutAction
 WasStockLease::ReleaseWasStop(uint64_t input_received) noexcept
 {
 	connection.Stop(input_received);
-	connection.Put(PutAction::REUSE);
+	PutAction action = connection.Put(PutAction::REUSE);
 	Destroy();
+	return action;
 }
