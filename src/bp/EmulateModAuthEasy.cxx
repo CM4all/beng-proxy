@@ -13,6 +13,7 @@
 #include "translation/Vary.hxx"
 #include "istream/FileIstream.hxx"
 #include "io/FileDescriptor.hxx"
+#include "io/SharedFd.hxx"
 #include "util/StringCompare.hxx"
 #include "util/StringStrip.hxx"
 #include "util/CharUtil.hxx"
@@ -277,12 +278,15 @@ Request::EmulateModAuthEasy(const FileAddress &address,
 			      instance.config.use_xattr);
 	write_translation_vary_header(headers2, tr);
 
+	auto *shared_fd = NewFromPool<SharedFd>(pool, std::move(fd));
+
 	auto status = tr.status == HttpStatus{} ? HttpStatus::OK : tr.status;
 
 	DispatchResponse(status, std::move(headers),
 			 istream_file_fd_new(instance.event_loop, pool,
 					     address.path,
-					     std::move(fd), 0, st.stx_size));
+					     shared_fd->Get(), *shared_fd,
+					     0, st.stx_size));
 
 	return true;
 }

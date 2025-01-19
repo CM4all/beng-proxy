@@ -6,8 +6,10 @@
 #include "FileIstream.hxx"
 #include "FdIstream.hxx"
 #include "UnusedPtr.hxx"
+#include "pool/pool.hxx"
 #include "lib/fmt/SystemError.hxx"
 #include "io/Open.hxx"
+#include "io/SharedFd.hxx"
 #include "io/UniqueFileDescriptor.hxx"
 
 #include <utility>
@@ -36,6 +38,9 @@ OpenFileIstream(EventLoop &event_loop, struct pool &pool, const char *path)
 				    std::move(fd), fd_type);
 	}
 
+	auto *shared_fd = NewFromPool<SharedFd>(pool, std::move(fd));
+
 	return istream_file_fd_new(event_loop, pool, path,
-				   std::move(fd), 0, st.st_size);
+				   shared_fd->Get(), *shared_fd,
+				   0, st.st_size);
 }

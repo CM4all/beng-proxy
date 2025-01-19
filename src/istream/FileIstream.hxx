@@ -9,9 +9,10 @@
 struct pool;
 class UnusedIstreamPtr;
 class EventLoop;
-class UniqueFileDescriptor;
+class FileDescriptor;
+class SharedLease;
 
 UnusedIstreamPtr
 istream_file_fd_new(EventLoop &event_loop, struct pool &pool,
-		    const char *path, UniqueFileDescriptor fd,
+		    const char *path, FileDescriptor fd, SharedLease &&lease,
 		    off_t start_offset, off_t end_offset) noexcept;

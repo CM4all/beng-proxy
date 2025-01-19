@@ -12,6 +12,7 @@
 #include "istream/FileIstream.hxx"
 #include "pool/pool.hxx"
 #include "lib/fmt/SystemError.hxx"
+#include "io/SharedFd.hxx"
 #include "io/UniqueFileDescriptor.hxx"
 #include "AllocatorPtr.hxx"
 
@@ -75,10 +76,12 @@ DelegateHttpRequest::OnDelegateSuccess(UniqueFileDescriptor fd) noexcept
 							content_type,
 							use_xattr);
 
+	auto *shared_fd = NewFromPool<SharedFd>(pool, std::move(fd));
+
 	handler.InvokeResponse(HttpStatus::OK,
 			       std::move(response_headers),
 			       istream_file_fd_new(event_loop, pool, path,
-						   std::move(fd),
+						   shared_fd->Get(), *shared_fd,
 						   0, st.stx_size));
 }
 

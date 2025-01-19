@@ -8,10 +8,11 @@
 
 struct pool;
 class UnusedIstreamPtr;
-class UniqueFileDescriptor;
+class FileDescriptor;
+class SharedLease;
 namespace Uring { class Queue; }
 
 UnusedIstreamPtr
 NewUringIstream(Uring::Queue &uring, struct pool &pool,
-		const char *path, UniqueFileDescriptor fd,
+		const char *path, FileDescriptor fd, SharedLease &&lease,
 		off_t start_offset, off_t end_offset) noexcept;

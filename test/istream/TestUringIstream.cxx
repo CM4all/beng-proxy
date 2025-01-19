@@ -6,8 +6,10 @@
 #include "istream/Sink.hxx"
 #include "istream/UringIstream.hxx"
 #include "istream/UnusedPtr.hxx"
+#include "pool/pool.hxx"
 #include "io/uring/Queue.hxx"
 #include "io/Open.hxx"
+#include "io/SharedFd.hxx"
 #include "io/UniqueFileDescriptor.hxx"
 #include "system/Error.hxx"
 
@@ -54,8 +56,10 @@ MakeUringIstream(struct pool &pool, Uring::Queue &uring, const char *path)
 	struct stat st;
 	EXPECT_EQ(fstat(fd.Get(), &st), 0);
 
+	auto *shared_fd = NewFromPool<SharedFd>(pool, std::move(fd));
+
 	return {NewUringIstream(uring, pool,
-				path, std::move(fd),
+				path, shared_fd->Get(), *shared_fd,
 				0, st.st_size),
 		st.st_size};
 }

@@ -20,6 +20,7 @@
 #include "lib/fmt/SystemError.hxx"
 #include "io/uring/config.h" // for HAVE_URING
 #include "io/FileAt.hxx"
+#include "io/SharedFd.hxx"
 #include "io/Open.hxx"
 #include "util/StringCompare.hxx"
 
@@ -174,6 +175,8 @@ Request::DispatchFile(const char *path, UniqueFileDescriptor fd,
 
 	/* finished, dispatch this response */
 
+	auto *shared_fd = NewFromPool<SharedFd>(pool, std::move(fd));
+
 	DispatchResponse(status, std::move(headers),
 #ifdef HAVE_URING
 			 instance.uring
@@ -185,15 +188,15 @@ Request::DispatchFile(const char *path, UniqueFileDescriptor fd,
 			       network filesystem) I/O */
 			    ? NewUringSpliceIstream(instance.event_loop, *instance.uring, instance.pipe_stock,
 						    pool, path,
-						    std::move(fd),
+						    shared_fd->Get(), *shared_fd,
 						    start_offset, end_offset)
 			    : NewUringIstream(*instance.uring, pool, path,
-					      std::move(fd),
+					      shared_fd->Get(), *shared_fd,
 					      start_offset, end_offset))
 			 :
 #endif
 			 istream_file_fd_new(instance.event_loop, pool, path,
-					     std::move(fd),
+					     shared_fd->Get(), *shared_fd,
 					     start_offset, end_offset));
 }
 
@@ -230,6 +233,8 @@ Request::DispatchCompressedFile(const char *path, FileDescriptor fd,
 
 	/* finished, dispatch this response */
 
+	auto *shared_fd = NewFromPool<SharedFd>(pool, std::move(compressed_fd));
+
 	HttpStatus status = tr.status == HttpStatus{}
 		? HttpStatus::OK
 		: tr.status;
@@ -237,12 +242,12 @@ Request::DispatchCompressedFile(const char *path, FileDescriptor fd,
 #ifdef HAVE_URING
 			 instance.uring
 			 ? NewUringIstream(*instance.uring, pool, path,
-					   std::move(compressed_fd),
+					   shared_fd->Get(), *shared_fd,
 					   0, compressed_size)
 			 :
 #endif
 			 istream_file_fd_new(instance.event_loop, pool,
-					     path, std::move(compressed_fd),
+					     path, shared_fd->Get(), *shared_fd,
 					     0, compressed_size));
 	return true;
 }

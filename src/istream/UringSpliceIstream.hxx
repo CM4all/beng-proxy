@@ -10,7 +10,8 @@ struct pool;
 class EventLoop;
 class PipeStock;
 class UnusedIstreamPtr;
-class UniqueFileDescriptor;
+class FileDescriptor;
+class SharedLease;
 namespace Uring { class Queue; }
 
 /**
@@ -25,5 +26,5 @@ namespace Uring { class Queue; }
 UnusedIstreamPtr
 NewUringSpliceIstream(EventLoop &event_loop, Uring::Queue &uring, PipeStock *_pipe_stock,
 		      struct pool &pool,
-		      const char *path, UniqueFileDescriptor fd,
+		      const char *path, FileDescriptor fd, SharedLease &&lease,
 		      off_t start_offset, off_t end_offset) noexcept;

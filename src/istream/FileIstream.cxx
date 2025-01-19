@@ -10,11 +10,12 @@
 #include "lib/fmt/RuntimeError.hxx"
 #include "lib/fmt/SystemError.hxx"
 #include "io/Buffered.hxx"
-#include "io/UniqueFileDescriptor.hxx"
+#include "io/FileDescriptor.hxx"
 #include "pool/pool.hxx"
 #include "memory/fb_pool.hxx"
 #include "memory/SliceFifoBuffer.hxx"
 #include "event/FineTimerEvent.hxx"
+#include "util/SharedLease.hxx"
 
 #include <assert.h>
 #include <sys/types.h>
@@ -39,24 +40,26 @@ class FileIstream final : public Istream {
 	SliceFifoBuffer buffer;
 	const char *path;
 
+	const SharedLease fd_lease;
+
 	off_t offset;
 
 	const off_t end_offset;
 
-	UniqueFileDescriptor fd;
+	FileDescriptor fd;
 
 	bool direct = false;
 
 public:
 	FileIstream(struct pool &p, EventLoop &event_loop,
-		    UniqueFileDescriptor &&_fd,
+		    FileDescriptor _fd, SharedLease &&_lease,
 		    off_t _start_offset, off_t _end_offset,
 		    const char *_path) noexcept
 		:Istream(p),
 		 retry_event(event_loop, BIND_THIS_METHOD(EventCallback)),
-		 path(_path),
+		 path(_path), fd_lease(std::move(_lease)),
 		 offset(_start_offset), end_offset(_end_offset),
-		 fd(std::move(_fd)) {}
+		 fd(_fd) {}
 
 private:
 	void EofDetected() noexcept {
@@ -282,13 +285,13 @@ FileIstream::_ConsumeBucketList(std::size_t nbytes) noexcept
 
 UnusedIstreamPtr
 istream_file_fd_new(EventLoop &event_loop, struct pool &pool,
-		    const char *path, UniqueFileDescriptor fd,
+		    const char *path, FileDescriptor fd, SharedLease &&lease,
 		    off_t start_offset, off_t end_offset) noexcept
 {
 	assert(fd.IsDefined());
 	assert(start_offset <= end_offset);
 
 	return NewIstreamPtr<FileIstream>(pool, event_loop,
-					  std::move(fd),
+					  fd, std::move(lease),
 					  start_offset, end_offset, path);
 }

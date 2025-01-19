@@ -9,8 +9,8 @@
 #include "lib/fmt/RuntimeError.hxx"
 #include "lib/fmt/SystemError.hxx"
 #include "event/DeferEvent.hxx"
-#include "io/UniqueFileDescriptor.hxx"
-#include "io/uring/Close.hxx"
+#include "io/SharedFd.hxx"
+#include "io/FileDescriptor.hxx"
 #include "io/uring/Operation.hxx"
 #include "io/uring/Queue.hxx"
 
@@ -34,6 +34,8 @@ class UringSpliceIstream final : public Istream, Uring::Operation {
 	 * The path name.  Only used for error messages.
 	 */
 	const char *const path;
+
+	const SharedLease fd_lease;
 
 	PipeLease pipe;
 
@@ -59,7 +61,7 @@ class UringSpliceIstream final : public Istream, Uring::Operation {
 	/**
 	 * The actual file.
 	 */
-	UniqueFileDescriptor fd;
+	FileDescriptor fd;
 
 #ifndef NDEBUG
 	bool direct = false;
@@ -68,14 +70,14 @@ class UringSpliceIstream final : public Istream, Uring::Operation {
 public:
 	UringSpliceIstream(struct pool &p, EventLoop &event_loop, Uring::Queue &_uring,
 			   PipeStock *_pipe_stock,
-			   const char *_path, UniqueFileDescriptor &&_fd,
+			   const char *_path, FileDescriptor _fd, SharedLease &&_lease,
 			   off_t _start_offset, off_t _end_offset)
 		:Istream(p), uring(_uring),
 		 defer_start(event_loop, BIND_THIS_METHOD(OnDeferredStart)),
-		 path(_path),
+		 path(_path), fd_lease(std::move(_lease)),
 		 pipe(_pipe_stock),
 		 offset(_start_offset), end_offset(_end_offset),
-		 fd(std::move(_fd))
+		 fd(_fd)
 	{
 	}
 
@@ -150,7 +152,6 @@ private:
 
 UringSpliceIstream::~UringSpliceIstream() noexcept
 {
-	Uring::Close(&uring, fd.Release());
 	pipe.Release(PutAction::DESTROY);
 }
 
@@ -313,13 +314,13 @@ UringSpliceIstream::_Read() noexcept
 UnusedIstreamPtr
 NewUringSpliceIstream(EventLoop &event_loop, Uring::Queue &uring, PipeStock *pipe_stock,
 		      struct pool &pool,
-		      const char *path, UniqueFileDescriptor fd,
+		      const char *path, FileDescriptor fd, SharedLease &&lease,
 		      off_t start_offset, off_t end_offset) noexcept
 {
 	assert(fd.IsDefined());
 	assert(start_offset <= end_offset);
 
 	return NewIstreamPtr<UringSpliceIstream>(pool, event_loop, uring, pipe_stock,
-						 path, std::move(fd),
+						 path, fd, std::move(lease),
 						 start_offset, end_offset);
 }

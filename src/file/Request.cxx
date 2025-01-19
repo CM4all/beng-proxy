@@ -15,6 +15,7 @@
 #include "system/Error.hxx"
 #include "io/FileAt.hxx"
 #include "io/Open.hxx"
+#include "io/SharedFd.hxx"
 #include "io/UniqueFileDescriptor.hxx"
 #include "http/Status.hxx"
 
@@ -127,10 +128,12 @@ UringStaticFileGet::OnOpenStat(UniqueFileDescriptor fd,
 
 	auto headers = static_response_headers(pool, fd, stx, _content_type, use_xattr);
 
+	auto *shared_fd = NewFromPool<SharedFd>(pool, std::move(fd));
+
 	_handler.InvokeResponse(HttpStatus::OK,
 				std::move(headers),
 				NewUringIstream(operation->GetQueue(), pool,
-						path, std::move(fd),
+						path, shared_fd->Get(), *shared_fd,
 						0, stx.stx_size));
 }
 
@@ -205,9 +208,11 @@ static_file_get(EventLoop &event_loop,
 	auto headers = static_response_headers(pool, fd, st, content_type,
 					       use_xattr);
 
+	auto *shared_fd = NewFromPool<SharedFd>(pool, std::move(fd));
+
 	handler.InvokeResponse(HttpStatus::OK,
 			       std::move(headers),
 			       istream_file_fd_new(event_loop, pool, path,
-						   std::move(fd),
+						   shared_fd->Get(), *shared_fd,
 						   0, st.stx_size));
 }

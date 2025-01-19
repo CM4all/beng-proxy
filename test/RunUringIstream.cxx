@@ -6,8 +6,10 @@
 #include "istream/UringIstream.hxx"
 #include "istream/sink_fd.hxx"
 #include "istream/UnusedPtr.hxx"
+#include "pool/pool.hxx"
 #include "system/Error.hxx"
 #include "io/Open.hxx"
+#include "io/SharedFd.hxx"
 #include "io/SpliceSupport.hxx"
 #include "event/uring/Manager.hxx"
 #include "io/uring/Handler.hxx"
@@ -64,10 +66,12 @@ void
 Context::CreateSinkFd(const char *path, UniqueFileDescriptor &&fd,
 		      off_t size) noexcept
 {
+	auto *shared_fd = NewFromPool<SharedFd>(root_pool, std::move(fd));
+
 	sink = sink_fd_new(event_loop, root_pool,
 			   NewUringIstream(uring_manager,
 					   root_pool, path,
-					   std::move(fd),
+					   shared_fd->Get(), *shared_fd,
 					   0, size),
 			   FileDescriptor(STDOUT_FILENO),
 			   guess_fd_type(STDOUT_FILENO),

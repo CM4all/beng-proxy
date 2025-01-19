@@ -9,8 +9,8 @@
 #include "lib/fmt/RuntimeError.hxx"
 #include "lib/fmt/SystemError.hxx"
 #include "io/Iovec.hxx"
-#include "io/UniqueFileDescriptor.hxx"
-#include "io/uring/Close.hxx"
+#include "io/SharedFd.hxx"
+#include "io/FileDescriptor.hxx"
 #include "io/uring/Operation.hxx"
 #include "io/uring/Queue.hxx"
 #include "memory/fb_pool.hxx"
@@ -59,6 +59,8 @@ class UringIstream final : public Istream, Uring::Operation {
 	 */
 	const char *const path;
 
+	const SharedLease fd_lease;
+
 	/**
 	 * The file offset of the next/pending read operation.  If
 	 * there is data in the #buffer, it precedes this offset.
@@ -71,18 +73,18 @@ class UringIstream final : public Istream, Uring::Operation {
 	 */
 	const off_t end_offset;
 
-	UniqueFileDescriptor fd;
+	FileDescriptor fd;
 
 	bool direct = false;
 
 public:
 	UringIstream(struct pool &p, Uring::Queue &_uring,
-		     const char *_path, UniqueFileDescriptor &&_fd,
+		     const char *_path, FileDescriptor _fd, SharedLease &&_lease,
 		     off_t _start_offset, off_t _end_offset) noexcept
 		:Istream(p), uring(_uring),
-		 path(_path),
+		 path(_path), fd_lease(std::move(_lease)),
 		 offset(_start_offset), end_offset(_end_offset),
-		 fd(std::move(_fd))
+		 fd(_fd)
 	{
 	}
 
@@ -138,8 +140,7 @@ UringIstream::~UringIstream() noexcept
 		auto *c = new CanceledUringIstream(std::move(iov),
 						   std::move(buffer));
 		ReplaceUring(*c);
-	} else
-		Uring::Close(&uring, fd.Release());
+	}
 }
 
 inline void
@@ -334,12 +335,12 @@ UringIstream::_Read() noexcept
 
 UnusedIstreamPtr
 NewUringIstream(Uring::Queue &uring, struct pool &pool,
-		const char *path, UniqueFileDescriptor fd,
+		const char *path, FileDescriptor fd, SharedLease &&lease,
 		off_t start_offset, off_t end_offset) noexcept
 {
 	assert(fd.IsDefined());
 	assert(start_offset <= end_offset);
 
-	return NewIstreamPtr<UringIstream>(pool, uring, path, std::move(fd),
+	return NewIstreamPtr<UringIstream>(pool, uring, path, fd, std::move(lease),
 					   start_offset, end_offset);
 }
