@@ -19,6 +19,7 @@
 #include "lib/fmt/ToBuffer.hxx"
 #include "net/SocketProtocolError.hxx"
 #include "io/FileDescriptor.hxx"
+#include "event/DeferEvent.hxx"
 #include "event/FineTimerEvent.hxx"
 #include "http/HeaderLimits.hxx"
 #include "http/HeaderName.hxx"
@@ -67,6 +68,15 @@ class WasClient final
 	HttpResponseHandler &handler;
 
 	/**
+	 * This defers update calls to WasInput (e.g. length,
+	 * premature) out of the OnWasControlPacket() method.  This is
+	 * important because these calls may (indirectly) release or
+	 * break the Was::Control instance in ways that we can't
+	 * report to the OnWasControlPacket() caller.
+	 */
+	DeferEvent defer_update_input;
+
+	/**
 	 * When we don't known the response length yet, this timer is
 	 * used to delay submitting the response to
 	 * #HttpResponseHandler a bit.  Chances are that we'll receive
@@ -95,9 +105,17 @@ class WasClient final
 		 */
 		StringMap headers;
 
+		uint_least64_t pending_size;
+
 		std::size_t total_header_size = 0;
 
 		WasInput *body;
+
+		enum class PendingInputType : uint_least8_t {
+			NONE,
+			LENGTH,
+			PREMATURE,
+		} pending_input_type = PendingInputType::NONE;
 
 		bool receiving_metadata = true;
 
@@ -107,12 +125,6 @@ class WasClient final
 		 * evaluated.
 		 */
 		bool pending = false;
-
-		/**
-		 * If set, then the response body length has been
-		 * announced via WAS_COMMAND_LENGTH.
-		 */
-		bool known_length = false;
 
 		/**
 		 * Did the #WasInput release its pipe yet?  If this happens
@@ -359,6 +371,7 @@ private:
 	bool SubmitPendingResponse() noexcept;
 
 	void OnSubmitResponseTimer() noexcept;
+	void OnDeferredInputUpdate() noexcept;
 
 	/* virtual methods from class Cancellable */
 	void Cancel() noexcept override {
@@ -463,6 +476,33 @@ WasClient::OnSubmitResponseTimer() noexcept
 	   response without a known total length */
 
 	SubmitPendingResponse();
+}
+
+inline void
+WasClient::OnDeferredInputUpdate() noexcept
+{
+	assert(response.body != nullptr);
+
+	switch (response.pending_input_type) {
+	case Response::PendingInputType::NONE:
+		break;
+
+	case Response::PendingInputType::LENGTH:
+		if (!was_input_set_length(response.body, response.pending_size))
+			return;
+
+		if (response.pending)
+			/* now that we know the length, we can finally
+			   submit the response (and don't need to wait
+			   for submit_response_timer to trigger
+			   that) */
+			SubmitPendingResponse();
+		break;
+
+	case Response::PendingInputType::PREMATURE:
+		was_input_premature(response.body, response.pending_size);
+		break;
+	}
 }
 
 /*
@@ -658,35 +698,21 @@ WasClient::OnWasControlPacket(enum was_command cmd,
 			return false;
 		}
 
+		if (response.pending_input_type >= Response::PendingInputType::LENGTH) {
+			stopwatch.RecordEvent("control_error");
+			AbortResponseBody(std::make_exception_ptr(SocketProtocolError("Misplaced LENGTH")));
+			return false;
+		}
+
 		if (payload.size() != sizeof(uint64_t)) {
 			stopwatch.RecordEvent("control_error");
 			AbortResponseBody(std::make_exception_ptr(SocketProtocolError("malformed LENGTH packet")));
 			return false;
 		}
 
-		if (!was_input_set_length(response.body,
-					  LoadUnaligned<uint64_t>(payload.data())))
-			return false;
-
-		if (IsControlReleased()) {
-			/* through WasInputRelease(), the above
-			   was_input_set_length() call may have disposed the
-			   Was::Control instance; this condition needs to be
-			   reported to our caller */
-
-			if (response.pending)
-				/* since OnWasControlDrained() isn't going to be
-				   called (because we cancelled that), we need to do
-				   this check manually */
-				SubmitPendingResponse();
-
-			return false;
-		}
-
-		/* now that we know the length, we can finally submit
-		   the response (and don't need to wait for
-		   submit_response_timer to trigger that) */
-		response.known_length = true;
+		response.pending_input_type = Response::PendingInputType::LENGTH;
+		response.pending_size = LoadUnaligned<uint64_t>(payload.data());
+		defer_update_input.Schedule();
 		break;
 
 	case WAS_COMMAND_STOP:
@@ -696,6 +722,12 @@ WasClient::OnWasControlPacket(enum was_command cmd,
 		if (response.IsReceivingMetadata()) {
 			stopwatch.RecordEvent("control_error");
 			AbortResponseHeaders(std::make_exception_ptr(SocketProtocolError("PREMATURE before DATA")));
+			return false;
+		}
+
+		if (response.pending_input_type >= Response::PendingInputType::PREMATURE) {
+			stopwatch.RecordEvent("control_error");
+			AbortResponseBody(std::make_exception_ptr(SocketProtocolError("Misplaced PREMATURE")));
 			return false;
 		}
 
@@ -719,12 +751,14 @@ WasClient::OnWasControlPacket(enum was_command cmd,
 			} catch (...) {
 				AbortPending(std::current_exception());
 			}
-		} else {
-			was_input_premature(response.body,
-					    LoadUnaligned<uint64_t>(payload.data()));
-		}
 
-		return false;
+			return false;
+		} else {
+			response.pending_input_type = Response::PendingInputType::PREMATURE;
+			response.pending_size = LoadUnaligned<uint64_t>(payload.data());
+			defer_update_input.Schedule();
+			return true;
+		}
 
 	case WAS_COMMAND_METRIC:
 		if (metrics_handler != nullptr &&
@@ -743,18 +777,15 @@ WasClient::OnWasControlPacket(enum was_command cmd,
 bool
 WasClient::OnWasControlDrained() noexcept
 {
-	if (response.pending) {
-		if (response.known_length)
-			return SubmitPendingResponse();
-		else {
-			/* we don't know the length yet - wait a bit
-			   before submitting the response, maybe we'll
-			   receive WAS_COMMAND_LENGTH really soon */
-			submit_response_timer.Schedule(std::chrono::milliseconds(5));
-			return true;
-		}
-	} else
-		return true;
+	if (response.pending &&
+	    response.pending_input_type != Response::PendingInputType::LENGTH) {
+		/* we don't know the length yet - wait a bit
+		   before submitting the response, maybe we'll
+		   receive WAS_COMMAND_LENGTH really soon */
+		submit_response_timer.Schedule(std::chrono::milliseconds(5));
+	}
+
+	return true;
 }
 
 /*
@@ -822,6 +853,7 @@ WasClient::WasInputClose(uint64_t received) noexcept
 	stopwatch.RecordEvent("close");
 
 	response.body = nullptr;
+	defer_update_input.Cancel();
 
 	/* if an error occurs while sending PREMATURE, don't pass it
 	   to our handler - he's not interested anymore */
@@ -859,6 +891,7 @@ WasClient::WasInputEof() noexcept
 	assert(response.released);
 
 	response.body = nullptr;
+	defer_update_input.Cancel();
 
 	ResponseEof();
 }
@@ -901,6 +934,8 @@ WasClient::WasClient(struct pool &_pool, struct pool &_caller_pool,
 	 control(_control),
 	 metrics_handler(_metrics_handler),
 	 handler(_handler),
+	 defer_update_input(control.GetEventLoop(),
+			    BIND_THIS_METHOD(OnDeferredInputUpdate)),
 	 submit_response_timer(control.GetEventLoop(),
 			       BIND_THIS_METHOD(OnSubmitResponseTimer)),
 	 request(body
