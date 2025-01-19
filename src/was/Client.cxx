@@ -438,8 +438,11 @@ WasClient::SubmitPendingResponse() noexcept
 	response.receiving_metadata = false;
 
 	if (response.released) {
+		/* must have been released already by
+                   WasInputRelease() */
+		assert(IsControlReleased());
+
 		was_input_free_unused_p(&response.body);
-		ReleaseControl();
 
 		DestroyInvokeResponse(response.status, std::move(response.headers),
 				      istream_null_new(caller_pool));
