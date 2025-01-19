@@ -71,28 +71,12 @@ was_input_new(struct pool &pool, EventLoop &event_loop, FileDescriptor fd,
 void
 was_input_free(WasInput *input, std::exception_ptr ep) noexcept;
 
-static inline void
-was_input_free_p(WasInput **input_p, std::exception_ptr ep) noexcept
-{
-	WasInput *input = *input_p;
-	*input_p = nullptr;
-	was_input_free(input, ep);
-}
-
 /**
  * Like was_input_free(), but assumes that was_input_enable() has not
  * been called yet (no istream handler).
  */
 void
 was_input_free_unused(WasInput *input) noexcept;
-
-static inline void
-was_input_free_unused_p(WasInput **input_p) noexcept
-{
-	WasInput *input = *input_p;
-	*input_p = nullptr;
-	was_input_free_unused(input);
-}
 
 UnusedIstreamPtr
 was_input_enable(WasInput &input) noexcept;

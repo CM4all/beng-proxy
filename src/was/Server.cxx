@@ -46,11 +46,11 @@ WasServer::ReleaseError(std::exception_ptr ep) noexcept
 
 	if (request.state != Request::State::NONE) {
 		if (request.body != nullptr)
-			was_input_free_p(&request.body, ep);
+			was_input_free(std::exchange(request.body, nullptr), ep);
 
 		if (request.state == Request::State::SUBMITTED &&
 		    response.body != nullptr)
-			was_output_free_p(&response.body);
+			was_output_free(std::exchange(response.body, nullptr));
 
 		request.pool.reset();
 	}
@@ -72,11 +72,11 @@ WasServer::ReleaseUnused() noexcept
 
 	if (request.state != Request::State::NONE) {
 		if (request.body != nullptr)
-			was_input_free_unused_p(&request.body);
+			was_input_free_unused(std::exchange(request.body, nullptr));
 
 		if (request.state == Request::State::SUBMITTED &&
 		    response.body != nullptr)
-			was_output_free_p(&response.body);
+			was_output_free(std::exchange(response.body, nullptr));
 
 		request.pool.reset();
 	}

@@ -54,14 +54,6 @@ was_output_new(struct pool &pool, EventLoop &event_loop,
 uint64_t
 was_output_free(WasOutput *data) noexcept;
 
-static inline uint64_t
-was_output_free_p(WasOutput **output_p) noexcept
-{
-	WasOutput *output = *output_p;
-	*output_p = nullptr;
-	return was_output_free(output);
-}
-
 /**
  * Check if we can provide the LENGTH header.
  *

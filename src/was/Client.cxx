@@ -83,7 +83,7 @@ class WasClient final
 
 		void ClearBody() noexcept {
 			if (body != nullptr)
-				was_output_free_p(&body);
+				was_output_free(std::exchange(body, nullptr));
 		}
 	} request;
 
@@ -196,7 +196,7 @@ private:
 		if (request.body == nullptr)
 			return true;
 
-		uint64_t sent = was_output_free_p(&request.body);
+		uint64_t sent = was_output_free(std::exchange(request.body, nullptr));
 		return control.SendUint64(WAS_COMMAND_PREMATURE, sent);
 	}
 
@@ -258,7 +258,7 @@ private:
 		request.ClearBody();
 
 		if (response.body != nullptr)
-			was_input_free_unused_p(&response.body);
+			was_input_free_unused(std::exchange(response.body, nullptr));
 
 		lease.ReleaseWas(PutAction::DESTROY);
 		lease_released = true;
@@ -376,7 +376,7 @@ private:
 			return;
 
 		if (response.body != nullptr)
-			was_input_free_unused_p(&response.body);
+			was_input_free_unused(std::exchange(response.body, nullptr));
 
 		if (!ReleaseControlStop(0))
 			return;
@@ -442,7 +442,7 @@ WasClient::SubmitPendingResponse() noexcept
                    WasInputRelease() */
 		assert(IsControlReleased());
 
-		was_input_free_unused_p(&response.body);
+		was_input_free_unused(std::exchange(response.body, nullptr));
 
 		DestroyInvokeResponse(response.status, std::move(response.headers),
 				      istream_null_new(caller_pool));
@@ -604,7 +604,7 @@ WasClient::OnWasControlPacket(enum was_command cmd,
 		    response.body != nullptr)
 			/* no response body possible with this status; release the
 			   object */
-			was_input_free_unused_p(&response.body);
+			was_input_free_unused(std::exchange(response.body, nullptr));
 
 		break;
 
@@ -618,7 +618,7 @@ WasClient::OnWasControlPacket(enum was_command cmd,
 		response.receiving_metadata = false;
 
 		if (response.body != nullptr)
-			was_input_free_unused_p(&response.body);
+			was_input_free_unused(std::exchange(response.body, nullptr));
 
 		if (!CancelRequestBody())
 			return false;
