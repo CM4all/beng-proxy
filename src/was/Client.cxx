@@ -26,7 +26,6 @@
 #include "http/Method.hxx"
 #include "util/Cancellable.hxx"
 #include "util/CharUtil.hxx"
-#include "util/DestructObserver.hxx"
 #include "util/Exception.hxx"
 #include "util/SpanCast.hxx"
 #include "util/StringSplit.hxx"
@@ -51,7 +50,7 @@ IsWasClientRetryFailure(std::exception_ptr error) noexcept
 
 class WasClient final
 	: Was::ControlHandler, WasOutputHandler, WasInputHandler,
-	  DestructAnchor, PoolLeakDetector,
+	  PoolLeakDetector,
 	  Cancellable
 {
 	const AllocatorPtr alloc;
@@ -365,10 +364,8 @@ private:
 
 	/**
 	 * Submit the pending response to our handler.
-	 *
-	 * @return false if our #Was::Control instance has been disposed
 	 */
-	bool SubmitPendingResponse() noexcept;
+	void SubmitPendingResponse() noexcept;
 
 	void OnSubmitResponseTimer() noexcept;
 	void OnDeferredInputUpdate() noexcept;
@@ -434,7 +431,7 @@ private:
 	void WasInputError() noexcept override;
 };
 
-bool
+void
 WasClient::SubmitPendingResponse() noexcept
 {
 	assert(response.pending);
@@ -459,12 +456,9 @@ WasClient::SubmitPendingResponse() noexcept
 
 		DestroyInvokeResponse(response.status, std::move(response.headers),
 				      istream_null_new(caller_pool));
-		return false;
 	} else {
-		const DestructObserver destructed(*this);
 		handler.InvokeResponse(response.status, std::move(response.headers),
 				       was_input_enable(*response.body));
-		return !destructed && !IsControlReleased();
 	}
 }
 
