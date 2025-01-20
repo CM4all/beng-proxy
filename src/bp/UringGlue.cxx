@@ -29,15 +29,18 @@ UringGlue::UringGlue([[maybe_unused]] EventLoop &event_loop,
 	if (!enable)
 		return;
 
-	unsigned flags = IORING_SETUP_SINGLE_ISSUER;
+	struct io_uring_params params{
+		.flags = IORING_SETUP_SINGLE_ISSUER,
+	};
+
 	if (sqpoll)
-		flags |= IORING_SETUP_SQPOLL;
+		params.flags |= IORING_SETUP_SQPOLL;
 	else
 		/* not compatible with IORING_SETUP_SQPOLL */
-		flags |= IORING_SETUP_COOP_TASKRUN;
+		params.flags |= IORING_SETUP_COOP_TASKRUN;
 
 	try {
-		uring.emplace(event_loop, 16384, flags);
+		uring.emplace(event_loop, 16384, params);
 	} catch (...) {
 		fprintf(stderr, "Failed to initialize io_uring: ");
 		PrintException(std::current_exception());
