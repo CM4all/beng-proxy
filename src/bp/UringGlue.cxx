@@ -29,9 +29,12 @@ UringGlue::UringGlue([[maybe_unused]] EventLoop &event_loop,
 	if (!enable)
 		return;
 
-	unsigned flags = 0;
+	unsigned flags = IORING_SETUP_SINGLE_ISSUER;
 	if (sqpoll)
 		flags |= IORING_SETUP_SQPOLL;
+	else
+		/* not compatible with IORING_SETUP_SQPOLL */
+		flags |= IORING_SETUP_COOP_TASKRUN;
 
 	try {
 		uring.emplace(event_loop, 16384, flags);
