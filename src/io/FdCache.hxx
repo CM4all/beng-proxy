@@ -17,6 +17,7 @@
 #include <string_view>
 
 struct open_how;
+struct statx;
 class FileDescriptor;
 class SharedLease;
 class CancellablePointer;
@@ -121,7 +122,8 @@ public:
 	 */
 	void Disable() noexcept;
 
-	using SuccessCallback = BoundMethod<void(FileDescriptor fd, SharedLease lease) noexcept>;
+	using SuccessCallback = BoundMethod<void(FileDescriptor fd, const struct statx &stx,
+						 SharedLease lease) noexcept>;
 	using ErrorCallback = BoundMethod<void(int error) noexcept>;
 
 	/**
@@ -136,6 +138,9 @@ public:
 	 *
 	 * @param path an absolute path (must be normalized)
 	 *
+	 * @param stx_mask if non-zero, then statx() is called,
+	 * collecting information about the file descriptor
+	 *
 	 * @param on_success the callback to be used on success
 	 * @param on_error the callback to be used on error
 	 */
@@ -143,6 +148,7 @@ public:
 		 std::string_view strip_path,
 		 std::string_view path,
 		 const struct open_how &how,
+		 unsigned stx_mask,
 		 SuccessCallback on_success,
 		 ErrorCallback on_error,
 		 CancellablePointer &cancel_ptr) noexcept;

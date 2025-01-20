@@ -996,12 +996,12 @@ private:
 	 */
 	void ApplyFileEnotdir() noexcept;
 
-	void OnBaseOpen(FileDescriptor fd, SharedLease _lease) noexcept;
+	void OnBaseOpen(FileDescriptor fd, const struct statx &stx, SharedLease _lease) noexcept;
 	void OnBaseOpenError(int error) noexcept {
 		LogDispatchErrno(error, "Failed to open file");
 	}
 
-	void OnBeneathOpen(FileDescriptor fd, SharedLease _lease) noexcept;
+	void OnBeneathOpen(FileDescriptor fd, const struct statx &stx, SharedLease _lease) noexcept;
 
 	void OpenBeneath(const FileAddress &address,
 			 Handler::File::OpenBaseCallback callback) noexcept;

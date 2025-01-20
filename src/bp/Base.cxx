@@ -29,7 +29,7 @@ NormalizePath(std::string_view path) noexcept
 }
 
 inline void
-Request::OnBaseOpen(FileDescriptor fd, SharedLease lease) noexcept
+Request::OnBaseOpen(FileDescriptor fd, const struct statx &, SharedLease lease) noexcept
 {
 	handler.file.base = fd;
 	handler.file.base_lease = std::move(lease);
@@ -39,7 +39,7 @@ Request::OnBaseOpen(FileDescriptor fd, SharedLease lease) noexcept
 }
 
 inline void
-Request::OnBeneathOpen(FileDescriptor fd, SharedLease lease) noexcept
+Request::OnBeneathOpen(FileDescriptor fd, const struct statx &, SharedLease lease) noexcept
 {
 	const auto &address = *handler.file.address;
 	assert(address.beneath != nullptr);
@@ -76,7 +76,7 @@ Request::OpenBeneath(const FileAddress &address,
 	handler.file.address = &address;
 
 	instance.fd_cache.Get(FileDescriptor::Undefined(), {}, address.beneath,
-			      open_directory_path,
+			      open_directory_path, 0,
 			      BIND_THIS_METHOD(OnBeneathOpen),
 			      BIND_THIS_METHOD(OnBaseOpenError),
 			      cancel_ptr);
@@ -90,7 +90,7 @@ Request::OpenBase(std::string_view path,
 
 	instance.fd_cache.Get(FileDescriptor::Undefined(), {},
 			      NormalizePath(path),
-			      open_directory_path,
+			      open_directory_path, 0,
 			      BIND_THIS_METHOD(OnBaseOpen),
 			      BIND_THIS_METHOD(OnBaseOpenError),
 			      cancel_ptr);

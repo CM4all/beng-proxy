@@ -18,13 +18,14 @@
 #include "io/uring/Handler.hxx"
 #include "io/uring/Open.hxx"
 #include "io/uring/Close.hxx"
+#include "io/uring/Queue.hxx"
 #endif
 
 #include <cassert>
 #include <cerrno>
 #include <string>
-
 #include <sys/inotify.h>
+#include <sys/stat.h> // for struct statx
 
 using std::string_view_literals::operator""sv;
 
@@ -57,6 +58,7 @@ struct FdCache::Item final
 	  IntrusiveListHook<IntrusiveHookMode::AUTO_UNLINK>,
 #ifdef HAVE_URING
 	  Uring::OpenHandler,
+	  Uring::Operation,
 #endif // HAVE_URING
 	  SharedAnchor
 {
@@ -89,6 +91,10 @@ struct FdCache::Item final
 	Uring::Open *uring_open = nullptr;
 #endif // HAVE_URING
 
+	struct statx stx;
+
+	unsigned next_stx_mask = 0;
+
 	UniqueFileDescriptor fd;
 
 	int error = 0;
@@ -99,10 +105,13 @@ struct FdCache::Item final
 
 	Item(FdCache &_cache,
 	     std::string_view _path, uint_least64_t _flags,
-	     std::chrono::steady_clock::time_point now) noexcept
+	     std::chrono::steady_clock::time_point _expires) noexcept
 		:cache(_cache),
 		 path(_path), flags(_flags),
-		 expires(now + std::chrono::minutes{1}) {}
+		 expires(_expires)
+	{
+		stx.stx_mask = 0;
+	}
 
 	~Item() noexcept {
 		assert(requests.empty());
@@ -143,9 +152,12 @@ struct FdCache::Item final
 
 	void Get(SuccessCallback on_success,
 		 ErrorCallback on_error,
+		 unsigned requested_stx_mask,
 		 CancellablePointer &cancel_ptr) noexcept;
 
 private:
+	void StartStatx() noexcept;
+
 	void InvokeSuccess() noexcept {
 		assert(fd.IsDefined());
 		assert(!error);
@@ -157,7 +169,7 @@ private:
 		requests.clear_and_dispose([this](Request *r) {
 			auto on_success = r->on_success;
 			delete r;
-			on_success(fd, *this);
+			on_success(fd, stx, *this);
 		});
 	}
 
@@ -177,6 +189,11 @@ private:
 	}
 
 	void RegisterInotify() noexcept {
+		if (next_stx_mask != 0)
+			/* this kludge-y check omits inotify
+			   registrations for regular files */
+			return;
+
 		/* tell the kernel to notify us when the directory
 		   gets deleted or moved; if that happens, we need to
 		   discard this item */
@@ -213,6 +230,11 @@ private:
 		fd = std::move(_fd);
 		RegisterInotify();
 
+		if (next_stx_mask != 0) {
+			StartStatx();
+			return;
+		}
+
 		InvokeSuccess();
 
 		assert(requests.empty());
@@ -231,6 +253,19 @@ private:
 		uring_open = nullptr;
 
 		SetError(_error);
+
+		assert(requests.empty());
+
+		if (IsDisabled() && IsAbandoned())
+			delete this;
+	}
+
+	/* virtual methods from Uring::Operation */
+	void OnUringCompletion(int res) noexcept override {
+		if (res == 0)
+			InvokeSuccess();
+		else
+			SetError(-res);
 
 		assert(requests.empty());
 
@@ -281,17 +316,48 @@ FdCache::Item::Start(FileDescriptor directory, std::size_t strip_length,
 }
 
 inline void
+FdCache::Item::StartStatx() noexcept
+{
+	assert(fd.IsDefined());
+
+#ifdef HAVE_URING
+	if (IsUringPending())
+		return;
+
+	if (cache.uring_queue != nullptr) {
+		auto &queue = *cache.uring_queue;
+		auto &s = queue.RequireSubmitEntry();
+		io_uring_prep_statx(&s, fd.Get(), "", AT_EMPTY_PATH, next_stx_mask, &stx);
+		queue.Push(s, *this);
+	} else {
+#endif // HAVE_URING
+		if (statx(fd.Get(), "", AT_EMPTY_PATH, next_stx_mask, &stx) == 0)
+			InvokeSuccess();
+		else
+			SetError(errno);
+#ifdef HAVE_URING
+	}
+#endif
+}
+
+inline void
 FdCache::Item::Get(SuccessCallback on_success,
 		   ErrorCallback on_error,
+		   unsigned requested_stx_mask,
 		   CancellablePointer &cancel_ptr) noexcept
 {
-	if (fd.IsDefined()) {
-		on_success(fd, *this);
+	if (fd.IsDefined() && (requested_stx_mask & ~stx.stx_mask) == 0) {
+		on_success(fd, stx, *this);
 	} else if (error) {
 		on_error(error);
 	} else {
 		auto *request = new Request(on_success, on_error, cancel_ptr);
 		requests.push_back(*request);
+
+		next_stx_mask |= requested_stx_mask;
+
+		if (fd.IsDefined())
+			StartStatx();
 	}
 }
 
@@ -373,6 +439,7 @@ FdCache::Get(FileDescriptor directory,
 	     std::string_view strip_path,
 	     std::string_view path,
 	     const struct open_how &how,
+	     unsigned stx_mask,
 	     SuccessCallback on_success,
 	     ErrorCallback on_error,
 	     CancellablePointer &cancel_ptr) noexcept
@@ -389,8 +456,15 @@ FdCache::Get(FileDescriptor directory,
 			   periodically */
 			expire_timer.Schedule(std::chrono::seconds{10});
 
+		std::chrono::steady_clock::duration expires = std::chrono::minutes{1};
+		if (stx_mask != 0)
+			/* regular files (stx_mask!=0) expire faster;
+			   we don't have inotify for them */
+			// TODO revalidate expired items instead of discarding them
+			expires = std::chrono::seconds{10};
+
 		auto *item = new Item(*this, path, how.flags,
-				      GetEventLoop().SteadyNow());
+				      GetEventLoop().SteadyNow() + expires);
 		chronological_list.push_back(*item);
 		map.insert_commit(it, *item);
 
@@ -403,9 +477,9 @@ FdCache::Get(FileDescriptor directory,
 		const SharedLease lock{*item};
 
 		item->Start(directory, StripLength(strip_path, path), how);
-		item->Get(on_success, on_error, cancel_ptr);
+		item->Get(on_success, on_error, stx_mask, cancel_ptr);
 	} else
-		it->Get(on_success, on_error, cancel_ptr);
+		it->Get(on_success, on_error, stx_mask, cancel_ptr);
 }
 
 inline void
