@@ -157,10 +157,6 @@ class HttpClient final : BufferedSocketHandler, IstreamSink, Cancellable, Destru
 			return GetClient().ConsumeBucketList(nbytes);
 		}
 
-		int _AsFd() noexcept override {
-			return GetClient().AsFD();
-		}
-
 		void _Close() noexcept override {
 			GetClient().Close();
 		}
@@ -395,7 +391,6 @@ private:
 	void FillBucketList(IstreamBucketList &list) noexcept;
 	Istream::ConsumeBucketResult ConsumeBucketList(std::size_t nbytes) noexcept;
 
-	int AsFD() noexcept;
 	void Close() noexcept;
 
 	/**
@@ -595,26 +590,6 @@ HttpClient::ConsumeBucketList(std::size_t nbytes) noexcept
 	assert(response.state == Response::State::BODY);
 
 	return response_body_reader.ConsumeBucketList(socket, nbytes);
-}
-
-inline int
-HttpClient::AsFD() noexcept
-{
-	assert(response_body_reader.IsSocketDone(socket) || !socket.HasEnded());
-	assert(response.state == Response::State::BODY);
-
-	if (!IsConnected() || !socket.IsEmpty() || socket.HasFilter() ||
-	    keep_alive ||
-	    /* must not be chunked */
-	    response_body_reader.IsChunked())
-		return -1;
-
-	int fd = socket.AsFD();
-	if (fd < 0)
-		return -1;
-
-	Destroy();
-	return fd;
 }
 
 inline void

@@ -45,8 +45,6 @@ public:
 	}
 
 	void _ConsumeDirect(std::size_t nbytes) noexcept override;
-
-	int _AsFd() noexcept override;
 	void _Close() noexcept override;
 
 	/* handler */
@@ -296,22 +294,6 @@ AutoPipeIstream::_ConsumeDirect(std::size_t nbytes) noexcept
 	} else {
 		ForwardIstream::_ConsumeDirect(nbytes);
 	}
-}
-
-int
-AutoPipeIstream::_AsFd() noexcept
-{
-	if (piped > 0)
-		/* need to flush the pipe buffer first */
-		return -1;
-
-	int fd = input.AsFd();
-	if (fd >= 0) {
-		CloseInternal();
-		Destroy();
-	}
-
-	return fd;
 }
 
 void

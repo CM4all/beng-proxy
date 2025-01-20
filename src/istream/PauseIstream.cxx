@@ -71,12 +71,6 @@ protected:
 			want_read = true;
 		}
 	}
-
-	int _AsFd() noexcept override {
-		return resumed
-			? ForwardIstream::_AsFd()
-			: -1;
-	}
 };
 
 void

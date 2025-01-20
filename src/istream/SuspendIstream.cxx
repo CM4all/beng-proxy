@@ -51,10 +51,6 @@ public:
 		}
 	}
 
-	int _AsFd() noexcept override {
-		return ready ? ForwardIstream::_AsFd() : -1;
-	}
-
 private:
 	void Schedule() noexcept {
 		if (!timer.IsPending())

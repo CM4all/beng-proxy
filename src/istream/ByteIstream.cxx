@@ -38,10 +38,6 @@ public:
 		list.SpliceBuffersFrom(std::move(tmp), 1);
 	}
 
-	int _AsFd() noexcept override {
-		return -1;
-	}
-
 	/* handler */
 
 	size_t OnData(std::span<const std::byte> src) noexcept override {

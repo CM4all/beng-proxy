@@ -42,11 +42,6 @@ public:
 	}
 
 	void _Read() noexcept override;
-
-	int _AsFd() noexcept override {
-		return -1;
-	}
-
 	void _Close() noexcept override;
 
 	/* virtual methods from class IstreamHandler */

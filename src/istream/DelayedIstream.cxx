@@ -95,12 +95,6 @@ public:
 			list.SetMore();
 	}
 
-	int _AsFd() noexcept override {
-		return HasInput()
-			? ForwardIstream::_AsFd()
-			: -1;
-	}
-
 	void _Close() noexcept override {
 		if (HasInput())
 			ForwardIstream::_Close();

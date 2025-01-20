@@ -95,10 +95,6 @@ protected:
 		ForwardIstream::_ConsumeDirect(nbytes);
 	}
 
-	int _AsFd() noexcept override {
-		return -1;
-	}
-
 	/* virtual methods from class IstreamHandler */
 
 	std::size_t OnData(std::span<const std::byte> src) noexcept override {

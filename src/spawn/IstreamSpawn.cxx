@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: BSD-2-Clause
+// SPDX-License-Identifier: BSD-2-Clausey
 // Copyright CM4all GmbH
 // author: Max Kellermann <mk@cm4all.com>
 
@@ -93,10 +93,7 @@ struct SpawnIstream final : Istream, IstreamSink, ExitListener {
 	}
 
 	void _Read() noexcept override;
-
 	void _ConsumeDirect(std::size_t nbytes) noexcept override;
-
-	// TODO: implement int AsFd() override;
 	void _Close() noexcept override;
 
 	/* virtual methods from class IstreamHandler */
@@ -413,14 +410,6 @@ SpawnChildProcess(EventLoop &event_loop, struct pool *pool, const char *name,
 		  SpawnService &spawn_service)
 {
 	UniqueFileDescriptor stdin_r, stdin_pipe;
-
-	if (input) {
-		int fd = input.AsFd();
-		if (fd >= 0) {
-			stdin_r = UniqueFileDescriptor{fd};
-			prepared.stdin_fd = stdin_r;
-		}
-	}
 
 	if (input) {
 		std::tie(stdin_r, stdin_pipe) = CreatePipe();

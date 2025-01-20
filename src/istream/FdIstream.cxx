@@ -90,7 +90,6 @@ private:
 	void _ConsumeDirect(std::size_t) noexcept override {
 	}
 
-	int _AsFd() noexcept override;
 	void _Close() noexcept override {
 		Destroy();
 	}
@@ -173,17 +172,6 @@ FdIstream::_GetAvailable(bool partial) noexcept
 	return partial
 		? buffer.GetAvailable()
 		: -1;
-}
-
-int
-FdIstream::_AsFd() noexcept
-{
-	if (!fd.IsDefined())
-		return -1;
-
-	int result_fd = fd.Steal();
-	Destroy();
-	return result_fd;
 }
 
 /*

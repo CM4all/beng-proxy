@@ -42,8 +42,6 @@ public:
 		input.ConsumeDirect(nbytes);
 	}
 
-	int _AsFd() noexcept override;
-
 	/* virtual methods from class IstreamHandler */
 
 	IstreamReadyResult OnIstreamReady() noexcept override {

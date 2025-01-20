@@ -107,7 +107,6 @@ private:
 	void _FillBucketList(IstreamBucketList &list) noexcept override;
 	ConsumeBucketResult _ConsumeBucketList(std::size_t nbytes) noexcept override;
 
-	int _AsFd() noexcept override;
 	void _Close() noexcept override {
 		Destroy();
 	}
@@ -274,27 +273,6 @@ FileIstream::_ConsumeBucketList(std::size_t nbytes) noexcept
 
 	buffer.Consume(nbytes);
 	return {Consumed(nbytes), is_eof};
-}
-
-int
-FileIstream::_AsFd() noexcept
-{
-	/* allow this method only if the file descriptor points to a
-	   regular file and the specified end offset is the end of the
-	   file */
-	struct stat st;
-	if (fstat(fd.Get(), &st) < 0 || !S_ISREG(st.st_mode) ||
-	    end_offset != st.st_size ||
-	    /* seek to the current offset (this class doesn't move the
-	       file pointer) */
-	    lseek(fd.Get(), offset, SEEK_SET) != offset)
-		return -1;
-
-	int result_fd = fd.Steal();
-
-	Destroy();
-
-	return result_fd;
 }
 
 /*

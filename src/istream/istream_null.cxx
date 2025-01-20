@@ -30,16 +30,6 @@ public:
 		return {0, true};
 	}
 
-	int _AsFd() noexcept override {
-		/* fd0 is always linked with /dev/null */
-		int fd = dup(0);
-		if (fd < 0)
-			return -1;
-
-		Destroy();
-		return fd;
-	}
-
 	void _Close() noexcept override {
 		Destroy();
 	}

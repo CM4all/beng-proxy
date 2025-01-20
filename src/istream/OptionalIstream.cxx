@@ -63,12 +63,6 @@ public:
 			list.SetMore();
 	}
 
-	int _AsFd() noexcept override {
-		return resumed
-			? ForwardIstream::_AsFd()
-			: -1;
-	}
-
 	/* handler */
 
 	std::size_t OnData(std::span<const std::byte> src) noexcept override {

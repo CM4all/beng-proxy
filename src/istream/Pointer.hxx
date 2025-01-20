@@ -119,14 +119,4 @@ public:
 
 		return stream->Skip(length);
 	}
-
-	int AsFd() noexcept {
-		assert(IsDefined());
-
-		int fd = stream->AsFd();
-		if (fd >= 0)
-			Clear();
-
-		return fd;
-	}
 };

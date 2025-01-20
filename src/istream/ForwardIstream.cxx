@@ -20,15 +20,6 @@ ForwardIstream::_FillBucketList(IstreamBucketList &list)
 	FillBucketListFromInput(list);
 }
 
-int
-ForwardIstream::_AsFd() noexcept
-{
-	int fd = input.AsFd();
-	if (fd >= 0)
-		Destroy();
-	return fd;
-}
-
 std::size_t
 ForwardIstream::OnData(std::span<const std::byte> src) noexcept
 {

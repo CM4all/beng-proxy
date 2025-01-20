@@ -50,10 +50,6 @@ class CatIstream final : public Istream, DestructAnchor {
 			return input.ConsumeDirect(nbytes);
 		}
 
-		int AsFd() noexcept {
-			return input.AsFd();
-		}
-
 		/* virtual methods from class IstreamHandler */
 
 		IstreamReadyResult OnIstreamReady() noexcept override {
@@ -197,7 +193,6 @@ public:
 	void _FillBucketList(IstreamBucketList &list) override;
 	ConsumeBucketResult _ConsumeBucketList(std::size_t nbytes) noexcept override;
 	void _ConsumeDirect(std::size_t nbytes) noexcept override;
-	int _AsFd() noexcept override;
 };
 
 /*
@@ -323,24 +318,6 @@ void
 CatIstream::_ConsumeDirect(std::size_t nbytes) noexcept
 {
 	GetCurrent().ConsumeDirect(nbytes);
-}
-
-int
-CatIstream::_AsFd() noexcept
-{
-	/* we can safely forward the as_fd() call to our input if it's the
-	   last one */
-
-	if (!IsLast())
-		/* not on last input */
-		return -1;
-
-	auto &i = GetCurrent();
-	int fd = i.AsFd();
-	if (fd >= 0)
-		Destroy();
-
-	return fd;
 }
 
 /*

@@ -41,10 +41,6 @@ public:
 			list.SetMore();
 	}
 
-	int _AsFd() noexcept override {
-		return -1;
-	}
-
 	/* virtual methods from class IstreamHandler */
 
 	void OnEof() noexcept override {

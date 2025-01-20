@@ -21,7 +21,6 @@ public:
 
 	void _FillBucketList(IstreamBucketList &list) override;
 	ConsumeBucketResult _ConsumeBucketList(std::size_t nbytes) noexcept override;
-	int _AsFd() noexcept override;
 
 	/* virtual methods from class IstreamHandler */
 	void OnEof() noexcept override;
@@ -76,18 +75,6 @@ StopwatchIstream::_ConsumeBucketList(std::size_t nbytes) noexcept
 		stopwatch.RecordEvent("end");
 
 	return c;
-}
-
-int
-StopwatchIstream::_AsFd() noexcept
-{
-	int fd = input.AsFd();
-	if (fd >= 0) {
-		stopwatch.RecordEvent("as_fd");
-		Destroy();
-	}
-
-	return fd;
 }
 
 /*

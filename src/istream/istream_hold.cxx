@@ -74,12 +74,6 @@ public:
 			return {0, true};
 	}
 
-	int _AsFd() noexcept override {
-		return HasInput() && !input_error
-			? ForwardIstream::_AsFd()
-			: -1;
-	}
-
 	void _Close() noexcept override {
 		if (HasInput()) [[likely]]
 			/* the input object is still there */

@@ -76,12 +76,6 @@ public:
 	[[gnu::pure]]
 	off_t GetAvailable(bool partial) const noexcept;
 
-	/**
-	 * Calls Istream::AsFd().  On successful (non-negative) return
-	 * value, this object is cleared.
-	 */
-	int AsFd() noexcept;
-
 private:
 	static void Close(Istream &i) noexcept;
 };

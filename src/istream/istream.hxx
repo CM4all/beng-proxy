@@ -44,7 +44,6 @@ public:
  * with one of the following events:
  *
  * - it is closed manually using Close()
- * - it is invalidated by a successful AsFd() call
  * - it has reached end-of-file (when IstreamHandler::OnEof() is called)
  * - an error has occurred (when IstreamHandler::OnError() is called)
  */
@@ -440,37 +439,6 @@ public:
 	}
 
 	/**
-	 * Close the istream object, and return the remaining data as a
-	 * file descriptor.  This fd can be read until end-of-stream.
-	 * Returns -1 if this is not possible (the stream object is still
-	 * usable).
-	 */
-	int AsFd() noexcept {
-#ifndef NDEBUG
-		assert(!destroyed);
-		assert(!closing);
-		assert(!eof);
-		assert(!bucket_eof);
-		assert(!reading);
-		assert(!in_data);
-
-		const DestructObserver destructed(*this);
-		reading = true;
-#endif
-
-		int fd = _AsFd();
-
-#ifndef NDEBUG
-		assert((destructed || destroyed) == (fd >= 0));
-
-		if (fd < 0)
-			reading = false;
-#endif
-
-		return fd;
-	}
-
-	/**
 	 * Close the stream and free resources.  This must not be called
 	 * after the handler's eof() / abort() callbacks were invoked.
 	 */
@@ -522,10 +490,6 @@ protected:
 	virtual void _FillBucketList(IstreamBucketList &list);
 	virtual ConsumeBucketResult _ConsumeBucketList(std::size_t nbytes) noexcept;
 	virtual void _ConsumeDirect(std::size_t nbytes) noexcept;
-
-	virtual int _AsFd() noexcept {
-		return -1;
-	}
 
 	virtual void _Close() noexcept {
 		Destroy();
