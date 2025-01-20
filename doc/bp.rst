@@ -424,6 +424,9 @@ The following settings are available:
   cost of a kernel thread running at 100% all the time, busy-polling
   for new entries.
 
+- ``io_uring_sq_thread_cpu``: Bind the ``io_uring_sqpoll`` kernel
+  worker thread to the specified CPU.
+
 - ``verbose_response``: Set to ``yes`` to reveal internal error
   messages in HTTP responses.
 

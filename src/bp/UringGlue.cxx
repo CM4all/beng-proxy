@@ -23,7 +23,8 @@
 
 UringGlue::UringGlue([[maybe_unused]] EventLoop &event_loop,
 		     [[maybe_unused]] bool enable,
-		     [[maybe_unused]] bool sqpoll) noexcept
+		     [[maybe_unused]] bool sqpoll,
+		     [[maybe_unused]] int sq_thread_cpu) noexcept
 {
 #ifdef HAVE_URING
 	if (!enable)
@@ -33,9 +34,14 @@ UringGlue::UringGlue([[maybe_unused]] EventLoop &event_loop,
 		.flags = IORING_SETUP_SINGLE_ISSUER,
 	};
 
-	if (sqpoll)
+	if (sqpoll) {
 		params.flags |= IORING_SETUP_SQPOLL;
-	else
+
+		if (sq_thread_cpu >= 0) {
+			params.flags |= IORING_SETUP_SQ_AFF;
+			params.sq_thread_cpu = sq_thread_cpu;
+		}
+	} else
 		/* not compatible with IORING_SETUP_SQPOLL */
 		params.flags |= IORING_SETUP_COOP_TASKRUN;
 

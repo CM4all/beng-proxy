@@ -64,6 +64,8 @@ BpConfig::HandleSet(std::string_view name, const char *value)
 		use_io_uring = ParseBool(value);
 	} else if (name == "io_uring_sqpoll"sv) {
 		io_uring_sqpoll = ParseBool(value);
+	} else if (name == "io_uring_sq_thread_cpu"sv) {
+		io_uring_sq_thread_cpu = ParseUnsignedLong(value);
 	} else if (name == "verbose_response"sv) {
 		verbose_response = ParseBool(value);
 	} else if (name == "session_cookie"sv) {

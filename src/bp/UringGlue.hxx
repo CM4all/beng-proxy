@@ -34,7 +34,7 @@ class UringGlue {
 
 public:
 	explicit UringGlue(EventLoop &event_loop, bool enable,
-			   bool sqpoll) noexcept;
+			   bool sqpoll, int sq_thread_cpu) noexcept;
 
 	void SetVolatile() noexcept;
 

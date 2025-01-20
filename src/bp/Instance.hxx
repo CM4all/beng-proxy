@@ -93,6 +93,7 @@ struct BpInstance final : PInstance, BengControl::Handler,
 		event_loop,
 		config.use_io_uring,
 		config.io_uring_sqpoll,
+		config.io_uring_sq_thread_cpu,
 	};
 
 	const StateDirectories state_directories;

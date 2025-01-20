@@ -81,6 +81,8 @@ struct BpConfig {
 
 	unsigned cluster_size = 0, cluster_node = 0;
 
+	int io_uring_sq_thread_cpu = -1;
+
 	CookieSameSite session_cookie_same_site = CookieSameSite::DEFAULT;
 
 	bool dynamic_session_cookie = false;
