@@ -20,7 +20,7 @@
 #include "widget/View.hxx"
 #include "http/ResponseHandler.hxx"
 #include "io/Logger.hxx"
-#include "io/UniqueFileDescriptor.hxx"
+#include "io/FileDescriptor.hxx"
 #include "co/InvokeTask.hxx"
 #include "util/Cancellable.hxx"
 #include "util/SharedLease.hxx"
@@ -255,7 +255,7 @@ private:
 			 */
 			const FileAddress *open_address = nullptr;
 
-			SharedLease beneath_lease, base_lease;
+			SharedLease beneath_lease, base_lease, fd_lease;
 
 			FileDescriptor base;
 
@@ -264,7 +264,7 @@ private:
 			 * descriptor for the file referred to by
 			 * #base.
 			 */
-			UniqueFileDescriptor fd;
+			FileDescriptor fd;
 
 			/**
 			 * If non-zero, then this is the error that
@@ -296,7 +296,7 @@ private:
 			struct Precompressed;
 			UniquePoolPtr<Precompressed> precompressed;
 
-			using OpenBaseCallback = void (Request:: *)(FileDescriptor fd) noexcept;
+			using OpenBaseCallback = void (Request:: *)(FileDescriptor fd, std::string_view strip_base) noexcept;
 			OpenBaseCallback open_base_callback;
 
 			using StatSuccessCallback = void (Request:: *)(const struct statx &st) noexcept;
@@ -309,7 +309,7 @@ private:
 			 * Clear #open_address, #fd, #error as if
 			 * StatFileAddress() had never been called.
 			 */
-			void Close(UringGlue &uring) noexcept;
+			void Close() noexcept;
 		} file;
 
 		struct {
@@ -595,8 +595,8 @@ private:
 	bool EvaluateFileRequest(FileDescriptor fd, const struct statx &st,
 				 struct file_request &file_request) noexcept;
 
-	void DispatchFile(const char *path, UniqueFileDescriptor fd,
-			  const struct statx &st,
+	void DispatchFile(const char *path, FileDescriptor fd,
+			  const struct statx &st, SharedLease &&lease,
 			  const struct file_request &file_request) noexcept;
 
 	bool DispatchCompressedFile(const char *path, FileDescriptor fd,
@@ -611,23 +611,25 @@ private:
 				     const char *suffix) noexcept;
 
 	bool EmulateModAuthEasy(const FileAddress &address,
-				UniqueFileDescriptor &fd,
-				const struct statx &st) noexcept;
+				FileDescriptor fd,
+				const struct statx &st,
+				SharedLease &lease) noexcept;
 
 	bool MaybeEmulateModAuthEasy(const FileAddress &address,
-				     UniqueFileDescriptor &fd,
-				     const struct statx &st) noexcept;
+				     FileDescriptor fd,
+				     const struct statx &st,
+				     SharedLease &lease) noexcept;
 
 	void HandleFileAddress(const FileAddress &address) noexcept;
-	void HandleFileAddressAfterBase(FileDescriptor base) noexcept;
+	void HandleFileAddressAfterBase(FileDescriptor base, std::string_view strip_base) noexcept;
 	void HandleFileAddress(const FileAddress &address,
-			       UniqueFileDescriptor fd,
-			       const struct statx &st) noexcept;
+			       FileDescriptor fd,
+			       const struct statx &st,
+			       SharedLease &&lease) noexcept;
 
-	void OnStatOpenStatSuccess(UniqueFileDescriptor fd,
-				   struct statx &st) noexcept;
+	void OnStatOpenStatSuccess(FileDescriptor fd, const struct statx &st, SharedLease lease) noexcept;
 	void OnStatOpenStatError(int error) noexcept;
-	void StatFileAddressAfterBase(FileDescriptor base) noexcept;
+	void StatFileAddressAfterBase(FileDescriptor base, std::string_view strip_base) noexcept;
 	void StatFileAddress(const FileAddress &address,
 			     Handler::File::StatSuccessCallback on_success,
 			     Handler::File::StatErrorCallback on_error) noexcept;
@@ -956,7 +958,7 @@ private:
 	void CheckDirectoryIndex(UniquePoolPtr<TranslateResponse> response) noexcept;
 	void CheckDirectoryIndex(UniquePoolPtr<TranslateResponse> _response, FileDescriptor base) noexcept;
 	void CheckDirectoryIndex(UniquePoolPtr<TranslateResponse> response, FileAt file) noexcept;
-	void OnDirectoryIndexBaseOpen(FileDescriptor fd) noexcept;
+	void OnDirectoryIndexBaseOpen(FileDescriptor fd, std::string_view strip_base) noexcept;
 	void OnDirectoryIndexStat(const struct statx &st) noexcept;
 	void OnDirectoryIndexStatError(int error) noexcept;
 	void SubmitDirectoryIndex(const TranslateResponse &response) noexcept;
@@ -966,7 +968,7 @@ private:
 	void CheckFileNotFound(UniquePoolPtr<TranslateResponse> response) noexcept;
 	void CheckFileNotFound(UniquePoolPtr<TranslateResponse> response, FileDescriptor base) noexcept;
 	void CheckFileNotFound(UniquePoolPtr<TranslateResponse> response, FileAt file) noexcept;
-	void OnFileNotFoundBaseOpen(FileDescriptor fd) noexcept;
+	void OnFileNotFoundBaseOpen(FileDescriptor fd, std::string_view strip_base) noexcept;
 	void OnFileNotFoundStat(const struct statx &st) noexcept;
 	void OnFileNotFoundStatError(int error) noexcept;
 	void SubmitFileNotFound(const TranslateResponse &response) noexcept;
@@ -978,7 +980,7 @@ private:
 	void OnEnotdirStat(const struct statx &st) noexcept;
 	void OnEnotdirStatError(int error) noexcept;
 
-	void OnEnotdirBaseOpen(FileDescriptor fd) noexcept;
+	void OnEnotdirBaseOpen(FileDescriptor fd, std::string_view strip_base) noexcept;
 
 	/**
 	 * The #TranslateResponse contains #TRANSLATE_ENOTDIR.  Check this
@@ -1027,8 +1029,7 @@ private:
 	[[gnu::pure]]
 	const char *StripBase(const char *path) const noexcept;
 
-	void ProbePrecompressed(UniqueFileDescriptor fd,
-				const struct statx &st) noexcept;
+	void ProbePrecompressed(FileDescriptor fd, const struct statx &st, SharedLease &&lease) noexcept;
 	void ProbeNextPrecompressed() noexcept;
 	void OnPrecompressedOpenStat(UniqueFileDescriptor fd,
 				     struct statx &st) noexcept;
@@ -1062,8 +1063,7 @@ private:
 	void OnDelegateError(std::exception_ptr ep) noexcept override;
 
 	/* handler methods for UringOpenStat() */
-	void OnOpenStat(UniqueFileDescriptor fd,
-			struct statx &st) noexcept;
+	void OnOpenStat(FileDescriptor fd, const struct statx &stx, SharedLease _lease) noexcept;
 	void OnOpenStatError(int error) noexcept;
 
 	/* virtual methods from class SuffixRegistryHandler */

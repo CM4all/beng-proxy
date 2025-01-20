@@ -5,6 +5,7 @@
 #pragma once
 
 #include "Request.hxx"
+#include "util/SharedLease.hxx"
 
 #include <sys/stat.h>
 
@@ -13,9 +14,11 @@ struct Request::Handler::File::Precompressed {
 
 	const char *encoding;
 
+	SharedLease original_lease;
+
 	const struct statx original_st;
 
-	UniqueFileDescriptor original_fd;
+	FileDescriptor original_fd;
 
 	enum Stat {
 #ifdef HAVE_BROTLI
@@ -26,6 +29,6 @@ struct Request::Handler::File::Precompressed {
 		END
 	} state{};
 
-	Precompressed(UniqueFileDescriptor &&_fd, const struct statx &_st) noexcept
-		:original_st(_st), original_fd(std::move(_fd)) {}
+	Precompressed(FileDescriptor _fd, const struct statx &_st, SharedLease &&_lease) noexcept
+		:original_lease(std::move(_lease)), original_st(_st), original_fd(_fd) {}
 };

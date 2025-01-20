@@ -87,7 +87,7 @@ Request::CheckFileNotFound(UniquePoolPtr<TranslateResponse> _response, FileDescr
 }
 
 void
-Request::OnFileNotFoundBaseOpen(FileDescriptor fd) noexcept
+Request::OnFileNotFoundBaseOpen(FileDescriptor fd, [[maybe_unused]] std::string_view strip_base) noexcept
 {
 	assert(translate.pending_response);
 

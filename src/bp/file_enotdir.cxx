@@ -84,7 +84,7 @@ Request::CheckFileEnotdir(UniquePoolPtr<TranslateResponse> _response, FileAt fil
 }
 
 void
-Request::OnEnotdirBaseOpen(FileDescriptor fd) noexcept
+Request::OnEnotdirBaseOpen(FileDescriptor fd, [[maybe_unused]] std::string_view strip_base) noexcept
 {
 	assert(translate.pending_response);
 

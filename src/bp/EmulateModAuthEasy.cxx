@@ -13,7 +13,6 @@
 #include "translation/Vary.hxx"
 #include "istream/FileIstream.hxx"
 #include "io/FileDescriptor.hxx"
-#include "io/SharedFd.hxx"
 #include "util/StringCompare.hxx"
 #include "util/StringStrip.hxx"
 #include "util/CharUtil.hxx"
@@ -210,8 +209,9 @@ CheckAccessFileFor(FileDescriptor directory, std::string_view base_relative,
 
 bool
 Request::EmulateModAuthEasy(const FileAddress &address,
-			    UniqueFileDescriptor &fd,
-			    const struct statx &st) noexcept
+			    FileDescriptor fd,
+			    const struct statx &st,
+			    SharedLease &lease) noexcept
 {
 	if (!CheckAccessFileFor(handler.file.base, handler.file.base_relative,
 				request.headers,
@@ -278,14 +278,12 @@ Request::EmulateModAuthEasy(const FileAddress &address,
 			      instance.config.use_xattr);
 	write_translation_vary_header(headers2, tr);
 
-	auto *shared_fd = NewFromPool<SharedFd>(pool, std::move(fd));
-
 	auto status = tr.status == HttpStatus{} ? HttpStatus::OK : tr.status;
 
 	DispatchResponse(status, std::move(headers),
 			 istream_file_fd_new(instance.event_loop, pool,
 					     address.path,
-					     shared_fd->Get(), *shared_fd,
+					     fd, std::move(lease),
 					     0, st.stx_size));
 
 	return true;

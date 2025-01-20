@@ -31,11 +31,14 @@ NormalizePath(std::string_view path) noexcept
 inline void
 Request::OnBaseOpen(FileDescriptor fd, const struct statx &, SharedLease lease) noexcept
 {
+	const auto &address = *handler.file.address;
+	assert(address.base != nullptr);
+
 	handler.file.base = fd;
 	handler.file.base_lease = std::move(lease);
 	handler.file.base_relative = {};
 
-	(this->*handler.file.open_base_callback)(fd);
+	(this->*handler.file.open_base_callback)(fd, address.base);
 }
 
 inline void
@@ -63,7 +66,7 @@ Request::OnBeneathOpen(FileDescriptor fd, const struct statx &, SharedLease leas
 		handler.file.base_relative = base;
 	}
 
-	(this->*handler.file.open_base_callback)(fd);
+	(this->*handler.file.open_base_callback)(fd, address.beneath);
 }
 
 inline void
@@ -107,7 +110,7 @@ Request::OpenBase(const FileAddress &address,
 	else if (address.base != nullptr)
 		OpenBase(address.base, callback);
 	else
-		(this->*callback)(FileDescriptor::Undefined());
+		(this->*callback)(FileDescriptor::Undefined(), {});
 }
 
 inline void
@@ -122,7 +125,7 @@ Request::OpenBase(const ResourceAddress &address,
 	case ResourceAddress::Type::FASTCGI:
 	case ResourceAddress::Type::WAS:
 	case ResourceAddress::Type::LHTTP:
-		(this->*callback)(FileDescriptor::Undefined());
+		(this->*callback)(FileDescriptor::Undefined(), {});
 		break;
 
 	case ResourceAddress::Type::LOCAL:

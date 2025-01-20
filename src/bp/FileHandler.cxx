@@ -32,6 +32,7 @@
 
 #include <assert.h>
 #include <fcntl.h>
+#include <linux/openat2.h> // for RESOLVE_*
 #include <sys/stat.h>
 
 using std::string_view_literals::operator""sv;
@@ -101,18 +102,17 @@ Request::CheckFileAddress(const FileAddress &address) noexcept
 }
 
 inline void
-Request::Handler::File::Close(UringGlue &uring) noexcept
+Request::Handler::File::Close() noexcept
 {
 	open_address = nullptr;
 	error = 0;
-
-	if (fd.IsDefined())
-		uring.Close(fd.Release());
+	fd = FileDescriptor::Undefined();
+	fd_lease = {};
 }
 
 void
-Request::DispatchFile(const char *path, UniqueFileDescriptor fd,
-		      const struct statx &st,
+Request::DispatchFile(const char *path, FileDescriptor fd,
+		      const struct statx &st, SharedLease &&lease,
 		      const struct file_request &file_request) noexcept
 {
 	const TranslateResponse &tr = *translate.response;
@@ -175,8 +175,6 @@ Request::DispatchFile(const char *path, UniqueFileDescriptor fd,
 
 	/* finished, dispatch this response */
 
-	auto *shared_fd = NewFromPool<SharedFd>(pool, std::move(fd));
-
 	DispatchResponse(status, std::move(headers),
 #ifdef HAVE_URING
 			 instance.uring
@@ -188,15 +186,15 @@ Request::DispatchFile(const char *path, UniqueFileDescriptor fd,
 			       network filesystem) I/O */
 			    ? NewUringSpliceIstream(instance.event_loop, *instance.uring, instance.pipe_stock,
 						    pool, path,
-						    shared_fd->Get(), *shared_fd,
+						    fd, std::move(lease),
 						    start_offset, end_offset)
 			    : NewUringIstream(*instance.uring, pool, path,
-					      shared_fd->Get(), *shared_fd,
+					      fd, std::move(lease),
 					      start_offset, end_offset))
 			 :
 #endif
 			 istream_file_fd_new(instance.event_loop, pool, path,
-					     shared_fd->Get(), *shared_fd,
+					     fd, std::move(lease),
 					     start_offset, end_offset));
 }
 
@@ -362,22 +360,23 @@ Request::ProbeNextPrecompressed() noexcept
 	}
 
 	const struct file_request file_request(p.original_st.stx_size);
-	DispatchFile(address.path, std::move(p.original_fd), p.original_st,
+	DispatchFile(address.path, p.original_fd, p.original_st, std::move(p.original_lease),
 		     file_request);
 }
 
 inline void
-Request::ProbePrecompressed(UniqueFileDescriptor fd,
-			    const struct statx &st) noexcept
+Request::ProbePrecompressed(FileDescriptor fd, const struct statx &st,
+			    SharedLease &&lease) noexcept
 {
-	handler.file.precompressed = UniquePoolPtr<Request::Handler::File::Precompressed>::Make(pool, std::move(fd), st);
+	handler.file.precompressed = UniquePoolPtr<Request::Handler::File::Precompressed>::Make(pool, fd, st, std::move(lease));
 	ProbeNextPrecompressed();
 }
 
 inline bool
 Request::MaybeEmulateModAuthEasy(const FileAddress &address,
-				 UniqueFileDescriptor &fd,
-				 const struct statx &st) noexcept
+				 FileDescriptor fd,
+				 const struct statx &st,
+				 SharedLease &lease) noexcept
 {
 	assert(S_ISREG(st.stx_mode));
 
@@ -397,14 +396,13 @@ Request::MaybeEmulateModAuthEasy(const FileAddress &address,
 	if (strstr(base, "/pr_0001/public_html") == nullptr)
 		return false;
 
-	return EmulateModAuthEasy(address, fd, st);
+	return EmulateModAuthEasy(address, fd, st, lease);
 }
 
 inline void
-Request::OnOpenStat(UniqueFileDescriptor fd,
-		    struct statx &st) noexcept
+Request::OnOpenStat(FileDescriptor fd, const struct statx &st, SharedLease _lease) noexcept
 {
-	HandleFileAddress(*handler.file.address, std::move(fd), st);
+	HandleFileAddress(*handler.file.address, fd, st, std::move(_lease));
 }
 
 inline void
@@ -435,8 +433,8 @@ Request::HandleFileAddress(const FileAddress &address) noexcept
 
 		if (handler.file.fd.IsDefined())
 			/* file has already been opened */
-			HandleFileAddress(address, std::move(handler.file.fd),
-					  handler.file.stx);
+			HandleFileAddress(address, handler.file.fd,
+					  handler.file.stx, std::move(handler.file.fd_lease));
 		else
 			OnOpenStatError(handler.file.error);
 	} else
@@ -444,19 +442,37 @@ Request::HandleFileAddress(const FileAddress &address) noexcept
 }
 
 void
-Request::HandleFileAddressAfterBase(FileDescriptor base) noexcept
+Request::HandleFileAddressAfterBase(FileDescriptor base, std::string_view strip_base) noexcept
 {
-	instance.uring.OpenStat(pool,
-				{base, StripBase(handler.file.address->path)},
-				BIND_THIS_METHOD(OnOpenStat),
-				BIND_THIS_METHOD(OnOpenStatError),
-				cancel_ptr);
+	const FileAddress &address = *handler.file.address;
+
+	const char *path = address.base != nullptr
+		? AllocatorPtr{pool}.Concat(address.base, address.path)
+		: address.path;
+
+	static constexpr struct open_how open_read_only{
+		.flags = O_RDONLY|O_NOCTTY|O_CLOEXEC|O_NONBLOCK,
+		.resolve = RESOLVE_NO_MAGICLINKS,
+	};
+
+	static constexpr struct open_how open_read_only_beneath{
+		.flags = O_RDONLY|O_NOCTTY|O_CLOEXEC|O_NONBLOCK,
+		.resolve = RESOLVE_BENEATH|RESOLVE_NO_MAGICLINKS,
+	};
+
+	instance.fd_cache.Get(base, strip_base, path,
+			      base.IsDefined() ? open_read_only_beneath : open_read_only,
+			      STATX_TYPE|STATX_MTIME|STATX_INO|STATX_SIZE,
+			      BIND_THIS_METHOD(OnOpenStat),
+			      BIND_THIS_METHOD(OnOpenStatError),
+			      cancel_ptr);
 }
 
 void
 Request::HandleFileAddress(const FileAddress &address,
-			   UniqueFileDescriptor fd,
-			   const struct statx &st) noexcept
+			   FileDescriptor fd,
+			   const struct statx &st,
+			   SharedLease &&lease) noexcept
 {
 	/* check request method */
 
@@ -474,20 +490,17 @@ Request::HandleFileAddress(const FileAddress &address,
 		DispatchResponse(HttpStatus::OK, {},
 				 NewFdIstream(instance.event_loop,
 					      pool, address.path,
-					      std::move(fd),
+					      fd.Duplicate(),
 					      FdType::FD_CHARDEV));
 		return;
 	}
 
 	if (!S_ISREG(st.stx_mode)) {
-		instance.uring.Close(fd.Release());
 		DispatchError(HttpStatus::NOT_FOUND, "Not a regular file");
 		return;
 	}
 
-	if (MaybeEmulateModAuthEasy(address, fd, st)) {
-		if (fd.IsDefined())
-			instance.uring.Close(fd.Release());
+	if (MaybeEmulateModAuthEasy(address, fd, st, lease)) {
 		return;
 	}
 
@@ -496,7 +509,6 @@ Request::HandleFileAddress(const FileAddress &address,
 	/* request options */
 
 	if (!EvaluateFileRequest(fd, st, file_request)) {
-		instance.uring.Close(fd.Release());
 		return;
 	}
 
@@ -504,23 +516,23 @@ Request::HandleFileAddress(const FileAddress &address,
 
 	if (file_request.range.type == HttpRangeRequest::Type::NONE &&
 	    !IsTransformationEnabled()) {
-		ProbePrecompressed(std::move(fd), st);
+		ProbePrecompressed(fd, st, std::move(lease));
 		return;
 	}
 
 	/* build the response */
 
-	DispatchFile(address.path, std::move(fd), st, file_request);
+	DispatchFile(address.path, fd, st, std::move(lease), file_request);
 }
 
 void
-Request::OnStatOpenStatSuccess(UniqueFileDescriptor fd,
-			       struct statx &st) noexcept
+Request::OnStatOpenStatSuccess(FileDescriptor fd, const struct statx &st, SharedLease lease) noexcept
 {
 	assert(!handler.file.fd.IsDefined());
 	assert(handler.file.error == 0);
 
-	handler.file.fd = std::move(fd);
+	handler.file.fd_lease = std::move(lease);
+	handler.file.fd = fd;
 	handler.file.stx = st;
 	handler.file.open_address = handler.file.address;
 
@@ -540,17 +552,27 @@ Request::OnStatOpenStatError(int error) noexcept
 }
 
 void
-Request::StatFileAddressAfterBase(FileDescriptor base) noexcept
+Request::StatFileAddressAfterBase(FileDescriptor base, std::string_view strip_base) noexcept
 {
 	assert(!handler.file.fd.IsDefined());
 
 	const FileAddress &address = *handler.file.address;
 
-	instance.uring.OpenStat(pool,
-				{base, StripBase(address.path)},
-				BIND_THIS_METHOD(OnStatOpenStatSuccess),
-				BIND_THIS_METHOD(OnStatOpenStatError),
-				cancel_ptr);
+	const char *path = address.base != nullptr
+		? AllocatorPtr{pool}.Concat(address.base, address.path)
+		: address.path;
+
+	static constexpr struct open_how open_read_only{
+		.flags = O_RDONLY|O_NOCTTY|O_CLOEXEC|O_NONBLOCK,
+		.resolve = RESOLVE_BENEATH|RESOLVE_NO_MAGICLINKS,
+	};
+
+	instance.fd_cache.Get(base, strip_base, path,
+			      open_read_only,
+			      STATX_TYPE|STATX_MTIME|STATX_INO|STATX_SIZE,
+			      BIND_THIS_METHOD(OnStatOpenStatSuccess),
+			      BIND_THIS_METHOD(OnStatOpenStatError),
+			      cancel_ptr);
 }
 
 void
@@ -566,7 +588,7 @@ Request::StatFileAddress(const FileAddress &address,
 		else
 			(this->*on_error)(handler.file.error);
 	} else {
-		handler.file.Close(instance.uring);
+		handler.file.Close();
 
 		handler.file.address = &address;
 		handler.file.on_stat_success = on_success;

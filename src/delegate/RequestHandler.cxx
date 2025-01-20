@@ -9,6 +9,7 @@
 #include "bp/Instance.hxx"
 #include "http/Method.hxx"
 #include "http/IncomingRequest.hxx"
+#include "io/SharedFd.hxx"
 #include "AllocatorPtr.hxx"
 
 #include <assert.h>
@@ -56,7 +57,9 @@ Request::OnDelegateSuccess(UniqueFileDescriptor fd) noexcept
 
 	/* build the response */
 
-	DispatchFile(handler.delegate.path, std::move(fd), st, file_request);
+	auto *shared_fd = NewFromPool<SharedFd>(pool, std::move(fd));
+
+	DispatchFile(handler.delegate.path, shared_fd->Get(), st, *shared_fd, file_request);
 }
 
 void

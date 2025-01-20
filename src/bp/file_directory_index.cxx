@@ -73,7 +73,7 @@ Request::CheckDirectoryIndex(UniquePoolPtr<TranslateResponse> _response, FileDes
 }
 
 void
-Request::OnDirectoryIndexBaseOpen(FileDescriptor fd) noexcept
+Request::OnDirectoryIndexBaseOpen(FileDescriptor fd, [[maybe_unused]] std::string_view strip_base) noexcept
 {
 	assert(translate.pending_response);
 
