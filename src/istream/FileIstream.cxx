@@ -31,19 +31,19 @@
 static constexpr Event::Duration file_retry_timeout = std::chrono::milliseconds(100);
 
 class FileIstream final : public Istream {
-	UniqueFileDescriptor fd;
-
 	/**
 	 * A timer to retry reading after EAGAIN.
 	 */
 	FineTimerEvent retry_event;
 
+	SliceFifoBuffer buffer;
+	const char *path;
+
 	off_t offset;
 
 	const off_t end_offset;
 
-	SliceFifoBuffer buffer;
-	const char *path;
+	UniqueFileDescriptor fd;
 
 	bool direct = false;
 
@@ -53,10 +53,10 @@ public:
 		    off_t _start_offset, off_t _end_offset,
 		    const char *_path) noexcept
 		:Istream(p),
-		 fd(std::move(_fd)),
 		 retry_event(event_loop, BIND_THIS_METHOD(EventCallback)),
+		 path(_path),
 		 offset(_start_offset), end_offset(_end_offset),
-		 path(_path) {}
+		 fd(std::move(_fd)) {}
 
 private:
 	void EofDetected() noexcept {

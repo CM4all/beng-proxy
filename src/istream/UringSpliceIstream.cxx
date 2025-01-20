@@ -35,11 +35,6 @@ class UringSpliceIstream final : public Istream, Uring::Operation {
 	 */
 	const char *const path;
 
-	/**
-	 * The actual file.
-	 */
-	UniqueFileDescriptor fd;
-
 	PipeLease pipe;
 
 	/**
@@ -61,6 +56,11 @@ class UringSpliceIstream final : public Istream, Uring::Operation {
 	 */
 	const off_t end_offset;
 
+	/**
+	 * The actual file.
+	 */
+	UniqueFileDescriptor fd;
+
 #ifndef NDEBUG
 	bool direct = false;
 #endif
@@ -73,9 +73,9 @@ public:
 		:Istream(p), uring(_uring),
 		 defer_start(event_loop, BIND_THIS_METHOD(OnDeferredStart)),
 		 path(_path),
-		 fd(std::move(_fd)),
 		 pipe(_pipe_stock),
-		 offset(_start_offset), end_offset(_end_offset)
+		 offset(_start_offset), end_offset(_end_offset),
+		 fd(std::move(_fd))
 	{
 	}
 

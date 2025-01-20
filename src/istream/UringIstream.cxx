@@ -42,8 +42,6 @@ public:
 class UringIstream final : public Istream, Uring::Operation {
 	Uring::Queue &uring;
 
-	UniqueFileDescriptor fd;
-
 	/**
 	 * Passed to the io_uring read operation.
 	 *
@@ -53,6 +51,13 @@ class UringIstream final : public Istream, Uring::Operation {
 	 * #CanceledUringIstream.
 	 */
 	std::unique_ptr<struct iovec> iov = std::make_unique<struct iovec>();
+
+	SliceFifoBuffer buffer;
+
+	/**
+	 * The path name.  Only used for error messages.
+	 */
+	const char *const path;
 
 	/**
 	 * The file offset of the next/pending read operation.  If
@@ -66,12 +71,7 @@ class UringIstream final : public Istream, Uring::Operation {
 	 */
 	const off_t end_offset;
 
-	SliceFifoBuffer buffer;
-
-	/**
-	 * The path name.  Only used for error messages.
-	 */
-	const char *const path;
+	UniqueFileDescriptor fd;
 
 	bool direct = false;
 
@@ -80,9 +80,9 @@ public:
 		     const char *_path, UniqueFileDescriptor &&_fd,
 		     off_t _start_offset, off_t _end_offset) noexcept
 		:Istream(p), uring(_uring),
-		 fd(std::move(_fd)),
+		 path(_path),
 		 offset(_start_offset), end_offset(_end_offset),
-		 path(_path)
+		 fd(std::move(_fd))
 	{
 	}
 
