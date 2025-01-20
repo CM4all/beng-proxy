@@ -214,6 +214,10 @@ SpawnIstream::OnDirect([[maybe_unused]] FdType type, FileDescriptor fd, off_t of
 	}
 
 	input.ConsumeDirect(nbytes);
+
+	if (!then_eof || static_cast<std::size_t>(nbytes) < max_length)
+		input_event.ScheduleWrite();
+
 	return IstreamDirectResult::OK;
 }
 
