@@ -87,6 +87,7 @@ HttpServerConnection::UringSend::Cancel() noexcept
 	auto &s = queue.RequireSubmitEntry();
 	io_uring_prep_cancel(&s, GetUringData(), 0);
 	io_uring_sqe_set_data(&s, nullptr);
+	io_uring_sqe_set_flags(&s, IOSQE_CQE_SKIP_SUCCESS);
 	queue.Submit();
 }
 
