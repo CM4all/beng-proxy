@@ -26,4 +26,8 @@ public:
 	char *operator()(AllocatorPtr alloc) const noexcept {
 		return alloc.Concat(items);
 	}
+
+	std::string_view MakeView(AllocatorPtr alloc) const noexcept {
+		return alloc.ConcatView(items);
+	}
 };
