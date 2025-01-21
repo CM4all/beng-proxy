@@ -366,7 +366,7 @@ AnyHttpClient::Probe::OnAlpnMismatch(PendingHttpRequest &&pending_request,
 
 	/* add this HTTP/1.1 socket to the FilteredSocketStock so it
 	   will be used by the deferred SendHTTP1() call */
-	parent.fs_balancer.GetStock().Add(key, address,
+	parent.fs_balancer.GetStock().Add(StockKey{key}, address,
 					  std::move(socket));
 
 	auto &w = waiting.front();

@@ -246,7 +246,7 @@ TcpStock::Get(AllocatorPtr alloc, const StopwatchPtr &parent_stopwatch,
 							     bind_address, address,
 							     timeout);
 
-	stock.Get(name, std::move(request), handler, cancel_ptr);
+	stock.Get(StockKey{name}, std::move(request), handler, cancel_ptr);
 }
 
 SocketDescriptor

@@ -159,5 +159,5 @@ RemoteWasStock::Get(AllocatorPtr alloc, SocketAddress address,
 	if (!ToString(key, address))
 		key[0] = 0;
 
-	multi_stock.Get(key, std::move(r), concurrency, handler, cancel_ptr);
+	multi_stock.Get(StockKey{key}, std::move(r), concurrency, handler, cancel_ptr);
 }

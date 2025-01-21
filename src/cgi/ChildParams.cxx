@@ -5,6 +5,7 @@
 #include "ChildParams.hxx"
 #include "spawn/ChildOptions.hxx"
 #include "pool/StringBuilder.hxx"
+#include "stock/Key.hxx"
 #include "AllocatorPtr.hxx"
 
 CgiChildParams::CgiChildParams(AllocatorPtr alloc, const CgiChildParams &src) noexcept
@@ -17,7 +18,7 @@ CgiChildParams::CgiChildParams(AllocatorPtr alloc, const CgiChildParams &src) no
 {
 }
 
-std::string_view
+StockKey
 CgiChildParams::GetStockKey(AllocatorPtr alloc) const noexcept
 {
 	PoolStringBuilder<256> b;
@@ -37,5 +38,5 @@ CgiChildParams::GetStockKey(AllocatorPtr alloc) const noexcept
 	b.emplace_back(options_buffer,
 		       options.MakeId(options_buffer));
 
-	return b.MakeView(alloc);
+	return StockKey{b.MakeView(alloc)};
 }

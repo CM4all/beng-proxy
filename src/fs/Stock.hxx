@@ -77,7 +77,7 @@ public:
 	 *
 	 * @param key a string generated with MakeFilteredSocketStockKey()
 	 */
-	void Add(std::string_view key, SocketAddress address,
+	void Add(StockKey key, SocketAddress address,
 		 std::unique_ptr<FilteredSocket> socket) noexcept;
 
 private:

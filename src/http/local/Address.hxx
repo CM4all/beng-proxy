@@ -10,6 +10,7 @@
 
 #include <string_view>
 
+struct StockKey;
 class AllocatorPtr;
 
 /**
@@ -89,7 +90,7 @@ struct LhttpAddress {
 	 * the specified pool.
 	 */
 	[[gnu::pure]]
-	const char *GetServerId(AllocatorPtr alloc) const noexcept;
+	StockKey GetServerId(AllocatorPtr alloc) const noexcept;
 
 	/**
 	 * Generates a string identifying the address.  This can be used as a

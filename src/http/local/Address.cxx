@@ -12,6 +12,7 @@
 #include "uri/Extract.hxx"
 #include "pexpand.hxx"
 #include "spawn/Prepared.hxx"
+#include "stock/Key.hxx"
 
 #include <string.h>
 
@@ -37,7 +38,7 @@ LhttpAddress::LhttpAddress(AllocatorPtr alloc,
 {
 }
 
-const char *
+StockKey
 LhttpAddress::GetServerId(AllocatorPtr alloc) const noexcept
 {
 	PoolStringBuilder<256> b;
@@ -52,13 +53,13 @@ LhttpAddress::GetServerId(AllocatorPtr alloc) const noexcept
 		b.push_back(i);
 	}
 
-	return b(alloc);
+	return StockKey{b.MakeView(alloc)};
 }
 
 const char *
 LhttpAddress::GetId(AllocatorPtr alloc) const noexcept
 {
-	const char *p = GetServerId(alloc);
+	const char *p = alloc.DupZ(GetServerId(alloc).value); // TODO eliminate copy
 
 	if (host_and_port != nullptr)
 		p = alloc.Concat(p, ";h=", host_and_port);

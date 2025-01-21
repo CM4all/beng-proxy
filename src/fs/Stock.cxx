@@ -330,7 +330,7 @@ FilteredSocketStock::Get(AllocatorPtr alloc,
 		return;
 	}
 
-	const char *key = key_buffer;
+	const StockKey key{key_buffer};
 
 	auto request =
 		NewDisposablePointer<FilteredSocketStockRequest>(alloc,
@@ -345,7 +345,7 @@ FilteredSocketStock::Get(AllocatorPtr alloc,
 }
 
 void
-FilteredSocketStock::Add(std::string_view key, SocketAddress address,
+FilteredSocketStock::Add(StockKey key, SocketAddress address,
 			 std::unique_ptr<FilteredSocket> socket) noexcept
 {
 	auto &_stock = stock.GetStock(key, nullptr);

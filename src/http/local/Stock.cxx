@@ -25,7 +25,7 @@
 #include <unistd.h>
 #include <string.h>
 
-static const char *
+static StockKey
 lhttp_stock_key(struct pool *pool, const LhttpAddress *address) noexcept
 {
 	return address->GetServerId(AllocatorPtr(*pool));
