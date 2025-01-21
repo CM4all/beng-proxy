@@ -7,6 +7,7 @@
 #include "http/Headers.hxx"
 #include "http/Method.hxx"
 #include "http/Upgrade.hxx"
+#include "http/Logger.hxx"
 #include "memory/GrowingBuffer.hxx"
 #include "memory/istream_gb.hxx"
 #include "istream/ConcatIstream.hxx"
@@ -107,9 +108,11 @@ HttpServerConnection::SubmitResponse(HttpStatus status,
 
 	response.status = status;
 
-	if (const auto content_type = headers.GetSloppy(content_type_header);
-	    !content_type.empty())
-		response.content_type = Net::Log::ParseContentType(content_type);
+	if (request.request->logger != nullptr && request.request->logger->WantsContentType()) {
+		if (const auto content_type = headers.GetSloppy(content_type_header);
+		    !content_type.empty())
+			response.content_type = Net::Log::ParseContentType(content_type);
+	}
 
 	PrependStatusLine(headers.GetBuffer(), status);
 

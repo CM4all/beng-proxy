@@ -13,7 +13,8 @@ BpRequestLogger::BpRequestLogger(BpInstance &_instance,
 				 BpListenerStats &_http_stats,
 				 AccessLogGlue *_access_logger,
 				 bool _access_logger_only_errors) noexcept
-	:instance(_instance), http_stats(_http_stats),
+	:IncomingHttpRequestLogger(_access_logger != nullptr && !_access_logger_only_errors),
+	 instance(_instance), http_stats(_http_stats),
 	 access_logger(_access_logger),
 	 start_time(instance.event_loop.SteadyNow()),
 	 access_logger_only_errors(_access_logger_only_errors)

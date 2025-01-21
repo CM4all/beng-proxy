@@ -575,8 +575,11 @@ ServerConnection::Request::SendResponse(HttpStatus status,
 	}
 
 	const auto response_header_map = std::move(response_headers).ToMap(AllocatorPtr{pool});
-	if (const char *ct = response_header_map.Get(content_type_header))
-		content_type = Net::Log::ParseContentType(ct);
+
+	if (logger != nullptr && logger->WantsContentType()) {
+		if (const char *ct = response_header_map.Get(content_type_header))
+			content_type = Net::Log::ParseContentType(ct);
+	}
 
 	for (const auto &i : response_header_map) {
 		if (hdrs.full())

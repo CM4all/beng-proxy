@@ -13,8 +13,23 @@ namespace Net::Log { enum class ContentType : uint8_t; }
 struct IncomingHttpRequest;
 
 class IncomingHttpRequestLogger {
+	const bool want_content_type;
+
+protected:
+	explicit IncomingHttpRequestLogger(bool _want_content_type) noexcept
+		:want_content_type(_want_content_type) {}
+
 public:
 	virtual ~IncomingHttpRequestLogger() noexcept = default;
+
+	/**
+	 * Is this instance interested in getting the parsed
+	 * Content-Type response header?  If not, then the caller can
+	 * omit the call to Net::Log::ParseContentType().
+	 */
+	bool WantsContentType() const noexcept {
+		return want_content_type;
+	}
 
 	/**
 	 * @param wait_duration the total duration waiting for the
