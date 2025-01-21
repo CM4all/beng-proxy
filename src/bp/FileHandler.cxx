@@ -421,13 +421,6 @@ Request::HandleFileAddress(const FileAddress &address) noexcept
 
 	assert(address.path != nullptr);
 
-	const char *const path = address.path;
-
-	if (address.delegate != nullptr) {
-		HandleDelegateAddress(*address.delegate, path);
-		return;
-	}
-
 	if (&address == handler.file.open_address) {
 		assert(handler.file.fd.IsDefined() || handler.file.error != 0);
 

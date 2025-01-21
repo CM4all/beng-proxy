@@ -662,26 +662,6 @@ Directory index
 For security (by obscurity) reasons, :program:`beng-proxy` has no code for
 generating directory listings.
 
-.. _delegate:
-
-Delegates
----------
-
-A “delegate” is a helper program which opens a local file and passes
-the file descriptor to :program:`beng-proxy`. The major reason for
-using a delegate is to take advantage of the kernel’s validation: the
-delegate program may run with different privileges, different resource
-limits or in a chroot/vserver.
-
-The delegate reads requests on standard input. The protocol is similar
-to the translation protocol. The file descriptor is sent to
-:program:`beng-proxy` in a ``SOL_SOCKET`` ancillary message.
-
-If the ``DELEGATE`` translation packet was followed by a
-``DOCUMENT_ROOT`` packet, then all helper processes are grouped by
-their document root, and the ``DOCUMENT_ROOT`` environment variable is
-set.
-
 .. _http:
 
 HTTP proxying

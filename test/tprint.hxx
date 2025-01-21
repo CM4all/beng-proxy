@@ -35,12 +35,7 @@ operator<<(std::ostream &os, const FileAddress &address)
 		os << " expand_path";
 
 	QuoteOptional(os, "base", address.base);
-	QuoteOptional(os, address.expand_document_root
-		      ? "expand_document_root" : "document_root",
-		      address.document_root);
 
-	if (address.delegate != nullptr)
-		os << " delegate";
 	// TODO: print more attributes
 	return os;
 }

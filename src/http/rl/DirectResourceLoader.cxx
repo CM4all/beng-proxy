@@ -18,8 +18,6 @@
 #include "was/Glue.hxx"
 #include "was/MGlue.hxx"
 #include "pipe_filter.hxx"
-#include "delegate/Address.hxx"
-#include "delegate/HttpRequest.hxx"
 #include "strmap.hxx"
 #include "istream/UnusedPtr.hxx"
 #include "pool/pool.hxx"
@@ -69,20 +67,6 @@ try {
 		body.Clear();
 
 		file = &address.GetFile();
-		if (file->delegate != nullptr) {
-			if (delegate_stock == nullptr)
-				throw std::runtime_error("No delegate stock");
-
-			delegate_stock_request(event_loop, *delegate_stock, pool,
-					       file->delegate->delegate,
-					       file->delegate->child_options,
-					       file->path,
-					       file->content_type,
-					       false,
-					       handler,
-					       cancel_ptr);
-			return;
-		}
 
 		static_file_get(event_loop,
 #ifdef HAVE_URING

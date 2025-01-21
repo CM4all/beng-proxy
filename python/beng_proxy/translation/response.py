@@ -242,15 +242,6 @@ class Response:
         assert content_type.find('/') > 0
         return self.packet(TRANSLATE_CONTENT_TYPE, content_type)
 
-    def delegate(self, helper):
-        assert isinstance(helper, (str, bytes))
-        return self.packet(TRANSLATE_DELEGATE, helper)
-
-    def delegated_path(self, helper, path):
-        self.path(path)
-        self.delegate(helper)
-        return self
-
     def header_forward(self, command, *args):
         payload = b''
         for x in args:

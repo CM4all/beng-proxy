@@ -16,7 +16,6 @@
 #include "http/Status.hxx"
 #include "http/Address.hxx"
 #include "file/Address.hxx"
-#include "delegate/Address.hxx"
 #include "cgi/Address.hxx"
 #include "spawn/Mount.hxx"
 #include "spawn/NamespaceOptions.hxx"
@@ -147,13 +146,6 @@ operator==(const ChildOptions &a, const ChildOptions &b) noexcept
 }
 
 static bool
-operator==(const DelegateAddress &a, const DelegateAddress &b) noexcept
-{
-	return StringEquals(a.delegate, b.delegate) &&
-		a.child_options == b.child_options;
-}
-
-static bool
 operator==(const HttpAddress &a, const HttpAddress &b) noexcept
 {
 	return StringEquals(a.host_and_port, b.host_and_port) &&
@@ -177,11 +169,7 @@ operator==(const ResourceAddress &a, const ResourceAddress &b) noexcept
 		return StringEquals(a.GetFile().path, b.GetFile().path) &&
 			StringEquals(a.GetFile().gzipped, b.GetFile().gzipped) &&
 			StringEquals(a.GetFile().base, b.GetFile().base) &&
-			StringEquals(a.GetFile().content_type, b.GetFile().content_type) &&
-			StringEquals(a.GetFile().document_root, b.GetFile().document_root) &&
-			(a.GetFile().delegate == nullptr) == (b.GetFile().delegate == nullptr) &&
-			(a.GetFile().delegate == nullptr ||
-			 *a.GetFile().delegate == *b.GetFile().delegate);
+			StringEquals(a.GetFile().content_type, b.GetFile().content_type);
 
 	case ResourceAddress::Type::CGI:
 		EXPECT_NE(a.GetCgi().path, nullptr);

@@ -20,8 +20,6 @@ from beng_proxy.translation import *
 from beng_proxy.translation.widget import WidgetRegistry
 
 widgets_path = '/etc/cm4all/beng/widgets'
-default_helpers_path = '/usr/lib/cm4all/beng-proxy/delegate/bin'
-helpers_path = default_helpers_path
 cgi_path = '/usr/lib/cgi-bin'
 was_path = '/usr/lib/cm4all/was/bin'
 demo_path = '/usr/share/cm4all/beng-proxy/demo/htdocs'
@@ -366,7 +364,7 @@ class Translation(Protocol):
                     response.packet(TRANSLATE_PATH, path)
                 response.packet(TRANSLATE_EXPAND_PATH, document_root + r'/\1' + request.probe_suffix)
 
-    def _handle_local_file(self, path, response, delegate=False, fastcgi=True, error_document=False):
+    def _handle_local_file(self, path, response, fastcgi=True, error_document=False):
         response.packet(TRANSLATE_DOCUMENT_ROOT, "/var/www")
         if error_document:
             response.packet(TRANSLATE_ERROR_DOCUMENT)
@@ -398,9 +396,6 @@ class Translation(Protocol):
         else:
             response.path(path)
             response.expires_relative(1800)
-            if delegate:
-                response.delegate(os.path.join(helpers_path,
-                                               'delegate-helper'))
             if path[-5:] == '.html':
                 response.content_type('text/html; charset=utf-8')
                 response.process(container=True)
@@ -508,8 +503,6 @@ class Translation(Protocol):
             response.status(204)
         elif uri in ['/null', '/zero', '/urandom']:
             response.path('/dev' + uri)
-        elif uri[:10] == '/delegate/':
-            self._handle_local_file('/var/www' + uri[9:], response, True)
         elif uri[:6] == '/demo/':
             self._handle_local_file(demo_path + uri[5:], response)
         elif uri[:6] == '/base/':
@@ -1264,7 +1257,6 @@ if __name__ == '__main__':
         # debug mode, run from svn working directory
         import os
         widgets_path = 'demo/widgets'
-        helpers_path = os.path.join(os.getcwd(), 'output/debug')
         test_binary_path = os.path.join(os.getcwd(), 'output/debug/test')
         cgi_path = os.path.join(os.getcwd(), 'demo/cgi-bin')
         demo_path = os.path.join(os.getcwd(), 'demo', 'htdocs')

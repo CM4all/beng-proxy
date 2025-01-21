@@ -10,7 +10,6 @@
 
 class AllocatorPtr;
 class MatchData;
-struct DelegateAddress;
 
 /**
  * The address of a local static file.
@@ -34,10 +33,6 @@ struct FileAddress {
 
 	std::span<const std::byte> content_type_lookup{};
 
-	const char *document_root = nullptr;
-
-	DelegateAddress *delegate = nullptr;
-
 	bool auto_gzipped = false;
 
 	bool auto_brotli_path = false;
@@ -47,12 +42,6 @@ struct FileAddress {
 	 * translation cache.
 	 */
 	bool expand_path = false;
-
-	/**
-	 * The value of #TRANSLATE_EXPAND_DOCUMENT_ROOT.  Only used by the
-	 * translation cache.
-	 */
-	bool expand_document_root = false;
 
 	/**
 	 * @param _path the new path pointer (taken as-is, no deep copy)

@@ -345,8 +345,8 @@ Response
   session’s ``SITE`` value.
 
 - ``DOCUMENT_ROOT``: base directory of the site; may also be passed
-  after a ``CGI``/``DELEGATE`` command, to set the document root only
-  for this CGI/delegate
+  after a ``CGI`` command, to set the document root only
+  for this CGI
 
 - ``FILTER``: the next resource address (``HTTP``, ``CGI``) will denote
   an output filter, see section :ref:`filter` for details.
@@ -796,24 +796,6 @@ served.  The following packets are available:
 - ``BENEATH``: Absolute path of a directory that the ``PATH`` shall
   not escape, not even using symlinks.  This is implemented using the
   ``RESOLVE_BENEATH`` flag of Linux's ``openat2()`` system call.
-
-.. _tdelegate:
-
-Delegates
----------
-
-If ``DELEGATE`` follows after ``PATH``, then this file will be opened
-through the “delegate” process. See :ref:`delegate` for an
-explanation.
-
-- ``DELEGATE``: The payload is the path of the delegate program.
-
-- ``DOCUMENT_ROOT``: See :ref:`tresponse`.
-
-- ``HOME``: See :ref:`tresponse`.
-
-See :ref:`rlimits` for how to configure resource limits and :ref:`ns`
-for how to configure namespaces.
 
 Proxying requests
 -----------------

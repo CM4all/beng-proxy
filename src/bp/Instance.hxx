@@ -201,8 +201,6 @@ struct BpInstance final : PInstance, BengControl::Handler,
 	std::unordered_map<std::string, float> was_metrics;
 #endif
 
-	StockMap *delegate_stock = nullptr;
-
 	PipeStock *pipe_stock = nullptr;
 
 	ResourceLoader *direct_resource_loader = nullptr;

@@ -14,7 +14,6 @@
 #include "translation/Response.hxx"
 #include "translation/Transformation.hxx"
 #include "translation/SuffixRegistry.hxx"
-#include "delegate/Handler.hxx"
 #include "strmap.hxx"
 #include "session/Id.hxx"
 #include "widget/View.hxx"
@@ -41,7 +40,6 @@ struct BpConnection;
 struct IncomingHttpRequest;
 struct PendingResponse;
 struct FilterTransformation;
-struct DelegateAddress;
 struct WidgetContext;
 struct WidgetRef;
 struct ForwardRequest;
@@ -55,7 +53,7 @@ namespace Co { template<typename T> class Task; }
  * The BENG request struct.  This is only used by the handlers
  * (handler.c, file-handler.c etc.).
  */
-class Request final : public HttpResponseHandler, DelegateHandler,
+class Request final : public HttpResponseHandler,
 		      TranslateHandler,
 		      SuffixRegistryHandler, Cancellable, PoolLeakDetector {
 
@@ -311,10 +309,6 @@ private:
 			 */
 			void Close() noexcept;
 		} file;
-
-		struct {
-			const char *path;
-		} delegate;
 	} handler;
 
 	/**
@@ -637,9 +631,6 @@ private:
 	void HandlePathExists(const FileAddress &address) noexcept;
 	void OnPathExistsStat(const struct statx &st) noexcept;
 	void OnPathExistsStatError(int error) noexcept;
-
-	void HandleDelegateAddress(const DelegateAddress &address,
-				   const char *path) noexcept;
 
 	/**
 	 * Return a copy of the original request URI for forwarding to the
@@ -1057,10 +1048,6 @@ private:
 	void OnHttpResponse(HttpStatus status, StringMap &&headers,
 			    UnusedIstreamPtr body) noexcept override;
 	void OnHttpError(std::exception_ptr ep) noexcept override;
-
-	/* virtual methods from class DelegateHandler */
-	void OnDelegateSuccess(UniqueFileDescriptor fd) noexcept override;
-	void OnDelegateError(std::exception_ptr ep) noexcept override;
 
 	/* handler methods for UringOpenStat() */
 	void OnOpenStat(FileDescriptor fd, const struct statx &stx, SharedLease _lease) noexcept;

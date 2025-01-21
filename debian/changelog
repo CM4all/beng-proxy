@@ -6,6 +6,7 @@ cm4all-beng-proxy (19.3) unstable; urgency=low
   * was: send/receive to/from control channel using io_uring
   * bp: reuse pipes for service static files with io_uring
   * bp: use the file descriptor cache for regular files
+  * bp: remove delegate support
   * io_uring: handle EAGAIN to full pipe
   * io_uring: add settings "io_uring_sqpoll", "io_uring_sq_thread_cpu"
   * do not resolve IPv6 scope ids to interface names

@@ -41,8 +41,7 @@ Recommends: cm4all-beng-proxy-translation | cm4all-jetserv-daemon,
  libcm4all-beng-proxy-js (= ${source:Version})
 Suggests: attr, cm4all-coma-cgi,
  cm4all-spawn-accessory,
- cm4all-beng-proxy-logging (= ${source:Version}),
- cm4all-beng-proxy-delegate-helper
+ cm4all-beng-proxy-logging (= ${source:Version})
 Provides: httpd, httpd-cgi
 Breaks: libcm4all-beng-proxy-js (<< 0.9.14),
  libcm4all-was-simple1 (<< 1.8),
@@ -66,17 +65,6 @@ Description: Logging servers for beng-proxy
  processor.
  .
  This package contains logging servers for use with beng-proxy.
-
-Package: cm4all-beng-proxy-delegate-helper
-Architecture: any
-Depends: ${misc:Depends}, ${shlibs:Depends}
-Enhances: cm4all-beng-proxy
-Description: HTTP proxy server, delegate helper
- BENG proxy is an HTTP proxy server which includes a HTML template
- processor.
- .
- This package contains the delegate helper.  It can be used to open
- files safely.
 
 Package: cm4all-beng-control
 Architecture: any

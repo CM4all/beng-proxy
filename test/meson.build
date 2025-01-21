@@ -110,15 +110,6 @@ if nghttp2_client_dep.found()
   )
 endif
 
-executable('run_delegate',
-  'run_delegate.cxx',
-  '../src/PInstance.cxx',
-  include_directories: inc,
-  dependencies: [
-    delegate_client_dep,
-    spawn_dep,
-  ])
-
 executable('run_http_cache',
   'run_http_cache.cxx',
   '../src/PInstance.cxx',

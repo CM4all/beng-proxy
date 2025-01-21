@@ -34,7 +34,6 @@
 #include "was/Stock.hxx"
 #include "was/MStock.hxx"
 #include "was/RStock.hxx"
-#include "delegate/Stock.hxx"
 #include "thread/Pool.hxx"
 #include "pipe/Stock.hxx"
 #include "bp/Control.hxx"
@@ -477,9 +476,6 @@ try {
 #endif // HAVE_URING
 #endif // HAVE_LIBWAS
 
-	instance.delegate_stock = delegate_stock_new(instance.event_loop,
-						     *instance.spawn_service);
-
 	instance.direct_resource_loader =
 		new DirectResourceLoader(instance.event_loop,
 #ifdef HAVE_URING
@@ -499,7 +495,6 @@ try {
 					 instance.remote_was_stock,
 					 &instance,
 #endif
-					 instance.delegate_stock,
 					 instance.ssl_client_factory.get(),
 
 					 /* TODO how to support

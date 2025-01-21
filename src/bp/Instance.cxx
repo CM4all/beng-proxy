@@ -29,7 +29,6 @@
 #include "was/Stock.hxx"
 #include "was/MStock.hxx"
 #include "was/RStock.hxx"
-#include "delegate/Stock.hxx"
 #include "tcp_stock.hxx"
 #include "ssl/Client.hxx"
 #include "fs/Stock.hxx"
@@ -162,11 +161,6 @@ BpInstance::FreeStocksAndCaches() noexcept
 	delete tcp_stock;
 	tcp_stock = nullptr;
 
-	if (delegate_stock != nullptr) {
-		delegate_stock_free(delegate_stock);
-		delegate_stock = nullptr;
-	}
-
 	delete std::exchange(pipe_stock, nullptr);
 }
 
@@ -227,9 +221,6 @@ BpInstance::FadeChildren() noexcept
 		multi_was_stock->FadeAll();
 #endif
 
-	if (delegate_stock != nullptr)
-		delegate_stock->FadeAll();
-
 	if (listen_stream_stock)
 		listen_stream_stock->FadeAll();
 }
@@ -252,8 +243,6 @@ BpInstance::FadeTaggedChildren(std::string_view tag) noexcept
 
 	if (listen_stream_stock)
 		listen_stream_stock->FadeTag(tag);
-
-	// TODO: delegate_stock
 }
 
 void

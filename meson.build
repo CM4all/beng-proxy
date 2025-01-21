@@ -465,7 +465,6 @@ raddress = static_library('raddress',
   'src/cgi/ChildParams.cxx',
   'src/cgi/Address.cxx',
   'src/file/Address.cxx',
-  'src/delegate/Address.cxx',
   'src/http/local/Address.cxx',
   'src/http/Address.cxx',
   'src/cluster/AddressList.cxx',
@@ -567,7 +566,6 @@ subdir('src/nghttp2')
 subdir('src/http/cache')
 subdir('src/cgi')
 subdir('src/fcgi')
-subdir('src/delegate')
 subdir('src/bp/session')
 subdir('src/widget')
 
@@ -611,7 +609,6 @@ executable(
   'cm4all-beng-proxy',
   sources,
   'src/io/FdCache.cxx',
-  'src/delegate/RequestHandler.cxx',
   'src/net/PToString.cxx',
   'src/cluster/TcpBalancer.cxx',
   'src/bp/Bot.cxx',
@@ -722,7 +719,6 @@ executable(
     session_dep,
     widget_dep,
     processor_dep,
-    delegate_client_dep,
     control_server_dep,
     nghttp2_client_dep,
     nghttp2_server_dep,
@@ -928,18 +924,6 @@ if get_option('certdb')
     install: true,
   )
 endif
-
-executable(
-  'delegate-helper',
-  'src/delegate/Helper.cxx',
-  include_directories: inc,
-  dependencies: [
-    net_dep,
-    util_dep,
-  ],
-  install: true,
-  install_dir: 'lib/cm4all/beng-proxy/delegate/bin',
-)
 
 conf = configuration_data()
 conf.set('HAVE_AVAHI', avahi_dep.found())

@@ -44,7 +44,6 @@ class DirectResourceLoader final : public ResourceLoader {
 	RemoteWasStock *const remote_was_stock;
 	WasMetricsHandler *const metrics_handler;
 #endif
-	StockMap *const delegate_stock;
 
 	const XForwardedForConfig &xff;
 
@@ -67,7 +66,6 @@ public:
 			     RemoteWasStock *_remote_was_stock,
 			     WasMetricsHandler *_metrics_handler,
 #endif
-			     StockMap *_delegate_stock,
 			     SslClientFactory *_ssl_client_factory,
 			     const XForwardedForConfig &_xff) noexcept
 		:event_loop(_event_loop),
@@ -89,7 +87,6 @@ public:
 		 remote_was_stock(_remote_was_stock),
 		 metrics_handler(_metrics_handler),
 #endif
-		 delegate_stock(_delegate_stock),
 		 xff(_xff)
 	{
 	}

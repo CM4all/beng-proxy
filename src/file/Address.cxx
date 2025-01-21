@@ -3,7 +3,6 @@
 // author: Max Kellermann <mk@cm4all.com>
 
 #include "Address.hxx"
-#include "delegate/Address.hxx"
 #include "uri/Base.hxx"
 #include "uri/Compare.hxx"
 #include "uri/PEscape.hxx"
@@ -21,14 +20,9 @@ FileAddress::FileAddress(AllocatorPtr alloc, const FileAddress &src,
 	 base(alloc.CheckDup(src.base)),
 	 content_type(alloc.CheckDup(src.content_type)),
 	 content_type_lookup(alloc.Dup(src.content_type_lookup)),
-	 document_root(alloc.CheckDup(src.document_root)),
-	 delegate(src.delegate != nullptr
-		  ? alloc.New<DelegateAddress>(alloc, *src.delegate)
-		  : nullptr),
 	 auto_gzipped(src.auto_gzipped),
 	 auto_brotli_path(src.auto_brotli_path),
-	 expand_path(src.expand_path),
-	 expand_document_root(src.expand_document_root)
+	 expand_path(src.expand_path)
 {
 }
 
@@ -38,21 +32,18 @@ FileAddress::FileAddress(AllocatorPtr alloc, const FileAddress &src) noexcept
 void
 FileAddress::Check() const
 {
-	if (delegate != nullptr)
-		delegate->Check();
 }
 
 bool
 FileAddress::IsValidBase() const noexcept
 {
-	return IsExpandable() ||
-		(delegate == nullptr ? base != nullptr : is_base(path));
+	return IsExpandable() || base != nullptr;
 }
 
 bool
 FileAddress::SplitBase(AllocatorPtr alloc, const char *suffix) noexcept
 {
-	if (base != nullptr || delegate != nullptr || expand_path)
+	if (base != nullptr || expand_path)
 		/* no-op and no error */
 		return true;
 
@@ -81,13 +72,8 @@ FileAddress::SaveBase(AllocatorPtr alloc, std::string_view suffix) const noexcep
 	if (base != nullptr && end == path)
 		return alloc.New<FileAddress>(alloc, *this, ".");
 
-	const char *new_path = alloc.DupZ({path, end});
-	const char *new_base = nullptr;
-
-	if (delegate == nullptr) {
-		new_base = new_path;
-		new_path = ".";
-	}
+	const char *new_path = ".";
+	const char *new_base = alloc.DupZ({path, end});
 
 	auto *dest = alloc.New<FileAddress>(alloc, *this, new_path);
 	dest->base = new_base;
@@ -102,18 +88,6 @@ FileAddress *
 FileAddress::LoadBase(AllocatorPtr alloc, std::string_view suffix) const noexcept
 {
 	assert(path != nullptr);
-
-	if (delegate != nullptr) {
-		/* no "base" support for delegates */
-		assert(*path != 0);
-		assert(path[strlen(path) - 1] == '/');
-
-		char *new_path = uri_unescape_concat(alloc, path, suffix);
-		if (new_path == nullptr)
-			return nullptr;
-
-		return alloc.New<FileAddress>(alloc, *this, new_path);
-	}
 
 	const char *src_base = base;
 	if (base == nullptr) {
@@ -149,9 +123,7 @@ FileAddress::LoadBase(AllocatorPtr alloc, std::string_view suffix) const noexcep
 bool
 FileAddress::IsExpandable() const noexcept
 {
-	return expand_path ||
-		expand_document_root ||
-		(delegate != nullptr && delegate->IsExpandable());
+	return expand_path;
 }
 
 void
@@ -161,13 +133,4 @@ FileAddress::Expand(AllocatorPtr alloc, const MatchData &match_data)
 		expand_path = false;
 		path = expand_string_unescaped(alloc, path, match_data);
 	}
-
-	if (expand_document_root) {
-		expand_document_root = false;
-		document_root = expand_string_unescaped(alloc, document_root,
-							match_data);
-	}
-
-	if (delegate != nullptr)
-		delegate->Expand(alloc, match_data);
 }
