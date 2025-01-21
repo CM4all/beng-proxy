@@ -6,6 +6,9 @@
 #include "spawn/ChildOptions.hxx"
 #include "pool/StringBuilder.hxx"
 #include "stock/Key.hxx"
+#include "util/djb_hash.hxx"
+#include "util/IntHash.hxx"
+#include "util/SpanCast.hxx"
 #include "AllocatorPtr.hxx"
 
 CgiChildParams::CgiChildParams(AllocatorPtr alloc, const CgiChildParams &src) noexcept
@@ -16,6 +19,26 @@ CgiChildParams::CgiChildParams(AllocatorPtr alloc, const CgiChildParams &src) no
 	 concurrency(src.concurrency),
 	 disposable(src.disposable)
 {
+}
+
+inline std::size_t
+CgiChildParams::GetStockHash() const noexcept
+{
+	std::size_t hash = INT_HASH_INIT;
+	hash = IntHashUpdate(djb_hash(AsBytes(executable_path)), hash);
+
+	for (const char *i : args)
+		hash = IntHashUpdate(djb_hash_string(i), hash);
+
+	hash = IntHashUpdate(djb_hash(AsBytes(options.tag)), hash);
+
+	if (options.ns.mount.pivot_root != nullptr)
+		hash = IntHashUpdate(djb_hash(AsBytes(options.ns.mount.pivot_root)), hash);
+
+	if (options.ns.mount.home != nullptr)
+		hash = IntHashUpdate(djb_hash(AsBytes(options.ns.mount.home)), hash);
+
+	return hash;
 }
 
 StockKey
@@ -38,5 +61,5 @@ CgiChildParams::GetStockKey(AllocatorPtr alloc) const noexcept
 	b.emplace_back(options_buffer,
 		       options.MakeId(options_buffer));
 
-	return StockKey{b.MakeView(alloc)};
+	return StockKey{b.MakeView(alloc), GetStockHash()};
 }

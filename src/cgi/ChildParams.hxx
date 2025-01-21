@@ -42,4 +42,8 @@ struct CgiChildParams {
 	 */
 	[[gnu::pure]]
 	StockKey GetStockKey(AllocatorPtr alloc) const noexcept;
+
+private:
+	[[gnu::pure]]
+	std::size_t GetStockHash() const noexcept;
 };
