@@ -34,11 +34,11 @@ MakeKey(StringBuilder &b, SocketAddress bind_address,
 }
 
 void
-MakeFilteredSocketStockKey(StringBuilder &b, const char *name,
+MakeFilteredSocketStockKey(StringBuilder &b, std::string_view name,
 			   SocketAddress bind_address, SocketAddress address,
 			   const SocketFilterParams *filter_params)
 {
-	if (name != nullptr)
+	if (!name.empty())
 		b.Append(name);
 	else
 		MakeKey(b, bind_address, address);

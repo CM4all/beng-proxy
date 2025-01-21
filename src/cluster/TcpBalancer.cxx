@@ -63,7 +63,7 @@ TcpBalancerRequest::Send(AllocatorPtr alloc, SocketAddress address,
 {
 	tcp_balancer.tcp_stock.Get(alloc,
 				   parent_stopwatch,
-				   nullptr,
+				   {},
 				   ip_transparent,
 				   bind_address,
 				   address,

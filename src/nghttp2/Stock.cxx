@@ -353,7 +353,7 @@ Stock::FadeAll() noexcept
 void
 Stock::Get(EventLoop &event_loop,
 	   AllocatorPtr alloc, const StopwatchPtr &parent_stopwatch,
-	   const char *name,
+	   std::string_view name,
 	   SocketAddress bind_address,
 	   SocketAddress address,
 	   Event::Duration timeout,

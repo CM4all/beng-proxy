@@ -70,7 +70,7 @@ FilteredSocketBalancer::Request::Send(AllocatorPtr alloc, SocketAddress address,
 {
 	stock.Get(alloc,
 		  StopwatchPtr(parent_stopwatch, "connect"),
-		  nullptr, fairness_hash,
+		  {}, fairness_hash,
 		  ip_transparent, bind_address, address,
 		  timeout,
 		  filter_params,

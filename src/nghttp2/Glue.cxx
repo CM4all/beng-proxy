@@ -51,7 +51,7 @@ public:
 	}
 
 	void Start(Stock &stock, EventLoop &event_loop) noexcept {
-		stock.Get(event_loop, alloc, stopwatch, nullptr,
+		stock.Get(event_loop, alloc, stopwatch, {},
 			  nullptr,
 			  *address.addresses.begin(), // TODO
 			  std::chrono::seconds(30),

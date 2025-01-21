@@ -51,7 +51,7 @@ public:
 	 * @param timeout the connect timeout in seconds
 	 */
 	void Get(AllocatorPtr alloc, const StopwatchPtr &parent_stopwatch,
-		 const char *name,
+		 std::string_view name,
 		 bool ip_transparent,
 		 SocketAddress bind_address,
 		 SocketAddress address,

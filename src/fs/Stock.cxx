@@ -307,7 +307,7 @@ FilteredSocketStockConnection::Release() noexcept
 void
 FilteredSocketStock::Get(AllocatorPtr alloc,
 			 StopwatchPtr stopwatch,
-			 const char *name,
+			 std::string_view name,
 			 uint_fast64_t fairness_hash,
 			 bool ip_transparent,
 			 SocketAddress bind_address,

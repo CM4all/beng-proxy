@@ -38,7 +38,7 @@ struct TcpStockRequest {
 	const Event::Duration timeout;
 
 	TcpStockRequest(AllocatorPtr _alloc, const StopwatchPtr &parent_stopwatch,
-			const char *name,
+			std::string_view name,
 			bool _ip_transparent, SocketAddress _bind_address,
 			SocketAddress _address, Event::Duration _timeout) noexcept
 		:alloc(_alloc),
@@ -215,7 +215,7 @@ TcpStockConnection::~TcpStockConnection() noexcept
 
 void
 TcpStock::Get(AllocatorPtr alloc, const StopwatchPtr &parent_stopwatch,
-	      const char *name,
+	      std::string_view name,
 	      bool ip_transparent,
 	      SocketAddress bind_address,
 	      SocketAddress address,
@@ -225,7 +225,7 @@ TcpStock::Get(AllocatorPtr alloc, const StopwatchPtr &parent_stopwatch,
 {
 	assert(!address.IsNull());
 
-	if (name == nullptr) {
+	if (name.empty()) {
 		char buffer[1024];
 		if (!ToString(buffer, address))
 			buffer[0] = 0;

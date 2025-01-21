@@ -433,7 +433,7 @@ AnyHttpClient::ProbeHTTP2(struct pool &pool,
 	try {
 		StringBuilder b(key_buffer);
 
-		const char *const name = nullptr;
+		const std::string_view name{};
 		const SocketAddress bind_address = nullptr;
 		MakeFilteredSocketStockKey(b, name,
 					   bind_address,
