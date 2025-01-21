@@ -33,37 +33,6 @@
 #include <sched.h>
 #endif
 
-class FcgiStock::CreateRequest final : StockGetHandler, Cancellable {
-	CreateStockItem create;
-	StockGetHandler &handler;
-	CancellablePointer cancel_ptr;
-
-public:
-	CreateRequest(const CreateStockItem &_create,
-		      StockGetHandler &_handler) noexcept
-		:create(_create), handler(_handler) {}
-
-	void Start(StockMap &child_stock_map,
-		   StockRequest &&request,
-		   CancellablePointer &caller_cancel_ptr) noexcept {
-		caller_cancel_ptr = *this;
-		child_stock_map.Get(create.GetStockName(),
-				    std::move(request),
-				    *this, cancel_ptr);
-	}
-
-private:
-	/* virtual methods from class StockGetHandler */
-	void OnStockItemReady(StockItem &item) noexcept override;
-	void OnStockItemError(std::exception_ptr error) noexcept override;
-
-	/* virtual methods from class Cancellable */
-	void Cancel() noexcept override {
-		cancel_ptr.Cancel();
-		delete this;
-	}
-};
-
 /*
  * child_stock class
  *
@@ -181,36 +150,6 @@ FcgiStock::PrepareListenChild(const void *, UniqueSocketDescriptor fd,
 			      FdHolder &close_fds)
 {
 	p.stdin_fd = close_fds.Insert(std::move(fd).MoveToFileDescriptor());
-}
-
-void
-FcgiStock::CreateRequest::OnStockItemReady(StockItem &item) noexcept
-{
-	auto &child = static_cast<ListenChildStockItem &>(item);
-
-	try {
-		auto *connection = new FcgiStockConnection(create, child, child.Connect());
-		connection->InvokeCreateSuccess(handler);
-	} catch (...) {
-		child.Put(PutAction::DESTROY);
-
-		try {
-			std::throw_with_nested(FcgiClientError(FcgiClientErrorCode::REFUSED,
-							       FmtBuffer<256>("Failed to connect to FastCGI server {:?}",
-									      create.GetStockName())));
-		} catch (...) {
-			create.InvokeCreateError(handler, std::current_exception());
-		}
-	}
-
-	delete this;
-}
-
-void
-FcgiStock::CreateRequest::OnStockItemError(std::exception_ptr error) noexcept
-{
-	create.InvokeCreateError(handler, std::move(error));
-	delete this;
 }
 
 /*

@@ -28,8 +28,6 @@ class FcgiStock final : MultiStockClass, ListenChildStockClass {
 	ChildStock child_stock;
 	MultiStock mchild_stock;
 
-	class CreateRequest;
-
 public:
 	FcgiStock(unsigned limit, unsigned max_idle,
 		  EventLoop &event_loop, SpawnService &spawn_service,
