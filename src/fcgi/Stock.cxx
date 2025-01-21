@@ -220,7 +220,7 @@ FcgiStock::Get(const ChildOptions &options,
 	auto r = ToDeletePointer(new CgiChildParams(executable_path,
 						    args, options,
 						    parallelism, concurrency, false));
-	const char *key = r->GetStockKey(*tpool);
+	const auto key = r->GetStockKey(*tpool);
 	mchild_stock.Get(key, std::move(r),
 			 concurrency,
 			 handler, cancel_ptr);

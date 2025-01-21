@@ -5,6 +5,7 @@
 #pragma once
 
 #include <span>
+#include <string_view>
 
 struct ChildOptions;
 class AllocatorPtr;
@@ -40,5 +41,5 @@ struct CgiChildParams {
 	 * allocated by the specified pool.
 	 */
 	[[gnu::pure]]
-	const char *GetStockKey(AllocatorPtr alloc) const noexcept;
+	std::string_view GetStockKey(AllocatorPtr alloc) const noexcept;
 };

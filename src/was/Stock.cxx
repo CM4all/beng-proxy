@@ -151,7 +151,7 @@ WasStock::Get(struct pool &pool,
 						      parallelism,
 						      0,
 						      disposable);
-	const char *key = r->GetStockKey(*tpool);
+	const auto key = r->GetStockKey(*tpool);
 
 	stock.Get(key, std::move(r), handler, cancel_ptr);
 }

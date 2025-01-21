@@ -17,7 +17,7 @@ CgiChildParams::CgiChildParams(AllocatorPtr alloc, const CgiChildParams &src) no
 {
 }
 
-const char *
+std::string_view
 CgiChildParams::GetStockKey(AllocatorPtr alloc) const noexcept
 {
 	PoolStringBuilder<256> b;
@@ -37,5 +37,5 @@ CgiChildParams::GetStockKey(AllocatorPtr alloc) const noexcept
 	b.emplace_back(options_buffer,
 		       options.MakeId(options_buffer));
 
-	return b(alloc);
+	return b.MakeView(alloc);
 }
