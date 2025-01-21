@@ -345,7 +345,7 @@ FilteredSocketStock::Get(AllocatorPtr alloc,
 }
 
 void
-FilteredSocketStock::Add(const char *key, SocketAddress address,
+FilteredSocketStock::Add(std::string_view key, SocketAddress address,
 			 std::unique_ptr<FilteredSocket> socket) noexcept
 {
 	auto &_stock = stock.GetStock(key, nullptr);
