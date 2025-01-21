@@ -76,7 +76,7 @@ public:
 		children.emplace_back(std::forward<C>(child));
 	}
 
-	void RecordEvent(const char *name) noexcept;
+	void RecordEvent(std::string_view name) noexcept;
 
 	void Dump(std::chrono::steady_clock::time_point root_time,
 		  size_t indent) noexcept;
@@ -110,22 +110,22 @@ MakeStopwatchName(std::string name, const char *suffix) noexcept
 }
 
 static std::shared_ptr<Stopwatch>
-stopwatch_new(const char *name, const char *suffix) noexcept
+stopwatch_new(std::string_view name, const char *suffix) noexcept
 {
 	if (!stopwatch_is_enabled())
 		return nullptr;
 
-	return std::make_shared<Stopwatch>(MakeStopwatchName(name, suffix), true);
+	return std::make_shared<Stopwatch>(MakeStopwatchName(std::string{name}, suffix), true);
 }
 
-StopwatchPtr::StopwatchPtr(const char *name, const char *suffix) noexcept
+StopwatchPtr::StopwatchPtr(std::string_view name, const char *suffix) noexcept
 	:stopwatch(stopwatch_new(name, suffix)) {}
 
-StopwatchPtr::StopwatchPtr(Stopwatch *parent, const char *name,
+StopwatchPtr::StopwatchPtr(Stopwatch *parent, std::string_view name,
 			   const char *suffix) noexcept
 {
 	if (parent != nullptr) {
-		stopwatch = std::make_shared<Stopwatch>(MakeStopwatchName(name, suffix),
+		stopwatch = std::make_shared<Stopwatch>(MakeStopwatchName(std::string{name}, suffix),
 							false);
 		parent->AddChild(stopwatch);
 	}
@@ -134,7 +134,7 @@ StopwatchPtr::StopwatchPtr(Stopwatch *parent, const char *name,
 StopwatchPtr::~StopwatchPtr() noexcept = default;
 
 inline void
-Stopwatch::RecordEvent(const char *event_name) noexcept
+Stopwatch::RecordEvent(std::string_view event_name) noexcept
 {
 	if (events.full())
 		/* array is full, do not record any more events */
@@ -144,7 +144,7 @@ Stopwatch::RecordEvent(const char *event_name) noexcept
 }
 
 void
-StopwatchPtr::RecordEvent(const char *name) const noexcept
+StopwatchPtr::RecordEvent(std::string_view name) const noexcept
 {
 	if (stopwatch != nullptr)
 		stopwatch->RecordEvent(name);

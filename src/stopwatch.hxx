@@ -5,6 +5,7 @@
 #pragma once
 
 #include <utility>
+#include <string_view>
 
 class Stopwatch;
 class UniqueFileDescriptor;
@@ -22,14 +23,14 @@ public:
 	StopwatchPtr(std::nullptr_t) noexcept {}
 
 protected:
-	StopwatchPtr(const char *name,
+	StopwatchPtr(std::string_view name,
 		     const char *suffix=nullptr) noexcept;
 
 public:
-	StopwatchPtr(Stopwatch *parent, const char *name,
+	StopwatchPtr(Stopwatch *parent, std::string_view name,
 		     const char *suffix=nullptr) noexcept;
 
-	StopwatchPtr(const StopwatchPtr &parent, const char *name,
+	StopwatchPtr(const StopwatchPtr &parent, std::string_view name,
 		     const char *suffix=nullptr) noexcept
 		:StopwatchPtr(parent.stopwatch.get(), name, suffix) {}
 
@@ -39,7 +40,7 @@ public:
 		return stopwatch != nullptr;
 	}
 
-	void RecordEvent(const char *name) const noexcept;
+	void RecordEvent(std::string_view name) const noexcept;
 };
 
 class RootStopwatchPtr : public StopwatchPtr {
@@ -67,16 +68,16 @@ public:
 	StopwatchPtr() = default;
 	StopwatchPtr(std::nullptr_t) noexcept {}
 
-	StopwatchPtr(const char *, const char * =nullptr) noexcept {}
+	StopwatchPtr(std::string_view, const char * =nullptr) noexcept {}
 
-	StopwatchPtr(const StopwatchPtr &, const char *,
+	StopwatchPtr(const StopwatchPtr &, std::string_view,
 		     const char * =nullptr) noexcept {}
 
 	operator bool() const noexcept {
 		return false;
 	}
 
-	void RecordEvent(const char *) const noexcept {}
+	void RecordEvent(std::string_view) const noexcept {}
 };
 
 using RootStopwatchPtr = StopwatchPtr;
