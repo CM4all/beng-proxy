@@ -7,7 +7,7 @@
 #include <span>
 
 struct ChildOptions;
-struct StockKey;
+struct StringWithHash;
 class AllocatorPtr;
 
 struct CgiChildParams {
@@ -41,7 +41,7 @@ struct CgiChildParams {
 	 * allocated by the specified pool.
 	 */
 	[[gnu::pure]]
-	StockKey GetStockKey(AllocatorPtr alloc) const noexcept;
+	StringWithHash GetStockKey(AllocatorPtr alloc) const noexcept;
 
 private:
 	[[gnu::pure]]
