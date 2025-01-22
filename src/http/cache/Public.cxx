@@ -459,7 +459,7 @@ http_cache_key(const AllocatorPtr alloc, const ResourceAddress &address,
 	case ResourceAddress::Type::LOCAL:
 	case ResourceAddress::Type::PIPE:
 		/* not cacheable */
-		return StringWithHash{{}, 0};
+		return StringWithHash{nullptr};
 
 	case ResourceAddress::Type::HTTP:
 	case ResourceAddress::Type::LHTTP:
@@ -474,7 +474,7 @@ http_cache_key(const AllocatorPtr alloc, const ResourceAddress &address,
 
 	/* unreachable */
 	assert(false);
-	return StringWithHash{{}, 0};
+	return StringWithHash{nullptr};
 }
 
 inline EventLoop &
@@ -1152,7 +1152,7 @@ HttpCache::Start(struct pool &caller_pool,
 	auto key = http_cache_key(caller_pool, address, params.address_id);
 	if (/* this address type cannot be cached; skip the rest of this
 	       library */
-	    key.value.data() == nullptr ||
+	    key.IsNull() ||
 	    /* don't cache a huge request URI; probably it contains lots
 	       and lots of unique parameters, and that's not worth the
 	       cache space anyway */

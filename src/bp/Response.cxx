@@ -131,7 +131,7 @@ GetEncodingCacheKey(AllocatorPtr alloc,
 				alloc.ConcatView(resource_tag, "|etag="sv, etag, "."sv, encoding),
 			};
 
-	return StringWithHash{{}, 0};
+	return StringWithHash{nullptr};
 }
 
 static void
@@ -146,7 +146,7 @@ MaybeCacheEncoded(EncodingCache *cache, AllocatorPtr alloc,
 
 	const auto key = GetEncodingCacheKey(alloc, resource_tag, encoding,
 					     response_headers);
-	if (key.value.data() == nullptr)
+	if (key.IsNull())
 		return;
 
 	if (auto encoded = cache->Get(alloc.GetPool(), key)) {
