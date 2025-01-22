@@ -8,6 +8,16 @@
 #include "http/List.hxx"
 #include "AllocatorPtr.hxx"
 
+using std::string_view_literals::operator""sv;
+
+std::string_view
+resource_tag_append_etag_encoding(AllocatorPtr alloc, std::string_view tag,
+				  std::string_view etag,
+				  std::string_view encoding) noexcept
+{
+	return alloc.ConcatView(tag, "|etag="sv, etag, "."sv, encoding);
+}
+
 const char *
 resource_tag_append_etag(AllocatorPtr alloc, const char *tag,
 			 const StringMap &headers) noexcept

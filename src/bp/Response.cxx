@@ -128,7 +128,7 @@ GetEncodingCacheKey(AllocatorPtr alloc,
 		if (const auto etag = response_headers.GetSloppy(etag_header);
 		    etag.data() != nullptr)
 			return StringWithHash{
-				alloc.ConcatView(resource_tag, "|etag="sv, etag, "."sv, encoding),
+				resource_tag_append_etag_encoding(alloc, resource_tag, etag, encoding),
 			};
 
 	return StringWithHash{nullptr};

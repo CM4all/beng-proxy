@@ -4,8 +4,19 @@
 
 #pragma once
 
+#include <string_view>
+
 class AllocatorPtr;
 class StringMap;
+
+/**
+ * A tag which addresses a resource in the filter cache.
+ */
+[[gnu::pure]]
+std::string_view
+resource_tag_append_etag_encoding(AllocatorPtr alloc, std::string_view tag,
+				  std::string_view etag,
+				  std::string_view encoding) noexcept;
 
 /**
  * A tag which addresses a resource in the filter cache.
