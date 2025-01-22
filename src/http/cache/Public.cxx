@@ -451,7 +451,7 @@ UpdateHeader(AllocatorPtr alloc, StringMap &dest,
 }
 
 static const char *
-http_cache_key(struct pool &pool, const ResourceAddress &address,
+http_cache_key(const AllocatorPtr alloc, const ResourceAddress &address,
 	       const char *id) noexcept
 {
 	switch (address.type) {
@@ -468,7 +468,7 @@ http_cache_key(struct pool &pool, const ResourceAddress &address,
 	case ResourceAddress::Type::WAS:
 		return id != nullptr
 			? id
-			: address.GetId(pool);
+			: address.GetId(alloc);
 	}
 
 	/* unreachable */
