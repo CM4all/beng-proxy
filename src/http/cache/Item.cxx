@@ -17,7 +17,7 @@ HttpCacheItem::TagHash::operator()(std::string_view _tag) const noexcept
 }
 
 HttpCacheItem::HttpCacheItem(PoolPtr &&_pool,
-			     const char *_key,
+			     StringWithHash _key,
 			     std::chrono::steady_clock::time_point now,
 			     std::chrono::system_clock::time_point system_now,
 			     const char *_tag,

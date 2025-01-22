@@ -8,6 +8,7 @@
 #include "istream/UnusedPtr.hxx"
 #include "istream/SharedLeaseIstream.hxx"
 #include "pool/pool.hxx"
+#include "AllocatorPtr.hxx"
 
 static bool
 http_cache_item_match(const CacheItem *_item, void *ctx) noexcept
@@ -19,15 +20,15 @@ http_cache_item_match(const CacheItem *_item, void *ctx) noexcept
 }
 
 HttpCacheDocument *
-HttpCacheHeap::Get(const char *uri, StringMap &request_headers) noexcept
+HttpCacheHeap::Get(StringWithHash key, StringMap &request_headers) noexcept
 {
-	return (HttpCacheItem *)cache.GetMatch(uri,
+	return (HttpCacheItem *)cache.GetMatch(key,
 					       http_cache_item_match,
 					       &request_headers);
 }
 
 void
-HttpCacheHeap::Put(const char *url, const char *tag,
+HttpCacheHeap::Put(StringWithHash key, const char *tag,
 		   const HttpCacheResponseInfo &info,
 		   const StringMap &request_headers,
 		   HttpStatus status,
@@ -35,7 +36,8 @@ HttpCacheHeap::Put(const char *url, const char *tag,
 		   RubberAllocation &&a, size_t size) noexcept
 {
 	auto new_pool = pool_new_slice(pool, "http_cache_item", slice_pool);
-	const char *key = p_strdup(new_pool, url);
+	const AllocatorPtr alloc{new_pool};
+	key = alloc.Dup(key);
 
 	auto item = NewFromPool<HttpCacheItem>(std::move(new_pool), key,
 					       cache.SteadyNow(),
@@ -63,9 +65,9 @@ HttpCacheHeap::Remove(HttpCacheDocument &document) noexcept
 }
 
 void
-HttpCacheHeap::RemoveURL(const char *url, const StringMap &headers) noexcept
+HttpCacheHeap::Remove(StringWithHash key, const StringMap &headers) noexcept
 {
-	cache.RemoveKeyIf(url, [&headers](const CacheItem &_item){
+	cache.RemoveKeyIf(key, [&headers](const CacheItem &_item){
 		const auto &item = static_cast<const HttpCacheItem &>(_item);
 		return item.VaryFits(headers);
 	});

@@ -51,13 +51,13 @@ public:
 		Compress();
 	}
 
-	UnusedIstreamPtr Get(struct pool &pool, const char *key) noexcept;
+	UnusedIstreamPtr Get(struct pool &pool, StringWithHash key) noexcept;
 
-	UnusedIstreamPtr Put(struct pool &pool, const char *key,
+	UnusedIstreamPtr Put(struct pool &pool, StringWithHash key,
 			     UnusedIstreamPtr src) noexcept;
 
 private:
-	void Add(const char *key,
+	void Add(StringWithHash key,
 		 RubberAllocation &&a, std::size_t size) noexcept;
 
 	void Compress() noexcept {

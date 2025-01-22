@@ -69,7 +69,7 @@ private:
 	/**
 	 * The cache key used to address the associated cache document.
 	 */
-	const char *const key;
+	const StringWithHash key;
 
 	/** headers from the original request */
 	const StringMap request_headers;
@@ -113,7 +113,7 @@ public:
 			 bool _eager_cache,
 			 const char *_cache_tag,
 			 HttpCache &_cache,
-			 const char *_key,
+			 StringWithHash _key,
 			 const StringMap &_headers,
 			 HttpResponseHandler &_handler,
 			 const HttpCacheRequestInfo &_info,
@@ -125,7 +125,7 @@ public:
 
 	using PoolHolder::GetPool;
 
-	const char *GetKey() const noexcept {
+	StringWithHash GetKey() const noexcept {
 		return key;
 	}
 
@@ -328,16 +328,16 @@ public:
 		   HttpResponseHandler &handler,
 		   CancellablePointer &cancel_ptr) noexcept;
 
-	void Put(const char *url, const char *tag,
+	void Put(StringWithHash key, const char *tag,
 		 const HttpCacheResponseInfo &info,
 		 const StringMap &request_headers,
 		 HttpStatus status,
 		 const StringMap &response_headers,
 		 RubberAllocation &&a, size_t size) noexcept {
-		LogConcat(4, "HttpCache", "put ", url);
+		LogConcat(4, "HttpCache", "put ", key.value);
 		++stats.stores;
 
-		heap.Put(url, tag, info, request_headers,
+		heap.Put(key, tag, info, request_headers,
 			 status, response_headers,
 			 std::move(a), size);
 	}
@@ -346,8 +346,8 @@ public:
 		heap.Remove(*document);
 	}
 
-	void RemoveURL(const char *url, StringMap &headers) noexcept {
-		heap.RemoveURL(url, headers);
+	void Remove(StringWithHash key, StringMap &headers) noexcept {
+		heap.Remove(key, headers);
 	}
 
 	[[nodiscard]]
@@ -363,7 +363,7 @@ public:
 	 */
 	void Use(struct pool &caller_pool,
 		 const StopwatchPtr &parent_stopwatch,
-		 const char *key,
+		 StringWithHash key,
 		 const ResourceRequestParams &params,
 		 HttpMethod method,
 		 const ResourceAddress &address,
@@ -379,7 +379,7 @@ public:
 	 */
 	void Serve(struct pool &caller_pool,
 		   HttpCacheDocument &document,
-		   const char *key,
+		   StringWithHash key,
 		   HttpResponseHandler &handler) noexcept;
 
 private:
@@ -390,7 +390,7 @@ private:
 	 */
 	void Miss(struct pool &caller_pool,
 		  const StopwatchPtr &parent_stopwatch,
-		  const char *key,
+		  StringWithHash key,
 		  const ResourceRequestParams &params,
 		  const HttpCacheRequestInfo &info,
 		  HttpMethod method,
@@ -406,7 +406,7 @@ private:
 	 */
 	void Revalidate(struct pool &caller_pool,
 			const StopwatchPtr &parent_stopwatch,
-			const char *key,
+			StringWithHash key,
 			const ResourceRequestParams &params,
 			const HttpCacheRequestInfo &info,
 			HttpCacheDocument &document,
@@ -425,7 +425,7 @@ private:
 	 */
 	void Found(const HttpCacheRequestInfo &info,
 		   HttpCacheDocument &document,
-		   const char *key,
+		   StringWithHash key,
 		   struct pool &caller_pool,
 		   const StopwatchPtr &parent_stopwatch,
 		   const ResourceRequestParams &params,
@@ -450,7 +450,7 @@ UpdateHeader(AllocatorPtr alloc, StringMap &dest,
 		dest.SecureSet(alloc, name, alloc.Dup(value));
 }
 
-static const char *
+static StringWithHash
 http_cache_key(const AllocatorPtr alloc, const ResourceAddress &address,
 	       const char *id) noexcept
 {
@@ -459,21 +459,22 @@ http_cache_key(const AllocatorPtr alloc, const ResourceAddress &address,
 	case ResourceAddress::Type::LOCAL:
 	case ResourceAddress::Type::PIPE:
 		/* not cacheable */
-		return nullptr;
+		return StringWithHash{{}, 0};
 
 	case ResourceAddress::Type::HTTP:
 	case ResourceAddress::Type::LHTTP:
 	case ResourceAddress::Type::CGI:
 	case ResourceAddress::Type::FASTCGI:
 	case ResourceAddress::Type::WAS:
+		// TODO optimize hasher
 		return id != nullptr
-			? id
-			: address.GetId(alloc);
+			? StringWithHash{id}
+			: StringWithHash{address.GetId(alloc)};
 	}
 
 	/* unreachable */
 	assert(false);
-	return nullptr;
+	return StringWithHash{{}, 0};
 }
 
 inline EventLoop &
@@ -530,7 +531,7 @@ HttpCacheRequest::RubberDone(RubberAllocation &&a, size_t size) noexcept
 void
 HttpCacheRequest::RubberOutOfMemory() noexcept
 {
-	LogConcat(4, "HttpCache", "nocache oom ", key);
+	LogConcat(4, "HttpCache", "nocache oom ", key.value);
 
 	RubberStoreFinished();
 	Destroy();
@@ -539,7 +540,7 @@ HttpCacheRequest::RubberOutOfMemory() noexcept
 void
 HttpCacheRequest::RubberTooLarge() noexcept
 {
-	LogConcat(4, "HttpCache", "nocache too large ", key);
+	LogConcat(4, "HttpCache", "nocache too large ", key.value);
 
 	RubberStoreFinished();
 	Destroy();
@@ -548,7 +549,7 @@ HttpCacheRequest::RubberTooLarge() noexcept
 void
 HttpCacheRequest::RubberError(std::exception_ptr ep) noexcept
 {
-	LogConcat(4, "HttpCache", "body_abort ", key, ": ", ep);
+	LogConcat(4, "HttpCache", "body_abort ", key.value, ": ", ep);
 
 	RubberStoreFinished();
 	Destroy();
@@ -605,7 +606,7 @@ HttpCacheRequest::OnHttpResponse(HttpStatus status, StringMap &&_headers,
 			UpdateHeader(item_alloc, document->response_headers, _headers, "cache-control");
 		}
 
-		LogConcat(5, "HttpCache", "not_modified ", key);
+		LogConcat(5, "HttpCache", "not_modified ", key.value);
 		Serve();
 		Destroy();
 		return;
@@ -614,7 +615,7 @@ HttpCacheRequest::OnHttpResponse(HttpStatus status, StringMap &&_headers,
 	if (document != nullptr &&
 	    http_cache_prefer_cached(*document, _headers)) {
 		LogConcat(4, "HttpCache", "matching etag '", document->info.etag,
-			  "' for ", key, ", using cache entry");
+			  "' for ", key.value, ", using cache entry");
 
 		body.Clear();
 
@@ -638,7 +639,7 @@ HttpCacheRequest::OnHttpResponse(HttpStatus status, StringMap &&_headers,
 		info = std::move(*_info);
 	} else {
 		/* don't cache response */
-		LogConcat(4, "HttpCache", "nocache ", key);
+		LogConcat(4, "HttpCache", "nocache ", key.value);
 
 		if (body)
 			body = NewRefIstream(pool, std::move(body));
@@ -721,7 +722,7 @@ HttpCacheRequest::OnHttpResponse(HttpStatus status, StringMap &&_headers,
 void
 HttpCacheRequest::OnHttpError(std::exception_ptr ep) noexcept
 {
-	ep = NestException(ep, FmtRuntimeError("http_cache {}", key));
+	ep = NestException(ep, FmtRuntimeError("http_cache {}", key.value));
 
 	auto &_handler = handler;
 	Destroy();
@@ -752,7 +753,7 @@ HttpCacheRequest::HttpCacheRequest(PoolPtr &&_pool,
 				   bool _eager_cache,
 				   const char *_cache_tag,
 				   HttpCache &_cache,
-				   const char *_key,
+				   StringWithHash _key,
 				   const StringMap &_headers,
 				   HttpResponseHandler &_handler,
 				   const HttpCacheRequestInfo &_request_info,
@@ -761,7 +762,7 @@ HttpCacheRequest::HttpCacheRequest(PoolPtr &&_pool,
 	:PoolHolder(std::move(_pool)), caller_pool(_caller_pool),
 	 cache_tag(_cache_tag),
 	 cache(_cache),
-	 key(p_strdup(pool, _key)),
+	 key(AllocatorPtr{pool}.Dup(_key)),
 	 request_headers(pool, _headers),
 	 handler(_handler),
 	 request_info(_request_info),
@@ -854,7 +855,7 @@ http_cache_flush_tag(HttpCache &cache, std::string_view tag) noexcept
 inline void
 HttpCache::Miss(struct pool &caller_pool,
 		const StopwatchPtr &parent_stopwatch,
-		const char *key,
+		StringWithHash key,
 		const ResourceRequestParams &params,
 		const HttpCacheRequestInfo &info,
 		HttpMethod method,
@@ -886,7 +887,7 @@ HttpCache::Miss(struct pool &caller_pool,
 					      handler,
 					      info, nullptr, SharedLease{});
 
-	LogConcat(4, "HttpCache", "miss ", request->GetKey());
+	LogConcat(4, "HttpCache", "miss ", request->GetKey().value);
 
 	request->Start(resource_loader, parent_stopwatch,
 		       params,
@@ -987,10 +988,10 @@ CheckCacheRequest(struct pool &pool, const HttpCacheRequestInfo &info,
 inline void
 HttpCache::Serve(struct pool &caller_pool,
 		 HttpCacheDocument &document,
-		 const char *key,
+		 const StringWithHash key,
 		 HttpResponseHandler &handler) noexcept
 {
-	LogConcat(4, "HttpCache", "serve ", key);
+	LogConcat(4, "HttpCache", "serve ", key.value);
 
 	auto body = heap.OpenStream(caller_pool, document);
 
@@ -1025,7 +1026,7 @@ HttpCacheRequest::Serve() noexcept
 inline void
 HttpCache::Revalidate(struct pool &caller_pool,
 		      const StopwatchPtr &parent_stopwatch,
-		      const char *key,
+		      const StringWithHash key,
 		      const ResourceRequestParams &params,
 		      const HttpCacheRequestInfo &info,
 		      HttpCacheDocument &document,
@@ -1049,7 +1050,7 @@ HttpCache::Revalidate(struct pool &caller_pool,
 					      handler,
 					      info, &document, Lock(document));
 
-	LogConcat(4, "HttpCache", "test ", request->GetKey());
+	LogConcat(4, "HttpCache", "test ", request->GetKey().value);
 
 	if (document.info.last_modified != nullptr)
 		headers.Set(request->GetPool(),
@@ -1078,7 +1079,7 @@ http_cache_may_serve(EventLoop &event_loop,
 inline void
 HttpCache::Found(const HttpCacheRequestInfo &info,
 		 HttpCacheDocument &document,
-		 const char *key,
+		 const StringWithHash key,
 		 struct pool &caller_pool,
 		 const StopwatchPtr &parent_stopwatch,
 		 const ResourceRequestParams &params,
@@ -1107,7 +1108,7 @@ HttpCache::Found(const HttpCacheRequestInfo &info,
 inline void
 HttpCache::Use(struct pool &caller_pool,
 	       const StopwatchPtr &parent_stopwatch,
-	       const char *key,
+	       const StringWithHash key,
 	       const ResourceRequestParams &params,
 	       HttpMethod method,
 	       const ResourceAddress &address,
@@ -1148,14 +1149,14 @@ HttpCache::Start(struct pool &caller_pool,
 		 HttpResponseHandler &handler,
 		 CancellablePointer &cancel_ptr) noexcept
 {
-	const char *key = http_cache_key(caller_pool, address, params.address_id);
+	auto key = http_cache_key(caller_pool, address, params.address_id);
 	if (/* this address type cannot be cached; skip the rest of this
 	       library */
-	    key == nullptr ||
+	    key.value.data() == nullptr ||
 	    /* don't cache a huge request URI; probably it contains lots
 	       and lots of unique parameters, and that's not worth the
 	       cache space anyway */
-	    strlen(key) > 8192) {
+	    key.value.size() > 8192) {
 		resource_loader.SendRequest(caller_pool, parent_stopwatch,
 					    params,
 					    method, address,
@@ -1177,16 +1178,20 @@ HttpCache::Start(struct pool &caller_pool,
 
 		if (https || docroot != nullptr) {
 			char buffer[32];
+			std::size_t docroot_hash = 0;
 			std::string_view docroot_base32{};
 
-			if (docroot != nullptr)
-				docroot_base32 = {buffer, FormatIntBase32(buffer, djb_hash_string(docroot))};
+			if (docroot != nullptr) {
+				docroot_hash = djb_hash_string(docroot);
+				docroot_base32 = {buffer, FormatIntBase32(buffer, docroot_hash)};
+			}
 
 			const AllocatorPtr alloc{caller_pool};
-			key = alloc.Concat(https ? "https;"sv : std::string_view{},
-					   docroot_base32,
-					   docroot != nullptr ? "=dr;"sv : std::string_view{},
-					   key);
+			key.value = alloc.Concat(https ? "https;"sv : std::string_view{},
+						 docroot_base32,
+						 docroot != nullptr ? "=dr;"sv : std::string_view{},
+						 key.value);
+			key.hash ^= docroot_hash + https;
 		}
 	}
 
@@ -1199,12 +1204,12 @@ HttpCache::Start(struct pool &caller_pool,
 		    method, address, std::move(headers), *info,
 		    handler, cancel_ptr);
 	} else if (params.auto_flush_cache && IsModifyingMethod(method)) {
-		LogConcat(4, "HttpCache", "auto_flush? ", key);
+		LogConcat(4, "HttpCache", "auto_flush? ", key.value);
 		++stats.skips;
 
 		/* TODO merge IsModifyingMethod() and
 		   http_cache_request_invalidate()? */
-		RemoveURL(key, headers);
+		Remove(key, headers);
 
 		auto request =
 			NewFromPool<AutoFlushHttpCacheRequest>(caller_pool,
@@ -1217,9 +1222,9 @@ HttpCache::Start(struct pool &caller_pool,
 			       cancel_ptr);
 	} else {
 		if (http_cache_request_invalidate(method))
-			RemoveURL(key, headers);
+			Remove(key, headers);
 
-		LogConcat(4, "HttpCache", "ignore ", key);
+		LogConcat(4, "HttpCache", "ignore ", key.value);
 		++stats.skips;
 
 		resource_loader.SendRequest(caller_pool, parent_stopwatch,

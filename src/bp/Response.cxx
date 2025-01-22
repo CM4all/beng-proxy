@@ -108,7 +108,7 @@ session_drop_widgets(RealmSession &session, const char *uri,
 }
 
 [[gnu::pure]]
-static const char *
+static StringWithHash
 GetEncodingCacheKey(AllocatorPtr alloc,
 		    const char *resource_tag,
 		    std::string_view encoding,
@@ -122,15 +122,16 @@ GetEncodingCacheKey(AllocatorPtr alloc,
 		   if EAGER_CACHE is enabled, and this code allows
 		   putting EAGER_CACHE responses in the
 		   EncodingCache */
-		return alloc.Concat(digest, "."sv, encoding);
+		return StringWithHash{alloc.ConcatView(digest, "."sv, encoding)};
 
 	if (resource_tag != nullptr)
 		if (const auto etag = response_headers.GetSloppy(etag_header);
 		    etag.data() != nullptr)
-			return alloc.Concat(resource_tag, "|etag="sv, etag,
-					    "."sv, encoding);
+			return StringWithHash{
+				alloc.ConcatView(resource_tag, "|etag="sv, etag, "."sv, encoding),
+			};
 
-	return nullptr;
+	return StringWithHash{{}, 0};
 }
 
 static void
@@ -143,9 +144,9 @@ MaybeCacheEncoded(EncodingCache *cache, AllocatorPtr alloc,
 	if (cache == nullptr)
 		return;
 
-	const char *key = GetEncodingCacheKey(alloc, resource_tag, encoding,
-					      response_headers);
-	if (key == nullptr)
+	const auto key = GetEncodingCacheKey(alloc, resource_tag, encoding,
+					     response_headers);
+	if (key.value.data() == nullptr)
 		return;
 
 	if (auto encoded = cache->Get(alloc.GetPool(), key)) {

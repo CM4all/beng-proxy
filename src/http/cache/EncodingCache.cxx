@@ -32,21 +32,23 @@ protected:
 
 public:
 	[[nodiscard]]
-	explicit EncodingCacheItemKey(const char *_key) noexcept
+	explicit EncodingCacheItemKey(std::string_view _key) noexcept
 		:key(_key) {}
 };
 
 struct EncodingCache::Item final : EncodingCacheItemKey, CacheItem, LeakDetector {
 	const std::string key;
 
+
 	const RubberAllocation allocation;
 
-	Item(const char *_key,
+	Item(StringWithHash _key,
 	     std::chrono::steady_clock::time_point now,
 	     std::chrono::system_clock::time_point system_now,
 	     std::size_t _size, RubberAllocation &&_allocation) noexcept
-		:EncodingCacheItemKey(_key),
-		 CacheItem(EncodingCacheItemKey::key.c_str(), _size, now, system_now,
+		:EncodingCacheItemKey(_key.value),
+		 CacheItem(StringWithHash{EncodingCacheItemKey::key, _key.hash},
+			   _size, now, system_now,
 			   system_now + encoding_cache_default_expires),
 		 allocation(std::move(_allocation)) {}
 
@@ -64,7 +66,7 @@ class EncodingCache::Store final
 
 	EncodingCache &cache;
 
-	const char *const key;
+	const StringWithHash key;
 
 	/**
 	 * This event is initialized by the response callback, and limits
@@ -78,7 +80,7 @@ class EncodingCache::Store final
 	CancellablePointer rubber_cancel_ptr;
 
 public:
-	Store(EncodingCache &_cache, const char *_key) noexcept
+	Store(EncodingCache &_cache, StringWithHash _key) noexcept
 		:cache(_cache), key(_key),
 		 timeout_event(cache.GetEventLoop(), BIND_THIS_METHOD(OnTimeout)) {}
 
@@ -114,7 +116,7 @@ private:
 	void OnTimeout() noexcept {
 		/* reading the response has taken too long already; don't store
 		   this resource */
-		LogConcat(4, "EncodingCache", "timeout ", key);
+		LogConcat(4, "EncodingCache", "timeout ", key.value);
 		CancelStore();
 	}
 
@@ -140,7 +142,7 @@ EncodingCache::Store::RubberOutOfMemory() noexcept
 {
 	rubber_cancel_ptr = nullptr;
 
-	LogConcat(4, "EncodingCache", "nocache oom ", key);
+	LogConcat(4, "EncodingCache", "nocache oom ", key.value);
 	++cache.stats.skips;
 	Destroy();
 }
@@ -150,7 +152,7 @@ EncodingCache::Store::RubberTooLarge() noexcept
 {
 	rubber_cancel_ptr = nullptr;
 
-	LogConcat(4, "EncodingCache", "nocache too large", key);
+	LogConcat(4, "EncodingCache", "nocache too large", key.value);
 	++cache.stats.skips;
 	Destroy();
 }
@@ -160,22 +162,22 @@ EncodingCache::Store::RubberError(std::exception_ptr ep) noexcept
 {
 	rubber_cancel_ptr = nullptr;
 
-	LogConcat(4, "EncodingCache", "body_error ", key, ": ", ep);
+	LogConcat(4, "EncodingCache", "body_error ", key.value, ": ", ep);
 	++cache.stats.skips;
 	Destroy();
 }
 
 UnusedIstreamPtr
-EncodingCache::Get(struct pool &pool, const char *key) noexcept
+EncodingCache::Get(struct pool &pool, StringWithHash key) noexcept
 {
 	auto *item = (EncodingCache::Item *)cache.Get(key);
 	if (item == nullptr) {
-		LogConcat(6, "EncodingCache", "miss ", key);
+		LogConcat(6, "EncodingCache", "miss ", key.value);
 		++stats.misses;
 		return {};
 	}
 
-	LogConcat(5, "EncodingCache", "hit ", key);
+	LogConcat(5, "EncodingCache", "hit ", key.value);
 	++stats.hits;
 
 	return NewSharedLeaseIstream(pool,
@@ -186,7 +188,7 @@ EncodingCache::Get(struct pool &pool, const char *key) noexcept
 
 UnusedIstreamPtr
 EncodingCache::Put(struct pool &pool,
-		   const char *key,
+		   StringWithHash key,
 		   UnusedIstreamPtr src) noexcept
 {
 	if (!src)
@@ -195,12 +197,12 @@ EncodingCache::Put(struct pool &pool,
 	if (const auto available = src.GetAvailable(true);
 	    available > cacheable_size_limit) {
 		/* too large for the cache */
-		LogConcat(4, "EncodingCache", "nocache too large", key);
+		LogConcat(4, "EncodingCache", "nocache too large", key.value);
 		++stats.skips;
 		return src;
 	}
 
-	LogConcat(4, "EncodingCache", "put ", key);
+	LogConcat(4, "EncodingCache", "put ", key.value);
 
 	/* tee the body: one goes to our client, and one goes into the
 	   cache */
@@ -217,10 +219,10 @@ EncodingCache::Put(struct pool &pool,
 }
 
 void
-EncodingCache::Add(const char *key,
+EncodingCache::Add(StringWithHash key,
 		   RubberAllocation &&a, std::size_t size) noexcept
 {
-	LogConcat(4, "EncodingCache", "add ", key);
+	LogConcat(4, "EncodingCache", "add ", key.value);
 	++stats.stores;
 
 	auto item = new Item(key,

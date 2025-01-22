@@ -67,9 +67,9 @@ struct FilterCacheInfo {
 	const char *tag;
 
 	/** the final resource id */
-	const char *key;
+	StringWithHash key;
 
-	FilterCacheInfo(const char *_tag, const char *_key) noexcept
+	FilterCacheInfo(const char *_tag, StringWithHash _key) noexcept
 		:tag(_tag), key(_key) {}
 
 	FilterCacheInfo(AllocatorPtr alloc, const FilterCacheInfo &src) noexcept
@@ -117,7 +117,7 @@ struct FilterCacheItem final : PoolHolder, CacheItem, LeakDetector {
 	};
 
 	FilterCacheItem(PoolPtr &&_pool,
-			const char *_key,
+			StringWithHash _key,
 			std::chrono::steady_clock::time_point now,
 			std::chrono::system_clock::time_point system_now,
 			const char *_tag,
@@ -374,10 +374,9 @@ filter_cache_request_evaluate(AllocatorPtr alloc,
 	if (user == nullptr)
 		user = "";
 
-	return alloc.New<FilterCacheInfo>(tag,
-					  alloc.Concat(source_id, '|',
-						       user, '|',
-						       address.GetId(alloc)));
+	const StringWithHash key{alloc.ConcatView(source_id, '|', user, '|', address.GetId(alloc))};
+
+	return alloc.New<FilterCacheInfo>(tag, key);
 }
 
 void
@@ -385,7 +384,7 @@ FilterCache::Put(const FilterCacheInfo &info,
 		 HttpStatus status, const StringMap &headers,
 		 RubberAllocation &&a, size_t size) noexcept
 {
-	LogConcat(4, "FilterCache", "put ", info.key);
+	LogConcat(4, "FilterCache", "put ", info.key.value);
 
 	std::chrono::system_clock::time_point expires;
 	if (info.expires == std::chrono::system_clock::from_time_t(-1))
@@ -394,7 +393,7 @@ FilterCache::Put(const FilterCacheInfo &info,
 		expires = info.expires;
 
 	auto new_pool = pool_new_slice(*pool, "FilterCacheItem", slice_pool);
-	const char *key = p_strdup(new_pool, info.key);
+	const StringWithHash key = AllocatorPtr{new_pool}.Dup(info.key);
 
 	auto item = NewFromPool<FilterCacheItem>(std::move(new_pool),
 						 key,
@@ -479,7 +478,7 @@ FilterCacheRequest::OnTimeout() noexcept
 {
 	/* reading the response has taken too long already; don't store
 	   this resource */
-	LogConcat(4, "FilterCache", "timeout ", info.key);
+	LogConcat(4, "FilterCache", "timeout ", info.key.value);
 	CancelStore();
 }
 
@@ -505,7 +504,7 @@ FilterCacheRequest::RubberOutOfMemory() noexcept
 {
 	response.cancel_ptr = nullptr;
 
-	LogConcat(4, "FilterCache", "nocache oom ", info.key);
+	LogConcat(4, "FilterCache", "nocache oom ", info.key.value);
 	Destroy();
 }
 
@@ -514,7 +513,7 @@ FilterCacheRequest::RubberTooLarge() noexcept
 {
 	response.cancel_ptr = nullptr;
 
-	LogConcat(4, "FilterCache", "nocache too large ", info.key);
+	LogConcat(4, "FilterCache", "nocache too large ", info.key.value);
 	Destroy();
 }
 
@@ -523,7 +522,7 @@ FilterCacheRequest::RubberError(std::exception_ptr ep) noexcept
 {
 	response.cancel_ptr = nullptr;
 
-	LogConcat(4, "FilterCache", "body_abort ", info.key, ": ", ep);
+	LogConcat(4, "FilterCache", "body_abort ", info.key.value, ": ", ep);
 	Destroy();
 }
 
@@ -551,7 +550,7 @@ FilterCacheRequest::OnHttpResponse(HttpStatus status, StringMap &&headers,
 	if (!filter_cache_response_evaluate(cache.GetEventLoop(), info,
 					    status, headers, available)) {
 		/* don't cache response */
-		LogConcat(4, "FilterCache", "nocache ", info.key);
+		LogConcat(4, "FilterCache", "nocache ", info.key.value);
 		++cache.stats.skips;
 
 		if (body)
@@ -638,7 +637,7 @@ FilterCacheRequest::OnHttpResponse(HttpStatus status, StringMap &&headers,
 void
 FilterCacheRequest::OnHttpError(std::exception_ptr ep) noexcept
 {
-	ep = NestException(ep, FmtRuntimeError("fcache {}", info.key));
+	ep = NestException(ep, FmtRuntimeError("fcache {}", info.key.value));
 
 	handler.InvokeError(ep);
 	Destroy();
@@ -736,7 +735,7 @@ FilterCache::Miss(struct pool &caller_pool,
 						       caller_pool,
 						       *this, _handler, info);
 
-	LogConcat(4, "FilterCache", "miss ", info.key);
+	LogConcat(4, "FilterCache", "miss ", info.key.value);
 	++stats.misses;
 
 	request->Start(resource_loader, parent_stopwatch, info.tag,
@@ -751,7 +750,7 @@ FilterCache::Serve(FilterCacheItem &item,
 		   struct pool &caller_pool,
 		   HttpResponseHandler &handler) noexcept
 {
-	LogConcat(4, "FilterCache", "serve ", item.GetKey());
+	LogConcat(4, "FilterCache", "serve ", item.GetKey().value);
 	++stats.hits;
 
 	/* XXX hold reference on item */

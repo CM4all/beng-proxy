@@ -58,7 +58,7 @@ put_random(HttpCacheHeap *cache)
 	response_headers->Add(*tpool, "x-foo", "bar");
 	response_headers->Add(*tpool, "x-bar", "foo");
 
-	cache->Put(uri, nullptr, info, *request_headers,
+	cache->Put(StringWithHash{uri}, nullptr, info, *request_headers,
 		   HttpStatus::OK, *response_headers,
 		   RubberAllocation(cache->GetRubber(), rubber_id), length);
 }

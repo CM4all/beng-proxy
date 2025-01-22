@@ -7,6 +7,7 @@
 #include "util/IntrusiveHashSet.hxx"
 #include "util/IntrusiveList.hxx"
 #include "util/SharedLease.hxx"
+#include "util/StringWithHash.hxx"
 
 #include <chrono>
 #include <cstddef>
@@ -28,23 +29,23 @@ class CacheItem : public SharedAnchor {
 	/**
 	 * The key under which this item is stored in the hash table.
 	 */
-	const char *const key;
+	const StringWithHash key;
 
 	std::chrono::steady_clock::time_point expires;
 
 	const size_t size;
 
 public:
-	CacheItem(const char *_key, std::size_t _size,
+	CacheItem(StringWithHash _key, std::size_t _size,
 		  std::chrono::steady_clock::time_point _expires) noexcept
 		:key(_key), expires(_expires), size(_size) {}
 
-	CacheItem(const char *_key, std::size_t _size,
+	CacheItem(StringWithHash _key, std::size_t _size,
 		  std::chrono::steady_clock::time_point now,
 		  std::chrono::system_clock::time_point system_now,
 		  std::chrono::system_clock::time_point _expires) noexcept;
 
-	CacheItem(const char *_key, std::size_t _size,
+	CacheItem(StringWithHash _key, std::size_t _size,
 		  std::chrono::steady_clock::time_point now,
 		  std::chrono::seconds max_age) noexcept;
 
@@ -63,7 +64,7 @@ public:
 			Destroy();
 	}
 
-	const char *GetKey() const noexcept {
+	StringWithHash GetKey() const noexcept {
 		return key;
 	}
 
@@ -90,19 +91,9 @@ public:
 
 	virtual void Destroy() noexcept = 0;
 
-	struct Hash {
-		[[gnu::pure]]
-		size_t operator()(const char *key) const noexcept;
-	};
-
-	struct Equal {
-		[[gnu::pure]]
-		bool operator()(const char *a, const char *b) const noexcept;
-	};
-
 	struct GetKeyFunction {
 		[[gnu::pure]]
-		const char *operator()(const CacheItem &item) const noexcept {
+		StringWithHash operator()(const CacheItem &item) const noexcept {
 			return item.GetKey();
 		}
 	};

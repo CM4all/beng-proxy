@@ -92,7 +92,7 @@ Cache::RemoveItem(CacheItem &item) noexcept
 }
 
 CacheItem *
-Cache::Get(const char *key) noexcept
+Cache::Get(StringWithHash key) noexcept
 {
 	auto i = items.find(key);
 	if (i == items.end())
@@ -112,7 +112,7 @@ Cache::Get(const char *key) noexcept
 }
 
 CacheItem *
-Cache::GetMatch(const char *key,
+Cache::GetMatch(StringWithHash key,
 		bool (*match)(const CacheItem *, void *),
 		void *ctx) noexcept
 {
@@ -224,7 +224,7 @@ Cache::PutMatch(CacheItem &item,
 }
 
 void
-Cache::Remove(const char *key) noexcept
+Cache::Remove(StringWithHash key) noexcept
 {
 	items.remove_and_dispose_key(key, ItemRemover{*this});
 }

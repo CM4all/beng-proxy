@@ -28,7 +28,7 @@ struct MyCacheItem final : PoolHolder, CacheItem {
 	const int match;
 	const int value;
 
-	MyCacheItem(PoolPtr &&_pool, const char *_key, int _match, int _value) noexcept
+	MyCacheItem(PoolPtr &&_pool, StringWithHash _key, int _match, int _value) noexcept
 		:PoolHolder(std::move(_pool)),
 		 CacheItem(_key, 1, std::chrono::steady_clock::now(),
 			   std::chrono::hours(1)),
@@ -42,7 +42,7 @@ struct MyCacheItem final : PoolHolder, CacheItem {
 };
 
 static MyCacheItem *
-my_cache_item_new(struct pool *_pool, const char *key, int match, int value)
+my_cache_item_new(struct pool *_pool, StringWithHash key, int match, int value)
 {
 	auto pool = pool_new_linear(_pool, "my_cache_item", 1024);
 	auto i = NewFromPool<MyCacheItem>(std::move(pool), key, match, value);
@@ -66,76 +66,78 @@ TEST(TranslationCache, Basic)
 
 	Cache cache(instance.event_loop, 4);
 
+	const StringWithHash foo_key{"foo"};
+
 	/* add first item */
 
-	i = my_cache_item_new(instance.root_pool, "foo", 1, 0);
+	i = my_cache_item_new(instance.root_pool, foo_key, 1, 0);
 	cache.Put(*i);
 
 	/* overwrite first item */
 
-	i = my_cache_item_new(instance.root_pool, "foo", 2, 0);
+	i = my_cache_item_new(instance.root_pool, foo_key, 2, 0);
 	cache.Put(*i);
 
 	/* check overwrite result */
 
-	i = (MyCacheItem *)cache.Get("foo");
+	i = (MyCacheItem *)cache.Get(foo_key);
 	ASSERT_NE(i, nullptr);
 	ASSERT_EQ(i->match, 2);
 	ASSERT_EQ(i->value, 0);
 
-	i = (MyCacheItem *)cache.GetMatch("foo", my_match, match_to_ptr(1));
+	i = (MyCacheItem *)cache.GetMatch(foo_key, my_match, match_to_ptr(1));
 	ASSERT_EQ(i, nullptr);
 
-	i = (MyCacheItem *)cache.GetMatch("foo", my_match, match_to_ptr(2));
+	i = (MyCacheItem *)cache.GetMatch(foo_key, my_match, match_to_ptr(2));
 	ASSERT_NE(i, nullptr);
 	ASSERT_EQ(i->match, 2);
 	ASSERT_EQ(i->value, 0);
 
 	/* add new item */
 
-	i = my_cache_item_new(instance.root_pool, "foo", 1, 1);
+	i = my_cache_item_new(instance.root_pool, foo_key, 1, 1);
 	cache.PutMatch(*i, my_match, match_to_ptr(1));
 
 	/* check second item */
 
-	i = (MyCacheItem *)cache.GetMatch("foo", my_match, match_to_ptr(1));
+	i = (MyCacheItem *)cache.GetMatch(foo_key, my_match, match_to_ptr(1));
 	ASSERT_NE(i, nullptr);
 	ASSERT_EQ(i->match, 1);
 	ASSERT_EQ(i->value, 1);
 
 	/* check first item */
 
-	i = (MyCacheItem *)cache.GetMatch("foo", my_match, match_to_ptr(2));
+	i = (MyCacheItem *)cache.GetMatch(foo_key, my_match, match_to_ptr(2));
 	ASSERT_NE(i, nullptr);
 	ASSERT_EQ(i->match, 2);
 	ASSERT_EQ(i->value, 0);
 
 	/* overwrite first item */
 
-	i = my_cache_item_new(instance.root_pool, "foo", 1, 3);
+	i = my_cache_item_new(instance.root_pool, foo_key, 1, 3);
 	cache.PutMatch(*i, my_match, match_to_ptr(1));
 
-	i = (MyCacheItem *)cache.GetMatch("foo", my_match, match_to_ptr(1));
+	i = (MyCacheItem *)cache.GetMatch(foo_key, my_match, match_to_ptr(1));
 	ASSERT_NE(i, nullptr);
 	ASSERT_EQ(i->match, 1);
 	ASSERT_EQ(i->value, 3);
 
-	i = (MyCacheItem *)cache.GetMatch("foo", my_match, match_to_ptr(2));
+	i = (MyCacheItem *)cache.GetMatch(foo_key, my_match, match_to_ptr(2));
 	ASSERT_NE(i, nullptr);
 	ASSERT_EQ(i->match, 2);
 	ASSERT_EQ(i->value, 0);
 
 	/* overwrite second item */
 
-	i = my_cache_item_new(instance.root_pool, "foo", 2, 4);
+	i = my_cache_item_new(instance.root_pool, foo_key, 2, 4);
 	cache.PutMatch(*i, my_match, match_to_ptr(2));
 
-	i = (MyCacheItem *)cache.GetMatch("foo", my_match, match_to_ptr(1));
+	i = (MyCacheItem *)cache.GetMatch(foo_key, my_match, match_to_ptr(1));
 	ASSERT_NE(i, nullptr);
 	ASSERT_EQ(i->match, 1);
 	ASSERT_EQ(i->value, 3);
 
-	i = (MyCacheItem *)cache.GetMatch("foo", my_match, match_to_ptr(2));
+	i = (MyCacheItem *)cache.GetMatch(foo_key, my_match, match_to_ptr(2));
 	ASSERT_NE(i, nullptr);
 	ASSERT_EQ(i->match, 2);
 	ASSERT_EQ(i->value, 4);

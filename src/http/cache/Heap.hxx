@@ -59,10 +59,10 @@ public:
 	[[gnu::pure]]
 	AllocatorStats GetStats() const noexcept;
 
-	HttpCacheDocument *Get(const char *uri,
+	HttpCacheDocument *Get(StringWithHash key,
 			       StringMap &request_headers) noexcept;
 
-	void Put(const char *url, const char *tag,
+	void Put(StringWithHash key, const char *tag,
 		 const HttpCacheResponseInfo &info,
 		 const StringMap &request_headers,
 		 HttpStatus status,
@@ -70,7 +70,7 @@ public:
 		 RubberAllocation &&a, size_t size) noexcept;
 
 	void Remove(HttpCacheDocument &document) noexcept;
-	void RemoveURL(const char *url, const StringMap &headers) noexcept;
+	void Remove(StringWithHash key, const StringMap &headers) noexcept;
 
 	void Compress() noexcept;
 	void Flush() noexcept;

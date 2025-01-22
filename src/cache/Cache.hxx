@@ -27,8 +27,8 @@ class Cache {
 	using ItemSet = IntrusiveHashSet<CacheItem, 65536,
 					 IntrusiveHashSetOperators<CacheItem,
 								   CacheItem::GetKeyFunction,
-								   CacheItem::Hash,
-								   CacheItem::Equal>,
+								   std::hash<StringWithHash>,
+								   std::equal_to<StringWithHash>>,
 					 IntrusiveHashSetMemberHookTraits<&CacheItem::set_hook>>;
 
 	ItemSet items;
@@ -59,7 +59,7 @@ public:
 	std::chrono::system_clock::time_point SystemNow() const noexcept;
 
 	[[gnu::pure]]
-	CacheItem *Get(const char *key) noexcept;
+	CacheItem *Get(StringWithHash key) noexcept;
 
 	/**
 	 * Find the first CacheItem for a key which matches with the
@@ -70,7 +70,7 @@ public:
 	 * @param ctx a context pointer for the callback
 	 */
 	[[gnu::pure]]
-	CacheItem *GetMatch(const char *key,
+	CacheItem *GetMatch(StringWithHash key,
 			    bool (*match)(const CacheItem *, void *),
 			    void *ctx) noexcept;
 
@@ -97,14 +97,14 @@ public:
 		      bool (*match)(const CacheItem *, void *),
 		      void *ctx) noexcept;
 
-	void Remove(const char *key) noexcept;
+	void Remove(StringWithHash key) noexcept;
 
 	/**
 	 * Removes all matching cache items.
 	 *
 	 * @return the number of items which were removed
 	 */
-	void RemoveKeyIf(const char *key,
+	void RemoveKeyIf(StringWithHash key,
 			 std::predicate<const CacheItem &> auto pred) noexcept {
 		items.remove_and_dispose_key_if(key, pred, ItemRemover{*this});
 	}

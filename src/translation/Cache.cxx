@@ -32,6 +32,7 @@
 #include "util/IntrusiveHashSet.hxx"
 #include "util/IntrusiveList.hxx"
 #include "util/SpanCast.hxx"
+#include "util/StringSplit.hxx"
 
 #include <cassert>
 
@@ -87,7 +88,7 @@ struct TranslateCacheItem final : PoolHolder, CacheItem {
 	AllocatorStats stats;
 
 	TranslateCacheItem(PoolPtr &&_pool,
-			   const char *_key,
+			   StringWithHash _key,
 			   TranslateResponse &&_response,
 			   std::chrono::steady_clock::time_point now,
 			   std::chrono::seconds max_age) noexcept
@@ -263,12 +264,12 @@ struct TranslateCacheRequest final : TranslateHandler {
 	/** are we looking for a "BASE" cache entry? */
 	const bool find_base;
 
-	const char *key;
+	const StringWithHash key;
 
 	TranslateHandler *handler;
 
 	TranslateCacheRequest(AllocatorPtr _alloc, struct tcache &_tcache,
-			      const TranslateRequest &_request, const char *_key,
+			      const TranslateRequest &_request, StringWithHash _key,
 			      bool _cacheable,
 			      TranslateHandler &_handler) noexcept
 		:alloc(_alloc), tcache(&_tcache), request(_request),
@@ -283,7 +284,7 @@ struct TranslateCacheRequest final : TranslateHandler {
 	void OnTranslateError(std::exception_ptr error) noexcept override;
 };
 
-static const char *
+static StringWithHash
 tcache_uri_key(AllocatorPtr alloc, const char *uri, const char *host,
 	       HttpStatus status,
 	       std::span<const std::byte> layout,
@@ -393,7 +394,8 @@ tcache_uri_key(AllocatorPtr alloc, const char *uri, const char *host,
 
 	b.push_back(uri);
 
-	return b(alloc);
+	// TODO optimize the hash calculation
+	return StringWithHash{b(alloc)};
 }
 
 [[gnu::pure]]
@@ -406,20 +408,20 @@ tcache_is_content_type_lookup(const TranslateRequest &request) noexcept
 }
 
 [[gnu::pure]]
-static const char *
+static StringWithHash
 tcache_content_type_lookup_key(AllocatorPtr alloc,
 			       const TranslateRequest &request) noexcept
 {
 	char buffer[MAX_CONTENT_TYPE_LOOKUP * 3];
 	const auto content_type_lookup = UriEscapeView(buffer, request.content_type_lookup);
 
-	return alloc.Concat("CTL|",
-			    content_type_lookup,
-			    '|',
-			    request.suffix);
+	return StringWithHash{
+		alloc.ConcatView("CTL|", content_type_lookup, '|', request.suffix),
+		djb_hash(request.content_type_lookup) ^ djb_hash_string(request.suffix),
+	};
 }
 
-static const char *
+static StringWithHash
 tcache_chain_key(AllocatorPtr alloc, const TranslateRequest &request) noexcept
 {
 	char buffer[MAX_CHAIN * 3];
@@ -430,20 +432,26 @@ tcache_chain_key(AllocatorPtr alloc, const TranslateRequest &request) noexcept
 	if (unsigned(request.status) != 0)
 		status = FmtUnsafeSV(status_buffer, "{}", unsigned(request.status));
 
-	return alloc.Concat("CHAIN|", chain, '=', status);
+	return StringWithHash{
+		alloc.ConcatView("CHAIN|", chain, '=', status),
+		djb_hash(request.chain) ^ static_cast<unsigned>(request.status),
+	};
 }
 
-static const char *
+static StringWithHash
 tcache_mount_listen_stream_key(AllocatorPtr alloc, const TranslateRequest &request) noexcept
 {
 	char buffer[MAX_MOUNT_LISTEN_STREAM * 3];
 	const auto mount_listen_stream = UriEscapeView(buffer, request.mount_listen_stream);
 
-	return alloc.Concat("MLS|"sv, mount_listen_stream);
+	return StringWithHash{
+		alloc.ConcatView("MLS|"sv, mount_listen_stream),
+		djb_hash(request.mount_listen_stream),
+	};
 }
 
 [[gnu::pure]]
-static const char *
+static StringWithHash
 tcache_request_key(AllocatorPtr alloc, const TranslateRequest &request) noexcept
 {
 	if (tcache_is_content_type_lookup(request))
@@ -467,7 +475,7 @@ tcache_request_key(AllocatorPtr alloc, const TranslateRequest &request) noexcept
 				 request.read_file,
 				 request.path_exists,
 				 !request.want.empty())
-		: request.widget_type;
+		: StringWithHash{request.widget_type};
 }
 
 /* check whether the request could produce a cacheable response */
@@ -584,10 +592,11 @@ tcache_expand_response(AllocatorPtr alloc, TranslateResponse &response,
 	response.Expand(alloc, match_data);
 }
 
-static const char *
+static StringWithHash
 tcache_store_response(AllocatorPtr alloc, TranslateResponse &dest,
 		      const TranslateResponse &src,
-		      const TranslateRequest &request)
+		      const TranslateRequest &request,
+		      const StringWithHash fallback_key)
 {
 	dest.CacheStore(alloc, src, request.uri);
 	return dest.base != nullptr
@@ -604,7 +613,7 @@ tcache_store_response(AllocatorPtr alloc, TranslateResponse &dest,
 				 request.path_exists,
 				 !request.want.empty())
 		/* no BASE, cache key unmodified */
-		: nullptr;
+		: alloc.Dup(fallback_key);
 }
 
 static const char *
@@ -665,15 +674,19 @@ tcache_address_match(SocketAddress a, SocketAddress b, bool strict) noexcept
  * @param strict in strict mode, nullptr values are a mismatch
  */
 static bool
-tcache_uri_match(const char *a, const char *b, bool strict) noexcept
+tcache_uri_match(std::string_view a, const char *b, bool strict) noexcept
 {
-	if (a == nullptr || b == nullptr)
-		return !strict && a == b;
+	if (b == nullptr)
+		return !strict;
 
 	/* skip everything until the first slash; these may be prefixes
 	   added by tcache_uri_key() */
-	a = strchr(a, '/');
-	return a != nullptr && strcmp(a, b) == 0;
+	if (auto i = a.find('/'); i == a.npos)
+		return false;
+	else
+		a = a.substr(i);
+
+	return a == b;
 }
 
 /**
@@ -687,7 +700,7 @@ TranslateCacheItem::VaryMatch(const TranslateRequest &other_request,
 {
 	switch (command) {
 	case TranslationCommand::URI:
-		return tcache_uri_match(GetKey(),
+		return tcache_uri_match(GetKey().value,
 					other_request.uri, strict);
 
 	case TranslationCommand::PARAM:
@@ -790,7 +803,7 @@ tcache_item_match(const CacheItem *_item, void *ctx) noexcept
 
 static TranslateCacheItem *
 tcache_get(struct tcache &tcache, const TranslateRequest &request,
-	   const char *key, bool find_base) noexcept
+	   StringWithHash key, bool find_base) noexcept
 {
 	TranslateCacheMatchContext match_ctx{request, find_base};
 
@@ -799,8 +812,8 @@ tcache_get(struct tcache &tcache, const TranslateRequest &request,
 }
 
 static TranslateCacheItem *
-tcache_lookup(AllocatorPtr alloc, struct tcache &tcache,
-	      const TranslateRequest &request, const char *key) noexcept
+tcache_lookup(struct tcache &tcache,
+	      const TranslateRequest &request, StringWithHash key) noexcept
 {
 	TranslateCacheItem *item = tcache_get(tcache, request, key, false);
 	if (item != nullptr || request.uri == nullptr)
@@ -808,26 +821,30 @@ tcache_lookup(AllocatorPtr alloc, struct tcache &tcache,
 
 	/* no match - look for matching BASE responses */
 
-	char *uri = alloc.Dup(key);
-	char *slash = strrchr(uri, '/');
+	const std::string_view new_key = key.value;
+	assert(!new_key.empty());
 
-	if (slash != nullptr && slash[1] == 0) {
+	auto slash = new_key.rfind('/');
+
+	if (slash == new_key.size() - 1) {
 		/* if the URI already ends with a slash, don't repeat the
 		   original lookup - cut off this slash, and try again */
-		*slash = 0;
-		slash = strrchr(uri, '/');
+
+		slash = new_key.rfind('/', slash - 1);
 	}
 
-	while (slash != nullptr) {
+	while (slash != new_key.npos) {
 		/* truncate string after slash */
-		slash[1] = 0;
+		key = StringWithHash{new_key.substr(0, slash + 1)};
 
-		item = tcache_get(tcache, request, uri, true);
+		item = tcache_get(tcache, request, key, true);
 		if (item != nullptr)
 			return item;
 
-		*slash = 0;
-		slash = strrchr(uri, '/');
+		if (slash == 0)
+			break;
+
+		slash = new_key.rfind('/', slash - 1);
 	}
 
 	return nullptr;
@@ -919,10 +936,9 @@ tcache_store(TranslateCacheRequest &tcr, const TranslateResponse &response)
 
 	TranslateResponse new_response;
 
-	const char *key = tcache_store_response(alloc, new_response, response,
-						tcr.request);
-	if (key == nullptr)
-		key = alloc.Dup(tcr.key);
+	const StringWithHash key =
+		tcache_store_response(alloc, new_response, response,
+				      tcr.request, tcr.key);
 
 	auto item = NewFromPool<TranslateCacheItem>(std::move(new_pool),
 						    key, std::move(new_response),
@@ -982,7 +998,7 @@ tcache_store(TranslateCacheRequest &tcr, const TranslateResponse &response)
 	assert(!item->response.easy_base ||
 	       item->response.address.IsValidBase());
 
-	LogConcat(4, "TranslationCache", "store ", key);
+	LogConcat(4, "TranslationCache", "store ", key.value);
 
 	if (response.regex != nullptr) {
 		try {
@@ -1057,12 +1073,11 @@ try {
 				   nullptr);
 
 	if (!cacheable) {
-		if (key != nullptr)
-			LogConcat(4, "TranslationCache", "ignore ", key);
+		LogConcat(4, "TranslationCache", "ignore ", key.value);
 	} else if (tcache_response_evaluate(response)) {
 		tcache_store(*this, response);
 	} else {
-		LogConcat(4, "TranslationCache", "nocache ", key);
+		LogConcat(4, "TranslationCache", "nocache ", key.value);
 	}
 
 	if (request.uri != nullptr && response.IsExpandable()) {
@@ -1094,7 +1109,7 @@ try {
 void
 TranslateCacheRequest::OnTranslateError(std::exception_ptr ep) noexcept
 {
-	LogConcat(4, "TranslationCache", "error ", key);
+	LogConcat(4, "TranslationCache", "error ", key.value);
 
 	handler->OnTranslateError(ep);
 }
@@ -1102,13 +1117,13 @@ TranslateCacheRequest::OnTranslateError(std::exception_ptr ep) noexcept
 static void
 tcache_hit(AllocatorPtr alloc,
 	   const char *uri, const char *host, const char *user,
-	   const char *key,
+	   StringWithHash key,
 	   const TranslateCacheItem &item,
 	   TranslateHandler &handler) noexcept
 {
 	auto response = UniquePoolPtr<TranslateResponse>::Make(alloc.GetPool());
 
-	LogConcat(4, "TranslationCache", "hit ", key);
+	LogConcat(4, "TranslationCache", "hit ", key.value);
 
 	try {
 		response->CacheLoad(alloc, item.response, uri);
@@ -1132,7 +1147,7 @@ tcache_hit(AllocatorPtr alloc,
 
 static void
 tcache_miss(AllocatorPtr alloc, struct tcache &tcache,
-	    const TranslateRequest &request, const char *key,
+	    const TranslateRequest &request, StringWithHash key,
 	    bool cacheable,
 	    const StopwatchPtr &parent_stopwatch,
 	    TranslateHandler &handler,
@@ -1144,7 +1159,7 @@ tcache_miss(AllocatorPtr alloc, struct tcache &tcache,
 						    handler);
 
 	if (cacheable)
-		LogConcat(4, "TranslationCache", "miss ", key);
+		LogConcat(4, "TranslationCache", "miss ", key.value);
 
 	tcache.next.SendRequest(alloc, request, parent_stopwatch,
 				*tcr, cancel_ptr);
@@ -1153,12 +1168,12 @@ tcache_miss(AllocatorPtr alloc, struct tcache &tcache,
 [[gnu::pure]]
 static bool
 tcache_validate_mtime(const TranslateResponse &response,
-		      const char *key) noexcept
+		      StringWithHash key) noexcept
 {
 	if (response.validate_mtime.path == nullptr)
 		return true;
 
-	LogConcat(6, "TranslationCache", "[", key,
+	LogConcat(6, "TranslationCache", "[", key.value,
 		  "] validate_mtime ", response.validate_mtime.mtime,
 		  " ", response.validate_mtime.path);
 
@@ -1170,31 +1185,31 @@ tcache_validate_mtime(const TranslateResponse &response,
 		if (errno == ENOENT && response.validate_mtime.mtime == 0) {
 			/* the special value 0 matches when the file does not
 			   exist */
-			LogConcat(6, "TranslationCache", "[", key,
+			LogConcat(6, "TranslationCache", "[", key.value,
 				  "] validate_mtime enoent ",
 				  response.validate_mtime.path);
 			return true;
 		}
 
-		LogConcat(3, "TranslationCache", "[", key,
+		LogConcat(3, "TranslationCache", "[", key.value,
 			  "] failed to stat '", response.validate_mtime.path,
 			  "': ", strerror(errno));
 		return false;
 	}
 
 	if (!S_ISREG(stx.stx_mode)) {
-		LogConcat(3, "TranslationCache", "[", key,
+		LogConcat(3, "TranslationCache", "[", key.value,
 			  "] not a regular file: ", response.validate_mtime.path);
 		return false;
 	}
 
 	if ((uint_least64_t)stx.stx_mtime.tv_sec == response.validate_mtime.mtime) {
-		LogConcat(6, "TranslationCache", "[", key,
+		LogConcat(6, "TranslationCache", "[", key.value,
 			  "] validate_mtime unmodified ",
 			  response.validate_mtime.path);
 		return true;
 	} else {
-		LogConcat(5, "TranslationCache", "[", key,
+		LogConcat(5, "TranslationCache", "[", key.value,
 			  "] validate_mtime modified ",
 			  response.validate_mtime.path);
 		return false;
@@ -1281,9 +1296,9 @@ TranslationCache::SendRequest(AllocatorPtr alloc,
 			      CancellablePointer &cancel_ptr) noexcept
 {
 	const bool cacheable = cache->active && tcache_request_evaluate(request);
-	const char *key = tcache_request_key(alloc, request);
+	const auto key = tcache_request_key(alloc, request);
 	TranslateCacheItem *item = cacheable
-		? tcache_lookup(alloc, *cache, request, key)
+		? tcache_lookup(*cache, request, key)
 		: nullptr;
 	if (item != nullptr) {
 		++cache->stats.hits;
