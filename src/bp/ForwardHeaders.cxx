@@ -180,27 +180,27 @@ forward_user_agent(AllocatorPtr alloc, StringMap &dest, const StringMap &src,
 	const char *p;
 
 	p = !mangle
-		? src.Get("user-agent")
+		? src.Get(user_agent_header)
 		: nullptr;
 	if (p == nullptr)
 		p = PRODUCT_TOKEN;
 
-	dest.Add(alloc, "user-agent", p);
+	dest.Add(alloc, user_agent_header, p);
 }
 
 static void
 forward_via(AllocatorPtr alloc, StringMap &dest, const StringMap &src,
 	    const char *local_host, bool mangle) noexcept
 {
-	const char *p = src.Get("via");
+	const char *p = src.Get(via_header);
 	if (p == nullptr) {
 		if (local_host != nullptr && mangle)
-			dest.Add(alloc, "via", alloc.Concat("1.1 ", local_host));
+			dest.Add(alloc, via_header, alloc.Concat("1.1 ", local_host));
 	} else {
 		if (local_host == nullptr || !mangle)
-			dest.Add(alloc, "via", p);
+			dest.Add(alloc, via_header, p);
 		else
-			dest.Add(alloc, "via", alloc.Concat(p, ", 1.1 ", local_host));
+			dest.Add(alloc, via_header, alloc.Concat(p, ", 1.1 ", local_host));
 	}
 }
 
@@ -210,15 +210,15 @@ forward_xff(AllocatorPtr alloc, StringMap &dest, const StringMap &src,
 {
 	const char *p;
 
-	p = src.Get("x-forwarded-for");
+	p = src.Get(x_forwarded_for_header);
 	if (p == nullptr) {
 		if (remote_host != nullptr && mangle)
-			dest.Add(alloc, "x-forwarded-for", remote_host);
+			dest.Add(alloc, x_forwarded_for_header, remote_host);
 	} else {
 		if (remote_host == nullptr || !mangle)
-			dest.Add(alloc, "x-forwarded-for", p);
+			dest.Add(alloc, x_forwarded_for_header, p);
 		else
-			dest.Add(alloc, "x-forwarded-for",
+			dest.Add(alloc, x_forwarded_for_header,
 				 alloc.Concat(p, ", ", remote_host));
 	}
 }
@@ -275,7 +275,7 @@ forward_request_headers(AllocatorPtr alloc, const StringMap &src,
 				if (!exclude_host)
 					dest.Add(alloc, key, value);
 				if (settings[HeaderGroup::FORWARD] == HeaderForwardMode::MANGLE)
-					dest.Add(alloc, "x-forwarded-host", value);
+					dest.Add(alloc, x_forwarded_host_header, value);
 			} else if (forward_charset &&
 				   StringIsEqual(key, "accept-charset")) {
 				dest.Add(alloc, key, value);
@@ -327,7 +327,7 @@ forward_request_headers(AllocatorPtr alloc, const StringMap &src,
 	}
 
 	if (!found_accept_charset)
-		dest.Add(alloc, "accept-charset", "utf-8");
+		dest.Add(alloc, accept_charset_header, "utf-8");
 
 	if (settings[HeaderGroup::COOKIE] == HeaderForwardMode::MANGLE &&
 	    session != nullptr && host_and_port != nullptr && uri != nullptr)
@@ -335,12 +335,12 @@ forward_request_headers(AllocatorPtr alloc, const StringMap &src,
 				       dest, alloc);
 
 	if (session != nullptr && session->parent.language != nullptr)
-		dest.Add(alloc, "accept-language",
+		dest.Add(alloc, accept_language_header,
 			 alloc.DupZ((std::string_view)session->parent.language));
 
 	if (settings[HeaderGroup::SECURE] == HeaderForwardMode::MANGLE &&
 	    user != nullptr) {
-		dest.Add(alloc, "x-cm4all-beng-user", user);
+		dest.Add(alloc, x_cm4all_beng_user_header, user);
 
 		if (has_session != nullptr)
 			dest.Add(alloc, "x-cm4all-beng-has-session",
@@ -349,7 +349,7 @@ forward_request_headers(AllocatorPtr alloc, const StringMap &src,
 
 	if (settings[HeaderGroup::AUTH] == HeaderForwardMode::MANGLE &&
 	    user != nullptr)
-		dest.Add(alloc, "authorization", alloc.Concat("Bearer ", user));
+		dest.Add(alloc, authorization_header, alloc.Concat("Bearer ", user));
 
 	if (settings[HeaderGroup::CAPABILITIES] != HeaderForwardMode::NO)
 		forward_user_agent(alloc, dest, src,
@@ -361,11 +361,11 @@ forward_request_headers(AllocatorPtr alloc, const StringMap &src,
 
 	if (settings[HeaderGroup::SSL] == HeaderForwardMode::MANGLE) {
 		if (peer_subject != nullptr)
-			dest.Add(alloc, "x-cm4all-beng-peer-subject",
+			dest.Add(alloc, x_cm4all_beng_peer_subject_header,
 				 peer_subject);
 
 		if (peer_issuer_subject != nullptr)
-			dest.Add(alloc, "x-cm4all-beng-peer-issuer-subject",
+			dest.Add(alloc, x_cm4all_beng_peer_issuer_subject_header,
 				 peer_issuer_subject);
 	}
 

@@ -5,6 +5,7 @@
 #include "ProcessorHeaders.hxx"
 #include "strmap.hxx"
 #include "AllocatorPtr.hxx"
+#include "http/CommonHeaders.hxx"
 
 StringMap
 processor_header_forward(struct pool &pool, const StringMap &src)
@@ -31,7 +32,7 @@ processor_header_forward(struct pool &pool, const StringMap &src)
 	/* reportedly, the Internet Explorer caches uncacheable resources
 	   without revalidating them; only Cache-Control will prevent him
 	   from showing stale data to the user */
-	dest.Add(pool, "cache-control", "no-store");
+	dest.Add(pool, cache_control_header, "no-store");
 
 	return dest;
 }

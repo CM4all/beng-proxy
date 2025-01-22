@@ -9,6 +9,7 @@
 /* a collection of well-known HTTP headers with hashes calculated at
    compile-time */
 
+constexpr StringMapKey accept_charset_header{"accept-charset"};
 constexpr StringMapKey accept_encoding_header{"accept-encoding"};
 constexpr StringMapKey accept_language_header{"accept-language"};
 constexpr StringMapKey access_control_allow_origin_header{"access-control-allow-origin"};
@@ -62,3 +63,4 @@ constexpr StringMapKey x_cm4all_widget_id_header{"x-cm4all-widget-id"};
 constexpr StringMapKey x_cm4all_widget_prefix_header{"x-cm4all-widget-prefix"};
 constexpr StringMapKey x_cm4all_widget_type_header{"x-cm4all-widget-type"};
 constexpr StringMapKey x_forwarded_for_header{"x-forwarded-for"};
+constexpr StringMapKey x_forwarded_host_header{"x-forwarded-host"};
