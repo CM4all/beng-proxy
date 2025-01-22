@@ -69,7 +69,7 @@ private:
 	/**
 	 * The cache key used to address the associated cache document.
 	 */
-	const char *key;
+	const char *const key;
 
 	/** headers from the original request */
 	const StringMap request_headers;
@@ -689,7 +689,6 @@ HttpCacheRequest::OnHttpResponse(HttpStatus status, StringMap &&_headers,
 		/* this->info was allocated from the caller pool; duplicate
 		   it to keep it alive even after the caller pool is
 		   destroyed */
-		key = alloc.Dup(key);
 		info.MoveToPool(alloc);
 
 		/* tee the body: one goes to our client, and one goes into the
