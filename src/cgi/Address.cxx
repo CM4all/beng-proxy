@@ -16,6 +16,7 @@
 #include "uri/PEscape.hxx"
 #include "uri/PRelative.hxx"
 #include "util/StringAPI.hxx"
+#include "util/StringWithHash.hxx"
 #include "pexpand.hxx"
 
 #include <stdexcept>
@@ -87,7 +88,7 @@ CgiAddress::GetURI(AllocatorPtr alloc) const noexcept
 	return alloc.Concat(sn, pi, qm, qs);
 }
 
-const char *
+StringWithHash
 CgiAddress::GetId(AllocatorPtr alloc) const noexcept
 {
 	PoolStringBuilder<256> b;
@@ -140,7 +141,7 @@ CgiAddress::GetId(AllocatorPtr alloc) const noexcept
 		b.push_back(query_string);
 	}
 
-	return b(alloc);
+	return StringWithHash{b(alloc)};
 }
 
 void

@@ -13,8 +13,11 @@
 #include "pexpand.hxx"
 #include "spawn/Prepared.hxx"
 #include "stock/Key.hxx"
+#include "resource_tag.hxx"
 
 #include <string.h>
+
+using std::string_view_literals::operator""sv;
 
 LhttpAddress::LhttpAddress(const char *_path) noexcept
 	:path(_path),
@@ -56,18 +59,18 @@ LhttpAddress::GetServerId(AllocatorPtr alloc) const noexcept
 	return StockKey{b.MakeView(alloc)};
 }
 
-const char *
+StringWithHash
 LhttpAddress::GetId(AllocatorPtr alloc) const noexcept
 {
-	const char *p = alloc.DupZ(GetServerId(alloc).value); // TODO eliminate copy
+	StringWithHash id = GetServerId(alloc); // TODO eliminate copy
 
 	if (host_and_port != nullptr)
-		p = alloc.Concat(p, ";h=", host_and_port);
+		id = resource_tag_concat(alloc, id, ";h="sv, StringWithHash{host_and_port});
 
 	if (uri != nullptr)
-		p = alloc.Concat(p, ";u=", uri);
+		id = resource_tag_concat(alloc, id, ";u="sv, StringWithHash{uri});
 
-	return p;
+	return id;
 }
 
 LhttpAddress *

@@ -98,7 +98,7 @@ struct LhttpAddress {
 	 * pool.
 	 */
 	[[gnu::pure]]
-	const char *GetId(AllocatorPtr alloc) const noexcept;
+	StringWithHash GetId(AllocatorPtr alloc) const noexcept;
 
 	/**
 	 * Throws std::runtime_error on error.

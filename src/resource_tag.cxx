@@ -14,13 +14,20 @@
 using std::string_view_literals::operator""sv;
 
 StringWithHash
-resource_tag_append_filter(AllocatorPtr alloc, StringWithHash tag,
-			   std::string_view filter_tag) noexcept
+resource_tag_concat(AllocatorPtr alloc, StringWithHash a,
+		    std::string_view separator, StringWithHash b) noexcept
 {
 	return StringWithHash{
-		alloc.ConcatView(tag.value, '|', filter_tag),
-		djb_hash(AsBytes(filter_tag), tag.hash),
+		alloc.ConcatView(a.value, separator, b.value),
+		a.hash ^ b.hash,
 	};
+}
+
+StringWithHash
+resource_tag_append_filter(AllocatorPtr alloc, StringWithHash tag,
+			   StringWithHash filter_tag) noexcept
+{
+	return resource_tag_concat(alloc, tag, "|"sv, filter_tag);
 }
 
 StringWithHash

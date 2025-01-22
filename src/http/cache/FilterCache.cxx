@@ -377,7 +377,7 @@ filter_cache_request_evaluate(AllocatorPtr alloc,
 		user = "";
 
 	const StringWithHash user_id{user};
-	const StringWithHash address_id{address.GetId(alloc)};
+	const StringWithHash address_id = address.GetId(alloc);
 
 	const StringWithHash key{
 		alloc.ConcatView(source_id.value, '|', user_id.value, '|', address_id.value),

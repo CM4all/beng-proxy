@@ -10,6 +10,7 @@
 
 #include <string_view>
 
+struct StringWithHash;
 class AllocatorPtr;
 class MatchData;
 
@@ -130,7 +131,7 @@ struct CgiAddress {
 	 * pool.
 	 */
 	[[gnu::pure]]
-	const char *GetId(AllocatorPtr alloc) const noexcept;
+	StringWithHash GetId(AllocatorPtr alloc) const noexcept;
 
 	/**
 	 * Throws on error.

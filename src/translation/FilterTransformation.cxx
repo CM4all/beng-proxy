@@ -3,6 +3,7 @@
 // author: Max Kellermann <mk@cm4all.com>
 
 #include "FilterTransformation.hxx"
+#include "util/StringWithHash.hxx"
 #include "AllocatorPtr.hxx"
 
 FilterTransformation::FilterTransformation(AllocatorPtr alloc,
@@ -11,7 +12,7 @@ FilterTransformation::FilterTransformation(AllocatorPtr alloc,
 	 address(alloc, src.address),
 	 reveal_user(src.reveal_user) {}
 
-const char *
+StringWithHash
 FilterTransformation::GetId(AllocatorPtr alloc) const noexcept
 {
 	return address.GetId(alloc);

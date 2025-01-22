@@ -417,7 +417,7 @@ Request::HandleTranslatedRequest(UniquePoolPtr<TranslateResponse> _response) noe
 			   "transparent") */
 			address.GetCgi().uri = ForwardURI();
 
-		resource_tag = translate.address_id = StringWithHash{address.GetId(pool)};
+		resource_tag = translate.address_id = address.GetId(pool);
 	}
 
 	translate.transformations.clear();

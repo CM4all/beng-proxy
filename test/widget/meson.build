@@ -81,7 +81,6 @@ test(
     '../../src/widget/FromSession.cxx',
     '../../src/widget/FromRequest.cxx',
     '../../src/bp/ForwardHeaders.cxx',
-    '../../src/resource_tag.cxx',
     '../../src/http/ResponseHandler.cxx',
     include_directories: inc,
     dependencies: [

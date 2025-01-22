@@ -41,7 +41,7 @@ struct FilterTransformation {
 	}
 
 	[[gnu::pure]]
-	const char *GetId(AllocatorPtr alloc) const noexcept;
+	StringWithHash GetId(AllocatorPtr alloc) const noexcept;
 
 	/**
 	 * Expand the strings in this transformation (not following the linked

@@ -13,8 +13,11 @@
 #include "uri/Base.hxx"
 #include "uri/PNormalize.hxx"
 #include "util/Compiler.h"
+#include "util/StringWithHash.hxx"
 #include "AllocatorPtr.hxx"
 #include "HttpMessageResponse.hxx"
+
+using std::string_view_literals::operator""sv;
 
 ResourceAddress::ResourceAddress(AllocatorPtr alloc,
 				 const ResourceAddress &src) noexcept
@@ -440,18 +443,18 @@ ResourceAddress::RelativeToApplied(AllocatorPtr alloc,
 		: std::string_view{};
 }
 
-const char *
+StringWithHash
 ResourceAddress::GetId(AllocatorPtr alloc) const noexcept
 {
 	switch (type) {
 	case Type::NONE:
-		return "";
+		return StringWithHash{""sv, 0};
 
 	case Type::LOCAL:
-		return alloc.Dup(u.file->path);
+		return StringWithHash{alloc.Dup(std::string_view{u.file->path})};
 
 	case Type::HTTP:
-		return u.http->GetAbsoluteURI(alloc);
+		return StringWithHash{u.http->GetAbsoluteURI(alloc)};
 
 	case Type::LHTTP:
 		return u.lhttp->GetId(alloc);

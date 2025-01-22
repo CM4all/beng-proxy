@@ -2,8 +2,7 @@
 // Copyright CM4all GmbH
 // author: Max Kellermann <mk@cm4all.com>
 
-#ifndef BENG_PROXY_RESOURCE_ADDRESS_HXX
-#define BENG_PROXY_RESOURCE_ADDRESS_HXX
+#pragma once
 
 #include "util/ShallowCopy.hxx"
 
@@ -11,6 +10,7 @@
 #include <cstddef>
 #include <string_view>
 
+struct StringWithHash;
 struct FileAddress;
 struct LhttpAddress;
 struct HttpAddress;
@@ -207,7 +207,7 @@ public:
 	 * key in a hash table.
 	 */
 	[[gnu::pure]]
-	const char *GetId(AllocatorPtr alloc) const noexcept;
+	StringWithHash GetId(AllocatorPtr alloc) const noexcept;
 
 	void CopyFrom(AllocatorPtr alloc, const ResourceAddress &src) noexcept;
 
@@ -336,5 +336,3 @@ public:
 	 */
 	void Expand(AllocatorPtr alloc, const MatchData &match_data);
 };
-
-#endif

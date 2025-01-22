@@ -466,7 +466,7 @@ http_cache_key(const AllocatorPtr alloc, const ResourceAddress &address,
 	case ResourceAddress::Type::WAS:
 		// TODO optimize hasher
 		return id.IsNull()
-			? StringWithHash{address.GetId(alloc)}
+			? address.GetId(alloc)
 		       : id;
 	}
 

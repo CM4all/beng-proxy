@@ -455,6 +455,7 @@ subdir('src/access_log')
 subdir('src/cluster')
 
 raddress = static_library('raddress',
+  'src/resource_tag.cxx',
   'src/regex.cxx',
   'src/cgi/ChildParams.cxx',
   'src/cgi/Address.cxx',
@@ -469,6 +470,7 @@ raddress = static_library('raddress',
     libpcre,
     sodium_dep,
     stock_dep,
+    http_dep,
   ])
 raddress_dep = declare_dependency(
   link_with: raddress,
@@ -656,7 +658,6 @@ executable(
   'src/bp/Response.cxx',
   'src/bp/GenerateResponse.cxx',
   'src/bp/PrometheusExporter.cxx',
-  'src/resource_tag.cxx',
   'src/widget/RewriteUri.cxx',
   'src/file/Request.cxx',
   'src/file/Headers.cxx',

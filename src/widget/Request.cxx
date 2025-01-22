@@ -678,7 +678,7 @@ WidgetRequest::SendRequest() noexcept
 		return;
 	}
 
-	resource_tag = StringWithHash{address.GetId(pool)};
+	resource_tag = address.GetId(pool);
 
 	UnusedIstreamPtr request_body(std::move(widget.from_request.body));
 
