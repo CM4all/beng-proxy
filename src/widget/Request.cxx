@@ -695,6 +695,7 @@ WidgetRequest::SendRequest() noexcept
 	ctx->resource_loader.SendRequest(pool, parent_stopwatch,
 					 {
 						 .sticky_hash = ctx->session_id.GetClusterHash(),
+						 .address_id = resource_tag,
 						 .site_name = ctx->site_name,
 					 },
 					 widget.from_request.method,
