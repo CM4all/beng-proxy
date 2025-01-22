@@ -10,6 +10,13 @@
 
 using std::string_view_literals::operator""sv;
 
+const char *
+resource_tag_append_filter(AllocatorPtr alloc, std::string_view tag,
+			   std::string_view filter_tag) noexcept
+{
+	return alloc.Concat(tag, '|', filter_tag);
+}
+
 std::string_view
 resource_tag_append_etag_encoding(AllocatorPtr alloc, std::string_view tag,
 				  std::string_view etag,

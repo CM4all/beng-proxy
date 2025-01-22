@@ -416,10 +416,9 @@ WidgetRequest::FilterResponse(HttpStatus status,
 
 	previous_status = status;
 
-	const char *source_tag = resource_tag_append_etag(pool, resource_tag,
-							  headers);
+	const char *source_tag = resource_tag_append_etag(alloc, resource_tag, headers);
 	resource_tag = source_tag != nullptr
-		? alloc.Concat(source_tag, '|', filter.GetId(alloc))
+		? resource_tag_append_filter(alloc, source_tag, filter.GetId(alloc))
 		: nullptr;
 
 	if (filter.reveal_user)

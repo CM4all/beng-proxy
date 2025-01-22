@@ -721,7 +721,7 @@ Request::ApplyFilter(HttpStatus status, StringMap &&headers2,
 	const char *source_tag = resource_tag_append_etag(pool, resource_tag,
 							  headers2);
 	resource_tag = source_tag != nullptr
-		? alloc.Concat(source_tag, '|', filter.GetId(AllocatorPtr(pool)))
+		? resource_tag_append_filter(alloc, source_tag, filter.GetId(alloc))
 		: nullptr;
 
 	if (filter.reveal_user)

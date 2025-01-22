@@ -9,6 +9,11 @@
 class AllocatorPtr;
 class StringMap;
 
+[[gnu::pure]]
+const char *
+resource_tag_append_filter(AllocatorPtr alloc, std::string_view tag,
+			   std::string_view filter_tag) noexcept;
+
 /**
  * A tag which addresses a resource in the filter cache.
  */
