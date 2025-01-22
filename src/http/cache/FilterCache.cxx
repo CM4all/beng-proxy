@@ -186,7 +186,7 @@ public:
 		   const char *cache_tag,
 		   const ResourceAddress &address,
 		   HttpStatus status, StringMap &&headers,
-		   UnusedIstreamPtr body, const char *body_etag,
+		   UnusedIstreamPtr body, StringWithHash body_etag,
 		   CancellablePointer &caller_cancel_ptr) noexcept {
 		caller_cancel_ptr = *this;
 		resource_loader.SendRequest(pool, parent_stopwatch,
@@ -292,7 +292,7 @@ public:
 		 const StopwatchPtr &parent_stopwatch,
 		 const char *cache_tag,
 		 const ResourceAddress &address,
-		 const char *source_id,
+		 StringWithHash source_id,
 		 HttpStatus status, StringMap &&headers,
 		 UnusedIstreamPtr body,
 		 HttpResponseHandler &handler,
@@ -308,7 +308,7 @@ private:
 		  FilterCacheInfo &&info,
 		  const ResourceAddress &address,
 		  HttpStatus status, StringMap &&headers,
-		  UnusedIstreamPtr body, const char *body_etag,
+		  UnusedIstreamPtr body, StringWithHash body_etag,
 		  HttpResponseHandler &_handler,
 		  CancellablePointer &cancel_ptr) noexcept;
 
@@ -366,17 +366,23 @@ static FilterCacheInfo *
 filter_cache_request_evaluate(AllocatorPtr alloc,
 			      const char *tag,
 			      const ResourceAddress &address,
-			      const char *source_id,
+			      StringWithHash source_id,
 			      const StringMap &headers) noexcept
 {
-	if (source_id == nullptr)
+	if (source_id.IsNull())
 		return nullptr;
 
 	const char *user = headers.Get(x_cm4all_beng_user_header);
 	if (user == nullptr)
 		user = "";
 
-	const StringWithHash key{alloc.ConcatView(source_id, '|', user, '|', address.GetId(alloc))};
+	const StringWithHash user_id{user};
+	const StringWithHash address_id{address.GetId(alloc)};
+
+	const StringWithHash key{
+		alloc.ConcatView(source_id.value, '|', user_id.value, '|', address_id.value),
+		source_id.hash ^ user_id.hash ^ address_id.hash,
+	};
 
 	return alloc.New<FilterCacheInfo>(tag, key);
 }
@@ -725,7 +731,7 @@ FilterCache::Miss(struct pool &caller_pool,
 		  FilterCacheInfo &&info,
 		  const ResourceAddress &address,
 		  HttpStatus status, StringMap &&headers,
-		  UnusedIstreamPtr body, const char *body_etag,
+		  UnusedIstreamPtr body, StringWithHash body_etag,
 		  HttpResponseHandler &_handler,
 		  CancellablePointer &cancel_ptr) noexcept
 {
@@ -784,7 +790,7 @@ FilterCache::Get(struct pool &caller_pool,
 		 const StopwatchPtr &parent_stopwatch,
 		 const char *cache_tag,
 		 const ResourceAddress &address,
-		 const char *source_id,
+		 StringWithHash source_id,
 		 HttpStatus status, StringMap &&headers,
 		 UnusedIstreamPtr body,
 		 HttpResponseHandler &handler,
@@ -828,7 +834,7 @@ filter_cache_request(FilterCache &cache,
 		     const StopwatchPtr &parent_stopwatch,
 		     const char *cache_tag,
 		     const ResourceAddress &address,
-		     const char *source_id,
+		     StringWithHash source_id,
 		     HttpStatus status, StringMap &&headers,
 		     UnusedIstreamPtr body,
 		     HttpResponseHandler &handler,

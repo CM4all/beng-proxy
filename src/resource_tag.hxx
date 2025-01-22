@@ -8,18 +8,19 @@
 
 class AllocatorPtr;
 class StringMap;
+struct StringWithHash;
 
 [[gnu::pure]]
-const char *
-resource_tag_append_filter(AllocatorPtr alloc, std::string_view tag,
+StringWithHash
+resource_tag_append_filter(AllocatorPtr alloc, StringWithHash tag,
 			   std::string_view filter_tag) noexcept;
 
 /**
  * A tag which addresses a resource in the filter cache.
  */
 [[gnu::pure]]
-std::string_view
-resource_tag_append_etag_encoding(AllocatorPtr alloc, std::string_view tag,
+StringWithHash
+resource_tag_append_etag_encoding(AllocatorPtr alloc, StringWithHash tag,
 				  std::string_view etag,
 				  std::string_view encoding) noexcept;
 
@@ -27,6 +28,6 @@ resource_tag_append_etag_encoding(AllocatorPtr alloc, std::string_view tag,
  * A tag which addresses a resource in the filter cache.
  */
 [[gnu::pure]]
-const char *
-resource_tag_append_etag(AllocatorPtr alloc, const char *tag,
+StringWithHash
+resource_tag_append_etag(AllocatorPtr alloc, StringWithHash tag,
 			 const StringMap &headers) noexcept;

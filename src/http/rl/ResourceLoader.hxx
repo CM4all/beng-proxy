@@ -5,6 +5,7 @@
 #pragma once
 
 #include "cluster/StickyHash.hxx"
+#include "util/StringWithHash.hxx"
 
 #include <cstdint>
 
@@ -50,13 +51,13 @@ struct ResourceRequestParams {
 	 * ResourceAddress::GetId() and the cache doesn't need to do
 	 * it again.
 	 */
-	const char *address_id;
+	StringWithHash address_id{nullptr};
 
 	/**
 	 * A unique identifier for the request body; if not nullptr,
 	 * it may be used to cache POST requests.
 	 */
-	const char *body_etag;
+	StringWithHash body_etag{nullptr};
 
 	/**
 	 * An opaque tag string to be assigned to the cache

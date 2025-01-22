@@ -6,44 +6,58 @@
 #include "strmap.hxx"
 #include "http/CommonHeaders.hxx"
 #include "http/List.hxx"
+#include "util/djb_hash.hxx"
+#include "util/SpanCast.hxx"
+#include "util/StringWithHash.hxx"
 #include "AllocatorPtr.hxx"
 
 using std::string_view_literals::operator""sv;
 
-const char *
-resource_tag_append_filter(AllocatorPtr alloc, std::string_view tag,
+StringWithHash
+resource_tag_append_filter(AllocatorPtr alloc, StringWithHash tag,
 			   std::string_view filter_tag) noexcept
 {
-	return alloc.Concat(tag, '|', filter_tag);
+	return StringWithHash{
+		alloc.ConcatView(tag.value, '|', filter_tag),
+		djb_hash(AsBytes(filter_tag), tag.hash),
+	};
 }
 
-std::string_view
-resource_tag_append_etag_encoding(AllocatorPtr alloc, std::string_view tag,
+StringWithHash
+resource_tag_append_etag_encoding(AllocatorPtr alloc, StringWithHash tag,
 				  std::string_view etag,
 				  std::string_view encoding) noexcept
 {
-	return alloc.ConcatView(tag, "|etag="sv, etag, "."sv, encoding);
+	return StringWithHash{
+		alloc.ConcatView(tag.value, "|etag="sv, etag, "."sv, encoding),
+		djb_hash(AsBytes(encoding), djb_hash(AsBytes(etag), tag.hash)),
+	};
 }
 
-const char *
-resource_tag_append_etag(AllocatorPtr alloc, const char *tag,
+StringWithHash
+resource_tag_append_etag(AllocatorPtr alloc, const StringWithHash tag,
 			 const StringMap &headers) noexcept
 {
 	const char *etag, *p;
 
-	if (tag == nullptr)
-		return NULL;
+	if (tag.IsNull())
+		return StringWithHash{nullptr};
 
 	etag = headers.Get(etag_header);
 	if (etag == NULL)
-		return NULL;
+		return StringWithHash{nullptr};
 
 	p = headers.Get(cache_control_header);
 	if (p != NULL && http_list_contains(p, "no-store"))
 		/* generating a resource tag for the cache is pointless,
 		   because we are not allowed to store the response anyway */
-		return NULL;
+		return StringWithHash{nullptr};
 
-	return alloc.Concat(tag, "|etag=", etag);
+	const std::string_view etag_v{etag};
+
+	return StringWithHash{
+		alloc.ConcatView(tag.value, "|etag="sv, etag_v),
+		djb_hash(AsBytes(etag_v), tag.hash),
+	};
 }
 

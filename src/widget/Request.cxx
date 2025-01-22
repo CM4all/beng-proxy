@@ -73,7 +73,7 @@ class WidgetRequest final
 	 * transformation.  This is used by the filter cache to address
 	 * resources.
 	 */
-	const char *resource_tag;
+	StringWithHash resource_tag{nullptr};
 
 	/**
 	 * The Content-Type from the suffix registry.
@@ -416,10 +416,10 @@ WidgetRequest::FilterResponse(HttpStatus status,
 
 	previous_status = status;
 
-	const char *source_tag = resource_tag_append_etag(alloc, resource_tag, headers);
-	resource_tag = source_tag != nullptr
+	const StringWithHash source_tag = resource_tag_append_etag(alloc, resource_tag, headers);
+	resource_tag = !source_tag.IsNull()
 		? resource_tag_append_filter(alloc, source_tag, filter.GetId(alloc))
-		: nullptr;
+		: StringWithHash{nullptr};
 
 	if (filter.reveal_user)
 		forward_reveal_user(alloc, headers, ctx->user);
@@ -459,7 +459,7 @@ WidgetRequest::TransformResponse(HttpStatus status,
 	switch (t.type) {
 	case Transformation::Type::PROCESS:
 		/* processor responses cannot be cached */
-		resource_tag = nullptr;
+		resource_tag = StringWithHash{nullptr};
 
 		ProcessResponse(status, headers, std::move(body),
 				t.u.processor.options);
@@ -467,7 +467,7 @@ WidgetRequest::TransformResponse(HttpStatus status,
 
 	case Transformation::Type::PROCESS_CSS:
 		/* processor responses cannot be cached */
-		resource_tag = nullptr;
+		resource_tag = StringWithHash{nullptr};
 
 		CssProcessResponse(status, headers, std::move(body),
 				   t.u.css_processor.options);
@@ -475,7 +475,7 @@ WidgetRequest::TransformResponse(HttpStatus status,
 
 	case Transformation::Type::PROCESS_TEXT:
 		/* processor responses cannot be cached */
-		resource_tag = nullptr;
+		resource_tag = StringWithHash{nullptr};
 
 		TextProcessResponse(status, headers, std::move(body));
 		break;
@@ -678,7 +678,7 @@ WidgetRequest::SendRequest() noexcept
 		return;
 	}
 
-	resource_tag = address.GetId(pool);
+	resource_tag = StringWithHash{address.GetId(pool)};
 
 	UnusedIstreamPtr request_body(std::move(widget.from_request.body));
 

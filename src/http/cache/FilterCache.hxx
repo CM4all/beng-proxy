@@ -19,6 +19,7 @@ class HttpResponseHandler;
 struct CacheStats;
 class FilterCache;
 class CancellablePointer;
+struct StringWithHash;
 
 /**
  * Caching filter responses.
@@ -56,7 +57,7 @@ filter_cache_request(FilterCache &cache,
 		     const StopwatchPtr &parent_stopwatch,
 		     const char *cache_tag,
 		     const ResourceAddress &address,
-		     const char *source_id,
+		     StringWithHash source_id,
 		     HttpStatus status, StringMap &&headers,
 		     UnusedIstreamPtr body,
 		     HttpResponseHandler &handler,

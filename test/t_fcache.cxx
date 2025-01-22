@@ -52,7 +52,7 @@ TestCancelBlocking()
 	auto request_pool = pool_new_linear(context.root_pool, "Request", 8192);
 	filter_cache_request(*context.fcache, request_pool, nullptr,
 			     nullptr, nullptr,
-			     "foo", HttpStatus::OK, {},
+			     StringWithHash{"foo"}, HttpStatus::OK, {},
 			     istream_string_new(*request_pool, "bar"),
 			     context, cancel_ptr);
 
@@ -90,7 +90,7 @@ TestNoBody()
 	auto request_pool = pool_new_linear(context.root_pool, "Request", 8192);
 	filter_cache_request(*context.fcache, *request_pool, nullptr,
 			     nullptr, nullptr,
-			     "foo", HttpStatus::OK, {},
+			     StringWithHash{"foo"}, HttpStatus::OK, {},
 			     nullptr,
 			     context, cancel_ptr);
 }

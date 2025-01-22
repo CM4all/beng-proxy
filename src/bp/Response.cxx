@@ -47,6 +47,8 @@
 #include "uri/Relocate.hxx"
 #include "uri/Verify.hxx"
 #include "util/DeleteDisposer.hxx"
+#include "util/djb_hash.hxx"
+#include "util/SpanCast.hxx"
 #include "util/StringBuffer.hxx"
 #include "util/StringSplit.hxx"
 #include "FilterStatus.hxx"
@@ -110,7 +112,7 @@ session_drop_widgets(RealmSession &session, const char *uri,
 [[gnu::pure]]
 static StringWithHash
 GetEncodingCacheKey(AllocatorPtr alloc,
-		    const char *resource_tag,
+		    StringWithHash resource_tag,
 		    std::string_view encoding,
 		    const HttpHeaders &response_headers) noexcept
 {
@@ -124,19 +126,17 @@ GetEncodingCacheKey(AllocatorPtr alloc,
 		   EncodingCache */
 		return StringWithHash{alloc.ConcatView(digest, "."sv, encoding)};
 
-	if (resource_tag != nullptr)
+	if (!resource_tag.IsNull())
 		if (const auto etag = response_headers.GetSloppy(etag_header);
 		    etag.data() != nullptr)
-			return StringWithHash{
-				resource_tag_append_etag_encoding(alloc, resource_tag, etag, encoding),
-			};
+			return resource_tag_append_etag_encoding(alloc, resource_tag, etag, encoding);
 
 	return StringWithHash{nullptr};
 }
 
 static void
 MaybeCacheEncoded(EncodingCache *cache, AllocatorPtr alloc,
-		  const char *resource_tag,
+		  StringWithHash resource_tag,
 		  std::string_view encoding,
 		  const HttpHeaders &response_headers,
 		  UnusedIstreamPtr &response_body) noexcept
@@ -175,7 +175,7 @@ IsShorterThan(const UnusedIstreamPtr &i, off_t length) noexcept
 static bool
 MaybeAutoCompress(EncodingCache *cache, AllocatorPtr alloc,
 		  const StringMap &request_headers,
-		  const char *resource_tag,
+		  StringWithHash resource_tag,
 		  HttpHeaders &response_headers,
 		  UnusedIstreamPtr &response_body,
 		  std::string_view encoding,
@@ -718,11 +718,11 @@ Request::ApplyFilter(HttpStatus status, StringMap &&headers2,
 
 	previous_status = status;
 
-	const char *source_tag = resource_tag_append_etag(pool, resource_tag,
-							  headers2);
-	resource_tag = source_tag != nullptr
+	const StringWithHash source_tag = resource_tag_append_etag(pool, resource_tag, headers2);
+
+	resource_tag = !source_tag.IsNull()
 		? resource_tag_append_filter(alloc, source_tag, filter.GetId(alloc))
-		: nullptr;
+		: StringWithHash{nullptr};
 
 	if (filter.reveal_user)
 		forward_reveal_user(pool, headers2, user);
@@ -768,7 +768,7 @@ Request::ApplyTransformation(HttpStatus status, StringMap &&headers,
 
 	case Transformation::Type::PROCESS:
 		/* processor responses cannot be cached */
-		resource_tag = nullptr;
+		resource_tag = StringWithHash{nullptr};
 
 		InvokeXmlProcessor(status, headers, std::move(response_body),
 				   transformation);
@@ -776,7 +776,7 @@ Request::ApplyTransformation(HttpStatus status, StringMap &&headers,
 
 	case Transformation::Type::PROCESS_CSS:
 		/* processor responses cannot be cached */
-		resource_tag = nullptr;
+		resource_tag = StringWithHash{nullptr};
 
 		InvokeCssProcessor(status, headers, std::move(response_body),
 				   transformation);
@@ -784,7 +784,7 @@ Request::ApplyTransformation(HttpStatus status, StringMap &&headers,
 
 	case Transformation::Type::PROCESS_TEXT:
 		/* processor responses cannot be cached */
-		resource_tag = nullptr;
+		resource_tag = StringWithHash{nullptr};
 
 		InvokeTextProcessor(status, headers, std::move(response_body));
 		break;

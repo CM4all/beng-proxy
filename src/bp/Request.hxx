@@ -23,6 +23,7 @@
 #include "co/InvokeTask.hxx"
 #include "util/Cancellable.hxx"
 #include "util/SharedLease.hxx"
+#include "util/StringWithHash.hxx"
 #include "stopwatch.hxx"
 
 #include <exception>
@@ -119,7 +120,7 @@ private:
                  * to be passed to the HTTP cache to avoid calling
                  * GetId() again.
 		 */
-		const char *address_id = nullptr;
+		StringWithHash address_id{nullptr};
 
 		/**
 		 * The next transformation.
@@ -357,7 +358,7 @@ private:
 	 * transformation.  This is used by the filter cache to address
 	 * resources.
 	 */
-	const char *resource_tag = nullptr;
+	StringWithHash resource_tag{nullptr};
 
 	/**
 	 * The RECOVER_COOKIE value parsed from the session cookie.

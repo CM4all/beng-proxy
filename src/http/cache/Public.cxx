@@ -450,7 +450,7 @@ UpdateHeader(AllocatorPtr alloc, StringMap &dest,
 
 static StringWithHash
 http_cache_key(const AllocatorPtr alloc, const ResourceAddress &address,
-	       const char *id) noexcept
+	       StringWithHash id) noexcept
 {
 	switch (address.type) {
 	case ResourceAddress::Type::NONE:
@@ -465,9 +465,9 @@ http_cache_key(const AllocatorPtr alloc, const ResourceAddress &address,
 	case ResourceAddress::Type::FASTCGI:
 	case ResourceAddress::Type::WAS:
 		// TODO optimize hasher
-		return id != nullptr
-			? StringWithHash{id}
-			: StringWithHash{address.GetId(alloc)};
+		return id.IsNull()
+			? StringWithHash{address.GetId(alloc)}
+		       : id;
 	}
 
 	/* unreachable */
