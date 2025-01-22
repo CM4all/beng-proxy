@@ -117,6 +117,7 @@ struct FilterCacheItem final : PoolHolder, CacheItem, LeakDetector {
 	};
 
 	FilterCacheItem(PoolPtr &&_pool,
+			const char *_key,
 			std::chrono::steady_clock::time_point now,
 			std::chrono::system_clock::time_point system_now,
 			const char *_tag,
@@ -124,7 +125,7 @@ struct FilterCacheItem final : PoolHolder, CacheItem, LeakDetector {
 			size_t _size, RubberAllocation &&_body,
 			std::chrono::system_clock::time_point _expires) noexcept
 		:PoolHolder(std::move(_pool)),
-		 CacheItem(now, system_now, _expires, pool_netto_size(pool) + _size),
+		 CacheItem(_key, pool_netto_size(pool) + _size, now, system_now, _expires),
 		 tag(_tag != nullptr ? p_strdup(GetPool(), _tag) : nullptr),
 		 status(_status), headers(pool, _headers),
 		 size(_size), body(std::move(_body)) {
@@ -392,7 +393,11 @@ FilterCache::Put(const FilterCacheInfo &info,
 	else
 		expires = info.expires;
 
-	auto item = NewFromPool<FilterCacheItem>(pool_new_slice(*pool, "FilterCacheItem", slice_pool),
+	auto new_pool = pool_new_slice(*pool, "FilterCacheItem", slice_pool);
+	const char *key = p_strdup(new_pool, info.key);
+
+	auto item = NewFromPool<FilterCacheItem>(std::move(new_pool),
+						 key,
 						 cache.SteadyNow(),
 						 cache.SystemNow(),
 						 info.tag,
@@ -403,7 +408,7 @@ FilterCache::Put(const FilterCacheInfo &info,
 	if (info.tag != nullptr)
 		per_tag.insert(*item);
 
-	cache.Put(p_strdup(item->GetPool(), info.key), *item);
+	cache.Put(*item);
 }
 
 static std::chrono::system_clock::time_point

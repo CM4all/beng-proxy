@@ -80,9 +80,9 @@ public:
 	 * @return false if the item could not be added to the cache due
 	 * to size constraints
 	 */
-	bool Add(const char *key, CacheItem &item) noexcept;
+	bool Add(CacheItem &item) noexcept;
 
-	bool Put(const char *key, CacheItem &item) noexcept;
+	bool Put(CacheItem &item) noexcept;
 
 	/**
 	 * Adds a new item to this cache, or replaces an existing item
@@ -93,7 +93,7 @@ public:
 	 * @param match the match callback function
 	 * @param ctx a context pointer for the callback
 	 */
-	bool PutMatch(const char *key, CacheItem &item,
+	bool PutMatch(CacheItem &item,
 		      bool (*match)(const CacheItem *, void *),
 		      void *ctx) noexcept;
 

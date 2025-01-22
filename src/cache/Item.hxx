@@ -28,24 +28,25 @@ class CacheItem : public SharedAnchor {
 	/**
 	 * The key under which this item is stored in the hash table.
 	 */
-	const char *key;
+	const char *const key;
 
 	std::chrono::steady_clock::time_point expires;
 
 	const size_t size;
 
 public:
-	CacheItem(std::chrono::steady_clock::time_point _expires,
-		  size_t _size) noexcept
-		:expires(_expires), size(_size) {}
+	CacheItem(const char *_key, std::size_t _size,
+		  std::chrono::steady_clock::time_point _expires) noexcept
+		:key(_key), expires(_expires), size(_size) {}
 
-	CacheItem(std::chrono::steady_clock::time_point now,
+	CacheItem(const char *_key, std::size_t _size,
+		  std::chrono::steady_clock::time_point now,
 		  std::chrono::system_clock::time_point system_now,
-		  std::chrono::system_clock::time_point _expires,
-		  size_t _size) noexcept;
+		  std::chrono::system_clock::time_point _expires) noexcept;
 
-	CacheItem(std::chrono::steady_clock::time_point now,
-		  std::chrono::seconds max_age, size_t _size) noexcept;
+	CacheItem(const char *_key, std::size_t _size,
+		  std::chrono::steady_clock::time_point now,
+		  std::chrono::seconds max_age) noexcept;
 
 	CacheItem(const CacheItem &) = delete;
 

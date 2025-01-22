@@ -26,7 +26,17 @@ static constexpr off_t cacheable_size_limit = 512 * 1024;
  */
 static constexpr auto encoding_cache_default_expires = std::chrono::hours(7 * 24);
 
-struct EncodingCache::Item final : CacheItem, LeakDetector {
+class EncodingCacheItemKey {
+protected:
+	const std::string key;
+
+public:
+	[[nodiscard]]
+	explicit EncodingCacheItemKey(const char *_key) noexcept
+		:key(_key) {}
+};
+
+struct EncodingCache::Item final : EncodingCacheItemKey, CacheItem, LeakDetector {
 	const std::string key;
 
 	const RubberAllocation allocation;
@@ -35,15 +45,10 @@ struct EncodingCache::Item final : CacheItem, LeakDetector {
 	     std::chrono::steady_clock::time_point now,
 	     std::chrono::system_clock::time_point system_now,
 	     std::size_t _size, RubberAllocation &&_allocation) noexcept
-		:CacheItem(now, system_now,
-			   system_now + encoding_cache_default_expires,
-			   _size),
-		 key(_key),
+		:EncodingCacheItemKey(_key),
+		 CacheItem(EncodingCacheItemKey::key.c_str(), _size, now, system_now,
+			   system_now + encoding_cache_default_expires),
 		 allocation(std::move(_allocation)) {}
-
-	const char *GetKey() const noexcept {
-		return key.c_str();
-	}
 
 	/* virtual methods from class CacheItem */
 	void Destroy() noexcept override {
@@ -224,7 +229,7 @@ EncodingCache::Add(const char *key,
 			     size,
 			     std::move(a));
 
-	cache.Put(item->GetKey(), *item);
+	cache.Put(*item);
 }
 
 EncodingCache::EncodingCache(EventLoop &_event_loop, size_t max_size)

@@ -17,6 +17,7 @@ HttpCacheItem::TagHash::operator()(std::string_view _tag) const noexcept
 }
 
 HttpCacheItem::HttpCacheItem(PoolPtr &&_pool,
+			     const char *_key,
 			     std::chrono::steady_clock::time_point now,
 			     std::chrono::system_clock::time_point system_now,
 			     const char *_tag,
@@ -29,8 +30,8 @@ HttpCacheItem::HttpCacheItem(PoolPtr &&_pool,
 	:PoolHolder(std::move(_pool)),
 	 HttpCacheDocument(pool, _info, _request_headers,
 			   _status, _response_headers),
-	 CacheItem(http_cache_calc_expires(now, system_now, _info.expires, vary),
-		   pool_netto_size(pool) + _size),
+	 CacheItem(_key, pool_netto_size(pool) + _size,
+		   http_cache_calc_expires(now, system_now, _info.expires, vary)),
 	 tag(_tag != nullptr ? p_strdup(GetPool(), _tag) : nullptr),
 	 size(_size),
 	 body(std::move(_body))

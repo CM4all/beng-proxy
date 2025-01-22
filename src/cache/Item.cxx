@@ -35,17 +35,18 @@ ToSteady(std::chrono::steady_clock::time_point steady_now,
 		: std::chrono::steady_clock::time_point();
 }
 
-CacheItem::CacheItem(std::chrono::steady_clock::time_point now,
+CacheItem::CacheItem(const char *_key, std::size_t _size,
+				       std::chrono::steady_clock::time_point now,
 		     std::chrono::system_clock::time_point system_now,
-		     std::chrono::system_clock::time_point _expires,
-		     size_t _size) noexcept
-	:CacheItem(ToSteady(now, system_now, _expires), _size)
+		     std::chrono::system_clock::time_point _expires) noexcept
+	:CacheItem(_key, _size, ToSteady(now, system_now, _expires))
 {
 }
 
-CacheItem::CacheItem(std::chrono::steady_clock::time_point now,
-		     std::chrono::seconds max_age, size_t _size) noexcept
-	:CacheItem(now + max_age, _size)
+CacheItem::CacheItem(const char *_key, std::size_t _size,
+		     std::chrono::steady_clock::time_point now,
+		     std::chrono::seconds max_age) noexcept
+	:CacheItem(_key, _size, now + max_age)
 {
 }
 

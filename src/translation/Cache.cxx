@@ -87,10 +87,13 @@ struct TranslateCacheItem final : PoolHolder, CacheItem {
 	AllocatorStats stats;
 
 	TranslateCacheItem(PoolPtr &&_pool,
+			   const char *_key,
+			   TranslateResponse &&_response,
 			   std::chrono::steady_clock::time_point now,
 			   std::chrono::seconds max_age) noexcept
 		:PoolHolder(std::move(_pool)),
-		 CacheItem(now, max_age, 1) {}
+		 CacheItem(_key, 1, now, max_age),
+		 response(std::move(_response)) {}
 
 	TranslateCacheItem(const TranslateCacheItem &) = delete;
 
@@ -912,12 +915,22 @@ tcache_store(TranslateCacheRequest &tcr, const TranslateResponse &response)
 		/* limit to one day */
 		max_age = max_max_age;
 
-	auto item = NewFromPool<TranslateCacheItem>(pool_new_slice(*tcr.tcache->pool, "tcache_item",
-								   tcr.tcache->slice_pool),
+	auto new_pool = pool_new_slice(*tcr.tcache->pool, "tcache_item",
+				       tcr.tcache->slice_pool);
+	const AllocatorPtr alloc{new_pool};
+
+	TranslateResponse new_response;
+
+	const char *key = tcache_store_response(alloc, new_response, response,
+						tcr.request);
+	if (key == nullptr)
+		key = alloc.Dup(tcr.key);
+
+	auto item = NewFromPool<TranslateCacheItem>(std::move(new_pool),
+						    key, std::move(new_response),
 						    tcr.tcache->cache.SteadyNow(),
 						    max_age);
 
-	const AllocatorPtr alloc(item->GetPool());
 
 	item->request.param =
 		tcache_vary_copy(alloc, tcr.request.param,
@@ -968,21 +981,8 @@ tcache_store(TranslateCacheRequest &tcr, const TranslateResponse &response)
 		tcache_vary_copy(alloc, tcr.request.user,
 				 response, TranslationCommand::USER);
 
-	const char *key;
-
-	try {
-		key = tcache_store_response(alloc, item->response, response,
-					    tcr.request);
-	} catch (...) {
-		item->Destroy();
-		throw;
-	}
-
 	assert(!item->response.easy_base ||
 	       item->response.address.IsValidBase());
-
-	if (key == nullptr)
-		key = alloc.Dup(tcr.key);
 
 	LogConcat(4, "TranslationCache", "store ", key);
 
@@ -1016,7 +1016,7 @@ tcache_store(TranslateCacheRequest &tcr, const TranslateResponse &response)
 
 	++tcr.tcache->stats.stores;
 	TranslateCacheMatchContext match_ctx{tcr.request, tcr.find_base};
-	tcr.tcache->cache.PutMatch(key, *item, tcache_item_match, &match_ctx);
+	tcr.tcache->cache.PutMatch(*item, tcache_item_match, &match_ctx);
 	return item;
 }
 

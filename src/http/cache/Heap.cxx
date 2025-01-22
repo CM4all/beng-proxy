@@ -34,7 +34,10 @@ HttpCacheHeap::Put(const char *url, const char *tag,
 		   const StringMap &response_headers,
 		   RubberAllocation &&a, size_t size) noexcept
 {
-	auto item = NewFromPool<HttpCacheItem>(pool_new_slice(pool, "http_cache_item", slice_pool),
+	auto new_pool = pool_new_slice(pool, "http_cache_item", slice_pool);
+	const char *key = p_strdup(new_pool, url);
+
+	auto item = NewFromPool<HttpCacheItem>(std::move(new_pool), key,
 					       cache.SteadyNow(),
 					       cache.SystemNow(),
 					       tag,
@@ -46,7 +49,7 @@ HttpCacheHeap::Put(const char *url, const char *tag,
 	if (tag != nullptr)
 		per_tag.insert(*item);
 
-	cache.PutMatch(p_strdup(&item->GetPool(), url), *item,
+	cache.PutMatch(*item,
 		       http_cache_item_match,
 		       const_cast<void *>((const void *)&request_headers));
 }

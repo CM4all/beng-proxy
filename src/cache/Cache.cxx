@@ -159,7 +159,7 @@ Cache::NeedRoom(size_t _size) noexcept
 }
 
 bool
-Cache::Add(const char *key, CacheItem &item) noexcept
+Cache::Add(CacheItem &item) noexcept
 {
 	/* XXX size constraints */
 	if (!NeedRoom(item.size)) {
@@ -167,7 +167,6 @@ Cache::Add(const char *key, CacheItem &item) noexcept
 		return false;
 	}
 
-	item.key = key;
 	items.insert(item);
 	sorted_items.push_back(item);
 
@@ -181,7 +180,7 @@ Cache::Add(const char *key, CacheItem &item) noexcept
 }
 
 bool
-Cache::Put(const char *key, CacheItem &item) noexcept
+Cache::Put(CacheItem &item) noexcept
 {
 	/* XXX size constraints */
 
@@ -193,9 +192,7 @@ Cache::Put(const char *key, CacheItem &item) noexcept
 		return false;
 	}
 
-	item.key = key;
-
-	auto i = items.find(key);
+	auto i = items.find(item.GetKey());
 	if (i != items.end())
 		RemoveItem(*i);
 
@@ -212,10 +209,10 @@ Cache::Put(const char *key, CacheItem &item) noexcept
 }
 
 bool
-Cache::PutMatch(const char *key, CacheItem &item,
+Cache::PutMatch(CacheItem &item,
 		bool (*match)(const CacheItem *, void *), void *ctx) noexcept
 {
-	auto *old = GetMatch(key, match, ctx);
+	auto *old = GetMatch(item.GetKey(), match, ctx);
 
 	assert(item.size > 0);
 	assert(item.IsAbandoned());
@@ -223,7 +220,7 @@ Cache::PutMatch(const char *key, CacheItem &item,
 	if (old != nullptr)
 		RemoveItem(*old);
 
-	return Add(key, item);
+	return Add(item);
 }
 
 void
