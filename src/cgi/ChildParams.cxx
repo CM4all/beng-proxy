@@ -7,7 +7,6 @@
 #include "pool/StringBuilder.hxx"
 #include "stock/Key.hxx"
 #include "util/djb_hash.hxx"
-#include "util/IntHash.hxx"
 #include "util/SpanCast.hxx"
 #include "AllocatorPtr.hxx"
 
@@ -24,19 +23,18 @@ CgiChildParams::CgiChildParams(AllocatorPtr alloc, const CgiChildParams &src) no
 inline std::size_t
 CgiChildParams::GetStockHash() const noexcept
 {
-	std::size_t hash = INT_HASH_INIT;
-	hash = IntHashUpdate(djb_hash(AsBytes(executable_path)), hash);
+	std::size_t hash = djb_hash(AsBytes(executable_path));
 
 	for (const char *i : args)
-		hash = IntHashUpdate(djb_hash_string(i), hash);
+		hash = djb_hash_string(i, hash);
 
-	hash = IntHashUpdate(djb_hash(AsBytes(options.tag)), hash);
+	hash = djb_hash(AsBytes(options.tag), hash);
 
 	if (options.ns.mount.pivot_root != nullptr)
-		hash = IntHashUpdate(djb_hash(AsBytes(options.ns.mount.pivot_root)), hash);
+		hash = djb_hash(AsBytes(options.ns.mount.pivot_root), hash);
 
 	if (options.ns.mount.home != nullptr)
-		hash = IntHashUpdate(djb_hash(AsBytes(options.ns.mount.home)), hash);
+		hash = djb_hash(AsBytes(options.ns.mount.home), hash);
 
 	return hash;
 }
