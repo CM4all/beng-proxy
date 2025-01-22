@@ -595,14 +595,14 @@ private:
 
 	bool DispatchCompressedFile(const char *path, FileDescriptor fd,
 				    const struct statx &st,
-				    const char *encoding,
+				    std::string_view encoding,
 				    UniqueFileDescriptor compressed_fd,
 				    off_t compressed_size) noexcept;
 
-	bool CheckCompressedFile(const char *path, const char *encoding) noexcept;
+	bool CheckCompressedFile(const char *path, std::string_view encoding) noexcept;
 
-	bool CheckAutoCompressedFile(const char *path, const char *encoding,
-				     const char *suffix) noexcept;
+	bool CheckAutoCompressedFile(const char *path, std::string_view encoding,
+				     std::string_view suffix) noexcept;
 
 	bool EmulateModAuthEasy(const FileAddress &address,
 				FileDescriptor fd,

@@ -201,7 +201,7 @@ Request::DispatchFile(const char *path, FileDescriptor fd,
 inline bool
 Request::DispatchCompressedFile(const char *path, FileDescriptor fd,
 				const struct statx &st,
-				const char *encoding,
+				std::string_view encoding,
 				UniqueFileDescriptor compressed_fd,
 				off_t compressed_size) noexcept
 {
@@ -251,10 +251,9 @@ Request::DispatchCompressedFile(const char *path, FileDescriptor fd,
 }
 
 inline bool
-Request::CheckCompressedFile(const char *path, const char *encoding) noexcept
+Request::CheckCompressedFile(const char *path, std::string_view encoding) noexcept
 {
 	assert(path != nullptr);
-	assert(encoding != nullptr);
 
 	if (!http_client_accepts_encoding(request.headers, encoding))
 		return false;
@@ -273,14 +272,12 @@ Request::CheckCompressedFile(const char *path, const char *encoding) noexcept
 }
 
 inline bool
-Request::CheckAutoCompressedFile(const char *path, const char *encoding,
-				 const char *suffix) noexcept
+Request::CheckAutoCompressedFile(const char *path, std::string_view encoding,
+				 std::string_view suffix) noexcept
 {
-	assert(encoding != nullptr);
 	assert(path != nullptr);
-	assert(suffix != nullptr);
-	assert(*suffix == '.');
-	assert(suffix[1] != 0);
+	assert(suffix.size() >= 2);
+	assert(suffix.front() == '.');
 
 	if (!http_client_accepts_encoding(request.headers, encoding))
 		return false;
@@ -332,7 +329,7 @@ Request::ProbeNextPrecompressed() noexcept
 		p.state = Handler::File::Precompressed::AUTO_GZIPPED;
 
 		if ((address.auto_brotli_path || translate.auto_brotli_path) &&
-		    CheckAutoCompressedFile(address.path, "br", ".br"))
+		    CheckAutoCompressedFile(address.path, "br"sv, ".br"sv))
 			return;
 #endif // HAVE_BROTLI
 
@@ -342,7 +339,7 @@ Request::ProbeNextPrecompressed() noexcept
 		p.state = Handler::File::Precompressed::GZIPPED;
 
 		if ((address.auto_gzipped || translate.auto_gzipped) &&
-		    CheckAutoCompressedFile(address.path, "gzip", ".gz"))
+		    CheckAutoCompressedFile(address.path, "gzip"sv, ".gz"sv))
 			return;
 
 		// fall through
@@ -351,7 +348,7 @@ Request::ProbeNextPrecompressed() noexcept
 		p.state = Handler::File::Precompressed::END;
 
 		if (address.gzipped != nullptr &&
-		    CheckCompressedFile(address.gzipped, "gzip"))
+		    CheckCompressedFile(address.gzipped, "gzip"sv))
 			return;
 
 		// fall through

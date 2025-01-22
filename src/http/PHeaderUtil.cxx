@@ -10,7 +10,7 @@
 
 int
 http_client_accepts_encoding(const StringMap &request_headers,
-			     const char *coding) noexcept
+			     std::string_view coding) noexcept
 {
 	const char *accept_encoding = request_headers.Get(accept_encoding_header);
 	return accept_encoding != nullptr &&

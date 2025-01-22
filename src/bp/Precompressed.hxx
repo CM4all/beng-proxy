@@ -12,7 +12,7 @@
 struct Request::Handler::File::Precompressed {
 	const char *compressed_path;
 
-	const char *encoding;
+	std::string_view encoding;
 
 	SharedLease original_lease;
 

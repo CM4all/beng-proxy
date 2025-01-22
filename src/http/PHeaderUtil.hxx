@@ -9,13 +9,14 @@
 #pragma once
 
 #include <chrono>
+#include <string_view>
 
 class StringMap;
 
 [[gnu::pure]]
 int
 http_client_accepts_encoding(const StringMap &request_headers,
-			     const char *coding) noexcept;
+			     std::string_view coding) noexcept;
 
 /**
  * Parse the "Date" response header.

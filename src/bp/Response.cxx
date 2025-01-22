@@ -111,7 +111,7 @@ session_drop_widgets(RealmSession &session, const char *uri,
 static const char *
 GetEncodingCacheKey(AllocatorPtr alloc,
 		    const char *resource_tag,
-		    const char *encoding,
+		    std::string_view encoding,
 		    const HttpHeaders &response_headers) noexcept
 {
 	if (const auto digest = response_headers.GetSloppy(digest_header);
@@ -136,7 +136,7 @@ GetEncodingCacheKey(AllocatorPtr alloc,
 static void
 MaybeCacheEncoded(EncodingCache *cache, AllocatorPtr alloc,
 		  const char *resource_tag,
-		  const char *encoding,
+		  std::string_view encoding,
 		  const HttpHeaders &response_headers,
 		  UnusedIstreamPtr &response_body) noexcept
 {
@@ -177,7 +177,7 @@ MaybeAutoCompress(EncodingCache *cache, AllocatorPtr alloc,
 		  const char *resource_tag,
 		  HttpHeaders &response_headers,
 		  UnusedIstreamPtr &response_body,
-		  const char *encoding,
+		  std::string_view encoding,
 		  auto &&factory) noexcept
 {
 	assert(!response_headers.ContainsContentEncoding());
@@ -204,7 +204,7 @@ Request::ApplyAutoCompress(HttpHeaders &response_headers,
 	    MaybeAutoCompress(instance.encoding_cache.get(), pool,
 			      request.headers,
 			      resource_tag,
-			      response_headers, response_body, "br",
+			      response_headers, response_body, "br"sv,
 			      [this, &response_headers](auto &&i){
 				      return NewBrotliEncoderIstream(pool,
 								     thread_pool_get_queue(instance.event_loop),
@@ -218,7 +218,7 @@ Request::ApplyAutoCompress(HttpHeaders &response_headers,
 		MaybeAutoCompress(instance.encoding_cache.get(), pool,
 				  request.headers,
 				  resource_tag,
-				  response_headers, response_body, "gzip",
+				  response_headers, response_body, "gzip"sv,
 				  [this](auto &&i){
 					  return NewGzipIstream(pool, std::move(i));
 				  });
