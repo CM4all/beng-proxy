@@ -303,26 +303,25 @@ tcache_uri_key(AllocatorPtr alloc, const char *uri, const char *host,
 
 	char rf_buffer[MAX_READ_FILE * 3];
 	if (read_file.data() != nullptr) {
-		b.emplace_back(rf_buffer, UriEscape(rf_buffer, read_file));
+		b.emplace_back(UriEscapeView(rf_buffer, read_file));
 		b.push_back("=RF]");
 	}
 
 	char di_buffer[MAX_DIRECTORY_INDEX * 3];
 	if (directory_index.data() != nullptr) {
-		b.emplace_back(di_buffer, UriEscape(di_buffer, directory_index));
+		b.emplace_back(UriEscapeView(di_buffer, directory_index));
 		b.push_back("=DIR]");
 	}
 
 	char fnf_buffer[MAX_FILE_NOT_FOUND * 3];
 	if (file_not_found.data() != nullptr) {
-		b.emplace_back(fnf_buffer, UriEscape(fnf_buffer, file_not_found));
+		b.emplace_back(UriEscapeView(fnf_buffer, file_not_found));
 		b.push_back("=FNF]");
 	}
 
 	char pps_buffer[MAX_PROBE_PATH_SUFFIXES * 3];
 	if (probe_path_suffixes.data() != nullptr) {
-		b.emplace_back(pps_buffer,
-			       UriEscape(pps_buffer, probe_path_suffixes));
+		b.emplace_back(UriEscapeView(pps_buffer, probe_path_suffixes));
 		b.push_back("=PPS");
 
 		if (probe_suffix != nullptr) {
@@ -343,12 +342,12 @@ tcache_uri_key(AllocatorPtr alloc, const char *uri, const char *host,
 	char wfu_buffer[MAX_CACHE_WFU * 3];
 	if (want_full_uri.data() != nullptr) {
 		b.push_back("|WFU=");
-		b.emplace_back(wfu_buffer, UriEscape(wfu_buffer, want_full_uri));
+		b.emplace_back(UriEscapeView(wfu_buffer, want_full_uri));
 	}
 
 	char layout_buffer[MAX_CACHE_LAYOUT * 3];
 	if (layout.data() != nullptr) {
-		b.emplace_back(layout_buffer, UriEscape(layout_buffer, layout));
+		b.emplace_back(UriEscapeView(layout_buffer, layout));
 
 		if (layout_item != nullptr) {
 			switch (layout_item->GetType()) {
@@ -372,7 +371,7 @@ tcache_uri_key(AllocatorPtr alloc, const char *uri, const char *host,
 	char check_buffer[MAX_CACHE_CHECK * 3];
 	if (check.data() != nullptr) {
 		b.push_back("|CHECK=");
-		b.emplace_back(check_buffer, UriEscape(check_buffer, check));
+		b.emplace_back(UriEscapeView(check_buffer, check));
 	}
 
 	if (check_header != nullptr) {
@@ -412,9 +411,10 @@ tcache_content_type_lookup_key(AllocatorPtr alloc,
 			       const TranslateRequest &request) noexcept
 {
 	char buffer[MAX_CONTENT_TYPE_LOOKUP * 3];
-	std::size_t length = UriEscape(buffer, request.content_type_lookup);
+	const auto content_type_lookup = UriEscapeView(buffer, request.content_type_lookup);
+
 	return alloc.Concat("CTL|",
-			    std::string_view{buffer, length},
+			    content_type_lookup,
 			    '|',
 			    request.suffix);
 }
@@ -423,25 +423,23 @@ static const char *
 tcache_chain_key(AllocatorPtr alloc, const TranslateRequest &request) noexcept
 {
 	char buffer[MAX_CHAIN * 3];
-	std::size_t length = UriEscape(buffer, request.chain);
+	const auto chain = UriEscapeView(buffer, request.chain);
 
 	char status_buffer[32];
 	std::string_view status{};
 	if (unsigned(request.status) != 0)
 		status = FmtUnsafeSV(status_buffer, "{}", unsigned(request.status));
 
-	return alloc.Concat("CHAIN|",
-			    std::string_view{buffer, length},
-			    '=',
-			    status);
+	return alloc.Concat("CHAIN|", chain, '=', status);
 }
 
 static const char *
 tcache_mount_listen_stream_key(AllocatorPtr alloc, const TranslateRequest &request) noexcept
 {
 	char buffer[MAX_MOUNT_LISTEN_STREAM * 3];
-	std::size_t length = UriEscape(buffer, request.mount_listen_stream);
-	return alloc.Concat("MLS|"sv, std::string_view{buffer, length});
+	const auto mount_listen_stream = UriEscapeView(buffer, request.mount_listen_stream);
+
+	return alloc.Concat("MLS|"sv, mount_listen_stream);
 }
 
 [[gnu::pure]]
