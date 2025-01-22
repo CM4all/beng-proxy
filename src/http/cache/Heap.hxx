@@ -5,10 +5,10 @@
 #pragma once
 
 #include "Item.hxx"
+#include "cache/Cache.hxx"
 #include "memory/SlicePool.hxx"
 #include "memory/Rubber.hxx"
 #include "util/IntrusiveHashSet.hxx"
-#include "cache.hxx"
 
 #include <string>
 

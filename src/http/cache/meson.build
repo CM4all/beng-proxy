@@ -10,13 +10,14 @@ http_cache = static_library(
   include_directories: inc,
   dependencies: [
     fmt_dep,
+    cache_dep,
   ],
 )
 
 http_cache_dep = declare_dependency(
   link_with: http_cache,
   dependencies: [
-    eutil_dep,
+    cache_dep,
     http_util_dep,
     istream_dep,
     memory_istream_dep,

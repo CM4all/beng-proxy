@@ -6,7 +6,7 @@
 
 #include "Document.hxx"
 #include "pool/Holder.hxx"
-#include "cache.hxx"
+#include "cache/Item.hxx"
 #include "memory/Rubber.hxx"
 #include "util/IntrusiveHashSet.hxx"
 

@@ -6,7 +6,6 @@
 #include "pool/pool.hxx"
 #include "pool/tpool.hxx"
 #include "pool/Ptr.hxx"
-#include "cache.hxx"
 #include "http/CommonHeaders.hxx"
 #include "http/Status.hxx"
 #include "http/cache/Heap.hxx"

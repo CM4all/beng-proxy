@@ -4,11 +4,11 @@
 
 #pragma once
 
+#include "cache/Cache.hxx"
 #include "stats/CacheStats.hxx"
 #include "memory/Rubber.hxx"
 #include "event/FarTimerEvent.hxx"
 #include "util/IntrusiveList.hxx"
-#include "cache.hxx"
 
 class UnusedIstreamPtr;
 

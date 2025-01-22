@@ -2,7 +2,8 @@
 // Copyright CM4all GmbH
 // author: Max Kellermann <mk@cm4all.com>
 
-#include "cache.hxx"
+#include "cache/Cache.hxx"
+#include "cache/Item.hxx"
 #include "pool/pool.hxx"
 #include "pool/Holder.hxx"
 #include "PInstance.hxx"

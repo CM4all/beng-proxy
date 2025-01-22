@@ -276,13 +276,7 @@ putil_dep = declare_dependency(link_with: putil,
 
 subdir('libcommon/src/event')
 
-# Utility library using libevent
-eutil = static_library('eutil',
-  'src/cache.cxx',
-  include_directories: inc,
-)
-eutil_dep = declare_dependency(link_with: eutil,
-                              dependencies: [event_dep])
+subdir('src/cache')
 
 if lua_dep.found()
   subdir('libcommon/src/lua/event')
@@ -529,7 +523,7 @@ translation_dep = declare_dependency(
     translation_dep,
     event_dep,
     putil_dep,
-    eutil_dep,
+    cache_dep,
     raddress_dep,
     socket_dep,
     stopwatch_dep
@@ -861,7 +855,7 @@ executable(
     http_server_dep,
     http_client_dep,
     putil_dep,
-    eutil_dep,
+    cache_dep,
     stock_dep,
     translation_dep,
     prometheus_dep,

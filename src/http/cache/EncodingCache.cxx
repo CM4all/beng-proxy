@@ -6,6 +6,7 @@
 #include "istream/UnusedPtr.hxx"
 #include "istream/SharedLeaseIstream.hxx"
 #include "istream/TeeIstream.hxx"
+#include "cache/Item.hxx"
 #include "memory/istream_rubber.hxx"
 #include "memory/sink_rubber.hxx"
 #include "pool/pool.hxx"

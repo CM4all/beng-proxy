@@ -3,8 +3,9 @@
 // author: Max Kellermann <mk@cm4all.com>
 
 #include "FilterCache.hxx"
-#include "cache.hxx"
 #include "strmap.hxx"
+#include "cache/Cache.hxx"
+#include "cache/Item.hxx"
 #include "http/CommonHeaders.hxx"
 #include "http/ResponseHandler.hxx"
 #include "http/rl/ResourceLoader.hxx"

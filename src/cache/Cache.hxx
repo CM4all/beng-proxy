@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include "Item.hxx"
 #include "event/CleanupTimer.hxx"
 #include "util/IntrusiveHashSet.hxx"
 #include "util/IntrusiveList.hxx"
@@ -14,111 +15,8 @@
 
 #include <stddef.h>
 
-class EventLoop;
-
-/**
- * Use #SharedLease with the #SharedAnchor base class to prevent items
- * from getting removed and freed while you are still using them.
- */
-class CacheItem : public SharedAnchor {
-	friend class Cache;
-
-	/**
-	 * This item's siblings, sorted by last access.
-	 */
-	IntrusiveListHook<IntrusiveHookMode::TRACK> sorted_siblings;
-
-	IntrusiveHashSetHook<IntrusiveHookMode::NORMAL> set_hook;
-
-	/**
-	 * The key under which this item is stored in the hash table.
-	 */
-	const char *key;
-
-	std::chrono::steady_clock::time_point expires;
-
-	const size_t size;
-
-public:
-	CacheItem(std::chrono::steady_clock::time_point _expires,
-		  size_t _size) noexcept
-		:expires(_expires), size(_size) {}
-
-	CacheItem(std::chrono::steady_clock::time_point now,
-		  std::chrono::system_clock::time_point system_now,
-		  std::chrono::system_clock::time_point _expires,
-		  size_t _size) noexcept;
-
-	CacheItem(std::chrono::steady_clock::time_point now,
-		  std::chrono::seconds max_age, size_t _size) noexcept;
-
-	CacheItem(const CacheItem &) = delete;
-
-	/**
-	 * If true, then this item has been removed from the cache, but
-	 * could not be destroyed yet, because it is locked.
-	 */
-	bool IsRemoved() const noexcept {
-		return !sorted_siblings.is_linked();
-	}
-
-	void Release() noexcept;
-
-	const char *GetKey() const noexcept {
-		return key;
-	}
-
-	void SetExpires(std::chrono::steady_clock::time_point _expires) noexcept {
-		expires = _expires;
-	}
-
-	void SetExpires(std::chrono::steady_clock::time_point steady_now,
-			std::chrono::system_clock::time_point system_now,
-			std::chrono::system_clock::time_point _expires) noexcept;
-
-	size_t GetSize() const noexcept {
-		return size;
-	}
-
-	[[gnu::pure]]
-	bool Validate(std::chrono::steady_clock::time_point now) const noexcept {
-		return now < expires && Validate();
-	}
-
-	virtual bool Validate() const noexcept {
-		return true;
-	}
-
-	virtual void Destroy() noexcept = 0;
-
-	struct Hash {
-		[[gnu::pure]]
-		size_t operator()(const char *key) const noexcept;
-	};
-
-	struct Equal {
-		[[gnu::pure]]
-		bool operator()(const char *a, const char *b) const noexcept;
-	};
-
-	struct GetKeyFunction {
-		[[gnu::pure]]
-		const char *operator()(const CacheItem &item) const noexcept {
-			return item.GetKey();
-		}
-	};
-
-protected:
-	/* virtual methods from SharedAnchor */
-	virtual void OnAbandoned() noexcept;
-	
-};
-
-class CacheHandler {
-public:
-	virtual void OnCacheItemAdded(const CacheItem &item) noexcept = 0;
-	virtual void OnCacheItemRemoved(const CacheItem &item) noexcept = 0;
-};
+class CacheItem;
+class CacheHandler;
 
 class Cache {
 	const size_t max_size;
