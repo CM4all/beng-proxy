@@ -15,6 +15,8 @@
 #include "uri/PEdit.hxx"
 #include "uri/PEscape.hxx"
 #include "uri/PRelative.hxx"
+#include "util/djb_hash.hxx"
+#include "util/SpanCast.hxx"
 #include "util/StringAPI.hxx"
 #include "util/StringWithHash.hxx"
 #include "pexpand.hxx"
@@ -91,6 +93,9 @@ CgiAddress::GetURI(AllocatorPtr alloc) const noexcept
 StringWithHash
 CgiAddress::GetId(AllocatorPtr alloc) const noexcept
 {
+	std::size_t hash = options.GetHash();
+	hash = djb_hash_string(path, hash);
+
 	PoolStringBuilder<256> b;
 	b.push_back(path);
 
@@ -105,43 +110,61 @@ CgiAddress::GetId(AllocatorPtr alloc) const noexcept
 
 	if (interpreter != nullptr) {
 		b.push_back(";i=");
-		b.push_back(interpreter);
+		const std::string_view value{interpreter};
+		b.push_back(value);
+		hash = djb_hash(AsBytes(value), hash);
 	}
 
 	if (action != nullptr) {
 		b.push_back(";a=");
-		b.push_back(action);
+		const std::string_view value{action};
+		b.push_back(value);
+		hash = djb_hash(AsBytes(value), hash);
 	}
 
-	for (auto i : args) {
+	for (std::string_view i : args) {
 		b.push_back("!");
 		b.push_back(i);
+		hash = djb_hash(AsBytes(i), hash);
 	}
 
-	for (auto i : params) {
+	for (std::string_view i : params) {
 		b.push_back("!");
 		b.push_back(i);
+		hash = djb_hash(AsBytes(i), hash);
 	}
 
 	if (uri != nullptr) {
 		b.push_back(";u=");
-		b.push_back(uri);
+		const std::string_view value{uri};
+		b.push_back(value);
+		hash = djb_hash(AsBytes(value), hash);
 	} else if (script_name != nullptr) {
 		b.push_back(";s=");
-		b.push_back(script_name);
+		const std::string_view value{script_name};
+		b.push_back(value);
+		hash = djb_hash(AsBytes(value), hash);
 	}
 
 	if (path_info != nullptr) {
 		b.push_back(";p=");
 		b.push_back(path_info);
+		const std::string_view value{path_info};
+		b.push_back(value);
+		hash = djb_hash(AsBytes(value), hash);
 	}
 
 	if (query_string != nullptr) {
 		b.push_back("?");
-		b.push_back(query_string);
+		const std::string_view value{query_string};
+		b.push_back(value);
+		hash = djb_hash(AsBytes(value), hash);
 	}
 
-	return StringWithHash{b(alloc)};
+	return StringWithHash{
+		b.MakeView(alloc),
+		hash,
+	};
 }
 
 void
