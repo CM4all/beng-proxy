@@ -49,9 +49,8 @@ DirectResourceLoader::SendRequest(struct pool &pool,
 				  const ResourceRequestParams &params,
 				  HttpMethod method,
 				  const ResourceAddress &address,
-				  HttpStatus status, StringMap &&headers,
+				  StringMap &&headers,
 				  UnusedIstreamPtr body,
-				  [[maybe_unused]] const char *body_etag,
 				  HttpResponseHandler &handler,
 				  CancellablePointer &cancel_ptr) noexcept
 try {
@@ -83,7 +82,8 @@ try {
 		pipe_filter(spawn_service, event_loop, pool, parent_stopwatch,
 			    cgi->path, cgi->args.ToArray(pool),
 			    cgi->options,
-			    status, std::move(headers), std::move(body),
+			    params.status != HttpStatus{} ? params.status : HttpStatus::OK,
+			    std::move(headers), std::move(body),
 			    handler);
 		return;
 

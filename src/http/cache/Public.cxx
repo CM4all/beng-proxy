@@ -141,8 +141,7 @@ public:
 		next.SendRequest(GetPool(), parent_stopwatch,
 				 params,
 				 method, address,
-				 HttpStatus::OK, std::move(_headers),
-				 nullptr, nullptr,
+				 std::move(_headers), nullptr,
 				 *this, cancel_ptr);
 	}
 
@@ -226,8 +225,7 @@ public:
 		next.SendRequest(pool, parent_stopwatch,
 				 params,
 				 method, address,
-				 HttpStatus::OK, std::move(_headers),
-				 std::move(body), nullptr,
+				 std::move(_headers), std::move(body),
 				 *this, cancel_ptr);
 	}
 
@@ -1160,8 +1158,8 @@ HttpCache::Start(struct pool &caller_pool,
 		resource_loader.SendRequest(caller_pool, parent_stopwatch,
 					    params,
 					    method, address,
-					    HttpStatus::OK, std::move(headers),
-					    std::move(body), nullptr,
+					    std::move(headers),
+					    std::move(body),
 					    handler, cancel_ptr);
 		return;
 	}
@@ -1230,8 +1228,8 @@ HttpCache::Start(struct pool &caller_pool,
 		resource_loader.SendRequest(caller_pool, parent_stopwatch,
 					    params,
 					    method, address,
-					    HttpStatus::OK, std::move(headers),
-					    std::move(body), nullptr,
+					    std::move(headers),
+					    std::move(body),
 					    handler, cancel_ptr);
 	}
 }

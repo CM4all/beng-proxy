@@ -284,11 +284,11 @@ WidgetRequest::HandleRedirect(const char *location, UnusedIstreamPtr &body) noex
 						 .sticky_hash = ctx->session_id.GetClusterHash(),
 						 .site_name = ctx->site_name,
 					 },
-					 HttpMethod::GET, address, HttpStatus::OK,
+					 HttpMethod::GET, address,
 					 MakeRequestHeaders(*view, *t_view,
 							    address.IsAnyHttp(),
 							    false),
-					 nullptr, nullptr,
+					 nullptr,
 					 *this,
 					 cancel_ptr);
 
@@ -432,11 +432,13 @@ WidgetRequest::FilterResponse(HttpStatus status,
 			     parent_stopwatch,
 			     {
 				     .sticky_hash = ctx->session_id.GetClusterHash(),
+				     .status = status,
+				     .body_etag = source_tag,
 				     .cache_tag = filter.cache_tag,
 				     .site_name = ctx->site_name,
 			     },
-			     HttpMethod::POST, filter.address, status,
-			     std::move(headers), std::move(body), source_tag,
+			     HttpMethod::POST, filter.address,
+			     std::move(headers), std::move(body),
 			     *this,
 			     cancel_ptr);
 }
@@ -698,9 +700,9 @@ WidgetRequest::SendRequest() noexcept
 						 .site_name = ctx->site_name,
 					 },
 					 widget.from_request.method,
-					 address, HttpStatus::OK,
+					 address,
 					 std::move(headers),
-					 std::move(request_body), nullptr,
+					 std::move(request_body),
 					 *this, cancel_ptr);
 }
 

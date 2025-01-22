@@ -12,9 +12,8 @@ MirrorResourceLoader::SendRequest(struct pool &,
 				  const ResourceRequestParams &,
 				  HttpMethod,
 				  const ResourceAddress &,
-				  HttpStatus,
 				  StringMap &&headers,
-				  UnusedIstreamPtr body, const char *,
+				  UnusedIstreamPtr body,
 				  HttpResponseHandler &handler,
 				  CancellablePointer &) noexcept
 {

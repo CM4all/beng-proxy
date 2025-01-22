@@ -34,9 +34,8 @@ BlockingResourceLoader::SendRequest(struct pool &pool,
 				    const ResourceRequestParams &,
 				    HttpMethod,
 				    const ResourceAddress &,
-				    HttpStatus,
 				    StringMap &&,
-				    UnusedIstreamPtr body, const char *,
+				    UnusedIstreamPtr body,
 				    HttpResponseHandler &,
 				    CancellablePointer &cancel_ptr) noexcept
 {

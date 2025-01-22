@@ -21,9 +21,7 @@ class PostponedRequest {
 	const ResourceRequestParams params;
 	const HttpMethod method;
 	const ResourceAddress &address;
-	const HttpStatus status;
 	StringMap headers;
-	const char *const body_etag;
 	HttpResponseHandler &handler;
 
 	CancellablePointer &caller_cancel_ptr;
@@ -34,20 +32,17 @@ public:
 			 const ResourceRequestParams &_params,
 			 HttpMethod _method,
 			 const ResourceAddress &_address,
-			 HttpStatus _status, StringMap &&_headers,
-			 const char *_body_etag,
+			 StringMap &&_headers,
 			 HttpResponseHandler &_handler,
 			 CancellablePointer &_caller_cancel_ptr) noexcept
 		:pool(_pool),
 		 next(_next), parent_stopwatch(_parent_stopwatch),
 		 params(_params),
 		 method(_method), address(_address),
-		 status(_status),
 		 /* copy the headers, because they may come from a
 		    FilterCacheRequest pool which may be freed before
 		    BufferedIstream becomes ready */
 		 headers(pool, _headers),
-		 body_etag(_body_etag),
 		 handler(_handler), caller_cancel_ptr(_caller_cancel_ptr)
 	{
 	}
@@ -62,8 +57,8 @@ public:
 
 	void Send(UnusedIstreamPtr body) noexcept {
 		next.SendRequest(pool, parent_stopwatch, params,
-				 method, address, status, std::move(headers),
-				 std::move(body), body_etag,
+				 method, address, std::move(headers),
+				 std::move(body),
 				 handler, caller_cancel_ptr);
 	}
 };
@@ -82,16 +77,15 @@ public:
 		const StopwatchPtr &_parent_stopwatch,
 		const ResourceRequestParams &_params,
 		HttpMethod _method, const ResourceAddress &_address,
-		HttpStatus _status, StringMap &&_headers,
-		const char *_body_etag,
+		StringMap &&_headers,
 		HttpResponseHandler &_handler,
 		CancellablePointer &caller_cancel_ptr) noexcept
 		:PoolLeakDetector(_pool),
 		 postponed_request(_pool, _next,
 				   _parent_stopwatch, _params,
 				   _method, _address,
-				   _status, std::move(_headers),
-				   _body_etag, _handler, caller_cancel_ptr)
+				   std::move(_headers),
+				   _handler, caller_cancel_ptr)
 	{
 		caller_cancel_ptr = *this;
 	}
@@ -139,8 +133,8 @@ BufferedResourceLoader::SendRequest(struct pool &pool,
 				    const ResourceRequestParams &params,
 				    HttpMethod method,
 				    const ResourceAddress &address,
-				    HttpStatus status, StringMap &&headers,
-				    UnusedIstreamPtr body, const char *body_etag,
+				    StringMap &&headers,
+				    UnusedIstreamPtr body,
 				    HttpResponseHandler &handler,
 				    CancellablePointer &cancel_ptr) noexcept
 {
@@ -148,14 +142,14 @@ BufferedResourceLoader::SendRequest(struct pool &pool,
 		auto *request = NewFromPool<Request>(pool, pool, next, parent_stopwatch,
 						     params,
 						     method, address,
-						     status, std::move(headers),
-						     body_etag, handler, cancel_ptr);
+						     std::move(headers),
+						     handler, cancel_ptr);
 		request->Start(event_loop, pipe_stock, std::move(body));
 	} else {
 		next.SendRequest(pool, parent_stopwatch,
 				 params,
-				 method, address, status, std::move(headers),
-				 std::move(body), body_etag,
+				 method, address, std::move(headers),
+				 std::move(body),
 				 handler, cancel_ptr);
 	}
 }

@@ -740,13 +740,15 @@ Request::ApplyFilter(HttpStatus status, StringMap &&headers2,
 		->SendRequest(pool, stopwatch,
 			      {
 				      .sticky_hash = session_id.GetClusterHash(),
+				      .status = status,
 				      .want_metrics = translate.enable_metrics,
+				      .body_etag = source_tag,
 				      .cache_tag = filter.cache_tag,
 				      .site_name = translate.response->site,
 			      },
 			      HttpMethod::POST, filter.address,
-			      status, std::move(headers2),
-			      std::move(body), source_tag,
+			      std::move(headers2),
+			      std::move(body),
 			      *this, cancel_ptr);
 }
 

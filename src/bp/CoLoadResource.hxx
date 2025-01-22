@@ -14,13 +14,13 @@ public:
 		       const ResourceRequestParams &params,
 		       HttpMethod method,
 		       const ResourceAddress &address,
-		       HttpStatus status, StringMap &&headers,
-		       UnusedIstreamPtr &&body, const char *body_etag) noexcept
+		       StringMap &&headers,
+		       UnusedIstreamPtr &&body) noexcept
 		:CoHttpResponseHandler(_pool)
 	{
 		rl.SendRequest(_pool, parent_stopwatch, params,
-			       method, address, status, std::move(headers),
-			       std::move(body), body_etag,
+			       method, address, std::move(headers),
+			       std::move(body),
 			       *this, cancel_ptr);
 	}
 };

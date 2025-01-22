@@ -14,10 +14,8 @@ CachedResourceLoader::SendRequest(struct pool &pool,
 				  const ResourceRequestParams &params,
 				  HttpMethod method,
 				  const ResourceAddress &address,
-				  HttpStatus,
 				  StringMap &&headers,
 				  UnusedIstreamPtr body,
-				  const char *,
 				  HttpResponseHandler &handler,
 				  CancellablePointer &cancel_ptr) noexcept
 {

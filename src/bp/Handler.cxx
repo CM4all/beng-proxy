@@ -769,13 +769,12 @@ Request::HandleChainResponse(UniquePoolPtr<TranslateResponse> _response) noexcep
 	rl.SendRequest(pool, stopwatch,
 		       {
 			       .sticky_hash = session_id.GetClusterHash(),
+			       .status = pr.status,
 			       .want_metrics = translate.enable_metrics,
 		       },
 		       method, response.address,
-		       pr.status,
 		       std::move(pr.headers).ToMap(pool),
 		       std::move(pr.body),
-		       nullptr,
 		       *this, cancel_ptr);
 
 }

@@ -47,8 +47,8 @@ Request::DispatchErrdocResponse(std::span<const std::byte> error_document)
 		CoLoadResource(*instance.cached_resource_loader, pool,
 			       stopwatch, {},
 			       HttpMethod::GET,
-			       t.address, HttpStatus::OK,
-			       {}, nullptr, nullptr);
+			       t.address,
+			       {}, nullptr);
 
 	if (!http_status_is_success(response->status))
 		/* the error document failed: submit the original

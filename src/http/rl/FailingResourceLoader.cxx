@@ -14,9 +14,8 @@ FailingResourceLoader::SendRequest(struct pool &,
 				   const ResourceRequestParams &,
 				   HttpMethod,
 				   const ResourceAddress &,
-				   HttpStatus,
 				   StringMap &&,
-				   UnusedIstreamPtr body, const char *,
+				   UnusedIstreamPtr body,
 				   HttpResponseHandler &handler,
 				   CancellablePointer &) noexcept
 {

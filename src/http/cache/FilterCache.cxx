@@ -191,11 +191,13 @@ public:
 		caller_cancel_ptr = *this;
 		resource_loader.SendRequest(pool, parent_stopwatch,
 					    {
+						    .status = status,
+						    .body_etag = body_etag,
 						    .cache_tag = cache_tag,
 					    },
 					    HttpMethod::POST, address,
-					    status, std::move(headers),
-					    std::move(body), body_etag,
+					    std::move(headers),
+					    std::move(body),
 					    *this,
 					    cancel_ptr);
 	}
@@ -809,11 +811,13 @@ FilterCache::Get(struct pool &caller_pool,
 
 		resource_loader.SendRequest(caller_pool, parent_stopwatch,
 					    {
+						    .status = status,
+						    .body_etag = source_id,
 						    .cache_tag = cache_tag,
 					    },
 					    HttpMethod::POST, address,
-					    status, std::move(headers),
-					    std::move(body), source_id,
+					    std::move(headers),
+					    std::move(body),
 					    handler, cancel_ptr);
 	}
 }

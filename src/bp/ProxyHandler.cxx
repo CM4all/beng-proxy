@@ -93,9 +93,8 @@ Request::HandleProxyAddress() noexcept
 			       .cache_tag = tr.cache_tag,
 			       .site_name = tr.site,
 		       },
-		       forward.method, address, HttpStatus::OK,
+		       forward.method, address,
 		       std::move(forward.headers),
 		       std::move(forward.body),
-		       nullptr,
 		       *this, cancel_ptr);
 }

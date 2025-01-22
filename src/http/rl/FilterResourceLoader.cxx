@@ -15,17 +15,15 @@ FilterResourceLoader::SendRequest(struct pool &pool,
 				  const ResourceRequestParams &params,
 				  [[maybe_unused]] HttpMethod method,
 				  const ResourceAddress &address,
-				  HttpStatus status,
 				  StringMap &&headers,
 				  UnusedIstreamPtr body,
-				  const char *body_etag,
 				  HttpResponseHandler &handler,
 				  CancellablePointer &cancel_ptr) noexcept
 {
 	assert(method == HttpMethod::POST);
 
 	filter_cache_request(cache, pool, parent_stopwatch, params.cache_tag,
-			     address, body_etag,
-			     status, std::move(headers), std::move(body),
+			     address, params.body_etag,
+			     params.status, std::move(headers), std::move(body),
 			     handler, cancel_ptr);
 }

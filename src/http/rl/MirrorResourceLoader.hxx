@@ -12,8 +12,8 @@ public:
 			 const ResourceRequestParams &params,
 			 HttpMethod method,
 			 const ResourceAddress &address,
-			 HttpStatus status, StringMap &&headers,
-			 UnusedIstreamPtr body, const char *body_etag,
+			 StringMap &&headers,
+			 UnusedIstreamPtr body,
 			 HttpResponseHandler &handler,
 			 CancellablePointer &cancel_ptr) noexcept override;
 };
