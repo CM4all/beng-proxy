@@ -23,18 +23,11 @@ CgiChildParams::CgiChildParams(AllocatorPtr alloc, const CgiChildParams &src) no
 inline std::size_t
 CgiChildParams::GetStockHash() const noexcept
 {
-	std::size_t hash = djb_hash(AsBytes(executable_path));
+	std::size_t hash = options.GetHash();
+	hash = djb_hash(AsBytes(executable_path), hash);
 
 	for (const char *i : args)
 		hash = djb_hash_string(i, hash);
-
-	hash = djb_hash(AsBytes(options.tag), hash);
-
-	if (options.ns.mount.pivot_root != nullptr)
-		hash = djb_hash(AsBytes(options.ns.mount.pivot_root), hash);
-
-	if (options.ns.mount.home != nullptr)
-		hash = djb_hash(AsBytes(options.ns.mount.home), hash);
 
 	return hash;
 }
