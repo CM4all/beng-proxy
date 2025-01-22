@@ -13,6 +13,7 @@
 
 #include <string.h>
 
+struct StringWithHash;
 class SocketAddress;
 
 class AllocatorPtr {
@@ -164,6 +165,7 @@ public:
 		return p_strdup_lower(pool, src);
 	}
 
+	StringWithHash Dup(StringWithHash src) const noexcept;
 	SocketAddress Dup(SocketAddress src) const noexcept;
 
 private:

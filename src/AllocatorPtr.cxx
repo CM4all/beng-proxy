@@ -4,6 +4,7 @@
 
 #include "AllocatorPtr.hxx"
 #include "pool/PSocketAddress.hxx"
+#include "util/StringWithHash.hxx"
 
 using std::string_view_literals::operator""sv;
 
@@ -41,6 +42,12 @@ AllocatorPtr::DupZ(std::string_view src) const noexcept
 		return "";
 
 	return p_strndup(&pool, src.data(), src.size());
+}
+
+StringWithHash
+AllocatorPtr::Dup(StringWithHash src) const noexcept
+{
+	return StringWithHash{Dup(src.value), src.hash};
 }
 
 SocketAddress
