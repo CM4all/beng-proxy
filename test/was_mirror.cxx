@@ -34,7 +34,7 @@ main(int, char **)
 	SetLogLevel(5);
 
 	WasSocket socket{
-		UniqueSocketDescriptor(3),
+		UniqueSocketDescriptor{AdoptTag{}, 3},
 		UniqueFileDescriptor(STDIN_FILENO),
 		UniqueFileDescriptor(STDOUT_FILENO),
 	};

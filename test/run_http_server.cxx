@@ -114,7 +114,7 @@ try {
 		return EXIT_FAILURE;
 	}
 
-	UniqueSocketDescriptor listen_fd{STDIN_FILENO};
+	UniqueSocketDescriptor listen_fd{AdoptTag{}, STDIN_FILENO};
 
 	Instance instance;
 	instance.shutdown_listener.Enable();

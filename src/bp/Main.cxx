@@ -555,7 +555,7 @@ try {
 									  {}),
 						 instance.translation_service,
 						 config,
-						 UniqueSocketDescriptor{STDIN_FILENO});
+						 UniqueSocketDescriptor{AdoptTag{}, STDIN_FILENO});
 	}
 
 	/* daemonize II */

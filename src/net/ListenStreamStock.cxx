@@ -160,7 +160,11 @@ ListenStreamStock::Item::OnSocketReady(unsigned) noexcept
 		/* after a fatal error, accept and discard all
 		   incoming connections */
 
-		UniqueSocketDescriptor connection{socket.GetSocket().AcceptNonBlock()};
+		UniqueSocketDescriptor connection{
+			AdoptTag{},
+			socket.GetSocket().AcceptNonBlock(),
+		};
+
 		if (!connection.IsDefined())
 			socket.Cancel();
 		return;
