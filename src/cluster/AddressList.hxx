@@ -6,7 +6,7 @@
 
 #include "StickyMode.hxx"
 #include "net/SocketAddress.hxx"
-#include "util/ShallowCopy.hxx"
+#include "util/TagStructs.hxx"
 
 #include <cassert>
 #include <span>

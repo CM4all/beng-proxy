@@ -5,7 +5,7 @@
 #pragma once
 
 #include "util/IntrusiveHashArrayTrie.hxx"
-#include "util/ShallowCopy.hxx"
+#include "util/TagStructs.hxx"
 #include "util/djb_hash.hxx"
 
 #include <utility>

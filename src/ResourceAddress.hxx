@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include "util/ShallowCopy.hxx"
+#include "util/TagStructs.hxx"
 
 #include <cassert>
 #include <cstddef>

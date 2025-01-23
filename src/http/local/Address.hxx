@@ -6,7 +6,7 @@
 
 #include "spawn/ChildOptions.hxx"
 #include "adata/ExpandableStringList.hxx"
-#include "util/ShallowCopy.hxx"
+#include "util/TagStructs.hxx"
 
 #include <string_view>
 
