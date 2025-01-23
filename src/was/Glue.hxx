@@ -5,39 +5,29 @@
 #pragma once
 
 #include <cstdint>
-#include <span>
 
 enum class HttpMethod : uint_least8_t;
 struct pool;
 class StopwatchPtr;
+struct CgiAddress;
 class UnusedIstreamPtr;
 class WasStock;
 class WasMetricsHandler;
 class StringMap;
 class HttpResponseHandler;
 class CancellablePointer;
-struct ChildOptions;
 
 /**
  * High level WAS client.
- *
- * @param args command-line arguments
  */
 void
 was_request(struct pool &pool, WasStock &was_stock,
 	    const StopwatchPtr &parent_stopwatch,
 	    const char *site_name,
-	    const ChildOptions &options,
-	    const char *action,
-	    const char *path,
-	    std::span<const char *const> args,
-	    unsigned parallelism, bool disposable,
+	    const CgiAddress &address,
 	    const char *remote_host,
-	    HttpMethod method, const char *uri,
-	    const char *script_name, const char *path_info,
-	    const char *query_string,
+	    HttpMethod method,
 	    StringMap &&headers, UnusedIstreamPtr body,
-	    std::span<const char *const> params,
 	    WasMetricsHandler *metrics_handler,
 	    HttpResponseHandler &handler,
 	    CancellablePointer &cancel_ptr);

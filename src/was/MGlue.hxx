@@ -9,6 +9,7 @@
 
 enum class HttpMethod : uint_least8_t;
 struct pool;
+struct CgiAddress;
 class StopwatchPtr;
 class SocketAddress;
 class UnusedIstreamPtr;
@@ -29,18 +30,10 @@ void
 SendMultiWasRequest(struct pool &pool, MultiWasStock &was_stock,
 		    const StopwatchPtr &parent_stopwatch,
 		    const char *site_name,
-		    const ChildOptions &options,
-		    const char *action,
-		    const char *path,
-		    std::span<const char *const> args,
-		    unsigned parallelism,
+		    const CgiAddress &address,
 		    const char *remote_host,
-		    HttpMethod method, const char *uri,
-		    const char *script_name, const char *path_info,
-		    const char *query_string,
+		    HttpMethod method,
 		    StringMap &&headers, UnusedIstreamPtr body,
-		    std::span<const char *const> params,
-		    unsigned concurrency,
 		    WasMetricsHandler *metrics_handler,
 		    HttpResponseHandler &handler,
 		    CancellablePointer &cancel_ptr) noexcept;
@@ -53,15 +46,10 @@ SendMultiWasRequest(struct pool &pool, MultiWasStock &was_stock,
 void
 SendRemoteWasRequest(struct pool &pool, RemoteWasStock &was_stock,
 		     const StopwatchPtr &parent_stopwatch,
-		     SocketAddress address,
-		     unsigned parallelism,
+		     const CgiAddress &address,
 		     const char *remote_host,
-		     HttpMethod method, const char *uri,
-		     const char *script_name, const char *path_info,
-		     const char *query_string,
+		     HttpMethod method,
 		     StringMap &&headers, UnusedIstreamPtr body,
-		     std::span<const char *const> params,
-		     unsigned concurrency,
 		     WasMetricsHandler *metrics_handler,
 		     HttpResponseHandler &handler,
 		     CancellablePointer &cancel_ptr) noexcept;

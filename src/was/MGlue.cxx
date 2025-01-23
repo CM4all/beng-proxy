@@ -9,7 +9,7 @@
 #include "was/async/Socket.hxx"
 #include "pool/pool.hxx"
 #include "stopwatch.hxx"
-#include "net/SocketAddress.hxx"
+#include "cgi/Address.hxx"
 #include "net/FormatAddress.hxx"
 #include "util/StringCompare.hxx"
 #include "AllocatorPtr.hxx"
@@ -19,38 +19,32 @@
 class MultiWasRequest final : WasStockRequest
 {
 	MultiWasStock &stock;
-	const ChildOptions &options;
+	const CgiAddress &address;
 	const char *const action;
 	const std::span<const char *const> args;
-	const unsigned parallelism, concurrency;
 
 public:
 	MultiWasRequest(struct pool &_pool, MultiWasStock &_stock,
 			StopwatchPtr &&_stopwatch,
 			const char *_site_name,
-			const ChildOptions &_options,
-			const char *_action,
-			std::span<const char *const> _args,
-			unsigned _parallelism, unsigned _concurrency,
+			const CgiAddress &_address,
 			const char *_remote_host,
 			HttpMethod _method, const char *_uri,
-			const char *_script_name, const char *_path_info,
-			const char *_query_string,
 			StringMap &&_headers,
 			UnusedIstreamPtr _body,
-			std::span<const char *const> _parameters,
 			WasMetricsHandler *_metrics_handler,
 			::HttpResponseHandler &_handler) noexcept
 		:WasStockRequest(_pool, std::move(_stopwatch),
 				 _site_name, _remote_host,
 				 _method, _uri,
-				 _script_name, _path_info, _query_string,
+				 _address.script_name, _address.path_info, _address.query_string,
 				 std::move(_headers), std::move(_body),
-				 _parameters, _metrics_handler, _handler),
+				 _address.params.ToArray(_pool),
+				 _metrics_handler, _handler),
 		 stock(_stock),
-		 options(_options),
-		 action(_action), args(_args),
-		 parallelism(_parallelism), concurrency(_concurrency) {}
+		 address(_address),
+		 action(address.action != nullptr ? address.action : address.path),
+		 args(address.args.ToArray(pool)) {}
 
 	void Start(CancellablePointer &caller_cancel_ptr) noexcept {
 		caller_cancel_ptr = *this;
@@ -60,9 +54,9 @@ public:
 protected:
 	void GetStockItem() noexcept override {
 		stock.Get(pool,
-			  options,
+			  address.options,
 			  action, args,
-			  parallelism, concurrency,
+			  address.parallelism, address.concurrency,
 			  *this, cancel_ptr);
 	}
 };
@@ -70,33 +64,28 @@ protected:
 class RemoteWasRequest final : WasStockRequest
 {
 	RemoteWasStock &stock;
-	const SocketAddress address;
-	const unsigned parallelism, concurrency;
+	const CgiAddress &address;
 
 public:
 	RemoteWasRequest(struct pool &_pool, RemoteWasStock &_stock,
 			 StopwatchPtr &&_stopwatch,
 			 const char *_site_name,
-			 SocketAddress _address,
-			 unsigned _parallelism, unsigned _concurrency,
+			 const CgiAddress &_address,
 			 const char *_remote_host,
 			 HttpMethod _method, const char *_uri,
-			 const char *_script_name, const char *_path_info,
-			 const char *_query_string,
 			 StringMap &&_headers,
 			 UnusedIstreamPtr _body,
-			 std::span<const char *const> _parameters,
 			 WasMetricsHandler *_metrics_handler,
 			 ::HttpResponseHandler &_handler) noexcept
 		:WasStockRequest(_pool, std::move(_stopwatch),
 				 _site_name, _remote_host,
 				 _method, _uri,
-				 _script_name, _path_info, _query_string,
+				 _address.script_name, _address.path_info, _address.query_string,
 				 std::move(_headers), std::move(_body),
-				 _parameters, _metrics_handler, _handler),
+				 _address.params.ToArray(_pool),
+				 _metrics_handler, _handler),
 		 stock(_stock),
-		 address(_address),
-		 parallelism(_parallelism), concurrency(_concurrency) {}
+		 address(_address) {}
 
 	void Start(CancellablePointer &caller_cancel_ptr) noexcept {
 		caller_cancel_ptr = *this;
@@ -105,7 +94,8 @@ public:
 
 protected:
 	void GetStockItem() noexcept override {
-		stock.Get(pool, address, parallelism, concurrency,
+		stock.Get(pool, address.address_list.front(),
+			  address.parallelism, address.concurrency,
 			  *this, cancel_ptr);
 	}
 };
@@ -119,7 +109,7 @@ protected:
 
 [[gnu::pure]]
 static const char *
-GetComaClass(std::span<const char *const> parameters)
+GetComaClass(const ExpandableStringList &parameters)
 {
 	for (const char *i : parameters) {
 		const char *result = StringAfterPrefix(i, "COMA_CLASS=");
@@ -136,7 +126,7 @@ static StopwatchPtr
 stopwatch_new_was(const StopwatchPtr &parent_stopwatch,
 		  const char *path, const char *uri,
 		  const char *path_info,
-		  std::span<const char *const> parameters)
+		  const ExpandableStringList &parameters)
 {
 #ifdef ENABLE_STOPWATCH
 	assert(path != nullptr);
@@ -176,39 +166,27 @@ void
 SendMultiWasRequest(struct pool &pool, MultiWasStock &stock,
 		    const StopwatchPtr &parent_stopwatch,
 		    const char *site_name,
-		    const ChildOptions &options,
-		    const char *action,
-		    const char *path,
-		    std::span<const char *const> args,
-		    unsigned parallelism,
+		    const CgiAddress &address,
 		    const char *remote_host,
-		    HttpMethod method, const char *uri,
-		    const char *script_name, const char *path_info,
-		    const char *query_string,
+		    HttpMethod method,
 		    StringMap &&headers, UnusedIstreamPtr body,
-		    std::span<const char *const> parameters,
-		    unsigned concurrency,
 		    WasMetricsHandler *metrics_handler,
 		    HttpResponseHandler &handler,
 		    CancellablePointer &cancel_ptr) noexcept
 {
-	if (action == nullptr)
-		action = path;
+	const char *uri = address.GetURI(pool);
 
 	auto request = NewFromPool<MultiWasRequest>(pool, pool, stock,
 						    stopwatch_new_was(parent_stopwatch,
-								      path, uri,
-								      path_info,
-								      parameters),
+								      address.path, uri,
+								      address.path_info,
+								      address.params),
 						    site_name,
-						    options, action, args,
-						    parallelism, concurrency,
+						    address,
 						    remote_host,
-						    method, uri, script_name,
-						    path_info, query_string,
+						    method, uri,
 						    std::move(headers),
 						    std::move(body),
-						    parameters,
 						    metrics_handler,
 						    handler);
 	request->Start(cancel_ptr);
@@ -218,7 +196,7 @@ static StopwatchPtr
 stopwatch_new_was(const StopwatchPtr &parent_stopwatch,
 		  SocketAddress address, const char *uri,
 		  const char *path_info,
-		  std::span<const char *const> parameters)
+		  const ExpandableStringList &parameters)
 {
 #ifdef ENABLE_STOPWATCH
 	assert(!address.IsNull());
@@ -267,34 +245,29 @@ stopwatch_new_was(const StopwatchPtr &parent_stopwatch,
 void
 SendRemoteWasRequest(struct pool &pool, RemoteWasStock &stock,
 		     const StopwatchPtr &parent_stopwatch,
-		     SocketAddress address,
-		     unsigned parallelism,
+		     const CgiAddress &address,
 		     const char *remote_host,
-		     HttpMethod method, const char *uri,
-		     const char *script_name, const char *path_info,
-		     const char *query_string,
+		     HttpMethod method,
 		     StringMap &&headers, UnusedIstreamPtr body,
-		     std::span<const char *const> parameters,
-		     unsigned concurrency,
 		     WasMetricsHandler *metrics_handler,
 		     HttpResponseHandler &handler,
 		     CancellablePointer &cancel_ptr) noexcept
 {
+	const char *uri = address.GetURI(pool);
+
 	auto request = NewFromPool<RemoteWasRequest>(pool, pool, stock,
 						     stopwatch_new_was(parent_stopwatch,
-								      address, uri,
-								      path_info,
-								      parameters),
+								       address.address_list.front(), uri,
+								       address.path_info,
+								       address.params),
 						     nullptr,
 						     address,
-						     parallelism, concurrency,
 						     remote_host,
-						     method, uri, script_name,
-						     path_info, query_string,
+						     method, uri,
 						     std::move(headers),
 						     std::move(body),
-						     parameters,
 						     metrics_handler,
 						     handler);
+
 	request->Start(cancel_ptr);
 }

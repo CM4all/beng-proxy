@@ -5,7 +5,7 @@
 #include "Glue.hxx"
 #include "Stock.hxx"
 #include "SRequest.hxx"
-#include "was/async/Socket.hxx"
+#include "cgi/Address.hxx"
 #include "pool/pool.hxx"
 #include "util/StringCompare.hxx"
 #include "AllocatorPtr.hxx"
@@ -14,40 +14,32 @@
 
 class WasRequest final : WasStockRequest {
 	WasStock &was_stock;
-	const ChildOptions &options;
+	const CgiAddress &address;
 	const char *const action;
 	const std::span<const char *const> args;
-	const unsigned parallelism;
-	const bool disposable;
 
 public:
 	WasRequest(struct pool &_pool, WasStock &_was_stock,
 		   StopwatchPtr &&_stopwatch,
 		   const char *_site_name,
-		   const ChildOptions &_options,
-		   const char *_action,
-		   std::span<const char *const> _args,
-		   unsigned _parallelism, bool _disposable,
+		   const CgiAddress &_address,
 		   const char *_remote_host,
 		   HttpMethod _method, const char *_uri,
-		   const char *_script_name, const char *_path_info,
-		   const char *_query_string,
 		   StringMap &&_headers,
 		   UnusedIstreamPtr _body,
-		   std::span<const char *const> _parameters,
 		   WasMetricsHandler *_metrics_handler,
 		   ::HttpResponseHandler &_handler) noexcept
 		:WasStockRequest(_pool, std::move(_stopwatch),
 				 _site_name, _remote_host,
 				 _method, _uri,
-				 _script_name, _path_info, _query_string,
+				 _address.script_name, _address.path_info, _address.query_string,
 				 std::move(_headers), std::move(_body),
-				 _parameters, _metrics_handler, _handler),
+				 _address.params.ToArray(_pool),
+				 _metrics_handler, _handler),
 		 was_stock(_was_stock),
-		 options(_options),
-		 action(_action), args(_args),
-		 parallelism(_parallelism),
-		 disposable(_disposable) {}
+		 address(_address),
+		 action(address.action != nullptr ? address.action : address.path),
+		 args(address.args.ToArray(pool)) {}
 
 	using WasStockRequest::WasStockRequest;
 
@@ -59,9 +51,9 @@ public:
 protected:
 	void GetStockItem() noexcept override {
 		was_stock.Get(pool,
-			      options,
+			      address.options,
 			      action, args,
-			      parallelism, disposable,
+			      address.parallelism, address.disposable,
 			      *this, cancel_ptr);
 	}
 };
@@ -75,7 +67,7 @@ protected:
 
 [[gnu::pure]]
 static const char *
-GetComaClass(std::span<const char *const> parameters)
+GetComaClass(const ExpandableStringList &parameters)
 {
 	for (const char *i : parameters) {
 		const char *result = StringAfterPrefix(i, "COMA_CLASS=");
@@ -92,7 +84,7 @@ static StopwatchPtr
 stopwatch_new_was(const StopwatchPtr &parent_stopwatch,
 		  const char *path, const char *uri,
 		  const char *path_info,
-		  std::span<const char *const> parameters)
+		  const ExpandableStringList &parameters)
 {
 #ifdef ENABLE_STOPWATCH
 	assert(path != nullptr);
@@ -132,38 +124,27 @@ void
 was_request(struct pool &pool, WasStock &was_stock,
 	    const StopwatchPtr &parent_stopwatch,
 	    const char *site_name,
-	    const ChildOptions &options,
-	    const char *action,
-	    const char *path,
-	    std::span<const char *const> args,
-	    unsigned parallelism, bool disposable,
+	    const CgiAddress &address,
 	    const char *remote_host,
-	    HttpMethod method, const char *uri,
-	    const char *script_name, const char *path_info,
-	    const char *query_string,
+	    HttpMethod method,
 	    StringMap &&headers, UnusedIstreamPtr body,
-	    std::span<const char *const> parameters,
 	    WasMetricsHandler *metrics_handler,
 	    HttpResponseHandler &handler,
 	    CancellablePointer &cancel_ptr)
 {
-	if (action == nullptr)
-		action = path;
+	const char *uri = address.GetURI(pool);
 
 	auto request = NewFromPool<WasRequest>(pool, pool, was_stock,
 					       stopwatch_new_was(parent_stopwatch,
-								 path, uri,
-								 path_info,
-								 parameters),
+								 address.path, uri,
+								 address.path_info,
+								 address.params),
 					       site_name,
-					       options, action, args,
-					       parallelism, disposable,
+					       address,
 					       remote_host,
-					       method, uri, script_name,
-					       path_info, query_string,
+					       method, uri,
 					       std::move(headers),
 					       std::move(body),
-					       parameters,
 					       metrics_handler,
 					       handler);
 	request->Start(cancel_ptr);
