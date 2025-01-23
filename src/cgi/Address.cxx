@@ -148,7 +148,17 @@ StringWithHash
 CgiAddress::GetId(AllocatorPtr alloc) const noexcept
 {
 	PoolStringBuilder<256> b;
-	std::size_t hash = BuildChildId(b);
+	std::size_t hash;
+
+	if (cached_child_id.IsNull()) {
+		hash = BuildChildId(b);
+	} else {
+		/* thie first part of the id (the part that is
+                   specific to the child process) was already
+                   calculated, so let's use that */
+		hash = cached_child_id.hash;
+		b.push_back(cached_child_id.value);
+	}
 
 	if (action != nullptr) {
 		b.push_back(";p=");
