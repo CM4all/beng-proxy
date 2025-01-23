@@ -14,6 +14,7 @@
 struct StringWithHash;
 class AllocatorPtr;
 class MatchData;
+template<size_t MAX> class PoolStringBuilder;
 
 /**
  * The address of a CGI/FastCGI/WAS request.
@@ -231,4 +232,7 @@ struct CgiAddress {
 	 * Throws std::runtime_error on error.
 	 */
 	void Expand(AllocatorPtr alloc, const MatchData &match_data);
+
+private:
+	std::size_t BuildChildId(PoolStringBuilder<256> &b) const noexcept;
 };

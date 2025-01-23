@@ -101,15 +101,10 @@ CgiAddress::GetURI(AllocatorPtr alloc) const noexcept
 	return alloc.Concat(sn, pi, qm, qs);
 }
 
-StringWithHash
-CgiAddress::GetChildId(AllocatorPtr alloc) const noexcept
+inline std::size_t
+CgiAddress::BuildChildId(PoolStringBuilder<256> &b) const noexcept
 {
-	if (!cached_child_id.IsNull())
-		return cached_child_id;
-
 	std::size_t hash = options.GetHash();
-
-	PoolStringBuilder<256> b;
 
 	{
 		const std::string_view value{action != nullptr ? action : path};
@@ -133,21 +128,33 @@ CgiAddress::GetChildId(AllocatorPtr alloc) const noexcept
 	b.emplace_back(options_buffer,
 		       options.MakeId(options_buffer));
 
+	return hash;
+}
+
+StringWithHash
+CgiAddress::GetChildId(AllocatorPtr alloc) const noexcept
+{
+	if (!cached_child_id.IsNull())
+		return cached_child_id;
+
+	PoolStringBuilder<256> b;
+
+	std::size_t hash = BuildChildId(b);
+
 	return StringWithHash{b.MakeView(alloc), hash};
 }
 
 StringWithHash
 CgiAddress::GetId(AllocatorPtr alloc) const noexcept
 {
-	std::size_t hash = options.GetHash();
-	hash = djb_hash_string(path, hash);
-
 	PoolStringBuilder<256> b;
-	b.push_back(path);
+	std::size_t hash = BuildChildId(b);
 
-	char child_options_buffer[16384];
-	b.emplace_back(child_options_buffer,
-		       options.MakeId(child_options_buffer));
+	if (action != nullptr) {
+		b.push_back(";p=");
+		hash = djb_hash_string(path, hash);
+		b.push_back(path);
+	}
 
 	if (document_root != nullptr) {
 		b.push_back(";d=");
@@ -159,19 +166,6 @@ CgiAddress::GetId(AllocatorPtr alloc) const noexcept
 		const std::string_view value{interpreter};
 		b.push_back(value);
 		hash = djb_hash(AsBytes(value), hash);
-	}
-
-	if (action != nullptr) {
-		b.push_back(";a=");
-		const std::string_view value{action};
-		b.push_back(value);
-		hash = djb_hash(AsBytes(value), hash);
-	}
-
-	for (std::string_view i : args) {
-		b.push_back("!");
-		b.push_back(i);
-		hash = djb_hash(AsBytes(i), hash);
 	}
 
 	for (std::string_view i : params) {
