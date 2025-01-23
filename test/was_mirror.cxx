@@ -35,8 +35,8 @@ main(int, char **)
 
 	WasSocket socket{
 		UniqueSocketDescriptor{AdoptTag{}, 3},
-		UniqueFileDescriptor(STDIN_FILENO),
-		UniqueFileDescriptor(STDOUT_FILENO),
+		UniqueFileDescriptor{AdoptTag{}, STDIN_FILENO},
+		UniqueFileDescriptor{AdoptTag{}, STDOUT_FILENO},
 	};
 
 	Instance instance;

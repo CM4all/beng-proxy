@@ -304,7 +304,7 @@ FdCache::Item::Start(FileDescriptor directory, std::size_t strip_length,
 		int _fd = openat2(directory.Get(), p,
 				  &how, sizeof(how));
 		if (_fd >= 0) {
-			fd = UniqueFileDescriptor{_fd};
+			fd = UniqueFileDescriptor{AdoptTag{}, _fd};
 			RegisterInotify();
 			InvokeSuccess();
 		} else {
