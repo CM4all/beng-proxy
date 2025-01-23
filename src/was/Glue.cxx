@@ -7,6 +7,7 @@
 #include "SRequest.hxx"
 #include "cgi/Address.hxx"
 #include "pool/pool.hxx"
+#include "pool/tpool.hxx"
 #include "util/StringCompare.hxx"
 #include "AllocatorPtr.hxx"
 
@@ -50,7 +51,10 @@ public:
 
 protected:
 	void GetStockItem() noexcept override {
-		was_stock.Get(pool,
+		const TempPoolLease tpool;
+		const auto key = address.GetChildId(*tpool);
+
+		was_stock.Get(pool, key,
 			      address.options,
 			      action, args,
 			      address.parallelism, address.disposable,

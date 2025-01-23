@@ -91,6 +91,38 @@ CgiAddress::GetURI(AllocatorPtr alloc) const noexcept
 }
 
 StringWithHash
+CgiAddress::GetChildId(AllocatorPtr alloc) const noexcept
+{
+	std::size_t hash = options.GetHash();
+
+	PoolStringBuilder<256> b;
+
+	{
+		const std::string_view value{action != nullptr ? action : path};
+		b.push_back(value);
+		hash = djb_hash(AsBytes(value), hash);
+	}
+
+	for (std::string_view i : args) {
+		b.push_back("!");
+		b.push_back(i);
+		hash = djb_hash(AsBytes(i), hash);
+	}
+
+	for (std::string_view i : options.env) {
+		b.push_back("$");
+		b.push_back(i);
+		hash = djb_hash(AsBytes(i), hash);
+	}
+
+	char options_buffer[16384];
+	b.emplace_back(options_buffer,
+		       options.MakeId(options_buffer));
+
+	return StringWithHash{b.MakeView(alloc), hash};
+}
+
+StringWithHash
 CgiAddress::GetId(AllocatorPtr alloc) const noexcept
 {
 	std::size_t hash = options.GetHash();

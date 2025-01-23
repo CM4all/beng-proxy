@@ -63,6 +63,7 @@ public:
 	 * instance.
 	 */
 	void Get(AllocatorPtr alloc,
+		 StockKey key,
 		 const ChildOptions &options,
 		 const char *executable_path,
 		 std::span<const char *const> args,

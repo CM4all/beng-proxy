@@ -8,6 +8,7 @@
 #include "SRequest.hxx"
 #include "was/async/Socket.hxx"
 #include "pool/pool.hxx"
+#include "pool/tpool.hxx"
 #include "stopwatch.hxx"
 #include "cgi/Address.hxx"
 #include "net/FormatAddress.hxx"
@@ -53,7 +54,10 @@ public:
 
 protected:
 	void GetStockItem() noexcept override {
-		stock.Get(pool,
+		const TempPoolLease tpool;
+		const auto key = address.GetChildId(*tpool);
+
+		stock.Get(pool, key,
 			  address.options,
 			  action, args,
 			  address.parallelism, address.concurrency,

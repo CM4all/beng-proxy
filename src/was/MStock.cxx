@@ -11,7 +11,6 @@
 #include "stock/MapStock.hxx"
 #include "pool/DisposablePointer.hxx"
 #include "pool/WithPoolDisposablePointer.hxx"
-#include "pool/tpool.hxx"
 #include "AllocatorPtr.hxx"
 #include "cgi/ChildParams.hxx"
 #include "spawn/ChildStockItem.hxx"
@@ -211,6 +210,7 @@ MultiWasStock::FadeTag(std::string_view tag) noexcept
 
 void
 MultiWasStock::Get(AllocatorPtr alloc,
+		   StockKey key,
 		   const ChildOptions &options,
 		   const char *executable_path,
 		   std::span<const char *const> args,
@@ -218,13 +218,10 @@ MultiWasStock::Get(AllocatorPtr alloc,
 		   StockGetHandler &handler,
 		   CancellablePointer &cancel_ptr) noexcept
 {
-	const TempPoolLease tpool;
-
 	auto r = NewDisposablePointer<CgiChildParams>(alloc, executable_path,
 						      args, options,
 						      parallelism, concurrency,
 						      false);
-	const auto key = r->GetStockKey(*tpool);
 
 	mchild_stock.Get(key, std::move(r), concurrency, handler, cancel_ptr);
 }

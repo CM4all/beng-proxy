@@ -11,7 +11,6 @@
 #include "spawn/ExitListener.hxx"
 #include "spawn/Interface.hxx"
 #include "pool/DisposablePointer.hxx"
-#include "pool/tpool.hxx"
 #include "util/StringList.hxx"
 
 #include <cassert>
@@ -137,6 +136,7 @@ WasChild::~WasChild() noexcept = default;
 
 void
 WasStock::Get(AllocatorPtr alloc,
+	      StockKey key,
 	      const ChildOptions &options,
 	      const char *executable_path,
 	      std::span<const char *const> args,
@@ -144,14 +144,12 @@ WasStock::Get(AllocatorPtr alloc,
 	      StockGetHandler &handler,
 	      CancellablePointer &cancel_ptr) noexcept
 {
-	const TempPoolLease tpool;
 
 	auto r = NewDisposablePointer<CgiChildParams>(alloc, executable_path,
 						      args, options,
 						      parallelism,
 						      0,
 						      disposable);
-	const auto key = r->GetStockKey(*tpool);
 
 	stock.Get(key, std::move(r), handler, cancel_ptr);
 }

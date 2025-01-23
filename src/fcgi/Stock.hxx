@@ -44,7 +44,7 @@ public:
 	/**
 	 * @param args command-line arguments
 	 */
-	void Get(const ChildOptions &options,
+	void Get(StockKey key, const ChildOptions &options,
 		 const char *executable_path,
 		 std::span<const char *const> args,
 		 unsigned parallelism, unsigned concurrency,

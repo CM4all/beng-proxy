@@ -34,16 +34,4 @@ struct CgiChildParams {
 		 disposable(_disposable) {}
 
 	CgiChildParams(AllocatorPtr alloc, const CgiChildParams &src) noexcept;
-
-	/**
-	 * Generates a string identifying the process.  This can be
-	 * used as a key in a hash table.  The string will be
-	 * allocated by the specified pool.
-	 */
-	[[gnu::pure]]
-	StringWithHash GetStockKey(AllocatorPtr alloc) const noexcept;
-
-private:
-	[[gnu::pure]]
-	std::size_t GetStockHash() const noexcept;
 };

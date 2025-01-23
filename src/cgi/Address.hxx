@@ -126,6 +126,14 @@ struct CgiAddress {
 	}
 
 	/**
+	 * Generates a string identifying the child process.  This can
+	 * be used as a key in a hash table.  The string will be
+	 * allocated by the specified pool.
+	 */
+	[[gnu::pure]]
+	StringWithHash GetChildId(AllocatorPtr alloc) const noexcept;
+
+	/**
 	 * Generates a string identifying the address.  This can be used as a
 	 * key in a hash table.  The string will be allocated by the specified
 	 * pool.

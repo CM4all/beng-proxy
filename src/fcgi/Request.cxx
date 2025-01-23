@@ -14,6 +14,7 @@
 #include "stock/Item.hxx"
 #include "istream/UnusedPtr.hxx"
 #include "pool/pool.hxx"
+#include "pool/tpool.hxx"
 #include "pool/LeakDetector.hxx"
 #include "event/FineTimerEvent.hxx"
 #include "net/SocketDescriptor.hxx"
@@ -91,7 +92,10 @@ public:
 	}
 
 	void BeginConnect() noexcept {
-		fcgi_stock.Get(address.options,
+		const TempPoolLease tpool;
+		const auto key = address.GetChildId(*tpool);
+
+		fcgi_stock.Get(key, address.options,
 			       action, address.args.ToArray(pool),
 			       address.parallelism, address.concurrency,
 			       *this, cancel_ptr);

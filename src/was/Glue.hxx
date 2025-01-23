@@ -10,6 +10,7 @@ enum class HttpMethod : uint_least8_t;
 struct pool;
 class StopwatchPtr;
 struct CgiAddress;
+struct StringWithHash;
 class UnusedIstreamPtr;
 class WasStock;
 class WasMetricsHandler;

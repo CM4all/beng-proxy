@@ -13,7 +13,6 @@
 #include "spawn/ChildOptions.hxx"
 #include "pool/DisposablePointer.hxx"
 #include "pool/WithPoolDisposablePointer.hxx"
-#include "pool/tpool.hxx"
 #include "lib/fmt/ToBuffer.hxx"
 #include "net/UniqueSocketDescriptor.hxx"
 #include "io/FdHolder.hxx"
@@ -204,7 +203,7 @@ FcgiStock::FadeTag(std::string_view tag) noexcept
 }
 
 void
-FcgiStock::Get(const ChildOptions &options,
+FcgiStock::Get(StockKey key, const ChildOptions &options,
 	       const char *executable_path,
 	       std::span<const char *const> args,
 	       unsigned parallelism, unsigned concurrency,
@@ -215,12 +214,9 @@ FcgiStock::Get(const ChildOptions &options,
 		/* no concurrency by default */
 		concurrency = 1;
 
-	const TempPoolLease tpool;
-
 	auto r = ToDeletePointer(new CgiChildParams(executable_path,
 						    args, options,
 						    parallelism, concurrency, false));
-	const auto key = r->GetStockKey(*tpool);
 	mchild_stock.Get(key, std::move(r),
 			 concurrency,
 			 handler, cancel_ptr);
