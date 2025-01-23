@@ -7,6 +7,7 @@
 #include "spawn/ChildOptions.hxx"
 #include "cluster/AddressList.hxx"
 #include "adata/ExpandableStringList.hxx"
+#include "util/StringWithHash.hxx"
 
 #include <string_view>
 
@@ -47,6 +48,8 @@ struct CgiAddress {
 	 * process.
 	 */
 	AddressList address_list;
+
+	StringWithHash cached_child_id{nullptr};
 
 	/**
 	 * The maximum number of parallel child processes of this
@@ -93,6 +96,7 @@ struct CgiAddress {
 		 uri(src.uri), script_name(src.script_name), path_info(src.path_info),
 		 query_string(src.query_string), document_root(src.document_root),
 		 address_list(shallow_copy, src.address_list),
+		 cached_child_id(src.cached_child_id),
 		 concurrency(src.concurrency),
 		 disposable(src.disposable),
 		 request_uri_verbatim(src.request_uri_verbatim),
@@ -110,6 +114,8 @@ struct CgiAddress {
 	CgiAddress(AllocatorPtr alloc, const CgiAddress &src) noexcept;
 
 	CgiAddress &operator=(const CgiAddress &) = delete;
+
+	void PostCacheStore(AllocatorPtr alloc) noexcept;
 
 	[[gnu::pure]]
 	const char *GetURI(AllocatorPtr alloc) const noexcept;
@@ -213,6 +219,12 @@ struct CgiAddress {
 			expand_document_root ||
 			args.IsExpandable() ||
 			params.IsExpandable();
+	}
+
+	[[gnu::pure]]
+	bool IsChildExpandable() const noexcept {
+		return options.IsExpandable() ||
+			args.IsExpandable();
 	}
 
 	/**

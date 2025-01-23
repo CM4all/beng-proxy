@@ -238,6 +238,27 @@ ResourceAddress::SaveBase(AllocatorPtr alloc,
 	gcc_unreachable();
 }
 
+inline void
+ResourceAddress::PostCacheStore(AllocatorPtr alloc) noexcept
+{
+	switch (type) {
+	case Type::NONE:
+	case Type::PIPE:
+		break;
+
+	case Type::CGI:
+	case Type::FASTCGI:
+	case Type::WAS:
+		GetCgi().PostCacheStore(alloc);
+		break;
+
+	case Type::LOCAL:
+	case Type::HTTP:
+	case Type::LHTTP:
+		break;
+	}
+}
+
 void
 ResourceAddress::CacheStore(AllocatorPtr alloc,
 			    const ResourceAddress &src,
@@ -246,6 +267,7 @@ ResourceAddress::CacheStore(AllocatorPtr alloc,
 {
 	if (base == nullptr) {
 		CopyFrom(alloc, src);
+		PostCacheStore(alloc);
 		return;
 	} else if (const char *tail = base_tail(uri, base)) {
 		/* we received a valid BASE packet - store only the base
@@ -255,6 +277,7 @@ ResourceAddress::CacheStore(AllocatorPtr alloc,
 			/* when the response is expandable, skip appending the
 			   tail URI, don't call SaveBase() */
 			CopyFrom(alloc, src);
+			PostCacheStore(alloc);
 			return;
 		}
 
@@ -267,8 +290,10 @@ ResourceAddress::CacheStore(AllocatorPtr alloc,
 		}
 
 		*this = src.SaveBase(alloc, tail);
-		if (IsDefined())
+		if (IsDefined()) {
+			PostCacheStore(alloc);
 			return;
+		}
 
 		/* the tail could not be applied to the address, so this is a
 		   base mismatch */

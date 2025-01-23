@@ -335,4 +335,7 @@ public:
 	 * Throws std::runtime_error on error.
 	 */
 	void Expand(AllocatorPtr alloc, const MatchData &match_data);
+
+private:
+	void PostCacheStore(AllocatorPtr alloc) noexcept;
 };

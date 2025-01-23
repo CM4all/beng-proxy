@@ -38,6 +38,7 @@ CgiAddress::CgiAddress(AllocatorPtr alloc, const CgiAddress &src) noexcept
 	 query_string(alloc.CheckDup(src.query_string)),
 	 document_root(alloc.CheckDup(src.document_root)),
 	 address_list(alloc, src.address_list),
+	 cached_child_id(alloc.Dup(src.cached_child_id)),
 	 parallelism(src.parallelism),
 	 concurrency(src.concurrency),
 	 disposable(src.disposable),
@@ -48,6 +49,16 @@ CgiAddress::CgiAddress(AllocatorPtr alloc, const CgiAddress &src) noexcept
 	 expand_path_info(src.expand_path_info),
 	 expand_document_root(src.expand_document_root)
 {
+}
+
+void
+CgiAddress::PostCacheStore(AllocatorPtr alloc) noexcept
+{
+	/* cache the GetChildId() call only if we expect future calls
+           to have the same result, i.e. none of the relevant fields
+           are "expandable" */
+	if ((action != nullptr || !expand_path) && !IsChildExpandable())
+		cached_child_id = GetChildId(alloc);
 }
 
 [[gnu::pure]]
@@ -93,6 +104,9 @@ CgiAddress::GetURI(AllocatorPtr alloc) const noexcept
 StringWithHash
 CgiAddress::GetChildId(AllocatorPtr alloc) const noexcept
 {
+	if (!cached_child_id.IsNull())
+		return cached_child_id;
+
 	std::size_t hash = options.GetHash();
 
 	PoolStringBuilder<256> b;
