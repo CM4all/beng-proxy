@@ -8,9 +8,9 @@
 #include "was/async/Socket.hxx"
 #include "pool/pool.hxx"
 #include "util/StringCompare.hxx"
+#include "AllocatorPtr.hxx"
 
-#include <assert.h>
-#include <string.h>
+#include <cassert>
 
 class WasRequest final : WasStockRequest {
 	WasStock &was_stock;

@@ -136,7 +136,7 @@ WasChild::~WasChild() noexcept = default;
  */
 
 void
-WasStock::Get(struct pool &pool,
+WasStock::Get(AllocatorPtr alloc,
 	      const ChildOptions &options,
 	      const char *executable_path,
 	      std::span<const char *const> args,
@@ -146,7 +146,7 @@ WasStock::Get(struct pool &pool,
 {
 	const TempPoolLease tpool;
 
-	auto r = NewDisposablePointer<CgiChildParams>(pool, executable_path,
+	auto r = NewDisposablePointer<CgiChildParams>(alloc, executable_path,
 						      args, options,
 						      parallelism,
 						      0,

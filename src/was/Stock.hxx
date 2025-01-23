@@ -14,7 +14,7 @@
 #include <string_view>
 
 namespace Net::Log { class Sink; }
-struct pool;
+class AllocatorPtr;
 struct ChildOptions;
 struct WasSocket;
 class SpawnService;
@@ -82,7 +82,7 @@ public:
 	 *
 	 * @param args command-line arguments
 	 */
-	void Get(struct pool &pool,
+	void Get(AllocatorPtr alloc,
 		 const ChildOptions &options,
 		 const char *executable_path,
 		 std::span<const char *const> args,
