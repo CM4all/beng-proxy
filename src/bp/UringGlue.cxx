@@ -51,6 +51,17 @@ UringGlue::UringGlue([[maybe_unused]] EventLoop &event_loop,
 		fprintf(stderr, "Failed to initialize io_uring: ");
 		PrintException(std::current_exception());
 	}
+
+	try {
+		/* limit the number of io_uring worker threads; having
+		   too many only leads to lock contention inside the
+		   kernel */
+		// TODO make configurable?
+		uring->SetMaxWorkers(64, 64);
+	} catch (...) {
+		fprintf(stderr, "Failed to set up io_uring: ");
+		PrintException(std::current_exception());
+	}
 #endif
 }
 
