@@ -11,6 +11,7 @@ cm4all-beng-proxy (19.3) unstable; urgency=low
   * io_uring: add settings "io_uring_sqpoll", "io_uring_sq_thread_cpu"
   * io_uring: limit io_uring workers to 64+64
   * do not resolve IPv6 scope ids to interface names
+  * bp: don't add default Accept charset header
 
  --   
 

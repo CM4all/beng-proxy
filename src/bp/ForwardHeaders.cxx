@@ -260,7 +260,6 @@ forward_request_headers(AllocatorPtr alloc, const StringMap &src,
 	const bool is_upgrade = with_body && http_is_upgrade(src);
 
 	StringMap dest;
-	bool found_accept_charset = false;
 
 	for (const auto &i : src) {
 		const char *const key = i.key;
@@ -279,7 +278,6 @@ forward_request_headers(AllocatorPtr alloc, const StringMap &src,
 			} else if (forward_charset &&
 				   StringIsEqual(key, "accept-charset")) {
 				dest.Add(alloc, key, value);
-				found_accept_charset = true;
 			} else if (forward_encoding &&
 				   StringIsEqual(key, "accept-encoding")) {
 				dest.Add(alloc, key, value);
@@ -325,9 +323,6 @@ forward_request_headers(AllocatorPtr alloc, const StringMap &src,
 
 		dest.Add(alloc, key, value);
 	}
-
-	if (!found_accept_charset)
-		dest.Add(alloc, accept_charset_header, "utf-8");
 
 	if (settings[HeaderGroup::COOKIE] == HeaderForwardMode::MANGLE &&
 	    session != nullptr && host_and_port != nullptr && uri != nullptr)
