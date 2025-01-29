@@ -127,33 +127,33 @@ TEST(HeaderForwardTest, BasicRequestHeader)
 	auto a = forward_request_headers(alloc, headers,
 					 false, false, false, false, false,
 					 settings);
-	EXPECT_EQ(strmap_to_string(a), "accept=1;accept-charset=utf-8;cache-control=3;from=2;"sv);
+	EXPECT_EQ(strmap_to_string(a), "accept=1;cache-control=3;from=2;"sv);
 
 	a = forward_request_headers(alloc, headers,
 				    true, true, true, true, true,
 				    settings);
-	EXPECT_EQ(strmap_to_string(a), "accept=1;accept-charset=utf-8;cache-control=3;from=2;"sv);
+	EXPECT_EQ(strmap_to_string(a), "accept=1;cache-control=3;from=2;"sv);
 
 	std::fill_n(settings.modes, size_t(HeaderGroup::MAX),
 		    HeaderForwardMode::YES);
 	a = forward_request_headers(alloc, headers,
 				    false, false, false, false, false,
 				    settings);
-	EXPECT_EQ(strmap_to_string(a), "accept=1;accept-charset=utf-8;cache-control=3;from=2;user-agent=" PRODUCT_TOKEN ";"sv);
+	EXPECT_EQ(strmap_to_string(a), "accept=1;cache-control=3;from=2;user-agent=" PRODUCT_TOKEN ";"sv);
 
 	std::fill_n(settings.modes, size_t(HeaderGroup::MAX),
 		    HeaderForwardMode::MANGLE);
 	a = forward_request_headers(alloc, headers,
 				    false, false, false, false, false,
 				    settings);
-	EXPECT_EQ(strmap_to_string(a), "accept=1;accept-charset=utf-8;cache-control=3;from=2;user-agent=" PRODUCT_TOKEN ";via=1.1 192.168.0.2;x-forwarded-for=192.168.0.3;"sv);
+	EXPECT_EQ(strmap_to_string(a), "accept=1;cache-control=3;from=2;user-agent=" PRODUCT_TOKEN ";via=1.1 192.168.0.2;x-forwarded-for=192.168.0.3;"sv);
 
 	std::fill_n(settings.modes, size_t(HeaderGroup::MAX),
 		    HeaderForwardMode::BOTH);
 	a = forward_request_headers(alloc, headers,
 				    false, false, false, false, false,
 				    settings);
-	EXPECT_EQ(strmap_to_string(a), "accept=1;accept-charset=utf-8;cache-control=3;from=2;user-agent=" PRODUCT_TOKEN ";"sv);
+	EXPECT_EQ(strmap_to_string(a), "accept=1;cache-control=3;from=2;user-agent=" PRODUCT_TOKEN ";"sv);
 }
 
 TEST(HeaderForwardTest, HostRequestHeader)
@@ -166,24 +166,24 @@ TEST(HeaderForwardTest, HostRequestHeader)
 	auto a = forward_request_headers(alloc, headers,
 					 true, false, false, false, false,
 					 settings);
-	EXPECT_EQ(strmap_to_string(a), "accept-charset=utf-8;"sv);
+	EXPECT_EQ(strmap_to_string(a), ""sv);
 
 	a = forward_request_headers(alloc, headers,
 				    false, false, false, false, false,
 				    settings);
-	EXPECT_EQ(strmap_to_string(a), "accept-charset=utf-8;host=foo;"sv);
+	EXPECT_EQ(strmap_to_string(a), "host=foo;"sv);
 
 	settings[HeaderGroup::FORWARD] = HeaderForwardMode::MANGLE;
 	a = forward_request_headers(alloc, headers,
 				    true, false, false, false, false,
 				    settings);
-	EXPECT_EQ(strmap_to_string(a), "accept-charset=utf-8;x-forwarded-host=foo;"sv);
+	EXPECT_EQ(strmap_to_string(a), "x-forwarded-host=foo;"sv);
 
 	settings[HeaderGroup::FORWARD] = HeaderForwardMode::MANGLE;
 	a = forward_request_headers(alloc, headers,
 				    false, false, false, false, false,
 				    settings);
-	EXPECT_EQ(strmap_to_string(a), "accept-charset=utf-8;host=foo;x-forwarded-host=foo;"sv);
+	EXPECT_EQ(strmap_to_string(a), "host=foo;x-forwarded-host=foo;"sv);
 }
 
 TEST(HeaderForwardTest, AuthRequestHeaders)
@@ -196,25 +196,25 @@ TEST(HeaderForwardTest, AuthRequestHeaders)
 	auto a = forward_request_headers(alloc, headers,
 					 false, false, false, false, false,
 					 settings);
-	EXPECT_EQ(strmap_to_string(a), "accept-charset=utf-8;"sv);
+	EXPECT_EQ(strmap_to_string(a), ""sv);
 
 	settings[HeaderGroup::AUTH] = HeaderForwardMode::MANGLE;
 	a = forward_request_headers(alloc, headers,
 				    false, false, false, false, false,
 				    settings);
-	EXPECT_EQ(strmap_to_string(a), "accept-charset=utf-8;"sv);
+	EXPECT_EQ(strmap_to_string(a), ""sv);
 
 	settings[HeaderGroup::AUTH] = HeaderForwardMode::BOTH;
 	a = forward_request_headers(alloc, headers,
 				    false, false, false, false, false,
 				    settings);
-	EXPECT_EQ(strmap_to_string(a), "accept-charset=utf-8;"sv);
+	EXPECT_EQ(strmap_to_string(a), ""sv);
 
 	settings[HeaderGroup::AUTH] = HeaderForwardMode::YES;
 	a = forward_request_headers(alloc, headers,
 				    false, false, false, false, false,
 				    settings);
-	EXPECT_EQ(strmap_to_string(a), "accept-charset=utf-8;authorization=foo;"sv);
+	EXPECT_EQ(strmap_to_string(a), "authorization=foo;"sv);
 }
 
 TEST(HeaderForwardTest, RangeRequestHeader)
@@ -227,17 +227,17 @@ TEST(HeaderForwardTest, RangeRequestHeader)
 	auto a = forward_request_headers(alloc, headers,
 					 false, false, false, false, false,
 					 settings);
-	EXPECT_EQ(strmap_to_string(a), "accept-charset=utf-8;"sv);
+	EXPECT_EQ(strmap_to_string(a), ""sv);
 
 	a = forward_request_headers(alloc, headers,
 				    false, false, false, false, true,
 				    settings);
-	EXPECT_EQ(strmap_to_string(a), "accept-charset=utf-8;range=1-42;"sv);
+	EXPECT_EQ(strmap_to_string(a), "range=1-42;"sv);
 
 	a = forward_request_headers(alloc, {},
 				    false, false, false, false, true,
 				    settings);
-	EXPECT_EQ(strmap_to_string(a), "accept-charset=utf-8;"sv);
+	EXPECT_EQ(strmap_to_string(a), ""sv);
 }
 
 TEST(HeaderForwardTest, CacheRequestHeaders)
@@ -257,17 +257,17 @@ TEST(HeaderForwardTest, CacheRequestHeaders)
 	auto a = forward_request_headers(alloc, headers,
 					 false, false, false, false, false,
 					 settings);
-	EXPECT_EQ(strmap_to_string(a), "accept-charset=utf-8;"sv);
+	EXPECT_EQ(strmap_to_string(a), ""sv);
 
 	a = forward_request_headers(alloc, headers,
 				    false, false, false, false, true,
 				    settings);
-	EXPECT_EQ(strmap_to_string(a), "accept-charset=utf-8;if-match=c;if-modified-since=a;if-none-match=d;if-unmodified-since=b;"sv);
+	EXPECT_EQ(strmap_to_string(a), "if-match=c;if-modified-since=a;if-none-match=d;if-unmodified-since=b;"sv);
 
 	a = forward_request_headers(alloc, {},
 				    false, false, false, false, true,
 				    settings);
-	EXPECT_EQ(strmap_to_string(a), "accept-charset=utf-8;"sv);
+	EXPECT_EQ(strmap_to_string(a), ""sv);
 }
 
 TEST(HeaderForwardTest, RequestHeaders)
@@ -310,8 +310,7 @@ TEST(HeaderForwardTest, RequestHeaders)
 					 false, false, false, false, false,
 					 settings);
 	ASSERT_STREQ(a.Remove("user-agent"), PRODUCT_TOKEN);
-	EXPECT_EQ(strmap_to_string(a), "accept-charset=utf-8;"
-		     "via=1.1 192.168.0.2;x-forwarded-for=192.168.0.3;");
+	EXPECT_EQ(strmap_to_string(a), "via=1.1 192.168.0.2;x-forwarded-for=192.168.0.3;");
 
 	/* basic test */
 	headers.Add(alloc, user_agent_header, "firesomething");
@@ -319,7 +318,7 @@ TEST(HeaderForwardTest, RequestHeaders)
 					 false, false, false, false, false,
 					 settings);
 	EXPECT_EQ(strmap_to_string(b),
-		  "accept=text/*;accept-charset=utf-8;"
+		  "accept=text/*;"
 		  "from=foo;user-agent=firesomething;"
 		  "via=1.1 192.168.0.1, 1.1 192.168.0.2;"
 		  "x-forwarded-for=10.0.0.2, 192.168.0.3;"sv);
@@ -331,7 +330,7 @@ TEST(HeaderForwardTest, RequestHeaders)
 					 false, false, false, false, false,
 					 settings);
 	EXPECT_EQ(strmap_to_string(c),
-		  "accept=text/*;accept-charset=utf-8;"
+		  "accept=text/*;"
 		  "from=foo;user-agent=firesomething;"
 		  "via=1.1 192.168.0.1, 1.1 192.168.0.2;"
 		  "x-forwarded-for=10.0.0.2, 192.168.0.3;"sv);
@@ -351,7 +350,7 @@ TEST(HeaderForwardTest, RequestHeaders)
 					 false, true, false, false, false,
 					 settings);
 	EXPECT_EQ(strmap_to_string(e),
-		  "accept=text/*;accept-charset=utf-8;"
+		  "accept=text/*;"
 		  "content-type=image/jpeg;from=foo;"
 		  "user-agent=firesomething;"
 		  "via=1.1 192.168.0.1, 1.1 192.168.0.2;"
@@ -364,7 +363,7 @@ TEST(HeaderForwardTest, RequestHeaders)
 					 false, false, false, false, false,
 					 settings);
 	EXPECT_EQ(strmap_to_string(f),
-		  "accept=text/*;accept-charset=utf-8;"
+		  "accept=text/*;"
 		  "from=foo;"
 		  "via=1.1 192.168.0.1, 1.1 192.168.0.2;"
 		  "x-forwarded-for=10.0.0.2, 192.168.0.3;"sv);
@@ -377,7 +376,7 @@ TEST(HeaderForwardTest, RequestHeaders)
 					 settings);
 	ASSERT_STREQ(g.Remove("user-agent"), PRODUCT_TOKEN);
 	EXPECT_EQ(strmap_to_string(g),
-		  "accept=text/*;accept-charset=utf-8;"
+		  "accept=text/*;"
 		  "from=foo;"
 		  "via=1.1 192.168.0.1, 1.1 192.168.0.2;"
 		  "x-forwarded-for=10.0.0.2, 192.168.0.3;"sv);
@@ -391,7 +390,7 @@ TEST(HeaderForwardTest, RequestHeaders)
 					 false, false, false, false, false,
 					 settings);
 	EXPECT_EQ(strmap_to_string(h),
-		  "accept=text/*;accept-charset=utf-8;"
+		  "accept=text/*;"
 		  "from=foo;"
 		  "via=1.1 192.168.0.1;"
 		  "x-forwarded-for=10.0.0.2;"sv);
@@ -404,7 +403,7 @@ TEST(HeaderForwardTest, RequestHeaders)
 					 false, false, false, false, false,
 					 settings);
 	EXPECT_EQ(strmap_to_string(i),
-		  "accept=text/*;accept-charset=utf-8;"
+		  "accept=text/*;"
 		  "from=foo;"sv);
 
 	/* forward cookies */
@@ -415,7 +414,7 @@ TEST(HeaderForwardTest, RequestHeaders)
 					 false, false, false, false, false,
 					 settings);
 	EXPECT_EQ(strmap_to_string(j),
-		  "accept=text/*;accept-charset=utf-8;"
+		  "accept=text/*;"
 		  "cookie=a=b;"
 		  "from=foo;"sv);
 
@@ -427,7 +426,7 @@ TEST(HeaderForwardTest, RequestHeaders)
 					 false, false, false, false, false,
 					 settings);
 	EXPECT_EQ(strmap_to_string(k),
-		  "accept=text/*;accept-charset=utf-8;"
+		  "accept=text/*;"
 		  "cookie=a=b;cookie=c=d;"
 		  "from=foo;"sv);
 
@@ -441,7 +440,7 @@ TEST(HeaderForwardTest, RequestHeaders)
 					 settings,
 					 "c", nullptr, nullptr, nullptr, nullptr);
 	EXPECT_EQ(strmap_to_string(l),
-		  "accept=text/*;accept-charset=utf-8;"
+		  "accept=text/*;"
 		  "cookie=a=b;"
 		  "from=foo;"sv);
 
@@ -454,7 +453,7 @@ TEST(HeaderForwardTest, RequestHeaders)
 					 false, false, false, false, false,
 					 settings);
 	EXPECT_EQ(strmap_to_string(m),
-		  "abc=def;accept=text/*;accept-charset=utf-8;"
+		  "abc=def;accept=text/*;"
 		  "from=foo;"sv);
 
 	/* forward CORS headers */
@@ -466,7 +465,7 @@ TEST(HeaderForwardTest, RequestHeaders)
 					 false, false, false, false, false,
 					 settings);
 	EXPECT_EQ(strmap_to_string(n),
-		  "abc=def;accept=text/*;accept-charset=utf-8;"
+		  "abc=def;accept=text/*;"
 		  "from=foo;"sv);
 
 	settings[HeaderGroup::CORS] = HeaderForwardMode::YES;
@@ -475,7 +474,7 @@ TEST(HeaderForwardTest, RequestHeaders)
 					 false, false, false, false, false,
 					 settings);
 	EXPECT_EQ(strmap_to_string(o),
-		  "abc=def;accept=text/*;accept-charset=utf-8;"
+		  "abc=def;accept=text/*;"
 		  "access-control-request-method=POST;"
 		  "from=foo;"
 		  "origin=example.com;"sv);
@@ -488,7 +487,7 @@ TEST(HeaderForwardTest, RequestHeaders)
 					 false, false, false, false, false,
 					 settings);
 	EXPECT_EQ(strmap_to_string(p),
-		  "abc=def;accept=text/*;accept-charset=utf-8;"
+		  "abc=def;accept=text/*;"
 		  "access-control-request-method=POST;"
 		  "from=foo;"
 		  "origin=example.com;"
@@ -503,7 +502,7 @@ TEST(HeaderForwardTest, RequestHeaders)
 					 false, false, false, false, false,
 					 settings);
 	EXPECT_EQ(strmap_to_string(q),
-		  "abc=def;accept=text/*;accept-charset=utf-8;"
+		  "abc=def;accept=text/*;"
 		  "access-control-request-method=POST;"
 		  "from=foo;"
 		  "origin=example.com;"
@@ -518,7 +517,7 @@ TEST(HeaderForwardTest, RequestHeaders)
 				    false, false, false, false, false,
 				    settings);
 	EXPECT_EQ(strmap_to_string(q),
-		  "abc=def;accept=text/*;accept-charset=utf-8;"
+		  "abc=def;accept=text/*;"
 		  "access-control-request-method=POST;"
 		  "from=foo;"
 		  "origin=example.com;"
