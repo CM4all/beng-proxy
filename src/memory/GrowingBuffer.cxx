@@ -246,6 +246,13 @@ GrowingBufferReader::GrowingBufferReader(GrowingBuffer &&gb) noexcept
 	:buffer(std::move(gb.head)), position(gb.position)
 {
 	assert(!buffer || buffer->fill > 0);
+	assert(!buffer || position <= buffer->fill);
+
+	if (buffer && position >= buffer->fill)
+		/* the first buffer has already been consumed; this
+                   can happen if Reserve() was called but no other
+                   data has ever been added */
+		buffer.Pop();
 }
 
 bool
