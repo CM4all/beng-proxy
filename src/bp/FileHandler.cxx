@@ -549,6 +549,14 @@ Request::StatFileAddressAfterBase(FileDescriptor base, std::string_view strip_ba
 	const FileAddress &address = *handler.file.address;
 
 	std::string_view path{address.path};
+
+	/* strip trailing slashes; we might be coming from
+	   CheckDirectoryIndex() where a trailing slash might be
+	   valid, but it's not useful to pass it to system calls and
+	   our FdCache class hates it */
+	while (path.ends_with('/'))
+		path.remove_suffix(1);
+
 	if (address.base != nullptr)
 		path = AllocatorPtr{pool}.ConcatView(address.base, path);
 
