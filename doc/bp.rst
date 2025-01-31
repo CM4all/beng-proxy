@@ -417,7 +417,15 @@ The following settings are available:
 
 - ``use_io_uring``: Set to ``no`` to disable the use of ``io_uring``,
   which can make debugging with ``strace`` easier, because ``strace``
-  cannot see ``io_uring`` operations.
+  cannot see ``io_uring`` operations.  This is the global knob; with
+  ``no``, all other ``io_uring`` settings mentioned below have no
+  effect.
+
+- ``http_io_uring``: Enables or disables ``io_uring`` for HTTP
+  connections.
+
+- ``was_io_uring``: Enables or disables ``io_uring`` for communication
+  with WAS applications.
 
 - ``io_uring_sqpoll``: Enables ``io_uring`` submit-queue polling.
   This reduces the number of ``io_uring_enter()`` system calls at the

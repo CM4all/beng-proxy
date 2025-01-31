@@ -62,6 +62,10 @@ BpConfig::HandleSet(std::string_view name, const char *value)
 		use_xattr = ParseBool(value);
 	} else if (name == "use_io_uring"sv) {
 		use_io_uring = ParseBool(value);
+	} else if (name == "http_io_uring"sv) {
+		http_io_uring = ParseBool(value);
+	} else if (name == "was_io_uring"sv) {
+		was_io_uring = ParseBool(value);
 	} else if (name == "io_uring_sqpoll"sv) {
 		io_uring_sqpoll = ParseBool(value);
 	} else if (name == "io_uring_sq_thread_cpu"sv) {

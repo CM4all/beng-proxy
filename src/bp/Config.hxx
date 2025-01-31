@@ -97,6 +97,9 @@ struct BpConfig {
 
 	bool use_io_uring = true;
 
+	// disabled by default until the code has been debugged
+	bool http_io_uring = false, was_io_uring = false;
+
 	bool io_uring_sqpoll = false;
 
 	SpawnConfig spawn;

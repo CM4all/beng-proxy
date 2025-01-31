@@ -1,9 +1,10 @@
 cm4all-beng-proxy (19.3) unstable; urgency=low
 
-  * http/server: receive and splice using io_uring
+  * http/server: receive and splice using io_uring (disabled by default)
   * {http,nghttp2}/server: parse Content-Type only if there is a logger
   * was: reduce the number of epoll_ctl() system calls again
-  * was: send/receive to/from control channel using io_uring
+  * was: send/receive to/from control channel using io_uring (disabled by
+    default)
   * bp: reuse pipes for static files with io_uring
   * bp: use the file descriptor cache for regular files
   * bp: remove delegate support

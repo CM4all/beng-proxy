@@ -468,7 +468,7 @@ try {
 				   instance.event_loop);
 
 #ifdef HAVE_URING
-	if (instance.uring) {
+	if (instance.config.was_io_uring && instance.uring) {
 		instance.was_stock->EnableUring(*instance.uring);
 		instance.multi_was_stock->EnableUring(*instance.uring);
 		instance.remote_was_stock->EnableUring(*instance.uring);
