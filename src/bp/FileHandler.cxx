@@ -436,9 +436,9 @@ Request::HandleFileAddressAfterBase(FileDescriptor base, std::string_view strip_
 {
 	const FileAddress &address = *handler.file.address;
 
-	const char *path = address.base != nullptr
-		? AllocatorPtr{pool}.Concat(address.base, address.path)
-		: address.path;
+	std::string_view path{address.path};
+	if (address.base != nullptr)
+		path = AllocatorPtr{pool}.ConcatView(address.base, path);
 
 	static constexpr struct open_how open_read_only{
 		.flags = O_RDONLY|O_NOCTTY|O_CLOEXEC|O_NONBLOCK,
@@ -548,9 +548,9 @@ Request::StatFileAddressAfterBase(FileDescriptor base, std::string_view strip_ba
 
 	const FileAddress &address = *handler.file.address;
 
-	const char *path = address.base != nullptr
-		? AllocatorPtr{pool}.Concat(address.base, address.path)
-		: address.path;
+	std::string_view path{address.path};
+	if (address.base != nullptr)
+		path = AllocatorPtr{pool}.ConcatView(address.base, path);
 
 	static constexpr struct open_how open_read_only{
 		.flags = O_RDONLY|O_NOCTTY|O_CLOEXEC|O_NONBLOCK,
