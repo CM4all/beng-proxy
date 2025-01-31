@@ -562,11 +562,16 @@ Request::StatFileAddressAfterBase(FileDescriptor base, std::string_view strip_ba
 
 	static constexpr struct open_how open_read_only{
 		.flags = O_RDONLY|O_NOCTTY|O_CLOEXEC|O_NONBLOCK,
+		.resolve = RESOLVE_NO_MAGICLINKS,
+	};
+
+	static constexpr struct open_how open_read_only_beneath{
+		.flags = O_RDONLY|O_NOCTTY|O_CLOEXEC|O_NONBLOCK,
 		.resolve = RESOLVE_BENEATH|RESOLVE_NO_MAGICLINKS,
 	};
 
 	instance.fd_cache.Get(base, strip_base, path,
-			      open_read_only,
+			      base.IsDefined() ? open_read_only_beneath : open_read_only,
 			      STATX_TYPE|STATX_MTIME|STATX_INO|STATX_SIZE,
 			      BIND_THIS_METHOD(OnStatOpenStatSuccess),
 			      BIND_THIS_METHOD(OnStatOpenStatError),
