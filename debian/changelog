@@ -4,7 +4,7 @@ cm4all-beng-proxy (19.4) unstable; urgency=low
   * translation: fix crash bug (19.3 regression)
   * translation: allow caching MOUNT_LISTEN_STREAM
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Fri, 31 Jan 2025 17:52:19 +0100
 
 cm4all-beng-proxy (19.3) unstable; urgency=low
 
