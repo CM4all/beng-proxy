@@ -50,6 +50,7 @@ UringGlue::UringGlue([[maybe_unused]] EventLoop &event_loop,
 	} catch (...) {
 		fprintf(stderr, "Failed to initialize io_uring: ");
 		PrintException(std::current_exception());
+		return;
 	}
 
 	try {
