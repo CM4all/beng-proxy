@@ -9,13 +9,16 @@
 #include "AllocatorPtr.hxx"
 
 #ifdef HAVE_URING
+#include "event/Loop.hxx"
 #include "io/UringStat.hxx"
 #include "io/UringOpenStat.hxx"
+#include "io/uring/Queue.hxx"
 #include "util/PrintException.hxx"
 
 #include <cstdio>
 #endif
 
+#include <cassert>
 #include <cerrno>
 
 #include <fcntl.h> // for AT_EMPTY_PATH
@@ -46,12 +49,15 @@ UringGlue::UringGlue([[maybe_unused]] EventLoop &event_loop,
 		params.flags |= IORING_SETUP_COOP_TASKRUN;
 
 	try {
-		uring.emplace(event_loop, 16384, params);
+		event_loop.EnableUring(16384, params);
 	} catch (...) {
 		fprintf(stderr, "Failed to initialize io_uring: ");
 		PrintException(std::current_exception());
 		return;
 	}
+
+	uring = event_loop.GetUring();
+	assert(uring != nullptr);
 
 	try {
 		/* limit the number of io_uring worker threads; having
@@ -63,15 +69,6 @@ UringGlue::UringGlue([[maybe_unused]] EventLoop &event_loop,
 		fprintf(stderr, "Failed to set up io_uring: ");
 		PrintException(std::current_exception());
 	}
-#endif
-}
-
-void
-UringGlue::SetVolatile() noexcept
-{
-#ifdef HAVE_URING
-	if (uring)
-		uring->SetVolatile();
 #endif
 }
 

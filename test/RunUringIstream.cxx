@@ -11,18 +11,24 @@
 #include "io/Open.hxx"
 #include "io/SharedFd.hxx"
 #include "io/SpliceSupport.hxx"
-#include "event/uring/Manager.hxx"
 #include "io/uring/Handler.hxx"
 #include "io/uring/OpenStat.hxx"
 #include "util/PrintException.hxx"
+
+#include <liburing.h>
 
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <stdio.h>
 #include <stdlib.h>
 
-struct Context final : TestInstance, Uring::OpenStatHandler, SinkFdHandler {
-	Uring::Manager uring_manager;
+struct UringInstance : TestInstance {
+	UringInstance() {
+		event_loop.EnableUring(1024, IORING_SETUP_SINGLE_ISSUER|IORING_SETUP_COOP_TASKRUN);
+	}
+};
+
+struct Context final : UringInstance, Uring::OpenStatHandler, SinkFdHandler {
 	Uring::OpenStat open_stat;
 
 	const char *_path;
@@ -31,11 +37,10 @@ struct Context final : TestInstance, Uring::OpenStatHandler, SinkFdHandler {
 	std::exception_ptr error;
 
 	Context()
-		:uring_manager(event_loop),
-		 open_stat(uring_manager, *this) {}
+		:open_stat(*event_loop.GetUring(), *this) {}
 
 	void BeginShutdown() noexcept {
-		uring_manager.SetVolatile();
+		event_loop.SetVolatile();
 	}
 
 	void Open(const char *path) noexcept;
@@ -69,7 +74,7 @@ Context::CreateSinkFd(const char *path, UniqueFileDescriptor &&fd,
 	auto *shared_fd = NewFromPool<SharedFd>(root_pool, std::move(fd));
 
 	sink = sink_fd_new(event_loop, root_pool,
-			   NewUringIstream(uring_manager,
+			   NewUringIstream(*event_loop.GetUring(),
 					   root_pool, path,
 					   shared_fd->Get(), *shared_fd,
 					   0, size),

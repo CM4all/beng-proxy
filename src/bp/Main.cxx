@@ -124,7 +124,7 @@ BpInstance::GetAvahiPublisher()
 void
 BpInstance::ShutdownCallback() noexcept
 {
-	uring.SetVolatile();
+	event_loop.SetVolatile();
 	fd_cache.Disable();
 
 	DisableSignals();

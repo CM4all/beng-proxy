@@ -309,7 +309,6 @@ net_dep = declare_dependency(
 subdir('libcommon/src/event/net')
 subdir('libcommon/src/event/net/control')
 subdir('libcommon/src/event/net/log')
-subdir('libcommon/src/event/uring')
 
 event_net2 = static_library(
   'event_net2',
@@ -694,7 +693,6 @@ executable(
     istream_pipe_dep,
     istream_extra_dep,
     access_log_client_dep,
-    event_uring_dep,
     event_net_log_dep,
     avahi_dep,
     odbus_dep,

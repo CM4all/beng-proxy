@@ -9,7 +9,6 @@
 #include "util/BindMethod.hxx"
 
 #ifdef HAVE_URING
-#include "event/uring/Manager.hxx"
 #include "io/uring/Close.hxx"
 
 #include <optional>
@@ -29,22 +28,20 @@ using UringOpenStatErrorCallback = BoundMethod<void(int error) noexcept>;
 
 class UringGlue {
 #ifdef HAVE_URING
-	std::optional<Uring::Manager> uring;
+	Uring::Queue *uring;
 #endif
 
 public:
 	explicit UringGlue(EventLoop &event_loop, bool enable,
 			   bool sqpoll, int sq_thread_cpu) noexcept;
 
-	void SetVolatile() noexcept;
-
 #ifdef HAVE_URING
 	operator bool() const noexcept {
-		return uring.has_value();
+		return uring != nullptr;
 	}
 
 	auto *get() noexcept {
-		return uring ? &uring.value() : nullptr;
+		return uring;
 	}
 
 	auto &operator*() noexcept {

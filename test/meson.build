@@ -539,7 +539,7 @@ if uring_dep.found()
     dependencies: [
       test_instance_dep,
       istream_dep,
-      event_uring_dep,
+      event_dep,
     ],
   )
 endif
