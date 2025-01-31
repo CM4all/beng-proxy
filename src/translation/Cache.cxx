@@ -463,19 +463,23 @@ tcache_request_key(AllocatorPtr alloc, const TranslateRequest &request) noexcept
 	if (request.mount_listen_stream.data() != nullptr)
 		return tcache_mount_listen_stream_key(alloc, request);
 
-	return request.uri != nullptr
-		? tcache_uri_key(alloc, request.uri, request.host,
-				 request.status,
-				 request.layout, request.layout_item,
-				 request.check, request.check_header,
-				 request.want_full_uri,
-				 request.probe_path_suffixes, request.probe_suffix,
-				 request.directory_index,
-				 request.file_not_found,
-				 request.read_file,
-				 request.path_exists,
-				 !request.want.empty())
-		: StringWithHash{request.widget_type};
+	if (request.uri != nullptr) [[likely]]
+		return tcache_uri_key(alloc, request.uri, request.host,
+				      request.status,
+				      request.layout, request.layout_item,
+				      request.check, request.check_header,
+				      request.want_full_uri,
+				      request.probe_path_suffixes, request.probe_suffix,
+				      request.directory_index,
+				      request.file_not_found,
+				      request.read_file,
+				      request.path_exists,
+				      !request.want.empty());
+
+	if (request.widget_type != nullptr)
+		return StringWithHash{request.widget_type};
+
+	return StringWithHash{nullptr};
 }
 
 /* check whether the request could produce a cacheable response */
