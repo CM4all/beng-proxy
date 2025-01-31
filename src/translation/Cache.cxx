@@ -488,6 +488,7 @@ static bool
 tcache_request_evaluate(const TranslateRequest &request) noexcept
 {
 	return (request.uri != nullptr || request.widget_type != nullptr ||
+		request.mount_listen_stream.data() != nullptr ||
 		request.chain.data() != nullptr ||
 		tcache_is_content_type_lookup(request)) &&
 		request.chain_header == nullptr &&
