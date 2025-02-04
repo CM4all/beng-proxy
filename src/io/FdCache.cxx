@@ -24,6 +24,9 @@
 #include <cassert>
 #include <cerrno>
 #include <string>
+
+#include <fcntl.h> // for AT_EMPTY_PATH
+#include <linux/openat2.h> // for struct open_how
 #include <sys/inotify.h>
 #include <sys/stat.h> // for struct statx
 
