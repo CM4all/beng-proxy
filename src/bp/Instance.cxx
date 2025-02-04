@@ -45,10 +45,6 @@
 #include "time/Cast.hxx" // for ToFloatSeconds()
 #include "util/PrintException.hxx"
 
-#ifdef HAVE_URING
-#include "event/uring/Manager.hxx"
-#endif
-
 #ifdef HAVE_AVAHI
 #include "lib/avahi/Client.hxx"
 #include "lib/avahi/Publisher.hxx"
