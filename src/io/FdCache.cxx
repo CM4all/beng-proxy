@@ -429,6 +429,9 @@ StripLength(std::string_view strip_path, std::string_view path)
 
 		if (path[strip_path.size()] == '/')
 			return strip_path.size() + 1;
+
+		if (strip_path.ends_with('/'))
+			return strip_path.size();
 	}
 
 	return 0;
