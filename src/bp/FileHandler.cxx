@@ -27,7 +27,6 @@
 #ifdef HAVE_URING
 #include "istream/UringIstream.hxx"
 #include "istream/UringSpliceIstream.hxx"
-#include "event/uring/Manager.hxx"
 #endif
 
 #include <assert.h>
