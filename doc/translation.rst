@@ -1160,6 +1160,10 @@ described in this section.
   filesystem root. All required mountpoints will be created, but the
   filesystem will contain nothing else.
 
+- ``TMPFS_DIRS_READABLE``: Make all directories created in tmpfs
+  (``MOUNT_ROOT_TMPFS``, ``MOUNT_EMPTY``) readable.  By default, such
+  directories are only "executable", but not "readable".
+
 - ``MOUNT_PROC`` mounts a new read-only instance of the ``proc``
   filesystem.
 

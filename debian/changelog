@@ -1,6 +1,7 @@
 cm4all-beng-proxy (19.5) unstable; urgency=low
 
   * bp: fix "Invalid cross-device link" (19.3 regression)
+  * translation: add packet TMPFS_DIRS_READABLE
 
  --   
 
