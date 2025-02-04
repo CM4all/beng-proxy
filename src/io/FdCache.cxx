@@ -5,8 +5,8 @@
 #include "FdCache.hxx"
 #include "event/Loop.hxx"
 #include "system/Error.hxx"
-#include "system/linux/openat2.h"
 #include "io/FileAt.hxx"
+#include "io/Open.hxx"
 #include "io/UniqueFileDescriptor.hxx"
 #include "io/linux/ProcPath.hxx"
 #include "util/Cancellable.hxx"
@@ -301,10 +301,8 @@ FdCache::Item::Start(FileDescriptor directory, std::size_t strip_length,
 		uring_open->StartOpen({directory, p}, how);
 	} else {
 #endif // HAVE_URING
-		int _fd = openat2(directory.Get(), p,
-				  &how, sizeof(how));
-		if (_fd >= 0) {
-			fd = UniqueFileDescriptor{AdoptTag{}, _fd};
+		fd = TryOpen({directory, p}, how);
+		if (fd.IsDefined()) {
 			RegisterInotify();
 			InvokeSuccess();
 		} else {
