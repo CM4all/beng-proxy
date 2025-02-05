@@ -37,30 +37,28 @@
 using std::string_view_literals::operator""sv;
 
 inline bool
-Request::CheckFilePath(const char *path, bool relative) noexcept
+Request::CheckFilePath(std::string_view path, bool relative) noexcept
 {
-	assert(path != nullptr);
-
-	const std::size_t path_length = strlen(path);
-
-	if (path_length >= PATH_MAX) [[unlikely]] {
+	if (path.size() >= PATH_MAX) [[unlikely]] {
 		DispatchError(HttpStatus::REQUEST_URI_TOO_LONG);
 		return false;
 	}
 
 	if (relative) {
-		if (path_length == 0 || *path == '/') [[unlikely]] {
+		if (path.empty() || path.front() == '/') [[unlikely]] {
 			DispatchError(HttpStatus::NOT_FOUND);
 			return false;
 		}
 	} else {
-		if (path_length < 2 || *path != '/') [[unlikely]] {
+		if (path.size() < 2 || path.front() != '/') [[unlikely]] {
 			DispatchError(HttpStatus::NOT_FOUND);
 			return false;
 		}
 	}
 
-	if (path[path_length - 1] == '/') [[unlikely]] {
+	assert(!path.empty());
+
+	if (path.back() == '/') [[unlikely]] {
 		DispatchError(HttpStatus::NOT_FOUND);
 		return false;
 	}
@@ -69,18 +67,14 @@ Request::CheckFilePath(const char *path, bool relative) noexcept
 }
 
 inline bool
-Request::CheckDirectoryPath(const char *path) noexcept
+Request::CheckDirectoryPath(std::string_view path) noexcept
 {
-	assert(path != nullptr);
-
-	const std::size_t path_length = strlen(path);
-
-	if (path_length >= PATH_MAX) [[unlikely]] {
+	if (path.size() >= PATH_MAX) [[unlikely]] {
 		DispatchError(HttpStatus::REQUEST_URI_TOO_LONG);
 		return false;
 	}
 
-	if (path_length == 0 || *path != '/') {
+	if (path.size() < 2 || path.front() != '/') [[unlikely]] {
 		DispatchError(HttpStatus::NOT_FOUND);
 		return false;
 	}

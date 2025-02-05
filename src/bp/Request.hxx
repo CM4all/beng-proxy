@@ -582,10 +582,10 @@ private:
 	bool CheckFileAddress(const FileAddress &address) noexcept;
 
 	[[nodiscard]]
-	bool CheckFilePath(const char *path, bool relative) noexcept;
+	bool CheckFilePath(std::string_view path, bool relative) noexcept;
 
 	[[nodiscard]]
-	bool CheckDirectoryPath(const char *path) noexcept;
+	bool CheckDirectoryPath(std::string_view path) noexcept;
 
 	bool EvaluateFileRequest(FileDescriptor fd, const struct statx &st,
 				 struct file_request &file_request) noexcept;
