@@ -109,11 +109,11 @@ FileAddress::LoadBase(AllocatorPtr alloc, std::string_view suffix) const noexcep
 	if (new_path == nullptr)
 		return nullptr;
 
+	while (*new_path == '/')
+		++new_path;
+
 	if (*new_path == 0)
 		new_path = ".";
-	else
-		while (*new_path == '/')
-			++new_path;
 
 	auto *dest = alloc.New<FileAddress>(alloc, *this, new_path);
 	dest->base = alloc.Dup(src_base);
