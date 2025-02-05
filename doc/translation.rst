@@ -1244,6 +1244,9 @@ described in this section.
   null byte.  The file can either be written to a ``tmpfs`` that was
   already mounted, or bind-mounted over an existing read-only file.
 
+- ``SYMLINK``: Create a symlink.  Payload is target and linkpath
+  separated by a null byte.
+
 - ``PIVOT_ROOT`` depends on user namespaces. ``MOUNT_PROC``,
   ``MOUNT_HOME`` and ``MOUNT_TMP_TMPFS`` depend on ``PIVOT_ROOT``,
   user namespaces and PID namespaces.
