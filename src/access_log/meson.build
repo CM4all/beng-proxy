@@ -46,11 +46,11 @@ if lua_dep.found()
     'Server.cxx',
     'Lua.cxx',
     'Launch.cxx',
+    '../../libcommon/src/spawn/UidGid.cxx',
     include_directories: inc,
     dependencies: [
       lua_dep,
       fmt_dep,
-      spawn_options_dep,
       net_log_dep,
       http_dep,
       liblua,
@@ -110,9 +110,9 @@ executable(
   'cm4all-beng-proxy-log-tee',
   'Launch.cxx',
   'Tee.cxx',
+  '../../libcommon/src/spawn/UidGid.cxx',
   include_directories: inc,
   dependencies: [
-    spawn_options_dep,
     system_dep,
     net_log_dep,
   ],
