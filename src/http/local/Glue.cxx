@@ -38,6 +38,10 @@ public:
 				 lhttp_stock_item_get_type(stock_item));
 	}
 
+	~LhttpLease() noexcept {
+		assert(!socket.IsConnected());
+	}
+
 	auto &GetSocket() noexcept {
 		return socket;
 	}
@@ -49,10 +53,16 @@ private:
 
 	/* virtual methods from class Lease */
 	PutAction ReleaseLease(PutAction action) noexcept override {
-		if (socket.IsConnected())
-			socket.Abandon();
-		else
+		if (socket.IsConnected()) {
+			[[maybe_unused]] SocketDescriptor s = socket.Abandon();
+			assert(s == lhttp_stock_item_get_socket(stock_item));
+		} else {
+			/* socket was closed by HttpClient, so the
+                           LhttpConnection needs to abandon the socket
+                           descriptor  */
+			assert(action == PutAction::DESTROY);
 			lhttp_stock_item_abandon_socket(stock_item);
+		}
 
 		auto &_item = stock_item;
 		Destroy();
