@@ -187,17 +187,17 @@ public:
 	 * socket.  The caller is responsible for closing the socket (or
 	 * scheduling it for reuse).
 	 */
-	void Abandon() noexcept {
+	SocketDescriptor Abandon() noexcept {
 		if (filter != nullptr)
 			filter->OnClosed();
 
 #ifndef NDEBUG
 		/* work around bogus assertion failure */
 		if (filter != nullptr && base.HasEnded())
-			return;
+			return SocketDescriptor::Undefined();
 #endif
 
-		base.Abandon();
+		return base.Abandon();
 	}
 
 	[[nodiscard]]
