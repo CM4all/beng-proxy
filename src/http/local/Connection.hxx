@@ -64,22 +64,44 @@ private:
  * Returns the socket descriptor of the specified stock item.
  */
 [[gnu::pure]]
-SocketDescriptor
-lhttp_stock_item_get_socket(const StockItem &item) noexcept;
+inline SocketDescriptor
+lhttp_stock_item_get_socket(const StockItem &item) noexcept
+{
+	auto &connection = static_cast<const LhttpConnection &>(item);
+
+	return connection.GetSocket();
+}
 
 /**
  * Abandon the socket.  Invoke this if the socket returned by
  * lhttp_stock_item_get_socket() has been closed by its caller.
  */
-void
-lhttp_stock_item_abandon_socket(StockItem &item) noexcept;
+inline void
+lhttp_stock_item_abandon_socket(StockItem &item) noexcept
+{
+	auto &connection = static_cast<LhttpConnection &>(item);
 
-[[gnu::pure]]
-FdType
-lhttp_stock_item_get_type(const StockItem &item) noexcept;
+	connection.AbandonSocket();
+}
 
-void
-lhttp_stock_item_set_site(StockItem &item, const char *site) noexcept;
+constexpr FdType
+lhttp_stock_item_get_type([[maybe_unused]] const StockItem &item) noexcept
+{
+	return FdType::FD_SOCKET;
+}
 
-void
-lhttp_stock_item_set_uri(StockItem &item, const char *uri) noexcept;
+inline void
+lhttp_stock_item_set_site(StockItem &item, const char *site) noexcept
+{
+	auto &connection = static_cast<LhttpConnection &>(item);
+
+	connection.SetSite(site);
+}
+
+inline void
+lhttp_stock_item_set_uri(StockItem &item, const char *uri) noexcept
+{
+	auto &connection = static_cast<LhttpConnection &>(item);
+
+	connection.SetUri(uri);
+}

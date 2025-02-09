@@ -80,39 +80,3 @@ LhttpConnection::Release() noexcept
 	event.ScheduleRead();
 	return true;
 }
-
-SocketDescriptor
-lhttp_stock_item_get_socket(const StockItem &item) noexcept
-{
-	const auto *connection = (const LhttpConnection *)&item;
-
-	return connection->GetSocket();
-}
-
-void
-lhttp_stock_item_abandon_socket(StockItem &item) noexcept
-{
-	auto &connection = static_cast<LhttpConnection &>(item);
-
-	connection.AbandonSocket();
-}
-
-FdType
-lhttp_stock_item_get_type([[maybe_unused]] const StockItem &item) noexcept
-{
-	return FdType::FD_SOCKET;
-}
-
-void
-lhttp_stock_item_set_site(StockItem &item, const char *site) noexcept
-{
-	auto &connection = (LhttpConnection &)item;
-	connection.SetSite(site);
-}
-
-void
-lhttp_stock_item_set_uri(StockItem &item, const char *uri) noexcept
-{
-	auto &connection = (LhttpConnection &)item;
-	connection.SetUri(uri);
-}
