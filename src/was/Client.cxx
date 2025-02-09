@@ -406,7 +406,8 @@ private:
 	}
 
 	void OnWasControlHangup() noexcept override {
-		assert(IsControlReleased());
+		assert(!control.IsDefined());
+		assert(!IsControlReleased());
 
 		AbortControlError(std::make_exception_ptr(SocketClosedPrematurelyError{}));
 	}
