@@ -26,24 +26,16 @@
 class LhttpLease final : public Lease, PoolLeakDetector {
 	StockItem &stock_item;
 
-	FilteredSocket socket;
-
 public:
-	explicit LhttpLease(struct pool &_pool, EventLoop &event_loop,
+	explicit LhttpLease(struct pool &_pool,
 			    StockItem &_stock_item) noexcept
 		:PoolLeakDetector(_pool),
-		 stock_item(_stock_item), socket(event_loop)
+		 stock_item(_stock_item)
 	{
-		socket.InitDummy(lhttp_stock_item_get_socket(stock_item),
-				 lhttp_stock_item_get_type(stock_item));
-	}
-
-	~LhttpLease() noexcept {
-		assert(!socket.IsConnected());
 	}
 
 	auto &GetSocket() noexcept {
-		return socket;
+		return lhttp_stock_item_get_socket(stock_item);
 	}
 
 private:
@@ -53,29 +45,9 @@ private:
 
 	/* virtual methods from class Lease */
 	PutAction ReleaseLease(PutAction action) noexcept override {
-		if (socket.IsConnected()) {
-			[[maybe_unused]] SocketDescriptor s = socket.Abandon();
-			assert(s == lhttp_stock_item_get_socket(stock_item));
-		} else {
-			/* socket was closed by HttpClient, so the
-                           LhttpConnection needs to abandon the socket
-                           descriptor  */
-			assert(action == PutAction::DESTROY);
-			lhttp_stock_item_abandon_socket(stock_item);
-		}
-
 		auto &_item = stock_item;
 		Destroy();
-		_item.Put(action);
-
-		/* we ignore the StockItem::Put() return value and
-		   unconditionally return DESTROY here because the
-		   FilteredSocket was destroyed already; strictly,
-		   this return value is wrong, and this is a
-		   workaround for the assertion in
-		   BufferedSocket::InvokeData() */
-		// TODO fix this properly
-		return PutAction::DESTROY;
+		return _item.Put(action);
 	}
 };
 
@@ -182,8 +154,7 @@ LhttpRequest::OnStockItemReady(StockItem &item) noexcept
 		header_write(more_headers, "host",
 			     address.host_and_port);
 
-	auto *lease = NewFromPool<LhttpLease>(pool, pool, GetEventLoop(),
-					      item);
+	auto *lease = NewFromPool<LhttpLease>(pool, pool, item);
 
 	http_client_request(pool, std::move(stopwatch),
 			    lease->GetSocket(), *lease,

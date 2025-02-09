@@ -5,20 +5,22 @@
 #pragma once
 
 #include "stock/Item.hxx"
-#include "event/SocketEvent.hxx"
+#include "fs/FilteredSocket.hxx"
 #include "io/FdType.hxx"
 #include "io/Logger.hxx"
+
+#include <cassert>
 
 class ListenChildStockItem;
 
 class LhttpConnection final
-	: LoggerDomainFactory, public StockItem
+	: LoggerDomainFactory, public StockItem, BufferedSocketHandler
 {
 	LazyDomainLogger logger;
 
 	ListenChildStockItem &child;
 
-	SocketEvent event;
+	FilteredSocket socket;
 
 public:
 	/**
@@ -28,16 +30,11 @@ public:
 				 ListenChildStockItem &_child);
 	~LhttpConnection() noexcept override;
 
-	SocketDescriptor GetSocket() const noexcept {
-		assert(event.IsDefined());
-		return event.GetSocket();
-	}
+	FilteredSocket &GetSocket() noexcept {
+		assert(socket.IsValid());
+		assert(socket.IsConnected());
 
-	void AbandonSocket() noexcept {
-		assert(event.IsDefined());
-		assert(event.GetScheduledFlags() == 0);
-
-		event.Abandon();
+		return socket;
 	}
 
 	[[gnu::pure]]
@@ -47,9 +44,6 @@ public:
 	void SetUri(const char *uri) noexcept;
 
 private:
-	void Read() noexcept;
-	void EventCallback(unsigned events) noexcept;
-
 	/* virtual methods from LoggerDomainFactory */
 	std::string MakeLoggerDomain() const noexcept override {
 		return GetStockName();
@@ -58,36 +52,25 @@ private:
 	/* virtual methods from class StockItem */
 	bool Borrow() noexcept override;
 	bool Release() noexcept override;
+
+	/* virtual methods from class BufferedSocketHandler */
+	BufferedResult OnBufferedData() override;
+	bool OnBufferedHangup() noexcept override;
+	bool OnBufferedClosed() noexcept override;
+	[[noreturn]] bool OnBufferedWrite() override;
+	void OnBufferedError(std::exception_ptr e) noexcept override;
 };
 
 /**
  * Returns the socket descriptor of the specified stock item.
  */
 [[gnu::pure]]
-inline SocketDescriptor
-lhttp_stock_item_get_socket(const StockItem &item) noexcept
-{
-	auto &connection = static_cast<const LhttpConnection &>(item);
-
-	return connection.GetSocket();
-}
-
-/**
- * Abandon the socket.  Invoke this if the socket returned by
- * lhttp_stock_item_get_socket() has been closed by its caller.
- */
-inline void
-lhttp_stock_item_abandon_socket(StockItem &item) noexcept
+inline FilteredSocket &
+lhttp_stock_item_get_socket(StockItem &item) noexcept
 {
 	auto &connection = static_cast<LhttpConnection &>(item);
 
-	connection.AbandonSocket();
-}
-
-constexpr FdType
-lhttp_stock_item_get_type([[maybe_unused]] const StockItem &item) noexcept
-{
-	return FdType::FD_SOCKET;
+	return connection.GetSocket();
 }
 
 inline void
