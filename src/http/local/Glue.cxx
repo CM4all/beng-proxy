@@ -47,7 +47,7 @@ public:
 	}
 
 private:
-	void Destroy() {
+	void Destroy() noexcept {
 		this->~LhttpLease();
 	}
 
