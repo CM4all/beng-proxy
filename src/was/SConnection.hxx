@@ -28,12 +28,16 @@ public:
 		return connection.GetEventLoop();
 	}
 
-	const auto &GetSocket() const noexcept {
-		return connection.GetSocket();
-	}
-
 	auto &GetControl() noexcept {
 		return connection.GetControl();
+	}
+
+	FileDescriptor GetInput() const noexcept {
+		return connection.GetInput();
+	}
+
+	FileDescriptor GetOutput() const noexcept {
+		return connection.GetOutput();
 	}
 
 	/**

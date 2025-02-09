@@ -17,13 +17,13 @@ WasStockRequest::OnStockItemReady(StockItem &item) noexcept
 	connection.SetSite(site_name);
 	connection.SetUri(pending_request.uri);
 
-	const auto &process = connection.GetSocket();
 	auto &lease = *NewFromPool<WasStockLease>(pool, connection);
 
 	was_client_request(pool,
 			   std::move(stopwatch),
 			   connection.GetControl(),
-			   process.input, process.output,
+			   connection.GetInput(),
+			   connection.GetOutput(),
 			   lease,
 			   remote_host,
 			   pending_request.method, pending_request.uri,

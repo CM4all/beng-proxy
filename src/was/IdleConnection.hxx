@@ -4,11 +4,13 @@
 
 #pragma once
 
-#include "was/async/Socket.hxx"
 #include "was/async/Control.hxx"
+#include "io/UniqueFileDescriptor.hxx"
 
 #include <exception>
 #include <utility>
+
+struct WasSocket;
 
 /**
  * Handler for #WasIdleConnection.
@@ -25,9 +27,9 @@ public:
  * PREMATURE confirmation.
  */
 class WasIdleConnection final : Was::ControlHandler {
-	WasSocket socket;
-
 	Was::Control control;
+
+	UniqueFileDescriptor input, output;
 
 	WasIdleConnectionHandler &handler;
 
@@ -44,7 +46,7 @@ class WasIdleConnection final : Was::ControlHandler {
 
 public:
 	WasIdleConnection(EventLoop &event_loop,
-			  WasSocket &&_socket,
+			  WasSocket &&socket,
 			  WasIdleConnectionHandler &_handler) noexcept;
 
 #ifdef HAVE_URING
@@ -57,12 +59,16 @@ public:
 		return control.GetEventLoop();
 	}
 
-	const auto &GetSocket() const noexcept {
-		return socket;
-	}
-
 	auto &GetControl() noexcept {
 		return control;
+	}
+
+	FileDescriptor GetInput() const noexcept {
+		return input;
+	}
+
+	FileDescriptor GetOutput() const noexcept {
+		return output;
 	}
 
 	void Stop(uint64_t _received) noexcept {

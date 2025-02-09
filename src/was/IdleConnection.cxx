@@ -3,6 +3,7 @@
 // author: Max Kellermann <mk@cm4all.com>
 
 #include "IdleConnection.hxx"
+#include "was/async/Socket.hxx"
 #include "system/Error.hxx"
 #include "net/SocketError.hxx"
 #include "net/SocketProtocolError.hxx"
@@ -15,10 +16,10 @@
 #include <sys/socket.h>
 
 WasIdleConnection::WasIdleConnection(EventLoop &event_loop,
-				     WasSocket &&_socket,
+				     WasSocket &&socket,
 				     WasIdleConnectionHandler &_handler) noexcept
-	:socket(std::move(_socket)),
-	 control(event_loop, socket.control.Release(), *this),
+	:control(event_loop, socket.control.Release(), *this),
+	 input(std::move(socket.input)), output(std::move(socket.output)),
 	 handler(_handler)
 {
 }
@@ -31,7 +32,7 @@ WasIdleConnection::DiscardInput(uint64_t remaining)
 		std::span<std::byte> dest = buffer;
 		if (dest.size() > remaining)
 			dest = dest.first(remaining);
-		ssize_t nbytes = socket.input.Read(dest);
+		ssize_t nbytes = input.Read(dest);
 		if (nbytes < 0)
 			throw MakeErrno("error on idle WAS input pipe");
 		else if (nbytes == 0)
