@@ -8,7 +8,6 @@
 #include "event/SocketEvent.hxx"
 #include "io/FdType.hxx"
 #include "io/Logger.hxx"
-#include "lease.hxx"
 
 class ListenChildStockItem;
 
@@ -18,8 +17,6 @@ class LhttpConnection final
 	LazyDomainLogger logger;
 
 	ListenChildStockItem &child;
-
-	LeasePtr lease_ref;
 
 	SocketEvent event;
 
