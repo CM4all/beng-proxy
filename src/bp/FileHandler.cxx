@@ -161,7 +161,6 @@ Request::DispatchFile(const char *path, FileDescriptor fd,
 		headers2.Fmt("bytes */{}", st.stx_size);
 		header_write_finish(headers2);
 
-		fd.Close();
 		DispatchResponse(status, std::move(headers), nullptr);
 		return;
 	}
