@@ -239,7 +239,7 @@ try {
 				     path, args,
 				     child_options,
 				     FileDescriptor{STDERR_FILENO}.Duplicate());
-	context.control.emplace(context.event_loop, context.process.control, context);
+	context.control.emplace(context.event_loop, std::move(context.process.control), context);
 
 	was_client_request(context.root_pool, nullptr,
 			   *context.control,

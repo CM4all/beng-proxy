@@ -18,7 +18,7 @@
 WasIdleConnection::WasIdleConnection(EventLoop &event_loop,
 				     WasSocket &&socket,
 				     WasIdleConnectionHandler &_handler) noexcept
-	:control(event_loop, socket.control.Release(), *this),
+	:control(event_loop, std::move(socket.control), *this),
 	 input(std::move(socket.input)), output(std::move(socket.output)),
 	 handler(_handler)
 {

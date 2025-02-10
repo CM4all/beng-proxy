@@ -30,10 +30,10 @@ WasServer::WasServer(struct pool &_pool, EventLoop &event_loop,
 		     WasServerHandler &_handler) noexcept
 	:pool(_pool),
 	 socket(std::move(_socket)),
-	 control(event_loop, socket.control, *this),
+	 control(event_loop, std::move(socket.control), *this),
 	 handler(_handler)
 {
-	assert(socket.control.IsDefined());
+	assert(!socket.control.IsDefined());
 	assert(socket.input.IsDefined());
 	assert(socket.output.IsDefined());
 }

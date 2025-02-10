@@ -155,7 +155,7 @@ public:
 				    WasSocket &&_socket,
 				    WasServerHandler &_handler) noexcept
 		:socket(std::move(_socket)),
-		 control(event_loop, socket.control, *this),
+		 control(event_loop, std::move(socket.control), *this),
 		 defer_premature(event_loop, BIND_THIS_METHOD(SendPremature)),
 		 handler(_handler)
 		{
@@ -340,7 +340,7 @@ public:
 	}
 
 	void InjectSocketFailure() noexcept override {
-		socket.control.Shutdown();
+		control->GetSocket().Shutdown();
 	}
 
 	/* virtual methods from class WasServerHandler */
@@ -364,7 +364,7 @@ private:
 		socket = std::move(s.first);
 		socket.input.SetNonBlocking();
 		socket.output.SetNonBlocking();
-		control.emplace(event_loop, socket.control, static_cast<Was::ControlHandler &>(*this));
+		control.emplace(event_loop, std::move(socket.control), static_cast<Was::ControlHandler &>(*this));
 
 		s.second.input.SetNonBlocking();
 		s.second.output.SetNonBlocking();
