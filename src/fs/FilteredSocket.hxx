@@ -182,24 +182,6 @@ public:
 		base.Close();
 	}
 
-	/**
-	 * Just like Close(), but do not actually close the
-	 * socket.  The caller is responsible for closing the socket (or
-	 * scheduling it for reuse).
-	 */
-	SocketDescriptor Abandon() noexcept {
-		if (filter != nullptr)
-			filter->OnClosed();
-
-#ifndef NDEBUG
-		/* work around bogus assertion failure */
-		if (filter != nullptr && base.HasEnded())
-			return SocketDescriptor::Undefined();
-#endif
-
-		return base.Abandon();
-	}
-
 	[[nodiscard]]
 	auto ClosedByPeer() noexcept {
 		return base.ClosedByPeer();
