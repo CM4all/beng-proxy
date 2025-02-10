@@ -140,7 +140,7 @@ ConnectFilteredSocketOperation::OnSocketConnectSuccess(UniqueSocketDescriptor fd
 	socket = std::make_unique<FilteredSocket>(GetEventLoop());
 
 	try {
-		socket->Init(fd.Release(), fd_type,
+		socket->Init(std::move(fd), fd_type,
 			     Event::Duration(-1),
 			     filter_factory != nullptr
 			     ? filter_factory->CreateFilter()

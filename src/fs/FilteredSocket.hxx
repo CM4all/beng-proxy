@@ -85,7 +85,7 @@ public:
 		return base.HasUring();
 	}
 
-	void Init(SocketDescriptor fd, FdType fd_type,
+	void Init(UniqueSocketDescriptor &&fd, FdType fd_type,
 		  Event::Duration write_timeout,
 		  SocketFilterPtr filter,
 		  BufferedSocketHandler &handler) noexcept;
@@ -95,7 +95,7 @@ public:
 	 * be used to schedule events (because there is no handler); the
 	 * next Reinit() call finishes initialization.
 	 */
-	void InitDummy(SocketDescriptor _fd, FdType _fd_type,
+	void InitDummy(UniqueSocketDescriptor &&_fd, FdType _fd_type,
 		       SocketFilterPtr _filter={}) noexcept;
 
 	void Reinit(Event::Duration write_timeout,

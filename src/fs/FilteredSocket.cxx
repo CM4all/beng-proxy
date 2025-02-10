@@ -14,7 +14,7 @@ FilteredSocket::FilteredSocket(EventLoop &_event_loop,
 			       SocketFilterPtr _filter)
 	:FilteredSocket(_event_loop)
 {
-	InitDummy(_fd.Release(), _fd_type, std::move(_filter));
+	InitDummy(std::move(_fd), _fd_type, std::move(_filter));
 }
 
 FilteredSocket::~FilteredSocket() noexcept
@@ -93,7 +93,7 @@ FilteredSocket::OnBufferedError(std::exception_ptr ep) noexcept
  */
 
 void
-FilteredSocket::Init(SocketDescriptor fd, FdType fd_type,
+FilteredSocket::Init(UniqueSocketDescriptor &&fd, FdType fd_type,
 		     Event::Duration write_timeout,
 		     SocketFilterPtr _filter,
 		     BufferedSocketHandler &__handler) noexcept
@@ -108,7 +108,7 @@ FilteredSocket::Init(SocketDescriptor fd, FdType fd_type,
 		_handler = this;
 	}
 
-	base.Init(fd, fd_type,
+	base.Init(fd.Release(), fd_type,
 		  write_timeout,
 		  *_handler);
 
@@ -124,7 +124,7 @@ FilteredSocket::Init(SocketDescriptor fd, FdType fd_type,
 }
 
 void
-FilteredSocket::InitDummy(SocketDescriptor fd, FdType fd_type,
+FilteredSocket::InitDummy(UniqueSocketDescriptor &&fd, FdType fd_type,
 			  SocketFilterPtr _filter) noexcept
 {
 	assert(!filter);
@@ -132,9 +132,9 @@ FilteredSocket::InitDummy(SocketDescriptor fd, FdType fd_type,
 	filter = std::move(_filter);
 
 	if (filter != nullptr)
-		base.Init(fd, fd_type, Event::Duration{-1}, *this);
+		base.Init(fd.Release(), fd_type, Event::Duration{-1}, *this);
 	else
-		base.Init(fd, fd_type);
+		base.Init(fd.Release(), fd_type);
 
 #ifndef NDEBUG
 	ended = false;

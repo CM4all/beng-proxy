@@ -13,7 +13,7 @@ EchoSocket::EchoSocket(EventLoop &_event_loop,
 		       SocketFilterPtr _filter) noexcept
 	:socket(_event_loop)
 {
-	socket.Init(_fd.Release(), _fd_type,
+	socket.Init(std::move(_fd), _fd_type,
 		    std::chrono::seconds{30},
 		    std::move(_filter), *this);
 	socket.ScheduleRead();

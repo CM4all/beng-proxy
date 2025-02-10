@@ -350,7 +350,7 @@ try {
 
 	switch (url.protocol) {
 	case parsed_url::HTTP:
-		fs.InitDummy(fd.Release(), FdType::FD_TCP,
+		fs.InitDummy(std::move(fd), FdType::FD_TCP,
 			     std::move(socket_filter));
 
 		http_client_request(*pool, nullptr, fs,

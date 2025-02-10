@@ -286,7 +286,7 @@ Server::Server(struct pool &_pool, EventLoop &event_loop)
 						request_slice_pool,
 						*this, *this);
 
-	client_fs.InitDummy(client_socket.Release(), FdType::FD_SOCKET);
+	client_fs.InitDummy(std::move(client_socket), FdType::FD_SOCKET);
 }
 
 void

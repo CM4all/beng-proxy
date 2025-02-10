@@ -69,7 +69,7 @@ public:
 		:thread(std::move(_thread)),
 		 socket(_event_loop)
 	{
-		socket.InitDummy(fd.Release(), FdType::FD_SOCKET,
+		socket.InitDummy(std::move(fd), FdType::FD_SOCKET,
 				 std::move(_filter));
 	}
 

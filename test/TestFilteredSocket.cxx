@@ -80,7 +80,7 @@ TEST(FilteredSocket, NullFilter)
 
 	FilteredSocket fs{instance.event_loop};
 	TestBufferedSocketHandler handler{fs};
-	fs.Init(s.Release(), FD_SOCKET, std::chrono::seconds{30}, {}, handler);
+	fs.Init(std::move(s), FD_SOCKET, std::chrono::seconds{30}, {}, handler);
 	fs.ScheduleRead();
 
 	handler.Write("foo"sv);
@@ -96,7 +96,7 @@ TEST(FilteredSocket, NopFilter)
 
 	FilteredSocket fs{instance.event_loop};
 	TestBufferedSocketHandler handler{fs};
-	fs.Init(s.Release(), FD_SOCKET, std::chrono::seconds{30},
+	fs.Init(std::move(s), FD_SOCKET, std::chrono::seconds{30},
 		instance.NewThreadSocketFilter(std::make_unique<NopThreadSocketFilter>()),
 		handler);
 	fs.ScheduleRead();
@@ -120,7 +120,7 @@ TEST(FilteredSocket, Approve)
 
 	FilteredSocket fs{instance.event_loop};
 	TestBufferedSocketHandler handler{fs};
-	fs.Init(s.Release(), FD_SOCKET, std::chrono::seconds{30},
+	fs.Init(std::move(s), FD_SOCKET, std::chrono::seconds{30},
 		instance.NewThreadSocketFilter(std::move(h)),
 		handler);
 	fs.ScheduleRead();
@@ -149,7 +149,7 @@ TEST(FilteredSocket, ApproveClose)
 
 	FilteredSocket fs{instance.event_loop};
 	TestBufferedSocketHandler handler{fs};
-	fs.Init(s.Release(), FD_SOCKET, std::chrono::seconds{30},
+	fs.Init(std::move(s), FD_SOCKET, std::chrono::seconds{30},
 		instance.NewThreadSocketFilter(std::move(h)),
 		handler);
 	fs.ScheduleRead();
@@ -175,7 +175,7 @@ TEST(FilteredSocket, ApproveCloseAfterData)
 
 	FilteredSocket fs{instance.event_loop};
 	TestBufferedSocketHandler handler{fs};
-	fs.Init(s.Release(), FD_SOCKET, std::chrono::seconds{30},
+	fs.Init(std::move(s), FD_SOCKET, std::chrono::seconds{30},
 		instance.NewThreadSocketFilter(std::move(h)),
 		handler);
 	fs.ScheduleRead();
@@ -200,7 +200,7 @@ TEST(FilteredSocket, Lease)
 	auto [s, echo] = NewEchoSocket(instance.event_loop, {});
 
 	FilteredSocket fs{instance.event_loop};
-	fs.InitDummy(s.Release(), FD_SOCKET,
+	fs.InitDummy(std::move(s), FD_SOCKET,
 		     instance.NewThreadSocketFilter(std::move(h)));
 
 	RecordingLease lease;
