@@ -1,3 +1,9 @@
+cm4all-beng-proxy (19.8) unstable; urgency=low
+
+  * 
+
+ --   
+
 cm4all-beng-proxy (19.7) unstable; urgency=low
 
   * http/local: reduce the number of epoll_ctl() system calls
