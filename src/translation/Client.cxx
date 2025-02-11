@@ -107,7 +107,7 @@ TranslateClient::ReleaseSocket(PutAction action) noexcept
 {
 	assert(socket.IsConnected());
 
-	socket.Abandon();
+	socket.ReleaseSocket();
 
 	lease_ref.Release(action);
 }

@@ -198,7 +198,7 @@ private:
 	 * Release the socket held by this object.
 	 */
 	void ReleaseSocket(PutAction action) noexcept {
-		socket.Abandon();
+		socket.ReleaseSocket();
 		lease_ref.Release(action);
 	}
 
