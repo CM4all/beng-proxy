@@ -174,9 +174,6 @@ private:
 	}
 
 	void ReleaseError() noexcept {
-		if (control.IsDefined())
-			control.ReleaseSocket();
-
 		socket.Close();
 		Destroy();
 	}

@@ -41,9 +41,6 @@ WasServer::WasServer(struct pool &_pool, EventLoop &event_loop,
 void
 WasServer::ReleaseError(std::exception_ptr ep) noexcept
 {
-	if (control.IsDefined())
-		control.ReleaseSocket();
-
 	if (request.state != Request::State::NONE) {
 		if (request.body != nullptr)
 			was_input_free(std::exchange(request.body, nullptr), ep);
@@ -67,9 +64,6 @@ WasServer::ReleaseError(const char *msg) noexcept
 void
 WasServer::ReleaseUnused() noexcept
 {
-	if (control.IsDefined())
-		control.ReleaseSocket();
-
 	if (request.state != Request::State::NONE) {
 		if (request.body != nullptr)
 			was_input_free_unused(std::exchange(request.body, nullptr));
