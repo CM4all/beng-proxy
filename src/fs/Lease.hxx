@@ -103,12 +103,6 @@ public:
 		socket->SetDirect(_direct);
 	}
 
-	int AsFD() noexcept {
-		assert(!IsReleased());
-
-		return socket->AsFD();
-	}
-
 	[[gnu::pure]]
 	bool IsEmpty() const noexcept;
 

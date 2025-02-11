@@ -201,17 +201,6 @@ public:
 	void Destroy() noexcept;
 
 	/**
-	 * Returns the socket descriptor and calls Abandon().  Returns -1
-	 * if the input buffer is not empty.
-	 */
-	[[nodiscard]]
-	int AsFD() noexcept {
-		return filter != nullptr
-			? -1
-			: base.AsFD();
-	}
-
-	/**
 	 * Is the socket still connected?  This does not actually check
 	 * whether the socket is connected, just whether it is known to be
 	 * closed.
