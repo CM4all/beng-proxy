@@ -133,11 +133,12 @@ struct BpInstance final : PInstance, BengControl::Handler,
 	ZombieReaper zombie_reaper{event_loop};
 
 	const std::unique_ptr<SpawnServerClient> spawn;
-	SpawnService *const spawn_service;
 
 #ifdef HAVE_LIBSYSTEMD
 	std::unique_ptr<CgroupMemoryThrottle> cgroup_memory_throttle;
 #endif
+
+	SpawnService *const spawn_service;
 
 	std::unique_ptr<SessionManager> session_manager;
 

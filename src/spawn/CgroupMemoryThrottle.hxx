@@ -5,13 +5,19 @@
 #pragma once
 
 #include "spawn/CgroupWatch.hxx"
+#include "spawn/Interface.hxx"
 #include "event/CoarseTimerEvent.hxx"
+#include "event/FineTimerEvent.hxx"
+#include "util/IntrusiveList.hxx"
 
 /**
  * Wraps #CgroupMemoryWatch and adds a timer that checks whether we
  * have fallen below the configured limit.
+ *
+ * Additionally, implements the #SpawnService interface which
+ * throttles the Enqueue() method as long as we're under pressure.
  */
-class CgroupMemoryThrottle {
+class CgroupMemoryThrottle final : public SpawnService {
 	const BoundMethod<void() noexcept> callback;
 
 	/**
@@ -34,11 +40,29 @@ class CgroupMemoryThrottle {
 	 */
 	CoarseTimerEvent repeat_timer;
 
+	SpawnService &next_spawn_service;
+
+	/**
+	 * An Enqueue() callback that is waiting for us to go below
+	 * the pressure threshold.
+	 */
+	struct Waiting;
+	IntrusiveList<Waiting> waiting;
+
+	/**
+	 * Periodically checks if we're below the pressure threshold
+	 * and invokes one #waiting item.
+	 */
+	FineTimerEvent retry_waiting_timer;
+
 public:
 	CgroupMemoryThrottle(EventLoop &event_loop,
 			     FileDescriptor group_fd,
+			     SpawnService &_next_spawn_service,
 			     BoundMethod<void() noexcept> _callback,
 			     uint_least64_t _limit);
+
+	~CgroupMemoryThrottle() noexcept;
 
 	auto &GetEventLoop() const noexcept {
 		return watch.GetEventLoop();
@@ -54,4 +78,10 @@ private:
 
 	void OnMemoryWarning(uint_least64_t memory_usage) noexcept;
 	void OnRepeatTimer() noexcept;
+	void OnRetryWaitingTimer() noexcept;
+
+	// virtual methods from SpawnService
+	std::unique_ptr<ChildProcessHandle> SpawnChildProcess(const char *name,
+							      PreparedChildProcess &&params) override;
+	void Enqueue(EnqueueCallback callback, CancellablePointer &cancel_ptr) noexcept override;
 };

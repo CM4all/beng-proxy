@@ -80,15 +80,18 @@ BpInstance::BpInstance(BpConfig &&_config,
 						     spawner.cgroup.IsDefined(),
 						     true)
 	       : nullptr),
-	 spawn_service(spawn.get()),
 #ifdef HAVE_LIBSYSTEMD
-	 cgroup_memory_throttle(spawner.cgroup.IsDefined() &&
+	 cgroup_memory_throttle(spawn && spawner.cgroup.IsDefined() &&
 				config.spawn.systemd_scope_properties.HaveMemoryLimit()
 				? std::make_unique<CgroupMemoryThrottle>(event_loop,
 									 spawner.cgroup,
+									 *spawn,
 									 BIND_THIS_METHOD(HandleMemoryWarning),
 									 GetMemoryLimit(config.spawn.systemd_scope_properties))
 				: nullptr),
+	 spawn_service(cgroup_memory_throttle ? static_cast<SpawnService *>(cgroup_memory_throttle.get()) : spawn.get()),
+#else
+	 spawn_service(spawn.get()),
 #endif
 	 session_save_timer(event_loop, BIND_THIS_METHOD(SaveSessions))
 {
