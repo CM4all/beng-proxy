@@ -34,7 +34,8 @@ CgroupMemoryThrottle::CgroupMemoryThrottle(EventLoop &event_loop,
 					   uint_least64_t _limit)
 	:callback(_callback),
 	 limit(_limit),
-	 pressure_threshold(limit / 16 * 15),
+	 light_pressure_threshold(limit / 8 * 7),
+	 heavy_pressure_threshold(limit / 16 * 15),
 	 watch(event_loop, group_fd, BIND_THIS_METHOD(OnMemoryWarning)),
 	 repeat_timer(event_loop, BIND_THIS_METHOD(OnRepeatTimer)),
 	 next_spawn_service(_next_spawn_service),
@@ -43,13 +44,13 @@ CgroupMemoryThrottle::CgroupMemoryThrottle(EventLoop &event_loop,
 CgroupMemoryThrottle::~CgroupMemoryThrottle() noexcept = default;
 
 uint_least64_t
-CgroupMemoryThrottle::IsUnderPressure() const noexcept
+CgroupMemoryThrottle::IsUnderPressure(uint_least64_t threshold) const noexcept
 {
 	assert(limit > 0);
 
 	try {
 		const auto usage = watch.GetMemoryUsage();
-		return usage >= pressure_threshold ? usage : 0;
+		return usage >= threshold ? usage : 0;
 	} catch (...) {
 		PrintException(std::current_exception());
 		return 0;
@@ -59,7 +60,7 @@ CgroupMemoryThrottle::IsUnderPressure() const noexcept
 inline void
 CgroupMemoryThrottle::OnMemoryWarning(uint_least64_t usage) noexcept
 {
-	if (limit > 0 && usage < pressure_threshold)
+	if (limit > 0 && usage < light_pressure_threshold)
 		/* false alarm - we're well below the configured
 		   limit */
 		return;
@@ -78,7 +79,7 @@ CgroupMemoryThrottle::OnRepeatTimer() noexcept
 {
 	assert(limit > 0);
 
-	const uint_least64_t usage = IsUnderPressure();
+	const uint_least64_t usage = IsUnderLightPressure();
 	if (usage == 0)
 		return;
 
@@ -110,7 +111,7 @@ CgroupMemoryThrottle::Enqueue(EnqueueCallback _callback, CancellablePointer &can
 
 	assert(limit > 0);
 
-	if (!IsUnderPressure()) {
+	if (!IsUnderHeavyPressure()) {
 		_callback();
 		return;
 	}
@@ -128,7 +129,7 @@ CgroupMemoryThrottle::OnRetryWaitingTimer() noexcept
 		// all waiters were canceled
 		return;
 
-	if (IsUnderPressure()) {
+	if (IsUnderHeavyPressure()) {
 		// still under pressure - try again later
 		retry_waiting_timer.Schedule(std::chrono::milliseconds{100});
 		return;

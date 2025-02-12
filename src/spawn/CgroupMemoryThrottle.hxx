@@ -27,9 +27,16 @@ class CgroupMemoryThrottle final : public SpawnService {
 	const uint_least64_t limit;
 
 	/**
-	 * Memory usage above this value means "under pressure".
+	 * Memory usage above this value means "under light pressure".
+	 * In this state, unused processes are stopped.
 	 */
-	const uint_least64_t pressure_threshold;
+	const uint_least64_t light_pressure_threshold;
+
+	/**
+	 * Memory usage above this value means "under heavy pressure".
+	 * In this state, no new processes will be spawned.
+	 */
+	const uint_least64_t heavy_pressure_threshold;
 
 	CgroupMemoryWatch watch;
 
@@ -74,7 +81,17 @@ private:
 	 * current memory usage if we're above the threshold
 	 */
 	[[gnu::pure]]
-	uint_least64_t IsUnderPressure() const noexcept;
+	uint_least64_t IsUnderPressure(uint_least64_t threshold) const noexcept;
+
+	[[gnu::pure]]
+	uint_least64_t IsUnderLightPressure() const noexcept {
+		return IsUnderPressure(light_pressure_threshold);
+	}
+
+	[[gnu::pure]]
+	uint_least64_t IsUnderHeavyPressure() const noexcept {
+		return IsUnderPressure(heavy_pressure_threshold);
+	}
 
 	void OnMemoryWarning(uint_least64_t memory_usage) noexcept;
 	void OnRepeatTimer() noexcept;
