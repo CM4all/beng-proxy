@@ -35,7 +35,7 @@ CgroupMemoryThrottle::CgroupMemoryThrottle(EventLoop &event_loop,
 					   uint_least64_t _limit)
 	:callback(_callback),
 	 limit(_limit),
-	 light_pressure_threshold(limit / 8 * 7),
+	 light_pressure_threshold(limit / 10 * 9),
 	 heavy_pressure_threshold(limit / 16 * 15),
 	 watch(event_loop, group_fd, BIND_THIS_METHOD(OnMemoryWarning)),
 	 repeat_timer(event_loop, BIND_THIS_METHOD(OnRepeatTimer)),
