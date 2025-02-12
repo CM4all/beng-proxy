@@ -20,6 +20,11 @@ class CgroupMemoryThrottle {
 	 */
 	const uint_least64_t limit;
 
+	/**
+	 * Memory usage above this value means "under pressure".
+	 */
+	const uint_least64_t pressure_threshold;
+
 	CgroupMemoryWatch watch;
 
 	/**

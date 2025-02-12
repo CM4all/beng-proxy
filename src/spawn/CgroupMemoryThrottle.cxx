@@ -15,13 +15,14 @@ CgroupMemoryThrottle::CgroupMemoryThrottle(EventLoop &event_loop,
 					   uint_least64_t _limit)
 	:callback(_callback),
 	 limit(_limit),
+	 pressure_threshold(limit > 0 ? limit / 16 * 15 : UINT64_MAX),
 	 watch(event_loop, group_fd, BIND_THIS_METHOD(OnMemoryWarning)),
 	 repeat_timer(event_loop, BIND_THIS_METHOD(OnRepeatTimer)) {}
 
 inline void
-CgroupMemoryThrottle:: OnMemoryWarning(uint_least64_t usage) noexcept
+CgroupMemoryThrottle::OnMemoryWarning(uint_least64_t usage) noexcept
 {
-	if (limit > 0 && usage < limit / 16 * 15)
+	if (limit > 0 && usage < pressure_threshold)
 		/* false alarm - we're well below the configured
 		   limit */
 		return;
@@ -42,7 +43,7 @@ CgroupMemoryThrottle::OnRepeatTimer() noexcept
 
 	try {
 		const auto usage = watch.GetMemoryUsage();
-		if (usage < limit * 15 / 16)
+		if (usage < pressure_threshold)
 			return;
 
 		/* repeat until we have a safe margin below the
