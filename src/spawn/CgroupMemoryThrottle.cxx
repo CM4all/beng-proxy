@@ -43,18 +43,22 @@ CgroupMemoryThrottle::CgroupMemoryThrottle(EventLoop &event_loop,
 
 CgroupMemoryThrottle::~CgroupMemoryThrottle() noexcept = default;
 
-uint_least64_t
-CgroupMemoryThrottle::IsUnderPressure(uint_least64_t threshold) const noexcept
+inline uint_least64_t
+CgroupMemoryThrottle::GetMemoryUsage() const noexcept
 {
-	assert(limit > 0);
-
 	try {
-		const auto usage = watch.GetMemoryUsage();
-		return usage >= threshold ? usage : 0;
+		return watch.GetMemoryUsage();
 	} catch (...) {
 		PrintException(std::current_exception());
 		return 0;
 	}
+}
+
+inline uint_least64_t
+CgroupMemoryThrottle::IsUnderPressure(uint_least64_t threshold) const noexcept
+{
+	const uint_least64_t usage = GetMemoryUsage();
+	return usage >= threshold ? usage : 0;
 }
 
 inline void

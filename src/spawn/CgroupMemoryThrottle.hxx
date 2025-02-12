@@ -77,6 +77,14 @@ public:
 
 private:
 	/**
+	 * A non-throwing wrapper for
+	 * CgroupMemoryWatch::GetMemoryUsage().  Errors are logged to
+	 * #stderr (returning 0).
+	 */
+	[[gnu::pure]]
+	uint_least64_t GetMemoryUsage() const noexcept;
+
+	/**
 	 * Returns 0 if we're below #pressure_threshold, or the
 	 * current memory usage if we're above the threshold
 	 */
