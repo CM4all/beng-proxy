@@ -601,6 +601,10 @@ if uring_dep.found()
   ]
 endif
 
+if libsystemd.found()
+  sources += 'src/spawn/CgroupMemoryThrottle.cxx'
+endif
+
 executable(
   'cm4all-beng-proxy',
   sources,

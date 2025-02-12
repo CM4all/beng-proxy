@@ -53,7 +53,7 @@ class SpawnService;
 namespace BengControl { class Server; }
 class SpawnServerClient;
 struct LaunchSpawnServerResult;
-class CgroupMemoryWatch;
+class CgroupMemoryThrottle;
 class TranslationStock;
 class TranslationCache;
 class TranslationService;
@@ -136,10 +136,7 @@ struct BpInstance final : PInstance, BengControl::Handler,
 	SpawnService *const spawn_service;
 
 #ifdef HAVE_LIBSYSTEMD
-	const uint_least64_t memory_limit;
-
-	std::unique_ptr<CgroupMemoryWatch> cgroup_memory_watch;
-	CoarseTimerEvent memory_warning_timer{event_loop, BIND_THIS_METHOD(OnMemoryWarningTimer)};
+	std::unique_ptr<CgroupMemoryThrottle> cgroup_memory_throttle;
 #endif
 
 	std::unique_ptr<SessionManager> session_manager;
@@ -279,8 +276,6 @@ struct BpInstance final : PInstance, BengControl::Handler,
 private:
 #ifdef HAVE_LIBSYSTEMD
 	void HandleMemoryWarning() noexcept;
-	void OnMemoryWarning(uint_least64_t memory_usage) noexcept;
-	void OnMemoryWarningTimer() noexcept;
 #endif
 
 	bool AllocatorCompressCallback() noexcept;

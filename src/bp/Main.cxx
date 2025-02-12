@@ -44,7 +44,7 @@
 #include "system/KernelVersion.hxx"
 #include "system/SetupProcess.hxx"
 #include "system/ProcessName.hxx"
-#include "spawn/CgroupWatch.hxx"
+#include "spawn/CgroupMemoryThrottle.hxx"
 #include "spawn/Launch.hxx"
 #include "spawn/Client.hxx"
 #include "net/ListenStreamStock.hxx"
@@ -134,8 +134,7 @@ BpInstance::ShutdownCallback() noexcept
 		spawn->Shutdown();
 
 #ifdef HAVE_LIBSYSTEMD
-	cgroup_memory_watch.reset();
-	memory_warning_timer.Cancel();
+	cgroup_memory_throttle.reset();
 #endif
 
 	listeners.clear();

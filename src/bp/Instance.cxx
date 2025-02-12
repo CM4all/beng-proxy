@@ -37,7 +37,7 @@
 #include "stock/MapStock.hxx"
 #include "session/Manager.hxx"
 #include "session/Save.hxx"
-#include "spawn/CgroupWatch.hxx"
+#include "spawn/CgroupMemoryThrottle.hxx"
 #include "spawn/Client.hxx"
 #include "spawn/Launch.hxx"
 #include "net/ListenStreamStock.hxx"
@@ -82,13 +82,13 @@ BpInstance::BpInstance(BpConfig &&_config,
 	       : nullptr),
 	 spawn_service(spawn.get()),
 #ifdef HAVE_LIBSYSTEMD
-	 memory_limit(GetMemoryLimit(config.spawn.systemd_scope_properties)),
-	 cgroup_memory_watch(spawner.cgroup.IsDefined() &&
-			     config.spawn.systemd_scope_properties.HaveMemoryLimit()
-			     ? std::make_unique<CgroupMemoryWatch>(event_loop,
-								   spawner.cgroup,
-								   BIND_THIS_METHOD(OnMemoryWarning))
-			     : nullptr),
+	 cgroup_memory_throttle(spawner.cgroup.IsDefined() &&
+				config.spawn.systemd_scope_properties.HaveMemoryLimit()
+				? std::make_unique<CgroupMemoryThrottle>(event_loop,
+									 spawner.cgroup,
+									 BIND_THIS_METHOD(HandleMemoryWarning),
+									 GetMemoryLimit(config.spawn.systemd_scope_properties))
+				: nullptr),
 #endif
 	 session_save_timer(event_loop, BIND_THIS_METHOD(SaveSessions))
 {
@@ -285,51 +285,6 @@ BpInstance::HandleMemoryWarning() noexcept
 
 	if (n > 0)
 		fmt::print(stderr, "Discarded {} child processes\n", n);
-}
-
-void
-BpInstance::OnMemoryWarning(uint_least64_t memory_usage) noexcept
-{
-	if (memory_limit > 0 &&
-	    memory_usage < memory_limit / 16 * 15)
-		/* false alarm - we're well below the configured
-		   limit */
-		return;
-
-	fmt::print(stderr, "Spawner memory warning: {} of {} bytes used\n",
-		   memory_usage, memory_limit);
-
-	HandleMemoryWarning();
-
-	if (memory_limit > 0)
-		memory_warning_timer.ScheduleEarlier(std::chrono::seconds{2});
-}
-
-void
-BpInstance::OnMemoryWarningTimer() noexcept
-{
-	assert(memory_limit > 0);
-	assert(cgroup_memory_watch);
-
-	try {
-		const auto memory_usage = cgroup_memory_watch->GetMemoryUsage();
-		if (memory_usage < memory_limit * 15 / 16)
-			return;
-
-		/* repeat until we have a safe margin below the
-		   configured memory limit to avoid too much kernel
-		   shrinker contention */
-
-		fmt::print(stderr, "Spawner memory warning (repeat): {} of {} bytes used\n",
-			   memory_usage, memory_limit);
-	} catch (...) {
-		PrintException(std::current_exception());
-		return;
-	}
-
-	HandleMemoryWarning();
-
-	memory_warning_timer.Schedule(std::chrono::seconds{2});
 }
 
 #endif // HAVE_LIBSYSTEMD
