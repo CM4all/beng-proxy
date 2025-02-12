@@ -4,6 +4,7 @@
 
 #include "CgroupMemoryThrottle.hxx"
 #include "spawn/ProcessHandle.hxx"
+#include "event/Loop.hxx"
 #include "util/Cancellable.hxx"
 #include "util/PrintException.hxx"
 
@@ -64,6 +65,8 @@ CgroupMemoryThrottle::IsUnderPressure(uint_least64_t threshold) const noexcept
 inline void
 CgroupMemoryThrottle::OnMemoryWarning(uint_least64_t usage) noexcept
 {
+	last_check = GetEventLoop().SteadyNow();
+
 	if (limit > 0 && usage < light_pressure_threshold)
 		/* false alarm - we're well below the configured
 		   limit */
@@ -83,6 +86,8 @@ CgroupMemoryThrottle::OnRepeatTimer() noexcept
 {
 	assert(limit > 0);
 
+	last_check = GetEventLoop().SteadyNow();
+
 	const uint_least64_t usage = IsUnderLightPressure();
 	if (usage == 0)
 		return;
@@ -92,6 +97,32 @@ CgroupMemoryThrottle::OnRepeatTimer() noexcept
 	   contention */
 
 	fmt::print(stderr, "Spawner memory warning (repeat): {} of {} bytes used\n",
+		   usage, limit);
+
+	callback();
+
+	repeat_timer.Schedule(std::chrono::seconds{2});
+}
+
+inline void
+CgroupMemoryThrottle::MaybeCheckMemoryWarning() noexcept
+{
+	if (limit == 0)
+		// no limit configured
+		return;
+
+	const auto now = GetEventLoop().SteadyNow();
+	if (now < last_check + std::chrono::seconds{1})
+		// we already checked recently
+		return;
+
+	last_check = now;
+
+	const auto usage = IsUnderLightPressure();
+	if (usage == 0)
+		return;
+
+	fmt::print(stderr, "Spawner memory warning: {} of {} bytes used\n",
 		   usage, limit);
 
 	callback();
@@ -109,6 +140,10 @@ void
 CgroupMemoryThrottle::Enqueue(EnqueueCallback _callback, CancellablePointer &cancel_ptr) noexcept
 {
 	if (!repeat_timer.IsPending() && !retry_waiting_timer.IsPending()) {
+		/* check for memory warnings to prevent running into
+                   the kernel shrinker */
+		MaybeCheckMemoryWarning();
+
 		next_spawn_service.Enqueue(_callback, cancel_ptr);
 		return;
 	}

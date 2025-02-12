@@ -62,6 +62,12 @@ class CgroupMemoryThrottle final : public SpawnService {
 	 */
 	FineTimerEvent retry_waiting_timer;
 
+	/**
+	 * When did we last check for a memory warning?  This
+	 * throttles reading from the "memory.current" file.
+	 */
+	Event::TimePoint last_check;
+
 public:
 	CgroupMemoryThrottle(EventLoop &event_loop,
 			     FileDescriptor group_fd,
@@ -103,6 +109,7 @@ private:
 
 	void OnMemoryWarning(uint_least64_t memory_usage) noexcept;
 	void OnRepeatTimer() noexcept;
+	void MaybeCheckMemoryWarning() noexcept;
 	void OnRetryWaitingTimer() noexcept;
 
 	// virtual methods from SpawnService
