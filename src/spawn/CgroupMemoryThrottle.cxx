@@ -105,14 +105,14 @@ void
 CgroupMemoryThrottle::Enqueue(EnqueueCallback _callback, CancellablePointer &cancel_ptr) noexcept
 {
 	if (!repeat_timer.IsPending() && !retry_waiting_timer.IsPending()) {
-		_callback();
+		next_spawn_service.Enqueue(_callback, cancel_ptr);
 		return;
 	}
 
 	assert(limit > 0);
 
 	if (!IsUnderHeavyPressure()) {
-		_callback();
+		next_spawn_service.Enqueue(_callback, cancel_ptr);
 		return;
 	}
 
