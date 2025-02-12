@@ -15,9 +15,23 @@ CgroupMemoryThrottle::CgroupMemoryThrottle(EventLoop &event_loop,
 					   uint_least64_t _limit)
 	:callback(_callback),
 	 limit(_limit),
-	 pressure_threshold(limit > 0 ? limit / 16 * 15 : UINT64_MAX),
+	 pressure_threshold(limit / 16 * 15),
 	 watch(event_loop, group_fd, BIND_THIS_METHOD(OnMemoryWarning)),
 	 repeat_timer(event_loop, BIND_THIS_METHOD(OnRepeatTimer)) {}
+
+uint_least64_t
+CgroupMemoryThrottle::IsUnderPressure() const noexcept
+{
+	assert(limit > 0);
+
+	try {
+		const auto usage = watch.GetMemoryUsage();
+		return usage >= pressure_threshold ? usage : 0;
+	} catch (...) {
+		PrintException(std::current_exception());
+		return 0;
+	}
+}
 
 inline void
 CgroupMemoryThrottle::OnMemoryWarning(uint_least64_t usage) noexcept
@@ -41,21 +55,16 @@ CgroupMemoryThrottle::OnRepeatTimer() noexcept
 {
 	assert(limit > 0);
 
-	try {
-		const auto usage = watch.GetMemoryUsage();
-		if (usage < pressure_threshold)
-			return;
-
-		/* repeat until we have a safe margin below the
-		   configured memory limit to avoid too much kernel
-		   shrinker contention */
-
-		fmt::print(stderr, "Spawner memory warning (repeat): {} of {} bytes used\n",
-			   usage, limit);
-	} catch (...) {
-		PrintException(std::current_exception());
+	const uint_least64_t usage = IsUnderPressure();
+	if (usage == 0)
 		return;
-	}
+
+	/* repeat until we have a safe margin below the configured
+	   memory limit to avoid too much kernel shrinker
+	   contention */
+
+	fmt::print(stderr, "Spawner memory warning (repeat): {} of {} bytes used\n",
+		   usage, limit);
 
 	callback();
 

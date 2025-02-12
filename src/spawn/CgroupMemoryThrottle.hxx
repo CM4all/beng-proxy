@@ -45,6 +45,13 @@ public:
 	}
 
 private:
+	/**
+	 * Returns 0 if we're below #pressure_threshold, or the
+	 * current memory usage if we're above the threshold
+	 */
+	[[gnu::pure]]
+	uint_least64_t IsUnderPressure() const noexcept;
+
 	void OnMemoryWarning(uint_least64_t memory_usage) noexcept;
 	void OnRepeatTimer() noexcept;
 };
