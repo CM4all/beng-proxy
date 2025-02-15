@@ -1,6 +1,6 @@
 cm4all-beng-proxy (19.9) unstable; urgency=low
 
-  * 
+  * bp: fix assertion failure in the file descriptor cache
 
  --   
 

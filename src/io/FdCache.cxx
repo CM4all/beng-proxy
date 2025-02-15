@@ -215,6 +215,18 @@ private:
 		if (_error == ENOENT)
 			cache.SetExpiresSoon(*this, std::chrono::seconds{1});
 
+		/* if this error happened during statx(), then we have
+		   a file descriptor already; discard it because we
+		   don't want to have a file descriptor that cannot
+		   even statx() - it's probably a stale */
+		if (fd.IsDefined()) [[unlikely]] {
+#ifdef HAVE_URING
+			Uring::Close(cache.uring_queue, fd.Release());
+#else
+			fd.Close();
+#endif
+		}
+
 		error = _error;
 		InvokeError();
 	}
