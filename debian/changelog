@@ -3,7 +3,7 @@ cm4all-beng-proxy (19.9) unstable; urgency=low
   * bp: fix assertion failure in the file descriptor cache
   * brotli: fix stall bug
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Mon, 17 Feb 2025 20:59:48 +0100
 
 cm4all-beng-proxy (19.8) unstable; urgency=low
 
