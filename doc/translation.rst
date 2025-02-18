@@ -1214,8 +1214,9 @@ described in this section.
 
 - ``BIND_MOUNT_RW`` and ``EXPAND_BIND_MOUNT_RW`` do the same, just in
   writable mode (mount option ``rw``). ``BIND_MOUNT_EXEC`` and
-  ``EXPAND_BIND_MOUNT_EXEC`` omit the ``noexec`` option. (There is no
-  way to make a mount both writable and executable.)
+  ``EXPAND_BIND_MOUNT_EXEC`` omit the ``noexec`` option.
+
+  ``BIND_MOUNT_RW_EXEC`` makes the mount both writable and executable.
 
 - ``BIND_MOUNT_FILE`` mounts a (read-only, non-executable) regular
   file onto an existing regular file.  The payload is the source path
