@@ -1223,6 +1223,8 @@ described in this section.
   (absolute within the old root) and the target path (absolute within
   the new root), separated by a null byte.
 
+  ``BIND_MOUNT_FILE_EXEC`` omits the ``noexec`` option.
+
 - ``MOUNT_LISTEN_STREAM`` creates a stream listener socket and mounts
   it at the specified path into the container.  Once the first process
   connects to this socket, :program:`beng-proxy` sends a request to
