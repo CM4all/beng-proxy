@@ -1195,10 +1195,15 @@ described in this section.
   existing filesystem.
 
 - ``BIND_MOUNT`` mounts arbitrary directories from the old root into
-  the new root. The payload is the source directory (absolute path
-  within the old root) and the target directory (absolute path within
-  the new root), separated by a null byte. The new mount will have the
-  options ``ro,noexec,nosuid,nodev``.
+  the new root. The payload is the source directory and the target
+  directory (absolute path within the new root), separated by a null
+  byte. The new mount will have the options
+  ``ro,noexec,nosuid,nodev``.
+
+  The source directory is an absolute path on the host.  If it is
+  prefixed with ``container:``, it is relative to the new mount
+  namespace, i.e. the container.  The prefix ``host:`` is the same as
+  no prefix.
 
   This (and all variants of this packet) may be followed by an empty
   ``OPTIONAL`` packet: if the source directory does not exist, this
