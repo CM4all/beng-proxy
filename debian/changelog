@@ -3,7 +3,7 @@ cm4all-beng-proxy (19.10) unstable; urgency=low
   * translation: allow BIND_MOUNT from container
   * translation: add packet BIND_MOUNT_FILE_EXEC
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Wed, 19 Feb 2025 05:46:12 +0100
 
 cm4all-beng-proxy (19.9) unstable; urgency=low
 
