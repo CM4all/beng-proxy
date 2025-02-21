@@ -6,6 +6,7 @@
 #include "spawn/Mount.hxx"
 #include "spawn/MountNamespaceOptions.hxx"
 #include "event/CoarseTimerEvent.hxx"
+#include "event/Loop.hxx"
 #include "event/SocketEvent.hxx"
 #include "net/TempListener.hxx"
 #include "net/UniqueSocketDescriptor.hxx"
@@ -20,6 +21,7 @@
 #include "AllocatorPtr.hxx"
 #include "stopwatch.hxx"
 
+#include <cassert>
 #include <string>
 
 #include <sys/socket.h> // for SOCK_STREAM
@@ -52,6 +54,8 @@ class ListenStreamStock::Item final
 
 	std::exception_ptr error;
 
+	Event::TimePoint error_expires;
+
 	DisposablePointer server;
 
 	bool fade = false;
@@ -79,6 +83,10 @@ public:
 		socket.Close();
 	}
 
+	auto &GetEventLoop() const noexcept {
+		return socket.GetEventLoop();
+	}
+
 	std::string_view GetKey() const noexcept {
 		return key;
 	}
@@ -101,7 +109,7 @@ public:
 	}
 
 	void Borrow() {
-		if (error)
+		if (error && !ExpireError())
 			std::rethrow_exception(error);
 
 		idle_timer.Cancel();
@@ -112,6 +120,20 @@ public:
 	}
 
 private:
+	/**
+	 * @return true if the error has expired
+	 */
+	bool ExpireError() noexcept {
+		assert(error);
+		assert(socket.IsReadPending());
+
+		const bool expired = GetEventLoop().SteadyNow() >= error_expires;
+		if (expired)
+			error = {};
+
+		return expired;
+	}
+
 	void OnSocketReady(unsigned events) noexcept;
 
 	void OnRearmTimer() noexcept {
@@ -156,9 +178,9 @@ ListenStreamStock::Item::OnSocketReady(unsigned) noexcept
 	assert(!server);
 	assert(!start_cancel_ptr);
 
-	if (error) {
+	if (error && !ExpireError()) {
 		/* after a fatal error, accept and discard all
-		   incoming connections */
+		   incoming connections (until the error expires) */
 
 		UniqueSocketDescriptor connection{
 			AdoptTag{},
@@ -200,6 +222,8 @@ ListenStreamStock::Item::OnListenStreamError(std::exception_ptr _error) noexcept
 
 	// TODO log
 	error = std::move(_error);
+	error_expires = GetEventLoop().SteadyNow() + std::chrono::seconds{20};
+
 	Fade();
 
 	/* there's no hope; from now on, accept and discard all
