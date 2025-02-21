@@ -3,7 +3,7 @@ cm4all-beng-proxy (19.11) unstable; urgency=low
   * bp: expire MOUNT_LISTEN_STREAM errors
   * io_uring: auto-restart io_uring_prep_poll_multishot()
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Fri, 21 Feb 2025 19:34:57 +0100
 
 cm4all-beng-proxy (19.10) unstable; urgency=low
 
