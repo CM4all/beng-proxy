@@ -1311,17 +1311,26 @@ e.g. ``user.account_id=42``.
 Other Child Process Options
 ---------------------------
 
-- ``UID_GID`` specifies uid and gid (and supplementary groups) for the
-  child process. Payload is an array of 32 bit integers. All selected
-  users and groups must be explicitly allowed with the ``user`` and
-  ``group`` settings in the ``spawn`` configuration. The default is to
-  run child processes with the same unprivileged credentials as
-  :program:`beng-proxy` itself (or the one specified with
-  ``--spawn-user``).
+- ``UID_GID`` specifies (effective) uid and gid (and supplementary
+  groups) for the child process. Payload is an array of 32 bit
+  integers. All selected users and groups must be explicitly allowed
+  with the ``user`` and ``group`` settings in the ``spawn``
+  configuration. The default is to run child processes with the same
+  unprivileged credentials as :program:`beng-proxy` itself (or the one
+  specified with ``--spawn-user``).
 
 - ``MAPPED_UID_GID`` is like ``UID_GID``, but these are the numbers
   visible inside the user namespace.  Currently, only the uid is
   implemented, therefore the payload must be a 32-bit integer.
+
+- ``REAL_UID_GID`` specifies the real uid and gid for the
+  child process.  Payload is either one or two 32 bit integers.
+  Defaults to the ``UID_GID`` value.
+
+  This feature works only if
+  https://lore.kernel.org/linux-security-module/20250306082615.174777-1-max.kellermann@ionos.com/
+  is applied.  Without it, the kernel will revert the euid on
+  ``execve()``.
 
 - ``CAP_SYS_RESOURCE`` grants the new child process the
   CAP_SYS_RESOURCE capability, allowing it to ignore filesystem
