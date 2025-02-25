@@ -75,20 +75,37 @@ private:
 	void OnSocketEvent(unsigned events) noexcept;
 };
 
-void
-fcgi_stock_item_set_site(StockItem &item, const char *site) noexcept;
+static inline void
+fcgi_stock_item_set_site(StockItem &item, const char *site) noexcept
+{
+	auto &connection = (FcgiStockConnection &)item;
+	connection.SetSite(site);
+}
 
-void
-fcgi_stock_item_set_uri(StockItem &item, const char *uri) noexcept;
+static inline void
+fcgi_stock_item_set_uri(StockItem &item, const char *uri) noexcept
+{
+	auto &connection = (FcgiStockConnection &)item;
+	connection.SetUri(uri);
+}
 
 /**
  * Returns the socket descriptor of the specified stock item.
  */
-SocketDescriptor
-fcgi_stock_item_get(const StockItem &item) noexcept;
+static inline SocketDescriptor
+fcgi_stock_item_get(const StockItem &item) noexcept
+{
+	const auto *connection = (const FcgiStockConnection *)&item;
 
-UniqueFileDescriptor
-fcgi_stock_item_get_stderr(const StockItem &item) noexcept;
+	return connection->GetSocket();
+}
+
+static inline UniqueFileDescriptor
+fcgi_stock_item_get_stderr(const StockItem &item) noexcept
+{
+	const auto &connection = (const FcgiStockConnection &)item;
+	return connection.GetStderr();
+}
 
 /**
  * Let the fcgi_stock know that the client is being aborted.  The
@@ -97,5 +114,10 @@ fcgi_stock_item_get_stderr(const StockItem &item) noexcept;
  * release the process - fcgi_stock_put() stil needs to be called
  * after this function.
  */
-void
-fcgi_stock_aborted(StockItem &item) noexcept;
+static inline void
+fcgi_stock_aborted(StockItem &item) noexcept
+{
+	auto *connection = (FcgiStockConnection *)&item;
+
+	connection->SetAborted();
+}

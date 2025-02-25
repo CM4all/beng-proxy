@@ -19,7 +19,7 @@ FcgiStockConnection::FcgiStockConnection(CreateStockItem c, ListenChildStockItem
 {
 }
 
-inline void
+void
 FcgiStockConnection::SetAborted() noexcept
 {
 	if (fresh)
@@ -72,41 +72,4 @@ FcgiStockConnection::Release() noexcept
 FcgiStockConnection::~FcgiStockConnection() noexcept
 {
 	event.Close();
-}
-
-UniqueFileDescriptor
-fcgi_stock_item_get_stderr(const StockItem &item) noexcept
-{
-	const auto &connection = (const FcgiStockConnection &)item;
-	return connection.GetStderr();
-}
-
-void
-fcgi_stock_item_set_site(StockItem &item, const char *site) noexcept
-{
-	auto &connection = (FcgiStockConnection &)item;
-	connection.SetSite(site);
-}
-
-void
-fcgi_stock_item_set_uri(StockItem &item, const char *uri) noexcept
-{
-	auto &connection = (FcgiStockConnection &)item;
-	connection.SetUri(uri);
-}
-
-SocketDescriptor
-fcgi_stock_item_get(const StockItem &item) noexcept
-{
-	const auto *connection = (const FcgiStockConnection *)&item;
-
-	return connection->GetSocket();
-}
-
-void
-fcgi_stock_aborted(StockItem &item) noexcept
-{
-	auto *connection = (FcgiStockConnection *)&item;
-
-	connection->SetAborted();
 }
