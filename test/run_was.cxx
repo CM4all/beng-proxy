@@ -173,7 +173,7 @@ try {
 	SetLogLevel(5);
 
 	if (argc < 3) {
-		fmt::print(stderr, "Usage: run_was PATH URI [--parameter a=b ...] -- ARGS...\n");
+		fmt::print(stderr, "Usage: run_was PATH URI [--parameter a=b ...] [--header name:value] -- ARGS...\n");
 		return EXIT_FAILURE;
 	}
 
