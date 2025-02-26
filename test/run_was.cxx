@@ -173,7 +173,7 @@ try {
 	SetLogLevel(5);
 
 	if (argc < 3) {
-		fmt::print(stderr, "Usage: run_was PATH URI [--parameter a=b ...] [--header name:value] -- ARGS...\n");
+		fmt::print(stderr, "Usage: run_was PATH URI [--parameter a=b ...] [--header name:value] [--query QUERY] -- ARGS...\n");
 		return EXIT_FAILURE;
 	}
 
@@ -184,6 +184,7 @@ try {
 	StaticVector<const char *, 64> params;
 	bool collect_args = false;
 	StaticVector<const char *, 64> args;
+	const char* query_string = nullptr;
 
 	StringMap headers;
 
@@ -213,6 +214,11 @@ try {
 
 			AllocatorPtr alloc(context.root_pool);
 			headers.Add(alloc, alloc.DupToLower(name), alloc.DupZ(value));
+		} else if (StringIsEqual(argv[i], "--query") || StringIsEqual(argv[i], "-q")) {
+			++i;
+			if (i >= argc)
+				throw std::runtime_error("Query string value missing");
+			query_string = argv[i++];
 		} else if (StringIsEqual(argv[i], "--")) {
 			collect_args = true;
 			i++;
@@ -249,7 +255,8 @@ try {
 			   nullptr,
 			   HttpMethod::GET, uri,
 			   nullptr,
-			   nullptr, nullptr,
+			   nullptr,
+			   query_string,
 			   headers,
 			   request_body(context.event_loop, context.root_pool),
 			   params,
