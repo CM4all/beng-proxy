@@ -487,7 +487,6 @@ subdir('libcommon/src/thread')
 subdir('src/fs')
 
 subdir('libcommon/src/translation')
-subdir('libcommon/src/translation/server')
 
 libcommon_translation_dep = translation_dep
 
