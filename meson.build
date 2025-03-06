@@ -600,7 +600,7 @@ if uring_dep.found()
   ]
 endif
 
-if libsystemd.found()
+if libcommon_enable_libsystemd
   sources += 'src/spawn/CgroupMemoryThrottle.cxx'
 endif
 
@@ -925,7 +925,7 @@ endif
 conf = configuration_data()
 conf.set('HAVE_AVAHI', avahi_dep.found())
 conf.set('HAVE_LIBCAP', cap_dep.found())
-conf.set('HAVE_LIBSYSTEMD', libsystemd.found())
+conf.set('HAVE_LIBSYSTEMD', libcommon_enable_libsystemd)
 conf.set('HAVE_LUA', lua_dep.found())
 configure_file(output: 'config.h', configuration: conf)
 
