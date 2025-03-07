@@ -17,6 +17,13 @@
 #include "util/StringList.hxx"
 #include "AllocatorPtr.hxx"
 
+#ifdef HAVE_LIBSYSTEMD
+#include "ResourcesExhaustedError.hxx"
+#include "spawn/CgroupOptions.hxx"
+#include "net/SocketPair.hxx"
+#include "net/UniqueSocketDescriptor.hxx"
+#endif // HAVE_LIBSYSTEMD
+
 #include <cassert>
 
 #include <sys/socket.h>
@@ -47,6 +54,19 @@ ChildStockItem::Spawn(ChildStockClass &cls, const void *info,
 	FdHolder close_fds;
 	PreparedChildProcess p;
 	Prepare(cls, info, p, close_fds);
+
+#ifdef HAVE_LIBSYSTEMD
+	UniqueSocketDescriptor return_cgroup;
+	if (p.cgroup != nullptr && p.cgroup->name != nullptr) {
+		cgroup_watch = child_stock.GetCgroupWatch(StringWithHash{p.cgroup->name});
+		if (cgroup_watch) {
+			if (cgroup_watch.IsBlocked())
+				throw SpawnResourcesExhaustedError{};
+
+			std::tie(return_cgroup, p.return_cgroup) = CreateSocketPair(SOCK_DGRAM);
+		}
+	}
+#endif // HAVE_LIBSYSTEMD
 
 	const TempPoolLease tpool;
 	if (p.ns.mount.mount_listen_stream.data() != nullptr) {
@@ -89,6 +109,18 @@ ChildStockItem::Spawn(ChildStockClass &cls, const void *info,
 
 		stderr_fd = EasyReceiveMessageWithOneFD(stderr_socket1);
 	}
+
+#ifdef HAVE_LIBSYSTEMD
+	if (return_cgroup.IsDefined()) {
+		assert(cgroup_watch);
+
+		// TODO do not receive synchronously
+		const auto cgroup_fd = EasyReceiveMessageWithOneFD(return_cgroup);
+		cgroup_watch.SetCgroup(cgroup_fd);
+		if (cgroup_watch.IsBlocked())
+			throw SpawnResourcesExhaustedError{};
+	}
+#endif // HAVE_LIBSYSTEMD
 }
 
 void
@@ -121,6 +153,12 @@ bool
 ChildStockItem::Borrow() noexcept
 {
 	assert(state == State::IDLE);
+
+#ifdef HAVE_LIBSYSTEMD
+	if (cgroup_watch.IsBlocked())
+		return false;
+#endif // HAVE_LIBSYSTEMD
+
 	state = State::BUSY;
 
 	/* remove from ChildStock::idle list */
@@ -139,6 +177,11 @@ ChildStockItem::Release() noexcept
 	/* reuse this item only if the child process hasn't exited */
 	if (!handle)
 		return false;
+
+#ifdef HAVE_LIBSYSTEMD
+	if (cgroup_watch.IsBlocked())
+		return false;
+#endif // HAVE_LIBSYSTEMD
 
 	assert(!AutoUnlinkIntrusiveListHook::is_linked());
 	child_stock.AddIdle(*this);

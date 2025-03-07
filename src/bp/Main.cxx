@@ -45,6 +45,7 @@
 #include "system/SetupProcess.hxx"
 #include "system/ProcessName.hxx"
 #include "spawn/CgroupMemoryThrottle.hxx"
+#include "spawn/CgroupMultiWatch.hxx"
 #include "spawn/Launch.hxx"
 #include "spawn/Client.hxx"
 #include "net/ListenStreamStock.hxx"
@@ -134,6 +135,9 @@ BpInstance::ShutdownCallback() noexcept
 		spawn->Shutdown();
 
 #ifdef HAVE_LIBSYSTEMD
+	if (cgroup_multi_watch)
+		cgroup_multi_watch->BeginShutdown();
+
 	cgroup_memory_throttle.reset();
 #endif
 
@@ -436,6 +440,9 @@ try {
 							    instance.config.lhttp_stock_max_idle,
 							    instance.event_loop,
 							    *instance.spawn_service,
+#ifdef HAVE_LIBSYSTEMD
+							    instance.cgroup_multi_watch.get(),
+#endif
 							    instance.listen_stream_stock.get(),
 							    child_log_sink,
 							    child_log_options);
@@ -444,6 +451,9 @@ try {
 							  instance.config.fcgi_stock_max_idle,
 							  instance.event_loop,
 							  *instance.spawn_service,
+#ifdef HAVE_LIBSYSTEMD
+							  instance.cgroup_multi_watch.get(),
+#endif
 							  instance.listen_stream_stock.get(),
 							  child_log_sink, child_log_options);
 
@@ -459,6 +469,9 @@ try {
 				  instance.config.multi_was_stock_max_idle,
 				  instance.event_loop,
 				  *instance.spawn_service,
+#ifdef HAVE_LIBSYSTEMD
+				  instance.cgroup_multi_watch.get(),
+#endif
 				  child_log_sink,
 				  child_log_options);
 	instance.remote_was_stock =

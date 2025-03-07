@@ -38,6 +38,7 @@
 #include "session/Manager.hxx"
 #include "session/Save.hxx"
 #include "spawn/CgroupMemoryThrottle.hxx"
+#include "spawn/CgroupMultiWatch.hxx"
 #include "spawn/Client.hxx"
 #include "spawn/Launch.hxx"
 #include "net/ListenStreamStock.hxx"
@@ -81,6 +82,7 @@ BpInstance::BpInstance(BpConfig &&_config,
 						     true)
 	       : nullptr),
 #ifdef HAVE_LIBSYSTEMD
+	 cgroup_multi_watch(spawn && spawner.cgroup.IsDefined() ? new CgroupMultiWatch(event_loop) : nullptr),
 	 cgroup_memory_throttle(spawn && spawner.cgroup.IsDefined() &&
 				config.spawn.systemd_scope_properties.HaveMemoryLimit()
 				? std::make_unique<CgroupMemoryThrottle>(event_loop,

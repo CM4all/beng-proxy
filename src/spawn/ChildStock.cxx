@@ -9,6 +9,10 @@
 #include "io/UniqueFileDescriptor.hxx"
 #include "util/Cancellable.hxx"
 
+#ifdef HAVE_LIBSYSTEMD
+#include "spawn/CgroupMultiWatch.hxx"
+#endif
+
 #include <cassert>
 
 std::string_view
@@ -26,11 +30,17 @@ ChildStockClass::CreateChild(CreateStockItem c, const void *info,
 }
 
 ChildStock::ChildStock(SpawnService &_spawn_service,
+#ifdef HAVE_LIBSYSTEMD
+		       CgroupMultiWatch *_cgroup_multi_watch,
+#endif
 		       ListenStreamStock *_listen_stream_stock,
 		       ChildStockClass &_cls,
 		       Net::Log::Sink *_log_sink,
 		       const ChildErrorLogOptions &_log_options) noexcept
 	:spawn_service(_spawn_service),
+#ifdef HAVE_LIBSYSTEMD
+	 cgroup_multi_watch(_cgroup_multi_watch),
+#endif
 	 listen_stream_stock(_listen_stream_stock),
 	 cls(_cls),
 	 log_sink(_log_sink),
@@ -121,12 +131,19 @@ ChildStock::Create(CreateStockItem c, StockRequest request,
  */
 
 ChildStockMap::ChildStockMap(EventLoop &event_loop, SpawnService &_spawn_service,
+#ifdef HAVE_LIBSYSTEMD
+			     CgroupMultiWatch *_cgroup_multi_watch,
+#endif
 			     ListenStreamStock *_listen_stream_stock,
 			     ChildStockMapClass &_cls,
 			     Net::Log::Sink *_log_sink,
 			     const ChildErrorLogOptions &_log_options,
 			     unsigned _limit, unsigned _max_idle) noexcept
-	:cls(_spawn_service, _listen_stream_stock,
+	:cls(_spawn_service,
+#ifdef HAVE_LIBSYSTEMD
+	     _cgroup_multi_watch,
+#endif
+	     _listen_stream_stock,
 	     _cls, _log_sink, _log_options),
 	 map(event_loop, cls, _cls, _limit, _max_idle)
 {
@@ -140,6 +157,18 @@ ChildStockMap::FadeTag(std::string_view tag) noexcept
 		return item.IsTag(tag);
 	});
 }
+
+#ifdef HAVE_LIBSYSTEMD
+
+CgroupWatchPtr
+ChildStock::GetCgroupWatch(StringWithHash name) const noexcept
+{
+	return cgroup_multi_watch != nullptr
+		? cgroup_multi_watch->Get(name)
+		: CgroupWatchPtr{};
+}
+
+#endif // HAVE_LIBSYSTEMD
 
 void
 ChildStock::AddIdle(ChildStockItem &item) noexcept

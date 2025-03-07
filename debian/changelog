@@ -2,6 +2,7 @@ cm4all-beng-proxy (19.12) unstable; urgency=low
 
   * translation: add packet REAL_UID_GID
   * spawn: watch "memory.events", not "memory.events.local"
+  * spawn: block processes that exceed cgroup limits for a minute
 
  --   
 

@@ -13,6 +13,11 @@
 #include "util/Cancellable.hxx"
 #include "util/IntrusiveList.hxx"
 #include "util/SharedLease.hxx"
+#include "config.h" // for HAVE_LIBSYSTEMD
+
+#ifdef HAVE_LIBSYSTEMD
+#include "spawn/CgroupWatchPtr.hxx"
+#endif
 
 #include <memory>
 #include <string>
@@ -46,6 +51,10 @@ class ChildStockItem
 	 * A lease obtained from #ListenStreamSpawnStock.
 	 */
 	SharedLease listen_stream_lease;
+
+#ifdef HAVE_LIBSYSTEMD
+	CgroupWatchPtr cgroup_watch;
+#endif
 
 	enum class State : uint_least8_t {
 		CREATE,

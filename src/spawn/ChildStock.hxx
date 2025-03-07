@@ -8,12 +8,14 @@
 #include "stock/MapStock.hxx"
 #include "access_log/ChildErrorLogOptions.hxx"
 #include "util/IntrusiveList.hxx"
+#include "config.h" // for HAVE_LIBSYSTEMD
 
 #include <memory>
 #include <string_view>
 
 namespace Net::Log { class Sink; }
 struct PreparedChildProcess;
+class FileDescriptor;
 class UniqueFileDescriptor;
 class FdHolder;
 class EventLoop;
@@ -21,6 +23,9 @@ class SpawnService;
 class ListenStreamStock;
 class ChildStock;
 class ChildStockItem;
+class CgroupMultiWatch;
+class CgroupWatchPtr;
+struct StringWithHash;
 
 /*
  * Launch processes and connect a stream socket to them.
@@ -78,6 +83,10 @@ public:
 class ChildStock final : public StockClass {
 	SpawnService &spawn_service;
 
+#ifdef HAVE_LIBSYSTEMD
+	CgroupMultiWatch *const cgroup_multi_watch;
+#endif
+
 	ListenStreamStock *const listen_stream_stock;
 
 	ChildStockClass &cls;
@@ -96,6 +105,9 @@ class ChildStock final : public StockClass {
 
 public:
 	ChildStock(SpawnService &_spawn_service,
+#ifdef HAVE_LIBSYSTEMD
+		   CgroupMultiWatch *_cgroup_multi_watch,
+#endif
 		   ListenStreamStock *_listen_stream_stock,
 		   ChildStockClass &_cls,
 		   Net::Log::Sink *_log_sink,
@@ -121,6 +133,10 @@ public:
 	const auto &GetLogOptions() const noexcept {
 		return log_options;
 	}
+
+#ifdef HAVE_LIBSYSTEMD
+	CgroupWatchPtr GetCgroupWatch(StringWithHash name) const noexcept;
+#endif
 
 	/**
 	 * For internal use only.
@@ -181,6 +197,9 @@ class ChildStockMap final {
 
 public:
 	ChildStockMap(EventLoop &event_loop, SpawnService &_spawn_service,
+#ifdef HAVE_LIBSYSTEMD
+		      CgroupMultiWatch *_cgroup_multi_watch,
+#endif
 		      ListenStreamStock *_listen_stream_stock,
 		      ChildStockMapClass &_cls,
 		      Net::Log::Sink *_log_sink,

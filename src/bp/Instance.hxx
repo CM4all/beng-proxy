@@ -54,6 +54,7 @@ namespace BengControl { class Server; }
 class SpawnServerClient;
 struct LaunchSpawnServerResult;
 class CgroupMemoryThrottle;
+class CgroupMultiWatch;
 class TranslationStock;
 class TranslationCache;
 class TranslationService;
@@ -135,6 +136,7 @@ struct BpInstance final : PInstance, BengControl::Handler,
 	const std::unique_ptr<SpawnServerClient> spawn;
 
 #ifdef HAVE_LIBSYSTEMD
+	std::unique_ptr<CgroupMultiWatch> cgroup_multi_watch;
 	std::unique_ptr<CgroupMemoryThrottle> cgroup_memory_throttle;
 #endif
 

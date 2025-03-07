@@ -29,6 +29,9 @@ class LhttpStock final : MultiStockClass, ListenChildStockClass {
 public:
 	LhttpStock(unsigned limit, unsigned max_idle,
 		   EventLoop &event_loop, SpawnService &spawn_service,
+#ifdef HAVE_LIBSYSTEMD
+		   CgroupMultiWatch *_cgroup_multi_watch,
+#endif
 		   ListenStreamStock *_listen_stream_stock,
 		   Net::Log::Sink *log_sink,
 		   const ChildErrorLogOptions &log_options) noexcept;

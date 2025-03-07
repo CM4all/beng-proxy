@@ -170,11 +170,18 @@ LhttpStock::Create(CreateStockItem c, StockItem &shared_item)
 
 LhttpStock::LhttpStock(unsigned limit, [[maybe_unused]] unsigned max_idle,
 		       EventLoop &event_loop, SpawnService &spawn_service,
+#ifdef HAVE_LIBSYSTEMD
+		       CgroupMultiWatch *_cgroup_multi_watch,
+#endif
 		       ListenStreamStock *_listen_stream_stock,
 		       Net::Log::Sink *log_sink,
 		       const ChildErrorLogOptions &log_options) noexcept
 	:pool(pool_new_dummy(nullptr, "LhttpStock")),
-	 child_stock(spawn_service, _listen_stream_stock,
+	 child_stock(spawn_service,
+#ifdef HAVE_LIBSYSTEMD
+		     _cgroup_multi_watch,
+#endif
+		     _listen_stream_stock,
 		     *this,
 		     log_sink, log_options),
 	 mchild_stock(event_loop, child_stock,

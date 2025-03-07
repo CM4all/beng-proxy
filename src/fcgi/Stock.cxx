@@ -177,11 +177,18 @@ FcgiStock::Create(CreateStockItem c, StockItem &shared_item)
 
 FcgiStock::FcgiStock(unsigned limit, [[maybe_unused]] unsigned max_idle,
 		     EventLoop &event_loop, SpawnService &spawn_service,
+#ifdef HAVE_LIBSYSTEMD
+		     CgroupMultiWatch *_cgroup_multi_watch,
+#endif
 		     ListenStreamStock *listen_stream_stock,
 		     Net::Log::Sink *log_sink,
 		     const ChildErrorLogOptions &_log_options) noexcept
 	:pool(pool_new_dummy(nullptr, "FcgiStock")),
-	 child_stock(spawn_service, listen_stream_stock,
+	 child_stock(spawn_service,
+#ifdef HAVE_LIBSYSTEMD
+		     _cgroup_multi_watch,
+#endif
+		     listen_stream_stock,
 		     *this,
 		     log_sink, _log_options),
 	 mchild_stock(event_loop, child_stock,

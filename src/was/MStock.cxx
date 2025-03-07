@@ -104,10 +104,16 @@ public:
 
 MultiWasStock::MultiWasStock(unsigned limit, [[maybe_unused]] unsigned max_idle,
 			     EventLoop &event_loop, SpawnService &spawn_service,
+#ifdef HAVE_LIBSYSTEMD
+			     CgroupMultiWatch *_cgroup_multi_watch,
+#endif
 			     Net::Log::Sink *log_sink,
 			     const ChildErrorLogOptions &log_options) noexcept
 	:pool(pool_new_dummy(nullptr, "MultiWasStock")),
 	 child_stock(spawn_service,
+#ifdef HAVE_LIBSYSTEMD
+		     _cgroup_multi_watch,
+#endif
 		     nullptr, // TODO do we need ListenStreamSpawnStock here?
 		     *this,
 		     log_sink, log_options),
