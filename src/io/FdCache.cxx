@@ -57,8 +57,8 @@ FdCache::Key::Hash::operator()(const Key &key) const noexcept
  */
 struct FdCache::Item final
 	: IntrusiveHashSetHook<IntrusiveHookMode::AUTO_UNLINK, KeyTag>,
-	  IntrusiveHashSetHook<IntrusiveHookMode::AUTO_UNLINK, InotifyTag>,
 	  IntrusiveListHook<IntrusiveHookMode::AUTO_UNLINK>,
+	  InotifyWatch,
 #ifdef HAVE_URING
 	  Uring::OpenHandler,
 	  Uring::Operation,
@@ -102,14 +102,12 @@ struct FdCache::Item final
 
 	int error = 0;
 
-	int watch_descriptor = -1;
-
 	std::chrono::steady_clock::time_point expires;
 
 	Item(FdCache &_cache,
 	     std::string_view _path, uint_least64_t _flags,
 	     std::chrono::steady_clock::time_point _expires) noexcept
-		:cache(_cache),
+		:InotifyWatch(_cache.inotify_manager), cache(_cache),
 		 path(_path), flags(_flags),
 		 expires(_expires)
 	{
@@ -119,11 +117,6 @@ struct FdCache::Item final
 	~Item() noexcept {
 		assert(requests.empty());
 		assert(IsAbandoned());
-
-		if (watch_descriptor >= 0) {
-			cache.inotify_event.RemoveWatch(watch_descriptor);
-			cache.inotify_map.erase(cache.inotify_map.iterator_to(*this));
-		}
 
 #ifdef HAVE_URING
 		if (uring_open != nullptr) {
@@ -200,12 +193,8 @@ private:
 		/* tell the kernel to notify us when the directory
 		   gets deleted or moved; if that happens, we need to
 		   discard this item */
-		watch_descriptor = cache.inotify_event
-			.TryAddWatch(ProcFdPath(fd),
-				     IN_DELETE_SELF|IN_MOVE_SELF|IN_ONESHOT|IN_ONLYDIR|IN_MASK_CREATE);
-
-		if (watch_descriptor >= 0)
-			cache.inotify_map.insert(*this);
+		TryAddWatch(ProcFdPath(fd),
+			    IN_DELETE_SELF|IN_MOVE_SELF|IN_ONESHOT|IN_ONLYDIR|IN_MASK_CREATE);
 	}
 
 	void SetError(int _error) noexcept {
@@ -230,6 +219,9 @@ private:
 		error = _error;
 		InvokeError();
 	}
+
+	// virtual methods from InotifyWatch
+	void OnInotify(unsigned mask, const char *name) noexcept override;
 
 #ifdef HAVE_URING
 	/* virtual methods from Uring::OpenHandler */
@@ -380,12 +372,6 @@ FdCache::ItemGetKey::operator()(const Item &item) const noexcept
 	return {item.path, item.flags};
 }
 
-inline int
-FdCache::ItemGetInotify::operator()(const Item &item) const noexcept
-{
-	return item.watch_descriptor;
-}
-
 FdCache::FdCache(EventLoop &event_loop
 #ifdef HAVE_URING
 		, Uring::Queue *_uring_queue
@@ -395,7 +381,7 @@ FdCache::FdCache(EventLoop &event_loop
 #ifdef HAVE_URING
 	 uring_queue(_uring_queue),
 #endif
-	 inotify_event(event_loop, *this)
+	 inotify_manager(event_loop)
 {
 }
 
@@ -420,7 +406,7 @@ FdCache::Disable() noexcept
 	enabled = false;
 
 	expire_timer.Cancel();
-	inotify_event.Disable();
+	inotify_manager.BeginShutdown();
 
 	Flush();
 }
@@ -546,25 +532,17 @@ FdCache::Expire() noexcept
 }
 
 void
-FdCache::OnInotify(int wd, [[maybe_unused]] unsigned mask,
-		   [[maybe_unused]] const char *name)
+FdCache::Item::OnInotify([[maybe_unused]] unsigned mask,
+			 [[maybe_unused]] const char *name) noexcept
 {
-	if (auto i = inotify_map.find(wd); i != inotify_map.end()) {
-		assert(i->watch_descriptor == wd);
-		inotify_map.erase(i);
-		i->watch_descriptor = -1;
+	assert(!IsWatching()); // it's oneshot
 
-		if (i->IsUnused())
-			/* unused, delete immediately */
-			delete &*i;
-		else
-			/* still in use, delete later */
-			i->Disable();
+	if (IsUnused()) {
+		/* unused, delete immediately */
+		delete this;
+	} else {
+		/* still in use, delete later */
+		Disable();
 	}
-}
 
-void
-FdCache::OnInotifyError([[maybe_unused]] std::exception_ptr error) noexcept
-{
-	// TODO log?
 }

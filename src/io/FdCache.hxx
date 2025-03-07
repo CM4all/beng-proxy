@@ -5,7 +5,7 @@
 #pragma once
 
 #include "event/CoarseTimerEvent.hxx"
-#include "event/InotifyEvent.hxx"
+#include "event/InotifyManager.hxx"
 #include "util/BindMethod.hxx"
 #include "util/IntrusiveHashSet.hxx"
 #include "util/IntrusiveList.hxx"
@@ -29,7 +29,7 @@ namespace Uring { class Queue; }
 /**
  * A cache for file descriptors.
  */
-class FdCache final : InotifyHandler {
+class FdCache final {
 	struct Key {
 		std::string_view path;
 		uint_least64_t flags;
@@ -44,7 +44,6 @@ class FdCache final : InotifyHandler {
 	};
 
 	struct KeyTag {};
-	struct InotifyTag {};
 
 	struct Item;
 
@@ -53,18 +52,13 @@ class FdCache final : InotifyHandler {
 		Key operator()(const Item &item) const noexcept;
 	};
 
-	struct ItemGetInotify {
-		[[gnu::pure]]
-		int operator()(const Item &item) const noexcept;
-	};
-
 	CoarseTimerEvent expire_timer;
 
 #ifdef HAVE_URING
 	Uring::Queue *const uring_queue;
 #endif // HAVE_URING
 
-	InotifyEvent inotify_event;
+	InotifyManager inotify_manager;
 
 	/**
 	 * Map #Key (path and flags) to #Item.
@@ -73,14 +67,6 @@ class FdCache final : InotifyHandler {
 			 IntrusiveHashSetOperators<Item, ItemGetKey,
 						   Key::Hash, std::equal_to<Key>>,
 			 IntrusiveHashSetBaseHookTraits<Item, KeyTag>> map;
-
-	/**
-	 * Map inotify watch descriptors to #Item.
-	 */
-	IntrusiveHashSet<Item, 2048,
-			 IntrusiveHashSetOperators<Item, ItemGetInotify,
-						   std::hash<int>, std::equal_to<int>>,
-			 IntrusiveHashSetBaseHookTraits<Item, InotifyTag>> inotify_map;
 
 	/**
 	 * A list of items sorted by its "expires" field.  This is
@@ -161,8 +147,4 @@ private:
 	void SetExpiresSoon(Item &item, Event::Duration expiry) noexcept;
 
 	void Expire() noexcept;
-
-	/* virtual methods from class InotifyHandler */
-	void OnInotify(int wd, unsigned mask, const char *name) override;
-	void OnInotifyError(std::exception_ptr error) noexcept override;
 };
