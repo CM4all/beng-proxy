@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include "spawn/CgroupWatch.hxx"
+#include "spawn/CgroupMemoryWatch.hxx"
 #include "spawn/Interface.hxx"
 #include "event/CoarseTimerEvent.hxx"
 #include "event/FineTimerEvent.hxx"
