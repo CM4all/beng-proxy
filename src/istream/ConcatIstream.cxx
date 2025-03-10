@@ -90,6 +90,11 @@ class CatIstream final : public Istream, DestructAnchor {
 
 	bool reading = false;
 
+	/**
+	 * Has OnInputReady() been called at least once?
+	 */
+	bool seen_ready = false;
+
 	using InputList = IntrusiveList<Input>;
 	InputList inputs;
 
@@ -130,7 +135,14 @@ private:
 	}
 
 	IstreamReadyResult OnInputReady(Input &i) noexcept {
-		if (!IsCurrent(i))
+		if (!seen_ready)
+			/* if this method is being called for the
+			   first time, we skip the IsCurrent() check
+			   and assume previous inputs are ready as
+			   well; in some cases, this avoids
+			   unnecessary epoll_ctl() system calls */
+			seen_ready = true;
+		else if (!IsCurrent(i))
 			return IstreamReadyResult::OK;
 
 		auto result = InvokeReady();
