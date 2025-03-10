@@ -10,7 +10,8 @@
 
 FcgiStockConnection::FcgiStockConnection(CreateStockItem c, ListenChildStockItem &_child,
 					 UniqueSocketDescriptor &&socket) noexcept
-	:StockItem(c), logger(GetStockName()),
+	:StockItem(c),
+	 logger(GetStockNameView()),
 	 child(_child),
 	 event(GetStock().GetEventLoop(), BIND_THIS_METHOD(OnSocketEvent),
 	       socket.Release()),

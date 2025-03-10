@@ -158,7 +158,7 @@ LhttpRequest::OnStockItemReady(StockItem &item) noexcept
 
 	http_client_request(pool, std::move(stopwatch),
 			    lease->GetSocket(), *lease,
-			    item.GetStockName(),
+			    item.GetStockNameC(),
 			    pending_request.method, pending_request.uri,
 			    pending_request.headers, std::move(more_headers),
 			    std::move(pending_request.body), true,

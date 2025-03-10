@@ -236,7 +236,7 @@ FilteredSocketStockConnection::OnConnectFilteredSocketError(std::exception_ptr e
 
 	ep = NestException(ep,
 			   FmtRuntimeError("Failed to connect to '{}'",
-					   GetStockName()));
+					   GetStockNameView()));
 
 	InvokeCreateError(*handler, std::move(ep));
 }

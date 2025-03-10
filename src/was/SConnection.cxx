@@ -9,7 +9,7 @@
 
 WasStockConnection::WasStockConnection(CreateStockItem c, WasSocket &&_socket) noexcept
 	:StockItem(c),
-	 logger(GetStockName()),
+	 logger(GetStockNameView()),
 	 connection(c.stock.GetEventLoop(), std::move(_socket), *this) {}
 
 void

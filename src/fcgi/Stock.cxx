@@ -166,7 +166,7 @@ FcgiStock::Create(CreateStockItem c, StockItem &shared_item)
 	} catch (...) {
 		std::throw_with_nested(FcgiClientError(FcgiClientErrorCode::REFUSED,
 						       FmtBuffer<256>("Failed to connect to FastCGI server {:?}",
-								      c.GetStockName())));
+								      c.GetStockNameView())));
 	}
 }
 

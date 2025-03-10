@@ -158,7 +158,7 @@ LhttpStock::Create(CreateStockItem c, StockItem &shared_item)
 	} catch (...) {
 		std::throw_with_nested(HttpClientError(HttpClientErrorCode::REFUSED,
 						       FmtBuffer<256>("Failed to connect to LHTTP server {:?}",
-								      c.GetStockName())));
+								      c.GetStockNameView())));
 	}
 }
 

@@ -14,6 +14,6 @@ public:
 		:stock(_stock) {}
 
 	std::string_view GetDomain() const noexcept {
-		return stock.GetName();
+		return stock.GetNameView();
 	}
 };

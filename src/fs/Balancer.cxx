@@ -93,7 +93,7 @@ FilteredSocketBalancer::Request::OnStockItemReady(StockItem &item) noexcept
 
 	handler.OnFilteredSocketReady(*this, fs_stock_item_get(item),
 				      fs_stock_item_get_address(item),
-				      item.GetStockName(),
+				      item.GetStockNameC(),
 				      base.GetFailureInfo());
 }
 

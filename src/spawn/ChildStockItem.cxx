@@ -100,7 +100,7 @@ ChildStockItem::Spawn(ChildStockClass &cls, const void *info,
 		stderr_fd = p.stderr_fd.Duplicate();
 
 	auto &spawn_service = child_stock.GetSpawnService();
-	handle = spawn_service.SpawnChildProcess(GetStockName(), std::move(p));
+	handle = spawn_service.SpawnChildProcess(GetStockNameView(), std::move(p));
 	handle->SetExitListener(*this);
 
 	if (stderr_socket1.IsDefined()) {

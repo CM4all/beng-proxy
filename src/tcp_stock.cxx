@@ -161,7 +161,7 @@ TcpStockConnection::OnSocketConnectError(std::exception_ptr ep) noexcept
 
 	ep = NestException(ep,
 			   FmtRuntimeError("Failed to connect to '{}'",
-					   GetStockName()));
+					   GetStockNameView()));
 	InvokeCreateError(handler, ep);
 }
 
