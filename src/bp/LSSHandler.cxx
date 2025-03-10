@@ -104,7 +104,7 @@ private:
 };
 
 static std::unique_ptr<ChildProcessHandle>
-DoSpawn(SpawnService &service, const char *name,
+DoSpawn(SpawnService &service, std::string_view name,
 	SocketDescriptor socket,
 	const TranslateResponse &response)
 {

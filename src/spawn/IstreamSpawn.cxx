@@ -408,7 +408,8 @@ SpawnIstream::SpawnIstream(EventLoop &event_loop,
 }
 
 UnusedIstreamPtr
-SpawnChildProcess(EventLoop &event_loop, struct pool *pool, const char *name,
+SpawnChildProcess(EventLoop &event_loop, struct pool *pool,
+		  std::string_view name,
 		  UnusedIstreamPtr input,
 		  PreparedChildProcess &&prepared,
 		  SpawnService &spawn_service)

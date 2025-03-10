@@ -131,7 +131,7 @@ CgroupMemoryThrottle::MaybeCheckMemoryWarning() noexcept
 }
 
 std::unique_ptr<ChildProcessHandle>
-CgroupMemoryThrottle::SpawnChildProcess(const char *name, PreparedChildProcess &&params)
+CgroupMemoryThrottle::SpawnChildProcess(std::string_view name, PreparedChildProcess &&params)
 {
 	return next_spawn_service.SpawnChildProcess(name, std::move(params));
 }

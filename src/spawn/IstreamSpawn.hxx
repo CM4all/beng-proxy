@@ -4,6 +4,8 @@
 
 #pragma once
 
+#include <string_view>
+
 #include <sys/types.h>
 
 struct pool;
@@ -28,7 +30,7 @@ class UnusedIstreamPtr;
  * @return the output stream
  */
 UnusedIstreamPtr
-SpawnChildProcess(EventLoop &event_loop, struct pool *pool, const char *name,
+SpawnChildProcess(EventLoop &event_loop, struct pool *pool, std::string_view name,
 		  UnusedIstreamPtr input,
 		  PreparedChildProcess &&prepared,
 		  SpawnService &spawn_service);

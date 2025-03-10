@@ -10,6 +10,7 @@
 
 #include <memory>
 #include <span>
+#include <string_view>
 
 class SpawnService;
 class ListenStreamStock;
@@ -38,7 +39,7 @@ struct WasProcess : WasSocket {
 WasProcess
 was_launch(SpawnService &spawn_service,
 	   ListenStreamStock *listen_stream_stock,
-	   const char *name,
+	   std::string_view name,
 	   const char *executable_path,
 	   std::span<const char *const> args,
 	   const ChildOptions &options,
