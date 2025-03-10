@@ -52,15 +52,15 @@ public:
 			  UnusedIstreamPtr _body,
 			  UniqueFileDescriptor &&_stderr_fd,
 			  HttpResponseHandler &_handler)
-	:PoolLeakDetector(_pool),
-	 pool(_pool), event_loop(_event_loop),
-	 address(_address),
-	 pending_request(_pool, _method, address.GetURI(pool),
-			 std::move(_headers), std::move(_body)),
-	 remote_addr(_remote_addr),
-	 stderr_fd(std::move(_stderr_fd)),
-	 stopwatch(parent_stopwatch, "fcgi", pending_request.uri),
-	 handler(_handler) {}
+		:PoolLeakDetector(_pool),
+		 pool(_pool), event_loop(_event_loop),
+		 address(_address),
+		 pending_request(_pool, _method, address.GetURI(pool),
+				 std::move(_headers), std::move(_body)),
+		 remote_addr(_remote_addr),
+		 stderr_fd(std::move(_stderr_fd)),
+		 stopwatch(parent_stopwatch, "fcgi", pending_request.uri),
+		 handler(_handler) {}
 
 	void Start(TcpBalancer &tcp_balancer,
 		   const AddressList &address_list,
