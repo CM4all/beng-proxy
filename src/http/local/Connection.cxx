@@ -10,7 +10,7 @@
 LhttpConnection::LhttpConnection(CreateStockItem c,
 				 ListenChildStockItem &_child)
 	:StockItem(c),
-	 logger(*this),
+	 logger(GetStockName()),
 	 child(_child),
 	 socket(c.stock.GetEventLoop(), _child.Connect(), FdType::FD_SOCKET)
 {

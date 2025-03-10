@@ -14,9 +14,9 @@
 class ListenChildStockItem;
 
 class LhttpConnection final
-	: LoggerDomainFactory, public StockItem, BufferedSocketHandler
+	: public StockItem, BufferedSocketHandler
 {
-	LazyDomainLogger logger;
+	LLogger logger;
 
 	ListenChildStockItem &child;
 
@@ -44,11 +44,6 @@ public:
 	void SetUri(const char *uri) noexcept;
 
 private:
-	/* virtual methods from LoggerDomainFactory */
-	std::string MakeLoggerDomain() const noexcept override {
-		return GetStockName();
-	}
-
 	/* virtual methods from class StockItem */
 	bool Borrow() noexcept override;
 	bool Release() noexcept override;
