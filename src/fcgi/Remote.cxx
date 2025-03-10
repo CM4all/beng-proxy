@@ -25,7 +25,6 @@ class FcgiRemoteRequest final
 	: Lease, Cancellable, StockGetHandler, HttpResponseHandler, PoolLeakDetector
 {
 	struct pool &pool;
-	EventLoop &event_loop;
 
 	StockItem *stock_item = nullptr;
 
@@ -43,7 +42,7 @@ class FcgiRemoteRequest final
 	CancellablePointer cancel_ptr;
 
 public:
-	FcgiRemoteRequest(struct pool &_pool, EventLoop &_event_loop,
+	FcgiRemoteRequest(struct pool &_pool,
 			  const StopwatchPtr &parent_stopwatch,
 			  const CgiAddress &_address,
 			  HttpMethod _method,
@@ -53,7 +52,7 @@ public:
 			  UniqueFileDescriptor &&_stderr_fd,
 			  HttpResponseHandler &_handler)
 		:PoolLeakDetector(_pool),
-		 pool(_pool), event_loop(_event_loop),
+		 pool(_pool),
 		 address(_address),
 		 pending_request(_pool, _method, address.GetURI(pool),
 				 std::move(_headers), std::move(_body)),
@@ -128,10 +127,8 @@ FcgiRemoteRequest::OnStockItemReady(StockItem &item) noexcept
 	stock_item = &item;
 	cancel_ptr = {};
 
-	fcgi_client_request(&pool, event_loop, std::move(stopwatch),
+	fcgi_client_request(&pool, std::move(stopwatch),
 			    tcp_stock_item_get(item),
-			    tcp_stock_item_get_domain(item) == AF_LOCAL
-			    ? FdType::FD_SOCKET : FdType::FD_TCP,
 			    *this,
 			    pending_request.method, pending_request.uri,
 			    address.path,
@@ -191,7 +188,7 @@ FcgiRemoteRequest::OnHttpError(std::exception_ptr error) noexcept
 }
 
 void
-fcgi_remote_request(struct pool *pool, EventLoop &event_loop,
+fcgi_remote_request(struct pool *pool,
 		    TcpBalancer *tcp_balancer,
 		    const StopwatchPtr &parent_stopwatch,
 		    const CgiAddress &address,
@@ -204,7 +201,7 @@ fcgi_remote_request(struct pool *pool, EventLoop &event_loop,
 {
 	CancellablePointer *cancel_ptr = &_cancel_ptr;
 
-	auto request = NewFromPool<FcgiRemoteRequest>(*pool, *pool, event_loop,
+	auto request = NewFromPool<FcgiRemoteRequest>(*pool, *pool,
 						      parent_stopwatch,
 						      address,
 						      method,

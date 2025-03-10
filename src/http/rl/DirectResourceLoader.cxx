@@ -116,7 +116,7 @@ try {
 				     std::move(stderr_fd),
 				     handler, cancel_ptr);
 		else
-			fcgi_remote_request(&pool, event_loop, tcp_balancer,
+			fcgi_remote_request(&pool, tcp_balancer,
 					    parent_stopwatch,
 					    *cgi,
 					    method,

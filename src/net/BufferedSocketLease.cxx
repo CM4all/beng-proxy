@@ -97,6 +97,8 @@ bool
 BufferedSocketLease::ReadReleased() noexcept
 {
 	const std::size_t remaining = input.GetAvailable();
+	if (remaining == 0)
+		return true;
 
 	switch (handler.OnBufferedData()) {
 	case BufferedResult::OK:

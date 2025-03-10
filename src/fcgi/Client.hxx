@@ -4,18 +4,15 @@
 
 #pragma once
 
-#include "io/FdType.hxx"
-
 #include <cstdint>
 #include <exception>
 #include <span>
 
 enum class HttpMethod : uint_least8_t;
 struct pool;
-class EventLoop;
 class UnusedIstreamPtr;
+class BufferedSocket;
 class Lease;
-class SocketDescriptor;
 class UniqueFileDescriptor;
 class StringMap;
 class HttpResponseHandler;
@@ -53,9 +50,9 @@ IsFcgiClientRetryFailure(std::exception_ptr error) noexcept;
  * @param async_ref a handle which may be used to abort the operation
  */
 void
-fcgi_client_request(struct pool *pool, EventLoop &event_loop,
+fcgi_client_request(struct pool *pool,
 		    StopwatchPtr stopwatch,
-		    SocketDescriptor fd, FdType fd_type, Lease &lease,
+		    BufferedSocket &socket, Lease &lease,
 		    HttpMethod method, const char *uri,
 		    const char *script_filename,
 		    const char *script_name, const char *path_info,

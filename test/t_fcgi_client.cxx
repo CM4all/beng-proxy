@@ -10,6 +10,7 @@
 #include "lease.hxx"
 #include "istream/UnusedPtr.hxx"
 #include "strmap.hxx"
+#include "event/net/BufferedSocket.hxx"
 #include "net/SocketPair.hxx"
 #include "net/UniqueSocketDescriptor.hxx"
 #include "util/ByteOrder.hxx"
@@ -222,7 +223,7 @@ fcgi_server_nop(struct pool &pool, FcgiServer &server)
 class FcgiClientConnection final : public ClientConnection {
 	EventLoop &event_loop;
 	std::thread thread;
-	UniqueSocketDescriptor fd;
+	BufferedSocket socket;
 
 	UniqueFileDescriptor stderr_w;
 
@@ -231,10 +232,13 @@ public:
 			     UniqueSocketDescriptor &&_fd)
 		:event_loop(_event_loop),
 		 thread(std::move(_thread)),
-		 fd(std::move(_fd)) {}
+		 socket(event_loop)
+	{
+		socket.Init(_fd.Release(), FdType::FD_SOCKET);
+	}
 
 	~FcgiClientConnection() noexcept override {
-		fd.Close();
+		socket.Close();
 
 		if (thread.joinable())
 			thread.join();
@@ -251,9 +255,8 @@ public:
 		     [[maybe_unused]] bool expect_100,
 		     HttpResponseHandler &handler,
 		     CancellablePointer &cancel_ptr) noexcept override {
-		fcgi_client_request(&pool, event_loop, nullptr,
-				    fd, FdType::FD_SOCKET,
-				    lease,
+		fcgi_client_request(&pool, nullptr,
+				    socket, lease,
 				    method, uri, uri, nullptr, nullptr, nullptr,
 				    nullptr, "192.168.1.100",
 				    std::move(headers), std::move(body),
@@ -263,7 +266,7 @@ public:
 	}
 
 	void InjectSocketFailure() noexcept override {
-		fd.Shutdown();
+		socket.GetSocket().Shutdown();
 	}
 };
 

@@ -23,7 +23,7 @@
 #include "product.h"
 #include "pool/pool.hxx"
 #include "system/Error.hxx"
-#include "event/net/BufferedSocket.hxx"
+#include "net/BufferedSocketLease.hxx"
 #include "net/SocketError.hxx"
 #include "net/SocketProtocolError.hxx"
 #include "net/TimeoutError.hxx"
@@ -36,7 +36,6 @@
 #include "util/Exception.hxx"
 #include "AllocatorPtr.hxx"
 #include "stopwatch.hxx"
-#include "lease.hxx"
 
 #include <fmt/format.h>
 
@@ -72,9 +71,7 @@ class FcgiClient final
 	  FcgiFrameHandler,
 	  DestructAnchor
 {
-	BufferedSocket socket;
-
-	LeasePtr lease_ref;
+	BufferedSocketLease socket;
 
 	UniqueFileDescriptor stderr_fd;
 
@@ -175,9 +172,9 @@ class FcgiClient final
 	std::size_t skip_stderr = 0;
 
 public:
-	FcgiClient(struct pool &_pool, EventLoop &event_loop,
+	FcgiClient(struct pool &_pool,
 		   StopwatchPtr &&_stopwatch,
-		   SocketDescriptor fd, FdType fd_type, Lease &lease,
+		   BufferedSocket &_socket, Lease &lease,
 		   UniqueFileDescriptor &&_stderr_fd,
 		   uint16_t _id, HttpMethod method,
 		   UnusedIstreamPtr &&request_istream,
@@ -194,14 +191,6 @@ public:
 	}
 
 private:
-	/**
-	 * Release the socket held by this object.
-	 */
-	void ReleaseSocket(PutAction action) noexcept {
-		socket.ReleaseSocket();
-		lease_ref.Release(action);
-	}
-
 	/**
 	 * Abort receiving the response status/headers from the FastCGI
 	 * server, and notify the HTTP response handler.
@@ -333,8 +322,8 @@ static constexpr auto fcgi_client_timeout = std::chrono::minutes{1};
 
 inline FcgiClient::~FcgiClient() noexcept
 {
-	if (socket.IsConnected())
-		ReleaseSocket(PutAction::DESTROY);
+	if (!socket.IsReleased())
+		socket.Release(false, PutAction::DESTROY);
 }
 
 void
@@ -1015,7 +1004,7 @@ FcgiClient::_FillBucketList(IstreamBucketList &list)
 {
 	assert(response.WasResponseSubmitted());
 
-	if (response.available == 0 && !socket.IsConnected())
+	if (response.available == 0 && socket.IsReleased())
 		return;
 
 	FillBucketHandler fill_bucket_handler{*this, list};
@@ -1029,12 +1018,12 @@ FcgiClient::_FillBucketList(IstreamBucketList &list)
 		throw;
 	}
 
-	if (fill_bucket_handler.release_socket && socket.IsConnected())
-		ReleaseSocket(fill_bucket_handler.put_action);
+	if (fill_bucket_handler.release_socket && !socket.IsReleased())
+		socket.Release(true, fill_bucket_handler.put_action);
 
 	/* report EOF only after we have received the whole
 	   END_REQUEST payload/padding */
-	if (socket.IsConnected())
+	if (!socket.IsReleased())
 		list.SetMore();
 }
 
@@ -1068,7 +1057,7 @@ FcgiClient::ConsumeBucketHandler::OnFrameHeader(FcgiRecordType type, uint_least1
 
 	switch (type) {
 	case FcgiRecordType::END_REQUEST:
-		if (!client.socket.IsConnected()) {
+		if (client.socket.IsReleased()) {
 			/* this condition must have been detected
 			   already in _FillBucketList() */
 			assert(client.response.available == 0);
@@ -1164,7 +1153,7 @@ FcgiClient::OnBufferedData()
 	auto r = socket.ReadBuffer();
 	assert(!r.empty());
 
-	if (socket.IsConnected()) {
+	if (!socket.IsReleased()) {
 		/* check if the END_REQUEST packet can be found in the
 		   following data chunk */
 		const auto analysis = AnalyseBuffer(r);
@@ -1172,9 +1161,10 @@ FcgiClient::OnBufferedData()
 		    analysis.end_request_offset <= r.size())
 			/* found it: we no longer need the socket, everything we
 			   need is already in the given buffer */
-			ReleaseSocket(analysis.end_request_offset == r.size()
-				      ? PutAction::REUSE
-				      : PutAction::DESTROY);
+			socket.Release(true,
+				       analysis.end_request_offset == r.size()
+				       ? PutAction::REUSE
+				       : PutAction::DESTROY);
 	}
 
 	return ConsumeInput(r);
@@ -1186,7 +1176,7 @@ FcgiClient::OnBufferedClosed() noexcept
 	stopwatch.RecordEvent("socket_closed");
 
 	/* the rest of the response may already be in the input buffer */
-	ReleaseSocket(PutAction::DESTROY);
+	socket.Release(false, PutAction::DESTROY);
 	return true;
 }
 
@@ -1237,7 +1227,7 @@ FcgiClient::Cancel() noexcept
 	/* Cancellable::Cancel() can only be used before the
 	   response was delivered to our callback */
 	assert(!response.WasResponseSubmitted());
-	assert(socket.IsConnected());
+	assert(!socket.IsReleased());
 
 	stopwatch.RecordEvent("cancel");
 
@@ -1250,9 +1240,9 @@ FcgiClient::Cancel() noexcept
  */
 
 inline
-FcgiClient::FcgiClient(struct pool &_pool, EventLoop &event_loop,
+FcgiClient::FcgiClient(struct pool &_pool,
 		       StopwatchPtr &&_stopwatch,
-		       SocketDescriptor fd, FdType fd_type, Lease &lease,
+		       BufferedSocket &_socket, Lease &lease,
 		       UniqueFileDescriptor &&_stderr_fd,
 		       uint16_t _id, HttpMethod method,
 		       UnusedIstreamPtr &&request_istream,
@@ -1260,25 +1250,22 @@ FcgiClient::FcgiClient(struct pool &_pool, EventLoop &event_loop,
 		       CancellablePointer &cancel_ptr) noexcept
 	:Istream(_pool),
 	 IstreamSink(std::move(request_istream)),
-	 socket(event_loop),
-	 lease_ref(lease),
+	 socket(_socket, lease, fcgi_client_timeout, *this),
 	 stderr_fd(std::move(_stderr_fd)),
 	 stopwatch(std::move(_stopwatch)),
 	 handler(_handler),
 	 id(_id),
 	 response(http_method_is_empty(method))
 {
-	socket.Init(fd, fd_type, fcgi_client_timeout, *this);
-
-	input.SetDirect(istream_direct_mask_to(fd_type));
+	input.SetDirect(istream_direct_mask_to(socket.GetType()));
 
 	cancel_ptr = *this;
 }
 
 void
-fcgi_client_request(struct pool *pool, EventLoop &event_loop,
+fcgi_client_request(struct pool *pool,
 		    StopwatchPtr stopwatch,
-		    SocketDescriptor fd, FdType fd_type, Lease &lease,
+		    BufferedSocket &socket, Lease &lease,
 		    HttpMethod method, const char *uri,
 		    const char *script_filename,
 		    const char *script_name, const char *path_info,
@@ -1378,9 +1365,9 @@ fcgi_client_request(struct pool *pool, EventLoop &event_loop,
 		request = istream_gb_new(*pool, std::move(buffer));
 	}
 
-	auto client = NewFromPool<FcgiClient>(*pool, *pool, event_loop,
+	auto client = NewFromPool<FcgiClient>(*pool, *pool,
 					      std::move(stopwatch),
-					      fd, fd_type, lease,
+					      socket, lease,
 					      std::move(stderr_fd),
 					      header.request_id, method,
 					      std::move(request),

@@ -4,21 +4,21 @@
 
 #include "SConnection.hxx"
 #include "net/UniqueSocketDescriptor.hxx"
-
-#include <errno.h>
-#include <string.h>
+#include "io/FdType.hxx"
+#include "util/Compiler.h"
 
 FcgiStockConnection::FcgiStockConnection(CreateStockItem c, ListenChildStockItem &_child,
-					 UniqueSocketDescriptor &&socket) noexcept
+					 UniqueSocketDescriptor &&_socket) noexcept
 	:StockItem(c),
 	 logger(GetStockNameView()),
 	 child(_child),
-	 event(GetStock().GetEventLoop(), BIND_THIS_METHOD(OnSocketEvent),
-	       socket.Release()),
-	 defer_schedule_read(GetStock().GetEventLoop(),
-			     BIND_THIS_METHOD(DeferredScheduleRead))
+	 socket(GetStock().GetEventLoop())
 {
+	socket.Init(_socket.Release(), FdType::FD_SOCKET, Event::Duration{-1}, *this);
+	socket.ScheduleRead();
 }
+
+FcgiStockConnection::~FcgiStockConnection() noexcept = default;
 
 void
 FcgiStockConnection::SetAborted() noexcept
@@ -27,38 +27,55 @@ FcgiStockConnection::SetAborted() noexcept
 		child.Fade();
 }
 
-inline void
-FcgiStockConnection::Read() noexcept
+BufferedResult
+FcgiStockConnection::OnBufferedData()
 {
-	std::byte buffer[1];
-	ssize_t nbytes = GetSocket().ReadNoWait(buffer);
-	if (nbytes < 0)
-		logger(2, "error on idle FastCGI connection: ", strerror(errno));
-	else if (nbytes > 0)
-		logger(2, "unexpected data from idle FastCGI connection");
+	logger(2, "unexpected data from idle FastCGI connection");
+	InvokeIdleDisconnect();
+	return BufferedResult::DESTROYED;
 }
 
-inline void
-FcgiStockConnection::OnSocketEvent(unsigned) noexcept
+bool
+FcgiStockConnection::OnBufferedHangup() noexcept
 {
-	Read();
+	InvokeIdleDisconnect();
+	return false;
+}
+
+bool
+FcgiStockConnection::OnBufferedClosed() noexcept
+{
+	InvokeIdleDisconnect();
+	return false;
+}
+
+bool
+FcgiStockConnection::OnBufferedWrite()
+{
+	/* should never be reached because we never schedule
+	   writing */
+	assert(false);
+	gcc_unreachable();
+}
+
+void
+FcgiStockConnection::OnBufferedError(std::exception_ptr e) noexcept
+{
+	logger(2, "error on idle FastCGI connection: ", std::move(e));
 	InvokeIdleDisconnect();
 }
 
 bool
 FcgiStockConnection::Borrow() noexcept
 {
-	if (event.GetReadyFlags() != 0) [[unlikely]] {
+	if (socket.GetReadyFlags() != 0) [[unlikely]] {
 		/* this connection was probably closed, but our
 		   SocketEvent callback hasn't been invoked yet;
 		   refuse to use this item; the caller will destroy
 		   the connection */
-		Read();
 		return false;
 	}
 
-	event.Cancel();
-	defer_schedule_read.Cancel();
 	return true;
 }
 
@@ -66,11 +83,10 @@ bool
 FcgiStockConnection::Release() noexcept
 {
 	fresh = false;
-	defer_schedule_read.ScheduleIdle();
-	return true;
-}
 
-FcgiStockConnection::~FcgiStockConnection() noexcept
-{
-	event.Close();
+	socket.Reinit(Event::Duration(-1), *this);
+	socket.UnscheduleWrite();
+
+	socket.ScheduleRead();
+	return true;
 }

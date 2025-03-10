@@ -118,6 +118,12 @@ public:
 		socket->DeferWrite();
 	}
 
+	void DeferNextWrite() noexcept {
+		assert(!IsReleased());
+
+		socket->DeferNextWrite();
+	}
+
 	void ScheduleWrite() noexcept {
 		assert(!IsReleased());
 

@@ -13,7 +13,7 @@
 #include "event/Chrono.hxx"
 
 class AllocatorPtr;
-class SocketDescriptor;
+class BufferedSocket;
 class CancellablePointer;
 class SocketAddress;
 class EventLoop;
@@ -66,10 +66,6 @@ private:
 		    CancellablePointer &cancel_ptr) override;
 };
 
-[[gnu::pure]]
-SocketDescriptor
-tcp_stock_item_get(const StockItem &item) noexcept;
-
-[[gnu::pure]]
-int
-tcp_stock_item_get_domain(const StockItem &item) noexcept;
+[[gnu::const]]
+BufferedSocket &
+tcp_stock_item_get(StockItem &item) noexcept;

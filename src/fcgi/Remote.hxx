@@ -9,7 +9,6 @@
 enum class HttpMethod : uint_least8_t;
 struct pool;
 struct CgiAddress;
-class EventLoop;
 class UnusedIstreamPtr;
 class TcpBalancer;
 class StringMap;
@@ -22,7 +21,7 @@ class StopwatchPtr;
  * High level FastCGI client for remote FastCGI servers.
  */
 void
-fcgi_remote_request(struct pool *pool, EventLoop &event_loop,
+fcgi_remote_request(struct pool *pool,
 		    TcpBalancer *tcp_balancer,
 		    const StopwatchPtr &parent_stopwatch,
 		    const CgiAddress &address,

@@ -168,9 +168,8 @@ FcgiRequest::OnStockItemReady(StockItem &item) noexcept
 
 	const char *script_filename = address.path;
 
-	fcgi_client_request(&pool, item.GetStock().GetEventLoop(), std::move(stopwatch),
+	fcgi_client_request(&pool, std::move(stopwatch),
 			    fcgi_stock_item_get(*stock_item),
-			    FdType::FD_SOCKET,
 			    *this,
 			    pending_request.method, pending_request.uri,
 			    script_filename,

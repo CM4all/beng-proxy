@@ -9,8 +9,8 @@
 #include "stock/Stock.hxx"
 #include "stock/Item.hxx"
 #include "stock/LoggerDomain.hxx"
-#include "event/SocketEvent.hxx"
 #include "event/CoarseTimerEvent.hxx"
+#include "event/net/BufferedSocket.hxx"
 #include "net/PConnectSocket.hxx"
 #include "net/AllocatedSocketAddress.hxx"
 #include "net/SocketAddress.hxx"
@@ -18,6 +18,7 @@
 #include "net/FormatAddress.hxx"
 #include "io/Logger.hxx"
 #include "util/Cancellable.hxx"
+#include "util/Compiler.h"
 #include "util/Exception.hxx"
 #include "stopwatch.hxx"
 
@@ -48,7 +49,7 @@ struct TcpStockRequest {
 };
 
 struct TcpStockConnection final
-	: StockItem, ConnectSocketHandler, Cancellable {
+	: StockItem, ConnectSocketHandler, BufferedSocketHandler, Cancellable {
 
 	BasicLogger<StockLoggerDomain> logger;
 
@@ -59,23 +60,22 @@ struct TcpStockConnection final
 	 */
 	CancellablePointer cancel_ptr;
 
-	SocketDescriptor fd = SocketDescriptor::Undefined();
-
-	const AllocatedSocketAddress address;
-
-	SocketEvent event;
+	BufferedSocket socket;
 	CoarseTimerEvent idle_timer;
 
-	TcpStockConnection(CreateStockItem c, SocketAddress _address,
+	FdType fd_type;
+
+	TcpStockConnection(CreateStockItem c,
+			   FdType _fd_type,
 			   StockGetHandler &_handler,
 			   CancellablePointer &_cancel_ptr) noexcept
 		:StockItem(c),
 		 logger(c.stock),
 		 handler(_handler),
-		 address(_address),
-		 event(c.stock.GetEventLoop(), BIND_THIS_METHOD(EventCallback)),
+		 socket(c.stock.GetEventLoop()),
 		 idle_timer(c.stock.GetEventLoop(),
-			    BIND_THIS_METHOD(OnIdleTimeout))
+			    BIND_THIS_METHOD(OnIdleTimeout)),
+		 fd_type(_fd_type)
 	{
 		_cancel_ptr = *this;
 	}
@@ -83,7 +83,6 @@ struct TcpStockConnection final
 	~TcpStockConnection() noexcept override;
 
 private:
-	void EventCallback(unsigned events) noexcept;
 	void OnIdleTimeout() noexcept;
 
 	/* virtual methods from class Cancellable */
@@ -98,36 +97,71 @@ private:
 	void OnSocketConnectSuccess(UniqueSocketDescriptor fd) noexcept override;
 	void OnSocketConnectError(std::exception_ptr ep) noexcept override;
 
+	/* virtual methods from class BufferedSocketHandler */
+	BufferedResult OnBufferedData() override;
+	bool OnBufferedHangup() noexcept override;
+	bool OnBufferedClosed() noexcept override;
+	[[noreturn]] bool OnBufferedWrite() override;
+	void OnBufferedError(std::exception_ptr e) noexcept override;
+
 	/* virtual methods from class StockItem */
 	bool Borrow() noexcept override {
-		event.Cancel();
+		if (socket.GetReadyFlags() != 0) [[unlikely]] {
+			/* this connection was probably closed, but
+			   our SocketEvent callback hasn't been
+			   invoked yet; refuse to use this item; the
+			   caller will destroy the connection */
+			return false;
+		}
+
 		idle_timer.Cancel();
 		return true;
 	}
 
 	bool Release() noexcept override {
-		event.ScheduleRead();
+		socket.Reinit(Event::Duration(-1), *this);
+		socket.UnscheduleWrite();
+		socket.ScheduleRead();
 		idle_timer.Schedule(std::chrono::minutes(1));
 		return true;
 	}
 };
 
-
-/*
- * libevent callback
- *
- */
-
-inline void
-TcpStockConnection::EventCallback(unsigned) noexcept
+BufferedResult
+TcpStockConnection::OnBufferedData()
 {
-	std::byte buffer[1];
-	ssize_t nbytes = fd.ReadNoWait(buffer);
-	if (nbytes < 0)
-		logger(2, "error on idle TCP connection: ", strerror(errno));
-	else if (nbytes > 0)
-		logger(2, "unexpected data in idle TCP connection");
+	logger(2, "unexpected data from idle TCP connection");
+	InvokeIdleDisconnect();
+	return BufferedResult::DESTROYED;
+}
 
+bool
+TcpStockConnection::OnBufferedHangup() noexcept
+{
+	InvokeIdleDisconnect();
+	return false;
+}
+
+bool
+TcpStockConnection::OnBufferedClosed() noexcept
+{
+	InvokeIdleDisconnect();
+	return false;
+}
+
+bool
+TcpStockConnection::OnBufferedWrite()
+{
+	/* should never be reached because we never schedule
+	   writing */
+	assert(false);
+	gcc_unreachable();
+}
+
+void
+TcpStockConnection::OnBufferedError(std::exception_ptr e) noexcept
+{
+	logger(2, "error on idle TCP connection: ", std::move(e));
 	InvokeIdleDisconnect();
 }
 
@@ -148,8 +182,9 @@ TcpStockConnection::OnSocketConnectSuccess(UniqueSocketDescriptor new_fd) noexce
 {
 	cancel_ptr = nullptr;
 
-	fd = new_fd.Release();
-	event.Open(fd);
+	socket.Init(new_fd.Release(), fd_type,
+		    Event::Duration{-1}, *this);
+	socket.ScheduleRead();
 
 	InvokeCreateSuccess(handler);
 }
@@ -183,7 +218,7 @@ TcpStock::Create(CreateStockItem c,
 	_request.reset();
 
 	auto *connection = new TcpStockConnection(c,
-						  request.address,
+						  request.address.GetFamily() == AF_LOCAL ? FdType::FD_SOCKET : FdType::FD_TCP,
 						  handler,
 						  cancel_ptr);
 
@@ -202,10 +237,6 @@ TcpStockConnection::~TcpStockConnection() noexcept
 {
 	if (cancel_ptr)
 		cancel_ptr.Cancel();
-	else if (fd.IsDefined()) {
-		event.Cancel();
-		fd.Close();
-	}
 }
 
 /*
@@ -249,20 +280,10 @@ TcpStock::Get(AllocatorPtr alloc, const StopwatchPtr &parent_stopwatch,
 	stock.Get(StockKey{name}, std::move(request), handler, cancel_ptr);
 }
 
-SocketDescriptor
-tcp_stock_item_get(const StockItem &item) noexcept
+BufferedSocket &
+tcp_stock_item_get(StockItem &item) noexcept
 {
-	auto *connection = (const TcpStockConnection *)&item;
+	auto &connection = static_cast<TcpStockConnection &>(item);
 
-	return connection->fd;
-}
-
-int
-tcp_stock_item_get_domain(const StockItem &item) noexcept
-{
-	auto *connection = (const TcpStockConnection *)&item;
-
-	assert(connection->fd.IsDefined());
-
-	return connection->address.GetFamily();
+	return connection.socket;
 }

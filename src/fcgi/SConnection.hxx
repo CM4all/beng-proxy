@@ -6,26 +6,17 @@
 
 #include "spawn/ListenChildStock.hxx"
 #include "stock/Item.hxx"
-#include "event/SocketEvent.hxx"
-#include "event/DeferEvent.hxx"
+#include "event/net/BufferedSocket.hxx"
 #include "io/Logger.hxx"
 
 class UniqueSocketDescriptor;
 
-class FcgiStockConnection final : public StockItem {
+class FcgiStockConnection final : public StockItem, BufferedSocketHandler {
 	const LLogger logger;
 
 	ListenChildStockItem &child;
 
-	SocketEvent event;
-
-	/**
-	 * This postpones the ScheduleRead() call, just in case the
-	 * connection gets borrowed immediately by the next waiter (in
-	 * which case the deferred ScheduleRead() call is canceled).
-	 * This reduces the number of epoll_ctl() system calls.
-	 */
-	DeferEvent defer_schedule_read;
+	BufferedSocket socket;
 
 	/**
 	 * Is this a fresh connection to the FastCGI child process?
@@ -43,9 +34,10 @@ public:
 		return child.GetTag();
 	}
 
-	SocketDescriptor GetSocket() const noexcept {
-		assert(event.IsDefined());
-		return event.GetSocket();
+	BufferedSocket &GetSocket() noexcept {
+		assert(socket.IsConnected());
+
+		return socket;
 	}
 
 	UniqueFileDescriptor GetStderr() const noexcept {
@@ -67,12 +59,12 @@ public:
 	bool Release() noexcept override;
 
 private:
-	void DeferredScheduleRead() noexcept {
-		event.ScheduleRead();
-	}
-
-	void Read() noexcept;
-	void OnSocketEvent(unsigned events) noexcept;
+	/* virtual methods from class BufferedSocketHandler */
+	BufferedResult OnBufferedData() override;
+	bool OnBufferedHangup() noexcept override;
+	bool OnBufferedClosed() noexcept override;
+	[[noreturn]] bool OnBufferedWrite() override;
+	void OnBufferedError(std::exception_ptr e) noexcept override;
 };
 
 static inline void
@@ -90,14 +82,14 @@ fcgi_stock_item_set_uri(StockItem &item, const char *uri) noexcept
 }
 
 /**
- * Returns the socket descriptor of the specified stock item.
+ * Returns the socket of the specified stock item.
  */
-static inline SocketDescriptor
-fcgi_stock_item_get(const StockItem &item) noexcept
+static inline BufferedSocket &
+fcgi_stock_item_get(StockItem &item) noexcept
 {
-	const auto *connection = (const FcgiStockConnection *)&item;
+	auto &connection = (FcgiStockConnection &)item;
 
-	return connection->GetSocket();
+	return connection.GetSocket();
 }
 
 static inline UniqueFileDescriptor
