@@ -96,6 +96,11 @@ class CatIstream final : public Istream, DestructAnchor {
 
 	bool reading = false;
 
+	/**
+	 * Has OnInputReady() been called at least once?
+	 */
+	bool seen_ready = false;
+
 	using InputList = IntrusiveList<Input>;
 	InputList inputs;
 
@@ -129,6 +134,13 @@ private:
 		assert(!inputs.empty());
 
 		return std::next(inputs.begin()) == inputs.end();
+	}
+
+	[[gnu::pure]]
+	bool HasInput(const Input &input) const noexcept {
+		return std::any_of(inputs.begin(), inputs.end(), [&input](const auto &i){
+			return &i == &input;
+		});
 	}
 
 	bool IsEOF() const noexcept {
@@ -193,11 +205,19 @@ public:
 inline IstreamReadyResult
 CatIstream::OnInputReady(Input &i) noexcept
 {
-	if (!IsCurrent(i))
+	const bool is_current = IsCurrent(i);
+	if (!seen_ready)
+		/* if this method is being called for the first time,
+		   we skip the IsCurrent() check and assume previous
+		   inputs are ready as well; in some cases, this
+		   avoids unnecessary epoll_ctl() system calls */
+		seen_ready = true;
+	else if (!is_current)
 		return IstreamReadyResult::OK;
 
 	auto result = InvokeReady();
-	if (result != IstreamReadyResult::CLOSED && !IsCurrent(i))
+	if (result != IstreamReadyResult::CLOSED &&
+	    !(is_current ? IsCurrent(i) : HasInput(i)))
 		/* the input that is ready has meanwhile been
 		   closed */
 		result = IstreamReadyResult::CLOSED;
