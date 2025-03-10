@@ -9,6 +9,7 @@
 #include "adata/ExpandableStringList.hxx"
 #include "util/StringWithHash.hxx"
 
+#include <span>
 #include <string_view>
 
 struct StringWithHash;
@@ -234,5 +235,6 @@ struct CgiAddress {
 	void Expand(AllocatorPtr alloc, const MatchData &match_data);
 
 private:
-	std::size_t BuildChildId(PoolStringBuilder<256> &b) const noexcept;
+	std::size_t BuildChildId(PoolStringBuilder<256> &b,
+				 std::span<char, 16384> options_buffer) const noexcept;
 };

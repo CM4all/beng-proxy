@@ -102,7 +102,8 @@ CgiAddress::GetURI(AllocatorPtr alloc) const noexcept
 }
 
 inline std::size_t
-CgiAddress::BuildChildId(PoolStringBuilder<256> &b) const noexcept
+CgiAddress::BuildChildId(PoolStringBuilder<256> &b,
+			 std::span<char, 16384> options_buffer) const noexcept
 {
 	std::size_t hash = options.GetHash();
 
@@ -124,9 +125,8 @@ CgiAddress::BuildChildId(PoolStringBuilder<256> &b) const noexcept
 		hash = djb_hash(AsBytes(i), hash);
 	}
 
-	char options_buffer[16384];
-	b.emplace_back(options_buffer,
-		       options.MakeId(options_buffer));
+	b.emplace_back(options_buffer.data(),
+		       options.MakeId(options_buffer.data()));
 
 	return hash;
 }
@@ -139,7 +139,8 @@ CgiAddress::GetChildId(AllocatorPtr alloc) const noexcept
 
 	PoolStringBuilder<256> b;
 
-	std::size_t hash = BuildChildId(b);
+	char child_options_buffer[16384];
+	std::size_t hash = BuildChildId(b, child_options_buffer);
 
 	return StringWithHash{b.MakeView(alloc), hash};
 }
@@ -150,8 +151,9 @@ CgiAddress::GetId(AllocatorPtr alloc) const noexcept
 	PoolStringBuilder<256> b;
 	std::size_t hash;
 
+	char child_options_buffer[16384];
 	if (cached_child_id.IsNull()) {
-		hash = BuildChildId(b);
+		hash = BuildChildId(b, child_options_buffer);
 	} else {
 		/* thie first part of the id (the part that is
                    specific to the child process) was already
