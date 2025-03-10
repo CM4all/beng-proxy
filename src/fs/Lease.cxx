@@ -64,6 +64,8 @@ FilteredSocketLease::Release(bool preserve, PutAction action) noexcept
 	assert(!IsReleased());
 	assert(lease_ref);
 
+	socket->SetDirect(false);
+
 	if (preserve)
 		MoveSocketInput();
 
