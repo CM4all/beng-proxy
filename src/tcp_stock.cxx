@@ -257,16 +257,6 @@ tcp_stock_item_get(const StockItem &item) noexcept
 	return connection->fd;
 }
 
-SocketAddress
-tcp_stock_item_get_address(const StockItem &item) noexcept
-{
-	auto &connection = (const TcpStockConnection &)item;
-
-	assert(connection.fd.IsDefined());
-
-	return connection.address;
-}
-
 int
 tcp_stock_item_get_domain(const StockItem &item) noexcept
 {

@@ -70,13 +70,6 @@ private:
 SocketDescriptor
 tcp_stock_item_get(const StockItem &item) noexcept;
 
-/**
- * Returns the (peer) address this object is connected to.
- */
-[[gnu::pure]]
-SocketAddress
-tcp_stock_item_get_address(const StockItem &item) noexcept;
-
 [[gnu::pure]]
 int
 tcp_stock_item_get_domain(const StockItem &item) noexcept;
