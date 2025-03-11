@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include "util/Expiry.hxx"
+#include "time/Expiry.hxx"
 #include "util/AllocatedString.hxx"
 #include "util/IntrusiveList.hxx"
 

@@ -5,7 +5,7 @@
 #pragma once
 
 #include "RoundRobinBalancer.hxx"
-#include "util/Expiry.hxx"
+#include "time/Expiry.hxx"
 
 #include <cassert>
 #include <iterator>

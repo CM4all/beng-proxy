@@ -12,9 +12,9 @@
 #include "http/CookieJar.hxx"
 #include "http/CookieSameSite.hxx"
 #include "pool/Ptr.hxx"
+#include "time/Expiry.hxx"
 #include "util/AllocatedArray.hxx"
 #include "util/AllocatedString.hxx"
-#include "util/Expiry.hxx"
 #include "util/IntrusiveHashSet.hxx"
 
 #include <chrono>

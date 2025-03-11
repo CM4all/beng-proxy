@@ -13,7 +13,7 @@
 #include "net/Parser.hxx"
 #include "net/FailureManager.hxx"
 #include "net/FailureRef.hxx"
-#include "util/Expiry.hxx"
+#include "time/Expiry.hxx"
 
 #include <gtest/gtest.h>
 

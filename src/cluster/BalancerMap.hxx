@@ -8,8 +8,8 @@
 #include "PickGeneric.hxx"
 #include "StickyHash.hxx"
 #include "HashKey.hxx"
+#include "time/Expiry.hxx"
 #include "util/StaticCache.hxx"
-#include "util/Expiry.hxx"
 
 /**
  * Load balancer for AddressList.

@@ -9,7 +9,7 @@
 #include "StickyMode.hxx"
 #include "RoundRobinBalancer.cxx"
 #include "net/SocketAddress.hxx"
-#include "util/Expiry.hxx"
+#include "time/Expiry.hxx"
 
 /**
  * Pick an address using the given #StickyMode.

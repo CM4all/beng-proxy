@@ -5,7 +5,7 @@
 #include "FailureManagerProxy.hxx"
 #include "net/FailureManager.hxx"
 #include "net/SocketAddress.hxx"
-#include "util/Expiry.hxx"
+#include "time/Expiry.hxx"
 
 ReferencedFailureInfo &
 FailureManagerProxy::MakeFailureInfo(SocketAddress address) const noexcept

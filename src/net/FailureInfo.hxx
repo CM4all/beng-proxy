@@ -5,7 +5,7 @@
 #pragma once
 
 #include "FailureStatus.hxx"
-#include "util/Expiry.hxx"
+#include "time/Expiry.hxx"
 
 class FailureInfo {
 	Expiry fade_expires = Expiry::AlreadyExpired();
