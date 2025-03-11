@@ -10,6 +10,7 @@
 #include "event/SocketEvent.hxx"
 #include "net/TempListener.hxx"
 #include "net/UniqueSocketDescriptor.hxx"
+#include "time/ExponentialBackoff.hxx"
 #include "util/Cancellable.hxx"
 #include "util/DeleteDisposer.hxx"
 #include "util/DisposablePointer.hxx"
@@ -54,7 +55,12 @@ class ListenStreamStock::Item final
 
 	std::exception_ptr error;
 
-	Event::TimePoint error_expires;
+	static constexpr ExponentialBackoffConfig error_expires_config{
+		.min_delay = std::chrono::seconds{5},
+		.max_delay = std::chrono::minutes{1},
+	};
+
+	ExponentialBackoff error_expires{error_expires_config};
 
 	DisposablePointer server;
 
@@ -127,7 +133,7 @@ private:
 		assert(error);
 		assert(socket.IsReadPending());
 
-		const bool expired = GetEventLoop().SteadyNow() >= error_expires;
+		const bool expired = error_expires.Check(GetEventLoop().SteadyNow());
 		if (expired)
 			error = {};
 
@@ -208,6 +214,8 @@ ListenStreamStock::Item::OnListenStreamSuccess(DisposablePointer _server,
 
 	start_cancel_ptr = {};
 
+	error_expires.Reset(error_expires_config);
+
 	server = std::move(_server);
 	tags = _tags;
 }
@@ -222,7 +230,7 @@ ListenStreamStock::Item::OnListenStreamError(std::exception_ptr _error) noexcept
 
 	// TODO log
 	error = std::move(_error);
-	error_expires = GetEventLoop().SteadyNow() + std::chrono::seconds{20};
+	error_expires.Delay(error_expires_config, GetEventLoop().SteadyNow());
 
 	Fade();
 
