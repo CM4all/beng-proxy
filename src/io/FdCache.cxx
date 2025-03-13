@@ -482,6 +482,8 @@ FdCache::Get(FileDescriptor directory,
 		item->Get(on_success, on_error, stx_mask, cancel_ptr);
 	} else
 		it->Get(on_success, on_error, stx_mask, cancel_ptr);
+
+	assert(enabled == expire_timer.IsPending());
 }
 
 inline void
