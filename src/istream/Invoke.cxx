@@ -26,6 +26,10 @@ Istream::InvokeReady() noexcept
 #ifndef NDEBUG
 	if (destructed || destroyed) {
 		assert(result == IstreamReadyResult::CLOSED);
+	} else {
+		assert(result != IstreamReadyResult::CLOSED);
+		assert(!closing);
+		assert(!eof);
 	}
 #endif
 
