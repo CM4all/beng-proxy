@@ -77,6 +77,10 @@ ErrnoToResponse(int e) noexcept
 		return {HttpStatus::REQUEST_URI_TOO_LONG,
 			"414 Request-URI Too Long"};
 
+	case ESTALE:
+		return {HttpStatus::SERVICE_UNAVAILABLE,
+			"503 Service Unavailable"};
+
 	default:
 		return {};
 	}
