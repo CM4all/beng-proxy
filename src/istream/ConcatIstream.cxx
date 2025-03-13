@@ -129,18 +129,7 @@ private:
 		return inputs.empty();
 	}
 
-	IstreamReadyResult OnInputReady(Input &i) noexcept {
-		if (!IsCurrent(i))
-			return IstreamReadyResult::OK;
-
-		auto result = InvokeReady();
-		if (result != IstreamReadyResult::CLOSED && !IsCurrent(i))
-			/* the input that is ready has meanwhile been
-			   closed */
-			result = IstreamReadyResult::CLOSED;
-
-		return result;
-	}
+	IstreamReadyResult OnInputReady(Input &i) noexcept;
 
 	std::size_t OnInputData(Input &i, std::span<const std::byte> src) noexcept {
 		return IsCurrent(i)
@@ -194,6 +183,21 @@ public:
 	ConsumeBucketResult _ConsumeBucketList(std::size_t nbytes) noexcept override;
 	void _ConsumeDirect(std::size_t nbytes) noexcept override;
 };
+
+inline IstreamReadyResult
+CatIstream::OnInputReady(Input &i) noexcept
+{
+	if (!IsCurrent(i))
+		return IstreamReadyResult::OK;
+
+	auto result = InvokeReady();
+	if (result != IstreamReadyResult::CLOSED && !IsCurrent(i))
+		/* the input that is ready has meanwhile been
+		   closed */
+		result = IstreamReadyResult::CLOSED;
+
+	return result;
+}
 
 /*
  * istream implementation
