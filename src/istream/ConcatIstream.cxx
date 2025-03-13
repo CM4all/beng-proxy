@@ -53,16 +53,22 @@ class CatIstream final : public Istream, DestructAnchor {
 		/* virtual methods from class IstreamHandler */
 
 		IstreamReadyResult OnIstreamReady() noexcept override {
+			assert(input.IsDefined());
+
 			return cat.OnInputReady(*this);
 		}
 
 		std::size_t OnData(std::span<const std::byte> src) noexcept override {
+			assert(input.IsDefined());
+
 			return cat.OnInputData(*this, src);
 		}
 
 		IstreamDirectResult OnDirect(FdType type, FileDescriptor fd,
 					     off_t offset, std::size_t max_length,
 					     bool then_eof) noexcept override {
+			assert(input.IsDefined());
+
 			return cat.OnInputDirect(*this, type, fd, offset,
 						 max_length, then_eof);
 		}
