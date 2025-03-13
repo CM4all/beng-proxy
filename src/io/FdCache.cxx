@@ -131,6 +131,7 @@ struct FdCache::Item final
 	}
 
 	void Disable() noexcept {
+		RemoveWatch();
 		expires = std::chrono::steady_clock::time_point{};
 	}
 
@@ -278,8 +279,6 @@ private:
 	/* virtual methods from SharedAnchor */
 	void OnAbandoned() noexcept override {
 		if (IsDisabled()) {
-			IntrusiveListHook::unlink();
-			IntrusiveHashSetHook::unlink();
 			delete this;
 		}
 	}
@@ -391,10 +390,13 @@ FdCache::~FdCache() noexcept
 void
 FdCache::Flush() noexcept
 {
-	for (auto &i : chronological_list)
-		i.Disable();
+	map.clear();
 
-	Expire();
+	chronological_list.clear_and_dispose([](auto *item){
+		item->Disable();
+		if (item->IsUnused())
+			delete item;
+	});
 }
 
 void
@@ -470,11 +472,17 @@ FdCache::Get(FileDescriptor directory,
 
 	auto *item = new Item(*this, path, how.flags,
 			      GetEventLoop().SteadyNow() + expires);
-	chronological_list.push_back(*item);
-	map.insert_commit(it, *item);
 
-	if (IsShuttingDown())
+	if (!IsShuttingDown()) {
+		[[likely]]
+		chronological_list.push_back(*item);
+		map.insert_commit(it, *item);
+	} else {
+		/* create a "disabled" item that is not in the map; it
+		   will be deleted as soon as the caller releases the
+		   ShardLease */
 		item->Disable();
+	}
 
 	/* hold a lease until Get() finishes so the item doesn't get
 	   destroyed if Start() finishes synchronously */
@@ -523,13 +531,13 @@ FdCache::Expire() noexcept
 		if (now < i->expires)
 			break;
 
-		if (i->IsUnused())
-			i = chronological_list.erase_and_dispose(i, [this](auto *item){
-				map.erase(map.iterator_to(*item));
-				delete item;
-			});
-		else
-			++i;
+		auto &item = *i;
+		map.erase(map.iterator_to(item));
+		i = chronological_list.erase(i);
+
+		item.Disable();
+		if (item.IsUnused())
+			delete &item;
 	}
 
 	if (!empty() && !IsShuttingDown())
@@ -542,14 +550,12 @@ FdCache::Item::OnInotify([[maybe_unused]] unsigned mask,
 {
 	assert(!IsWatching()); // it's oneshot
 
-	if (IsUnused()) {
+	IntrusiveListHook::unlink();
+	IntrusiveHashSetHook::unlink();
+	Disable();
+
+	if (IsUnused())
 		/* unused, delete immediately */
-		IntrusiveListHook::unlink();
-		IntrusiveHashSetHook::unlink();
 		delete this;
-	} else {
-		/* still in use, delete later */
-		Disable();
-	}
 
 }
