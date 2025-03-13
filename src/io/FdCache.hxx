@@ -74,14 +74,6 @@ class FdCache final {
 	 */
 	IntrusiveList<Item> chronological_list;
 
-	/**
-	 * If not enabled, then all newly created items will be
-	 * flushed immediately.  This is used during shutdown.
-	 *
-	 * @see Disable()
-	 */
-	bool enabled = true;
-
 public:
 	FdCache(EventLoop &event_loop
 #ifdef HAVE_URING
@@ -104,9 +96,17 @@ public:
 	void Flush() noexcept;
 
 	/**
-	 * Disable the cache, initiating shutdown.
+	 * Initiate shutdown.  This unregisters all #EventLoop events
+	 * and prevents new ones from getting registered.
 	 */
-	void Disable() noexcept;
+	void BeginShutdown() noexcept;
+
+	/**
+	 * Has BeginShutdown() been called?
+	 */
+	bool IsShuttingDown() const noexcept {
+		return inotify_manager.IsShuttingDown();
+	}
 
 	using SuccessCallback = BoundMethod<void(FileDescriptor fd, const struct statx &stx,
 						 SharedLease lease) noexcept>;

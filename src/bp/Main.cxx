@@ -126,7 +126,7 @@ void
 BpInstance::ShutdownCallback() noexcept
 {
 	event_loop.SetVolatile();
-	fd_cache.Disable();
+	fd_cache.BeginShutdown();
 
 	DisableSignals();
 	thread_pool_stop();
