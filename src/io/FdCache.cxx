@@ -444,37 +444,42 @@ FdCache::Get(FileDescriptor directory,
 	assert(!path.ends_with('/'));
 
 	auto [it, inserted] = map.insert_check(Key{path, how.flags});
-	if (inserted) {
-		if (empty() && !IsShuttingDown())
-			/* the cache is about to become non-empty and
-			   from now on, we need to expire all items
-			   periodically */
-			expire_timer.Schedule(std::chrono::seconds{10});
+	if (!inserted) {
+		assert(!IsShuttingDown());
+		assert(expire_timer.IsPending());
 
-		std::chrono::steady_clock::duration expires = std::chrono::minutes{1};
-		if (stx_mask != 0)
-			/* regular files (stx_mask!=0) expire faster;
-			   we don't have inotify for them */
-			// TODO revalidate expired items instead of discarding them
-			expires = std::chrono::seconds{10};
-
-		auto *item = new Item(*this, path, how.flags,
-				      GetEventLoop().SteadyNow() + expires);
-		chronological_list.push_back(*item);
-		map.insert_commit(it, *item);
-
-		if (IsShuttingDown())
-			item->Disable();
-
-		/* hold a lease until Get() finishes so the item
-		   doesn't get destroyed if Start() finishes
-		   synchronously */
-		const SharedLease lock{*item};
-
-		item->Start(directory, StripLength(strip_path, path), how);
-		item->Get(on_success, on_error, stx_mask, cancel_ptr);
-	} else
 		it->Get(on_success, on_error, stx_mask, cancel_ptr);
+
+		assert(expire_timer.IsPending());
+		return;
+	}
+
+	if (empty() && !IsShuttingDown())
+		/* the cache is about to become non-empty and from now
+		   on, we need to expire all items periodically */
+		expire_timer.Schedule(std::chrono::seconds{10});
+
+	std::chrono::steady_clock::duration expires = std::chrono::minutes{1};
+	if (stx_mask != 0)
+		/* regular files (stx_mask!=0) expire faster; we don't
+		   have inotify for them */
+		// TODO revalidate expired items instead of discarding them
+		expires = std::chrono::seconds{10};
+
+	auto *item = new Item(*this, path, how.flags,
+			      GetEventLoop().SteadyNow() + expires);
+	chronological_list.push_back(*item);
+	map.insert_commit(it, *item);
+
+	if (IsShuttingDown())
+		item->Disable();
+
+	/* hold a lease until Get() finishes so the item doesn't get
+	   destroyed if Start() finishes synchronously */
+	const SharedLease lock{*item};
+
+	item->Start(directory, StripLength(strip_path, path), how);
+	item->Get(on_success, on_error, stx_mask, cancel_ptr);
 
 	assert(IsShuttingDown() != expire_timer.IsPending());
 }
