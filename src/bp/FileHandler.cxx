@@ -389,7 +389,7 @@ Request::MaybeEmulateModAuthEasy(const FileAddress &address,
 }
 
 inline void
-Request::OnOpenStat(FileDescriptor fd, const struct statx &st, SharedLease _lease) noexcept
+Request::OnOpenStat(FileDescriptor fd, const struct statx &st, SharedLease &&_lease) noexcept
 {
 	HandleFileAddress(*handler.file.address, fd, st, std::move(_lease));
 }
@@ -508,7 +508,7 @@ Request::HandleFileAddress(const FileAddress &address,
 }
 
 void
-Request::OnStatOpenStatSuccess(FileDescriptor fd, const struct statx &st, SharedLease lease) noexcept
+Request::OnStatOpenStatSuccess(FileDescriptor fd, const struct statx &st, SharedLease &&lease) noexcept
 {
 	assert(!handler.file.fd.IsDefined());
 	assert(handler.file.error == 0);

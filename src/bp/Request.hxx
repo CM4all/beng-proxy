@@ -622,7 +622,7 @@ private:
 			       const struct statx &st,
 			       SharedLease &&lease) noexcept;
 
-	void OnStatOpenStatSuccess(FileDescriptor fd, const struct statx &st, SharedLease lease) noexcept;
+	void OnStatOpenStatSuccess(FileDescriptor fd, const struct statx &st, SharedLease &&lease) noexcept;
 	void OnStatOpenStatError(int error) noexcept;
 	void StatFileAddressAfterBase(FileDescriptor base, std::string_view strip_base) noexcept;
 	void StatFileAddress(const FileAddress &address,
@@ -990,12 +990,12 @@ private:
 	 */
 	void ApplyFileEnotdir() noexcept;
 
-	void OnBaseOpen(FileDescriptor fd, const struct statx &stx, SharedLease _lease) noexcept;
+	void OnBaseOpen(FileDescriptor fd, const struct statx &stx, SharedLease &&_lease) noexcept;
 	void OnBaseOpenError(int error) noexcept {
 		LogDispatchErrno(error, "Failed to open file");
 	}
 
-	void OnBeneathOpen(FileDescriptor fd, const struct statx &stx, SharedLease _lease) noexcept;
+	void OnBeneathOpen(FileDescriptor fd, const struct statx &stx, SharedLease &&_lease) noexcept;
 
 	void OpenBeneath(const FileAddress &address,
 			 Handler::File::OpenBaseCallback callback) noexcept;
@@ -1051,7 +1051,7 @@ private:
 	void OnHttpError(std::exception_ptr ep) noexcept override;
 
 	/* handler methods for UringOpenStat() */
-	void OnOpenStat(FileDescriptor fd, const struct statx &stx, SharedLease _lease) noexcept;
+	void OnOpenStat(FileDescriptor fd, const struct statx &stx, SharedLease &&_lease) noexcept;
 	void OnOpenStatError(int error) noexcept;
 
 	/* virtual methods from class SuffixRegistryHandler */

@@ -29,7 +29,7 @@ NormalizePath(std::string_view path) noexcept
 }
 
 inline void
-Request::OnBaseOpen(FileDescriptor fd, const struct statx &, SharedLease lease) noexcept
+Request::OnBaseOpen(FileDescriptor fd, const struct statx &, SharedLease &&lease) noexcept
 {
 	const auto &address = *handler.file.address;
 	assert(address.base != nullptr);
@@ -42,7 +42,7 @@ Request::OnBaseOpen(FileDescriptor fd, const struct statx &, SharedLease lease) 
 }
 
 inline void
-Request::OnBeneathOpen(FileDescriptor fd, const struct statx &, SharedLease lease) noexcept
+Request::OnBeneathOpen(FileDescriptor fd, const struct statx &, SharedLease &&lease) noexcept
 {
 	const auto &address = *handler.file.address;
 	assert(address.beneath != nullptr);

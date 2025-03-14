@@ -109,7 +109,7 @@ public:
 	}
 
 	using SuccessCallback = BoundMethod<void(FileDescriptor fd, const struct statx &stx,
-						 SharedLease lease) noexcept>;
+						 SharedLease &&lease) noexcept>;
 	using ErrorCallback = BoundMethod<void(int error) noexcept>;
 
 	/**
