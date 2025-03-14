@@ -154,6 +154,11 @@ struct FdCache::Item final
 private:
 	void StartStatx() noexcept;
 
+	/**
+	 * Invoke the on_success callbacks of all requests.
+	 *
+	 * After returning, this object may be deleted.
+	 */
 	void InvokeSuccess() noexcept {
 		assert(fd.IsDefined());
 		assert(!error);
@@ -169,6 +174,11 @@ private:
 		});
 	}
 
+	/**
+	 * Invoke the on_success callbacks of all requests.
+	 *
+	 * After returning, this object may be deleted.
+	 */
 	void InvokeError() noexcept {
 		assert(!fd.IsDefined());
 		assert(error);
@@ -243,11 +253,6 @@ private:
 		}
 
 		InvokeSuccess();
-
-		assert(requests.empty());
-
-		if (IsDisabled() && IsAbandoned())
-			delete this;
 	}
 
 	void OnOpenError(int _error) noexcept override {
@@ -260,11 +265,6 @@ private:
 		uring_open = nullptr;
 
 		SetError(_error);
-
-		assert(requests.empty());
-
-		if (IsDisabled() && IsAbandoned())
-			delete this;
 	}
 
 	/* virtual methods from Uring::Operation */
@@ -273,11 +273,6 @@ private:
 			InvokeSuccess();
 		else
 			SetError(-res);
-
-		assert(requests.empty());
-
-		if (IsDisabled() && IsAbandoned())
-			delete this;
 	}
 #endif // HAVE_URING
 
