@@ -564,6 +564,7 @@ endif
 
 subdir('acme')
 subdir('http')
+subdir('io')
 subdir('istream')
 subdir('memory')
 subdir('uri')
