@@ -56,7 +56,7 @@ FdCache::Key::Hash::operator()(const Key &key) const noexcept
  * the result.
  */
 struct FdCache::Item final
-	: IntrusiveHashSetHook<IntrusiveHookMode::AUTO_UNLINK, KeyTag>,
+	: IntrusiveHashSetHook<IntrusiveHookMode::AUTO_UNLINK>,
 	  IntrusiveListHook<IntrusiveHookMode::AUTO_UNLINK>,
 	  InotifyWatch,
 #ifdef HAVE_URING

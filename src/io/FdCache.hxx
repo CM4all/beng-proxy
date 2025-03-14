@@ -43,8 +43,6 @@ class FdCache final {
 		};
 	};
 
-	struct KeyTag {};
-
 	struct Item;
 
 	struct ItemGetKey {
@@ -65,8 +63,7 @@ class FdCache final {
 	 */
 	IntrusiveHashSet<Item, 8192,
 			 IntrusiveHashSetOperators<Item, ItemGetKey,
-						   Key::Hash, std::equal_to<Key>>,
-			 IntrusiveHashSetBaseHookTraits<Item, KeyTag>> map;
+						   Key::Hash, std::equal_to<Key>>> map;
 
 	/**
 	 * A list of items sorted by its "expires" field.  This is
