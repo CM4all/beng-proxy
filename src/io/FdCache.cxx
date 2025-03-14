@@ -10,7 +10,6 @@
 #include "io/UniqueFileDescriptor.hxx"
 #include "io/linux/ProcPath.hxx"
 #include "util/Cancellable.hxx"
-#include "util/DeleteDisposer.hxx"
 #include "util/djb_hash.hxx"
 #include "util/SpanCast.hxx"
 
@@ -56,8 +55,8 @@ FdCache::Key::Hash::operator()(const Key &key) const noexcept
  * the result.
  */
 struct FdCache::Item final
-	: IntrusiveHashSetHook<IntrusiveHookMode::AUTO_UNLINK>,
-	  IntrusiveListHook<IntrusiveHookMode::AUTO_UNLINK>,
+	: IntrusiveHashSetHook<>,
+	  IntrusiveListHook<>,
 	  InotifyWatch,
 #ifdef HAVE_URING
 	  Uring::OpenHandler,
@@ -278,8 +277,11 @@ private:
 
 	/* virtual methods from SharedAnchor */
 	void OnAbandoned() noexcept override {
-		if (IsDisabled())
+		if (IsDisabled()) {
+			IntrusiveListHook::unlink();
+			IntrusiveHashSetHook::unlink();
 			delete this;
+		}
 	}
 };
 
@@ -522,7 +524,10 @@ FdCache::Expire() noexcept
 			break;
 
 		if (i->IsUnused())
-			i = chronological_list.erase_and_dispose(i, DeleteDisposer{});
+			i = chronological_list.erase_and_dispose(i, [this](auto *item){
+				map.erase(map.iterator_to(*item));
+				delete item;
+			});
 		else
 			++i;
 	}
@@ -539,6 +544,8 @@ FdCache::Item::OnInotify([[maybe_unused]] unsigned mask,
 
 	if (IsUnused()) {
 		/* unused, delete immediately */
+		IntrusiveListHook::unlink();
+		IntrusiveHashSetHook::unlink();
 		delete this;
 	} else {
 		/* still in use, delete later */
