@@ -447,15 +447,29 @@ FdCache::Get(FileDescriptor directory,
 	assert(path.starts_with('/'));
 	assert(!path.ends_with('/'));
 
+	const auto now = GetEventLoop().SteadyNow();
+
 	auto [it, inserted] = map.insert_check(Key{path, how.flags});
 	if (!inserted) {
 		assert(!IsShuttingDown());
 		assert(expire_timer.IsPending());
 
-		it->Get(on_success, on_error, stx_mask, cancel_ptr);
+		auto &item = *it;
+		assert(!item.IsDisabled());
 
-		assert(expire_timer.IsPending());
-		return;
+		if (now < item.expires) [[likely]] {
+			/* use this item */
+			item.Get(on_success, on_error, stx_mask, cancel_ptr);
+			assert(expire_timer.IsPending());
+			return;
+		}
+
+		/* item expired: remove it and create a new one */
+		item.Disable();
+		map.erase(it);
+		chronological_list.erase(chronological_list.iterator_to(item));
+		if (item.IsUnused())
+			delete &item;
 	}
 
 	if (empty() && !IsShuttingDown())
