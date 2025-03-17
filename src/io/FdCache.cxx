@@ -204,7 +204,7 @@ private:
 		   gets deleted or moved; if that happens, we need to
 		   discard this item */
 		TryAddWatch(ProcFdPath(fd),
-			    IN_DELETE_SELF|IN_MOVE_SELF|IN_ONESHOT|IN_ONLYDIR|IN_MASK_CREATE);
+			    IN_MOVE_SELF|IN_ONESHOT|IN_ONLYDIR|IN_MASK_CREATE);
 	}
 
 	void SetError(int _error) noexcept {
