@@ -58,6 +58,7 @@ ApproveThreadSocketFilter::Run(ThreadSocketFilterInternal &f)
 		input.MoveFromAllowBothNull(f.encrypted_input);
 		if (!f.encrypted_input.empty())
 			f.again = true;
+		f.drained = input.empty();
 	}
 
 	if (!input.empty()) {
@@ -83,6 +84,7 @@ ApproveThreadSocketFilter::Run(ThreadSocketFilterInternal &f)
 		std::copy_n(r.begin(), n, w.begin());
 		input.Consume(n);
 		f.decrypted_input.Append(n);
+		f.drained = input.empty();
 
 		approved -= n;
 	}
