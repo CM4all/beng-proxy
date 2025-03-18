@@ -181,6 +181,7 @@ try {
 			StartRead();
 		} else {
 			/* XXX */
+			fd_lease.SetBroken();
 			throw FmtErrno("Failed to read from '{}'", path);
 		}
 
@@ -223,8 +224,10 @@ UringIstream::StartRead() noexcept
 void
 UringIstream::OnUringCompletion(int res) noexcept
 try {
-	if (res < 0)
+	if (res < 0) {
+		fd_lease.SetBroken();
 		throw FmtErrno(-res, "Failed to read from '{}'", path);
+	}
 
 	if (res == 0)
 		throw FmtRuntimeError("Premature end of file in '{}'", path);

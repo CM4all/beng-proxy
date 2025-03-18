@@ -196,6 +196,7 @@ try {
 		throw FmtRuntimeError("premature end of file in '{}'", path);
 
 	case IstreamDirectResult::ERRNO:
+		fd_lease.SetBroken();
 		throw FmtErrno("Failed to read from '{}'", path);
 	}
 
@@ -255,6 +256,7 @@ try {
 			   non-blocking pipes */
 			return;
 
+		fd_lease.SetBroken();
 		throw FmtErrno(-res, "Failed to read from '{}'", path);
 	}
 

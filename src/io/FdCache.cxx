@@ -282,6 +282,16 @@ private:
 			delete this;
 		}
 	}
+
+	void OnBroken() noexcept override {
+		assert(!IsAbandoned());
+
+		if (!IsDisabled()) {
+			IntrusiveListHook::unlink();
+			IntrusiveHashSetHook::unlink();
+			Disable();
+		}
+	}
 };
 
 inline void
