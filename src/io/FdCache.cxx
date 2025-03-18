@@ -144,7 +144,8 @@ struct FdCache::Item final
 	}
 
 	void Start(FileDescriptor directory, std::size_t strip_length,
-		   const struct open_how &how) noexcept;
+		   const struct open_how &how,
+		   unsigned requested_stx_mask) noexcept;
 
 	void Get(SuccessCallback on_success,
 		 ErrorCallback on_error,
@@ -296,11 +297,16 @@ private:
 
 inline void
 FdCache::Item::Start(FileDescriptor directory, std::size_t strip_length,
-		     const struct open_how &how) noexcept
+		     const struct open_how &how,
+		     unsigned requested_stx_mask) noexcept
 {
 	assert(!fd.IsDefined());
 	assert(!error);
 	assert(strip_length <= path.length());
+
+	/* this requested_stx_mask parameter is only passed here to
+	   prevent the inotify_add_watch() call for regular files */
+	next_stx_mask |= requested_stx_mask;
 
 	const char *p = path.c_str() + strip_length;
 	if (*p == 0)
@@ -512,7 +518,7 @@ FdCache::Get(FileDescriptor directory,
 	   destroyed if Start() finishes synchronously */
 	const SharedLease lock{*item};
 
-	item->Start(directory, StripLength(strip_path, path), how);
+	item->Start(directory, StripLength(strip_path, path), how, stx_mask);
 	item->Get(on_success, on_error, stx_mask, cancel_ptr);
 
 	assert(IsShuttingDown() != expire_timer.IsPending());
