@@ -666,7 +666,7 @@ ThreadSocketFilter::OnRemaining(std::size_t remaining) noexcept
 	if (remaining == 0) {
 		std::unique_lock lock{mutex};
 
-		if (!busy && !again && !done_pending && encrypted_input.empty()) {
+		if (!busy && !again && drained && !done_pending && encrypted_input.empty()) {
 			const std::size_t available = decrypted_input.GetAvailable() +
 				unprotected_decrypted_input.GetAvailable();
 			lock.unlock();
@@ -692,7 +692,7 @@ ThreadSocketFilter::OnEnd()
 		/* see if we can commit the "remaining" call now */
 		std::unique_lock lock{mutex};
 
-		if (!busy && !again && !done_pending && encrypted_input.empty()) {
+		if (!busy && !again && drained && !done_pending && encrypted_input.empty()) {
 			const std::size_t available = decrypted_input.GetAvailable() +
 				unprotected_decrypted_input.GetAvailable();
 			lock.unlock();
