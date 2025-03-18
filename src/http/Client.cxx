@@ -599,6 +599,14 @@ HttpClient::Close() noexcept
 
 	stopwatch.RecordEvent("close");
 
+	if (defer_socket_done.IsPending())
+		/* this event didn't have a chance yet to fire, but
+		   the socket can probably be reused; this is the last
+		   chance to do that; we're probably being closed
+		   after _FillBucketList() has indicated
+		   end-of-file */
+		SocketDone();
+
 	Destroy();
 }
 
