@@ -1,6 +1,7 @@
 cm4all-beng-proxy (19.14) unstable; urgency=low
 
   * http: reduce the number of epoll_ctl() system calls
+  * http: reduce the number of recv() system calls
   * http_client: improve keep-alive
   * bp: map ESTALE to "503 Service Unavailable"
   * bp: do not use expired file descriptors from the cache
