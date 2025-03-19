@@ -127,6 +127,7 @@ BpInstance::ShutdownCallback() noexcept
 {
 	event_loop.SetVolatile();
 	fd_cache.BeginShutdown();
+	file_cache.BeginShutdown();
 
 	DisableSignals();
 	thread_pool_stop();
@@ -203,6 +204,7 @@ BpInstance::ReloadEventCallback(int) noexcept
 		listen_stream_stock->FadeAll();
 
 	fd_cache.Flush();
+	file_cache.Flush();
 
 	Compress();
 

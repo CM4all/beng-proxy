@@ -24,6 +24,7 @@
 #include "net/FailureManager.hxx"
 #include "io/uring/config.h" // for HAVE_URING
 #include "io/FdCache.hxx"
+#include "io/FileCache.hxx"
 #include "io/StateDirectories.hxx"
 #include "util/Background.hxx"
 
@@ -105,6 +106,11 @@ struct BpInstance final : PInstance, BengControl::Handler,
 		uring.get(),
 #endif
 	};
+
+	/**
+	 * Cache for READ_FILE.
+	 */
+	FileCache file_cache{event_loop};
 
 	/**
 	 * An allocator for per-request memory.

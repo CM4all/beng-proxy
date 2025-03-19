@@ -10,7 +10,6 @@
 #include "RLogger.hxx"
 #include "Instance.hxx"
 #include "PerSite.hxx"
-#include "load_file.hxx"
 #include "file/Address.hxx"
 #include "cgi/Address.hxx"
 #include "session/Lease.hxx"
@@ -998,17 +997,8 @@ Request::CheckHandleReadFile(const TranslateResponse &response) noexcept
 		return true;
 	}
 
-	std::span<const std::byte> contents;
+	std::tie(translate.request.read_file, translate.read_file_lease) = instance.file_cache.Get(response.read_file, 256);
 
-	try {
-		contents = LoadFile(pool, response.read_file, 256);
-	} catch (...) {
-		/* special case: if the file does not exist, return an empty
-		   READ_FILE packet to the translation server */
-		contents = AsBytes(""sv);
-	}
-
-	translate.request.read_file = contents;
 	SubmitTranslateRequest();
 	return true;
 }

@@ -609,6 +609,7 @@ executable(
   'cm4all-beng-proxy',
   sources,
   'src/io/FdCache.cxx',
+  'src/io/FileCache.cxx',
   'src/net/PToString.cxx',
   'src/cluster/TcpBalancer.cxx',
   'src/bp/Bot.cxx',

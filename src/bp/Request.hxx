@@ -161,6 +161,12 @@ private:
 		std::shared_ptr<std::vector<TranslationLayoutItem>> layout_items;
 
 		/**
+		 * Lease for the request.read_file pointer (refers to
+		 * FileCache::Item).
+		 */
+		SharedLease read_file_lease;
+
+		/**
 		 * Number of LIKE_HOST packets followed so far.  This
 		 * variable is used for loop detection.
 		 */

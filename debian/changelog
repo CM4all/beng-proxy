@@ -8,6 +8,7 @@ cm4all-beng-proxy (19.14) unstable; urgency=low
   * bp: never reuse failed file descriptors
   * bp: remove unnecessary inotify_add_watch() calls
   * bp: fix io_uring timer bug causing bogus timeouts (19.8 regression)
+  * bp: new cache for READ_FILE
 
  --   
 
