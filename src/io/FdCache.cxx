@@ -482,7 +482,7 @@ FdCache::Get(FileDescriptor directory,
 
 		/* item expired: remove it and create a new one */
 		item.Disable();
-		map.erase(it);
+		it = map.erase(it);
 		chronological_list.erase(chronological_list.iterator_to(item));
 		if (item.IsUnused())
 			delete &item;
