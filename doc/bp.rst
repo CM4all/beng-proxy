@@ -67,7 +67,7 @@ Installation
 
 :program:`beng-proxy` requires a Debian Bullseye operating system:
 Linux kernel 5.10 glibc 2.31. For compiling the source code, you need
-a C++20 compiler, e.g. gcc 10.
+a C++23 compiler, e.g. gcc 12.
 
 Install the package ``cm4all-beng-proxy`` and the translation server of
 your choice.

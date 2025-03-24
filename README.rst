@@ -15,7 +15,7 @@ Building beng-proxy
 You need:
 
 - Linux kernel 5.12 or later
-- a C++20 compliant compiler (e.g. GCC 10 or clang 10)
+- a C++23 compliant compiler (e.g. GCC 12 or clang 14)
 - `libfmt <https://fmt.dev/>`__
 - `libpq <https://www.postgresql.org/>`__
 - `CURL <https://curl.haxx.se/>`__
