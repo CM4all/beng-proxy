@@ -8,6 +8,8 @@
 #include "util/IntrusiveList.hxx"
 #include "util/TokenBucket.hxx"
 
+#include <string>
+
 class BpPerSite : public IntrusiveHashSetHook<>, public IntrusiveListHook<> {
 	const std::string site;
 

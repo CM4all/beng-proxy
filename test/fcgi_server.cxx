@@ -14,6 +14,7 @@
 #include <stdexcept>
 
 #include <stdio.h>
+#include <stdlib.h> // for strtol()
 #include <sys/socket.h>
 
 FcgiRecordHeader

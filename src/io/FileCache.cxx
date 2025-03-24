@@ -8,6 +8,7 @@
 #include "util/SharedLease.hxx"
 
 #include <cassert>
+#include <string>
 
 #include <fcntl.h> // for AT_EMPTY_PATH
 #include <sys/inotify.h>

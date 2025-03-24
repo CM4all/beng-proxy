@@ -10,6 +10,7 @@
 #include "event/CoarseTimerEvent.hxx"
 #include "memory/SliceFifoBuffer.hxx"
 
+#include <exception> // for std::exception_ptr
 #include <memory>
 #include <mutex>
 

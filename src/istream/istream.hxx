@@ -14,6 +14,7 @@
 #include <cassert>
 #include <concepts>
 #include <cstddef>
+#include <exception> // for std::exception_ptr
 #include <span>
 
 #include <limits.h> // for INT_MAX

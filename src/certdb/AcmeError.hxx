@@ -6,6 +6,7 @@
 
 #include <nlohmann/json_fwd.hpp>
 
+#include <exception> // for std::exception_ptr
 #include <stdexcept>
 #include <string>
 

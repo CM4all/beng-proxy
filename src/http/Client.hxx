@@ -9,6 +9,7 @@
 #pragma once
 
 #include <cstdint>
+#include <exception> // for std::exception_ptr
 #include <stdexcept>
 
 enum class HttpMethod : uint_least8_t;

@@ -9,6 +9,8 @@
 #include "util/StringCompare.hxx"
 #include "strmap.hxx"
 
+#include <stdlib.h> // for random()
+
 using std::string_view_literals::operator""sv;
 
 sticky_hash_t
