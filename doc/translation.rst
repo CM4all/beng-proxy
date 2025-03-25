@@ -344,6 +344,11 @@ Response
   session. This packet with an empty payload can be used to clear the
   session’s ``SITE`` value.
 
+- ``RATE_LIMIT_SITE_REQUESTS``: limit the rate of requests to this
+  site.  Payload is two 32-bit floats describing the rate and burst
+  for the underlying token bucket.  Requests that fail the token
+  bucket get a "429 Too Many Requests" response.
+
 - ``DOCUMENT_ROOT``: base directory of the site; may also be passed
   after a ``CGI`` command, to set the document root only
   for this CGI
