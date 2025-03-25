@@ -23,13 +23,14 @@
 #include "istream/istream_string.hxx"
 #include "strmap.hxx"
 #include "bp/session/Lease.hxx"
-#include "util/Compiler.h"
 #include "util/SpanCast.hxx"
 #include "util/Cancellable.hxx"
 #include "util/StringCompare.hxx"
 #include "util/StringSplit.hxx"
 #include "stopwatch.hxx"
 #include "AllocatorPtr.hxx"
+
+#include <utility> // for std::unreachable()
 
 using std::string_view_literals::operator""sv;
 
@@ -210,8 +211,7 @@ do_rewrite_widget_uri(AllocatorPtr alloc, WidgetContext &ctx,
 		break;
 
 	case RewriteUriMode::RESPONSE:
-		assert(false);
-		gcc_unreachable();
+		std::unreachable();
 	}
 
 	const char *uri = widget.ExternalUri(alloc, ctx.external_base_uri,

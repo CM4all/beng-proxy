@@ -25,6 +25,7 @@
 
 #include <cassert>
 #include <memory>
+#include <utility> // for std::unreachable()
 
 struct FilteredSocketStockRequest {
 	StopwatchPtr stopwatch;
@@ -161,7 +162,7 @@ private:
 	bool OnBufferedWrite() override {
 		/* should never be reached because we never schedule
 		   writing */
-		gcc_unreachable();
+		std::unreachable();
 	}
 
 	void OnBufferedError(std::exception_ptr e) noexcept override;

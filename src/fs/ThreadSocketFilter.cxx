@@ -8,9 +8,9 @@
 #include "thread/Queue.hxx"
 #include "system/Error.hxx"
 #include "net/SocketProtocolError.hxx"
-#include "util/Compiler.h" // for gcc_unreachable
 
 #include <algorithm>
+#include <utility> // for std::unreachable()
 
 ThreadSocketFilter::ThreadSocketFilter(ThreadQueue &_queue,
 				       std::unique_ptr<ThreadSocketFilterHandler> _handler) noexcept
@@ -611,8 +611,7 @@ ThreadSocketFilter::InternalWrite() noexcept
 	} else {
 		switch ((enum write_result)nbytes) {
 		case WRITE_SOURCE_EOF:
-			assert(false);
-			gcc_unreachable();
+			std::unreachable();
 
 		case WRITE_ERRNO:
 			socket->InvokeError(std::make_exception_ptr(MakeErrno("write error")));
@@ -628,8 +627,7 @@ ThreadSocketFilter::InternalWrite() noexcept
 			return true;
 		}
 
-		assert(false);
-		gcc_unreachable();
+		std::unreachable();
 	}
 }
 

@@ -7,7 +7,8 @@
 #include "UnusedPtr.hxx"
 #include "pool/pool.hxx"
 #include "io/FileDescriptor.hxx"
-#include "util/Compiler.h"
+
+#include <utility> // for std::unreachable()
 
 class SinkClose final : IstreamSink {
 public:
@@ -28,7 +29,7 @@ public:
 				     FileDescriptor, off_t,
 				     [[maybe_unused]] std::size_t max_length,
 				     [[maybe_unused]] bool then_eof) noexcept {
-		gcc_unreachable();
+		std::unreachable();
 	}
 
 	void OnEof() noexcept {

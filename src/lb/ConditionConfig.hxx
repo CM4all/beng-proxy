@@ -7,10 +7,10 @@
 #include "http/Method.hxx"
 #include "lib/pcre/UniqueRegex.hxx"
 #include "net/MaskedSocketAddress.hxx"
-#include "util/Compiler.h"
 
 #include <cassert>
 #include <string>
+#include <utility> // for std::unreachable()
 #include <variant>
 
 struct LbAttributeReference {
@@ -60,8 +60,7 @@ struct LbAttributeReference {
 			return request.headers.Get(name.c_str());
 		}
 
-		assert(false);
-		gcc_unreachable();
+		std::unreachable();
 	}
 
 };
@@ -128,7 +127,7 @@ private:
 
 		bool operator()(const MaskedSocketAddress &) const noexcept {
 			/* unreachable - handled as a special case */
-			gcc_unreachable();
+			std::unreachable();
 		}
 	};
 };

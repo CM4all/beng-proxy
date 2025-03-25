@@ -35,12 +35,12 @@
 #include "net/UniqueSocketDescriptor.hxx"
 #include "system/Error.hxx"
 #include "util/Cancellable.hxx"
-#include "util/Compiler.h" // for gcc_unreachable
 #include "util/Exception.hxx"
 #include "util/PrintException.hxx"
 #include "stopwatch.hxx"
 
 #include <functional>
+#include <utility> // for std::unreachable()
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -161,7 +161,7 @@ private:
 	bool OnBufferedWrite() override {
 		/* should never be reached because we never schedule
 		   writing */
-		gcc_unreachable();
+		std::unreachable();
 	}
 
 	void OnBufferedError(std::exception_ptr e) noexcept override {

@@ -9,13 +9,14 @@
 #include "memory/SlicePool.hxx"
 #include "memory/AllocatorStats.hxx"
 #include "io/Logger.hxx"
-#include "util/Compiler.h"
 #include "util/IntrusiveList.hxx"
 #include "util/Recycler.hxx"
 #include "util/RoundPowerOfTwo.hxx"
 #include "util/Poison.hxx"
 
 #include <fmt/format.h>
+
+#include <utility> // for std::unreachable()
 
 #include <assert.h>
 #include <stdlib.h>
@@ -946,8 +947,7 @@ p_free(struct pool *pool, const void *cptr, size_t size) noexcept
 
 	switch (pool->type) {
 	case pool::Type::DUMMY:
-		assert(false);
-		gcc_unreachable();
+		std::unreachable();
 
 	case pool::Type::LIBC:
 		p_free_libc(pool, ptr);

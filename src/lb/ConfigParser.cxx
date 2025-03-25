@@ -22,6 +22,8 @@
 #include "lib/avahi/Check.hxx"
 #endif
 
+#include <utility> // for std::unreachable()
+
 #include <assert.h>
 #include <stdlib.h>
 #include <string.h>
@@ -525,7 +527,7 @@ ValidateZeroconfSticky(StickyMode sticky) noexcept
 		return false;
 	}
 
-	gcc_unreachable();
+	std::unreachable();
 }
 
 #endif

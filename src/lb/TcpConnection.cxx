@@ -13,7 +13,8 @@
 #include "net/SocketAddress.hxx"
 #include "net/UniqueSocketDescriptor.hxx"
 
-#include <assert.h>
+#include <cassert>
+#include <utility> // for std::unreachable()
 
 static constexpr Event::Duration LB_TCP_CONNECT_TIMEOUT =
 	std::chrono::seconds(20);
@@ -80,8 +81,7 @@ LbTcpConnection::Inbound::OnBufferedData()
 		int save_errno;
 
 	case WRITE_SOURCE_EOF:
-		assert(false);
-		gcc_unreachable();
+		std::unreachable();
 
 	case WRITE_ERRNO:
 		save_errno = errno;
@@ -99,8 +99,7 @@ LbTcpConnection::Inbound::OnBufferedData()
 		return BufferedResult::DESTROYED;
 	}
 
-	assert(false);
-	gcc_unreachable();
+	std::unreachable();
 }
 
 bool
@@ -202,8 +201,7 @@ LbTcpConnection::Outbound::OnBufferedData()
 		int save_errno;
 
 	case WRITE_SOURCE_EOF:
-		assert(false);
-		gcc_unreachable();
+		std::unreachable();
 
 	case WRITE_ERRNO:
 		save_errno = errno;
@@ -221,8 +219,7 @@ LbTcpConnection::Outbound::OnBufferedData()
 		return BufferedResult::DESTROYED;
 	}
 
-	assert(false);
-	gcc_unreachable();
+	std::unreachable();
 }
 
 bool

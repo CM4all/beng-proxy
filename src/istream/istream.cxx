@@ -4,7 +4,8 @@
 
 #include "istream.hxx"
 #include "Bucket.hxx"
-#include "util/Compiler.h"
+
+#include <utility> // for std::unreachable()
 
 Istream::~Istream() noexcept
 {
@@ -24,14 +25,12 @@ Istream::_FillBucketList(IstreamBucketList &list)
 Istream::ConsumeBucketResult
 Istream::_ConsumeBucketList(std::size_t) noexcept
 {
-	assert(false);
-	gcc_unreachable();
+	std::unreachable();
 }
 
 [[gnu::noreturn]]
 void
 Istream::_ConsumeDirect(std::size_t) noexcept
 {
-	assert(false);
-	gcc_unreachable();
+	std::unreachable();
 }

@@ -6,6 +6,8 @@
 #include "ClusterConfig.hxx"
 #include "PrometheusExporterConfig.hxx"
 
+#include <utility> // for std::unreachable()
+
 #ifdef HAVE_AVAHI
 #include "PrometheusDiscoveryConfig.hxx"
 
@@ -31,8 +33,7 @@ LbGotoConfig::GetProtocol() const noexcept
 
 	struct GetProtocolHelper {
 		LbProtocol operator()(std::monostate) const noexcept {
-			assert(false);
-			gcc_unreachable();
+			std::unreachable();
 		}
 
 		LbProtocol operator()(const LbClusterConfig *cluster) const noexcept {
@@ -76,8 +77,7 @@ LbGotoConfig::GetName() const noexcept
 
 	struct GetNameHelper {
 		const char *operator()(std::monostate) const noexcept {
-			assert(false);
-			gcc_unreachable();
+			std::unreachable();
 		}
 
 		const char *operator()(const LbClusterConfig *cluster) const noexcept {

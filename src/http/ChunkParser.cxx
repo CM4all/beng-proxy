@@ -3,11 +3,11 @@
 // author: Max Kellermann <mk@cm4all.com>
 
 #include "ChunkParser.hxx"
-#include "util/Compiler.h"
 #include "util/SpanCast.hxx"
 
 #include <algorithm>
 #include <stdexcept>
+#include <utility> // for std::unreachable()
 
 std::span<const std::byte>
 HttpChunkParser::Parse(std::span<const std::byte> _input)
@@ -89,8 +89,7 @@ HttpChunkParser::Parse(std::span<const std::byte> _input)
 			break;
 
 		case State::END:
-			assert(false);
-			gcc_unreachable();
+			std::unreachable();
 		}
 	}
 

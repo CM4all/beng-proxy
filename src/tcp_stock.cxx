@@ -18,9 +18,10 @@
 #include "net/FormatAddress.hxx"
 #include "io/Logger.hxx"
 #include "util/Cancellable.hxx"
-#include "util/Compiler.h"
 #include "util/Exception.hxx"
 #include "stopwatch.hxx"
+
+#include <utility> // for std::unreachable()
 
 #include <assert.h>
 #include <errno.h>
@@ -154,8 +155,7 @@ TcpStockConnection::OnBufferedWrite()
 {
 	/* should never be reached because we never schedule
 	   writing */
-	assert(false);
-	gcc_unreachable();
+	std::unreachable();
 }
 
 void

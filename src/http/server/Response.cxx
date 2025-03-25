@@ -6,8 +6,9 @@
 #include "Request.hxx"
 #include "Handler.hxx"
 #include "io/SpliceSupport.hxx"
-#include "util/Compiler.h"
 #include "util/Exception.hxx"
+
+#include <utility> // for std::unreachable()
 
 #include <errno.h>
 #include <string.h>
@@ -35,7 +36,7 @@ HttpServerConnection::OnIstreamReady() noexcept
 		return IstreamReadyResult::CLOSED;
 	}
 
-	gcc_unreachable();
+	std::unreachable();
 }
 
 std::size_t

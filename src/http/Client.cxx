@@ -46,7 +46,8 @@
 #include "util/StringStrip.hxx"
 #include "util/StaticVector.hxx"
 #include "util/Exception.hxx"
-#include "util/Compiler.h"
+
+#include <utility> // for std::unreachable()
 
 #include <assert.h>
 #include <stdlib.h>
@@ -1117,7 +1118,7 @@ HttpClient::TryResponseDirect(SocketDescriptor fd, FdType fd_type) noexcept
 		return DirectResult::OK;
 	}
 
-	gcc_unreachable();
+	std::unreachable();
 }
 
 /*
@@ -1161,8 +1162,7 @@ HttpClient::OnBufferedData()
 		break;
 	}
 
-	assert(false);
-	gcc_unreachable();
+	std::unreachable();
 }
 
 DirectResult

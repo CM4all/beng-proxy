@@ -11,9 +11,9 @@
 #include "net/SocketError.hxx"
 #include "io/Splice.hxx"
 #include "io/SpliceSupport.hxx"
-#include "util/Compiler.h"
 
 #include <cassert>
+#include <utility> // for std::unreachable()
 
 #include <errno.h>
 #include <sys/socket.h>
@@ -84,8 +84,7 @@ SocketPairIstream::Consume() noexcept
 
 	case IstreamDirectResult::END:
 		/* must not happen */
-		assert(false);
-		gcc_unreachable();
+		std::unreachable();
 
 	case IstreamDirectResult::ERRNO:
 		if (errno != EAGAIN) {

@@ -13,7 +13,8 @@
 #include "http/IncomingRequest.hxx"
 #include "http/Method.hxx"
 #include "http/Status.hxx"
-#include "util/Compiler.h"
+
+#include <utility> // for std::unreachable()
 
 #include <assert.h>
 #include <string.h>
@@ -50,8 +51,7 @@ AccessLogGlue::Create(EventLoop &event_loop,
 		}
 	}
 
-	assert(false);
-	gcc_unreachable();
+	std::unreachable();
 }
 
 void

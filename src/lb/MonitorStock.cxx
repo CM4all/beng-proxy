@@ -12,9 +12,9 @@
 #include "ClusterConfig.hxx"
 #include "net/SocketAddress.hxx"
 #include "net/ToString.hxx"
-#include "util/Compiler.h"
 
-#include <assert.h>
+#include <cassert>
+#include <utility> // for std::unreachable()
 
 [[gnu::const]]
 static const LbMonitorClass &
@@ -22,8 +22,7 @@ LookupMonitorClass(LbMonitorConfig::Type type)
 {
 	switch (type) {
 	case LbMonitorConfig::Type::NONE:
-		assert(false);
-		gcc_unreachable();
+		std::unreachable();
 
 	case LbMonitorConfig::Type::PING:
 		return ping_monitor_class;
@@ -35,7 +34,7 @@ LookupMonitorClass(LbMonitorConfig::Type type)
 		return expect_monitor_class;
 	}
 
-	gcc_unreachable();
+	std::unreachable();
 }
 
 LbMonitorStock::LbMonitorStock(EventLoop &_event_loop,

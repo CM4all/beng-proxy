@@ -5,7 +5,8 @@
 #include "Connection.hxx"
 #include "spawn/ListenChildStock.hxx"
 #include "net/UniqueSocketDescriptor.hxx"
-#include "util/Compiler.h" // for gcc_unreachable()
+
+#include <utility> // for std::unreachable()
 
 LhttpConnection::LhttpConnection(CreateStockItem c,
 				 ListenChildStockItem &_child)
@@ -63,8 +64,7 @@ LhttpConnection::OnBufferedWrite()
 {
 	/* should never be reached because we never schedule
 	   writing */
-	assert(false);
-	gcc_unreachable();
+	std::unreachable();
 }
 
 void

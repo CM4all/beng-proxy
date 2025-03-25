@@ -5,7 +5,8 @@
 #include "SConnection.hxx"
 #include "net/UniqueSocketDescriptor.hxx"
 #include "io/FdType.hxx"
-#include "util/Compiler.h"
+
+#include <utility> // for std::unreachable()
 
 FcgiStockConnection::FcgiStockConnection(CreateStockItem c, ListenChildStockItem &_child,
 					 UniqueSocketDescriptor &&_socket) noexcept
@@ -54,8 +55,7 @@ FcgiStockConnection::OnBufferedWrite()
 {
 	/* should never be reached because we never schedule
 	   writing */
-	assert(false);
-	gcc_unreachable();
+	std::unreachable();
 }
 
 void

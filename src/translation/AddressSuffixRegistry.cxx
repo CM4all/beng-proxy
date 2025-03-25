@@ -7,10 +7,10 @@
 #include "ResourceAddress.hxx"
 #include "file/Address.hxx"
 #include "util/CharUtil.hxx"
-#include "util/Compiler.h"
 #include "AllocatorPtr.hxx"
 
 #include <span>
+#include <utility> // for std::unreachable()
 
 #include <string.h>
 
@@ -55,7 +55,7 @@ GetAddressSuffixInfo(const ResourceAddress &address) noexcept
 		return {address.GetFile().path, address.GetFile().content_type_lookup};
 	}
 
-	gcc_unreachable();
+	std::unreachable();
 }
 
 bool

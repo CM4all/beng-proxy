@@ -3,11 +3,12 @@
 // author: Max Kellermann <mk@cm4all.com>
 
 #include "FifoBufferBio.hxx"
-#include "util/Compiler.h"
 #include "util/ForeignFifoBuffer.hxx"
 
 #include <openssl/bio.h>
 #include <openssl/err.h>
+
+#include <utility> // for std::unreachable()
 
 #include <string.h>
 
@@ -120,8 +121,7 @@ fb_gets(BIO *b, char *buf, int size) noexcept
 	(void)size;
 
 	/* not implemented; I suppose we don't need it */
-	assert(false);
-	gcc_unreachable();
+	std::unreachable();
 }
 
 static int
@@ -131,8 +131,7 @@ fb_puts(BIO *b, const char *str) noexcept
 	(void)str;
 
 	/* not implemented; I suppose we don't need it */
-	assert(false);
-	gcc_unreachable();
+	std::unreachable();
 }
 
 static BIO_METHOD *fb_method;

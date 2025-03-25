@@ -14,12 +14,13 @@
 #include "http/HeaderParser.hxx"
 #include "istream/istream_null.hxx"
 #include "http/List.hxx"
-#include "util/Compiler.h"
 #include "util/SpanCast.hxx"
 #include "util/StringCompare.hxx"
 #include "util/StringSplit.hxx"
 #include "util/StringStrip.hxx"
 #include "AllocatorPtr.hxx"
+
+#include <utility> // for std::unreachable()
 
 #include <string.h>
 #include <stdlib.h>
@@ -449,8 +450,7 @@ HttpServerConnection::Feed(std::span<const std::byte> b) noexcept
 		return BufferedResult::MORE;
 	}
 
-	assert(false);
-	gcc_unreachable();
+	std::unreachable();
 }
 
 DirectResult
@@ -515,5 +515,5 @@ HttpServerConnection::TryRequestBodyDirect(SocketDescriptor fd, FdType fd_type) 
 		return DirectResult::OK;
 	}
 
-	gcc_unreachable();
+	std::unreachable();
 }

@@ -6,7 +6,8 @@
 #include "Bucket.hxx"
 #include "UnusedPtr.hxx"
 #include "memory/fb_pool.hxx"
-#include "util/Compiler.h"
+
+#include <utility> // for std::unreachable()
 
 #include <string.h>
 
@@ -20,7 +21,7 @@ ToBucketIstream::ToBucketIstream(struct pool &_pool,
 void
 ToBucketIstream::_Read() noexcept
 {
-	gcc_unreachable();
+	std::unreachable();
 }
 
 void

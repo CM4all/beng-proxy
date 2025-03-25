@@ -8,12 +8,13 @@
 #include "New.hxx"
 #include "Bucket.hxx"
 #include "pool/pool.hxx"
-#include "util/Compiler.h"
 #include "util/DestructObserver.hxx"
 #include "util/SpanCast.hxx"
 #include "util/StringSplit.hxx"
 
-#include <assert.h>
+#include <cassert>
+#include <utility> // for std::unreachable()
+
 #include <string.h>
 
 /* ternary search tree */
@@ -838,7 +839,7 @@ SubstIstream::_ConsumeBucketList(size_t nbytes) noexcept
 	}
 	}
 
-	gcc_unreachable();
+	std::unreachable();
 }
 
 #endif

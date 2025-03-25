@@ -17,9 +17,10 @@
 #include "io/Buffered.hxx"
 #include "io/SpliceSupport.hxx"
 #include "system/Error.hxx"
-#include "util/Compiler.h"
 #include "util/ScopeExit.hxx"
 #include "util/Exception.hxx"
+
+#include <utility> // for std::unreachable()
 
 #include <errno.h>
 #include <string.h>
@@ -386,7 +387,7 @@ WasInput::TryDirect() noexcept
 		return true;
 	}
 
-	gcc_unreachable();
+	std::unreachable();
 }
 
 /*

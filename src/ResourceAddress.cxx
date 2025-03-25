@@ -12,10 +12,11 @@
 #include "uri/Verify.hxx"
 #include "uri/Base.hxx"
 #include "uri/PNormalize.hxx"
-#include "util/Compiler.h"
 #include "util/StringWithHash.hxx"
 #include "AllocatorPtr.hxx"
 #include "HttpMessageResponse.hxx"
+
+#include <utility> // for std::unreachable()
 
 using std::string_view_literals::operator""sv;
 
@@ -84,8 +85,7 @@ ResourceAddress::WithPath(AllocatorPtr alloc, const char *path) const noexcept
 		return *alloc.New<LhttpAddress>(ShallowCopy(), GetLhttp(), path);
 	}
 
-	assert(false);
-	gcc_unreachable();
+	std::unreachable();
 }
 
 ResourceAddress
@@ -131,8 +131,7 @@ ResourceAddress::WithQueryStringFrom(AllocatorPtr alloc,
 			return {ShallowCopy(), *this};
 	}
 
-	assert(false);
-	gcc_unreachable();
+	std::unreachable();
 }
 
 ResourceAddress
@@ -171,8 +170,7 @@ ResourceAddress::WithArgs(AllocatorPtr alloc,
 		return ResourceAddress(type, *cgi);
 	}
 
-	assert(false);
-	gcc_unreachable();
+	std::unreachable();
 }
 
 const char *
@@ -194,8 +192,7 @@ ResourceAddress::AutoBase(AllocatorPtr alloc, const char *uri) const noexcept
 		return u.cgi->AutoBase(alloc, uri);
 	}
 
-	assert(false);
-	gcc_unreachable();
+	std::unreachable();
 }
 
 ResourceAddress
@@ -234,8 +231,7 @@ ResourceAddress::SaveBase(AllocatorPtr alloc,
 			return nullptr;
 	}
 
-	assert(false);
-	gcc_unreachable();
+	std::unreachable();
 }
 
 inline void
@@ -309,8 +305,7 @@ ResourceAddress::LoadBase(AllocatorPtr alloc,
 	switch (type) {
 	case Type::NONE:
 	case Type::PIPE:
-		assert(false);
-		gcc_unreachable();
+		std::unreachable();
 
 	case Type::CGI:
 	case Type::FASTCGI:
@@ -339,8 +334,7 @@ ResourceAddress::LoadBase(AllocatorPtr alloc,
 			return nullptr;
 	}
 
-	assert(false);
-	gcc_unreachable();
+	std::unreachable();
 }
 
 void
@@ -406,8 +400,7 @@ ResourceAddress::Apply(AllocatorPtr alloc,
 
 	}
 
-	assert(false);
-	gcc_unreachable();
+	std::unreachable();
 }
 
 std::string_view
@@ -433,8 +426,7 @@ ResourceAddress::RelativeTo(const ResourceAddress &base) const noexcept
 		return u.cgi->RelativeTo(*base.u.cgi);
 	}
 
-	assert(false);
-	gcc_unreachable();
+	std::unreachable();
 }
 
 std::string_view
@@ -491,8 +483,7 @@ ResourceAddress::GetId(AllocatorPtr alloc) const noexcept
 		return u.cgi->GetId(alloc);
 	}
 
-	assert(false);
-	gcc_unreachable();
+	std::unreachable();
 }
 
 const char *
@@ -512,8 +503,7 @@ ResourceAddress::GetFilePath() const noexcept
 		return u.file->path;
 	}
 
-	assert(false);
-	gcc_unreachable();
+	std::unreachable();
 }
 
 const char *
@@ -537,8 +527,7 @@ ResourceAddress::GetFileOrExecutablePath() const noexcept
 		return u.file->path;
 	}
 
-	assert(false);
-	gcc_unreachable();
+	std::unreachable();
 }
 
 const char *
@@ -560,8 +549,7 @@ ResourceAddress::GetHostAndPort() const noexcept
 		return u.lhttp->host_and_port;
 	}
 
-	assert(false);
-	gcc_unreachable();
+	std::unreachable();
 }
 
 const char *
@@ -588,8 +576,7 @@ ResourceAddress::GetUriPath() const noexcept
 		return u.cgi->script_name;
 	}
 
-	assert(false);
-	gcc_unreachable();
+	std::unreachable();
 }
 
 void
@@ -643,8 +630,7 @@ ResourceAddress::IsValidBase() const noexcept
 		return u.cgi->IsValidBase();
 	}
 
-	assert(false);
-	gcc_unreachable();
+	std::unreachable();
 }
 
 bool
@@ -698,8 +684,7 @@ ResourceAddress::IsExpandable() const noexcept
 		return u.lhttp->IsExpandable();
 	}
 
-	assert(false);
-	gcc_unreachable();
+	std::unreachable();
 }
 
 void

@@ -4,7 +4,8 @@
 
 #include "Handler.hxx"
 #include "io/FileDescriptor.hxx"
-#include "util/Compiler.h"
+
+#include <utility> // for std::unreachable()
 
 [[gnu::noreturn]]
 IstreamDirectResult
@@ -14,5 +15,5 @@ IstreamHandler::OnDirect([[maybe_unused]] FdType type,
 			 [[maybe_unused]] std::size_t max_length,
 			 [[maybe_unused]] bool then_eof) noexcept
 {
-	gcc_unreachable();
+	std::unreachable();
 }
