@@ -11,7 +11,6 @@
 #include "istream/UnusedPtr.hxx"
 #include "istream/UnusedHoldPtr.hxx"
 #include "util/Cancellable.hxx"
-#include "util/Compiler.h"
 #include "util/SpanCast.hxx"
 
 using std::string_view_literals::operator""sv;
@@ -64,13 +63,7 @@ MakeBufferedIstream(struct pool &pool, EventLoop &event_loop,
 			   *adapter, std::move(input),
 			   adapter->cancel_ptr);
 
-#if GCC_CHECK_VERSION(11,0)
-	/* GCC 11 warns about redundant move, but without it, GCC 10
-	   refuses to compile - disable the warning for now */
-#pragma GCC diagnostic ignored "-Wredundant-move"
-#endif
-
-	return std::move(hold);
+	return hold;
 }
 
 class IstreamBufferedTestTraits {
