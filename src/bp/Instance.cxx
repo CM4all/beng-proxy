@@ -332,5 +332,5 @@ BpInstance::MakePerSite(std::string_view site) noexcept
 	if (!per_site)
 		per_site = std::make_unique<BpPerSiteMap>();
 
-	return per_site->Make(site);
+	return per_site->Make(StringWithHash{site});
 }

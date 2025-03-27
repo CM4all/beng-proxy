@@ -4,14 +4,7 @@
 
 #include "PerSite.hxx"
 #include "util/DeleteDisposer.hxx"
-#include "util/djb_hash.hxx"
 #include "util/SpanCast.hxx"
-
-inline std::size_t
-BpPerSite::Hash::operator()(std::string_view _site) const noexcept
-{
-	return djb_hash(AsBytes(_site));
-}
 
 BpPerSiteMap::~BpPerSiteMap() noexcept
 {
@@ -33,7 +26,7 @@ BpPerSiteMap::Expire(double now) noexcept
 }
 
 BpPerSite &
-BpPerSiteMap::Make(std::string_view site) noexcept
+BpPerSiteMap::Make(StringWithHash site) noexcept
 {
 	auto [it, inserted] = map.insert_check(site);
 	if (inserted) {

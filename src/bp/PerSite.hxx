@@ -6,29 +6,26 @@
 
 #include "util/IntrusiveHashSet.hxx"
 #include "util/IntrusiveList.hxx"
+#include "util/StringWithHash.hxx"
 #include "util/TokenBucket.hxx"
 
 #include <string>
 
 class BpPerSite : public IntrusiveHashSetHook<>, public IntrusiveListHook<> {
 	const std::string site;
+	const std::size_t hash;
 
 	TokenBucket request_count_throttle;
 
 public:
-	explicit BpPerSite(std::string_view _site) noexcept
-		:site(_site) {}
+	explicit BpPerSite(StringWithHash _site) noexcept
+		:site(_site.value), hash(_site.hash) {}
 
 	struct GetSite {
 		[[gnu::pure]]
-		std::string_view operator()(const BpPerSite &per_site) const noexcept {
-			return per_site.site;
+		StringWithHash operator()(const BpPerSite &per_site) const noexcept {
+			return StringWithHash{per_site.site, per_site.hash};
 		}
-	};
-
-	struct Hash {
-		[[gnu::pure]]
-		std::size_t operator()(std::string_view site) const noexcept;
 	};
 
 	bool CheckRequestCount(double now, double rate, double burst) noexcept {
@@ -43,8 +40,8 @@ public:
 class BpPerSiteMap {
 	IntrusiveHashSet<BpPerSite, 65536,
 			 IntrusiveHashSetOperators<BpPerSite, BpPerSite::GetSite,
-						   BpPerSite::Hash,
-						   std::equal_to<std::string_view>>> map;
+						   std::hash<StringWithHash>,
+						   std::equal_to<StringWithHash>>> map;
 
 	IntrusiveList<BpPerSite> lru;
 
@@ -54,5 +51,5 @@ public:
 	void Expire(double now) noexcept;
 
 	[[gnu::pure]]
-	BpPerSite &Make(std::string_view site) noexcept;
+	BpPerSite &Make(StringWithHash site) noexcept;
 };
