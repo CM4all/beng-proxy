@@ -149,16 +149,33 @@ Request::HandleTranslatedRequest2(const TranslateResponse &response) noexcept
 		rl.stats_tag = response.stats_tag;
 	}
 
-	if (response.rate_limit_site_requests.IsDefined()) {
+	if (response.rate_limit_site_requests.IsDefined() ||
+	    response.rate_limit_site_traffic.IsDefined()) {
 		assert(response.site != nullptr);
 
-		const auto per_site = instance.MakePerSite(response.site);
+		auto per_site = instance.MakePerSite(response.site);
 
 		const auto float_now = ToFloatSeconds(instance.event_loop.SteadyNow().time_since_epoch());
 
-		if (!per_site->CheckRequestCount(ToTokenBucketConfig(response.rate_limit_site_requests), float_now)) {
+		if (response.rate_limit_site_requests.IsDefined() &&
+		    !per_site->CheckRequestCount(ToTokenBucketConfig(response.rate_limit_site_requests), float_now)) {
 			DispatchError(HttpStatus::TOO_MANY_REQUESTS);
 			return;
+		}
+
+		if (response.rate_limit_site_traffic.IsDefined()) {
+			if (!per_site->CheckRequestTraffic(float_now)) {
+				DispatchError(HttpStatus::TOO_MANY_REQUESTS);
+				return;
+			}
+
+			/* the "per_site" lease is moved to the
+			   BpRequestLogger; it is needed there to
+			   update the TokenBucket after the traffic
+			   amount of this request is known */
+			auto &rl = *(BpRequestLogger *)request.logger;
+			rl.per_site = std::move(per_site);
+			rl.rate_limit_site_traffic = ToTokenBucketConfig(response.rate_limit_site_traffic);
 		}
 	}
 

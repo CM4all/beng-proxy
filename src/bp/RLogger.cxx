@@ -5,9 +5,11 @@
 #include "RLogger.hxx"
 #include "Instance.hxx"
 #include "LStats.hxx"
+#include "PerSite.hxx"
 #include "access_log/Glue.hxx"
 #include "http/CommonHeaders.hxx"
 #include "http/IncomingRequest.hxx"
+#include "time/Cast.hxx" // for ToFloatSeconds()
 
 BpRequestLogger::BpRequestLogger(BpInstance &_instance,
 				 BpListenerStats &_http_stats,
@@ -55,4 +57,11 @@ BpRequestLogger::LogHttpRequest(IncomingHttpRequest &request,
 				   status, content_type, length,
 				   bytes_received, bytes_sent,
 				   duration);
+
+	if (rate_limit_site_traffic.rate > 0) {
+		assert(per_site);
+
+		const auto float_now = ToFloatSeconds(instance.event_loop.SteadyNow().time_since_epoch());
+		per_site->UpdateRequestTraffic(rate_limit_site_traffic, float_now, bytes_received + bytes_sent);
+	}
 }

@@ -25,6 +25,7 @@ class BpPerSite final
 	const std::size_t hash;
 
 	TokenBucket request_count_throttle;
+	TokenBucket request_traffic_throttle;
 
 public:
 	explicit BpPerSite(StringWithHash _site) noexcept
@@ -45,8 +46,17 @@ public:
 		return request_count_throttle.Check(config, now, 1);
 	}
 
+	bool CheckRequestTraffic(double now) const noexcept {
+		return request_traffic_throttle.IsZero(now);
+	}
+
+	void UpdateRequestTraffic(TokenBucketConfig config, double now, double size) noexcept {
+		request_traffic_throttle.Update(config, now, size);
+	}
+
 	bool IsExpired(double now) const noexcept {
-		return request_count_throttle.IsZero(now);
+		return request_count_throttle.IsZero(now) &&
+			request_traffic_throttle.IsZero(now);
 	}
 
 protected:

@@ -349,6 +349,12 @@ Response
   for the underlying token bucket.  Requests that fail the token
   bucket get a "429 Too Many Requests" response.
 
+- ``RATE_LIMIT_SITE_TRAFFIC``: limit the traffic rate of requests to
+  this site.  Payload is two 32-bit floats describing the rate [bytes
+  per second] and burst [bytes] for the underlying token bucket.
+  Requests that fail the token bucket get a "429 Too Many Requests"
+  response.
+
 - ``DOCUMENT_ROOT``: base directory of the site; may also be passed
   after a ``CGI`` command, to set the document root only
   for this CGI

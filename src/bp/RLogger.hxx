@@ -5,6 +5,8 @@
 #pragma once
 
 #include "http/Logger.hxx"
+#include "util/SharedLease.hxx"
+#include "util/TokenBucket.hxx"
 
 #include <chrono>
 #include <cstdint>
@@ -12,6 +14,7 @@
 
 struct BpInstance;
 struct BpListenerStats;
+class BpPerSite;
 class AccessLogGlue;
 
 /**
@@ -24,6 +27,9 @@ struct BpRequestLogger final : IncomingHttpRequestLogger {
 	BpInstance &instance;
 
 	BpListenerStats &http_stats;
+
+	SharedLeasePtr<BpPerSite> per_site;
+	TokenBucketConfig rate_limit_site_traffic{-1, -1};
 
 	AccessLogGlue *const access_logger;
 
