@@ -15,8 +15,10 @@
  * After too many abuses, new requests will be delayed.
  */
 class AbuseTarpit {
-	static constexpr double RATE = 10;
-	static constexpr double BURST = 100;
+	static constexpr TokenBucketConfig RATE_LIMIT = {
+		.rate = 10,
+		.burst = 100,
+	};
 
 	static constexpr std::chrono::steady_clock::duration DURATION = std::chrono::seconds{20};
 	static constexpr std::chrono::steady_clock::duration DELAY = std::chrono::seconds{5};
@@ -29,7 +31,7 @@ class AbuseTarpit {
 public:
 	constexpr void Record(std::chrono::steady_clock::time_point now, double size=1) noexcept {
 		const auto float_now = ToFloatSeconds(now.time_since_epoch());
-		if (!rate_limiter.Check(float_now, RATE, BURST, size))
+		if (!rate_limiter.Check(RATE_LIMIT, float_now, size))
 			tarpit_until = now + DURATION;
 	}
 

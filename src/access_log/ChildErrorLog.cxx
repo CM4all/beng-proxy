@@ -50,8 +50,8 @@ ChildErrorLog::EnableClient(EventLoop &event_loop, Net::Log::Sink *sink,
 	adapter = std::make_unique<Net::Log::PipeAdapter>(event_loop, std::move(r),
 							  *sink,
 							  Net::Log::Type::HTTP_ERROR);
-	if (options.rate_limit > 0)
-		adapter->SetRateLimit(options.rate_limit, options.burst);
+	if (options.rate_limit.rate > 0)
+		adapter->SetRateLimit(options.rate_limit);
 	return std::move(w);
 }
 

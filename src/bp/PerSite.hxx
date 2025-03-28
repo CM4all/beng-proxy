@@ -28,8 +28,8 @@ public:
 		}
 	};
 
-	bool CheckRequestCount(double now, double rate, double burst) noexcept {
-		return request_count_throttle.Check(now, rate, burst, 1);
+	bool CheckRequestCount(TokenBucketConfig config, double now) noexcept {
+		return request_count_throttle.Check(config, now, 1);
 	}
 
 	bool IsExpired(double now) const noexcept {

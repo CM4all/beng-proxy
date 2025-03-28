@@ -52,10 +52,10 @@ AccessLogConfigParser::ParseLine(FileLineParser &line)
 		if (!is_child_error_logger && !config.forward_child_errors)
 			throw LineParser::Error("Requires forward_child_errors");
 
-		config.child_error_options.rate_limit = line.NextPositiveInteger();
-		config.child_error_options.burst = line.NextPositiveInteger();
+		config.child_error_options.rate_limit.rate = line.NextPositiveInteger();
+		config.child_error_options.rate_limit.burst = line.NextPositiveInteger();
 
-		if (config.child_error_options.burst < config.child_error_options.rate_limit)
+		if (config.child_error_options.rate_limit.burst < config.child_error_options.rate_limit.rate)
 			throw LineParser::Error("Burst must not be smaller than the rate");
 
 		line.ExpectEnd();

@@ -4,11 +4,13 @@
 
 #pragma once
 
+#include "util/TokenBucket.hxx"
+
 /**
  * Run-time options for #ChildErrorLog.
  */
 struct ChildErrorLogOptions {
-	double rate_limit = -1, burst = -1;
+	TokenBucketConfig rate_limit{.rate = -1, .burst = -1};
 
 	bool is_default = true;
 };

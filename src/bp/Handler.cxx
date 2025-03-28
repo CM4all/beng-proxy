@@ -144,9 +144,14 @@ Request::HandleTranslatedRequest2(const TranslateResponse &response) noexcept
 		assert(response.site != nullptr);
 
 		auto &per_site = instance.MakePerSite(response.site);
-		if (!per_site.CheckRequestCount(ToFloatSeconds(instance.event_loop.SteadyNow().time_since_epoch()),
-						(double)response.rate_limit_site_requests.rate,
-						(double)response.rate_limit_site_requests.burst)) {
+		const TokenBucketConfig config{
+			.rate = static_cast<double>(response.rate_limit_site_requests.rate),
+			.burst = static_cast<double>(response.rate_limit_site_requests.burst),
+		};
+
+		const auto float_now = ToFloatSeconds(instance.event_loop.SteadyNow().time_since_epoch());
+
+		if (!per_site.CheckRequestCount(config, float_now)) {
 			DispatchError(HttpStatus::TOO_MANY_REQUESTS);
 			return;
 		}
