@@ -95,6 +95,15 @@ Request::HandleAddress(const ResourceAddress &address)
 	}
 }
 
+static constexpr TokenBucketConfig
+ToTokenBucketConfig(const TranslateTokenBucketParams &src) noexcept
+{
+	return {
+		.rate = static_cast<double>(src.rate),
+		.burst = static_cast<double>(src.burst),
+	};
+}
+
 void
 Request::HandleTranslatedRequest2(const TranslateResponse &response) noexcept
 {
@@ -144,14 +153,10 @@ Request::HandleTranslatedRequest2(const TranslateResponse &response) noexcept
 		assert(response.site != nullptr);
 
 		const auto per_site = instance.MakePerSite(response.site);
-		const TokenBucketConfig config{
-			.rate = static_cast<double>(response.rate_limit_site_requests.rate),
-			.burst = static_cast<double>(response.rate_limit_site_requests.burst),
-		};
 
 		const auto float_now = ToFloatSeconds(instance.event_loop.SteadyNow().time_since_epoch());
 
-		if (!per_site->CheckRequestCount(config, float_now)) {
+		if (!per_site->CheckRequestCount(ToTokenBucketConfig(response.rate_limit_site_requests), float_now)) {
 			DispatchError(HttpStatus::TOO_MANY_REQUESTS);
 			return;
 		}
