@@ -6,12 +6,21 @@
 
 #include "util/IntrusiveHashSet.hxx"
 #include "util/IntrusiveList.hxx"
+#include "util/SharedLease.hxx"
 #include "util/StringWithHash.hxx"
 #include "util/TokenBucket.hxx"
 
+#include <cassert>
 #include <string>
 
-class BpPerSite : public IntrusiveHashSetHook<>, public IntrusiveListHook<> {
+class BpPerSite final
+	: public IntrusiveHashSetHook<>,
+	  public IntrusiveListHook<IntrusiveHookMode::TRACK>,
+	  SharedAnchor
+{
+	friend class SharedLeasePtr<BpPerSite>;
+	friend class BpPerSiteMap;
+
 	const std::string site;
 	const std::size_t hash;
 
@@ -20,6 +29,10 @@ class BpPerSite : public IntrusiveHashSetHook<>, public IntrusiveListHook<> {
 public:
 	explicit BpPerSite(StringWithHash _site) noexcept
 		:site(_site.value), hash(_site.hash) {}
+
+	~BpPerSite() noexcept {
+		assert(IsAbandoned());
+	}
 
 	struct GetSite {
 		[[gnu::pure]]
@@ -34,6 +47,15 @@ public:
 
 	bool IsExpired(double now) const noexcept {
 		return request_count_throttle.IsZero(now);
+	}
+
+protected:
+	// virtual methods from SharedAnchor
+	void OnAbandoned() noexcept override;
+
+private:
+	bool IsLinked() const noexcept {
+		return IntrusiveListHook::is_linked();
 	}
 };
 
@@ -51,5 +73,5 @@ public:
 	void Expire(double now) noexcept;
 
 	[[gnu::pure]]
-	BpPerSite &Make(StringWithHash site) noexcept;
+	SharedLeasePtr<BpPerSite> Make(StringWithHash site) noexcept;
 };

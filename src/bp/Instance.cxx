@@ -326,7 +326,7 @@ BpInstance::ScheduleSaveSessions() noexcept
 	session_save_timer.Schedule(std::chrono::minutes(2));
 }
 
-BpPerSite &
+SharedLeasePtr<BpPerSite>
 BpInstance::MakePerSite(std::string_view site) noexcept
 {
 	if (!per_site)

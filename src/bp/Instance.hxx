@@ -280,7 +280,7 @@ struct BpInstance final : PInstance, BengControl::Handler,
 	void OnWasMetric(std::string_view name, float value) noexcept override;
 #endif
 
-	BpPerSite &MakePerSite(std::string_view site) noexcept;
+	SharedLeasePtr<BpPerSite> MakePerSite(std::string_view site) noexcept;
 
 private:
 #ifdef HAVE_LIBSYSTEMD
