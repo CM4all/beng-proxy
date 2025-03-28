@@ -8,7 +8,7 @@
 
 BpPerSiteMap::~BpPerSiteMap() noexcept
 {
-	map.clear_and_dispose(DeleteDisposer{});
+	lru.clear_and_dispose(DeleteDisposer{});
 }
 
 void
