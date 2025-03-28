@@ -100,5 +100,5 @@ public:
 
 protected:
 	/* virtual methods from SharedAnchor */
-	virtual void OnAbandoned() noexcept;
+	void OnAbandoned() noexcept override;
 };
