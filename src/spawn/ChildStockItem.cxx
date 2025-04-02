@@ -114,6 +114,13 @@ ChildStockItem::Spawn(ChildStockClass &cls, const void *info,
 	if (return_cgroup.IsDefined()) {
 		assert(cgroup_watch);
 
+		/* close the other side of the socketpair if it's
+		   still open to avoid blocking the following receive
+		   call if the spawner has closed the socket without
+		   sending something */
+		if (p.return_cgroup.IsDefined())
+			p.return_stderr.Close();
+
 		// TODO do not receive synchronously
 		const auto cgroup_fd = EasyReceiveMessageWithOneFD(return_cgroup);
 		if (!cgroup_fd.IsDefined())
