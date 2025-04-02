@@ -256,7 +256,6 @@ struct HttpServerConnection final
 	/** the response; this struct is only valid if
 	    read_state==READ_BODY||read_state==READ_END */
 	struct Response {
-		char content_length_buffer[32];
 		off_t length;
 
 		uint64_t bytes_sent = 0;
