@@ -549,7 +549,7 @@ FdCache::SetExpiresSoon(Item &item, Event::Duration expiry) noexcept
 
 	/* re-schedule the timer to make sure this item really gets
 	   flushed soon */
-	expire_timer.Schedule(expiry);
+	expire_timer.ScheduleEarlier(expiry);
 }
 
 void
