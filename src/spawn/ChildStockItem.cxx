@@ -116,6 +116,13 @@ ChildStockItem::Spawn(ChildStockClass &cls, const void *info,
 
 		// TODO do not receive synchronously
 		const auto cgroup_fd = EasyReceiveMessageWithOneFD(return_cgroup);
+		if (!cgroup_fd.IsDefined())
+			/* this happens if the open file limit was
+			   exceeded; apparently the recvmsg() is
+			   successful, but returns no file
+			   descriptors */
+			throw std::runtime_error{"Failed to receive cgroup"};
+
 		cgroup_watch.SetCgroup(cgroup_fd);
 		if (cgroup_watch.IsBlocked())
 			throw SpawnResourcesExhaustedError{};
