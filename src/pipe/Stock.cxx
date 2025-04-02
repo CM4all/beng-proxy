@@ -38,6 +38,11 @@ PipeStock::Create(CreateStockItem c, StockRequest,
 		throw MakeErrno(e, "pipe() failed");
 	}
 
+	/* enlarge the pipe buffer to 256 kB to reduce the number of
+	   splice() system calls */
+	constexpr unsigned PIPE_BUFFER_SIZE = 256 * 1024;
+	item->fds[1].SetPipeCapacity(PIPE_BUFFER_SIZE);
+
 	item->InvokeCreateSuccess(get_handler);
 }
 
