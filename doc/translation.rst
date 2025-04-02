@@ -1687,8 +1687,17 @@ The request contains the following packets:
 
 - ``LOGIN``: Marks this request as a “login” request. No payload.
 
-- ``SERVICE``: Payload specifies the service that wants to log in, e.g.
-  "``ssh``" or "``ftp``".
+- ``SERVICE``: Payload specifies the service that wants to log in.
+  Examples for well-known service names:
+
+  - ``ssh``: Secure Shell.  The response describes how to execute
+    commands in a SSH sesion channel.
+  - ``sftp``: SSH File Transfer Protocol, i.e. SSH subsystem ``sftp``.
+  - ``rsync``: rsync over SSH.  This request is sent by `Lukko
+    <https://github.com/CM4all/lukko>`__ when it sees a
+    ``rsync --server`` command.  The response contains an ``EXECUTE``
+    packet with a path to a statically linked ``rsync`` executable
+    that will be executed using ``execveat()``.
 
 - ``LISTENER_TAG``: A string which specifies the listener this login
   was accepted on; this is optional and its configuration is specific to
