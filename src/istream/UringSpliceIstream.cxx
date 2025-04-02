@@ -206,7 +206,7 @@ try {
 	return false;
 }
 
-bool
+inline bool
 UringSpliceIstream::StartRead() noexcept
 {
 	assert(!IsUringPending());
@@ -302,8 +302,10 @@ UringSpliceIstream::_Read() noexcept
 
 	if (in_pipe == 0) {
 		if (!IsUringPending()) {
-			defer_start.Cancel();
-			StartRead();
+			if (offset == end_offset)
+				DestroyEof();
+			else
+				defer_start.Schedule();
 		}
 
 		return;
