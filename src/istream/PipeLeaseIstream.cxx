@@ -41,9 +41,16 @@ PipeLeaseIstream::_Skip(off_t length) noexcept
 	if (!n.Open("/dev/null", O_WRONLY))
 		return -1;
 
-	return splice(pipe.GetReadFd().Get(), nullptr,
-		      n.Get(), nullptr,
-		      length, SPLICE_F_MOVE|SPLICE_F_NONBLOCK);
+	auto nbytes = splice(pipe.GetReadFd().Get(), nullptr,
+			     n.Get(), nullptr,
+			     length, SPLICE_F_MOVE|SPLICE_F_NONBLOCK);
+	if (nbytes > 0) {
+		assert(static_cast<std::size_t>(nbytes) <= remaining);
+		remaining -= nbytes;
+		Consumed(nbytes);
+	}
+
+	return nbytes;
 }
 
 void
