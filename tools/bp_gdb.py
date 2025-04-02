@@ -196,7 +196,7 @@ class IntrusiveHashSetPrinter:
 class IntrusiveHashArrayTriePrinter:
     def __init__(self, val):
         self.__val = val
-        self.__type = IntrusiveContainerType(val.type)
+        self.__type = IntrusiveContainerType(val.type, GuessIntrusiveHookTraits(val.type, val.type.template_argument(2).strip_typedefs()))
 
     def display_hint(self):
         return 'array'
