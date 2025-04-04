@@ -39,6 +39,8 @@
 
 #include <fmt/format.h>
 
+#include <utility> // for std::unreachable()
+
 #include <string.h>
 #include <errno.h>
 #include <stdlib.h>
@@ -743,9 +745,7 @@ FcgiClient::ConsumeInput(std::span<const std::byte> src) noexcept
 		return BufferedResult::DESTROYED;
 	}
 
-#ifdef __GNUC__
-	__builtin_unreachable();
-#endif
+	std::unreachable();
 }
 
 /*
