@@ -30,9 +30,10 @@ public:
 
 		std::string key;
 
+		std::string redirect, message, pool, canonical_host, site, analytics_id, generator;
+
 		HttpStatus status = {};
 		uint16_t https_only = 0;
-		std::string redirect, message, pool, canonical_host, site, analytics_id, generator;
 
 		[[nodiscard]]
 		explicit Item(const char *_key, const TranslateResponse &response) noexcept;
