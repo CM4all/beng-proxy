@@ -13,6 +13,7 @@
 #include "ssl/CertCallback.hxx"
 #include "ssl/AlpnProtos.hxx"
 #include "fs/FilteredSocket.hxx"
+#include "lib/avahi/Arch.hxx"
 #include "net/SocketAddress.hxx"
 #include "io/Logger.hxx"
 
@@ -30,10 +31,18 @@ BpListener::MakeAvahiService(const BpListenerConfig &config) const noexcept
 	   because it may have changed, e.g. if the kernel has
 	   selected a port for us */
 	if (const auto local_address = GetLocalAddress();
-	    local_address.IsDefined())
-		return std::make_unique<Avahi::Service>(config.zeroconf_service.c_str(),
-							config.GetZeroconfInterface(), local_address,
-							config.v6only);
+	    local_address.IsDefined()) {
+		auto service = std::make_unique<Avahi::Service>(config.zeroconf_service.c_str(),
+								config.GetZeroconfInterface(), local_address,
+								config.v6only);
+
+		AvahiStringList *txt = nullptr;
+
+		txt = Avahi::AddArchTxt(txt);
+
+		service->txt.reset(txt);
+		return service;
+	}
 
 	return {};
 }
