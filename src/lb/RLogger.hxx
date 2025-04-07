@@ -9,6 +9,7 @@
 #include <chrono>
 #include <cstdint>
 
+enum class Arch : uint_least8_t;
 struct HttpStats;
 struct LbInstance;
 class AccessLogGlue;
@@ -84,6 +85,11 @@ struct LbRequestLogger final : IncomingHttpRequestLogger {
 	 * @see LOG_FORWARDED_TO
 	 */
 	const char *forwarded_to = nullptr;
+
+	/**
+	 * @see TranslationCommand::ARCH
+	 */
+	Arch arch{};
 
 	const bool access_logger_only_errors;
 

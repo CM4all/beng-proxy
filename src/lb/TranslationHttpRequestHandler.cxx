@@ -75,6 +75,8 @@ LbHttpRequest::OnTranslateResponse(UniquePoolPtr<TranslateResponse> _response) n
 	auto &c = connection;
 	auto &rl = *(LbRequestLogger *)request.logger;
 
+	rl.arch = response.arch;
+
 	if (response.site != nullptr)
 		rl.site_name = p_strdup(request.pool, response.site);
 

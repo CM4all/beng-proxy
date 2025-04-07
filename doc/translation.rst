@@ -1866,4 +1866,10 @@ The response contains the following packets:
 
 - ``VARY``: See page .
 
+- ``ARCH``: Prefer this CPU architecture for the selected pool member.
+  Payload can be ``amd64`` or ``arm64``.  If no member with a matching
+  architecture exists, the behavior is unspecified; the request may
+  fail or be forwarded to a server with a mismatching architecture.
+  (This is implemented for ``rendezvous_hashing`` only.)
+
 The client may assume that all responses may be cached indefinitely.

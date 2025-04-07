@@ -137,7 +137,8 @@ private:
 LbTranslationCache::Item::Item(const char *_key, const TranslateResponse &response) noexcept
 	:key(_key),
 	 status(response.status),
-	 https_only(response.https_only)
+	 https_only(response.https_only),
+	 arch(response.arch)
 {
 	if (response.redirect != nullptr)
 		redirect = response.redirect;

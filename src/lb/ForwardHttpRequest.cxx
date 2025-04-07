@@ -441,9 +441,12 @@ LbRequest::MakeBindAddress() const noexcept
 inline void
 LbRequest::Start() noexcept
 {
+	const auto &rl = *(const LbRequestLogger *)request.logger;
+
 	cluster.ConnectHttp(pool, nullptr,
 			    MakeFairnessHash(),
 			    MakeBindAddress(),
+			    rl.arch,
 			    GetStickySource(),
 			    GetStickyHash(),
 			    LB_HTTP_CONNECT_TIMEOUT,

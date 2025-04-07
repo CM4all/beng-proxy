@@ -17,12 +17,14 @@
 #include "lib/avahi/ExplorerListener.hxx"
 #endif
 
+#include <cstdint>
 #include <forward_list>
 #include <vector>
 #include <string>
 #include <map>
 #include <memory>
 
+enum class Arch : uint_least8_t;
 struct LbClusterConfig;
 struct LbContext;
 class LbMonitorStock;
@@ -119,8 +121,11 @@ class LbCluster final
 		 */
 		sticky_hash_t rendezvous_hash;
 
+		Arch arch;
+
 	public:
 		ZeroconfMember(std::string_view key,
+			       Arch _arch,
 			       SocketAddress _address,
 			       ReferencedFailureInfo &_failure,
 			       LbMonitorStock *monitors) noexcept;
@@ -133,9 +138,13 @@ class LbCluster final
 			return address;
 		}
 
-		void SetAddress(SocketAddress _address) noexcept;
+		void Update(SocketAddress _address, Arch _arch) noexcept;
 
 		void CalculateRendezvousHash(std::span<const std::byte> sticky_source) noexcept;
+
+		Arch GetArch() const noexcept {
+			return arch;
+		}
 
 		sticky_hash_t GetRendezvousHash() const noexcept {
 			return rendezvous_hash;
@@ -202,6 +211,7 @@ public:
 			 const StopwatchPtr &parent_stopwatch,
 			 uint_fast64_t fairness_hash,
 			 SocketAddress bind_address,
+			 Arch arch,
 			 std::span<const std::byte> sticky_source,
 			 sticky_hash_t sticky_hash,
 			 Event::Duration timeout,
@@ -260,7 +270,7 @@ private:
 	 *
 	 * Zeroconf only.
 	 */
-	ZeroconfMemberMap::const_pointer PickZeroconf(Expiry now,
+	ZeroconfMemberMap::const_pointer PickZeroconf(Expiry now, Arch arch,
 						      std::span<const std::byte> sticky_source,
 						      sticky_hash_t sticky_hash) noexcept;
 
@@ -280,7 +290,7 @@ private:
 	 * To be called by PickZeroconf(), which has already
 	 * lazy-initialized and verified everything.
 	 */
-	ZeroconfMemberMap::const_reference PickZeroconfRendezvous(Expiry now,
+	ZeroconfMemberMap::const_reference PickZeroconfRendezvous(Expiry now, Arch arch,
 								  std::span<const std::byte> sticky_source) noexcept;
 
 	/**
@@ -299,6 +309,7 @@ private:
 				 const StopwatchPtr &parent_stopwatch,
 				 uint_fast64_t fairness_hash,
 				 SocketAddress bind_address,
+				 Arch arch,
 				 std::span<const std::byte> sticky_source,
 				 sticky_hash_t sticky_hash,
 				 Event::Duration timeout,

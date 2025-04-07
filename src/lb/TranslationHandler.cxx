@@ -122,6 +122,7 @@ LbTranslationHandler::Pick(struct pool &pool, const IncomingHttpRequest &request
 			response.Clear();
 			response.status = item->status;
 			response.https_only = item->https_only;
+			response.arch = item->arch;
 			response.site = item->site.empty() ? nullptr : item->site.c_str();
 			response.redirect = item->redirect.empty() ? nullptr : item->redirect.c_str();
 			response.message = item->message.empty() ? nullptr : item->message.c_str();

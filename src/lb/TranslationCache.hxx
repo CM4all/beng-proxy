@@ -12,6 +12,7 @@
 
 #include <string>
 
+enum class Arch : uint_least8_t;
 enum class HttpStatus : uint_least16_t;
 struct IncomingHttpRequest;
 struct TranslationInvalidateRequest;
@@ -34,6 +35,8 @@ public:
 
 		HttpStatus status = {};
 		uint16_t https_only = 0;
+
+		Arch arch;
 
 		[[nodiscard]]
 		explicit Item(const char *_key, const TranslateResponse &response) noexcept;

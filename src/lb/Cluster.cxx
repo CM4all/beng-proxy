@@ -31,8 +31,12 @@
 #include "stopwatch.hxx"
 
 #ifdef HAVE_AVAHI
+#include "system/Arch.hxx"
 #include "lib/avahi/Explorer.hxx"
+#include "lib/avahi/StringListCast.hxx"
 #endif
+
+using std::string_view_literals::operator""sv;
 
 /**
  * The hash algorithm we use for Rendezvous Hashing.  FNV1a is fast
@@ -61,6 +65,7 @@ class LbCluster::StickyRing final
 	: public MemberHashRing<ZeroconfMemberMap::iterator> {};
 
 LbCluster::ZeroconfMember::ZeroconfMember(std::string_view key,
+					  Arch _arch,
 					  SocketAddress _address,
 					  ReferencedFailureInfo &_failure,
 					  LbMonitorStock *monitors) noexcept
@@ -68,15 +73,17 @@ LbCluster::ZeroconfMember::ZeroconfMember(std::string_view key,
 	 monitor(monitors != nullptr
 		 ? std::make_unique<LbMonitorRef>(monitors->Add(key, _address))
 		 : std::unique_ptr<LbMonitorRef>()),
-	 address_hash(RendezvousHashAlgorithm::BinaryHash(address.GetSteadyPart()))
+	 address_hash(RendezvousHashAlgorithm::BinaryHash(address.GetSteadyPart())),
+	 arch(_arch)
 {
 }
 
 LbCluster::ZeroconfMember::~ZeroconfMember() noexcept = default;
 
 inline void
-LbCluster::ZeroconfMember::SetAddress(SocketAddress _address) noexcept
+LbCluster::ZeroconfMember::Update(SocketAddress _address, Arch _arch) noexcept
 {
+	arch = _arch;
 	address = _address;
 	address_hash = RendezvousHashAlgorithm::BinaryHash(address.GetSteadyPart());
 }
@@ -161,6 +168,7 @@ LbCluster::ConnectHttp(AllocatorPtr alloc,
 		       const StopwatchPtr &parent_stopwatch,
 		       uint_fast64_t fairness_hash,
 		       SocketAddress bind_address,
+		       Arch arch,
 		       std::span<const std::byte> sticky_source,
 		       sticky_hash_t sticky_hash,
 		       Event::Duration timeout,
@@ -171,13 +179,14 @@ LbCluster::ConnectHttp(AllocatorPtr alloc,
 	if (config.HasZeroConf()) {
 		ConnectZeroconfHttp(alloc, parent_stopwatch,
 				    fairness_hash,
-				    bind_address,
+				    bind_address, arch,
 				    sticky_source, sticky_hash,
 				    timeout,
 				    handler, cancel_ptr);
 		return;
 	}
 #else
+	(void)arch;
 	(void)sticky_source;
 #endif
 
@@ -323,7 +332,7 @@ LbCluster::PickZeroconfHashRing(Expiry now,
 }
 
 inline LbCluster::ZeroconfMemberMap::const_reference
-LbCluster::PickZeroconfRendezvous(Expiry now,
+LbCluster::PickZeroconfRendezvous(Expiry now, const Arch arch,
 				  std::span<const std::byte> sticky_source) noexcept
 {
 	assert(!active_zeroconf_members.empty());
@@ -335,8 +344,18 @@ LbCluster::PickZeroconfRendezvous(Expiry now,
 	   address hash and the request's hash */
 	std::sort(active_zeroconf_members.begin(),
 		  active_zeroconf_members.end(),
-		  [](ZeroconfMemberMap::const_iterator a,
-		     ZeroconfMemberMap::const_iterator b) noexcept {
+		  [arch](ZeroconfMemberMap::const_iterator a,
+			 ZeroconfMemberMap::const_iterator b) noexcept {
+			  if (arch != Arch::NONE &&
+			      a->second.GetArch() != b->second.GetArch()) {
+				  [[unlikely]]
+
+				  if (a->second.GetArch() == arch)
+					  return true;
+				  if (b->second.GetArch() == arch)
+					  return false;
+			  }
+
 			  return a->second.GetRendezvousHash() < b->second.GetRendezvousHash();
 		  });
 
@@ -376,7 +395,7 @@ LbCluster::PickZeroconfCache(Expiry now,
 }
 
 LbCluster::ZeroconfMemberMap::const_pointer
-LbCluster::PickZeroconf(const Expiry now,
+LbCluster::PickZeroconf(const Expiry now, Arch arch,
 			std::span<const std::byte> sticky_source,
 			sticky_hash_t sticky_hash) noexcept
 {
@@ -396,7 +415,7 @@ LbCluster::PickZeroconf(const Expiry now,
 			return &PickZeroconfHashRing(now, sticky_hash);
 
 		case LbClusterConfig::StickyMethod::RENDEZVOUS_HASHING:
-			return &PickZeroconfRendezvous(now, sticky_source);
+			return &PickZeroconfRendezvous(now, arch, sticky_source);
 
 		case LbClusterConfig::StickyMethod::CACHE:
 			if (const auto *member = PickZeroconfCache(now,
@@ -475,10 +494,13 @@ class LbCluster::ZeroconfHttpConnect final : StockGetHandler, Lease, Cancellable
 	 */
 	unsigned retries;
 
+	const Arch arch;
+
 public:
 	ZeroconfHttpConnect(LbCluster &_cluster, AllocatorPtr _alloc,
 			    const uint_fast64_t _fairness_hash,
 			    SocketAddress _bind_address,
+			    Arch _arch,
 			    std::span<const std::byte> _sticky_source,
 			    sticky_hash_t _sticky_hash,
 			    Event::Duration _timeout,
@@ -493,7 +515,8 @@ public:
 		 timeout(_timeout),
 		 filter_params(_filter_params),
 		 handler(_handler),
-		 retries(CalculateRetries(cluster.GetZeroconfCount()))
+		 retries(CalculateRetries(cluster.GetZeroconfCount())),
+		 arch(_arch)
 	{
 		caller_cancel_ptr = *this;
 	}
@@ -539,6 +562,7 @@ void
 LbCluster::ZeroconfHttpConnect::Start() noexcept
 {
 	auto *member = cluster.PickZeroconf(GetEventLoop().SteadyNow(),
+					    arch,
 					    sticky_source,
 					    sticky_hash);
 	if (member == nullptr) {
@@ -605,6 +629,7 @@ LbCluster::ConnectZeroconfHttp(AllocatorPtr alloc,
 			       const StopwatchPtr &,
 			       uint_fast64_t fairness_hash,
 			       SocketAddress bind_address,
+			       Arch arch,
 			       std::span<const std::byte> sticky_source,
 			       sticky_hash_t sticky_hash,
 			       Event::Duration timeout,
@@ -616,6 +641,7 @@ LbCluster::ConnectZeroconfHttp(AllocatorPtr alloc,
 	auto *c = alloc.New<ZeroconfHttpConnect>(*this, alloc,
 						 fairness_hash,
 						 bind_address,
+						 arch,
 						 sticky_source, sticky_hash,
 						 timeout,
 						 socket_filter_params.get(),
@@ -637,6 +663,7 @@ LbCluster::ConnectZeroconfTcp(AllocatorPtr alloc,
 	auto &event_loop = fs_balancer.GetEventLoop();
 
 	const auto *member = PickZeroconf(event_loop.SteadyNow(),
+					  Arch::NONE,
 					  sticky_source,
 					  CalculateStickyHash(sticky_source));
 	if (member == nullptr) {
@@ -655,17 +682,29 @@ LbCluster::ConnectZeroconfTcp(AllocatorPtr alloc,
 			  handler, cancel_ptr);
 }
 
+[[gnu::pure]]
+static Arch
+GetArchFromTxt(AvahiStringList *txt) noexcept
+{
+	constexpr std::string_view prefix = "arch="sv;
+	txt = avahi_string_list_find(txt, "arch");
+	return txt != nullptr
+		? ParseArch(Avahi::ToStringView(*txt).substr(prefix.size()))
+		: Arch::NONE;
+}
+
 void
 LbCluster::OnAvahiNewObject(const std::string &key,
 			    SocketAddress address,
-			    [[maybe_unused]] AvahiStringList *txt) noexcept
+			    AvahiStringList *txt) noexcept
 {
-	auto [it, inserted] = zeroconf_members.try_emplace(key, key, address,
+	const auto arch = GetArchFromTxt(txt);
+	auto [it, inserted] = zeroconf_members.try_emplace(key, key, arch, address,
 							   failure_manager.Make(address),
 							   monitors);
 	if (!inserted) {
 		/* update existing member */
-		it->second.SetAddress(address);
+		it->second.Update(address, arch);
 	}
 
 	dirty = true;
@@ -685,4 +724,4 @@ LbCluster::OnAvahiRemoveObject(const std::string &key) noexcept
 	dirty = true;
 }
 
-#endif
+#endif // HAVE_AVAHI
