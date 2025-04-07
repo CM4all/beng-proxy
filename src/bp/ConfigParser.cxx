@@ -160,6 +160,26 @@ BpConfigParser::Listener::ParseLine(FileLineParser &line)
 #else
 		throw LineParser::Error("Zeroconf support is disabled at compile time");
 #endif
+	} else if (StringIsEqual(word, "zeroconf_weight")) {
+#ifdef HAVE_AVAHI
+		if (config.zeroconf_service.empty())
+			throw LineParser::Error("zeroconf_weight without zeroconf_service");
+
+		if (config.zeroconf_weight >= 0)
+			throw LineParser::Error("Duplicate zeroconf_weight");
+
+		const char *s = line.ExpectValueAndEnd();
+
+		char *endptr;
+		config.zeroconf_weight = strtod(s, &endptr);
+		if (endptr == s || *endptr != '\0')
+			throw LineParser::Error("Failed to parse number");
+
+		if (config.zeroconf_weight <= 0 || config.zeroconf_weight > 1e6f)
+			throw LineParser::Error("Bad zeroconf_weight value");
+#else
+		throw LineParser::Error("Zeroconf support is disabled at compile time");
+#endif
 	} else if (StringIsEqual(word, "ack_timeout")) {
 		config.tcp_user_timeout = line.NextPositiveInteger() * 1000;
 		line.ExpectEnd();

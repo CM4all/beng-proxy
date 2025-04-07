@@ -17,9 +17,12 @@
 #include "net/SocketAddress.hxx"
 #include "io/Logger.hxx"
 
+using std::string_view_literals::operator""sv;
+
 #ifdef HAVE_AVAHI
 #include "lib/avahi/Service.hxx"
 #include "lib/avahi/Publisher.hxx"
+#include "lib/fmt/ToBuffer.hxx"
 
 inline std::unique_ptr<Avahi::Service>
 BpListener::MakeAvahiService(const BpListenerConfig &config) const noexcept
@@ -39,6 +42,10 @@ BpListener::MakeAvahiService(const BpListenerConfig &config) const noexcept
 		AvahiStringList *txt = nullptr;
 
 		txt = Avahi::AddArchTxt(txt);
+
+		if (config.zeroconf_weight >= 0)
+			txt = avahi_string_list_add_pair(txt, "weight",
+							 FmtBuffer<64>("{}"sv, config.zeroconf_weight));
 
 		service->txt.reset(txt);
 		return service;

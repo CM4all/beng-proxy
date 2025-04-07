@@ -31,6 +31,15 @@ struct BpListenerConfig : SocketConfig {
 
 	SslConfig ssl_config;
 
+#ifdef HAVE_AVAHI
+	/**
+	 * The weight published via Zeroconf.  Negative value means
+	 * don't publish a weight (peers will assume the default
+	 * weight, i.e. 1.0).
+	 */
+	float zeroconf_weight = -1;
+#endif
+
 	enum class Handler {
 		TRANSLATION,
 		PROMETHEUS_EXPORTER,

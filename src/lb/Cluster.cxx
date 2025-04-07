@@ -38,6 +38,8 @@
 
 #include <cmath> // for std::log()
 #include <limits> // for std::numeric_limits
+
+#include <stdlib.h> // for strtod()
 #endif
 
 using std::string_view_literals::operator""sv;
@@ -84,6 +86,14 @@ class LbCluster::ZeroconfMember final : LeakDetector {
 	sticky_hash_t address_hash;
 
 	/**
+	 * The weight of this node (received in a Zeroconf TXT
+	 * record).  We store the negative value because this
+	 * eliminates one minus operator from the method
+	 * CalculateRendezvousScore().
+	 */
+	double negative_weight;
+
+	/**
 	 * A score for rendezvous hasing calculated from the hash of
 	 * the sticky attribute of the current request (e.g. the
 	 * "Host" header) and this server address.
@@ -94,7 +104,7 @@ class LbCluster::ZeroconfMember final : LeakDetector {
 
 public:
 	ZeroconfMember(std::string_view key,
-		       Arch _arch,
+		       Arch _arch, double _weight,
 		       SocketAddress _address,
 		       ReferencedFailureInfo &_failure,
 		       LbMonitorStock *monitors) noexcept;
@@ -107,7 +117,7 @@ public:
 		return address;
 	}
 
-	void Update(SocketAddress _address, Arch _arch) noexcept;
+	void Update(SocketAddress _address, Arch _arch, double _weight) noexcept;
 
 	void CalculateRendezvousScore(std::span<const std::byte> sticky_source) noexcept;
 
@@ -135,7 +145,7 @@ public:
 };
 
 LbCluster::ZeroconfMember::ZeroconfMember(std::string_view key,
-					  Arch _arch,
+					  Arch _arch, double _weight,
 					  SocketAddress _address,
 					  ReferencedFailureInfo &_failure,
 					  LbMonitorStock *monitors) noexcept
@@ -144,6 +154,7 @@ LbCluster::ZeroconfMember::ZeroconfMember(std::string_view key,
 		 ? std::make_unique<LbMonitorRef>(monitors->Add(key, _address))
 		 : std::unique_ptr<LbMonitorRef>()),
 	 address_hash(RendezvousHashAlgorithm::BinaryHash(address.GetSteadyPart())),
+	 negative_weight(-_weight),
 	 arch(_arch)
 {
 }
@@ -151,9 +162,10 @@ LbCluster::ZeroconfMember::ZeroconfMember(std::string_view key,
 LbCluster::ZeroconfMember::~ZeroconfMember() noexcept = default;
 
 inline void
-LbCluster::ZeroconfMember::Update(SocketAddress _address, Arch _arch) noexcept
+LbCluster::ZeroconfMember::Update(SocketAddress _address, Arch _arch, double _weight) noexcept
 {
 	arch = _arch;
+	negative_weight = -_weight;
 	address = _address;
 	address_hash = RendezvousHashAlgorithm::BinaryHash(address.GetSteadyPart());
 }
@@ -179,8 +191,11 @@ LbCluster::ZeroconfMember::GetLogName(const char *key) const noexcept
 }
 
 /**
- * Convert a 64 bit integer to a double-precision float, preserving as
- * many bits as possible.
+ * Convert a quasi-random unsigned 64 bit integer to a
+ * double-precision float in the range 0..1, preserving as many bits
+ * as possible.  The returned value has no arithmetic meaning; the
+ * goal of this function is only to convert a hash value to a floating
+ * point value.
  */
 template<std::unsigned_integral I>
 static constexpr double
@@ -211,7 +226,6 @@ inline void
 LbCluster::ZeroconfMember::CalculateRendezvousScore(std::span<const std::byte> sticky_source) noexcept
 {
 	const auto rendezvous_hash = RendezvousHashAlgorithm::BinaryHash(sticky_source, address_hash);
-	constexpr double negative_weight = -1.0;
 	rendezvous_score = negative_weight / std::log(UintToDouble(rendezvous_hash));
 }
 
@@ -794,18 +808,40 @@ GetArchFromTxt(AvahiStringList *txt) noexcept
 		: Arch::NONE;
 }
 
+[[gnu::pure]]
+static double
+GetWeightFromTxt(AvahiStringList *txt) noexcept
+{
+	constexpr std::string_view prefix = "weight="sv;
+	txt = avahi_string_list_find(txt, "weight");
+	if (txt == nullptr)
+		/* there's no "weight" record */
+		return 1.0;
+
+	const char *s = reinterpret_cast<const char *>(txt->text) + prefix.size();
+	char *endptr;
+	double value = strtod(s, &endptr);
+	if (endptr == s || *endptr != '\0' || value <= 0 || value > 1e6)
+		/* parser failed: fall back to default value */
+		return 1.0;
+
+	return value;
+}
+
 void
 LbCluster::OnAvahiNewObject(const std::string &key,
 			    SocketAddress address,
 			    AvahiStringList *txt) noexcept
 {
 	const auto arch = GetArchFromTxt(txt);
-	auto [it, inserted] = zeroconf_members.try_emplace(key, key, arch, address,
+	const auto weight = GetWeightFromTxt(txt);
+
+	auto [it, inserted] = zeroconf_members.try_emplace(key, key, arch, weight, address,
 							   failure_manager.Make(address),
 							   monitors);
 	if (!inserted) {
 		/* update existing member */
-		it->second.Update(address, arch);
+		it->second.Update(address, arch, weight);
 	}
 
 	dirty = true;
