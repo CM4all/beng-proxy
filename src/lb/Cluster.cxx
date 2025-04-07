@@ -657,7 +657,8 @@ LbCluster::ConnectZeroconfTcp(AllocatorPtr alloc,
 
 void
 LbCluster::OnAvahiNewObject(const std::string &key,
-			    SocketAddress address) noexcept
+			    SocketAddress address,
+			    [[maybe_unused]] AvahiStringList *txt) noexcept
 {
 	auto [it, inserted] = zeroconf_members.try_emplace(key, key, address,
 							   failure_manager.Make(address),

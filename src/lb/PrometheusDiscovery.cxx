@@ -66,7 +66,8 @@ LbPrometheusDiscovery::HandleHttpRequest(IncomingHttpRequest &request,
 
 void
 LbPrometheusDiscovery::OnAvahiNewObject(const std::string &key,
-					SocketAddress address) noexcept
+					SocketAddress address,
+					[[maybe_unused]] AvahiStringList *txt) noexcept
 {
 	members.insert_or_assign(key, address);
 }

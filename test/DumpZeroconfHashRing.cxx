@@ -73,7 +73,8 @@ struct Context final : TestInstance, Avahi::ServiceExplorerListener,
 
 	/* virtual methods from class AvahiServiceExplorerListener */
 	void OnAvahiNewObject(const std::string &key,
-			      SocketAddress address) noexcept override;
+			      SocketAddress address,
+			      AvahiStringList *txt) noexcept override;
 	void OnAvahiRemoveObject(const std::string &key) noexcept override;
 
 	void OnAvahiAllForNow() noexcept override {
@@ -115,7 +116,8 @@ Context::Dump() noexcept
 
 void
 Context::OnAvahiNewObject(const std::string &key,
-			  SocketAddress address) noexcept
+			  SocketAddress address,
+			  [[maybe_unused]] AvahiStringList *txt) noexcept
 {
 	members.insert_or_assign(key, address);
 
