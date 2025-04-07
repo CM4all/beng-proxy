@@ -18,6 +18,7 @@
 #include "lb_features.h"
 
 #ifdef HAVE_AVAHI
+#include "lib/avahi/Arch.hxx"
 #include "lib/avahi/Service.hxx"
 #include "lib/avahi/Publisher.hxx"
 
