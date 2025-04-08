@@ -35,6 +35,9 @@
 #include "system/Arch.hxx"
 #include "lib/avahi/Explorer.hxx"
 #include "lib/avahi/StringListCast.hxx"
+
+#include <cmath> // for std::log()
+#include <limits> // for std::numeric_limits
 #endif
 
 using std::string_view_literals::operator""sv;
@@ -81,11 +84,11 @@ class LbCluster::ZeroconfMember final : LeakDetector {
 	sticky_hash_t address_hash;
 
 	/**
-	 * The hash of the sticky attribute of the current
-	 * request (e.g. the "Host" header) and this server
-	 * address.
+	 * A score for rendezvous hasing calculated from the hash of
+	 * the sticky attribute of the current request (e.g. the
+	 * "Host" header) and this server address.
 	 */
-	sticky_hash_t rendezvous_hash;
+	double rendezvous_score;
 
 	Arch arch;
 
@@ -106,14 +109,14 @@ public:
 
 	void Update(SocketAddress _address, Arch _arch) noexcept;
 
-	void CalculateRendezvousHash(std::span<const std::byte> sticky_source) noexcept;
+	void CalculateRendezvousScore(std::span<const std::byte> sticky_source) noexcept;
 
 	Arch GetArch() const noexcept {
 		return arch;
 	}
 
-	sticky_hash_t GetRendezvousHash() const noexcept {
-		return rendezvous_hash;
+	double GetRendezvousScore() const noexcept {
+		return rendezvous_score;
 	}
 
 	auto &GetFailureRef() const noexcept {
@@ -175,10 +178,41 @@ LbCluster::ZeroconfMember::GetLogName(const char *key) const noexcept
 	return log_name.c_str();
 }
 
-inline void
-LbCluster::ZeroconfMember::CalculateRendezvousHash(std::span<const std::byte> sticky_source) noexcept
+/**
+ * Convert a 64 bit integer to a double-precision float, preserving as
+ * many bits as possible.
+ */
+template<std::unsigned_integral I>
+static constexpr double
+UintToDouble(const I i) noexcept
 {
-	rendezvous_hash = RendezvousHashAlgorithm::BinaryHash(sticky_source, address_hash);
+	constexpr unsigned SRC_BITS = std::numeric_limits<I>::digits;
+
+	/* the mantissa has 53 bits, and this is how many bits we can
+	   preserve in the conversion */
+	constexpr unsigned DEST_BITS = std::numeric_limits<double>::digits;
+
+	if constexpr (DEST_BITS < SRC_BITS) {
+		/* discard upper bits that don't fit into the mantissa */
+		constexpr uint_least64_t mask = (~I{}) >> (SRC_BITS - DEST_BITS);
+		constexpr double max = I{1} << DEST_BITS;
+
+		return (i & mask) / max;
+	} else {
+		/* don't discard anything */
+		static_assert(std::numeric_limits<uintmax_t>::digits > std::numeric_limits<I>::digits);
+		constexpr double max = std::uintmax_t{1} << SRC_BITS;
+
+		return i / max;
+	}
+}
+
+inline void
+LbCluster::ZeroconfMember::CalculateRendezvousScore(std::span<const std::byte> sticky_source) noexcept
+{
+	const auto rendezvous_hash = RendezvousHashAlgorithm::BinaryHash(sticky_source, address_hash);
+	constexpr double negative_weight = -1.0;
+	rendezvous_score = negative_weight / std::log(UintToDouble(rendezvous_hash));
 }
 
 #endif // HAVE_AVAHI
@@ -405,7 +439,7 @@ LbCluster::PickZeroconfRendezvous(Expiry now, const Arch arch,
 	assert(!active_zeroconf_members.empty());
 
 	for (auto &i : active_zeroconf_members)
-		i->second.CalculateRendezvousHash(sticky_source);
+		i->second.CalculateRendezvousScore(sticky_source);
 
 	/* sort the list of active Zeroconf members by a mix of its
 	   address hash and the request's hash */
@@ -423,7 +457,7 @@ LbCluster::PickZeroconfRendezvous(Expiry now, const Arch arch,
 					  return false;
 			  }
 
-			  return a->second.GetRendezvousHash() < b->second.GetRendezvousHash();
+			  return a->second.GetRendezvousScore() > b->second.GetRendezvousScore();
 		  });
 
 	/* return the first "good" member */
