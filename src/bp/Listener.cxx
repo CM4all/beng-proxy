@@ -13,13 +13,13 @@
 #include "ssl/CertCallback.hxx"
 #include "ssl/AlpnProtos.hxx"
 #include "fs/FilteredSocket.hxx"
-#include "lib/avahi/Arch.hxx"
 #include "net/SocketAddress.hxx"
 #include "io/Logger.hxx"
 
 using std::string_view_literals::operator""sv;
 
 #ifdef HAVE_AVAHI
+#include "lib/avahi/Arch.hxx"
 #include "lib/avahi/Service.hxx"
 #include "lib/avahi/Publisher.hxx"
 #include "lib/fmt/ToBuffer.hxx"
