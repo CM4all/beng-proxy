@@ -35,17 +35,15 @@ class BpListenStreamStockHandler::Process final
 
 public:
 	Process(ListenStreamReadyHandler &_handler,
-		std::unique_ptr<ChildProcessHandle> &&_process,
 		std::string_view _tags) noexcept
-		:handler(_handler), process(std::move(_process)), tags(_tags)
+		:handler(_handler), tags(_tags)
 	{
-		process->SetExitListener(*this);
 	}
 
-	void Start(CancellablePointer &cancel_ptr) noexcept {
-		cancel_ptr = *this;
-		process->SetCompletionHandler(*this);
-	}
+	void Start(SpawnService &service, std::string_view name,
+		   SocketDescriptor socket,
+		   UniquePoolPtr<TranslateResponse> &&_response,
+		   CancellablePointer &cancel_ptr);
 
 	// virtual methods from class Cancellable
 	void Cancel() noexcept override {
@@ -103,11 +101,15 @@ private:
 	}
 };
 
-static std::unique_ptr<ChildProcessHandle>
-DoSpawn(SpawnService &service, std::string_view name,
-	SocketDescriptor socket,
-	const TranslateResponse &response)
+inline void
+BpListenStreamStockHandler::Process::Start(SpawnService &service, std::string_view name,
+					   SocketDescriptor socket,
+					   UniquePoolPtr<TranslateResponse> &&_response,
+					   CancellablePointer &cancel_ptr)
 {
+	assert(!process);
+
+	const auto &response = *_response;
 	assert(response.execute != nullptr);
 
 	PreparedChildProcess p;
@@ -124,7 +126,13 @@ DoSpawn(SpawnService &service, std::string_view name,
 	FdHolder close_fds;
 	response.child_options.CopyTo(p, close_fds);
 
-	return service.SpawnChildProcess(name, std::move(p));
+	process = service.SpawnChildProcess(name, std::move(p));
+
+	_response = {};
+
+	cancel_ptr = *this;
+	process->SetExitListener(*this);
+	process->SetCompletionHandler(*this);
 }
 
 void
@@ -145,12 +153,11 @@ BpListenStreamStockHandler::Handle(const char *socket_path,
 		throw FmtRuntimeError("Status {} from translation server",
 				      static_cast<unsigned>(response.status));
 	} else if (response.execute != nullptr) {
-		auto process = DoSpawn(*instance.spawn_service, socket_path, socket, response);
-		auto *process2 = new Process(handler, std::move(process), response.child_options.tag);
+		auto *process2 = new Process(handler, response.child_options.tag);
 
-		_response = {};
-
-		process2->Start(cancel_ptr);
+		process2->Start(*instance.spawn_service, socket_path, socket,
+				std::move(_response),
+				cancel_ptr);
 	} else if (response.accept_http) {
 		auto ptr = ToDeletePointer(new HttpListener(instance, socket, response));
 
