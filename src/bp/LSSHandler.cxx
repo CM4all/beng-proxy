@@ -6,6 +6,7 @@
 #include "Instance.hxx"
 #include "Listener.hxx"
 #include "LStats.hxx"
+#include "access_log/ChildErrorLog.hxx"
 #include "spawn/CompletionHandler.hxx"
 #include "spawn/ExitListener.hxx"
 #include "spawn/Interface.hxx"
@@ -18,9 +19,12 @@
 #include "io/FdHolder.hxx"
 #include "util/DisposablePointer.hxx"
 
-BpListenStreamStockHandler::BpListenStreamStockHandler(BpInstance &_instance) noexcept
+BpListenStreamStockHandler::BpListenStreamStockHandler(BpInstance &_instance,
+						       Net::Log::Sink *_log_sink,
+						       const ChildErrorLogOptions &_log_options) noexcept
 	:TranslationListenStreamStockHandler(*_instance.translation_service),
-	 instance(_instance)
+	 instance(_instance),
+	 log_sink(_log_sink), log_options(_log_options)
 {
 }
 
@@ -33,6 +37,8 @@ class BpListenStreamStockHandler::Process final
 
 	const std::string tags;
 
+	ChildErrorLog log;
+
 public:
 	Process(ListenStreamReadyHandler &_handler,
 		std::string_view _tags) noexcept
@@ -40,9 +46,12 @@ public:
 	{
 	}
 
-	void Start(SpawnService &service, std::string_view name,
+	void Start(EventLoop &event_loop, SpawnService &service,
+		   std::string_view name,
 		   SocketDescriptor socket,
 		   UniquePoolPtr<TranslateResponse> &&_response,
+		   Net::Log::Sink *log_sink,
+		   const ChildErrorLogOptions &log_options,
 		   CancellablePointer &cancel_ptr);
 
 	// virtual methods from class Cancellable
@@ -102,9 +111,12 @@ private:
 };
 
 inline void
-BpListenStreamStockHandler::Process::Start(SpawnService &service, std::string_view name,
+BpListenStreamStockHandler::Process::Start(EventLoop &event_loop, SpawnService &service,
+					   std::string_view name,
 					   SocketDescriptor socket,
 					   UniquePoolPtr<TranslateResponse> &&_response,
+					   Net::Log::Sink *_log_sink,
+					   const ChildErrorLogOptions &_log_options,
 					   CancellablePointer &cancel_ptr)
 {
 	assert(!process);
@@ -125,6 +137,12 @@ BpListenStreamStockHandler::Process::Start(SpawnService &service, std::string_vi
 
 	FdHolder close_fds;
 	response.child_options.CopyTo(p, close_fds);
+
+	if (_log_sink != nullptr && !p.stderr_fd.IsDefined() &&
+	    p.stderr_path == nullptr)
+		log.EnableClient(p, close_fds,
+				 event_loop, _log_sink, _log_options,
+				 response.child_options.stderr_pond);
 
 	process = service.SpawnChildProcess(name, std::move(p));
 
@@ -155,8 +173,10 @@ BpListenStreamStockHandler::Handle(const char *socket_path,
 	} else if (response.execute != nullptr) {
 		auto *process2 = new Process(handler, response.child_options.tag);
 
-		process2->Start(*instance.spawn_service, socket_path, socket,
+		process2->Start(instance.event_loop, *instance.spawn_service,
+				socket_path, socket,
 				std::move(_response),
+				log_sink, log_options,
 				cancel_ptr);
 	} else if (response.accept_http) {
 		auto ptr = ToDeletePointer(new HttpListener(instance, socket, response));

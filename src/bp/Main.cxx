@@ -432,7 +432,9 @@ try {
 
 	if (instance.translation_service != nullptr) {
 		instance.spawn_listen_stream_stock_handler =
-			std::make_unique<BpListenStreamStockHandler>(instance);
+			std::make_unique<BpListenStreamStockHandler>(instance,
+								     child_log_sink,
+								     child_log_options);
 		instance.listen_stream_stock = std::make_unique<ListenStreamStock>(instance.event_loop,
 										   *instance.spawn_listen_stream_stock_handler);
 	}
