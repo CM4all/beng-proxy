@@ -92,7 +92,7 @@ Package: python3-cm4all-beng-proxy
 Architecture: all
 Section: python
 Provides: ${python3:Provides}
-Depends: ${misc:Depends}, ${python3:Depends}, python3-future
+Depends: ${misc:Depends}, ${python3:Depends}
 Recommends: cm4all-beng-proxy | cm4all-beng-lb
 Description: Python 3 bindings for beng-proxy's control channel
  BENG proxy is an HTTP proxy server which includes a HTML template
