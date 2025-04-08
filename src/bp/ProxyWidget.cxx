@@ -22,6 +22,7 @@
 #include "pool/pool.hxx"
 #include "lib/fmt/ToBuffer.hxx"
 #include "io/Logger.hxx"
+#include "util/StringAPI.hxx"
 
 class ProxyWidget final : PoolLeakDetector, WidgetLookupHandler, HttpResponseHandler, Cancellable {
 	Request &request;
@@ -142,7 +143,7 @@ widget_view_allowed(Widget &widget, const WidgetView &view)
 	assert(view.name != nullptr);
 
 	if (widget.from_template.view_name != nullptr &&
-	    strcmp(view.name, widget.from_template.view_name) == 0)
+	    StringIsEqual(view.name, widget.from_template.view_name))
 		/* always allow when it's the same view that was specified in
 		   the template */
 		return true;

@@ -10,9 +10,9 @@
 #include "pool/tpool.hxx"
 #include "util/HexFormat.hxx"
 #include "util/Cast.hxx"
+#include "util/StringAPI.hxx"
 #include "AllocatorPtr.hxx"
 
-#include <string.h>
 #include <assert.h>
 
 static constexpr bool
@@ -177,7 +177,7 @@ Widget::FindChild(const char *child_id) noexcept
 	assert(child_id != nullptr);
 
 	for (auto &child : children)
-		if (child.id != nullptr && strcmp(child.id, child_id) == 0)
+		if (child.id != nullptr && StringIsEqual(child.id, child_id))
 			return &child;
 
 	return nullptr;

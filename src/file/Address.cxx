@@ -6,11 +6,11 @@
 #include "uri/Base.hxx"
 #include "uri/Compare.hxx"
 #include "uri/PEscape.hxx"
+#include "util/StringAPI.hxx"
 #include "pexpand.hxx"
 #include "AllocatorPtr.hxx"
 
 #include <assert.h>
-#include <string.h>
 
 FileAddress::FileAddress(AllocatorPtr alloc, const FileAddress &src,
 			 const char *_path) noexcept
@@ -61,7 +61,7 @@ FileAddress *
 FileAddress::SaveBase(AllocatorPtr alloc, std::string_view suffix) const noexcept
 {
 	if (base != nullptr && suffix.empty())
-		return strcmp(path, ".") == 0
+		return StringIsEqual(path, ".")
 			? alloc.New<FileAddress>(alloc, *this)
 			: nullptr;
 
@@ -97,7 +97,7 @@ FileAddress::LoadBase(AllocatorPtr alloc, std::string_view suffix) const noexcep
 
 		src_base = path;
 	} else {
-		assert(strcmp(path, ".") == 0);
+		assert(StringIsEqual(path, "."));
 		assert(base != nullptr);
 		assert(*base == '/');
 		assert(base[strlen(base) - 1] == '/');

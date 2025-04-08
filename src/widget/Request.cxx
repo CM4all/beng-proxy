@@ -36,6 +36,7 @@
 #include "AllocatorPtr.hxx"
 #include "lib/fmt/ToBuffer.hxx"
 #include "util/Cancellable.hxx"
+#include "util/StringAPI.hxx"
 #include "stopwatch.hxx"
 
 #include <assert.h>
@@ -449,7 +450,7 @@ WidgetRequest::TransformResponse(HttpStatus status,
 				 const Transformation &t) noexcept
 {
 	const char *p = headers.Get(content_encoding_header);
-	if (p != nullptr && strcmp(p, "identity") != 0) {
+	if (p != nullptr && !StringIsEqual(p, "identity")) {
 		body.Clear();
 		DispatchError(WidgetErrorCode::UNSUPPORTED_ENCODING,
 			      "Got non-identity response, cannot transform");

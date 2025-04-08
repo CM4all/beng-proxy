@@ -13,6 +13,7 @@
 #include "http/IncomingRequest.hxx"
 #include "http/Method.hxx"
 #include "http/Status.hxx"
+#include "util/StringAPI.hxx"
 
 #include <utility> // for std::unreachable()
 
@@ -61,7 +62,7 @@ AccessLogGlue::Log(const Net::Log::Datagram &d) noexcept
 	    d.http_uri != nullptr &&
 	    d.http_uri == config.ignore_localhost_200 &&
 	    d.host != nullptr &&
-	    strcmp(d.host, "localhost") == 0 &&
+	    StringIsEqual(d.host, "localhost") &&
 	    d.http_status == HttpStatus::OK)
 		return;
 

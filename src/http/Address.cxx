@@ -11,11 +11,10 @@
 #include "uri/Extract.hxx"
 #include "AllocatorPtr.hxx"
 #include "pexpand.hxx"
+#include "util/StringAPI.hxx"
 #include "util/StringCompare.hxx"
 
 #include <stdexcept>
-
-#include <string.h>
 
 HttpAddress::HttpAddress(bool _ssl,
 			 const char *_host_and_port, const char *_path) noexcept
@@ -230,7 +229,7 @@ HttpAddress::Apply(AllocatorPtr alloc,
 			? other->host_and_port
 			: "";
 
-		if (strcmp(my_host, other_host) != 0)
+		if (!StringIsEqual(my_host, other_host))
 			/* if it points to a different host, we cannot apply the
 			   address list, and so this function must fail */
 			return nullptr;
@@ -253,7 +252,7 @@ HttpAddress::RelativeTo(const HttpAddress &base) const noexcept
 		? base.host_and_port
 		: "";
 
-	if (strcmp(my_host, base_host) != 0)
+	if (!StringIsEqual(my_host, base_host))
 		return {};
 
 	return uri_relative(base.path, path);

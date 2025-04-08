@@ -13,6 +13,7 @@
 #include "translation/Vary.hxx"
 #include "istream/FileIstream.hxx"
 #include "io/FileDescriptor.hxx"
+#include "util/StringAPI.hxx"
 #include "util/StringCompare.hxx"
 #include "util/StringStrip.hxx"
 #include "util/CharUtil.hxx"
@@ -130,14 +131,14 @@ VerifyPassword(const char *crypted_password,
 {
 	if (IsAprMd5(crypted_password)) {
 		const auto result = AprMd5(given_password, crypted_password);
-		return strcmp(crypted_password, result.c_str()) == 0;
+		return StringIsEqual(crypted_password, result.c_str());
 	}
 
 	char *p = crypt(given_password, crypted_password);
 	if (p == nullptr)
 		return false;
 
-	return strcmp(p, crypted_password) == 0;
+	return StringIsEqual(p, crypted_password);
 }
 
 static FILE *

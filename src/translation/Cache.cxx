@@ -32,6 +32,7 @@
 #include "util/IntrusiveHashSet.hxx"
 #include "util/IntrusiveList.hxx"
 #include "util/SpanCast.hxx"
+#include "util/StringAPI.hxx"
 #include "util/StringSplit.hxx"
 
 #include <cassert>
@@ -105,7 +106,7 @@ struct TranslateCacheItem final : PoolHolder, CacheItem {
 		assert(_site != nullptr);
 
 		return response.site != nullptr &&
-			strcmp(_site, response.site) == 0;
+			StringIsEqual(_site, response.site);
 	}
 
 	[[gnu::pure]]
@@ -651,7 +652,7 @@ tcache_string_match(const char *a, const char *b, bool strict) noexcept
 	if (a == nullptr || b == nullptr)
 		return !strict && a == b;
 
-	return strcmp(a, b) == 0;
+	return StringIsEqual(a, b);
 }
 
 /**

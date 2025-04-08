@@ -14,6 +14,7 @@
 #include "net/Parser.hxx"
 #include "net/AllocatedSocketAddress.hxx"
 #include "net/log/Protocol.hxx"
+#include "util/StringAPI.hxx"
 #include "util/PrintException.hxx"
 
 #include <stdlib.h>
@@ -29,7 +30,7 @@ try {
 
 	SocketConfig config;
 
-	if (i + 2 <= argc && strcmp(argv[i], "--multicast-group") == 0) {
+	if (i + 2 <= argc && StringIsEqual(argv[i], "--multicast-group")) {
 		++i;
 		config.multicast_group = ParseSocketAddress(argv[i++], 0, false);
 	}

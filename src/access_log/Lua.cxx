@@ -23,6 +23,7 @@
 #include "time/Cast.hxx"
 #include "util/PrintException.hxx"
 #include "util/ScopeExit.hxx"
+#include "util/StringAPI.hxx"
 #include "util/ConstBuffer.hxx"
 
 #include <functional>
@@ -225,14 +226,14 @@ try {
 	const char *path = nullptr, *function_name = nullptr;
 
 	while (!args.empty() && args.front()[0] == '-') {
-		if (strcmp(args.front(), "--handler-code") == 0) {
+		if (StringIsEqual(args.front(), "--handler-code")) {
 			args.shift();
 
 			if (args.empty())
 				throw Usage();
 
 			handler_code = args.shift();
-		} else if (strcmp(args.front(), "--filter-exec") == 0)
+		} else if (StringIsEqual(args.front(), "--filter-exec"))
 			break;
 		else
 			throw Usage();
@@ -250,7 +251,7 @@ try {
 
 	UniqueSocketDescriptor filter_sink;
 
-	if (!args.empty() && strcmp(args.front(), "--filter-exec") == 0) {
+	if (!args.empty() && StringIsEqual(args.front(), "--filter-exec")) {
 		args.shift();
 
 		if (args.empty())

@@ -10,12 +10,11 @@
 #include "uri/PRelative.hxx"
 #include "uri/Relative.hxx"
 #include "uri/Extract.hxx"
+#include "util/StringAPI.hxx"
 #include "pexpand.hxx"
 #include "spawn/Prepared.hxx"
 #include "stock/Key.hxx"
 #include "resource_tag.hxx"
-
-#include <string.h>
 
 using std::string_view_literals::operator""sv;
 
@@ -92,7 +91,7 @@ bool
 LhttpAddress::IsSameProgram(const LhttpAddress &other) const noexcept
 {
 	// TODO: check args, params, options?
-	return strcmp(path, other.path) == 0;
+	return StringIsEqual(path, other.path);
 }
 
 LhttpAddress *

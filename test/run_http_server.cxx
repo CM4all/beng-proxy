@@ -13,12 +13,12 @@
 #include "net/UniqueSocketDescriptor.hxx"
 #include "io/UniqueFileDescriptor.hxx"
 #include "util/PrintException.hxx"
+#include "util/StringAPI.hxx"
 
 #include <memory>
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
 
 struct Instance;
 
@@ -121,23 +121,23 @@ try {
 
 	const char *mode = argv[1];
 	DemoHttpServerConnection::Mode parsed_mode;
-	if (strcmp(mode, "null") == 0)
+	if (StringIsEqual(mode, "null"))
 		parsed_mode = DemoHttpServerConnection::Mode::MODE_NULL;
-	else if (strcmp(mode, "mirror") == 0)
+	else if (StringIsEqual(mode, "mirror"))
 		parsed_mode = DemoHttpServerConnection::Mode::MIRROR;
-	else if (strcmp(mode, "close") == 0)
+	else if (StringIsEqual(mode, "close"))
 		parsed_mode = DemoHttpServerConnection::Mode::CLOSE;
-	else if (strcmp(mode, "dummy") == 0)
+	else if (StringIsEqual(mode, "dummy"))
 		parsed_mode = DemoHttpServerConnection::Mode::DUMMY;
-	else if (strcmp(mode, "fixed") == 0)
+	else if (StringIsEqual(mode, "fixed"))
 		parsed_mode = DemoHttpServerConnection::Mode::FIXED;
-	else if (strcmp(mode, "huge") == 0)
+	else if (StringIsEqual(mode, "huge"))
 		parsed_mode = DemoHttpServerConnection::Mode::HUGE_;
-	else if (strcmp(mode, "hold") == 0)
+	else if (StringIsEqual(mode, "hold"))
 		parsed_mode = DemoHttpServerConnection::Mode::HOLD;
-	else if (strcmp(mode, "nop") == 0)
+	else if (StringIsEqual(mode, "nop"))
 		parsed_mode = DemoHttpServerConnection::Mode::NOP;
-	else if (strcmp(mode, "failing-keepalive") == 0)
+	else if (StringIsEqual(mode, "failing-keepalive"))
 		parsed_mode = DemoHttpServerConnection::Mode::FAILING_KEEPALIVE;
 	else {
 		fprintf(stderr, "Unknown mode: %s\n", mode);

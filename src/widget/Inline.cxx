@@ -29,6 +29,7 @@
 #include "net/TimeoutError.hxx"
 #include "util/Cancellable.hxx"
 #include "util/LimitedConcurrencyQueue.hxx"
+#include "util/StringAPI.hxx"
 #include "util/StringCompare.hxx"
 #include "AllocatorPtr.hxx"
 #include "stopwatch.hxx"
@@ -138,7 +139,7 @@ widget_response_format(struct pool &pool, const Widget &widget,
 	assert(body);
 
 	const char *p = headers.Get(content_encoding_header);
-	if (p != nullptr && strcmp(p, "identity") != 0)
+	if (p != nullptr && !StringIsEqual(p, "identity"))
 		throw WidgetError(widget, WidgetErrorCode::UNSUPPORTED_ENCODING,
 				  "widget sent non-identity response, cannot embed");
 

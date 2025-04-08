@@ -11,6 +11,7 @@
 #include "net/log/OneLine.hxx"
 #include "time/Convert.hxx"
 #include "util/ConstBuffer.hxx"
+#include "util/StringAPI.hxx"
 
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -174,7 +175,7 @@ open_log_file(const char *path)
 	static char cache_path[PATH_MAX];
 
 	if (cache_fd.IsDefined()) {
-		if (strcmp(path, cache_path) == 0)
+		if (StringIsEqual(path, cache_path))
 			return cache_fd;
 
 		cache_fd.Close();
@@ -217,7 +218,7 @@ Dump(const char *template_path, const Net::Log::Datagram &d)
 int main(int argc, char **argv)
 {
 	int argi = 1;
-	if (argi < argc && strcmp(argv[argi], "--localtime") == 0) {
+	if (argi < argc && StringIsEqual(argv[argi], "--localtime")) {
 		++argi;
 		use_local_time = true;
 	}

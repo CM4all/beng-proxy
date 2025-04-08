@@ -13,11 +13,10 @@
 #include "http/Method.hxx"
 #include "io/FdHolder.hxx"
 #include "util/CharUtil.hxx"
+#include "util/StringAPI.hxx"
 #include "AllocatorPtr.hxx"
 
 #include <fmt/format.h>
-
-#include <string.h>
 
 static const char *
 cgi_address_name(const CgiAddress *address)
@@ -81,19 +80,19 @@ PrepareCgi(struct pool &pool, PreparedChildProcess &p,
 
 	const char *content_type = nullptr;
 	for (const auto &pair : headers) {
-		if (strcmp(pair.key, "content-type") == 0) {
+		if (StringIsEqual(pair.key, "content-type")) {
 			content_type = pair.value;
 			continue;
 		}
 
-		if (strcmp(pair.key, "proxy") == 0)
+		if (StringIsEqual(pair.key, "proxy"))
 			/* work around vulnerability in several CGI programs
 			   which take the environment variable HTTP_PROXY as
 			   proxy specification for their internal HTTP
 			   clients; see CVE-2016-5385 and others */
 			continue;
 
-		if (strcmp(pair.key, "x-cm4all-https") == 0)
+		if (StringIsEqual(pair.key, "x-cm4all-https"))
 			/* this will be translated to HTTPS */
 			continue;
 
@@ -121,7 +120,7 @@ PrepareCgi(struct pool &pool, PreparedChildProcess &p,
 	}
 
 	const char *https = headers.Get(x_cm4all_https_header);
-	if (https != nullptr && strcmp(https, "on") == 0)
+	if (https != nullptr && StringIsEqual(https, "on"))
 		p.PutEnv("HTTPS=on");
 
 	p.Append(path);

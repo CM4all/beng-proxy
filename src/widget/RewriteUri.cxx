@@ -25,6 +25,7 @@
 #include "bp/session/Lease.hxx"
 #include "util/SpanCast.hxx"
 #include "util/Cancellable.hxx"
+#include "util/StringAPI.hxx"
 #include "util/StringCompare.hxx"
 #include "util/StringSplit.hxx"
 #include "stopwatch.hxx"
@@ -231,7 +232,7 @@ do_rewrite_widget_uri(AllocatorPtr alloc, WidgetContext &ctx,
 
 	if (widget.cls->untrusted_host != nullptr &&
 	    (ctx.untrusted_host == nullptr ||
-	     strcmp(widget.cls->untrusted_host, ctx.untrusted_host) != 0))
+	     !StringIsEqual(widget.cls->untrusted_host, ctx.untrusted_host)))
 		uri = uri_replace_hostname(alloc, uri, widget.cls->untrusted_host);
 	else if (widget.cls->untrusted_prefix != nullptr)
 		uri = uri_add_prefix(alloc, uri, ctx.absolute_uri, ctx.untrusted_host,

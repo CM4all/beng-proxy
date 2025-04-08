@@ -8,6 +8,7 @@
 #include "strmap.hxx"
 #include "AllocatorPtr.hxx"
 #include "util/IterableSplitString.hxx"
+#include "util/StringAPI.hxx"
 #include "util/StringSplit.hxx"
 
 #include <string.h>
@@ -64,10 +65,10 @@ args_format_n(AllocatorPtr alloc, const StringMap *args,
 
 	if (args != nullptr) {
 		for (const auto &i : *args) {
-			if ((replace_key != nullptr && strcmp(i.key, replace_key) == 0) ||
-			    (replace_key2 != nullptr && strcmp(i.key, replace_key2) == 0) ||
-			    (replace_key3 != nullptr && strcmp(i.key, replace_key3) == 0) ||
-			    (remove_key != nullptr && strcmp(i.key, remove_key) == 0))
+			if ((replace_key != nullptr && StringIsEqual(i.key, replace_key)) ||
+			    (replace_key2 != nullptr && StringIsEqual(i.key, replace_key2)) ||
+			    (replace_key3 != nullptr && StringIsEqual(i.key, replace_key3)) ||
+			    (remove_key != nullptr && StringIsEqual(i.key, remove_key)))
 				continue;
 			if (p > ret)
 				*p++ = '&';

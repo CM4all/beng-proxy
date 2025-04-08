@@ -7,11 +7,11 @@
 #include "Class.hxx"
 #include "Ref.hxx"
 #include "uri/PRelative.hxx"
+#include "util/StringAPI.hxx"
 #include "util/StringSplit.hxx"
 #include "http/Method.hxx"
 #include "AllocatorPtr.hxx"
 
-#include <string.h>
 #include <assert.h>
 
 bool
@@ -21,7 +21,7 @@ Widget::HasFocus() const noexcept
 
 	return id != nullptr &&
 		parent->from_request.focus_ref != nullptr &&
-		strcmp(id, parent->from_request.focus_ref->id) == 0 &&
+		StringIsEqual(id, parent->from_request.focus_ref->id) &&
 		parent->from_request.focus_ref->next == nullptr;
 }
 
@@ -32,7 +32,7 @@ Widget::DescendantHasFocus() const noexcept
 
 	return id != nullptr &&
 		parent->from_request.focus_ref != nullptr &&
-		strcmp(id, parent->from_request.focus_ref->id) == 0 &&
+		StringIsEqual(id, parent->from_request.focus_ref->id) &&
 		parent->from_request.focus_ref->next != nullptr;
 }
 

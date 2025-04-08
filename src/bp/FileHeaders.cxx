@@ -16,6 +16,7 @@
 #include "http/Method.hxx"
 #include "event/Loop.hxx"
 #include "io/FileDescriptor.hxx"
+#include "util/StringAPI.hxx"
 
 #include <assert.h>
 #include <stdlib.h>
@@ -68,7 +69,7 @@ CheckETagList(const char *list, FileDescriptor fd,
 {
 	assert(list != nullptr);
 
-	if (strcmp(list, "*") == 0)
+	if (StringIsEqual(list, "*"))
 		return true;
 
 	char buffer[256];
@@ -122,7 +123,7 @@ check_if_range(const char *if_range,
 
 	char etag[256];
 	GetAnyETag(etag, sizeof(etag), fd, st, use_xattr);
-	return strcmp(if_range, etag) == 0;
+	return StringIsEqual(if_range, etag);
 }
 
 /**

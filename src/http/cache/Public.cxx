@@ -900,7 +900,7 @@ CheckETagList(const char *list, const StringMap &response_headers) noexcept
 {
 	assert(list != nullptr);
 
-	if (strcmp(list, "*") == 0)
+	if (StringIsEqual(list, "*"))
 		return true;
 
 	const char *etag = response_headers.Get(etag_header);
@@ -947,7 +947,7 @@ CheckCacheRequest(struct pool &pool, const HttpCacheRequestInfo &info,
 	if (info.if_modified_since && !ignore_if_modified_since) {
 		const char *last_modified = document.response_headers.Get(last_modified_header);
 		if (last_modified != nullptr) {
-			if (strcmp(info.if_modified_since, last_modified) == 0) {
+			if (StringIsEqual(info.if_modified_since, last_modified)) {
 				/* common fast path: client sends the previous
 				   Last-Modified header string as-is */
 				DispatchNotModified(pool, document, handler);

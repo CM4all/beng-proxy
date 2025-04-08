@@ -30,6 +30,7 @@
 #include "io/UniqueFileDescriptor.hxx"
 #include "io/SpliceSupport.hxx"
 #include "util/DestructObserver.hxx"
+#include "util/StringAPI.hxx"
 #include "util/StringSplit.hxx"
 #include "util/StringStrip.hxx"
 #include "util/Cancellable.hxx"
@@ -1331,7 +1332,7 @@ fcgi_client_request(struct pool *pool,
 		ps("CONTENT_TYPE", content_type);
 
 	if (const char *https = headers.Get(x_cm4all_https_header);
-	    https != nullptr && strcmp(https, "on") == 0)
+	    https != nullptr && StringIsEqual(https, "on"))
 		ps("HTTPS", https);
 
 	ps.Headers(headers);

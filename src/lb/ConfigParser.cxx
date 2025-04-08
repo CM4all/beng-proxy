@@ -688,7 +688,7 @@ LbConfigParser::Cluster::ParseLine(FileLineParser &line)
 		line.ExpectEnd();
 	} else if (StringIsEqual(word, "source_address")) {
 		const char *address = line.ExpectValueAndEnd();
-		if (strcmp(address, "transparent") != 0)
+		if (!StringIsEqual(address, "transparent"))
 			throw LineParser::Error("\"transparent\" expected");
 
 		config.transparent_source = true;
@@ -911,7 +911,7 @@ LbConfigParser::Branch::AddGoto(LbGotoConfig &&destination,
 			throw LineParser::Error("Protocol mismatch");
 
 		const char *if_ = line.NextWord();
-		if (if_ == nullptr || strcmp(if_, "if") != 0)
+		if (if_ == nullptr || !StringIsEqual(if_, "if"))
 			throw LineParser::Error("'if' or end of line expected");
 
 		auto condition = ParseCondition(line);

@@ -10,6 +10,7 @@
 #include "ClusterConfig.hxx"
 #include "Branch.hxx"
 #include "lua/Class.hxx"
+#include "util/StringAPI.hxx"
 
 using namespace Lua;
 
@@ -36,7 +37,7 @@ LuaGotoIndex(lua_State *L)
 		luaL_argerror(L, 2, "string expected");
 
 	const char *name = lua_tostring(L, 2);
-	if (strcmp(name, "type") == 0) {
+	if (StringIsEqual(name, "type")) {
 		return std::visit([L](const auto &value){
 			using T = std::decay_t<decltype(value)>;
 
@@ -61,7 +62,7 @@ LuaGotoIndex(lua_State *L)
 				static_assert(always_false_v<T>);
 			}
 		}, g.destination);
-	} else if (strcmp(name, "name") == 0) {
+	} else if (StringIsEqual(name, "name")) {
 		const std::string_view result = std::visit([](const auto &value) -> std::string_view {
 			using T = std::decay_t<decltype(value)>;
 
@@ -84,13 +85,13 @@ LuaGotoIndex(lua_State *L)
 			Lua::Push(L, result);
 			return 1;
 		}
-	} else if (strcmp(name, "status") == 0) {
+	} else if (StringIsEqual(name, "status")) {
 		if (auto *value = std::get_if<const LbSimpleHttpResponse *>(&g.destination)) {
 			const auto &response = **value;
 			Lua::Push(L, lua_Integer(response.status));
 			return 1;
 		}
-	} else if (strcmp(name, "location") == 0) {
+	} else if (StringIsEqual(name, "location")) {
 		if (auto *value = std::get_if<const LbSimpleHttpResponse *>(&g.destination)) {
 			const auto &response = **value;
 			if (!response.location.empty()) {
@@ -98,7 +99,7 @@ LuaGotoIndex(lua_State *L)
 				return 1;
 			}
 		}
-	} else if (strcmp(name, "message") == 0) {
+	} else if (StringIsEqual(name, "message")) {
 		if (auto *value = std::get_if<const LbSimpleHttpResponse *>(&g.destination)) {
 			const auto &response = **value;
 			if (!response.message.empty()) {

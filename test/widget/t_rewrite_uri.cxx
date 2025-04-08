@@ -22,6 +22,7 @@
 #include "pool/SharedPtr.hxx"
 #include "widget/Inline.hxx"
 #include "util/Cancellable.hxx"
+#include "util/StringAPI.hxx"
 #include "stopwatch.hxx"
 #include "AllocatorPtr.hxx"
 
@@ -94,19 +95,19 @@ ResolveWidget(AllocatorPtr,
 	      [[maybe_unused]] CancellablePointer &cancel_ptr) noexcept
 {
 
-	if (strcmp(widget.class_name, "1") == 0) {
+	if (StringIsEqual(widget.class_name, "1")) {
 		widget.cls = NewFromPool<MakeWidgetClass>(widget.pool, widget.pool, "/1/");
-	} else if (strcmp(widget.class_name, "2") == 0) {
+	} else if (StringIsEqual(widget.class_name, "2")) {
 		widget.cls = NewFromPool<MakeWidgetClass>(widget.pool, widget.pool, "/2");
-	} else if (strcmp(widget.class_name, "3") == 0) {
+	} else if (StringIsEqual(widget.class_name, "3")) {
 		auto *cls = NewFromPool<MakeWidgetClass>(widget.pool, widget.pool, "/3");
 		cls->local_uri = "/resources/3/";
 		widget.cls = cls;
-	} else if (strcmp(widget.class_name, "untrusted_host") == 0) {
+	} else if (StringIsEqual(widget.class_name, "untrusted_host")) {
 		auto *cls = NewFromPool<MakeWidgetClass>(widget.pool, widget.pool, "/1/");
 		cls->untrusted_host = "untrusted.host";
 		widget.cls = cls;
-	} else if (strcmp(widget.class_name, "untrusted_raw_site_suffix") == 0) {
+	} else if (StringIsEqual(widget.class_name, "untrusted_raw_site_suffix")) {
 		auto *cls = NewFromPool<MakeWidgetClass>(widget.pool, widget.pool, "/1/");
 		cls->untrusted_raw_site_suffix = "_urss";
 		widget.cls = cls;

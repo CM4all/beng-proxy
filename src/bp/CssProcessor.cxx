@@ -13,6 +13,7 @@
 #include "istream/istream_string.hxx"
 #include "pool/SharedPtr.hxx"
 #include "pool/pool.hxx"
+#include "util/StringAPI.hxx"
 #include "stopwatch.hxx"
 
 #include <assert.h>
@@ -169,13 +170,13 @@ css_processor_parser_property_keyword(const char *name, std::string_view value,
 	CssProcessor *processor = (CssProcessor *)ctx;
 
 	if (css_processor_option_rewrite_url(processor) &&
-	    strcmp(name, "-c-mode") == 0) {
+	    StringIsEqual(name, "-c-mode")) {
 		processor->uri_rewrite.mode = parse_uri_mode(value);
 		css_processor_replace_add(processor, start, end, nullptr);
 	}
 
 	if (css_processor_option_rewrite_url(processor) &&
-	    strcmp(name, "-c-view") == 0 &&
+	    StringIsEqual(name, "-c-view") &&
 	    value.size() < sizeof(processor->uri_rewrite.view)) {
 		*std::copy(value.begin(), value.end(),
 			   processor->uri_rewrite.view) = 0;

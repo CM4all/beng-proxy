@@ -17,11 +17,10 @@
 #include "pool/Ptr.hxx"
 #include "PInstance.hxx"
 #include "util/Cancellable.hxx"
+#include "util/StringAPI.hxx"
 #include "stopwatch.hxx"
 
 #include <gtest/gtest.h>
-
-#include <string.h>
 
 class MyTranslationService final : public TranslationService, Cancellable {
 public:
@@ -69,13 +68,13 @@ MyTranslationService::SendRequest(AllocatorPtr alloc,
 	assert(request.session.data() == nullptr);
 	assert(request.param == NULL);
 
-	if (strcmp(request.widget_type, "sync") == 0) {
+	if (StringIsEqual(request.widget_type, "sync")) {
 		auto response = UniquePoolPtr<TranslateResponse>::Make(alloc.GetPool());
 		response->address = *http_address_parse(alloc, "http://foo/");
 		response->views.push_front(*alloc.New<WidgetView>(nullptr));
 		response->views.front().address = {ShallowCopy(), response->address};
 		handler.OnTranslateResponse(std::move(response));
-	} else if (strcmp(request.widget_type, "block") == 0) {
+	} else if (StringIsEqual(request.widget_type, "block")) {
 		cancel_ptr = *this;
 	} else
 		assert(0);

@@ -13,6 +13,7 @@
 #include "uri/Args.hxx"
 #include "uri/PEdit.hxx"
 #include "uri/PRelative.hxx"
+#include "util/StringAPI.hxx"
 #include "util/StringCompare.hxx"
 #include "util/StringSplit.hxx"
 
@@ -244,7 +245,7 @@ compare_widget_path(const Widget *widget, const char *other) noexcept
 	if (path == nullptr)
 		return false;
 
-	return strcmp(path, other) == 0;
+	return StringIsEqual(path, other);
 }
 
 const char *

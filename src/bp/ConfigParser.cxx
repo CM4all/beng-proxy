@@ -81,7 +81,7 @@ SslClientConfigParser::ParseLine(FileLineParser &line)
 {
 	const char *word = line.ExpectWord();
 
-	if (strcmp(word, "cert") == 0) {
+	if (StringIsEqual(word, "cert")) {
 		const char *cert_file = line.ExpectValue();
 		const char *key_file = line.ExpectValue();
 
@@ -112,13 +112,13 @@ BpConfigParser::Listener::ParseLine(FileLineParser &line)
 {
 	const char *word = line.ExpectWord();
 
-	if (strcmp(word, "bind") == 0) {
+	if (StringIsEqual(word, "bind")) {
 		if (!config.bind_address.IsNull())
 			throw LineParser::Error("Bind address already specified");
 
 		config.bind_address = ParseSocketAddress(line.ExpectValueAndEnd(),
 							 80, true);
-	} else if (strcmp(word, "interface") == 0) {
+	} else if (StringIsEqual(word, "interface")) {
 		config.interface = line.ExpectValueAndEnd();
 	} else if (StringIsEqual(word, "mode")) {
 		if (config.bind_address.IsNull() ||
@@ -138,17 +138,17 @@ BpConfigParser::Listener::ParseLine(FileLineParser &line)
 	} else if (StringIsEqual(word, "mptcp")) {
 		config.mptcp = line.NextBool();
 		line.ExpectEnd();
-	} else if (strcmp(word, "tag") == 0) {
+	} else if (StringIsEqual(word, "tag")) {
 		config.tag = line.ExpectValueAndEnd();
-	} else if (strcmp(word, "zeroconf_service") == 0 ||
-		   /* old option name: */ strcmp(word, "zeroconf_type") == 0) {
+	} else if (StringIsEqual(word, "zeroconf_service") ||
+		   /* old option name: */ StringIsEqual(word, "zeroconf_type")) {
 #ifdef HAVE_AVAHI
 		config.zeroconf_service = MakeZeroconfServiceType(line.ExpectValueAndEnd(),
 								  "_tcp");
 #else
 		throw LineParser::Error("Zeroconf support is disabled at compile time");
 #endif
-	} else if (strcmp(word, "zeroconf_interface") == 0) {
+	} else if (StringIsEqual(word, "zeroconf_interface")) {
 #ifdef HAVE_AVAHI
 		if (config.zeroconf_service.empty())
 			throw LineParser::Error("zeroconf_interface without zeroconf_service");
@@ -160,25 +160,25 @@ BpConfigParser::Listener::ParseLine(FileLineParser &line)
 #else
 		throw LineParser::Error("Zeroconf support is disabled at compile time");
 #endif
-	} else if (strcmp(word, "ack_timeout") == 0) {
+	} else if (StringIsEqual(word, "ack_timeout")) {
 		config.tcp_user_timeout = line.NextPositiveInteger() * 1000;
 		line.ExpectEnd();
-	} else if (strcmp(word, "keepalive") == 0) {
+	} else if (StringIsEqual(word, "keepalive")) {
 		config.keepalive = line.NextBool();
 		line.ExpectEnd();
-	} else if (strcmp(word, "v6only") == 0) {
+	} else if (StringIsEqual(word, "v6only")) {
 		config.v6only = line.NextBool();
 		line.ExpectEnd();
-	} else if (strcmp(word, "reuse_port") == 0) {
+	} else if (StringIsEqual(word, "reuse_port")) {
 		config.reuse_port = line.NextBool();
 		line.ExpectEnd();
-	} else if (strcmp(word, "free_bind") == 0) {
+	} else if (StringIsEqual(word, "free_bind")) {
 		config.free_bind = line.NextBool();
 		line.ExpectEnd();
-	} else if (strcmp(word, "auth_alt_host") == 0) {
+	} else if (StringIsEqual(word, "auth_alt_host")) {
 		config.auth_alt_host = line.NextBool();
 		line.ExpectEnd();
-	} else if (strcmp(word, "ssl") == 0) {
+	} else if (StringIsEqual(word, "ssl")) {
 		bool value = line.NextBool();
 
 		if (config.ssl && !value)
@@ -187,7 +187,7 @@ BpConfigParser::Listener::ParseLine(FileLineParser &line)
 		line.ExpectEnd();
 
 		config.ssl = value;
-	} else if (strcmp(word, "ssl_cert") == 0) {
+	} else if (StringIsEqual(word, "ssl_cert")) {
 		if (!config.ssl)
 			throw LineParser::Error("SSL is not enabled");
 
@@ -196,7 +196,7 @@ BpConfigParser::Listener::ParseLine(FileLineParser &line)
 		line.ExpectEnd();
 
 		config.ssl_config.cert_key.emplace_back(path, key_path);
-	} else if (strcmp(word, "ssl_ca_cert") == 0) {
+	} else if (StringIsEqual(word, "ssl_ca_cert")) {
 		if (!config.ssl)
 			throw LineParser::Error("SSL is not enabled");
 
@@ -204,22 +204,22 @@ BpConfigParser::Listener::ParseLine(FileLineParser &line)
 			throw LineParser::Error("Certificate already configured");
 
 		config.ssl_config.ca_cert_file = line.ExpectValueAndEnd();
-	} else if (strcmp(word, "ssl_verify") == 0) {
+	} else if (StringIsEqual(word, "ssl_verify")) {
 		if (!config.ssl)
 			throw LineParser::Error("SSL is not enabled");
 
 		const char *value = line.ExpectValueAndEnd();
-		if (strcmp(value, "yes") == 0)
+		if (StringIsEqual(value, "yes"))
 			config.ssl_config.verify = SslVerify::YES;
-		else if (strcmp(value, "no") == 0)
+		else if (StringIsEqual(value, "no"))
 			config.ssl_config.verify = SslVerify::NO;
-		else if (strcmp(value, "optional") == 0)
+		else if (StringIsEqual(value, "optional"))
 			config.ssl_config.verify = SslVerify::OPTIONAL;
 		else
 			throw LineParser::Error("yes/no expected");
 	} else if (StringIsEqual(word, "translation_socket")) {
 		config.translation_sockets.emplace_front(line.ExpectValueAndEnd());
-	} else if (strcmp(word, "handler") == 0) {
+	} else if (StringIsEqual(word, "handler")) {
 		config.handler = ParseListenerHandler(line.ExpectValueAndEnd());
 	} else if (StringIsEqual(word, "access_logger")) {
 		const char *value = line.ExpectValueAndEnd();
@@ -271,13 +271,13 @@ BpConfigParser::Control::ParseLine(FileLineParser &line)
 {
 	const char *word = line.ExpectWord();
 
-	if (strcmp(word, "bind") == 0) {
+	if (StringIsEqual(word, "bind")) {
 		config.bind_address = ParseSocketAddress(line.ExpectValueAndEnd(),
 							 BengControl::DEFAULT_PORT, true);
-	} else if (strcmp(word, "multicast_group") == 0) {
+	} else if (StringIsEqual(word, "multicast_group")) {
 		config.multicast_group = ParseSocketAddress(line.ExpectValueAndEnd(),
 							    0, false);
-	} else if (strcmp(word, "interface") == 0) {
+	} else if (StringIsEqual(word, "interface")) {
 		config.interface = line.ExpectValueAndEnd();
 	} else
 		throw LineParser::Error("Unknown option");
@@ -308,11 +308,11 @@ BpConfigParser::ParseLine2(FileLineParser &line)
 {
 	const char *word = line.ExpectWord();
 
-	if (strcmp(word, "listener") == 0)
+	if (StringIsEqual(word, "listener"))
 		CreateListener(line);
-	else if (strcmp(word, "control") == 0)
+	else if (StringIsEqual(word, "control"))
 		CreateControl(line);
-	else if (strcmp(word, "access_logger") == 0) {
+	else if (StringIsEqual(word, "access_logger")) {
 		if (line.SkipSymbol('{')) {
 			line.ExpectEnd();
 
@@ -329,20 +329,20 @@ BpConfigParser::ParseLine2(FileLineParser &line)
 			current_access_log = &it->second;
 			SetChild(std::make_unique<AccessLogConfigParser>());
 		}
-	} else if (strcmp(word, "child_error_logger") == 0) {
+	} else if (StringIsEqual(word, "child_error_logger")) {
 		line.ExpectSymbolAndEol('{');
 
 		current_access_log = &config.child_error_log;
 		SetChild(std::make_unique<AccessLogConfigParser>(true));
-	} else if (strcmp(word, "set") == 0) {
+	} else if (StringIsEqual(word, "set")) {
 		const char *name = line.ExpectWord();
 		line.ExpectSymbol('=');
 		const char *value = line.ExpectValueAndEnd();
 		config.HandleSet(name, value);
-	} else if (strcmp(word, "spawn") == 0) {
+	} else if (StringIsEqual(word, "spawn")) {
 		line.ExpectSymbolAndEol('{');
 		SetChild(std::make_unique<SpawnConfigParser>(config.spawn));
-	} else if (strcmp(word, "ssl_client") == 0) {
+	} else if (StringIsEqual(word, "ssl_client")) {
 		line.ExpectSymbolAndEol('{');
 		SetChild(std::make_unique<SslClientConfigParser>());
 	} else if (StringIsEqual(word, "emulate_mod_auth_easy")) {

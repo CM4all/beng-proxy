@@ -5,10 +5,9 @@
 #include "VList.hxx"
 #include "View.hxx"
 #include "AllocatorPtr.hxx"
+#include "util/StringAPI.hxx"
 
 #include <algorithm> // for std::any_of()
-
-#include <string.h>
 
 WidgetViewList
 Clone(AllocatorPtr alloc, const WidgetViewList &src) noexcept
@@ -41,7 +40,7 @@ FindByName(const WidgetViewList &list, const char *name) noexcept
 	for (++view; view != list.end(); ++view) {
 		assert(view->name != nullptr);
 
-		if (strcmp(view->name, name) == 0)
+		if (StringIsEqual(view->name, name))
 			return &*view;
 	}
 

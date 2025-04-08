@@ -23,8 +23,6 @@
 
 #include <stdexcept>
 
-#include <string.h>
-
 CgiAddress::CgiAddress(AllocatorPtr alloc, const CgiAddress &src) noexcept
 	:path(alloc.Dup(src.path)),
 	 args(alloc, src.args),
@@ -248,7 +246,7 @@ bool
 CgiAddress::IsSameProgram(const CgiAddress &other) const noexcept
 {
 	// TODO: check args, params, options?
-	return strcmp(path, other.path) == 0;
+	return StringIsEqual(path, other.path);
 }
 
 bool

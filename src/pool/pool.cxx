@@ -13,6 +13,7 @@
 #include "util/Recycler.hxx"
 #include "util/RoundPowerOfTwo.hxx"
 #include "util/Poison.hxx"
+#include "util/StringAPI.hxx"
 
 #include <fmt/format.h>
 
@@ -20,7 +21,6 @@
 
 #include <assert.h>
 #include <stdlib.h>
-#include <string.h>
 
 #ifdef major
 /* avoid name clash with system header macro */
@@ -570,7 +570,7 @@ pool_increment_ref(std::forward_list<PoolRef> &list TRACE_ARGS_DECL) noexcept
 {
 #ifdef ENABLE_TRACE
 	for (auto &ref : list) {
-		if (ref.line == line && strcmp(ref.file, file) == 0) {
+		if (ref.line == line && StringIsEqual(ref.file, file)) {
 			++ref.count;
 			return;
 		}

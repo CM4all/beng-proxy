@@ -15,6 +15,7 @@
 #include "http/Method.hxx"
 #include "http/Status.hxx"
 #include "util/IterableSplitString.hxx"
+#include "util/StringAPI.hxx"
 #include "util/StringCompare.hxx"
 #include "util/StringStrip.hxx"
 #include "AllocatorPtr.hxx"
@@ -62,7 +63,7 @@ http_cache_request_evaluate(HttpMethod method,
 		}
 	} else if (obey_no_cache) {
 		if (const char *pragma = headers.Get(pragma_header);
-		    pragma != nullptr && strcmp(pragma, "no-cache") == 0)
+		    pragma != nullptr && StringIsEqual(pragma, "no-cache"))
 			return std::nullopt;
 	}
 
@@ -88,7 +89,7 @@ http_cache_vary_fits(const StringMap &vary, const StringMap &headers) noexcept
 		if (value == nullptr)
 			value = "";
 
-		if (strcmp(i.value, value) != 0)
+		if (!StringIsEqual(i.value, value))
 			/* mismatch in one of the "Vary" request headers */
 			return false;
 	}
@@ -245,7 +246,7 @@ http_cache_response_evaluate(const HttpCacheRequestInfo &request_info,
 		if (*value == 0)
 			continue;
 
-		if (strcmp(value, "*") == 0)
+		if (StringIsEqual(value, "*"))
 			/* RFC 2616 13.6: A Vary header field-value of
 			   "*" always fails to match and subsequent
 			   requests on that resource can only be
@@ -303,5 +304,5 @@ http_cache_prefer_cached(const HttpCacheDocument &document,
 
 	/* if the ETags are the same, then the resource hasn't changed,
 	   but the server was too lazy to check that properly */
-	return etag != nullptr && strcmp(etag, document.info.etag) == 0;
+	return etag != nullptr && StringIsEqual(etag, document.info.etag);
 }

@@ -6,8 +6,7 @@
 #include "Class.hxx"
 #include "Error.hxx"
 #include "lib/fmt/ToBuffer.hxx"
-
-#include <string.h>
+#include "util/StringAPI.hxx"
 
 bool
 Widget::InitApproval(bool self_container) noexcept
@@ -25,7 +24,7 @@ Widget::InitApproval(bool self_container) noexcept
 	}
 
 	if (parent->class_name != NULL &&
-	    strcmp(parent->class_name, class_name) == 0)
+	    StringIsEqual(parent->class_name, class_name))
 		/* approved by SELF_CONTAINER */
 		return true;
 

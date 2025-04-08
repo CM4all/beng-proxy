@@ -9,6 +9,7 @@
 #include "util/ByteOrder.hxx"
 #include "util/CharUtil.hxx"
 #include "util/SpanCast.hxx"
+#include "util/StringAPI.hxx"
 #include "AllocatorPtr.hxx"
 
 #include <stdexcept>
@@ -76,12 +77,12 @@ static void
 handle_fcgi_param(struct pool *pool, FcgiRequest *r,
 		  const char *name, const char *value)
 {
-	if (strcmp(name, "REQUEST_METHOD") == 0) {
-		if (strcmp(value, "HEAD") == 0)
+	if (StringIsEqual(name, "REQUEST_METHOD")) {
+		if (StringIsEqual(value, "HEAD"))
 			r->method = HttpMethod::HEAD;
-		else if (strcmp(value, "POST") == 0)
+		else if (StringIsEqual(value, "POST"))
 			r->method = HttpMethod::POST;
-	} else if (strcmp(name, "REQUEST_URI") == 0) {
+	} else if (StringIsEqual(name, "REQUEST_URI")) {
 		r->uri = p_strdup(pool, value);
 	} else if (memcmp(name, "HTTP_", 5) == 0 && name[5] != 0) {
 		char *p = p_strdup(pool, name + 5);

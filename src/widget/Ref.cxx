@@ -5,9 +5,9 @@
 #include "Ref.hxx"
 #include "AllocatorPtr.hxx"
 #include "util/IterableSplitString.hxx"
+#include "util/StringAPI.hxx"
 
 #include <assert.h>
-#include <string.h>
 
 const WidgetRef *
 widget_ref_parse(AllocatorPtr alloc, const char *_p) noexcept
@@ -44,7 +44,7 @@ widget_ref_includes(const WidgetRef *outer,
 	assert(inner != nullptr);
 
 	while (true) {
-		if (strcmp(outer->id, inner->id) != 0)
+		if (!StringIsEqual(outer->id, inner->id))
 			return false;
 
 		outer = outer->next;
