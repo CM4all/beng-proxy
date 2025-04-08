@@ -119,7 +119,7 @@ ChildStockItem::Spawn(ChildStockClass &cls, const void *info,
 		   call if the spawner has closed the socket without
 		   sending something */
 		if (p.return_cgroup.IsDefined())
-			p.return_stderr.Close();
+			p.return_cgroup.Close();
 
 		// TODO do not receive synchronously
 		const auto cgroup_fd = EasyReceiveMessageWithOneFD(return_cgroup);

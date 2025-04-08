@@ -2,6 +2,7 @@ cm4all-beng-proxy (19.17) unstable; urgency=low
 
   * translation: add packets RATE_LIMIT_SITE_TRAFFIC, ARCH
   * zeroconf: add "arch" TXT record to published services
+  * spawn: fix hanging main process after spawner failure (second try)
 
  --   
 
