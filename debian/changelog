@@ -1,5 +1,6 @@
 cm4all-beng-proxy (19.18) unstable; urgency=low
 
+  * bp: fix READ_FILE when file does not exist (19.14 regression)
   * zeroconf: support "weight" TXT record
 
  --   

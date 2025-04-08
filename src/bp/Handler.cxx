@@ -1026,6 +1026,11 @@ Request::CheckHandleReadFile(const TranslateResponse &response) noexcept
 
 	std::tie(translate.request.read_file, translate.read_file_lease) = instance.file_cache.Get(response.read_file, 256);
 
+	if (translate.request.read_file.data() == nullptr)
+		/* special case: if the file does not exist, return an empty
+		   READ_FILE packet to the translation server */
+		translate.request.read_file = AsBytes(""sv);
+
 	SubmitTranslateRequest();
 	return true;
 }
