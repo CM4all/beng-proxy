@@ -25,6 +25,7 @@
 #include "util/DereferenceIterator.hxx"
 #include "util/djb_hash.hxx"
 #include "util/FNVHash.hxx"
+#include "util/LeakDetector.hxx"
 #include "AllocatorPtr.hxx"
 #include "HttpMessageResponse.hxx"
 #include "lease.hxx"
@@ -63,6 +64,72 @@ CalculateStickyHash(std::span<const std::byte> source) noexcept
 
 class LbCluster::StickyRing final
 	: public MemberHashRing<ZeroconfMemberMap::iterator> {};
+
+class LbCluster::ZeroconfMember final : LeakDetector {
+	AllocatedSocketAddress address;
+
+	const FailureRef failure;
+
+	const std::unique_ptr<LbMonitorRef> monitor;
+
+	mutable std::string log_name;
+
+	/**
+	 * The precalculated hash of #address for Rendezvous
+	 * Hashing.
+	 */
+	sticky_hash_t address_hash;
+
+	/**
+	 * The hash of the sticky attribute of the current
+	 * request (e.g. the "Host" header) and this server
+	 * address.
+	 */
+	sticky_hash_t rendezvous_hash;
+
+	Arch arch;
+
+public:
+	ZeroconfMember(std::string_view key,
+		       Arch _arch,
+		       SocketAddress _address,
+		       ReferencedFailureInfo &_failure,
+		       LbMonitorStock *monitors) noexcept;
+	~ZeroconfMember() noexcept;
+
+	ZeroconfMember(const ZeroconfMember &) = delete;
+	ZeroconfMember &operator=(const ZeroconfMember &) = delete;
+
+	SocketAddress GetAddress() const noexcept {
+		return address;
+	}
+
+	void Update(SocketAddress _address, Arch _arch) noexcept;
+
+	void CalculateRendezvousHash(std::span<const std::byte> sticky_source) noexcept;
+
+	Arch GetArch() const noexcept {
+		return arch;
+	}
+
+	sticky_hash_t GetRendezvousHash() const noexcept {
+		return rendezvous_hash;
+	}
+
+	auto &GetFailureRef() const noexcept {
+		return failure;
+	}
+
+	FailureInfo &GetFailureInfo() const noexcept {
+		return *failure;
+	}
+
+	/**
+	 * Obtain a name identifying this object for logging.
+	 */
+	[[gnu::pure]]
+	const char *GetLogName(const char *key) const noexcept;
+};
 
 LbCluster::ZeroconfMember::ZeroconfMember(std::string_view key,
 					  Arch _arch,
@@ -114,7 +181,7 @@ LbCluster::ZeroconfMember::CalculateRendezvousHash(std::span<const std::byte> st
 	rendezvous_hash = RendezvousHashAlgorithm::BinaryHash(sticky_source, address_hash);
 }
 
-#endif
+#endif // HAVE_AVAHI
 
 LbCluster::LbCluster(const LbClusterConfig &_config,
 		     const LbContext &context,
