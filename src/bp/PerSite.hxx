@@ -27,6 +27,8 @@ class BpPerSite final
 	TokenBucket request_count_throttle;
 	TokenBucket request_traffic_throttle;
 
+	double expires = 0;
+
 public:
 	explicit BpPerSite(StringWithHash _site) noexcept
 		:site(_site.value), hash(_site.hash) {}
@@ -43,7 +45,13 @@ public:
 	};
 
 	bool CheckRequestCount(TokenBucketConfig config, double now) noexcept {
-		return request_count_throttle.Check(config, now, 1);
+		bool result = request_count_throttle.Check(config, now, 1);
+
+		if (double full_time = request_count_throttle.GetFullTime(config);
+		    full_time > expires)
+			expires = full_time;
+
+		return result;
 	}
 
 	bool CheckRequestTraffic(double now) const noexcept {
@@ -52,11 +60,14 @@ public:
 
 	void UpdateRequestTraffic(TokenBucketConfig config, double now, double size) noexcept {
 		request_traffic_throttle.Update(config, now, size);
+
+		if (double full_time = request_traffic_throttle.GetFullTime(config);
+		    full_time > expires)
+			expires = full_time;
 	}
 
 	bool IsExpired(double now) const noexcept {
-		return request_count_throttle.IsZero(now) &&
-			request_traffic_throttle.IsZero(now);
+		return now >= expires;
 	}
 
 protected:

@@ -2,6 +2,7 @@ cm4all-beng-proxy (19.18) unstable; urgency=low
 
   * bp: fix READ_FILE when file does not exist (19.14 regression)
   * bp: support MOUNT_LISTEN_STREAM with STDERR_POND
+  * bp: fix expiry of rate limiters
   * zeroconf: support "weight" TXT record
   * debian: remove obsolete dependency on python3-future
 
