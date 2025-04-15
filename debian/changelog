@@ -2,7 +2,7 @@ cm4all-beng-proxy (19.19) unstable; urgency=low
 
   * spawn: fix hanging main process after spawner failure (third try)
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Tue, 15 Apr 2025 11:54:22 +0200
 
 cm4all-beng-proxy (19.18) unstable; urgency=low
 
