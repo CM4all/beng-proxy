@@ -844,7 +844,7 @@ class SpawnServerChildPrinter:
         self.val = val
 
     def to_string(self):
-        return f"{{id={self.val['id']}, pid={self.val['pid']}, name={self.val['name']}}}"
+        return f"{{id={self.val['id']}}}"
 
 import gdb.printing
 def build_pretty_printer():
