@@ -63,7 +63,7 @@ ChildStockItem::Spawn(ChildStockClass &cls, const void *info,
 			if (cgroup_watch.IsBlocked())
 				throw SpawnResourcesExhaustedError{};
 
-			std::tie(return_cgroup, p.return_cgroup) = CreateSocketPair(SOCK_DGRAM);
+			std::tie(return_cgroup, p.return_cgroup) = CreateSocketPair(SOCK_SEQPACKET);
 		}
 	}
 #endif // HAVE_LIBSYSTEMD
