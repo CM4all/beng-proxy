@@ -16,7 +16,7 @@ LbRequestLogger::LbRequestLogger(LbInstance &_instance,
 	:IncomingHttpRequestLogger(_access_logger != nullptr && !_access_logger_only_errors),
 	 instance(_instance), http_stats(_http_stats),
 	 access_logger(_access_logger),
-	 start_time(instance.event_loop.SteadyNow()),
+	 clock(instance.event_loop.SteadyNow()),
 	 host(request.headers.Get(host_header)),
 	 x_forwarded_for(request.headers.Get(x_forwarded_for_header)),
 	 referer(request.headers.Get(referer_header)),
@@ -33,9 +33,7 @@ LbRequestLogger::LogHttpRequest(IncomingHttpRequest &request,
 				int_least64_t length,
 				uint_least64_t bytes_received, uint_least64_t bytes_sent) noexcept
 {
-	const auto total_duration = GetDuration(instance.event_loop.SteadyNow());
-	assert(total_duration >= wait_duration);
-	const auto duration = total_duration - wait_duration;
+	const auto duration = clock.GetDuration(instance.event_loop.SteadyNow(), wait_duration);
 
 	instance.http_stats.AddRequest(status,
 				       bytes_received, bytes_sent,

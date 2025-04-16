@@ -5,6 +5,7 @@
 #pragma once
 
 #include "http/Logger.hxx"
+#include "time/RequestClock.hxx"
 
 #include <chrono>
 #include <cstdint>
@@ -32,11 +33,7 @@ struct LbRequestLogger final : IncomingHttpRequestLogger {
 
 	AccessLogGlue *const access_logger;
 
-	/**
-	 * The time stamp at the start of the request.  Used to calculate
-	 * the request duration.
-	 */
-	const std::chrono::steady_clock::time_point start_time;
+	const RequestClock clock;
 
 	/**
 	 * The "Host" request header.
@@ -102,10 +99,6 @@ struct LbRequestLogger final : IncomingHttpRequestLogger {
 		return canonical_host != nullptr
 			? canonical_host
 			: host;
-	}
-
-	std::chrono::steady_clock::duration GetDuration(std::chrono::steady_clock::time_point now) const {
-		return now - start_time;
 	}
 
 	/* virtual methods from class IncomingHttpRequestLogger */

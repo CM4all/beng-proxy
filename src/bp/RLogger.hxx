@@ -5,6 +5,7 @@
 #pragma once
 
 #include "http/Logger.hxx"
+#include "time/RequestClock.hxx"
 #include "util/SharedLease.hxx"
 #include "util/TokenBucket.hxx"
 
@@ -33,11 +34,7 @@ struct BpRequestLogger final : IncomingHttpRequestLogger {
 
 	AccessLogGlue *const access_logger;
 
-	/**
-	 * The time stamp at the start of the request.  Used to calculate
-	 * the request duration.
-	 */
-	const std::chrono::steady_clock::time_point start_time;
+	const RequestClock clock;
 
 	/**
 	 * The name of the site being accessed by the current HTTP
@@ -67,10 +64,6 @@ struct BpRequestLogger final : IncomingHttpRequestLogger {
 			BpListenerStats &_http_stats,
 			AccessLogGlue *_access_logger,
 			bool _access_logger_only_errors) noexcept;
-
-	std::chrono::steady_clock::duration GetDuration(std::chrono::steady_clock::time_point now) const noexcept {
-		return now - start_time;
-	}
 
 	/* virtual methods from class IncomingHttpRequestLogger */
 	void LogHttpRequest(IncomingHttpRequest &request,
