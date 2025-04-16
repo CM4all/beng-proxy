@@ -532,6 +532,11 @@ try {
 
 	instance.pipe_stock = new PipeStock(instance.event_loop);
 
+#ifdef HAVE_URING
+	if (instance.uring)
+		instance.pipe_stock->EnableUring(*instance.uring);
+#endif // HAVE_URING
+
 	if (instance.config.filter_cache_size > 0) {
 		instance.filter_cache = filter_cache_new(instance.root_pool,
 							 instance.config.filter_cache_size,

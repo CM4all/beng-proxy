@@ -7,6 +7,10 @@
 #include "system/Error.hxx"
 #include "io/UniqueFileDescriptor.hxx"
 
+#ifdef HAVE_URING
+#include "io/uring/Close.hxx"
+#endif // HAVE_URING
+
 class PipeStockItem final : public StockItem {
 	UniqueFileDescriptor fds[2];
 
@@ -16,6 +20,8 @@ public:
 	std::pair<FileDescriptor, FileDescriptor> Get() const noexcept {
 		return {fds[0], fds[1]};
 	}
+
+	~PipeStockItem() noexcept override;
 
 	/* virtual methods from class StockItem */
 	bool Borrow() noexcept override;
@@ -33,6 +39,20 @@ PipeStockItem::PipeStockItem(CreateStockItem c)
 	   splice() system calls */
 	constexpr unsigned PIPE_BUFFER_SIZE = 256 * 1024;
 	fds[1].SetPipeCapacity(PIPE_BUFFER_SIZE);
+}
+
+PipeStockItem::~PipeStockItem() noexcept
+{
+#ifdef HAVE_URING
+	const auto &pipe_stock = static_cast<const PipeStock &>(GetStock());
+	auto *uring_queue = pipe_stock.GetUringQueue();
+	if (uring_queue != nullptr) {
+		if (fds[0].IsDefined())
+			Uring::Close(uring_queue, fds[0].Release());
+		if (fds[1].IsDefined())
+			Uring::Close(uring_queue, fds[1].Release());
+	}
+#endif // HAVE_URING
 }
 
 /*
