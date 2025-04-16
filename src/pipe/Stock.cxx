@@ -7,10 +7,15 @@
 #include "system/Error.hxx"
 #include "io/UniqueFileDescriptor.hxx"
 
-struct PipeStockItem final : StockItem {
+class PipeStockItem final : public StockItem {
 	UniqueFileDescriptor fds[2];
 
+public:
 	explicit PipeStockItem(CreateStockItem c);
+
+	std::pair<FileDescriptor, FileDescriptor> Get() const noexcept {
+		return {fds[0], fds[1]};
+	}
 
 	/* virtual methods from class StockItem */
 	bool Borrow() noexcept override;
@@ -65,6 +70,5 @@ std::pair<FileDescriptor, FileDescriptor>
 pipe_stock_item_get(StockItem *_item) noexcept
 {
 	auto *item = (PipeStockItem *)_item;
-
-	return {item->fds[0], item->fds[1]};
+	return item->Get();
 }
