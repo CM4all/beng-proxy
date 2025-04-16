@@ -4,7 +4,6 @@
 
 #pragma once
 
-#include <cassert>
 #include <chrono>
 
 /**
@@ -29,7 +28,20 @@ public:
 	constexpr std::chrono::steady_clock::duration GetDuration(std::chrono::steady_clock::time_point now,
 								  std::chrono::steady_clock::duration wait_duration) const noexcept {
 		const auto total_duration = now - start_time;
-		assert(total_duration >= wait_duration);
+		if (total_duration.count() < 0)
+			/* a CLOCK_MONOTONIC warp - should never
+			   happen, but sometimes does */
+			return {};
+
+		if (wait_duration.count() <= 0)
+			/* probably caused by a CLOCK_MONOTONIC warp,
+			   too */
+			return total_duration;
+
+		if (wait_duration >= total_duration)
+			/* same */
+			return {};
+
 		return total_duration - wait_duration;
 	}
 };
