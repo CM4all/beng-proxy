@@ -10,7 +10,7 @@
 struct PipeStockItem final : StockItem {
 	UniqueFileDescriptor fds[2];
 
-	explicit PipeStockItem(CreateStockItem c)
+	explicit PipeStockItem(CreateStockItem c) noexcept
 		:StockItem(c) {
 	}
 
