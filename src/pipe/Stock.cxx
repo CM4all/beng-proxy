@@ -10,14 +10,25 @@
 struct PipeStockItem final : StockItem {
 	UniqueFileDescriptor fds[2];
 
-	explicit PipeStockItem(CreateStockItem c) noexcept
-		:StockItem(c) {
-	}
+	explicit PipeStockItem(CreateStockItem c);
 
 	/* virtual methods from class StockItem */
 	bool Borrow() noexcept override;
 	bool Release() noexcept override;
 };
+
+inline
+PipeStockItem::PipeStockItem(CreateStockItem c)
+	:StockItem(c)
+{
+	if (!UniqueFileDescriptor::CreatePipeNonBlock(fds[0], fds[1]))
+		throw MakeErrno("pipe() failed");
+
+	/* enlarge the pipe buffer to 256 kB to reduce the number of
+	   splice() system calls */
+	constexpr unsigned PIPE_BUFFER_SIZE = 256 * 1024;
+	fds[1].SetPipeCapacity(PIPE_BUFFER_SIZE);
+}
 
 /*
  * stock class
@@ -30,19 +41,6 @@ PipeStock::Create(CreateStockItem c, StockRequest,
 		  CancellablePointer &)
 {
 	auto *item = new PipeStockItem(c);
-
-	if (!UniqueFileDescriptor::CreatePipeNonBlock(item->fds[0],
-						      item->fds[1])) {
-		int e = errno;
-		delete item;
-		throw MakeErrno(e, "pipe() failed");
-	}
-
-	/* enlarge the pipe buffer to 256 kB to reduce the number of
-	   splice() system calls */
-	constexpr unsigned PIPE_BUFFER_SIZE = 256 * 1024;
-	item->fds[1].SetPipeCapacity(PIPE_BUFFER_SIZE);
-
 	item->InvokeCreateSuccess(get_handler);
 }
 
