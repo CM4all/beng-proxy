@@ -6,6 +6,7 @@
 #include "istream/GzipIstream.hxx"
 #include "istream/istream_string.hxx"
 #include "istream/UnusedPtr.hxx"
+#include "thread/Pool.hxx"
 #include "lib/zlib/Error.hxx"
 #include "util/ScopeExit.hxx"
 
@@ -40,6 +41,8 @@ GunzipString(std::string_view src)
 }
 
 class GzipIstreamTestTraits {
+	mutable EventLoop *event_loop_ = nullptr;
+
 public:
 	static constexpr IstreamFilterTestOptions options{
 		.expected_result = "foobar",
@@ -47,13 +50,28 @@ public:
 		.enable_buckets = false,
 	};
 
+	~GzipIstreamTestTraits() noexcept {
+		// invoke all pending ThreadJob::Done() calls
+		if (event_loop_ != nullptr)
+			event_loop_->Run();
+
+		thread_pool_stop();
+		thread_pool_join();
+		thread_pool_deinit();
+	}
+
 	UnusedIstreamPtr CreateInput(struct pool &pool) const noexcept {
 		return istream_string_new(pool, "foobar");
 	}
 
-	UnusedIstreamPtr CreateTest(EventLoop &, struct pool &pool,
+	UnusedIstreamPtr CreateTest(EventLoop &event_loop, struct pool &pool,
 				    UnusedIstreamPtr input) const noexcept {
-		return NewGzipIstream(pool, std::move(input));
+		event_loop_ = &event_loop;
+
+		thread_pool_set_volatile();
+		return NewGzipIstream(pool,
+				      thread_pool_get_queue(event_loop),
+				      std::move(input));
 	}
 };
 

@@ -221,7 +221,9 @@ Request::ApplyAutoCompress(HttpHeaders &response_headers,
 				  resource_tag,
 				  response_headers, response_body, "gzip"sv,
 				  [this](auto &&i){
-					  return NewGzipIstream(pool, std::move(i));
+					  return NewGzipIstream(pool,
+								thread_pool_get_queue(instance.event_loop),
+								std::move(i));
 				  });
 }
 

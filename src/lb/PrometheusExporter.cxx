@@ -9,6 +9,7 @@
 #include "Config.hxx"
 #include "prometheus/Stats.hxx"
 #include "prometheus/HttpStats.hxx"
+#include "thread/Pool.hxx"
 #include "net/control/Protocol.hxx"
 #include "http/Address.hxx"
 #include "http/Headers.hxx"
@@ -165,9 +166,11 @@ LbPrometheusExporter::HandleHttpRequest(IncomingHttpRequest &request,
 						    BIND_FUNCTION(CatchCallback)));
 	}
 
-	if (http_client_accepts_encoding(request.headers, "gzip")) {
+	if (instance != nullptr && http_client_accepts_encoding(request.headers, "gzip")) {
 		headers.Write("content-encoding", "gzip");
-		body = NewGzipIstream(pool, std::move(body));
+		body = NewGzipIstream(pool,
+				      thread_pool_get_queue(instance->event_loop),
+				      std::move(body));
 	}
 
 	request.SendResponse(HttpStatus::OK, std::move(headers),

@@ -6,6 +6,8 @@
 
 struct pool;
 class UnusedIstreamPtr;
+class ThreadQueue;
 
 UnusedIstreamPtr
-NewGzipIstream(struct pool &pool, UnusedIstreamPtr input) noexcept;
+NewGzipIstream(struct pool &pool, ThreadQueue &queue,
+	       UnusedIstreamPtr input) noexcept;
