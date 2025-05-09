@@ -16,14 +16,6 @@ class BrotliEncoderFilter final : public ThreadIstreamFilter {
 
 	SliceFifoBuffer input, output;
 
-	/**
-	 * Pending output data from the encoder.  Since this buffer
-	 * will be invalidated by the next encoder call, we need to
-	 * submit it to our #IstreamHandler before feeding more data
-	 * into the encoder.
-	 */
-	std::span<const std::byte> pending{};
-
 	const BrotliEncoderMode mode;
 
 	BrotliEncoderOperation operation = BROTLI_OPERATION_PROCESS;
