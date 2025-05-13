@@ -62,13 +62,10 @@ BrotliEncoderFilter::Run(ThreadIstreamInternal &i)
 	if (state == nullptr)
 		CreateEncoder();
 
-	bool has_more_input;
-
 	{
 		const std::scoped_lock lock{i.mutex};
 		input.MoveFromAllowBothNull(i.input);
 
-		has_more_input = !i.input.empty();
 		if (!i.has_input && i.input.empty())
 			operation = BROTLI_OPERATION_FINISH;
 
@@ -94,7 +91,11 @@ BrotliEncoderFilter::Run(ThreadIstreamInternal &i)
 	input.Consume(input_consumed);
 	output.Append(reinterpret_cast<std::byte *>(next_out) - w.data());
 
-	if (available_out == 0 || (input_consumed > 0 && has_more_input))
+	{
+		const std::scoped_lock lock{i.mutex};
+		i.output.MoveFromAllowSrcNull(output);
+		i.drained = output.empty();
+
 		/* run again if:
 		   1. our output buffer is full (ThreadIstream will
 		      provide a new one)
@@ -102,12 +103,7 @@ BrotliEncoderFilter::Run(ThreadIstreamInternal &i)
 		      in this run, there was not enough space in our
 		      input buffer, but there is now
 		*/
-		i.again = true;
-
-	{
-		const std::scoped_lock lock{i.mutex};
-		i.output.MoveFromAllowSrcNull(output);
-		i.drained = output.empty();
+		i.again = available_out == 0 || (input_consumed > 0 && !i.input.empty());
 	}
 }
 
