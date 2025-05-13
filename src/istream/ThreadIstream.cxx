@@ -194,15 +194,18 @@ ThreadIstream::Internal::Done() noexcept
 		return;
 	}
 
-	if (error) {
-		istream.DestroyError(std::move(error));
-		return;
-	}
-
 	bool output_empty, input_empty, input_full, _again;
 
 	{
-		const std::scoped_lock lock{mutex};
+		std::unique_lock lock{mutex};
+
+		if (error) {
+			auto copy = std::move(error);
+			lock.unlock();
+			istream.DestroyError(std::move(copy));
+			return;
+		}
+
 		istream.unprotected_output.MoveFromAllowNull(output);
 		output_empty = output.empty();
 		output_full = output.IsDefinedAndFull();
@@ -263,7 +266,12 @@ ThreadIstream::Internal::Run() noexcept
 {
 	assert(filter);
 
-	filter->Run(*this);
+	try {
+		filter->Run(*this);
+	} catch (...) {
+		const std::scoped_lock lock{mutex};
+		error = std::current_exception();
+	}
 }
 
 ThreadIstream::~ThreadIstream() noexcept
