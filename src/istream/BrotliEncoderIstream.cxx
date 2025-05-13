@@ -70,6 +70,11 @@ BrotliEncoderFilter::Run(ThreadIstreamInternal &i)
 			operation = BROTLI_OPERATION_FINISH;
 
 		i.output.MoveFromAllowNull(output);
+
+		if (output.IsFull()) {
+			i.again = true;
+			return;
+		}
 	}
 
 	const auto r = input.Read();
