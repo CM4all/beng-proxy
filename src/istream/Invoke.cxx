@@ -170,7 +170,7 @@ Istream::InvokeError(std::exception_ptr ep) noexcept
 {
 	assert(ep);
 
-	PrepareError().OnError(ep);
+	PrepareError().OnError(std::move(ep));
 }
 
 void
@@ -178,5 +178,5 @@ Istream::DestroyError(std::exception_ptr ep) noexcept
 {
 	auto &_handler = PrepareError();
 	Destroy();
-	_handler.OnError(ep);
+	_handler.OnError(std::move(ep));
 }
