@@ -62,16 +62,25 @@ class ThreadIstream final : public FacadeIstream {
 			assert(filter);
 		}
 
-		void PreRun() noexcept {
+		/**
+		 * @return true if Run() shall be invoked, false if
+		 * conditions for Run() are not met
+		 */
+		[[nodiscard]]
+		bool PreRun() noexcept {
 			assert(filter);
 
 			{
 				const std::scoped_lock lock{mutex};
 				istream.unprotected_output.MoveFromAllowNull(output);
 				output.AllocateIfNull(fb_pool_get());
+
+				output_full = output.IsFull();
+				if (output_full)
+					return false;
 			}
 
-			filter->PreRun(*this);
+			return filter->PreRun(*this);
 		}
 
 		void PostRun() noexcept {
@@ -83,8 +92,8 @@ class ThreadIstream final : public FacadeIstream {
 		void Schedule() noexcept {
 			assert(filter);
 
-			PreRun();
-			istream.queue.Add(*this);
+			if (PreRun())
+				istream.queue.Add(*this);
 		}
 
 		/**

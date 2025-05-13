@@ -79,8 +79,14 @@ public:
 	 * Called in the main thread before Run() is scheduled.  This
 	 * can be used to prepare things that can only be done in the
 	 * main thread, e.g. allocate more (internal) buffers.
+	 *
+	 * @return true if Run() shall be invoked, false if conditions
+	 * for Run() are not met
 	 */
-	virtual void PreRun(ThreadIstreamInternal &) noexcept {}
+	[[nodiscard]]
+	virtual bool PreRun(ThreadIstreamInternal &) noexcept {
+		return true;
+	}
 
 	/**
 	 * Do the work.  This is run in an unspecified worker thread.

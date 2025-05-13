@@ -254,9 +254,10 @@ class DrainThreadIstreamFilter final : public ThreadIstreamFilter {
 	SliceFifoBuffer output;
 
 public:
-	void PreRun(ThreadIstreamInternal &) noexcept override {
+	bool PreRun(ThreadIstreamInternal &) noexcept override {
 		if (!output.IsDefined())
 			output.AllocateIfNull(fb_pool_get());
+		return true;
 	}
 
 	void Run(ThreadIstreamInternal &i) override {
