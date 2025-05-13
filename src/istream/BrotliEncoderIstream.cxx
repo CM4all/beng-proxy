@@ -57,8 +57,6 @@ BrotliEncoderFilter::CreateEncoder() noexcept
 void
 BrotliEncoderFilter::Run(ThreadIstreamInternal &i)
 {
-	using std::swap;
-
 	if (state == nullptr)
 		CreateEncoder();
 
