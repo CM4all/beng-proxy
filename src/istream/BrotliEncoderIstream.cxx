@@ -72,10 +72,7 @@ BrotliEncoderFilter::Run(ThreadIstreamInternal &i)
 		if (!i.has_input && i.input.empty())
 			operation = BROTLI_OPERATION_FINISH;
 
-		if (!output.IsNull())
-			i.output.MoveFromAllowNull(output);
-		else if (i.output.empty())
-			swap(output, i.output);
+		i.output.MoveFromAllowNull(output);
 	}
 
 	const auto r = input.Read();
