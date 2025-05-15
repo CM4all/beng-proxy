@@ -6,7 +6,7 @@ cm4all-beng-proxy (19.21) unstable; urgency=low
   * event: another workaround for CLOCK_MONOTONIC warps
   * debian: add missing build-dependency on pkg-config
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Thu, 15 May 2025 12:35:04 +0200
 
 cm4all-beng-proxy (19.20) unstable; urgency=low
 
