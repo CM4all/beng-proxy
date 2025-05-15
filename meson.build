@@ -1,4 +1,4 @@
-project('CM4all beng-proxy', 'cpp', version: '19.21',
+project('CM4all beng-proxy', 'cpp', version: '19.22',
   meson_version: '>= 1.2',
   default_options: [
     'cpp_std=c++23',
