@@ -4,6 +4,7 @@
 
 #include "BrotliEncoderIstream.hxx"
 #include "ThreadIstream.hxx"
+#include "SimpleThreadIstreamFilter.hxx"
 #include "UnusedPtr.hxx"
 
 #include <brotli/encode.h>
@@ -11,10 +12,8 @@
 #include <cassert>
 #include <stdexcept>
 
-class BrotliEncoderFilter final : public ThreadIstreamFilter {
+class BrotliEncoderFilter final : public SimpleThreadIstreamFilter {
 	BrotliEncoderState *state = nullptr;
-
-	SliceFifoBuffer input, output;
 
 	const BrotliEncoderMode mode;
 
@@ -34,9 +33,9 @@ public:
 protected:
 	void CreateEncoder() noexcept;
 
-	/* virtual methods from class ThreadIstreamFilter */
-	void Run(ThreadIstreamInternal &i) override;
-	void PostRun(ThreadIstreamInternal &i) noexcept override;
+	/* virtual methods from class SimpleThreadIstreamFilter */
+	Result SimpleRun(SliceFifoBuffer &input, SliceFifoBuffer &output,
+			 Params params) override;
 };
 
 inline void
@@ -54,26 +53,15 @@ BrotliEncoderFilter::CreateEncoder() noexcept
 	BrotliEncoderSetParameter(state, BROTLI_PARAM_MODE, mode);
 }
 
-void
-BrotliEncoderFilter::Run(ThreadIstreamInternal &i)
+SimpleThreadIstreamFilter::Result
+BrotliEncoderFilter::SimpleRun(SliceFifoBuffer &input, SliceFifoBuffer &output,
+			       Params params)
 {
 	if (state == nullptr)
 		CreateEncoder();
 
-	{
-		const std::scoped_lock lock{i.mutex};
-		input.MoveFromAllowBothNull(i.input);
-
-		if (!i.has_input && i.input.empty())
-			operation = BROTLI_OPERATION_FINISH;
-
-		i.output.MoveFromAllowNull(output);
-
-		if (output.IsFull()) {
-			i.again = true;
-			return;
-		}
-	}
+	if (params.finish)
+		operation = BROTLI_OPERATION_FINISH;
 
 	const auto r = input.Read();
 	const auto w = output.Write();
@@ -90,31 +78,12 @@ BrotliEncoderFilter::Run(ThreadIstreamInternal &i)
 					 nullptr))
 		throw std::runtime_error{"Brotli error"};
 
-	const std::size_t input_consumed = reinterpret_cast<const std::byte *>(next_in) - r.data();
-	input.Consume(input_consumed);
+	input.Consume(reinterpret_cast<const std::byte *>(next_in) - r.data());
 	output.Append(reinterpret_cast<std::byte *>(next_out) - w.data());
 
-	{
-		const std::scoped_lock lock{i.mutex};
-		i.output.MoveFromAllowSrcNull(output);
-		i.drained = output.empty();
-
-		/* run again if:
-		   1. our output buffer is full (ThreadIstream will
-		      provide a new one)
-		   2. there is more input in ThreadIstreamInternal but
-		      in this run, there was not enough space in our
-		      input buffer, but there is now
-		*/
-		i.again = available_out == 0 || (input_consumed > 0 && !i.input.empty());
-	}
-}
-
-void
-BrotliEncoderFilter::PostRun(ThreadIstreamInternal &) noexcept
-{
-	input.FreeIfEmpty();
-	output.FreeIfEmpty();
+	return {
+		.drained = true,
+	};
 }
 
 UnusedIstreamPtr

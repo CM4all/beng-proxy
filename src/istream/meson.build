@@ -155,6 +155,7 @@ istream_extra = static_library(
   istream_extra_sources,
   'GzipIstream.cxx',
   'ThreadIstream.cxx',
+  'SimpleThreadIstreamFilter.cxx',
   include_directories: inc,
   dependencies: [
     fmt_dep,
