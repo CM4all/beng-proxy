@@ -48,6 +48,7 @@
 #include "spawn/CgroupMultiWatch.hxx"
 #include "spawn/Launch.hxx"
 #include "spawn/Client.hxx"
+#include "net/InterfaceNameCache.hxx"
 #include "net/ListenStreamStock.hxx"
 #include "net/SocketAddress.hxx"
 #include "net/StaticSocketAddress.hxx"
@@ -176,6 +177,8 @@ BpInstance::ReloadEventCallback(int) noexcept
 {
 	LogConcat(3, "main", "caught SIGHUP, flushing all caches (pid=",
 		  (int)getpid(), ")");
+
+	FlushInterfaceNameCache();
 
 	FadeChildren();
 

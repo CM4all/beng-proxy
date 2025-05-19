@@ -16,6 +16,7 @@
 #include "pool/pool.hxx"
 #include "thread/Pool.hxx"
 #include "memory/fb_pool.hxx"
+#include "net/InterfaceNameCache.hxx"
 #include "system/Isolate.hxx"
 #include "system/SetupProcess.hxx"
 #include "io/SpliceSupport.hxx"
@@ -103,6 +104,8 @@ LbInstance::ShutdownCallback() noexcept
 void
 LbInstance::ReloadEventCallback(int) noexcept
 {
+	FlushInterfaceNameCache();
+
 	goto_map.FlushCaches();
 
 	Compress();

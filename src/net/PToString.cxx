@@ -3,6 +3,7 @@
 // author: Max Kellermann <mk@cm4all.com>
 
 #include "PToString.hxx"
+#include "InterfaceNameCache.hxx"
 #include "pool/pool.hxx"
 #include "net/SocketAddress.hxx"
 #include "net/FormatAddress.hxx"
@@ -47,11 +48,16 @@ V6HostWithScopeToString(std::span<char> buffer, const IPv6Address &address) noex
 	if (scope_id == 0)
 		return V6HostToString(buffer, address);
 
-	if (!V6HostToString(buffer.first(buffer.size() - 8), address))
+	if (!V6HostToString(buffer.first(buffer.size() - 16), address))
 		return false;
 
 	buffer = buffer.subspan(strlen(buffer.data()));
-	*fmt::format_to(buffer.data(), "%{}", scope_id) = '\0';
+
+	if (const auto name = GetCachedInterfaceName(scope_id); !name.empty() && name.size() <= 14)
+		*fmt::format_to(buffer.data(), "%{}", name) = '\0';
+	else
+		*fmt::format_to(buffer.data(), "%{}", scope_id) = '\0';
+
 	return true;
 }
 
