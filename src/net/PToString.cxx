@@ -12,7 +12,6 @@
 #include <fmt/core.h>
 
 #include <arpa/inet.h>
-#include <string.h>
 
 static bool
 V4HostToString(std::span<char> buffer, const IPv4Address &address) noexcept
