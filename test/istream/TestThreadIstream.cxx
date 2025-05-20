@@ -97,7 +97,7 @@ public:
 
 		{
 			const std::scoped_lock lock{i.mutex};
-			i.output.MoveFromAllowBothNull(i.input);
+			i.output.MoveFromAllowSrcNull(i.input);
 		}
 
 		if (!i.has_input && i.input.empty() && !trailer_sent) {
