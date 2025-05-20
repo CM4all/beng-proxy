@@ -618,6 +618,8 @@ struct RequestBodyCanceled {};
 inline HttpClient::BucketResult
 HttpClient::TryWriteBuckets2()
 {
+	assert(HasInput());
+
 	if (socket.HasFilter())
 		return BucketResult::FALLBACK;
 
@@ -677,6 +679,8 @@ HttpClient::TryWriteBuckets2()
 HttpClient::BucketResult
 HttpClient::TryWriteBuckets() noexcept
 {
+	assert(HasInput());
+
 	BucketResult result;
 
 	try {
@@ -1237,6 +1241,8 @@ HttpClient::OnBufferedRemaining(std::size_t remaining) noexcept
 bool
 HttpClient::OnBufferedWrite()
 {
+	assert(HasInput());
+
 	request.got_data = false;
 
 	switch (TryWriteBuckets()) {
