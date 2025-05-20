@@ -30,7 +30,7 @@ SimpleThreadIstreamFilter::Run(ThreadIstreamInternal &i)
 				      {.finish = finish});
 
 	const bool input_consumed = input_available < unprotected_input.GetAvailable();
-	const bool output_full = unprotected_output.IsFull();
+	const bool output_full = unprotected_output.IsDefinedAndFull();
 
 	{
 		const std::scoped_lock lock{i.mutex};
