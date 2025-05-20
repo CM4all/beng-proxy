@@ -1,6 +1,7 @@
 cm4all-beng-proxy (19.22) unstable; urgency=low
 
   * resolve IPv6 scope ids to interface names (19.3 revert)
+  * http_client: unschedule writing when request stream is depleted
   * ssl: reduce worker stack to 128 kB on ARM64
 
  --   

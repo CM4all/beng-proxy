@@ -714,6 +714,7 @@ HttpClient::TryWriteBuckets() noexcept
 		stopwatch.RecordEvent("request_end");
 		CloseInput();
 		socket.ScheduleRead();
+		socket.UnscheduleWrite();
 		break;
 
 	case BucketResult::DESTROYED:
