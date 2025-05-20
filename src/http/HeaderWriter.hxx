@@ -8,6 +8,7 @@
 
 #pragma once
 
+#include <chrono>
 #include <string_view>
 
 class StringMap;
@@ -31,6 +32,10 @@ header_write_finish(GrowingBuffer &buffer) noexcept;
 void
 header_write(GrowingBuffer &buffer,
 	     std::string_view name, std::string_view value) noexcept;
+
+void
+header_write(GrowingBuffer &headers, std::string_view name,
+	     std::chrono::system_clock::time_point value) noexcept;
 
 void
 headers_copy_one(const StringMap &in, GrowingBuffer &out,

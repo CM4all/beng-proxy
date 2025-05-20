@@ -116,6 +116,10 @@ public:
 		header_write(buffer, name, value);
 	}
 
+	void Write(std::string_view name, std::chrono::system_clock::time_point value) noexcept {
+		header_write(buffer, name, value);
+	}
+
 	void VFmt(std::string_view name, fmt::string_view format_str, fmt::format_args args) noexcept {
 		header_write_begin(buffer, name);
 		buffer.VFmt(format_str, args);

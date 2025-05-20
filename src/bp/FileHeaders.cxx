@@ -23,6 +23,8 @@
 #include <sys/stat.h>
 #include <sys/xattr.h>
 
+using std::string_view_literals::operator""sv;
+
 [[gnu::pure]]
 static std::chrono::seconds
 read_xattr_max_age(FileDescriptor fd) noexcept
@@ -57,8 +59,7 @@ generate_expires(GrowingBuffer &headers,
 		max_age = max_max_age;
 
 	/* generate an "Expires" response header */
-	header_write(headers, "expires",
-		     http_date_format(now + max_age));
+	header_write(headers, "expires"sv, now + max_age);
 }
 
 [[gnu::pure]]
@@ -94,8 +95,7 @@ file_cache_headers(GrowingBuffer &headers,
 		   std::chrono::seconds max_age,
 		   bool use_xattr) noexcept
 {
-	header_write(headers, "last-modified",
-		     http_date_format(std::chrono::system_clock::from_time_t(st.stx_mtime.tv_sec)));
+	header_write(headers, "last-modified"sv, std::chrono::system_clock::from_time_t(st.stx_mtime.tv_sec));
 
 	MakeETag(headers, fd, st, use_xattr);
 

@@ -5,6 +5,7 @@
 #include "http/HeaderWriter.hxx"
 #include "strmap.hxx"
 #include "memory/GrowingBuffer.hxx"
+#include "http/Date.hxx"
 #include "http/HeaderName.hxx"
 
 #include <assert.h>
@@ -52,6 +53,19 @@ header_write(GrowingBuffer &buffer,
 	dest = std::copy(value.begin(), value.end(), dest);
 	*dest++ = '\r';
 	*dest = '\n';
+}
+
+void
+header_write(GrowingBuffer &headers, std::string_view name,
+	     std::chrono::system_clock::time_point value) noexcept
+{
+	header_write_begin(headers, name);
+
+	char *begin = (char *)headers.BeginWrite(30);
+	char *end = http_date_format_r(begin, value);
+	headers.CommitWrite(end - begin);
+
+	header_write_finish(headers);
 }
 
 void

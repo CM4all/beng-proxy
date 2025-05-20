@@ -154,7 +154,7 @@ HttpServerConnection::SubmitResponse(HttpStatus status,
 
 	if (headers.generate_date_header)
 		/* RFC 2616 14.18: Date */
-		headers.Write("date", http_date_format(GetEventLoop().SystemNow()));
+		headers.Write("date"sv, GetEventLoop().SystemNow());
 
 	if (headers.generate_server_header)
 		/* RFC 2616 3.8: Product Tokens */
