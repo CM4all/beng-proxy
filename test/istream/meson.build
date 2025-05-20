@@ -36,6 +36,7 @@ test(
     'TestBufferedIstream.cxx',
     'TestLengthIstream.cxx',
     'TestThreadIstream.cxx',
+    'TestSimpleThreadIstream.cxx',
     istream_test_sources,
     include_directories: inc,
     dependencies: [
