@@ -16,10 +16,10 @@
 #include "http/Method.hxx"
 #include "event/Loop.hxx"
 #include "io/FileDescriptor.hxx"
+#include "util/NumberParser.hxx"
 #include "util/StringAPI.hxx"
 
 #include <assert.h>
-#include <stdlib.h>
 #include <sys/stat.h>
 #include <sys/xattr.h>
 
@@ -33,15 +33,12 @@ read_xattr_max_age(FileDescriptor fd) noexcept
 
 	char buffer[32];
 	ssize_t nbytes = fgetxattr(fd.Get(), "user.MaxAge",
-				   buffer, sizeof(buffer) - 1);
+				   buffer, sizeof(buffer));
 	if (nbytes <= 0)
 		return std::chrono::seconds::zero();
 
-	buffer[nbytes] = 0;
-
-	char *endptr;
-	unsigned long max_age = strtoul(buffer, &endptr, 10);
-	if (*endptr != 0)
+	unsigned max_age;
+	if (!ParseIntegerTo({buffer, static_cast<std::size_t>(nbytes)}, max_age))
 		return std::chrono::seconds::zero();
 
 	return std::chrono::seconds(max_age);
