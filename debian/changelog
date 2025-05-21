@@ -5,7 +5,7 @@ cm4all-beng-proxy (19.22) unstable; urgency=low
   * ssl: reduce worker stack to 128 kB on ARM64
   * translation: add packet MAPPED_REAL_UID_GID
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Wed, 21 May 2025 09:14:34 +0200
 
 cm4all-beng-proxy (19.21) unstable; urgency=low
 
