@@ -1343,6 +1343,10 @@ Other Child Process Options
   is applied.  Without it, the kernel will revert the euid on
   ``execve()``.
 
+- ``MAPPED_REAL_UID_GID`` adds user namespace mappings for
+  ``REAL_UID_GID``.  Currently, only the uid is implemented, therefore
+  the payload must be a 32-bit integer.
+
 - ``CAP_SYS_RESOURCE`` grants the new child process the
   CAP_SYS_RESOURCE capability, allowing it to ignore filesystem
   quotas.  It is not possible to use it together with user namespaces
