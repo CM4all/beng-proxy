@@ -7,14 +7,16 @@
 void
 SimpleThreadIstreamFilter::Run(ThreadIstreamInternal &i)
 {
-	bool finish = false;
+	Params params{
+		.finish = false,
+	};
 
 	{
 		const std::scoped_lock lock{i.mutex};
 		unprotected_input.MoveFromAllowBothNull(i.input);
 
 		if (!i.has_input && i.input.empty())
-			finish = true;
+			params.finish = true;
 
 		i.output.MoveFromAllowNull(unprotected_output);
 
@@ -26,8 +28,7 @@ SimpleThreadIstreamFilter::Run(ThreadIstreamInternal &i)
 
 	const std::size_t input_available = unprotected_input.GetAvailable();
 
-	const auto result = SimpleRun(unprotected_input, unprotected_output,
-				      {.finish = finish});
+	const auto result = SimpleRun(unprotected_input, unprotected_output, params);
 
 	const bool input_consumed = input_available < unprotected_input.GetAvailable();
 	const bool output_full = unprotected_output.IsDefinedAndFull();
