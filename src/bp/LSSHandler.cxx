@@ -13,6 +13,7 @@
 #include "spawn/Prepared.hxx"
 #include "spawn/ProcessHandle.hxx"
 #include "translation/Response.hxx"
+#include "translation/ExecuteOptions.hxx"
 #include "pool/UniquePtr.hxx"
 #include "lib/fmt/RuntimeError.hxx"
 #include "net/SocketDescriptor.hxx"
@@ -122,13 +123,16 @@ BpListenStreamStockHandler::Process::Start(EventLoop &event_loop, SpawnService &
 	assert(!process);
 
 	const auto &response = *_response;
-	assert(response.execute != nullptr);
+	assert(response.execute_options != nullptr);
+
+	const auto &options = *response.execute_options;
+	assert(options.execute != nullptr);
 
 	PreparedChildProcess p;
 	p.stdin_fd = socket.ToFileDescriptor();
-	p.args.push_back(response.execute);
+	p.args.push_back(options.execute);
 
-	for (const char *arg : response.args) {
+	for (const char *arg : options.args) {
 		if (p.args.size() >= 4096)
 			throw std::runtime_error("Too many APPEND packets from translation server");
 
@@ -136,13 +140,13 @@ BpListenStreamStockHandler::Process::Start(EventLoop &event_loop, SpawnService &
 	}
 
 	FdHolder close_fds;
-	response.child_options.CopyTo(p, close_fds);
+	options.child_options.CopyTo(p, close_fds);
 
 	if (_log_sink != nullptr && !p.stderr_fd.IsDefined() &&
 	    p.stderr_path == nullptr)
 		log.EnableClient(p, close_fds,
 				 event_loop, _log_sink, _log_options,
-				 response.child_options.stderr_pond);
+				 options.child_options.stderr_pond);
 
 	process = service.SpawnChildProcess(name, std::move(p));
 
@@ -170,8 +174,9 @@ BpListenStreamStockHandler::Handle(const char *socket_path,
 
 		throw FmtRuntimeError("Status {} from translation server",
 				      static_cast<unsigned>(response.status));
-	} else if (response.execute != nullptr) {
-		auto *process2 = new Process(handler, response.child_options.tag);
+	} else if (response.execute_options != nullptr &&
+		   response.execute_options->execute != nullptr) {
+		auto *process2 = new Process(handler, response.execute_options->child_options.tag);
 
 		process2->Start(instance.event_loop, *instance.spawn_service,
 				socket_path, socket,
@@ -181,7 +186,9 @@ BpListenStreamStockHandler::Handle(const char *socket_path,
 	} else if (response.accept_http) {
 		auto ptr = ToDeletePointer(new HttpListener(instance, socket, response));
 
-		const std::string_view tags = response.child_options.tag;
+		const std::string_view tags = response.execute_options != nullptr
+			? response.execute_options->child_options.tag
+			: std::string_view{};
 		_response = {};
 
 		handler.OnListenStreamSuccess(std::move(ptr), tags);
