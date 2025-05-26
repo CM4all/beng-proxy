@@ -1745,6 +1745,17 @@ A successful response must contain at least ``HOME`` and ``UID_GID``:
 - ``NO_HOME_AUTHORIZED_KEYS``: If present, then
   :file:`~/.ssh/authorized_keys` is not used.
 
+- ``SERVICE``: Begin a new partition of the response for the specified
+  service.  The translation server can do this to send an individual
+  response for all supported services in a single response.  This is
+  useful if the request was ``SERVICE=ssh`` when the client (i.e. the
+  SSH server, i.e. `Lukko <https://github.com/CM4all/lukko>`__)
+  doesn't yet know whether the SSH client will open a shell or a SFTP
+  session.  Returning all possible services eliminates further
+  translation requests: the translation server promises that these are
+  the only allowed services (in the context of the ``SERVICE``
+  specified in the request) and all other services shall be denied.
+
 .. _cron:
 
 Cron translation
