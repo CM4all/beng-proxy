@@ -8,6 +8,8 @@
 #include "istream/istream_string.hxx"
 #include "thread/Pool.hxx"
 
+#include <thread> // for std::this_thread::sleep_for()
+
 /* most of this is a copy of TestThreadIstream.cxx refactored to use
    SimpleThreadIstreamFilter */
 
