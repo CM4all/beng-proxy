@@ -1,5 +1,4 @@
 etc/cm4all/beng/proxy/conf.d
-var/log/cm4all/beng-proxy
 
 etc/cm4all/state/beng-proxy
 lib/cm4all/state/beng-proxy
