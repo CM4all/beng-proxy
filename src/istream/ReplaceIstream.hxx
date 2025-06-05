@@ -75,7 +75,7 @@ class ReplaceIstream : public FacadeIstream, DestructAnchor {
 	};
 
 	/**
-	 * This event is scheduled when a #ReplaceIstreamControl method
+	 * This event is scheduled when a method call
 	 * call allows us to submit more data to the #IstreamHandler.
 	 * This avoids stalling the transfer when the last Read() call did
 	 * not return any data.
