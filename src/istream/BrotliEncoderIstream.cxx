@@ -82,7 +82,7 @@ BrotliEncoderFilter::SimpleRun(SliceFifoBuffer &input, SliceFifoBuffer &output,
 	output.Append(reinterpret_cast<std::byte *>(next_out) - w.data());
 
 	return {
-		.drained = true,
+		.drained = params.finish && BrotliEncoderIsFinished(state),
 	};
 }
 
