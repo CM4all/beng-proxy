@@ -290,7 +290,14 @@ ReplaceIstream::AppendToBuffer(const std::span<const std::byte> src)
 IstreamReadyResult
 ReplaceIstream::OnIstreamReady() noexcept
 {
-	return InvokeReady();
+	auto result = InvokeReady();
+	if (result != IstreamReadyResult::CLOSED && !HasInput())
+		/* our input has been closed; we need to return CLOSED
+		   to it, even though ReplaceIstream's handler was
+		   successful and didn't close the ReplaceIstream */
+		result = IstreamReadyResult::CLOSED;
+
+	return result;
 }
 
 size_t
