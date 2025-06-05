@@ -290,6 +290,8 @@ ReplaceIstream::AppendToBuffer(const std::span<const std::byte> src)
 IstreamReadyResult
 ReplaceIstream::OnIstreamReady() noexcept
 {
+	defer_read.Cancel();
+
 	auto result = InvokeReady();
 	if (result != IstreamReadyResult::CLOSED && !HasInput())
 		/* our input has been closed; we need to return CLOSED
@@ -431,6 +433,8 @@ ReplaceIstream::_FillBucketList(IstreamBucketList &list)
 {
 	assert(!list.HasMore());
 
+	defer_read.Cancel();
+
 	if (HasInput()) {
 		/* fill our buffer from the input */
 		IstreamBucketList tmp;
@@ -533,6 +537,8 @@ ReplaceIstream::_FillBucketList(IstreamBucketList &list)
 Istream::ConsumeBucketResult
 ReplaceIstream::_ConsumeBucketList(size_t nbytes) noexcept
 {
+	defer_read.Cancel();
+
 	size_t total = 0;
 
 	while (true) {
@@ -669,6 +675,8 @@ IstreamReadyResult
 ReplaceIstream::OnSubstitutionReady(Substitution &s) noexcept
 {
 	assert(s.IsActive());
+
+	defer_read.Cancel();
 
 	auto result = InvokeReady();
 	if (result != IstreamReadyResult::CLOSED && first_substitution != &s)
