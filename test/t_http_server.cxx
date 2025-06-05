@@ -445,7 +445,7 @@ TestAbortedRequestBody(Server &server)
 		assert(request_received);
 	}
 
-	inject_control.InjectFault(std::make_exception_ptr(std::runtime_error("Inject")));
+	InjectFault(std::move(inject_control), std::make_exception_ptr(std::runtime_error("Inject")));
 	server.WaitClosed();
 }
 

@@ -118,14 +118,14 @@ struct Context final : IstreamSink {
 	bool record = false;
 	std::string buffer;
 
-	InjectIstreamControl *abort_istream = nullptr;
+	std::shared_ptr<InjectIstreamControl> abort_istream;
 	int abort_after = 0;
 
 	/**
 	 * An InjectIstream instance which will fail after the data
 	 * handler has blocked.
 	 */
-	InjectIstreamControl *block_inject = nullptr;
+	std::shared_ptr<InjectIstreamControl> block_inject;
 
 	int block_after = -1;
 
@@ -139,7 +139,7 @@ struct Context final : IstreamSink {
 	std::size_t skipped = 0;
 
 	DeferEvent defer_inject_event;
-	InjectIstreamControl *defer_inject_istream = nullptr;
+	std::shared_ptr<InjectIstreamControl> defer_inject_istream;
 	std::exception_ptr defer_inject_error;
 
 	template<typename I>
@@ -171,7 +171,7 @@ struct Context final : IstreamSink {
 		}
 	}
 
-	void DeferInject(InjectIstreamControl &inject,
+	void DeferInject(std::shared_ptr<InjectIstreamControl> &&inject,
 			 std::exception_ptr ep) noexcept;
 
 	void DeferredInject() noexcept;
@@ -644,7 +644,7 @@ TYPED_TEST_P(IstreamFilterTest, BlockInject)
 	Context ctx(instance, std::move(pool),
 		    traits.options,
 		    std::move(istream));
-	ctx.block_inject = &inject.second;
+	ctx.block_inject = std::move(inject.second);
 
 	run_istream_ctx(ctx);
 
@@ -790,7 +790,7 @@ TYPED_TEST_P(IstreamFilterTest, AbortInHandler)
 		    traits.options,
 		    std::move(istream));
 	ctx.block_after = -1;
-	ctx.abort_istream = &inject.second;
+	ctx.abort_istream = std::move(inject.second);
 
 	ctx.WaitForEndOfStream();
 
@@ -822,7 +822,7 @@ TYPED_TEST_P(IstreamFilterTest, AbortInHandlerHalf)
 		    std::move(istream));
 	ctx.half = true;
 	ctx.abort_after = 2;
-	ctx.abort_istream = &inject.second;
+	ctx.abort_istream = std::move(inject.second);
 
 	ctx.WaitForEndOfStream();
 

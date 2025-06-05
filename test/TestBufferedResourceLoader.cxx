@@ -143,7 +143,7 @@ TEST(BufferedResourceLoader, EarlyRequestError)
 
 	ASSERT_EQ(handler.state, RecordingHttpResponseHandler::State::WAITING);
 
-	inject.second.InjectFault(std::make_exception_ptr(std::runtime_error("error")));
+	InjectFault(std::move(inject.second), std::make_exception_ptr(std::runtime_error("error")));
 
 	ASSERT_EQ(handler.state, RecordingHttpResponseHandler::State::ERROR);
 	ASSERT_TRUE(handler.error);

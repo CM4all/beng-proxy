@@ -12,21 +12,21 @@ Context::HandleBlockInject() noexcept
 	if (block_inject == nullptr)
 		return false;
 
-	DeferInject(*block_inject,
+	DeferInject(std::move(block_inject),
 		    std::make_exception_ptr(std::runtime_error{"block_inject"}));
 	block_inject = nullptr;
 	return true;
 }
 
 void
-Context::DeferInject(InjectIstreamControl &inject,
+Context::DeferInject(std::shared_ptr<InjectIstreamControl> &&inject,
 		     std::exception_ptr ep) noexcept
 {
 	assert(ep);
 	assert(defer_inject_istream == nullptr);
 	assert(!defer_inject_error);
 
-	defer_inject_istream = &inject;
+	defer_inject_istream = std::move(inject);
 	defer_inject_error = ep;
 	defer_inject_event.Schedule();
 }
@@ -37,11 +37,8 @@ Context::DeferredInject() noexcept
 	assert(defer_inject_istream != nullptr);
 	assert(defer_inject_error);
 
-	auto &i = *defer_inject_istream;
-	defer_inject_istream = nullptr;
-
-	i.InjectFault(std::exchange(defer_inject_error,
-				    std::exception_ptr()));
+	InjectFault(std::move(defer_inject_istream),
+		    std::exchange(defer_inject_error, std::exception_ptr()));
 }
 
 std::pair<IstreamReadyResult, bool>
@@ -165,7 +162,7 @@ Context::WaitForEndOfStream() noexcept
 				continue;
 
 			if (abort_istream != nullptr && abort_after == 0) {
-				DeferInject(*abort_istream,
+				DeferInject(std::move(abort_istream),
 					    std::make_exception_ptr(std::runtime_error{"abort_istream"}));
 				abort_istream = nullptr;
 				continue;
@@ -241,7 +238,7 @@ Context::OnData(const std::span<const std::byte> src) noexcept
 		length = 1;
 
 	if (abort_istream != nullptr && abort_after-- == 0) {
-		DeferInject(*abort_istream,
+		DeferInject(std::move(abort_istream),
 			    std::make_exception_ptr(std::runtime_error("abort_istream")));
 		abort_istream = nullptr;
 		return 0;
@@ -293,14 +290,14 @@ Context::OnDirect(FdType, FileDescriptor fd, off_t,
 	got_data = true;
 
 	if (block_inject != nullptr) {
-		DeferInject(*block_inject,
+		DeferInject(std::move(block_inject),
 			    std::make_exception_ptr(std::runtime_error("block_inject")));
 		block_inject = nullptr;
 		return IstreamDirectResult::BLOCKING;
 	}
 
 	if (abort_istream != nullptr) {
-		DeferInject(*abort_istream,
+		DeferInject(std::move(abort_istream),
 			    std::make_exception_ptr(std::runtime_error("abort_istream")));
 		abort_istream = nullptr;
 		return IstreamDirectResult::BLOCKING;

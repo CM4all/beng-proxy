@@ -8,12 +8,26 @@
 #include "Bucket.hxx"
 #include "New.hxx"
 
-class InjectIstream final
-	: public ForwardIstream, public InjectIstreamControl {
+#include <cassert>
+
+class InjectIstream final : public ForwardIstream {
+	const std::shared_ptr<InjectIstreamControl> control;
 
 public:
 	InjectIstream(struct pool &p, UnusedIstreamPtr &&_input) noexcept
-		:ForwardIstream(p, std::move(_input)) {}
+		:ForwardIstream(p, std::move(_input)),
+		 control(std::make_shared<InjectIstreamControl>(*this)) {}
+
+	~InjectIstream() noexcept override {
+		assert(control);
+		assert(control->inject == this);
+
+		control->inject = nullptr;
+	}
+
+	auto GetControl() noexcept {
+		return control;
+	}
 
 	void InjectFault(std::exception_ptr ep) noexcept {
 		DestroyError(ep);
@@ -52,22 +66,24 @@ public:
 	}
 };
 
-void
-InjectIstreamControl::InjectFault(std::exception_ptr e) noexcept
-{
-	auto &d = *(InjectIstream *)this;
-	d.InjectFault(std::move(e));
-}
-
-/*
- * constructor
- *
- */
-
-std::pair<UnusedIstreamPtr, InjectIstreamControl &>
+std::pair<UnusedIstreamPtr, std::shared_ptr<InjectIstreamControl>>
 istream_inject_new(struct pool &pool, UnusedIstreamPtr input) noexcept
 {
 	auto *i = NewIstream<InjectIstream>(pool, std::move(input));
-	InjectIstreamControl &control = *i;
-	return {UnusedIstreamPtr(i), control};
+	return std::make_pair(UnusedIstreamPtr{i}, i->GetControl());
+}
+
+bool
+InjectFault(std::shared_ptr<InjectIstreamControl> &&control, std::exception_ptr &&e) noexcept
+{
+	if (!control)
+		return false;
+
+	InjectIstream *inject = control->inject;
+	control.reset();
+	if (!inject)
+		return false;
+
+	inject->InjectFault(std::move(e));
+	return true;
 }
