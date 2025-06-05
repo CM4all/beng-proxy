@@ -20,7 +20,7 @@ public:
 		:ForwardIstream(p, std::move(_input)),
 		 defer_ready(event_loop, BIND_THIS_METHOD(OnDeferredReady)) {}
 
-	/* handler */
+	// virtual methods from IstreamHandler
 	size_t OnData(std::span<const std::byte> src) noexcept override;
 
 private:
