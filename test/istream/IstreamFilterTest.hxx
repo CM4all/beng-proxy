@@ -46,6 +46,13 @@ struct IstreamFilterTestOptions {
 	bool enable_big = true;
 
 	/**
+	 * Enable tests that transfer byte-by-byte?  This should be
+	 * disabled for tests with huge inputs because they would take
+	 * too long.
+	 */
+	bool enable_byte = true;
+
+	/**
 	 * If disabled, all bucket tests are skipped.
 	 */
 	bool enable_buckets = true;
@@ -579,7 +586,7 @@ TYPED_TEST_P(IstreamFilterTest, Byte)
 	auto &traits = this->traits_;
 	auto &instance = this->instance_;
 
-	if (!traits.options.enable_blocking)
+	if (!traits.options.enable_blocking || !traits.options.enable_byte)
 		GTEST_SKIP();
 
 	auto pool = pool_new_linear(instance.root_pool, "test", 8192);
@@ -601,7 +608,7 @@ TYPED_TEST_P(IstreamFilterTest, BlockByte)
 	auto &traits = this->traits_;
 	auto &instance = this->instance_;
 
-	if (!traits.options.enable_blocking)
+	if (!traits.options.enable_blocking || !traits.options.enable_byte)
 		GTEST_SKIP();
 
 	auto pool = pool_new_linear(instance.root_pool, "test", 8192);
@@ -803,7 +810,7 @@ TYPED_TEST_P(IstreamFilterTest, AbortInHandlerHalf)
 	auto &traits = this->traits_;
 	auto &instance = this->instance_;
 
-	if (!traits.options.enable_abort_istream || !traits.options.enable_blocking)
+	if (!traits.options.enable_abort_istream || !traits.options.enable_blocking || !traits.options.enable_byte)
 		GTEST_SKIP();
 
 	auto pool = pool_new_linear(instance.root_pool, "test", 8192);

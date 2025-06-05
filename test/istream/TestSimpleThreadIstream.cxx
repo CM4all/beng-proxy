@@ -3,9 +3,11 @@
 // author: Max Kellermann <mk@cm4all.com>
 
 #include "IstreamFilterTest.hxx"
+#include "istream/HeadIstream.hxx"
 #include "istream/SimpleThreadIstreamFilter.hxx"
 #include "istream/UnusedPtr.hxx"
 #include "istream/istream_string.hxx"
+#include "istream/ZeroIstream.hxx"
 #include "thread/Pool.hxx"
 
 #include <thread> // for std::this_thread::sleep_for()
@@ -223,3 +225,83 @@ public:
 
 INSTANTIATE_TYPED_TEST_SUITE_P(SimpleThreadIstreamExplode, IstreamFilterTest,
 			       ExplodeOutputIstreamTestTraits);
+
+/**
+ * A #SimpleThreadIstreamFilter implementation that counts all the
+ * bytes sent to it and writes this number as string to the output.
+ */
+class CountSimpleThreadIstreamFilter final : public SimpleThreadIstreamFilter {
+	std::size_t count = 0;
+
+	bool first = true;
+
+public:
+	/* virtual methods from class SimpleThreadIstreamFilter */
+	Result SimpleRun(SliceFifoBuffer &input, SliceFifoBuffer &output,
+			 Params params) override {
+		if (first) {
+			/* ignore the first run so both input buffers
+			   get filled completely */
+			first = false;
+			return {.drained = false};
+		}
+
+		const auto r = input.Read();
+		count += r.size();
+		input.Consume(r.size());
+
+		if (params.finish) {
+			auto w = output.Write();
+			assert(w.size() >= 64);
+
+			auto *p = reinterpret_cast<char *>(w.data());
+			char *q = std::format_to(p, "{}", count);
+			output.Append(q - p);
+		}
+
+		return {.drained = params.finish};
+	}
+};
+
+/**
+ * Test with a huge input (but small output).  This checks whether
+ * full input buffers can lead to stalled transfers.
+ */
+class HugeZeroInputIstreamTestTraits {
+	mutable EventLoop *event_loop_ = nullptr;
+
+public:
+	static constexpr IstreamFilterTestOptions options{
+		.expected_result = "4194304",
+		.enable_byte = false,
+	};
+
+	~HugeZeroInputIstreamTestTraits() noexcept {
+		// invoke all pending ThreadJob::Done() calls
+		if (event_loop_ != nullptr)
+			event_loop_->Run();
+
+		thread_pool_stop();
+		thread_pool_join();
+		thread_pool_deinit();
+	}
+
+	UnusedIstreamPtr CreateInput(struct pool &pool) const noexcept {
+		return istream_head_new(pool,
+					istream_zero_new(pool),
+					4194304, true);
+	}
+
+	UnusedIstreamPtr CreateTest(EventLoop &event_loop, struct pool &pool,
+				    UnusedIstreamPtr input) const noexcept {
+		event_loop_ = &event_loop;
+
+		thread_pool_set_volatile();
+		return NewThreadIstream(pool, thread_pool_get_queue(event_loop),
+					std::move(input),
+					std::make_unique<CountSimpleThreadIstreamFilter>());
+	}
+};
+
+INSTANTIATE_TYPED_TEST_SUITE_P(SimpleThreadIstreamHugeZeroInput, IstreamFilterTest,
+			       HugeZeroInputIstreamTestTraits);
