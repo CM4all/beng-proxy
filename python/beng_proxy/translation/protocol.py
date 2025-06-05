@@ -2,7 +2,7 @@
 # Basic protocol definitions for the beng-proxy translation server
 # protocol.
 #
-# Author: Max Kellermann <mk@cm4all.com>
+# Author: Max Kellermann <max.kellermann@ionos.com>
 #
 
 TRANSLATE_BEGIN = 1

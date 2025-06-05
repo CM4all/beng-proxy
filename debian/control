@@ -1,7 +1,7 @@
 Source: cm4all-beng-proxy
 Section: web
 Priority: optional
-Maintainer: Max Kellermann <mk@cm4all.com>
+Maintainer: Max Kellermann <max.kellermann@ionos.com>
 Build-Depends: debhelper (>= 13.3~), dh-python,
  python3,
  meson (>= 1.2),

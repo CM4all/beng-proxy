@@ -1,7 +1,7 @@
 #
 # Definitions for the beng-proxy remote control protocol.
 #
-# Author: Max Kellermann <mk@cm4all.com>
+# Author: Max Kellermann <max.kellermann@ionos.com>
 #
 
 control_magic = 0x63046101

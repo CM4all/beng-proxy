@@ -1,7 +1,7 @@
 #
 # gdb commands for debugging/inspecting beng-proxy.
 #
-# Author: Max Kellermann <mk@cm4all.com>
+# Author: Max Kellermann <max.kellermann@ionos.com>
 #
 
 import re

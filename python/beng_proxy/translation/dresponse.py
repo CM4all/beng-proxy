@@ -1,7 +1,7 @@
 #
 # A builder for a translation response.
 #
-# Author: Max Kellermann <mk@cm4all.com>
+# Author: Max Kellermann <max.kellermann@ionos.com>
 #
 
 import struct

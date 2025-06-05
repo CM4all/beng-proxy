@@ -1,7 +1,7 @@
 #
 # Parsers for beng-proxy remote control responses.
 #
-# Author: Max Kellermann <mk@cm4all.com>
+# Author: Max Kellermann <max.kellermann@ionos.com>
 #
 
 import struct

@@ -2,7 +2,7 @@
 #
 # A trivial beng-proxy CGI filter which applies XSLT to an XML input using xsltproc.
 #
-# Author: Max Kellermann <mk@cm4all.com>
+# Author: Max Kellermann <max.kellermann@ionos.com>
 
 echo "Content-Type: text/html; charset=utf-8"
 echo

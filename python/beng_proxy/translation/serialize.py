@@ -1,7 +1,7 @@
 #
 # An implementation of the beng-proxy translation server protocol.
 #
-# Author: Max Kellermann <mk@cm4all.com>
+# Author: Max Kellermann <max.kellermann@ionos.com>
 #
 
 import struct

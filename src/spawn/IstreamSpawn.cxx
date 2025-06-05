@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-2-Clausey
 // Copyright CM4all GmbH
-// author: Max Kellermann <mk@cm4all.com>
+// author: Max Kellermann <max.kellermann@ionos.com>
 
 #include "IstreamSpawn.hxx"
 #include "spawn/Interface.hxx"

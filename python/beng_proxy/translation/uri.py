@@ -1,7 +1,7 @@
 #
 # Build URIs.
 #
-# Author: Max Kellermann <mk@cm4all.com>
+# Author: Max Kellermann <max.kellermann@ionos.com>
 #
 
 from urllib.parse import quote

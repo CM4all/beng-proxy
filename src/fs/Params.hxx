@@ -2,7 +2,7 @@
  * Copyright 2007-2022 CM4all GmbH
  * All rights reserved.
  *
- * author: Max Kellermann <mk@cm4all.com>
+ * author: Max Kellermann <max.kellermann@ionos.com>
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions

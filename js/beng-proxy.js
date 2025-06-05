@@ -1,7 +1,7 @@
 //
 // The beng-proxy JavaScript library.
 //
-// Author: Max Kellermann <mk@cm4all.com>
+// Author: Max Kellermann <max.kellermann@ionos.com>
 //
 
 function beng_widget_uri(base_uri, session_id, frame, focus, mode,

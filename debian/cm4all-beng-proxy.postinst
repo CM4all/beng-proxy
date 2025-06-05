@@ -1,5 +1,5 @@
 #! /bin/sh -e
-# Author: Max Kellermann <mk@cm4all.com>
+# Author: Max Kellermann <max.kellermann@ionos.com>
 
 if [ "$1" = "triggered" ]; then
     if systemctl --quiet is-active cm4all-beng-proxy; then

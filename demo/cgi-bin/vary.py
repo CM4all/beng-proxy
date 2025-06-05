@@ -4,7 +4,7 @@
 # header, beng-proxy knows how to cache different responses for the
 # same resource.
 #
-# author: Max Kellermann <mk@cm4all.com>
+# author: Max Kellermann <max.kellermann@ionos.com>
 
 from os import getenv
 from sys import stdout

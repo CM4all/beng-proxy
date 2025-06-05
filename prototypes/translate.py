@@ -2,7 +2,7 @@
 #
 # Prototype for the beng-proxy translation server.
 #
-# Author: Max Kellermann <mk@cm4all.com>
+# Author: Max Kellermann <max.kellermann@ionos.com>
 
 import re, base64
 import os

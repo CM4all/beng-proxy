@@ -1,7 +1,7 @@
 #
 # Incremental request parser.
 #
-# Author: Max Kellermann <mk@cm4all.com>
+# Author: Max Kellermann <max.kellermann@ionos.com>
 #
 
 import six
