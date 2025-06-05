@@ -164,7 +164,7 @@ UringSpliceIstream::~UringSpliceIstream() noexcept
 inline bool
 UringSpliceIstream::TryDirect() noexcept
 try {
-	assert(in_pipe >= 0);
+	assert(in_pipe > 0);
 
 	if (offset - in_pipe >= end_offset) {
 		DestroyEof();
@@ -272,6 +272,20 @@ try {
 	offset += res;
 
 	assert(in_pipe >= 0);
+
+	if (in_pipe == 0) [[unlikely]] {
+		/* the in-flight pipe data has already been consumed
+		   before this completion callback was invoked; now
+		   that our bookkeeping is up to date, start another
+		   io_uring splice operation to refill the pipe (or
+		   report end-of-file to our handler) */
+
+		if (offset >= end_offset)
+			DestroyEof();
+		else
+			DeferStartRead();
+		return;
+	}
 
 	TryDirect();
 } catch (...) {

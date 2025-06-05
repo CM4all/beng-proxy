@@ -1,6 +1,6 @@
 cm4all-beng-proxy (19.24) unstable; urgency=low
 
-  * 
+  * io_uring: fix stall bug after slow completion callback
 
  --   
 
