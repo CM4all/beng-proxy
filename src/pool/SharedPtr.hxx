@@ -84,8 +84,17 @@ public:
 			c->Unref();
 	}
 
+	SharedPoolPtr &operator=(std::nullptr_t) noexcept {
+		reset();
+		return *this;
+	}
+
 	operator bool() const noexcept {
 		return control != nullptr;
+	}
+
+	constexpr bool operator==(std::nullptr_t n) const noexcept {
+		return control == n;
 	}
 
 	T &operator*() const noexcept {
