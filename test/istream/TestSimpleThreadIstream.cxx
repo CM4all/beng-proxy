@@ -10,6 +10,8 @@
 #include "istream/ZeroIstream.hxx"
 #include "thread/Pool.hxx"
 
+#include <fmt/core.h>
+
 #include <thread> // for std::this_thread::sleep_for()
 
 /* most of this is a copy of TestThreadIstream.cxx refactored to use
@@ -255,7 +257,7 @@ public:
 			assert(w.size() >= 64);
 
 			auto *p = reinterpret_cast<char *>(w.data());
-			char *q = std::format_to(p, "{}", count);
+			char *q = fmt::format_to(p, "{}", count);
 			output.Append(q - p);
 		}
 
