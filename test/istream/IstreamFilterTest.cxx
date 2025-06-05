@@ -194,6 +194,9 @@ Context::WaitForEndOfStream() noexcept
 IstreamReadyResult
 Context::OnIstreamReady() noexcept
 {
+	if (HandleBlockInject())
+		return IstreamReadyResult::OK;
+
 	const auto result = on_ready_buckets
 		? ReadBuckets2(1024 * 1024, false).first
 		: IstreamReadyResult::FALLBACK;
