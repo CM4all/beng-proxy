@@ -18,18 +18,18 @@ using std::string_view_literals::operator""sv;
 class IstreamReplaceTestTraits {
 public:
 	static constexpr IstreamFilterTestOptions options{
-		.expected_result = "foo",
+		.expected_result = "abcfoodefbarghijklmnopqrstuvwxyz",
 	};
 
 	UnusedIstreamPtr CreateInput(struct pool &pool) const noexcept {
-		return istream_string_new(pool, "foo");
+		return istream_string_new(pool, "abcdefghijklmnopqrstuvwxyz");
 	}
 
 	UnusedIstreamPtr CreateTest(EventLoop &event_loop, struct pool &pool,
 				    UnusedIstreamPtr input) const noexcept {
 		auto *replace = NewIstream<ReplaceIstream>(pool, event_loop, std::move(input));
-		replace->Add(0, 0, nullptr);
-		replace->Add(3, 3, nullptr);
+		replace->Add(3, 3, istream_string_new(pool, "foo"sv));
+		replace->Add(6, 6, istream_string_new(pool, "bar"sv));
 		replace->Finish();
 		return UnusedIstreamPtr(replace);
 	}
