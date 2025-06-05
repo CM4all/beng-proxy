@@ -12,6 +12,8 @@
 class ReadyIstream final : public ForwardIstream {
 	DeferEvent defer_ready;
 
+	bool allow_buckets = false;
+
 	bool fallback = false;
 
 public:
@@ -20,12 +22,27 @@ public:
 		:ForwardIstream(p, std::move(_input)),
 		 defer_ready(event_loop, BIND_THIS_METHOD(OnDeferredReady)) {}
 
+	// virtual methods from Istream
+	void _FillBucketList(IstreamBucketList &list) override;
+
 	// virtual methods from IstreamHandler
 	size_t OnData(std::span<const std::byte> src) noexcept override;
 
 private:
 	void OnDeferredReady() noexcept;
 };
+
+void
+ReadyIstream::_FillBucketList(IstreamBucketList &list)
+{
+	if (!allow_buckets) {
+		defer_ready.Schedule();
+		list.SetMore();
+		return;
+	}
+
+	return ForwardIstream::_FillBucketList(list);
+}
 
 size_t
 ReadyIstream::OnData(std::span<const std::byte> src) noexcept
@@ -42,6 +59,8 @@ ReadyIstream::OnData(std::span<const std::byte> src) noexcept
 void
 ReadyIstream::OnDeferredReady() noexcept
 {
+	allow_buckets = true;
+
 	switch (InvokeReady()) {
 	case IstreamReadyResult::OK:
 		break;
