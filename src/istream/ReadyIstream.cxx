@@ -23,6 +23,7 @@ public:
 	/* handler */
 	size_t OnData(std::span<const std::byte> src) noexcept override;
 
+private:
 	void OnDeferredReady() noexcept;
 };
 
