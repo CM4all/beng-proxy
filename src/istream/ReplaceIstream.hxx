@@ -62,13 +62,7 @@ class ReplaceIstream : public FacadeIstream, DestructAnchor {
 
 		/* virtual methods from class IstreamHandler */
 
-		IstreamReadyResult OnIstreamReady() noexcept override {
-			if (!IsActive())
-				return IstreamReadyResult::OK;
-
-			return replace.OnSubstitutionReady(*this);
-		}
-
+		IstreamReadyResult OnIstreamReady() noexcept override;
 		size_t OnData(std::span<const std::byte> src) noexcept override;
 		void OnEof() noexcept override;
 		void OnError(std::exception_ptr ep) noexcept override;
@@ -168,19 +162,7 @@ private:
 	 */
 	bool TryReadFromBuffer() noexcept;
 
-	void DeferredRead() noexcept {
-		switch (InvokeReady()) {
-		case IstreamReadyResult::OK:
-			break;
-
-		case IstreamReadyResult::FALLBACK:
-			TryRead();
-			break;
-
-		case IstreamReadyResult::CLOSED:
-			break;
-		}
-	}
+	void DeferredRead() noexcept;
 
 	/**
 	 * Copy data from the source buffer to the istream handler.

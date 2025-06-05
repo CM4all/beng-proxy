@@ -25,7 +25,7 @@ ReplaceIstream::Substitution::Substitution(ReplaceIstream &_replace,
  * Is this substitution object is active, i.e. its data is the next
  * being written?
  */
-bool
+inline bool
 ReplaceIstream::Substitution::IsActive() const noexcept
 {
 	assert(replace.first_substitution != nullptr);
@@ -61,6 +61,15 @@ ReplaceIstream::ToNextSubstitution(ReplaceIstream::Substitution *s) noexcept
  * istream handler
  *
  */
+
+IstreamReadyResult
+ReplaceIstream::Substitution::OnIstreamReady() noexcept
+{
+	if (!IsActive())
+		return IstreamReadyResult::OK;
+
+	return replace.OnSubstitutionReady(*this);
+}
 
 size_t
 ReplaceIstream::Substitution::OnData(std::span<const std::byte> src) noexcept
@@ -223,6 +232,22 @@ ReplaceIstream::TryReadFromBuffer() noexcept
 	}
 
 	return true;
+}
+
+inline void
+ReplaceIstream::DeferredRead() noexcept
+{
+	switch (InvokeReady()) {
+	case IstreamReadyResult::OK:
+		break;
+
+	case IstreamReadyResult::FALLBACK:
+		TryRead();
+		break;
+
+	case IstreamReadyResult::CLOSED:
+		break;
+	}
 }
 
 bool
