@@ -125,6 +125,12 @@ private:
 	 */
 	bool StartRead() noexcept;
 
+	void DeferStartRead() noexcept {
+		assert(!IsUringPending());
+
+		defer_start.Schedule();
+	}
+
 	void OnDeferredStart() noexcept {
 		StartRead();
 	}
@@ -285,7 +291,7 @@ UringSpliceIstream::_ConsumeDirect(std::size_t nbytes) noexcept
            only here we know the pipe is not full */
 	if (offset < end_offset) {
 		if (!IsUringPending()) {
-			defer_start.Schedule();
+			DeferStartRead();
 		}
 	} else {
 		if (in_pipe == 0) {
@@ -305,7 +311,7 @@ UringSpliceIstream::_Read() noexcept
 			if (offset == end_offset)
 				DestroyEof();
 			else
-				defer_start.Schedule();
+				DeferStartRead();
 		}
 
 		return;
