@@ -10,6 +10,8 @@
 #include "event/DeferEvent.hxx"
 #include "io/FileDescriptor.hxx"
 
+#include <cassert>
+
 class ApproveIstream final : public ForwardIstream {
 	const SharedPoolPtr<ApproveIstreamControl> control;
 
@@ -25,6 +27,9 @@ public:
 		 defer_read(event_loop, BIND_THIS_METHOD(DeferredRead)) {}
 
 	~ApproveIstream() noexcept override {
+		assert(control);
+		assert(control->approve == this);
+
 		control->approve = nullptr;
 	}
 
