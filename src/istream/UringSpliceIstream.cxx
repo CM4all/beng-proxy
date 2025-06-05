@@ -63,6 +63,13 @@ class UringSpliceIstream final : public Istream, Uring::Operation {
 	 */
 	FileDescriptor fd;
 
+	/**
+	 * Has more data from the pipe been consumed by our handler
+	 * while the io_uring splice was pending?  This is used to
+	 * restart the operation on EAGAIN.
+	 */
+	bool consumed_while_pending;
+
 #ifndef NDEBUG
 	bool direct = false;
 #endif
@@ -128,6 +135,10 @@ private:
 	void DeferStartRead() noexcept {
 		assert(!IsUringPending());
 
+		if (defer_start.IsPending())
+			return;
+
+		consumed_while_pending = false;
 		defer_start.Schedule();
 	}
 
@@ -257,12 +268,23 @@ try {
 		if (res == 0) [[unlikely]]
 			throw FmtRuntimeError("Premature end of file in '{}'", path);
 
-		if (res == -EAGAIN)
+		if (res == -EAGAIN) {
 			/* this can happen if the pipe is full; this
 			   is surprising, because io_uring is supposed
 			   to handle EAGAIN, but it does not with
 			   non-blocking pipes */
+
+			if (consumed_while_pending)
+				/* if data was consumed since the
+				   io_uring operation was pending (and
+				   until this completion callback was
+				   invoked), assume that the pipe is
+				   no longer full, so try to restart
+				   the read */
+				DeferStartRead();
+
 			return;
+		}
 
 		fd_lease.SetBroken();
 		throw FmtErrno(-res, "Failed to read from '{}'", path);
@@ -306,7 +328,9 @@ UringSpliceIstream::_ConsumeDirect(std::size_t nbytes) noexcept
 	/* we trigger the next io_uring read call from here because
            only here we know the pipe is not full */
 	if (offset < end_offset) {
-		if (!IsUringPending()) {
+		if (IsUringPending()) {
+			consumed_while_pending = true;
+		} else {
 			DeferStartRead();
 		}
 	} else {
