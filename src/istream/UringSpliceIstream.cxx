@@ -164,6 +164,8 @@ UringSpliceIstream::~UringSpliceIstream() noexcept
 inline bool
 UringSpliceIstream::TryDirect() noexcept
 try {
+	assert(in_pipe >= 0);
+
 	if (offset - in_pipe >= end_offset) {
 		DestroyEof();
 		return false;
@@ -306,8 +308,14 @@ UringSpliceIstream::_Read() noexcept
 {
 	assert(direct);
 
-	if (in_pipe == 0) {
+	if (in_pipe <= 0) {
 		if (!IsUringPending()) {
+			/* in_pipe can only be negative if we have
+			   consumed data before OnUringCompletion()
+			   was called to update in_pipe, i.e it must
+			   still be pending */
+			assert(in_pipe == 0);
+
 			if (offset == end_offset)
 				DestroyEof();
 			else
