@@ -1,6 +1,7 @@
 cm4all-beng-proxy (19.23) unstable; urgency=low
 
   * translation: support combined response for multiple SERVICEs
+  * brotli, gzip: fix stall bug
 
  --   
 

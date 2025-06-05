@@ -30,7 +30,7 @@ SimpleThreadIstreamFilter::Run(ThreadIstreamInternal &i)
 
 	const auto result = SimpleRun(unprotected_input, unprotected_output, params);
 
-	const bool input_consumed = input_available < unprotected_input.GetAvailable();
+	const bool input_consumed = unprotected_input.GetAvailable() < input_available;
 	const bool output_full = unprotected_output.IsDefinedAndFull();
 
 	{
