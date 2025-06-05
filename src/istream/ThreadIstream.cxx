@@ -458,8 +458,7 @@ ThreadIstream::_Read() noexcept
 	if (!SubmitOutput())
 		return;
 
-	if (HasInput())
-		input.Read();
+	MaybeFillInput();
 }
 
 void
