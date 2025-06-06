@@ -1127,6 +1127,9 @@ FcgiClient::_ConsumeBucketList(std::size_t nbytes) noexcept
 
 	assert(response.end_request || consume_bucket_handler.nbytes == 0);
 
+	if (!response.end_request && socket.IsConnected())
+		socket.ScheduleRead();
+
 	return {Consumed(consume_bucket_handler.total), response.end_request};
 }
 

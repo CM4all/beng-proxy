@@ -1,6 +1,6 @@
 cm4all-beng-proxy (19.25) unstable; urgency=low
 
-  * 
+  * fcgi: fix stall bug
 
  --   
 
