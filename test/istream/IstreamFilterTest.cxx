@@ -115,9 +115,12 @@ Context::ReadBuckets2(std::size_t limit, bool consume_more)
 		}
 	}
 
-	[[maybe_unused]] const auto r = input.ConsumeBucketList(consumed + consume_more);
-	assert(r.consumed == consumed);
-	bucket_eof = eof = r.eof;
+	if (consumed + consume_more > 0) {
+		[[maybe_unused]] const auto r = input.ConsumeBucketList(consumed + consume_more);
+		assert(r.consumed == consumed);
+		bucket_eof = eof = r.eof;
+	}
+
 	// TODO check r.eof
 
 	[[maybe_unused]]
