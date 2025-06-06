@@ -41,11 +41,15 @@ SimpleThreadIstreamFilter::Run(ThreadIstreamInternal &i)
 		/* run again if:
 		   1. our output buffer is full (ThreadIstream will
 		      provide a new one)
-		   2. there is more input in ThreadIstreamInternal but
+	           2. the thread's output buffer is full but our output
+		      buffer has more data
+		   3. there is more input in ThreadIstreamInternal but
 		      in this run, there was not enough space in our
 		      input buffer, but there is now
 		*/
-		i.again = output_full || (input_consumed && !i.input.empty());
+		i.again = output_full ||
+			(i.output.IsFull() && !unprotected_output.empty()) ||
+			(input_consumed && !i.input.empty());
 	}
 }
 

@@ -2,6 +2,7 @@ cm4all-beng-proxy (19.25) unstable; urgency=low
 
   * fcgi: fix stall bug
   * http: fix stall bug
+  * brotli, gzip: fix yet another stall bug
 
  --   
 
