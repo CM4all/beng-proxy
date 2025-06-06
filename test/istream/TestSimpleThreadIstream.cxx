@@ -189,7 +189,7 @@ static constexpr auto MakeExplodedBuffer(const char (&src)[size]) noexcept {
 	return buffer;
 }
 
-class ExplodeOutputIstreamTestTraits {
+class SimpleExplodeOutputIstreamTestTraits {
 	mutable EventLoop *event_loop_ = nullptr;
 
 	static constexpr char input_string[] = "0123456789abcdefghijklmnopqrstuvwxyz";
@@ -200,7 +200,7 @@ public:
 		.expected_result = result.data(),
 	};
 
-	~ExplodeOutputIstreamTestTraits() noexcept {
+	~SimpleExplodeOutputIstreamTestTraits() noexcept {
 		// invoke all pending ThreadJob::Done() calls
 		if (event_loop_ != nullptr)
 			event_loop_->Run();
@@ -226,7 +226,7 @@ public:
 };
 
 INSTANTIATE_TYPED_TEST_SUITE_P(SimpleThreadIstreamExplode, IstreamFilterTest,
-			       ExplodeOutputIstreamTestTraits);
+			       SimpleExplodeOutputIstreamTestTraits);
 
 /**
  * A #SimpleThreadIstreamFilter implementation that counts all the
