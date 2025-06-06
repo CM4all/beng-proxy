@@ -142,9 +142,6 @@ public:
 	template<typename Socket>
 	ConsumeBucketResult ConsumeBucketList(Socket &s, std::size_t nbytes) noexcept {
 		auto b = s.ReadBuffer();
-		if (b.empty())
-			return {0, IsEOF()};
-
 		std::size_t max = GetMaxRead(b.size());
 		if (nbytes > max)
 			nbytes = max;
