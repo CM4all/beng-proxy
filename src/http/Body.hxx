@@ -151,6 +151,10 @@ public:
 		s.DisposeConsumed(nbytes);
 		s.AfterConsumed();
 		Consumed(nbytes);
+
+		if (nbytes > 0 && !IsEOF() && s.IsConnected())
+			s.ScheduleRead();
+
 		return {Istream::Consumed(nbytes), IsEOF()};
 	}
 
