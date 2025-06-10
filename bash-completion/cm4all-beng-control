@@ -1,0 +1,46 @@
+_beng_control () {
+    local c=1 command
+
+    while [ $c -lt $COMP_CWORD ]; do
+	local word="${COMP_WORDS[c]}"
+	case "$word" in
+            -*) ;;
+	    *) command="$word"; break ;;
+	esac
+	c=$((c+1))
+    done
+
+    local cur="${COMP_WORDS[COMP_CWORD]}"
+
+    if [ -z "${command:-}" ]; then
+	case "$cur" in
+	    -*)
+                COMPREPLY=(--server=)
+                compopt -o nospace
+                ;;
+
+	    *)
+                COMPREPLY=( $(compgen -W "
+                     nop
+                     tcache-invalidate
+                     enable-node
+                     fade-node
+                     dump-pools
+                     verbose
+                     reload-state
+                     fade-children
+                     terminate-children
+                     disable-zeroconf
+                     enable-zeroconf
+                     flush-http-cache
+                     flush-filter-cache
+                     discard-session
+                     " -- "$cur"
+                            ) )
+                ;;
+	esac
+	return
+    fi
+}
+
+complete -F _beng_control cm4all-beng-control

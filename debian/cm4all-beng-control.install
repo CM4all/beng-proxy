@@ -1,1 +1,2 @@
 usr/bin/cm4all-beng-control
+bash-completion/cm4all-beng-control usr/share/bash-completion/completions
