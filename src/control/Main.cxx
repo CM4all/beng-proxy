@@ -197,6 +197,21 @@ TerminateChildren(const char *server, ConstBuffer<const char *> args)
 }
 
 static void
+DisconnectDatabase(const char *server, ConstBuffer<const char *> args)
+{
+	if (args.empty())
+		throw Usage{"Not enough arguments"};
+
+	const std::string_view tag = args.shift();
+
+	if (!args.empty())
+		throw Usage{"Too many arguments"};
+
+	BengControl::Client client(server);
+	client.Send(BengControl::Command::DISCONNECT_DATABASE, tag);
+}
+
+static void
 FlushHttpCache(const char *server, ConstBuffer<const char *> args)
 {
 	std::string_view tag{};
@@ -319,6 +334,9 @@ try {
 	} else if (StringIsEqual(command, "terminate-children")) {
 		TerminateChildren(server, args);
 		return EXIT_SUCCESS;
+	} else if (StringIsEqual(command, "disconnect-database")) {
+		DisconnectDatabase(server, args);
+		return EXIT_SUCCESS;
 	} else if (StringIsEqual(command, "disable-zeroconf")) {
 		SimpleCommand(server, args,
 			      BengControl::Command::DISABLE_ZEROCONF);
@@ -357,6 +375,7 @@ try {
 		"  reload-state\n"
 		"  fade-children [TAG]\n"
 		"  terminate-children TAG\n"
+		"  disconnect-database TAG\n"
 		"  disable-zeroconf\n"
 		"  enable-zeroconf\n"
 		"  flush-http-cache [TAG]\n"

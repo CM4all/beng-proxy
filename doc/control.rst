@@ -121,6 +121,11 @@ Commands
 - ``RELOAD_STATE``: Reload state from the :ref:`state directories
   <state>` and apply it to the current process.
 
+- ``DISCONNECT_DATABASE``: Disconnect all database connections
+  matching the payload.  This is usually received and handled by
+  `myproxy <https://github.com/CM4all/myproxy>`__ processes and the
+  payload is the account identifier.
+
 Only ``TCACHE_INVALIDATE``,
 ``FLUSH_FILTER_CACHE``, ``STATS`` and ``NODE_STATUS`` are allowed when
 received via IP. The other commands are only accepted from clients

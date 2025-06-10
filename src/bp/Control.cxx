@@ -170,6 +170,7 @@ BpInstance::OnControlPacket(BengControl::Server &,
 
 	case Command::ENABLE_QUEUE:
 	case Command::DISABLE_QUEUE:
+	case Command::DISCONNECT_DATABASE:
 		// not applicable
 		break;
 	}

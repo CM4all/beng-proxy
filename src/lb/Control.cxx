@@ -325,6 +325,7 @@ LbControl::OnControlPacket(BengControl::Server &control_server,
 	case Command::TERMINATE_CHILDREN:
 	case Command::ENABLE_QUEUE:
 	case Command::DISABLE_QUEUE:
+	case Command::DISCONNECT_DATABASE:
 		/* not applicable */
 		break;
 

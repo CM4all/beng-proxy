@@ -30,6 +30,7 @@ _beng_control () {
                      reload-state
                      fade-children
                      terminate-children
+                     disconnect-database
                      disable-zeroconf
                      enable-zeroconf
                      flush-http-cache
