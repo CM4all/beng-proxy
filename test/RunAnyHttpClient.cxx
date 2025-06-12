@@ -207,9 +207,11 @@ try {
 	auto *address = http_address_parse(*ctx.pool, argv[1]);
 
 	if (address->host_and_port != nullptr) {
-		static constexpr auto hints = MakeAddrInfo(AI_ADDRCONFIG,
-							   AF_UNSPEC,
-							   SOCK_STREAM);
+		static constexpr struct addrinfo hints{
+			.ai_flags = AI_ADDRCONFIG,
+			.ai_family = AF_UNSPEC,
+			.ai_socktype = SOCK_STREAM,
+		};
 
 		AddressListBuilder address_list_builder;
 		address_list_builder.Add(*ctx.pool,

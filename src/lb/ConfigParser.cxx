@@ -469,7 +469,10 @@ LbConfigParser::AutoCreateMember(LbMemberConfig &member, const char *name)
 static unsigned
 parse_port(const char *p, SocketAddress address)
 {
-	const auto hints = MakeAddrInfo(0, address.GetFamily(), SOCK_STREAM);
+	const struct addrinfo hints = {
+		.ai_family = address.GetFamily(),
+		.ai_socktype = SOCK_STREAM,
+	};
 
 	struct addrinfo *ai;
 	if (getaddrinfo(nullptr, p, &hints, &ai) != 0)

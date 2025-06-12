@@ -76,8 +76,11 @@ try {
 
 	AddressListBuilder address_list_builder;
 
-	static constexpr auto hints = MakeAddrInfo(AI_ADDRCONFIG, AF_UNSPEC,
-						   SOCK_STREAM);
+	static constexpr struct addrinfo hints{
+		.ai_flags = AI_ADDRCONFIG,
+		.ai_family = AF_UNSPEC,
+		.ai_socktype = SOCK_STREAM,
+	};
 
 	for (int i = 1; i < argc; ++i)
 		address_list_builder.Add(alloc, Resolve(argv[i], 80, &hints));
