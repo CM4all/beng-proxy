@@ -110,6 +110,9 @@ class Client:
     def send_fade_children(self, tag: Optional[str]=None) -> None:
         self.send(CONTROL_FADE_CHILDREN, tag)
 
+    def send_terminate_children(self, tag: Optional[str]=None) -> None:
+        self.send(CONTROL_TERMINATE_CHILDREN, tag)
+
     def send_enable_zeroconf(self) -> None:
         self.send(CONTROL_ENABLE_ZEROCONF)
 
@@ -121,3 +124,12 @@ class Client:
 
     def send_flush_filter_cache(self) -> None:
         self.send(CONTROL_FLUSH_FILTER_CACHE)
+
+    def send_enable_queue(self, name: Optional[str]=None) -> None:
+        self.send(CONTROL_ENABLE_QUEUE, name)
+
+    def send_disable_queue(self, name: Optional[str]=None) -> None:
+        self.send(CONTROL_DISABLE_QUEUE, name)
+
+    def send_disconnect_database(self, account: str) -> None:
+        self.send(CONTROL_DISCONNECT_DATABASE, account)
