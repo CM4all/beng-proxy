@@ -43,7 +43,7 @@ constexpr std::array valid_http_status_array{
 	HttpStatus::GONE,
 	HttpStatus::LENGTH_REQUIRED,
 	HttpStatus::PRECONDITION_FAILED,
-	HttpStatus::REQUEST_ENTITY_TOO_LARGE,
+	HttpStatus::PAYLOAD_TOO_LARGE,
 	HttpStatus::REQUEST_URI_TOO_LONG,
 	HttpStatus::UNSUPPORTED_MEDIA_TYPE,
 	HttpStatus::REQUESTED_RANGE_NOT_SATISFIABLE,
