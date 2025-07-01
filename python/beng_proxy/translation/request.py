@@ -6,12 +6,14 @@
 
 import array
 import struct
+from typing import FrozenSet
 from urllib.parse import unquote
 
 from .protocol import *
+from .serialize import PacketReader
 import beng_proxy.translation.uri
 
-def _parse_port(address):
+def _parse_port(address: str) -> int|None:
     if address[0] == '[':
         i = address.find(']', 1)
         if i < 0 or len(address) <= i + 2 or address[i + 1] != ':':
@@ -35,62 +37,62 @@ class Request:
 
     Never ever access the 'args' property."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.protocol_version = 0
-        self.host = None
-        self.alt_host = None
-        self.raw_uri = None
-        self.args = None
-        self.query_string = None
-        self.widget_type = None
-        self.session = None
-        self.check = None
-        self.check_header = None
-        self.auth = None
-        self.http_auth = None
-        self.token_auth = None
-        self.auth_token = None
-        self.mount_listen_stream = None
-        self.recover_session = None
-        self.want_full_uri = None
-        self.chain = None
-        self.chain_header = None
-        self.param = None
-        self.layout = None
-        self.listener_tag = None
-        self.local_address = None
-        self.local_port = None
-        self.remote_host = None
-        self.user_agent = None
-        self.ua_class = None
-        self.accept_language = None
-        self.authorization = None
-        self.status = None
-        self.want = None
-        self.file_not_found = None
-        self.path_exists = None
-        self.directory_index = None
-        self.internal_redirect = None
-        self.enotdir = None
-        self.content_type_lookup = None
-        self.suffix = None
+        self.host: str|None = None
+        self.alt_host: str|None = None
+        self.raw_uri: str|None = None
+        self.args: str|None = None
+        self.query_string: str|None = None
+        self.widget_type: str|None = None
+        self.session: str|None = None
+        self.check: bytes|None = None
+        self.check_header: str|None = None
+        self.auth: bytes|None = None
+        self.http_auth: bytes|None = None
+        self.token_auth: bytes|None = None
+        self.auth_token: bytes|None = None
+        self.mount_listen_stream: bytes|None = None
+        self.recover_session: bytes|None = None
+        self.want_full_uri: bytes|None = None
+        self.chain: bytes|None = None
+        self.chain_header: bytes|None = None
+        self.param: str|None = None
+        self.layout: bytes|None = None
+        self.listener_tag: str|None = None
+        self.local_address: str|None = None
+        self.local_port: int|None = None
+        self.remote_host: str|None = None
+        self.user_agent: str|None = None
+        self.ua_class: str|None = None
+        self.accept_language: str|None = None
+        self.authorization: str|None = None
+        self.status: int|None = None
+        self.want: FrozenSet[int]|None = None
+        self.file_not_found: bytes|None = None
+        self.path_exists: bytes|None = None
+        self.directory_index: bytes|None = None
+        self.internal_redirect: bytes|None = None
+        self.enotdir: bytes|None = None
+        self.content_type_lookup: bytes|None = None
+        self.suffix: str|None = None
         self.error_document = False
-        self.error_document_payload = None
-        self.probe_path_suffixes = None
-        self.probe_suffix = None
-        self.read_file = None
-        self.pool = None
-        self.user = None
+        self.error_document_payload: bytes|None = None
+        self.probe_path_suffixes: bytes|None = None
+        self.probe_suffix: str|None = None
+        self.read_file: bytes|None = None
+        self.pool: str|None = None
+        self.user: str|None = None
         self.login = False
-        self.password = None
-        self.service = None
-        self.plan = None
-        self.cron = False
-        self.execute = False
-        self.base = None
-        self.regex = None
+        self.password: str|None = None
+        self.service: str|None = None
+        self.plan: str|None = None
+        self.cron: str|bool = False
+        self.execute: str|bool = False
+        self.base: str|None = None
+        self.regex: str|None = None
 
-    def __getattr__(self, name):
+    def __getattr__(self, name: str) -> str|None:
         if name == 'uri':
             # compatibility with pre-0.7: return the unquoted URI
             if self.raw_uri is None:
@@ -99,7 +101,7 @@ class Request:
         else:
             raise AttributeError(name)
 
-    def packetReceived(self, packet):
+    def packetReceived(self, packet: PacketReader) -> bool:
         """Feed a packet into this object.  Returns true when the
         request is finished."""
 
@@ -222,8 +224,11 @@ class Request:
             print("Invalid command:", packet.command)
         return False
 
-    def absolute_uri(self, scheme=None, host=None, uri=None, query_string=None,
-                     param=None):
+    def absolute_uri(self, scheme: str|None=None,
+                     host: str|None=None,
+                     uri: str|None=None,
+                     query_string: str|None=None,
+                     param: str|None=None) -> str:
         """Returns the absolute URI of this request.  You may override
         some of the attributes."""
         return beng_proxy.translation.uri.absolute_uri(self, scheme=scheme,

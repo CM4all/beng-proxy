@@ -10,8 +10,9 @@ import struct
 from urllib.parse import unquote
 
 from twisted.python import log
+from twisted.python.failure import Failure
 from twisted.internet import reactor, defer
-from twisted.internet.protocol import Protocol, Factory
+from twisted.internet.protocol import Factory, Protocol
 from beng_proxy.translation import *
 from beng_proxy.translation.widget import WidgetRegistry
 
@@ -56,7 +57,7 @@ content_types = {
 }
 
 class Translation(Protocol):
-    def connectionMade(self):
+    def connectionMade(self) -> None:
         log.msg(f"Connected from {self.transport.client}")
         self._request = None
         self._packet = None
@@ -83,7 +84,7 @@ class Translation(Protocol):
             log.err()
             return Response(protocol_version=2).status(500)
 
-    def _handle_content_type_lookup(self, payload, suffix):
+    def _handle_content_type_lookup(self, payload: bytes, suffix: str) -> Response:
         log.msg(r"content_type_lookup {payload!r} suffix={suffix!r}")
 
         response = Response(protocol_version=2)
@@ -99,7 +100,7 @@ class Translation(Protocol):
                 response.packet(TRANSLATE_AUTO_BROTLI_PATH)
         return response
 
-    def _handle_login(self, user, password, service, listener_tag):
+    def _handle_login(self, user: str, password: str|None, service: str, listener_tag: str|None) -> Response:
         log.msg(f"login {user!r} password={password!r} service={service!r} tag={listener_tag!r}")
 
         response = Response(protocol_version=2)
@@ -130,7 +131,7 @@ class Translation(Protocol):
             response.packet(TRANSLATE_UTS_NAMESPACE, 'host-' + user)
         return response
 
-    def _handle_cron(self, partition, tag, user, uri, param):
+    def _handle_cron(self, partition, tag, user: str|None, uri: str|None, param) -> Response:
         log.msg(f"cron partition={partition!r} tag={tag!r} user={user!r} uri={uri!r} param={param!r}")
 
         response = Response(protocol_version=2)
@@ -156,14 +157,14 @@ class Translation(Protocol):
         response.packet(TRANSLATE_UTS_NAMESPACE, 'host-' + user)
         return response
 
-    def _handle_execute(self, execute, param, service, tag, plan):
+    def _handle_execute(self, execute, param, service, tag, plan) -> Response:
         log.msg(f"execute {execute!r} param={param!r} service={service!r} tag={tag!r} plan={plan!r}")
 
         response = Response(protocol_version=2)
         response.status(404)
         return response
 
-    def _handle_mount_listen_stream(self, mount_listen_stream):
+    def _handle_mount_listen_stream(self, mount_listen_stream: bytes) -> Response:
         log.msg(f"mount_listen_stream {mount_listen_stream!r}")
 
         response = Response(protocol_version=2)
@@ -177,7 +178,7 @@ class Translation(Protocol):
             response.status(404)
         return response
 
-    def _handle_auth(self, auth, uri, session, alt_host):
+    def _handle_auth(self, auth, uri, session, alt_host) -> Response:
         log.msg(f"auth {auth!r} uri={uri!r} session={session!r} alt_host={alt_host!r}")
 
         response = Response(protocol_version=2)
@@ -186,7 +187,7 @@ class Translation(Protocol):
         response.max_age(20)
         return response
 
-    def _handle_http_auth(self, http_auth, authorization):
+    def _handle_http_auth(self, http_auth, authorization) -> Response:
         log.msg(f"http_auth {http_auth!r} authorization={authorization!r}")
 
         response = Response(protocol_version=2)
@@ -205,7 +206,7 @@ class Translation(Protocol):
 
         return response
 
-    def _handle_token_auth(self, token_auth, auth_token, recover_session):
+    def _handle_token_auth(self, token_auth, auth_token, recover_session) -> Response:
         log.msg(f"token_auth {token_auth!r} auth_token={auth_token!r} recover_session={recover_session!r}")
 
         response = Response(protocol_version=2)
@@ -222,7 +223,7 @@ class Translation(Protocol):
 
         return response
 
-    def _handle_pool(self, name, listener_tag, host):
+    def _handle_pool(self, name: str, listener_tag, host) -> Response:
         log.msg(f"pool {name!r} tag={listener_tag!r} host={host!r}")
 
         response = Response(protocol_version=2)
@@ -241,8 +242,8 @@ class Translation(Protocol):
 
         return response
 
-    def _handle_hosting(self, request, response, base, uri,
-                        document_root='/var/www'):
+    def _handle_hosting(self, request, response, base, uri: str,
+                        document_root: str='/var/www'):
         response.packet(TRANSLATE_BASE, base)
         response.packet(TRANSLATE_DOCUMENT_ROOT, document_root)
 
@@ -321,7 +322,7 @@ class Translation(Protocol):
             response.packet(TRANSLATE_DIRECTORY_INDEX, 'foo')
 
     def _handle_probe(self, request, response, base, uri,
-                      document_root='/var/www'):
+                      document_root: str='/var/www'):
         response.packet(TRANSLATE_BASE, base)
         response.packet(TRANSLATE_DOCUMENT_ROOT, document_root)
 
@@ -399,8 +400,9 @@ class Translation(Protocol):
                 response.content_type('text/plain; charset=utf-8')
                 response.gzipped(path + '.gz')
 
-    def _handle_coma(self, response, base_uri, relative_uri, base_path,
-                     config_file=None):
+    def _handle_coma(self, response: Response,
+                     base_uri: str, relative_uri: str, base_path: str,
+                     config_file: str|None=None):
         i = relative_uri.find('/')
         if i < 0: i = len(relative_uri)
         relative_path, path_info = relative_uri[:i], relative_uri[i:]
@@ -419,7 +421,7 @@ class Translation(Protocol):
         if path_info != '' and path_info[0] == '/':
             response.packet(TRANSLATE_BASE, base_uri + relative_path + '/')
 
-    def _authenticate(self, authorization):
+    def _authenticate(self, authorization: str|None) -> bool:
         if authorization is None: return False
         m = re.match(r'^Basic\s+(\S+)$', authorization)
         if m is None: return False
@@ -431,7 +433,7 @@ class Translation(Protocol):
     def _handle_http(self, request, raw_uri, uri, authorization,
                      check, check_header,
                      want_full_uri, want, file_not_found, directory_index,
-                     response):
+                     response: Response) -> Response:
         if uri[:6] == '/site/':
             x = uri[6:]
             i = x.find('/')
@@ -1127,7 +1129,7 @@ class Translation(Protocol):
             self._handle_local_file('/var/www' + uri, response,
                                     error_document=True)
 
-    def _handle_request(self, request):
+    def _handle_request(self, request: Request) -> Response:
         if request.content_type_lookup is not None:
             return self._handle_content_type_lookup(request.content_type_lookup,
                                                     request.suffix)
@@ -1206,16 +1208,16 @@ class Translation(Protocol):
 
         return response
 
-    def _success(self, result):
+    def _success(self, result) -> None:
         self.transport.write(result.finish())
         self._request = None
 
-    def _fail(self, fail):
+    def _fail(self, fail) -> None:
         log.err(fail)
         self.transport.write(Response(protocol_version=2).status(500).finish())
         self._request = None
 
-    def _handle_packet(self, packet):
+    def _handle_packet(self, packet) -> None:
         if packet.command == TRANSLATE_BEGIN:
             self._request = Request()
             self._request.packetReceived(packet)
@@ -1230,7 +1232,7 @@ class Translation(Protocol):
         else:
             log.msg(f"Invalid command without request: {packet.command}")
 
-    def dataReceived(self, data):
+    def dataReceived(self, data: bytes) -> None:
         while len(data) > 0:
             if self._packet is None:
                 self._packet = PacketReader()
@@ -1240,7 +1242,7 @@ class Translation(Protocol):
                 self._handle_packet(self._packet)
                 self._packet = None
 
-    def connectionLost(self, reason):
+    def connectionLost(self, reason: Failure) -> None:
         log.msg(f"Disconnected from {self.transport.client}")
 
 factory = Factory()

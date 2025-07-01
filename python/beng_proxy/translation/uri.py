@@ -6,8 +6,16 @@
 
 from urllib.parse import quote
 
-def absolute_uri(request, scheme=None, host=None, uri=None, query_string=None,
-                 param=None):
+from typing import TYPE_CHECKING
+if TYPE_CHECKING:
+    from .request import Request
+
+def absolute_uri(request: 'Request',
+                 scheme: str|None=None,
+                 host: str|None=None,
+                 uri: str|None=None,
+                 query_string: str|None=None,
+                 param: str|None=None) -> str:
     """Returns the absolute URI of this request.  You may override
     some of the attributes."""
 

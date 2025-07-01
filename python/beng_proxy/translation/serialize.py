@@ -5,6 +5,7 @@
 #
 
 import struct
+from typing import IO
 
 class PacketReader:
     """A class which can read a packet incrementally.  Whenever you
@@ -12,11 +13,11 @@ class PacketReader:
     consume().  As soon as the attribute 'finished' becomes true, the
     attributes 'command' and 'payload' are available."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self._header = b''
         self.complete = False
 
-    def consume(self, data):
+    def consume(self, data: bytes) -> bytes:
         """Consumes a chunk of data.  Returns the unused tail of the
         buffer.  This must not be called when the 'complete' attribute
         is already true."""
@@ -55,13 +56,13 @@ class PacketReader:
         # return data chunk without the consumed part
         return data
 
-def packet_header(command, length=0):
+def packet_header(command: int, length: int=0) -> bytes:
     """Generate the header of a translation packet."""
 
     assert length <= 0xffff
     return struct.pack('HH', length, command)
 
-def write_packet(f, command, payload = b''):
+def write_packet(f: IO[bytes], command: int, payload: bytes = b'') -> None:
     assert isinstance(payload, str)
     f.write(packet_header(command, len(payload)))
     f.write(payload)

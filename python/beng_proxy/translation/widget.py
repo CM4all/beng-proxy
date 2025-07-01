@@ -5,48 +5,51 @@
 import re
 import os.path
 import sys
+from typing import IO
+
 from twisted.internet import reactor, defer
 from .protocol import *
 from .response import Response
 from .dresponse import DeferredResponse
 
 class MalformedLineError(Exception):
-    def __init__(self, path, line):
+    def __init__(self, path: str, line: str):
         Exception.__init__(self, f"Syntax error in {path}: {line}")
         self.path = path
         self.line = line
 
 class _Lookup:
-    def __init__(self, f):
+    def __init__(self, f: IO[str]):
         self._f = f
         self._response = DeferredResponse()
-        self.d = defer.Deferred()
+        self.d: defer.Deferred[DeferredResponse] = defer.Deferred()
 
-    def _handle_line(self, line):
+    def _handle_line(self, line: str) -> defer.Deferred[DeferredResponse]|None:
         response = self._response
 
         m = re.match(r'^(?:untrusted|host)\s+"(\S+)"$', line)
         if m:
             response.packet(TRANSLATE_UNTRUSTED, m.group(1))
-            return
+            return None
         m = re.match(r'^untrusted_prefix\s+"(\S+)"$', line)
         if m:
             response.packet(TRANSLATE_UNTRUSTED_PREFIX, m.group(1))
-            return
+            return None
         m = re.match(r'^untrusted_site_suffix\s+"(\S+)"$', line)
         if m:
             response.packet(TRANSLATE_UNTRUSTED_SITE_SUFFIX, m.group(1))
-            return
+            return None
         m = re.match(r'^untrusted_raw_site_suffix\s+"(\S+)"$', line)
         if m:
             response.packet(TRANSLATE_UNTRUSTED_RAW_SITE_SUFFIX, m.group(1))
-            return
+            return None
         m = re.match(r'^server\s+"(\S+)"$', line)
         if m:
             uri = m.group(1)
             return response.http(uri)
         if line == 'http2':
-            return response.packet(TRANSLATE_HTTP2)
+            response.packet(TRANSLATE_HTTP2)
+            return None
         m = re.match(r'^pipe\s+"(\S+)"', line)
         if m:
             line = line[4:]
@@ -56,80 +59,80 @@ class _Lookup:
                 raise MalformedLineError(self.path, line)
 
             response.pipe(*args)
-            return
+            return None
         m = re.match(r'^cgi\s+"(\S+)"$', line)
         if m:
             response.packet(TRANSLATE_CGI, m.group(1))
-            return
+            return None
         m = re.match(r'^fastcgi\s+"(\S+)"$', line)
         if m:
             response.packet(TRANSLATE_FASTCGI, m.group(1))
-            return
+            return None
         m = re.match(r'^was\s+"(\S+)"$', line)
         if m:
             response.packet(TRANSLATE_WAS, m.group(1))
-            return
+            return None
         m = re.match(r'^path\s+"(\S+)"$', line)
         if m:
             path = m.group(1)
             response.path(path)
             if path[-5:] == '.html' or path[-4:] == '.xml':
                 response.content_type('text/html; charset=utf-8')
-            return
+            return None
         m = re.match(r'^script_name\s+"(\S+)"$', line)
         if m:
             response.packet(TRANSLATE_SCRIPT_NAME, m.group(1))
-            return
+            return None
         m = re.match(r'^path_info\s+"(\S+)"$', line)
         if m:
             response.packet(TRANSLATE_PATH_INFO, m.group(1))
-            return
+            return None
         m = re.match(r'^document_root\s+"(\S+)"$', line)
         if m:
             response.packet(TRANSLATE_DOCUMENT_ROOT, m.group(1))
-            return
+            return None
         m = re.match(r'^action\s+"(\S+)"$', line)
         if m:
             response.packet(TRANSLATE_ACTION, m.group(1))
-            return
+            return None
         m = re.match(r'^interpreter\s+"(\S+)"$', line)
         if m:
             response.packet(TRANSLATE_INTERPRETER, m.group(1))
-            return
+            return None
         m = re.match(r'^content_type\s+"([^\"]+)"$', line)
         if m:
             response.content_type(m.group(1))
-            return
+            return None
         m = re.match(r'^content_type_lookup\s+"([-._\w]+)"$', line)
         if m:
             response.packet(TRANSLATE_CONTENT_TYPE_LOOKUP, m.group(1))
-            return
+            return None
         m = re.match(r'^view\s+"([-_\w]+)"$', line)
         if m:
             response.view(m.group(1))
-            return
+            return None
         m = re.match(r'^cookie_host\s+"([-._\w]+)"$', line)
         if m:
             response.packet(TRANSLATE_COOKIE_HOST, m.group(1))
-            return
+            return None
         m = re.match(r'^local_uri\s+"(\S*/)"$', line)
         if m:
             response.packet(TRANSLATE_LOCAL_URI, m.group(1))
-            return
+            return None
         m = re.match(r'^group_container\s+"([-._\w]+)"$', line)
         if m:
             response.packet(TRANSLATE_GROUP_CONTAINER, m.group(1))
-            return
+            return None
         m = re.match(r'^group\s+"([-._\w]+)"$', line)
         if m:
             response.packet(TRANSLATE_WIDGET_GROUP, m.group(1))
-            return
+            return None
 
         m = re.match(r'^pair\s+"([^"]+)"\s+"([^"]*)"$', line)
         if m:
             name, value = m.group(1), m.group(2)
             response.pair(name, value)
-            return
+            return None
 
         if line == 'process':
             response.process()
@@ -169,8 +172,9 @@ class _Lookup:
             response.packet(TRANSLATE_WIDGET_INFO)
         else:
             raise MalformedLineError(self.path, line)
+        return None
 
-    def do(self):
+    def do(self) -> None:
         while True:
             line = self._f.readline()
             if len(line) == 0: break
@@ -188,16 +192,16 @@ class _Lookup:
 
         self.d.callback(self._response)
 
-def _lookup(f):
+def _lookup(f: IO[str]) -> defer.Deferred[DeferredResponse]:
     l = _Lookup(f)
     l.do()
     return l.d
 
 class WidgetRegistry:
-    def __init__(self, path):
+    def __init__(self, path: str):
         self._path = path
 
-    def lookup(self, widget_type):
+    def lookup(self, widget_type: str) -> Response|defer.Deferred[DeferredResponse]:
         path = os.path.join(self._path, widget_type)
         try:
             f = open(path)
