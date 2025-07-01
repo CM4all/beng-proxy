@@ -7,11 +7,7 @@
 import re, base64
 import os
 import struct
-
-try:
-    from urllib.parse import unquote
-except ImportError:
-    from urllib import unquote
+from urllib.parse import unquote
 
 from twisted.python import log
 from twisted.internet import reactor, defer
