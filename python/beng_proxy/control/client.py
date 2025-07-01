@@ -10,6 +10,7 @@ from typing import Optional, Tuple, Union
 from collections.abc import Mapping
 
 from .protocol import *
+from .serialize import make_packet
 
 class Client:
     def __init__(self, host: str, port: int=5478, broadcast: bool=False, timeout: int=10):
@@ -66,11 +67,7 @@ class Client:
         if payload is None: payload = b''
         payload = self.__to_bytes(payload)
 
-        length = len(payload)
-        assert length <= 0xffff
-        header = struct.pack('>IHH', control_magic, length, command)
-        padding = b' ' * (3 - ((length - 1) & 0x3))
-        self._socket.send(header + payload + padding)
+        self._socket.send(make_packet(command, payload))
 
     def send_tcache_invalidate(self, vary: Mapping[int, Union[str, bytes]]) -> None:
         payload = b''
