@@ -166,8 +166,9 @@ class Request:
             if len(packet.payload) == 2:
                 self.status = struct.unpack('H', packet.payload)[0]
         elif packet.command == TRANSLATE_WANT:
-            self.want = array.array('H')
-            self.want.frombytes(packet.payload)
+            want = array.array('H')
+            want.frombytes(packet.payload)
+            self.want = frozenset(want)
         elif packet.command == TRANSLATE_FILE_NOT_FOUND:
             self.file_not_found = packet.payload
         elif packet.command == TRANSLATE_PATH_EXISTS:
