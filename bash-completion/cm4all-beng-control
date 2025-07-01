@@ -31,6 +31,8 @@ _beng_control () {
                      fade-children
                      terminate-children
                      disconnect-database
+                     disable-uring
+                     enable-uring
                      disable-zeroconf
                      enable-zeroconf
                      flush-http-cache

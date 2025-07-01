@@ -12,6 +12,7 @@
 #include "io/uring/Close.hxx"
 
 #include <cassert>
+#include <chrono>
 #include <optional>
 #endif
 
@@ -29,7 +30,7 @@ using UringOpenStatErrorCallback = BoundMethod<void(int error) noexcept>;
 
 class UringGlue {
 #ifdef HAVE_URING
-	Uring::Queue *uring = nullptr;
+	Uring::Queue *uring;
 #endif
 
 public:
@@ -50,6 +51,14 @@ public:
 
 		return *uring;
 	}
+
+	void Enable(Uring::Queue &_uring) noexcept {
+		uring = &_uring;
+	}
+
+	void Disable() noexcept {
+		uring = nullptr;
+	}
 #endif
 
 	void Stat(FileAt file, int flags, unsigned mask,
@@ -69,4 +78,7 @@ public:
 		fd.Close();
 #endif
 	}
+
+private:
+	void OnEnableTimer() noexcept;
 };

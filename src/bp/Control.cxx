@@ -15,6 +15,7 @@
 #include "pool/pool.hxx"
 #include "net/SocketAddress.hxx"
 #include "io/Logger.hxx"
+#include "util/PackedBigEndian.hxx"
 #include "util/SpanCast.hxx"
 #include "AllocatorPtr.hxx"
 #include "stopwatch.hxx"
@@ -65,6 +66,48 @@ HandleStopwatchPipe(std::span<const std::byte> payload,
 
 	stopwatch_enable(std::move(fds.front()));
 }
+
+#ifdef HAVE_URING
+
+inline void
+BpInstance::OnEnableUringTimer() noexcept
+{
+	if (auto *u = event_loop.GetUring()) {
+		uring.Enable(*u);
+		fd_cache.EnableUring(*u);
+	}
+}
+
+void
+BpInstance::DisableUringFor(Event::Duration duration) noexcept
+{
+	if (duration <= Event::Duration::zero()) {
+		enable_uring_timer.Cancel();
+		OnEnableUringTimer();
+		return;
+	}
+
+	uring.Disable();
+	fd_cache.DisableUring();
+
+	if (duration != Event::Duration::max())
+		enable_uring_timer.Schedule(duration);
+	else
+		enable_uring_timer.Cancel();
+}
+
+inline void
+BpInstance::HandleDisableUring(std::span<const std::byte> payload) noexcept
+{
+	if (payload.empty()) {
+		DisableUringFor(Event::Duration::max());
+	} else if (payload.size() == 4) {
+		const uint_least32_t seconds = *reinterpret_cast<const PackedBE32 *>(payload.data());
+		DisableUringFor(std::chrono::duration<uint_least32_t>{seconds});
+	}
+}
+
+#endif
 
 void
 BpInstance::OnControlPacket(BengControl::Server &,
@@ -166,6 +209,12 @@ BpInstance::OnControlPacket(BengControl::Server &,
 
 	case Command::RELOAD_STATE:
 		ReloadState();
+		break;
+
+	case Command::DISABLE_URING:
+#ifdef HAVE_URING
+		HandleDisableUring(payload);
+#endif
 		break;
 
 	case Command::ENABLE_QUEUE:

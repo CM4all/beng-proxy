@@ -87,6 +87,14 @@ Commands
   not wait for completion of the child's currently work.Fade out child
   processes.
 
+- ``DISABLE_URING``: Disable ``io_uring`` (temporarily).  Optional
+  payload is a big-endian 32 bit integer containing the number of
+  seconds after which it will be re-enabled automatically.  As this
+  overrides any previous ``DISABLE_URING`` command, zero explicitly
+  re-enables ``io_uring`` now.  This switch exists to make debugging
+  with ``strace`` easier, because ``strace`` does not cope well with
+  ``io_uring``.
+
 - ``DISABLE_ZEROCONF``: Hide all registered Zeroconf services. To
   reveal them again, use ``ENABLE_ZEROCONF``. This is a privileged
   operation (only allowed through local socket by user root).

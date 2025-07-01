@@ -152,6 +152,10 @@ BpInstance::ShutdownCallback() noexcept
 	avahi_client.reset();
 #endif
 
+#ifdef HAVE_URING
+	enable_uring_timer.Cancel();
+#endif
+
 	compress_timer.Cancel();
 
 	zombie_reaper.Disable();

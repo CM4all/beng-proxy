@@ -98,6 +98,10 @@ struct BpInstance final : PInstance, BengControl::Handler,
 		config.io_uring_sq_thread_cpu,
 	};
 
+#ifdef HAVE_URING
+	FarTimerEvent enable_uring_timer{event_loop, BIND_THIS_METHOD(OnEnableUringTimer)};
+#endif
+
 	const StateDirectories state_directories;
 
 	FdCache fd_cache{event_loop};
@@ -258,6 +262,8 @@ struct BpInstance final : PInstance, BengControl::Handler,
 	[[gnu::pure]]
 	Prometheus::Stats GetStats() const noexcept;
 
+	void HandleDisableUring(std::span<const std::byte> payload) noexcept;
+
 	/* virtual methods from class BengControl::Handler */
 	void OnControlPacket(BengControl::Server &control_server,
 			     BengControl::Command command,
@@ -287,4 +293,7 @@ private:
 	void SaveSessions() noexcept;
 
 	void FreeStocksAndCaches() noexcept;
+
+	void OnEnableUringTimer() noexcept;
+	void DisableUringFor(Event::Duration duration) noexcept;
 };

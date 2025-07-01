@@ -10,9 +10,12 @@
 #include "system/Error.hxx"
 #include "util/ByteOrder.hxx"
 #include "util/ConstBuffer.hxx"
+#include "util/PackedBigEndian.hxx"
 #include "util/PrintException.hxx"
 #include "util/SpanCast.hxx"
 #include "util/StringCompare.hxx"
+
+#include <chrono>
 
 #include <inttypes.h>
 #include <stdlib.h>
@@ -212,6 +215,21 @@ DisconnectDatabase(const char *server, ConstBuffer<const char *> args)
 }
 
 static void
+DisableUring(const char *server, std::chrono::duration<uint_least32_t> seconds)
+{
+	const PackedBE32 payload{seconds.count()};
+	BengControl::Client client(server);
+	client.Send(BengControl::Command::DISABLE_URING, ReferenceAsBytes(payload));
+}
+
+static void
+DisableUring(const char *server)
+{
+	BengControl::Client client(server);
+	client.Send(BengControl::Command::DISABLE_URING);
+}
+
+static void
 FlushHttpCache(const char *server, ConstBuffer<const char *> args)
 {
 	std::string_view tag{};
@@ -337,6 +355,21 @@ try {
 	} else if (StringIsEqual(command, "disconnect-database")) {
 		DisconnectDatabase(server, args);
 		return EXIT_SUCCESS;
+	} else if (StringIsEqual(command, "disable-uring")) {
+		if (args.empty()) {
+			DisableUring(server);
+			return EXIT_SUCCESS;
+		} else if (args.size == 1) {
+			DisableUring(server, std::chrono::duration<uint_least32_t>{atoi(args.front())});
+			return EXIT_SUCCESS;
+		} else
+			throw Usage{"Too many arguments"};
+	} else if (StringIsEqual(command, "enable-uring")) {
+		if (!args.empty())
+			throw Usage{"Too many arguments"};
+
+		DisableUring(server, std::chrono::duration<uint_least32_t>::zero());
+		return EXIT_SUCCESS;
 	} else if (StringIsEqual(command, "disable-zeroconf")) {
 		SimpleCommand(server, args,
 			      BengControl::Command::DISABLE_ZEROCONF);
@@ -376,6 +409,8 @@ try {
 		"  fade-children [TAG]\n"
 		"  terminate-children TAG\n"
 		"  disconnect-database TAG\n"
+		"  disable-uring [SECONDS]\n"
+		"  enable-uring\n"
 		"  disable-zeroconf\n"
 		"  enable-zeroconf\n"
 		"  flush-http-cache [TAG]\n"
