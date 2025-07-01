@@ -167,10 +167,7 @@ class Request:
                 self.status = struct.unpack('H', packet.payload)[0]
         elif packet.command == TRANSLATE_WANT:
             self.want = array.array('H')
-            if six.PY2:
-                self.want.fromstring(packet.payload)
-            else:
-                self.want.frombytes(packet.payload)
+            self.want.frombytes(packet.payload)
         elif packet.command == TRANSLATE_FILE_NOT_FOUND:
             self.file_not_found = packet.payload
         elif packet.command == TRANSLATE_PATH_EXISTS:

@@ -152,10 +152,7 @@ class Response:
 
         assert len(args) > 0
         payload = array.array('H', args)
-        if six.PY2:
-            payload = payload.tostring()
-        else:
-            payload = payload.tobytes()
+        payload = payload.tobytes()
         return self.packet(TRANSLATE_VARY, payload)
 
     def invalidate(self, *args):
@@ -164,10 +161,7 @@ class Response:
 
         assert len(args) > 0
         payload = array.array('H', args)
-        if six.PY2:
-            payload = payload.tostring()
-        else:
-            payload = payload.tobytes()
+        payload = payload.tobytes()
         return self.packet(TRANSLATE_INVALIDATE, payload)
 
     def want(self, *args):
@@ -176,10 +170,7 @@ class Response:
 
         assert len(args) > 0
         payload = array.array('H', args)
-        if six.PY2:
-            payload = payload.tostring()
-        else:
-            payload = payload.tobytes()
+        payload = payload.tobytes()
         return self.packet(TRANSLATE_WANT, payload)
 
     def pipe(self, path, *args):
