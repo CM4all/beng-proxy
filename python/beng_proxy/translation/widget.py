@@ -12,7 +12,7 @@ from beng_proxy.translation.dresponse import DeferredResponse
 
 class MalformedLineError(Exception):
     def __init__(self, path, line):
-        Exception.__init__(self, "Syntax error in %s: %s" % (path, line))
+        Exception.__init__(self, f"Syntax error in {path}: {line}")
         self.path = path
         self.line = line
 
