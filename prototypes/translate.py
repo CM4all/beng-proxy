@@ -592,7 +592,7 @@ class Translation(Protocol):
             uri, path_info = uri[:i], uri[i:]
 
             response.packet(TRANSLATE_BASE, "/imageprocessor-filter/")
-            response.packet(TRANSLATE_REGEX, "^(.+\.(?:jpe?g|png|gif|bmp))/([^/]+(?:/[^/])?)")
+            response.packet(TRANSLATE_REGEX, r"^(.+\.(?:jpe?g|png|gif|bmp))/([^/]+(?:/[^/])?)")
             response.packet(TRANSLATE_REGEX_TAIL)
             response.packet(TRANSLATE_DOCUMENT_ROOT, "/var/www")
             response.path('/var/www' + uri)
