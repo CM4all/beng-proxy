@@ -17,7 +17,7 @@ class Client:
             try:
                 # connect to a specific process by its PID
                 pid = int(host)
-                host = '@beng_control:pid=%d' % pid
+                host = f'@beng_control:pid={pid}'
             except ValueError:
                 pass
 
@@ -87,13 +87,13 @@ class Client:
         self.send(CONTROL_TCACHE_INVALIDATE, payload)
 
     def send_enable_node(self, node: str, port: int) -> None:
-        self.send(CONTROL_ENABLE_NODE, '%s:%i' % (node, port))
+        self.send(CONTROL_ENABLE_NODE, f'{node}:{port}')
 
     def send_fade_node(self, node: str, port: int) -> None:
-        self.send(CONTROL_FADE_NODE, '%s:%i' % (node, port))
+        self.send(CONTROL_FADE_NODE, f'{node}:{port}')
 
     def send_node_status(self, node: str, port: int) -> None:
-        self.send(CONTROL_NODE_STATUS, '%s:%i' % (node, port))
+        self.send(CONTROL_NODE_STATUS, f'{node}:{port}')
 
     def send_dump_pools(self) -> None:
         self.send(CONTROL_DUMP_POOLS)
