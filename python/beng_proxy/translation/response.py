@@ -78,7 +78,7 @@ class Response:
         return self
 
     def __http(self, packet, uri, addresses=None):
-        assert uri[0] != '/' or len(addresses) == 0
+        assert uri[0] != '/' or addresses is None or len(addresses) == 0
         assert addresses is None or hasattr(addresses, '__iter__')
 
         if uri[0] != '/' and addresses is None:
@@ -91,8 +91,9 @@ class Response:
             addresses = (address,)
 
         self.packet(packet, uri)
-        for address in addresses:
-            self.packet(TRANSLATE_ADDRESS_STRING, address)
+        if addresses is not None:
+            for address in addresses:
+                self.packet(TRANSLATE_ADDRESS_STRING, address)
         return self
 
     def http(self, *args, **kwargs):
