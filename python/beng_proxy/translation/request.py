@@ -25,7 +25,7 @@ def _parse_port(address):
         port = address[i + 1:]
     try:
         return int(port)
-    except ParserError:
+    except ValueError:
         return None
 
 class Request:
