@@ -4,8 +4,8 @@
 # Author: Max Kellermann <max.kellermann@ionos.com>
 #
 
-import six
-import array, struct
+import array
+import struct
 from urllib.parse import unquote
 
 from .protocol import *
