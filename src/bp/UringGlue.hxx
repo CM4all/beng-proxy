@@ -11,6 +11,7 @@
 #ifdef HAVE_URING
 #include "io/uring/Close.hxx"
 
+#include <cassert>
 #include <optional>
 #endif
 
@@ -45,6 +46,8 @@ public:
 	}
 
 	auto &operator*() noexcept {
+		assert(uring != nullptr);
+
 		return *uring;
 	}
 #endif
