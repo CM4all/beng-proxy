@@ -9,7 +9,7 @@ import struct
 from typing import Optional, Tuple, Union
 from collections.abc import Mapping
 
-from beng_proxy.control.protocol import *
+from .protocol import *
 
 class Client:
     def __init__(self, host: str, port: int=5478, broadcast: bool=False, timeout: int=10):

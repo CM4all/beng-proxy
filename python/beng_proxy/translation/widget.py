@@ -6,9 +6,9 @@ import re
 import os.path
 import sys
 from twisted.internet import reactor, defer
-from beng_proxy.translation.protocol import *
-from beng_proxy.translation.response import Response
-from beng_proxy.translation.dresponse import DeferredResponse
+from .protocol import *
+from .response import Response
+from .dresponse import DeferredResponse
 
 class MalformedLineError(Exception):
     def __init__(self, path, line):
