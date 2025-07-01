@@ -29,7 +29,7 @@ using UringOpenStatErrorCallback = BoundMethod<void(int error) noexcept>;
 
 class UringGlue {
 #ifdef HAVE_URING
-	Uring::Queue *uring;
+	Uring::Queue *uring = nullptr;
 #endif
 
 public:
