@@ -69,7 +69,7 @@ HandleStopwatchPipe(std::span<const std::byte> payload,
 
 #ifdef HAVE_URING
 
-inline void
+void
 BpInstance::OnEnableUringTimer() noexcept
 {
 	if (auto *u = event_loop.GetUring()) {
