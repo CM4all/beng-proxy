@@ -194,12 +194,14 @@ struct TestFdCacheInstance : EventLoopUringInstance {
 	const StringBuffer<16> tmp_name = MakeTempDirectory(tmp, 0700);
 	const UniqueFileDescriptor dir = OpenPath(tmp, tmp_name, O_DIRECTORY);
 
-	FdCache fd_cache{
-		event_loop,
+	FdCache fd_cache{event_loop};
+
+	TestFdCacheInstance() noexcept {
 #ifdef HAVE_URING
-		event_loop.GetUring(),
+		if (auto *uring = event_loop.GetUring())
+			fd_cache.EnableUring(*uring);
 #endif
-	};
+	}
 
 	~TestFdCacheInstance() noexcept {
 		fd_cache.BeginShutdown();

@@ -488,6 +488,7 @@ try {
 
 #ifdef HAVE_URING
 	if (instance.config.was_io_uring && instance.uring) {
+		instance.fd_cache.EnableUring(*instance.uring);
 		instance.was_stock->EnableUring(*instance.uring);
 		instance.multi_was_stock->EnableUring(*instance.uring);
 		instance.remote_was_stock->EnableUring(*instance.uring);

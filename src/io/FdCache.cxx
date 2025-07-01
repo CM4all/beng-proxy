@@ -384,15 +384,8 @@ FdCache::ItemGetKey::operator()(const Item &item) const noexcept
 	return {item.path, item.flags};
 }
 
-FdCache::FdCache(EventLoop &event_loop
-#ifdef HAVE_URING
-		, Uring::Queue *_uring_queue
-#endif // HAVE_URING
-	) noexcept
+FdCache::FdCache(EventLoop &event_loop) noexcept
 	:expire_timer(event_loop, BIND_THIS_METHOD(Expire)),
-#ifdef HAVE_URING
-	 uring_queue(_uring_queue),
-#endif
 	 inotify_manager(event_loop)
 {
 }

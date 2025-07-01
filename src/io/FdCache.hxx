@@ -53,7 +53,7 @@ class FdCache final {
 	CoarseTimerEvent expire_timer;
 
 #ifdef HAVE_URING
-	Uring::Queue *const uring_queue;
+	Uring::Queue *uring_queue = nullptr;
 #endif // HAVE_URING
 
 	InotifyManager inotify_manager;
@@ -72,16 +72,22 @@ class FdCache final {
 	IntrusiveList<Item> chronological_list;
 
 public:
-	FdCache(EventLoop &event_loop
-#ifdef HAVE_URING
-		, Uring::Queue *uring_queue
-#endif // HAVE_URING
-		) noexcept;
+	explicit FdCache(EventLoop &event_loop) noexcept;
 	~FdCache() noexcept;
 
 	auto &GetEventLoop() const noexcept {
 		return expire_timer.GetEventLoop();
 	}
+
+#ifdef HAVE_URING
+	void EnableUring(Uring::Queue &_uring_queue) noexcept {
+		uring_queue = &_uring_queue;
+	}
+
+	void DisableUring() noexcept {
+		uring_queue = nullptr;
+	}
+#endif // HAVE_URING
 
 	bool empty() const noexcept {
 		return chronological_list.empty();

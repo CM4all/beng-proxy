@@ -100,12 +100,7 @@ struct BpInstance final : PInstance, BengControl::Handler,
 
 	const StateDirectories state_directories;
 
-	FdCache fd_cache{
-		event_loop,
-#ifdef HAVE_URING
-		uring.get(),
-#endif
-	};
+	FdCache fd_cache{event_loop};
 
 	/**
 	 * Cache for READ_FILE.
