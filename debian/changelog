@@ -7,6 +7,7 @@ cm4all-beng-proxy (19.26) unstable; urgency=low
   * python/translation: remove the remaining "six.PY2" checks
   * python: add "py.typed" marker file (PEP 561)
   * debian: do not create /var/log/cm4all/beng-{proxy,lb}
+  * debian: start daemon during initial installation, stop on uninstall
 
  --   
 
