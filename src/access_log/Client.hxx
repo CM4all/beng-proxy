@@ -10,6 +10,8 @@
 #include "io/Logger.hxx"
 
 #include <array>
+#include <cassert>
+#include <cstdint>
 
 #include <sys/socket.h> // for struct mmsghdr
 #include <sys/uio.h> // for struct iovec
@@ -30,10 +32,17 @@ class LogClient final : public Net::Log::Sink {
 	std::array<struct iovec, 256> vecs;
 	std::size_t n_vecs = 0;
 
+	const uint_least16_t max_size;
+
 public:
-	explicit LogClient(EventLoop &event_loop, UniqueSocketDescriptor &&_fd) noexcept
+	explicit LogClient(EventLoop &event_loop, UniqueSocketDescriptor &&_fd,
+			   std::size_t _max_size) noexcept
 		:logger("access_log"), fd(std::move(_fd)),
-		 flush_timer(event_loop, BIND_THIS_METHOD(Flush)) {}
+		 flush_timer(event_loop, BIND_THIS_METHOD(Flush)),
+		 max_size(_max_size)
+	{
+		assert(_max_size <= buffer.size());
+	}
 
 	SocketDescriptor GetSocket() noexcept {
 		return fd;

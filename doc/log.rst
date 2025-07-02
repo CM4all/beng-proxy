@@ -83,6 +83,10 @@ The following ``access_logger`` options are available:
   process. The specified command is execute with the shell
   (``/bin/sh -c``).
 
+- ``max_size``: Discard datagrams larger than this.  The default value
+  is 1452, which is the usual MTU of 1500 minus the size of an
+  IPv6-UDP header (48 bytes).
+
 - ``trust_xff``: The specified IP address is a “trusted” proxy whose
   ``X-Forwarded-For`` value is used to determine the ``remote_host``.
   This option can be specified multiple times.  Instead of a single IP

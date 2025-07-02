@@ -48,6 +48,13 @@ struct AccessLogConfig {
 	ChildErrorLogOptions child_error_options;
 
 	/**
+	 * Discard datagrams larger than this.  The default value is
+	 * the usual MTU of 1500 minus the size of an IPv6-UDP header
+	 * (48 bytes).
+	 */
+	unsigned max_size = 1452;
+
+	/**
 	 * Forward error messages printed by child processes into their
 	 * stderr pipe to the Pond server?
 	 */

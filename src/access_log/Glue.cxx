@@ -40,7 +40,7 @@ AccessLogGlue::Create(EventLoop &event_loop,
 
 	case AccessLogConfig::Type::SEND:
 		return new AccessLogGlue(config,
-					 std::make_unique<LogClient>(event_loop, CreateConnectDatagramSocket(config.send_to)));
+					 std::make_unique<LogClient>(event_loop, CreateConnectDatagramSocket(config.send_to), config.max_size));
 
 	case AccessLogConfig::Type::EXECUTE:
 		{
@@ -48,7 +48,7 @@ AccessLogGlue::Create(EventLoop &event_loop,
 			assert(lp.fd.IsDefined());
 
 			return new AccessLogGlue(config,
-						 std::make_unique<LogClient>(event_loop, std::move(lp.fd)));
+						 std::make_unique<LogClient>(event_loop, std::move(lp.fd), config.max_size));
 		}
 	}
 

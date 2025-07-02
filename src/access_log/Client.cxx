@@ -8,8 +8,6 @@
 #include "net/SocketError.hxx"
 #include "io/Iovec.hxx"
 
-#include <cassert>
-
 #include <errno.h>
 #include <string.h> // for strerror()
 #include <sys/socket.h> // for sendmmsg()
@@ -20,9 +18,13 @@ inline bool
 LogClient::Append(const Datagram &d) noexcept
 try {
 	assert(buffer_fill < buffer.size());
+	assert(buffer_fill + max_size <= buffer.size());
 	assert(n_vecs < vecs.size());
 
-	const auto w = std::span{buffer}.subspan(buffer_fill);
+	auto w = std::span{buffer}.subspan(buffer_fill);
+	assert(w.size() >= max_size);
+	w = w.first(max_size);
+
 	const auto size = Serialize(w, d);
 	assert(size > 0);
 
@@ -37,16 +39,15 @@ try {
 inline bool
 LogClient::AppendRetry(const Net::Log::Datagram &d) noexcept
 {
-	if (n_vecs < vecs.size() && buffer_fill + 4096 <= buffer.size() && Append(d))
-		return true;
+	if (n_vecs < vecs.size() && buffer_fill + max_size < buffer.size())
+		return Append(d);
 
 	/* not enough space in the buffer - flush it and try again */
 
 	Flush();
 	flush_timer.Cancel();
 
-	/* silently discard datagrams that are larger than our
-	   buffer */
+	/* silently discard datagrams that are larger than max_size */
 	return Append(d);
 }
 

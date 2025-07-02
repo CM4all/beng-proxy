@@ -45,6 +45,16 @@ AccessLogConfigParser::ParseLine(FileLineParser &line)
 			config.xff.trust.emplace(value);
 	} else if (StringIsEqual(word, "trust_xff_interface") && !is_child_error_logger) {
 		config.xff.trust_interfaces.emplace(line.ExpectValueAndEnd());
+	} else if (StringIsEqual(word, "max_size")) {
+		config.max_size = line.NextPositiveInteger();
+
+		if (config.max_size > 512)
+			throw LineParser::Error("Number is too small");
+
+		if (config.max_size > 16384)
+			throw LineParser::Error("Number is too large");
+
+		line.ExpectEnd();
 	} else if (StringIsEqual(word, "forward_child_errors") &&
 		   !is_child_error_logger) {
 		config.forward_child_errors = line.NextBool();
