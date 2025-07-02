@@ -43,13 +43,13 @@ class Client:
             s.connect((host, port))
             s.settimeout(timeout)
 
-        self._socket = s
+        self.__socket = s
 
     def receive(self) -> list[Tuple[int, bytes]]:
         """Receive a datagram from the server.  Returns a list of
         (command, payload) tuples."""
         packets = []
-        data = self._socket.recv(8192)
+        data = self.__socket.recv(8192)
         while len(data) > 4:
             header, data = data[:4], data[4:]
             length, command = struct.unpack('>HH', header)
@@ -69,7 +69,7 @@ class Client:
         if payload is None: payload = b''
         payload = self.__to_bytes(payload)
 
-        self._socket.send(make_packet(command, payload))
+        self.__socket.send(make_packet(command, payload))
 
     def send_tcache_invalidate(self, vary: Mapping[int, Union[str, bytes]]) -> None:
         payload = b''
