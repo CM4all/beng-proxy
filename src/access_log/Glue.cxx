@@ -130,6 +130,10 @@ AccessLogGlue::Log(std::chrono::system_clock::time_point now,
 	if (content_length >= 0)
 		d.SetLength(content_length);
 
+	d.TruncateHttpUri(1024);
+	d.TruncateHttpReferer(512);
+	d.TruncateUserAgent(64);
+
 	Log(d);
 }
 

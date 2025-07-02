@@ -119,13 +119,18 @@ ChildErrorLog::SetUri(const char *_uri) noexcept
 			return;
 
 		uri.clear();
+		GetDatagram().http_uri = {};
 	} else {
-		if (uri == _uri)
+		std::string_view __uri{_uri};
+		constexpr std::size_t max_length = 512;
+		const bool truncated = __uri.size() > max_length;
+		if (truncated)
+			__uri = __uri.substr(0, max_length);
+
+		if (uri == __uri)
 			return;
 
-		uri = _uri;
-		_uri = uri.c_str();
+		GetDatagram().http_uri = __uri;
+		GetDatagram().truncated_http_uri = truncated;
 	}
-
-	GetDatagram().http_uri = _uri;
 }
