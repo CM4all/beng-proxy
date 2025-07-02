@@ -213,7 +213,8 @@ BpInstance::OnControlPacket(BengControl::Server &,
 
 	case Command::DISABLE_URING:
 #ifdef HAVE_URING
-		HandleDisableUring(payload);
+		if (is_privileged)
+			HandleDisableUring(payload);
 #endif
 		break;
 
