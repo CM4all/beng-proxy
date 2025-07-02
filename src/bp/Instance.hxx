@@ -116,6 +116,11 @@ struct BpInstance final : PInstance, BengControl::Handler,
 	 */
 	SlicePool request_slice_pool{16384, 4096, "Requests"};
 
+#ifdef HAVE_AVAHI
+	std::unique_ptr<Avahi::Client> avahi_client;
+	std::unique_ptr<Avahi::Publisher> avahi_publisher;
+#endif
+
 	std::map<std::string, BpListenerStats> listener_stats;
 
 	std::list<BpListener> listeners;
@@ -155,11 +160,6 @@ struct BpInstance final : PInstance, BengControl::Handler,
 	 * configured.
 	 */
 	std::forward_list<BengControl::Server> control_servers;
-
-#ifdef HAVE_AVAHI
-	std::unique_ptr<Avahi::Client> avahi_client;
-	std::unique_ptr<Avahi::Publisher> avahi_publisher;
-#endif
 
 	/* stock */
 	FailureManager failure_manager;
