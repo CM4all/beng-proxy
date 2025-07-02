@@ -17,10 +17,6 @@
 #include <stdio.h>
 #include <string.h>
 
-#if 0
-#include <sys/resource.h>
-#endif
-
 static UniqueFileDescriptor stopwatch_fd;
 
 struct StopwatchEvent {
@@ -156,17 +152,6 @@ ToLongMs(std::chrono::steady_clock::duration d) noexcept
 	return std::chrono::duration_cast<std::chrono::milliseconds>(d).count();
 }
 
-#if 0
-
-static long
-timeval_diff_ms(const struct timeval *a, const struct timeval *b) noexcept
-{
-	return (a->tv_sec - b->tv_sec) * 1000 +
-		(a->tv_usec - b->tv_usec) / 1000;
-}
-
-#endif
-
 inline void
 Stopwatch::Dump(std::chrono::steady_clock::time_point root_time,
 		size_t indent) noexcept
@@ -190,14 +175,6 @@ try {
 		b.Format(" %s=%ldms",
 			 i.name.c_str(),
 			 ToLongMs(i.time - time));
-
-#if 0
-	struct rusage new_self;
-	getrusage(RUSAGE_SELF, &new_self);
-	b.Format(" (beng-proxy=%ld+%ldms)",
-		 timeval_diff_ms(&new_self.ru_utime, &self.ru_utime),
-		 timeval_diff_ms(&new_self.ru_stime, &self.ru_stime));
-#endif
 
 	b.Append('\n');
 
