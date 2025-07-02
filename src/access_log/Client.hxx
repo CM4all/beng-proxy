@@ -14,8 +14,6 @@
 #include <sys/socket.h> // for struct mmsghdr
 #include <sys/uio.h> // for struct iovec
 
-namespace Net { namespace Log { struct Datagram; }}
-
 /**
  * A client for the logging protocol.
  */
