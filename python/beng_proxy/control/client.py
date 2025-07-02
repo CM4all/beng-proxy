@@ -94,12 +94,6 @@ class Client:
     def send_node_status(self, node: str, port: int) -> None:
         self.send(CONTROL_NODE_STATUS, f'{node}:{port}')
 
-    def send_dump_pools(self) -> None:
-        self.send(CONTROL_DUMP_POOLS)
-
-    def send_stats(self) -> None:
-        self.send(CONTROL_STATS)
-
     def send_verbose(self, verbose: int) -> None:
         assert verbose >= 0
         assert verbose <= 0xff
@@ -117,9 +111,6 @@ class Client:
 
     def send_disable_zeroconf(self) -> None:
         self.send(CONTROL_DISABLE_ZEROCONF)
-
-    def send_flush_nfs_cache(self) -> None:
-        self.send(CONTROL_FLUSH_NFS_CACHE)
 
     def send_flush_filter_cache(self) -> None:
         self.send(CONTROL_FLUSH_FILTER_CACHE)

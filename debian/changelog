@@ -6,6 +6,7 @@ cm4all-beng-proxy (19.26) unstable; urgency=low
   * control: add commands DISCONNECT_DATABASE, DISABLE_URING
   * control: add bash-completion
   * python/control: add missing "send" methods
+  * python/control: remove obsolete features
   * python/translation: catch ValueError, not ParserError
   * python/translation: remove the remaining "six.PY2" checks
   * python: add "py.typed" marker file (PEP 561)
