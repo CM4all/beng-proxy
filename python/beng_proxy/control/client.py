@@ -23,25 +23,27 @@ class Client:
                 pass
 
         if host.startswith('/') or host.startswith('@'):
-            self._socket = socket.socket(socket.AF_UNIX, socket.SOCK_DGRAM)
-            self._socket.settimeout(timeout)
+            s = socket.socket(socket.AF_UNIX, socket.SOCK_DGRAM)
+            s.settimeout(timeout)
 
             # bind to a unique address, so the server has something it
             # can send a reply to
             import os
-            self._socket.bind('\0beng-proxy-client-' + str(os.getpid()))
+            s.bind('\0beng-proxy-client-' + str(os.getpid()))
 
             if host.startswith('@'):
                 # abstract socket
                 host = '\0' + host[1:]
 
-            self._socket.connect(host)
+            s.connect(host)
         else:
-            self._socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+            s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
             if broadcast:
-                self._socket.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
-            self._socket.connect((host, port))
-            self._socket.settimeout(timeout)
+                s.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
+            s.connect((host, port))
+            s.settimeout(timeout)
+
+        self._socket = s
 
     def receive(self) -> list[Tuple[int, bytes]]:
         """Receive a datagram from the server.  Returns a list of
