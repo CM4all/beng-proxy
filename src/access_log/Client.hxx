@@ -45,7 +45,20 @@ public:
 	void Log(const Net::Log::Datagram &d) noexcept override;
 
 private:
+	/**
+	 * @return true if the datagram was appended to the buffer,
+	 * false if it was discarded
+	 */
 	bool Append(const Net::Log::Datagram &d) noexcept;
+
+	/**
+	 * @return true if the datagram was appended to the buffer,
+	 * false if it was discarded
+	 */
 	bool AppendRetry(const Net::Log::Datagram &d) noexcept;
+
+	/**
+	 * Send #buffer contents to the socket.
+	 */
 	void Flush() noexcept;
 };
