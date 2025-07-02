@@ -59,7 +59,6 @@ void
 AccessLogGlue::Log(const Net::Log::Datagram &d) noexcept
 {
 	if (!config.ignore_localhost_200.empty() &&
-	    d.http_uri != nullptr &&
 	    d.http_uri == config.ignore_localhost_200 &&
 	    d.host != nullptr &&
 	    StringIsEqual(d.host, "localhost") &&
@@ -70,6 +69,12 @@ AccessLogGlue::Log(const Net::Log::Datagram &d) noexcept
 		client->Log(d);
 	else
 		LogOneLine(FileDescriptor(STDOUT_FILENO), d, {});
+}
+
+static std::string_view
+NullableStringView(const char *s) noexcept
+{
+	return s != nullptr ? std::string_view{s} : std::string_view{};
 }
 
 void
@@ -111,9 +116,9 @@ AccessLogGlue::Log(std::chrono::system_clock::time_point now,
 		.analytics_id = analytics_id,
 		.generator = generator,
 		.forwarded_to = forwarded_to,
-		.http_uri = request.uri,
-		.http_referer = referer,
-		.user_agent = user_agent,
+		.http_uri = NullableStringView(request.uri),
+		.http_referer = NullableStringView(referer),
+		.user_agent = NullableStringView(user_agent),
 		.http_method = request.method,
 		.http_status = status,
 		.type = Net::Log::Type::HTTP_ACCESS,

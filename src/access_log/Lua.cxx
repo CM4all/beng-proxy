@@ -147,14 +147,14 @@ try {
 		SetTable(L, RelativeStackIndex{-1},
 			 "http_method", http_method_to_string(d.http_method));
 
-	if (d.http_uri != nullptr)
+	if (d.http_uri.data() != nullptr)
 		SetTable(L, RelativeStackIndex{-1}, "http_uri", d.http_uri);
 
-	if (d.http_referer != nullptr)
+	if (d.http_referer.data() != nullptr)
 		SetTable(L, RelativeStackIndex{-1},
 			 "http_referer", d.http_referer);
 
-	if (d.user_agent != nullptr)
+	if (d.user_agent.data() != nullptr)
 		SetTable(L, RelativeStackIndex{-1},
 			 "user_agent", d.user_agent);
 

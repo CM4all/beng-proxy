@@ -61,13 +61,13 @@ Dump(JsonWriter::Sink sink, const ReceivedAccessLogDatagram &d)
 	    http_method_is_valid(d.http_method))
 		o.AddMember("method", http_method_to_string(d.http_method));
 
-	if (d.http_uri != nullptr)
+	if (d.http_uri.data() != nullptr)
 		o.AddMember("uri", d.http_uri);
 
-	if (d.http_referer != nullptr)
+	if (d.http_referer.data() != nullptr)
 		o.AddMember("referer", d.http_referer);
 
-	if (d.user_agent != nullptr)
+	if (d.user_agent.data() != nullptr)
 		o.AddMember("user_agent", d.user_agent);
 
 	if (d.message.data() != nullptr)
