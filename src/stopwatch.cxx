@@ -9,6 +9,8 @@
 #include "util/StaticVector.hxx"
 #include "util/StringBuilder.hxx"
 
+#include <fmt/core.h>
+
 #include <chrono>
 #include <list>
 #include <string>
@@ -146,8 +148,8 @@ StopwatchPtr::RecordEvent(std::string_view name) const noexcept
 		stopwatch->RecordEvent(name);
 }
 
-static constexpr long
-ToLongMs(std::chrono::steady_clock::duration d) noexcept
+static constexpr auto
+ToMs(std::chrono::steady_clock::duration d) noexcept
 {
 	return std::chrono::duration_cast<std::chrono::milliseconds>(d).count();
 }
@@ -168,13 +170,15 @@ try {
 
 	b.Append(name.c_str());
 
-	b.Format(" init=%ldms",
-		 ToLongMs(time - root_time));
+	auto w = b.Write();
+	char *p = fmt::format_to_n(w.data(), w.size(), " init={}ms", ToMs(time - root_time)).out;
+	b.Extend(p - w.data());
 
-	for (const auto &i : events)
-		b.Format(" %s=%ldms",
-			 i.name.c_str(),
-			 ToLongMs(i.time - time));
+	for (const auto &i : events) {
+		w = b.Write();
+		p = fmt::format_to_n(w.data(), w.size(), " {}={}ms", i.name, ToMs(time - root_time)).out;
+		b.Extend(p - w.data());
+	}
 
 	b.Append('\n');
 
