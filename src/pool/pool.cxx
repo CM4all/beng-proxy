@@ -8,12 +8,15 @@
 #include "memory/Checker.hxx"
 #include "memory/SlicePool.hxx"
 #include "memory/AllocatorStats.hxx"
-#include "io/Logger.hxx"
 #include "util/IntrusiveList.hxx"
 #include "util/Recycler.hxx"
 #include "util/RoundPowerOfTwo.hxx"
 #include "util/Poison.hxx"
 #include "util/StringAPI.hxx"
+
+#ifndef NDEBUG
+#include "io/Logger.hxx"
+#endif
 
 #include <fmt/format.h>
 
@@ -120,8 +123,11 @@ struct PoolRef {
 #endif
 
 struct pool final
-	: IntrusiveListHook<IntrusiveHookMode::NORMAL>,
-	  LoggerDomainFactory {
+	: IntrusiveListHook<IntrusiveHookMode::NORMAL>
+#ifndef NDEBUG
+	, LoggerDomainFactory
+#endif
+{
 
 	enum class Type : uint_least8_t {
 		DUMMY,
@@ -129,7 +135,9 @@ struct pool final
 		LINEAR,
 	};
 
+#ifndef NDEBUG
 	const LazyDomainLogger logger{*this};
+#endif
 
 	using List = IntrusiveList<struct pool>;
 
@@ -205,10 +213,12 @@ struct pool final
 		child.parent = nullptr;
 	}
 
+#ifndef NDEBUG
 	/* virtual methods from class LoggerDomainFactory */
 	std::string MakeLoggerDomain() const noexcept override {
 		return fmt::format("pool {}", name);
 	}
+#endif
 };
 
 #ifndef NDEBUG
@@ -832,7 +842,9 @@ static void *
 p_malloc_linear(struct pool *pool, const size_t original_size
 		TYPE_ARG_DECL TRACE_ARGS_DECL) noexcept
 {
+#ifndef NDEBUG
 	auto &logger = pool->logger;
+#endif
 	struct linear_pool_area *area = pool->current_area.linear;
 
 	size_t size = align_size(original_size);
@@ -842,6 +854,7 @@ p_malloc_linear(struct pool *pool, const size_t original_size
 		/* this allocation is larger than the standard area size;
 		   obtain a new area just for this allocation, and keep on
 		   using the last area */
+#ifndef NDEBUG
 		logger.Fmt(5, "big allocation on linear pool '{}' ({} bytes)"sv,
 			      pool->name, original_size);
 #ifdef DEBUG_POOL_GROW
@@ -850,6 +863,7 @@ p_malloc_linear(struct pool *pool, const size_t original_size
 #else
 		TRACE_ARGS_IGNORE;
 #endif
+#endif // NDEBUG
 
 		if (area == nullptr) {
 			/* this is the first allocation, create the initial
@@ -863,6 +877,7 @@ p_malloc_linear(struct pool *pool, const size_t original_size
 		}
 	} else if (area == nullptr || area->used + size > area->size) [[unlikely]] {
 		if (area != nullptr) {
+#ifndef NDEBUG
 			logger.Fmt(5, "growing linear pool '{}'"sv, pool->name);
 #ifdef DEBUG_POOL_GROW
 			pool_dump_allocations(*pool);
@@ -870,6 +885,7 @@ p_malloc_linear(struct pool *pool, const size_t original_size
 #else
 			TRACE_ARGS_IGNORE;
 #endif
+#endif // NDEBUG
 		}
 
 		area = pool->slice_pool != nullptr
