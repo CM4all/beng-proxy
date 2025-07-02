@@ -22,7 +22,7 @@ class Client:
             except ValueError:
                 pass
 
-        if host and host[0] in '/@':
+        if host.startswith('/') or host.startswith('@'):
             self._socket = socket.socket(socket.AF_UNIX, socket.SOCK_DGRAM)
             self._socket.settimeout(timeout)
 
@@ -31,7 +31,7 @@ class Client:
             import os
             self._socket.bind('\0beng-proxy-client-' + str(os.getpid()))
 
-            if host[0] == '@':
+            if host.startswith('@'):
                 # abstract socket
                 host = '\0' + host[1:]
 
