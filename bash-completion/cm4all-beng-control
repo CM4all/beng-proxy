@@ -25,7 +25,6 @@ _beng_control () {
                      tcache-invalidate
                      enable-node
                      fade-node
-                     dump-pools
                      verbose
                      reload-state
                      fade-children
