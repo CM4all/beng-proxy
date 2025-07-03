@@ -134,6 +134,12 @@ Commands
   `myproxy <https://github.com/CM4all/myproxy>`__ processes and the
   payload is the account identifier.
 
+- ``RESET_LIMITER``: Reset data structures bound to the specified
+  account that keep track of resource usage limits.  This shall be
+  sent after resource limits have been changed and applies only to
+  data structures that cannot automatically apply these because they
+  do not have enough context (e.g. token buckets).
+
 Only ``TCACHE_INVALIDATE``,
 ``FLUSH_FILTER_CACHE``, ``STATS`` and ``NODE_STATUS`` are allowed when
 received via IP. The other commands are only accepted from clients

@@ -4,6 +4,7 @@
 
 #include "Control.hxx"
 #include "Instance.hxx"
+#include "PerSite.hxx"
 #include "session/Manager.hxx"
 #include "http/cache/FilterCache.hxx"
 #include "http/cache/Public.hxx"
@@ -216,6 +217,13 @@ BpInstance::OnControlPacket(BengControl::Server &,
 		if (is_privileged)
 			HandleDisableUring(payload);
 #endif
+		break;
+
+	case Command::RESET_LIMITER:
+		if (!payload.empty() && per_site)
+			if (auto p = per_site->Get(StringWithHash{ToStringView(payload)}))
+			    p->ResetLimiter();
+
 		break;
 
 	case Command::ENABLE_QUEUE:

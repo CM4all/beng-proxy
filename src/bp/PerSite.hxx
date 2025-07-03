@@ -70,6 +70,11 @@ public:
 		return now >= expires;
 	}
 
+	void ResetLimiter() noexcept {
+		request_count_throttle.Reset();
+		request_traffic_throttle.Reset();
+	}
+
 protected:
 	// virtual methods from SharedAnchor
 	void OnAbandoned() noexcept override;

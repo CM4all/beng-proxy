@@ -327,6 +327,7 @@ LbControl::OnControlPacket(BengControl::Server &control_server,
 	case Command::DISABLE_QUEUE:
 	case Command::DISCONNECT_DATABASE:
 	case Command::DISABLE_URING:
+	case Command::RESET_LIMITER:
 		/* not applicable */
 		break;
 
