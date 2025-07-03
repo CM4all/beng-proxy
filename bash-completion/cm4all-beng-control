@@ -38,6 +38,7 @@ _beng_control () {
                      flush-http-cache
                      flush-filter-cache
                      discard-session
+                     reset-limiter
                      " -- "$cur"
                             ) )
                 ;;

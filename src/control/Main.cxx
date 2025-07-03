@@ -275,6 +275,21 @@ DiscardSession(const char *server, ConstBuffer<const char *> args)
 }
 
 static void
+ResetLimiter(const char *server, ConstBuffer<const char *> args)
+{
+	if (args.empty())
+		throw Usage{"Not enough arguments"};
+
+	const std::string_view id = args.shift();
+
+	if (!args.empty())
+		throw Usage{"Too many arguments"};
+
+	BengControl::Client client(server);
+	client.Send(BengControl::Command::RESET_LIMITER, id);
+}
+
+static void
 Stopwatch(const char *server, ConstBuffer<const char *> args)
 {
 	if (!args.empty())
@@ -387,6 +402,9 @@ try {
 	} else if (StringIsEqual(command, "discard-session")) {
 		DiscardSession(server, args);
 		return EXIT_SUCCESS;
+	} else if (StringIsEqual(command, "reset-limiter")) {
+		ResetLimiter(server, args);
+		return EXIT_SUCCESS;
 	} else if (StringIsEqual(command, "stopwatch")) {
 		Stopwatch(server, args);
 		return EXIT_SUCCESS;
@@ -416,6 +434,7 @@ try {
 		"  flush-http-cache [TAG]\n"
 		"  flush-filter-cache [TAG]\n"
 		"  discard-session ATTACH_ID\n"
+		"  reset-limiter ID\n"
 		"  stopwatch\n"
 		"\n"
 		"Names for tcache-invalidate:\n",
