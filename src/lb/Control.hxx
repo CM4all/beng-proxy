@@ -42,12 +42,6 @@ private:
 	void EnableNode(const char *payload, size_t length);
 	void FadeNode(const char *payload, size_t length);
 
-	void QueryNodeStatus(BengControl::Server &control_server,
-			     std::string_view payload,
-			     SocketAddress address);
-
-	void QueryStats(BengControl::Server &control_server, SocketAddress address);
-
 	/* virtual methods from class BengControl::Handler */
 	void OnControlPacket(BengControl::Server &control_server,
 			     BengControl::Command command,

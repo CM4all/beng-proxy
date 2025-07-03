@@ -5,6 +5,7 @@ cm4all-beng-proxy (20.1) unstable; urgency=low
   * access_log: truncate HTTP_URI, HTTP_REFERER, USER_AGENT
   * bp: fix assertion failure when binding a listener fails
   * control: add commands DISCONNECT_DATABASE, DISABLE_URING, RESET_LIMITER
+  * control: deprecate NODE_STATUS
   * control: add bash-completion
   * python/control: add missing "send" methods
   * python/control: remove obsolete features

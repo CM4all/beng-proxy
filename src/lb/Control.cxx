@@ -158,97 +158,8 @@ LbControl::FadeNode(const char *payload, size_t length)
 		.SetFade(GetEventLoop().SteadyNow(), std::chrono::hours(3));
 }
 
-static constexpr const char *
-failure_status_to_string(FailureStatus status) noexcept
-{
-	switch (status) {
-	case FailureStatus::OK:
-		return "ok";
-
-	case FailureStatus::FADE:
-		return "fade";
-
-	case FailureStatus::PROTOCOL:
-	case FailureStatus::CONNECT:
-	case FailureStatus::MONITOR:
-		break;
-	}
-
-	return "error";
-}
-
-static void
-node_status_response(BengControl::Server *server,
-		     struct pool &pool,
-		     SocketAddress address,
-		     std::string_view payload, std::string_view status)
-{
-	size_t response_length = payload.size() + 1 + status.size();
-	char *response = PoolAlloc<char>(pool, response_length);
-
-	auto *p = std::copy(payload.begin(), payload.end(), response);
-	*p++ = 0;
-	std::copy(status.begin(), status.end(), p);
-
-	server->Reply(address,
-		      BengControl::Command::NODE_STATUS,
-		      AsBytes(std::string_view{response, response_length}));
-}
-
-inline void
-LbControl::QueryNodeStatus(BengControl::Server &control_server,
-			   std::string_view payload,
-			   SocketAddress address)
-try {
-	if (address.GetSize() == 0) {
-		logger(3, "got NODE_STATUS from unbound client socket");
-		return;
-	}
-
-	const TempPoolLease tpool;
-
-	const auto [_node_name, _port_string] = Split(payload, ':');
-	if (_node_name.empty() || _port_string.empty()) {
-		logger(3, "malformed NODE_STATUS control packet: no port");
-		node_status_response(&control_server, tpool, address,
-				     payload, "malformed");
-		return;
-	}
-
-	char *node_name = p_strdup(tpool, _node_name);
-	char *port_string = p_strdup(tpool, _port_string);
-
-	const auto *node = instance.config.FindNode(node_name);
-	if (node == nullptr) {
-		logger(3, "unknown node in NODE_STATUS control packet");
-		node_status_response(&control_server, tpool, address,
-				     payload, "unknown");
-		return;
-	}
-
-	char *endptr;
-	unsigned port = strtoul(port_string, &endptr, 10);
-	if (port == 0 || *endptr != 0) {
-		logger(3, "malformed NODE_STATUS control packet: port is not a number");
-		node_status_response(&control_server, tpool, address,
-				     payload, "malformed");
-		return;
-	}
-
-	const auto with_port = node->address.WithPort(port);
-
-	auto status = instance.failure_manager.Get(GetEventLoop().SteadyNow(),
-						   with_port);
-	const char *s = failure_status_to_string(status);
-
-	node_status_response(&control_server, tpool, address,
-			     payload, s);
-} catch (...) {
-	logger(3, std::current_exception());
-}
-
 void
-LbControl::OnControlPacket(BengControl::Server &control_server,
+LbControl::OnControlPacket(BengControl::Server &,
 			   BengControl::Command command,
 			   std::span<const std::byte> payload,
 			   std::span<UniqueFileDescriptor>,
@@ -298,11 +209,6 @@ LbControl::OnControlPacket(BengControl::Server &control_server,
 		break;
 
 	case Command::NODE_STATUS:
-		QueryNodeStatus(control_server,
-				ToStringView(payload),
-				address);
-		break;
-
 	case Command::DUMP_POOLS:
 		// deprecated
 		break;

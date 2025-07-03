@@ -144,32 +144,6 @@ FadeNode(const char *server, ConstBuffer<const char *> args)
 }
 
 static void
-NodeStatus(const char *server, ConstBuffer<const char *> args)
-{
-	if (args.empty())
-		throw Usage{"Node name missing"};
-
-	const std::string_view name = args.shift();
-
-	if (!args.empty())
-		throw Usage{"Too many arguments"};
-
-	BengControl::Client client(server);
-	client.AutoBind();
-	client.Send(BengControl::Command::NODE_STATUS, name);
-
-	const auto response = client.Receive();
-	if (response.first != BengControl::Command::NODE_STATUS)
-		throw std::runtime_error("Wrong response command");
-
-	const auto nul = response.second.find('\0');
-	if (nul == response.second.npos)
-		throw std::runtime_error("Malformed response payload");
-
-	printf("%s\n", response.second.c_str() + nul + 1);
-}
-
-static void
 FadeChildren(const char *server, ConstBuffer<const char *> args)
 {
 	std::string_view tag{};
@@ -346,9 +320,6 @@ try {
 		return EXIT_SUCCESS;
 	} else if (StringIsEqual(command, "fade-node")) {
 		FadeNode(server, args);
-		return EXIT_SUCCESS;
-	} else if (StringIsEqual(command, "node-status")) {
-		NodeStatus(server, args);
 		return EXIT_SUCCESS;
 	} else if (StringIsEqual(command, "verbose")) {
 		Verbose(server, args);

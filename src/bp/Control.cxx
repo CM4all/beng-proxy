@@ -134,13 +134,8 @@ BpInstance::OnControlPacket(BengControl::Server &,
 		control_tcache_invalidate(this, payload);
 		break;
 
-	case Command::DUMP_POOLS:
-		// deprecated
-		break;
-
 	case Command::ENABLE_NODE:
 	case Command::FADE_NODE:
-	case Command::NODE_STATUS:
 		/* only for beng-lb */
 		break;
 
@@ -176,6 +171,8 @@ BpInstance::OnControlPacket(BengControl::Server &,
 #endif
 		break;
 
+	case Command::DUMP_POOLS:
+	case Command::NODE_STATUS:
 	case Command::FLUSH_NFS_CACHE:
 	case Command::STATS:
 		// deprecated
