@@ -43,8 +43,7 @@ private:
 	void FadeNode(const char *payload, size_t length);
 
 	/* virtual methods from class BengControl::Handler */
-	void OnControlPacket(BengControl::Server &control_server,
-			     BengControl::Command command,
+	void OnControlPacket(BengControl::Command command,
 			     std::span<const std::byte> payload,
 			     std::span<UniqueFileDescriptor> fds,
 			     SocketAddress address, int uid) override;

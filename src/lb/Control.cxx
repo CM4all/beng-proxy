@@ -159,8 +159,7 @@ LbControl::FadeNode(const char *payload, size_t length)
 }
 
 void
-LbControl::OnControlPacket(BengControl::Server &,
-			   BengControl::Command command,
+LbControl::OnControlPacket(BengControl::Command command,
 			   std::span<const std::byte> payload,
 			   std::span<UniqueFileDescriptor>,
 			   SocketAddress address, int uid)

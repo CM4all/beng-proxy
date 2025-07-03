@@ -111,8 +111,7 @@ BpInstance::HandleDisableUring(std::span<const std::byte> payload) noexcept
 #endif
 
 void
-BpInstance::OnControlPacket(BengControl::Server &,
-			    BengControl::Command command,
+BpInstance::OnControlPacket(BengControl::Command command,
 			    std::span<const std::byte> payload,
 			    std::span<UniqueFileDescriptor> fds,
 			    SocketAddress, int uid)

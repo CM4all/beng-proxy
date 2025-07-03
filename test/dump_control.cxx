@@ -17,8 +17,7 @@ using namespace BengControl;
 
 class DumpControlHandler final : public Handler {
 public:
-	void OnControlPacket(Server &,
-			     Command command,
+	void OnControlPacket(Command command,
 			     std::span<const std::byte> payload,
 			     std::span<UniqueFileDescriptor>,
 			     SocketAddress, int uid) override {
