@@ -34,6 +34,15 @@ BpPerSiteMap::Expire(double now) noexcept
 	}
 }
 
+BpPerSite *
+BpPerSiteMap::Get(StringWithHash site) noexcept
+{
+	if (auto it = map.find(site); it != map.end())
+		return &*it;
+
+	return nullptr;
+}
+
 SharedLeasePtr<BpPerSite>
 BpPerSiteMap::Make(StringWithHash site) noexcept
 {

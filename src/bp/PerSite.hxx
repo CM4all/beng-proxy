@@ -93,6 +93,17 @@ public:
 
 	void Expire(double now) noexcept;
 
+	/**
+	 * Look up an existing #BpPerSite item.  Returns nullptr if
+	 * the site does not exist.
+	 */
+	[[gnu::pure]]
+	BpPerSite *Get(StringWithHash site) noexcept;
+
+	/**
+	 * Like Get(), but create an item if it does not exist and
+	 * wrap it in a #SharedLeasePtr.
+	 */
 	[[gnu::pure]]
 	SharedLeasePtr<BpPerSite> Make(StringWithHash site) noexcept;
 };
