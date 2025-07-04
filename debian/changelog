@@ -15,7 +15,7 @@ cm4all-beng-proxy (20.1) unstable; urgency=low
   * debian: do not create /var/log/cm4all/beng-{proxy,lb}
   * debian: start daemon during initial installation, stop on uninstall
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Fri, 04 Jul 2025 09:06:09 +0200
 
 cm4all-beng-proxy (19.25) unstable; urgency=low
 
