@@ -18,15 +18,6 @@ class Client:
             s = socket.socket(socket.AF_UNIX, socket.SOCK_DGRAM)
             s.settimeout(timeout)
 
-            # bind to a unique address, so the server has something it
-            # can send a reply to
-            import os
-            s.bind('\0beng-proxy-client-' + str(os.getpid()))
-
-            if host.startswith('@'):
-                # abstract socket
-                host = '\0' + host[1:]
-
             s.connect(host)
         else:
             s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -36,20 +27,6 @@ class Client:
             s.settimeout(timeout)
 
         self.__socket = s
-
-    def receive(self) -> list[Tuple[int, bytes]]:
-        """Receive a datagram from the server.  Returns a list of
-        (command, payload) tuples."""
-        packets = []
-        data = self.__socket.recv(8192)
-        while len(data) > 4:
-            header, data = data[:4], data[4:]
-            length, command = struct.unpack('>HH', header)
-            if length > len(data):
-                break
-            payload, data = data[:length], data[length:]
-            packets.append((command, payload))
-        return packets
 
     @staticmethod
     def __to_bytes(s: Union[str, bytes]) -> bytes:
