@@ -10,8 +10,9 @@
 #include "Server.hxx"
 #include "net/log/OneLine.hxx"
 #include "time/Convert.hxx"
-#include "util/ConstBuffer.hxx"
 #include "util/StringAPI.hxx"
+
+#include <span>
 
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -228,7 +229,7 @@ int main(int argc, char **argv)
 		return EXIT_FAILURE;
 	}
 
-	ConstBuffer<const char *> templates(&argv[argi], argc - argi);
+	const std::span<const char *const> templates{&argv[argi], static_cast<std::size_t>(argc - argi)};
 
 	AccessLogServer().Run([templates](const Net::Log::Datagram &d){
 		for (const char *t : templates)

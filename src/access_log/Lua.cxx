@@ -24,11 +24,9 @@
 #include "util/PrintException.hxx"
 #include "util/ScopeExit.hxx"
 #include "util/StringAPI.hxx"
-#include "util/ConstBuffer.hxx"
 
 #include <functional>
-
-#include <functional>
+#include <span>
 
 extern "C" {
 #include <lauxlib.h>
@@ -220,19 +218,19 @@ struct Usage {};
 int
 main(int argc, char **argv)
 try {
-	ConstBuffer<const char *> args(argv + 1, argc - 1);
+	std::span<const char *const> args{argv + 1, static_cast<std::size_t>(argc - 1)};
 
 	const char *handler_code = nullptr;
 	const char *path = nullptr, *function_name = nullptr;
 
 	while (!args.empty() && args.front()[0] == '-') {
 		if (StringIsEqual(args.front(), "--handler-code")) {
-			args.shift();
-
+			args = args.subspan(1);
 			if (args.empty())
 				throw Usage();
 
-			handler_code = args.shift();
+			handler_code = args.front();
+			args = args.subspan(1);
 		} else if (StringIsEqual(args.front(), "--filter-exec"))
 			break;
 		else
@@ -243,16 +241,20 @@ try {
 		if (args.empty())
 			throw Usage();
 
-		path = args.shift();
-		function_name = !args.empty() && args.front()[0] != '-'
-			? args.shift()
-			: "access_log";
+		path = args.front();
+		args = args.subspan(1);
+
+		function_name = "access_log";
+		if (!args.empty() && args.front()[0] != '-') {
+			function_name = args.front();
+			args = args.subspan(1);
+		}
 	}
 
 	UniqueSocketDescriptor filter_sink;
 
 	if (!args.empty() && StringIsEqual(args.front(), "--filter-exec")) {
-		args.shift();
+		args = args.subspan(1);
 
 		if (args.empty())
 			throw Usage();

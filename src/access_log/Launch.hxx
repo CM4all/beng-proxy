@@ -10,10 +10,11 @@
 
 #include "net/UniqueSocketDescriptor.hxx"
 
+#include <span>
+
 #include <sys/types.h>
 
 struct UidGid;
-template<typename T> struct ConstBuffer;
 
 struct LogProcess {
 	pid_t pid;
@@ -25,4 +26,4 @@ LaunchLogger(const char *command,
 	     const UidGid *uid_gid);
 
 UniqueSocketDescriptor
-LaunchLogger(ConstBuffer<const char *> args);
+LaunchLogger(std::span<const char *const> args);

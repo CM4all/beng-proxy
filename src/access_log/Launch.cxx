@@ -7,7 +7,6 @@
 #include "system/Error.hxx"
 #include "net/SocketError.hxx"
 #include "util/PrintException.hxx"
-#include "util/ConstBuffer.hxx"
 
 #include <assert.h>
 #include <sys/socket.h>
@@ -74,11 +73,11 @@ static constexpr size_t MAX_ARGS = 255;
 
 [[noreturn]]
 static void
-Exec(ConstBuffer<const char *> _args)
+Exec(std::span<const char *const> _args)
 {
 	std::array<const char *, MAX_ARGS + 1> args;
-	assert(_args.size < args.size());
-	*std::copy_n(_args.data, _args.size, args.begin()) = nullptr;
+	assert(_args.size() < args.size());
+	*std::copy(_args.begin(), _args.end(), args.begin()) = nullptr;
 
 	execv(args.front(), const_cast<char **>(args.data()));
 	fprintf(stderr, "failed to execute %s: %s\n",
@@ -88,9 +87,9 @@ Exec(ConstBuffer<const char *> _args)
 }
 
 UniqueSocketDescriptor
-LaunchLogger(ConstBuffer<const char *> args)
+LaunchLogger(std::span<const char *const> args)
 {
-	if (args.size > MAX_ARGS)
+	if (args.size() > MAX_ARGS)
 		throw std::runtime_error("Too many arguments");
 
 	UniqueSocketDescriptor child_fd, parent_fd;
