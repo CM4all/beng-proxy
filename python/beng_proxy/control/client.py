@@ -60,9 +60,6 @@ class Client:
     def send_fade_node(self, node: str, port: int) -> None:
         self.send(CONTROL_FADE_NODE, f'{node}:{port}')
 
-    def send_node_status(self, node: str, port: int) -> None:
-        self.send(CONTROL_NODE_STATUS, f'{node}:{port}')
-
     def send_verbose(self, verbose: int) -> None:
         assert verbose >= 0
         assert verbose <= 0xff
