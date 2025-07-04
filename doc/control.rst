@@ -140,8 +140,7 @@ Commands
   data structures that cannot automatically apply these because they
   do not have enough context (e.g. token buckets).
 
-Only ``TCACHE_INVALIDATE``,
-``FLUSH_FILTER_CACHE``, ``STATS`` and ``NODE_STATUS`` are allowed when
+Only ``TCACHE_INVALIDATE``, ``FLUSH_FILTER_CACHE`` are allowed when
 received via IP. The other commands are only accepted from clients
 connected on a local socket (aka Unix Domain Socket, ``AF_LOCAL``).
 
