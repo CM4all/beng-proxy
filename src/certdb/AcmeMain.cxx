@@ -26,7 +26,7 @@
 #include "lib/openssl/Name.hxx"
 #include "lib/openssl/UniqueCertKey.hxx"
 #include "util/AllocatedString.hxx"
-#include "util/ConstBuffer.hxx"
+#include <span>
 #include "util/StringAPI.hxx"
 
 #include <map>
@@ -468,7 +468,7 @@ PrintAccount(const AcmeAccount &account) noexcept
 }
 
 void
-Acme(ConstBuffer<const char *> args)
+Acme(std::span<const char *const> args)
 {
 	AcmeConfig config;
 
@@ -476,64 +476,64 @@ Acme(ConstBuffer<const char *> args)
 		const char *arg = args.front();
 
 		if (StringIsEqual(arg, "--staging")) {
-			args.shift();
+			args = args.subspan(1);
 			config.staging = true;
 		} else if (StringIsEqual(arg, "--directory-url")) {
-			args.shift();
+			args = args.subspan(1);
 
 			if (args.empty())
 				throw std::runtime_error("Directory URL missing");
 
 			config.directory_url = args.front();
-			args.shift();
+			args = args.subspan(1);
 		} else if (StringIsEqual(arg, "--tls-ca")) {
-			args.shift();
+			args = args.subspan(1);
 
 			if (args.empty())
 				throw std::runtime_error("TLS CA filename missing");
 
 			config.tls_ca = args.front();
-			args.shift();
+			args = args.subspan(1);
 		} else if (StringIsEqual(arg, "--debug")) {
-			args.shift();
+			args = args.subspan(1);
 			config.debug = true;
 		} else if (StringIsEqual(arg, "--account-db")) {
-			args.shift();
+			args = args.subspan(1);
 			config.account_db = true;
 		} else if (StringIsEqual(arg, "--account-key")) {
-			args.shift();
+			args = args.subspan(1);
 
 			if (args.empty())
 				throw std::runtime_error("File missing");
 
 			config.account_key_path = args.front();
-			args.shift();
+			args = args.subspan(1);
 		} else if (StringIsEqual(arg, "--account-key-id")) {
-			args.shift();
+			args = args.subspan(1);
 
 			if (args.empty())
 				throw std::runtime_error("Key id missing");
 
 			config.account_key_id = args.front();
-			args.shift();
+			args = args.subspan(1);
 		} else if (StringIsEqual(arg, "--challenge-directory")) {
-			args.shift();
+			args = args.subspan(1);
 
 			if (args.empty())
 				throw std::runtime_error("Directory missing");
 
 			config.challenge_directory = args.front();
-			args.shift();
+			args = args.subspan(1);
 		} else if (StringIsEqual(arg, "--dns-txt-program")) {
-			args.shift();
+			args = args.subspan(1);
 
 			if (args.empty())
 				throw std::runtime_error("Program missing");
 
 			config.dns_txt_program = args.front();
-			args.shift();
+			args = args.subspan(1);
 		} else if (StringIsEqual(arg, "--alpn")) {
-			args.shift();
+			args = args.subspan(1);
 			config.alpn = true;
 		} else
 			break;
@@ -565,11 +565,12 @@ Acme(ConstBuffer<const char *> args)
 
 	const char *key_path = config.account_key_path.c_str();
 
-	const auto cmd = args.shift();
+	const auto cmd = args.front();
+	args = args.subspan(1);
 
 	if (StringIsEqual(cmd, "new-account") ||
 	    /* deprecated alias: */ StringIsEqual(cmd, "new-reg")) {
-		if (args.size != 1)
+		if (args.size() != 1)
 			throw Usage("acme new-account EMAIL");
 
 		const char *email = args[0];
@@ -620,10 +621,11 @@ Acme(ConstBuffer<const char *> args)
 		if (!config.account_db)
 			throw std::runtime_error("import-account requires --account-db");
 
-		if (args.size != 1)
+		if (args.size() != 1)
 			throw Usage("acme import-account KEYFILE");
 
-		const char *import_key_path = args.shift();
+		const char *import_key_path = args.front();
+		args = args.subspan(1);
 
 		const auto db_config = LoadPatchCertDatabaseConfig();
 
@@ -646,10 +648,11 @@ Acme(ConstBuffer<const char *> args)
 
 		PrintAccount(account);
 	} else if (StringIsEqual(cmd, "new-order")) {
-		if (args.size < 2)
+		if (args.size() < 2)
 			throw Usage("acme new-order HANDLE HOST ...");
 
-		const char *handle = args.shift();
+		const char *handle = args.front();
+		args = args.subspan(1);
 
 		std::set<std::string> identifiers;
 		for (const char *i : args)
@@ -664,7 +667,7 @@ Acme(ConstBuffer<const char *> args)
 			     handle, identifiers);
 		fmt::print("OK\n");
 	} else if (StringIsEqual(cmd, "renew-cert")) {
-		if (args.size != 1)
+		if (args.size() != 1)
 			throw Usage("acme renew-cert HANDLE");
 
 		const char *handle = args.front();

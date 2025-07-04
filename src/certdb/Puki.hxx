@@ -4,7 +4,7 @@
 
 #pragma once
 
-template<typename T> struct ConstBuffer;
+#include <span>
 
 void
-HandlePuki(ConstBuffer<const char *> args);
+HandlePuki(std::span<const char *const> args);

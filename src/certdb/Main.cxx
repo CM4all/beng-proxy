@@ -26,7 +26,7 @@
 #include "io/FileDescriptor.hxx"
 #include "io/StringFile.hxx"
 #include "util/AllocatedString.hxx"
-#include "util/ConstBuffer.hxx"
+#include <span>
 #include "util/PrintException.hxx"
 #include "util/StringCompare.hxx"
 
@@ -305,9 +305,9 @@ Populate(const CertDatabaseConfig &db_config,
 }
 
 static void
-HandleLoad(ConstBuffer<const char *> args)
+HandleLoad(std::span<const char *const> args)
 {
-	if (args.size != 3)
+	if (args.size() != 3)
 		throw AutoUsage();
 
 	const auto db_config = LoadPatchCertDatabaseConfig();
@@ -315,9 +315,9 @@ HandleLoad(ConstBuffer<const char *> args)
 }
 
 static void
-HandleReload(ConstBuffer<const char *> args)
+HandleReload(std::span<const char *const> args)
 {
-	if (args.size != 1)
+	if (args.size() != 1)
 		throw AutoUsage();
 
 	const auto db_config = LoadPatchCertDatabaseConfig();
@@ -325,9 +325,9 @@ HandleReload(ConstBuffer<const char *> args)
 }
 
 static void
-HandleDelete(ConstBuffer<const char *> args)
+HandleDelete(std::span<const char *const> args)
 {
-	if (args.size != 1)
+	if (args.size() != 1)
 		throw AutoUsage();
 
 	const auto db_config = LoadPatchCertDatabaseConfig();
@@ -343,9 +343,9 @@ PrintNames(const CertDatabaseConfig &db_config, const char *handle)
 }
 
 static void
-HandleNames(ConstBuffer<const char *> args)
+HandleNames(std::span<const char *const> args)
 {
-	if (args.size != 1)
+	if (args.size() != 1)
 		throw AutoUsage();
 
 	const auto db_config = LoadPatchCertDatabaseConfig();
@@ -353,9 +353,9 @@ HandleNames(ConstBuffer<const char *> args)
 }
 
 static void
-HandleGet(ConstBuffer<const char *> args)
+HandleGet(std::span<const char *const> args)
 {
-	if (args.size != 1)
+	if (args.size() != 1)
 		throw AutoUsage();
 
 	const auto db_config = LoadPatchCertDatabaseConfig();
@@ -363,7 +363,7 @@ HandleGet(ConstBuffer<const char *> args)
 }
 
 static void
-HandleFind(ConstBuffer<const char *> args)
+HandleFind(std::span<const char *const> args)
 {
 	bool headers = false;
 
@@ -371,13 +371,13 @@ HandleFind(ConstBuffer<const char *> args)
 		const char *arg = args.front();
 
 		if (StringIsEqual(arg, "--headers")) {
-			args.shift();
+			args = args.subspan(1);
 			headers = true;
 		} else
 			break;
 	}
 
-	if (args.size != 1)
+	if (args.size() != 1)
 		throw AutoUsage();
 
 	const auto db_config = LoadPatchCertDatabaseConfig();
@@ -393,9 +393,9 @@ SetHandle(const CertDatabaseConfig &db_config,
 }
 
 static void
-HandleSetHandle(ConstBuffer<const char *> args)
+HandleSetHandle(std::span<const char *const> args)
 {
-	if (args.size != 2)
+	if (args.size() != 2)
 		throw AutoUsage();
 
 	const auto db_config = LoadPatchCertDatabaseConfig();
@@ -403,9 +403,9 @@ HandleSetHandle(ConstBuffer<const char *> args)
 }
 
 static void
-HandleDumpKey(ConstBuffer<const char *> args)
+HandleDumpKey(std::span<const char *const> args)
 {
-	if (args.size != 1)
+	if (args.size() != 1)
 		throw AutoUsage();
 
 	const auto db_config = LoadPatchCertDatabaseConfig();
@@ -414,9 +414,9 @@ HandleDumpKey(ConstBuffer<const char *> args)
 
 [[noreturn]]
 static void
-HandleMonitor(ConstBuffer<const char *> args)
+HandleMonitor(std::span<const char *const> args)
 {
-	if (args.size != 0)
+	if (args.size() != 0)
 		throw AutoUsage();
 
 	const auto db_config = LoadPatchCertDatabaseConfig();
@@ -424,9 +424,9 @@ HandleMonitor(ConstBuffer<const char *> args)
 }
 
 static void
-HandleTail(ConstBuffer<const char *> args)
+HandleTail(std::span<const char *const> args)
 {
-	if (args.size != 0)
+	if (args.size() != 0)
 		throw AutoUsage();
 
 	const auto db_config = LoadPatchCertDatabaseConfig();
@@ -434,15 +434,15 @@ HandleTail(ConstBuffer<const char *> args)
 }
 
 static void
-HandleAcme(ConstBuffer<const char *> args)
+HandleAcme(std::span<const char *const> args)
 {
 	Acme(args);
 }
 
 static void
-HandleGenwrap(ConstBuffer<const char *> args)
+HandleGenwrap(std::span<const char *const> args)
 {
-	if (args.size != 0)
+	if (args.size() != 0)
 		throw AutoUsage();
 
 	WrapKeyBuffer key;
@@ -454,16 +454,16 @@ HandleGenwrap(ConstBuffer<const char *> args)
 }
 
 static void
-HandlePopulate(ConstBuffer<const char *> args)
+HandlePopulate(std::span<const char *const> args)
 {
-	if (args.size < 2 || args.size > 3)
+	if (args.size() < 2 || args.size() > 3)
 		throw AutoUsage();
 
 	const char *key = args[0];
 	const char *suffix = args[1];
 	unsigned count = 0;
 
-	if (args.size == 3) {
+	if (args.size() == 3) {
 		count = strtoul(args[2], nullptr, 10);
 		if (count == 0)
 			throw std::runtime_error("Invalid COUNT parameter");
@@ -474,9 +474,9 @@ HandlePopulate(ConstBuffer<const char *> args)
 }
 
 static void
-HandleMigrate(ConstBuffer<const char *> args)
+HandleMigrate(std::span<const char *const> args)
 {
-	if (args.size != 0)
+	if (args.size() != 0)
 		throw AutoUsage();
 
 	const auto db_config = LoadPatchCertDatabaseConfig();
@@ -486,11 +486,11 @@ HandleMigrate(ConstBuffer<const char *> args)
 
 static constexpr struct Command {
 	const char *name, *usage;
-	void (*function)(ConstBuffer<const char *> args);
+	void (*function)(std::span<const char *const> args);
 	bool undocumented = false;
 
 	constexpr Command(const char *_name, const char *_usage,
-			  void (*_function)(ConstBuffer<const char *> args),
+			  void (*_function)(std::span<const char *const> args),
 			  bool _undocumented = false)
 		:name(_name), usage(_usage),
 		 function(_function), undocumented(_undocumented) {}
@@ -526,14 +526,14 @@ FindCommand(const char *name)
 int
 main(int argc, char **argv)
 try {
-	ConstBuffer<const char *> args(argv + 1, argc - 1);
+	std::span<const char *const> args{argv + 1, static_cast<std::size_t>(argc - 1)};
 
 	while (!args.empty() && *args.front() == '-') {
 		if (StringIsEqual(args.front(), "--progress")) {
-			args.shift();
+			args = args.subspan(1);
 			root_progress.Enable(0, 100);
 		} else if (auto range = StringAfterPrefix(args.front(), "--progress=")) {
-			args.shift();
+			args = args.subspan(1);
 
 			char *endptr;
 			unsigned min = strtoul(range, &endptr, 10);
@@ -547,12 +547,12 @@ try {
 
 			root_progress = WorkshopProgress(min, max);
 		} else if (StringIsEqual(args.front(), "--workshop-control")) {
-			args.shift();
+			args = args.subspan(1);
 			root_progress.UseControlChannel();
 		} else {
 			fmt::print(stderr, "Unknown option: {}\n\n", args.front());
 			/* clear the list to trigger printing the usage */
-			args.size = 0;
+			args = args.subspan(args.size());
 		}
 	}
 
@@ -585,7 +585,8 @@ try {
 	setvbuf(stdout, nullptr, _IOLBF, 0);
 	setvbuf(stderr, nullptr, _IOLBF, 0);
 
-	const auto cmd = args.shift();
+	const auto cmd = args.front();
+	args = args.subspan(1);
 
 	const auto *cmd2 = FindCommand(cmd);
 	if (cmd2 == nullptr) {

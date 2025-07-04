@@ -4,7 +4,7 @@
 
 #pragma once
 
-template<typename T> struct ConstBuffer;
+#include <span>
 
 void
-Acme(ConstBuffer<const char *> args);
+Acme(std::span<const char *const> args);

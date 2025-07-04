@@ -18,7 +18,7 @@
 #include "lib/openssl/UniqueBIO.hxx"
 #include "lib/openssl/UniqueCertKey.hxx"
 #include "http/Status.hxx"
-#include "util/ConstBuffer.hxx"
+#include <span>
 #include "util/MimeType.hxx"
 #include "util/StringAPI.hxx"
 
@@ -135,7 +135,7 @@ RenewCert(const CertDatabaseConfig &db_config, const PukiConfig &config,
 }
 
 void
-HandlePuki(ConstBuffer<const char *> args)
+HandlePuki(std::span<const char *const> args)
 {
 	PukiConfig config;
 
@@ -143,24 +143,24 @@ HandlePuki(ConstBuffer<const char *> args)
 		const char *arg = args.front();
 
 		if (StringIsEqual(arg, "--verbose")) {
-			args.shift();
+			args = args.subspan(1);
 			config.verbose = true;
 		} else if (StringIsEqual(arg, "--puki-url")) {
-			args.shift();
+			args = args.subspan(1);
 
 			if (args.empty())
 				throw "URL missing";
 
 			config.puki_url = args.front();
-			args.shift();
+			args = args.subspan(1);
 		} else if (StringIsEqual(arg, "--tls-ca")) {
-			args.shift();
+			args = args.subspan(1);
 
 			if (args.empty())
 				throw "TLS CA filename missing";
 
 			config.tls_ca = args.front();
-			args.shift();
+			args = args.subspan(1);
 		} else
 			break;
 	}
@@ -177,26 +177,29 @@ HandlePuki(ConstBuffer<const char *> args)
 	if (config.puki_url == nullptr)
 		throw "No --puki-url parameter";
 
-	const char *const cmd = args.shift();
+	const char *const cmd = args.front();
+	args = args.subspan(1);
 
 	if (StringIsEqual(cmd, "new-cert")) {
-		if (args.size < 2)
+		if (args.size() < 2)
 			throw Usage{"puki new-cert HANDLE HOST..."};
 
 		const auto db_config = LoadPatchCertDatabaseConfig();
 		CertDatabase db(db_config);
 
-		const char *const handle = args.shift();
+		const char *const handle = args.front();
+		args = args.subspan(1);
 		NewCert(db_config, config, db,
 			handle, {args.begin(), args.end()});
 	} else if (StringIsEqual(cmd, "renew-cert")) {
-		if (args.size != 1)
+		if (args.size() != 1)
 			throw Usage{"puki renew-cert HANDLE"};
 
 		const auto db_config = LoadPatchCertDatabaseConfig();
 		CertDatabase db(db_config);
 
-		const char *const handle = args.shift();
+		const char *const handle = args.front();
+		args = args.subspan(1);
 		RenewCert(db_config, config, db,
 			  handle);
 	} else
