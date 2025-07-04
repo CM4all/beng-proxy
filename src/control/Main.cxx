@@ -9,13 +9,13 @@
 #include "io/UniqueFileDescriptor.hxx"
 #include "system/Error.hxx"
 #include "util/ByteOrder.hxx"
-#include "util/ConstBuffer.hxx"
 #include "util/PackedBigEndian.hxx"
 #include "util/PrintException.hxx"
 #include "util/SpanCast.hxx"
 #include "util/StringCompare.hxx"
 
 #include <chrono>
+#include <span>
 
 #include <inttypes.h>
 #include <stdlib.h>
@@ -26,7 +26,7 @@ struct Usage {
 };
 
 static void
-SimpleCommand(const char *server, ConstBuffer<const char *> args,
+SimpleCommand(const char *server, std::span<const char *const> args,
 	      BengControl::Command cmd)
 {
 	if (!args.empty())
@@ -37,7 +37,7 @@ SimpleCommand(const char *server, ConstBuffer<const char *> args,
 }
 
 static void
-Nop(const char *server, ConstBuffer<const char *> args)
+Nop(const char *server, std::span<const char *const> args)
 {
 	SimpleCommand(server, args, BengControl::Command::NOP);
 }
@@ -84,7 +84,7 @@ ParseTcacheInvalidate(const char *s)
 }
 
 static void
-TcacheInvalidate(const char *server, ConstBuffer<const char *> args)
+TcacheInvalidate(const char *server, std::span<const char *const> args)
 {
 	std::string payload;
 
@@ -96,12 +96,13 @@ TcacheInvalidate(const char *server, ConstBuffer<const char *> args)
 }
 
 static void
-Verbose(const char *server, ConstBuffer<const char *> args)
+Verbose(const char *server, std::span<const char *const> args)
 {
 	if (args.empty())
 		throw Usage{"Log level missing"};
 
-	const char *s = args.shift();
+	const char *s = args.front();
+	args = args.subspan(1);
 
 	if (!args.empty())
 		throw Usage{"Too many arguments"};
@@ -114,12 +115,13 @@ Verbose(const char *server, ConstBuffer<const char *> args)
 }
 
 static void
-EnableNode(const char *server, ConstBuffer<const char *> args)
+EnableNode(const char *server, std::span<const char *const> args)
 {
 	if (args.empty())
 		throw Usage{"Node name missing"};
 
-	const std::string_view name = args.shift();
+	const std::string_view name = args.front();
+	args = args.subspan(1);
 
 	if (!args.empty())
 		throw Usage{"Too many arguments"};
@@ -129,12 +131,13 @@ EnableNode(const char *server, ConstBuffer<const char *> args)
 }
 
 static void
-FadeNode(const char *server, ConstBuffer<const char *> args)
+FadeNode(const char *server, std::span<const char *const> args)
 {
 	if (args.empty())
 		throw Usage{"Node name missing"};
 
-	const std::string_view name = args.shift();
+	const std::string_view name = args.front();
+	args = args.subspan(1);
 
 	if (!args.empty())
 		throw Usage{"Too many arguments"};
@@ -144,12 +147,14 @@ FadeNode(const char *server, ConstBuffer<const char *> args)
 }
 
 static void
-FadeChildren(const char *server, ConstBuffer<const char *> args)
+FadeChildren(const char *server, std::span<const char *const> args)
 {
 	std::string_view tag{};
 
-	if (!args.empty())
-		tag = args.shift();
+	if (!args.empty()) {
+		tag = args.front();
+		args = args.subspan(1);
+	}
 
 	if (!args.empty())
 		throw Usage{"Too many arguments"};
@@ -159,12 +164,14 @@ FadeChildren(const char *server, ConstBuffer<const char *> args)
 }
 
 static void
-TerminateChildren(const char *server, ConstBuffer<const char *> args)
+TerminateChildren(const char *server, std::span<const char *const> args)
 {
 	std::string_view tag{};
 
-	if (!args.empty())
-		tag = args.shift();
+	if (!args.empty()) {
+		tag = args.front();
+		args = args.subspan(1);
+	}
 
 	if (!args.empty())
 		throw Usage{"Too many arguments"};
@@ -174,12 +181,13 @@ TerminateChildren(const char *server, ConstBuffer<const char *> args)
 }
 
 static void
-DisconnectDatabase(const char *server, ConstBuffer<const char *> args)
+DisconnectDatabase(const char *server, std::span<const char *const> args)
 {
 	if (args.empty())
 		throw Usage{"Not enough arguments"};
 
-	const std::string_view tag = args.shift();
+	const std::string_view tag = args.front();
+	args = args.subspan(1);
 
 	if (!args.empty())
 		throw Usage{"Too many arguments"};
@@ -204,12 +212,14 @@ DisableUring(const char *server)
 }
 
 static void
-FlushHttpCache(const char *server, ConstBuffer<const char *> args)
+FlushHttpCache(const char *server, std::span<const char *const> args)
 {
 	std::string_view tag{};
 
-	if (!args.empty())
-		tag = args.shift();
+	if (!args.empty()) {
+		tag = args.front();
+		args = args.subspan(1);
+	}
 
 	if (!args.empty())
 		throw Usage{"Too many arguments"};
@@ -219,12 +229,14 @@ FlushHttpCache(const char *server, ConstBuffer<const char *> args)
 }
 
 static void
-FlushFilterCache(const char *server, ConstBuffer<const char *> args)
+FlushFilterCache(const char *server, std::span<const char *const> args)
 {
 	std::string_view tag{};
 
-	if (!args.empty())
-		tag = args.shift();
+	if (!args.empty()) {
+		tag = args.front();
+		args = args.subspan(1);
+	}
 
 	if (!args.empty())
 		throw Usage{"Too many arguments"};
@@ -234,12 +246,13 @@ FlushFilterCache(const char *server, ConstBuffer<const char *> args)
 }
 
 static void
-DiscardSession(const char *server, ConstBuffer<const char *> args)
+DiscardSession(const char *server, std::span<const char *const> args)
 {
 	if (args.empty())
 		throw Usage{"Not enough arguments"};
 
-	const std::string_view attach_id = args.shift();
+	const std::string_view attach_id = args.front();
+	args = args.subspan(1);
 
 	if (!args.empty())
 		throw Usage{"Too many arguments"};
@@ -249,12 +262,13 @@ DiscardSession(const char *server, ConstBuffer<const char *> args)
 }
 
 static void
-ResetLimiter(const char *server, ConstBuffer<const char *> args)
+ResetLimiter(const char *server, std::span<const char *const> args)
 {
 	if (args.empty())
 		throw Usage{"Not enough arguments"};
 
-	const std::string_view id = args.shift();
+	const std::string_view id = args.front();
+	args = args.subspan(1);
 
 	if (!args.empty())
 		throw Usage{"Too many arguments"};
@@ -264,7 +278,7 @@ ResetLimiter(const char *server, ConstBuffer<const char *> args)
 }
 
 static void
-Stopwatch(const char *server, ConstBuffer<const char *> args)
+Stopwatch(const char *server, std::span<const char *const> args)
 {
 	if (!args.empty())
 		throw Usage{"Too many arguments"};
@@ -292,12 +306,13 @@ Stopwatch(const char *server, ConstBuffer<const char *> args)
 int
 main(int argc, char **argv)
 try {
-	ConstBuffer<const char *> args(argv + 1, argc - 1);
+	std::span<const char *const> args{argv + 1, static_cast<std::size_t>(argc - 1)};
 
 	const char *server = "@bp-control";
 
 	while (!args.empty() && args.front()[0] == '-') {
-		const char *option = args.shift();
+		const char *option = args.front();
+		args = args.subspan(1);
 		if (const char *new_server = StringAfterPrefix(option, "--server=")) {
 			server = new_server;
 		} else
@@ -307,7 +322,8 @@ try {
 	if (args.empty())
 		throw Usage();
 
-	const char *const command = args.shift();
+	const char *const command = args.front();
+	args = args.subspan(1);
 
 	if (StringIsEqual(command, "nop")) {
 		Nop(server, args);
@@ -341,7 +357,7 @@ try {
 		if (args.empty()) {
 			DisableUring(server);
 			return EXIT_SUCCESS;
-		} else if (args.size == 1) {
+		} else if (args.size() == 1) {
 			DisableUring(server, std::chrono::duration<uint_least32_t>{atoi(args.front())});
 			return EXIT_SUCCESS;
 		} else
