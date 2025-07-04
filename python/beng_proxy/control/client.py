@@ -14,14 +14,6 @@ from .serialize import make_packet
 
 class Client:
     def __init__(self, host: str, port: int=5478, broadcast: bool=False, timeout: int=10):
-        if host:
-            try:
-                # connect to a specific process by its PID
-                pid = int(host)
-                host = f'@beng_control:pid={pid}'
-            except ValueError:
-                pass
-
         if host.startswith('/') or host.startswith('@'):
             s = socket.socket(socket.AF_UNIX, socket.SOCK_DGRAM)
             s.settimeout(timeout)
