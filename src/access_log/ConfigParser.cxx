@@ -48,7 +48,7 @@ AccessLogConfigParser::ParseLine(FileLineParser &line)
 	} else if (StringIsEqual(word, "max_size")) {
 		config.max_size = line.NextPositiveInteger();
 
-		if (config.max_size > 512)
+		if (config.max_size < 512)
 			throw LineParser::Error("Number is too small");
 
 		if (config.max_size > 16384)
