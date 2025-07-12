@@ -3,7 +3,7 @@ cm4all-beng-proxy (20.3) unstable; urgency=low
   * access_log: truncate User-Agent after 128 bytes (was 64)
   * access_log: fix corrupt URIs in HTTP_ERROR records (use-after-free)
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Sat, 12 Jul 2025 07:35:06 +0200
 
 cm4all-beng-proxy (20.2) unstable; urgency=low
 
