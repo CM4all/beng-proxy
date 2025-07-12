@@ -1,6 +1,6 @@
 cm4all-beng-proxy (20.3) unstable; urgency=low
 
-  * 
+  * access_log: truncate User-Agent after 128 bytes (was 64)
 
  --   
 
