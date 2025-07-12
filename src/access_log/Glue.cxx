@@ -132,7 +132,7 @@ AccessLogGlue::Log(std::chrono::system_clock::time_point now,
 
 	d.TruncateHttpUri(1024);
 	d.TruncateHttpReferer(512);
-	d.TruncateUserAgent(64);
+	d.TruncateUserAgent(128);
 
 	Log(d);
 }
