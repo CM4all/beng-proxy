@@ -130,7 +130,10 @@ ChildErrorLog::SetUri(const char *_uri) noexcept
 		if (uri == __uri)
 			return;
 
-		GetDatagram().http_uri = __uri;
+		/* copy (truncated) URI to our std::string field and
+		   let the Datagram field point to this copy */
+		uri = __uri;
+		GetDatagram().http_uri = uri;
 		GetDatagram().truncated_http_uri = truncated;
 	}
 }
