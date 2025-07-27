@@ -1,6 +1,6 @@
 cm4all-beng-proxy (20.4) unstable; urgency=low
 
-  * 
+  * always log accept() errors
 
  --   
 

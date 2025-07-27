@@ -144,7 +144,7 @@ try {
 void
 LbListener::OnFilteredSocketError(std::exception_ptr ep) noexcept
 {
-	logger(2, "Failed to accept: ", ep);
+	logger(1, "Failed to accept: ", ep);
 }
 
 /*

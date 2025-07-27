@@ -159,7 +159,7 @@ BpListener::OnFilteredSocketConnect(PoolPtr pool,
 void
 BpListener::OnFilteredSocketError(std::exception_ptr ep) noexcept
 {
-	LogConcat(2, "listener", ep);
+	LogConcat(1, "listener", ep);
 }
 
 void
