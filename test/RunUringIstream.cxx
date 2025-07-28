@@ -4,6 +4,7 @@
 
 #include "TestInstance.hxx"
 #include "istream/UringIstream.hxx"
+#include "istream/UringSpliceIstream.hxx"
 #include "istream/sink_fd.hxx"
 #include "istream/UnusedPtr.hxx"
 #include "pool/pool.hxx"
@@ -15,6 +16,7 @@
 #include "io/uring/Handler.hxx"
 #include "io/uring/OpenStat.hxx"
 #include "util/PrintException.hxx"
+#include "util/StringAPI.hxx"
 
 #include <liburing.h>
 
@@ -29,6 +31,11 @@ struct UringInstance : TestInstance {
 	}
 };
 
+enum class Mode : uint_least8_t {
+	READ,
+	SPLICE,
+};
+
 class Context final : UringInstance, Uring::OpenStatHandler, SinkFdHandler {
 	ShutdownListener shutdown_listener{event_loop, BIND_THIS_METHOD(OnShutdown)};
 
@@ -39,9 +46,12 @@ class Context final : UringInstance, Uring::OpenStatHandler, SinkFdHandler {
 	SinkFd *sink = nullptr;
 	std::exception_ptr error;
 
+	const Mode mode;
+
 public:
-	Context()
-		:open_stat(*event_loop.GetUring(), *this)
+	explicit Context(Mode _mode)
+		:open_stat(*event_loop.GetUring(), *this),
+		 mode(_mode)
 	{
 		shutdown_listener.Enable();
 	}
@@ -89,6 +99,28 @@ Context::Open(const char *path) noexcept
 	open_stat.StartOpenStatReadOnly(path);
 }
 
+static UnusedIstreamPtr
+CreateIstream(EventLoop &event_loop, struct pool &pool,
+	      const char *path, FileDescriptor fd, SharedLease &&lease,
+	      off_t start_offset, off_t end_offset,
+	      Mode mode) noexcept
+{
+	switch (mode) {
+	case Mode::READ:
+		return NewUringIstream(*event_loop.GetUring(), pool, path,
+				       fd, std::move(lease),
+				       start_offset, end_offset);
+
+	case Mode::SPLICE:
+		return NewUringSpliceIstream(event_loop, *event_loop.GetUring(), nullptr,
+					     pool, path,
+					     fd, std::move(lease),
+					     start_offset, end_offset);
+	}
+
+	std::unreachable();
+}
+
 inline void
 Context::CreateSinkFd(const char *path, UniqueFileDescriptor &&fd,
 		      off_t size) noexcept
@@ -96,10 +128,9 @@ Context::CreateSinkFd(const char *path, UniqueFileDescriptor &&fd,
 	auto *shared_fd = NewFromPool<SharedFd>(root_pool, std::move(fd));
 
 	sink = sink_fd_new(event_loop, root_pool,
-			   NewUringIstream(*event_loop.GetUring(),
-					   root_pool, path,
-					   shared_fd->Get(), *shared_fd,
-					   0, size),
+			   CreateIstream(event_loop, root_pool, path,
+					 shared_fd->Get(), *shared_fd,
+					 0, size, mode),
 			   FileDescriptor(STDOUT_FILENO),
 			   guess_fd_type(STDOUT_FILENO),
 			   *this);
@@ -153,14 +184,28 @@ Context::OnSendError(int _error) noexcept
 int
 main(int argc, char **argv)
 try {
-	if (argc != 2) {
-		fprintf(stderr, "Usage: %s PATH\n", argv[0]);
+	Mode mode = Mode::READ;
+	int i = 1;
+
+	while (i < argc && argv[i][0] == '-') {
+		if (StringIsEqual(argv[i], "--")) {
+			++i;
+			break;
+		} else if (StringIsEqual(argv[i], "--splice")) {
+			++i;
+			mode = Mode::SPLICE;
+		} else
+			throw "Unknown option";
+	}
+
+	if (i >= argc) {
+		fprintf(stderr, "Usage: %s [--splice] [--] PATH\n", argv[0]);
 		return EXIT_FAILURE;
 	}
 
-	const char *path = argv[1];
+	const char *path = argv[i];
 
-	Context context;
+	Context context{mode};
 	context.Open(path);
 	context.Run();
 

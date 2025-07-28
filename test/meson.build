@@ -546,6 +546,7 @@ if uring_dep.found()
       test_instance_dep,
       istream_dep,
       event_dep,
+      pipe_dep,
     ],
   )
 endif
