@@ -8,7 +8,6 @@
 #include "strmap.hxx"
 #include "istream/UnusedPtr.hxx"
 #include "istream/FileIstream.hxx"
-#include "istream/FdIstream.hxx"
 #include "istream/UringIstream.hxx"
 #include "pool/pool.hxx"
 #include "lib/fmt/SystemError.hxx"
@@ -34,7 +33,6 @@
 
 class UringStaticFileGet final : Uring::OpenStatHandler, Cancellable {
 	struct pool &pool;
-	EventLoop &event_loop;
 
 	UniqueFileDescriptor base;
 
@@ -48,14 +46,14 @@ class UringStaticFileGet final : Uring::OpenStatHandler, Cancellable {
 	const bool use_xattr;
 
 public:
-	UringStaticFileGet(EventLoop &_event_loop, Uring::Queue &uring,
+	UringStaticFileGet(Uring::Queue &uring,
 			   struct pool &_pool,
 			   UniqueFileDescriptor &&_base,
 			   const char *_path,
 			   const char *_content_type,
 			   bool _use_xattr,
 			   HttpResponseHandler &_handler) noexcept
-		:pool(_pool), event_loop(_event_loop),
+		:pool(_pool),
 		 base(std::move(_base)), // TODO: use io_uring to open it
 		 path(_path),
 		 content_type(_content_type),
@@ -114,13 +112,7 @@ UringStaticFileGet::OnOpenStat(UniqueFileDescriptor fd,
 
 	Destroy();
 
-	if (S_ISCHR(stx.stx_mode)) {
-		_handler.InvokeResponse(HttpStatus::OK, {},
-					NewFdIstream(event_loop, pool, path,
-						     std::move(fd),
-						     FdType::FD_CHARDEV));
-		return;
-	} else if (!S_ISREG(stx.stx_mode)) {
+	if (!S_ISREG(stx.stx_mode)) {
 		_handler.InvokeResponse(pool, HttpStatus::NOT_FOUND,
 					"Not a regular file");
 		return;
@@ -165,7 +157,7 @@ static_file_get(EventLoop &event_loop,
 
 #ifdef HAVE_URING
 	if (uring != nullptr) {
-		auto *o = NewFromPool<UringStaticFileGet>(pool, event_loop,
+		auto *o = NewFromPool<UringStaticFileGet>(pool,
 							  *uring, pool,
 							  std::move(base),
 							  path, content_type,
@@ -193,13 +185,7 @@ static_file_get(EventLoop &event_loop,
 		return;
 	}
 
-	if (S_ISCHR(st.stx_mode)) {
-		handler.InvokeResponse(HttpStatus::OK, {},
-				       NewFdIstream(event_loop, pool, path,
-						    std::move(fd),
-						    FdType::FD_CHARDEV));
-		return;
-	} else if (!S_ISREG(st.stx_mode)) {
+	if (!S_ISREG(st.stx_mode)) {
 		handler.InvokeResponse(pool, HttpStatus::NOT_FOUND,
 				       "Not a regular file");
 		return;

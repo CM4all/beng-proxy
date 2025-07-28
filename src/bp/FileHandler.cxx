@@ -14,7 +14,6 @@
 #include "http/Method.hxx"
 #include "http/IncomingRequest.hxx"
 #include "istream/FileIstream.hxx"
-#include "istream/FdIstream.hxx"
 #include "pool/pool.hxx"
 #include "translation/Vary.hxx"
 #include "lib/fmt/SystemError.hxx"
@@ -466,16 +465,6 @@ Request::HandleFileAddress(const FileAddress &address,
 	}
 
 	/* check file type */
-
-	if (S_ISCHR(st.stx_mode)) {
-		/* allow character devices, but skip range etc. */
-		DispatchResponse(HttpStatus::OK, {},
-				 NewFdIstream(instance.event_loop,
-					      pool, address.path,
-					      fd.Duplicate(),
-					      FdType::FD_CHARDEV));
-		return;
-	}
 
 	if (!S_ISREG(st.stx_mode)) {
 		DispatchError(HttpStatus::NOT_FOUND, "Not a regular file");

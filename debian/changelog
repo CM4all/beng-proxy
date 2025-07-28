@@ -1,5 +1,6 @@
 cm4all-beng-proxy (20.4) unstable; urgency=low
 
+  * bp: remove support for character devices
   * io_uring: ignore EAGAIN on listener sockets
   * always log accept() errors
   * systemd: do not restart on configuration errors
