@@ -15,10 +15,10 @@
 
 struct StdioSink final : IstreamSink {
 	template<typename I>
-	explicit StdioSink(I &&_input)
+	explicit StdioSink(I &&_input) noexcept
 		:IstreamSink(std::forward<I>(_input)) {}
 
-	void LoopRead() {
+	void LoopRead() noexcept {
 		while (input.IsDefined())
 			input.Read();
 	}
