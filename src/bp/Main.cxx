@@ -46,6 +46,7 @@
 #include "system/ProcessName.hxx"
 #include "spawn/CgroupMemoryThrottle.hxx"
 #include "spawn/CgroupMultiWatch.hxx"
+#include "spawn/CgroupPidsThrottle.hxx"
 #include "spawn/Launch.hxx"
 #include "spawn/Client.hxx"
 #include "net/InterfaceNameCache.hxx"
@@ -141,6 +142,7 @@ BpInstance::ShutdownCallback() noexcept
 	if (cgroup_multi_watch)
 		cgroup_multi_watch->BeginShutdown();
 
+	cgroup_pids_throttle.reset();
 	cgroup_memory_throttle.reset();
 #endif
 

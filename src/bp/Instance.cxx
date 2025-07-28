@@ -39,6 +39,7 @@
 #include "session/Save.hxx"
 #include "spawn/CgroupMemoryThrottle.hxx"
 #include "spawn/CgroupMultiWatch.hxx"
+#include "spawn/CgroupPidsThrottle.hxx"
 #include "spawn/Client.hxx"
 #include "spawn/Launch.hxx"
 #include "net/ListenStreamStock.hxx"
@@ -97,6 +98,18 @@ BpInstance::BpInstance(BpConfig &&_config,
 #endif
 	 session_save_timer(event_loop, BIND_THIS_METHOD(SaveSessions))
 {
+#ifdef HAVE_LIBSYSTEMD
+	if (spawn && spawner.cgroup.IsDefined()) {
+		if (config.spawn.systemd_scope_properties.tasks_max > 0) {
+			cgroup_pids_throttle = std::make_unique<CgroupPidsThrottle>(event_loop, spawner.cgroup,
+										    *spawn_service,
+										    BIND_THIS_METHOD(HandleMemoryWarning),
+										    config.spawn.systemd_scope_properties.tasks_max);
+			spawn_service = cgroup_pids_throttle.get();
+		}
+	}
+#endif
+
 	ForkCow(false);
 	ScheduleCompress();
 }

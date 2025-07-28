@@ -56,6 +56,7 @@ class SpawnServerClient;
 struct LaunchSpawnServerResult;
 class CgroupMemoryThrottle;
 class CgroupMultiWatch;
+class CgroupPidsThrottle;
 class TranslationStock;
 class TranslationCache;
 class TranslationService;
@@ -148,9 +149,10 @@ struct BpInstance final : PInstance, BengControl::Handler,
 #ifdef HAVE_LIBSYSTEMD
 	std::unique_ptr<CgroupMultiWatch> cgroup_multi_watch;
 	std::unique_ptr<CgroupMemoryThrottle> cgroup_memory_throttle;
+	std::unique_ptr<CgroupPidsThrottle> cgroup_pids_throttle;
 #endif
 
-	SpawnService *const spawn_service;
+	SpawnService *spawn_service;
 
 	std::unique_ptr<SessionManager> session_manager;
 

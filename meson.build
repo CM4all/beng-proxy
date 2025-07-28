@@ -602,7 +602,10 @@ if uring_dep.found()
 endif
 
 if libcommon_enable_libsystemd
-  sources += 'src/spawn/CgroupMemoryThrottle.cxx'
+  sources += [
+    'src/spawn/CgroupMemoryThrottle.cxx',
+    'src/spawn/CgroupPidsThrottle.cxx',
+  ]
 endif
 
 executable(
