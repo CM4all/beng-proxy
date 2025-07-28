@@ -8,7 +8,6 @@
 #include "New.hxx"
 #include "lib/fmt/RuntimeError.hxx"
 #include "lib/fmt/SystemError.hxx"
-#include "io/Iovec.hxx"
 #include "io/SharedFd.hxx"
 #include "io/FileDescriptor.hxx"
 #include "io/uring/Operation.hxx"
@@ -16,21 +15,16 @@
 #include "memory/fb_pool.hxx"
 #include "memory/SliceFifoBuffer.hxx"
 
-#include <memory>
-
 #include <assert.h>
 #include <limits.h>
 #include <sys/stat.h>
 
 class CanceledUringIstream final : public Uring::Operation {
-	std::unique_ptr<struct iovec> iov;
-
 	SliceFifoBuffer buffer;
 
 public:
-	CanceledUringIstream(std::unique_ptr<struct iovec> &&_iov,
-			     SliceFifoBuffer &&_buffer) noexcept
-		:iov(std::move(_iov)), buffer(std::move(_buffer)) {}
+	explicit CanceledUringIstream(SliceFifoBuffer &&_buffer) noexcept
+		:buffer(std::move(_buffer)) {}
 
 	void OnUringCompletion(int) noexcept override {
 		/* ignore the result and delete this object, which
@@ -41,16 +35,6 @@ public:
 
 class UringIstream final : public Istream, Uring::Operation {
 	Uring::Queue &uring;
-
-	/**
-	 * Passed to the io_uring read operation.
-	 *
-	 * It is allocated on the heap, because the kernel may access
-	 * it if a read is still in flight and this object is
-	 * destroyed; ownership will be passed to
-	 * #CanceledUringIstream.
-	 */
-	std::unique_ptr<struct iovec> iov = std::make_unique<struct iovec>();
 
 	SliceFifoBuffer buffer;
 
@@ -137,8 +121,7 @@ UringIstream::~UringIstream() noexcept
 
 		assert(buffer.IsDefined());
 
-		auto *c = new CanceledUringIstream(std::move(iov),
-						   std::move(buffer));
+		auto *c = new CanceledUringIstream(std::move(buffer));
 		ReplaceUring(*c);
 	}
 }
@@ -215,8 +198,7 @@ UringIstream::StartRead() noexcept
 	if (w.size() > GetMaxRead())
 		w = w.first(GetMaxRead());
 
-	*iov = MakeIovec(w);
-	io_uring_prep_readv(&s, fd.Get(), iov.get(), 1, offset);
+	io_uring_prep_read(&s, fd.Get(), w.data(), w.size(), offset);
 
 	uring.Push(s, *this);
 }
