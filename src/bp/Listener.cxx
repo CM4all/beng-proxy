@@ -142,9 +142,8 @@ BpListener::OnFilteredSocketConnect(PoolPtr pool,
 		unsigned num_dropped = DropSomeConnections();
 
 		if (num_dropped == 0) {
-			LogConcat(1, "connection", "too many connections (",
-				  unsigned(GetConnectionCount()),
-				  ", dropping");
+			LogFmt(1, "connection", "too many connections ({}), dropping",
+			       GetConnectionCount());
 			return;
 		}
 	}
