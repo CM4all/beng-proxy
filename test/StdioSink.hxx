@@ -13,7 +13,8 @@
 #include <errno.h>
 #include <string.h>
 
-struct StdioSink final : IstreamSink {
+class StdioSink final : public IstreamSink {
+public:
 	template<typename I>
 	explicit StdioSink(I &&_input) noexcept
 		:IstreamSink(std::forward<I>(_input)) {}
