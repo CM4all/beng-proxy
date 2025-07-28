@@ -7,6 +7,7 @@
 #include "istream/sink_fd.hxx"
 #include "istream/UnusedPtr.hxx"
 #include "pool/pool.hxx"
+#include "event/ShutdownListener.hxx"
 #include "system/Error.hxx"
 #include "io/Open.hxx"
 #include "io/SharedFd.hxx"
@@ -29,6 +30,8 @@ struct UringInstance : TestInstance {
 };
 
 class Context final : UringInstance, Uring::OpenStatHandler, SinkFdHandler {
+	ShutdownListener shutdown_listener{event_loop, BIND_THIS_METHOD(OnShutdown)};
+
 	Uring::OpenStat open_stat;
 
 	const char *_path;
@@ -38,7 +41,10 @@ class Context final : UringInstance, Uring::OpenStatHandler, SinkFdHandler {
 
 public:
 	Context()
-		:open_stat(*event_loop.GetUring(), *this) {}
+		:open_stat(*event_loop.GetUring(), *this)
+	{
+		shutdown_listener.Enable();
+	}
 
 	void Open(const char *path) noexcept;
 
@@ -51,6 +57,13 @@ public:
 
 private:
 	void BeginShutdown() noexcept {
+		shutdown_listener.Disable();
+		event_loop.SetVolatile();
+	}
+
+	void OnShutdown() noexcept {
+		if (sink != nullptr)
+			sink_fd_close(std::exchange(sink, nullptr));
 		event_loop.SetVolatile();
 	}
 
