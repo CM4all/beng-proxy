@@ -26,6 +26,8 @@
 #include "istream/GzipIstream.hxx"
 #include "istream/UnusedHoldPtr.hxx"
 #include "istream/CatchIstream.hxx"
+#include "event/CoarseTimerEvent.hxx"
+#include "net/TimeoutError.hxx"
 #include "memory/istream_gb.hxx"
 #include "memory/GrowingBuffer.hxx"
 #include "stopwatch.hxx"
@@ -41,14 +43,18 @@ class LbPrometheusExporter::AppendRequest final
 
 	HttpAddress address{false, "dummy:80", "/"};
 
+	CoarseTimerEvent timeout_event;
+
 	CancellablePointer cancel_ptr;
 
 public:
 	AppendRequest(struct pool &_pool,
+		      EventLoop &event_loop,
 		      SocketAddress _address,
 		      DelayedIstreamControl &_control) noexcept
 		:PoolLeakDetector(_pool),
-		 control(_control), socket_address(_address)
+		 control(_control), socket_address(_address),
+		 timeout_event(event_loop, BIND_THIS_METHOD(OnTimeout))
 	{
 		control.cancel_ptr = *this;
 
@@ -80,6 +86,13 @@ public:
 	}
 
 private:
+	void OnTimeout() noexcept {
+		/* this request has been taking too long - cancel it
+		   and report timeout */
+		cancel_ptr.Cancel();
+		DestroyError(std::make_exception_ptr(TimeoutError{}));
+	}
+
 	/* virtual methods from class Cancellable */
 	void Cancel() noexcept override {
 		cancel_ptr.Cancel();
@@ -91,6 +104,8 @@ inline void
 LbPrometheusExporter::AppendRequest::Start(struct pool &pool,
 					   LbInstance &_instance) noexcept
 {
+	timeout_event.Schedule(std::chrono::seconds{10});
+
 	http_request(pool, _instance.event_loop,
 		     *_instance.fs_balancer, {}, {},
 		     nullptr,
@@ -162,7 +177,7 @@ LbPrometheusExporter::HandleHttpRequest(IncomingHttpRequest &request,
 		auto delayed = istream_delayed_new(pool, instance->event_loop);
 		UnusedHoldIstreamPtr hold(pool, std::move(delayed.first));
 
-		auto *ar = NewFromPool<AppendRequest>(pool, pool, i, delayed.second);
+		auto *ar = NewFromPool<AppendRequest>(pool, pool, instance->event_loop, i, delayed.second);
 		ar->Start(pool, *instance);
 
 		AppendConcatIstream(body,
