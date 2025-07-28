@@ -134,6 +134,7 @@ Context::CreateSinkFd(const char *path, UniqueFileDescriptor &&fd,
 			   FileDescriptor(STDOUT_FILENO),
 			   guess_fd_type(STDOUT_FILENO),
 			   *this);
+	sink_fd_read(sink);
 }
 
 void
