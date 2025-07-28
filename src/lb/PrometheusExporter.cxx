@@ -9,6 +9,7 @@
 #include "Config.hxx"
 #include "prometheus/Stats.hxx"
 #include "prometheus/HttpStats.hxx"
+#include "pool/LeakDetector.hxx"
 #include "thread/Pool.hxx"
 #include "net/control/Protocol.hxx"
 #include "http/Address.hxx"
@@ -32,7 +33,7 @@
 using std::string_view_literals::operator""sv;
 
 class LbPrometheusExporter::AppendRequest final
-	: public HttpResponseHandler, Cancellable
+	: public HttpResponseHandler, Cancellable, PoolLeakDetector
 {
 	DelayedIstreamControl &control;
 
@@ -43,9 +44,11 @@ class LbPrometheusExporter::AppendRequest final
 	CancellablePointer cancel_ptr;
 
 public:
-	AppendRequest(SocketAddress _address,
+	AppendRequest(struct pool &_pool,
+		      SocketAddress _address,
 		      DelayedIstreamControl &_control) noexcept
-		:control(_control), socket_address(_address)
+		:PoolLeakDetector(_pool),
+		 control(_control), socket_address(_address)
 	{
 		control.cancel_ptr = *this;
 
@@ -157,7 +160,7 @@ LbPrometheusExporter::HandleHttpRequest(IncomingHttpRequest &request,
 		auto delayed = istream_delayed_new(pool, instance->event_loop);
 		UnusedHoldIstreamPtr hold(pool, std::move(delayed.first));
 
-		auto *ar = NewFromPool<AppendRequest>(pool, i, delayed.second);
+		auto *ar = NewFromPool<AppendRequest>(pool, pool, i, delayed.second);
 		ar->Start(pool, *instance);
 
 		AppendConcatIstream(body,
