@@ -89,10 +89,9 @@ static_response_headers(struct pool &pool,
 			const char *content_type,
 			bool use_xattr) noexcept
 {
-	StringMap headers;
+	assert(S_ISREG(st.stx_mode));
 
-	if (S_ISCHR(st.stx_mode))
-		return headers;
+	StringMap headers;
 
 	char buffer[256];
 
