@@ -158,7 +158,11 @@ BpListener::OnFilteredSocketConnect(PoolPtr pool,
 void
 BpListener::OnFilteredSocketError(std::exception_ptr ep) noexcept
 {
-	LogConcat(1, "listener", ep);
+	LogConcat(0, "listener", "Fatal error while accepting connection: ", ep);
+
+	/* accept() errors are fatal because we're effectively defunct
+	   now */
+	std::terminate();
 }
 
 void

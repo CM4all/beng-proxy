@@ -144,7 +144,11 @@ try {
 void
 LbListener::OnFilteredSocketError(std::exception_ptr ep) noexcept
 {
-	logger(1, "Failed to accept: ", ep);
+	logger(0, "Fatal error while accepting connection: ", ep);
+
+	/* accept() errors are fatal because we're effectively defunct
+	   now */
+	std::terminate();
 }
 
 /*

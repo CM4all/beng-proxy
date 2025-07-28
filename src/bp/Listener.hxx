@@ -139,6 +139,7 @@ private:
 				     UniquePoolPtr<FilteredSocket> socket,
 				     SocketAddress address,
 				     const SslFilter *ssl_filter) noexcept override;
-	void OnFilteredSocketError(std::exception_ptr e) noexcept override;
 
+	[[noreturn]]
+	void OnFilteredSocketError(std::exception_ptr e) noexcept override;
 };
