@@ -67,7 +67,7 @@ Context::Open(const char *path) noexcept
 	open_stat.StartOpenStatReadOnly(path);
 }
 
-void
+inline void
 Context::CreateSinkFd(const char *path, UniqueFileDescriptor &&fd,
 		      off_t size) noexcept
 {
