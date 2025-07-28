@@ -204,6 +204,7 @@ executable(
 
 executable('run_subst',
   'run_subst.cxx',
+  'StdioSink.cxx',
   include_directories: inc,
   dependencies: [
     test_instance_dep,
@@ -228,6 +229,7 @@ executable('run_html_escape',
 
 executable('run_processor',
   'run_processor.cxx',
+  'StdioSink.cxx',
   '../src/widget/FromSession.cxx',
   '../src/widget/FromRequest.cxx',
   '../src/escape/Istream.cxx',
