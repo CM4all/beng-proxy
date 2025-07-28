@@ -57,7 +57,7 @@ enum class IstreamDirectResult {
 	 * The handler is using this file descriptor in an
 	 * asynchronous operation.  When finished,
 	 * Istream::ConsumeDirect() will be called.  Since the handler
-	 * has a pending opertion, the caller does not need to
+	 * has a pending operation, the caller does not need to
 	 * schedule reading.
 	 */
 	ASYNC,
