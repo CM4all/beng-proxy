@@ -28,7 +28,7 @@ struct UringInstance : TestInstance {
 	}
 };
 
-struct Context final : UringInstance, Uring::OpenStatHandler, SinkFdHandler {
+class Context final : UringInstance, Uring::OpenStatHandler, SinkFdHandler {
 	Uring::OpenStat open_stat;
 
 	const char *_path;
@@ -36,14 +36,23 @@ struct Context final : UringInstance, Uring::OpenStatHandler, SinkFdHandler {
 	SinkFd *sink = nullptr;
 	std::exception_ptr error;
 
+public:
 	Context()
 		:open_stat(*event_loop.GetUring(), *this) {}
 
+	void Open(const char *path) noexcept;
+
+	void Run() {
+		event_loop.Run();
+
+		if (error)
+			std::rethrow_exception(error);
+	}
+
+private:
 	void BeginShutdown() noexcept {
 		event_loop.SetVolatile();
 	}
-
-	void Open(const char *path) noexcept;
 
 	void CreateSinkFd(const char *path,
 			  UniqueFileDescriptor &&fd,
@@ -140,11 +149,7 @@ try {
 
 	Context context;
 	context.Open(path);
-
-	context.event_loop.Run();
-
-	if (context.error)
-		std::rethrow_exception(context.error);
+	context.Run();
 
 	return EXIT_SUCCESS;
 } catch (...) {
