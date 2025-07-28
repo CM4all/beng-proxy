@@ -9,10 +9,10 @@
 #include "lib/fmt/RuntimeError.hxx"
 #include "lib/fmt/SystemError.hxx"
 #include "event/DeferEvent.hxx"
-#include "io/SharedFd.hxx"
 #include "io/FileDescriptor.hxx"
 #include "io/uring/Operation.hxx"
 #include "io/uring/Queue.hxx"
+#include "util/SharedLease.hxx"
 
 #include <cassert>
 #include <tuple>

@@ -8,12 +8,12 @@
 #include "New.hxx"
 #include "lib/fmt/RuntimeError.hxx"
 #include "lib/fmt/SystemError.hxx"
-#include "io/SharedFd.hxx"
 #include "io/FileDescriptor.hxx"
 #include "io/uring/Operation.hxx"
 #include "io/uring/Queue.hxx"
 #include "memory/fb_pool.hxx"
 #include "memory/SliceFifoBuffer.hxx"
+#include "util/SharedLease.hxx"
 
 #include <assert.h>
 #include <limits.h>
