@@ -117,12 +117,12 @@ SinkFd::OnData(std::span<const std::byte> src) noexcept
 	if (nbytes >= 0) {
 		ScheduleWrite();
 		return nbytes;
-	} else if (errno == EAGAIN) {
+	} else if (const int e = errno; e == EAGAIN) {
 		ScheduleWrite();
 		return 0;
 	} else {
 		event.Cancel();
-		if (handler.OnSendError(errno)) {
+		if (handler.OnSendError(e)) {
 			Destroy();
 		}
 		return 0;
