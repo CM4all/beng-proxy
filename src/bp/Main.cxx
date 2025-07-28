@@ -81,6 +81,7 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <sysexits.h> // for EX_*
 
 #ifndef NDEBUG
 bool debug_mode = false;
@@ -316,10 +317,15 @@ try {
 	if (geteuid() == 0)
 		throw "Refusing to run as root";
 
-	if (cmdline.config_file != nullptr)
-		LoadConfigFile(_config, cmdline.config_file);
+	try {
+		if (cmdline.config_file != nullptr)
+			LoadConfigFile(_config, cmdline.config_file);
 
-	_config.Finish(GetDefaultPort());
+		_config.Finish(GetDefaultPort());
+	} catch (...) {
+		PrintException(std::current_exception());
+		return EX_CONFIG;
+	}
 
 	/* initialize */
 

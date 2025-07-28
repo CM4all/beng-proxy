@@ -12,6 +12,7 @@
 #include <stdarg.h>
 #include <getopt.h>
 #include <string.h>
+#include <sysexits.h> // for EX_*
 #include <unistd.h>
 
 static void
@@ -72,7 +73,7 @@ static void arg_error(const char *argv0, const char *fmt, ...) {
 
 	fprintf(stderr, "Try '%s --help' for more information.\n",
 		argv0);
-	exit(1);
+	exit(EX_USAGE);
 }
 
 static void
@@ -169,7 +170,7 @@ ParseCommandLine(LbCmdLine &cmdline, LbConfig &config,
 			arg_error(argv[0], NULL);
 
 		default:
-			exit(1);
+			exit(EX_USAGE);
 		}
 	}
 

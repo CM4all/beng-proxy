@@ -47,6 +47,7 @@
 #endif
 
 #include <stdlib.h>
+#include <sysexits.h> // for EX_*
 
 #ifdef __linux
 #include <sys/prctl.h>
@@ -140,7 +141,12 @@ try {
 	if (geteuid() == 0)
 		throw "Refusing to run as root";
 
-	LoadConfigFile(config, cmdline.config_path);
+	try {
+		LoadConfigFile(config, cmdline.config_path);
+	} catch (...) {
+		PrintException(std::current_exception());
+		return EX_CONFIG;
+	}
 
 	const ScopeSslGlobalInit ssl_init;
 

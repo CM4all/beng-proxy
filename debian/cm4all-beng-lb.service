@@ -8,6 +8,7 @@ Type=notify
 ExecStart=/usr/lib/cm4all/beng-lb/systemd/run.sh
 ExecReload=/bin/kill -HUP $MAINPID
 Restart=on-failure
+RestartPreventExitStatus=USAGE CONFIG
 
 SyslogIdentifier=cm4all-beng-lb
 

@@ -16,6 +16,7 @@
 #include <stdarg.h>
 #include <getopt.h>
 #include <string.h>
+#include <sysexits.h> // for EX_*
 
 static void
 PrintUsage()
@@ -85,7 +86,7 @@ static void arg_error(const char *argv0, const char *fmt, ...) {
 
 	fprintf(stderr, "Try '%s --help' for more information.\n",
 		argv0);
-	exit(1);
+	exit(EX_USAGE);
 }
 
 static void
@@ -211,7 +212,7 @@ ParseCommandLine(BpCmdLine &cmdline, BpConfig &config, int argc, char **argv)
 			arg_error(argv[0], nullptr);
 
 		default:
-			exit(1);
+			exit(EX_USAGE);
 		}
 	}
 
