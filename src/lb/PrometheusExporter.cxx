@@ -111,7 +111,9 @@ try {
 	    GetMimeTypeBase(content_type) != "text/plain")
 		throw std::runtime_error("Not text/plain");
 
-	control.Set(std::move(body));
+	auto &_control = control;
+	Destroy();
+	_control.Set(std::move(body));
 } catch (...) {
 	DestroyError(std::current_exception());
 }
