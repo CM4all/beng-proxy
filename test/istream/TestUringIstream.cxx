@@ -3,14 +3,12 @@
 // author: Max Kellermann <max.kellermann@ionos.com>
 
 #include "../TestInstance.hxx"
+#include "../OpenFileLease.hxx"
 #include "CountIstreamSink.hxx"
 #include "istream/UringIstream.hxx"
 #include "istream/UnusedPtr.hxx"
 #include "pool/pool.hxx"
 #include "io/uring/Queue.hxx"
-#include "io/Open.hxx"
-#include "io/SharedFd.hxx"
-#include "io/UniqueFileDescriptor.hxx"
 #include "system/Error.hxx"
 
 #include <gtest/gtest.h>
@@ -18,16 +16,14 @@
 static std::pair<UnusedIstreamPtr, size_t>
 MakeUringIstream(struct pool &pool, Uring::Queue &uring, const char *path)
 {
-	auto fd = OpenReadOnly(path);
-	struct statx stx;
-	EXPECT_EQ(statx(fd.Get(), "", AT_EMPTY_PATH, STATX_SIZE, &stx), 0);
+	auto [fd, lease, size] = OpenFileLease(pool, path);
 
-	auto *shared_fd = NewFromPool<SharedFd>(pool, std::move(fd));
-
-	return {NewUringIstream(uring, pool,
-				path, shared_fd->Get(), *shared_fd,
-				0, stx.stx_size),
-		stx.stx_size};
+	return {
+		NewUringIstream(uring, pool,
+				path, fd, std::move(lease),
+				0, size),
+		size,
+	};
 }
 
 static auto

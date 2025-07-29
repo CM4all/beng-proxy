@@ -101,6 +101,7 @@ if uring_dep.found()
       'TestUringIstream',
       'TestUringIstream.cxx',
       'CountIstreamSink.cxx',
+      '../OpenFileLease.cxx',
       include_directories: inc,
       dependencies: [
         gtest,
