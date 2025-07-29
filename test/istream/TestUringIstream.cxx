@@ -49,6 +49,7 @@ try {
 		while (!sink.IsDone())
 			uring.WaitDispatchOneCompletion();
 
+		EXPECT_TRUE(sink.IsDone());
 		EXPECT_EQ(sink.GetCount(), size);
 	}
 
