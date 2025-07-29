@@ -50,6 +50,7 @@ try {
 			uring.WaitDispatchOneCompletion();
 
 		EXPECT_TRUE(sink.IsDone());
+		sink.RethrowError();
 		EXPECT_EQ(sink.GetCount(), size);
 	}
 

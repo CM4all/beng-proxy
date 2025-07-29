@@ -22,6 +22,11 @@ public:
 		return !HasInput();
 	}
 
+	void RethrowError() const {
+		if (error)
+			std::rethrow_exception(error);
+	}
+
 	void Read() noexcept {
 		input.Read();
 	}
