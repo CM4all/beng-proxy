@@ -19,24 +19,27 @@
 #include <limits.h>
 #include <sys/stat.h>
 
-class CanceledUringIstream final : public Uring::Operation {
-	SliceFifoBuffer buffer;
+class UringIstream final : public Istream {
+	struct ReadOperation final : Uring::Operation {
+		UringIstream &parent;
+		Uring::Queue &queue;
 
-public:
-	explicit CanceledUringIstream(SliceFifoBuffer &&_buffer) noexcept
-		:buffer(std::move(_buffer)) {}
+		SliceFifoBuffer buffer;
 
-	void OnUringCompletion(int) noexcept override {
-		/* ignore the result and delete this object, which
-		   will free the buffer */
-		delete this;
-	}
-};
+		bool released = false;
 
-class UringIstream final : public Istream, Uring::Operation {
-	Uring::Queue &uring;
+		ReadOperation(UringIstream &_parent, Uring::Queue &_queue) noexcept
+			:parent(_parent), queue(_queue) {}
 
-	SliceFifoBuffer buffer;
+		void Release() noexcept;
+
+		void Start(FileDescriptor fd, std::size_t max_read, off_t offset);
+
+		/* virtual methods from class Uring::Operation */
+		void OnUringCompletion(int res) noexcept override;
+	};
+
+	ReadOperation *read_operation;
 
 	/**
 	 * The path name.  Only used for error messages.
@@ -65,7 +68,8 @@ public:
 	UringIstream(struct pool &p, Uring::Queue &_uring,
 		     const char *_path, FileDescriptor _fd, SharedLease &&_lease,
 		     off_t _start_offset, off_t _end_offset) noexcept
-		:Istream(p), uring(_uring),
+		:Istream(p),
+		 read_operation(new ReadOperation(*this, _uring)),
 		 path(_path), fd_lease(std::move(_lease)),
 		 offset(_start_offset), end_offset(_end_offset),
 		 fd(_fd)
@@ -89,8 +93,9 @@ private:
 
 	void StartRead() noexcept;
 
-	/* virtual methods from class Uring::Operation */
-	void OnUringCompletion(int res) noexcept override;
+	void OnReadError(int error) noexcept;
+	void OnReadPrematureEnd() noexcept;
+	void OnReadSuccess(std::size_t nbytes) noexcept;
 
 	/* virtual methods from class Istream */
 
@@ -111,26 +116,32 @@ private:
 	}
 };
 
-UringIstream::~UringIstream() noexcept
+inline void
+UringIstream::ReadOperation::Release() noexcept
 {
+	assert(!released);
+
 	if (IsUringPending()) {
 		/* the operation is still pending, and we must not
 		   release the buffer yet, or the kernel will later
 		   write into this buffer which then belongs somebody
 		   else */
 
-		assert(buffer.IsDefined());
+		released = true;
+	} else
+		delete this;
+}
 
-		auto *c = new CanceledUringIstream(std::move(buffer));
-		ReplaceUring(*c);
-	}
+UringIstream::~UringIstream() noexcept
+{
+	read_operation->Release();
 }
 
 inline void
 UringIstream::TryDirect() noexcept
 try {
-	assert(buffer.empty());
-	assert(!IsUringPending());
+	assert(read_operation->buffer.empty());
+	assert(!read_operation->IsUringPending());
 
 	if (offset >= end_offset) {
 		DestroyEof();
@@ -174,24 +185,17 @@ try {
 	DestroyError(std::current_exception());
 }
 
-void
-UringIstream::StartRead() noexcept
+inline void
+UringIstream::ReadOperation::Start(FileDescriptor fd,
+				   std::size_t max_read, off_t offset)
 {
 	assert(!IsUringPending());
 	assert(!buffer.IsDefinedAndFull());
 
-	size_t max_read = GetMaxRead();
-	if (max_read == 0) {
-		if (buffer.empty())
-			DestroyEof();
-
-		return;
-	}
-
 	if (buffer.IsNull())
 		buffer.Allocate(fb_pool_get());
 
-	auto &s = uring.RequireSubmitEntry();
+	auto &s = queue.RequireSubmitEntry();
 
 	auto w = buffer.Write();
 	assert(!w.empty());
@@ -200,22 +204,40 @@ UringIstream::StartRead() noexcept
 
 	io_uring_prep_read(&s, fd.Get(), w.data(), w.size(), offset);
 
-	uring.Push(s, *this);
+	queue.Push(s, *this);
 }
 
 void
-UringIstream::OnUringCompletion(int res) noexcept
-try {
-	if (res < 0) {
-		fd_lease.SetBroken();
-		throw FmtErrno(-res, "Failed to read from '{}'", path);
+UringIstream::StartRead() noexcept
+{
+	size_t max_read = GetMaxRead();
+	if (max_read == 0) {
+		if (read_operation->buffer.empty())
+			DestroyEof();
+
+		return;
 	}
 
-	if (res == 0)
-		throw FmtRuntimeError("Premature end of file in '{}'", path);
+	read_operation->Start(fd, max_read, offset);
+}
 
-	buffer.Append(res);
-	offset += res;
+inline void
+UringIstream::OnReadError(int error) noexcept
+{
+	fd_lease.SetBroken();
+	DestroyError(std::make_exception_ptr(FmtErrno(error, "Failed to read from '{}'", path)));
+}
+
+inline void
+UringIstream::OnReadPrematureEnd() noexcept
+{
+	DestroyError(std::make_exception_ptr(FmtRuntimeError("Premature end of file in '{}'", path)));
+}
+
+inline void
+UringIstream::OnReadSuccess(std::size_t nbytes) noexcept
+{
+	offset += nbytes;
 
 	switch (InvokeReady()) {
 	case IstreamReadyResult::OK:
@@ -227,16 +249,36 @@ try {
 	}
 
 	// TODO free the buffer?
-	if (SendFromBuffer(buffer) > 0 && !IsUringPending())
+	if (SendFromBuffer(read_operation->buffer) > 0 && !read_operation->IsUringPending())
 		StartRead();
-} catch (...) {
-	DestroyError(std::current_exception());
+}
+
+void
+UringIstream::ReadOperation::OnUringCompletion(int res) noexcept
+{
+	if (released) {
+		delete this;
+		return;
+	}
+
+	if (res < 0) {
+		parent.OnReadError(-res);
+		return;
+	}
+
+	if (res == 0) {
+		parent.OnReadPrematureEnd();
+		return;
+	}
+
+	buffer.Append(res);
+	parent.OnReadSuccess(res);
 }
 
 off_t
 UringIstream::_GetAvailable(bool) noexcept
 {
-	return GetRemaining() + buffer.GetAvailable();
+	return GetRemaining() + read_operation->buffer.GetAvailable();
 }
 
 off_t
@@ -244,6 +286,8 @@ UringIstream::_Skip(off_t length) noexcept
 {
 	if (length == 0)
 		return 0;
+
+	auto &buffer = read_operation->buffer;
 
 	const size_t buffer_available = buffer.GetAvailable();
 	if (length <= off_t(buffer_available)) {
@@ -269,6 +313,8 @@ UringIstream::_ConsumeDirect(std::size_t nbytes) noexcept
 void
 UringIstream::_FillBucketList(IstreamBucketList &list) noexcept
 {
+	const auto &buffer = read_operation->buffer;
+
 	if (auto r = buffer.Read(); !r.empty())
 		list.Push(r);
 
@@ -279,7 +325,7 @@ UringIstream::_FillBucketList(IstreamBucketList &list) noexcept
 			/* the caller prefers sendfile(), so let him
 			   invoke Istream::Read() */
 			list.EnableFallback();
-		else if (buffer.empty() && !IsUringPending())
+		else if (buffer.empty() && !read_operation->IsUringPending())
 			/* we have no data and there is no pending
 			   operation; make sure we have some data next
 			   time */
@@ -290,6 +336,8 @@ UringIstream::_FillBucketList(IstreamBucketList &list) noexcept
 Istream::ConsumeBucketResult
 UringIstream::_ConsumeBucketList(std::size_t nbytes) noexcept
 {
+	auto &buffer = read_operation->buffer;
+
 	bool is_eof = false;
 	if (const auto available = buffer.GetAvailable(); nbytes >= available) {
 		nbytes = available;
@@ -298,7 +346,7 @@ UringIstream::_ConsumeBucketList(std::size_t nbytes) noexcept
 
 	buffer.Consume(nbytes);
 
-	if (!is_eof && nbytes > 0 && !direct && !IsUringPending())
+	if (!is_eof && nbytes > 0 && !direct && !read_operation->IsUringPending())
 		/* read more data from the file */
 		StartRead();
 
@@ -309,7 +357,7 @@ void
 UringIstream::_Read() noexcept
 {
 	// TODO free the buffer?
-	if (ConsumeFromBuffer(buffer) == 0 && !IsUringPending()) {
+	if (ConsumeFromBuffer(read_operation->buffer) == 0 && !read_operation->IsUringPending()) {
 		if (direct)
 			TryDirect();
 		else
