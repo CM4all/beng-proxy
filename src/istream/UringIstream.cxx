@@ -195,8 +195,8 @@ UringIstream::StartRead() noexcept
 
 	auto w = buffer.Write();
 	assert(!w.empty());
-	if (w.size() > GetMaxRead())
-		w = w.first(GetMaxRead());
+	if (w.size() > max_read)
+		w = w.first(max_read);
 
 	io_uring_prep_read(&s, fd.Get(), w.data(), w.size(), offset);
 
