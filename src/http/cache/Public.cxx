@@ -758,7 +758,7 @@ HttpCacheRequest::HttpCacheRequest(PoolPtr &&_pool,
 				   HttpCacheDocument *_document,
 				   SharedLease &&_lease) noexcept
 	:PoolHolder(std::move(_pool)), caller_pool(_caller_pool),
-	 cache_tag(_cache_tag),
+	 cache_tag(AllocatorPtr{pool}.CheckDup(_cache_tag)),
 	 cache(_cache),
 	 key(AllocatorPtr{pool}.Dup(_key)),
 	 request_headers(pool, _headers),
