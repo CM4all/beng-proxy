@@ -109,7 +109,7 @@ try {
 		sink.RethrowError();
 	}
 
-	uring.DispatchCompletions();
+	instance.event_loop.Run();
 } catch (const std::system_error &e) {
 	if (IsErrno(e, ENOSYS))
 		GTEST_SKIP();
@@ -143,7 +143,7 @@ try {
 		sink.RethrowError();
 	}
 
-	uring.DispatchCompletions();
+	instance.event_loop.Run();
 } catch (const std::system_error &e) {
 	if (IsErrno(e, ENOSYS))
 		GTEST_SKIP();
@@ -206,7 +206,7 @@ try {
 		EXPECT_EQ(sink.GetCount(), size);
 	}
 
-	uring.DispatchCompletions();
+	instance.event_loop.Run();
 } catch (const std::system_error &e) {
 	if (IsErrno(e, ENOSYS))
 		GTEST_SKIP();
