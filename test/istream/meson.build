@@ -100,6 +100,7 @@ if uring_dep.found()
     executable(
       'TestUringIstream',
       'TestUringIstream.cxx',
+      'TestUringSpliceIstream.cxx',
       'CountIstreamSink.cxx',
       '../OpenFileLease.cxx',
       include_directories: inc,
@@ -108,6 +109,7 @@ if uring_dep.found()
         test_instance_dep,
         uring_dep,
         istream_dep,
+        pipe_dep,
       ],
     ),
   )

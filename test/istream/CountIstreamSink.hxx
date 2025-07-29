@@ -18,6 +18,10 @@ public:
 	explicit CountIstreamSink(UnusedIstreamPtr &&_input) noexcept
 		:IstreamSink(std::move(_input)) {}
 
+	void EnableDirect() noexcept {
+		input.SetDirect(FD_ANY);
+	}
+
 	bool IsDone() const noexcept {
 		return !HasInput();
 	}
@@ -38,6 +42,10 @@ public:
 protected:
 	/* virtual methods from class IstreamHandler */
 	std::size_t OnData(std::span<const std::byte> src) noexcept override;
+	IstreamDirectResult OnDirect(FdType type, FileDescriptor fd,
+				     off_t offset,
+				     std::size_t max_length,
+				     bool then_eof) noexcept override;
 	void OnEof() noexcept override;
 	void OnError(std::exception_ptr _error) noexcept override;
 };
