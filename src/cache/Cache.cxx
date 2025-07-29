@@ -120,9 +120,7 @@ Cache::GetMatch(StringWithHash key,
 
 	auto i = items.expire_find_if(key, [now](const auto &item){
 		return !item.Validate(now);
-	}, [this](auto *item){
-		RemoveItem(*item);
-	}, [match, ctx](const auto &item){
+	}, ItemRemover{*this}, [match, ctx](const auto &item){
 		return match(&item, ctx);
 	});
 

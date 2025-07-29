@@ -1,6 +1,7 @@
 cm4all-beng-proxy (20.4) unstable; urgency=low
 
   * bp: remove support for character devices
+  * http_cache: fix crash during removal of expired items
   * spawn: watch "pids.events"
   * lb/prometheus: subrequests time out after 10 seconds
   * io_uring: ignore EAGAIN on listener sockets
