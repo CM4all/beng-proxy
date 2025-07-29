@@ -142,3 +142,27 @@ TEST(TranslationCache, Basic)
 	ASSERT_EQ(i->match, 2);
 	ASSERT_EQ(i->value, 4);
 }
+
+TEST(TranslationCache, GetMatchExpired)
+{
+	MyCacheItem *i;
+
+	PInstance instance;
+
+	Cache cache(instance.event_loop, 4);
+
+	const StringWithHash foo_key{"foo"};
+
+	/* add expired item */
+
+	i = my_cache_item_new(instance.root_pool, foo_key, 1, 0);
+	i->SetExpires({});
+	cache.Put(*i);
+
+	/* look it up - it will be deleted because it is expired; only
+	   GetMatch() does that because it walks the list of items
+	   with this key */
+
+	i = (MyCacheItem *)cache.GetMatch(foo_key, my_match, match_to_ptr(1));
+	ASSERT_EQ(i, nullptr);
+}
