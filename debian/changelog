@@ -4,6 +4,7 @@ cm4all-beng-proxy (20.4) unstable; urgency=low
   * spawn: watch "pids.events"
   * lb/prometheus: subrequests time out after 10 seconds
   * io_uring: ignore EAGAIN on listener sockets
+  * io_uring: fix assertion failure
   * accept() errors are fatal
   * systemd: do not restart on configuration errors
 

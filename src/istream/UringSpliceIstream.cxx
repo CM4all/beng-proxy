@@ -25,14 +25,21 @@ class UringSpliceIstream final : public Istream {
 		UringSpliceIstream &parent;
 		Uring::Queue &queue;
 
+		PipeLease pipe;
+
 		bool released = false;
 
-		SpliceOperation(UringSpliceIstream &_parent, Uring::Queue &_queue) noexcept
-			:parent(_parent), queue(_queue) {}
+		SpliceOperation(UringSpliceIstream &_parent, Uring::Queue &_queue,
+				PipeStock *pipe_stock) noexcept
+			:parent(_parent), queue(_queue), pipe(pipe_stock) {}
+
+		~SpliceOperation() noexcept {
+			pipe.Release(PutAction::DESTROY);
+		}
 
 		void Release() noexcept;
 
-		void Start(FileDescriptor file_fd, FileDescriptor pipe_fd,
+		void Start(FileDescriptor file_fd,
 			   std::size_t max_splice, off_t file_offset);
 
 		/* virtual methods from class Uring::Operation */
@@ -54,8 +61,6 @@ class UringSpliceIstream final : public Istream {
 	const char *const path;
 
 	const SharedLease fd_lease;
-
-	PipeLease pipe;
 
 	/**
 	 * The number of bytes currently in the pipe.  It may be
@@ -98,10 +103,9 @@ public:
 			   const char *_path, FileDescriptor _fd, SharedLease &&_lease,
 			   off_t _start_offset, off_t _end_offset)
 		:Istream(p),
-		 splice_operation(new SpliceOperation(*this, _uring)),
+		 splice_operation(new SpliceOperation(*this, _uring, _pipe_stock)),
 		 defer_start(event_loop, BIND_THIS_METHOD(OnDeferredStart)),
 		 path(_path), fd_lease(std::move(_lease)),
-		 pipe(_pipe_stock),
 		 offset(_start_offset), end_offset(_end_offset),
 		 fd(_fd)
 	{
@@ -204,8 +208,6 @@ UringSpliceIstream::SpliceOperation::Release() noexcept
 UringSpliceIstream::~UringSpliceIstream() noexcept
 {
 	splice_operation->Release();
-
-	pipe.Release(PutAction::DESTROY);
 }
 
 inline bool
@@ -222,6 +224,7 @@ try {
 	if (in_pipe <= 0)
 		return true;
 
+	auto &pipe = splice_operation->pipe;
 	assert(pipe.IsDefined());
 
 	const auto [max_size, then_eof] = CalcMaxDirect(GetRemainingWithPipe());
@@ -266,12 +269,15 @@ try {
 }
 
 inline void
-UringSpliceIstream::SpliceOperation::Start(FileDescriptor file_fd, FileDescriptor pipe_fd,
+UringSpliceIstream::SpliceOperation::Start(FileDescriptor file_fd,
 					   std::size_t max_splice, off_t file_offset)
 {
+	if (!pipe.IsDefined())
+		pipe.Create();
+
 	auto &s = queue.RequireSubmitEntry();
 	io_uring_prep_splice(&s, file_fd.Get(), file_offset,
-			     pipe_fd.Get(), -1,
+			     pipe.GetWriteFd().Get(), -1,
 			     max_splice, SPLICE_F_MOVE);
 	queue.Push(s, *this);
 }
@@ -294,16 +300,12 @@ UringSpliceIstream::StartRead() noexcept
 		return true;
 	}
 
-	if (!pipe.IsDefined()) {
-		try {
-			pipe.Create();
-		} catch (...) {
-			DestroyError(std::current_exception());
-			return false;
-		}
+	try {
+		splice_operation->Start(fd, max_read, offset);
+	} catch (...) {
+		DestroyError(std::current_exception());
+		return false;
 	}
-
-	splice_operation->Start(fd, pipe.GetWriteFd(), max_read, offset);
 
 	return true;
 }
@@ -407,7 +409,7 @@ UringSpliceIstream::_ConsumeDirect(std::size_t nbytes) noexcept
 	} else {
 		if (in_pipe == 0) {
 			assert(!splice_operation->IsUringPending());
-			pipe.Release(PutAction::REUSE);
+			splice_operation->pipe.Release(PutAction::REUSE);
 		}
 	}
 }
