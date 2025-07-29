@@ -215,8 +215,12 @@ try {
 		throw FmtRuntimeError("premature end of file in '{}'", path);
 
 	case IstreamDirectResult::ERRNO:
-		fd_lease.SetBroken();
-		throw FmtErrno("Failed to read from '{}'", path);
+		if (const int e = errno; e != EAGAIN) {
+			fd_lease.SetBroken();
+			throw FmtErrno(e, "Failed to read from '{}'", path);
+		}
+
+		break;
 	}
 
 	return true;
