@@ -11,7 +11,7 @@ cm4all-beng-proxy (20.4) unstable; urgency=low
   * accept() errors are fatal
   * systemd: do not restart on configuration errors
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Tue, 29 Jul 2025 20:31:34 +0200
 
 cm4all-beng-proxy (20.3) unstable; urgency=low
 
