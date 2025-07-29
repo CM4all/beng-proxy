@@ -6,6 +6,7 @@
 #include "util/SharedLease.hxx"
 
 #include <cstddef>
+#include <tuple>
 
 struct pool;
 
