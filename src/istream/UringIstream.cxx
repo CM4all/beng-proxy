@@ -24,12 +24,16 @@ class UringIstream final : public Istream {
 		UringIstream &parent;
 		Uring::Queue &queue;
 
+		const SharedLease fd_lease;
+
 		SliceFifoBuffer buffer;
 
 		bool released = false;
 
-		ReadOperation(UringIstream &_parent, Uring::Queue &_queue) noexcept
-			:parent(_parent), queue(_queue) {}
+		ReadOperation(UringIstream &_parent, Uring::Queue &_queue,
+			      SharedLease &&_fd_lease) noexcept
+			:parent(_parent), queue(_queue),
+			 fd_lease(std::move(_fd_lease)) {}
 
 		void Release() noexcept;
 
@@ -45,8 +49,6 @@ class UringIstream final : public Istream {
 	 * The path name.  Only used for error messages.
 	 */
 	const char *const path;
-
-	const SharedLease fd_lease;
 
 	/**
 	 * The file offset of the next/pending read operation.  If
@@ -69,8 +71,8 @@ public:
 		     const char *_path, FileDescriptor _fd, SharedLease &&_lease,
 		     off_t _start_offset, off_t _end_offset) noexcept
 		:Istream(p),
-		 read_operation(new ReadOperation(*this, _uring)),
-		 path(_path), fd_lease(std::move(_lease)),
+		read_operation(new ReadOperation(*this, _uring, std::move(_lease))),
+		 path(_path),
 		 offset(_start_offset), end_offset(_end_offset),
 		 fd(_fd)
 	{
@@ -175,7 +177,7 @@ try {
 			StartRead();
 		} else {
 			/* XXX */
-			fd_lease.SetBroken();
+			read_operation->fd_lease.SetBroken();
 			throw FmtErrno("Failed to read from '{}'", path);
 		}
 
@@ -224,7 +226,6 @@ UringIstream::StartRead() noexcept
 inline void
 UringIstream::OnReadError(int error) noexcept
 {
-	fd_lease.SetBroken();
 	DestroyError(std::make_exception_ptr(FmtErrno(error, "Failed to read from '{}'", path)));
 }
 
@@ -262,6 +263,7 @@ UringIstream::ReadOperation::OnUringCompletion(int res) noexcept
 	}
 
 	if (res < 0) {
+		fd_lease.SetBroken();
 		parent.OnReadError(-res);
 		return;
 	}

@@ -25,13 +25,17 @@ class UringSpliceIstream final : public Istream {
 		UringSpliceIstream &parent;
 		Uring::Queue &queue;
 
+		const SharedLease fd_lease;
+
 		PipeLease pipe;
 
 		bool released = false;
 
 		SpliceOperation(UringSpliceIstream &_parent, Uring::Queue &_queue,
-				PipeStock *pipe_stock) noexcept
-			:parent(_parent), queue(_queue), pipe(pipe_stock) {}
+				PipeStock *pipe_stock, SharedLease &&_fd_lease) noexcept
+			:parent(_parent), queue(_queue),
+			 fd_lease(std::move(_fd_lease)),
+			 pipe(pipe_stock) {}
 
 		~SpliceOperation() noexcept {
 			pipe.Release(PutAction::DESTROY);
@@ -59,8 +63,6 @@ class UringSpliceIstream final : public Istream {
 	 * The path name.  Only used for error messages.
 	 */
 	const char *const path;
-
-	const SharedLease fd_lease;
 
 	/**
 	 * The number of bytes currently in the pipe.  It may be
@@ -103,9 +105,9 @@ public:
 			   const char *_path, FileDescriptor _fd, SharedLease &&_lease,
 			   off_t _start_offset, off_t _end_offset)
 		:Istream(p),
-		 splice_operation(new SpliceOperation(*this, _uring, _pipe_stock)),
+		 splice_operation(new SpliceOperation(*this, _uring, _pipe_stock, std::move(_lease))),
 		 defer_start(event_loop, BIND_THIS_METHOD(OnDeferredStart)),
-		 path(_path), fd_lease(std::move(_lease)),
+		 path(_path),
 		 offset(_start_offset), end_offset(_end_offset),
 		 fd(_fd)
 	{
@@ -312,7 +314,6 @@ UringSpliceIstream::StartRead() noexcept
 inline void
 UringSpliceIstream::OnSpliceError(int error) noexcept
 {
-	fd_lease.SetBroken();
 	DestroyError(std::make_exception_ptr(FmtErrno(error, "Failed to read from '{}'", path)));
 }
 
@@ -379,6 +380,7 @@ UringSpliceIstream::SpliceOperation::OnUringCompletion(int res) noexcept
 			return;
 		}
 
+		fd_lease.SetBroken();
 		parent.OnSpliceError(-res);
 		return;
 	}
