@@ -19,15 +19,15 @@ static std::pair<UnusedIstreamPtr, size_t>
 MakeUringIstream(struct pool &pool, Uring::Queue &uring, const char *path)
 {
 	auto fd = OpenReadOnly(path);
-	struct stat st;
-	EXPECT_EQ(fstat(fd.Get(), &st), 0);
+	struct statx stx;
+	EXPECT_EQ(statx(fd.Get(), "", AT_EMPTY_PATH, STATX_SIZE, &stx), 0);
 
 	auto *shared_fd = NewFromPool<SharedFd>(pool, std::move(fd));
 
 	return {NewUringIstream(uring, pool,
 				path, shared_fd->Get(), *shared_fd,
-				0, st.st_size),
-		st.st_size};
+				0, stx.stx_size),
+		stx.stx_size};
 }
 
 static auto
