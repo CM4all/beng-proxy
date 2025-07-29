@@ -33,7 +33,7 @@ class UringIstream final : public Istream {
 
 		void Release() noexcept;
 
-		void Start(FileDescriptor fd, std::size_t max_read, off_t offset);
+		void Start(FileDescriptor file_fd, std::size_t max_read, off_t file_offset);
 
 		/* virtual methods from class Uring::Operation */
 		void OnUringCompletion(int res) noexcept override;
@@ -186,8 +186,8 @@ try {
 }
 
 inline void
-UringIstream::ReadOperation::Start(FileDescriptor fd,
-				   std::size_t max_read, off_t offset)
+UringIstream::ReadOperation::Start(FileDescriptor file_fd,
+				   std::size_t max_read, off_t file_offset)
 {
 	assert(!IsUringPending());
 	assert(!buffer.IsDefinedAndFull());
@@ -202,7 +202,7 @@ UringIstream::ReadOperation::Start(FileDescriptor fd,
 	if (w.size() > max_read)
 		w = w.first(max_read);
 
-	io_uring_prep_read(&s, fd.Get(), w.data(), w.size(), offset);
+	io_uring_prep_read(&s, file_fd.Get(), w.data(), w.size(), file_offset);
 
 	queue.Push(s, *this);
 }
