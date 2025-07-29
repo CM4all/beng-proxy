@@ -746,7 +746,7 @@ class SocketEventPrinter:
         self.val = val
 
     def to_string(self):
-        return 'SocketEvent{%d, scheduled=0x%x, callback=%s}' % (self.val['fd']['fd'], self.val['scheduled_flags'], self.val['callback'])
+        return 'SocketEvent{%d, scheduled=0x%x, ready=0x%x, callback=%s}' % (self.val['fd']['fd'], self.val['scheduled_flags'], self.val['ready_flags'], self.val['callback'])
 
 def format_steady_tp(tp, event_loop):
     steady_cache = event_loop['steady_clock_cache']
