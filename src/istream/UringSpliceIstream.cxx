@@ -202,6 +202,13 @@ UringSpliceIstream::SpliceOperation::Release() noexcept
 		/* the operation is still pending; delete this object
 		   later (after completion) */
 
+		if (auto *s = queue.GetSubmitEntry()) {
+			io_uring_prep_cancel(s, GetUringData(), 0);
+			io_uring_sqe_set_data(s, nullptr);
+			io_uring_sqe_set_flags(s, IOSQE_CQE_SKIP_SUCCESS);
+			queue.Submit();
+		}
+
 		released = true;
 	} else
 		delete this;
