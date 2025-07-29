@@ -100,6 +100,7 @@ if uring_dep.found()
     executable(
       'TestUringIstream',
       'TestUringIstream.cxx',
+      'CountIstreamSink.cxx',
       include_directories: inc,
       dependencies: [
         gtest,

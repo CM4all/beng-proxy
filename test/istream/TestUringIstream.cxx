@@ -3,7 +3,7 @@
 // author: Max Kellermann <max.kellermann@ionos.com>
 
 #include "../TestInstance.hxx"
-#include "istream/Sink.hxx"
+#include "CountIstreamSink.hxx"
 #include "istream/UringIstream.hxx"
 #include "istream/UnusedPtr.hxx"
 #include "pool/pool.hxx"
@@ -14,40 +14,6 @@
 #include "system/Error.hxx"
 
 #include <gtest/gtest.h>
-
-class MyHandler final : IstreamSink {
-public:
-	std::exception_ptr error;
-	size_t got_data = 0;
-	bool done = false;
-
-	MyHandler(UnusedIstreamPtr _input) noexcept
-		:IstreamSink(std::move(_input)) {}
-
-	bool IsDone() const noexcept {
-		return !HasInput();
-	}
-
-	void Read() noexcept {
-		input.Read();
-	}
-
-	/* virtual methods from class IstreamHandler */
-
-	size_t OnData(std::span<const std::byte> src) noexcept override {
-		got_data += src.size();
-		return src.size();
-	}
-
-	void OnEof() noexcept override {
-		ClearInput();
-	}
-
-	void OnError(std::exception_ptr ep) noexcept override {
-		ClearInput();
-		error = std::move(ep);
-	}
-};
 
 static std::pair<UnusedIstreamPtr, size_t>
 MakeUringIstream(struct pool &pool, Uring::Queue &uring, const char *path)
@@ -78,12 +44,12 @@ try {
 	auto [i, size] = MakeUringIstream(instance.root_pool, uring);
 
 	{
-		MyHandler h(std::move(i));
-		h.Read();
-		while (!h.IsDone())
+		CountIstreamSink sink{std::move(i)};
+		sink.Read();
+		while (!sink.IsDone())
 			uring.WaitDispatchOneCompletion();
 
-		EXPECT_EQ(h.got_data, size);
+		EXPECT_EQ(sink.GetCount(), size);
 	}
 
 	uring.DispatchCompletions();
@@ -102,8 +68,8 @@ try {
 	auto [i, size] = MakeUringIstream(instance.root_pool, uring);
 
 	{
-		MyHandler h(std::move(i));
-		h.Read();
+		CountIstreamSink sink{std::move(i)};
+		sink.Read();
 	}
 
 	uring.DispatchCompletions();
@@ -126,10 +92,10 @@ try {
 	auto [i, size] = MakeUringIstream(instance.root_pool, uring);
 
 	{
-		MyHandler h(std::move(i));
-		h.Read();
+		CountIstreamSink sink{std::move(i)};
+		sink.Read();
 
-		while (!h.IsDone() && h.got_data == 0)
+		while (!sink.IsDone() && sink.GetCount() == 0)
 			uring.WaitDispatchOneCompletion();
 	}
 
