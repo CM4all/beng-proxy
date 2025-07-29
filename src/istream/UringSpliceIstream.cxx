@@ -255,7 +255,6 @@ try {
 
 	case IstreamDirectResult::ERRNO:
 		if (const int e = errno; e != EAGAIN) {
-			fd_lease.SetBroken();
 			throw FmtErrno(e, "Failed to read from '{}'", path);
 		}
 
