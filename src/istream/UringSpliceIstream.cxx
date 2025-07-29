@@ -20,8 +20,26 @@
 #include <fcntl.h>
 #include <limits.h>
 
-class UringSpliceIstream final : public Istream, Uring::Operation {
-	Uring::Queue &uring;
+class UringSpliceIstream final : public Istream {
+	struct SpliceOperation final : Uring::Operation {
+		UringSpliceIstream &parent;
+		Uring::Queue &queue;
+
+		bool released = false;
+
+		SpliceOperation(UringSpliceIstream &_parent, Uring::Queue &_queue) noexcept
+			:parent(_parent), queue(_queue) {}
+
+		void Release() noexcept;
+
+		void Start(FileDescriptor file_fd, FileDescriptor pipe_fd,
+			   std::size_t max_splice, off_t file_offset);
+
+		/* virtual methods from class Uring::Operation */
+		void OnUringCompletion(int res) noexcept override;
+	};
+
+	SpliceOperation *splice_operation;
 
 	/**
 	 * This allows the StartRead() call to be called from a "safe"
@@ -79,7 +97,8 @@ public:
 			   PipeStock *_pipe_stock,
 			   const char *_path, FileDescriptor _fd, SharedLease &&_lease,
 			   off_t _start_offset, off_t _end_offset)
-		:Istream(p), uring(_uring),
+		:Istream(p),
+		 splice_operation(new SpliceOperation(*this, _uring)),
 		 defer_start(event_loop, BIND_THIS_METHOD(OnDeferredStart)),
 		 path(_path), fd_lease(std::move(_lease)),
 		 pipe(_pipe_stock),
@@ -133,7 +152,7 @@ private:
 	bool StartRead() noexcept;
 
 	void DeferStartRead() noexcept {
-		assert(!IsUringPending());
+		assert(!splice_operation->IsUringPending());
 
 		if (defer_start.IsPending())
 			return;
@@ -146,8 +165,9 @@ private:
 		StartRead();
 	}
 
-	/* virtual methods from class Uring::Operation */
-	void OnUringCompletion(int res) noexcept override;
+	void OnSpliceError(int error) noexcept;
+	void OnSplicePrematureEnd() noexcept;
+	void OnSpliceSuccess(std::size_t nbytes) noexcept;
 
 	/* virtual methods from class Istream */
 
@@ -167,8 +187,24 @@ private:
 	}
 };
 
+inline void
+UringSpliceIstream::SpliceOperation::Release() noexcept
+{
+	assert(!released);
+
+	if (IsUringPending()) {
+		/* the operation is still pending; delete this object
+		   later (after completion) */
+
+		released = true;
+	} else
+		delete this;
+}
+
 UringSpliceIstream::~UringSpliceIstream() noexcept
 {
+	splice_operation->Release();
+
 	pipe.Release(PutAction::DESTROY);
 }
 
@@ -229,10 +265,21 @@ try {
 	return false;
 }
 
+inline void
+UringSpliceIstream::SpliceOperation::Start(FileDescriptor file_fd, FileDescriptor pipe_fd,
+					   std::size_t max_splice, off_t file_offset)
+{
+	auto &s = queue.RequireSubmitEntry();
+	io_uring_prep_splice(&s, file_fd.Get(), file_offset,
+			     pipe_fd.Get(), -1,
+			     max_splice, SPLICE_F_MOVE);
+	queue.Push(s, *this);
+}
+
 inline bool
 UringSpliceIstream::StartRead() noexcept
 {
-	assert(!IsUringPending());
+	assert(!splice_operation->IsUringPending());
 
 	size_t max_read = GetMaxRead();
 	if (max_read == 0) {
@@ -256,46 +303,29 @@ UringSpliceIstream::StartRead() noexcept
 		}
 	}
 
-	auto &s = uring.RequireSubmitEntry();
-	io_uring_prep_splice(&s, fd.Get(), offset,
-			     pipe.GetWriteFd().Get(), -1,
-			     max_read, SPLICE_F_MOVE);
-	uring.Push(s, *this);
+	splice_operation->Start(fd, pipe.GetWriteFd(), max_read, offset);
 
 	return true;
 }
 
-void
-UringSpliceIstream::OnUringCompletion(int res) noexcept
-try {
-	if (res <= 0) [[unlikely]] {
-		if (res == 0) [[unlikely]]
-			throw FmtRuntimeError("Premature end of file in '{}'", path);
+inline void
+UringSpliceIstream::OnSpliceError(int error) noexcept
+{
+	fd_lease.SetBroken();
+	DestroyError(std::make_exception_ptr(FmtErrno(error, "Failed to read from '{}'", path)));
+}
 
-		if (res == -EAGAIN) {
-			/* this can happen if the pipe is full; this
-			   is surprising, because io_uring is supposed
-			   to handle EAGAIN, but it does not with
-			   non-blocking pipes */
+inline void
+UringSpliceIstream::OnSplicePrematureEnd() noexcept
+{
+	DestroyError(std::make_exception_ptr(FmtRuntimeError("Premature end of file in '{}'", path)));
+}
 
-			if (consumed_while_pending)
-				/* if data was consumed since the
-				   io_uring operation was pending (and
-				   until this completion callback was
-				   invoked), assume that the pipe is
-				   no longer full, so try to restart
-				   the read */
-				DeferStartRead();
-
-			return;
-		}
-
-		fd_lease.SetBroken();
-		throw FmtErrno(-res, "Failed to read from '{}'", path);
-	}
-
-	in_pipe += res;
-	offset += res;
+inline void
+UringSpliceIstream::OnSpliceSuccess(std::size_t nbytes) noexcept
+{
+	in_pipe += nbytes;
+	offset += nbytes;
 
 	assert(in_pipe >= 0);
 
@@ -314,8 +344,45 @@ try {
 	}
 
 	TryDirect();
-} catch (...) {
-	DestroyError(std::current_exception());
+}
+
+void
+UringSpliceIstream::SpliceOperation::OnUringCompletion(int res) noexcept
+{
+	if (released) {
+		delete this;
+		return;
+	}
+
+	if (res <= 0) [[unlikely]] {
+		if (res == 0) [[unlikely]] {
+			parent.OnSplicePrematureEnd();
+			return;
+		}
+
+		if (res == -EAGAIN) {
+			/* this can happen if the pipe is full; this
+			   is surprising, because io_uring is supposed
+			   to handle EAGAIN, but it does not with
+			   non-blocking pipes */
+
+			if (parent.consumed_while_pending)
+				/* if data was consumed since the
+				   io_uring operation was pending (and
+				   until this completion callback was
+				   invoked), assume that the pipe is
+				   no longer full, so try to restart
+				   the read */
+				parent.DeferStartRead();
+
+			return;
+		}
+
+		parent.OnSpliceError(-res);
+		return;
+	}
+
+	parent.OnSpliceSuccess(static_cast<std::size_t>(res));
 }
 
 off_t
@@ -332,14 +399,14 @@ UringSpliceIstream::_ConsumeDirect(std::size_t nbytes) noexcept
 	/* we trigger the next io_uring read call from here because
            only here we know the pipe is not full */
 	if (offset < end_offset) {
-		if (IsUringPending()) {
+		if (splice_operation->IsUringPending()) {
 			consumed_while_pending = true;
 		} else {
 			DeferStartRead();
 		}
 	} else {
 		if (in_pipe == 0) {
-			assert(!IsUringPending());
+			assert(!splice_operation->IsUringPending());
 			pipe.Release(PutAction::REUSE);
 		}
 	}
@@ -351,7 +418,7 @@ UringSpliceIstream::_Read() noexcept
 	assert(direct);
 
 	if (in_pipe <= 0) {
-		if (!IsUringPending()) {
+		if (!splice_operation->IsUringPending()) {
 			/* in_pipe can only be negative if we have
 			   consumed data before OnUringCompletion()
 			   was called to update in_pipe, i.e it must
