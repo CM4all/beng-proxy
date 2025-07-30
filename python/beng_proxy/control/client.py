@@ -18,6 +18,10 @@ class Client:
             s = socket.socket(socket.AF_UNIX, socket.SOCK_DGRAM)
             s.settimeout(timeout)
 
+            if host.startswith('@'):
+                # abstract socket
+                host = '\0' + host[1:]
+
             s.connect(host)
         else:
             s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)

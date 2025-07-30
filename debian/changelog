@@ -1,6 +1,6 @@
 cm4all-beng-proxy (20.5) unstable; urgency=low
 
-  * 
+  * python/control: fix abstract socket support (19.26 regression)
 
  --   
 
