@@ -1,5 +1,6 @@
 cm4all-beng-proxy (20.5) unstable; urgency=low
 
+  * spawn: do not block site when picking up old cgroup oom_kill counter
   * python/control: fix abstract socket support (20.1 regression)
 
  --   
