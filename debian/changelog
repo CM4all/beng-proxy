@@ -3,7 +3,7 @@ cm4all-beng-proxy (20.5) unstable; urgency=low
   * spawn: do not block site when picking up old cgroup oom_kill counter
   * python/control: fix abstract socket support (20.1 regression)
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Wed, 30 Jul 2025 13:52:09 +0200
 
 cm4all-beng-proxy (20.4) unstable; urgency=low
 
