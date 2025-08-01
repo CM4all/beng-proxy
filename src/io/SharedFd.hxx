@@ -19,7 +19,7 @@ class SharedFd final : public SharedAnchor {
 	const UniqueFileDescriptor fd;
 
 public:
-	SharedFd(UniqueFileDescriptor &&_fd) noexcept
+	explicit SharedFd(UniqueFileDescriptor &&_fd) noexcept
 		:fd(std::move(_fd)) {}
 
 	FileDescriptor Get() const noexcept {
