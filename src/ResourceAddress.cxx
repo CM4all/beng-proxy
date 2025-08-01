@@ -346,7 +346,7 @@ ResourceAddress::CacheLoad(AllocatorPtr alloc, const ResourceAddress &src,
 		const char *tail = require_base_tail(uri, base);
 		tail = NormalizeUriPath(alloc, tail);
 
-		if (!unsafe_base && !uri_path_verify_paranoid(tail - 1))
+		if (!unsafe_base && (*tail == '/' || !uri_path_verify_paranoid(tail)))
 			throw HttpMessageResponse(HttpStatus::BAD_REQUEST, "Malformed URI");
 
 		if (src.type == Type::NONE) {
