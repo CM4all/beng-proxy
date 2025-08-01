@@ -344,9 +344,16 @@ ResourceAddress::CacheLoad(AllocatorPtr alloc, const ResourceAddress &src,
 {
 	if (base != nullptr && !expandable) {
 		const char *tail = require_base_tail(uri, base);
+
+		/* strip leading slashes before normalizing the URI;
+		   merging adjacent slashes is part of normalization,
+		   but "tail" already comes after a slash */
+		while (*tail == '/')
+			++tail;
+
 		tail = NormalizeUriPath(alloc, tail);
 
-		if (!unsafe_base && (*tail == '/' || !uri_path_verify_paranoid(tail)))
+		if (!unsafe_base && !uri_path_verify_paranoid(tail))
 			throw HttpMessageResponse(HttpStatus::BAD_REQUEST, "Malformed URI");
 
 		if (src.type == Type::NONE) {
