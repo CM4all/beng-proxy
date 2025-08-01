@@ -8,7 +8,5 @@
 #include <cstddef>
 #include <tuple>
 
-struct pool;
-
 std::tuple<FileDescriptor, SharedLease, std::size_t>
-OpenFileLease(struct pool &pool, const char *path);
+OpenFileLease(const char *path);

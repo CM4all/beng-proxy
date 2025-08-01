@@ -222,7 +222,7 @@ Request::DispatchCompressedFile(const char *path, FileDescriptor fd,
 
 	/* finished, dispatch this response */
 
-	auto *shared_fd = NewFromPool<SharedFd>(pool, std::move(compressed_fd));
+	auto *shared_fd = new SharedFd(std::move(compressed_fd));
 
 	HttpStatus status = tr.status == HttpStatus{}
 		? HttpStatus::OK

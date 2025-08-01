@@ -125,7 +125,7 @@ inline void
 Context::CreateSinkFd(const char *path, UniqueFileDescriptor &&fd,
 		      off_t size) noexcept
 {
-	auto *shared_fd = NewFromPool<SharedFd>(root_pool, std::move(fd));
+	auto *shared_fd = new SharedFd(std::move(fd));
 
 	sink = sink_fd_new(event_loop, root_pool,
 			   CreateIstream(event_loop, root_pool, path,

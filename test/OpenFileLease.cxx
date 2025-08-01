@@ -13,14 +13,14 @@
 #include <sys/stat.h>
 
 std::tuple<FileDescriptor, SharedLease, std::size_t>
-OpenFileLease(struct pool &pool, const char *path)
+OpenFileLease(const char *path)
 {
 	auto fd = OpenReadOnly(path);
 	struct statx stx;
 	if (statx(fd.Get(), "", AT_EMPTY_PATH, STATX_SIZE, &stx) < 0)
 		throw MakeErrno("statx() failed");
 
-	auto *shared_fd = NewFromPool<SharedFd>(pool, std::move(fd));
+	auto *shared_fd = new SharedFd(std::move(fd));
 	return {
 		shared_fd->Get(),
 		*shared_fd,

@@ -19,7 +19,7 @@ namespace {
 static std::pair<UnusedIstreamPtr, size_t>
 MakeUringSpliceIstream(struct pool &pool, EventLoop &event_loop, Uring::Queue &uring, const char *path)
 {
-	auto [fd, lease, size] = OpenFileLease(pool, path);
+	auto [fd, lease, size] = OpenFileLease(path);
 
 	return {
 		NewUringSpliceIstream(event_loop, uring, nullptr, pool,
@@ -162,7 +162,7 @@ try {
 	auto &uring = *instance.event_loop.GetUring();
 
 	const char *const path = "build.ninja";
-	const auto [fd, lease, size] = OpenFileLease(instance.root_pool, path);
+	const auto [fd, lease, size] = OpenFileLease(path);
 
 	{
 		CountIstreamSink sink{

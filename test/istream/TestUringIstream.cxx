@@ -16,7 +16,7 @@
 static std::pair<UnusedIstreamPtr, size_t>
 MakeUringIstream(struct pool &pool, Uring::Queue &uring, const char *path)
 {
-	auto [fd, lease, size] = OpenFileLease(pool, path);
+	auto [fd, lease, size] = OpenFileLease(path);
 
 	return {
 		NewUringIstream(uring, pool,

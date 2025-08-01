@@ -38,7 +38,7 @@ OpenFileIstream(EventLoop &event_loop, struct pool &pool, const char *path)
 				    std::move(fd), fd_type);
 	}
 
-	auto *shared_fd = NewFromPool<SharedFd>(pool, std::move(fd));
+	auto *shared_fd = new SharedFd(std::move(fd));
 
 	return istream_file_fd_new(event_loop, pool, path,
 				   shared_fd->Get(), *shared_fd,

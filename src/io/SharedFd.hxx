@@ -12,8 +12,8 @@
  * entities.  The reference counter and leases are managed by
  * #SharedAnchor, i.e. instantiate a #SharedLease.  The file
  * descriptor will be closed as soon as the last lease is released,
- * which destructs this class, but does not free memory.  Therefore,
- * this class must be allocated by a #pool.
+ * which deletes this class.  Therefore, this class must be allocated
+ * using the `new` operator and the memory is owned by all leases.
  */
 class SharedFd final : public SharedAnchor {
 	const UniqueFileDescriptor fd;
@@ -28,11 +28,6 @@ public:
 
 protected:
 	void OnAbandoned() noexcept override {
-		Destroy();
-	}
-
-private:
-	void Destroy() noexcept {
-		this->~SharedFd();
+		delete this;
 	}
 };
