@@ -499,11 +499,14 @@ try {
 				   instance.event_loop);
 
 #ifdef HAVE_URING
-	if (instance.config.was_io_uring && instance.uring) {
+	if (instance.uring) {
 		instance.fd_cache.EnableUring(*instance.uring);
-		instance.was_stock->EnableUring(*instance.uring);
-		instance.multi_was_stock->EnableUring(*instance.uring);
-		instance.remote_was_stock->EnableUring(*instance.uring);
+
+		if (instance.config.was_io_uring) {
+			instance.was_stock->EnableUring(*instance.uring);
+			instance.multi_was_stock->EnableUring(*instance.uring);
+			instance.remote_was_stock->EnableUring(*instance.uring);
+		}
 	}
 #endif // HAVE_URING
 #endif // HAVE_LIBWAS
