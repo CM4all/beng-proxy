@@ -1814,7 +1814,7 @@ The request contains the following packets:
   was provided by an unprivileged process and should not be trusted.
 
 - ``PARAM``: An opaque parameter with more details about the process.
-  This parametr was provided by an unprivileged process and should not
+  This parameter was provided by an unprivileged process and should not
   be trusted.
 
 - ``SERVICE``: Payload specifies the service that wants to execute the
