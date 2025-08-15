@@ -4,30 +4,9 @@
 
 #pragma once
 
-#include <avahi-common/address.h>
+#include "lib/avahi/ExplorerConfig.hxx"
 
-
-#include <memory>
-#include <string>
-
-class FileLineParser;
-
-namespace Avahi {
-class ErrorHandler;
-class Client;
-class ServiceExplorer;
-class ServiceExplorerListener;
-}
-
-struct ZeroconfDiscoveryConfig {
-	std::string service, domain, interface;
-
-	AvahiProtocol protocol = AVAHI_PROTO_UNSPEC;
-
-	bool IsEnabled() const noexcept {
-		return !service.empty();
-	}
-
+struct ZeroconfDiscoveryConfig : Avahi::ServiceExplorerConfig {
 	/**
 	 * Parse a configuration file line.
 	 *
@@ -36,21 +15,4 @@ struct ZeroconfDiscoveryConfig {
 	 * @return false if the word was not recognized
 	 */
 	bool ParseLine(const char *word, FileLineParser &line);
-
-	/**
-	 * Check whether the configuration is formally correct.
-	 * Throws on error.
-	 */
-	void Check() const;
-
-	/**
-	 * Create a #ServiceExplorer instance for this configuration.
-	 *
-	 * IsEnabled() must be true.
-	 *
-	 * Throws on error.
-	 */
-	std::unique_ptr<Avahi::ServiceExplorer> Create(Avahi::Client &client,
-						       Avahi::ServiceExplorerListener &listener,
-						       Avahi::ErrorHandler &error_handler) const;
 };
