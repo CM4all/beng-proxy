@@ -27,6 +27,7 @@
 #include "net/SocketProtocolError.hxx"
 #include "net/TimeoutError.hxx"
 #include "system/Error.hxx"
+#include "util/AlwaysFalse.hxx"
 #include "util/Exception.hxx"
 #include "HttpMessageResponse.hxx"
 #include "AllocatorPtr.hxx"
@@ -280,8 +281,6 @@ LbHttpConnection::HandleHttpRequest(IncomingHttpRequest &request,
 
 	HandleHttpRequest(initial_destination, request, parent_stopwatch, cancel_ptr);
 }
-
-template <class> constexpr bool always_false_v = false;
 
 void
 LbHttpConnection::HandleHttpRequest(const LbGoto &destination,

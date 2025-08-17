@@ -10,6 +10,7 @@
 #include "ClusterConfig.hxx"
 #include "Branch.hxx"
 #include "lua/Class.hxx"
+#include "util/AlwaysFalse.hxx"
 #include "util/StringAPI.hxx"
 
 using namespace Lua;
@@ -22,8 +23,6 @@ CastLuaGoto(lua_State *L, int idx)
 {
 	return LuaGoto::Cast(L, idx);
 }
-
-template<class> constexpr bool always_false_v = false;
 
 static int
 LuaGotoIndex(lua_State *L)
