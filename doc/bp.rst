@@ -207,8 +207,13 @@ Known attributes:
   Zeroconf service in the local Avahi daemon. This can be used by
   :program:`beng-lb` to discover pool members.
 
+- ``zeroconf_domain`` (optional): The name of the Zeroconf domain.
+
 - ``zeroconf_interface``: publish the Zeroconf service only on the
   given interface.
+
+- ``zeroconf_protocol`` (optional): Publish only protocol ``inet`` or
+  ``inet6``.
 
 - ``zeroconf_weight``: publish the Zeroconf service with the specified
   "weight", i.e. ask :program:`beng-lb` to use this weight when

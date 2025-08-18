@@ -457,8 +457,20 @@ Known attributes:
 - ``zeroconf_service``: if specified, then register this listener as
   Zeroconf service in the local Avahi daemon.
 
+- ``zeroconf_domain`` (optional): The name of the Zeroconf domain.
+
 - ``zeroconf_interface``: publish the Zeroconf service only on the
   given interface.
+
+- ``zeroconf_protocol`` (optional): Publish only protocol ``inet`` or
+  ``inet6``.
+
+- ``zeroconf_weight``: publish the Zeroconf service with the specified
+  "weight", i.e. ask :program:`beng-lb` to use this weight when
+  choosing nodes (works only with ``rendezvous_hashing``).  The value
+  is a decimal number; the implied default value is :samp:`1.0`.  For
+  example, if you specify :samp:`0.5`, you expect this node to get
+  only half as many requests as others.
 
 - ``bind``: an adddress to bind to. May be the wildcard ``*`` or an
   IPv4/IPv6 address followed by a port. IPv6 addresses should be

@@ -6,6 +6,7 @@
 
 #include "GotoConfig.hxx"
 #include "ssl/Config.hxx"
+#include "lib/avahi/ServiceConfig.hxx"
 #include "net/SocketConfig.hxx"
 #include "config.h"
 
@@ -21,8 +22,7 @@ struct LbListenerConfig : SocketConfig {
 	std::string tag;
 
 #ifdef HAVE_AVAHI
-	std::string zeroconf_service;
-	std::string zeroconf_interface;
+	Avahi::ServiceConfig zeroconf;
 #endif
 
 	std::string access_logger_name;
@@ -62,27 +62,12 @@ struct LbListenerConfig : SocketConfig {
 #ifdef HAVE_AVAHI
 	[[gnu::pure]]
 	bool HasZeroconfPublisher() const noexcept {
-		return !zeroconf_service.empty();
+		return zeroconf.IsEnabled();
 	}
 
 	[[gnu::pure]]
 	bool HasZeroConf() const noexcept {
 		return destination.HasZeroConf();
-	}
-
-	/**
-	 * @return the name of the interface where the Zeroconf
-	 * service shall be published
-	 */
-	[[gnu::pure]]
-	const char *GetZeroconfInterface() const noexcept {
-		if (!zeroconf_interface.empty())
-			return zeroconf_interface.c_str();
-
-		if (!interface.empty())
-			return interface.c_str();
-
-		return nullptr;
 	}
 #endif
 

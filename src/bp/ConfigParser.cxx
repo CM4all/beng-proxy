@@ -10,12 +10,11 @@
 #include "net/Parser.hxx"
 #include "net/control/Protocol.hxx"
 #include "util/StringAPI.hxx"
-
-#ifdef HAVE_AVAHI
-#include "lib/avahi/Check.hxx"
-#endif
+#include "util/StringCompare.hxx"
 
 #include <string.h>
+
+using std::string_view_literals::operator""sv;
 
 class BpConfigParser final : public NestedConfigParser {
 	BpConfig &config;
@@ -140,44 +139,10 @@ BpConfigParser::Listener::ParseLine(FileLineParser &line)
 		line.ExpectEnd();
 	} else if (StringIsEqual(word, "tag")) {
 		config.tag = line.ExpectValueAndEnd();
-	} else if (StringIsEqual(word, "zeroconf_service") ||
-		   /* old option name: */ StringIsEqual(word, "zeroconf_type")) {
 #ifdef HAVE_AVAHI
-		config.zeroconf_service = MakeZeroconfServiceType(line.ExpectValueAndEnd(),
-								  "_tcp");
+	} else if (config.zeroconf.ParseLine(word, line)) {
 #else
-		throw LineParser::Error("Zeroconf support is disabled at compile time");
-#endif
-	} else if (StringIsEqual(word, "zeroconf_interface")) {
-#ifdef HAVE_AVAHI
-		if (config.zeroconf_service.empty())
-			throw LineParser::Error("zeroconf_interface without zeroconf_service");
-
-		if (!config.zeroconf_interface.empty())
-			throw LineParser::Error("Duplicate zeroconf_interface");
-
-		config.zeroconf_interface = line.ExpectValueAndEnd();
-#else
-		throw LineParser::Error("Zeroconf support is disabled at compile time");
-#endif
-	} else if (StringIsEqual(word, "zeroconf_weight")) {
-#ifdef HAVE_AVAHI
-		if (config.zeroconf_service.empty())
-			throw LineParser::Error("zeroconf_weight without zeroconf_service");
-
-		if (config.zeroconf_weight >= 0)
-			throw LineParser::Error("Duplicate zeroconf_weight");
-
-		const char *s = line.ExpectValueAndEnd();
-
-		char *endptr;
-		config.zeroconf_weight = strtod(s, &endptr);
-		if (endptr == s || *endptr != '\0')
-			throw LineParser::Error("Failed to parse number");
-
-		if (config.zeroconf_weight <= 0 || config.zeroconf_weight > 1e6f)
-			throw LineParser::Error("Bad zeroconf_weight value");
-#else
+	} else if (StringStartsWith(word, "zeroconf_"sv)) {
 		throw LineParser::Error("Zeroconf support is disabled at compile time");
 #endif
 	} else if (StringIsEqual(word, "ack_timeout")) {

@@ -28,6 +28,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+using std::string_view_literals::operator""sv;
+
 class LbConfigParser final : public NestedConfigParser {
 	LbConfig &config;
 
@@ -1200,23 +1202,10 @@ LbConfigParser::Listener::ParseLine(FileLineParser &line)
 		line.ExpectEnd();
 	} else if (StringIsEqual(word, "tag")) {
 		config.tag = line.ExpectValueAndEnd();
-	} else if (StringIsEqual(word, "zeroconf_service")) {
 #ifdef HAVE_AVAHI
-		config.zeroconf_service = MakeZeroconfServiceType(line.ExpectValueAndEnd(),
-								  "_tcp");
+	} else if (config.zeroconf.ParseLine(word, line)) {
 #else
-		throw LineParser::Error("Zeroconf support is disabled at compile time");
-#endif
-	} else if (StringIsEqual(word, "zeroconf_interface")) {
-#ifdef HAVE_AVAHI
-		if (config.zeroconf_service.empty())
-			throw LineParser::Error("zeroconf_interface without zeroconf_service");
-
-		if (!config.zeroconf_interface.empty())
-			throw LineParser::Error("Duplicate zeroconf_interface");
-
-		config.zeroconf_interface = line.ExpectValueAndEnd();
-#else
+	} else if (StringStartsWith(word, "zeroconf_"sv)) {
 		throw LineParser::Error("Zeroconf support is disabled at compile time");
 #endif
 	} else if (StringIsEqual(word, "max_connections_per_ip")) {

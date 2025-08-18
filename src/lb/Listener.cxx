@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: BSD-2-Clause
+// SPDX-License-Identifier: BSD-2-Clausee
 // Copyright CM4all GmbH
 // author: Max Kellermann <max.kellermann@ionos.com>
 
@@ -18,14 +18,13 @@
 #include "lb_features.h"
 
 #ifdef HAVE_AVAHI
-#include "lib/avahi/Arch.hxx"
 #include "lib/avahi/Service.hxx"
 #include "lib/avahi/Publisher.hxx"
 
 inline std::unique_ptr<Avahi::Service>
 LbListener::MakeAvahiService() const noexcept
 {
-	if (!config.HasZeroconfPublisher())
+	if (!config.zeroconf.IsEnabled())
 		return {};
 
 	/* ask the kernel for the effective address via getsockname(),
@@ -33,16 +32,8 @@ LbListener::MakeAvahiService() const noexcept
 	   selected a port for us */
 	if (const auto local_address = GetLocalAddress();
 	    local_address.IsDefined()) {
-		auto service = std::make_unique<Avahi::Service>(config.zeroconf_service.c_str(),
-								config.GetZeroconfInterface(), local_address,
-								config.v6only);
-
-		AvahiStringList *txt = nullptr;
-
-		txt = Avahi::AddArchTxt(txt);
-
-		service->txt.reset(txt);
-		return service;
+		return config.zeroconf.Create(config.interface.empty() ? nullptr : config.interface.c_str(),
+					      local_address, config.v6only);
 	}
 
 	return {};

@@ -5,6 +5,7 @@
 #pragma once
 
 #include "ssl/Config.hxx"
+#include "lib/avahi/ServiceConfig.hxx"
 #include "net/LocalSocketAddress.hxx"
 #include "net/SocketConfig.hxx"
 #include "config.h"
@@ -16,8 +17,7 @@ struct BpListenerConfig : SocketConfig {
 	std::string tag;
 
 #ifdef HAVE_AVAHI
-	std::string zeroconf_service;
-	std::string zeroconf_interface;
+	Avahi::ServiceConfig zeroconf;
 #endif
 
 	std::string access_logger_name;
@@ -30,15 +30,6 @@ struct BpListenerConfig : SocketConfig {
 	std::forward_list<LocalSocketAddress> translation_sockets;
 
 	SslConfig ssl_config;
-
-#ifdef HAVE_AVAHI
-	/**
-	 * The weight published via Zeroconf.  Negative value means
-	 * don't publish a weight (peers will assume the default
-	 * weight, i.e. 1.0).
-	 */
-	float zeroconf_weight = -1;
-#endif
 
 	enum class Handler {
 		TRANSLATION,
@@ -74,21 +65,4 @@ struct BpListenerConfig : SocketConfig {
 		}
 	{
 	}
-
-#ifdef HAVE_AVAHI
-	/**
-	 * @return the name of the interface where the
-	 * Zeroconf service shall be published
-	 */
-	[[gnu::pure]]
-	const char *GetZeroconfInterface() const noexcept {
-		if (!zeroconf_interface.empty())
-			return zeroconf_interface.c_str();
-
-		if (!interface.empty())
-			return interface.c_str();
-
-		return nullptr;
-	}
-#endif
 };

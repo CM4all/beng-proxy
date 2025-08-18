@@ -19,15 +19,13 @@
 using std::string_view_literals::operator""sv;
 
 #ifdef HAVE_AVAHI
-#include "lib/avahi/Arch.hxx"
 #include "lib/avahi/Service.hxx"
 #include "lib/avahi/Publisher.hxx"
-#include "lib/fmt/ToBuffer.hxx"
 
 inline std::unique_ptr<Avahi::Service>
 BpListener::MakeAvahiService(const BpListenerConfig &config) const noexcept
 {
-	if (config.zeroconf_service.empty())
+	if (!config.zeroconf.IsEnabled())
 		return {};
 
 	/* ask the kernel for the effective address via getsockname(),
@@ -35,20 +33,8 @@ BpListener::MakeAvahiService(const BpListenerConfig &config) const noexcept
 	   selected a port for us */
 	if (const auto local_address = GetLocalAddress();
 	    local_address.IsDefined()) {
-		auto service = std::make_unique<Avahi::Service>(config.zeroconf_service.c_str(),
-								config.GetZeroconfInterface(), local_address,
-								config.v6only);
-
-		AvahiStringList *txt = nullptr;
-
-		txt = Avahi::AddArchTxt(txt);
-
-		if (config.zeroconf_weight >= 0)
-			txt = avahi_string_list_add_pair(txt, "weight",
-							 FmtBuffer<64>("{}"sv, config.zeroconf_weight));
-
-		service->txt.reset(txt);
-		return service;
+		return config.zeroconf.Create(config.interface.empty() ? nullptr : config.interface.c_str(),
+					      local_address, config.v6only);
 	}
 
 	return {};
