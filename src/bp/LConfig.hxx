@@ -5,10 +5,13 @@
 #pragma once
 
 #include "ssl/Config.hxx"
-#include "lib/avahi/ServiceConfig.hxx"
 #include "net/LocalSocketAddress.hxx"
 #include "net/SocketConfig.hxx"
 #include "config.h"
+
+#ifdef HAVE_AVAHI
+#include "lib/avahi/ServiceConfig.hxx"
+#endif
 
 #include <forward_list>
 #include <string>
