@@ -1684,6 +1684,10 @@ The translation server’s response consists of these packets:
   request, the request and response headers will be logged. Only for
   debugging purposes.
 
+- ``PROBE``: Mark this request as a "probe" request, which means the
+  server shall generate the translation response, but shall not
+  account it (e.g. shall not mark a ticket as "consumed").
+
 .. _login:
 
 Login translation
