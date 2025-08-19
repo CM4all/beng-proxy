@@ -33,8 +33,9 @@ BpListener::MakeAvahiService(const BpListenerConfig &config) const noexcept
 	   selected a port for us */
 	if (const auto local_address = GetLocalAddress();
 	    local_address.IsDefined()) {
-		return config.zeroconf.Create(config.interface.empty() ? nullptr : config.interface.c_str(),
-					      local_address, config.v6only);
+		return std::make_unique<Avahi::Service>(config.zeroconf,
+							config.interface.empty() ? nullptr : config.interface.c_str(),
+							local_address, config.v6only);
 	}
 
 	return {};
