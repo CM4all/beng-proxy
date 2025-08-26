@@ -1,6 +1,6 @@
 cm4all-beng-proxy (20.8) unstable; urgency=low
 
-  * 
+  * ssl: disable weak AES128 ciphers
 
  --   
 

@@ -63,6 +63,8 @@ SetupBasicSslCtx(SSL_CTX &ssl_ctx, bool server)
 	SSL_CTX_set_cipher_list(&ssl_ctx, "DEFAULT"
 				":!EXPORT:!LOW:!MEDIUM"
 				":!RC4"
+				/* disable weak AES ciphers */
+				":!AES128"
 				/* disable insecure CBC ciphers */
 				":!SHA1:!SHA256:!SHA384");
 
