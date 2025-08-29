@@ -57,7 +57,7 @@ SetupBasicSslCtx(SSL_CTX &ssl_ctx, bool server)
 	}
 
 	/* disable protocols that are known to be insecure */
-	SSL_CTX_set_min_proto_version(&ssl_ctx, TLS1_3_VERSION);
+	SSL_CTX_set_min_proto_version(&ssl_ctx, TLS1_2_VERSION);
 
 	/* disable weak ciphers */
 	SSL_CTX_set_cipher_list(&ssl_ctx, "DEFAULT"

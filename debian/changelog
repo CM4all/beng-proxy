@@ -1,6 +1,6 @@
 cm4all-beng-proxy (20.9) unstable; urgency=low
 
-  * 
+  * ssl: revert the TLS 1.3 requirement, allow TLS 1.2
 
  --   
 
