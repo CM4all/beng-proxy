@@ -275,6 +275,12 @@ WasInput::SubmitBuffer(bool invoke_ready) noexcept
 void
 WasInput::ReadToBuffer()
 {
+	/* since we're going to read manually now (upon caller's
+	   request), the pending EPOLLIN has been handled already in
+	   this EventLoop iteration; clear this flag for now and skip
+	   the pending read */
+	event.ClearReadyFlags(PipeEvent::READ);
+
 	std::size_t max_length = FB_SIZE;
 	if (known_length) {
 		uint64_t rest = length - received;
@@ -342,6 +348,12 @@ WasInput::TryDirect() noexcept
 {
 	assert(buffer.empty());
 	assert(!buffer.IsDefined());
+
+	/* since we're going to read manually now (upon caller's
+	   request), the pending EPOLLIN has been handled already in
+	   this EventLoop iteration; clear this flag for now and skip
+	   the pending read */
+	event.ClearReadyFlags(PipeEvent::READ);
 
 	std::size_t max_length = 0x1000000;
 	bool then_eof = false;

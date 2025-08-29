@@ -314,6 +314,12 @@ WasOutput::OnDirect(FdType, FileDescriptor source_fd, off_t source_offset,
 	assert(HasPipe());
 	assert(!IsEof());
 
+	/* since we're going to write manually now (upon caller's
+	   request), the pending EPOLLOUT has been handled already in
+	   this EventLoop iteration; clear this flag for now and skip
+	   the pending write */
+	event.ClearReadyFlags(PipeEvent::WRITE);
+
 	if (then_eof && !known_length) {
 		known_length = true;
 		total_length = sent + max_length;
