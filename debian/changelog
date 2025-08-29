@@ -1,5 +1,6 @@
 cm4all-beng-proxy (20.9) unstable; urgency=low
 
+  * io_uring: revert "eliminate unnecessary epoll_wait() system calls"
   * ssl: revert the TLS 1.3 requirement, allow TLS 1.2
 
  --   
