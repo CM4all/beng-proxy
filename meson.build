@@ -196,7 +196,6 @@ subdir('libcommon/src/io/config')
 io2 = static_library(
   'io2',
   'src/io/Buffered.cxx',
-  'src/io/RuntimeDirectory.cxx',
   'src/io/SpliceSupport.cxx',
   include_directories: inc,
   dependencies: [
