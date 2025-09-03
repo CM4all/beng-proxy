@@ -292,7 +292,6 @@ net2 = static_library(
   'src/net/FailureManager.cxx',
   'src/net/FailureInfo.cxx',
   'src/net/FailureRef.cxx',
-  'src/net/TempListener.cxx',
   'src/net/ClientAccounting.cxx',
   'src/net/ListenStreamStock.cxx',
   'src/net/ConnectSocketX.cxx',
