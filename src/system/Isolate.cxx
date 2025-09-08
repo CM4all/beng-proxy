@@ -37,7 +37,7 @@ isolate_from_filesystem(bool allow_dbus,
 	/* for dbus "AUTH EXTERNAL", libdbus needs to obtain the "real"
 	   uid from geteuid(), so set up the mapping */
 	DenySetGroups(0);
-	SetupGidMap(0, gid, false);
+	SetupGidMap(0, gid);
 	SetupUidMap(0, uid, uid, 0, 0, false);
 
 	/* convert all "shared" mounts to "private" mounts */
