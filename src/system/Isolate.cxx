@@ -38,7 +38,7 @@ isolate_from_filesystem(bool allow_dbus,
 	   uid from geteuid(), so set up the mapping */
 	DenySetGroups(0);
 	SetupGidMap(0, gid);
-	SetupUidMap(0, uid, uid, 0, 0, false);
+	SetupUidMap(0, uid);
 
 	/* convert all "shared" mounts to "private" mounts */
 	MountSetAttr(FileDescriptor::Undefined(), "/",
