@@ -231,9 +231,9 @@ BpInstance::OnControlPacket(BengControl::Command command,
 }
 
 void
-BpInstance::OnControlError(std::exception_ptr ep) noexcept
+BpInstance::OnControlError(std::exception_ptr &&error) noexcept
 {
-	LogConcat(2, "control", ep);
+	LogConcat(2, "control", std::move(error));
 }
 
 void

@@ -244,7 +244,7 @@ LbControl::OnControlPacket(BengControl::Command command,
 }
 
 void
-LbControl::OnControlError(std::exception_ptr ep) noexcept
+LbControl::OnControlError(std::exception_ptr &&error) noexcept
 {
-	logger(2, ep);
+	logger(2, std::move(error));
 }

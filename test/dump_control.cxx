@@ -25,8 +25,8 @@ public:
 		       unsigned(command), uid, payload.size());
 	}
 
-	void OnControlError(std::exception_ptr ep) noexcept override {
-		PrintException(ep);
+	void OnControlError(std::exception_ptr &&error) noexcept override {
+		PrintException(std::move(error));
 	}
 };
 
