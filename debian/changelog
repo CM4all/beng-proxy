@@ -4,7 +4,7 @@ cm4all-beng-proxy (20.10) unstable; urgency=low
   * spawn: reassociate with existing user/IPC namespace (experimental)
   * spawn: hold a namespace lease
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Tue, 09 Sep 2025 19:34:55 +0200
 
 cm4all-beng-proxy (20.9) unstable; urgency=low
 
