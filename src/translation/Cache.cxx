@@ -29,12 +29,13 @@
 #include "lib/pcre/UniqueRegex.hxx"
 #include "io/Logger.hxx"
 #include "util/djb_hash.hxx"
+#include "util/IntrusiveForwardList.hxx"
 #include "util/IntrusiveHashSet.hxx"
-#include "util/IntrusiveList.hxx"
 #include "util/SpanCast.hxx"
 #include "util/StringAPI.hxx"
 #include "util/StringSplit.hxx"
 
+#include <algorithm> // for std::any_of()
 #include <cassert>
 
 #include <time.h>
@@ -59,6 +60,31 @@ static constexpr std::size_t MAX_READ_FILE = 256;
 
 struct TranslateCacheItem final : PoolHolder, CacheItem {
 	IntrusiveHashSetHook<IntrusiveHookMode::AUTO_UNLINK> per_host_siblings, per_site_siblings;
+
+	struct Tag final : IntrusiveHashSetHook<IntrusiveHookMode::AUTO_UNLINK>, IntrusiveForwardListHook {
+		TranslateCacheItem &parent;
+
+		const char *const value;
+
+		constexpr Tag(TranslateCacheItem &_parent, const char *_value) noexcept
+			:parent(_parent), value(_value) {}
+
+		[[gnu::pure]]
+		bool Match(const char *other) const noexcept {
+			return StringIsEqual(value, other);
+		}
+
+		struct GetTag {
+			[[gnu::pure]]
+			constexpr std::string_view operator()(const Tag &tag) const noexcept {
+				assert(tag.value != nullptr);
+
+				return tag.value;
+			}
+		};
+	};
+
+	IntrusiveForwardList<Tag> tags;
 
 	struct {
 		const char *param;
@@ -99,7 +125,26 @@ struct TranslateCacheItem final : PoolHolder, CacheItem {
 
 	TranslateCacheItem(const TranslateCacheItem &) = delete;
 
+	~TranslateCacheItem() noexcept {
+		tags.clear_and_dispose(PoolDisposer{GetPool()});
+	}
+
 	using PoolHolder::GetPool;
+
+	[[nodiscard]]
+	Tag &AddTag(const char *value) noexcept {
+		const AllocatorPtr alloc{GetPool()};
+		auto *tag = alloc.New<Tag>(*this, alloc.Dup(value));
+		tags.push_front(*tag);
+		return *tag;
+	}
+
+	[[gnu::pure]]
+	bool MatchTag(const char *tag) const noexcept {
+		return tag == nullptr ||
+			std::any_of(tags.begin(), tags.end(),
+				    [tag](const auto &i){ return i.Match(tag); });
+	}
 
 	[[gnu::pure]]
 	bool MatchSite(const char *_site) const noexcept {
@@ -131,16 +176,18 @@ struct TranslateCacheItem final : PoolHolder, CacheItem {
 
 	[[gnu::pure]]
 	bool InvalidateMatch(std::span<const TranslationCommand> vary,
+			     const char *tag,
 			     const TranslateRequest &other_request) const noexcept {
-		return VaryMatch(vary, other_request, true);
+		return MatchTag(tag) && VaryMatch(vary, other_request, true);
 	}
 
 	[[gnu::pure]]
 	bool InvalidateMatch(std::span<const TranslationCommand> vary,
+			     const char *tag,
 			     const TranslateRequest &other_request,
 			     const char *other_site) const noexcept {
 		return (other_site == nullptr || MatchSite(other_site)) &&
-			InvalidateMatch(vary, other_request);
+			InvalidateMatch(vary, tag, other_request);
 	}
 
 	/* virtual methods from class CacheItem */
@@ -209,6 +256,20 @@ struct tcache final : private CacheHandler {
 				 IntrusiveHashSetMemberHookTraits<&TranslateCacheItem::per_site_siblings>>;
 	PerSiteSet per_site;
 
+	/**
+	 * This hash table maps each tag string to the
+	 * #TranslateCacheItem::Tag instances with that CACHE_TAG.
+	 * This is used to optimize the common INVALIDATE=CACHE_TAG
+	 * response, to avoid traversing the whole cache.
+	 */
+	using PerTagSet =
+		IntrusiveHashSet<TranslateCacheItem::Tag, 256,
+				 IntrusiveHashSetOperators<TranslateCacheItem::Tag,
+							   TranslateCacheItem::Tag::GetTag,
+							   TranslateCacheItem::StringViewHash,
+							   std::equal_to<std::string_view>>>;
+	PerTagSet per_tag;
+
 	Cache cache;
 
 	CacheStats stats{};
@@ -230,15 +291,20 @@ struct tcache final : private CacheHandler {
 	~tcache() noexcept = default;
 
 	std::size_t InvalidateHost(const TranslateRequest &request,
-				   std::span<const TranslationCommand> vary) noexcept;
+				   std::span<const TranslationCommand> vary,
+				   const char *tag) noexcept;
 
 	std::size_t InvalidateSite(const TranslateRequest &request,
 				   std::span<const TranslationCommand> vary,
-				   std::string_view site) noexcept;
+				   std::string_view site, const char *tag) noexcept;
+
+	std::size_t InvalidateTag(const TranslateRequest &request,
+				  std::span<const TranslationCommand> vary,
+				  std::string_view tag) noexcept;
 
 	void Invalidate(const TranslateRequest &request,
 			std::span<const TranslationCommand> vary,
-			const char *site) noexcept;
+			const char *site, const char *tag) noexcept;
 
 private:
 	/* virtual methods from CacheHandler */
@@ -861,7 +927,7 @@ struct TranslationCacheInvalidate {
 
 	std::span<const TranslationCommand> vary;
 
-	const char *site;
+	const char *site, *tag;
 };
 
 static bool
@@ -870,19 +936,20 @@ tcache_invalidate_match(const CacheItem *_item, void *ctx) noexcept
 	const TranslateCacheItem &item = *(const TranslateCacheItem *)_item;
 	const auto &data = *(const TranslationCacheInvalidate *)ctx;
 
-	return item.InvalidateMatch(data.vary, *data.request, data.site);
+	return item.InvalidateMatch(data.vary, data.tag, *data.request, data.site);
 }
 
 inline std::size_t
 tcache::InvalidateHost(const TranslateRequest &request,
-		       std::span<const TranslationCommand> vary) noexcept
+		       std::span<const TranslationCommand> vary,
+		       const char *tag) noexcept
 {
 	const std::string_view host = request.host != nullptr
 		? std::string_view{request.host}
 		: std::string_view{};
 
-	return per_host.remove_and_dispose_key_if(host, [&request, vary](const TranslateCacheItem &item){
-		return item.InvalidateMatch(vary, request);
+	return per_host.remove_and_dispose_key_if(host, [&request, vary, tag](const TranslateCacheItem &item){
+		return item.InvalidateMatch(vary, tag, request);
 	}, [this](TranslateCacheItem *item){
 		cache.Remove(*item);
 	});
@@ -891,29 +958,43 @@ tcache::InvalidateHost(const TranslateRequest &request,
 inline std::size_t
 tcache::InvalidateSite(const TranslateRequest &request,
 		       std::span<const TranslationCommand> vary,
-		       std::string_view site) noexcept
+		       std::string_view site, const char *tag) noexcept
 {
-	return per_site.remove_and_dispose_key_if(site, [&request, vary](const TranslateCacheItem &item){
-		return item.InvalidateMatch(vary, request);
+	return per_site.remove_and_dispose_key_if(site, [&request, vary, tag](const TranslateCacheItem &item){
+		return item.InvalidateMatch(vary, tag, request);
 	}, [this](TranslateCacheItem *item){
 		cache.Remove(*item);
+	});
+}
+
+inline std::size_t
+tcache::InvalidateTag(const TranslateRequest &request,
+		      std::span<const TranslationCommand> vary,
+		      std::string_view tag) noexcept
+{
+	return per_tag.remove_and_dispose_key_if(tag, [&request, vary](const TranslateCacheItem::Tag &i){
+		return i.parent.InvalidateMatch(vary, nullptr, request);
+	}, [this](TranslateCacheItem::Tag *i){
+		cache.Remove(i->parent);
 	});
 }
 
 void
 tcache::Invalidate(const TranslateRequest &request,
 		   std::span<const TranslationCommand> vary,
-		   const char *site) noexcept
+		   const char *site, const char *tag) noexcept
 {
-	TranslationCacheInvalidate data{&request, vary, site};
+	TranslationCacheInvalidate data{&request, vary, site, tag};
 
 	[[maybe_unused]]
 	std::size_t removed;
 
 	if (site != nullptr)
-		removed = InvalidateSite(request, vary, site);
+		removed = InvalidateSite(request, vary, site, tag);
 	else if (std::find(vary.begin(), vary.end(), TranslationCommand::HOST) != vary.end())
-		removed = InvalidateHost(request, vary);
+		removed = InvalidateHost(request, vary, tag);
+	else if (tag != nullptr)
+		removed = InvalidateTag(request, vary, tag);
 	else
 		removed = cache.RemoveAllMatch(tcache_invalidate_match, &data);
 
@@ -923,9 +1004,9 @@ tcache::Invalidate(const TranslateRequest &request,
 void
 TranslationCache::Invalidate(const TranslateRequest &request,
 			     std::span<const TranslationCommand> vary,
-			     const char *site) noexcept
+			     const char *site, const char *tag) noexcept
 {
-	cache->Invalidate(request, vary, site);
+	cache->Invalidate(request, vary, site, tag);
 }
 
 /**
@@ -1038,6 +1119,9 @@ tcache_store(TranslateCacheRequest &tcr, const TranslateResponse &response)
 	if (response.site != nullptr)
 		tcr.tcache->per_site.insert(*item);
 
+	for (const char *i : response.cache_tags)
+		tcr.tcache->per_tag.insert(item->AddTag(i));
+
 	++tcr.tcache->stats.stores;
 	TranslateCacheMatchContext match_ctx{tcr.request, tcr.find_base};
 	tcr.tcache->cache.PutMatch(*item, tcache_item_match, &match_ctx);
@@ -1080,7 +1164,7 @@ try {
 	if (!response.invalidate.empty())
 		tcache->Invalidate(request,
 				   response.invalidate,
-				   nullptr);
+				   nullptr, nullptr);
 
 	if (!cacheable) {
 		LogConcat(4, "TranslationCache", "ignore ", key.value);

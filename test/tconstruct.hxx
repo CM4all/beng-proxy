@@ -244,6 +244,14 @@ struct MakeResponse : TranslateResponse {
 		site = value;
 		return std::move(*this);
 	}
+
+	MakeResponse &&CacheTags(std::initializer_list<const char *> tags) noexcept {
+		cache_tags.Init();
+		for (const char *tag : tags) {
+			cache_tags.Add(alloc, tag);
+		}
+		return std::move(*this);
+	}
 };
 
 struct MakeFileAddress : FileAddress {

@@ -187,6 +187,8 @@ ParseTranslationInvalidateRequest(AllocatorPtr alloc,
 			: "";
 		if (command == TranslationCommand::SITE)
 			request.site = payload;
+		else if (command == TranslationCommand::CACHE_TAG)
+			request.tag = payload;
 		else {
 			apply_translation_packet(request, command, payload,
 						 payload_length);

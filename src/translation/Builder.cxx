@@ -86,10 +86,10 @@ TranslationCacheBuilder::Flush() noexcept
 void
 TranslationCacheBuilder::Invalidate(const TranslateRequest &request,
 				    std::span<const TranslationCommand> vary,
-				    const char *site) noexcept
+				    const char *site, const char *tag) noexcept
 {
 	for (auto &i : m)
-		i.second->Invalidate(request, vary, site);
+		i.second->Invalidate(request, vary, site, tag);
 }
 
 std::shared_ptr<TranslationService>

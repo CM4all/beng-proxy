@@ -16,6 +16,7 @@ class AllocatorPtr;
 
 struct TranslationInvalidateRequest : TranslateRequest {
 	const char *site = nullptr;
+	const char *tag = nullptr;
 
 	StaticVector<TranslationCommand, 32> commands;
 

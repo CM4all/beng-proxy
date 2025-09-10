@@ -55,7 +55,7 @@ control_tcache_invalidate(BpInstance *instance, std::span<const std::byte> paylo
 	instance->translation_caches
 		->Invalidate(request,
 			     request.commands,
-			     request.site);
+			     request.site, request.tag);
 }
 
 static void

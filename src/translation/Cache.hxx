@@ -51,7 +51,7 @@ public:
 	 */
 	void Invalidate(const TranslateRequest &request,
 			std::span<const TranslationCommand> vary,
-			const char *site) noexcept;
+			const char *site, const char *tag) noexcept;
 
 	/* virtual methods from class TranslationService */
 	void SendRequest(AllocatorPtr alloc,

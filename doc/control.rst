@@ -56,6 +56,8 @@ Commands
 
 - ``NOP``: ignored
 
+.. _tcache_invalidate:
+
 - ``TCACHE_INVALIDATE``: Invalidates translation cache entries. This
   packet follows the same semantics as the ``INVALIDATE`` translation
   response packet, but instead of passing just a list of command

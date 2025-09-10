@@ -379,6 +379,10 @@ Response
     ``WAS``): for HTTP cache items, to be used with
     :ref:`FLUSH_HTTP_CACHE <flush_http_cache>`.
 
+  - Prior to any of the above: for the whole translation response
+    (i.e. the translation cache item), to be used with
+    :ref:`TCACHE_INVALIDATE <tcache_invalidate>`.
+
 - ``REVEAL_USER``: If present after ``FILTER``, then the filter will
   see ``X-CM4all-BENG-User`` as an additional request header (if a user
   is logged in).

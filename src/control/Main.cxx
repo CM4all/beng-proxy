@@ -55,6 +55,7 @@ static constexpr struct {
 	{ "USER_AGENT", TranslationCommand::USER_AGENT },
 	{ "QUERY_STRING", TranslationCommand::QUERY_STRING },
 	{ "SITE", TranslationCommand::SITE },
+	{ "CACHE_TAG", TranslationCommand::CACHE_TAG },
 	{ "INTERNAL_REDIRECT", TranslationCommand::INTERNAL_REDIRECT },
 	{ "ENOTDIR", TranslationCommand::ENOTDIR_ },
 	{ "USER", TranslationCommand::USER },

@@ -1199,7 +1199,7 @@ TEST(TranslationCache, InvalidateSite)
 
 	/* invalidate cache items with site "site1" */
 
-	cache.Invalidate(MakeRequest("/dummy"), {}, "site1");
+	cache.Invalidate(MakeRequest("/dummy"), {}, "site1", nullptr);
 
 	/* check that items with site "site1" have been removed, others remain */
 
@@ -1207,4 +1207,56 @@ TEST(TranslationCache, InvalidateSite)
 	Cached(pool, cache, request2, response2);  // remains (site2)
 	Cached(pool, cache, request3, response3);  // remains (no site)
 	CachedError(pool, cache, request4);  // removed (site1)
+}
+
+TEST(TranslationCache, InvalidateTag)
+{
+	Instance instance;
+	struct pool &pool = instance.root_pool;
+	auto &cache = instance.cache;
+
+	/* feed the cache with items having different cache tags */
+
+	const auto request1 = MakeRequest("/tag/page1");
+	const auto response1 = MakeResponse(pool).File("/var/www/page1").CacheTags({"tag1", "common"});
+	Feed(pool, cache, request1, response1);
+
+	const auto request2 = MakeRequest("/tag/page2");
+	const auto response2 = MakeResponse(pool).File("/var/www/page2").CacheTags({"tag2", "common"});
+	Feed(pool, cache, request2, response2);
+
+	const auto request3 = MakeRequest("/tag/page3");
+	const auto response3 = MakeResponse(pool).File("/var/www/page3");
+	Feed(pool, cache, request3, response3);
+
+	const auto request4 = MakeRequest("/tag/page4");
+	const auto response4 = MakeResponse(pool).File("/var/www/page4").CacheTags({"tag1"});
+	Feed(pool, cache, request4, response4);
+
+	/* verify the cache items */
+
+	Cached(pool, cache, request1, response1);
+	Cached(pool, cache, request2, response2);
+	Cached(pool, cache, request3, response3);
+	Cached(pool, cache, request4, response4);
+
+	/* invalidate cache items with tag "tag1" */
+
+	cache.Invalidate(MakeRequest("/dummy"), {}, nullptr, "tag1");
+
+	/* check that items with tag "tag1" have been removed, others remain */
+
+	CachedError(pool, cache, request1);  // removed (has tag1)
+	Cached(pool, cache, request2, response2);  // remains (has tag2, common but not tag1)
+	Cached(pool, cache, request3, response3);  // remains (no tags)
+	CachedError(pool, cache, request4);  // removed (has tag1)
+
+	/* now invalidate items with tag "common" */
+
+	cache.Invalidate(MakeRequest("/dummy"), {}, nullptr, "common");
+
+	/* check that remaining items with tag "common" are removed */
+
+	CachedError(pool, cache, request2);  // removed (has common)
+	Cached(pool, cache, request3, response3);  // remains (no tags)
 }
