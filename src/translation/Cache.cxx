@@ -229,12 +229,12 @@ struct tcache final : private CacheHandler {
 
 	~tcache() noexcept = default;
 
-	unsigned InvalidateHost(const TranslateRequest &request,
-				std::span<const TranslationCommand> vary) noexcept;
+	std::size_t InvalidateHost(const TranslateRequest &request,
+				   std::span<const TranslationCommand> vary) noexcept;
 
-	unsigned InvalidateSite(const TranslateRequest &request,
-				std::span<const TranslationCommand> vary,
-				std::string_view site) noexcept;
+	std::size_t InvalidateSite(const TranslateRequest &request,
+				   std::span<const TranslationCommand> vary,
+				   std::string_view site) noexcept;
 
 	void Invalidate(const TranslateRequest &request,
 			std::span<const TranslationCommand> vary,
@@ -873,7 +873,7 @@ tcache_invalidate_match(const CacheItem *_item, void *ctx) noexcept
 	return item.InvalidateMatch(data.vary, *data.request, data.site);
 }
 
-inline unsigned
+inline std::size_t
 tcache::InvalidateHost(const TranslateRequest &request,
 		       std::span<const TranslationCommand> vary) noexcept
 {
@@ -888,7 +888,7 @@ tcache::InvalidateHost(const TranslateRequest &request,
 	});
 }
 
-inline unsigned
+inline std::size_t
 tcache::InvalidateSite(const TranslateRequest &request,
 		       std::span<const TranslationCommand> vary,
 		       std::string_view site) noexcept
@@ -908,7 +908,7 @@ tcache::Invalidate(const TranslateRequest &request,
 	TranslationCacheInvalidate data{&request, vary, site};
 
 	[[maybe_unused]]
-	unsigned removed = site != nullptr
+	std::size_t removed = site != nullptr
 		? InvalidateSite(request, vary, site)
 		: (std::find(vary.begin(), vary.end(), TranslationCommand::HOST) != vary.end()
 		   ? InvalidateHost(request, vary)
