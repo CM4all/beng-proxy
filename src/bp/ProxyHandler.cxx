@@ -90,7 +90,7 @@ Request::HandleProxyAddress() noexcept
 			       .auto_flush_cache = tr.auto_flush_cache,
 			       .want_metrics = translate.enable_metrics,
 			       .address_id = translate.address_id,
-			       .cache_tag = tr.cache_tag,
+			       .cache_tag = tr.address_cache_tag,
 			       .site_name = tr.site,
 		       },
 		       forward.method, address,
