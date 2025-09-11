@@ -908,11 +908,15 @@ tcache::Invalidate(const TranslateRequest &request,
 	TranslationCacheInvalidate data{&request, vary, site};
 
 	[[maybe_unused]]
-	std::size_t removed = site != nullptr
-		? InvalidateSite(request, vary, site)
-		: (std::find(vary.begin(), vary.end(), TranslationCommand::HOST) != vary.end()
-		   ? InvalidateHost(request, vary)
-		   : cache.RemoveAllMatch(tcache_invalidate_match, &data));
+	std::size_t removed;
+
+	if (site != nullptr)
+		removed = InvalidateSite(request, vary, site);
+	else if (std::find(vary.begin(), vary.end(), TranslationCommand::HOST) != vary.end())
+		removed = InvalidateHost(request, vary);
+	else
+		removed = cache.RemoveAllMatch(tcache_invalidate_match, &data);
+
 	LogConcat(4, "TranslationCache", "invalidated ", removed, " cache items");
 }
 
