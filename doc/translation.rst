@@ -1375,6 +1375,9 @@ Other Child Process Options
 
 - ``FORBID_BIND`` makes ``bind()`` and ``listen()`` return ``EACCES``.
 
+- ``ALLOW_PTRACE`` allows the child process to use the ``ptrace()`` and
+  similar system calls which are disallowed by default.
+
 - ``STDERR_PATH`` specifies an absolute path that will be created. The
   child’s error messages will be appended there. ``STDERR_NULL``
   redirects standard error to :file:`/dev/null` instead.
