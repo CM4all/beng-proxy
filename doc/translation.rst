@@ -368,13 +368,16 @@ Response
 
 .. _cache_tag:
 
-- ``CACHE_TAG``: If present after ``FILTER`` and the filter's response
-  is cached, then this tag will be assigned to the cache item.  This
-  tag can be used with :ref:`FLUSH_FILTER_CACHE <flush_filter_cache>`
-  to flush only a part of the filter cache.
+- ``CACHE_TAG``: Mark a cache item with this tag (an opaque string).
+  This can be used to flush/invalidate groups of cache items in one
+  control command.  The following parts of the response can be tagged:
 
-  Without ``FILTER``, this assigns a tag for the HTTP cache item which
-  can be used with :ref:`FLUSH_HTTP_CACHE <flush_http_cache>`.
+  - After ``FILTER``: for filter cache items, to be used with
+    :ref:`FLUSH_FILTER_CACHE <flush_filter_cache>`.
+
+  - After a HTTP resource address (e.g. ``HTTP``, ``FASTCGI``,
+    ``WAS``): for HTTP cache items, to be used with
+    :ref:`FLUSH_HTTP_CACHE <flush_http_cache>`.
 
 - ``REVEAL_USER``: If present after ``FILTER``, then the filter will
   see ``X-CM4all-BENG-User`` as an additional request header (if a user
