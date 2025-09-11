@@ -1165,3 +1165,46 @@ TEST(TranslationCache, ExpandBindMount)
 		    .BindMount("/home/bar", "/mnt")
 		    .BindMount("/etc", "/etc")));
 }
+
+TEST(TranslationCache, InvalidateSite)
+{
+	Instance instance;
+	struct pool &pool = instance.root_pool;
+	auto &cache = instance.cache;
+
+	/* feed the cache with items having different site values */
+
+	const auto request1 = MakeRequest("/site/page1");
+	const auto response1 = MakeResponse(pool).File("/var/www/site1/page1").Site("site1");
+	Feed(pool, cache, request1, response1);
+
+	const auto request2 = MakeRequest("/site/page2");
+	const auto response2 = MakeResponse(pool).File("/var/www/site2/page2").Site("site2");
+	Feed(pool, cache, request2, response2);
+
+	const auto request3 = MakeRequest("/site/page3");
+	const auto response3 = MakeResponse(pool).File("/var/www/default/page3");
+	Feed(pool, cache, request3, response3);
+
+	const auto request4 = MakeRequest("/site/page4");
+	const auto response4 = MakeResponse(pool).File("/var/www/site1/page4").Site("site1");
+	Feed(pool, cache, request4, response4);
+
+	/* verify the cache items */
+
+	Cached(pool, cache, request1, response1);
+	Cached(pool, cache, request2, response2);
+	Cached(pool, cache, request3, response3);
+	Cached(pool, cache, request4, response4);
+
+	/* invalidate cache items with site "site1" */
+
+	cache.Invalidate(MakeRequest("/dummy"), {}, "site1");
+
+	/* check that items with site "site1" have been removed, others remain */
+
+	CachedError(pool, cache, request1);  // removed (site1)
+	Cached(pool, cache, request2, response2);  // remains (site2)
+	Cached(pool, cache, request3, response3);  // remains (no site)
+	CachedError(pool, cache, request4);  // removed (site1)
+}

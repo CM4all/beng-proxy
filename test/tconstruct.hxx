@@ -239,6 +239,11 @@ struct MakeResponse : TranslateResponse {
 		want_full_uri = {(const std::byte *)value, strlen(value)};
 		return std::move(*this);
 	}
+
+	MakeResponse &&Site(const char *value) noexcept {
+		site = value;
+		return std::move(*this);
+	}
 };
 
 struct MakeFileAddress : FileAddress {
