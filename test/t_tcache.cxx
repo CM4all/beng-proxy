@@ -1260,3 +1260,60 @@ TEST(TranslationCache, InvalidateTag)
 	CachedError(pool, cache, request2);  // removed (has common)
 	Cached(pool, cache, request3, response3);  // remains (no tags)
 }
+
+TEST(TranslationCache, InvalidateHost)
+{
+	Instance instance;
+	struct pool &pool = instance.root_pool;
+	auto &cache = instance.cache;
+
+	static constexpr TranslationCommand host_vary[] = {
+		TranslationCommand::HOST,
+	};
+
+	/* feed the cache with items having different host values */
+
+	auto request1 = MakeRequest("/host/page1");
+	request1.host = "host1.example.com";
+	const auto response1 = MakeResponse(pool).File("/var/www/host1/page1")
+		.Vary(host_vary);
+	Feed(pool, cache, request1, response1);
+
+	auto request2 = MakeRequest("/host/page2");
+	request2.host = "host2.example.com";
+	const auto response2 = MakeResponse(pool).File("/var/www/host2/page2")
+		.Vary(host_vary);
+	Feed(pool, cache, request2, response2);
+
+	auto request3 = MakeRequest("/host/page3");
+	// request3.host is nullptr (no host)
+	const auto response3 = MakeResponse(pool).File("/var/www/default/page3")
+		.Vary(host_vary);
+	Feed(pool, cache, request3, response3);
+
+	auto request4 = MakeRequest("/host/page4");
+	request4.host = "host1.example.com";
+	const auto response4 = MakeResponse(pool).File("/var/www/host1/page4")
+		.Vary(host_vary);
+	Feed(pool, cache, request4, response4);
+
+	/* verify the cache items */
+
+	Cached(pool, cache, request1, response1);
+	Cached(pool, cache, request2, response2);
+	Cached(pool, cache, request3, response3);
+	Cached(pool, cache, request4, response4);
+
+	/* invalidate cache items with host "host1.example.com" */
+
+	auto invalidate_request = MakeRequest("/dummy");
+	invalidate_request.host = "host1.example.com";
+	cache.Invalidate(invalidate_request, host_vary, nullptr, nullptr);
+
+	/* check that items with host "host1.example.com" have been removed, others remain */
+
+	CachedError(pool, cache, request1);  // removed (host1.example.com)
+	Cached(pool, cache, request2, response2);  // remains (host2.example.com)
+	Cached(pool, cache, request3, response3);  // remains (no host)
+	CachedError(pool, cache, request4);  // removed (host1.example.com)
+}
