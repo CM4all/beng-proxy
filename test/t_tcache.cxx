@@ -594,11 +594,11 @@ TEST(TranslationCache, VaryInvalidate)
 	struct pool &pool = instance.root_pool;
 	auto &cache = instance.cache;
 
-	static const TranslationCommand response5_vary[] = {
+	static constexpr TranslationCommand response5_vary[] = {
 		TranslationCommand::QUERY_STRING,
 	};
 
-	static const TranslationCommand response5_invalidate[] = {
+	static constexpr TranslationCommand response5_invalidate[] = {
 		TranslationCommand::QUERY_STRING,
 	};
 
@@ -673,7 +673,7 @@ TEST(TranslationCache, InvalidateUri)
 
 	/* invalidate all cache items */
 
-	static const TranslationCommand response5_invalidate[] = {
+	static constexpr TranslationCommand response5_invalidate[] = {
 		TranslationCommand::URI,
 	};
 
