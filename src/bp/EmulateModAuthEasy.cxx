@@ -12,6 +12,7 @@
 #include "http/IncomingRequest.hxx"
 #include "translation/Vary.hxx"
 #include "istream/FileIstream.hxx"
+#include "io/FileAt.hxx"
 #include "io/FileDescriptor.hxx"
 #include "util/StringAPI.hxx"
 #include "util/StringCompare.hxx"
@@ -169,7 +170,7 @@ OpenSiblingFile(FileDescriptor directory, std::string_view base_relative,
 	}
 
 	FileDescriptor fd;
-	if (!fd.Open(directory, sibling_name, O_RDONLY|O_NOFOLLOW))
+	if (!fd.Open({directory, sibling_name}, O_RDONLY|O_NOFOLLOW))
 		return nullptr;
 
 	return fdopen(fd.Get(), "r");

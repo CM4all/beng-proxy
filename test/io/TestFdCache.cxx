@@ -5,6 +5,7 @@
 #include "event/FineTimerEvent.hxx"
 #include "event/Loop.hxx"
 #include "io/FdCache.hxx"
+#include "io/FileAt.hxx"
 #include "io/Open.hxx"
 #include "io/Temp.hxx"
 #include "io/RecursiveDelete.hxx"
@@ -192,7 +193,7 @@ struct EventLoopUringInstance {
 struct TestFdCacheInstance : EventLoopUringInstance {
 	const UniqueFileDescriptor tmp = OpenTmpDir();
 	const StringBuffer<16> tmp_name = MakeTempDirectory(tmp, 0700);
-	const UniqueFileDescriptor dir = OpenPath(tmp, tmp_name, O_DIRECTORY);
+	const UniqueFileDescriptor dir = OpenPath({tmp, tmp_name}, O_DIRECTORY);
 
 	FdCache fd_cache{event_loop};
 
