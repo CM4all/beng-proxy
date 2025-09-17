@@ -132,6 +132,10 @@ BpInstance::ShutdownCallback() noexcept
 	fd_cache.BeginShutdown();
 	file_cache.BeginShutdown();
 
+#ifdef HAVE_LIBSYSTEMD
+	systemd_watchdog.Disable();
+#endif
+
 	DisableSignals();
 	thread_pool_stop();
 

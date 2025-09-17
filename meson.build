@@ -383,6 +383,12 @@ else
   odbus_dep = dependency('', required: false)
 endif
 
+if libcommon_enable_libsystemd
+  subdir('libcommon/src/event/systemd')
+else
+  event_systemd_dep = dependency('', required: false)
+endif
+
 subdir('src/http')
 subdir('src/pipe')
 subdir('src/istream')
@@ -703,6 +709,7 @@ executable(
     event_net_log_dep,
     avahi_dep,
     odbus_dep,
+    event_systemd_dep,
     pool_dep,
     io_config_dep,
     net_dep,
@@ -853,6 +860,7 @@ executable(
     io_config_dep,
     socket_dep,
     event_dep,
+    event_systemd_dep,
     net_dep,
     net_log_dep,
     ssl_dep,

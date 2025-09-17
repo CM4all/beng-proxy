@@ -14,6 +14,8 @@ SyslogIdentifier=cm4all-beng-lb
 
 User=cm4all-beng-lb
 
+WatchdogSec=2m
+
 # Allow reading TLS key files
 AmbientCapabilities=CAP_DAC_READ_SEARCH
 

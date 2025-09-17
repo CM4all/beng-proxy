@@ -24,6 +24,8 @@ SyslogIdentifier=cm4all-beng-proxy
 
 User=cm4all-beng-proxy
 
+WatchdogSec=2m
+
 RuntimeDirectory=cm4all/beng-proxy
 RuntimeDirectoryMode=0700
 

@@ -60,6 +60,10 @@
 void
 LbInstance::ShutdownCallback() noexcept
 {
+#ifdef HAVE_LIBSYSTEMD
+	systemd_watchdog.Disable();
+#endif
+
 	deinit_signals(this);
 	thread_pool_stop();
 

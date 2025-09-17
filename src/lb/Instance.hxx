@@ -20,6 +20,10 @@
 #include "util/IntrusiveList.hxx"
 #include "lb_features.h"
 
+#ifdef HAVE_LIBSYSTEMD
+#include "event/systemd/Watchdog.hxx"
+#endif
+
 #include <forward_list>
 #include <memory>
 #include <map>
@@ -45,6 +49,10 @@ struct LbInstance final : PInstance, Avahi::ErrorHandler {
 	const LbConfig &config;
 
 	const Logger logger;
+
+#ifdef HAVE_LIBSYSTEMD
+	Systemd::Watchdog systemd_watchdog{event_loop};
+#endif
 
 	ShutdownListener shutdown_listener;
 	SignalEvent sighup_event;

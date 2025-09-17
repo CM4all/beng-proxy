@@ -28,6 +28,10 @@
 #include "io/StateDirectories.hxx"
 #include "util/Background.hxx"
 
+#ifdef HAVE_LIBSYSTEMD
+#include "event/systemd/Watchdog.hxx"
+#endif
+
 #include <forward_list>
 #include <list>
 #include <map>
@@ -90,6 +94,10 @@ struct BpInstance final : PInstance, BengControl::Handler,
 	const BpConfig config;
 
 	HttpStats http_stats;
+
+#ifdef HAVE_LIBSYSTEMD
+	Systemd::Watchdog systemd_watchdog{event_loop};
+#endif
 
 	[[no_unique_address]]
 	UringGlue uring{
