@@ -3,6 +3,7 @@ cm4all-beng-proxy (20.11) unstable; urgency=low
   * control: support TCACHE_INVALIDATE + CACHE_TAG
   * translation: add packet ALLOW_PTRACE
   * add systemd watchdog support
+  * change product token to "IONOS Webserver"
 
  --   
 

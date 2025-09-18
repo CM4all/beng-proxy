@@ -6,5 +6,5 @@
 
 #include "version.h"
 
-#define PRODUCT_TOKEN "CM4all Webserver v" VERSION
-#define BRIEF_PRODUCT_TOKEN "CM4all Webserver"
+#define PRODUCT_TOKEN "IONOS Webserver v" VERSION
+#define BRIEF_PRODUCT_TOKEN "IONOS Webserver"
