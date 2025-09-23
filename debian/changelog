@@ -6,7 +6,7 @@ cm4all-beng-proxy (20.11) unstable; urgency=low
   * add systemd watchdog support
   * change product token to "IONOS Webserver"
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Tue, 23 Sep 2025 23:02:59 +0200
 
 cm4all-beng-proxy (20.10) unstable; urgency=low
 
