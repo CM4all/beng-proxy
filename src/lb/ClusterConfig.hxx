@@ -114,6 +114,14 @@ struct LbClusterConfig {
 
 	StickyMode sticky_mode = StickyMode::NONE;
 
+	/**
+	 * If not empty and the URI begins with this prefix followed
+	 * by 32 lower-case hex digits, then #sticky_mode will be
+	 * ignored and instead a UUID will be generated from those 32
+	 * hex digits.
+	 */
+	std::string sticky_hex_uuid_uri_prefix;
+
 	std::string session_cookie = "beng_proxy_session";
 
 	const LbMonitorConfig *monitor = nullptr;

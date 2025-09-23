@@ -126,6 +126,12 @@ Example::
 - ``session_cookie``: the name of the session cookie for
   ``sticky session_modulo``.
 
+- ``sticky_hex_uuid_uri_prefix``: if the request URI begins with this
+  prefix followed by 32 lower-case hex digits, then the ``sticky``
+  setting will be ignored and instead a UUID will be generated from
+  those 32 hex digits (by inserting four dashes).  This is an
+  experimental feature and may change or be removed at any time.
+
 - ``monitor``: the name of a monitor which shall be used to check this
   pool's members; see :ref:`monitors`.
 

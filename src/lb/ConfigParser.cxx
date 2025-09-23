@@ -608,6 +608,8 @@ LbConfigParser::Cluster::ParseLine(FileLineParser &line)
 #else
 		throw LineParser::Error("Zeroconf support is disabled at compile time");
 #endif
+	} else if (StringIsEqual(word, "sticky_hex_uuid_uri_prefix")) {
+		config.sticky_hex_uuid_uri_prefix = line.ExpectValueAndEnd();
 	} else if (StringIsEqual(word, "session_cookie")) {
 		config.session_cookie = line.ExpectValueAndEnd();
 	} else if (StringIsEqual(word, "monitor")) {

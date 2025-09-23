@@ -30,10 +30,15 @@
 #include "net/PToString.hxx"
 #include "istream/UnusedHoldPtr.hxx"
 #include "util/Cancellable.hxx"
+#include "util/CharUtil.hxx"
 #include "util/LeakDetector.hxx"
 #include "util/FNVHash.hxx"
+#include "util/StringCompare.hxx"
+#include "util/StringVerify.hxx"
 #include "AllocatorPtr.hxx"
 #include "stopwatch.hxx"
+
+#include <algorithm> // for std::copy_n()
 
 static constexpr Event::Duration LB_HTTP_CONNECT_TIMEOUT =
 	std::chrono::seconds{10};
@@ -248,6 +253,34 @@ LbRequest::GetStickyHash() noexcept
 inline std::span<const std::byte>
 LbRequest::GetStickySource() const noexcept
 {
+	if (!cluster_config.sticky_hex_uuid_uri_prefix.empty()) {
+		if (const char *s = StringAfterPrefix(request.uri, cluster_config.sticky_hex_uuid_uri_prefix)) {
+			static constexpr std::size_t HEX_DIGITS = 32;
+			static constexpr std::size_t UUID_LENGTH = 36;
+			const std::string_view sv{s, HEX_DIGITS};
+
+			// TODO throw "400 Bad Request" on malformed UUID
+			if (sv.find('\0') == sv.npos && CheckChars(sv, IsLowerHexDigit)) {
+				/* there are 32 hex digits in the URI,
+				   but to make it a UUID string, we
+				   need to insert four dashes */
+				const std::span<char, UUID_LENGTH> uuid{PoolAlloc<char>(pool, UUID_LENGTH), UUID_LENGTH};
+				char *p = uuid.data();
+				p = std::copy_n(s, 8, p);
+				*p++ = '-';
+				p = std::copy_n(s + 8, 4, p);
+				*p++ = '-';
+				p = std::copy_n(s + 12, 4, p);
+				*p++ = '-';
+				p = std::copy_n(s + 16, 4, p);
+				*p++ = '-';
+				p = std::copy_n(s + 20, 12, p);
+				assert(p == uuid.data() + UUID_LENGTH);
+				return std::as_bytes(uuid);
+			}
+		}
+	}
+
 	switch (cluster_config.sticky_mode) {
 	case StickyMode::NONE:
 	case StickyMode::FAILOVER:
