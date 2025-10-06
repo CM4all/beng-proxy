@@ -152,14 +152,17 @@ DeleteCertificate(const CertDatabaseConfig &db_config, const char *handle)
 }
 
 static void
-GetCertificate(const CertDatabaseConfig &db_config, const char *handle)
+GetCertificate(const CertDatabaseConfig &db_config, const char *handle,
+	       bool text)
 {
 	CertDatabase db(db_config);
 	auto cert = db.GetServerCertificateByHandle(handle);
 	if (!cert)
 		throw "Certificate not found";
 
-	X509_print_fp(stdout, cert.get());
+	if (text)
+		X509_print_fp(stdout, cert.get());
+
 	PEM_write_X509(stdout, cert.get());
 }
 
@@ -355,11 +358,26 @@ HandleNames(std::span<const char *const> args)
 static void
 HandleGet(std::span<const char *const> args)
 {
+	bool text = true;
+
+	while (!args.empty() && args.front()[0] == '-') {
+		const char *arg = args.front();
+
+		if (StringIsEqual(arg, "--text")) {
+			args = args.subspan(1);
+			text = true;
+		} else if (StringIsEqual(arg, "--no-text")) {
+			args = args.subspan(1);
+			text = false;
+		} else
+			break;
+	}
+
 	if (args.size() != 1)
 		throw AutoUsage();
 
 	const auto db_config = LoadPatchCertDatabaseConfig();
-	GetCertificate(db_config, args[0]);
+	GetCertificate(db_config, args[0], text);
 }
 
 static void
@@ -500,7 +518,7 @@ static constexpr struct Command {
 	{ "reload", "HANDLE", HandleReload, true },
 	{ "delete", "HANDLE", HandleDelete },
 	{ "names", "HANDLE", HandleNames },
-	{ "get", "HANDLE", HandleGet },
+	{ "get", "[--no-text] HANDLE", HandleGet },
 	{ "find", "[--headers] HOST", HandleFind },
 	{ "set-handle", "ID HANDLE", HandleSetHandle },
 	{ "dumpkey", "HANDLE", HandleDumpKey, true },
