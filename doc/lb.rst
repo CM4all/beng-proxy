@@ -336,6 +336,7 @@ The configured function receives one parameter: the request object. The
 following attributes are available:
 
 - ``uri``: the request URI
+- ``query_table``: a table containing all (unique) query parameters
 - ``method``: the request method
 - ``has_body``: ``true`` if a request body is present
 - ``remote_host``: the client’s IP address

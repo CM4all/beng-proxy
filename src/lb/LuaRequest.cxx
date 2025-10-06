@@ -15,6 +15,8 @@
 #include "http/Method.hxx"
 #include "http/ResponseHandler.hxx"
 #include "http/Status.hxx"
+#include "uri/Extract.hxx"
+#include "uri/MapQueryString.hxx"
 #include "uri/Verify.hxx"
 #include "util/StringAPI.hxx"
 #include "AllocatorPtr.hxx"
@@ -296,6 +298,19 @@ LbLuaRequestIndex(lua_State *L)
 
 	if (StringIsEqual(name, "uri")) {
 		Lua::Push(L, data.request.uri);
+
+		// copy a reference to the fenv (our cache)
+		Lua::SetFenvCache(L, 1, name_idx, Lua::RelativeStackIndex{-1});
+
+		return 1;
+	} else if (StringIsEqual(name, "query_table")) {
+		lua_newtable(L);
+
+		if (const char *const query = UriQuery(data.request.uri)) {
+			for (const auto &[key, value] : MapQueryString(query)) {
+				Lua::SetTable(L, Lua::RelativeStackIndex{-1}, key, value);
+			}
+		}
 
 		// copy a reference to the fenv (our cache)
 		Lua::SetFenvCache(L, 1, name_idx, Lua::RelativeStackIndex{-1});
