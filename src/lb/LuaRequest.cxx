@@ -38,6 +38,14 @@ CastLuaRequestData(lua_State *L, int idx)
 	return data;
 }
 
+inline
+LbLuaRequestData::LbLuaRequestData(const LbHttpConnection &_connection,
+				   IncomingHttpRequest &_request,
+				   HttpResponseHandler &_handler) noexcept
+	:connection(_connection), request(_request), handler(_handler)
+{
+}
+
 static int
 GetHeader(lua_State *L)
 {

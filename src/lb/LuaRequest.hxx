@@ -17,8 +17,7 @@ struct LbLuaRequestData {
 
 	explicit LbLuaRequestData(const LbHttpConnection &_connection,
 				  IncomingHttpRequest &_request,
-				  HttpResponseHandler &_handler) noexcept
-		:connection(_connection), request(_request), handler(_handler) {}
+				  HttpResponseHandler &_handler) noexcept;
 };
 
 void
