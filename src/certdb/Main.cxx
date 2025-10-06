@@ -164,15 +164,15 @@ GetCertificate(const CertDatabaseConfig &db_config, const char *handle)
 }
 
 /**
- * Load the private key for the given host name from the database.
+ * Load the private key for the given handle from the database.
  *
  * Returns the key or nullptr if no such certificate/key pair was
  * found.  Throws an exception on error.
  */
 static UniqueEVP_PKEY
-FindKeyByName(CertDatabase &db, const char *common_name)
+FindKeyByHandle(CertDatabase &db, const char *handle)
 {
-	return db.GetServerCertificateKey(common_name, nullptr).key;
+	return db.GetServerCertificateKeyByHandle(handle).key;
 }
 
 static void
@@ -200,11 +200,11 @@ FindCertificate(const CertDatabaseConfig &db_config, const char *host, bool head
 }
 
 static void
-DumpKey(const CertDatabaseConfig &db_config, const char *host)
+DumpKey(const CertDatabaseConfig &db_config, const char *handle)
 {
 	CertDatabase db(db_config);
 
-	auto key = FindKeyByName(db, host);
+	auto key = FindKeyByHandle(db, handle);
 	if (!key)
 		throw "Key not found";
 
@@ -503,7 +503,7 @@ static constexpr struct Command {
 	{ "get", "HANDLE", HandleGet },
 	{ "find", "[--headers] HOST", HandleFind },
 	{ "set-handle", "ID HANDLE", HandleSetHandle },
-	{ "dumpkey", "HOST", HandleDumpKey, true },
+	{ "dumpkey", "HANDLE", HandleDumpKey, true },
 	{ "monitor", nullptr, HandleMonitor },
 	{ "tail", nullptr, HandleTail },
 	{ "acme", "[OPTIONS] COMMAND ...", HandleAcme },

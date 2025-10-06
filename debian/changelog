@@ -1,6 +1,6 @@
 cm4all-beng-proxy (20.12) unstable; urgency=low
 
-  * 
+  * certdb: command "dumpkey" expects a handle, not a host name
 
  --   
 
