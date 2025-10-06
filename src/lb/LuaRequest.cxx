@@ -7,6 +7,7 @@
 #include "istream/istream_string.hxx"
 #include "pool/pool.hxx"
 #include "lua/Class.hxx"
+#include "lua/FenvCache.hxx"
 #include "lua/StackIndex.hxx"
 #include "lua/StringView.hxx"
 #include "http/CommonHeaders.hxx"
@@ -39,11 +40,14 @@ CastLuaRequestData(lua_State *L, int idx)
 }
 
 inline
-LbLuaRequestData::LbLuaRequestData(const LbHttpConnection &_connection,
+LbLuaRequestData::LbLuaRequestData(lua_State *L,
+				   const LbHttpConnection &_connection,
 				   IncomingHttpRequest &_request,
 				   HttpResponseHandler &_handler) noexcept
 	:connection(_connection), request(_request), handler(_handler)
 {
+	lua_newtable(L);
+	lua_setfenv(L, -2);
 }
 
 static int
@@ -276,6 +280,7 @@ LbLuaRequestIndex(lua_State *L)
 	if (lua_type(L, 2) != LUA_TSTRING)
 		luaL_argerror(L, 2, "string expected");
 
+	constexpr Lua::StackIndex name_idx{2};
 	const char *name = lua_tostring(L, 2);
 
 	for (const auto *i = request_methods; i->name != nullptr; ++i) {
@@ -285,21 +290,41 @@ LbLuaRequestIndex(lua_State *L)
 		}
 	}
 
+	// look it up in the fenv (our cache)
+	if (Lua::GetFenvCache(L, 1, name_idx))
+		return 1;
+
 	if (StringIsEqual(name, "uri")) {
 		Lua::Push(L, data.request.uri);
+
+		// copy a reference to the fenv (our cache)
+		Lua::SetFenvCache(L, 1, name_idx, Lua::RelativeStackIndex{-1});
+
 		return 1;
 	} else if (StringIsEqual(name, "method")) {
 		Lua::Push(L, http_method_to_string(data.request.method));
+
+		// copy a reference to the fenv (our cache)
+		Lua::SetFenvCache(L, 1, name_idx, Lua::RelativeStackIndex{-1});
+
 		return 1;
 	} else if (StringIsEqual(name, "has_body")) {
 		Lua::Push(L, data.request.HasBody());
 		return 1;
 	} else if (StringIsEqual(name, "remote_host")) {
 		Lua::Push(L, data.request.remote_host);
+
+		// copy a reference to the fenv (our cache)
+		Lua::SetFenvCache(L, 1, name_idx, Lua::RelativeStackIndex{-1});
+
 		return 1;
 	} else if (StringIsEqual(name, "peer_subject")) {
 		if (const char *value = data.connection.GetPeerSubject()) {
 			Lua::Push(L, value);
+
+			// copy a reference to the fenv (our cache)
+			Lua::SetFenvCache(L, 1, name_idx, Lua::RelativeStackIndex{-1});
+
 			return 1;
 		}
 
@@ -307,6 +332,10 @@ LbLuaRequestIndex(lua_State *L)
 	} else if (StringIsEqual(name, "peer_issuer_subject")) {
 		if (const char *value = data.connection.GetPeerIssuerSubject()) {
 			Lua::Push(L, value);
+
+			// copy a reference to the fenv (our cache)
+			Lua::SetFenvCache(L, 1, name_idx, Lua::RelativeStackIndex{-1});
+
 			return 1;
 		}
 
@@ -330,5 +359,5 @@ NewLuaRequest(lua_State *L, const LbHttpConnection &connection,
 	      IncomingHttpRequest &request,
 	      HttpResponseHandler &handler)
 {
-	return LbLuaRequest::New(L, connection, request, handler);
+	return LbLuaRequest::New(L, L, connection, request, handler);
 }

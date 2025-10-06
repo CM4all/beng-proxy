@@ -15,7 +15,8 @@ struct LbLuaRequestData {
 	HttpResponseHandler &handler;
 	bool stale = false;
 
-	explicit LbLuaRequestData(const LbHttpConnection &_connection,
+	explicit LbLuaRequestData(lua_State *L,
+				  const LbHttpConnection &_connection,
 				  IncomingHttpRequest &_request,
 				  HttpResponseHandler &_handler) noexcept;
 };
