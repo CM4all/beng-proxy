@@ -18,6 +18,8 @@
 #include <openssl/err.h>
 #include <openssl/ssl.h>
 
+#include <fmt/format.h>
+
 #include <set>
 
 using std::string_view_literals::operator""sv;
@@ -243,7 +245,7 @@ CertCache::Expire() noexcept
 	const std::scoped_lock lock{mutex};
 	for (auto i = map.begin(), end = map.end(); i != end;) {
 		if (now >= i->second.expires) {
-			logger(5, "flushed certificate '", i->first, "'");
+			logger.Fmt(5, "flushed certificate {:?}", i->first);
 			i = map.erase(i);
 		} else
 			++i;
@@ -258,12 +260,12 @@ CertCache::LoadCaCertificate(const char *path)
 
 	const X509_NAME *subject = X509_get_subject_name(chain.front().get());
 	if (subject == nullptr)
-		throw SslError(std::string("CA certificate has no subject: ") + path);
+		throw SslError{fmt::format("CA certificate has no subject: {}"sv, path)};
 
 	auto digest = CalcSHA1(*subject);
 	auto r = ca_certs.emplace(std::move(digest), std::move(chain));
 	if (!r.second)
-		throw SslError(std::string("Duplicate CA certificate: ") + path);
+		throw SslError{fmt::format("Duplicate CA certificate: {}"sv, path)};
 }
 
 void
@@ -549,7 +551,7 @@ CertCache::OnDisconnect() noexcept
 void
 CertCache::OnNotify(const char *name)
 {
-	logger(5, "received notify '", name, "'");
+	logger.Fmt(5, "received notify {:?}"sv, name);
 }
 
 void
