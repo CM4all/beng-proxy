@@ -193,7 +193,7 @@ struct EventLoopUringInstance {
 struct TestFdCacheInstance : EventLoopUringInstance {
 	const UniqueFileDescriptor tmp = OpenTmpDir();
 	const StringBuffer<16> tmp_name = MakeTempDirectory(tmp, 0700);
-	const UniqueFileDescriptor dir = OpenPath({tmp, tmp_name}, O_DIRECTORY);
+	const UniqueFileDescriptor dir = OpenDirectoryPath({tmp, tmp_name});
 
 	FdCache fd_cache{event_loop};
 
