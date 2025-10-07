@@ -256,7 +256,7 @@ CertCache::LoadCaCertificate(const char *path)
 	auto chain = LoadCertChainFile(path);
 	assert(!chain.empty());
 
-	X509_NAME *subject = X509_get_subject_name(chain.front().get());
+	const X509_NAME *subject = X509_get_subject_name(chain.front().get());
 	if (subject == nullptr)
 		throw SslError(std::string("CA certificate has no subject: ") + path);
 
@@ -412,7 +412,7 @@ CertCache::Apply(SSL &ssl, X509 &cert, EVP_PKEY &key)
 	if (SSL_use_certificate(&ssl, &cert) != 1)
 		throw SslError("SSL_use_certificate() failed");
 
-	if (X509_NAME *issuer = X509_get_issuer_name(&cert);
+	if (const X509_NAME *issuer = X509_get_issuer_name(&cert);
 	    issuer != nullptr) {
 		auto i = ca_certs.find(CalcSHA1(*issuer));
 		if (i != ca_certs.end())
