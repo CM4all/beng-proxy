@@ -4,10 +4,9 @@
 
 #pragma once
 
+#include "CAMap.hxx"
 #include "NameCache.hxx"
 #include "LookupCertResult.hxx"
-#include "lib/openssl/Hash.hxx"
-#include "lib/openssl/UniqueX509.hxx"
 #include "lib/openssl/UniqueCertKey.hxx"
 #include "lib/openssl/IntegralExDataIndex.hxx"
 #include "certdb/Config.hxx"
@@ -18,8 +17,6 @@
 #include "util/IntrusiveList.hxx"
 
 #include <unordered_map>
-#include <map>
-#include <forward_list>
 #include <string>
 #include <mutex>
 #include <chrono>
@@ -69,7 +66,7 @@ class CertCache final : Pg::AsyncConnectionHandler, CertNameCacheHandler {
 		}
 	};
 
-	std::map<SHA1Digest, std::forward_list<UniqueX509>, SHA1Compare> ca_certs;
+	CAMap ca_certs;
 
 	/**
 	 * Protects #map, #queries.

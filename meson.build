@@ -359,6 +359,7 @@ if get_option('certdb')
     '../certdb/FromResult.cxx',
     '../certdb/WrapKey.cxx',
     '../certdb/Wildcard.cxx',
+    'CAMap.cxx',
     'Cache.cxx',
     'NameCache.cxx',
     'DbCertCallback.cxx',

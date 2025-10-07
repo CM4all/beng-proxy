@@ -7,7 +7,6 @@
 #include "lib/openssl/Name.hxx"
 #include "lib/openssl/AltName.hxx"
 #include "lib/openssl/Error.hxx"
-#include "lib/openssl/LoadFile.hxx"
 #include "certdb/Wildcard.hxx"
 #include "certdb/CoCertDatabase.hxx"
 #include "co/InvokeTask.hxx"
@@ -17,8 +16,6 @@
 
 #include <openssl/err.h>
 #include <openssl/ssl.h>
-
-#include <fmt/format.h>
 
 #include <set>
 
@@ -255,17 +252,7 @@ CertCache::Expire() noexcept
 void
 CertCache::LoadCaCertificate(const char *path)
 {
-	auto chain = LoadCertChainFile(path);
-	assert(!chain.empty());
-
-	const X509_NAME *subject = X509_get_subject_name(chain.front().get());
-	if (subject == nullptr)
-		throw SslError{fmt::format("CA certificate has no subject: {}"sv, path)};
-
-	auto digest = CalcSHA1(*subject);
-	auto r = ca_certs.emplace(std::move(digest), std::move(chain));
-	if (!r.second)
-		throw SslError{fmt::format("Duplicate CA certificate: {}"sv, path)};
+	ca_certs.LoadChainFile(path);
 }
 
 void
@@ -414,13 +401,9 @@ CertCache::Apply(SSL &ssl, X509 &cert, EVP_PKEY &key)
 	if (SSL_use_certificate(&ssl, &cert) != 1)
 		throw SslError("SSL_use_certificate() failed");
 
-	if (const X509_NAME *issuer = X509_get_issuer_name(&cert);
-	    issuer != nullptr) {
-		auto i = ca_certs.find(CalcSHA1(*issuer));
-		if (i != ca_certs.end())
-			for (const auto &ca_cert : i->second)
-				SSL_add1_chain_cert(&ssl, ca_cert.get());
-	}
+	if (const auto *chain = ca_certs.FindIssuer(cert))
+		for (const auto &ca_cert : *chain)
+			SSL_add1_chain_cert(&ssl, ca_cert.get());
 }
 
 inline void
