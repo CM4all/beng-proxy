@@ -6,6 +6,7 @@
 
 #include "WrapKey.hxx"
 
+#include <list>
 #include <map>
 #include <string>
 
@@ -18,6 +19,12 @@ struct CertDatabaseConfig {
 	std::map<std::string, WrapKey, std::less<>> wrap_keys;
 
 	std::string default_wrap_key;
+
+	/**
+	 * List of PEM path names containing certificate authorities
+	 * we're going to use to build the certificate chain.
+	 */
+	std::list<std::string> ca_certs;
 
 	/**
 	 * Throws on error.

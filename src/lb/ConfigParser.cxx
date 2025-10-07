@@ -297,8 +297,6 @@ LbConfigParser::CertDatabase::ParseLine(FileLineParser &line)
 	const char *word = line.ExpectWord();
 
 	if (config.ParseLine(word, line)) {
-	} else if (StringIsEqual(word, "ca_cert")) {
-		config.ca_certs.emplace_back(line.ExpectValueAndEnd());
 	} else
 		throw std::runtime_error("Unknown option");
 }

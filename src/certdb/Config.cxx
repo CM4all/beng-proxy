@@ -59,6 +59,9 @@ CertDatabaseConfig::ParseLine(const char *word, LineParser &line)
 			default_wrap_key = i.first->first;
 
 		return true;
+	} else if (StringIsEqual(word, "ca_cert")) {
+		ca_certs.emplace_back(line.ExpectValueAndEnd());
+		return true;
 	} else
 		return false;
 }
