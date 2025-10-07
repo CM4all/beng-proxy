@@ -144,7 +144,7 @@ CertCache &
 LbInstance::GetCertCache(const LbCertDatabaseConfig &cert_db_config)
 {
 	auto i = cert_dbs.emplace(std::piecewise_construct,
-				  std::forward_as_tuple(cert_db_config.name),
+				  std::forward_as_tuple(&cert_db_config),
 				  std::forward_as_tuple(event_loop,
 							cert_db_config));
 	if (i.second)

@@ -93,7 +93,7 @@ struct LbInstance final : PInstance, Avahi::ErrorHandler {
 	std::forward_list<LbListener> listeners;
 
 #ifdef ENABLE_CERTDB
-	std::map<std::string, CertCache> cert_dbs;
+	std::map<const LbCertDatabaseConfig *, CertCache> cert_dbs;
 #endif
 
 	IntrusiveList<
