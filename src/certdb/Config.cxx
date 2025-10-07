@@ -60,7 +60,7 @@ CertDatabaseConfig::ParseLine(const char *word, LineParser &line)
 
 		return true;
 	} else if (StringIsEqual(word, "ca_cert")) {
-		ca_certs.emplace_back(line.ExpectValueAndEnd());
+		ca_certs.emplace_front(line.ExpectValueAndEnd());
 		return true;
 	} else
 		return false;

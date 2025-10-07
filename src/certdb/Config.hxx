@@ -6,7 +6,7 @@
 
 #include "WrapKey.hxx"
 
-#include <list>
+#include <forward_list>
 #include <map>
 #include <string>
 
@@ -24,7 +24,7 @@ struct CertDatabaseConfig {
 	 * List of PEM path names containing certificate authorities
 	 * we're going to use to build the certificate chain.
 	 */
-	std::list<std::string> ca_certs;
+	std::forward_list<std::string> ca_certs;
 
 	/**
 	 * Throws on error.
