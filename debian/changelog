@@ -3,7 +3,7 @@ cm4all-beng-proxy (20.12) unstable; urgency=low
   * lb/lua: add request field "query_table"
   * certdb: no delay for first auto-reconnect
   * certdb: command "dumpkey" expects a handle, not a host name
-  * certdb: add option "--no-text"
+  * certdb: add options "--chain", "--no-text"
 
  --   
 

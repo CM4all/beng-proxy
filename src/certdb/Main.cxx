@@ -10,6 +10,7 @@
 #include "CertDatabase.hxx"
 #include "WrapKey.hxx"
 #include "Wildcard.hxx"
+#include "ssl/CAMap.hxx"
 #include "lib/fmt/RuntimeError.hxx"
 #include "lib/fmt/ToBuffer.hxx"
 #include "lib/openssl/Buffer.hxx"
@@ -153,7 +154,7 @@ DeleteCertificate(const CertDatabaseConfig &db_config, const char *handle)
 
 static void
 GetCertificate(const CertDatabaseConfig &db_config, const char *handle,
-	       bool text)
+	       bool chain, bool text)
 {
 	CertDatabase db(db_config);
 	auto cert = db.GetServerCertificateByHandle(handle);
@@ -164,6 +165,21 @@ GetCertificate(const CertDatabaseConfig &db_config, const char *handle,
 		X509_print_fp(stdout, cert.get());
 
 	PEM_write_X509(stdout, cert.get());
+
+	if (chain) {
+		CAMap ca_certs;
+		for (const auto &i : db_config.ca_certs)
+			ca_certs.LoadChainFile(i.c_str());
+
+		if (const auto *issuer = ca_certs.FindIssuer(*cert)) {
+			for (const auto &i : *issuer) {
+				if (text)
+					X509_print_fp(stdout, i.get());
+
+				PEM_write_X509(stdout, i.get());
+			}
+		}
+	}
 }
 
 /**
@@ -358,7 +374,7 @@ HandleNames(std::span<const char *const> args)
 static void
 HandleGet(std::span<const char *const> args)
 {
-	bool text = true;
+	bool text = true, chain = false;
 
 	while (!args.empty() && args.front()[0] == '-') {
 		const char *arg = args.front();
@@ -369,6 +385,9 @@ HandleGet(std::span<const char *const> args)
 		} else if (StringIsEqual(arg, "--no-text")) {
 			args = args.subspan(1);
 			text = false;
+		} else if (StringIsEqual(arg, "--chain")) {
+			args = args.subspan(1);
+			chain = true;
 		} else
 			break;
 	}
@@ -377,7 +396,7 @@ HandleGet(std::span<const char *const> args)
 		throw AutoUsage();
 
 	const auto db_config = LoadPatchCertDatabaseConfig();
-	GetCertificate(db_config, args[0], text);
+	GetCertificate(db_config, args[0], chain, text);
 }
 
 static void

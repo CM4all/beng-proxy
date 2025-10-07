@@ -915,6 +915,7 @@ if get_option('certdb')
     'src/certdb/AcmeMain.cxx',
     'src/certdb/Puki.cxx',
     'src/certdb/Main.cxx',
+    'src/ssl/CAMap.cxx',
     'src/access_log/ConfigParser.cxx',
     include_directories: inc,
     dependencies: [
