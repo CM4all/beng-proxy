@@ -51,11 +51,12 @@ class LbConfigParser final : public NestedConfigParser {
 
 	class CertDatabase final : public ConfigParser {
 		LbConfigParser &parent;
+		std::string name;
 		LbCertDatabaseConfig config;
 
 	public:
-		CertDatabase(LbConfigParser &_parent, const char *_name)
-			:parent(_parent), config(_name) {}
+		CertDatabase(LbConfigParser &_parent, const char *_name) noexcept
+			:parent(_parent), name(_name) {}
 
 	protected:
 		/* virtual methods from class ConfigParser */
@@ -307,7 +308,7 @@ LbConfigParser::CertDatabase::Finish()
 {
 	config.Check();
 
-	auto i = parent.config.cert_dbs.emplace(std::string(config.name),
+	auto i = parent.config.cert_dbs.emplace(std::move(name),
 						std::move(config));
 	if (!i.second)
 		throw LineParser::Error("Duplicate certdb name");

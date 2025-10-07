@@ -32,16 +32,11 @@ struct LbControlConfig : SocketConfig {
 };
 
 struct LbCertDatabaseConfig : CertDatabaseConfig {
-	std::string name;
-
 	/**
 	 * List of PEM path names containing certificate authorities
 	 * we're going to use to build the certificate chain.
 	 */
 	std::list<std::string> ca_certs;
-
-	explicit LbCertDatabaseConfig(const char *_name) noexcept
-		:name(_name) {}
 };
 
 struct LbConfig {
