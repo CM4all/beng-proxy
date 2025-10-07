@@ -6,6 +6,7 @@
 #include "lb/Config.hxx"
 #include "ssl/Factory.hxx"
 #include "ssl/CertCallback.hxx"
+#include "lib/fmt/RuntimeError.hxx"
 
 #include "lb_features.h"
 #ifdef ENABLE_CERTDB
@@ -16,6 +17,8 @@
 #include "lb/LuaHandler.hxx"
 #include "lb/LuaInitHook.hxx"
 #endif
+
+using std::string_view_literals::operator""sv;
 
 static void
 lb_check(EventLoop &event_loop, const LbCertDatabaseConfig &config)
@@ -46,7 +49,7 @@ lb_check(EventLoop &event_loop, const LbConfig &config)
 		try {
 			lb_check(event_loop, cdb.second);
 		} catch (...) {
-			std::throw_with_nested(std::runtime_error("cert_db '" + cdb.first + "'"));
+			std::throw_with_nested(FmtRuntimeError("cert_db {:?}"sv, cdb.first));
 		}
 	}
 
@@ -54,7 +57,7 @@ lb_check(EventLoop &event_loop, const LbConfig &config)
 		try {
 			lb_check(listener);
 		} catch (...) {
-			std::throw_with_nested(std::runtime_error("listener '" + listener.name + "'"));
+			std::throw_with_nested(FmtRuntimeError("listener {:?}"sv, listener.name));
 		}
 	}
 
