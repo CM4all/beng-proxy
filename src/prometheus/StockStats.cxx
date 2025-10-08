@@ -22,11 +22,16 @@ Write(GrowingBuffer &buffer, std::string_view process,
 # HELP beng_proxy_stock_idle Number of idle stock items
 # TYPE beng_proxy_stock_idle gauge
 
+# HELP beng_proxy_stock_waiting Number of callers waiting for an items
+# TYPE beng_proxy_stock_waiting gauge
+
 beng_proxy_stock_busy{{process={:?},stock={:?}}} {}
 beng_proxy_stock_idle{{process={:?},stock={:?}}} {}
+beng_proxy_stock_waiting{{process={:?},stock={:?}}} {}
 )"sv,
 		   process, stock, stats.busy,
-		   process, stock, stats.idle);
+		   process, stock, stats.idle,
+		   process, stock, stats.waiting);
 }
 
 } // namespace Prometheus
