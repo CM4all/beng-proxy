@@ -37,8 +37,8 @@ Write(GrowingBuffer &buffer, std::string_view process,
 # HELP beng_proxy_stock_waiting Number of callers waiting for an items
 # TYPE beng_proxy_stock_waiting gauge
 
-# HELP beng_proxy_stock_total_wait Total time spent waiting for an item
-# TYPE beng_proxy_stock_total_wait counter
+# HELP beng_proxy_stock_total_wait_duration Total time spent waiting for an item
+# TYPE beng_proxy_stock_total_wait_duration counter
 
 beng_proxy_stock_total_creates{{process={:?},stock={:?}}} {}
 beng_proxy_stock_canceled_creates{{process={:?},stock={:?}}} {}
@@ -47,7 +47,7 @@ beng_proxy_stock_failed_creates{{process={:?},stock={:?}}} {}
 beng_proxy_stock_busy{{process={:?},stock={:?}}} {}
 beng_proxy_stock_idle{{process={:?},stock={:?}}} {}
 beng_proxy_stock_waiting{{process={:?},stock={:?}}} {}
-beng_proxy_stock_total_wait{{process={:?},stock={:?}}} {}
+beng_proxy_stock_total_wait_duration{{process={:?},stock={:?}}} {}
 )"sv,
 		   process, stock, stats.total_creates,
 		   process, stock, stats.canceled_creates,
@@ -56,7 +56,7 @@ beng_proxy_stock_total_wait{{process={:?},stock={:?}}} {}
 		   process, stock, stats.busy,
 		   process, stock, stats.idle,
 		   process, stock, stats.waiting,
-		   process, stock, std::chrono::duration_cast<std::chrono::duration<double>>(stats.total_wait).count());
+		   process, stock, std::chrono::duration_cast<std::chrono::duration<double>>(stats.total_wait_duration).count());
 }
 
 } // namespace Prometheus
