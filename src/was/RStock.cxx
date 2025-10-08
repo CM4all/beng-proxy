@@ -115,16 +115,17 @@ RemoteWasStock::RemoteWasStock(unsigned limit, [[maybe_unused]] unsigned max_idl
 		     // TODO max_idle,
 		     *this) {}
 
-std::size_t
-RemoteWasStock::GetLimit(const void *request,
-			 std::size_t _limit) const noexcept
+StockOptions
+RemoteWasStock::GetOptions(const void *request,
+		      StockOptions o) const noexcept
 {
 	const auto &params = *(const RemoteMultiWasParams *)request;
-
 	if (params.parallelism > 0)
-		return params.parallelism;
+		o.limit = params.parallelism;
 
-	return _limit;
+	o.clear_interval = std::chrono::minutes{5};
+
+	return o;
 }
 
 StockItem *

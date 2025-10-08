@@ -37,27 +37,21 @@
  *
  */
 
-std::size_t
-FcgiStock::GetLimit(const void *request,
-		    std::size_t _limit) const noexcept
+StockOptions
+FcgiStock::GetOptions(const void *request,
+		      StockOptions o) const noexcept
 {
 	const auto &params = *(const CgiChildParams *)request;
 	if (params.parallelism > 0)
-		return params.parallelism;
+		o.limit = params.parallelism;
 
-	return _limit;
-}
-
-Event::Duration
-FcgiStock::GetClearInterval(const void *info) const noexcept
-{
-	const auto &params = *(const CgiChildParams *)info;
-
-	return params.options.ns.mount.pivot_root == nullptr
-		? std::chrono::minutes(10)
+	o.clear_interval = params.options.ns.mount.pivot_root == nullptr
+		? std::chrono::minutes{10}
 		/* lower clear_interval for jailed (per-account?)
 		   processes */
-		: std::chrono::minutes(5);
+		: std::chrono::minutes{5};
+
+	return o;
 }
 
 /* TODO: this method is unreachable we don't use ChildStockMap, but we
@@ -66,9 +60,7 @@ FcgiStock::GetClearInterval(const void *info) const noexcept
 StockOptions
 FcgiStock::GetChildOptions(const void *request, StockOptions o) const noexcept
 {
-	o.clear_interval = GetClearInterval(request);
-	o.limit = GetLimit(request, o.limit);
-	return o;
+	return GetOptions(request, o);
 }
 
 StockRequest

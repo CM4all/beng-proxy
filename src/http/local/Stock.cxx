@@ -36,28 +36,21 @@ lhttp_stock_key(struct pool *pool, const LhttpAddress *address) noexcept
  *
  */
 
-std::size_t
-LhttpStock::GetLimit(const void *request,
-		     std::size_t _limit) const noexcept
+StockOptions
+LhttpStock::GetOptions(const void *request,
+		      StockOptions o) const noexcept
 {
 	const auto &address = *(const LhttpAddress *)request;
-
 	if (address.parallelism > 0)
-		return address.parallelism;
+		o.limit = address.parallelism;
 
-	return _limit;
-}
-
-Event::Duration
-LhttpStock::GetClearInterval(const void *info) const noexcept
-{
-	const auto &address = *(const LhttpAddress *)info;
-
-	return address.options.ns.mount.pivot_root == nullptr
-		? std::chrono::minutes(15)
+	o.clear_interval = address.options.ns.mount.pivot_root == nullptr
+		? std::chrono::minutes{15}
 		/* lower clear_interval for jailed (per-account?)
 		   processes */
-		: std::chrono::minutes(5);
+		: std::chrono::minutes{5};
+
+	return o;
 }
 
 /* TODO: this method is unreachable we don't use ChildStockMap, but we
@@ -67,9 +60,7 @@ StockOptions
 LhttpStock::GetChildOptions(const void *request,
 			    StockOptions o) const noexcept
 {
-	o.limit = GetLimit(request, o.limit);
-	o.clear_interval = GetClearInterval(request);
-	return o;
+	return GetOptions(request, o);
 }
 
 StockRequest

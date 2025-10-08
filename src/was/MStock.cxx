@@ -122,28 +122,21 @@ MultiWasStock::MultiWasStock(unsigned limit, [[maybe_unused]] unsigned max_idle,
 		      // TODO max_idle,
 		      *this) {}
 
-std::size_t
-MultiWasStock::GetLimit(const void *request,
-			std::size_t _limit) const noexcept
+StockOptions
+MultiWasStock::GetOptions(const void *request,
+			  StockOptions o) const noexcept
 {
 	const auto &params = *(const CgiChildParams *)request;
-
 	if (params.parallelism > 0)
-		return params.parallelism;
+		o.limit = params.parallelism;
 
-	return _limit;
-}
-
-Event::Duration
-MultiWasStock::GetClearInterval(const void *info) const noexcept
-{
-	const auto &params = *(const CgiChildParams *)info;
-
-	return params.options.ns.mount.pivot_root == nullptr
-		? std::chrono::minutes(15)
+	o.clear_interval = params.options.ns.mount.pivot_root == nullptr
+		? std::chrono::minutes{15}
 		/* lower clear_interval for jailed (per-account?)
 		   processes */
-		: std::chrono::minutes(5);
+		: std::chrono::minutes{5};
+
+	return o;
 }
 
 StockRequest

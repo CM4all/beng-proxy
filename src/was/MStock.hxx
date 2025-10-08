@@ -76,9 +76,8 @@ public:
 
 private:
 	/* virtual methods from class MultiStockClass */
-	std::size_t GetLimit(const void *request,
-			     std::size_t _limit) const noexcept override;
-	Event::Duration GetClearInterval(const void *info) const noexcept override;
+	StockOptions GetOptions(const void *request,
+				StockOptions o) const noexcept override;
 	StockItem *Create(CreateStockItem c, StockItem &shared_item) override;
 
 	/* virtual methods from class ChildStockClass */
