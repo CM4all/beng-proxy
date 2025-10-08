@@ -168,7 +168,11 @@ LhttpStock::LhttpStock(unsigned limit, [[maybe_unused]] unsigned max_idle,
 		     *this,
 		     log_sink, log_options),
 	 mchild_stock(event_loop, child_stock,
-		      {.limit = limit, .clear_interval = std::chrono::minutes{15}},
+		      {
+			      .limit = limit,
+			      .clear_interval = std::chrono::minutes{15},
+			      .max_wait = std::chrono::seconds{20},
+		      },
 		      // TODO max_idle,
 		      *this)
 {

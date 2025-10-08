@@ -175,8 +175,12 @@ FcgiStock::FcgiStock(unsigned limit, [[maybe_unused]] unsigned max_idle,
 		     *this,
 		     log_sink, _log_options),
 	 mchild_stock(event_loop, child_stock,
-		      {.limit = limit, .clear_interval = std::chrono::minutes{10}},
-		      // TODO max_idle,
+		      {
+			      // TODO max_idle,
+			      .limit = limit,
+			      .clear_interval = std::chrono::minutes{10},
+			      .max_wait = std::chrono::seconds{20},
+		      },
 		      *this)
 {
 }
