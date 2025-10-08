@@ -10,6 +10,7 @@
 
 #include "stock/Class.hxx"
 #include "stock/MapStock.hxx"
+#include "stock/Options.hxx"
 #include "event/Chrono.hxx"
 
 class AllocatorPtr;
@@ -33,9 +34,13 @@ public:
 	 */
 	TcpStock(EventLoop &event_loop,
 		 std::size_t limit, std::size_t max_idle) noexcept
-		:stock(event_loop, *this, limit, max_idle,
-		       /* each TcpStockConnection has its own timer */
-		       Event::Duration::zero()) {}
+		:stock(event_loop, *this,
+		       {
+			       .limit = limit,
+			       .max_idle = max_idle,
+			       /* each TcpStockConnection has its own timer */
+			       .clear_interval = Event::Duration::zero(),
+		       }) {}
 
 	EventLoop &GetEventLoop() const noexcept {
 		return stock.GetEventLoop();

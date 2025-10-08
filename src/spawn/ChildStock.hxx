@@ -6,6 +6,7 @@
 
 #include "stock/Class.hxx"
 #include "stock/MapStock.hxx"
+#include "stock/Options.hxx"
 #include "access_log/ChildErrorLogOptions.hxx"
 #include "util/IntrusiveList.hxx"
 #include "config.h" // for HAVE_LIBSYSTEMD
@@ -176,9 +177,8 @@ class ChildStockMap final {
 	public:
 		MyStockMap(EventLoop &_event_loop, StockClass &_cls,
 			   ChildStockMapClass &_ccls,
-			   unsigned _limit, unsigned _max_idle) noexcept
-			:StockMap(_event_loop, _cls, _limit, _max_idle,
-				  Event::Duration::zero()),
+			   StockOptions _options) noexcept
+			:StockMap(_event_loop, _cls, _options),
 			 ccls(_ccls) {}
 
 	protected:
@@ -204,7 +204,7 @@ public:
 		      ChildStockMapClass &_cls,
 		      Net::Log::Sink *_log_sink,
 		      const ChildErrorLogOptions &_log_options,
-		      unsigned _limit, unsigned _max_idle) noexcept;
+		      StockOptions stock_options) noexcept;
 
 	StockMap &GetStockMap() noexcept {
 		return map;

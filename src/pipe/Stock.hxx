@@ -6,6 +6,7 @@
 
 #include "stock/Stock.hxx"
 #include "stock/Class.hxx"
+#include "stock/Options.hxx"
 #include "io/uring/config.h" // for HAVE_URING
 
 #include <utility> // for std::pair
@@ -26,8 +27,8 @@ class PipeStock final : public Stock, StockClass {
 
 public:
 	explicit PipeStock(EventLoop &event_loop)
-		:Stock(event_loop, *this, "pipe", 0, 64,
-		       Event::Duration::zero()) {}
+		:Stock(event_loop, *this, "pipe",
+		       {.limit = 0, .max_idle = 64}) {}
 
 #ifdef HAVE_URING
 	void EnableUring(Uring::Queue &_uring_queue) noexcept {

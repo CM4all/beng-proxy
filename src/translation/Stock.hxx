@@ -6,6 +6,7 @@
 
 #include "stock/Stock.hxx"
 #include "stock/Class.hxx"
+#include "stock/Options.hxx"
 #include "net/AllocatedSocketAddress.hxx"
 
 class SocketDescriptor;
@@ -20,8 +21,11 @@ class TranslationStock final : StockClass {
 public:
 	TranslationStock(EventLoop &event_loop, SocketAddress _address,
 			 unsigned limit) noexcept
-		:stock(event_loop, *this, "translation", limit, 8,
-		       Event::Duration::zero()),
+		:stock(event_loop, *this, "translation",
+		       {
+			       .limit = limit,
+			       .max_idle = 8,
+		       }),
 		 address(_address)
 	{
 	}

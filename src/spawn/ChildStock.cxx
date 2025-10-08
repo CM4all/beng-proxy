@@ -138,14 +138,14 @@ ChildStockMap::ChildStockMap(EventLoop &event_loop, SpawnService &_spawn_service
 			     ChildStockMapClass &_cls,
 			     Net::Log::Sink *_log_sink,
 			     const ChildErrorLogOptions &_log_options,
-			     unsigned _limit, unsigned _max_idle) noexcept
+			     StockOptions stock_options) noexcept
 	:cls(_spawn_service,
 #ifdef HAVE_LIBSYSTEMD
 	     _cgroup_multi_watch,
 #endif
 	     _listen_stream_stock,
 	     _cls, _log_sink, _log_options),
-	 map(event_loop, cls, _cls, _limit, _max_idle)
+	 map(event_loop, cls, _cls, stock_options)
 {
 }
 

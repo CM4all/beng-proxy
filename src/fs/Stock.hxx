@@ -10,6 +10,7 @@
 
 #include "stock/Class.hxx"
 #include "stock/MapStock.hxx"
+#include "stock/Options.hxx"
 
 #include <memory>
 
@@ -35,8 +36,12 @@ public:
 	 */
 	FilteredSocketStock(EventLoop &event_loop,
 			    std::size_t limit, std::size_t max_idle) noexcept
-		:stock(event_loop, *this, limit, max_idle,
-		       std::chrono::minutes(5)) {}
+		:stock(event_loop, *this,
+		       {
+			       .limit = limit,
+			       .max_idle = max_idle,
+			       .clear_interval =  std::chrono::minutes{5},
+		       }) {}
 
 	EventLoop &GetEventLoop() noexcept {
 		return stock.GetEventLoop();

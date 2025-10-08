@@ -7,6 +7,7 @@
 #include "access_log/ChildErrorLogOptions.hxx"
 #include "stock/Class.hxx"
 #include "stock/MapStock.hxx"
+#include "stock/Options.hxx"
 #include "net/SocketDescriptor.hxx"
 #include "io/uring/config.h" // for HAVE_URING
 
@@ -53,12 +54,11 @@ public:
 			  ListenStreamStock *_listen_stream_stock,
 			  Net::Log::Sink *_log_sink,
 			  const ChildErrorLogOptions &_log_options,
-			  unsigned limit, unsigned max_idle) noexcept
+			  StockOptions stock_options) noexcept
 		:spawn_service(_spawn_service),
 		 listen_stream_stock(_listen_stream_stock),
 		 log_sink(_log_sink), log_options(_log_options),
-		 stock(event_loop, *this, limit, max_idle,
-		       std::chrono::minutes(10)) {}
+		 stock(event_loop, *this, stock_options) {}
 
 	auto &GetEventLoop() const noexcept {
 		return stock.GetEventLoop();

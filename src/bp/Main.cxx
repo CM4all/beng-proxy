@@ -485,8 +485,11 @@ try {
 					  *instance.spawn_service,
 					  instance.listen_stream_stock.get(),
 					  child_log_sink, child_log_options,
-					  instance.config.was_stock_limit,
-					  instance.config.was_stock_max_idle);
+					  {
+						  .limit = instance.config.was_stock_limit,
+						  .max_idle = instance.config.was_stock_max_idle,
+						  .clear_interval = std::chrono::minutes{5},
+					  });
 	instance.multi_was_stock =
 		new MultiWasStock(instance.config.multi_was_stock_limit,
 				  instance.config.multi_was_stock_max_idle,
