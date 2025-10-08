@@ -17,6 +17,7 @@
 #include "http/MessageHttpResponse.hxx"
 #include "HttpMessageResponse.hxx"
 #include "pool/pool.hxx"
+#include "stock/Error.hxx"
 #include "system/Error.hxx"
 #include "net/SocketProtocolError.hxx"
 #include "net/TimeoutError.hxx"
@@ -138,6 +139,10 @@ ToResponse(struct pool &pool, std::exception_ptr ep) noexcept
 	if (FindNested<SocketProtocolError>(ep))
 		return {HttpStatus::BAD_GATEWAY,
 			"Upstream server failed"};
+
+	if (FindNested<StockOverloadedError>(ep))
+		return {HttpStatus::TOO_MANY_REQUESTS,
+			"Overloaded"};
 
 	return {HttpStatus::INTERNAL_SERVER_ERROR, "Internal server error"};
 }

@@ -40,6 +40,9 @@ Write(GrowingBuffer &buffer, std::string_view process,
 # HELP beng_proxy_stock_failed_waits Number of failed waits for item
 # TYPE beng_proxy_stock_failed_waits counter
 
+# HELP beng_proxy_stock_rejects Number of rejected stock requests (e.g. rate-limited)
+# TYPE beng_proxy_stock_rejects counter
+
 # HELP beng_proxy_stock_busy Number of busy stock items
 # TYPE beng_proxy_stock_busy gauge
 
@@ -62,6 +65,8 @@ beng_proxy_stock_canceled_waits{{process={:?},stock={:?}}} {}
 beng_proxy_stock_successful_waits{{process={:?},stock={:?}}} {}
 beng_proxy_stock_failed_waits{{process={:?},stock={:?}}} {}
 
+beng_proxy_stock_rejects{{process={:?},stock={:?}}} {}
+
 beng_proxy_stock_busy{{process={:?},stock={:?}}} {}
 beng_proxy_stock_idle{{process={:?},stock={:?}}} {}
 beng_proxy_stock_waiting{{process={:?},stock={:?}}} {}
@@ -75,6 +80,7 @@ beng_proxy_stock_total_wait_duration{{process={:?},stock={:?}}} {}
 		   process, stock, stats.canceled_waits,
 		   process, stock, stats.successful_waits,
 		   process, stock, stats.failed_waits,
+		   process, stock, stats.rejects,
 		   process, stock, stats.busy,
 		   process, stock, stats.idle,
 		   process, stock, stats.waiting,
