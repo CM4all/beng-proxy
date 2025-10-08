@@ -37,6 +37,10 @@ public:
 		   const ChildErrorLogOptions &log_options) noexcept;
 	~LhttpStock() noexcept;
 
+	void AddStats(StockStats &data) const noexcept {
+		mchild_stock.AddStats(data);
+	}
+
 	/**
 	 * Discard one or more processes to free some memory.
 	 */

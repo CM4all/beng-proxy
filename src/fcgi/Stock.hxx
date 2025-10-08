@@ -44,6 +44,10 @@ public:
 		return mchild_stock.GetEventLoop();
 	}
 
+	void AddStats(StockStats &data) const noexcept {
+		mchild_stock.AddStats(data);
+	}
+
 	/**
 	 * @param args command-line arguments
 	 */

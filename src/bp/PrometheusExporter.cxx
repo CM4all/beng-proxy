@@ -14,7 +14,12 @@
 #include "http/ResponseHandler.hxx"
 #include "stats/TaggedHttpStats.hxx"
 #include "spawn/Client.hxx"
+#include "http/local/Stock.hxx"
+#include "fcgi/Stock.hxx"
 #include "fs/Stock.hxx"
+#include "was/Stock.hxx"
+#include "was/MStock.hxx"
+#include "was/RStock.hxx"
 #include "stock/Stats.hxx"
 #include "memory/istream_gb.hxx"
 #include "memory/GrowingBuffer.hxx"
@@ -61,6 +66,29 @@ BpPrometheusExporter::HandleHttpRequest(IncomingHttpRequest &request,
 			instance.fs_stock->AddStats(stats);
 
 		Prometheus::Write(buffer, process, "tcp"sv, stats);
+	}
+
+	if (instance.lhttp_stock) {
+		StockStats stats{};
+		instance.lhttp_stock->AddStats(stats);
+		Prometheus::Write(buffer, process, "lhttp"sv, stats);
+	}
+
+	if (instance.fcgi_stock) {
+		StockStats stats{};
+		instance.fcgi_stock->AddStats(stats);
+		Prometheus::Write(buffer, process, "fcgi"sv, stats);
+	}
+
+	if (instance.was_stock || instance.multi_was_stock || instance.remote_was_stock) {
+		StockStats stats{};
+		if (instance.was_stock)
+			instance.was_stock->AddStats(stats);
+		if (instance.multi_was_stock)
+			instance.multi_was_stock->AddStats(stats);
+		if (instance.remote_was_stock)
+			instance.remote_was_stock->AddStats(stats);
+		Prometheus::Write(buffer, process, "was"sv, stats);
 	}
 
 #ifdef HAVE_LIBWAS

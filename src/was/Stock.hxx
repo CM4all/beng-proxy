@@ -64,6 +64,10 @@ public:
 		return stock.GetEventLoop();
 	}
 
+	void AddStats(StockStats &data) const noexcept {
+		stock.AddStats(data);
+	}
+
 #ifdef HAVE_URING
 	void EnableUring(Uring::Queue &_uring_queue) noexcept {
 		uring_queue = &_uring_queue;
