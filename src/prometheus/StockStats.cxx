@@ -16,6 +16,18 @@ Write(GrowingBuffer &buffer, std::string_view process,
       const StockStats &stats) noexcept
 {
 	buffer.Fmt(R"(
+# HELP beng_proxy_stock_total_creates Number of items that were attempted to be created
+# TYPE beng_proxy_stock_total_creates counter
+
+# HELP beng_proxy_stock_canceled_creates Number of items that were canceled
+# TYPE beng_proxy_stock_canceled_creates counter
+
+# HELP beng_proxy_stock_successful_creates Number of items that were created successfully
+# TYPE beng_proxy_stock_successful_creates counter
+
+# HELP beng_proxy_stock_failed_creates Number of items that were failed to be created
+# TYPE beng_proxy_stock_failed_creates counter
+
 # HELP beng_proxy_stock_busy Number of busy stock items
 # TYPE beng_proxy_stock_busy gauge
 
@@ -28,11 +40,19 @@ Write(GrowingBuffer &buffer, std::string_view process,
 # HELP beng_proxy_stock_total_wait Total time spent waiting for an item
 # TYPE beng_proxy_stock_total_wait counter
 
+beng_proxy_stock_total_creates{{process={:?},stock={:?}}} {}
+beng_proxy_stock_canceled_creates{{process={:?},stock={:?}}} {}
+beng_proxy_stock_successful_creates{{process={:?},stock={:?}}} {}
+beng_proxy_stock_failed_creates{{process={:?},stock={:?}}} {}
 beng_proxy_stock_busy{{process={:?},stock={:?}}} {}
 beng_proxy_stock_idle{{process={:?},stock={:?}}} {}
 beng_proxy_stock_waiting{{process={:?},stock={:?}}} {}
 beng_proxy_stock_total_wait{{process={:?},stock={:?}}} {}
 )"sv,
+		   process, stock, stats.total_creates,
+		   process, stock, stats.canceled_creates,
+		   process, stock, stats.successful_creates,
+		   process, stock, stats.failed_creates,
 		   process, stock, stats.busy,
 		   process, stock, stats.idle,
 		   process, stock, stats.waiting,
