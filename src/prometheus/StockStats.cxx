@@ -56,6 +56,12 @@ beng_proxy_stock_total_creates{{process={:?},stock={:?}}} {}
 beng_proxy_stock_canceled_creates{{process={:?},stock={:?}}} {}
 beng_proxy_stock_successful_creates{{process={:?},stock={:?}}} {}
 beng_proxy_stock_failed_creates{{process={:?},stock={:?}}} {}
+
+beng_proxy_stock_total_waits{{process={:?},stock={:?}}} {}
+beng_proxy_stock_canceled_waits{{process={:?},stock={:?}}} {}
+beng_proxy_stock_successful_waits{{process={:?},stock={:?}}} {}
+beng_proxy_stock_failed_waits{{process={:?},stock={:?}}} {}
+
 beng_proxy_stock_busy{{process={:?},stock={:?}}} {}
 beng_proxy_stock_idle{{process={:?},stock={:?}}} {}
 beng_proxy_stock_waiting{{process={:?},stock={:?}}} {}
