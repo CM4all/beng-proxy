@@ -8,13 +8,17 @@
 #include "prometheus/Stats.hxx"
 #include "prometheus/HttpStats.hxx"
 #include "prometheus/SpawnStats.hxx"
+#include "prometheus/StockStats.hxx"
 #include "http/Headers.hxx"
 #include "http/IncomingRequest.hxx"
 #include "http/ResponseHandler.hxx"
 #include "stats/TaggedHttpStats.hxx"
 #include "spawn/Client.hxx"
+#include "fs/Stock.hxx"
+#include "stock/Stats.hxx"
 #include "memory/istream_gb.hxx"
 #include "memory/GrowingBuffer.hxx"
+#include "tcp_stock.hxx"
 
 using std::string_view_literals::operator""sv;
 
@@ -46,6 +50,18 @@ BpPrometheusExporter::HandleHttpRequest(IncomingHttpRequest &request,
 
 	for (const auto &[name, stats] : instance.listener_stats)
 		Prometheus::Write(buffer, process, name, stats);
+
+	if (instance.tcp_stock != nullptr || instance.fs_stock) {
+		StockStats stats{};
+
+		if (instance.tcp_stock != nullptr)
+			instance.tcp_stock->AddStats(stats);
+
+		if (instance.fs_stock != nullptr)
+			instance.fs_stock->AddStats(stats);
+
+		Prometheus::Write(buffer, process, "tcp"sv, stats);
+	}
 
 #ifdef HAVE_LIBWAS
 	buffer.Write("# HELP beng_proxy_was_metric Metric received from WAS applications\n"
