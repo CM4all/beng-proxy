@@ -25,13 +25,18 @@ Write(GrowingBuffer &buffer, std::string_view process,
 # HELP beng_proxy_stock_waiting Number of callers waiting for an items
 # TYPE beng_proxy_stock_waiting gauge
 
+# HELP beng_proxy_stock_total_wait Total time spent waiting for an item
+# TYPE beng_proxy_stock_total_wait counter
+
 beng_proxy_stock_busy{{process={:?},stock={:?}}} {}
 beng_proxy_stock_idle{{process={:?},stock={:?}}} {}
 beng_proxy_stock_waiting{{process={:?},stock={:?}}} {}
+beng_proxy_stock_total_wait{{process={:?},stock={:?}}} {}
 )"sv,
 		   process, stock, stats.busy,
 		   process, stock, stats.idle,
-		   process, stock, stats.waiting);
+		   process, stock, stats.waiting,
+		   process, stock, std::chrono::duration_cast<std::chrono::duration<double>>(stats.total_wait).count());
 }
 
 } // namespace Prometheus
