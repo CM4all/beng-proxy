@@ -44,11 +44,10 @@ LhttpStock::GetOptions(const void *request,
 	if (address.parallelism > 0)
 		o.limit = address.parallelism;
 
-	o.clear_interval = address.options.ns.mount.pivot_root == nullptr
-		? std::chrono::minutes{15}
+	if (address.options.ns.mount.pivot_root != nullptr)
 		/* lower clear_interval for jailed (per-account?)
 		   processes */
-		: std::chrono::minutes{5};
+		o.clear_interval /= 3;
 
 	return o;
 }
@@ -169,7 +168,7 @@ LhttpStock::LhttpStock(unsigned limit, [[maybe_unused]] unsigned max_idle,
 		     *this,
 		     log_sink, log_options),
 	 mchild_stock(event_loop, child_stock,
-		      limit,
+		      {.limit = limit, .clear_interval = std::chrono::minutes{15}},
 		      // TODO max_idle,
 		      *this)
 {

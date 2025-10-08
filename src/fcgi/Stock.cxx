@@ -45,11 +45,10 @@ FcgiStock::GetOptions(const void *request,
 	if (params.parallelism > 0)
 		o.limit = params.parallelism;
 
-	o.clear_interval = params.options.ns.mount.pivot_root == nullptr
-		? std::chrono::minutes{10}
+	if (params.options.ns.mount.pivot_root != nullptr)
 		/* lower clear_interval for jailed (per-account?)
 		   processes */
-		: std::chrono::minutes{5};
+		o.clear_interval /= 2;
 
 	return o;
 }
@@ -176,7 +175,7 @@ FcgiStock::FcgiStock(unsigned limit, [[maybe_unused]] unsigned max_idle,
 		     *this,
 		     log_sink, _log_options),
 	 mchild_stock(event_loop, child_stock,
-		      limit,
+		      {.limit = limit, .clear_interval = std::chrono::minutes{10}},
 		      // TODO max_idle,
 		      *this)
 {

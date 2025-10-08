@@ -111,7 +111,7 @@ RemoteWasStock::MultiClientStockClass::Create(CreateStockItem c,
 RemoteWasStock::RemoteWasStock(unsigned limit, [[maybe_unused]] unsigned max_idle,
 			       EventLoop &event_loop) noexcept
 	:multi_stock(event_loop, multi_client_stock_class,
-		     limit,
+		     {.limit = limit, .clear_interval = std::chrono::minutes{5}},
 		     // TODO max_idle,
 		     *this) {}
 
@@ -122,8 +122,6 @@ RemoteWasStock::GetOptions(const void *request,
 	const auto &params = *(const RemoteMultiWasParams *)request;
 	if (params.parallelism > 0)
 		o.limit = params.parallelism;
-
-	o.clear_interval = std::chrono::minutes{5};
 
 	return o;
 }

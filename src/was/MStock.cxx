@@ -118,7 +118,7 @@ MultiWasStock::MultiWasStock(unsigned limit, [[maybe_unused]] unsigned max_idle,
 		     *this,
 		     log_sink, log_options),
 	 mchild_stock(event_loop, child_stock,
-		      limit,
+		      {.limit = limit, .clear_interval = std::chrono::minutes{15}},
 		      // TODO max_idle,
 		      *this) {}
 
@@ -130,11 +130,10 @@ MultiWasStock::GetOptions(const void *request,
 	if (params.parallelism > 0)
 		o.limit = params.parallelism;
 
-	o.clear_interval = params.options.ns.mount.pivot_root == nullptr
-		? std::chrono::minutes{15}
+	if (params.options.ns.mount.pivot_root != nullptr)
 		/* lower clear_interval for jailed (per-account?)
 		   processes */
-		: std::chrono::minutes{5};
+		o.clear_interval /= 3;
 
 	return o;
 }
