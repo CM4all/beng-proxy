@@ -537,7 +537,7 @@ static constexpr struct Command {
 	{ "reload", "HANDLE", HandleReload, true },
 	{ "delete", "HANDLE", HandleDelete },
 	{ "names", "HANDLE", HandleNames },
-	{ "get", "[--no-text] HANDLE", HandleGet },
+	{ "get", "[--chain] [--no-text] HANDLE", HandleGet },
 	{ "find", "[--headers] HOST", HandleFind },
 	{ "set-handle", "ID HANDLE", HandleSetHandle },
 	{ "dumpkey", "HANDLE", HandleDumpKey, true },
