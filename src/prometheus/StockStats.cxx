@@ -28,13 +28,25 @@ Write(GrowingBuffer &buffer, std::string_view process,
 # HELP beng_proxy_stock_failed_creates Number of items that were failed to be created
 # TYPE beng_proxy_stock_failed_creates counter
 
+# HELP beng_proxy_stock_total_waits Number of waits for item
+# TYPE beng_proxy_stock_total_waits counter
+
+# HELP beng_proxy_stock_canceled_waits Number of canceled waits for item
+# TYPE beng_proxy_stock_canceled_waits counter
+
+# HELP beng_proxy_stock_successful_waits Number of successful waits for item
+# TYPE beng_proxy_stock_successful_waits counter
+
+# HELP beng_proxy_stock_failed_waits Number of failed waits for item
+# TYPE beng_proxy_stock_failed_waits counter
+
 # HELP beng_proxy_stock_busy Number of busy stock items
 # TYPE beng_proxy_stock_busy gauge
 
 # HELP beng_proxy_stock_idle Number of idle stock items
 # TYPE beng_proxy_stock_idle gauge
 
-# HELP beng_proxy_stock_waiting Number of callers waiting for an items
+# HELP beng_proxy_stock_waiting Number of callers waiting for an item
 # TYPE beng_proxy_stock_waiting gauge
 
 # HELP beng_proxy_stock_total_wait_duration Total time spent waiting for an item
@@ -53,6 +65,10 @@ beng_proxy_stock_total_wait_duration{{process={:?},stock={:?}}} {}
 		   process, stock, stats.canceled_creates,
 		   process, stock, stats.successful_creates,
 		   process, stock, stats.failed_creates,
+		   process, stock, stats.total_waits,
+		   process, stock, stats.canceled_waits,
+		   process, stock, stats.successful_waits,
+		   process, stock, stats.failed_waits,
 		   process, stock, stats.busy,
 		   process, stock, stats.idle,
 		   process, stock, stats.waiting,
