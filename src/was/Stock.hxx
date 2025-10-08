@@ -39,8 +39,8 @@ class WasStock final : StockClass {
 		using StockMap::StockMap;
 
 		/* virtual methods from class StockMap */
-		std::size_t GetLimit(const void *request,
-				     std::size_t _limit) const noexcept override;
+		StockOptions GetOptions(const void *request,
+					StockOptions o) const noexcept override;
 	};
 
 	WasStockMap stock;

@@ -76,9 +76,8 @@ private:
 			  FdHolder &close_fds) override;
 
 	/* virtual methods from class ChildStockMapClass */
-	std::size_t GetChildLimit(const void *request,
-				  std::size_t _limit) const noexcept override;
-	Event::Duration GetChildClearInterval(const void *info) const noexcept override;
+	StockOptions GetChildOptions(const void *request,
+				     StockOptions o) const noexcept override;
 
 	/* virtual methods from class ListenChildStockClass */
 	unsigned GetChildBacklog(const void *info) const noexcept override;

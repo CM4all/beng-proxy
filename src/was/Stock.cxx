@@ -16,15 +16,16 @@
 #include <cassert>
 #include <string>
 
-std::size_t
-WasStock::WasStockMap::GetLimit(const void *request,
-				std::size_t _limit) const noexcept
+StockOptions
+WasStock::WasStockMap::GetOptions(const void *request,
+				  StockOptions o) const noexcept
+
 {
 	auto &params = *(const CgiChildParams *)request;
 	if (params.parallelism > 0)
-		return params.parallelism;
+		o.limit = params.parallelism;
 
-	return _limit;
+	return o;
 }
 
 class WasChild final : public WasStockConnection, ExitListener {

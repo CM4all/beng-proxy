@@ -63,20 +63,12 @@ FcgiStock::GetClearInterval(const void *info) const noexcept
 /* TODO: this method is unreachable we don't use ChildStockMap, but we
    must implemented it because ListenChildStockClass is based on
    ChildStockMapClass */
-std::size_t
-FcgiStock::GetChildLimit(const void *request,
-			 std::size_t _limit) const noexcept
+StockOptions
+FcgiStock::GetChildOptions(const void *request, StockOptions o) const noexcept
 {
-	return GetLimit(request, _limit);
-}
-
-/* TODO: this method is unreachable we don't use ChildStockMap, but we
-   must implemented it because ListenChildStockClass is based on
-   ChildStockMapClass */
-Event::Duration
-FcgiStock::GetChildClearInterval(const void *info) const noexcept
-{
-	return GetClearInterval(info);
+	o.clear_interval = GetClearInterval(request);
+	o.limit = GetLimit(request, o.limit);
+	return o;
 }
 
 StockRequest

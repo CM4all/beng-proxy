@@ -70,10 +70,9 @@ public:
 
 class ChildStockMapClass : public ChildStockClass {
 public:
-	virtual std::size_t GetChildLimit(const void *request,
-					  std::size_t _limit) const noexcept = 0;
-
-	virtual Event::Duration GetChildClearInterval(const void *info) const noexcept = 0;
+	[[gnu::pure]]
+	virtual StockOptions GetChildOptions(const void *request,
+					     StockOptions o) const noexcept = 0;
 };
 
 /**
@@ -183,13 +182,9 @@ class ChildStockMap final {
 
 	protected:
 		/* virtual method from class StockMap */
-		std::size_t GetLimit(const void *request,
-				     std::size_t _limit) const noexcept override {
-			return ccls.GetChildLimit(request, _limit);
-		}
-
-		Event::Duration GetClearInterval(const void *info) const noexcept override {
-			return ccls.GetChildClearInterval(info);
+		StockOptions GetOptions(const void *request,
+					StockOptions o) const noexcept override {
+			return ccls.GetChildOptions(request, o);
 		}
 	};
 
