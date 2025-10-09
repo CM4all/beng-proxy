@@ -327,6 +327,9 @@ if stopwatch
     'src/istream_stopwatch.cxx',
     'src/stopwatch.cxx',
     include_directories: inc,
+    dependencies: [
+      fmt_dep,
+    ],
   )
   stopwatch_dep = declare_dependency(link_with: stopwatch,
                                     dependencies: [net_dep])
