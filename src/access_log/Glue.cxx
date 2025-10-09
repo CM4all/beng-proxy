@@ -83,7 +83,8 @@ AccessLogGlue::Log(std::chrono::system_clock::time_point now,
 		   const char *analytics_id,
 		   const char *generator,
 		   const char *forwarded_to,
-		   const char *host, const char *x_forwarded_for,
+		   const char *host,
+		   const char *remote_host, const char *x_forwarded_for,
 		   const char *referer, const char *user_agent,
 		   HttpStatus status,
 		   Net::Log::ContentType content_type,
@@ -94,7 +95,6 @@ AccessLogGlue::Log(std::chrono::system_clock::time_point now,
 	assert(http_method_is_valid(request.method));
 	assert(status == HttpStatus{} || http_status_is_valid(status));
 
-	const char *remote_host = request.remote_host;
 	std::string buffer;
 
 	if (const auto r = config.xff.GetRealRemoteHost(remote_host, request.remote_address,
@@ -149,6 +149,7 @@ AccessLogGlue::Log(std::chrono::system_clock::time_point now,
 	Log(now, request, site, analytics_id, generator,
 	    forwarded_to,
 	    request.headers.Get(host_header),
+	    request.remote_host,
 	    request.headers.Get(x_forwarded_for_header),
 	    referer, user_agent,
 	    status, content_type, content_length,
