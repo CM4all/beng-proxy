@@ -6,12 +6,23 @@
 #include "CommandLine.hxx"
 #include "pg/Interval.hxx"
 #include "net/Parser.hxx"
-#include "util/StringAPI.hxx"
+#include "util/StringCompare.hxx"
 #include "util/StringParser.hxx"
 
 #include <stdexcept>
 
 using std::string_view_literals::operator""sv;
+
+static void
+HandleSetStockOption(StockOptions &options, std::string_view name, const char *value)
+{
+	if (name == "limit"sv)
+		options.limit = ParseUnsignedLong(value);
+	else if (name == "max_idle"sv)
+		options.max_idle = ParseUnsignedLong(value);
+	else
+		throw std::invalid_argument{"Unknown variable"};
+}
 
 void
 BpConfig::HandleSet(std::string_view name, const char *value)
@@ -20,26 +31,16 @@ BpConfig::HandleSet(std::string_view name, const char *value)
 		max_connections = ParsePositiveLong(value, 1024 * 1024);
 	} else if (name == "tcp_stock_limit"sv) {
 		tcp_stock_limit = ParseUnsignedLong(value);
-	} else if (name == "lhttp_stock_limit"sv) {
-		lhttp_stock_options.limit = ParseUnsignedLong(value);
-	} else if (name == "lhttp_stock_max_idle"sv) {
-		lhttp_stock_options.max_idle = ParseUnsignedLong(value);
-	} else if (name == "fastcgi_stock_limit"sv) {
-		fcgi_stock_options.limit = ParseUnsignedLong(value);
-	} else if (name == "fcgi_stock_max_idle"sv) {
-		fcgi_stock_options.max_idle = ParseUnsignedLong(value);
-	} else if (name == "was_stock_limit"sv) {
-		was_stock_options.limit = ParseUnsignedLong(value);
-	} else if (name == "was_stock_max_idle"sv) {
-		was_stock_options.max_idle = ParseUnsignedLong(value);
-	} else if (name == "multi_was_stock_limit"sv) {
-		multi_was_stock_options.limit = ParseUnsignedLong(value);
-	} else if (name == "multi_was_stock_max_idle"sv) {
-		multi_was_stock_options.max_idle = ParseUnsignedLong(value);
-	} else if (name == "remote_was_stock_limit"sv) {
-		remote_was_stock_options.limit = ParseUnsignedLong(value);
-	} else if (name == "remote_was_stock_max_idle"sv) {
-		remote_was_stock_options.max_idle = ParseUnsignedLong(value);
+	} else if (SkipPrefix(name, "lhttp_stock_"sv)) {
+		HandleSetStockOption(lhttp_stock_options, name, value);
+	} else if (SkipPrefix(name, "fastcgi_stock_"sv)) {
+		HandleSetStockOption(fcgi_stock_options, name, value);
+	} else if (SkipPrefix(name, "was_stock_"sv)) {
+		HandleSetStockOption(was_stock_options, name, value);
+	} else if (SkipPrefix(name, "multi_was_stock_"sv)) {
+		HandleSetStockOption(multi_was_stock_options, name, value);
+	} else if (SkipPrefix(name, "remote_was_stock_"sv)) {
+		HandleSetStockOption(remote_was_stock_options, name, value);
 	} else if (name == "http_cache_size"sv) {
 		http_cache_size = ParseSize(value);
 	} else if (name == "http_cache_obey_no_cache"sv) {
