@@ -80,6 +80,7 @@ BpPrometheusExporter::HandleHttpRequest(IncomingHttpRequest &request,
 		Prometheus::Write(buffer, process, "fcgi"sv, stats);
 	}
 
+#ifdef HAVE_LIBWAS
 	if (instance.was_stock || instance.multi_was_stock || instance.remote_was_stock) {
 		StockStats stats{};
 		if (instance.was_stock)
@@ -91,7 +92,6 @@ BpPrometheusExporter::HandleHttpRequest(IncomingHttpRequest &request,
 		Prometheus::Write(buffer, process, "was"sv, stats);
 	}
 
-#ifdef HAVE_LIBWAS
 	buffer.Write("# HELP beng_proxy_was_metric Metric received from WAS applications\n"
 		     "# TYPE beng_proxy_was_metric counter\n"sv);
 
