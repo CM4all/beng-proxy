@@ -155,18 +155,18 @@ private:
 	void *WriteAt(std::size_t offset) noexcept {
 		assert(offset <= table.size());
 
-		return (uint8_t *)table.get() + offset;
+		return reinterpret_cast<std::byte *>(table.get()) + offset;
 	}
 
 	[[gnu::pure]]
 	const void *ReadAt(std::size_t offset) const noexcept {
 		assert(offset <= table.size());
 
-		return (const uint8_t *)table.get() + offset;
+		return reinterpret_cast<const std::byte *>(table.get()) + offset;
 	}
 
 	std::size_t OffsetOf(const void *p) const noexcept {
-		return (const uint8_t *)p - (const uint8_t *)table.get();
+		return reinterpret_cast<const std::byte *>(p) - reinterpret_cast<const std::byte *>(table.get());
 	}
 
 	std::size_t OffsetOf(const Hole &hole) const noexcept {

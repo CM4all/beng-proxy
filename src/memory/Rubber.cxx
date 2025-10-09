@@ -219,12 +219,12 @@ RubberTable::RubberTable(unsigned _max_entries) noexcept
 {
 	assert(_max_entries > 1);
 
-	uint8_t *const table_begin = (uint8_t *)this;
+	std::byte *const table_begin = reinterpret_cast<std::byte *>(this);
 
 	/* round to nearest "huge page", so the first real allocation
 	   starts at a "huge page" boundary */
-	uint8_t *const table_end = (uint8_t *)
-		align_page_size_ptr(table_begin + RequiredSize(_max_entries));
+	std::byte *const table_end =
+		reinterpret_cast<std::byte *>(align_page_size_ptr(table_begin + RequiredSize(_max_entries)));
 	const std::size_t table_size = table_end - table_begin;
 
 	entries[0].InitHead(table_size);
@@ -621,7 +621,7 @@ Rubber::UseHole(Hole &hole, unsigned id, std::size_t size) noexcept
 	if (size != hole.size) {
 		/* shrink the hole */
 
-		void *p = (uint8_t *)&hole + size;
+		void *p = reinterpret_cast<std::byte *>(&hole) + size;
 		auto &new_hole = *(Hole *)p;
 
 		new_hole.size = hole.size - size;
