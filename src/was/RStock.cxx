@@ -115,7 +115,7 @@ RemoteWasStock::RemoteWasStock(unsigned limit, [[maybe_unused]] unsigned max_idl
 			     // TODO max_idle,
 			     .limit = limit,
 			     .clear_interval = std::chrono::minutes{5},
-			     .max_wait = std::chrono::seconds{20},
+			     .max_wait = std::chrono::seconds{5},
 		     },
 		     *this) {}
 

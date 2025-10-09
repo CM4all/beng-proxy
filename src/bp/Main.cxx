@@ -489,7 +489,7 @@ try {
 						  .limit = instance.config.was_stock_limit,
 						  .max_idle = instance.config.was_stock_max_idle,
 						  .clear_interval = std::chrono::minutes{5},
-						  .max_wait = std::chrono::seconds{20},
+						  .max_wait = std::chrono::seconds{5},
 					  });
 	instance.multi_was_stock =
 		new MultiWasStock(instance.config.multi_was_stock_limit,

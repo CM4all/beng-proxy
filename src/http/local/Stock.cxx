@@ -171,7 +171,7 @@ LhttpStock::LhttpStock(unsigned limit, [[maybe_unused]] unsigned max_idle,
 		      {
 			      .limit = limit,
 			      .clear_interval = std::chrono::minutes{15},
-			      .max_wait = std::chrono::seconds{20},
+			      .max_wait = std::chrono::seconds{5},
 		      },
 		      // TODO max_idle,
 		      *this)
