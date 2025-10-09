@@ -135,3 +135,15 @@ XForwardedForConfig::GetRealRemoteHost(std::string_view list) const noexcept
 		list = l.first;
 	}
 }
+
+std::string_view
+XForwardedForConfig::GetRealRemoteHost(const char *remote_host,
+				       SocketAddress remote_address,
+				       const char *x_forwarded_for) const noexcept
+{
+	if (x_forwarded_for != nullptr &&
+	    IsTrustedHostOrAddress(remote_host, remote_address))
+		return GetRealRemoteHost(x_forwarded_for);
+
+	return {};
+}

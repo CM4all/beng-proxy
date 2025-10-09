@@ -60,4 +60,9 @@ struct XForwardedForConfig {
 
 	[[gnu::pure]]
 	std::string_view GetRealRemoteHost(std::string_view xff) const noexcept;
+
+	[[gnu::pure]]
+	std::string_view GetRealRemoteHost(const char *remote_host,
+					   SocketAddress remote_address,
+					   const char *x_forwarded_for) const noexcept;
 };
