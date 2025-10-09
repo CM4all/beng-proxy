@@ -42,8 +42,7 @@ class Rubber {
 		1024 * 1024, 64 * 1024, 32 * 1024, 16 * 1024, 8192, 4096, 2048, 1024, 64, 0
 	};
 
-	[[gnu::const]]
-	static unsigned LookupHoleThreshold(std::size_t size) noexcept {
+	static constexpr unsigned LookupHoleThreshold(std::size_t size) noexcept {
 		for (unsigned i = 0;; ++i)
 			if (size >= HOLE_THRESHOLDS[i])
 				return i;
