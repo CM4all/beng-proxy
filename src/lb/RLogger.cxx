@@ -7,6 +7,30 @@
 #include "access_log/Glue.hxx"
 #include "http/CommonHeaders.hxx"
 #include "http/IncomingRequest.hxx"
+#include "AllocatorPtr.hxx"
+
+[[gnu::pure]]
+static const char *
+GetRealRemoteHost(const AccessLogGlue *access_logger,
+		  const IncomingHttpRequest &request) noexcept
+{
+	const char *remote_host = request.remote_host;
+
+	if (access_logger != nullptr) {
+		const char *x_forwarded_for = request.headers.Get(x_forwarded_for_header);
+
+		const auto &config = access_logger->GetXForwardedForConfig();
+		if (const auto r = config.GetRealRemoteHost(remote_host,
+							    request.remote_address,
+							    x_forwarded_for);
+		    !r.empty()) {
+			AllocatorPtr alloc{request.pool};
+			remote_host = alloc.DupZ(r);
+		}
+	}
+
+	return remote_host;
+}
 
 LbRequestLogger::LbRequestLogger(LbInstance &_instance,
 				 HttpStats &_http_stats,
@@ -18,7 +42,7 @@ LbRequestLogger::LbRequestLogger(LbInstance &_instance,
 	 access_logger(_access_logger),
 	 clock(instance.event_loop.SteadyNow()),
 	 host(request.headers.Get(host_header)),
-	 x_forwarded_for(request.headers.Get(x_forwarded_for_header)),
+	 real_remote_host(::GetRealRemoteHost(_access_logger, request)),
 	 referer(request.headers.Get(referer_header)),
 	 user_agent(request.headers.Get(user_agent_header)),
 	 access_logger_only_errors(_access_logger_only_errors)
@@ -50,7 +74,7 @@ LbRequestLogger::LogHttpRequest(IncomingHttpRequest &request,
 				   generator != nullptr && *generator != 0 ? generator : nullptr,
 				   forwarded_to,
 				   host,
-				   request.remote_host, x_forwarded_for,
+				   real_remote_host, nullptr,
 				   referer,
 				   user_agent,
 				   status, content_type, length,

@@ -41,9 +41,10 @@ struct LbRequestLogger final : IncomingHttpRequestLogger {
 	const char *const host;
 
 	/**
-	 * The "X-Forwarded-For" request header.
+	 * The "real" remote host, i.e. possibly extracted from the
+	 * "X-Forwarded-For" request header.
 	 */
-	const char *const x_forwarded_for;
+	const char *const real_remote_host;
 
 	/**
 	 * The "Referer" [sic] request header.
@@ -99,6 +100,10 @@ struct LbRequestLogger final : IncomingHttpRequestLogger {
 		return canonical_host != nullptr
 			? canonical_host
 			: host;
+	}
+
+	const char *GetRealRemoteHost() const noexcept {
+		return real_remote_host;
 	}
 
 	/* virtual methods from class IncomingHttpRequestLogger */
