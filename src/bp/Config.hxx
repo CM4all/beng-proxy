@@ -76,31 +76,26 @@ struct BpConfig {
 	StockOptions lhttp_stock_options = {
 		.max_idle = 8,
 		.clear_interval = std::chrono::minutes{15},
-		.max_wait = std::chrono::seconds{5},
 	};
 
 	StockOptions fcgi_stock_options = {
 		.max_idle = 8,
 		.clear_interval = std::chrono::minutes{10},
-		.max_wait = std::chrono::seconds{5},
 	};
 
 	StockOptions was_stock_options = {
 		.max_idle = 16,
 		.clear_interval = std::chrono::minutes{5},
-		.max_wait = std::chrono::seconds{5},
 	};
 
 	StockOptions multi_was_stock_options = {
 		.max_idle = 16,
 		.clear_interval = std::chrono::minutes{15},
-		.max_wait = std::chrono::seconds{5},
 	};
 
 	StockOptions remote_was_stock_options = {
 		.max_idle = 16,
 		.clear_interval = std::chrono::minutes{5},
-		.max_wait = std::chrono::seconds{5},
 	};
 
 	unsigned cluster_size = 0, cluster_node = 0;

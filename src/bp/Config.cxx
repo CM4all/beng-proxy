@@ -6,6 +6,7 @@
 #include "CommandLine.hxx"
 #include "pg/Interval.hxx"
 #include "net/Parser.hxx"
+#include "time/Parser.hxx"
 #include "util/StringCompare.hxx"
 #include "util/StringParser.hxx"
 
@@ -20,6 +21,8 @@ HandleSetStockOption(StockOptions &options, std::string_view name, const char *v
 		options.limit = ParseUnsignedLong(value);
 	else if (name == "max_idle"sv)
 		options.max_idle = ParseUnsignedLong(value);
+	else if (name == "max_wait"sv)
+		options.max_wait = ParseDuration(value).first;
 	else
 		throw std::invalid_argument{"Unknown variable"};
 }

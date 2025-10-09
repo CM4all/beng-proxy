@@ -403,6 +403,12 @@ The following settings are available:
   connections to one Remote-WAS application.  If there are more than
   that, a timer will incrementally kill excess connections.
 
+- ``{lhttp,fastcgi,was,multi_was,remote_was}_stock_max_wait``: If the
+  stock wait time goes above this threshold, then further waiters fail
+  with HTTP status "418 Too Many Requests".  Value is a duration
+  followed by a unit, e.g. :samp:`5s` or :samp:`800ms`.  By default,
+  there is no maximum wait time.
+
 - ``http_cache_size``: The maximum amount of memory used by the HTTP
   cache. Set to 0 to disable the HTTP cache.
 
