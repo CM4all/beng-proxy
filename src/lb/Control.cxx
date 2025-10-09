@@ -223,6 +223,11 @@ LbControl::OnControlPacket(BengControl::Command command,
 		instance.ReloadState();
 		break;
 
+	case Command::REJECT_CLIENT:
+	case Command::TARPIT_CLIENT:
+		// TODO implement
+		break;
+
 	case Command::FLUSH_FILTER_CACHE:
 	case Command::STOPWATCH_PIPE:
 	case Command::DISCARD_SESSION:

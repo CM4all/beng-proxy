@@ -161,6 +161,17 @@ Commands
   data structures that cannot automatically apply these because they
   do not have enough context (e.g. token buckets).
 
+- ``REJECT_CLIENT``: Reject clients from the specified address.
+  Payload is a big-endian 32 bit integer containing the number of
+  seconds after which the effect will expire, followed by a string
+  describing the client address (e.g. ``192.168.1.200``,
+  ``fe80::1234:5678%public``).  If an entry for this address already
+  exists, this packet will only update the expiration time.  An expiry
+  of 0 means remove the entry immediately.
+
+- ``TARPIT_CLIENT``: Like #REJECT_CLIENT, but slow down the client
+  instead of rejecting it.
+
 Only ``TCACHE_INVALIDATE``, ``FLUSH_FILTER_CACHE`` are allowed when
 received via IP. The other commands are only accepted from clients
 connected on a local socket (aka Unix Domain Socket, ``AF_LOCAL``).

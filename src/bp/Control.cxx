@@ -222,6 +222,11 @@ BpInstance::OnControlPacket(BengControl::Command command,
 
 		break;
 
+	case Command::REJECT_CLIENT:
+	case Command::TARPIT_CLIENT:
+		// TODO implement
+		break;
+
 	case Command::ENABLE_QUEUE:
 	case Command::DISABLE_QUEUE:
 	case Command::DISCONNECT_DATABASE:
