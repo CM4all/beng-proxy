@@ -102,11 +102,11 @@ public:
 	}
 };
 
-MultiWasStock::MultiWasStock(unsigned limit, [[maybe_unused]] unsigned max_idle,
-			     EventLoop &event_loop, SpawnService &spawn_service,
+MultiWasStock::MultiWasStock(EventLoop &event_loop, SpawnService &spawn_service,
 #ifdef HAVE_LIBSYSTEMD
 			     CgroupMultiWatch *_cgroup_multi_watch,
 #endif
+			     StockOptions stock_options,
 			     Net::Log::Sink *log_sink,
 			     const ChildErrorLogOptions &log_options) noexcept
 	:pool(pool_new_dummy(nullptr, "MultiWasStock")),
@@ -118,12 +118,7 @@ MultiWasStock::MultiWasStock(unsigned limit, [[maybe_unused]] unsigned max_idle,
 		     *this,
 		     log_sink, log_options),
 	 mchild_stock(event_loop, child_stock,
-		      {
-			      .limit = limit,
-			      .clear_interval = std::chrono::minutes{15},
-			      .max_wait = std::chrono::seconds{5},
-		      },
-		      // TODO max_idle,
+		      stock_options,
 		      *this) {}
 
 StockOptions

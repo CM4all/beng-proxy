@@ -33,8 +33,8 @@ class RemoteWasStock final : MultiStockClass {
 #endif
 
 public:
-	RemoteWasStock(unsigned limit, unsigned max_idle,
-		       EventLoop &event_loop) noexcept;
+	RemoteWasStock(EventLoop &event_loop,
+		       StockOptions stock_options) noexcept;
 
 	auto &GetEventLoop() const noexcept {
 		return multi_stock.GetEventLoop();

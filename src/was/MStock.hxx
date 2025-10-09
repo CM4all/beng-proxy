@@ -33,11 +33,11 @@ class MultiWasStock final : MultiStockClass, ChildStockClass {
 #endif
 
 public:
-	MultiWasStock(unsigned limit, unsigned max_idle,
-		      EventLoop &event_loop, SpawnService &spawn_service,
+	MultiWasStock(EventLoop &event_loop, SpawnService &spawn_service,
 #ifdef HAVE_LIBSYSTEMD
 		      CgroupMultiWatch *_cgroup_multi_watch,
 #endif
+		      StockOptions stock_options,
 		      Net::Log::Sink *log_sink,
 		      const ChildErrorLogOptions &log_options) noexcept;
 

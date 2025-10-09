@@ -108,15 +108,10 @@ RemoteWasStock::MultiClientStockClass::Create(CreateStockItem c,
 	connection->InvokeCreateSuccess(handler);
 }
 
-RemoteWasStock::RemoteWasStock(unsigned limit, [[maybe_unused]] unsigned max_idle,
-			       EventLoop &event_loop) noexcept
+RemoteWasStock::RemoteWasStock(EventLoop &event_loop,
+			       StockOptions stock_options) noexcept
 	:multi_stock(event_loop, multi_client_stock_class,
-		     {
-			     // TODO max_idle,
-			     .limit = limit,
-			     .clear_interval = std::chrono::minutes{5},
-			     .max_wait = std::chrono::seconds{5},
-		     },
+		     stock_options,
 		     *this) {}
 
 StockOptions

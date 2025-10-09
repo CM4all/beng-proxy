@@ -29,12 +29,12 @@ class FcgiStock final : MultiStockClass, ListenChildStockClass {
 	MultiStock mchild_stock;
 
 public:
-	FcgiStock(unsigned limit, unsigned max_idle,
-		  EventLoop &event_loop, SpawnService &spawn_service,
+	FcgiStock(EventLoop &event_loop, SpawnService &spawn_service,
 #ifdef HAVE_LIBSYSTEMD
 		  CgroupMultiWatch *_cgroup_multi_watch,
 #endif
 		  ListenStreamStock *listen_stream_stock,
+		  StockOptions stock_options,
 		  Net::Log::Sink *log_sink,
 		  const ChildErrorLogOptions &_log_options) noexcept;
 

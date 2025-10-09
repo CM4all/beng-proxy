@@ -459,25 +459,33 @@ try {
 	}
 
 
-	instance.lhttp_stock = std::make_unique<LhttpStock>(instance.config.lhttp_stock_limit,
-							    instance.config.lhttp_stock_max_idle,
-							    instance.event_loop,
+	instance.lhttp_stock = std::make_unique<LhttpStock>(instance.event_loop,
 							    *instance.spawn_service,
 #ifdef HAVE_LIBSYSTEMD
 							    instance.cgroup_multi_watch.get(),
 #endif
 							    instance.listen_stream_stock.get(),
+							    StockOptions{
+								    .limit = instance.config.lhttp_stock_limit,
+								    .max_idle = instance.config.lhttp_stock_max_idle,
+								    .clear_interval = std::chrono::minutes{15},
+								    .max_wait = std::chrono::seconds{5},
+							    },
 							    child_log_sink,
 							    child_log_options);
 
-	instance.fcgi_stock = std::make_unique<FcgiStock>(instance.config.fcgi_stock_limit,
-							  instance.config.fcgi_stock_max_idle,
-							  instance.event_loop,
+	instance.fcgi_stock = std::make_unique<FcgiStock>(instance.event_loop,
 							  *instance.spawn_service,
 #ifdef HAVE_LIBSYSTEMD
 							  instance.cgroup_multi_watch.get(),
 #endif
 							  instance.listen_stream_stock.get(),
+							  StockOptions{
+								  .limit = instance.config.fcgi_stock_limit,
+								  .max_idle = instance.config.fcgi_stock_max_idle,
+								  .clear_interval = std::chrono::minutes{10},
+								  .max_wait = std::chrono::seconds{5},
+							  },
 							  child_log_sink, child_log_options);
 
 #ifdef HAVE_LIBWAS
@@ -492,19 +500,27 @@ try {
 						  .max_wait = std::chrono::seconds{5},
 					  });
 	instance.multi_was_stock =
-		new MultiWasStock(instance.config.multi_was_stock_limit,
-				  instance.config.multi_was_stock_max_idle,
-				  instance.event_loop,
+		new MultiWasStock(instance.event_loop,
 				  *instance.spawn_service,
 #ifdef HAVE_LIBSYSTEMD
 				  instance.cgroup_multi_watch.get(),
 #endif
+				  {
+					  .limit = instance.config.multi_was_stock_limit,
+					  .max_idle = instance.config.multi_was_stock_max_idle,
+					  .clear_interval = std::chrono::minutes{15},
+					  .max_wait = std::chrono::seconds{5},
+				  },
 				  child_log_sink,
 				  child_log_options);
 	instance.remote_was_stock =
-		new RemoteWasStock(instance.config.remote_was_stock_limit,
-				   instance.config.remote_was_stock_max_idle,
-				   instance.event_loop);
+		new RemoteWasStock(instance.event_loop,
+				   {
+					   .limit = instance.config.remote_was_stock_limit,
+					   .max_idle = instance.config.remote_was_stock_max_idle,
+					   .clear_interval = std::chrono::minutes{5},
+					   .max_wait = std::chrono::seconds{5},
+				   });
 
 #ifdef HAVE_URING
 	if (instance.uring) {
