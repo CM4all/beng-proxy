@@ -289,6 +289,7 @@ subdir('libcommon/src/net/log')
 
 net2 = static_library(
   'net2',
+  'src/net/BanList.cxx',
   'src/net/FailureManager.cxx',
   'src/net/FailureInfo.cxx',
   'src/net/FailureRef.cxx',

@@ -28,6 +28,7 @@
 #include "net/TimeoutError.hxx"
 #include "system/Error.hxx"
 #include "util/AlwaysFalse.hxx"
+#include "util/Cancellable.hxx"
 #include "util/Exception.hxx"
 #include "HttpMessageResponse.hxx"
 #include "AllocatorPtr.hxx"
@@ -235,6 +236,22 @@ LbHttpConnection::ResponseFinished() noexcept
 	AccountedClientConnection::NoteResponseFinished();
 }
 
+/**
+ * A dummy object that does nothing until it gets canceled.  This is
+ * used to implement #BanAction::TARPIT.
+ */
+class LbHttpTarpit final : Cancellable {
+public:
+	LbHttpTarpit(CancellablePointer &cancel_ptr) noexcept {
+		cancel_ptr = *this;
+	}
+
+private:
+	void Cancel() noexcept override {
+		this->~LbHttpTarpit();
+	}
+};
+
 void
 LbHttpConnection::HandleHttpRequest(IncomingHttpRequest &request,
 				    const StopwatchPtr &parent_stopwatch,
@@ -262,6 +279,27 @@ LbHttpConnection::HandleHttpRequest(IncomingHttpRequest &request,
 		request.body.Clear();
 		request.SendMessage(HttpStatus::BAD_REQUEST, "Malformed Host header"sv);
 		return;
+	}
+
+	if (listener_config.client_ban_list) {
+		if (const char *real_remote_host = rl.GetRealRemoteHost()) {
+			switch (instance.ban_list.Get(real_remote_host)) {
+			case BanAction::NONE:
+				break;
+
+			case BanAction::REJECT:
+				++listener.GetHttpStats().n_rejected;
+				request.body.Clear();
+				request.SendMessage(HttpStatus::FORBIDDEN, "Banned"sv);
+				return;
+
+			case BanAction::TARPIT:
+				++listener.GetHttpStats().n_delayed;
+				NewFromPool<LbHttpTarpit>(request.pool, cancel_ptr);
+				// TODO shrink kernel socket buffers?
+				return;
+			}
+		}
 	}
 
 	if (instance.config.global_http_check &&

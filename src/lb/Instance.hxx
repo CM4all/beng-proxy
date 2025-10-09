@@ -14,6 +14,7 @@
 #include "event/FarTimerEvent.hxx"
 #include "event/SignalEvent.hxx"
 #include "event/ShutdownListener.hxx"
+#include "net/BanList.hxx"
 #include "net/FailureManager.hxx"
 #include "io/Logger.hxx"
 #include "io/StateDirectories.hxx"
@@ -70,8 +71,10 @@ struct LbInstance final : PInstance, Avahi::ErrorHandler {
 	 */
 	SlicePool request_slice_pool{8192, 8192, "Requests"};
 
-	/* stock */
+	BanList ban_list{event_loop};
 	FailureManager failure_manager;
+
+	/* stock */
 	std::unique_ptr<BalancerMap> balancer;
 
 	std::unique_ptr<FilteredSocketStock> fs_stock;

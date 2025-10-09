@@ -69,6 +69,7 @@ LbInstance::ShutdownCallback() noexcept
 
 	compress_event.Cancel();
 
+	ban_list.BeginShutdown();
 	DeinitAllControls();
 
 	while (!tcp_connections.empty())

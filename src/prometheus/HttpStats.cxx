@@ -35,6 +35,9 @@ Write(GrowingBuffer &buffer, std::string_view labels,
 # HELP beng_proxy_http_requests Number of HTTP requests
 # TYPE beng_proxy_http_requests counter
 
+# HELP beng_proxy_http_requests_rejected Number of rejected HTTP requests
+# TYPE beng_proxy_http_requests_rejected counter
+
 # HELP beng_proxy_http_requests_delayed Number of delayed HTTP requests
 # TYPE beng_proxy_http_requests_delayed counter
 
@@ -47,12 +50,14 @@ Write(GrowingBuffer &buffer, std::string_view labels,
 # HELP beng_proxy_http_traffic Number of bytes transferred
 # TYPE beng_proxy_http_traffic counter
 
+beng_proxy_http_requests_rejected{{{}}} {}
 beng_proxy_http_requests_delayed{{{}}} {}
 beng_proxy_http_invalid_frames{{{}}} {}
 beng_proxy_http_total_duration{{{}}} {:e}
 beng_proxy_http_traffic{{{}direction="in"}} {}
 beng_proxy_http_traffic{{{}direction="out"}} {}
 )",
+	       labels, stats.n_rejected,
 	       labels, stats.n_delayed,
 	       labels, stats.n_invalid_frames,
 	       labels, std::chrono::duration_cast<std::chrono::duration<double>>(stats.total_duration).count(),

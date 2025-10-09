@@ -20,6 +20,12 @@ struct HttpStats {
 	uint_least64_t n_invalid_frames = 0;
 
 	/**
+	 * The number of HTTP requests that were rejected due to
+	 * #BanList entry.
+	 */
+	uint_least64_t n_rejected = 0;
+
+	/**
 	 * The number of HTTP requests that were delayed due (for
 	 * throttling/tarpit).
 	 */

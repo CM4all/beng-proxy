@@ -531,6 +531,12 @@ Known attributes:
 - ``access_logger_only_errors``: ``yes`` limits the access log to
   failed requests (HTTP status 4xx and 5xx).
 
+.. _client_ban_list:
+
+- ``client_ban_list``: ``yes`` enables lookup in the client ban list
+  which can be edited by control commands :ref:`REJECT_CLIENT
+  <reject_client>` and :ref:`TARPIT_CLIENT <tarpit_client>`.
+
 - ``verbose_response``: ``yes`` exposes internal error messages in
   HTTP responses.
 

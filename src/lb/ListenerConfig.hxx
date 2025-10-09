@@ -43,6 +43,11 @@ struct LbListenerConfig : SocketConfig {
 
 	bool access_logger_only_errors = false;
 
+	/**
+	 * Enable or disable #BanList lookups.
+	 */
+	bool client_ban_list = false;
+
 	bool verbose_response = false;
 
 #ifdef HAVE_NGHTTP2

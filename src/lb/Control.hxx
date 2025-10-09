@@ -8,8 +8,10 @@
 #include "event/net/control/Server.hxx"
 #include "io/Logger.hxx"
 
+#include <cstdint>
 #include <string_view>
 
+enum class BanAction : uint_least8_t;
 struct LbInstance;
 struct LbControlConfig;
 
@@ -41,6 +43,7 @@ private:
 
 	void EnableNode(const char *payload, size_t length);
 	void FadeNode(const char *payload, size_t length);
+	void BanClient(BanAction action, std::span<const std::byte> payload) noexcept;
 
 	/* virtual methods from class BengControl::Handler */
 	void OnControlPacket(BengControl::Command command,

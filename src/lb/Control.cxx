@@ -11,9 +11,12 @@
 #include "net/FormatAddress.hxx"
 #include "net/FailureManager.hxx"
 #include "net/FailureRef.hxx"
+#include "util/CharUtil.hxx"
 #include "util/Exception.hxx"
 #include "util/SpanCast.hxx"
 #include "util/StringSplit.hxx"
+#include "util/StringVerify.hxx"
+#include "util/UnalignedBigEndian.hxx"
 #include "AllocatorPtr.hxx"
 
 #ifdef HAVE_AVAHI
@@ -116,6 +119,21 @@ LbControl::EnableNode(const char *payload, size_t length)
 	       ")");
 
 	instance.failure_manager.Make(with_port).UnsetAll();
+}
+
+inline void
+LbControl::BanClient(BanAction action, std::span<const std::byte> payload) noexcept
+{
+	if (payload.size() <= 4)
+		return;
+
+	const std::chrono::seconds duration{ReadUnalignedBE32(payload.first<4>())};
+	const auto address = ToStringView(payload.subspan(4));
+
+	if (!CheckChars(address, IsPrintableASCII))
+		return;
+
+	instance.ban_list.Set(address, action, duration);
 }
 
 inline void
@@ -224,8 +242,11 @@ LbControl::OnControlPacket(BengControl::Command command,
 		break;
 
 	case Command::REJECT_CLIENT:
+		BanClient(BanAction::REJECT, payload);
+		break;
+
 	case Command::TARPIT_CLIENT:
-		// TODO implement
+		BanClient(BanAction::TARPIT, payload);
 		break;
 
 	case Command::FLUSH_FILTER_CACHE:
