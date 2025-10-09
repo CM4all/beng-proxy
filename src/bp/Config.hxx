@@ -11,6 +11,7 @@
 #include "net/LocalSocketAddress.hxx"
 #include "net/SocketConfig.hxx"
 #include "spawn/Config.hxx"
+#include "stock/Options.hxx"
 #include "config.h"
 
 #include <chrono>
@@ -72,12 +73,35 @@ struct BpConfig {
 	unsigned tcp_stock_limit = 0;
 	static constexpr std::size_t tcp_stock_max_idle = 16;
 
-	unsigned lhttp_stock_limit = 0, lhttp_stock_max_idle = 8;
-	unsigned fcgi_stock_limit = 0, fcgi_stock_max_idle = 8;
+	StockOptions lhttp_stock_options = {
+		.max_idle = 8,
+		.clear_interval = std::chrono::minutes{15},
+		.max_wait = std::chrono::seconds{5},
+	};
 
-	unsigned was_stock_limit = 0, was_stock_max_idle = 16;
-	unsigned multi_was_stock_limit = 0, multi_was_stock_max_idle = 16;
-	unsigned remote_was_stock_limit = 0, remote_was_stock_max_idle = 16;
+	StockOptions fcgi_stock_options = {
+		.max_idle = 8,
+		.clear_interval = std::chrono::minutes{10},
+		.max_wait = std::chrono::seconds{5},
+	};
+
+	StockOptions was_stock_options = {
+		.max_idle = 16,
+		.clear_interval = std::chrono::minutes{5},
+		.max_wait = std::chrono::seconds{5},
+	};
+
+	StockOptions multi_was_stock_options = {
+		.max_idle = 16,
+		.clear_interval = std::chrono::minutes{15},
+		.max_wait = std::chrono::seconds{5},
+	};
+
+	StockOptions remote_was_stock_options = {
+		.max_idle = 16,
+		.clear_interval = std::chrono::minutes{5},
+		.max_wait = std::chrono::seconds{5},
+	};
 
 	unsigned cluster_size = 0, cluster_node = 0;
 

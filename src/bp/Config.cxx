@@ -21,25 +21,25 @@ BpConfig::HandleSet(std::string_view name, const char *value)
 	} else if (name == "tcp_stock_limit"sv) {
 		tcp_stock_limit = ParseUnsignedLong(value);
 	} else if (name == "lhttp_stock_limit"sv) {
-		lhttp_stock_limit = ParseUnsignedLong(value);
+		lhttp_stock_options.limit = ParseUnsignedLong(value);
 	} else if (name == "lhttp_stock_max_idle"sv) {
-		lhttp_stock_max_idle = ParseUnsignedLong(value);
+		lhttp_stock_options.max_idle = ParseUnsignedLong(value);
 	} else if (name == "fastcgi_stock_limit"sv) {
-		fcgi_stock_limit = ParseUnsignedLong(value);
+		fcgi_stock_options.limit = ParseUnsignedLong(value);
 	} else if (name == "fcgi_stock_max_idle"sv) {
-		fcgi_stock_max_idle = ParseUnsignedLong(value);
+		fcgi_stock_options.max_idle = ParseUnsignedLong(value);
 	} else if (name == "was_stock_limit"sv) {
-		was_stock_limit = ParseUnsignedLong(value);
+		was_stock_options.limit = ParseUnsignedLong(value);
 	} else if (name == "was_stock_max_idle"sv) {
-		was_stock_max_idle = ParseUnsignedLong(value);
+		was_stock_options.max_idle = ParseUnsignedLong(value);
 	} else if (name == "multi_was_stock_limit"sv) {
-		multi_was_stock_limit = ParseUnsignedLong(value);
+		multi_was_stock_options.limit = ParseUnsignedLong(value);
 	} else if (name == "multi_was_stock_max_idle"sv) {
-		multi_was_stock_max_idle = ParseUnsignedLong(value);
+		multi_was_stock_options.max_idle = ParseUnsignedLong(value);
 	} else if (name == "remote_was_stock_limit"sv) {
-		remote_was_stock_limit = ParseUnsignedLong(value);
+		remote_was_stock_options.limit = ParseUnsignedLong(value);
 	} else if (name == "remote_was_stock_max_idle"sv) {
-		remote_was_stock_max_idle = ParseUnsignedLong(value);
+		remote_was_stock_options.max_idle = ParseUnsignedLong(value);
 	} else if (name == "http_cache_size"sv) {
 		http_cache_size = ParseSize(value);
 	} else if (name == "http_cache_obey_no_cache"sv) {
