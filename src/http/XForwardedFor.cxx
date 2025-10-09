@@ -35,6 +35,14 @@ XForwardedForConfig::IsTrustedAddress(SocketAddress address) const noexcept
 	});
 }
 
+bool
+XForwardedForConfig::IsTrustedHostOrAddress(const char *host,
+					    SocketAddress address) const noexcept
+{
+	return (host != nullptr && IsTrustedHost(host)) ||
+		(address.IsDefined() && IsTrustedAddress(address));
+}
+
 [[gnu::pure]]
 static StaticSocketAddress
 ParseIpAddress(std::string_view s) noexcept

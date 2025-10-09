@@ -43,6 +43,14 @@ struct XForwardedForConfig {
 	bool IsTrustedAddress(SocketAddress address) const noexcept;
 
 	/**
+	 * Wrapper for both IsTrustedHost() and IsTrustedAddress();
+	 * both parameters are allowed to be nullptr.
+	 */
+	[[gnu::pure]]
+	bool IsTrustedHostOrAddress(const char *host,
+				    SocketAddress address) const noexcept;
+
+	/**
 	 * Wrapper which calls both IsTrustedHost() and
 	 * IsTrustedAddress(); if calling the latter is needed, the
 	 * specified host string is parsed.
