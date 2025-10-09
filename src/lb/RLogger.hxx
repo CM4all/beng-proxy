@@ -95,7 +95,7 @@ struct LbRequestLogger final : IncomingHttpRequestLogger {
 			bool _access_logger_only_errors,
 			const IncomingHttpRequest &request) noexcept;
 
-	const char *GetCanonicalHost() const {
+	const char *GetCanonicalHost() const noexcept {
 		return canonical_host != nullptr
 			? canonical_host
 			: host;
