@@ -38,12 +38,14 @@ BpConfig::HandleSet(std::string_view name, const char *value)
 		HandleSetStockOption(lhttp_stock_options, name, value);
 	} else if (SkipPrefix(name, "fastcgi_stock_"sv)) {
 		HandleSetStockOption(fcgi_stock_options, name, value);
+#ifdef HAVE_LIBWAS
 	} else if (SkipPrefix(name, "was_stock_"sv)) {
 		HandleSetStockOption(was_stock_options, name, value);
 	} else if (SkipPrefix(name, "multi_was_stock_"sv)) {
 		HandleSetStockOption(multi_was_stock_options, name, value);
 	} else if (SkipPrefix(name, "remote_was_stock_"sv)) {
 		HandleSetStockOption(remote_was_stock_options, name, value);
+#endif // HAVE_LIBWAS
 	} else if (name == "http_cache_size"sv) {
 		http_cache_size = ParseSize(value);
 	} else if (name == "http_cache_obey_no_cache"sv) {

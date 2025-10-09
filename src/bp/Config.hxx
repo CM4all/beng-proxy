@@ -83,6 +83,7 @@ struct BpConfig {
 		.clear_interval = std::chrono::minutes{10},
 	};
 
+#ifdef HAVE_LIBWAS
 	StockOptions was_stock_options = {
 		.max_idle = 16,
 		.clear_interval = std::chrono::minutes{5},
@@ -97,6 +98,7 @@ struct BpConfig {
 		.max_idle = 16,
 		.clear_interval = std::chrono::minutes{5},
 	};
+#endif // HAVE_LIBWAS
 
 	unsigned cluster_size = 0, cluster_node = 0;
 
