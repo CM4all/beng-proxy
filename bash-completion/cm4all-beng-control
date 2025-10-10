@@ -38,6 +38,8 @@ _beng_control () {
                      flush-filter-cache
                      discard-session
                      reset-limiter
+                     reject-client
+                     tarpit-client
                      " -- "$cur"
                             ) )
                 ;;

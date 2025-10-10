@@ -7,6 +7,7 @@ executable(
     control_client_dep,
     net_dep,
     io_dep,
+    time_dep,
     util_dep,
   ],
   install: true,

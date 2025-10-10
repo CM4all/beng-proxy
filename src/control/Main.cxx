@@ -8,12 +8,16 @@
 #include "io/Pipe.hxx"
 #include "io/UniqueFileDescriptor.hxx"
 #include "system/Error.hxx"
+#include "time/Parser.hxx"
+#include "util/AllocatedArray.hxx"
 #include "util/ByteOrder.hxx"
 #include "util/PackedBigEndian.hxx"
 #include "util/PrintException.hxx"
 #include "util/SpanCast.hxx"
 #include "util/StringCompare.hxx"
+#include "util/UnalignedBigEndian.hxx"
 
+#include <algorithm> // for std::clamp()
 #include <chrono>
 #include <span>
 
@@ -279,6 +283,32 @@ ResetLimiter(const char *server, std::span<const char *const> args)
 }
 
 static void
+BanClient(const char *server, BengControl::Command command, std::span<const char *const> args)
+{
+	if (args.size() < 2)
+		throw Usage{"Not enough arguments"};
+
+	if (args.size() > 2)
+		throw Usage{"Too many arguments"};
+
+	const auto duration = std::clamp(std::chrono::duration_cast<std::chrono::seconds>(ParseDuration(args[0]).first),
+					 std::chrono::seconds{0},
+					 std::chrono::seconds{0xffffffff});
+
+	const std::string_view address = args[1];
+	if (address.empty())
+		throw Usage{"Invalid address"};
+
+	AllocatedArray<std::byte> payload{4 + address.size()};
+	std::byte *p = payload.data();
+	p = WriteUnalignedBE32(p, duration.count());
+	std::copy(address.begin(), address.end(), reinterpret_cast<char *>(p));
+
+	BengControl::Client client(server);
+	client.Send(command, payload);
+}
+
+static void
 Stopwatch(const char *server, std::span<const char *const> args)
 {
 	if (!args.empty())
@@ -389,6 +419,12 @@ try {
 	} else if (StringIsEqual(command, "reset-limiter")) {
 		ResetLimiter(server, args);
 		return EXIT_SUCCESS;
+	} else if (StringIsEqual(command, "reject-client")) {
+		BanClient(server, BengControl::Command::REJECT_CLIENT, args);
+		return EXIT_SUCCESS;
+	} else if (StringIsEqual(command, "tarpit-client")) {
+		BanClient(server, BengControl::Command::TARPIT_CLIENT, args);
+		return EXIT_SUCCESS;
 	} else if (StringIsEqual(command, "stopwatch")) {
 		Stopwatch(server, args);
 		return EXIT_SUCCESS;
@@ -418,6 +454,8 @@ try {
 		"  flush-filter-cache [TAG]\n"
 		"  discard-session ATTACH_ID\n"
 		"  reset-limiter ID\n"
+		"  reject-client DURATION ADDRESS\n"
+		"  tarpit-client DURATION ADDRESS\n"
 		"  stopwatch\n"
 		"\n"
 		"Names for tcache-invalidate:\n",
