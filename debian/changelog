@@ -8,7 +8,7 @@ cm4all-beng-proxy (20.12) unstable; urgency=low
   * certdb: command "dumpkey" expects a handle, not a host name
   * certdb: add options "--chain", "--no-text"
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Fri, 10 Oct 2025 18:54:23 +0200
 
 cm4all-beng-proxy (20.11) unstable; urgency=low
 
