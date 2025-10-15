@@ -88,7 +88,7 @@ private:
 
 	/* virtual methods from class Lua::ResumeListener */
 	void OnLuaFinished(lua_State *L) noexcept override;
-	void OnLuaError(lua_State *L, std::exception_ptr e) noexcept override;
+	void OnLuaError(lua_State *L, std::exception_ptr &&error) noexcept override;
 
 	/* virtual methods from class Cancellable */
 	void Cancel() noexcept override;
@@ -169,10 +169,10 @@ try {
 }
 
 void
-LbLuaResponseHandler::OnLuaError(lua_State *, std::exception_ptr e) noexcept
+LbLuaResponseHandler::OnLuaError(lua_State *, std::exception_ptr &&e) noexcept
 {
 	if (IsFinished())
-		connection.logger(1, "Lua error: ", e);
+		connection.logger(1, "Lua error: ", std::move(e));
 	else
 		InvokeError(std::move(e));
 	Destroy();
