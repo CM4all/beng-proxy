@@ -96,6 +96,11 @@ struct Context final : IstreamSink {
 	bool got_data;
 	bool eof = false, error = false;
 
+	/**
+	 * Call input.GetAvailable() before/after input.FillBucketList()?
+	 */
+	bool get_available_before_bucket = true, get_available_after_bucket = true;
+
 	bool bucket_fallback = false, bucket_eof = false;
 
 	/**
@@ -338,6 +343,37 @@ TYPED_TEST_P(IstreamFilterTest, Bucket)
 	Context ctx(instance, std::move(pool),
 		    traits.options, std::move(istream));
 	ctx.on_ready_buckets = true;
+	if (ctx.options.expected_result.data() != nullptr)
+		ctx.record = true;
+
+	while (ctx.ReadBuckets(1024 * 1024)) {}
+
+	if (ctx.input.IsDefined())
+		run_istream_ctx(ctx);
+}
+
+/** test with Istream::FillBucketList(), but don't call input.GetAvailable() */
+TYPED_TEST_P(IstreamFilterTest, BucketNoGetAvailable)
+{
+	auto &traits = this->traits_;
+	auto &instance = this->instance_;
+
+	if (!traits.options.enable_buckets)
+		GTEST_SKIP();
+
+	auto pool = pool_new_linear(instance.root_pool, "test", 8192);
+	auto input_pool = pool_new_linear(instance.root_pool, "input", 8192);
+
+	auto istream = traits.CreateTest(instance.event_loop, pool,
+					 traits.CreateInput(input_pool));
+	ASSERT_TRUE(!!istream);
+	input_pool.reset();
+
+	Context ctx(instance, std::move(pool),
+		    traits.options, std::move(istream));
+	ctx.on_ready_buckets = true;
+	ctx.get_available_before_bucket = false;
+	ctx.get_available_after_bucket = false;
 	if (ctx.options.expected_result.data() != nullptr)
 		ctx.record = true;
 
@@ -906,6 +942,7 @@ REGISTER_TYPED_TEST_SUITE_P(IstreamFilterTest,
 			    HalfSuspend,
 			    NoBucket,
 			    Bucket,
+			    BucketNoGetAvailable,
 			    BucketHalfSuspend,
 			    BucketMore,
 			    SmallBucket,

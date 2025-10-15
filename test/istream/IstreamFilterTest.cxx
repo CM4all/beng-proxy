@@ -50,18 +50,22 @@ Context::ReadBuckets2(std::size_t limit, bool consume_more)
 		   OnData() */
 		return {IstreamReadyResult::OK, false};
 
-	/* these Istream::GetAvailable() are only here to trigger
-	   assertions */
-	[[maybe_unused]]
-	const auto available_partial1 = input.GetAvailable(true),
-		available_full1 = input.GetAvailable(false);
+	if (get_available_before_bucket) {
+		/* these Istream::GetAvailable() are only here to trigger
+		   assertions */
+		[[maybe_unused]]
+		const auto available_partial1 = input.GetAvailable(true),
+			available_full1 = input.GetAvailable(false);
+	}
 
 	IstreamBucketList list;
 	input.FillBucketList(list);
 
-	[[maybe_unused]]
-	const auto available_partial2 = input.GetAvailable(true),
-		available_full2 = input.GetAvailable(false);
+	if (get_available_after_bucket) {
+		[[maybe_unused]]
+		const auto available_partial2 = input.GetAvailable(true),
+			available_full2 = input.GetAvailable(false);
+	}
 
 	if (list.ShouldFallback())
 		bucket_fallback = true;
