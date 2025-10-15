@@ -55,7 +55,8 @@ Istream::FillBucketList(IstreamBucketList &list)
 		}
 
 		bucket_eof_seen = true;
-	} else {
+	} else if (!list.ShouldFallback()) {
+		// TODO remove the fallback check once CatchIstream implements buckets
 		assert(!bucket_eof_seen);
 	}
 }
