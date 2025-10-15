@@ -23,6 +23,8 @@ extern "C" {
 #include <lualib.h>
 }
 
+using std::string_view_literals::operator""sv;
+
 LbLuaHandler::LbLuaHandler(EventLoop &event_loop,
 			   LuaInitHook &init_hook,
 			   const LbLuaHandlerConfig &_config)
@@ -48,11 +50,11 @@ LbLuaHandler::LbLuaHandler(EventLoop &event_loop,
 
 	if (!lua_isfunction(L, -1)) {
 		if (lua_isnil(L, -1))
-			throw FmtRuntimeError("No such function: '{}' in {}",
+			throw FmtRuntimeError("No such function: {:?} in {}"sv,
 					      config.function,
 					      config.path.c_str());
 		else
-			throw FmtRuntimeError("Not a function: '{}' in {}",
+			throw FmtRuntimeError("Not a function: {:?} in {}"sv,
 					      config.function,
 					      config.path.c_str());
 	}

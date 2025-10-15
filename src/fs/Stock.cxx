@@ -27,6 +27,8 @@
 #include <memory>
 #include <utility> // for std::unreachable()
 
+using std::string_view_literals::operator""sv;
+
 struct FilteredSocketStockRequest {
 	StopwatchPtr stopwatch;
 
@@ -236,7 +238,7 @@ FilteredSocketStockConnection::OnConnectFilteredSocketError(std::exception_ptr e
 	cancel_ptr = nullptr;
 
 	ep = NestException(ep,
-			   FmtRuntimeError("Failed to connect to '{}'",
+			   FmtRuntimeError("Failed to connect to {:?}"sv,
 					   GetStockNameView()));
 
 	InvokeCreateError(*handler, std::move(ep));

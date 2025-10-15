@@ -16,6 +16,8 @@
 #include <cassert>
 #include <utility> // for std::unreachable()
 
+using std::string_view_literals::operator""sv;
+
 static constexpr Event::Duration LB_TCP_CONNECT_TIMEOUT =
 	std::chrono::seconds(20);
 
@@ -293,7 +295,7 @@ LbTcpConnection::Outbound::OnBufferedError(std::exception_ptr ep) noexcept
 std::string
 LbTcpConnection::MakeLoggerDomain() const noexcept
 {
-	return fmt::format("listener='{}' cluster='{}' client='{}'",
+	return fmt::format("listener={:?} cluster={:?} client={:?}"sv,
 			   listener.name, listener.destination.GetName(),
 			   client_address);
 }

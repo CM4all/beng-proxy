@@ -33,6 +33,7 @@ extern "C" {
 #include <lualib.h>
 }
 
+using std::string_view_literals::operator""sv;
 using namespace Lua;
 
 static void
@@ -45,10 +46,10 @@ LookupFunction(Lua::Value &dest, const char *path, const char *name)
 
 	if (!lua_isfunction(L, -1)) {
 		if (lua_isnil(L, -1))
-			throw FmtRuntimeError("No such function: '{}' in {}",
+			throw FmtRuntimeError("No such function: {:?} in {}"sv,
 					      name, path);
 		else
-			throw FmtRuntimeError("Not a function: '{}' in {}",
+			throw FmtRuntimeError("Not a function: {:?} in {}"sv,
 					      name, path);
 	}
 

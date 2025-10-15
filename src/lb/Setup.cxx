@@ -8,6 +8,8 @@
 #include "Control.hxx"
 #include "lib/fmt/RuntimeError.hxx"
 
+using std::string_view_literals::operator""sv;
+
 void
 LbInstance::InitAllListeners(const UidGid *logger_user)
 {
@@ -20,7 +22,7 @@ LbInstance::InitAllListeners(const UidGid *logger_user)
 								i.access_logger_name),
 						i);
 		} catch (...) {
-			std::throw_with_nested(FmtRuntimeError("Failed to set up listener '{}'",
+			std::throw_with_nested(FmtRuntimeError("Failed to set up listener {:?}"sv,
 							       i.name));
 		}
 	}

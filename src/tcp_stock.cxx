@@ -28,6 +28,8 @@
 #include <string.h>
 #include <unistd.h>
 
+using std::string_view_literals::operator""sv;
+
 struct TcpStockRequest {
 	AllocatorPtr alloc;
 
@@ -195,7 +197,7 @@ TcpStockConnection::OnSocketConnectError(std::exception_ptr ep) noexcept
 	cancel_ptr = nullptr;
 
 	ep = NestException(ep,
-			   FmtRuntimeError("Failed to connect to '{}'",
+			   FmtRuntimeError("Failed to connect to {:?}"sv,
 					   GetStockNameView()));
 	InvokeCreateError(handler, ep);
 }

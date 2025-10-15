@@ -17,6 +17,8 @@
 
 #include <map>
 
+using std::string_view_literals::operator""sv;
+
 class SslClientCerts {
 	struct X509NameCompare {
 		[[gnu::pure]]
@@ -85,7 +87,7 @@ SslClientCerts::SslClientCerts(const std::vector<NamedSslCertKeyConfig> &config)
 							 std::forward_as_tuple(i.name),
 							 std::forward_as_tuple(UpRef(ck)));
 				if (!j.second)
-					throw FmtRuntimeError("Duplicate certificate name '{}'",
+					throw FmtRuntimeError("Duplicate certificate name {:?}"sv,
 							      i.name);
 			}
 
@@ -97,7 +99,7 @@ SslClientCerts::SslClientCerts(const std::vector<NamedSslCertKeyConfig> &config)
 							  std::move(ck));
 			}
 		} catch (...) {
-			std::throw_with_nested(FmtRuntimeError("Failed to load certificate '{}'/'{}'",
+			std::throw_with_nested(FmtRuntimeError("Failed to load certificate {:?}/{:?}"sv,
 							       i.cert_file, i.key_file));
 		}
 	}

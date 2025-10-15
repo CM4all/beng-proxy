@@ -366,7 +366,7 @@ private:
 
 	std::exception_ptr PrefixError(std::exception_ptr ep) const noexcept {
 		return NestException(ep,
-				     FmtRuntimeError("error on HTTP connection to '{}'",
+				     FmtRuntimeError("error on HTTP connection to {:?}"sv,
 						     peer_name));
 	}
 
@@ -1552,7 +1552,7 @@ http_client_request(struct pool &caller_pool,
 		body.Clear();
 
 		handler.InvokeError(std::make_exception_ptr(HttpClientError(HttpClientErrorCode::UNSPECIFIED,
-									    FmtBuffer<256>("malformed request URI '{}'", uri))));
+									    FmtBuffer<256>("malformed request URI {:?}"sv, uri))));
 		return;
 	}
 

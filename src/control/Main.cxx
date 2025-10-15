@@ -25,6 +25,8 @@
 #include <stdlib.h>
 #include <stdio.h>
 
+using std::string_view_literals::operator""sv;
+
 struct Usage {
 	const char *msg = nullptr;
 };
@@ -72,7 +74,7 @@ ParseTcacheInvalidate(std::string_view name, const char *value)
 		if (name == i.name)
 			return BengControl::Client::MakeTcacheInvalidate(i.cmd, value);
 
-	throw FmtRuntimeError("Unrecognized key: '{}'", name);
+	throw FmtRuntimeError("Unrecognized key: {:?}"sv, name);
 }
 
 static std::string

@@ -512,7 +512,7 @@ CertCache::OnCertModified(const std::string &name, bool deleted) noexcept
 	const std::scoped_lock lock{mutex};
 
 	if (Flush(name))
-		logger.Fmt(5, "flushed {} certificate '{}'"sv,
+		logger.Fmt(5, "flushed {} certificate {:?}"sv,
 			   deleted ? "deleted"sv : "modified"sv,
 			   name);
 }
