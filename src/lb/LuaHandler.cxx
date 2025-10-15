@@ -33,6 +33,7 @@ LbLuaHandler::LbLuaHandler(EventLoop &event_loop,
 	const Lua::ScopeCheckStack check_stack(L);
 
 	luaL_openlibs(L);
+	Lua::InitResume(L);
 
 	Lua::InitEvent(L, event_loop);
 
