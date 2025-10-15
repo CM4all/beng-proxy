@@ -58,6 +58,7 @@ public:
 
 	void _Read() noexcept override;
 	void _FillBucketList(IstreamBucketList &list) override;
+	ConsumeBucketResult _ConsumeBucketList(std::size_t nbytes) noexcept override;
 	void _ConsumeDirect(std::size_t nbytes) noexcept override;
 
 	/* virtual methods from class IstreamHandler */
@@ -224,6 +225,10 @@ CatchIstream::_FillBucketList(IstreamBucketList &list)
 
 	try {
 		input.FillBucketList(list);
+
+		if (const auto buffer_size = list.GetTotalBufferSize();
+		    std::cmp_greater(buffer_size, available))
+			available = static_cast<off_t>(buffer_size);
 	} catch (...) {
 		if (auto error = callback(std::current_exception())) {
 			Destroy();
@@ -236,6 +241,19 @@ CatchIstream::_FillBucketList(IstreamBucketList &list)
 
 		// TODO: return space bucket here
 	}
+}
+
+Istream::ConsumeBucketResult
+CatchIstream::_ConsumeBucketList(std::size_t nbytes) noexcept
+{
+	auto result = ForwardIstream::_ConsumeBucketList(nbytes);
+
+	if (std::cmp_less(result.consumed, available))
+		available -= static_cast<off_t>(result.consumed);
+	else
+		available = 0;
+
+	return result;
 }
 
 /*
