@@ -66,6 +66,7 @@ public:
 		"  \n"
 		"  background-image: url(foo.jpg);\n"
 		"}\n",
+		.enable_buckets_second_fail = false,
 	};
 
 	UnusedIstreamPtr CreateInput(struct pool &pool) const noexcept {

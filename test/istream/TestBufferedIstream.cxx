@@ -73,6 +73,7 @@ public:
 		.enable_blocking = false,
 		.enable_abort_istream = false,
 		.enable_big = false,
+		.enable_buckets_second_fail = false,
 	};
 
 	UnusedIstreamPtr CreateInput(struct pool &pool) const noexcept {

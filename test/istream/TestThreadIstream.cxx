@@ -38,6 +38,7 @@ class NopThreadIstreamTestTraits {
 public:
 	static constexpr IstreamFilterTestOptions options{
 		.expected_result = "foobar",
+		.enable_buckets_second_fail = false,
 	};
 
 	~NopThreadIstreamTestTraits() noexcept {
@@ -123,6 +124,7 @@ class FooThreadIstreamTestTraits {
 public:
 	static constexpr IstreamFilterTestOptions options{
 		.expected_result = "HfoobarT",
+		.enable_buckets_second_fail = false,
 	};
 
 	~FooThreadIstreamTestTraits() noexcept {
@@ -216,6 +218,7 @@ class ExplodeOutputIstreamTestTraits {
 public:
 	static constexpr IstreamFilterTestOptions options{
 		.expected_result = result.data(),
+		.enable_buckets_second_fail = false,
 	};
 
 	~ExplodeOutputIstreamTestTraits() noexcept {
@@ -303,6 +306,7 @@ class DrainThreadIstreamTestTraits {
 public:
 	static constexpr IstreamFilterTestOptions options{
 		.expected_result = "foobar",
+		.enable_buckets_second_fail = false,
 	};
 
 	~DrainThreadIstreamTestTraits() noexcept {
@@ -364,6 +368,7 @@ class FinishThreadIstreamTestTraits {
 public:
 	static constexpr IstreamFilterTestOptions options{
 		.expected_result = "foobar",
+		.enable_buckets_second_fail = false,
 		.late_finish = true,
 	};
 

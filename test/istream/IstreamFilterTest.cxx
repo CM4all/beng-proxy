@@ -58,6 +58,11 @@ Context::ReadBuckets2(std::size_t limit, bool consume_more)
 			available_full1 = input.GetAvailable(false);
 	}
 
+	if (fill_buckets_twice) {
+		IstreamBucketList dummy;
+		input.FillBucketList(dummy);
+	}
+
 	IstreamBucketList list;
 	input.FillBucketList(list);
 
@@ -152,6 +157,24 @@ bool
 Context::ReadBuckets(std::size_t limit, bool consume_more)
 {
 	return ReadBuckets2(limit, consume_more).second;
+}
+
+bool
+Context::ReadBucketsOrFallback(std::size_t limit, bool consume_more)
+{
+	const auto [rresult, result] = ReadBuckets2(limit, consume_more);
+
+	switch (rresult) {
+	case IstreamReadyResult::OK:
+	case IstreamReadyResult::CLOSED:
+		break;
+
+	case IstreamReadyResult::FALLBACK:
+		input.Read();
+		return input.IsDefined();
+	}
+
+	return result;
 }
 
 void

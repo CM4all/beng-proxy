@@ -39,6 +39,7 @@ istream_basic = static_library(
   'MemoryIstream.cxx',
   'OptionalIstream.cxx',
   'RefIstream.cxx',
+  'SecondFailIstream.cxx',
   'SharedLeaseIstream.cxx',
   'SubstIstream.cxx',
   'ZeroIstream.cxx',

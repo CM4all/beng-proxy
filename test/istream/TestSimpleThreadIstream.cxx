@@ -33,6 +33,7 @@ class NopSimpleThreadIstreamTestTraits {
 public:
 	static constexpr IstreamFilterTestOptions options{
 		.expected_result = "foobar",
+		.enable_buckets_second_fail = false,
 	};
 
 	~NopSimpleThreadIstreamTestTraits() noexcept {
@@ -111,6 +112,7 @@ class FooSimpleThreadIstreamTestTraits {
 public:
 	static constexpr IstreamFilterTestOptions options{
 		.expected_result = "HfoobarT",
+		.enable_buckets_second_fail = false,
 	};
 
 	~FooSimpleThreadIstreamTestTraits() noexcept {
@@ -198,6 +200,7 @@ class SimpleExplodeOutputIstreamTestTraits {
 public:
 	static constexpr IstreamFilterTestOptions options{
 		.expected_result = result.data(),
+		.enable_buckets_second_fail = false,
 	};
 
 	~SimpleExplodeOutputIstreamTestTraits() noexcept {
@@ -276,6 +279,7 @@ public:
 	static constexpr IstreamFilterTestOptions options{
 		.expected_result = "4194304",
 		.enable_byte = false,
+		.enable_buckets_second_fail = false,
 	};
 
 	~HugeZeroInputIstreamTestTraits() noexcept {

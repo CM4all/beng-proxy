@@ -18,6 +18,7 @@
 #include "istream/istream_later.hxx"
 #include "istream/HalfSuspendIstream.hxx"
 #include "istream/ReadyIstream.hxx"
+#include "istream/SecondFailIstream.hxx"
 #include "istream/UnusedHoldPtr.hxx"
 #include "istream/ForwardIstream.hxx"
 #include "istream/New.hxx"
@@ -56,6 +57,13 @@ struct IstreamFilterTestOptions {
 	 * If disabled, all bucket tests are skipped.
 	 */
 	bool enable_buckets = true;
+
+	/**
+	 * Enable or disable BucketSecondFail.  Some implementations
+	 * cannot properly handle this because they do a lot of
+	 * buffering and never do a second FillBucketList() call.
+	 */
+	bool enable_buckets_second_fail = true;
 
 	/**
 	 * Does the #Istream implementation forward errors from the
@@ -100,6 +108,8 @@ struct Context final : IstreamSink {
 	 * Call input.GetAvailable() before/after input.FillBucketList()?
 	 */
 	bool get_available_before_bucket = true, get_available_after_bucket = true;
+
+	bool fill_buckets_twice = false;
 
 	bool bucket_fallback = false, bucket_eof = false;
 
@@ -190,6 +200,7 @@ struct Context final : IstreamSink {
 
 	std::pair<IstreamReadyResult, bool> ReadBuckets2(std::size_t limit, bool consume_more);
 	bool ReadBuckets(std::size_t limit, bool consume_more=false);
+	bool ReadBucketsOrFallback(std::size_t limit, bool consume_more=false);
 
 	void WaitForEndOfStream() noexcept;
 
@@ -502,6 +513,46 @@ TYPED_TEST_P(IstreamFilterTest, BucketError)
 			FAIL();
 		} else {
 			ASSERT_TRUE(ctx.input.IsDefined());
+			ctx.CloseInput();
+		}
+	} catch (...) {
+		ASSERT_FALSE(ctx.input.IsDefined());
+	}
+}
+
+/** Istream::FillBucketList() which throws on the second call */
+TYPED_TEST_P(IstreamFilterTest, BucketSecondFail)
+{
+	auto &traits = this->traits_;
+	auto &instance = this->instance_;
+
+	if (!traits.options.enable_buckets ||
+	    !traits.options.enable_buckets_second_fail)
+		GTEST_SKIP();
+
+	auto pool = pool_new_linear(instance.root_pool, "test", 8192);
+	auto input_pool = pool_new_linear(instance.root_pool, "input", 8192);
+
+	const std::runtime_error error("test_fail");
+	auto istream = traits.CreateTest(instance.event_loop, pool,
+					 NewSecondFailIstream(input_pool, traits.CreateInput(input_pool),
+							      std::make_exception_ptr(error)));
+	ASSERT_TRUE(!!istream);
+	input_pool.reset();
+
+	Context ctx(instance, std::move(pool),
+		    traits.options, std::move(istream));
+	ctx.on_ready_buckets = true;
+	ctx.get_available_before_bucket = false;
+	ctx.get_available_after_bucket = false;
+	ctx.fill_buckets_twice = true;
+
+	try {
+		while (ctx.ReadBucketsOrFallback(3)) {}
+
+		if (traits.options.forwards_errors) {
+			FAIL();
+		} else if (ctx.input.IsDefined()) {
 			ctx.CloseInput();
 		}
 	} catch (...) {
@@ -947,6 +998,7 @@ REGISTER_TYPED_TEST_SUITE_P(IstreamFilterTest,
 			    BucketMore,
 			    SmallBucket,
 			    BucketError,
+			    BucketSecondFail,
 			    Ready,
 			    ReadyOk,
 			    Skip,

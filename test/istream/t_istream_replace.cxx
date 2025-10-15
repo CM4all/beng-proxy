@@ -19,6 +19,7 @@ class IstreamReplaceTestTraits {
 public:
 	static constexpr IstreamFilterTestOptions options{
 		.expected_result = "abcfoodefbarghijklmnopqrstuvwxyz",
+		.enable_buckets_second_fail = false,
 	};
 
 	UnusedIstreamPtr CreateInput(struct pool &pool) const noexcept {
