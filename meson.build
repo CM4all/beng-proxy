@@ -278,8 +278,10 @@ subdir('libcommon/src/event')
 subdir('src/cache')
 
 if lua_dep.found()
+  subdir('libcommon/src/lua/sodium')
   subdir('libcommon/src/lua/event')
 else
+  lua_sodium_dep = lua_dep
   lua_event_dep = lua_dep
 endif
 
@@ -887,6 +889,7 @@ executable(
     odbus_dep,
     lua_dep,
     lua_event_dep,
+    lua_sodium_dep,
     pcre_dep,
     cluster_dep,
   ],

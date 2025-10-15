@@ -1,5 +1,6 @@
 cm4all-beng-proxy (20.13) unstable; urgency=low
 
+  * lua: add libsodium bindings
   * lua: support coroutine.yield(), coroutine.resume()
   * pg: fix use-after-free bug
 

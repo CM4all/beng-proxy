@@ -14,6 +14,7 @@
 #include "lua/Error.hxx"
 #include "lua/InitHook.hxx"
 #include "lua/Resume.hxx"
+#include "lua/sodium/Init.hxx"
 #include "lua/event/Init.hxx"
 #include "lib/fmt/RuntimeError.hxx"
 #include "util/ScopeExit.hxx"
@@ -36,6 +37,8 @@ LbLuaHandler::LbLuaHandler(EventLoop &event_loop,
 
 	luaL_openlibs(L);
 	Lua::InitResume(L);
+
+	Lua::InitSodium(L);
 
 	Lua::InitEvent(L, event_loop);
 
