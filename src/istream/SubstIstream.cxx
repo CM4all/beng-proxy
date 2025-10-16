@@ -773,6 +773,10 @@ SubstIstream::OnEof() noexcept
 		break;
 	}
 
+	/* we can't be in an existing "mismatch" if our input has
+	   reported EOF */
+	assert(analysis.mismatch.empty());
+
 	if (analysis.state == State::NONE)
 		DestroyEof();
 }
@@ -834,7 +838,8 @@ SubstIstream::_Read() noexcept
 		break;
 	}
 
-	if (analysis.state == State::NONE && !input.IsDefined())
+	if (analysis.state == State::NONE && !input.IsDefined() &&
+	    analysis.mismatch.empty())
 		DestroyEof();
 }
 
