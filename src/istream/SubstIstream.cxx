@@ -156,6 +156,22 @@ public:
 		:FacadeIstream(p, std::move(_input)), tree(std::move(_tree)) {}
 
 private:
+	/**
+	 * Submit filtered data to our #IstreamHandler (i.e. wrapper
+	 * for InvokeData() with some bookkeeping).
+	 *
+	 * @return the number of bytes consumed
+	 */
+	std::size_t FeedOutput(std::span<const std::byte> src) noexcept {
+		had_output = true;
+
+		const std::size_t nbytes = InvokeData(src);
+		if (nbytes > 0)
+			SubtractBucketAvailable(nbytes);
+
+		return nbytes;
+	}
+
 	void UpdateBucketAvailable(const IstreamBucketList &list) noexcept {
 		if (auto total = list.GetTotalBufferSize(); total > bucket_available)
 			bucket_available = total;
@@ -418,11 +434,9 @@ SubstIstream::TryWriteB() noexcept
 	const auto src = analysis.GetB();
 	assert(!src.empty());
 
-	const size_t nbytes = InvokeData(src);
+	const std::size_t nbytes = FeedOutput(src);
 	assert(nbytes <= src.size());
 	if (nbytes > 0) {
-		SubtractBucketAvailable(nbytes);
-
 		/* note progress */
 		analysis.b_sent += nbytes;
 
@@ -442,11 +456,9 @@ SubstIstream::FeedMismatch() noexcept
 	assert(!analysis.mismatch.empty());
 
 	if (analysis.send_first) {
-		const size_t nbytes = InvokeData(analysis.mismatch.first(1));
+		const size_t nbytes = FeedOutput(analysis.mismatch.first(1));
 		if (nbytes == 0)
 			return true;
-
-		SubtractBucketAvailable(nbytes);
 
 		if (!analysis.ConsumeMismatch(nbytes))
 			return false;
@@ -467,11 +479,9 @@ SubstIstream::WriteMismatch() noexcept
 	assert(!input.IsDefined());
 	assert(!analysis.mismatch.empty());
 
-	size_t nbytes = InvokeData(analysis.mismatch);
+	size_t nbytes = FeedOutput(analysis.mismatch);
 	if (nbytes == 0)
 		return true;
-
-	SubtractBucketAvailable(nbytes);
 
 	if (analysis.ConsumeMismatch(nbytes))
 		return true;
@@ -485,16 +495,12 @@ SubstIstream::ForwardSourceData(const char *start,
 {
 	const DestructObserver destructed(*this);
 
-	size_t nbytes = InvokeData(AsBytes(src));
+	size_t nbytes = FeedOutput(AsBytes(src));
 	if (destructed) {
 		/* stream has been closed - we must return 0 */
 		assert(nbytes == 0);
 		return 0;
 	}
-
-	SubtractBucketAvailable(nbytes);
-
-	had_output = true;
 
 	if (nbytes < src.size()) {
 		/* blocking */
@@ -511,10 +517,8 @@ SubstIstream::ForwardSourceDataFinal(const char *start,
 {
 	const DestructObserver destructed(*this);
 
-	size_t nbytes = InvokeData(std::as_bytes(std::span{p, end}));
+	size_t nbytes = FeedOutput(std::as_bytes(std::span{p, end}));
 	if (nbytes > 0 || !destructed) {
-		SubtractBucketAvailable(nbytes);
-		had_output = true;
 		nbytes += (p - start);
 	}
 
@@ -578,8 +582,6 @@ SubstIstream::Feed(std::span<const std::byte> src) noexcept
 					if (first != nullptr && first > data) {
 						/* write the data chunk before the match */
 
-						had_output = true;
-
 						const size_t nbytes =
 							ForwardSourceData(data0, {data, first});
 						if (nbytes != (size_t)-1)
@@ -606,8 +608,6 @@ SubstIstream::Feed(std::span<const std::byte> src) noexcept
 				if (first != nullptr && (first > data ||
 							 !analysis.mismatch.empty())) {
 					/* write the data chunk before the (mis-)match */
-
-					had_output = true;
 
 					const char *chunk_end = first;
 					if (!analysis.mismatch.empty())
@@ -681,8 +681,6 @@ SubstIstream::Feed(std::span<const std::byte> src) noexcept
 
 	if (chunk_length > 0) {
 		/* write chunk */
-
-		had_output = true;
 
 		const size_t nbytes = ForwardSourceData(data0, {data, chunk_length});
 		if (nbytes != (size_t)-1)
