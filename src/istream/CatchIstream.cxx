@@ -253,6 +253,11 @@ CatchIstream::_ConsumeBucketList(std::size_t nbytes) noexcept
 	else
 		available = 0;
 
+	if (nbytes < chunk)
+		chunk -= nbytes;
+	else
+		chunk = 0;
+
 	return result;
 }
 
