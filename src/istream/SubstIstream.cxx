@@ -188,7 +188,21 @@ private:
 	 */
 	size_t TryWriteB() noexcept;
 
+	/**
+	 * Feed the partial match after a mismatch to the parser (to
+	 * search for more matches).
+	 *
+	 * @return true if there is more mismatch data, false if the
+	 * mismatch is now empty
+	 */
 	bool FeedMismatch() noexcept;
+
+	/**
+	 * Submit the partial match after a mismatch to the handler.
+	 *
+	 * @return true if there is more mismatch data, false if the
+	 * mismatch is now empty
+	 */
 	bool WriteMismatch() noexcept;
 
 	/**
@@ -199,9 +213,20 @@ private:
 	 */
 	size_t ForwardSourceData(const char *start,
 				 std::string_view src) noexcept;
+
+	/**
+	 * Like ForwardSourceData(), but for the final input section
+	 * where no match was found.
+	 */
 	size_t ForwardSourceDataFinal(const char *start,
 				      const char *end, const char *p) noexcept;
 
+	/**
+	 * Feed input data to the parser.
+	 *
+	 * @return the number of #src bytes consumed (0 if this object
+	 * has been closed)
+	 */
 	size_t Feed(std::span<const std::byte> src) noexcept;
 
 public:
