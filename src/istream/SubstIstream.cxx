@@ -100,13 +100,45 @@ class SubstIstream final : public FacadeIstream, DestructAnchor {
 	};
 
 	struct BufferAnalysis {
+		/**
+		 * If #state is #MATCH, then this is the non-leaf
+		 * #SubstNode matching the most recent character.
+		 *
+		 * If #state is #INSERT, then this is the leaf
+		 * #SubstNode containing the replacement string ("b").
+		 */
 		const SubstNode *match;
+
+		/**
+		 * If non-empty, then this should be parsed instead of
+		 * data from our #input.  It is set after a mismatch
+		 * and contains the portion of "a" that has matched.
+		 * See also #send_first.
+		 */
 		std::span<const std::byte> mismatch{};
 
-		std::size_t a_match, b_sent;
+		/**
+		 * Number of bytes our input has matched "a" so far.
+		 * Only initialized (to a positive value) if #state is
+		 * #MATCH.
+		 */
+		std::size_t a_match;
+
+		/**
+		 * Number of bytes of "b" that were already submitted
+		 * to our #IstreamHandler.  Only initialized if #state
+		 * is #INSERT.
+		 */
+		std::size_t b_sent;
 
 		State state = State::NONE;
 
+		/**
+		 * If true, then the first byte of #mismatch will be
+		 * submitted to our #IstreamHandler instead of feeding
+		 * it into the parser (via Feed()).  This is necessary
+		 * to avoid encountering the same mismatch again.
+		 */
 		bool send_first;
 
 		/**
