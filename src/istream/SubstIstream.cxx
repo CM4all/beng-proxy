@@ -66,6 +66,20 @@ struct SubstNode {
 	 */
 	[[gnu::pure]]
 	static bool CheckMatch(const SubstNode *match, std::string_view input) noexcept;
+
+	/**
+	 * Return the string that lead to a partial match.  This is
+	 * used by the caller to re-insert the original text without
+	 * having access to input data.
+	 */
+	[[gnu::pure]]
+	std::string_view GetPartialMatchString(std::size_t length) const noexcept {
+		const auto *leaf_node = SubstNode::FindAnyLeaf(this);
+		assert(leaf_node != nullptr);
+		assert(leaf_node->IsLeaf());
+
+		return {leaf_node->leaf.a, length};
+	}
 };
 
 class SubstIstream final : public FacadeIstream, DestructAnchor {
@@ -605,11 +619,7 @@ SubstIstream::Feed(std::span<const std::byte> src) noexcept
 
 				if (analysis.mismatch.empty()) {
 					analysis.send_first = true;
-
-					const auto *leaf = SubstNode::FindAnyLeaf(analysis.match);
-					assert(leaf != nullptr);
-					assert(leaf->IsLeaf());
-					analysis.mismatch = std::as_bytes(std::span{leaf->leaf.a, analysis.a_match});
+					analysis.mismatch = AsBytes(analysis.match->GetPartialMatchString(analysis.a_match));
 
 					if (FeedMismatch())
 						return destructed ? 0 : data - data0;
@@ -694,11 +704,7 @@ SubstIstream::OnEof() noexcept
 		   mismatch because we reach end of file before end of
 		   match */
 		if (analysis.mismatch.empty()) {
-			const SubstNode *n = SubstNode::FindAnyLeaf(analysis.match);
-			assert(n != nullptr);
-			assert(n->IsLeaf());
-
-			analysis.mismatch = std::as_bytes(std::span{n->leaf.a, analysis.a_match});
+			analysis.mismatch = AsBytes(analysis.match->GetPartialMatchString(analysis.a_match));
 			WriteMismatch();
 			return;
 		}
