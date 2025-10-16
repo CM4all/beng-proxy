@@ -748,8 +748,6 @@ SubstIstream::OnEof() noexcept
 	input.Clear();
 
 	switch (analysis.state) {
-		size_t nbytes;
-
 	case State::NONE:
 		break;
 
@@ -766,8 +764,7 @@ SubstIstream::OnEof() noexcept
 		break;
 
 	case State::INSERT:
-		nbytes = TryWriteB();
-		if (nbytes > 0)
+		if (auto nbytes = TryWriteB(); nbytes > 0)
 			return;
 		break;
 	}
