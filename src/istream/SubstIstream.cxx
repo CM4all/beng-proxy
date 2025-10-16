@@ -485,7 +485,6 @@ SubstIstream::Feed(std::span<const std::byte> src) noexcept
 
 	const char *const data0 = (const char *)src.data(), *data = data0, *p = data0,
 		*const end = p + src.size(), *first = nullptr;
-	const SubstNode *n;
 
 	had_input = true;
 
@@ -519,19 +518,17 @@ SubstIstream::Feed(std::span<const std::byte> src) noexcept
 			/* now see if the rest matches; note that max_compare may be
 			   0, but that isn't a problem */
 
-			n = subst_find_char(analysis.match, *p);
-			if (n != nullptr) {
+			if (const auto *ch = subst_find_char(analysis.match, *p)) {
 				/* next character matches */
 
 				++analysis.a_match;
 				++p;
-				analysis.match = n;
+				analysis.match = ch;
 
-				n = subst_find_leaf(n);
-				if (n != nullptr) {
+				if (const auto *leaf = subst_find_leaf(ch)) {
 					/* full match */
 
-					analysis.match = n;
+					analysis.match = leaf;
 
 					if (first != nullptr && first > data) {
 						/* write the data chunk before the match */
@@ -551,7 +548,7 @@ SubstIstream::Feed(std::span<const std::byte> src) noexcept
 
 					/* switch state */
 
-					if (n->leaf.b_length > 0) {
+					if (leaf->leaf.b_length > 0) {
 						analysis.state = State::INSERT;
 						analysis.b_sent = 0;
 					} else {
@@ -598,10 +595,10 @@ SubstIstream::Feed(std::span<const std::byte> src) noexcept
 				if (analysis.mismatch.empty()) {
 					analysis.send_first = true;
 
-					n = subst_find_any_leaf(analysis.match);
-					assert(n != nullptr);
-					assert(n->IsLeaf());
-					analysis.mismatch = std::as_bytes(std::span{n->leaf.a, analysis.a_match});
+					const auto *leaf = subst_find_any_leaf(analysis.match);
+					assert(leaf != nullptr);
+					assert(leaf->IsLeaf());
+					analysis.mismatch = std::as_bytes(std::span{leaf->leaf.a, analysis.a_match});
 
 					if (FeedMismatch())
 						return destructed ? 0 : data - data0;
