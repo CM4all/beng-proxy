@@ -176,7 +176,7 @@ try {
 
 	for (const auto &i : events) {
 		w = b.Write();
-		p = fmt::format_to_n(w.data(), w.size(), " {}={}ms", i.name, ToMs(time - root_time)).out;
+		p = fmt::format_to_n(w.data(), w.size(), " {}={}ms", i.name, ToMs(i.time - root_time)).out;
 		b.Extend(p - w.data());
 	}
 
