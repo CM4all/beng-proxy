@@ -40,12 +40,7 @@ struct SubstNode {
 class SubstIstream final : public FacadeIstream, DestructAnchor {
 	bool had_input, had_output;
 
-	bool send_first;
-
 	SubstTree tree;
-
-	const SubstNode *match;
-	std::span<const std::byte> mismatch{};
 
 	enum class State {
 		/** searching the first matching character */
@@ -57,8 +52,49 @@ class SubstIstream final : public FacadeIstream, DestructAnchor {
 
 		/** inserting the substitution */
 		INSERT,
-	} state = State::NONE;
-	size_t a_match, b_sent;
+	};
+
+	struct BufferAnalysis {
+		const SubstNode *match;
+		std::span<const std::byte> mismatch{};
+
+		std::size_t a_match, b_sent;
+
+		State state = State::NONE;
+
+		bool send_first;
+
+		/**
+		 * @return true if there is more mismatch data, false
+		 * if the mismatch is now empty
+		 */
+		constexpr bool ConsumeMismatch(std::size_t nbytes) noexcept {
+			assert(nbytes <= mismatch.size());
+
+			mismatch = mismatch.subspan(nbytes);
+			return !mismatch.empty();
+		}
+
+		/**
+		 * @return the number of bytes actually consumed
+		 */
+		constexpr std::size_t ClampConsumeMismatch(std::size_t nbytes) noexcept {
+			if (nbytes > mismatch.size())
+				nbytes = mismatch.size();
+			mismatch = mismatch.subspan(nbytes);
+			return nbytes;
+		}
+
+		constexpr std::span<const std::byte> GetB() const noexcept {
+			assert(state == State::INSERT);
+			assert(match != nullptr);
+			assert(b_sent < match->leaf.b_length);
+
+			return std::as_bytes(match->leaf.AsSpan().subspan(b_sent));
+		}
+	};
+
+	BufferAnalysis analysis;
 
 	/**
 	 * How many bytes have previously been returned in buckets?
@@ -316,20 +352,20 @@ inline const char *
 SubstIstream::FindFirstChar(std::string_view src) noexcept
 {
 	auto x = tree.FindFirstChar(src);
-	match = x.first;
+	analysis.match = x.first;
 	return x.second;
 }
 
 size_t
 SubstIstream::TryWriteB() noexcept
 {
-	assert(state == State::INSERT);
-	assert(a_match > 0);
-	assert(match != nullptr);
-	assert(match->IsLeaf());
-	assert(a_match == strlen(match->leaf.a));
+	assert(analysis.state == State::INSERT);
+	assert(analysis.a_match > 0);
+	assert(analysis.match != nullptr);
+	assert(analysis.match->IsLeaf());
+	assert(analysis.a_match == strlen(analysis.match->leaf.a));
 
-	const auto src = std::as_bytes(match->leaf.AsSpan().subspan(b_sent));
+	const auto src = analysis.GetB();
 	assert(!src.empty());
 
 	const size_t nbytes = InvokeData(src);
@@ -338,11 +374,11 @@ SubstIstream::TryWriteB() noexcept
 		SubtractBucketAvailable(nbytes);
 
 		/* note progress */
-		b_sent += nbytes;
+		analysis.b_sent += nbytes;
 
 		/* finished sending substitution? */
 		if (nbytes == src.size())
-			state = State::NONE;
+			analysis.state = State::NONE;
 	}
 
 	return src.size() - nbytes;
@@ -351,51 +387,43 @@ SubstIstream::TryWriteB() noexcept
 bool
 SubstIstream::FeedMismatch() noexcept
 {
-	assert(state == State::NONE);
+	assert(analysis.state == State::NONE);
 	assert(input.IsDefined());
-	assert(!mismatch.empty());
+	assert(!analysis.mismatch.empty());
 
-	if (send_first) {
-		const size_t nbytes = InvokeData(mismatch.first(1));
+	if (analysis.send_first) {
+		const size_t nbytes = InvokeData(analysis.mismatch.first(1));
 		if (nbytes == 0)
 			return true;
 
 		SubtractBucketAvailable(nbytes);
 
-		mismatch = mismatch.subspan(nbytes);
-
-		if (mismatch.empty())
+		if (!analysis.ConsumeMismatch(nbytes))
 			return false;
 
-		send_first = false;
+		analysis.send_first = false;
 	}
 
-	const size_t nbytes = Feed(mismatch);
+	const size_t nbytes = Feed(analysis.mismatch);
 	if (nbytes == 0)
 		return true;
 
-	assert(nbytes <= mismatch.size());
-	mismatch = mismatch.subspan(nbytes);
-
-	return !mismatch.empty();
+	return analysis.ConsumeMismatch(nbytes);
 }
 
 bool
 SubstIstream::WriteMismatch() noexcept
 {
-	assert(!input.IsDefined() || state == State::NONE);
-	assert(!mismatch.empty());
+	assert(!input.IsDefined() || analysis.state == State::NONE);
+	assert(!analysis.mismatch.empty());
 
-	size_t nbytes = InvokeData(mismatch);
+	size_t nbytes = InvokeData(analysis.mismatch);
 	if (nbytes == 0)
 		return true;
 
 	SubtractBucketAvailable(nbytes);
 
-	assert(nbytes <= mismatch.size());
-	mismatch = mismatch.subspan(nbytes);
-
-	if (!mismatch.empty())
+	if (analysis.ConsumeMismatch(nbytes))
 		return true;
 
 	if (!input.IsDefined()) {
@@ -425,7 +453,7 @@ SubstIstream::ForwardSourceData(const char *start,
 
 	if (nbytes < src.size()) {
 		/* blocking */
-		state = State::NONE;
+		analysis.state = State::NONE;
 		return (src.data() - start) + nbytes;
 	} else
 		/* everything has been consumed */
@@ -468,7 +496,7 @@ SubstIstream::Feed(std::span<const std::byte> src) noexcept
 		assert(p >= data);
 		assert(p <= end);
 
-		switch (state) {
+		switch (analysis.state) {
 		case State::NONE:
 			/* find matching first char */
 
@@ -479,8 +507,8 @@ SubstIstream::Feed(std::span<const std::byte> src) noexcept
 				/* no match, try to write and return */
 				return ForwardSourceDataFinal(data0, end, data);
 
-			state = State::MATCH;
-			a_match = 1;
+			analysis.state = State::MATCH;
+			analysis.a_match = 1;
 
 			p = first + 1;
 
@@ -491,19 +519,19 @@ SubstIstream::Feed(std::span<const std::byte> src) noexcept
 			/* now see if the rest matches; note that max_compare may be
 			   0, but that isn't a problem */
 
-			n = subst_find_char(match, *p);
+			n = subst_find_char(analysis.match, *p);
 			if (n != nullptr) {
 				/* next character matches */
 
-				++a_match;
+				++analysis.a_match;
 				++p;
-				match = n;
+				analysis.match = n;
 
 				n = subst_find_leaf(n);
 				if (n != nullptr) {
 					/* full match */
 
-					match = n;
+					analysis.match = n;
 
 					if (first != nullptr && first > data) {
 						/* write the data chunk before the match */
@@ -524,23 +552,23 @@ SubstIstream::Feed(std::span<const std::byte> src) noexcept
 					/* switch state */
 
 					if (n->leaf.b_length > 0) {
-						state = State::INSERT;
-						b_sent = 0;
+						analysis.state = State::INSERT;
+						analysis.b_sent = 0;
 					} else {
-						state = State::NONE;
+						analysis.state = State::NONE;
 					}
 				}
 			} else {
 				/* mismatch. reset match indicator and find new one */
 
 				if (first != nullptr && (first > data ||
-							 !mismatch.empty())) {
+							 !analysis.mismatch.empty())) {
 					/* write the data chunk before the (mis-)match */
 
 					had_output = true;
 
 					const char *chunk_end = first;
-					if (!mismatch.empty())
+					if (!analysis.mismatch.empty())
 						++chunk_end;
 
 					const size_t nbytes =
@@ -551,7 +579,7 @@ SubstIstream::Feed(std::span<const std::byte> src) noexcept
 					/* when re-parsing a mismatch, "first" must not be
 					   nullptr because we entered this function with
 					   state=NONE */
-					assert(mismatch.empty());
+					assert(analysis.mismatch.empty());
 				}
 
 				/* move data pointer */
@@ -565,15 +593,15 @@ SubstIstream::Feed(std::span<const std::byte> src) noexcept
 				   can use to re-insert the partial match into the
 				   stream */
 
-				state = State::NONE;
+				analysis.state = State::NONE;
 
-				if (mismatch.empty()) {
-					send_first = true;
+				if (analysis.mismatch.empty()) {
+					analysis.send_first = true;
 
-					n = subst_find_any_leaf(match);
+					n = subst_find_any_leaf(analysis.match);
 					assert(n != nullptr);
 					assert(n->IsLeaf());
-					mismatch = std::as_bytes(std::span{n->leaf.a, a_match});
+					analysis.mismatch = std::as_bytes(std::span{n->leaf.a, analysis.a_match});
 
 					if (FeedMismatch())
 						return destructed ? 0 : data - data0;
@@ -590,23 +618,23 @@ SubstIstream::Feed(std::span<const std::byte> src) noexcept
 				if (destructed)
 					return 0;
 
-				assert(state == State::INSERT);
+				assert(analysis.state == State::INSERT);
 				/* blocking */
 				return data - data0;
 			}
 
-			assert(state == State::NONE);
+			assert(analysis.state == State::NONE);
 
 			break;
 		}
-	} while (p < end || state == State::INSERT);
+	} while (p < end || analysis.state == State::INSERT);
 
 	size_t chunk_length;
 	if (first != nullptr)
 		/* we have found a partial match which we discard now, instead
 		   we will write the chunk right before this match */
 		chunk_length = first - data;
-	else if (state == State::MATCH || state == State::INSERT)
+	else if (analysis.state == State::MATCH || analysis.state == State::INSERT)
 		chunk_length = 0;
 	else
 		/* there was no match (maybe a partial match which mismatched
@@ -634,7 +662,7 @@ SubstIstream::Feed(std::span<const std::byte> src) noexcept
 inline size_t
 SubstIstream::OnData(std::span<const std::byte> src) noexcept
 {
-	if (!mismatch.empty() && FeedMismatch())
+	if (!analysis.mismatch.empty() && FeedMismatch())
 		return 0;
 
 	return Feed(src);
@@ -647,7 +675,7 @@ SubstIstream::OnEof() noexcept
 
 	input.Clear();
 
-	switch (state) {
+	switch (analysis.state) {
 		size_t nbytes;
 
 	case State::NONE:
@@ -657,12 +685,12 @@ SubstIstream::OnEof() noexcept
 		/* we're in the middle of a match, technically making this a
 		   mismatch because we reach end of file before end of
 		   match */
-		if (mismatch.empty()) {
-			const SubstNode *n = subst_find_any_leaf(match);
+		if (analysis.mismatch.empty()) {
+			const SubstNode *n = subst_find_any_leaf(analysis.match);
 			assert(n != nullptr);
 			assert(n->IsLeaf());
 
-			mismatch = std::as_bytes(std::span{n->leaf.a, a_match});
+			analysis.mismatch = std::as_bytes(std::span{n->leaf.a, analysis.a_match});
 			WriteMismatch();
 			return;
 		}
@@ -675,7 +703,7 @@ SubstIstream::OnEof() noexcept
 		break;
 	}
 
-	if (state == State::NONE)
+	if (analysis.state == State::NONE)
 		DestroyEof();
 }
 
@@ -696,7 +724,7 @@ SubstIstream::OnError(std::exception_ptr ep) noexcept
 void
 SubstIstream::_Read() noexcept
 {
-	if (!mismatch.empty()) {
+	if (!analysis.mismatch.empty()) {
 		bool ret = input.IsDefined()
 			? FeedMismatch()
 			: WriteMismatch();
@@ -707,7 +735,7 @@ SubstIstream::_Read() noexcept
 		assert(input.IsDefined());
 	}
 
-	switch (state) {
+	switch (analysis.state) {
 		size_t nbytes;
 
 	case State::NONE:
@@ -722,7 +750,7 @@ SubstIstream::_Read() noexcept
 			had_input = false;
 			input.Read();
 		} while (!destructed && input.IsDefined() && had_input &&
-			 !had_output && state != State::INSERT);
+			 !had_output && analysis.state != State::INSERT);
 
 		return;
 	}
@@ -734,19 +762,19 @@ SubstIstream::_Read() noexcept
 		break;
 	}
 
-	if (state == State::NONE && !input.IsDefined())
+	if (analysis.state == State::NONE && !input.IsDefined())
 		DestroyEof();
 }
 
 void
 SubstIstream::_FillBucketList(IstreamBucketList &list)
 {
-	if (!mismatch.empty()) {
+	if (!analysis.mismatch.empty()) {
 		if (input.IsDefined()) {
 			// FeedMismatch()
 
-			if (send_first)
-				list.Push(mismatch.first(1));
+			if (analysis.send_first)
+				list.Push(analysis.mismatch.first(1));
 
 			// TODO: re-parse the rest of the mismatch buffer
 			list.SetMore();
@@ -755,7 +783,7 @@ SubstIstream::_FillBucketList(IstreamBucketList &list)
 			return;
 		} else {
 			// WriteMismatch()
-			list.Push(mismatch);
+			list.Push(analysis.mismatch);
 			UpdateBucketAvailable(list);
 			return;
 		}
@@ -763,7 +791,7 @@ SubstIstream::_FillBucketList(IstreamBucketList &list)
 		assert(input.IsDefined());
 	}
 
-	switch (state) {
+	switch (analysis.state) {
 	case State::NONE: {
 		IstreamBucketList tmp;
 		FillBucketListFromInput(tmp);
@@ -812,16 +840,13 @@ SubstIstream::_FillBucketList(IstreamBucketList &list)
 
 	case State::INSERT: {
 		// TryWriteB
-		assert(state == State::INSERT);
-		assert(a_match > 0);
-		assert(match != nullptr);
-		assert(match->IsLeaf());
-		assert(a_match == strlen(match->leaf.a));
+		assert(analysis.state == State::INSERT);
+		assert(analysis.a_match > 0);
+		assert(analysis.match != nullptr);
+		assert(analysis.match->IsLeaf());
+		assert(analysis.a_match == strlen(analysis.match->leaf.a));
 
-		const size_t length = match->leaf.b_length - b_sent;
-		assert(length > 0);
-
-		list.Push({(const std::byte *)match->leaf.b + b_sent, length});
+		list.Push(analysis.GetB());
 		list.SetMore();
 		list.EnableFallback(); // TODO eliminate
 
@@ -839,27 +864,26 @@ SubstIstream::_ConsumeBucketList(size_t nbytes) noexcept
 
 	// TODO return eof flag?
 
-	if (!mismatch.empty()) {
+	if (!analysis.mismatch.empty()) {
 		if (input.IsDefined()) {
 			// FeedMismatch()
 
-			if (send_first) {
-				send_first = false;
+			if (analysis.send_first) {
+				analysis.send_first = false;
 				return {BucketConsumed(1), false};
 			}
 
 			return {0, false};
 		} else {
 			// WriteMismatch()
-			nbytes = std::min(nbytes, mismatch.size());
-			mismatch = mismatch.subspan(nbytes);
+			nbytes = analysis.ClampConsumeMismatch(nbytes);
 			return {BucketConsumed(nbytes), false};
 		}
 	} else {
 		assert(input.IsDefined());
 	}
 
-	switch (state) {
+	switch (analysis.state) {
 	case State::NONE:
 		return BucketConsumed(input.ConsumeBucketList(nbytes));
 
@@ -868,23 +892,23 @@ SubstIstream::_ConsumeBucketList(size_t nbytes) noexcept
 
 	case State::INSERT: {
 		// TryWriteB
-		assert(state == State::INSERT);
-		assert(a_match > 0);
-		assert(match != nullptr);
-		assert(match->IsLeaf());
-		assert(a_match == strlen(match->leaf.a));
+		assert(analysis.state == State::INSERT);
+		assert(analysis.a_match > 0);
+		assert(analysis.match != nullptr);
+		assert(analysis.match->IsLeaf());
+		assert(analysis.a_match == strlen(analysis.match->leaf.a));
 
-		const size_t length = match->leaf.b_length - b_sent;
+		const size_t length = analysis.match->leaf.b_length - analysis.b_sent;
 		assert(length > 0);
 
 		size_t consumed = std::min(nbytes, length);
 
 		/* note progress */
-		b_sent += consumed;
+		analysis.b_sent += consumed;
 
 		/* finished sending substitution? */
 		if (consumed == length)
-			state = State::NONE;
+			analysis.state = State::NONE;
 		return {BucketConsumed(consumed), false};
 	}
 	}
