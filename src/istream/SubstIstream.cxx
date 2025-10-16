@@ -752,6 +752,10 @@ SubstIstream::OnEof() noexcept
 		break;
 
 	case State::MATCH:
+		/* note: not resetting analysis.state here because at
+		   this point, nobody will ever use this variable
+		   anymore */
+
 		/* we're in the middle of a match, technically making this a
 		   mismatch because we reach end of file before end of
 		   match */
