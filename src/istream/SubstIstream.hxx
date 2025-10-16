@@ -7,8 +7,6 @@
 #include <string_view>
 #include <utility>
 
-#include <stddef.h>
-
 struct pool;
 class UnusedIstreamPtr;
 struct SubstNode;
@@ -32,8 +30,7 @@ public:
 	bool Add(struct pool &pool, const char *a0, const char *b) noexcept;
 
 	[[gnu::pure]]
-	std::pair<const SubstNode *, const char *> FindFirstChar(const char *data,
-								 size_t length) const noexcept;
+	std::pair<const SubstNode *, const char *> FindFirstChar(std::string_view src) const noexcept;
 };
 
 /**

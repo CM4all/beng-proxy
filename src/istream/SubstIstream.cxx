@@ -94,7 +94,7 @@ private:
 	}
 
 	/** find the first occurence of a "first character" in the buffer */
-	const char *FindFirstChar(const char *data, size_t length) noexcept;
+	const char *FindFirstChar(std::string_view src) noexcept;
 
 	/**
 	 * Write data from "b".
@@ -113,7 +113,7 @@ private:
 	 * correct return value for the data() callback.
 	 */
 	size_t ForwardSourceData(const char *start,
-				 const char *p, size_t length) noexcept;
+				 std::string_view src) noexcept;
 	size_t ForwardSourceDataFinal(const char *start,
 				      const char *end, const char *p) noexcept;
 
@@ -269,9 +269,9 @@ subst_next_non_leaf_node(const SubstNode *node, const SubstNode *root) noexcept
 }
 
 inline std::pair<const SubstNode *, const char *>
-SubstTree::FindFirstChar(const char *data, size_t length) const noexcept
+SubstTree::FindFirstChar(std::string_view src) const noexcept
 {
-	const char *const end = data + length;
+	const char *const end = src.data() + src.size();
 	const SubstNode *n = root;
 	const SubstNode *match = nullptr;
 	const char *min = nullptr;
@@ -281,7 +281,7 @@ SubstTree::FindFirstChar(const char *data, size_t length) const noexcept
 
 		/* loop to find all instances of this start character, until
 		   there is one where the rest also matches */
-		const char *p = data;
+		const char *p = src.data();
 		while (true) {
 			p = (const char *)memchr(p, n->ch, end - p);
 			if (p != nullptr && (min == nullptr || p < min)) {
@@ -309,9 +309,9 @@ SubstTree::FindFirstChar(const char *data, size_t length) const noexcept
 }
 
 inline const char *
-SubstIstream::FindFirstChar(const char *data, size_t length) noexcept
+SubstIstream::FindFirstChar(std::string_view src) noexcept
 {
-	auto x = tree.FindFirstChar(data, length);
+	auto x = tree.FindFirstChar(src);
 	match = x.first;
 	return x.second;
 }
@@ -404,11 +404,11 @@ SubstIstream::WriteMismatch() noexcept
 
 size_t
 SubstIstream::ForwardSourceData(const char *start,
-				const char *p, size_t length) noexcept
+				std::string_view src) noexcept
 {
 	const DestructObserver destructed(*this);
 
-	size_t nbytes = InvokeData(std::as_bytes(std::span{p, length}));
+	size_t nbytes = InvokeData(AsBytes(src));
 	if (destructed) {
 		/* stream has been closed - we must return 0 */
 		assert(nbytes == 0);
@@ -419,10 +419,10 @@ SubstIstream::ForwardSourceData(const char *start,
 
 	had_output = true;
 
-	if (nbytes < length) {
+	if (nbytes < src.size()) {
 		/* blocking */
 		state = State::NONE;
-		return (p - start) + nbytes;
+		return (src.data() - start) + nbytes;
 	} else
 		/* everything has been consumed */
 		return (size_t)-1;
@@ -470,7 +470,7 @@ SubstIstream::Feed(std::span<const std::byte> src) noexcept
 
 			assert(first == nullptr);
 
-			first = FindFirstChar(p, end - p);
+			first = FindFirstChar({p, end});
 			if (first == nullptr)
 				/* no match, try to write and return */
 				return ForwardSourceDataFinal(data0, end, data);
@@ -506,9 +506,8 @@ SubstIstream::Feed(std::span<const std::byte> src) noexcept
 
 						had_output = true;
 
-						const size_t chunk_length = first - data;
 						const size_t nbytes =
-							ForwardSourceData(data0, data, chunk_length);
+							ForwardSourceData(data0, {data, first});
 						if (nbytes != (size_t)-1)
 							return nbytes;
 					}
@@ -536,12 +535,12 @@ SubstIstream::Feed(std::span<const std::byte> src) noexcept
 
 					had_output = true;
 
-					size_t chunk_length = first - data;
+					const char *chunk_end = first;
 					if (!mismatch.empty())
-						++chunk_length;
+						++chunk_end;
 
 					const size_t nbytes =
-						ForwardSourceData(data0, data, chunk_length);
+						ForwardSourceData(data0, {data, chunk_end});
 					if (nbytes != (size_t)-1)
 						return nbytes;
 				} else {
@@ -615,7 +614,7 @@ SubstIstream::Feed(std::span<const std::byte> src) noexcept
 
 		had_output = true;
 
-		const size_t nbytes = ForwardSourceData(data0, data, chunk_length);
+		const size_t nbytes = ForwardSourceData(data0, {data, chunk_length});
 		if (nbytes != (size_t)-1)
 			return nbytes;
 	}
@@ -782,8 +781,7 @@ SubstIstream::_FillBucketList(IstreamBucketList &list)
 
 			auto s = ToStringView(bucket.GetBuffer());
 
-			const char *first = FindFirstChar(s.data(),
-							  s.size());
+			const char *first = FindFirstChar(s);
 			if (first != nullptr) {
 				s = Partition(s, first).first;
 				if (!s.empty())
