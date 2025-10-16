@@ -15,12 +15,12 @@ class SubstTree {
 	SubstNode *root = nullptr;
 
 public:
-	SubstTree() = default;
+	constexpr SubstTree() = default;
 
-	SubstTree(SubstTree &&src) noexcept
+	constexpr SubstTree(SubstTree &&src) noexcept
 		:root(std::exchange(src.root, nullptr)) {}
 
-	SubstTree &operator=(SubstTree &&src) noexcept {
+	constexpr SubstTree &operator=(SubstTree &&src) noexcept {
 		using std::swap;
 		swap(root, src.root);
 		return *this;
