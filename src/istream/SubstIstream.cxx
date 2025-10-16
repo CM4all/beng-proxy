@@ -464,7 +464,7 @@ SubstIstream::FeedMismatch() noexcept
 bool
 SubstIstream::WriteMismatch() noexcept
 {
-	assert(!input.IsDefined() || analysis.state == State::NONE);
+	assert(!input.IsDefined());
 	assert(!analysis.mismatch.empty());
 
 	size_t nbytes = InvokeData(analysis.mismatch);
