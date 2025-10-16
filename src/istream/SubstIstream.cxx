@@ -35,6 +35,37 @@ struct SubstNode {
 	constexpr bool IsLeaf() const noexcept {
 		return ch == 0;
 	}
+
+	/** find a character in the tree */
+	[[gnu::pure]]
+	static const SubstNode *FindChar(const SubstNode *node, char ch) noexcept;
+
+	/** find the leaf ending the current search word */
+	[[gnu::pure]]
+	static const SubstNode *FindLeaf(const SubstNode *node) noexcept;
+
+	/**
+	 * Find any leaf which begins with the current partial match,
+	 * used to find a buffer which is partially re-inserted into
+	 * the data stream.
+	 */
+	[[gnu::pure]]
+	static const SubstNode *FindAnyLeaf(const SubstNode *node) noexcept;
+
+	/** iterates over the current depth */
+	[[gnu::pure]]
+	static const SubstNode *NextNonLeafNode(const SubstNode *node, const SubstNode *root) noexcept;
+	/**
+	 * Check whether the given input can possibly be a match.
+	 *
+	 * @param match the current match (usually found with memchr() by
+	 * SubstTree::FindFirstChar())
+	 * @param input the remaining input
+	 * @param true if the remaining input matches so far (but may not be
+	 * complete yet), false if the input cannot match
+	 */
+	[[gnu::pure]]
+	static bool CheckMatch(const SubstNode *match, std::string_view input) noexcept;
 };
 
 class SubstIstream final : public FacadeIstream, DestructAnchor {
@@ -186,10 +217,8 @@ public:
  *
  */
 
-/** find a character in the tree */
-[[gnu::pure]]
-static const SubstNode *
-subst_find_char(const SubstNode *node, char ch) noexcept
+inline const SubstNode *
+SubstNode::FindChar(const SubstNode *node, char ch) noexcept
 {
 	assert(node != nullptr);
 
@@ -212,10 +241,8 @@ subst_find_char(const SubstNode *node, char ch) noexcept
 	return nullptr;
 }
 
-/** find the leaf ending the current search word */
-[[gnu::pure]]
-static const SubstNode *
-subst_find_leaf(const SubstNode *node) noexcept
+inline const SubstNode *
+SubstNode::FindLeaf(const SubstNode *node) noexcept
 {
 	assert(node != nullptr);
 
@@ -232,24 +259,14 @@ subst_find_leaf(const SubstNode *node) noexcept
 	return nullptr;
 }
 
-/**
- * Check whether the given input can possibly be a match.
- *
- * @param match the current match (usually found with memchr() by
- * SubstTree::FindFirstChar())
- * @param input the remaining input
- * @param true if the remaining input matches so far (but may not be
- * complete yet), false if the input cannot match
- */
-[[gnu::pure]]
-static bool
-CheckMatch(const SubstNode *match, std::string_view input) noexcept
+inline bool
+SubstNode::CheckMatch(const SubstNode *match, std::string_view input) noexcept
 {
 	for (const char ch : input) {
-		if (subst_find_leaf(match) != nullptr)
+		if (SubstNode::FindLeaf(match) != nullptr)
 			return true;
 
-		match = subst_find_char(match, ch);
+		match = SubstNode::FindChar(match, ch);
 		if (match == nullptr)
 			return false;
 	}
@@ -257,12 +274,8 @@ CheckMatch(const SubstNode *match, std::string_view input) noexcept
 	return true;
 }
 
-/** find any leaf which begins with the current partial match, used to
-    find a buffer which is partially re-inserted into the data
-    stream */
-[[gnu::pure]]
-static const SubstNode *
-subst_find_any_leaf(const SubstNode *node) noexcept
+inline const SubstNode *
+SubstNode::FindAnyLeaf(const SubstNode *node) noexcept
 {
 	while (true) {
 		assert(node != nullptr);
@@ -274,10 +287,8 @@ subst_find_any_leaf(const SubstNode *node) noexcept
 	}
 }
 
-/** iterates over the current depth */
-[[gnu::pure]]
-static const SubstNode *
-subst_next_non_leaf_node(const SubstNode *node, const SubstNode *root) noexcept
+inline const SubstNode *
+SubstNode::NextNonLeafNode(const SubstNode *node, const SubstNode *root) noexcept
 {
 	/* dive into left wing first */
 	if (node->left != nullptr && !node->left->IsLeaf())
@@ -325,7 +336,7 @@ SubstTree::FindFirstChar(std::string_view src) const noexcept
 		while (true) {
 			p = (const char *)memchr(p, n->ch, end - p);
 			if (p != nullptr && (min == nullptr || p < min)) {
-				if (!CheckMatch(n->equals, {p + 1, end})) {
+				if (!SubstNode::CheckMatch(n->equals, {p + 1, end})) {
 					/* late mismatch; continue the loop to check if
 					   there are more of the current start
 					   character */
@@ -342,7 +353,7 @@ SubstTree::FindFirstChar(std::string_view src) const noexcept
 		}
 
 		/* check the next start character in the #SubstTree */
-		n = subst_next_non_leaf_node(n, root);
+		n = SubstNode::NextNonLeafNode(n, root);
 	}
 
 	return std::make_pair(match, min);
@@ -518,14 +529,14 @@ SubstIstream::Feed(std::span<const std::byte> src) noexcept
 			/* now see if the rest matches; note that max_compare may be
 			   0, but that isn't a problem */
 
-			if (const auto *ch = subst_find_char(analysis.match, *p)) {
+			if (const auto *ch = SubstNode::FindChar(analysis.match, *p)) {
 				/* next character matches */
 
 				++analysis.a_match;
 				++p;
 				analysis.match = ch;
 
-				if (const auto *leaf = subst_find_leaf(ch)) {
+				if (const auto *leaf = SubstNode::FindLeaf(ch)) {
 					/* full match */
 
 					analysis.match = leaf;
@@ -595,7 +606,7 @@ SubstIstream::Feed(std::span<const std::byte> src) noexcept
 				if (analysis.mismatch.empty()) {
 					analysis.send_first = true;
 
-					const auto *leaf = subst_find_any_leaf(analysis.match);
+					const auto *leaf = SubstNode::FindAnyLeaf(analysis.match);
 					assert(leaf != nullptr);
 					assert(leaf->IsLeaf());
 					analysis.mismatch = std::as_bytes(std::span{leaf->leaf.a, analysis.a_match});
@@ -683,7 +694,7 @@ SubstIstream::OnEof() noexcept
 		   mismatch because we reach end of file before end of
 		   match */
 		if (analysis.mismatch.empty()) {
-			const SubstNode *n = subst_find_any_leaf(analysis.match);
+			const SubstNode *n = SubstNode::FindAnyLeaf(analysis.match);
 			assert(n != nullptr);
 			assert(n->IsLeaf());
 
