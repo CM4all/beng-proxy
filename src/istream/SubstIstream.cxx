@@ -228,14 +228,16 @@ private:
 	 * correct return value for the data() callback.
 	 */
 	size_t ForwardSourceData(const char *start,
-				 std::string_view src) noexcept;
+				 std::string_view src,
+				 const DestructObserver &destructed) noexcept;
 
 	/**
 	 * Like ForwardSourceData(), but for the final input section
 	 * where no match was found.
 	 */
 	size_t ForwardSourceDataFinal(const char *start,
-				      const char *end, const char *p) noexcept;
+				      const char *end, const char *p,
+				      const DestructObserver &destructed) noexcept;
 
 	/**
 	 * Feed input data to the parser.
@@ -491,10 +493,9 @@ SubstIstream::WriteMismatch() noexcept
 
 size_t
 SubstIstream::ForwardSourceData(const char *start,
-				std::string_view src) noexcept
+				std::string_view src,
+				const DestructObserver &destructed) noexcept
 {
-	const DestructObserver destructed(*this);
-
 	size_t nbytes = FeedOutput(AsBytes(src));
 	if (destructed) {
 		/* stream has been closed - we must return 0 */
@@ -513,10 +514,9 @@ SubstIstream::ForwardSourceData(const char *start,
 
 inline size_t
 SubstIstream::ForwardSourceDataFinal(const char *start,
-				     const char *end, const char *p) noexcept
+				     const char *end, const char *p,
+				     const DestructObserver &destructed) noexcept
 {
-	const DestructObserver destructed(*this);
-
 	size_t nbytes = FeedOutput(std::as_bytes(std::span{p, end}));
 	if (nbytes > 0 || !destructed) {
 		nbytes += (p - start);
@@ -553,7 +553,8 @@ SubstIstream::Feed(std::span<const std::byte> src) noexcept
 			first = FindFirstChar({p, end});
 			if (first == nullptr)
 				/* no match, try to write and return */
-				return ForwardSourceDataFinal(data0, end, data);
+				return ForwardSourceDataFinal(data0, end, data,
+							      destructed);
 
 			analysis.state = State::MATCH;
 			analysis.a_match = 1;
@@ -583,7 +584,8 @@ SubstIstream::Feed(std::span<const std::byte> src) noexcept
 						/* write the data chunk before the match */
 
 						const size_t nbytes =
-							ForwardSourceData(data0, {data, first});
+							ForwardSourceData(data0, {data, first},
+									  destructed);
 						if (nbytes != (size_t)-1)
 							return nbytes;
 					}
@@ -614,7 +616,8 @@ SubstIstream::Feed(std::span<const std::byte> src) noexcept
 						++chunk_end;
 
 					const size_t nbytes =
-						ForwardSourceData(data0, {data, chunk_end});
+						ForwardSourceData(data0, {data, chunk_end},
+								  destructed);
 					if (nbytes != (size_t)-1)
 						return nbytes;
 				} else {
@@ -682,7 +685,8 @@ SubstIstream::Feed(std::span<const std::byte> src) noexcept
 	if (chunk_length > 0) {
 		/* write chunk */
 
-		const size_t nbytes = ForwardSourceData(data0, {data, chunk_length});
+		const size_t nbytes = ForwardSourceData(data0, {data, chunk_length},
+							destructed);
 		if (nbytes != (size_t)-1)
 			return nbytes;
 	}
