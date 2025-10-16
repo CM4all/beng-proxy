@@ -31,6 +31,10 @@ struct SubstNode {
 			return {b, b_length};
 		}
 	} leaf;
+
+	constexpr bool IsLeaf() const noexcept {
+		return ch == 0;
+	}
 };
 
 class SubstIstream final : public FacadeIstream, DestructAnchor {
@@ -180,7 +184,7 @@ subst_find_leaf(const SubstNode *node) noexcept
 	assert(node != nullptr);
 
 	do {
-		if (node->ch == 0)
+		if (node->IsLeaf())
 			return node;
 
 		if (0 < node->ch)
@@ -227,7 +231,7 @@ subst_find_any_leaf(const SubstNode *node) noexcept
 	while (true) {
 		assert(node != nullptr);
 
-		if (node->ch == 0)
+		if (node->IsLeaf())
 			return node;
 
 		node = node->equals;
@@ -240,11 +244,11 @@ static const SubstNode *
 subst_next_non_leaf_node(const SubstNode *node, const SubstNode *root) noexcept
 {
 	/* dive into left wing first */
-	if (node->left != nullptr && node->left->ch != 0)
+	if (node->left != nullptr && !node->left->IsLeaf())
 		return node->left;
 
 	/* if left does not exist, go right */
-	if (node->right != nullptr && node->right->ch != 0)
+	if (node->right != nullptr && !node->right->IsLeaf())
 		return node->right;
 
 	/* this subtree is finished, go up */
@@ -260,7 +264,7 @@ subst_next_non_leaf_node(const SubstNode *node, const SubstNode *root) noexcept
 
 			/* only go to parent->right if we came from
 			   parent->left */
-			if (node->right != nullptr && node->right->ch != 0)
+			if (node->right != nullptr && !node->right->IsLeaf())
 				return node;
 		} else {
 			node = node->parent;
@@ -277,7 +281,7 @@ SubstTree::FindFirstChar(std::string_view src) const noexcept
 	const char *min = nullptr;
 
 	while (n != nullptr) {
-		assert(n->ch != 0);
+		assert(!n->IsLeaf());
 
 		/* loop to find all instances of this start character, until
 		   there is one where the rest also matches */
@@ -322,7 +326,7 @@ SubstIstream::TryWriteB() noexcept
 	assert(state == State::INSERT);
 	assert(a_match > 0);
 	assert(match != nullptr);
-	assert(match->ch == 0);
+	assert(match->IsLeaf());
 	assert(a_match == strlen(match->leaf.a));
 
 	const auto src = std::as_bytes(match->leaf.AsSpan().subspan(b_sent));
@@ -568,7 +572,7 @@ SubstIstream::Feed(std::span<const std::byte> src) noexcept
 
 					n = subst_find_any_leaf(match);
 					assert(n != nullptr);
-					assert(n->ch == 0);
+					assert(n->IsLeaf());
 					mismatch = std::as_bytes(std::span{n->leaf.a, a_match});
 
 					if (FeedMismatch())
@@ -656,7 +660,7 @@ SubstIstream::OnEof() noexcept
 		if (mismatch.empty()) {
 			const SubstNode *n = subst_find_any_leaf(match);
 			assert(n != nullptr);
-			assert(n->ch == 0);
+			assert(n->IsLeaf());
 
 			mismatch = std::as_bytes(std::span{n->leaf.a, a_match});
 			WriteMismatch();
@@ -811,7 +815,7 @@ SubstIstream::_FillBucketList(IstreamBucketList &list)
 		assert(state == State::INSERT);
 		assert(a_match > 0);
 		assert(match != nullptr);
-		assert(match->ch == 0);
+		assert(match->IsLeaf());
 		assert(a_match == strlen(match->leaf.a));
 
 		const size_t length = match->leaf.b_length - b_sent;
@@ -867,7 +871,7 @@ SubstIstream::_ConsumeBucketList(size_t nbytes) noexcept
 		assert(state == State::INSERT);
 		assert(a_match > 0);
 		assert(match != nullptr);
-		assert(match->ch == 0);
+		assert(match->IsLeaf());
 		assert(a_match == strlen(match->leaf.a));
 
 		const size_t length = match->leaf.b_length - b_sent;
