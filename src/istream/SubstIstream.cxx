@@ -476,11 +476,6 @@ SubstIstream::WriteMismatch() noexcept
 	if (analysis.ConsumeMismatch(nbytes))
 		return true;
 
-	if (!input.IsDefined()) {
-		DestroyEof();
-		return true;
-	}
-
 	return false;
 }
 
@@ -730,7 +725,8 @@ SubstIstream::OnEof() noexcept
 		   match */
 		if (analysis.mismatch.empty()) {
 			analysis.mismatch = AsBytes(analysis.match->GetPartialMatchString(analysis.a_match));
-			WriteMismatch();
+			if (!WriteMismatch())
+				DestroyEof();
 			return;
 		}
 		break;
@@ -764,12 +760,14 @@ void
 SubstIstream::_Read() noexcept
 {
 	if (!analysis.mismatch.empty()) {
-		bool ret = input.IsDefined()
-			? FeedMismatch()
-			: WriteMismatch();
-
-		if (ret || !input.IsDefined())
+		if (input.IsDefined()) {
+			if (FeedMismatch() || !input.IsDefined())
+				return;
+		} else {
+			if (!WriteMismatch())
+				DestroyEof();
 			return;
+		}
 	} else {
 		assert(input.IsDefined());
 	}
