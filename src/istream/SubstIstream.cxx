@@ -56,11 +56,43 @@ class SubstIstream final : public FacadeIstream, DestructAnchor {
 	} state = State::NONE;
 	size_t a_match, b_sent;
 
+	/**
+	 * How many bytes have previously been returned in buckets?
+	 * This is used for implementing _GetAvailable().  It is set
+	 * by _FillBucketList() and must be updated by calling
+	 * SubtractBucketAvailable() or BucketConsumed().
+	 *
+	 * TODO implement properly
+	 */
+	std::size_t bucket_available = 0;
+
 public:
 	SubstIstream(struct pool &p, UnusedIstreamPtr &&_input, SubstTree &&_tree) noexcept
 		:FacadeIstream(p, std::move(_input)), tree(std::move(_tree)) {}
 
 private:
+	void UpdateBucketAvailable(const IstreamBucketList &list) noexcept {
+		if (auto total = list.GetTotalBufferSize(); total > bucket_available)
+			bucket_available = total;
+	}
+
+	std::size_t SubtractBucketAvailable(std::size_t nbytes) noexcept {
+		if (nbytes <= bucket_available)
+			bucket_available -= nbytes;
+		else
+			bucket_available = 0;
+		return nbytes;
+	}
+
+	std::size_t BucketConsumed(std::size_t nbytes) noexcept {
+		return Consumed(SubtractBucketAvailable(nbytes));
+	}
+
+	ConsumeBucketResult BucketConsumed(ConsumeBucketResult result) noexcept {
+		SubtractBucketAvailable(result.consumed);
+		return Consumed(result);
+	}
+
 	/** find the first occurence of a "first character" in the buffer */
 	const char *FindFirstChar(const char *data, size_t length) noexcept;
 
@@ -91,14 +123,17 @@ public:
 	/* virtual methods from class Istream */
 
 	void _Read() noexcept override;
-
-#if 0
-	// TODO enable this once this and _GetAvailable() is implemented properly
 	void _FillBucketList(IstreamBucketList &list) override;
 	ConsumeBucketResult _ConsumeBucketList(size_t nbytes) noexcept override;
-#endif
 
 	/* istream handler */
+
+	off_t _GetAvailable(bool partial) noexcept override {
+		if (partial)
+			return bucket_available;
+		else
+			return -1;
+	}
 
 	size_t OnData(std::span<const std::byte> src) noexcept override;
 
@@ -296,6 +331,8 @@ SubstIstream::TryWriteB() noexcept
 	const size_t nbytes = InvokeData(src);
 	assert(nbytes <= src.size());
 	if (nbytes > 0) {
+		SubtractBucketAvailable(nbytes);
+
 		/* note progress */
 		b_sent += nbytes;
 
@@ -318,6 +355,8 @@ SubstIstream::FeedMismatch() noexcept
 		const size_t nbytes = InvokeData(mismatch.first(1));
 		if (nbytes == 0)
 			return true;
+
+		SubtractBucketAvailable(nbytes);
 
 		mismatch = mismatch.subspan(nbytes);
 
@@ -347,6 +386,8 @@ SubstIstream::WriteMismatch() noexcept
 	if (nbytes == 0)
 		return true;
 
+	SubtractBucketAvailable(nbytes);
+
 	assert(nbytes <= mismatch.size());
 	mismatch = mismatch.subspan(nbytes);
 
@@ -374,6 +415,8 @@ SubstIstream::ForwardSourceData(const char *start,
 		return 0;
 	}
 
+	SubtractBucketAvailable(nbytes);
+
 	had_output = true;
 
 	if (nbytes < length) {
@@ -393,6 +436,7 @@ SubstIstream::ForwardSourceDataFinal(const char *start,
 
 	size_t nbytes = InvokeData(std::as_bytes(std::span{p, end}));
 	if (nbytes > 0 || !destructed) {
+		SubtractBucketAvailable(nbytes);
 		had_output = true;
 		nbytes += (p - start);
 	}
@@ -691,9 +735,6 @@ SubstIstream::_Read() noexcept
 		DestroyEof();
 }
 
-#if 0
-// TODO enable this once this and _GetAvailable() is implemented properly
-
 void
 SubstIstream::_FillBucketList(IstreamBucketList &list)
 {
@@ -707,10 +748,12 @@ SubstIstream::_FillBucketList(IstreamBucketList &list)
 			// TODO: re-parse the rest of the mismatch buffer
 			list.SetMore();
 			list.EnableFallback(); // TODO eliminate
+			UpdateBucketAvailable(list);
 			return;
 		} else {
 			// WriteMismatch()
 			list.Push(mismatch);
+			UpdateBucketAvailable(list);
 			return;
 		}
 	} else {
@@ -733,6 +776,7 @@ SubstIstream::_FillBucketList(IstreamBucketList &list)
 			if (!bucket.IsBuffer()) {
 				list.SetMore();
 				list.EnableFallback(); // TODO eliminate
+				UpdateBucketAvailable(list);
 				return;
 			}
 
@@ -746,12 +790,14 @@ SubstIstream::_FillBucketList(IstreamBucketList &list)
 					list.Push(AsBytes(s));
 				list.SetMore();
 				list.EnableFallback(); // TOOD eliminate
+				UpdateBucketAvailable(list);
 				return;
 			}
 
 			list.Push(AsBytes(s));
 		}
 
+		UpdateBucketAvailable(list);
 		return;
 	}
 
@@ -759,6 +805,7 @@ SubstIstream::_FillBucketList(IstreamBucketList &list)
 		// TODO: read from input
 		list.SetMore();
 		list.EnableFallback(); // TODO eliminate
+		UpdateBucketAvailable(list);
 		return;
 
 	case State::INSERT: {
@@ -777,6 +824,7 @@ SubstIstream::_FillBucketList(IstreamBucketList &list)
 		list.EnableFallback(); // TODO eliminate
 
 		// TODO: read more
+		UpdateBucketAvailable(list);
 		return;
 	}
 	}
@@ -795,7 +843,7 @@ SubstIstream::_ConsumeBucketList(size_t nbytes) noexcept
 
 			if (send_first) {
 				send_first = false;
-				return {Consumed(1), false};
+				return {BucketConsumed(1), false};
 			}
 
 			return {0, false};
@@ -803,7 +851,7 @@ SubstIstream::_ConsumeBucketList(size_t nbytes) noexcept
 			// WriteMismatch()
 			nbytes = std::min(nbytes, mismatch.size());
 			mismatch = mismatch.subspan(nbytes);
-			return {Consumed(nbytes), false};
+			return {BucketConsumed(nbytes), false};
 		}
 	} else {
 		assert(input.IsDefined());
@@ -811,7 +859,7 @@ SubstIstream::_ConsumeBucketList(size_t nbytes) noexcept
 
 	switch (state) {
 	case State::NONE:
-		return Consumed(input.ConsumeBucketList(nbytes));
+		return BucketConsumed(input.ConsumeBucketList(nbytes));
 
 	case State::MATCH:
 		return {0, false};
@@ -835,14 +883,12 @@ SubstIstream::_ConsumeBucketList(size_t nbytes) noexcept
 		/* finished sending substitution? */
 		if (consumed == length)
 			state = State::NONE;
-		return {Consumed(consumed), false};
+		return {BucketConsumed(consumed), false};
 	}
 	}
 
 	std::unreachable();
 }
-
-#endif
 
 /*
  * constructor
