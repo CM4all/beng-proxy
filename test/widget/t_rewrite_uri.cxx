@@ -178,7 +178,7 @@ assert_rewrite_check4(EventLoop &event_loop,
 		value2 = escape_dup(*widget_pool, html_escape_class, value);
 
 	if (result != NULL) {
-		result = escape_dup(*widget_pool, html_escape_class, result);
+		result = p_strdup(*widget_pool, escape_dup(*widget_pool, html_escape_class, result));
 	}
 
 	SessionId session_id;

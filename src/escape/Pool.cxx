@@ -8,7 +8,7 @@
 
 #include <assert.h>
 
-const char *
+std::string_view
 escape_dup(AllocatorPtr alloc, const struct escape_class &cls,
 	   std::string_view p) noexcept
 {
@@ -19,12 +19,11 @@ escape_dup(AllocatorPtr alloc, const struct escape_class &cls,
 	if (size == 0)
 		return alloc.DupZ(p);
 
-	char *q = alloc.NewArray<char>(size + 1);
+	char *q = alloc.NewArray<char>(size);
 	size_t out_size = cls.escape(p, q);
 	assert(out_size <= size);
-	q[out_size] = 0;
 
-	return q;
+	return {q, out_size};
 }
 
 std::string_view

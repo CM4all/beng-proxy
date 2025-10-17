@@ -9,7 +9,7 @@
 class AllocatorPtr;
 struct escape_class;
 
-const char *
+std::string_view
 escape_dup(AllocatorPtr alloc, const struct escape_class &cls,
 	   std::string_view p) noexcept;
 
