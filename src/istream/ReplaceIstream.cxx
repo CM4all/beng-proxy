@@ -540,6 +540,7 @@ ReplaceIstream::_FillBucketList(IstreamBucketList &list)
 			ToNextSubstitution(s);
 
 			// TODO refactor the loop to avoid this recursive call
+			list.SetMore(false);
 			return _FillBucketList(list);
 		}
 

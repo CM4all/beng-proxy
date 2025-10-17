@@ -1,6 +1,6 @@
 cm4all-beng-proxy (20.14) unstable; urgency=low
 
-  * 
+  * processor: fix assertion failure (20.13 regression)
 
  --   
 
