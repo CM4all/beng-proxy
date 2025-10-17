@@ -234,12 +234,15 @@ InlineWidget::OnHttpResponse(HttpStatus status, StringMap &&headers,
 			Fail(std::current_exception());
 			return;
 		}
-	} else
-		body = istream_null_new(pool);
 
-	auto &_delayed = delayed;
-	Destroy();
-	_delayed.Set(std::move(body));
+		auto &_delayed = delayed;
+		Destroy();
+		_delayed.Set(std::move(body));
+	} else {
+		auto &_delayed = delayed;
+		Destroy();
+		_delayed.SetEof();
+	}
 }
 
 void
