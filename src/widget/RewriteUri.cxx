@@ -356,10 +356,10 @@ UriRewriter::ResolverCallback() noexcept
 
 	UnusedIstreamPtr istream;
 	if (!value.empty()) {
-		istream = istream_string_new(pool, value);
-
 		if (escape_flag && escape != nullptr)
-			istream = istream_escape_new(pool, std::move(istream), *escape);
+			value = optional_escape_dup(pool, *escape, value);
+
+		istream = istream_string_new(pool, value);
 	} else
 		istream = istream_null_new(pool);
 
@@ -416,11 +416,11 @@ rewrite_widget_uri(struct pool &pool,
 		if (uri == nullptr)
 			return nullptr;
 
-		auto istream = istream_string_new(pool, uri);
+		std::string_view s{uri};
 		if (escape != nullptr)
-			istream = istream_escape_new(pool, std::move(istream), *escape);
+			s = optional_escape_dup(pool, *escape, s);
 
-		return istream;
+		return istream_string_new(pool, s);
 	} else {
 		auto delayed = istream_delayed_new(pool, ctx->event_loop);
 
