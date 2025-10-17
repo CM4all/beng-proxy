@@ -172,12 +172,10 @@ Widget::IsContainer() const noexcept
 }
 
 Widget *
-Widget::FindChild(const char *child_id) noexcept
+Widget::FindChild(std::string_view child_id) noexcept
 {
-	assert(child_id != nullptr);
-
 	for (auto &child : children)
-		if (child.id != nullptr && StringIsEqual(child.id, child_id))
+		if (child.id != nullptr && child_id == child.id)
 			return &child;
 
 	return nullptr;

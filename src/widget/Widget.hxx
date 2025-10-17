@@ -319,7 +319,7 @@ public:
 	}
 
 	[[gnu::pure]]
-	Widget *FindChild(const char *child_id) noexcept;
+	Widget *FindChild(std::string_view child_id) noexcept;
 
 	[[gnu::pure]]
 	const char *GetDefaultPathInfo() const noexcept {

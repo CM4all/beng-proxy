@@ -549,7 +549,7 @@ XmlProcessor::TransformUriAttribute(const XmlParserAttribute &attr,
 	case UriBase::CHILD: {
 		const auto [child_id, suffix] = Split(value, '/');
 
-		target_widget = container.FindChild(p_strdup(GetPool(), child_id));
+		target_widget = container.FindChild(child_id);
 		if (target_widget == nullptr)
 			return;
 
