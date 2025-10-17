@@ -526,6 +526,23 @@ ReplaceIstream::_FillBucketList(IstreamBucketList &list)
 			throw;
 		}
 
+		if (tmp.IsEmpty() && !tmp.HasMore() && s->IsActive()) {
+			/* this (active) substitution is empty -
+			   remove it and try again; getting rid of
+			   empty substitutions is important because
+			   otherwise OnIstreamReady() calls from the
+			   following substitutions would be ignored;
+			   while reading buckets, nobody else would do
+			   that */
+			assert(fill_position == position);
+			assert(end == fill_position);
+
+			ToNextSubstitution(s);
+
+			// TODO refactor the loop to avoid this recursive call
+			return _FillBucketList(list);
+		}
+
 		list.SpliceBuffersFrom(std::move(tmp));
 		if (tmp.HasMore())
 			return;
