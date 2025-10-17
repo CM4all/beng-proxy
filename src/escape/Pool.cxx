@@ -27,6 +27,19 @@ escape_dup(AllocatorPtr alloc, const struct escape_class &cls,
 }
 
 std::string_view
+optional_escape_dup(AllocatorPtr alloc, const struct escape_class &cls,
+		    std::string_view p) noexcept
+{
+	assert(cls.escape_find != nullptr);
+	assert(cls.escape_size != nullptr);
+	assert(cls.escape != nullptr);
+
+	return cls.escape_find(p) != nullptr
+		? escape_dup(alloc, cls, p)
+		: p;
+}
+
+std::string_view
 unescape_dup(AllocatorPtr alloc, const struct escape_class &cls,
 	     std::string_view src) noexcept
 {
