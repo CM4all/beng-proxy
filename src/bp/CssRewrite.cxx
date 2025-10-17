@@ -13,6 +13,7 @@
 #include "istream/UnusedPtr.hxx"
 #include "istream/istream_string.hxx"
 #include "istream/ReplaceIstream.hxx"
+#include "AllocatorPtr.hxx"
 
 struct css_url {
 	size_t start, end;
@@ -75,9 +76,9 @@ css_rewrite_block_uris(struct pool &pool,
 		/* no URLs found, no rewriting necessary */
 		return nullptr;
 
-	auto input =
-		istream_string_new(pool, {p_strdup(pool, block), block.size()});
-	auto replace = NewIstream<ReplaceIstream>(pool, ctx->event_loop, std::move(input));
+	const AllocatorPtr alloc{pool};
+	auto replace = NewIstream<ReplaceIstream>(pool, ctx->event_loop,
+						  istream_string_new(pool, alloc.Dup(block)));
 
 	bool modified = false;
 	for (unsigned i = 0; i < rewrite.n_urls; ++i) {

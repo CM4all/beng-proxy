@@ -30,6 +30,7 @@
 #include "lib/fmt/RuntimeError.hxx"
 #include "util/StringCompare.hxx"
 #include "util/StringSplit.hxx"
+#include "AllocatorPtr.hxx"
 #include "stopwatch.hxx"
 
 #include <assert.h>
@@ -590,11 +591,8 @@ XmlProcessor::TransformUriAttribute(const XmlParserAttribute &attr,
 
 	if (!fragment.empty()) {
 		/* escape and append the fragment to the new URI */
-		auto s = istream_string_new(GetPool(),
-					    {
-						    p_strdup(GetPool(), fragment),
-						    fragment.size(),
-					    });
+		const AllocatorPtr alloc{GetPool()};
+		auto s = istream_string_new(GetPool(), alloc.Dup(fragment));
 		s = istream_escape_new(GetPool(), std::move(s), html_escape_class);
 
 		istream = NewConcatIstream(GetPool(), std::move(istream), std::move(s));
