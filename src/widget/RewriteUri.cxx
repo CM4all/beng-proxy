@@ -18,7 +18,6 @@
 #include "escape/Pool.hxx"
 #include "istream/TimeoutIstream.hxx"
 #include "istream/DelayedIstream.hxx"
-#include "istream/istream_memory.hxx"
 #include "istream/istream_null.hxx"
 #include "istream/istream_string.hxx"
 #include "strmap.hxx"
@@ -357,7 +356,7 @@ UriRewriter::ResolverCallback() noexcept
 
 	UnusedIstreamPtr istream;
 	if (!value.empty()) {
-		istream = istream_memory_new(pool, AsBytes(value));
+		istream = istream_string_new(pool, value);
 
 		if (escape_flag && escape != nullptr)
 			istream = istream_escape_new(pool, std::move(istream), *escape);
