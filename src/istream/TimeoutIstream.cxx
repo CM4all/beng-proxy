@@ -47,7 +47,7 @@ public:
 		IstreamBucketList tmp;
 		ForwardIstream::_FillBucketList(tmp);
 
-		if (!tmp.IsEmpty())
+		if (!tmp.IsEmpty() || !tmp.HasMore())
 			/* disable the timeout as soon as the first data byte
 			   arrives */
 			timeout_event.Cancel();
