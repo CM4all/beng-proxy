@@ -105,7 +105,7 @@ public:
 private:
 	Co::InvokeTask Run();
 
-	void OnCompletion(std::exception_ptr error) noexcept;
+	void OnCompletion(std::exception_ptr &&error) noexcept;
 };
 
 static Co::Task<UniqueCertKey>
@@ -189,14 +189,14 @@ CertCache::Query::Run()
 }
 
 inline void
-CertCache::Query::OnCompletion(std::exception_ptr error) noexcept
+CertCache::Query::OnCompletion(std::exception_ptr &&error) noexcept
 {
 	assert(&cache.current_query->second == this);
 
 	const State new_state = error ? State::ERROR : State::NOT_FOUND;
 
 	if (error)
-		cache.logger(1, error);
+		cache.logger(1, std::move(error));
 
 	/* invoke all remaining SslCompletionHandlers; this is
 	   only relevant if Run() has not finished

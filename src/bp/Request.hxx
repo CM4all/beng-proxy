@@ -926,13 +926,13 @@ private:
 	 * Overload with a custom completion handler.
 	 */
 	void CoStart(Co::Task<PendingResponse> task,
-		     BoundMethod<void(std::exception_ptr) noexcept> on_completion) noexcept;
+		     BoundMethod<void(std::exception_ptr &&) noexcept> on_completion) noexcept;
 
 	/**
 	 * Default completion handler for CoStart() which calls
 	 * DispatchResponse() or DispatchError().
 	 */
-	void OnCoCompletion(std::exception_ptr error) noexcept;
+	void OnCoCompletion(std::exception_ptr &&error) noexcept;
 
 	/**
 	 * Asks the translation server for an error document, and submits it
@@ -944,7 +944,7 @@ private:
 	 */
 	Co::Task<PendingResponse> DispatchErrdocResponse(std::span<const std::byte> error_document);
 
-	void OnErrdocCompletion(std::exception_ptr e) noexcept;
+	void OnErrdocCompletion(std::exception_ptr &&e) noexcept;
 
 	/* FILE_DIRECTORY_INDEX handler */
 

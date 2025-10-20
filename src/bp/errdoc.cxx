@@ -62,12 +62,12 @@ Request::DispatchErrdocResponse(std::span<const std::byte> error_document)
 }
 
 void
-Request::OnErrdocCompletion(std::exception_ptr e) noexcept
+Request::OnErrdocCompletion(std::exception_ptr &&e) noexcept
 {
 	assert(co_response);
 
 	if (e)
-		logger(2, "error on error document: ", e);
+		logger(2, "error on error document: ", std::move(e));
 
 	DispatchResponse(std::move(*co_response));
 }

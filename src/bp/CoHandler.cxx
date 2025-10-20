@@ -18,7 +18,7 @@ Request::CoRun(Co::Task<PendingResponse> task)
 
 void
 Request::CoStart(Co::Task<PendingResponse> task,
-		 BoundMethod<void(std::exception_ptr) noexcept> on_completion) noexcept
+		 BoundMethod<void(std::exception_ptr &&) noexcept> on_completion) noexcept
 {
 	assert(!co_handler);
 
@@ -33,12 +33,12 @@ Request::CoStart(Co::Task<PendingResponse> task) noexcept
 }
 
 void
-Request::OnCoCompletion(std::exception_ptr error) noexcept
+Request::OnCoCompletion(std::exception_ptr &&error) noexcept
 {
 	assert(error || co_response);
 
 	if (error)
-		LogDispatchError(error);
+		LogDispatchError(std::move(error));
 	else
 		DispatchResponse(std::move(co_response));
 }
