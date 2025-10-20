@@ -5,12 +5,64 @@
 #include "ReplaceIstream.hxx"
 #include "UnusedPtr.hxx"
 #include "Bucket.hxx"
+#include "Sink.hxx"
 #include "pool/pool.hxx"
 #include "util/DestructObserver.hxx"
 
 #include <stdexcept>
 
 #include <assert.h>
+
+struct ReplaceIstream::Substitution final : IstreamSink {
+	Substitution *next = nullptr;
+	ReplaceIstream &replace;
+	const off_t start;
+	off_t end;
+
+	Substitution(ReplaceIstream &_replace,
+		     off_t _start, off_t _end,
+		     UnusedIstreamPtr &&_input) noexcept;
+
+	void Destroy() noexcept {
+		this->~Substitution();
+	}
+
+	bool IsDefined() const noexcept {
+		return input.IsDefined();
+	}
+
+	off_t GetAvailable(bool partial) const noexcept {
+		return input.GetAvailable(partial);
+	}
+
+	void Read() noexcept {
+		input.Read();
+	}
+
+	void FillBucketList(IstreamBucketList &list) {
+		if (!IsDefined())
+			return;
+
+		input.FillBucketList(list);
+	}
+
+	auto ConsumeBucketList(size_t nbytes) noexcept {
+		assert(IsActive());
+		return IsDefined()
+			? input.ConsumeBucketList(nbytes)
+			: ConsumeBucketResult{0, true};
+	}
+
+	[[gnu::pure]]
+	bool IsActive() const noexcept;
+
+	/* virtual methods from class IstreamHandler */
+
+	IstreamReadyResult OnIstreamReady() noexcept override;
+	size_t OnData(std::span<const std::byte> src) noexcept override;
+	void OnEof() noexcept override;
+	void OnError(std::exception_ptr ep) noexcept override;
+};
 
 ReplaceIstream::Substitution::Substitution(ReplaceIstream &_replace,
 					   off_t _start, off_t _end,
@@ -131,6 +183,21 @@ ReplaceIstream::~ReplaceIstream() noexcept
 	}
 }
 
+inline off_t
+ReplaceIstream::GetBufferEndOffsetUntil(off_t _position, const Substitution *s) const noexcept
+{
+	if (s != nullptr)
+		return std::min(s->start, source_length);
+	else if (finished)
+		return source_length;
+	else if (_position < settled_position)
+		return settled_position;
+	else
+		/* block after the last substitution, unless
+		   the caller has already set the "finished"
+		   flag */
+		return -1;
+}
 
 bool
 ReplaceIstream::ReadSubstitution() noexcept
