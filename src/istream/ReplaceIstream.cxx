@@ -88,22 +88,22 @@ ReplaceIstream::Substitution::IsActive() const noexcept
 }
 
 void
-ReplaceIstream::ToNextSubstitution(ReplaceIstream::Substitution *s) noexcept
+ReplaceIstream::ToNextSubstitution(ReplaceIstream::Substitution &s) noexcept
 {
-	assert(first_substitution == s);
-	assert(s->IsActive());
-	assert(s->start <= s->end);
+	assert(first_substitution == &s);
+	assert(s.IsActive());
+	assert(s.start <= s.end);
 
-	buffer.Skip(s->end - s->start);
-	position = s->end;
+	buffer.Skip(s.end - s.start);
+	position = s.end;
 
-	first_substitution = s->next;
+	first_substitution = s.next;
 	if (first_substitution == nullptr) {
-		assert(append_substitution_p == &s->next);
+		assert(append_substitution_p == &s.next);
 		append_substitution_p = &first_substitution;
 	}
 
-	s->Destroy();
+	s.Destroy();
 
 	assert(first_substitution == nullptr ||
 	       first_substitution->start >= position);
@@ -144,7 +144,7 @@ ReplaceIstream::Substitution::OnEof() noexcept
 		   object */
 		auto &r = replace;
 
-		r.ToNextSubstitution(this);
+		r.ToNextSubstitution(*this);
 
 		if (r.IsEOF())
 			r.DestroyEof();
@@ -203,19 +203,19 @@ bool
 ReplaceIstream::ReadSubstitution() noexcept
 {
 	while (first_substitution != nullptr && first_substitution->IsActive()) {
-		auto *s = first_substitution;
+		auto &s = *first_substitution;
 
-		if (s->IsDefined()) {
+		if (s.IsDefined()) {
 			const DestructObserver destructed(*this);
 
-			s->Read();
+			s.Read();
 
 			if (destructed)
 				return false;
 
 			/* we assume the substitution object is blocking if it hasn't
 			   reached EOF with this one call */
-			if (s == first_substitution)
+			if (&s == first_substitution)
 				return false;
 		} else {
 			ToNextSubstitution(s);
@@ -604,7 +604,7 @@ ReplaceIstream::_FillBucketList(IstreamBucketList &list)
 			assert(fill_position == position);
 			assert(end == fill_position);
 
-			ToNextSubstitution(s);
+			ToNextSubstitution(*s);
 
 			// TODO refactor the loop to avoid this recursive call
 			list.SetMore(false);
@@ -661,7 +661,7 @@ ReplaceIstream::_ConsumeBucketList(size_t nbytes) noexcept
 		nbytes -= r.consumed;
 
 		if (r.eof)
-			ToNextSubstitution(s);
+			ToNextSubstitution(*s);
 
 		if (nbytes == 0)
 			break;
@@ -703,7 +703,7 @@ ReplaceIstream::Add(off_t start, off_t end,
 	defer_read.Schedule();
 }
 
-inline ReplaceIstream::Substitution *
+inline ReplaceIstream::Substitution &
 ReplaceIstream::GetLastSubstitution() noexcept
 {
 	auto *substitution = first_substitution;
@@ -714,7 +714,7 @@ ReplaceIstream::GetLastSubstitution() noexcept
 
 	assert(substitution->end <= settled_position);
 	assert(substitution->end == last_substitution_end);
-	return substitution;
+	return *substitution;
 }
 
 void
@@ -722,13 +722,13 @@ ReplaceIstream::Extend([[maybe_unused]] off_t start, off_t end) noexcept
 {
 	assert(!finished);
 
-	auto *substitution = GetLastSubstitution();
-	assert(substitution->start == start);
-	assert(substitution->end == settled_position);
-	assert(substitution->end == last_substitution_end);
-	assert(end >= substitution->end);
+	auto &substitution = GetLastSubstitution();
+	assert(substitution.start == start);
+	assert(substitution.end == settled_position);
+	assert(substitution.end == last_substitution_end);
+	assert(end >= substitution.end);
 
-	substitution->end = end;
+	substitution.end = end;
 	settled_position = end;
 #ifndef NDEBUG
 	last_substitution_end = end;

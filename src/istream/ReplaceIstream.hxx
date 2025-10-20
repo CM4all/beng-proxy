@@ -134,9 +134,10 @@ private:
 	/**
 	 * Activate the next substitution object after s.
 	 */
-	void ToNextSubstitution(ReplaceIstream::Substitution *s) noexcept;
+	void ToNextSubstitution(ReplaceIstream::Substitution &s) noexcept;
 
-	Substitution *GetLastSubstitution() noexcept;
+	[[gnu::pure]]
+	Substitution &GetLastSubstitution() noexcept;
 
 	IstreamReadyResult OnSubstitutionReady(Substitution &s) noexcept;
 
