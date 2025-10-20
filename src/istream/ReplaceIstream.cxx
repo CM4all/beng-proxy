@@ -14,7 +14,6 @@
 #include <assert.h>
 
 struct ReplaceIstream::Substitution final : IntrusiveForwardListHook, IstreamSink {
-	Substitution *next = nullptr;
 	ReplaceIstream &replace;
 	const off_t start;
 	off_t end;
