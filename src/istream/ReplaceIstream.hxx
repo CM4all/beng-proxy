@@ -7,6 +7,7 @@
 #include "FacadeIstream.hxx"
 #include "event/DeferEvent.hxx"
 #include "memory/GrowingBuffer.hxx"
+#include "util/IntrusiveForwardList.hxx"
 
 #include <sys/types.h>
 
@@ -17,6 +18,8 @@ class UnusedIstreamPtr;
 
 class ReplaceIstream : public FacadeIstream, DestructAnchor {
 	struct Substitution;
+	using SubstitutionList = IntrusiveForwardList<Substitution,
+		IntrusiveForwardListBaseHookTraits<Substitution>, {.cache_last = true}>;
 
 	/**
 	 * This event is scheduled when a method call
@@ -38,8 +41,7 @@ class ReplaceIstream : public FacadeIstream, DestructAnchor {
 	 */
 	off_t settled_position = 0;
 
-	Substitution *first_substitution = nullptr,
-		**append_substitution_p = &first_substitution;
+	SubstitutionList substitutions;
 
 #ifndef NDEBUG
 	off_t last_substitution_end = 0;
@@ -79,15 +81,15 @@ private:
 	 */
 	bool IsEOF() const noexcept {
 		return !input.IsDefined() && finished &&
-			first_substitution == nullptr &&
+			substitutions.empty() &&
 			IsBufferAtEOF();
 	}
 
 	[[gnu::pure]]
-	off_t GetBufferEndOffsetUntil(off_t _position, const Substitution *s) const noexcept;
+	off_t GetBufferEndOffsetUntil(off_t _position, SubstitutionList::const_iterator s) const noexcept;
 
 	[[gnu::pure]]
-	off_t GetBufferEndOffsetUntil(const Substitution *s) const noexcept {
+	off_t GetBufferEndOffsetUntil(SubstitutionList::const_iterator s) const noexcept {
 		return GetBufferEndOffsetUntil(position, s);
 	}
 
@@ -135,9 +137,6 @@ private:
 	 * Activate the next substitution object after s.
 	 */
 	void ToNextSubstitution(ReplaceIstream::Substitution &s) noexcept;
-
-	[[gnu::pure]]
-	Substitution &GetLastSubstitution() noexcept;
 
 	IstreamReadyResult OnSubstitutionReady(Substitution &s) noexcept;
 

@@ -13,7 +13,7 @@
 
 #include <assert.h>
 
-struct ReplaceIstream::Substitution final : IstreamSink {
+struct ReplaceIstream::Substitution final : IntrusiveForwardListHook, IstreamSink {
 	Substitution *next = nullptr;
 	ReplaceIstream &replace;
 	const off_t start;
@@ -22,10 +22,6 @@ struct ReplaceIstream::Substitution final : IstreamSink {
 	Substitution(ReplaceIstream &_replace,
 		     off_t _start, off_t _end,
 		     UnusedIstreamPtr &&_input) noexcept;
-
-	void Destroy() noexcept {
-		this->~Substitution();
-	}
 
 	bool IsDefined() const noexcept {
 		return input.IsDefined();
@@ -80,33 +76,27 @@ ReplaceIstream::Substitution::Substitution(ReplaceIstream &_replace,
 inline bool
 ReplaceIstream::Substitution::IsActive() const noexcept
 {
-	assert(replace.first_substitution != nullptr);
-	assert(replace.first_substitution->start <= start);
+	assert(!replace.substitutions.empty());
+	assert(replace.substitutions.front().start <= start);
 	assert(start >= replace.position);
 
-	return this == replace.first_substitution && replace.position == start;
+	return replace.substitutions.iterator_to(*this) == replace.substitutions.begin() && replace.position == start;
 }
 
 void
 ReplaceIstream::ToNextSubstitution(ReplaceIstream::Substitution &s) noexcept
 {
-	assert(first_substitution == &s);
+	assert(substitutions.iterator_to(s) == substitutions.begin());
 	assert(s.IsActive());
 	assert(s.start <= s.end);
 
 	buffer.Skip(s.end - s.start);
 	position = s.end;
 
-	first_substitution = s.next;
-	if (first_substitution == nullptr) {
-		assert(append_substitution_p == &s.next);
-		append_substitution_p = &first_substitution;
-	}
+	substitutions.pop_front_and_dispose(PoolDisposer{GetPool()});
 
-	s.Destroy();
-
-	assert(first_substitution == nullptr ||
-	       first_substitution->start >= position);
+	assert(substitutions.empty() ||
+	       substitutions.front().start >= position);
 }
 
 /*
@@ -175,18 +165,13 @@ ReplaceIstream::ReplaceIstream(struct pool &p, EventLoop &event_loop,
 
 ReplaceIstream::~ReplaceIstream() noexcept
 {
-	while (first_substitution != nullptr) {
-		auto *s = first_substitution;
-		first_substitution = s->next;
-
-		s->Destroy();
-	}
+	substitutions.clear_and_dispose(PoolDisposer{GetPool()});
 }
 
 inline off_t
-ReplaceIstream::GetBufferEndOffsetUntil(off_t _position, const Substitution *s) const noexcept
+ReplaceIstream::GetBufferEndOffsetUntil(off_t _position, SubstitutionList::const_iterator s) const noexcept
 {
-	if (s != nullptr)
+	if (s != substitutions.end())
 		return std::min(s->start, source_length);
 	else if (finished)
 		return source_length;
@@ -202,8 +187,8 @@ ReplaceIstream::GetBufferEndOffsetUntil(off_t _position, const Substitution *s) 
 bool
 ReplaceIstream::ReadSubstitution() noexcept
 {
-	while (first_substitution != nullptr && first_substitution->IsActive()) {
-		auto &s = *first_substitution;
+	while (!substitutions.empty() && substitutions.front().IsActive()) {
+		auto &s = substitutions.front();
 
 		if (s.IsDefined()) {
 			const DestructObserver destructed(*this);
@@ -215,7 +200,7 @@ ReplaceIstream::ReadSubstitution() noexcept
 
 			/* we assume the substitution object is blocking if it hasn't
 			   reached EOF with this one call */
-			if (&s == first_substitution)
+			if (substitutions.iterator_to(s) == substitutions.begin())
 				return false;
 		} else {
 			ToNextSubstitution(s);
@@ -279,7 +264,7 @@ ReplaceIstream::TryReadFromBuffer() noexcept
 {
 	assert(position <= source_length);
 
-	off_t end = GetBufferEndOffsetUntil(first_substitution);
+	off_t end = GetBufferEndOffsetUntil(substitutions.begin());
 	if (end < 0)
 		return true;
 
@@ -292,7 +277,7 @@ ReplaceIstream::TryReadFromBuffer() noexcept
 	assert(position == end);
 
 	if (position == source_length &&
-	    first_substitution == nullptr &&
+	    substitutions.empty() &&
 	    !input.IsDefined()) {
 		DestroyEof();
 		return false;
@@ -329,9 +314,9 @@ ReplaceIstream::TryRead() noexcept
 
 		if (!TryReadFromBuffer())
 			return false;
-	} while (first_substitution != nullptr &&
+	} while (!substitutions.empty() &&
 		 /* quit the loop if we don't have enough data yet */
-		 first_substitution->start <= source_length);
+		 substitutions.front().start <= source_length);
 
 	return true;
 }
@@ -383,7 +368,7 @@ ReplaceIstream::OnData(const std::span<const std::byte> src) noexcept
 		return 0;
 	}
 
-	if (GetBufferEndOffsetUntil(first_substitution) > old_source_length) {
+	if (GetBufferEndOffsetUntil(substitutions.begin()) > old_source_length) {
 		defer_read.Schedule();
 		had_output = true;
 	}
@@ -449,21 +434,20 @@ ReplaceIstream::_GetAvailable(bool partial) noexcept
 	off_t available = input_avalable;
 	off_t position2 = position;
 
-	for (auto subst = first_substitution;
-	     subst != nullptr; subst = subst->next) {
-		assert(position2 <= subst->start);
+	for (const auto &subst : substitutions) {
+		assert(position2 <= subst.start);
 
-		available += subst->start - position2;
+		available += subst.start - position2;
 
-		if (subst->IsDefined()) {
-			const off_t l = subst->GetAvailable(partial);
+		if (subst.IsDefined()) {
+			const off_t l = subst.GetAvailable(partial);
 			if (l != (off_t)-1)
 				available += l;
 			else if (!partial)
 				return (off_t)-1;
 		}
 
-		position2 = subst->end;
+		position2 = subst.end;
 	}
 
 	/* add available bytes from tail (if known yet) */
@@ -545,7 +529,7 @@ ReplaceIstream::_FillBucketList(IstreamBucketList &list)
 	}
 
 	off_t fill_position = position;
-	for (auto *s = first_substitution;; s = s->next) {
+	for (auto s = substitutions.begin();; ++s) {
 		off_t end = GetBufferEndOffsetUntil(fill_position, s);
 		if (end < 0) {
 			/* after last substitution and the "settled" position:
@@ -573,7 +557,7 @@ ReplaceIstream::_FillBucketList(IstreamBucketList &list)
 			}
 		}
 
-		if (s == nullptr) {
+		if (s == substitutions.end()) {
 			if (input.IsDefined() || !finished)
 				list.SetMore();
 			return;
@@ -627,7 +611,7 @@ ReplaceIstream::_ConsumeBucketList(size_t nbytes) noexcept
 	size_t total = 0;
 
 	while (true) {
-		auto *s = first_substitution;
+		const auto s = substitutions.begin();
 		off_t end = GetBufferEndOffsetUntil(s);
 		assert(end >= 0);
 
@@ -652,7 +636,7 @@ ReplaceIstream::_ConsumeBucketList(size_t nbytes) noexcept
 			Consumed(before_size);
 		}
 
-		if (s == nullptr)
+		if (s == substitutions.end())
 			break;
 
 		const auto r = s->ConsumeBucketList(nbytes);
@@ -697,32 +681,18 @@ ReplaceIstream::Add(off_t start, off_t end,
 	last_substitution_end = end;
 #endif
 
-	*append_substitution_p = s;
-	append_substitution_p = &s->next;
+	substitutions.push_back(*s);
 
 	defer_read.Schedule();
-}
-
-inline ReplaceIstream::Substitution &
-ReplaceIstream::GetLastSubstitution() noexcept
-{
-	auto *substitution = first_substitution;
-	assert(substitution != nullptr);
-
-	while (substitution->next != nullptr)
-		substitution = substitution->next;
-
-	assert(substitution->end <= settled_position);
-	assert(substitution->end == last_substitution_end);
-	return *substitution;
 }
 
 void
 ReplaceIstream::Extend([[maybe_unused]] off_t start, off_t end) noexcept
 {
 	assert(!finished);
+	assert(!substitutions.empty());
 
-	auto &substitution = GetLastSubstitution();
+	auto &substitution = substitutions.back();
 	assert(substitution.start == start);
 	assert(substitution.end == settled_position);
 	assert(substitution.end == last_substitution_end);
@@ -764,7 +734,7 @@ ReplaceIstream::OnSubstitutionReady(Substitution &s) noexcept
 	defer_read.Cancel();
 
 	auto result = InvokeReady();
-	if (result != IstreamReadyResult::CLOSED && first_substitution != &s)
+	if (result != IstreamReadyResult::CLOSED && substitutions.iterator_to(s) != substitutions.begin())
 		/* this substitution has been closed; we need to
 		   return CLOSED to its callback, even though
 		   ReplaceIstream's handler was successful and didn't
