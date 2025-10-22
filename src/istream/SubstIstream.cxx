@@ -175,7 +175,7 @@ class SubstIstream final : public FacadeIstream, DestructAnchor {
 
 	/**
 	 * How many bytes have previously been returned in buckets?
-	 * This is used for implementing _GetAvailable().  It is set
+	 * This is used for implementing _GetLength().  It is set
 	 * by _FillBucketList() and must be updated by calling
 	 * SubtractBucketAvailable() or BucketConsumed().
 	 *
@@ -288,11 +288,11 @@ public:
 
 	/* istream handler */
 
-	off_t _GetAvailable(bool partial) noexcept override {
-		if (partial)
-			return bucket_available;
-		else
-			return -1;
+	IstreamLength _GetLength() noexcept override {
+		return {
+			.length = static_cast<off_t>(bucket_available),
+			.exhaustive = false,
+		};
 	}
 
 	size_t OnData(std::span<const std::byte> src) noexcept override;

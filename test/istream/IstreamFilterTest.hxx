@@ -294,8 +294,10 @@ TYPED_TEST_P(IstreamFilterTest, NoBucket)
 			:ForwardIstream(p, std::move(_input)) {}
 
 	protected:
-		off_t _GetAvailable(bool partial) noexcept override {
-			return has_read ? ForwardIstream::_GetAvailable(partial) : -1;
+		IstreamLength _GetLength() noexcept override {
+			return has_read
+				? ForwardIstream::_GetLength()
+				: IstreamLength{.length = 0, .exhaustive = false};
 		}
 
 		void _Read() noexcept override {

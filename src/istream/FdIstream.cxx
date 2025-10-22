@@ -80,7 +80,7 @@ private:
 		direct = (mask & FdTypeMask(fd_type)) != 0;
 	}
 
-	off_t _GetAvailable(bool partial) noexcept override;
+	IstreamLength _GetLength() noexcept override;
 
 	void _Read() noexcept override {
 		retry_event.Cancel();
@@ -167,12 +167,13 @@ FdIstream::TryDirect()
  *
  */
 
-off_t
-FdIstream::_GetAvailable(bool partial) noexcept
+IstreamLength
+FdIstream:: _GetLength() noexcept
 {
-	return partial
-		? buffer.GetAvailable()
-		: -1;
+	return {
+		.length = static_cast<off_t>(buffer.GetAvailable()),
+		.exhaustive = !fd.IsDefined(),
+	};
 }
 
 /*

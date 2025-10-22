@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include "Length.hxx"
 #include "Result.hxx"
 #include "pool/Holder.hxx"
 #include "io/FdType.hxx"
@@ -202,16 +203,10 @@ public:
 	}
 
 	/**
-	 * How much data is available?
-	 *
-	 * @param partial if false, the stream must provide the data size
-	 * until the end of the stream; for partial, a minimum estimate is
-	 * ok
-	 * @return the number of bytes available or -1 if the object does
-	 * not know
+	 * How long is the remainder of this #Istream?
 	 */
 	[[gnu::pure]]
-	off_t GetAvailable(bool partial) noexcept {
+	IstreamLength GetLength() noexcept {
 #ifndef NDEBUG
 		assert(!destroyed);
 		assert(!closing);
@@ -222,32 +217,29 @@ public:
 		reading = true;
 #endif
 
-		off_t available = _GetAvailable(partial);
+		const auto result = _GetLength();
 
 #ifndef NDEBUG
-		assert(available >= -1);
+		assert(result.length >= 0);
 		assert(!destructed);
 		assert(!destroyed);
 		assert(reading);
 
 		reading = false;
 
-		if (partial) {
-			assert(available_partial == 0 ||
-			       available >= available_partial);
-			if (available > available_partial)
-				available_partial = available;
-		} else {
+		assert(available_partial == 0 || result.length >= available_partial);
+		if (result.length > available_partial)
+			available_partial = result.length;
+
+		if (result.exhaustive) {
 			assert(!available_full_set ||
-			       available_full == available);
-			if (!available_full_set && available != (off_t)-1) {
-				available_full = available;
-				available_full_set = true;
-			}
+			       available_full == result.length);
+			available_full = result.length;
+			available_full_set = true;
 		}
 #endif
 
-		return available;
+		return result;
 	}
 
 	/**
@@ -478,8 +470,8 @@ protected:
 	virtual void _SetDirect([[maybe_unused]] FdTypeMask _handler_direct) noexcept {
 	}
 
-	virtual off_t _GetAvailable([[maybe_unused]] bool partial) noexcept {
-		return -1;
+	virtual IstreamLength _GetLength() noexcept {
+		return {0, false};
 	}
 
 	virtual off_t _Skip([[maybe_unused]] off_t length) noexcept {

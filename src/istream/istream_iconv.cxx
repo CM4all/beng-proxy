@@ -35,11 +35,11 @@ public:
 
 	/* virtual methods from class Istream */
 
-	off_t _GetAvailable(bool partial) noexcept override {
-		if (partial)
-			return buffer.GetAvailable();
-
-		return -1;
+	IstreamLength _GetLength() noexcept override {
+		return {
+			.length = static_cast<off_t>(buffer.GetAvailable()),
+			.exhaustive = false,
+		};
 	}
 
 	void _Read() noexcept override;

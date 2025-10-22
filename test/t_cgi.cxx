@@ -45,7 +45,8 @@ struct Context final : TestInstance, HttpResponseHandler, IstreamSink {
 	bool released = false, aborted = false;
 	HttpStatus status = HttpStatus{};
 
-	off_t body_data = 0, body_available = 0;
+	off_t body_data = 0;
+	IstreamLength body_length{.exhaustive = false};
 	bool body_eof = false, body_abort = false, body_closed = false;
 
 	Context()
@@ -162,7 +163,7 @@ Context::OnHttpResponse(HttpStatus _status, StringMap &&,
 	} else if (_body) {
 		SetInput(std::move(_body));
 		input.SetDirect(my_handler_direct);
-		body_available = input.GetAvailable(false);
+		body_length = input.GetLength();
 	}
 
 	if (close_response_body_late) {
@@ -442,7 +443,7 @@ test_no_length(PoolPtr pool, Context *c)
 
 	c->event_loop.Run();
 
-	assert(c->body_available == -1);
+	assert(!c->body_length.exhaustive);
 	assert(c->body_eof);
 }
 
@@ -466,7 +467,8 @@ test_length_ok(PoolPtr pool, Context *c)
 
 	c->event_loop.Run();
 
-	assert(c->body_available == 4);
+	assert(c->body_length.exhaustive);
+	assert(c->body_length.length == 4);
 	assert(c->body_eof);
 }
 
@@ -492,7 +494,8 @@ test_length_ok_large(PoolPtr pool, Context *c)
 
 	c->event_loop.Run();
 
-	assert(c->body_available == 8192);
+	assert(c->body_length.exhaustive);
+	assert(c->body_length.length == 8192);
 	assert(c->body_eof);
 }
 

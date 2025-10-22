@@ -7,12 +7,12 @@
 
 #include <assert.h>
 
-off_t
-UnusedIstreamPtr::GetAvailable(bool partial) const noexcept
+IstreamLength
+UnusedIstreamPtr::GetLength() const noexcept
 {
 	assert(stream != nullptr);
 
-	return stream->GetAvailable(partial);
+	return stream->GetLength();
 }
 
 void

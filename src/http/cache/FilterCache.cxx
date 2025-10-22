@@ -11,6 +11,7 @@
 #include "http/rl/ResourceLoader.hxx"
 #include "AllocatorPtr.hxx"
 #include "ResourceAddress.hxx"
+#include "istream/Length.hxx"
 #include "istream/UnusedPtr.hxx"
 #include "istream/istream_null.hxx"
 #include "istream/SharedLeaseIstream.hxx"
@@ -553,10 +554,12 @@ FilterCacheRequest::OnHttpResponse(HttpStatus status, StringMap &&headers,
 	/* make sure the caller pool gets unreferenced upon returning */
 	const auto _caller_pool = std::move(caller_pool);
 
-	off_t available = body ? body.GetAvailable(true) : 0;
+	const off_t body_length = body
+		? body.GetLength().length
+		: 0;
 
 	if (!filter_cache_response_evaluate(cache.GetEventLoop(), info,
-					    status, headers, available)) {
+					    status, headers, body_length)) {
 		/* don't cache response */
 		LogConcat(4, "FilterCache", "nocache ", info.key.value);
 		++cache.stats.skips;

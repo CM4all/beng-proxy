@@ -67,14 +67,11 @@ struct TeeIstream final : IstreamSink, DestructAnchor {
 
 		/* virtual methods from class Istream */
 
-		off_t _GetAvailable(bool partial) noexcept override {
-			auto available = parent.input.GetAvailable(partial);
-			if (available >= 0) {
-				assert(available >= (off_t)skip);
-				available -= skip;
-			}
-
-			return available;
+		IstreamLength _GetLength() noexcept override {
+			auto result = parent.input.GetLength();
+			assert(result.length >= static_cast<off_t>(skip));
+			result.length -= skip;
+			return result;
 		}
 
 		void _Read() noexcept override {

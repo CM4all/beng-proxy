@@ -10,6 +10,7 @@
 #include <assert.h>
 #include <sys/types.h>
 
+struct IstreamLength;
 class Istream;
 
 /**
@@ -75,7 +76,7 @@ public:
 	}
 
 	[[gnu::pure]]
-	off_t GetAvailable(bool partial) const noexcept;
+	IstreamLength GetLength() const noexcept;
 
 private:
 	static void Close(Istream &i) noexcept;

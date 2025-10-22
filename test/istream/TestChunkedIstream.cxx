@@ -42,8 +42,8 @@ TEST(IstreamChunkedTest, Custom)
 
 		/* virtual methods from class Istream */
 
-		off_t _GetAvailable(bool) noexcept override {
-			return 1;
+		IstreamLength _GetLength() noexcept override {
+			return {.length = 1, .exhaustive = true};
 		}
 
 		void _Read() noexcept override {}
@@ -102,19 +102,20 @@ TEST(IstreamChunkedTest, Leave1ByteInBuffer)
 	static constexpr std::size_t CHUNK_END_SIZE = 2;
 	static constexpr std::size_t EOF_SIZE = 5;
 
-	EXPECT_EQ(ctx.input.GetAvailable(false), -1);
-	EXPECT_EQ(ctx.input.GetAvailable(true), CHUNK_START_SIZE + 1 + CHUNK_END_SIZE + EOF_SIZE);
+	EXPECT_FALSE(ctx.input.GetLength().exhaustive);
+	EXPECT_EQ(ctx.input.GetLength().length,
+		  CHUNK_START_SIZE + 1 + CHUNK_END_SIZE + EOF_SIZE);
 
 	/* consume the first chunk, leave the "\n" in the buffer */
 	ctx.ReadBuckets(CHUNK_START_SIZE + 1 + CHUNK_END_SIZE - 1);
 
-	EXPECT_EQ(ctx.input.GetAvailable(false), -1);
-	EXPECT_EQ(ctx.input.GetAvailable(true), 1 + EOF_SIZE);
+	EXPECT_FALSE(ctx.input.GetLength().exhaustive);
+	EXPECT_EQ(ctx.input.GetLength().length, 1 + EOF_SIZE);
 
 	delayed.second.Set(istream_string_new(ctx.test_pool, "y"));
 
-	EXPECT_EQ(ctx.input.GetAvailable(false), 1 + CHUNK_START_SIZE + 1 + CHUNK_END_SIZE + EOF_SIZE);
-	EXPECT_EQ(ctx.input.GetAvailable(true), 1 + CHUNK_START_SIZE + 1 + CHUNK_END_SIZE + EOF_SIZE);
+	EXPECT_TRUE(ctx.input.GetLength().exhaustive);
+	EXPECT_EQ(ctx.input.GetLength().length, 1 + CHUNK_START_SIZE + 1 + CHUNK_END_SIZE + EOF_SIZE);
 
 	ctx.ReadBuckets(1 + 1 + 7);
 }

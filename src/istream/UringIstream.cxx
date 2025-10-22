@@ -105,7 +105,7 @@ private:
 		direct = (mask & FdTypeMask(FdType::FD_FILE)) != 0;
 	}
 
-	off_t _GetAvailable(bool partial) noexcept override;
+	IstreamLength _GetLength() noexcept override;
 	off_t _Skip(off_t length) noexcept override;
 	void _Read() noexcept override;
 	void _ConsumeDirect(std::size_t nbytes) noexcept override;
@@ -284,10 +284,13 @@ UringIstream::ReadOperation::OnUringCompletion(int res) noexcept
 	parent.OnReadSuccess(res);
 }
 
-off_t
-UringIstream::_GetAvailable(bool) noexcept
+IstreamLength
+UringIstream::_GetLength() noexcept
 {
-	return GetRemaining() + read_operation->buffer.GetAvailable();
+	return {
+		.length = GetRemaining() + static_cast<off_t>(read_operation->buffer.GetAvailable()),
+		.exhaustive = true,
+	};
 }
 
 off_t

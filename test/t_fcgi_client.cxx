@@ -544,7 +544,8 @@ TEST_P(FcgiClientB, InterleavedStderr)
 	EXPECT_FALSE(c.request_error);
 	EXPECT_FALSE(c.body_error);
 	EXPECT_EQ(c.status, HttpStatus::OK);
-	EXPECT_EQ(c.available, 5);
+	EXPECT_TRUE(c.available.exhaustive);
+	EXPECT_EQ(c.available.length, 5);
 	EXPECT_EQ(c.body_data, 5);
 	EXPECT_EQ(c.consumed_body_data, 5);
 	EXPECT_TRUE(c.body_eof);
@@ -613,7 +614,8 @@ TEST_P(FcgiClientB, BlockingEnd)
 	EXPECT_FALSE(c.request_error);
 	EXPECT_FALSE(c.body_error);
 	EXPECT_EQ(c.status, HttpStatus::OK);
-	EXPECT_EQ(c.available, 5);
+	EXPECT_TRUE(c.available.exhaustive);
+	EXPECT_EQ(c.available.length, 5);
 	EXPECT_EQ(c.body_data, 5);
 	EXPECT_EQ(c.consumed_body_data, 5);
 	EXPECT_FALSE(c.body_eof);
@@ -628,7 +630,8 @@ TEST_P(FcgiClientB, BlockingEnd)
 	EXPECT_FALSE(c.request_error);
 	EXPECT_FALSE(c.body_error);
 	EXPECT_EQ(c.status, HttpStatus::OK);
-	EXPECT_EQ(c.available, 5);
+	EXPECT_TRUE(c.available.exhaustive);
+	EXPECT_EQ(c.available.length, 5);
 	EXPECT_EQ(c.body_data, 5);
 	EXPECT_EQ(c.consumed_body_data, 5);
 	EXPECT_TRUE(c.body_eof);
@@ -669,7 +672,8 @@ TEST_P(FcgiClientB, BlockingStderr)
 	EXPECT_FALSE(c.request_error);
 	EXPECT_FALSE(c.body_error);
 	EXPECT_EQ(c.status, HttpStatus::OK);
-	EXPECT_EQ(c.available, 5);
+	EXPECT_TRUE(c.available.exhaustive);
+	EXPECT_EQ(c.available.length, 5);
 	EXPECT_EQ(c.body_data, 3);
 	EXPECT_EQ(c.consumed_body_data, 3);
 	EXPECT_FALSE(c.body_eof);
@@ -685,7 +689,8 @@ TEST_P(FcgiClientB, BlockingStderr)
 	EXPECT_FALSE(c.request_error);
 	EXPECT_FALSE(c.body_error);
 	EXPECT_EQ(c.status, HttpStatus::OK);
-	EXPECT_EQ(c.available, 5);
+	EXPECT_TRUE(c.available.exhaustive);
+	EXPECT_EQ(c.available.length, 5);
 	EXPECT_EQ(c.body_data, 5);
 	EXPECT_EQ(c.consumed_body_data, 5);
 	EXPECT_TRUE(c.body_eof);

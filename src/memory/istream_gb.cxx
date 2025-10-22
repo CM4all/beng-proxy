@@ -20,8 +20,11 @@ public:
 
 	/* virtual methods from class Istream */
 
-	off_t _GetAvailable(bool) noexcept override {
-		return reader.Available();
+	IstreamLength _GetLength() noexcept override {
+		return {
+			.length = static_cast<off_t>(reader.Available()),
+			.exhaustive = true,
+		};
 	}
 
 	off_t _Skip(off_t _nbytes) noexcept override {

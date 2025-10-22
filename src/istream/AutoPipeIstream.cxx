@@ -33,7 +33,7 @@ public:
 	/* virtual methods from class Istream */
 
 	void _SetDirect(FdTypeMask mask) noexcept override;
-	off_t _GetAvailable(bool partial) noexcept override;
+	IstreamLength _GetLength() noexcept override;
 	void _Read() noexcept override;
 
 	void _FillBucketList(IstreamBucketList &list) override {
@@ -248,24 +248,18 @@ AutoPipeIstream::_SetDirect(FdTypeMask mask) noexcept
 	input.SetDirect(mask);
 }
 
-off_t
-AutoPipeIstream::_GetAvailable(bool partial) noexcept
+IstreamLength
+AutoPipeIstream:: _GetLength() noexcept
 {
-	if (input.IsDefined()) [[likely]] {
-		off_t available = input.GetAvailable(partial);
-		if (piped > 0) {
-			if (available != -1)
-				available += piped;
-			else if (partial)
-				available = piped;
-		}
+	IstreamLength result{
+		.length = static_cast<off_t>(piped),
+		.exhaustive = true,
+	};
 
-		return available;
-	} else {
-		assert(piped > 0);
+	if (input.IsDefined()) [[likely]]
+		result += input.GetLength();
 
-		return piped;
-	}
+	return result;
 }
 
 void

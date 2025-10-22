@@ -40,7 +40,7 @@ public:
 	/* virtual methods from class Istream */
 
 	void _SetDirect(FdTypeMask mask) noexcept override;
-	off_t _GetAvailable(bool partial) noexcept override;
+	IstreamLength _GetLength() noexcept override;
 	void _Read() noexcept override;
 
 	void _FillBucketList(IstreamBucketList &list) override {
@@ -260,24 +260,18 @@ SocketPairIstream::_SetDirect([[maybe_unused]] FdTypeMask mask) noexcept
 	// always enabled
 }
 
-off_t
-SocketPairIstream::_GetAvailable(bool partial) noexcept
+IstreamLength
+SocketPairIstream:: _GetLength() noexcept
 {
-	if (input.IsDefined()) [[likely]] {
-		off_t available = input.GetAvailable(partial);
-		if (in_socket > 0) {
-			if (available != -1)
-				available += in_socket;
-			else if (partial)
-				available = in_socket;
-		}
+	IstreamLength result{
+		.length = static_cast<off_t>(in_socket),
+		.exhaustive = true,
+	};
 
-		return available;
-	} else {
-		assert(in_socket > 0);
+	if (input.IsDefined()) [[likely]]
+		result += input.GetLength();
 
-		return in_socket;
-	}
+	return result;
 }
 
 void

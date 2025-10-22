@@ -198,13 +198,17 @@ private:
 		direct = (mask & ISTREAM_TO_PIPE) != 0;
 	}
 
-	off_t _GetAvailable(bool partial) noexcept override {
+	IstreamLength _GetLength() noexcept override {
 		if (known_length)
-			return length - received + buffer.GetAvailable();
-		else if (partial)
-			return buffer.GetAvailable();
+			return {
+				.length = static_cast<off_t>(length - received + buffer.GetAvailable()),
+				.exhaustive = true,
+			};
 		else
-			return -1;
+			return {
+				.length = static_cast<off_t>(buffer.GetAvailable()),
+				.exhaustive = false,
+			};
 	}
 
 	void _Read() noexcept override {

@@ -18,10 +18,11 @@ public:
 
 	/* virtual methods from class Istream */
 
-	off_t _GetAvailable(bool partial) noexcept override {
-		return partial
-			? INT_MAX
-			: -1;
+	IstreamLength _GetLength() noexcept override {
+		return {
+			.length = INT_MAX,
+			.exhaustive = false,
+		};
 	}
 
 	off_t _Skip(off_t length) noexcept override {

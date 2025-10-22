@@ -26,8 +26,8 @@ struct ReplaceIstream::Substitution final : IntrusiveForwardListHook, IstreamSin
 		return input.IsDefined();
 	}
 
-	off_t GetAvailable(bool partial) const noexcept {
-		return input.GetAvailable(partial);
+	IstreamLength GetLength() const noexcept {
+		return input.GetLength();
 	}
 
 	void Read() noexcept {
@@ -407,44 +407,31 @@ ReplaceIstream::OnError(std::exception_ptr ep) noexcept
  *
  */
 
-off_t
-ReplaceIstream::_GetAvailable(bool partial) noexcept
+IstreamLength
+ReplaceIstream::_GetLength() noexcept
 {
-	if (!partial && !finished)
-		/* we don't know yet how many substitutions will come, so we
-		   cannot calculate the exact rest */
-		return (off_t)-1;
-
 	/* get available bytes from input */
 
-	off_t input_avalable = 0;
-	if (HasInput() && finished) {
-		input_avalable = input.GetAvailable(partial);
-		if (input_avalable == (off_t)-1) {
-			if (!partial)
-				return (off_t)-1;
-			input_avalable = 0;
-		}
-	}
+	IstreamLength result{
+		.length = 0,
+		.exhaustive = finished,
+	};
+
+	if (HasInput() && finished)
+		result = input.GetLength();
 
 	/* add available bytes from substitutions (and the source buffers
 	   before the substitutions) */
 
-	off_t available = input_avalable;
 	off_t position2 = position;
 
 	for (const auto &subst : substitutions) {
 		assert(position2 <= subst.start);
 
-		available += subst.start - position2;
+		result.length += subst.start - position2;
 
-		if (subst.IsDefined()) {
-			const off_t l = subst.GetAvailable(partial);
-			if (l != (off_t)-1)
-				available += l;
-			else if (!partial)
-				return (off_t)-1;
-		}
+		if (subst.IsDefined())
+			result += subst.GetLength();
 
 		position2 = subst.end;
 	}
@@ -452,11 +439,11 @@ ReplaceIstream::_GetAvailable(bool partial) noexcept
 	/* add available bytes from tail (if known yet) */
 
 	if (finished)
-		available += source_length - position2;
+		result.length += source_length - position2;
 	else if (position2 < settled_position)
-		available += settled_position - position2;
+		result.length += settled_position - position2;
 
-	return available;
+	return result;
 }
 
 void

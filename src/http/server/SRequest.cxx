@@ -93,15 +93,15 @@ HttpServerConnection::DiscardRequestBody() noexcept
 		keep_alive = false;
 }
 
-off_t
-HttpServerConnection::RequestBodyReader::_GetAvailable(bool partial) noexcept
+IstreamLength
+HttpServerConnection::RequestBodyReader::_GetLength() noexcept
 {
 	assert(connection.IsValid());
 	assert(connection.request.read_state == Request::BODY);
 	assert(connection.request.body_state == Request::BodyState::READING);
 	assert(!connection.response.pending_drained);
 
-	return HttpBodyReader::GetAvailable(*connection.socket, partial);
+	return HttpBodyReader::GetLength(*connection.socket);
 }
 
 inline void

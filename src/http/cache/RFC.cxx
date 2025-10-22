@@ -175,7 +175,7 @@ http_cache_response_evaluate(const HttpCacheRequestInfo &request_info,
 	if (!http_status_cacheable(status))
 		return std::nullopt;
 
-	if (body_available != (off_t)-1 && body_available > cacheable_size_limit)
+	if (body_available > cacheable_size_limit)
 		/* too large for the cache */
 		return std::nullopt;
 

@@ -45,10 +45,13 @@ public:
 
 	/* virtual methods from class Istream */
 
-	off_t _GetAvailable(bool partial) noexcept override {
+	IstreamLength _GetLength() noexcept override {
 		/* can't respond to this until we're resumed, because the
 		   original input can be discarded */
-		return resumed ? ForwardIstream::_GetAvailable(partial) : -1;
+		if (resumed)
+			return ForwardIstream::_GetLength();
+		else
+			return {.exhaustive = false};
 	}
 
 	void _Read() noexcept override {

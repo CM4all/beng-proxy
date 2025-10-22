@@ -213,25 +213,22 @@ sink_rubber_new(struct pool &pool, UnusedIstreamPtr input,
 		RubberSinkHandler &handler,
 		CancellablePointer &cancel_ptr) noexcept
 {
-	const off_t available = input.GetAvailable(true);
-	if (available > (off_t)max_size) {
+	const auto length = input.GetLength();
+	if (length.length > static_cast<off_t>(max_size)) {
 		input.Clear();
 		handler.RubberTooLarge();
 		return nullptr;
 	}
 
-	const off_t size = input.GetAvailable(false);
-	assert(size == -1 || size >= available);
-	assert(size <= (off_t)max_size);
-	if (size == 0) {
+	if (length.exhaustive && length.length == 0) {
 		input.Clear();
 		handler.RubberDone({}, 0);
 		return nullptr;
 	}
 
-	const std::size_t allocate = size == -1
-		? max_size
-		: (std::size_t)size;
+	const std::size_t allocate = length.exhaustive
+		? static_cast<std::size_t>(length.length)
+		: max_size;
 
 	unsigned rubber_id = rubber.Add(allocate);
 	if (rubber_id == 0) {

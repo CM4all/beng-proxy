@@ -105,7 +105,7 @@ struct HttpServerConnection final
 
 		/* virtual methods from class Istream */
 
-		off_t _GetAvailable(bool partial) noexcept override;
+		IstreamLength _GetLength() noexcept override;
 		void _Read() noexcept override;
 		void _ConsumeDirect(std::size_t nbytes) noexcept override;
 		void _Close() noexcept override;

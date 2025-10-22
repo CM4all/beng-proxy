@@ -71,10 +71,11 @@ public:
 			input.SetDirect(mask);
 	}
 
-	off_t _GetAvailable(bool partial) noexcept override {
-		return HasInput()
-			? ForwardIstream::_GetAvailable(partial)
-			: -1;
+	IstreamLength _GetLength() noexcept override {
+		if (HasInput())
+			return ForwardIstream::_GetLength();
+		else
+			return {.exhaustive = false};
 	}
 
 	off_t _Skip(off_t length) noexcept override {

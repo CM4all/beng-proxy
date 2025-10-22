@@ -4,6 +4,7 @@
 
 #include "Server.hxx"
 #include "Map.hxx"
+#include "istream/Length.hxx"
 #include "istream/UnusedPtr.hxx"
 #include "istream/istream_null.hxx"
 #include "strmap.hxx"
@@ -439,12 +440,12 @@ WasServer::SendResponse(HttpStatus status,
 
 	if (body && http_method_is_empty(request.method)) {
 		if (request.method == HttpMethod::HEAD) {
-			off_t available = body.GetAvailable(false);
-			if (available >= 0)
+			if (const auto length = body.GetLength();
+			    length.exhaustive)
 				headers.Add(AllocatorPtr{request.pool},
 					    content_length_header,
 					    FmtUnsafeC(response.content_length_buffer,
-						       "{}"sv, available));
+						       "{}"sv, length.length));
 		}
 
 		body.Clear();

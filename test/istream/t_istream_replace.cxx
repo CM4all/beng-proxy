@@ -92,8 +92,8 @@ TEST(ReplaceIstream, Buckets)
 		EXPECT_TRUE(list.HasMore());
 	}
 
-	EXPECT_EQ(replace->GetAvailable(false), -1);
-	EXPECT_EQ(replace->GetAvailable(true), 0);
+	EXPECT_FALSE(replace->GetLength().exhaustive);
+	EXPECT_EQ(replace->GetLength().length, 0);
 
 	/* add one (blocking) replacement: all data up to this
 	   replacement should be available */
@@ -116,8 +116,8 @@ TEST(ReplaceIstream, Buckets)
 		ASSERT_EQ(i, list.end());
 	}
 
-	EXPECT_EQ(replace->GetAvailable(false), -1);
-	EXPECT_EQ(replace->GetAvailable(true), 3);
+	EXPECT_FALSE(replace->GetLength().exhaustive);
+	EXPECT_EQ(replace->GetLength().length, 3);
 
 	/* unblock this replacement */
 
@@ -143,8 +143,8 @@ TEST(ReplaceIstream, Buckets)
 		ASSERT_EQ(i, list.end());
 	}
 
-	EXPECT_EQ(replace->GetAvailable(false), -1);
-	EXPECT_EQ(replace->GetAvailable(true), 6);
+	EXPECT_FALSE(replace->GetLength().exhaustive);
+	EXPECT_EQ(replace->GetLength().length, 6);
 
 	/* increase the "settled" position */
 
@@ -175,8 +175,8 @@ TEST(ReplaceIstream, Buckets)
 		ASSERT_EQ(i, list.end());
 	}
 
-	EXPECT_EQ(replace->GetAvailable(false), -1);
-	EXPECT_EQ(replace->GetAvailable(true), 8);
+	EXPECT_FALSE(replace->GetLength().exhaustive);
+	EXPECT_EQ(replace->GetLength().length, 8);
 
 	/* finish */
 
@@ -207,8 +207,8 @@ TEST(ReplaceIstream, Buckets)
 		ASSERT_EQ(i, list.end());
 	}
 
-	EXPECT_EQ(replace->GetAvailable(false), 28);
-	EXPECT_EQ(replace->GetAvailable(true), 28);
+	EXPECT_TRUE(replace->GetLength().exhaustive);
+	EXPECT_EQ(replace->GetLength().length, 28);
 
 	/* unpause */
 
@@ -239,8 +239,8 @@ TEST(ReplaceIstream, Buckets)
 		ASSERT_EQ(i, list.end());
 	}
 
-	EXPECT_EQ(replace->GetAvailable(false), 28);
-	EXPECT_EQ(replace->GetAvailable(true), 28);
+	EXPECT_TRUE(replace->GetLength().exhaustive);
+	EXPECT_EQ(replace->GetLength().length, 28);
 
 	/* cleanup */
 

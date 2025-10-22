@@ -37,8 +37,11 @@ public:
 		direct = (mask & FdTypeMask(FdType::FD_PIPE)) != 0;
 	}
 
-	off_t _GetAvailable(bool) noexcept override {
-		return remaining;
+	IstreamLength _GetLength() noexcept override {
+		return {
+			.length = static_cast<off_t>(remaining),
+			.exhaustive = true,
+		};
 	}
 
 	off_t _Skip(off_t length) noexcept override;

@@ -37,6 +37,7 @@
 #include "istream/AutoPipeIstream.hxx"
 #include "istream/BrotliEncoderIstream.hxx"
 #include "istream/istream_string.hxx"
+#include "istream/Length.hxx"
 #include "AllocatorPtr.hxx"
 #include "pool/pool.hxx"
 #include "translation/Transformation.hxx"
@@ -168,8 +169,8 @@ IsTextMimeType(const HttpHeaders &response_headers) noexcept
 static bool
 IsShorterThan(const UnusedIstreamPtr &i, off_t length) noexcept
 {
-	const off_t available = i.GetAvailable(false);
-	return available >= 0 && available < length;
+	const auto il = i.GetLength();
+	return il.exhaustive && il.length < length;
 }
 
 static bool

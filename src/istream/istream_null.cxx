@@ -15,8 +15,11 @@ public:
 
 	/* virtual methods from class Istream */
 
-	off_t _GetAvailable(bool) noexcept override {
-		return 0;
+	IstreamLength _GetLength() noexcept override {
+		return {
+			.length = 0,
+			.exhaustive = true,
+		};
 	}
 
 	void _Read() noexcept override {

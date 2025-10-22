@@ -283,13 +283,13 @@ ClientConnection::Request::SendRequest(HttpMethod method, const char *uri,
 
 	char content_length_buffer[32];
 	if (body) {
-		const auto content_length = body.GetAvailable(false);
-		if (content_length >= 0) {
+		if (const auto body_length = body.GetLength();
+		    body_length.exhaustive) {
 			/* can't use fmt::format_int because it
 			   doesn't have a default constructor */
 			hdrs.push_back(MakeNv("content-length"sv,
 					      FmtUnsafeSV(content_length_buffer,
-							  "{}"sv, content_length)));
+							  "{}"sv, body_length.length)));
 		}
 	}
 

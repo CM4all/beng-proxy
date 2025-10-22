@@ -7,10 +7,13 @@
 
 #include <stdexcept>
 
-off_t
-LengthIstream::_GetAvailable(bool) noexcept
+IstreamLength
+LengthIstream::_GetLength() noexcept
 {
-	return remaining;
+	return {
+		.length = remaining,
+		.exhaustive = true,
+	};
 }
 
 off_t

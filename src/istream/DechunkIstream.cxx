@@ -166,7 +166,7 @@ private:
 public:
 	/* virtual methods from class Istream */
 
-	off_t _GetAvailable(bool partial) noexcept override;
+	IstreamLength _GetLength() noexcept override;
 	void _Read() noexcept override;
 	void _FillBucketList(IstreamBucketList &list) override;
 	ConsumeBucketResult _ConsumeBucketList(size_t nbytes) noexcept override;
@@ -406,12 +406,9 @@ DechunkIstream::OnError(std::exception_ptr ep) noexcept
  *
  */
 
-off_t
-DechunkIstream::_GetAvailable(bool partial) noexcept
+IstreamLength
+DechunkIstream::_GetLength() noexcept
 {
-	if (!partial && !parser.HasEnded())
-		return -1;
-
 	std::size_t total = parser.GetAvailable();
 
 	for (const auto &chunk : chunks) {
@@ -419,7 +416,10 @@ DechunkIstream::_GetAvailable(bool partial) noexcept
 		total += chunk.data;
 	}
 
-	return total;
+	return {
+		.length = static_cast<off_t>(total),
+		.exhaustive = parser.HasEnded(),
+	};
 }
 
 void

@@ -51,11 +51,10 @@ Context::ReadBuckets2(std::size_t limit, bool consume_more)
 		return {IstreamReadyResult::OK, false};
 
 	if (get_available_before_bucket) {
-		/* these Istream::GetAvailable() are only here to trigger
-		   assertions */
+		/* this Istream::GetLength() call is only here to
+		   trigger assertions */
 		[[maybe_unused]]
-		const auto available_partial1 = input.GetAvailable(true),
-			available_full1 = input.GetAvailable(false);
+		const auto l = input.GetLength();
 	}
 
 	if (fill_buckets_twice) {
@@ -68,8 +67,7 @@ Context::ReadBuckets2(std::size_t limit, bool consume_more)
 
 	if (get_available_after_bucket) {
 		[[maybe_unused]]
-		const auto available_partial2 = input.GetAvailable(true),
-			available_full2 = input.GetAvailable(false);
+		const auto l = input.GetLength();
 	}
 
 	if (list.ShouldFallback())
@@ -136,8 +134,7 @@ Context::ReadBuckets2(std::size_t limit, bool consume_more)
 	// TODO check r.eof
 
 	[[maybe_unused]]
-	const auto available_partial3 = input.GetAvailable(true),
-		available_full3 = input.GetAvailable(false);
+	const auto l = input.GetLength();
 
 	IstreamReadyResult rresult = IstreamReadyResult::OK;
 
@@ -419,8 +416,7 @@ run_istream_ctx(Context &ctx)
 	ctx.eof = false;
 
 	if (ctx.options.call_available) {
-		[[maybe_unused]] off_t a1 = ctx.input.GetAvailable(false);
-		[[maybe_unused]] off_t a2 = ctx.input.GetAvailable(true);
+		[[maybe_unused]] const auto l = ctx.input.GetLength();
 	}
 
 	ctx.WaitForEndOfStream();

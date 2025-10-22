@@ -21,8 +21,8 @@ public:
 
 	/* virtual methods from class Istream */
 
-	off_t _GetAvailable(bool) noexcept override {
-		return -1;
+	IstreamLength _GetLength() noexcept override {
+		return {.exhaustive = false};
 	}
 
 	off_t _Skip(off_t) noexcept override {

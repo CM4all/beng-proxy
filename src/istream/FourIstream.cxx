@@ -18,16 +18,14 @@ public:
 
 	/* virtual methods from class Istream */
 
-	off_t _GetAvailable(bool partial) noexcept override {
-		auto available = ForwardIstream::_GetAvailable(partial);
-		if (available > 4) {
-			if (partial)
-				available = 4;
-			else
-				available = -1;
+	IstreamLength _GetLength() noexcept override {
+		auto result = ForwardIstream::_GetLength();
+		if (result.length > 4) {
+			result.length = 4;
+			result.exhaustive = false;
 		}
 
-		return available;
+		return result;
 	}
 
 	off_t _Skip([[maybe_unused]] off_t length) noexcept override {

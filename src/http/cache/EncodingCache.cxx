@@ -3,6 +3,7 @@
 // author: Max Kellermann <max.kellermann@ionos.com>
 
 #include "EncodingCache.hxx"
+#include "istream/Length.hxx"
 #include "istream/UnusedPtr.hxx"
 #include "istream/SharedLeaseIstream.hxx"
 #include "istream/TeeIstream.hxx"
@@ -194,8 +195,7 @@ EncodingCache::Put(struct pool &pool,
 	if (!src)
 		return src;
 
-	if (const auto available = src.GetAvailable(true);
-	    available > cacheable_size_limit) {
+	if (src.GetLength().length > cacheable_size_limit) {
 		/* too large for the cache */
 		LogConcat(4, "EncodingCache", "nocache too large", key.value);
 		++stats.skips;

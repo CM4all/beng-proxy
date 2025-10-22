@@ -42,7 +42,7 @@ public:
 
 	/* virtual methods from class Istream */
 
-	off_t _GetAvailable(bool partial) noexcept override;
+	IstreamLength _GetLength() noexcept override;
 	void _Read() noexcept override;
 	void _FillBucketList(IstreamBucketList &list) override;
 	ConsumeBucketResult _ConsumeBucketList(size_t nbytes) noexcept override;
@@ -279,27 +279,28 @@ ChunkedIstream::OnError(std::exception_ptr ep) noexcept
  *
  */
 
-off_t
-ChunkedIstream::_GetAvailable(bool partial) noexcept
+IstreamLength
+ChunkedIstream:: _GetLength() noexcept
 {
-	off_t result = ReadBuffer().size();
+	IstreamLength result{
+		.length = static_cast<off_t>(ReadBuffer().size()),
+		.exhaustive = true,
+	};
 
 	if (missing_from_current_chunk > 0)
 		/* end of the current chunk */
-		result += CHUNK_END_SIZE;
+		result.length += CHUNK_END_SIZE;
 
 	if (input.IsDefined()) {
-		if (off_t available = input.GetAvailable(partial); available >= 0) {
-			result += available;
+		const auto from_input = input.GetLength();
+		result += from_input;
 
-			if (std::cmp_greater(available, missing_from_current_chunk))
-				/* new chunk header and end */
-				result += CHUNK_START_SIZE + CHUNK_END_SIZE;
-		} else if (!partial)
-			return -1;
+		if (std::cmp_greater(from_input.length, missing_from_current_chunk))
+			/* new chunk header and end */
+			result.length += CHUNK_START_SIZE + CHUNK_END_SIZE;
 
 		/* EOF chunk */
-		result += EOF_SIZE;
+		result.length += EOF_SIZE;
 	}
 
 	return result;
@@ -317,8 +318,8 @@ ChunkedIstream::_Read() noexcept
 	}
 
 	if (IsBufferEmpty() && missing_from_current_chunk == 0) {
-		off_t available = input.GetAvailable(true);
-		if (available > 0) {
+		if (const auto available = input.GetLength().length;
+		    available > 0) {
 			StartChunk(available);
 			if (!SendBuffer2())
 				return;
@@ -354,7 +355,7 @@ ChunkedIstream::_FillBucketList(IstreamBucketList &list)
 		   returns more data and use that to start the new
 		   chunk */
 
-		off_t available = input.GetAvailable(true);
+		off_t available = input.GetLength().length;
 		if (std::cmp_greater(sub.GetTotalBufferSize(), available))
 			available = sub.GetTotalBufferSize();
 

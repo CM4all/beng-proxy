@@ -143,13 +143,13 @@ public:
 
 	/* virtual methods from class Istream */
 
-	off_t _GetAvailable(bool partial) noexcept override {
+	IstreamLength _GetLength() noexcept override {
 		// TODO special case at EOF?
 
-		if (!partial && internal)
-			return -1;
-
-		return unprotected_output.GetAvailable();
+		return {
+			.length = static_cast<off_t>(unprotected_output.GetAvailable()),
+			.exhaustive = !internal,
+		};
 	}
 
 	void _Read() noexcept override;

@@ -107,10 +107,10 @@ public:
 
 	[[gnu::always_inline]]
 	[[gnu::pure]]
-	off_t GetAvailable(bool partial) const noexcept {
+	IstreamLength GetLength() const noexcept {
 		assert(IsDefined());
 
-		return stream->GetAvailable(partial);
+		return stream->GetLength();
 	}
 
 	[[gnu::always_inline]]

@@ -22,8 +22,8 @@ public:
 		input.SetDirect(mask);
 	}
 
-	off_t _GetAvailable(bool partial) noexcept override {
-		return input.GetAvailable(partial);
+	IstreamLength _GetLength() noexcept override {
+		return input.GetLength();
 	}
 
 	off_t _Skip(off_t length) noexcept override;

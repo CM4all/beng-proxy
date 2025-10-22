@@ -183,7 +183,7 @@ private:
 #endif
 	}
 
-	off_t _GetAvailable(bool partial) noexcept override;
+	IstreamLength _GetLength() noexcept override;
 	//off_t _Skip(off_t length) noexcept override;  TODO implement using splice(/dev/null)
 	void _Read() noexcept override;
 	void _ConsumeDirect(std::size_t nbytes) noexcept override;
@@ -395,10 +395,13 @@ UringSpliceIstream::SpliceOperation::OnUringCompletion(int res) noexcept
 	parent.OnSpliceSuccess(static_cast<std::size_t>(res));
 }
 
-off_t
-UringSpliceIstream::_GetAvailable(bool) noexcept
+IstreamLength
+UringSpliceIstream::_GetLength() noexcept
 {
-	return GetRemainingWithPipe();
+	return {
+		.length = GetRemainingWithPipe(),
+		.exhaustive = true,
+	};
 }
 
 void

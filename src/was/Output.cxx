@@ -142,12 +142,12 @@ WasOutput::CheckLength() noexcept
 	if (known_length)
 		return true;
 
-	off_t available = input.GetAvailable(false);
-	if (available < 0)
+	const auto input_length = input.GetLength();
+	if (!input_length.exhaustive)
 		return true;
 
 	known_length = true;
-	total_length = sent + available;
+	total_length = sent + input_length.length;
 	return handler.WasOutputLength(total_length);
 }
 

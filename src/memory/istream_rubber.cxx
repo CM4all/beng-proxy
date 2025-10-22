@@ -34,8 +34,11 @@ public:
 
 	/* virtual methods from class Istream */
 
-	off_t _GetAvailable(bool) noexcept override {
-		return end - position;
+	IstreamLength _GetLength() noexcept override {
+		return {
+			.length = static_cast<off_t>(end - position),
+			.exhaustive = true,
+		};
 	}
 
 	off_t _Skip(off_t nbytes) noexcept override {

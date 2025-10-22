@@ -35,12 +35,14 @@ public:
 
 	/* virtual methods from class Istream */
 
-	off_t _GetAvailable(bool partial) noexcept override {
+	IstreamLength _GetLength() noexcept override {
+		auto result = ForwardIstream::_GetLength();
+
 		/* never return the total length, because the caller may then
 		   make assumptions on when this stream ends */
-		return partial && HasInput()
-			? ForwardIstream::_GetAvailable(partial)
-			: -1;
+		result.exhaustive = false;
+
+		return result;
 	}
 
 	void _Read() noexcept override {

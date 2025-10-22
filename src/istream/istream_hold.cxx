@@ -37,11 +37,14 @@ public:
 			ForwardIstream::_SetDirect(mask);
 	}
 
-	off_t _GetAvailable(bool partial) noexcept override {
+	IstreamLength _GetLength() noexcept override {
 		if (HasInput()) [[likely]]
-			return ForwardIstream::_GetAvailable(partial);
+			return ForwardIstream::_GetLength();
 
-		return input_error ? -1 : 0;
+		return {
+			.length = 0,
+			.exhaustive = !input_error,
+		};
 	}
 
 	off_t _Skip(off_t length) noexcept override {

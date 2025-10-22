@@ -112,15 +112,16 @@ public:
 
 	template<typename Socket>
 	[[gnu::pure]]
-	off_t GetAvailable(const Socket &s, bool partial) const noexcept {
+	IstreamLength GetLength(const Socket &s) const noexcept {
 		assert(rest != REST_EOF_CHUNK);
 
 		if (KnownLength())
-			return rest;
+			return {.length = rest, .exhaustive = true};
 
-		return partial
-			? (off_t)s.GetAvailable()
-			: -1;
+		return {
+			.length = static_cast<off_t>(s.GetAvailable()),
+			.exhaustive = false,
+		};
 	}
 
 	template<typename Socket>

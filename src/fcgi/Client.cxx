@@ -300,7 +300,7 @@ private:
 
 	/* virtual methods from class Istream */
 
-	off_t _GetAvailable(bool partial) noexcept override;
+	IstreamLength _GetLength() noexcept override;
 	void _Read() noexcept override;
 	void _FillBucketList(IstreamBucketList &list) override;
 	ConsumeBucketResult _ConsumeBucketList(std::size_t nbytes) noexcept override;
@@ -847,21 +847,29 @@ FcgiClient::OnError(std::exception_ptr ep) noexcept
  *
  */
 
-off_t
-FcgiClient::_GetAvailable(bool partial) noexcept
+IstreamLength
+FcgiClient::_GetLength() noexcept
 {
 	if (response.available >= 0)
-		return response.available;
+		return {.length = response.available, .exhaustive = true};
 
 	const std::size_t remaining = parser.GetRemaining();
 	const auto buffer = socket.ReadBuffer();
 	if (buffer.size() > remaining) {
 		const auto analysis = AnalyseBuffer(buffer);
-		if (analysis.end_request_offset > 0 || partial)
-			return analysis.total_stdout;
+		return {
+			.length = static_cast<off_t>(analysis.total_stdout),
+			.exhaustive = analysis.end_request_offset > 0,
+		};
 	}
 
-	return partial && !response.stderr ? (off_t)remaining : -1;
+	if (response.stderr)
+		return {.length = 0, .exhaustive = false};
+
+	return {
+		.length = static_cast<off_t>(remaining),
+		.exhaustive = false,
+	};
 }
 
 void
@@ -1316,11 +1324,11 @@ fcgi_client_request(struct pool *pool,
 	if (remote_addr != nullptr)
 		ps("REMOTE_ADDR", remote_addr);
 
-	off_t available = body
-		? body.GetAvailable(false)
-		: -1;
-	if (available >= 0) {
-		const fmt::format_int value{available};
+	const auto body_length = body
+		? body.GetLength()
+		: IstreamLength{.length = 0, .exhaustive = true};
+	if (body_length.exhaustive) {
+		const fmt::format_int value{body_length.length};
 
 		ps("HTTP_CONTENT_LENGTH", value.c_str())
 			/* PHP wants the parameter without

@@ -175,7 +175,7 @@ public:
 	void OnError(std::exception_ptr ep) noexcept override;
 
 	/* virtual methods from class Istream */
-	off_t _GetAvailable(bool partial) noexcept override;
+	IstreamLength _GetLength() noexcept override;
 	void _Read() noexcept override;
 	void _FillBucketList(IstreamBucketList &list) override;
 	ConsumeBucketResult _ConsumeBucketList(size_t nbytes) noexcept override;

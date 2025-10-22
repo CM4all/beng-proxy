@@ -17,8 +17,11 @@ public:
 
 	/* virtual methods from class Istream */
 
-	off_t _GetAvailable([[maybe_unused]] bool partial) noexcept override {
-		return data.size();
+	IstreamLength _GetLength() noexcept override {
+		return {
+			.length = static_cast<off_t>(data.size()),
+			.exhaustive = true,
+		};
 	}
 
 	off_t _Skip(off_t length) noexcept override;

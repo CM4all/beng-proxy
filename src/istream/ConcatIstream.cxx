@@ -26,8 +26,8 @@ class CatIstream final : public Istream, DestructAnchor {
 			input.SetDirect(direct);
 		}
 
-		off_t GetAvailable(bool partial) const noexcept {
-			return input.GetAvailable(partial);
+		IstreamLength GetLength() const noexcept {
+			return input.GetLength();
 		}
 
 		off_t Skip(off_t length) noexcept {
@@ -194,7 +194,7 @@ public:
 			i.SetDirect(mask);
 	}
 
-	off_t _GetAvailable(bool partial) noexcept override;
+	IstreamLength _GetLength() noexcept override;
 	off_t _Skip([[maybe_unused]] off_t length) noexcept override;
 	void _Read() noexcept override;
 	void _FillBucketList(IstreamBucketList &list) override;
@@ -230,23 +230,18 @@ CatIstream::OnInputReady(Input &i) noexcept
  *
  */
 
-off_t
-CatIstream::_GetAvailable(bool partial) noexcept
+IstreamLength
+CatIstream::_GetLength() noexcept
 {
-	off_t available = 0;
+	IstreamLength result{
+		.length = 0,
+		.exhaustive = true,
+	};
 
-	for (const auto &input : inputs) {
-		const off_t a = input.GetAvailable(partial);
-		if (a != (off_t)-1)
-			available += a;
-		else if (!partial)
-			/* if the caller wants the exact number of bytes, and
-			   one input cannot provide it, we cannot provide it
-			   either */
-			return (off_t)-1;
-	}
+	for (const auto &input : inputs)
+		result += input.GetLength();
 
-	return available;
+	return result;
 }
 
 off_t

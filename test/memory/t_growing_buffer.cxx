@@ -105,8 +105,7 @@ Context::ReadExpect()
 void
 Context::Run(PoolPtr _pool, UnusedIstreamPtr _istream)
 {
-	[[maybe_unused]] off_t a1 = _istream.GetAvailable(false);
-	[[maybe_unused]] off_t a2 = _istream.GetAvailable(true);
+	[[maybe_unused]] auto l = _istream.GetLength();
 
 	SetInput(std::move(_istream));
 

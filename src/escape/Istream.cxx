@@ -28,13 +28,18 @@ public:
 
 	/* virtual methods from class Istream */
 
-	off_t _GetAvailable(bool partial) noexcept override {
-		if (!HasInput())
-			return escaped.size();
+	IstreamLength _GetLength() noexcept override {
+		IstreamLength result{
+			.length = static_cast<off_t>(escaped.size()),
+			.exhaustive = true,
+		};
 
-		return partial
-			? escaped.size() + input.GetAvailable(partial)
-			: -1;
+		if (HasInput()) {
+			result.exhaustive = false;
+			result += input.GetLength();
+		}
+
+		return result;
 	}
 
 	off_t _Skip(off_t) noexcept override {

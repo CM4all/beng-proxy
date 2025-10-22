@@ -37,7 +37,7 @@ public:
 
 	/* virtual methods from class Istream */
 
-	off_t _GetAvailable(bool partial) noexcept override;
+	IstreamLength _GetLength() noexcept override;
 
 	off_t _Skip(off_t length) noexcept override {
 		off_t nbytes = ForwardIstream::_Skip(length);
@@ -190,17 +190,17 @@ CatchIstream::OnError(std::exception_ptr ep) noexcept
  *
  */
 
-off_t
-CatchIstream::_GetAvailable(bool partial) noexcept
+IstreamLength
+CatchIstream:: _GetLength() noexcept
 {
 	if (HasInput()) {
-		off_t result = ForwardIstream::_GetAvailable(partial);
-		if (result > available)
-			available = result;
+		const auto result = ForwardIstream::_GetLength();
+		if (result.length > available)
+			available = result.length;
 
 		return result;
 	} else
-		return available;
+		return {.length = available, .exhaustive = true};
 }
 
 void

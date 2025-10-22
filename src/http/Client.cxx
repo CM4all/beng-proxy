@@ -142,8 +142,8 @@ class HttpClient final : BufferedSocketHandler, IstreamSink, Cancellable, Destru
 
 		/* virtual methods from class Istream */
 
-		off_t _GetAvailable(bool partial) noexcept override {
-			return GetClient().GetAvailable(partial);
+		IstreamLength _GetLength() noexcept override {
+			return GetClient().GetLength();
 		}
 
 		void _Read() noexcept override {
@@ -385,7 +385,7 @@ private:
 	void ResponseFinished() noexcept;
 
 	[[gnu::pure]]
-	off_t GetAvailable(bool partial) const noexcept;
+	IstreamLength GetLength() const noexcept;
 
 	void Read() noexcept;
 
@@ -528,13 +528,13 @@ HttpClient::AbortResponse(std::exception_ptr ep) noexcept
  *
  */
 
-inline off_t
-HttpClient::GetAvailable(bool partial) const noexcept
+inline IstreamLength
+HttpClient::GetLength() const noexcept
 {
 	assert(response_body_reader.IsSocketDone(socket) || !socket.HasEnded());
 	assert(response.state == Response::State::BODY);
 
-	return response_body_reader.GetAvailable(socket, partial);
+	return response_body_reader.GetLength(socket);
 }
 
 inline void
@@ -1491,19 +1491,19 @@ HttpClient::HttpClient(struct pool &_pool, struct pool &_caller_pool,
 		if (value != nullptr)
 			header_write(headers2, "upgrade", value);
 	} else if (body) {
-		off_t content_length = body.GetAvailable(false);
-		if (content_length == (off_t)-1) {
+		const auto body_length = body.GetLength();
+
+		if (!body_length.exhaustive) {
 			header_write(headers2, "transfer-encoding", "chunked");
 
 			body = istream_chunked_new(GetPool(), std::move(body));
 		} else {
 			header_write_begin(headers2, "content-length"sv);
-			headers2.Fmt("{}", content_length);
+			headers2.Fmt("{}", body_length.length);
 			header_write_finish(headers2);
 		}
 
-		off_t available = expect_100 ? body.GetAvailable(true) : 0;
-		if (available < 0 || available >= EXPECT_100_THRESHOLD) {
+		if (expect_100 && (!body_length.exhaustive || body_length.length >= EXPECT_100_THRESHOLD)) {
 			/* large request body: ask the server for confirmation
 			   that he's really interested */
 			header_write(headers2, "expect", "100-continue");

@@ -561,13 +561,13 @@ ServerConnection::Request::SendResponse(HttpStatus status,
 
 	char content_length_buffer[32];
 	if (_response_body) {
-		const auto content_length = _response_body.GetAvailable(false);
-		if (content_length >= 0) {
+		if (const auto body_length = _response_body.GetLength();
+		    body_length.exhaustive) {
 			/* can't use fmt::format_int because it
 			   doesn't have a default constructor */
 			hdrs.push_back(MakeNv("content-length"sv,
 					      FmtUnsafeSV(content_length_buffer,
-							  "{}"sv, content_length)));
+							  "{}"sv, body_length.length)));
 		}
 
 		if (http_method_is_empty(method))

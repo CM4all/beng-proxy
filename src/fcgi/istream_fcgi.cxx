@@ -36,10 +36,11 @@ public:
 
 	/* virtual methods from class Istream */
 
-	off_t _GetAvailable(bool partial) noexcept override {
-		return partial
-			? sizeof(header) - header_sent + input.GetAvailable(partial)
-			: -1;
+	IstreamLength _GetLength() noexcept override {
+		return IstreamLength{
+			.length = static_cast<off_t>(sizeof(header) - header_sent),
+			.exhaustive = false,
+		} + input.GetLength();
 	}
 
 	off_t _Skip([[maybe_unused]] off_t length) noexcept override {
@@ -173,8 +174,8 @@ FcgiIstream::_Read() noexcept
 	}
 
 	if (missing_from_current_record == 0) {
-		off_t available = input.GetAvailable(true);
-		if (available > 0) {
+		if (const off_t available = input.GetLength().length;
+		    available > 0) {
 			StartRecord(available);
 			if (!WriteHeader())
 				return;

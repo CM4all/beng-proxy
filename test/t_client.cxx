@@ -156,8 +156,7 @@ Context::DoBuckets() noexcept {
 	} else
 		eof = !more_buckets;
 
-	available_after_bucket = input.GetAvailable(false);
-	available_after_bucket_partial = input.GetAvailable(true);
+	available_after_bucket = input.GetLength();
 
 	if (eof) {
 		assert(!close_after_buckets);
@@ -187,8 +186,8 @@ Context::OnDeferred() noexcept
 	}
 
 	if (use_buckets) {
-		if (available < 0)
-			available = input.GetAvailable(false);
+		if (available.length < 0)
+			available = input.GetLength();
 		DoBuckets();
 	} else
 		assert(false);
@@ -329,8 +328,8 @@ Context::OnHttpResponse(HttpStatus _status, StringMap &&headers,
 	if (_content_length != nullptr)
 		content_length = strdup(_content_length);
 	available = _body
-		? _body.GetAvailable(false)
-		: -2;
+		? _body.GetLength()
+		: IstreamLength{.length = -2, .exhaustive = false};
 
 	if (close_request_body_early && !aborted_request_body) {
 		request_body->SetError(std::make_exception_ptr(std::runtime_error("close_request_body_early")));
@@ -347,7 +346,7 @@ Context::OnHttpResponse(HttpStatus _status, StringMap &&headers,
 		SetInput(std::move(_body));
 
 	if (use_buckets && !buckets_after_data) {
-		if (available >= 0)
+		if (available.exhaustive)
 			DoBuckets();
 		else {
 			/* try again later */

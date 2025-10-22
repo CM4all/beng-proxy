@@ -138,7 +138,7 @@ struct Context final
 	std::exception_ptr request_error;
 
 	char *content_length = nullptr;
-	off_t available = -3;
+	IstreamLength available{.length = -3, .exhaustive = false};
 
 	DelayedIstreamControl *delayed = nullptr;
 
@@ -155,7 +155,7 @@ struct Context final
 	bool buckets_after_data = false;
 	bool close_after_buckets = false;
 	size_t total_buckets;
-	off_t available_after_bucket, available_after_bucket_partial;
+	IstreamLength available_after_bucket;
 
 	FineTimerEvent read_later_event{event_loop, BIND_THIS_METHOD(OnDeferred)};
 	DeferEvent read_defer_event{event_loop, BIND_THIS_METHOD(OnDeferred)};
@@ -268,7 +268,8 @@ TYPED_TEST_P(ClientTest, Body)
 	EXPECT_EQ(c.status, HttpStatus::OK);
 	EXPECT_FALSE(c.request_error);
 	EXPECT_EQ(c.content_length, nullptr);
-	EXPECT_EQ(c.available, 6);
+	EXPECT_TRUE(c.available.exhaustive);
+	EXPECT_EQ(c.available.length, 6);
 
 	c.WaitForFirstBodyByte();
 	c.WaitReleased();
@@ -300,7 +301,8 @@ TYPED_TEST_P(ClientTest, BodyBuckets)
 	EXPECT_EQ(c.status, HttpStatus::OK);
 	EXPECT_FALSE(c.request_error);
 	EXPECT_EQ(c.content_length, nullptr);
-	EXPECT_EQ(c.available, 6);
+	EXPECT_TRUE(c.available.exhaustive);
+	EXPECT_EQ(c.available.length, 6);
 
 	c.WaitForFirstBodyByte();
 	c.WaitReleased();
@@ -335,7 +337,8 @@ TYPED_TEST_P(ClientTest, ReadBody)
 	EXPECT_TRUE(c.released);
 	EXPECT_EQ(c.status, HttpStatus::OK);
 	EXPECT_EQ(c.content_length, nullptr);
-	EXPECT_EQ(c.available, 6);
+	EXPECT_TRUE(c.available.exhaustive);
+	EXPECT_EQ(c.available.length, 6);
 	EXPECT_TRUE(c.body_eof);
 	EXPECT_EQ(c.body_data, 6);
 	EXPECT_FALSE(c.request_error);
@@ -368,7 +371,8 @@ TYPED_TEST_P(ClientTest, Huge)
 
 	EXPECT_TRUE(c.released);
 	EXPECT_EQ(c.status, HttpStatus::OK);
-	EXPECT_TRUE(c.available >= 65536);
+	EXPECT_TRUE(c.available.exhaustive);
+	EXPECT_GE(c.available.length, 65536);
 	EXPECT_FALSE(c.body_eof);
 	EXPECT_TRUE(c.body_data > 0);
 	EXPECT_FALSE(c.request_error);
@@ -399,7 +403,8 @@ TYPED_TEST_P(ClientTest, HugeBuckets)
 
 	EXPECT_TRUE(c.released);
 	EXPECT_EQ(c.status, HttpStatus::OK);
-	EXPECT_TRUE(c.available >= 65536);
+	EXPECT_TRUE(c.available.exhaustive);
+	EXPECT_GE(c.available.length, 65536);
 	EXPECT_TRUE(c.body_eof);
 	EXPECT_TRUE(c.body_data > 0);
 	EXPECT_FALSE(c.request_error);
@@ -446,7 +451,8 @@ TYPED_TEST_P(ClientTest, CloseResponseBodyEarly)
 	EXPECT_TRUE(c.released);
 	EXPECT_EQ(c.status, HttpStatus::OK);
 	EXPECT_EQ(c.content_length, nullptr);
-	EXPECT_EQ(c.available, 6);
+	EXPECT_TRUE(c.available.exhaustive);
+	EXPECT_EQ(c.available.length, 6);
 	EXPECT_FALSE(c.HasInput());
 	EXPECT_EQ(c.body_data, 0);
 	EXPECT_FALSE(c.body_eof);
@@ -473,7 +479,8 @@ TYPED_TEST_P(ClientTest, CloseResponseBodyLate)
 	EXPECT_TRUE(c.released);
 	EXPECT_EQ(c.status, HttpStatus::OK);
 	EXPECT_EQ(c.content_length, nullptr);
-	EXPECT_EQ(c.available, 6);
+	EXPECT_TRUE(c.available.exhaustive);
+	EXPECT_EQ(c.available.length, 6);
 	EXPECT_FALSE(c.HasInput());
 	EXPECT_EQ(c.body_data, 0);
 	EXPECT_FALSE(c.body_eof);
@@ -501,7 +508,8 @@ TYPED_TEST_P(ClientTest, CloseResponseBodyData)
 	EXPECT_EQ(c.status, HttpStatus::OK);
 	EXPECT_FALSE(c.request_error);
 	EXPECT_EQ(c.content_length, nullptr);
-	EXPECT_EQ(c.available, 6);
+	EXPECT_TRUE(c.available.exhaustive);
+	EXPECT_EQ(c.available.length, 6);
 
 	c.WaitForFirstBodyByte();
 
@@ -532,7 +540,8 @@ TYPED_TEST_P(ClientTest, CloseResponseBodyAfter)
 	EXPECT_EQ(c.status, HttpStatus::OK);
 	EXPECT_FALSE(c.request_error);
 	EXPECT_EQ(c.content_length, nullptr);
-	EXPECT_EQ(c.available, 524288);
+	EXPECT_TRUE(c.available.exhaustive);
+	EXPECT_EQ(c.available.length, 524288);
 
 	c.event_loop.Run();
 
@@ -548,7 +557,7 @@ inline UnusedIstreamPtr
 wrap_fake_request_body(struct pool *pool, UnusedIstreamPtr i,
 		       const ClientTestOptions &options) noexcept
 {
-	if (!options.have_chunked_request_body && i.GetAvailable(false) < 0)
+	if (!options.have_chunked_request_body && !i.GetLength().exhaustive)
 		i = istream_head_new(*pool, std::move(i), HEAD_SIZE, true);
 
 	return i;
@@ -619,9 +628,10 @@ TYPED_TEST_P(ClientTest, CloseRequestBodyFail)
 	EXPECT_EQ(c.status, HttpStatus::OK);
 	EXPECT_EQ(c.content_length, nullptr);
 	if (factory.options.have_chunked_request_body) {
-		EXPECT_EQ(c.available, -1);
+		EXPECT_FALSE(c.available.exhaustive);
 	} else {
-		EXPECT_EQ(c.available, HEAD_SIZE);
+		EXPECT_TRUE(c.available.exhaustive);
+		EXPECT_EQ(c.available.length, HEAD_SIZE);
 	}
 	EXPECT_FALSE(c.HasInput());
 	EXPECT_FALSE(c.body_eof);
@@ -646,7 +656,7 @@ TYPED_TEST_P(ClientTest, DataBlocking)
 		NewApproveIstream(*c.pool, c.event_loop,
 				  istream_head_new(*c.pool,
 						   istream_zero_new(*c.pool),
-						   65536, false));
+						   HEAD_SIZE, false));
 
 	c.data_blocking = 5;
 	c.connection = factory.NewMirror(*c.pool, c.event_loop);
@@ -662,10 +672,11 @@ TYPED_TEST_P(ClientTest, DataBlocking)
 	EXPECT_FALSE(c.request_error);
 	EXPECT_EQ(c.status, HttpStatus::OK);
 	EXPECT_EQ(c.content_length, nullptr);
-	if (factory.options.have_chunked_request_body) {
-		EXPECT_EQ(c.available, -1);
-	} else {
-		EXPECT_EQ(c.available, HEAD_SIZE);
+	if (!factory.options.have_chunked_request_body) {
+		EXPECT_TRUE(c.available.exhaustive);
+	}
+	if (c.available.exhaustive) {
+		EXPECT_EQ(c.available.length, HEAD_SIZE);
 	}
 	EXPECT_TRUE(c.HasInput());
 	EXPECT_FALSE(c.released);
@@ -741,7 +752,8 @@ TYPED_TEST_P(ClientTest, DataBlocking2)
 	if (!factory.options.no_early_release_socket)
 		c.WaitReleased();
 	EXPECT_EQ(c.content_length, nullptr);
-	EXPECT_EQ(c.available, body_size);
+	EXPECT_TRUE(c.available.exhaustive);
+	EXPECT_EQ(c.available.length, body_size);
 	EXPECT_TRUE(c.HasInput());
 	EXPECT_FALSE(c.body_eof);
 	EXPECT_TRUE(c.consumed_body_data < (off_t)body_size);
@@ -1340,9 +1352,10 @@ TYPED_TEST_P(ClientTest, PostEmpty)
 	c.WaitForFirstBodyByte();
 
 	if (c.body_eof) {
-		EXPECT_EQ(c.available, 0);
+		EXPECT_TRUE(c.available.exhaustive);
+		EXPECT_EQ(c.available.length, 0);
 	} else {
-		EXPECT_EQ(c.available, -2);
+		EXPECT_EQ(c.available.length, -2);
 	}
 
 	EXPECT_TRUE(c.released);
@@ -1375,14 +1388,16 @@ TYPED_TEST_P(ClientTest, Buckets)
 	EXPECT_EQ(c.status, HttpStatus::OK);
 	EXPECT_EQ(c.content_length, nullptr);
 	if (factory.options.have_content_length_header) {
-		EXPECT_TRUE(c.available > 0);
+		EXPECT_TRUE(c.available.exhaustive);
+		EXPECT_GT(c.available.length, 0);
 		EXPECT_TRUE(c.body_eof);
 		EXPECT_EQ(c.body_error, nullptr);
 		EXPECT_FALSE(c.more_buckets);
-		EXPECT_EQ(c.total_buckets, (size_t)c.available);
-		EXPECT_EQ(c.available_after_bucket, 0);
+		EXPECT_EQ(c.total_buckets, (size_t)c.available.length);
+		EXPECT_TRUE(c.available_after_bucket.exhaustive);
+		EXPECT_EQ(c.available_after_bucket.length, 0);
 	}
-	EXPECT_EQ(c.available_after_bucket_partial, 0);
+	EXPECT_EQ(c.available_after_bucket.length, 0);
 	EXPECT_EQ(c.lease_action, PutAction::REUSE);
 }
 
@@ -1415,9 +1430,10 @@ TYPED_TEST_P(ClientTest, BucketsChunked)
 		EXPECT_EQ(c.body_error, nullptr);
 		EXPECT_FALSE(c.more_buckets);
 		EXPECT_TRUE(c.total_buckets > 0);
-		EXPECT_EQ(c.available_after_bucket, 0);
+		EXPECT_TRUE(c.available_after_bucket.exhaustive);
+		EXPECT_EQ(c.available_after_bucket.length, 0);
 	}
-	EXPECT_EQ(c.available_after_bucket_partial, 0);
+	EXPECT_EQ(c.available_after_bucket.length, 0);
 	EXPECT_EQ(c.lease_action, PutAction::REUSE);
 }
 
@@ -1446,14 +1462,16 @@ TYPED_TEST_P(ClientTest, BucketsAfterData)
 	EXPECT_EQ(c.status, HttpStatus::OK);
 	EXPECT_EQ(c.content_length, nullptr);
 	if (factory.options.have_content_length_header) {
-		EXPECT_TRUE(c.available > 0);
+		EXPECT_TRUE(c.available.exhaustive);
+		EXPECT_GT(c.available.length, 0);
 		EXPECT_FALSE(c.more_buckets);
-		EXPECT_EQ(c.total_buckets, (size_t)c.available);
-		EXPECT_EQ(c.available_after_bucket, 0);
+		EXPECT_EQ(c.total_buckets, (size_t)c.available.length);
+		EXPECT_TRUE(c.available_after_bucket.exhaustive);
+		EXPECT_EQ(c.available_after_bucket.length, 0);
 	}
 	EXPECT_TRUE(c.body_eof);
 	EXPECT_EQ(c.body_error, nullptr);
-	EXPECT_EQ(c.available_after_bucket_partial, 0);
+	EXPECT_EQ(c.available_after_bucket.length, 0);
 	EXPECT_EQ(c.lease_action, PutAction::REUSE);
 }
 
@@ -1482,14 +1500,15 @@ TYPED_TEST_P(ClientTest, BucketsClose)
 	EXPECT_EQ(c.status, HttpStatus::OK);
 	EXPECT_EQ(c.content_length, nullptr);
 	if (factory.options.have_content_length_header) {
-		EXPECT_TRUE(c.available > 0);
+		EXPECT_TRUE(c.available.exhaustive);
+		EXPECT_GT(c.available.length, 0);
 	}
 	EXPECT_FALSE(c.body_eof);
 	EXPECT_EQ(c.body_error, nullptr);
 	EXPECT_FALSE(c.more_buckets);
-	EXPECT_EQ(c.total_buckets, (size_t)c.available);
-	EXPECT_EQ(c.available_after_bucket, 1);
-	EXPECT_EQ(c.available_after_bucket_partial, 1);
+	EXPECT_EQ(c.total_buckets, (size_t)c.available.length);
+	EXPECT_TRUE(c.available_after_bucket.exhaustive);
+	EXPECT_EQ(c.available_after_bucket.length, 1);
 }
 
 TYPED_TEST_P(ClientTest, PrematureEnd)
@@ -1512,7 +1531,8 @@ TYPED_TEST_P(ClientTest, PrematureEnd)
 		EXPECT_TRUE(c.released);
 		EXPECT_EQ(c.status, HttpStatus::OK);
 		EXPECT_EQ(c.content_length, nullptr);
-		EXPECT_TRUE(c.available > 0);
+		EXPECT_TRUE(c.available.exhaustive);
+		EXPECT_GT(c.available.length, 0);
 		EXPECT_FALSE(c.body_eof);
 		EXPECT_NE(c.body_error, nullptr);
 	} else
@@ -1541,7 +1561,8 @@ TYPED_TEST_P(ClientTest, PrematureEndBuckets)
 		EXPECT_TRUE(c.released);
 		EXPECT_EQ(c.status, HttpStatus::OK);
 		EXPECT_EQ(c.content_length, nullptr);
-		EXPECT_TRUE(c.available > 0);
+		EXPECT_TRUE(c.available.exhaustive);
+		EXPECT_GT(c.available.length, 0);
 		EXPECT_FALSE(c.body_eof);
 		EXPECT_NE(c.body_error, nullptr);
 	} else
@@ -1569,7 +1590,8 @@ TYPED_TEST_P(ClientTest, ExcessData)
 		EXPECT_TRUE(c.released);
 		EXPECT_EQ(c.status, HttpStatus::OK);
 		EXPECT_EQ(c.content_length, nullptr);
-		EXPECT_TRUE(c.available > 0);
+		EXPECT_TRUE(c.available.exhaustive);
+		EXPECT_GT(c.available.length, 0);
 		EXPECT_FALSE(c.body_eof);
 		EXPECT_NE(c.body_error, nullptr);
 	} else
@@ -1598,7 +1620,8 @@ TYPED_TEST_P(ClientTest, ExcessDataBuckets)
 		EXPECT_TRUE(c.released);
 		EXPECT_EQ(c.status, HttpStatus::OK);
 		EXPECT_EQ(c.content_length, nullptr);
-		EXPECT_TRUE(c.available > 0);
+		EXPECT_TRUE(c.available.exhaustive);
+		EXPECT_GT(c.available.length, 0);
 		EXPECT_FALSE(c.body_eof);
 		EXPECT_NE(c.body_error, nullptr);
 	} else
@@ -1680,7 +1703,8 @@ TYPED_TEST_P(ClientTest, MalformedPremature)
 
 		EXPECT_TRUE(c.released);
 		EXPECT_EQ(c.status, HttpStatus::OK);
-		EXPECT_EQ(c.available, 1024);
+		EXPECT_TRUE(c.available.exhaustive);
+		EXPECT_EQ(c.available.length, 1024);
 		EXPECT_EQ(c.body_data, 0);
 		EXPECT_FALSE(c.body_eof);
 		EXPECT_NE(c.body_error, nullptr);
@@ -1710,7 +1734,8 @@ TYPED_TEST_P(ClientTest, MalformedPrematureBuckets)
 
 		EXPECT_TRUE(c.released);
 		EXPECT_EQ(c.status, HttpStatus::OK);
-		EXPECT_EQ(c.available, 1024);
+		EXPECT_TRUE(c.available.exhaustive);
+		EXPECT_EQ(c.available.length, 1024);
 		EXPECT_EQ(c.body_data, 0);
 		EXPECT_FALSE(c.body_eof);
 		EXPECT_NE(c.body_error, nullptr);

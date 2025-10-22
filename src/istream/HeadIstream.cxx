@@ -25,7 +25,7 @@ public:
 
 	/* virtual methods from class Istream */
 
-	off_t _GetAvailable(bool partial) noexcept override;
+	IstreamLength _GetLength() noexcept override;
 	ConsumeBucketResult _ConsumeBucketList(std::size_t nbytes) noexcept override;
 	void _ConsumeDirect(std::size_t nbytes) noexcept override;
 	off_t _Skip(off_t length) noexcept override;
@@ -138,18 +138,25 @@ HeadIstream::OnDirect(FdType type, FileDescriptor fd, off_t offset,
  *
  */
 
-off_t
-HeadIstream::_GetAvailable(bool partial) noexcept
+IstreamLength
+HeadIstream::_GetLength() noexcept
 {
 	if (authoritative) {
-		assert(partial ||
-		       input.GetAvailable(partial) < 0 ||
-		       std::cmp_greater_equal(input.GetAvailable(partial), rest));
-		return rest;
+#ifndef NDEBUG
+		const auto from_input = input.GetLength();
+		assert(!from_input.exhaustive || from_input.length >= rest);
+#endif
+
+		return {.length = rest, .exhaustive = true};
 	}
 
-	off_t available = input.GetAvailable(partial);
-	return std::min(available, rest);
+	auto result = input.GetLength();
+	if (result.length > rest) {
+		result.length = rest;
+		result.exhaustive = true;
+	}
+
+	return result;
 }
 
 off_t

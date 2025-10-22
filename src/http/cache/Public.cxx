@@ -18,6 +18,7 @@
 #include "http/List.hxx"
 #include "http/Method.hxx"
 #include "http/PDigestHeader.hxx"
+#include "istream/Length.hxx"
 #include "istream/UnusedPtr.hxx"
 #include "istream/TeeIstream.hxx"
 #include "istream/RefIstream.hxx"
@@ -587,7 +588,7 @@ HttpCacheRequest::OnHttpResponse(HttpStatus status, StringMap &&_headers,
 							      alloc,
 							      eager_cache,
 							      HttpStatus::OK,
-							      _headers, -1);
+							      _headers, 0);
 		    _info && _info->expires >= GetEventLoop().SystemNow()) {
 			/* copy the new "Expires" (or "max-age") value from the
 			   "304 Not Modified" response */
@@ -625,14 +626,14 @@ HttpCacheRequest::OnHttpResponse(HttpStatus status, StringMap &&_headers,
 	if (document != nullptr)
 		cache.Remove(document);
 
-	const off_t available = body
-		? body.GetAvailable(true)
+	const off_t body_length = body
+		? body.GetLength().length
 		: 0;
 
 	if (auto _info = http_cache_response_evaluate(request_info, alloc,
 						      eager_cache,
 						      status, _headers,
-						      available);
+						      body_length);
 	    _info) {
 		info = std::move(*_info);
 	} else {

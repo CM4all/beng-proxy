@@ -87,7 +87,7 @@ public:
 		input.SetDirect(mask);
 	}
 
-	off_t _GetAvailable(bool partial) noexcept override;
+	IstreamLength _GetLength() noexcept override;
 	void _Read() noexcept override;
 	void _ConsumeDirect(std::size_t nbytes) noexcept override;
 
@@ -359,22 +359,22 @@ CGIClient::OnError(std::exception_ptr ep) noexcept
  *
  */
 
-off_t
-CGIClient::_GetAvailable(bool partial) noexcept
+IstreamLength
+CGIClient::_GetLength() noexcept
 {
 	if (parser.KnownLength())
-		return parser.GetAvailable();
+		return {.length = parser.GetAvailable(), .exhaustive = true};
 
 	if (!input.IsDefined())
-		return 0;
+		return {.length = 0, .exhaustive = true};
 
 	if (in_response_callback)
 		/* this condition catches the case in cgi_parse_headers():
 		   HttpResponseHandler::InvokeResponse() might
 		   recursively call istream_read(input) */
-		return (off_t)-1;
+		return {.length = 0, .exhaustive = false};
 
-	return input.GetAvailable(partial);
+	return input.GetLength();
 }
 
 void

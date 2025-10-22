@@ -120,11 +120,15 @@ HttpServerConnection::SubmitResponse(HttpStatus status,
 	   transfer-encoding */
 
 	const bool got_body = body;
-	const off_t content_length = got_body ? body.GetAvailable(false) : 0;
+
+	const auto body_length = got_body
+		? body.GetLength()
+		: IstreamLength{.length = 0, .exhaustive = true};
+
 	if (http_method_is_empty(request.request->method))
 		body.Clear();
 
-	if (content_length == (off_t)-1) {
+	if (!body_length.exhaustive) {
 		/* the response length is unknown yet */
 		assert(!http_status_is_empty(status));
 
@@ -139,10 +143,10 @@ HttpServerConnection::SubmitResponse(HttpStatus status,
 			body = istream_chunked_new(request_pool, std::move(body));
 		}
 	} else if (http_status_is_empty(status)) {
-		assert(content_length == 0);
+		assert(body_length.length == 0);
 	} else if (got_body || !http_method_is_empty(request.request->method)) {
 		/* fixed body size */
-		headers.Write("content-length", fmt::format_int{content_length}.c_str());
+		headers.Write("content-length", fmt::format_int{body_length.length}.c_str());
 	}
 
 	const bool upgrade = body && http_is_upgrade(status, headers);
@@ -185,7 +189,9 @@ HttpServerConnection::SubmitResponse(HttpStatus status,
 #endif
 	auto header_stream = istream_gb_new(request_pool, std::move(headers3));
 
-	response.length = - header_stream.GetAvailable(false);
+	const auto header_length = header_stream.GetLength();
+	assert(header_length.exhaustive);
+	response.length = -header_length.length;
 
 	SetResponseIstream(NewConcatIstream(request_pool, std::move(header_stream),
 					    std::move(body)));

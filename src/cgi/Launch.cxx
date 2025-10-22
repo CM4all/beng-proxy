@@ -4,6 +4,7 @@
 
 #include "Launch.hxx"
 #include "Address.hxx"
+#include "istream/Length.hxx"
 #include "istream/UnusedPtr.hxx"
 #include "strmap.hxx"
 #include "product.h"
@@ -49,7 +50,7 @@ PrepareCgi(struct pool &pool, PreparedChildProcess &p,
 	   const CgiAddress &address,
 	   const char *remote_addr,
 	   const StringMap &headers,
-	   off_t content_length)
+	   const IstreamLength content_length)
 {
 	const char *path = address.path;
 
@@ -115,8 +116,8 @@ PrepareCgi(struct pool &pool, PreparedChildProcess &p,
 	if (content_type != nullptr)
 		p.SetEnv("CONTENT_TYPE", content_type);
 
-	if (content_length >= 0) {
-		p.SetEnv("CONTENT_LENGTH", fmt::format_int{content_length}.c_str());
+	if (content_length.exhaustive) {
+		p.SetEnv("CONTENT_LENGTH", fmt::format_int{content_length.length}.c_str());
 	}
 
 	const char *https = headers.Get(x_cm4all_https_header);
@@ -144,7 +145,7 @@ cgi_launch(EventLoop &event_loop, struct pool *pool,
 	PreparedChildProcess p;
 	PrepareCgi(*pool, p, close_fds, method,
 		   *address, remote_addr, headers,
-		   body ? body.GetAvailable(false) : -1);
+		   body ? body.GetLength() : IstreamLength{.length = 0, .exhaustive = true});
 
 	return SpawnChildProcess(event_loop, pool,
 				 cgi_address_name(address), std::move(body),

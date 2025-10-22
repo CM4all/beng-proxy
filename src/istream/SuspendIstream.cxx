@@ -27,8 +27,8 @@ public:
 
 	/* virtual methods from class Istream */
 
-	off_t _GetAvailable(bool partial) noexcept override {
-		return ready ? ForwardIstream::_GetAvailable(partial) : -1;
+	IstreamLength _GetLength() noexcept override {
+		return ready ? ForwardIstream::_GetLength() : IstreamLength{.exhaustive = false};
 	}
 
 	off_t _Skip(off_t length) noexcept override {
