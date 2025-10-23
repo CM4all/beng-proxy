@@ -73,6 +73,8 @@ private:
 		return end_offset - offset;
 	}
 
+	void ReadToBuffer();
+
 	void TryData();
 	void TryDirect();
 
@@ -115,6 +117,29 @@ private:
 };
 
 inline void
+FileIstream::ReadToBuffer()
+{
+	assert(offset < end_offset);
+
+	auto w = buffer.Write();
+	assert(!w.empty());
+
+	if (GetRemaining() < w.size())
+		w = w.first(GetRemaining());
+
+	ssize_t nbytes = fd.ReadAt(offset, w);
+	if (nbytes == 0) {
+		throw FmtRuntimeError("premature end of file in {:?}", path);
+	} else if (nbytes == -1) {
+		fd_lease.SetBroken();
+		throw FmtErrno("Failed to read from {:?}", path);
+	} else if (nbytes > 0) {
+		buffer.Append(nbytes);
+		offset += nbytes;
+	}
+}
+
+inline void
 FileIstream::TryData()
 {
 	if (buffer.IsNull()) {
@@ -137,22 +162,7 @@ FileIstream::TryData()
 		return;
 	}
 
-	auto w = buffer.Write();
-	assert(!w.empty());
-
-	if (GetRemaining() < w.size())
-		w = w.first(GetRemaining());
-
-	ssize_t nbytes = fd.ReadAt(offset, w);
-	if (nbytes == 0) {
-		throw FmtRuntimeError("premature end of file in {:?}", path);
-	} else if (nbytes == -1) {
-		fd_lease.SetBroken();
-		throw FmtErrno("Failed to read from {:?}", path);
-	} else if (nbytes > 0) {
-		buffer.Append(nbytes);
-		offset += nbytes;
-	}
+	ReadToBuffer();
 
 	assert(!buffer.empty());
 
