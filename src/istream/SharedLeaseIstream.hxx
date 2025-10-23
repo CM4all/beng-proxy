@@ -13,5 +13,5 @@ class SharedLease;
  * closed.
  */
 UnusedIstreamPtr
-NewSharedLeaseIstream(struct pool &pool, UnusedIstreamPtr input,
-		      SharedLease lease) noexcept;
+NewSharedLeaseIstream(struct pool &pool, UnusedIstreamPtr &&input,
+		      SharedLease &&lease) noexcept;
