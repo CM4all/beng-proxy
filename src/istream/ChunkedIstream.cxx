@@ -43,6 +43,10 @@ class ChunkedIstream final : public FacadeIstream, DestructAnchor {
 			return buffer.data() + position;
 		}
 
+		constexpr void Set(std::string_view src) noexcept {
+			std::copy(src.begin(), src.end(), Set(src.size()));
+		}
+
 		/**
 		 * Append data to the buffer.
 		 */
@@ -253,9 +257,7 @@ ChunkedIstream::Feed(const std::span<const std::byte> src) noexcept
 		missing_from_current_chunk -= nbytes;
 		if (missing_from_current_chunk == 0) {
 			/* a chunk ends with "\r\n" */
-			char *p = buffer.Set(2);
-			p[0] = '\r';
-			p[1] = '\n';
+			buffer.Set("\r\n"sv);
 		}
 	} while ((!buffer.empty() || total < src.size()) && nbytes == rest);
 
@@ -444,13 +446,9 @@ ChunkedIstream::_ConsumeBucketList(size_t nbytes) noexcept
 		if (missing_from_current_chunk == 0) {
 			if (HasInput()) {
 				/* a chunk ends with "\r\n" */
-				char *p = buffer.Set(2);
-				p[0] = '\r';
-				p[1] = '\n';
+				buffer.Set("\r\n"sv);
 			} else {
-				static constexpr auto src = "\r\n0\r\n\r\n"sv;
-				char *p = buffer.Set(src.size());
-				std::copy(src.begin(), src.end(), p);
+				buffer.Set("\r\n0\r\n\r\n"sv);
 			}
 
 			size = ConsumeBuffer(nbytes);
