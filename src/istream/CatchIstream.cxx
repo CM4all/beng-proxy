@@ -178,7 +178,7 @@ CatchIstream::OnError(std::exception_ptr &&ep) noexcept
  */
 
 IstreamLength
-CatchIstream:: _GetLength() noexcept
+CatchIstream::_GetLength() noexcept
 {
 	if (HasInput()) {
 		const auto result = ForwardIstream::_GetLength();
@@ -201,25 +201,30 @@ CatchIstream::_Read() noexcept
 		SendSpace();
 }
 
+static void
+PushSpaceBuckets(IstreamBucketList &list, uint_least64_t remaining) noexcept
+{
+	if (remaining == 0)
+		return;
+
+	while (!list.IsFull()) {
+		if (remaining <= space.size()) {
+			list.Push(std::span{space}.first(remaining));
+			return;
+		}
+
+		list.Push(std::span{space});
+		remaining -= space.size();
+	}
+
+	list.SetMore();
+}
+
 void
 CatchIstream::_FillBucketList(IstreamBucketList &list)
 {
 	if (!HasInput()) {
-		uint_least64_t remaining = available;
-		if (remaining == 0)
-			return;
-
-		while (!list.IsFull()) {
-			if (remaining <= space.size()) {
-				list.Push(std::span{space}.first(remaining));
-				return;
-			}
-
-			list.Push(std::span{space});
-			remaining -= space.size();
-		}
-
-		list.SetMore();
+		PushSpaceBuckets(list, available);
 		return;
 	}
 
