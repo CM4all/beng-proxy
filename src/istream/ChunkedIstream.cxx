@@ -24,6 +24,59 @@ class ChunkedIstream final : public FacadeIstream, DestructAnchor {
 	static constexpr std::size_t CHUNK_END_SIZE = 2;
 	static constexpr std::size_t EOF_SIZE = 5;
 
+	template<std::size_t SIZE>
+	class Buffer {
+		std::array<char, SIZE> buffer;
+		std::size_t position = buffer.size();
+
+	public:
+		/**
+		 * Set the buffer length and return a pointer to the
+		 * first character to be written.
+		 */
+		[[nodiscard]]
+		constexpr char *Set(std::size_t size) noexcept {
+			assert(empty());
+			assert(size <= buffer.size());
+
+			position = buffer.size() - size;
+			return buffer.data() + position;
+		}
+
+		/**
+		 * Append data to the buffer.
+		 */
+		constexpr void Append(std::string_view src) noexcept;
+
+		[[nodiscard]]
+		constexpr bool empty() const noexcept {
+			assert(position <= buffer.size());
+
+			return position == buffer.size();
+		}
+
+		[[nodiscard]]
+		constexpr std::span<const char> ReadChars() const noexcept {
+			assert(position <= buffer.size());
+
+			return std::span{buffer}.subspan(position);
+		}
+
+		[[nodiscard]]
+		constexpr std::span<const std::byte> Read() const noexcept {
+			return std::as_bytes(ReadChars());
+		}
+
+		constexpr void Consume(std::size_t nbytes) noexcept {
+			assert(position <= buffer.size());
+			assert(nbytes <= buffer.size());
+
+			position += nbytes;
+
+			assert(position <= buffer.size());
+		}
+	};
+
 	/**
 	 * This flag is true while writing the buffer inside _Read().
 	 * OnData() will check it, and refuse to accept more data from the
@@ -31,8 +84,7 @@ class ChunkedIstream final : public FacadeIstream, DestructAnchor {
 	 */
 	bool writing_buffer = false;
 
-	std::array<char, 7> buffer;
-	size_t buffer_sent = buffer.size();
+	Buffer<7> buffer;
 
 	size_t missing_from_current_chunk = 0;
 
@@ -62,37 +114,15 @@ public:
 	void OnError(std::exception_ptr &&ep) noexcept override;
 
 private:
-	bool IsBufferEmpty() const noexcept {
-		assert(buffer_sent <= buffer.size());
-
-		return buffer_sent == buffer.size();
-	}
-
-	/** set the buffer length and return a pointer to the first byte */
-	char *SetBuffer(size_t length) noexcept {
-		assert(IsBufferEmpty());
-		assert(length <= buffer.size());
-
-		buffer_sent = buffer.size() - length;
-		return buffer.data() + buffer_sent;
-	}
-
-	/** append data to the buffer */
-	void AppendToBuffer(std::string_view src) noexcept;
-
 	void StartChunk(size_t length) noexcept;
 
-	std::span<const char> ReadBuffer() noexcept {
-		return std::span{buffer}.subspan(buffer_sent);
-	}
-
 	size_t ConsumeBuffer(size_t nbytes) noexcept {
-		size_t size = ReadBuffer().size();
+		size_t size = buffer.Read().size();
 		if (size > nbytes)
 			size = nbytes;
 
 		if (size > 0) {
-			buffer_sent += size;
+			buffer.Consume(size);
 			Consumed(size);
 		}
 
@@ -116,21 +146,22 @@ private:
 	size_t Feed(std::span<const std::byte> src) noexcept;
 };
 
-void
-ChunkedIstream::AppendToBuffer(std::string_view src) noexcept
+template<std::size_t SIZE>
+constexpr void
+ChunkedIstream::Buffer<SIZE>::Append(std::string_view src) noexcept
 {
 	assert(!src.empty());
-	assert(src.size() <= buffer_sent);
+	assert(src.size() <= position);
 
-	const auto old = ReadBuffer();
+	const auto old = ReadChars();
 
 #ifndef NDEBUG
-	/* simulate a buffer reset; if we don't do this, an assertion in
-	   SetBuffer() fails (which is invalid for this special case) */
-	buffer_sent = buffer.size();
+	/* simulate a buffer reset; if we don't do this, an assertion
+	   in Set() fails (which is invalid for this special case) */
+	position = buffer.size();
 #endif
 
-	auto dest = SetBuffer(old.size() + src.size());
+	auto dest = Set(old.size() + src.size());
 	dest = std::copy(old.begin(), old.end(), dest);
 	std::copy(src.begin(), src.end(), dest);
 }
@@ -139,7 +170,7 @@ void
 ChunkedIstream::StartChunk(size_t length) noexcept
 {
 	assert(length > 0);
-	assert(IsBufferEmpty());
+	assert(buffer.empty());
 	assert(missing_from_current_chunk == 0);
 
 	if (length > 0x8000)
@@ -148,7 +179,7 @@ ChunkedIstream::StartChunk(size_t length) noexcept
 
 	missing_from_current_chunk = length;
 
-	char *p = (char *)SetBuffer(6);
+	char *p = buffer.Set(6);
 	p = HexFormatUint16Fixed(p, (uint16_t)length);
 	*p++ = '\r';
 	*p++ = '\n';
@@ -157,13 +188,13 @@ ChunkedIstream::StartChunk(size_t length) noexcept
 bool
 ChunkedIstream::SendBuffer() noexcept
 {
-	auto r = ReadBuffer();
+	auto r = buffer.Read();
 	if (r.empty())
 		return true;
 
-	size_t nbytes = InvokeData(std::as_bytes(r));
+	size_t nbytes = InvokeData(r);
 	if (nbytes > 0)
-		buffer_sent += nbytes;
+		buffer.Consume(nbytes);
 
 	return nbytes == r.size();
 }
@@ -194,13 +225,13 @@ ChunkedIstream::Feed(const std::span<const std::byte> src) noexcept
 	do {
 		assert(!writing_buffer);
 
-		if (IsBufferEmpty() && missing_from_current_chunk == 0)
+		if (buffer.empty() && missing_from_current_chunk == 0)
 			StartChunk(src.size() - total);
 
 		if (!SendBuffer())
 			return destructed ? 0 : total;
 
-		assert(IsBufferEmpty());
+		assert(buffer.empty());
 
 		if (missing_from_current_chunk == 0) {
 			/* we have just written the previous chunk trailer;
@@ -222,11 +253,11 @@ ChunkedIstream::Feed(const std::span<const std::byte> src) noexcept
 		missing_from_current_chunk -= nbytes;
 		if (missing_from_current_chunk == 0) {
 			/* a chunk ends with "\r\n" */
-			char *p = SetBuffer(2);
+			char *p = buffer.Set(2);
 			p[0] = '\r';
 			p[1] = '\n';
 		}
-	} while ((!IsBufferEmpty() || total < src.size()) && nbytes == rest);
+	} while ((!buffer.empty() || total < src.size()) && nbytes == rest);
 
 	return total;
 }
@@ -257,7 +288,7 @@ ChunkedIstream::OnEof() noexcept
 
 	/* write EOF chunk (length 0) */
 
-	AppendToBuffer("0\r\n\r\n"sv);
+	buffer.Append("0\r\n\r\n"sv);
 
 	/* flush the buffer */
 
@@ -283,7 +314,7 @@ IstreamLength
 ChunkedIstream:: _GetLength() noexcept
 {
 	IstreamLength result{
-		.length = ReadBuffer().size(),
+		.length = buffer.Read().size(),
 		.exhaustive = true,
 	};
 
@@ -317,7 +348,7 @@ ChunkedIstream::_Read() noexcept
 		return;
 	}
 
-	if (IsBufferEmpty() && missing_from_current_chunk == 0) {
+	if (buffer.empty() && missing_from_current_chunk == 0) {
 		if (const auto available = input.GetLength().length;
 		    available > 0) {
 			StartChunk(available);
@@ -333,8 +364,8 @@ void
 ChunkedIstream::_FillBucketList(IstreamBucketList &list)
 {
 	if (!input.IsDefined()) {
-		if (auto b = ReadBuffer(); !b.empty())
-			list.Push(std::as_bytes(b));
+		if (const auto r = buffer.Read(); !r.empty())
+			list.Push(r);
 
 		return;
 	}
@@ -346,10 +377,10 @@ ChunkedIstream::_FillBucketList(IstreamBucketList &list)
 		CloseInput();
 
 		/* write EOF chunk (length 0) */
-		AppendToBuffer("0\r\n\r\n"sv);
+		buffer.Append("0\r\n\r\n"sv);
 	}
 
-	auto b = ReadBuffer();
+	auto b = buffer.Read();
 	if (b.empty() && missing_from_current_chunk == 0 && HasInput()) {
 		/* see which of FillBucketList() and GetAvailable()
 		   returns more data and use that to start the new
@@ -361,7 +392,7 @@ ChunkedIstream::_FillBucketList(IstreamBucketList &list)
 
 		if (available > 0) {
 			StartChunk(available);
-			b = ReadBuffer();
+			b = buffer.Read();
 		}
 	}
 
@@ -413,12 +444,12 @@ ChunkedIstream::_ConsumeBucketList(size_t nbytes) noexcept
 		if (missing_from_current_chunk == 0) {
 			if (HasInput()) {
 				/* a chunk ends with "\r\n" */
-				char *p = SetBuffer(2);
+				char *p = buffer.Set(2);
 				p[0] = '\r';
 				p[1] = '\n';
 			} else {
 				static constexpr auto src = "\r\n0\r\n\r\n"sv;
-				char *p = SetBuffer(src.size());
+				char *p = buffer.Set(src.size());
 				std::copy(src.begin(), src.end(), p);
 			}
 
@@ -428,7 +459,7 @@ ChunkedIstream::_ConsumeBucketList(size_t nbytes) noexcept
 		}
 	}
 
-	return {total, missing_from_current_chunk == 0 && IsBufferEmpty() && !HasInput()};
+	return {total, missing_from_current_chunk == 0 && buffer.empty() && !HasInput()};
 }
 
 /*
