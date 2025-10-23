@@ -42,10 +42,6 @@ public:
 		return result;
 	}
 
-	off_t _Skip(off_t) noexcept override {
-		return -1;
-	}
-
 	void _Read() noexcept override;
 	void _Close() noexcept override;
 

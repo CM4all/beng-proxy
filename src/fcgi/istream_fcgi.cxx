@@ -43,10 +43,6 @@ public:
 		} + input.GetLength();
 	}
 
-	off_t _Skip([[maybe_unused]] off_t length) noexcept override {
-		return -1;
-	}
-
 	void _Read() noexcept override;
 
 	/* virtual methods from class IstreamHandler */
