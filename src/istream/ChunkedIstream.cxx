@@ -396,7 +396,7 @@ ChunkedIstream::_FillBucketList(IstreamBucketList &list)
 	}
 
 	if (!b.empty())
-		list.Push(std::as_bytes(b));
+		list.Push(b);
 
 	if (missing_from_current_chunk > 0) {
 		assert(input.IsDefined());
