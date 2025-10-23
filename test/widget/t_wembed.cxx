@@ -13,7 +13,6 @@
 #include "uri/Dissect.hxx"
 #include "http/ResponseHandler.hxx"
 #include "istream/istream.hxx"
-#include "istream/istream_iconv.hxx"
 #include "pool/pool.hxx"
 #include "pool/SharedPtr.hxx"
 #include "bp/session/Lease.hxx"
@@ -39,14 +38,6 @@ std::string_view
 Widget::LoggerDomain::GetDomain() const noexcept
 {
 	return "dummy";
-}
-
-UnusedIstreamPtr
-istream_iconv_new([[maybe_unused]] struct pool &pool, UnusedIstreamPtr input,
-		  [[maybe_unused]] const char *tocode,
-		  [[maybe_unused]] const char *fromcode) noexcept
-{
-	return input;
 }
 
 void

@@ -16,7 +16,6 @@
 #include "escape/Istream.hxx"
 #include "istream/ConcatIstream.hxx"
 #include "istream/DelayedIstream.hxx"
-#include "istream/istream_iconv.hxx"
 #include "istream/istream_null.hxx"
 #include "istream/PauseIstream.hxx"
 #include "istream/istream_string.hxx"
@@ -160,24 +159,6 @@ widget_response_format(struct pool &pool, const Widget &widget,
 	     !StringStartsWith(content_type, "application/xhtml+xml")))
 		throw WidgetError(widget, WidgetErrorCode::UNSUPPORTED_ENCODING,
 				  "widget sent non-text response");
-
-	const auto charset = http_header_param(content_type, "charset");
-	if (charset.data() != nullptr &&
-	    !StringIsEqualIgnoreCase(charset, "utf-8"sv) &&
-	    !StringIsEqualIgnoreCase(charset, "utf8"sv)) {
-		/* beng-proxy expects all widgets to send their HTML code in
-		   utf-8; this widget however used a different charset.
-		   Automatically convert it with istream_iconv */
-		const char *charset2 = p_strdup(pool, charset);
-		auto ic = istream_iconv_new(pool, std::move(body), "utf-8", charset2);
-		if (!ic)
-			throw WidgetError(widget, WidgetErrorCode::UNSUPPORTED_ENCODING,
-					  FmtBuffer<64>("widget sent unknown charset '{}'",
-							charset2));
-
-		widget.logger.Fmt(6, "charset conversion {:?} -> UTF-8", charset);
-		body = std::move(ic);
-	}
 
 	if (StringStartsWith(content_type, "text/") &&
 	    !StringStartsWith(content_type + 5, "html") &&

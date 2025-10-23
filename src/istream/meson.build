@@ -96,7 +96,6 @@ istream = static_library(
   'ToBucketIstream.cxx',
   'FromBucketIstream.cxx',
 
-  'istream_iconv.cxx',
   'istream_later.cxx',
   'PauseIstream.cxx',
 

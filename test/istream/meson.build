@@ -28,7 +28,6 @@ test(
     't_istream_html_escape.cxx',
     '../../src/escape/Istream.cxx',
     '../../src/istream/sink_close.cxx',
-    't_istream_iconv.cxx',
     't_istream_replace.cxx',
     't_istream_subst.cxx',
     't_istream_tee.cxx',
