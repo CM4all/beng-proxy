@@ -243,11 +243,7 @@ CatchIstream::_FillBucketList(IstreamBucketList &list)
 			std::rethrow_exception(std::move(error));
 		}
 
-		/* the error has been handled by the callback, and he has
-		   disposed it */
-		list.EnableFallback();
-
-		// TODO: return space bucket here
+		PushSpaceBuckets(list, available);
 	}
 }
 
