@@ -160,7 +160,7 @@ public:
 	IstreamReadyResult OnIstreamReady() noexcept override;
 	std::size_t OnData(std::span<const std::byte> src) noexcept override;
 	void OnEof() noexcept override;
-	void OnError(std::exception_ptr error) noexcept override;
+	void OnError(std::exception_ptr &&error) noexcept override;
 
 private:
 	void OnDeferredReady() noexcept;
@@ -540,7 +540,7 @@ ThreadIstream::OnEof() noexcept
 }
 
 void
-ThreadIstream::OnError(std::exception_ptr error) noexcept
+ThreadIstream::OnError(std::exception_ptr &&error) noexcept
 {
 	assert(internal);
 

@@ -61,7 +61,7 @@ private:
 				     off_t offset, std::size_t max_length,
 				     bool then_eof) noexcept override;
 	void OnEof() noexcept override;
-	void OnError(std::exception_ptr ep) noexcept override;
+	void OnError(std::exception_ptr &&ep) noexcept override;
 };
 
 static ssize_t
@@ -181,14 +181,14 @@ RubberSink::OnEof() noexcept
 }
 
 void
-RubberSink::OnError(std::exception_ptr ep) noexcept
+RubberSink::OnError(std::exception_ptr &&ep) noexcept
 {
 	assert(input.IsDefined());
 	input.Clear();
 
 	auto &_handler = handler;
 	Destroy();
-	_handler.RubberError(ep);
+	_handler.RubberError(std::move(ep));
 }
 
 /*

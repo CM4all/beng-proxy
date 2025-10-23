@@ -23,7 +23,7 @@ private:
 			return true;
 
 		if (input_error) [[unlikely]]
-			DestroyError(input_error);
+			DestroyError(std::move(input_error));
 		else
 			DestroyEof();
 		return false;
@@ -120,17 +120,17 @@ public:
 		}
 	}
 
-	void OnError(std::exception_ptr ep) noexcept override {
+	void OnError(std::exception_ptr &&ep) noexcept override {
 		assert(HasInput());
 		assert(!input_error);
 
 		ClearInput();
 
 		if (HasHandler())
-			ForwardIstream::OnError(ep);
+			ForwardIstream::OnError(std::move(ep));
 		else
 			/* queue the abort() call */
-			input_error = ep;
+			input_error = std::move(ep);
 	}
 };
 

@@ -98,7 +98,7 @@ public:
 		should_exit = true;
 	}
 
-	void OnError(std::exception_ptr ep) noexcept override {
+	void OnError(std::exception_ptr &&ep) noexcept override {
 		fprintf(stderr, "ABORT: %s\n", GetFullMessage(ep).c_str());
 		exit(2);
 	}

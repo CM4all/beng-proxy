@@ -361,7 +361,7 @@ private:
 	void DestroyInvokeError(std::exception_ptr ep) noexcept {
 		auto &_handler = request.handler;
 		Destroy();
-		_handler.InvokeError(ep);
+		_handler.InvokeError(std::move(ep));
 	}
 
 	std::exception_ptr PrefixError(std::exception_ptr ep) const noexcept {
@@ -370,9 +370,9 @@ private:
 						     peer_name));
 	}
 
-	void AbortResponseHeaders(std::exception_ptr ep) noexcept;
-	void AbortResponseBody(std::exception_ptr ep) noexcept;
-	void AbortResponse(std::exception_ptr ep) noexcept;
+	void AbortResponseHeaders(std::exception_ptr &&ep) noexcept;
+	void AbortResponseBody(std::exception_ptr &&ep) noexcept;
+	void AbortResponse(std::exception_ptr &&ep) noexcept;
 
 	void AbortResponseHeaders(HttpClientErrorCode code, const char *msg) noexcept {
 		AbortResponseHeaders(std::make_exception_ptr(HttpClientError(code, msg)));
@@ -459,14 +459,14 @@ private:
 				     off_t offset, std::size_t max_length,
 				     bool then_eof) noexcept override;
 	void OnEof() noexcept override;
-	void OnError(std::exception_ptr ep) noexcept override;
+	void OnError(std::exception_ptr &&ep) noexcept override;
 };
 
 /**
  * Abort receiving the response status/headers from the HTTP server.
  */
 void
-HttpClient::AbortResponseHeaders(std::exception_ptr ep) noexcept
+HttpClient::AbortResponseHeaders(std::exception_ptr &&ep) noexcept
 {
 	assert(response.state == Response::State::STATUS ||
 	       response.state == Response::State::HEADERS);
@@ -486,7 +486,7 @@ HttpClient::AbortResponseHeaders(std::exception_ptr ep) noexcept
  * Abort receiving the response status/headers from the HTTP server.
  */
 void
-HttpClient::AbortResponseBody(std::exception_ptr ep) noexcept
+HttpClient::AbortResponseBody(std::exception_ptr &&ep) noexcept
 {
 	assert(response.state == Response::State::BODY);
 
@@ -499,7 +499,7 @@ HttpClient::AbortResponseBody(std::exception_ptr ep) noexcept
 		   then destroys HttpBodyReader, which finally destroys
 		   DechunkIstream ... */
 	} else {
-		response_body_reader.InvokeError(PrefixError(ep));
+		response_body_reader.InvokeError(PrefixError(std::move(ep)));
 	}
 
 	Destroy();
@@ -510,16 +510,16 @@ HttpClient::AbortResponseBody(std::exception_ptr ep) noexcept
  * server.
  */
 void
-HttpClient::AbortResponse(std::exception_ptr ep) noexcept
+HttpClient::AbortResponse(std::exception_ptr &&ep) noexcept
 {
 	assert(response.state == Response::State::STATUS ||
 	       response.state == Response::State::HEADERS ||
 	       response.state == Response::State::BODY);
 
 	if (response.state != Response::State::BODY)
-		AbortResponseHeaders(ep);
+		AbortResponseHeaders(std::move(ep));
 	else
-		AbortResponseBody(ep);
+		AbortResponseBody(std::move(ep));
 }
 
 
@@ -1397,7 +1397,7 @@ HttpClient::OnEof() noexcept
 }
 
 void
-HttpClient::OnError(std::exception_ptr ep) noexcept
+HttpClient::OnError(std::exception_ptr &&ep) noexcept
 {
 	assert(response.state == Response::State::STATUS ||
 	       response.state == Response::State::HEADERS ||
@@ -1412,11 +1412,11 @@ HttpClient::OnError(std::exception_ptr ep) noexcept
 	switch (response.state) {
 	case Response::State::STATUS:
 	case Response::State::HEADERS:
-		AbortResponseHeaders(ep);
+		AbortResponseHeaders(std::move(ep));
 		break;
 
 	case Response::State::BODY:
-		AbortResponseBody(ep);
+		AbortResponseBody(std::move(ep));
 		break;
 
 	case Response::State::END:

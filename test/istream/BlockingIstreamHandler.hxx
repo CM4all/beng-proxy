@@ -26,7 +26,7 @@ public:
 		state = State::EOF_;
 	}
 
-	void OnError(std::exception_ptr) noexcept override {
+	void OnError(std::exception_ptr &&) noexcept override {
 		assert(state = State::OPEN);
 		state = State::ERROR;
 	}

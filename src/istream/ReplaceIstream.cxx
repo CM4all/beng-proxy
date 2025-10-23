@@ -56,7 +56,7 @@ struct ReplaceIstream::Substitution final : IntrusiveForwardListHook, IstreamSin
 	IstreamReadyResult OnIstreamReady() noexcept override;
 	size_t OnData(std::span<const std::byte> src) noexcept override;
 	void OnEof() noexcept override;
-	void OnError(std::exception_ptr ep) noexcept override;
+	void OnError(std::exception_ptr &&ep) noexcept override;
 };
 
 ReplaceIstream::Substitution::Substitution(ReplaceIstream &_replace,
@@ -143,11 +143,11 @@ ReplaceIstream::Substitution::OnEof() noexcept
 }
 
 void
-ReplaceIstream::Substitution::OnError(std::exception_ptr ep) noexcept
+ReplaceIstream::Substitution::OnError(std::exception_ptr &&ep) noexcept
 {
 	ClearInput();
 
-	replace.DestroyError(ep);
+	replace.DestroyError(std::move(ep));
 }
 
 /*
@@ -396,10 +396,10 @@ ReplaceIstream::OnEof() noexcept
 }
 
 void
-ReplaceIstream::OnError(std::exception_ptr ep) noexcept
+ReplaceIstream::OnError(std::exception_ptr &&ep) noexcept
 {
 	input.Clear();
-	DestroyError(ep);
+	DestroyError(std::move(ep));
 }
 
 /*

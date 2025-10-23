@@ -83,7 +83,7 @@ GrowingBufferSink::OnEof() noexcept
 }
 
 void
-GrowingBufferSink::OnError(std::exception_ptr error) noexcept
+GrowingBufferSink::OnError(std::exception_ptr &&error) noexcept
 {
 	input.Clear();
 	handler.OnGrowingBufferSinkError(std::move(error));

@@ -27,7 +27,7 @@ public:
 		ClearInput();
 	}
 
-	void OnError(std::exception_ptr) noexcept override {
+	void OnError(std::exception_ptr &&) noexcept override {
 		ClearInput();
 	}
 };

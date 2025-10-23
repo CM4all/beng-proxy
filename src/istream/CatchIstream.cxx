@@ -64,7 +64,7 @@ public:
 	/* virtual methods from class IstreamHandler */
 
 	std::size_t OnData(std::span<const std::byte> src) noexcept override;
-	void OnError(std::exception_ptr ep) noexcept override;
+	void OnError(std::exception_ptr &&ep) noexcept override;
 };
 
 static constexpr char space[] =
@@ -162,12 +162,12 @@ CatchIstream::OnData(std::span<const std::byte> src) noexcept
 }
 
 void
-CatchIstream::OnError(std::exception_ptr ep) noexcept
+CatchIstream::OnError(std::exception_ptr &&ep) noexcept
 {
-	ep = callback(ep);
+	ep = callback(std::move(ep));
 	if (ep) {
 		/* forward error to our handler */
-		ForwardIstream::OnError(ep);
+		ForwardIstream::OnError(std::move(ep));
 		return;
 	}
 

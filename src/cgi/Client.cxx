@@ -97,7 +97,7 @@ public:
 				     off_t offset, std::size_t max_length,
 				     bool then_eof) noexcept override;
 	void OnEof() noexcept override;
-	void OnError(std::exception_ptr ep) noexcept override;
+	void OnError(std::exception_ptr &&ep) noexcept override;
 };
 
 inline bool
@@ -333,7 +333,7 @@ CGIClient::OnEof() noexcept
 }
 
 void
-CGIClient::OnError(std::exception_ptr ep) noexcept
+CGIClient::OnError(std::exception_ptr &&ep) noexcept
 {
 	stopwatch.RecordEvent("error");
 
@@ -346,11 +346,11 @@ CGIClient::OnError(std::exception_ptr ep) noexcept
 
 		auto &_handler = handler;
 		Destroy();
-		_handler.InvokeError(NestException(ep,
+		_handler.InvokeError(NestException(std::move(ep),
 						   std::runtime_error("CGI request body failed")));
 	} else {
 		/* response has been sent: abort only the output stream */
-		DestroyError(ep);
+		DestroyError(std::move(ep));
 	}
 }
 

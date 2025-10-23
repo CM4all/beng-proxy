@@ -54,7 +54,7 @@ private:
 		_handler.OnStringSinkSuccess(std::move(_value));
 	}
 
-	void OnError(std::exception_ptr ep) noexcept override {
+	void OnError(std::exception_ptr &&ep) noexcept override {
 		ClearInput();
 
 		auto &_handler = handler;

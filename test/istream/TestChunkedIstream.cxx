@@ -59,8 +59,8 @@ TEST(IstreamChunkedTest, Custom)
 			eof = true;
 		}
 
-		void OnError(std::exception_ptr ep) noexcept override {
-			error = ep;
+		void OnError(std::exception_ptr &&ep) noexcept override {
+			error = std::move(ep);
 		}
 	};
 

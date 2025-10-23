@@ -54,11 +54,11 @@ public:
 				     off_t offset, std::size_t max_length,
 				     bool then_eof) noexcept override;
 	void OnEof() noexcept override;
-	void OnError(std::exception_ptr ep) noexcept override;
+	void OnError(std::exception_ptr &&ep) noexcept override;
 
 private:
 	void CloseInternal() noexcept;
-	void Abort(std::exception_ptr ep) noexcept;
+	void Abort(std::exception_ptr &&ep) noexcept;
 	IstreamDirectResult Consume() noexcept;
 };
 
@@ -70,11 +70,11 @@ AutoPipeIstream::CloseInternal() noexcept
 }
 
 void
-AutoPipeIstream::Abort(std::exception_ptr ep) noexcept
+AutoPipeIstream::Abort(std::exception_ptr &&ep) noexcept
 {
 	CloseInternal();
 
-	DestroyError(ep);
+	DestroyError(std::move(ep));
 }
 
 IstreamDirectResult
@@ -223,11 +223,11 @@ AutoPipeIstream::OnEof() noexcept
 }
 
 inline void
-AutoPipeIstream::OnError(std::exception_ptr ep) noexcept
+AutoPipeIstream::OnError(std::exception_ptr &&ep) noexcept
 {
 	CloseInternal();
 	input.Clear();
-	DestroyError(ep);
+	DestroyError(std::move(ep));
 }
 
 /*

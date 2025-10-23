@@ -211,7 +211,7 @@ struct Context final : IstreamSink {
 				     off_t offset, std::size_t max_length,
 				     bool then_eof) noexcept override;
 	void OnEof() noexcept override;
-	void OnError(std::exception_ptr ep) noexcept override;
+	void OnError(std::exception_ptr &&ep) noexcept override;
 
 private:
 	bool HandleBlockInject() noexcept;

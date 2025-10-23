@@ -111,7 +111,7 @@ private:
 				     off_t offset, std::size_t max_length,
 				     bool then_eof) noexcept override;
 	void OnEof() noexcept override;
-	void OnError(std::exception_ptr e) noexcept override;
+	void OnError(std::exception_ptr &&e) noexcept override;
 };
 
 UnusedIstreamPtr
@@ -271,7 +271,7 @@ BufferedIstream::OnEof() noexcept
 }
 
 void
-BufferedIstream::OnError(std::exception_ptr e) noexcept
+BufferedIstream::OnError(std::exception_ptr &&e) noexcept
 {
 	ClearInput();
 	InvokeError(std::move(e));

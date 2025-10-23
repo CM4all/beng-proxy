@@ -80,11 +80,11 @@ class CatIstream final : public Istream, DestructAnchor {
 			cat.OnInputEof(*this);
 		}
 
-		void OnError(std::exception_ptr ep) noexcept override {
+		void OnError(std::exception_ptr &&ep) noexcept override {
 			assert(input.IsDefined());
 			ClearInput();
 
-			cat.OnInputError(*this, ep);
+			cat.OnInputError(*this, std::move(ep));
 		}
 
 		struct Disposer {
@@ -181,9 +181,9 @@ private:
 		}
 	}
 
-	void OnInputError(Input &i, std::exception_ptr ep) noexcept {
+	void OnInputError(Input &i, std::exception_ptr &&ep) noexcept {
 		i.unlink();
-		DestroyError(ep);
+		DestroyError(std::move(ep));
 	}
 
 public:

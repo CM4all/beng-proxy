@@ -34,7 +34,7 @@ StdioSink::OnEof() noexcept
 }
 
 void
-StdioSink::OnError(std::exception_ptr ep) noexcept
+StdioSink::OnError(std::exception_ptr &&ep) noexcept
 {
 	ClearInput();
 

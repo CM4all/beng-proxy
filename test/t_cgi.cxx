@@ -68,7 +68,7 @@ struct Context final : TestInstance, HttpResponseHandler, IstreamSink {
 				     off_t offset, std::size_t max_length,
 				     bool then_eof) noexcept override;
 	void OnEof() noexcept override;
-	void OnError(std::exception_ptr ep) noexcept override;
+	void OnError(std::exception_ptr &&ep) noexcept override;
 };
 
 static FdTypeMask my_handler_direct = 0;
@@ -139,7 +139,7 @@ Context::OnEof() noexcept
 }
 
 void
-Context::OnError(std::exception_ptr) noexcept
+Context::OnError(std::exception_ptr &&) noexcept
 {
 	ClearInput();
 	body_abort = true;

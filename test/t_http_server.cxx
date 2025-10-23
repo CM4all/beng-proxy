@@ -261,7 +261,7 @@ private:
 			event_loop.Break();
 	}
 
-	void OnError(std::exception_ptr ep) noexcept override {
+	void OnError(std::exception_ptr &&ep) noexcept override {
 		IstreamSink::ClearInput();
 		response_error = std::move(ep);
 

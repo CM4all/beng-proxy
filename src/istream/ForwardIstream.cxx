@@ -41,8 +41,8 @@ ForwardIstream::OnEof() noexcept
 }
 
 void
-ForwardIstream::OnError(std::exception_ptr ep) noexcept
+ForwardIstream::OnError(std::exception_ptr &&error) noexcept
 {
 	ClearInput();
-	DestroyError(ep);
+	DestroyError(std::move(error));
 }

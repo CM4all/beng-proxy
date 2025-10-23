@@ -97,7 +97,7 @@ ToBucketIstream::OnEof() noexcept
 }
 
 void
-ToBucketIstream::OnError(std::exception_ptr ep) noexcept
+ToBucketIstream::OnError(std::exception_ptr &&ep) noexcept
 {
 	ClearInput();
 	DestroyError(std::move(ep));

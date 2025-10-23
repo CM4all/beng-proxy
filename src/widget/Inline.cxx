@@ -97,10 +97,10 @@ private:
 		DeleteFromPool(pool, this);
 	}
 
-	void Fail(std::exception_ptr ep) noexcept {
+	void Fail(std::exception_ptr &&ep) noexcept {
 		auto &_delayed = delayed;
 		Destroy();
-		_delayed.SetError(ep);
+		_delayed.SetError(std::move(ep));
 	}
 
 	void SendRequest() noexcept;
@@ -252,7 +252,7 @@ InlineWidget::OnHttpError(std::exception_ptr ep) noexcept
 
 	header_timeout_event.Cancel();
 
-	Fail(ep);
+	Fail(std::move(ep));
 }
 
 void

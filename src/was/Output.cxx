@@ -133,7 +133,7 @@ private:
 				     off_t offset, std::size_t max_length,
 				     bool then_eof) noexcept override;
 	void OnEof() noexcept override;
-	void OnError(std::exception_ptr ep) noexcept override;
+	void OnError(std::exception_ptr &&ep) noexcept override;
 };
 
 bool
@@ -377,13 +377,13 @@ WasOutput::OnEof() noexcept
 }
 
 void
-WasOutput::OnError(std::exception_ptr ep) noexcept
+WasOutput::OnError(std::exception_ptr &&ep) noexcept
 {
 	assert(HasInput());
 
 	ClearInput();
 
-	DestroyPremature(ep);
+	DestroyPremature(std::move(ep));
 }
 
 /*

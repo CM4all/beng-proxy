@@ -298,7 +298,7 @@ public:
 	size_t OnData(std::span<const std::byte> src) noexcept override;
 
 	void OnEof() noexcept override;
-	void OnError(std::exception_ptr ep) noexcept override;
+	void OnError(std::exception_ptr &&ep) noexcept override;
 };
 
 /*
@@ -782,12 +782,12 @@ SubstIstream::OnEof() noexcept
 }
 
 void
-SubstIstream::OnError(std::exception_ptr ep) noexcept
+SubstIstream::OnError(std::exception_ptr &&ep) noexcept
 {
 	assert(input.IsDefined());
 
 	input.Clear();
-	DestroyError(ep);
+	DestroyError(std::move(ep));
 }
 
 /*

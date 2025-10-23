@@ -51,9 +51,9 @@ public:
 
 	void OnEof() noexcept override;
 
-	void OnError(std::exception_ptr ep) noexcept override {
+	void OnError(std::exception_ptr &&ep) noexcept override {
 		ClearInput();
-		DestroyError(ep);
+		DestroyError(std::move(ep));
 	}
 };
 

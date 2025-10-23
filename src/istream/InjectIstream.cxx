@@ -29,8 +29,8 @@ public:
 		return control;
 	}
 
-	void InjectFault(std::exception_ptr ep) noexcept {
-		DestroyError(ep);
+	void InjectFault(std::exception_ptr &&ep) noexcept {
+		DestroyError(std::move(ep));
 	}
 
 	/* virtual methods from class Istream */
@@ -63,7 +63,7 @@ public:
 		ClearInput();
 	}
 
-	void OnError(std::exception_ptr) noexcept override {
+	void OnError(std::exception_ptr &&) noexcept override {
 		ClearInput();
 	}
 };

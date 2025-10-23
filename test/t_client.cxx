@@ -297,7 +297,7 @@ Context::OnEof() noexcept
 }
 
 void
-Context::OnError(std::exception_ptr ep) noexcept
+Context::OnError(std::exception_ptr &&ep) noexcept
 {
 	if (break_data || break_eof)
 		event_loop.Break();
@@ -308,7 +308,7 @@ Context::OnError(std::exception_ptr ep) noexcept
 	read_defer_event.Cancel();
 
 	assert(!body_error);
-	body_error = ep;
+	body_error = std::move(ep);
 }
 
 /*

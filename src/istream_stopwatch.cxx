@@ -24,7 +24,7 @@ public:
 
 	/* virtual methods from class IstreamHandler */
 	void OnEof() noexcept override;
-	void OnError(std::exception_ptr ep) noexcept override;
+	void OnError(std::exception_ptr &&ep) noexcept override;
 };
 
 
@@ -42,11 +42,11 @@ StopwatchIstream::OnEof() noexcept
 }
 
 void
-StopwatchIstream::OnError(std::exception_ptr ep) noexcept
+StopwatchIstream::OnError(std::exception_ptr &&ep) noexcept
 {
 	stopwatch.RecordEvent("input_error");
 
-	ForwardIstream::OnError(ep);
+	ForwardIstream::OnError(std::move(ep));
 }
 
 /*

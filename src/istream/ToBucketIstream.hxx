@@ -40,5 +40,5 @@ protected:
 	IstreamReadyResult OnIstreamReady() noexcept override;
 	size_t OnData(std::span<const std::byte> src) noexcept override;
 	void OnEof() noexcept override;
-	void OnError(std::exception_ptr ep) noexcept override;
+	void OnError(std::exception_ptr &&ep) noexcept override;
 };

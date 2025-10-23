@@ -102,7 +102,7 @@ struct SpawnIstream final : Istream, IstreamSink, ExitListener {
 				     off_t offset, std::size_t max_length,
 				     bool then_eof) noexcept override;
 	void OnEof() noexcept override;
-	void OnError(std::exception_ptr ep) noexcept override;
+	void OnError(std::exception_ptr &&ep) noexcept override;
 
 	/* virtual methods from class ExitListener */
 	void OnChildProcessExit(int status) noexcept override;
@@ -231,7 +231,7 @@ SpawnIstream::OnEof() noexcept
 }
 
 void
-SpawnIstream::OnError(std::exception_ptr ep) noexcept
+SpawnIstream::OnError(std::exception_ptr &&ep) noexcept
 {
 	assert(HasInput());
 	assert(input_fd.IsDefined());
@@ -241,7 +241,7 @@ SpawnIstream::OnError(std::exception_ptr ep) noexcept
 	ClearInput();
 
 	Cancel();
-	DestroyError(ep);
+	DestroyError(std::move(ep));
 }
 
 /*

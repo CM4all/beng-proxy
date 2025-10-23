@@ -13,4 +13,4 @@ class UnusedIstreamPtr;
  * istream implementation which produces a failure.
  */
 UnusedIstreamPtr
-istream_fail_new(struct pool &pool, std::exception_ptr ep) noexcept;
+istream_fail_new(struct pool &pool, std::exception_ptr &&ep) noexcept;

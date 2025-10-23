@@ -392,7 +392,7 @@ Context::OnEof() noexcept
 }
 
 void
-Context::OnError(std::exception_ptr) noexcept
+Context::OnError(std::exception_ptr &&) noexcept
 {
 	assert(options.expected_result.data() == nullptr || !record);
 

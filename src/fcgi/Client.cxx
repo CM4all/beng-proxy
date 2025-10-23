@@ -49,7 +49,7 @@
 #include <unistd.h>
 
 bool
-IsFcgiClientRetryFailure(std::exception_ptr error) noexcept
+IsFcgiClientRetryFailure(const std::exception_ptr &error) noexcept
 {
 	if (FindNested<SocketClosedPrematurelyError>(error))
 		return true;
@@ -198,19 +198,19 @@ private:
 	 * Abort receiving the response status/headers from the FastCGI
 	 * server, and notify the HTTP response handler.
 	 */
-	void AbortResponseHeaders(std::exception_ptr ep) noexcept;
+	void AbortResponseHeaders(std::exception_ptr &&ep) noexcept;
 
 	/**
 	 * Abort receiving the response body from the FastCGI server, and
 	 * notify the response body istream handler.
 	 */
-	void AbortResponseBody(std::exception_ptr ep) noexcept;
+	void AbortResponseBody(std::exception_ptr &&ep) noexcept;
 
 	/**
 	 * Abort receiving the response from the FastCGI server.  This is
 	 * a wrapper for AbortResponseHeaders() or AbortResponseBody().
 	 */
-	void AbortResponse(std::exception_ptr ep) noexcept;
+	void AbortResponse(std::exception_ptr &&ep) noexcept;
 
 	void HandleStderrPayload(std::span<const std::byte> payload) noexcept;
 
@@ -312,7 +312,7 @@ private:
 				     off_t offset, std::size_t max_length,
 				     bool then_eof) noexcept override;
 	void OnEof() noexcept override;
-	void OnError(std::exception_ptr ep) noexcept override;
+	void OnError(std::exception_ptr &&ep) noexcept override;
 
 	// virtual methods from class FcgiFrameHandler
 	void OnFrameConsumed(std::size_t nbytes) noexcept override;
@@ -330,30 +330,30 @@ inline FcgiClient::~FcgiClient() noexcept
 }
 
 void
-FcgiClient::AbortResponseHeaders(std::exception_ptr ep) noexcept
+FcgiClient::AbortResponseHeaders(std::exception_ptr &&ep) noexcept
 {
 	assert(!response.WasResponseSubmitted());
 
 	auto &_handler = handler;
 	Destroy();
-	_handler.InvokeError(ep);
+	_handler.InvokeError(std::move(ep));
 }
 
 void
-FcgiClient::AbortResponseBody(std::exception_ptr ep) noexcept
+FcgiClient::AbortResponseBody(std::exception_ptr &&ep) noexcept
 {
 	assert(response.WasResponseSubmitted());
 
-	DestroyError(ep);
+	DestroyError(std::move(ep));
 }
 
 void
-FcgiClient::AbortResponse(std::exception_ptr ep) noexcept
+FcgiClient::AbortResponse(std::exception_ptr &&ep) noexcept
 {
 	if (!response.WasResponseSubmitted())
-		AbortResponseHeaders(ep);
+		AbortResponseHeaders(std::move(ep));
 	else
-		AbortResponseBody(ep);
+		AbortResponseBody(std::move(ep));
 }
 
 void
@@ -831,14 +831,14 @@ FcgiClient::OnEof() noexcept
 }
 
 void
-FcgiClient::OnError(std::exception_ptr ep) noexcept
+FcgiClient::OnError(std::exception_ptr &&ep) noexcept
 {
 	assert(HasInput());
 	ClearInput();
 
 	stopwatch.RecordEvent("request_error");
 
-	AbortResponse(NestException(ep,
+	AbortResponse(NestException(std::move(ep),
 				    std::runtime_error("FastCGI request stream failed")));
 }
 

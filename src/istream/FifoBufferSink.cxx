@@ -114,7 +114,7 @@ FifoBufferSink::OnEof() noexcept
 }
 
 void
-FifoBufferSink::OnError(std::exception_ptr ep) noexcept
+FifoBufferSink::OnError(std::exception_ptr &&ep) noexcept
 {
 	input.Clear();
 	handler.OnFifoBufferSinkError(std::move(ep));

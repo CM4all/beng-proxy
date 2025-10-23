@@ -29,7 +29,7 @@ public:
 	/**
 	 * Injects a failure, to be called instead of Set().
 	 */
-	void SetError(std::exception_ptr e) noexcept;
+	void SetError(std::exception_ptr &&e) noexcept;
 };
 
 /**

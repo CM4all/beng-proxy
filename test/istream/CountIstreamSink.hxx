@@ -47,5 +47,5 @@ protected:
 				     std::size_t max_length,
 				     bool then_eof) noexcept override;
 	void OnEof() noexcept override;
-	void OnError(std::exception_ptr _error) noexcept override;
+	void OnError(std::exception_ptr &&_error) noexcept override;
 };

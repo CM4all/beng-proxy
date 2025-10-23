@@ -243,7 +243,7 @@ struct TeeIstream final : IstreamSink, DestructAnchor {
 	/* virtual methods from class IstreamHandler */
 	size_t OnData(std::span<const std::byte> src) noexcept override;
 	void OnEof() noexcept override;
-	void OnError(std::exception_ptr ep) noexcept override;
+	void OnError(std::exception_ptr &&ep) noexcept override;
 };
 
 inline std::size_t
@@ -368,7 +368,7 @@ TeeIstream::OnEof() noexcept
 }
 
 void
-TeeIstream::OnError(std::exception_ptr ep) noexcept
+TeeIstream::OnError(std::exception_ptr &&ep) noexcept
 {
 	assert(HasInput());
 	ClearInput();

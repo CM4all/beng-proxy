@@ -24,7 +24,7 @@ class StopwatchPtr;
  */
 [[gnu::pure]]
 bool
-IsFcgiClientRetryFailure(std::exception_ptr error) noexcept;
+IsFcgiClientRetryFailure(const std::exception_ptr &error) noexcept;
 
 /**
  * Sends a HTTP request on a socket to an FastCGI server, and passes

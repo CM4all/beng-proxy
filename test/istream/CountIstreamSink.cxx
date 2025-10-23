@@ -66,7 +66,7 @@ CountIstreamSink::OnEof() noexcept
 }
 
 void
-CountIstreamSink::OnError(std::exception_ptr _error) noexcept
+CountIstreamSink::OnError(std::exception_ptr &&_error) noexcept
 {
 	ClearInput();
 	error = std::move(_error);

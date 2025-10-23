@@ -176,6 +176,8 @@ Istream::InvokeError(std::exception_ptr ep) noexcept
 void
 Istream::DestroyError(std::exception_ptr ep) noexcept
 {
+	assert(ep);
+
 	auto &_handler = PrepareError();
 	Destroy();
 	_handler.OnError(std::move(ep));

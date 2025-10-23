@@ -111,7 +111,7 @@ public:
 	}
 
 private:
-	void Abort(std::exception_ptr ep) noexcept;
+	void Abort(std::exception_ptr &&ep) noexcept;
 
 	[[gnu::pure]]
 	bool IsEofPending() const noexcept {
@@ -185,17 +185,17 @@ protected:
 
 	size_t OnData(std::span<const std::byte> src) noexcept override;
 	void OnEof() noexcept override;
-	void OnError(std::exception_ptr ep) noexcept override;
+	void OnError(std::exception_ptr &&ep) noexcept override;
 };
 
 inline void
-DechunkIstream::Abort(std::exception_ptr ep) noexcept
+DechunkIstream::Abort(std::exception_ptr &&ep) noexcept
 {
 	assert(!parser.HasEnded());
 	assert(input.IsDefined());
 	assert(!IsEofPending());
 
-	DestroyError(ep);
+	DestroyError(std::move(ep));
 }
 
 inline void
@@ -390,7 +390,7 @@ DechunkIstream::OnEof() noexcept
 }
 
 void
-DechunkIstream::OnError(std::exception_ptr ep) noexcept
+DechunkIstream::OnError(std::exception_ptr &&ep) noexcept
 {
 	input.Clear();
 
@@ -398,7 +398,7 @@ DechunkIstream::OnError(std::exception_ptr ep) noexcept
 		/* let DeferEvent handle this */
 		return;
 
-	DestroyError(ep);
+	DestroyError(std::move(ep));
 }
 
 /*

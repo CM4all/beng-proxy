@@ -91,7 +91,7 @@ private:
 	}
 
 	void OnEof() noexcept override;
-	void OnError(std::exception_ptr ep) noexcept override;
+	void OnError(std::exception_ptr &&ep) noexcept override;
 
 	/* virtual methods from class WidgetContainerParser */
 	bool WantWidget(const Widget &w) const noexcept override {
@@ -260,7 +260,7 @@ WidgetLookupProcessor::OnEof() noexcept
 }
 
 void
-WidgetLookupProcessor::OnError(std::exception_ptr ep) noexcept
+WidgetLookupProcessor::OnError(std::exception_ptr &&ep) noexcept
 {
 	input.Clear();
 
@@ -272,7 +272,7 @@ WidgetLookupProcessor::OnError(std::exception_ptr ep) noexcept
 
 	auto &_handler = handler;
 	Destroy();
-	_handler.WidgetLookupError(ep);
+	_handler.WidgetLookupError(std::move(ep));
 }
 
 void

@@ -59,7 +59,7 @@ public:
 
 	size_t OnData(std::span<const std::byte> src) noexcept override;
 	void OnEof() noexcept override;
-	void OnError(std::exception_ptr ep) noexcept override;
+	void OnError(std::exception_ptr &&ep) noexcept override;
 
 private:
 	bool IsBufferEmpty() const noexcept {
@@ -266,12 +266,12 @@ ChunkedIstream::OnEof() noexcept
 }
 
 void
-ChunkedIstream::OnError(std::exception_ptr ep) noexcept
+ChunkedIstream::OnError(std::exception_ptr &&ep) noexcept
 {
 	assert(input.IsDefined());
 
 	input.Clear();
-	DestroyError(ep);
+	DestroyError(std::move(ep));
 }
 
 /*

@@ -39,7 +39,7 @@ public:
 		abort();
 	}
 
-	void OnError(std::exception_ptr) noexcept {
+	void OnError(std::exception_ptr &&) noexcept {
 		/* should not be reachable, because we expect the Istream to
 		   call the OnData() callback at least once */
 

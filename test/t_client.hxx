@@ -207,7 +207,7 @@ struct Context final
 	IstreamReadyResult OnIstreamReady() noexcept override;
 	std::size_t OnData(std::span<const std::byte> src) noexcept override;
 	void OnEof() noexcept override;
-	void OnError(std::exception_ptr ep) noexcept override;
+	void OnError(std::exception_ptr &&ep) noexcept override;
 
 	/* virtual methods from class Lease */
 	PutAction ReleaseLease(PutAction action) noexcept override;

@@ -124,7 +124,7 @@ private:
 		event.CancelRead();
 	}
 
-	void AbortError(std::exception_ptr ep) noexcept {
+	void AbortError(std::exception_ptr &&ep) noexcept {
 		buffer.FreeIfDefined();
 		event.Cancel();
 
@@ -133,7 +133,7 @@ private:
 		closed = true;
 
 		handler.WasInputError();
-		DestroyError(ep);
+		DestroyError(std::move(ep));
 	}
 
 	void AbortError(const char *msg) noexcept {
@@ -466,7 +466,7 @@ WasInput::Free(std::exception_ptr ep) noexcept
 	event.Cancel();
 
 	if (!closed && enabled)
-		DestroyError(ep);
+		DestroyError(std::move(ep));
 }
 
 void

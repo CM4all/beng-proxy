@@ -40,10 +40,10 @@ public:
 		DestroyEof();
 	}
 
-	void SetError(std::exception_ptr ep) noexcept {
+	void SetError(std::exception_ptr &&ep) noexcept {
 		assert(!HasInput());
 
-		DestroyError(ep);
+		DestroyError(std::move(ep));
 	}
 
 private:
@@ -123,7 +123,7 @@ DelayedIstreamControl::SetEof() noexcept
 }
 
 void
-DelayedIstreamControl::SetError(std::exception_ptr e) noexcept
+DelayedIstreamControl::SetError(std::exception_ptr &&e) noexcept
 {
 	auto &d = *(DelayedIstream *)this;
 	d.SetError(std::move(e));

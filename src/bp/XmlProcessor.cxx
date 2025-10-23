@@ -226,7 +226,7 @@ private:
 
 	/* virtual methods from class IstreamHandler */
 	void OnEof() noexcept override;
-	void OnError(std::exception_ptr ep) noexcept override;
+	void OnError(std::exception_ptr &&ep) noexcept override;
 
 	/* virtual methods from class ReplaceIstream */
 	void Parse(std::span<const std::byte> b) override {
@@ -1074,7 +1074,7 @@ XmlProcessor::OnEof() noexcept
 }
 
 void
-XmlProcessor::OnError(std::exception_ptr ep) noexcept
+XmlProcessor::OnError(std::exception_ptr &&ep) noexcept
 {
 	stopwatch.RecordEvent("error");
 
@@ -1084,7 +1084,7 @@ XmlProcessor::OnError(std::exception_ptr ep) noexcept
 	   because we didn't find it; dispose it now */
 	container.DiscardForFocused();
 
-	ReplaceIstream::OnError(ep);
+	ReplaceIstream::OnError(std::move(ep));
 }
 
 /*

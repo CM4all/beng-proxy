@@ -149,14 +149,14 @@ HttpServerConnection::OnEof() noexcept
 }
 
 void
-HttpServerConnection::OnError(std::exception_ptr ep) noexcept
+HttpServerConnection::OnError(std::exception_ptr &&ep) noexcept
 {
 	assert(HasInput());
 	assert(!request.cancel_ptr);
 
 	ClearInput();
 
-	Error(NestException(ep,
+	Error(NestException(std::move(ep),
 			    std::runtime_error("error on HTTP response stream")));
 }
 

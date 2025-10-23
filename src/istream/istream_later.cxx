@@ -40,8 +40,8 @@ public:
 		Schedule();
 	}
 
-	void OnError(std::exception_ptr ep) noexcept override {
-		ForwardIstream::OnError(ep);
+	void OnError(std::exception_ptr &&ep) noexcept override {
+		ForwardIstream::OnError(std::move(ep));
 	}
 
 private:

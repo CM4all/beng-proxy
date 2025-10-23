@@ -101,5 +101,5 @@ public:
 	 *
 	 * @param error an exception describing the error condition
 	 */
-	virtual void OnError(std::exception_ptr error) noexcept = 0;
+	virtual void OnError(std::exception_ptr &&error) noexcept = 0;
 };
