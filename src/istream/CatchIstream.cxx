@@ -229,11 +229,14 @@ CatchIstream::_FillBucketList(IstreamBucketList &list)
 	}
 
 	try {
-		input.FillBucketList(list);
+		IstreamBucketList sub;
+		input.FillBucketList(sub);
 
-		if (const auto buffer_size = list.GetTotalBufferSize();
+		if (const auto buffer_size = sub.GetTotalBufferSize();
 		    std::cmp_greater(buffer_size, available))
 			available = buffer_size;
+
+		list.SpliceFrom(std::move(sub));
 	} catch (...) {
 		if (auto error = callback(std::current_exception())) {
 			Destroy();
