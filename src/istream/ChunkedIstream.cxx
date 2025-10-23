@@ -47,12 +47,9 @@ class ChunkedIstream final : public FacadeIstream, DestructAnchor {
 			std::copy(src.begin(), src.end(), Set(src.size()));
 		}
 
-		/**
-		 * Append data to the buffer.
-		 */
-		constexpr void Append(std::string_view src) noexcept {
-			assert(!src.empty());
-			assert(src.size() <= position);
+		[[nodiscard]]
+		constexpr char *Append(std::size_t size) noexcept {
+			assert(size <= position);
 
 			const auto old = ReadChars();
 
@@ -62,9 +59,14 @@ class ChunkedIstream final : public FacadeIstream, DestructAnchor {
 			position = buffer.size();
 #endif
 
-			auto dest = Set(old.size() + src.size());
-			dest = std::copy(old.begin(), old.end(), dest);
-			std::copy(src.begin(), src.end(), dest);
+			return std::copy(old.begin(), old.end(), Set(old.size() + size));
+		}
+
+		/**
+		 * Append data to the buffer.
+		 */
+		constexpr void Append(std::string_view src) noexcept {
+			std::copy(src.begin(), src.end(), Append(src.size()));
 		}
 
 		[[nodiscard]]
