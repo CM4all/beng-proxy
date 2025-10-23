@@ -417,7 +417,7 @@ DechunkIstream::_GetLength() noexcept
 	}
 
 	return {
-		.length = static_cast<off_t>(total),
+		.length = total,
 		.exhaustive = parser.HasEnded(),
 	};
 }

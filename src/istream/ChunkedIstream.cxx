@@ -283,7 +283,7 @@ IstreamLength
 ChunkedIstream:: _GetLength() noexcept
 {
 	IstreamLength result{
-		.length = static_cast<off_t>(ReadBuffer().size()),
+		.length = ReadBuffer().size(),
 		.exhaustive = true,
 	};
 
@@ -355,7 +355,7 @@ ChunkedIstream::_FillBucketList(IstreamBucketList &list)
 		   returns more data and use that to start the new
 		   chunk */
 
-		off_t available = input.GetLength().length;
+		auto available = input.GetLength().length;
 		if (std::cmp_greater(sub.GetTotalBufferSize(), available))
 			available = sub.GetTotalBufferSize();
 

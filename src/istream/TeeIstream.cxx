@@ -69,7 +69,7 @@ struct TeeIstream final : IstreamSink, DestructAnchor {
 
 		IstreamLength _GetLength() noexcept override {
 			auto result = parent.input.GetLength();
-			assert(result.length >= static_cast<off_t>(skip));
+			assert(std::cmp_greater_equal(result.length, skip));
 			result.length -= skip;
 			return result;
 		}

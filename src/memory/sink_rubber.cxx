@@ -214,7 +214,7 @@ sink_rubber_new(struct pool &pool, UnusedIstreamPtr input,
 		CancellablePointer &cancel_ptr) noexcept
 {
 	const auto length = input.GetLength();
-	if (length.length > static_cast<off_t>(max_size)) {
+	if (std::cmp_greater(length.length, max_size)) {
 		input.Clear();
 		handler.RubberTooLarge();
 		return nullptr;

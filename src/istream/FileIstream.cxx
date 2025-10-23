@@ -69,7 +69,7 @@ private:
 	}
 
 	[[gnu::pure]]
-	off_t GetRemaining() const noexcept {
+	uint_least64_t GetRemaining() const noexcept {
 		return end_offset - offset;
 	}
 
@@ -141,7 +141,7 @@ FileIstream::TryData()
 	auto w = buffer.Write();
 	assert(!w.empty());
 
-	if (GetRemaining() < off_t(w.size()))
+	if (GetRemaining() < w.size())
 		w = w.first(GetRemaining());
 
 	ssize_t nbytes = fd.ReadAt(offset, w);
@@ -219,7 +219,7 @@ IstreamLength
 FileIstream::_GetLength() noexcept
 {
 	return {
-		.length = GetRemaining() + static_cast<off_t>(buffer.GetAvailable()),
+		.length = GetRemaining() + buffer.GetAvailable(),
 		.exhaustive = true,
 	};
 }
@@ -233,7 +233,7 @@ FileIstream::_Skip(off_t length) noexcept
 		return 0;
 
 	const size_t buffer_available = buffer.GetAvailable();
-	if (length < off_t(buffer_available)) {
+	if (std::cmp_less(length, buffer_available)) {
 		buffer.Consume(length);
 		Consumed(length);
 		return length;
@@ -242,7 +242,7 @@ FileIstream::_Skip(off_t length) noexcept
 	length -= buffer_available;
 	buffer.Clear();
 
-	if (length >= GetRemaining()) {
+	if (std::cmp_greater_equal(length, GetRemaining())) {
 		/* skip beyond EOF */
 
 		length = GetRemaining();

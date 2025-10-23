@@ -12,11 +12,11 @@
  * header, for example.
  */
 class LengthIstream final : public ForwardIstream {
-	off_t remaining;
+	uint_least64_t remaining;
 
 public:
 	template<typename P, typename I>
-	LengthIstream(P &&_pool, I &&_input, off_t _length)
+	LengthIstream(P &&_pool, I &&_input, uint_least64_t _length)
 		:ForwardIstream(std::forward<P>(_pool),
 				std::forward<I>(_input)),
 		 remaining(_length) {}

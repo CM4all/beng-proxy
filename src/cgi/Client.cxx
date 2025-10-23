@@ -363,7 +363,10 @@ IstreamLength
 CGIClient::_GetLength() noexcept
 {
 	if (parser.KnownLength())
-		return {.length = parser.GetAvailable(), .exhaustive = true};
+		return {
+			.length = static_cast<uint_least64_t>(parser.GetAvailable()),
+			.exhaustive = true,
+		};
 
 	if (!input.IsDefined())
 		return {.length = 0, .exhaustive = true};

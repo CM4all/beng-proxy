@@ -264,7 +264,7 @@ IstreamLength
 SocketPairIstream:: _GetLength() noexcept
 {
 	IstreamLength result{
-		.length = static_cast<off_t>(in_socket),
+		.length = in_socket,
 		.exhaustive = true,
 	};
 

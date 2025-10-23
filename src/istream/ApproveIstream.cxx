@@ -17,7 +17,7 @@ class ApproveIstream final : public ForwardIstream {
 
 	DeferEvent defer_read;
 
-	off_t approved = 0;
+	uint_least64_t approved = 0;
 
 public:
 	ApproveIstream(struct pool &p, EventLoop &event_loop,
@@ -37,8 +37,8 @@ public:
 		return control;
 	}
 
-	void Approve(off_t nbytes) noexcept {
-		if (approved <= 0)
+	void Approve(uint_least64_t nbytes) noexcept {
+		if (approved == 0)
 			defer_read.Schedule();
 
 		approved += nbytes;
@@ -56,7 +56,7 @@ protected:
 		if (approved <= 0)
 			return -1;
 
-		if (length > approved)
+		if (std::cmp_greater(length, approved))
 			length = approved;
 
 		auto nbytes = ForwardIstream::_Skip(length);
@@ -132,7 +132,7 @@ protected:
 };
 
 void
-ApproveIstreamControl::Approve(off_t nbytes) noexcept
+ApproveIstreamControl::Approve(uint_least64_t nbytes) noexcept
 {
 	if (approve != nullptr)
 		approve->Approve(nbytes);

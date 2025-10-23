@@ -121,7 +121,7 @@ private:
 	 * the actual file.
 	 */
 	[[gnu::pure]]
-	off_t GetRemaining() const noexcept {
+	uint_least64_t GetRemaining() const noexcept {
 		return end_offset - offset;
 	}
 
@@ -130,7 +130,7 @@ private:
 	 * that is currently in the pipe.
 	 */
 	[[gnu::pure]]
-	off_t GetRemainingWithPipe() const noexcept {
+	uint_least64_t GetRemainingWithPipe() const noexcept {
 		return GetRemaining() + in_pipe;
 	}
 
@@ -138,7 +138,7 @@ private:
 	std::size_t GetMaxRead() const noexcept {
 		/* Linux can't splice() more than 2 GB at a time and
 		   may return EINVAL if we ask it to transfer more */
-		return std::min(GetRemaining(), off_t(INT_MAX));
+		return std::min(GetRemaining(), static_cast<uint_least64_t>(INT_MAX));
 	}
 
 	/**

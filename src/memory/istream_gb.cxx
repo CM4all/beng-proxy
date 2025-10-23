@@ -22,13 +22,13 @@ public:
 
 	IstreamLength _GetLength() noexcept override {
 		return {
-			.length = static_cast<off_t>(reader.Available()),
+			.length = reader.Available(),
 			.exhaustive = true,
 		};
 	}
 
 	off_t _Skip(off_t _nbytes) noexcept override {
-		size_t nbytes = _nbytes > off_t(reader.Available())
+		size_t nbytes = std::cmp_greater(_nbytes, reader.Available())
 			? reader.Available()
 			: size_t(_nbytes);
 

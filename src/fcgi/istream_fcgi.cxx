@@ -38,7 +38,7 @@ public:
 
 	IstreamLength _GetLength() noexcept override {
 		return IstreamLength{
-			.length = static_cast<off_t>(sizeof(header) - header_sent),
+			.length = sizeof(header) - header_sent,
 			.exhaustive = false,
 		} + input.GetLength();
 	}

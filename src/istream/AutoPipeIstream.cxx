@@ -252,7 +252,7 @@ IstreamLength
 AutoPipeIstream:: _GetLength() noexcept
 {
 	IstreamLength result{
-		.length = static_cast<off_t>(piped),
+		.length = piped,
 		.exhaustive = true,
 	};
 

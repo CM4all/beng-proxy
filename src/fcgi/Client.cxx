@@ -94,11 +94,13 @@ class FcgiClient final
 	} request;
 
 	class RemainingLength {
-		off_t value;
+		static constexpr uint_least64_t UNKNOWN = ~uint_least64_t{};
+
+		uint_least64_t value;
 
 	public:
 		constexpr void SetUnknown() noexcept {
-			value = -1;
+			value = UNKNOWN;
 		}
 
 		constexpr void SetKnown(off_t _value) noexcept {
@@ -107,10 +109,10 @@ class FcgiClient final
 		}
 
 		constexpr bool IsKnown() const noexcept {
-			return value >= 0;
+			return value != UNKNOWN;
 		}
 
-		constexpr off_t GetValue() const noexcept {
+		constexpr uint_least64_t GetValue() const noexcept {
 			assert(IsKnown());
 
 			return value;
@@ -129,7 +131,7 @@ class FcgiClient final
 		}
 
 		constexpr bool ExpectsMore() const noexcept {
-			return value > 0;
+			return IsKnown() && value > 0;
 		}
 
 		constexpr bool IsExcess(std::size_t n) const noexcept {
@@ -901,7 +903,7 @@ FcgiClient::_GetLength() noexcept
 	if (buffer.size() > remaining) {
 		const auto analysis = AnalyseBuffer(buffer);
 		return {
-			.length = static_cast<off_t>(analysis.total_stdout),
+			.length = analysis.total_stdout,
 			.exhaustive = analysis.end_request_offset > 0,
 		};
 	}
@@ -910,7 +912,7 @@ FcgiClient::_GetLength() noexcept
 		return {.length = 0, .exhaustive = false};
 
 	return {
-		.length = static_cast<off_t>(remaining),
+		.length = remaining,
 		.exhaustive = false,
 	};
 }

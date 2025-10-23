@@ -30,7 +30,7 @@ public:
 
 	IstreamLength _GetLength() noexcept override {
 		IstreamLength result{
-			.length = static_cast<off_t>(escaped.size()),
+			.length = escaped.size(),
 			.exhaustive = true,
 		};
 

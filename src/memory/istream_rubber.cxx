@@ -36,7 +36,7 @@ public:
 
 	IstreamLength _GetLength() noexcept override {
 		return {
-			.length = static_cast<off_t>(end - position),
+			.length = end - position,
 			.exhaustive = true,
 		};
 	}
@@ -45,7 +45,7 @@ public:
 		assert(position <= end);
 
 		const size_t remaining = end - position;
-		if (nbytes > off_t(remaining))
+		if (std::cmp_greater(nbytes, remaining))
 			nbytes = remaining;
 
 		position += nbytes;

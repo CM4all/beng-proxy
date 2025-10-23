@@ -79,7 +79,7 @@ public:
 
 	IstreamLength _GetLength() noexcept override {
 		return {
-			.length = static_cast<off_t>(buffer.GetAvailable()),
+			.length = buffer.GetAvailable(),
 			.exhaustive = eof,
 		};
 	}

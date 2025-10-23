@@ -71,7 +71,7 @@ class Istream : PoolHolder, LeakDetector, IstreamDestructAnchor {
 	 */
 	std::size_t consumed_sum;
 
-	off_t available_partial = 0, available_full = 0;
+	uint_least64_t available_partial = 0, available_full = 0;
 #endif
 
 protected:
@@ -107,7 +107,7 @@ protected:
 		if (available_full_set) {
 			assert(std::cmp_less_equal(nbytes, available_full));
 
-			available_full -= (off_t)nbytes;
+			available_full -= nbytes;
 		}
 
 		data_available -= std::min(nbytes, data_available);
@@ -220,7 +220,6 @@ public:
 		const auto result = _GetLength();
 
 #ifndef NDEBUG
-		assert(result.length >= 0);
 		assert(!destructed);
 		assert(!destroyed);
 		assert(reading);
@@ -271,13 +270,13 @@ public:
 		reading = false;
 
 		if (nbytes > 0) {
-			if (nbytes > available_partial)
+			if (std::cmp_greater(nbytes, available_partial))
 				available_partial = 0;
 			else
 				available_partial -= nbytes;
 
 			assert(!available_full_set ||
-			       nbytes < available_full);
+			       std::cmp_less(nbytes, available_full));
 			if (available_full_set)
 				available_full -= nbytes;
 		}

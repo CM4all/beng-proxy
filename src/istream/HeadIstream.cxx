@@ -14,7 +14,7 @@
 #include <assert.h>
 
 class HeadIstream final : public ForwardIstream {
-	off_t rest;
+	uint_least64_t rest;
 	const bool authoritative;
 
 public:
@@ -162,7 +162,7 @@ HeadIstream::_GetLength() noexcept
 off_t
 HeadIstream::_Skip(off_t length) noexcept
 {
-	if (length >= rest)
+	if (std::cmp_greater_equal(length, rest))
 		length = rest;
 
 	off_t nbytes = ForwardIstream::_Skip(length);

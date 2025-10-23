@@ -17,7 +17,7 @@ class CatchIstream final : public ForwardIstream {
 	 * This much data was announced by our input, either by
 	 * GetAvailable(), OnData() or OnDirect().
 	 */
-	off_t available = 0;
+	uint_least64_t available = 0;
 
 	/**
 	 * The amount of data passed to OnData(), minus the number of
@@ -42,12 +42,12 @@ public:
 	off_t _Skip(off_t length) noexcept override {
 		off_t nbytes = ForwardIstream::_Skip(length);
 		if (nbytes > 0) {
-			if (nbytes < available)
+			if (std::cmp_less(nbytes, available))
 				available -= nbytes;
 			else
 				available = 0;
 
-			if ((std::size_t)nbytes < chunk)
+			if (std::cmp_less(nbytes, chunk))
 				chunk -= nbytes;
 			else
 				chunk = 0;
@@ -101,7 +101,7 @@ CatchIstream::SendSpace() noexcept
 
 	do {
 		std::size_t length;
-		if (available >= (off_t)sizeof(space) - 1)
+		if (available >= sizeof(space) - 1)
 			length = sizeof(space) - 1;
 		else
 			length = (std::size_t)available;
@@ -124,7 +124,7 @@ CatchIstream::_ConsumeDirect(std::size_t nbytes) noexcept
 	ForwardIstream::_ConsumeDirect(nbytes);
 
 	if (std::cmp_less(nbytes, available))
-		available -= (off_t)nbytes;
+		available -= nbytes;
 	else
 		available = 0;
 
@@ -151,7 +151,7 @@ CatchIstream::OnData(std::span<const std::byte> src) noexcept
 	std::size_t nbytes = ForwardIstream::OnData(src);
 	if (nbytes > 0) {
 		if (std::cmp_less(nbytes, available))
-			available -= (off_t)nbytes;
+			available -= nbytes;
 		else
 			available = 0;
 
@@ -228,7 +228,7 @@ CatchIstream::_FillBucketList(IstreamBucketList &list)
 
 		if (const auto buffer_size = list.GetTotalBufferSize();
 		    std::cmp_greater(buffer_size, available))
-			available = static_cast<off_t>(buffer_size);
+			available = buffer_size;
 	} catch (...) {
 		if (auto error = callback(std::current_exception())) {
 			Destroy();
@@ -249,7 +249,7 @@ CatchIstream::_ConsumeBucketList(std::size_t nbytes) noexcept
 	auto result = ForwardIstream::_ConsumeBucketList(nbytes);
 
 	if (std::cmp_less(result.consumed, available))
-		available -= static_cast<off_t>(result.consumed);
+		available -= result.consumed;
 	else
 		available = 0;
 

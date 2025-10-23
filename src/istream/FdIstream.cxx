@@ -171,7 +171,7 @@ IstreamLength
 FdIstream:: _GetLength() noexcept
 {
 	return {
-		.length = static_cast<off_t>(buffer.GetAvailable()),
+		.length = buffer.GetAvailable(),
 		.exhaustive = !fd.IsDefined(),
 	};
 }

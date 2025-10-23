@@ -290,7 +290,7 @@ public:
 
 	IstreamLength _GetLength() noexcept override {
 		return {
-			.length = static_cast<off_t>(bucket_available),
+			.length = bucket_available,
 			.exhaustive = false,
 		};
 	}

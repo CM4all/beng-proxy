@@ -201,12 +201,12 @@ private:
 	IstreamLength _GetLength() noexcept override {
 		if (known_length)
 			return {
-				.length = static_cast<off_t>(length - received + buffer.GetAvailable()),
+				.length = length - received + buffer.GetAvailable(),
 				.exhaustive = true,
 			};
 		else
 			return {
-				.length = static_cast<off_t>(buffer.GetAvailable()),
+				.length = buffer.GetAvailable(),
 				.exhaustive = false,
 			};
 	}

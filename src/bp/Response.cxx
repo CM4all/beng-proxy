@@ -167,7 +167,7 @@ IsTextMimeType(const HttpHeaders &response_headers) noexcept
 
 [[nodiscard]] [[gnu::pure]]
 static bool
-IsShorterThan(const UnusedIstreamPtr &i, off_t length) noexcept
+IsShorterThan(const UnusedIstreamPtr &i, uint_least64_t length) noexcept
 {
 	const auto il = i.GetLength();
 	return il.exhaustive && il.length < length;

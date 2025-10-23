@@ -147,7 +147,7 @@ public:
 		// TODO special case at EOF?
 
 		return {
-			.length = static_cast<off_t>(unprotected_output.GetAvailable()),
+			.length = unprotected_output.GetAvailable(),
 			.exhaustive = !internal,
 		};
 	}

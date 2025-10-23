@@ -4,14 +4,14 @@
 
 #pragma once
 
-#include <sys/types.h> // for off_t
+#include <cstdint>
 
 struct IstreamLength {
 	/**
 	 * Non-negative number of bytes which will be
 	 * available in this #Istream (eventually).
 	 */
-	off_t length;
+	uint_least64_t length;
 
 	/**
 	 * True if the #Istream ends after #bytes.  False if

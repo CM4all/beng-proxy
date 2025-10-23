@@ -19,7 +19,7 @@ public:
 
 	IstreamLength _GetLength() noexcept override {
 		return {
-			.length = static_cast<off_t>(data.size()),
+			.length = data.size(),
 			.exhaustive = true,
 		};
 	}

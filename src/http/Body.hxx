@@ -116,10 +116,13 @@ public:
 		assert(rest != REST_EOF_CHUNK);
 
 		if (KnownLength())
-			return {.length = rest, .exhaustive = true};
+			return {
+				.length = static_cast<uint_least64_t>(rest),
+				.exhaustive = true,
+			};
 
 		return {
-			.length = static_cast<off_t>(s.GetAvailable()),
+			.length = s.GetAvailable(),
 			.exhaustive = false,
 		};
 	}
@@ -208,7 +211,7 @@ public:
 		   ReadBuffer() has moved decrypted_input into
 		   unprotected_decrypted_input */
 		std::size_t available = s.ReadBuffer().size();
-		if ((off_t)available < rest)
+		if (std::cmp_less(available, rest))
 			return false;
 
 		s.DisposeConsumed(rest);
@@ -231,7 +234,7 @@ private:
 		assert(rest != REST_EOF_CHUNK);
 
 		bool then_eof = false;
-		if (KnownLength() && rest <= static_cast<off_t>(i.size())) {
+		if (KnownLength() && std::cmp_less_equal(rest, i.size())) {
 			i = i.first(static_cast<std::size_t>(rest));
 			then_eof = true;
 		}

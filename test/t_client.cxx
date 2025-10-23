@@ -186,7 +186,8 @@ Context::OnDeferred() noexcept
 	}
 
 	if (use_buckets) {
-		if (available.length < 0)
+		if (available.length == static_cast<uint_least64_t>(-2) ||
+		    available.length == static_cast<uint_least64_t>(-3))
 			available = input.GetLength();
 		DoBuckets();
 	} else
@@ -329,7 +330,7 @@ Context::OnHttpResponse(HttpStatus _status, StringMap &&headers,
 		content_length = strdup(_content_length);
 	available = _body
 		? _body.GetLength()
-		: IstreamLength{.length = -2, .exhaustive = false};
+		: IstreamLength{.length = static_cast<uint_least64_t>(-2), .exhaustive = false};
 
 	if (close_request_body_early && !aborted_request_body) {
 		request_body->SetError(std::make_exception_ptr(std::runtime_error("close_request_body_early")));

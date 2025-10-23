@@ -6,7 +6,7 @@
 
 #include "pool/SharedPtr.hxx"
 
-#include <sys/types.h>
+#include <cstdint>
 
 struct pool;
 class EventLoop;
@@ -22,7 +22,7 @@ public:
 	explicit constexpr ApproveIstreamControl(ApproveIstream &_approve) noexcept
 		:approve(&_approve) {}
 
-	void Approve(off_t nbytes) noexcept;
+	void Approve(uint_least64_t nbytes) noexcept;
 };
 
 /**

@@ -82,13 +82,13 @@ public:
 
 private:
 	[[gnu::pure]]
-	off_t GetRemaining() const noexcept {
+	uint_least64_t GetRemaining() const noexcept {
 		return end_offset - offset;
 	}
 
 	[[gnu::pure]]
 	size_t GetMaxRead() const noexcept {
-		return std::min(GetRemaining(), off_t(INT_MAX));
+		return std::min(GetRemaining(), static_cast<uint_least64_t>(INT_MAX));
 	}
 
 	void TryDirect() noexcept;
@@ -288,7 +288,7 @@ IstreamLength
 UringIstream::_GetLength() noexcept
 {
 	return {
-		.length = GetRemaining() + static_cast<off_t>(read_operation->buffer.GetAvailable()),
+		.length = GetRemaining() + read_operation->buffer.GetAvailable(),
 		.exhaustive = true,
 	};
 }
@@ -302,7 +302,7 @@ UringIstream::_Skip(off_t length) noexcept
 	auto &buffer = read_operation->buffer;
 
 	const size_t buffer_available = buffer.GetAvailable();
-	if (length <= off_t(buffer_available)) {
+	if (std::cmp_less_equal(length, buffer_available)) {
 		buffer.Consume(length);
 		Consumed(length);
 		return length;
