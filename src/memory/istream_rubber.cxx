@@ -41,18 +41,6 @@ public:
 		};
 	}
 
-	off_t _Skip(off_t nbytes) noexcept override {
-		assert(position <= end);
-
-		const size_t remaining = end - position;
-		if (std::cmp_greater(nbytes, remaining))
-			nbytes = remaining;
-
-		position += nbytes;
-		Consumed(nbytes);
-		return nbytes;
-	}
-
 	void _Read() noexcept override {
 		assert(position <= end);
 

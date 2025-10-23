@@ -112,11 +112,4 @@ public:
 
 		return stream->GetLength();
 	}
-
-	[[gnu::always_inline]]
-	off_t Skip(off_t length) noexcept {
-		assert(IsDefined());
-
-		return stream->Skip(length);
-	}
 };

@@ -78,12 +78,6 @@ public:
 			return {.exhaustive = false};
 	}
 
-	off_t _Skip(off_t length) noexcept override {
-		return HasInput()
-			? ForwardIstream::_Skip(length)
-			: -1;
-	}
-
 	void _Read() noexcept override {
 		if (HasInput())
 			ForwardIstream::_Read();

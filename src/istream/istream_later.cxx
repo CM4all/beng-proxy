@@ -25,10 +25,6 @@ public:
 		return {.exhaustive = false};
 	}
 
-	off_t _Skip(off_t) noexcept override {
-		return -1;
-	}
-
 	void _Read() noexcept override {
 		Schedule();
 	}

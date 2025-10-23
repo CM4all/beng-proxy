@@ -30,10 +30,6 @@ class CatIstream final : public Istream, DestructAnchor {
 			return input.GetLength();
 		}
 
-		off_t Skip(off_t length) noexcept {
-			return input.Skip(length);
-		}
-
 		void Read() noexcept {
 			input.Read();
 		}
@@ -195,7 +191,6 @@ public:
 	}
 
 	IstreamLength _GetLength() noexcept override;
-	off_t _Skip([[maybe_unused]] off_t length) noexcept override;
 	void _Read() noexcept override;
 	void _FillBucketList(IstreamBucketList &list) override;
 	ConsumeBucketResult _ConsumeBucketList(std::size_t nbytes) noexcept override;
@@ -242,17 +237,6 @@ CatIstream::_GetLength() noexcept
 		result += input.GetLength();
 
 	return result;
-}
-
-off_t
-CatIstream::_Skip(off_t length) noexcept
-{
-	if (inputs.empty())
-		return 0;
-
-	off_t nbytes = inputs.front().Skip(length);
-	Consumed(nbytes);
-	return nbytes;
 }
 
 void

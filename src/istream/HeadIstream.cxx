@@ -28,7 +28,6 @@ public:
 	IstreamLength _GetLength() noexcept override;
 	ConsumeBucketResult _ConsumeBucketList(std::size_t nbytes) noexcept override;
 	void _ConsumeDirect(std::size_t nbytes) noexcept override;
-	off_t _Skip(off_t length) noexcept override;
 	void _Read() noexcept override;
 
 	void _FillBucketList(IstreamBucketList &list) override;
@@ -157,21 +156,6 @@ HeadIstream::_GetLength() noexcept
 	}
 
 	return result;
-}
-
-off_t
-HeadIstream::_Skip(off_t length) noexcept
-{
-	if (std::cmp_greater_equal(length, rest))
-		length = rest;
-
-	off_t nbytes = ForwardIstream::_Skip(length);
-	assert(nbytes <= length);
-
-	if (nbytes > 0)
-		rest -= nbytes;
-
-	return nbytes;
 }
 
 void

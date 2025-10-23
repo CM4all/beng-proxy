@@ -26,10 +26,6 @@ public:
 		return result;
 	}
 
-	off_t _Skip([[maybe_unused]] off_t length) noexcept override {
-		return -1;
-	}
-
 	void _FillBucketList(IstreamBucketList &list) override {
 		IstreamBucketList tmp;
 		ForwardIstream::_FillBucketList(tmp);

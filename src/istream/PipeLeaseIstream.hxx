@@ -44,10 +44,7 @@ public:
 		};
 	}
 
-	off_t _Skip(off_t length) noexcept override;
-
 	void _Read() noexcept override;
-
 	void _ConsumeDirect(std::size_t nbytes) noexcept override;
 
 private:

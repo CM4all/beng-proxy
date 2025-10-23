@@ -47,12 +47,6 @@ public:
 		};
 	}
 
-	off_t _Skip(off_t length) noexcept override {
-		return HasInput()
-			? ForwardIstream::_Skip(length)
-			: -1;
-	}
-
 	void _Read() noexcept override {
 		if (Check()) [[likely]]
 			ForwardIstream::_Read();

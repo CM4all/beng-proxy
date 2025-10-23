@@ -43,23 +43,6 @@ FifoBufferIstream::SubmitBuffer() noexcept
 	}
 }
 
-off_t
-FifoBufferIstream::_Skip(off_t length) noexcept
-{
-	size_t nbytes = std::min<decltype(length)>(length, buffer.GetAvailable());
-	buffer.Consume(nbytes);
-	buffer.FreeIfEmpty();
-	Consumed(nbytes);
-
-	if (nbytes > 0 && !eof) {
-		handler.OnFifoBufferIstreamConsumed(nbytes);
-		if (buffer.empty())
-			handler.OnFifoBufferIstreamDrained();
-	}
-
-	return nbytes;
-}
-
 void
 FifoBufferIstream::_Read() noexcept
 {

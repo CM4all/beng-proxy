@@ -89,7 +89,6 @@ public:
 		};
 	}
 
-	off_t _Skip(off_t length) noexcept override;
 	void _Read() noexcept override;
 	void _FillBucketList(IstreamBucketList &list) noexcept override;
 	ConsumeBucketResult _ConsumeBucketList(size_t nbytes) noexcept override;

@@ -5,17 +5,6 @@
 #include "MemoryIstream.hxx"
 #include "Bucket.hxx"
 
-#include <algorithm>
-
-off_t
-MemoryIstream::_Skip(off_t length) noexcept
-{
-	size_t nbytes = std::min(off_t(data.size()), length);
-	data = data.subspan(nbytes);
-	Consumed(nbytes);
-	return nbytes;
-}
-
 void
 MemoryIstream::_Read() noexcept
 {

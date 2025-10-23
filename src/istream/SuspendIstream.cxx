@@ -31,10 +31,6 @@ public:
 		return ready ? ForwardIstream::_GetLength() : IstreamLength{.exhaustive = false};
 	}
 
-	off_t _Skip(off_t length) noexcept override {
-		return ready ? ForwardIstream::_Skip(length) : -1;
-	}
-
 	void _Read() noexcept override {
 		if (ready)
 			ForwardIstream::_Read();

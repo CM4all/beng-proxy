@@ -184,7 +184,6 @@ private:
 	}
 
 	IstreamLength _GetLength() noexcept override;
-	//off_t _Skip(off_t length) noexcept override;  TODO implement using splice(/dev/null)
 	void _Read() noexcept override;
 	void _ConsumeDirect(std::size_t nbytes) noexcept override;
 

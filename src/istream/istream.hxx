@@ -242,50 +242,6 @@ public:
 	}
 
 	/**
-	 * Skip data without processing it.  By skipping 0 bytes, you can
-	 * test whether the stream is able to skip at all.
-	 *
-	 * @return the number of bytes skipped or -1 if skipping is not supported
-	 */
-	off_t Skip(off_t length) noexcept {
-#ifndef NDEBUG
-		assert(!destroyed);
-		assert(!closing);
-		assert(!eof);
-		assert(!bucket_eof);
-		assert(!reading);
-
-		const DestructObserver destructed(*this);
-		reading = true;
-		in_direct = false;
-#endif
-
-		off_t nbytes = _Skip(length);
-		assert(nbytes <= length);
-
-#ifndef NDEBUG
-		if (destructed || destroyed)
-			return nbytes;
-
-		reading = false;
-
-		if (nbytes > 0) {
-			if (std::cmp_greater(nbytes, available_partial))
-				available_partial = 0;
-			else
-				available_partial -= nbytes;
-
-			assert(!available_full_set ||
-			       std::cmp_less(nbytes, available_full));
-			if (available_full_set)
-				available_full -= nbytes;
-		}
-#endif
-
-		return nbytes;
-	}
-
-	/**
 	 * Try to read from the stream.  If the stream can read data
 	 * without blocking, it must provide data.  It may invoke the
 	 * callbacks any number of times, supposed that the handler itself
@@ -471,10 +427,6 @@ protected:
 
 	virtual IstreamLength _GetLength() noexcept {
 		return {0, false};
-	}
-
-	virtual off_t _Skip([[maybe_unused]] off_t length) noexcept {
-		return -1;
 	}
 
 	virtual void _Read() noexcept = 0;

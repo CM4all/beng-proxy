@@ -36,21 +36,6 @@ MultiFifoBufferIstream::SubmitBuffer() noexcept
 		DestroyEof();
 }
 
-off_t
-MultiFifoBufferIstream::_Skip(off_t length) noexcept
-{
-	size_t consumed = buffer.Skip(length);
-
-	if (consumed > 0) {
-		Consumed(consumed);
-
-		if (!eof)
-			handler.OnFifoBufferIstreamConsumed(consumed);
-	}
-
-	return consumed;
-}
-
 void
 MultiFifoBufferIstream::_Read() noexcept
 {

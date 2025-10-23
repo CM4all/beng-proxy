@@ -38,24 +38,6 @@ public:
 	/* virtual methods from class Istream */
 
 	IstreamLength _GetLength() noexcept override;
-
-	off_t _Skip(off_t length) noexcept override {
-		off_t nbytes = ForwardIstream::_Skip(length);
-		if (nbytes > 0) {
-			if (std::cmp_less(nbytes, available))
-				available -= nbytes;
-			else
-				available = 0;
-
-			if (std::cmp_less(nbytes, chunk))
-				chunk -= nbytes;
-			else
-				chunk = 0;
-		}
-
-		return nbytes;
-	}
-
 	void _Read() noexcept override;
 	void _FillBucketList(IstreamBucketList &list) override;
 	ConsumeBucketResult _ConsumeBucketList(std::size_t nbytes) noexcept override;

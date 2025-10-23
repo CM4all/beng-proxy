@@ -24,7 +24,6 @@ public:
 	/* virtual methods from class Istream */
 
 	IstreamLength _GetLength() noexcept override;
-	off_t _Skip(off_t length) noexcept override;
 	void _FillBucketList(IstreamBucketList &list) override;
 	ConsumeBucketResult _ConsumeBucketList(std::size_t nbytes) noexcept override;
 	void _ConsumeDirect(std::size_t nbytes) noexcept override;

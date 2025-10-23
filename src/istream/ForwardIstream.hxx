@@ -26,8 +26,6 @@ public:
 		return input.GetLength();
 	}
 
-	off_t _Skip(off_t length) noexcept override;
-
 	void _Read() noexcept override {
 		input.Read();
 	}

@@ -52,20 +52,6 @@ private:
 protected:
 	/* virtual methods from class Istream */
 
-	off_t _Skip(off_t length) noexcept override {
-		if (approved <= 0)
-			return -1;
-
-		if (std::cmp_greater(length, approved))
-			length = approved;
-
-		auto nbytes = ForwardIstream::_Skip(length);
-		if (nbytes > 0)
-			approved -= nbytes;
-
-		return nbytes;
-	}
-
 	void _Read() noexcept override {
 		if (approved > 0)
 			ForwardIstream::_Read();

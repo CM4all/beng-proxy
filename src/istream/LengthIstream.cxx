@@ -16,15 +16,6 @@ LengthIstream::_GetLength() noexcept
 	};
 }
 
-off_t
-LengthIstream::_Skip(off_t length) noexcept
-{
-	off_t nbytes = ForwardIstream::_Skip(length);
-	if (nbytes > 0)
-		remaining -= nbytes;
-	return nbytes;
-}
-
 void
 LengthIstream::_FillBucketList(IstreamBucketList &list)
 {

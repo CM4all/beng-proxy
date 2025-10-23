@@ -98,7 +98,6 @@ private:
 	}
 
 	IstreamLength _GetLength() noexcept override;
-	off_t _Skip(off_t length) noexcept override;
 
 	void _Read() noexcept override {
 		retry_event.Cancel();
@@ -222,40 +221,6 @@ FileIstream::_GetLength() noexcept
 		.length = GetRemaining() + buffer.GetAvailable(),
 		.exhaustive = true,
 	};
-}
-
-off_t
-FileIstream::_Skip(off_t length) noexcept
-{
-	retry_event.Cancel();
-
-	if (length == 0)
-		return 0;
-
-	const size_t buffer_available = buffer.GetAvailable();
-	if (std::cmp_less(length, buffer_available)) {
-		buffer.Consume(length);
-		Consumed(length);
-		return length;
-	}
-
-	length -= buffer_available;
-	buffer.Clear();
-
-	if (std::cmp_greater_equal(length, GetRemaining())) {
-		/* skip beyond EOF */
-
-		length = GetRemaining();
-		offset = end_offset;
-	} else {
-		/* seek the file descriptor */
-
-		offset += length;
-	}
-
-	off_t result = buffer_available + length;
-	Consumed(result);
-	return result;
 }
 
 void

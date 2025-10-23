@@ -106,7 +106,6 @@ private:
 	}
 
 	IstreamLength _GetLength() noexcept override;
-	off_t _Skip(off_t length) noexcept override;
 	void _Read() noexcept override;
 	void _ConsumeDirect(std::size_t nbytes) noexcept override;
 
@@ -291,29 +290,6 @@ UringIstream::_GetLength() noexcept
 		.length = GetRemaining() + read_operation->buffer.GetAvailable(),
 		.exhaustive = true,
 	};
-}
-
-off_t
-UringIstream::_Skip(off_t length) noexcept
-{
-	if (length == 0)
-		return 0;
-
-	auto &buffer = read_operation->buffer;
-
-	const size_t buffer_available = buffer.GetAvailable();
-	if (std::cmp_less_equal(length, buffer_available)) {
-		buffer.Consume(length);
-		Consumed(length);
-		return length;
-	}
-
-	buffer.Consume(buffer_available);
-	Consumed(buffer_available);
-
-	// TODO: skip more data?  what about the pending read?
-
-	return buffer_available;
 }
 
 void

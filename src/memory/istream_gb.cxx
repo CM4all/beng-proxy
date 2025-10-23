@@ -27,15 +27,6 @@ public:
 		};
 	}
 
-	off_t _Skip(off_t _nbytes) noexcept override {
-		size_t nbytes = std::cmp_greater(_nbytes, reader.Available())
-			? reader.Available()
-			: size_t(_nbytes);
-
-		reader.Skip(nbytes);
-		return Consumed(nbytes);
-	}
-
 	void _Read() noexcept override {
 		/* this loop is required to cross the buffer borders */
 		while (true) {

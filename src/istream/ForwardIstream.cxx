@@ -5,15 +5,6 @@
 #include "ForwardIstream.hxx"
 #include "io/FileDescriptor.hxx"
 
-off_t
-ForwardIstream::_Skip(off_t length) noexcept
-{
-	off_t nbytes = input.Skip(length);
-	if (nbytes > 0)
-		Consumed(nbytes);
-	return nbytes;
-}
-
 void
 ForwardIstream::_FillBucketList(IstreamBucketList &list)
 {

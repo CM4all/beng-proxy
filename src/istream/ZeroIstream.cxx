@@ -25,11 +25,6 @@ public:
 		};
 	}
 
-	off_t _Skip(off_t length) noexcept override {
-		Consumed(length);
-		return length;
-	}
-
 	void _Read() noexcept override {
 		InvokeData(std::span{zero_buffer});
 	}

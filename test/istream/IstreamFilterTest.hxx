@@ -184,15 +184,6 @@ struct Context final : IstreamSink {
 
 	using IstreamSink::CloseInput;
 
-	void Skip(off_t nbytes) noexcept {
-		assert(skipped == 0);
-		auto s = input.Skip(nbytes);
-		if (s > 0) {
-			skipped += s;
-			offset += s;
-		}
-	}
-
 	void DeferInject(std::shared_ptr<InjectIstreamControl> &&inject,
 			 std::exception_ptr ep) noexcept;
 
@@ -623,28 +614,6 @@ TYPED_TEST_P(IstreamFilterTest, ReadyOk)
 	run_istream_ctx(ctx);
 }
 
-/** invoke Istream::Skip(1) */
-TYPED_TEST_P(IstreamFilterTest, Skip)
-{
-	auto &traits = this->traits_;
-	auto &instance = this->instance_;
-
-	auto pool = pool_new_linear(instance.root_pool, "test", 8192);
-	auto input_pool = pool_new_linear(instance.root_pool, "input", 8192);
-
-	auto istream = traits.CreateTest(instance.event_loop, pool,
-					 traits.CreateInput(input_pool));
-	ASSERT_TRUE(!!istream);
-	input_pool.reset();
-
-	Context ctx(instance, std::move(pool),
-		    traits.options, std::move(istream));
-	ctx.record = ctx.options.expected_result.data() != nullptr;
-	ctx.Skip(1);
-
-	run_istream_ctx(ctx);
-}
-
 /** block once after n data() invocations */
 TYPED_TEST_P(IstreamFilterTest, Block)
 {
@@ -1003,7 +972,6 @@ REGISTER_TYPED_TEST_SUITE_P(IstreamFilterTest,
 			    BucketSecondFail,
 			    Ready,
 			    ReadyOk,
-			    Skip,
 			    Block,
 			    Byte,
 			    BlockByte,
