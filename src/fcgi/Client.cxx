@@ -93,12 +93,56 @@ class FcgiClient final
 		bool got_data;
 	} request;
 
+	class RemainingLength {
+		off_t value;
+
+	public:
+		constexpr void SetUnknown() noexcept {
+			value = -1;
+		}
+
+		constexpr void SetKnown(off_t _value) noexcept {
+			value = _value;
+			assert(IsKnown());
+		}
+
+		constexpr bool IsKnown() const noexcept {
+			return value >= 0;
+		}
+
+		constexpr off_t GetValue() const noexcept {
+			assert(IsKnown());
+
+			return value;
+		}
+
+		constexpr void Consume(std::size_t n) noexcept {
+			if (!IsKnown())
+				return;
+
+			assert(std::cmp_less_equal(n, value));
+			value -= n;
+		}
+
+		constexpr bool HasEnded() const noexcept {
+			return value == 0;
+		}
+
+		constexpr bool ExpectsMore() const noexcept {
+			return value > 0;
+		}
+
+		constexpr bool IsExcess(std::size_t n) const noexcept {
+			return IsKnown() && std::cmp_greater(n, GetValue());
+		}
+	};
+
 	struct Response {
 		StringMap headers;
 
 		std::size_t total_header_size = 0;
 
-		off_t available;
+		RemainingLength remaining;
 
 		/**
 		 * Only used when #no_body is set.
@@ -515,14 +559,11 @@ FcgiClient::Feed(std::span<const std::byte> src) noexcept
 		}
 	} else {
 		assert(!response.no_body);
-		assert(response.available < 0 ||
-		       std::cmp_less_equal(src.size(), response.available));
+		assert(!response.remaining.IsExcess(src.size()));
 
 		std::size_t consumed = InvokeData(src);
-		if (consumed > 0 && response.available >= 0) {
-			assert(std::cmp_less_equal(consumed, response.available));
-			response.available -= consumed;
-		}
+		if (consumed > 0)
+			response.remaining.Consume(consumed);
 
 		return consumed;
 	}
@@ -556,13 +597,13 @@ FcgiClient::SubmitResponse() noexcept
 		return true;
 	}
 
-	response.available = -1;
+	response.remaining.SetUnknown();
 	p = response.headers.Remove(content_length_header);
 	if (p != nullptr) {
 		char *endptr;
 		unsigned long long l = strtoull(p, &endptr, 10);
 		if (endptr > p && *endptr == 0)
-			response.available = l;
+			response.remaining.SetKnown(l);
 	}
 
 	const DestructObserver destructed{*this};
@@ -581,7 +622,7 @@ inline void
 FcgiClient::HandleEndComplete() noexcept
 {
 	assert(!response.receiving_headers);
-	assert(response.no_body || response.available == 0);
+	assert(response.no_body || response.remaining.HasEnded());
 
 	if (response.no_body) {
 		auto &_handler = handler;
@@ -605,14 +646,14 @@ FcgiClient::HandleEnd() noexcept
 									     "premature end of headers "
 									     "from FastCGI application")));
 		return FrameResult::CLOSED;
-	} else if (!response.no_body && response.available > 0) {
+	} else if (!response.no_body && response.remaining.ExpectsMore()) {
 		AbortResponseBody(std::make_exception_ptr(FcgiClientError(FcgiClientErrorCode::GARBAGE,
 									  "premature end of body "
 									  "from FastCGI application")));
 		return FrameResult::CLOSED;
 	}
 
-	response.available = 0;
+	response.remaining.SetKnown(0);
 
 	return FrameResult::SKIP;
 }
@@ -660,8 +701,7 @@ FcgiClient::OnFramePayload(std::span<const std::byte> payload)
 
 	if (response.WasResponseSubmitted() &&
 	    !response.stderr &&
-	    response.available >= 0 &&
-	    std::cmp_greater(payload.size(), response.available)) {
+	    response.remaining.IsExcess(payload.size())) {
 		/* the DATA packet was larger than the Content-Length
 		   declaration - fail */
 		AbortResponseBody(std::make_exception_ptr(FcgiClientError(FcgiClientErrorCode::GARBAGE,
@@ -850,8 +890,11 @@ FcgiClient::OnError(std::exception_ptr &&ep) noexcept
 IstreamLength
 FcgiClient::_GetLength() noexcept
 {
-	if (response.available >= 0)
-		return {.length = response.available, .exhaustive = true};
+	if (response.remaining.IsKnown())
+		return {
+			.length = response.remaining.GetValue(),
+			.exhaustive = true,
+		};
 
 	const std::size_t remaining = parser.GetRemaining();
 	const auto buffer = socket.ReadBuffer();
@@ -896,7 +939,7 @@ struct FcgiClient::FillBucketHandler final : FcgiFrameHandler {
 
 	IstreamBucketList &list;
 
-	off_t available = client.response.available;
+	RemainingLength remaining = client.response.remaining;
 
 	std::size_t total_size = 0;
 
@@ -943,16 +986,15 @@ FcgiClient::FillBucketHandler::OnFrameHeader(FcgiRecordType type, uint_least16_t
 
 	case FcgiRecordType::END_REQUEST:
 		/* "excess data" has already been checked */
-		assert(client.response.available < 0 ||
-						   static_cast<std::size_t>(client.response.available) >= total_size);
+		assert(!client.response.remaining.IsExcess(total_size));
 
-		if (available > 0) {
+		if (remaining.ExpectsMore()) {
 			throw FcgiClientError(FcgiClientErrorCode::GARBAGE,
 					      "premature end of body "
 					      "from FastCGI application");
-		} else if (client.response.available < 0) {
+		} else if (!client.response.remaining.IsKnown()) {
 			/* now we know how much data remains */
-			client.response.available = total_size;
+			client.response.remaining.SetKnown(total_size);
 		}
 
 		found_end_request = true;
@@ -979,16 +1021,13 @@ FcgiClient::FillBucketHandler::OnFramePayload(std::span<const std::byte> src)
 			current_skip_stderr -= src.size();
 		}
 	} else {
-		if (available >= 0) {
-			if (std::cmp_greater(src.size(), available))
-				/* the DATA packet was larger than the Content-Length
-				   declaration - fail */
-				throw FcgiClientError(FcgiClientErrorCode::GARBAGE,
-						      "excess data at end of body "
-						      "from FastCGI application");
+		if (remaining.IsExcess(src.size()))
+			/* the DATA packet was larger than the
+			   Content-Length declaration - fail */
+			throw FcgiClientError(FcgiClientErrorCode::GARBAGE,
+					      "excess data at end of body from FastCGI application");
 
-			available -= src.size();
-		}
+		remaining.Consume(src.size());
 
 		list.Push(src);
 		total_size += src.size();
@@ -1013,7 +1052,7 @@ FcgiClient::_FillBucketList(IstreamBucketList &list)
 {
 	assert(response.WasResponseSubmitted());
 
-	if (response.available == 0 && socket.IsReleased())
+	if (response.remaining.HasEnded() && socket.IsReleased())
 		return;
 
 	FillBucketHandler fill_bucket_handler{*this, list};
@@ -1069,7 +1108,7 @@ FcgiClient::ConsumeBucketHandler::OnFrameHeader(FcgiRecordType type, uint_least1
 		if (client.socket.IsReleased()) {
 			/* this condition must have been detected
 			   already in _FillBucketList() */
-			assert(client.response.available == 0);
+			assert(client.response.remaining.HasEnded());
 
 			client.response.end_request = true;
 		}
@@ -1108,8 +1147,7 @@ FcgiClient::ConsumeBucketHandler::OnFramePayload(std::span<const std::byte> src)
 		nbytes -= consumed;
 		total += consumed;
 
-		if (client.response.available > 0)
-			client.response.available -= consumed;
+		client.response.remaining.Consume(consumed);
 	}
 
 	return {result, consumed};
@@ -1124,7 +1162,7 @@ FcgiClient::ConsumeBucketHandler::OnFrameEnd()
 Istream::ConsumeBucketResult
 FcgiClient::_ConsumeBucketList(std::size_t nbytes) noexcept
 {
-	assert(response.available != 0);
+	assert(!response.remaining.HasEnded());
 	assert(response.WasResponseSubmitted());
 
 	ConsumeBucketHandler consume_bucket_handler{*this, nbytes};
