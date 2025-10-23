@@ -50,7 +50,22 @@ class ChunkedIstream final : public FacadeIstream, DestructAnchor {
 		/**
 		 * Append data to the buffer.
 		 */
-		constexpr void Append(std::string_view src) noexcept;
+		constexpr void Append(std::string_view src) noexcept {
+			assert(!src.empty());
+			assert(src.size() <= position);
+
+			const auto old = ReadChars();
+
+#ifndef NDEBUG
+			/* simulate a buffer reset; if we don't do this, an assertion
+			   in Set() fails (which is invalid for this special case) */
+			position = buffer.size();
+#endif
+
+			auto dest = Set(old.size() + src.size());
+			dest = std::copy(old.begin(), old.end(), dest);
+			std::copy(src.begin(), src.end(), dest);
+		}
 
 		[[nodiscard]]
 		constexpr bool empty() const noexcept {
@@ -149,26 +164,6 @@ private:
 
 	size_t Feed(std::span<const std::byte> src) noexcept;
 };
-
-template<std::size_t SIZE>
-constexpr void
-ChunkedIstream::Buffer<SIZE>::Append(std::string_view src) noexcept
-{
-	assert(!src.empty());
-	assert(src.size() <= position);
-
-	const auto old = ReadChars();
-
-#ifndef NDEBUG
-	/* simulate a buffer reset; if we don't do this, an assertion
-	   in Set() fails (which is invalid for this special case) */
-	position = buffer.size();
-#endif
-
-	auto dest = Set(old.size() + src.size());
-	dest = std::copy(old.begin(), old.end(), dest);
-	std::copy(src.begin(), src.end(), dest);
-}
 
 void
 ChunkedIstream::StartChunk(size_t length) noexcept
