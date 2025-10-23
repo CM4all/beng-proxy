@@ -205,8 +205,21 @@ void
 CatchIstream::_FillBucketList(IstreamBucketList &list)
 {
 	if (!HasInput()) {
-		// TODO: generate space bucket?
-		list.EnableFallback();
+		uint_least64_t remaining = available;
+		if (remaining == 0)
+			return;
+
+		while (!list.IsFull()) {
+			if (remaining <= space.size()) {
+				list.Push(std::span{space}.first(remaining));
+				return;
+			}
+
+			list.Push(std::span{space});
+			remaining -= space.size();
+		}
+
+		list.SetMore();
 		return;
 	}
 
@@ -233,6 +246,17 @@ CatchIstream::_FillBucketList(IstreamBucketList &list)
 Istream::ConsumeBucketResult
 CatchIstream::_ConsumeBucketList(std::size_t nbytes) noexcept
 {
+	if (!HasInput()) {
+		if (nbytes < available) {
+			available -= nbytes;
+			return {.consumed = nbytes, .eof = false};
+		} else {
+			const std::size_t consumed = available;
+			available = 0;
+			return {.consumed = consumed, .eof = true};
+		}
+	}
+
 	auto result = ForwardIstream::_ConsumeBucketList(nbytes);
 
 	if (std::cmp_less(result.consumed, available))
