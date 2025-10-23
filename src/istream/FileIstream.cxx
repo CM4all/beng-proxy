@@ -263,8 +263,12 @@ try {
 	if (auto r = buffer.Read(); !r.empty())
 		list.Push(buffer.Read());
 
-	if (offset < end_offset && direct)
-		list.EnableFallback();
+	if (offset < end_offset) {
+		if (direct)
+			list.EnableFallback();
+		else
+			list.SetMore();
+	}
 } catch (...) {
 	Destroy();
 	throw;
