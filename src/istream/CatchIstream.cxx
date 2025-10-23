@@ -249,10 +249,12 @@ CatchIstream::_ConsumeBucketList(std::size_t nbytes) noexcept
 	if (!HasInput()) {
 		if (nbytes < available) {
 			available -= nbytes;
+			Consumed(nbytes);
 			return {.consumed = nbytes, .eof = false};
 		} else {
 			const std::size_t consumed = available;
 			available = 0;
+			Consumed(consumed);
 			return {.consumed = consumed, .eof = true};
 		}
 	}
