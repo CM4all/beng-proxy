@@ -8,6 +8,7 @@
 #include "Bucket.hxx"
 #include "New.hxx"
 
+#include <array>
 #include <memory>
 
 #include <assert.h>
@@ -49,11 +50,15 @@ public:
 	void OnError(std::exception_ptr &&ep) noexcept override;
 };
 
-static constexpr char space[] =
-	"                                "
-	"                                "
-	"                                "
-	"                                ";
+static constexpr auto
+MakeSpaceArray() noexcept
+{
+	std::array<std::byte, 1024> result;
+	result.fill(static_cast<std::byte>(' '));
+	return result;
+}
+
+static constexpr auto space = MakeSpaceArray();
 
 void
 CatchIstream::SendSpace() noexcept
@@ -62,7 +67,7 @@ CatchIstream::SendSpace() noexcept
 	assert(available > 0);
 	assert(std::cmp_less_equal(chunk, available));
 
-	if (chunk > sizeof(space) - 1) {
+	if (chunk > space.size()) {
 		std::unique_ptr<char[]> buffer(new char[chunk]);
 		std::fill_n(buffer.get(), ' ', chunk);
 		std::size_t nbytes = ForwardIstream::OnData(std::as_bytes(std::span{buffer.get(), chunk}));
@@ -83,12 +88,12 @@ CatchIstream::SendSpace() noexcept
 
 	do {
 		std::size_t length;
-		if (available >= sizeof(space) - 1)
-			length = sizeof(space) - 1;
+		if (available >= space.size())
+			length = space.size();
 		else
 			length = (std::size_t)available;
 
-		std::size_t nbytes = ForwardIstream::OnData(std::as_bytes(std::span{space, length}));
+		std::size_t nbytes = ForwardIstream::OnData(std::span{space}.first(length));
 		if (nbytes == 0)
 			return;
 
