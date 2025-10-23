@@ -145,10 +145,10 @@ FileIstream::TryData()
 
 	ssize_t nbytes = fd.ReadAt(offset, w);
 	if (nbytes == 0) {
-		throw FmtRuntimeError("premature end of file in '{}'", path);
+		throw FmtRuntimeError("premature end of file in {:?}", path);
 	} else if (nbytes == -1) {
 		fd_lease.SetBroken();
-		throw FmtErrno("Failed to read from '{}'", path);
+		throw FmtErrno("Failed to read from {:?}", path);
 	} else if (nbytes > 0) {
 		buffer.Append(nbytes);
 		offset += nbytes;
@@ -188,7 +188,7 @@ FileIstream::TryDirect()
 		break;
 
 	case IstreamDirectResult::END:
-		throw FmtRuntimeError("premature end of file in '{}'", path);
+		throw FmtRuntimeError("premature end of file in {:?}", path);
 
 	case IstreamDirectResult::ERRNO:
 		if (errno == EAGAIN) {
@@ -202,7 +202,7 @@ FileIstream::TryDirect()
 		} else {
 			/* XXX */
 			fd_lease.SetBroken();
-			throw FmtErrno("Failed to read from '{}'", path);
+			throw FmtErrno("Failed to read from {:?}", path);
 		}
 
 		break;
