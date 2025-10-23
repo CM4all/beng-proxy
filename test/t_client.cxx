@@ -253,7 +253,7 @@ Context::OnData(std::span<const std::byte> src) noexcept
 	body_data += src.size();
 
 	if (close_response_body_after >= 0 &&
-	    body_data >= close_response_body_after)
+	    std::cmp_greater_equal(body_data, close_response_body_after))
 		close_response_body_data = true;
 
 	if (close_response_body_data) {

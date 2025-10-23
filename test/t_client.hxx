@@ -142,7 +142,7 @@ struct Context final
 
 	DelayedIstreamControl *delayed = nullptr;
 
-	off_t body_data = 0, consumed_body_data = 0;
+	uint_least64_t body_data = 0, consumed_body_data = 0;
 	bool body_eof = false, body_closed = false;
 
 	DelayedIstreamControl *request_body = nullptr;
