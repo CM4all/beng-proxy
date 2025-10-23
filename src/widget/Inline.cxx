@@ -270,7 +270,7 @@ try {
 
 	if (!widget.HasDefaultView())
 		throw WidgetError(widget, WidgetErrorCode::NO_SUCH_VIEW,
-				  FmtBuffer<256>("No such view: {}",
+				  FmtBuffer<256>("No such view: {:?}",
 						 widget.from_template.view_name));
 
 	if (widget.session_sync_pending) {
