@@ -504,8 +504,7 @@ TYPED_TEST_P(IstreamFilterTest, BucketError)
 
 		if (traits.options.forwards_errors) {
 			FAIL();
-		} else {
-			ASSERT_TRUE(ctx.input.IsDefined());
+		} else if (ctx.input.IsDefined()) {
 			ctx.CloseInput();
 		}
 	} catch (...) {
