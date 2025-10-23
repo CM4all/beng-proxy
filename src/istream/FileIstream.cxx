@@ -168,8 +168,12 @@ FileIstream::TryData()
 
 	assert(!buffer.empty());
 
-	if (ConsumeFromBuffer(buffer) == 0 && offset >= end_offset)
-		EofDetected();
+	if (ConsumeFromBuffer(buffer) == 0) {
+		if (offset >= end_offset)
+			EofDetected();
+		else
+			buffer.Free();
+	}
 }
 
 inline void
@@ -178,6 +182,8 @@ FileIstream::TryDirect()
 	/* first consume the rest of the buffer */
 	if (ConsumeFromBuffer(buffer) > 0)
 		return;
+
+	buffer.FreeIfDefined();
 
 	if (offset >= end_offset) {
 		EofDetected();
@@ -254,14 +260,13 @@ FileIstream::_FillBucketList(IstreamBucketList &list) noexcept
 Istream::ConsumeBucketResult
 FileIstream::_ConsumeBucketList(std::size_t nbytes) noexcept
 {
-	bool is_eof = false;
 	if (const auto available = buffer.GetAvailable(); nbytes >= available) {
-		nbytes = available;
-		is_eof = offset == end_offset;
+		buffer.FreeIfDefined();
+		return {Consumed(available), offset == end_offset};
+	} else {
+		buffer.Consume(nbytes);
+		return {Consumed(nbytes), false};
 	}
-
-	buffer.Consume(nbytes);
-	return {Consumed(nbytes), is_eof};
 }
 
 /*
