@@ -108,7 +108,7 @@ private:
 
 	void _ConsumeDirect(std::size_t nbytes) noexcept override;
 
-	void _FillBucketList(IstreamBucketList &list) noexcept override;
+	void _FillBucketList(IstreamBucketList &list) override;
 	ConsumeBucketResult _ConsumeBucketList(std::size_t nbytes) noexcept override;
 
 	void _Close() noexcept override {
@@ -248,13 +248,26 @@ FileIstream::_ConsumeDirect(std::size_t nbytes) noexcept
 }
 
 void
-FileIstream::_FillBucketList(IstreamBucketList &list) noexcept
-{
-	if (auto r = buffer.Read(); !r.empty())
-		list.Push(r);
+FileIstream::_FillBucketList(IstreamBucketList &list)
+try {
+	if (buffer.empty() && !direct) {
+		assert(!buffer.IsDefined());
 
-	if (offset < end_offset)
-		list.EnableFallback(); // TODO read from file
+		if (offset == end_offset)
+			return;
+
+		buffer.Allocate(fb_pool_get());
+		ReadToBuffer();
+	}
+
+	if (auto r = buffer.Read(); !r.empty())
+		list.Push(buffer.Read());
+
+	if (offset < end_offset && direct)
+		list.EnableFallback();
+} catch (...) {
+	Destroy();
+	throw;
 }
 
 Istream::ConsumeBucketResult
