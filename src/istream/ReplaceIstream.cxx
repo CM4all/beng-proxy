@@ -472,19 +472,19 @@ ReplaceIstream::_FillBucketList(IstreamBucketList &list)
 
 	defer_read.Cancel();
 
+	bool input_fallback = false;
 	if (HasInput()) {
 		/* fill our buffer from the input */
 		IstreamBucketList tmp;
 		FillBucketListFromInput(tmp);
 
-		if (tmp.ShouldFallback())
-			list.EnableFallback();
+		input_fallback = tmp.ShouldFallback();
 
 		size_t total = 0;
 		bool only_buffers = true;
 		for (const auto &i : tmp) {
 			if (i.GetType() != IstreamBucket::Type::BUFFER) {
-				list.EnableFallback();
+				input_fallback = true;
 				only_buffers = false;
 				break;
 			}
@@ -521,6 +521,8 @@ ReplaceIstream::_FillBucketList(IstreamBucketList &list)
 			/* after last substitution and the "settled" position:
 			   not yet ready to read */
 			list.SetMore();
+			if (input_fallback)
+				list.EnableFallback();
 			return;
 		}
 
@@ -544,13 +546,19 @@ ReplaceIstream::_FillBucketList(IstreamBucketList &list)
 		}
 
 		if (s == substitutions.end()) {
-			if (input.IsDefined() || !finished)
+			if (input.IsDefined() || !finished) {
 				list.SetMore();
+				if (input_fallback)
+					list.EnableFallback();
+			}
+
 			return;
 		}
 
 		if (end < s->start) {
 			list.SetMore();
+			if (input_fallback)
+				list.EnableFallback();
 			return;
 		}
 
