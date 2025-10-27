@@ -42,8 +42,7 @@ LengthIstream::_FillBucketList(IstreamBucketList &list)
 		/* our input isn't yet sure whether it has ended, but
 		   since we got just the right amount of data, let's
 		   pretend it's the end */
-		list.DisableFallback();
-		list.SetMore(false);
+		list.ResetMoreFlags();
 	}
 }
 

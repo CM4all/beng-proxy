@@ -57,8 +57,8 @@ public:
 	IstreamBucketList(const IstreamBucketList &) = delete;
 	IstreamBucketList &operator=(const IstreamBucketList &) = delete;
 
-	void SetMore(bool _more=true) noexcept {
-		more = _more;
+	void SetMore() noexcept {
+		more = true;
 	}
 
 	bool HasMore() const noexcept {
@@ -71,6 +71,11 @@ public:
 	}
 
 	void DisableFallback() noexcept {
+		fallback = false;
+	}
+
+	void ResetMoreFlags() noexcept {
+		more = false;
 		fallback = false;
 	}
 
