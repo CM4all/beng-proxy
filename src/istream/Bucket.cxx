@@ -21,11 +21,15 @@ IstreamBucketList::SpliceBuffersFrom(IstreamBucketList &&src,
 {
 	std::size_t total_size = 0;
 	for (const auto &bucket : src) {
-		if (max_size == 0 ||
-		    !bucket.IsBuffer()) {
+		if (max_size == 0) {
 			if (copy_more_flag)
 				SetMore();
 			break;
+		}
+
+		if (!bucket.IsBuffer()) {
+			EnableFallback();
+			return total_size;
 		}
 
 		auto buffer = bucket.GetBuffer();
@@ -52,7 +56,7 @@ IstreamBucketList::SpliceBuffersFrom(IstreamBucketList &&src) noexcept
 	std::size_t total_size = 0;
 	for (const auto &bucket : src) {
 		if (!bucket.IsBuffer()) {
-			SetMore();
+			EnableFallback();
 			break;
 		}
 
@@ -74,7 +78,7 @@ IstreamBucketList::CopyBuffersFrom(std::size_t skip,
 	size_t total_size = 0;
 	for (const auto &bucket : src) {
 		if (!bucket.IsBuffer()) {
-			SetMore();
+			EnableFallback();
 			break;
 		}
 
