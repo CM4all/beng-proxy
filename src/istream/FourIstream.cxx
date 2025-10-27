@@ -31,7 +31,18 @@ public:
 	void _FillBucketList(IstreamBucketList &list) override {
 		IstreamBucketList tmp;
 		ForwardIstream::_FillBucketList(tmp);
-		list.SpliceBuffersFrom(std::move(tmp), 4);
+
+		const std::size_t max_size = 4;
+		const std::size_t nbytes = list.SpliceBuffersFrom(std::move(tmp), max_size);
+		if (nbytes >= max_size) {
+			if (nbytes > max_size)
+				/* there was more data in "tmp" */
+				list.SetMore();
+			else
+				/* our input may have more data
+				   eventually */
+				list.CopyMoreFlagsFrom(tmp);
+		}
 	}
 
 	/* virtual methods from class IstreamHandler */

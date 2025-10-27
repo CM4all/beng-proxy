@@ -403,8 +403,21 @@ ChunkedIstream::_FillBucketList(IstreamBucketList &list)
 
 		size_t nbytes = list.SpliceBuffersFrom(std::move(sub),
 						       missing_from_current_chunk);
-		if (nbytes >= missing_from_current_chunk)
+		if (nbytes >= missing_from_current_chunk) {
+			if (nbytes > missing_from_current_chunk)
+				/* there was more data in "sub" than
+				   the current chunk */
+				list.SetMore();
+			else
+				/* our input may have more data
+				   eventually */
+				list.CopyMoreFlagsFrom(sub);
+
+			/* the rest of the chunk has been added to the
+			   list: push the end-of-chunk marker (and
+			   maybe the end-of-stream marker) */
 			list.Push(AsBytes(list.HasMore() ? "\r\n"sv : "\r\n0\r\n\r\n"sv));
+		}
 	} else if (sub.HasMore()) {
 		list.CopyMoreFlagsFrom(sub);
 	} else if (!sub.IsEmpty()) {

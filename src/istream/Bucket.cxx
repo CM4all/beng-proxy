@@ -16,15 +16,15 @@ IstreamBucketList::SpliceFrom(IstreamBucketList &&src) noexcept
 
 std::size_t
 IstreamBucketList::SpliceBuffersFrom(IstreamBucketList &&src,
-				     std::size_t max_size,
-				     bool copy_more_flag) noexcept
+				     std::size_t max_size) noexcept
 {
 	std::size_t total_size = 0;
 	for (const auto &bucket : src) {
 		if (max_size == 0) {
-			if (copy_more_flag)
-				SetMore();
-			break;
+			/* we have moved everything, but there is more
+			   data: add 1 according to the API
+			   contract */
+			return total_size + 1;
 		}
 
 		if (!bucket.IsBuffer()) {
@@ -35,8 +35,12 @@ IstreamBucketList::SpliceBuffersFrom(IstreamBucketList &&src,
 		auto buffer = bucket.GetBuffer();
 		if (buffer.size() > max_size) {
 			buffer = buffer.first(max_size);
-			if (copy_more_flag)
-				SetMore();
+			Push(buffer);
+			total_size += max_size;
+
+			/* complete and there is more data, again: add
+			   1 */
+			return total_size + 1;
 		}
 
 		Push(buffer);
@@ -44,7 +48,7 @@ IstreamBucketList::SpliceBuffersFrom(IstreamBucketList &&src,
 		total_size += buffer.size();
 	}
 
-	if (!HasMore() && copy_more_flag)
+	if (!HasMore() && max_size > 0)
 		CopyMoreFlagsFrom(src);
 
 	return total_size;

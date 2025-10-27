@@ -168,11 +168,15 @@ public:
 	 * Move buffer buckets from the given list, stopping at the first
 	 * no-buffer bucket or after #max_size bytes have been moved.
 	 *
-	 * @return the number of bytes in all moved buffers
+	 * If enough data (#max_size) was found and moved, this
+	 * object's "more" flags are not enabled.
+	 *
+	 * @return the number of bytes in all moved buffers; if
+	 * #max_size was copied and there is more data in #src, the
+	 * return value is #max_size+1
 	 */
 	size_t SpliceBuffersFrom(IstreamBucketList &&src,
-				 size_t max_size,
-				 bool copy_more_flag=true) noexcept;
+				 size_t max_size) noexcept;
 
 	/**
 	 * Move buffer buckets from the given list, stopping at the first

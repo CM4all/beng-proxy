@@ -66,7 +66,17 @@ protected:
 		IstreamBucketList tmp;
 		ForwardIstream::_FillBucketList(tmp);
 
-		list.SpliceBuffersFrom(std::move(tmp), approved);
+		const std::size_t nbytes = list.SpliceBuffersFrom(std::move(tmp), approved);
+		if (nbytes >= approved) {
+			if (nbytes > approved)
+				/* there was more data in "tmp" than what was
+				   approved */
+				list.SetMore();
+			else
+				/* our input may have more data
+				   eventually */
+				list.CopyMoreFlagsFrom(tmp);
+		}
 	}
 
 	ConsumeBucketResult _ConsumeBucketList(std::size_t nbytes) noexcept override {

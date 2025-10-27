@@ -37,8 +37,17 @@ public:
 			IstreamBucketList tmp;
 			ForwardIstream::_FillBucketList(tmp);
 
-			list.SpliceBuffersFrom(std::move(tmp),
-					       (tmp.GetTotalBufferSize() + 1) / 2);
+			const std::size_t max_size = (tmp.GetTotalBufferSize() + 1) / 2;
+			const std::size_t nbytes = list.SpliceBuffersFrom(std::move(tmp), max_size);
+			if (nbytes >= max_size) {
+				if (nbytes > max_size)
+					/* there was more data in "tmp" */
+					list.SetMore();
+				else
+					/* our input may have more data
+					   eventually */
+					list.CopyMoreFlagsFrom(tmp);
+			}
 		}
 	}
 
