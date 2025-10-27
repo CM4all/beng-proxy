@@ -49,7 +49,8 @@ class IstreamBucketList {
 
 	enum class More {
 		NO,
-		YES,
+		PUSH,
+		PULL,
 		FALLBACK,
 	};
 
@@ -61,17 +62,13 @@ public:
 	IstreamBucketList(const IstreamBucketList &) = delete;
 	IstreamBucketList &operator=(const IstreamBucketList &) = delete;
 
-	void SetMore() noexcept {
-		if (more < More::YES)
-			more = More::YES;
-	}
-
 	/**
 	 * More data will be available eventually and
 	 * IstreamHandler::OnIstreamReady() will be called.
 	 */
 	void SetPushMore() noexcept {
-		SetMore();
+		if (more < More::PUSH)
+			more = More::PUSH;
 	}
 
 	/**
@@ -79,7 +76,8 @@ public:
 	 * again (after consuming the data that was just returned).
 	 */
 	void SetPullMore() noexcept {
-		SetMore();
+		if (more < More::PULL)
+			more = More::PULL;
 	}
 
 	/**
@@ -92,6 +90,10 @@ public:
 
 	bool HasMore() const noexcept {
 		return more != More::NO;
+	}
+
+	bool ShouldPullMore() const noexcept {
+		return more == More::PULL;
 	}
 
 	void EnableFallback() noexcept {

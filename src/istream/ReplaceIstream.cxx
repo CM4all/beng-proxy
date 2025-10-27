@@ -485,13 +485,14 @@ ReplaceIstream::_FillBucketList(IstreamBucketList &list)
 
 	defer_read.Cancel();
 
-	bool input_fallback = false;
+	bool input_fallback = false, input_pull = false;
 	if (HasInput()) {
 		/* fill our buffer from the input */
 		IstreamBucketList tmp;
 		FillBucketListFromInput(tmp);
 
 		input_fallback = tmp.ShouldFallback();
+		input_pull = tmp.ShouldPullMore();
 
 		size_t total = 0;
 		bool only_buffers = true;
@@ -535,6 +536,8 @@ ReplaceIstream::_FillBucketList(IstreamBucketList &list)
 			   not yet ready to read */
 			if (input_fallback)
 				list.EnableFallback();
+			else if (input_pull)
+				list.SetPullMore();
 			else
 				list.SetPushMore();
 			return;
@@ -561,6 +564,8 @@ ReplaceIstream::_FillBucketList(IstreamBucketList &list)
 			if (input.IsDefined() || !finished) {
 				if (input_fallback)
 					list.EnableFallback();
+				else if (input_pull)
+					list.SetPullMore();
 				else
 					list.SetPushMore();
 			}
@@ -571,6 +576,8 @@ ReplaceIstream::_FillBucketList(IstreamBucketList &list)
 		if (end < s->start) {
 			if (input_fallback)
 				list.EnableFallback();
+			else if (input_pull)
+				list.SetPullMore();
 			else
 				list.SetPushMore();
 			return;

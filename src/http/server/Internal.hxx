@@ -74,8 +74,8 @@ struct HttpServerConnection final
 		LATER,
 
 		/**
-		 * Some data has been transferred, more data will be
-		 * available later.
+		 * Some data has been transferred, but more data is
+		 * available.  Try again.
 		 */
 		MORE,
 

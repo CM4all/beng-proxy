@@ -120,7 +120,9 @@ HttpServerConnection::TryWriteBuckets2()
 		? BucketResult::DEPLETED
 		: (list.ShouldFallback()
 		   ? BucketResult::FALLBACK
-		   : BucketResult::MORE);
+		   : (list.ShouldPullMore()
+		      ? BucketResult::MORE
+		      : BucketResult::LATER));
 }
 
 HttpServerConnection::BucketResult
