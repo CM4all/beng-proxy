@@ -163,7 +163,7 @@ HttpServerConnection::TryWriteBuckets() noexcept
 	return result;
 }
 
-bool
+inline bool
 HttpServerConnection::TryWrite() noexcept
 {
 	assert(IsValid());
