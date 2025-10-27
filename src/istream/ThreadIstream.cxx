@@ -475,7 +475,7 @@ ThreadIstream::_FillBucketList(IstreamBucketList &list)
 
 			case IstreamReadyResult::FALLBACK:
 				list.EnableFallback();
-				break;
+				return;
 			}
 		} catch (...) {
 			Destroy();
