@@ -582,7 +582,7 @@ ReplaceIstream::_FillBucketList(IstreamBucketList &list)
 		}
 
 		list.SpliceBuffersFrom(std::move(tmp));
-		if (tmp.HasMore())
+		if (list.HasMore())
 			return;
 
 		fill_position = s->end;
