@@ -7,15 +7,15 @@
 void
 IstreamBucketList::SpliceFrom(IstreamBucketList &&src) noexcept
 {
-	if (src.HasMore()) {
+	for (const auto &bucket : src)
+		Push(bucket);
+
+	if (!HasMore() && src.HasMore()) {
 		SetMore();
 
 		if (src.ShouldFallback() && src.IsEmpty())
 			EnableFallback();
 	}
-
-	for (const auto &bucket : src)
-		Push(bucket);
 }
 
 std::size_t
@@ -23,13 +23,6 @@ IstreamBucketList::SpliceBuffersFrom(IstreamBucketList &&src,
 				     std::size_t max_size,
 				     bool copy_more_flag) noexcept
 {
-	if (src.HasMore() && copy_more_flag) {
-		SetMore();
-
-		if (src.ShouldFallback() && src.IsEmpty())
-			EnableFallback();
-	}
-
 	std::size_t total_size = 0;
 	for (const auto &bucket : src) {
 		if (max_size == 0 ||
@@ -51,19 +44,19 @@ IstreamBucketList::SpliceBuffersFrom(IstreamBucketList &&src,
 		total_size += buffer.size();
 	}
 
-	return total_size;
-}
-
-size_t
-IstreamBucketList::SpliceBuffersFrom(IstreamBucketList &&src) noexcept
-{
-	if (src.HasMore()) {
+	if (!HasMore() && src.HasMore() && copy_more_flag) {
 		SetMore();
 
 		if (src.ShouldFallback() && src.IsEmpty())
 			EnableFallback();
 	}
 
+	return total_size;
+}
+
+size_t
+IstreamBucketList::SpliceBuffersFrom(IstreamBucketList &&src) noexcept
+{
 	std::size_t total_size = 0;
 	for (const auto &bucket : src) {
 		if (!bucket.IsBuffer()) {
@@ -76,6 +69,13 @@ IstreamBucketList::SpliceBuffersFrom(IstreamBucketList &&src) noexcept
 		total_size += buffer.size();
 	}
 
+	if (!HasMore() && src.HasMore()) {
+		SetMore();
+
+		if (src.ShouldFallback() && src.IsEmpty())
+			EnableFallback();
+	}
+
 	return total_size;
 }
 
@@ -83,13 +83,6 @@ std::size_t
 IstreamBucketList::CopyBuffersFrom(std::size_t skip,
 				   const IstreamBucketList &src) noexcept
 {
-	if (src.HasMore()) {
-		SetMore();
-
-		if (src.ShouldFallback() && src.IsEmpty())
-			EnableFallback();
-	}
-
 	size_t total_size = 0;
 	for (const auto &bucket : src) {
 		if (!bucket.IsBuffer()) {
@@ -105,6 +98,13 @@ IstreamBucketList::CopyBuffersFrom(std::size_t skip,
 			total_size += buffer.size();
 		} else
 			skip -= buffer.size();
+	}
+
+	if (!HasMore() && src.HasMore()) {
+		SetMore();
+
+		if (src.ShouldFallback() && src.IsEmpty())
+			EnableFallback();
 	}
 
 	return total_size;
