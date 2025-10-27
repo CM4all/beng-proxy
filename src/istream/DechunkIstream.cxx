@@ -486,7 +486,8 @@ DechunkIstream::_FillBucketList(IstreamBucketList &list)
 		if (!tmp.HasMore() && !list.HasMore())
 			throw std::runtime_error{"premature EOF in dechunker"};
 
-		list.SetMore();
+		if (!list.HasMore())
+			list.CopyMoreFlagsFrom(tmp);
 	}
 
 	IstreamBucketReader r{tmp};
