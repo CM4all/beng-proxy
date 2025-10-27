@@ -138,6 +138,12 @@ private:
 	 */
 	void ToNextSubstitution(ReplaceIstream::Substitution &s) noexcept;
 
+	/**
+	 * Like ToNextSubstitution(), but pop all active substitutions
+	 * that have no input.
+	 */
+	void ToNextSubstitutionLoop() noexcept;
+
 	IstreamReadyResult OnSubstitutionReady(Substitution &s) noexcept;
 
 protected:

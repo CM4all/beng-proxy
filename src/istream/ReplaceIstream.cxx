@@ -98,6 +98,19 @@ ReplaceIstream::ToNextSubstitution(ReplaceIstream::Substitution &s) noexcept
 	       substitutions.front().start >= position);
 }
 
+void
+ReplaceIstream::ToNextSubstitutionLoop() noexcept
+{
+	assert(!substitutions.empty());
+	assert(substitutions.front().IsActive());
+
+	do {
+		ToNextSubstitution(substitutions.front());
+	} while (!substitutions.empty() &&
+		 substitutions.front().IsActive() &&
+		 !substitutions.front().IsDefined());
+}
+
 /*
  * istream handler
  *
@@ -133,7 +146,7 @@ ReplaceIstream::Substitution::OnEof() noexcept
 		   object */
 		auto &r = replace;
 
-		r.ToNextSubstitution(*this);
+		r.ToNextSubstitutionLoop();
 
 		if (r.IsEOF())
 			r.DestroyEof();
@@ -637,7 +650,7 @@ ReplaceIstream::_ConsumeBucketList(size_t nbytes) noexcept
 		nbytes -= r.consumed;
 
 		if (r.eof)
-			ToNextSubstitution(*s);
+			ToNextSubstitutionLoop();
 
 		if (nbytes == 0)
 			break;
