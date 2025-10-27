@@ -139,8 +139,12 @@ HttpServerConnection::TryWriteBuckets() noexcept
 
 	switch (result) {
 	case BucketResult::FALLBACK:
+		assert(HasInput());
+		break;
+
 	case BucketResult::LATER:
 		assert(HasInput());
+		response.want_write = false;
 		break;
 
 	case BucketResult::MORE:

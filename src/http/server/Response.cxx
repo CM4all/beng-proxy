@@ -22,8 +22,11 @@ HttpServerConnection::OnIstreamReady() noexcept
 	case BucketResult::FALLBACK:
 		return IstreamReadyResult::FALLBACK;
 
-	case BucketResult::MORE:
 	case BucketResult::LATER:
+		socket->UnscheduleWrite();
+		return IstreamReadyResult::OK;
+
+	case BucketResult::MORE:
 	case BucketResult::BLOCKING:
 		return IstreamReadyResult::OK;
 
