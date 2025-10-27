@@ -23,10 +23,6 @@ HttpServerConnection::OnIstreamReady() noexcept
 		return IstreamReadyResult::FALLBACK;
 
 	case BucketResult::MORE:
-		/* it's our responsibility now to ask for more data */
-		ScheduleWrite();
-		return IstreamReadyResult::OK;
-
 	case BucketResult::LATER:
 	case BucketResult::BLOCKING:
 		return IstreamReadyResult::OK;
