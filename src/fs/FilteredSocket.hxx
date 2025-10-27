@@ -307,6 +307,13 @@ public:
 		return base.IsReadyForWriting();
 	}
 
+	void ClearReadyFlags(unsigned flags) noexcept {
+		if (filter == nullptr)
+			base.ClearReadyFlags(flags);
+		/* if there is a filter, then this micro-optimization
+		   is ignored */
+	}
+
 	/**
 	 * Wrapper for BufferedSocket::DeferRead().  This works only
 	 * for the initial read.
