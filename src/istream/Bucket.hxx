@@ -47,9 +47,13 @@ class IstreamBucketList {
 	using List = StaticVector<IstreamBucket, 64>;
 	List list;
 
-	bool more = false;
+	enum class More {
+		NO,
+		YES,
+		FALLBACK,
+	};
 
-	bool fallback = false;
+	More more = More::NO;
 
 public:
 	IstreamBucketList() = default;
@@ -58,30 +62,24 @@ public:
 	IstreamBucketList &operator=(const IstreamBucketList &) = delete;
 
 	void SetMore() noexcept {
-		more = true;
+		if (more < More::YES)
+			more = More::YES;
 	}
 
 	bool HasMore() const noexcept {
-		return more;
+		return more != More::NO;
 	}
 
 	void EnableFallback() noexcept {
-		SetMore();
-		fallback = true;
-	}
-
-	void DisableFallback() noexcept {
-		fallback = false;
+		more = More::FALLBACK;
 	}
 
 	void CopyMoreFlagsFrom(const IstreamBucketList &src) noexcept {
 		more = src.more;
-		fallback = src.fallback;
 	}
 
 	void ResetMoreFlags() noexcept {
-		more = false;
-		fallback = false;
+		more = More::NO;
 	}
 
 	/**
@@ -90,7 +88,7 @@ public:
 	 * instead of Istream::FillBucketList()?
 	 */
 	bool ShouldFallback() const noexcept {
-		return fallback;
+		return more == More::FALLBACK;
 	}
 
 	bool IsEmpty() const noexcept {
