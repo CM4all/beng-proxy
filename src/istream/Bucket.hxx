@@ -74,6 +74,11 @@ public:
 		fallback = false;
 	}
 
+	void CopyMoreFlagsFrom(const IstreamBucketList &src) noexcept {
+		more = src.more;
+		fallback = src.fallback;
+	}
+
 	void ResetMoreFlags() noexcept {
 		more = false;
 		fallback = false;

@@ -79,12 +79,8 @@ HeadIstream::_FillBucketList(IstreamBucketList &list)
 	ForwardIstream::_FillBucketList(tmp1);
 
 	const auto nbytes = list.SpliceBuffersFrom(std::move(tmp1), rest, false);
-	if (std::cmp_less(nbytes, rest) && tmp1.HasMore()) {
-		list.SetMore();
-
-		if (tmp1.ShouldFallback())
-			list.EnableFallback();
-	}
+	if (std::cmp_less(nbytes, rest) && !list.HasMore())
+		list.CopyMoreFlagsFrom(tmp1);
 }
 
 Istream::ConsumeBucketResult

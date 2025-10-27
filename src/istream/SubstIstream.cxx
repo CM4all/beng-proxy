@@ -874,10 +874,7 @@ SubstIstream::_FillBucketList(IstreamBucketList &list)
 		FillBucketListFromInput(tmp);
 
 		if (tmp.HasMore()) {
-			list.SetMore();
-
-			if (tmp.ShouldFallback())
-				list.EnableFallback();
+			list.CopyMoreFlagsFrom(tmp);
 		}
 
 		for (const auto &bucket : tmp) {

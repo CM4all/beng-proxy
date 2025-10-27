@@ -10,12 +10,8 @@ IstreamBucketList::SpliceFrom(IstreamBucketList &&src) noexcept
 	for (const auto &bucket : src)
 		Push(bucket);
 
-	if (!HasMore() && src.HasMore()) {
-		SetMore();
-
-		if (src.ShouldFallback() && src.IsEmpty())
-			EnableFallback();
-	}
+	if (!HasMore())
+		CopyMoreFlagsFrom(src);
 }
 
 std::size_t
@@ -44,12 +40,8 @@ IstreamBucketList::SpliceBuffersFrom(IstreamBucketList &&src,
 		total_size += buffer.size();
 	}
 
-	if (!HasMore() && src.HasMore() && copy_more_flag) {
-		SetMore();
-
-		if (src.ShouldFallback() && src.IsEmpty())
-			EnableFallback();
-	}
+	if (!HasMore() && copy_more_flag)
+		CopyMoreFlagsFrom(src);
 
 	return total_size;
 }
@@ -69,12 +61,8 @@ IstreamBucketList::SpliceBuffersFrom(IstreamBucketList &&src) noexcept
 		total_size += buffer.size();
 	}
 
-	if (!HasMore() && src.HasMore()) {
-		SetMore();
-
-		if (src.ShouldFallback() && src.IsEmpty())
-			EnableFallback();
-	}
+	if (!HasMore())
+		CopyMoreFlagsFrom(src);
 
 	return total_size;
 }
@@ -100,12 +88,8 @@ IstreamBucketList::CopyBuffersFrom(std::size_t skip,
 			skip -= buffer.size();
 	}
 
-	if (!HasMore() && src.HasMore()) {
-		SetMore();
-
-		if (src.ShouldFallback() && src.IsEmpty())
-			EnableFallback();
-	}
+	if (!HasMore())
+		CopyMoreFlagsFrom(src);
 
 	return total_size;
 }

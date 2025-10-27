@@ -406,10 +406,7 @@ ChunkedIstream::_FillBucketList(IstreamBucketList &list)
 		if (nbytes >= missing_from_current_chunk)
 			list.Push(AsBytes(list.HasMore() ? "\r\n"sv : "\r\n0\r\n\r\n"sv));
 	} else if (sub.HasMore()) {
-		list.SetMore();
-
-		if (sub.ShouldFallback())
-			list.EnableFallback();
+		list.CopyMoreFlagsFrom(sub);
 	} else if (!sub.IsEmpty()) {
 		/* no new chunk was generated yet because our buffer
 		   has no room yet for the chunk header, but there
