@@ -854,7 +854,6 @@ SubstIstream::_FillBucketList(IstreamBucketList &list)
 				list.Push(analysis.mismatch.first(1));
 
 			// TODO: re-parse the rest of the mismatch buffer
-			list.SetMore();
 			list.EnableFallback(); // TODO eliminate
 			UpdateBucketAvailable(list);
 			return;
@@ -879,7 +878,6 @@ SubstIstream::_FillBucketList(IstreamBucketList &list)
 
 		for (const auto &bucket : tmp) {
 			if (!bucket.IsBuffer()) {
-				list.SetMore();
 				list.EnableFallback(); // TODO eliminate
 				UpdateBucketAvailable(list);
 				return;
@@ -892,7 +890,6 @@ SubstIstream::_FillBucketList(IstreamBucketList &list)
 				s = Partition(s, first).first;
 				if (!s.empty())
 					list.Push(AsBytes(s));
-				list.SetMore();
 				list.EnableFallback(); // TOOD eliminate
 				UpdateBucketAvailable(list);
 				return;
@@ -907,7 +904,6 @@ SubstIstream::_FillBucketList(IstreamBucketList &list)
 
 	case State::MATCH:
 		// TODO: read from input
-		list.SetMore();
 		list.EnableFallback(); // TODO eliminate
 		UpdateBucketAvailable(list);
 		return;
@@ -921,7 +917,6 @@ SubstIstream::_FillBucketList(IstreamBucketList &list)
 		assert(analysis.a_match == strlen(analysis.match->leaf.a));
 
 		list.Push(analysis.GetB());
-		list.SetMore();
 		list.EnableFallback(); // TODO eliminate
 
 		// TODO: read more

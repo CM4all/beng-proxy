@@ -47,7 +47,7 @@ public:
 		} else {
 			second = true;
 			ForwardIstream::_FillBucketList(list);
-			list.SetMore();
+			list.SetPushMore();
 		}
 	}
 };

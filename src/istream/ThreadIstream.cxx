@@ -484,7 +484,7 @@ ThreadIstream::_FillBucketList(IstreamBucketList &list)
 	}
 
 	if (internal)
-		list.SetMore();
+		list.SetPushMore();
 }
 
 Istream::ConsumeBucketResult

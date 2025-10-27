@@ -94,7 +94,7 @@ struct TeeIstream final : IstreamSink, DestructAnchor {
 			if (skip > 0) {
 				/* TODO: this can be optimized by skipping data from
 				   new buckets */
-				list.SetMore();
+				list.SetPushMore();
 				bucket_list_size = 0;
 				return;
 			}

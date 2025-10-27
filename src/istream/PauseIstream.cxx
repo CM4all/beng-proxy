@@ -65,7 +65,7 @@ protected:
 			defer_read.Cancel();
 			ForwardIstream::_FillBucketList(list);
 		} else {
-			list.SetMore();
+			list.SetPushMore();
 
 			/* we'll try again after Resume() gets called */
 			want_read = true;

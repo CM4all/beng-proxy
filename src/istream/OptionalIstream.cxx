@@ -63,7 +63,7 @@ public:
 		if (resumed)
 			ForwardIstream::_FillBucketList(list);
 		else
-			list.SetMore();
+			list.SetPushMore();
 	}
 
 	/* handler */

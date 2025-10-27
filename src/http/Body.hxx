@@ -133,14 +133,14 @@ public:
 		const auto b = s.ReadBuffer();
 		if (b.empty()) {
 			if (!IsEOF())
-				list.SetMore();
+				list.SetPushMore();
 			return;
 		}
 
 		const auto [t, then_eof] = TruncateInput(b);
 		list.Push(t);
 		if (!then_eof)
-			list.SetMore();
+			list.SetPushMore();
 	}
 
 	template<typename Socket>

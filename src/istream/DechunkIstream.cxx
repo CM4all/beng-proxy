@@ -473,7 +473,7 @@ DechunkIstream::_FillBucketList(IstreamBucketList &list)
 					/* there's more data, but our
 					   "chunks" array does not
 					   have enough room */
-					list.SetMore();
+					list.SetTruncated();
 				break;
 			}
 		} catch (...) {

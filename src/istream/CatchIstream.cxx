@@ -217,7 +217,7 @@ PushSpaceBuckets(IstreamBucketList &list, uint_least64_t remaining) noexcept
 		remaining -= space.size();
 	}
 
-	list.SetMore();
+	list.SetPullMore();
 }
 
 void

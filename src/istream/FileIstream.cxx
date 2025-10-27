@@ -267,7 +267,7 @@ try {
 		if (direct)
 			list.EnableFallback();
 		else
-			list.SetMore();
+			list.SetPullMore();
 	}
 } catch (...) {
 	Destroy();

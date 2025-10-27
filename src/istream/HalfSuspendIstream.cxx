@@ -30,7 +30,7 @@ public:
 		if (ready) {
 			ForwardIstream::_FillBucketList(list);
 		} else if (timer.IsPending()) {
-			list.SetMore();
+			list.SetPushMore();
 		} else {
 			timer.Schedule(delay);
 
@@ -42,7 +42,7 @@ public:
 			if (nbytes >= max_size) {
 				if (nbytes > max_size)
 					/* there was more data in "tmp" */
-					list.SetMore();
+					list.SetPullMore();
 				else
 					/* our input may have more data
 					   eventually */

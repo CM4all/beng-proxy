@@ -407,7 +407,7 @@ ChunkedIstream::_FillBucketList(IstreamBucketList &list)
 			if (nbytes > missing_from_current_chunk)
 				/* there was more data in "sub" than
 				   the current chunk */
-				list.SetMore();
+				list.SetPullMore();
 			else
 				/* our input may have more data
 				   eventually */
@@ -424,7 +424,7 @@ ChunkedIstream::_FillBucketList(IstreamBucketList &list)
 		/* no new chunk was generated yet because our buffer
 		   has no room yet for the chunk header, but there
 		   will be one */
-		list.SetMore();
+		list.SetTruncated();
 	}
 }
 

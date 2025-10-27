@@ -307,7 +307,7 @@ UringIstream::_FillBucketList(IstreamBucketList &list) noexcept
 		list.Push(r);
 
 	if (offset < end_offset) {
-		list.SetMore();
+		list.SetPushMore();
 
 		if (direct)
 			/* the caller prefers sendfile(), so let him

@@ -87,7 +87,7 @@ public:
 		if (HasInput())
 			ForwardIstream::_FillBucketList(list);
 		else
-			list.SetMore();
+			list.SetPushMore();
 	}
 
 	void _Close() noexcept override {

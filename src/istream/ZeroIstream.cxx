@@ -30,10 +30,10 @@ public:
 	}
 
 	void _FillBucketList(IstreamBucketList &list) noexcept override {
-		list.SetMore();
-
 		while (!list.IsFull())
 			list.Push(std::span{zero_buffer});
+
+		list.SetPullMore();
 	}
 
 	ConsumeBucketResult _ConsumeBucketList(size_t nbytes) noexcept override {

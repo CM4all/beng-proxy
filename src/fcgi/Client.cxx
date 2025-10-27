@@ -1074,7 +1074,7 @@ FcgiClient::_FillBucketList(IstreamBucketList &list)
 	/* report EOF only after we have received the whole
 	   END_REQUEST payload/padding */
 	if (!socket.IsReleased())
-		list.SetMore();
+		list.SetPushMore();
 }
 
 struct FcgiClient::ConsumeBucketHandler final : FcgiFrameHandler {

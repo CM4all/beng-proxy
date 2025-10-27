@@ -57,7 +57,7 @@ FifoBufferIstream::_FillBucketList(IstreamBucketList &list) noexcept
 		list.Push(r);
 
 	if (!eof)
-		list.SetMore();
+		list.SetPushMore();
 }
 
 Istream::ConsumeBucketResult

@@ -42,7 +42,7 @@ public:
 		if (ready)
 			ForwardIstream::_FillBucketList(list);
 		else {
-			list.SetMore();
+			list.SetPushMore();
 			Schedule();
 		}
 	}

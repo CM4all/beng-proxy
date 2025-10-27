@@ -297,7 +297,6 @@ TYPED_TEST_P(IstreamFilterTest, NoBucket)
 		}
 
 		void _FillBucketList(IstreamBucketList &list) override {
-			list.SetMore();
 			list.EnableFallback();
 		}
 	};

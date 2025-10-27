@@ -35,7 +35,7 @@ public:
 		if (nbytes >= max_size) {
 			if (nbytes > max_size)
 				/* there was more data in "tmp" */
-				list.SetMore();
+				list.SetPullMore();
 			else
 				/* our input may have more data
 				   eventually */

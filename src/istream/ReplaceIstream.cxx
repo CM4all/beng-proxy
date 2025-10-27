@@ -533,9 +533,10 @@ ReplaceIstream::_FillBucketList(IstreamBucketList &list)
 		if (end < 0) {
 			/* after last substitution and the "settled" position:
 			   not yet ready to read */
-			list.SetMore();
 			if (input_fallback)
 				list.EnableFallback();
+			else
+				list.SetPushMore();
 			return;
 		}
 
@@ -558,18 +559,20 @@ ReplaceIstream::_FillBucketList(IstreamBucketList &list)
 
 		if (s == substitutions.end()) {
 			if (input.IsDefined() || !finished) {
-				list.SetMore();
 				if (input_fallback)
 					list.EnableFallback();
+				else
+					list.SetPushMore();
 			}
 
 			return;
 		}
 
 		if (end < s->start) {
-			list.SetMore();
 			if (input_fallback)
 				list.EnableFallback();
+			else
+				list.SetPushMore();
 			return;
 		}
 

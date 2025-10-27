@@ -59,7 +59,7 @@ protected:
 
 	void _FillBucketList(IstreamBucketList &list) override {
 		if (approved <= 0) {
-			list.SetMore();
+			list.SetPushMore();
 			return;
 		}
 
@@ -71,7 +71,7 @@ protected:
 			if (nbytes > approved)
 				/* there was more data in "tmp" than what was
 				   approved */
-				list.SetMore();
+				list.SetPullMore();
 			else
 				/* our input may have more data
 				   eventually */

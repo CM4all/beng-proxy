@@ -37,7 +37,7 @@ ReadyIstream::_FillBucketList(IstreamBucketList &list)
 {
 	if (!allow_buckets) {
 		defer_ready.Schedule();
-		list.SetMore();
+		list.SetPushMore();
 		return;
 	}
 

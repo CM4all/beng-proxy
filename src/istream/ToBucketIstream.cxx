@@ -30,7 +30,7 @@ ToBucketIstream::_FillBucketList(IstreamBucketList &list)
 	auto r = buffer.Read();
 	if (!r.empty()) {
 		list.Push(r);
-		list.SetMore();
+		list.SetPushMore();
 		return;
 	}
 
@@ -44,7 +44,7 @@ ToBucketIstream::_FillBucketList(IstreamBucketList &list)
 			/* no data yet or FillBucketList() not implemented: invoke
 			   its old-style Read() method */
 			defer_read.Schedule();
-			list.SetMore();
+			list.SetPushMore();
 		} else {
 			/* end of file */
 			CloseInput();

@@ -66,6 +66,30 @@ public:
 			more = More::YES;
 	}
 
+	/**
+	 * More data will be available eventually and
+	 * IstreamHandler::OnIstreamReady() will be called.
+	 */
+	void SetPushMore() noexcept {
+		SetMore();
+	}
+
+	/**
+	 * More data is available now - call Istream::FillBucketList()
+	 * again (after consuming the data that was just returned).
+	 */
+	void SetPullMore() noexcept {
+		SetMore();
+	}
+
+	/**
+	 * More data is available now but does not fit into this
+	 * object.
+	 */
+	void SetTruncated() noexcept {
+		SetPullMore();
+	}
+
 	bool HasMore() const noexcept {
 		return more != More::NO;
 	}
@@ -105,7 +129,7 @@ public:
 
 	void Push(const IstreamBucket &bucket) noexcept {
 		if (IsFull()) {
-			SetMore();
+			SetTruncated();
 			return;
 		}
 

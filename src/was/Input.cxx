@@ -637,7 +637,7 @@ WasInput::_FillBucketList(IstreamBucketList &list)
 
 		r = buffer.Read();
 		if (r.empty()) {
-			list.SetMore();
+			list.SetPushMore();
 			return;
 		}
 	}
@@ -645,7 +645,7 @@ WasInput::_FillBucketList(IstreamBucketList &list)
 	list.Push(r);
 
 	if (!known_length || received < length)
-		list.SetMore();
+		list.SetPushMore();
 }
 
 Istream::ConsumeBucketResult
