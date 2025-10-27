@@ -18,6 +18,12 @@ HttpServerConnection::OnIstreamReady() noexcept
 {
 	assert(!request.cancel_ptr);
 
+	/* since we're going to write manually now, the pending
+	   EPOLLOUT has been handled already in this EventLoop
+	   iteration; clear this flag for now and skip the pending
+	   write */
+	socket->ClearReadyFlags(SocketEvent::WRITE);
+
 	switch (TryWriteBuckets()) {
 	case BucketResult::FALLBACK:
 		return IstreamReadyResult::FALLBACK;
