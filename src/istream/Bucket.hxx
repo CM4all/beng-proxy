@@ -152,17 +152,7 @@ public:
 		return !HasMore() && consumed == GetTotalBufferSize();
 	}
 
-	void SpliceFrom(IstreamBucketList &&src) noexcept {
-		if (src.HasMore()) {
-			SetMore();
-
-			if (src.ShouldFallback() && src.IsEmpty())
-				EnableFallback();
-		}
-
-		for (const auto &bucket : src)
-			Push(bucket);
-	}
+	void SpliceFrom(IstreamBucketList &&src) noexcept;
 
 	/**
 	 * Move buffer buckets from the given list, stopping at the first
@@ -172,37 +162,7 @@ public:
 	 */
 	size_t SpliceBuffersFrom(IstreamBucketList &&src,
 				 size_t max_size,
-				 bool copy_more_flag=true) noexcept {
-		if (src.HasMore() && copy_more_flag) {
-			SetMore();
-
-			if (src.ShouldFallback() && src.IsEmpty())
-				EnableFallback();
-		}
-
-		size_t total_size = 0;
-		for (const auto &bucket : src) {
-			if (max_size == 0 ||
-			    !bucket.IsBuffer()) {
-				if (copy_more_flag)
-					SetMore();
-				break;
-			}
-
-			auto buffer = bucket.GetBuffer();
-			if (buffer.size() > max_size) {
-				buffer = buffer.first(max_size);
-				if (copy_more_flag)
-					SetMore();
-			}
-
-			Push(buffer);
-			max_size -= buffer.size();
-			total_size += buffer.size();
-		}
-
-		return total_size;
-	}
+				 bool copy_more_flag=true) noexcept;
 
 	/**
 	 * Move buffer buckets from the given list, stopping at the first
@@ -210,28 +170,7 @@ public:
 	 *
 	 * @return the number of bytes in all moved buffers
 	 */
-	size_t SpliceBuffersFrom(IstreamBucketList &&src) noexcept {
-		if (src.HasMore()) {
-			SetMore();
-
-			if (src.ShouldFallback() && src.IsEmpty())
-				EnableFallback();
-		}
-
-		size_t total_size = 0;
-		for (const auto &bucket : src) {
-			if (!bucket.IsBuffer()) {
-				SetMore();
-				break;
-			}
-
-			auto buffer = bucket.GetBuffer();
-			Push(buffer);
-			total_size += buffer.size();
-		}
-
-		return total_size;
-	}
+	size_t SpliceBuffersFrom(IstreamBucketList &&src) noexcept;
 
 	/**
 	 * Copy buffer buckets from the given list, stopping at the first
@@ -241,31 +180,5 @@ public:
 	 * @return the number of bytes in all moved buffers
 	 */
 	size_t CopyBuffersFrom(size_t skip,
-			       const IstreamBucketList &src) noexcept {
-		if (src.HasMore()) {
-			SetMore();
-
-			if (src.ShouldFallback() && src.IsEmpty())
-				EnableFallback();
-		}
-
-		size_t total_size = 0;
-		for (const auto &bucket : src) {
-			if (!bucket.IsBuffer()) {
-				SetMore();
-				break;
-			}
-
-			auto buffer = bucket.GetBuffer();
-			if (buffer.size() > skip) {
-				buffer = buffer.subspan(skip);
-				skip = 0;
-				Push(buffer);
-				total_size += buffer.size();
-			} else
-				skip -= buffer.size();
-		}
-
-		return total_size;
-	}
+			       const IstreamBucketList &src) noexcept;
 };

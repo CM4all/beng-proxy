@@ -7,6 +7,7 @@ istream_api = static_library(
   'Pointer.cxx',
   'UnusedPtr.cxx',
   'istream.cxx',
+  'Bucket.cxx',
   include_directories: inc,
 )
 
