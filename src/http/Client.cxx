@@ -637,48 +637,34 @@ HttpClient::TryWriteBuckets2()
 			break;
 	}
 
-	if (v.empty()) {
-		switch (list.GetMore()) {
-		case IstreamBucketList::More::NO:
-			return BucketResult::DEPLETED;
+	if (!v.empty()) [[likely]] {
+		ssize_t nbytes = socket.WriteV(v);
+		if (nbytes < 0) [[unlikely]] {
+			if (nbytes == WRITE_BLOCKING)
+				[[likely]]
+				return BucketResult::BLOCKING;
 
-		case IstreamBucketList::More::PUSH:
-			return BucketResult::LATER;
+			if (nbytes == WRITE_DESTROYED)
+				return BucketResult::DESTROYED;
 
-		case IstreamBucketList::More::PULL:
-			return BucketResult::MORE;
+			if (nbytes == WRITE_BROKEN)
+				/* our input has already been closed by
+				   OnBufferedBroken() */
+				throw RequestBodyCanceled{};
 
-		case IstreamBucketList::More::FALLBACK:
-			return BucketResult::FALLBACK;
+			const int _errno = errno;
+
+			throw HttpClientError(HttpClientErrorCode::IO,
+					      FmtBuffer<64>("write error ({})",
+							    strerror(_errno)));
 		}
+
+		const auto r = input.ConsumeBucketList(nbytes);
+		assert(r.consumed == (std::size_t)nbytes);
+
+		if (r.eof)
+			return BucketResult::DEPLETED;
 	}
-
-	ssize_t nbytes = socket.WriteV(v);
-	if (nbytes < 0) {
-		if (nbytes == WRITE_BLOCKING)
-			[[likely]]
-			return BucketResult::BLOCKING;
-
-		if (nbytes == WRITE_DESTROYED)
-			return BucketResult::DESTROYED;
-
-		if (nbytes == WRITE_BROKEN)
-			/* our input has already been closed by
-			   OnBufferedBroken() */
-			throw RequestBodyCanceled{};
-
-		const int _errno = errno;
-
-		throw HttpClientError(HttpClientErrorCode::IO,
-				      FmtBuffer<64>("write error ({})",
-						    strerror(_errno)));
-	}
-
-	const auto r = input.ConsumeBucketList(nbytes);
-	assert(r.consumed == (std::size_t)nbytes);
-
-	if (r.eof)
-		return BucketResult::DEPLETED;
 
 	switch (list.GetMore()) {
 	case IstreamBucketList::More::NO:

@@ -88,44 +88,30 @@ HttpServerConnection::TryWriteBuckets2()
 			break;
 	}
 
-	if (v.empty()) {
-		switch (list.GetMore()) {
-		case IstreamBucketList::More::NO:
-			return BucketResult::DEPLETED;
+	if (!v.empty()) [[likely]] {
+		ssize_t nbytes = v.size() == 1
+			? socket->Write(ToSpan(v.front()))
+			: socket->WriteV(v);
+		if (nbytes < 0) [[unlikely]] {
+			if (nbytes == WRITE_BLOCKING) [[likely]]
+				return BucketResult::BLOCKING;
 
-		case IstreamBucketList::More::PUSH:
-			return BucketResult::LATER;
+			if (nbytes == WRITE_DESTROYED)
+				return BucketResult::DESTROYED;
 
-		case IstreamBucketList::More::PULL:
-			return BucketResult::MORE;
-
-		case IstreamBucketList::More::FALLBACK:
-			return BucketResult::FALLBACK;
-		}
-	}
-
-	ssize_t nbytes = v.size() == 1
-		? socket->Write(ToSpan(v.front()))
-		: socket->WriteV(v);
-	if (nbytes < 0) {
-		if (nbytes == WRITE_BLOCKING) [[likely]]
-			return BucketResult::BLOCKING;
-
-		if (nbytes == WRITE_DESTROYED)
+			SocketErrorErrno("write error on HTTP connection");
 			return BucketResult::DESTROYED;
+		}
 
-		SocketErrorErrno("write error on HTTP connection");
-		return BucketResult::DESTROYED;
+		response.bytes_sent += nbytes;
+		response.length += nbytes;
+
+		const auto r = input.ConsumeBucketList(nbytes);
+		assert(r.consumed == (std::size_t)nbytes);
+
+		if (r.eof)
+			return BucketResult::DEPLETED;
 	}
-
-	response.bytes_sent += nbytes;
-	response.length += nbytes;
-
-	const auto r = input.ConsumeBucketList(nbytes);
-	assert(r.consumed == (std::size_t)nbytes);
-
-	if (r.eof)
-		return BucketResult::DEPLETED;
 
 	switch (list.GetMore()) {
 	case IstreamBucketList::More::NO:
