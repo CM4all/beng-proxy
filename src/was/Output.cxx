@@ -234,7 +234,7 @@ WasOutput::OnIstreamReady() noexcept
 			return IstreamReadyResult::OK;
 		}
 
-		DestroyError(std::make_exception_ptr(MakeErrno("Write to WAS process failed")));
+		DestroyError(std::make_exception_ptr(MakeErrno(e, "Write to WAS process failed")));
 		return IstreamReadyResult::CLOSED;
 	}
 
@@ -277,12 +277,13 @@ WasOutput::OnData(const std::span<const std::byte> src) noexcept
 		else
 			DeferNextWrite();
 	} else if (nbytes < 0) {
-		if (errno == EAGAIN) {
+		const int e = errno;
+		if (e == EAGAIN) {
 			ScheduleWrite();
 			return 0;
 		}
 
-		DestroyError(std::make_exception_ptr(MakeErrno("Write to WAS process failed")));
+		DestroyError(std::make_exception_ptr(MakeErrno(e, "Write to WAS process failed")));
 		return 0;
 	}
 
