@@ -94,8 +94,10 @@ HttpServerConnection::TryWriteBuckets2()
 			return BucketResult::DEPLETED;
 
 		case IstreamBucketList::More::PUSH:
-		case IstreamBucketList::More::PULL:
 			return BucketResult::LATER;
+
+		case IstreamBucketList::More::PULL:
+			return BucketResult::MORE;
 
 		case IstreamBucketList::More::FALLBACK:
 			return BucketResult::FALLBACK;
