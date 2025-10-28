@@ -23,20 +23,20 @@ private:
 	};
 
 public:
-	explicit IstreamBucket(std::span<const std::byte> _buffer) noexcept
+	explicit constexpr IstreamBucket(std::span<const std::byte> _buffer) noexcept
 		:type(Type::BUFFER),
 		 buffer(_buffer) {}
 
 
-	Type GetType() const noexcept {
+	constexpr Type GetType() const noexcept {
 		return type;
 	}
 
-	bool IsBuffer() const noexcept {
+	constexpr bool IsBuffer() const noexcept {
 		return type == Type::BUFFER;
 	}
 
-	std::span<const std::byte> GetBuffer() const noexcept {
+	constexpr std::span<const std::byte> GetBuffer() const noexcept {
 		assert(type == Type::BUFFER);
 
 		return buffer;
@@ -57,7 +57,7 @@ class IstreamBucketList {
 	More more = More::NO;
 
 public:
-	IstreamBucketList() = default;
+	constexpr IstreamBucketList() = default;
 
 	IstreamBucketList(const IstreamBucketList &) = delete;
 	IstreamBucketList &operator=(const IstreamBucketList &) = delete;
@@ -66,7 +66,7 @@ public:
 	 * More data will be available eventually and
 	 * IstreamHandler::OnIstreamReady() will be called.
 	 */
-	void SetPushMore() noexcept {
+	constexpr void SetPushMore() noexcept {
 		if (more < More::PUSH)
 			more = More::PUSH;
 	}
@@ -75,7 +75,7 @@ public:
 	 * More data is available now - call Istream::FillBucketList()
 	 * again (after consuming the data that was just returned).
 	 */
-	void SetPullMore() noexcept {
+	constexpr void SetPullMore() noexcept {
 		if (more < More::PULL)
 			more = More::PULL;
 	}
@@ -84,27 +84,27 @@ public:
 	 * More data is available now but does not fit into this
 	 * object.
 	 */
-	void SetTruncated() noexcept {
+	constexpr void SetTruncated() noexcept {
 		SetPullMore();
 	}
 
-	bool HasMore() const noexcept {
+	constexpr bool HasMore() const noexcept {
 		return more != More::NO;
 	}
 
-	bool ShouldPullMore() const noexcept {
+	constexpr bool ShouldPullMore() const noexcept {
 		return more == More::PULL;
 	}
 
-	void EnableFallback() noexcept {
+	constexpr void EnableFallback() noexcept {
 		more = More::FALLBACK;
 	}
 
-	void CopyMoreFlagsFrom(const IstreamBucketList &src) noexcept {
+	constexpr void CopyMoreFlagsFrom(const IstreamBucketList &src) noexcept {
 		more = src.more;
 	}
 
-	void ResetMoreFlags() noexcept {
+	constexpr void ResetMoreFlags() noexcept {
 		more = More::NO;
 	}
 
@@ -113,23 +113,23 @@ public:
 	 * i.e. shall the consumer fall back to Istream::Read()
 	 * instead of Istream::FillBucketList()?
 	 */
-	bool ShouldFallback() const noexcept {
+	constexpr bool ShouldFallback() const noexcept {
 		return more == More::FALLBACK;
 	}
 
-	bool IsEmpty() const noexcept {
+	constexpr bool IsEmpty() const noexcept {
 		return list.empty();
 	}
 
-	bool IsFull() const noexcept {
+	constexpr bool IsFull() const noexcept {
 		return list.full();
 	}
 
-	void Clear() noexcept {
+	constexpr void Clear() noexcept {
 		list.clear();
 	}
 
-	void Push(const IstreamBucket &bucket) noexcept {
+	constexpr void Push(const IstreamBucket &bucket) noexcept {
 		if (IsFull()) {
 			SetTruncated();
 			return;
@@ -138,7 +138,7 @@ public:
 		list.push_back(bucket);
 	}
 
-	void Push(std::span<const std::byte> buffer) noexcept {
+	constexpr void Push(std::span<const std::byte> buffer) noexcept {
 		Push(IstreamBucket{buffer});
 	}
 
@@ -146,26 +146,26 @@ public:
 		List::size_type value;
 	};
 
-	Marker Mark() const noexcept {
+	constexpr Marker Mark() const noexcept {
 		return {list.size() - HasMore()};
 	}
 
-	bool EmptySinceMark(const Marker m) const noexcept {
+	constexpr bool EmptySinceMark(const Marker m) const noexcept {
 		return !HasMore() && list.size() == m.value;
 	}
 
 	using const_iterator = List::const_iterator;
 
-	const_iterator begin() const noexcept {
+	constexpr const_iterator begin() const noexcept {
 		return list.begin();
 	}
 
-	const_iterator end() const noexcept {
+	constexpr const_iterator end() const noexcept {
 		return list.end();
 	}
 
 	[[gnu::pure]]
-	bool HasNonBuffer() const noexcept {
+	constexpr bool HasNonBuffer() const noexcept {
 		for (const auto &bucket : list)
 			if (!bucket.IsBuffer())
 				return true;
@@ -173,7 +173,7 @@ public:
 	}
 
 	[[gnu::pure]]
-	size_t GetTotalBufferSize() const noexcept {
+	constexpr size_t GetTotalBufferSize() const noexcept {
 		size_t size = 0;
 		for (const auto &bucket : list)
 			if (bucket.IsBuffer())
@@ -182,7 +182,7 @@ public:
 	}
 
 	[[gnu::pure]]
-	bool IsDepleted(size_t consumed) const noexcept {
+	constexpr bool IsDepleted(size_t consumed) const noexcept {
 		return !HasMore() && consumed == GetTotalBufferSize();
 	}
 
