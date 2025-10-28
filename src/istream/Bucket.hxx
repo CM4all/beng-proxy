@@ -48,6 +48,7 @@ class IstreamBucketList {
 	using List = StaticVector<IstreamBucket, 64>;
 	List list;
 
+public:
 	enum class More {
 		NO,
 		PUSH,
@@ -55,6 +56,7 @@ class IstreamBucketList {
 		FALLBACK,
 	};
 
+private:
 	More more = More::NO;
 
 public:
@@ -62,6 +64,15 @@ public:
 
 	IstreamBucketList(const IstreamBucketList &) = delete;
 	IstreamBucketList &operator=(const IstreamBucketList &) = delete;
+
+	constexpr More GetMore() const noexcept {
+		return more;
+	}
+
+	constexpr void UpdateMore(More _more) noexcept {
+		if (_more > more)
+			more = _more;
+	}
 
 	/**
 	 * More data will be available eventually and
@@ -91,10 +102,6 @@ public:
 
 	constexpr bool HasMore() const noexcept {
 		return more != More::NO;
-	}
-
-	constexpr bool ShouldPullMore() const noexcept {
-		return more == More::PULL;
 	}
 
 	constexpr void EnableFallback() noexcept {

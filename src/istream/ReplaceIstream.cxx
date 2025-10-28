@@ -485,20 +485,19 @@ ReplaceIstream::_FillBucketList(IstreamBucketList &list)
 
 	defer_read.Cancel();
 
-	bool input_fallback = false, input_pull = false;
+	IstreamBucketList::More input_more = IstreamBucketList::More::NO;
 	if (HasInput()) {
 		/* fill our buffer from the input */
 		IstreamBucketList tmp;
 		FillBucketListFromInput(tmp);
 
-		input_fallback = tmp.ShouldFallback();
-		input_pull = tmp.ShouldPullMore();
+		input_more = tmp.GetMore();
 
 		size_t total = 0;
 		bool only_buffers = true;
 		for (const auto &i : tmp) {
 			if (i.GetType() != IstreamBucket::Type::BUFFER) {
-				input_fallback = true;
+				input_more = IstreamBucketList::More::FALLBACK;
 				only_buffers = false;
 				break;
 			}
@@ -515,7 +514,7 @@ ReplaceIstream::_FillBucketList(IstreamBucketList &list)
 			total += b.size();
 		}
 
-		if (only_buffers && !tmp.HasMore()) {
+		if (only_buffers && input_more == IstreamBucketList::More::NO) {
 			CloseInput();
 
 			try {
@@ -534,12 +533,9 @@ ReplaceIstream::_FillBucketList(IstreamBucketList &list)
 		if (end < 0) {
 			/* after last substitution and the "settled" position:
 			   not yet ready to read */
-			if (input_fallback)
-				list.EnableFallback();
-			else if (input_pull)
-				list.SetPullMore();
-			else
-				list.SetPushMore();
+			if (input_more == IstreamBucketList::More::NO)
+				input_more = IstreamBucketList::More::PUSH;
+			list.UpdateMore(input_more);
 			return;
 		}
 
@@ -562,24 +558,18 @@ ReplaceIstream::_FillBucketList(IstreamBucketList &list)
 
 		if (s == substitutions.end()) {
 			if (input.IsDefined() || !finished) {
-				if (input_fallback)
-					list.EnableFallback();
-				else if (input_pull)
-					list.SetPullMore();
-				else
-					list.SetPushMore();
+				if (input_more == IstreamBucketList::More::NO)
+					input_more = IstreamBucketList::More::PUSH;
+				list.UpdateMore(input_more);
 			}
 
 			return;
 		}
 
 		if (end < s->start) {
-			if (input_fallback)
-				list.EnableFallback();
-			else if (input_pull)
-				list.SetPullMore();
-			else
-				list.SetPushMore();
+			if (input_more == IstreamBucketList::More::NO)
+				input_more = IstreamBucketList::More::PUSH;
+			list.UpdateMore(input_more);
 			return;
 		}
 

@@ -89,11 +89,17 @@ HttpServerConnection::TryWriteBuckets2()
 	}
 
 	if (v.empty()) {
-		return list.HasMore()
-			? (list.ShouldFallback()
-			   ? BucketResult::FALLBACK
-			   : BucketResult::LATER)
-			: BucketResult::DEPLETED;
+		switch (list.GetMore()) {
+		case IstreamBucketList::More::NO:
+			return BucketResult::DEPLETED;
+
+		case IstreamBucketList::More::PUSH:
+		case IstreamBucketList::More::PULL:
+			return BucketResult::LATER;
+
+		case IstreamBucketList::More::FALLBACK:
+			return BucketResult::FALLBACK;
+		}
 	}
 
 	ssize_t nbytes = v.size() == 1
@@ -116,13 +122,24 @@ HttpServerConnection::TryWriteBuckets2()
 	const auto r = input.ConsumeBucketList(nbytes);
 	assert(r.consumed == (std::size_t)nbytes);
 
-	return r.eof
-		? BucketResult::DEPLETED
-		: (list.ShouldFallback()
-		   ? BucketResult::FALLBACK
-		   : (list.ShouldPullMore()
-		      ? BucketResult::MORE
-		      : BucketResult::LATER));
+	if (r.eof)
+		return BucketResult::DEPLETED;
+
+	switch (list.GetMore()) {
+	case IstreamBucketList::More::NO:
+		return BucketResult::DEPLETED;
+
+	case IstreamBucketList::More::PUSH:
+		return BucketResult::LATER;
+
+	case IstreamBucketList::More::PULL:
+		return BucketResult::MORE;
+
+	case IstreamBucketList::More::FALLBACK:
+		return BucketResult::FALLBACK;
+	}
+
+	std::unreachable();
 }
 
 HttpServerConnection::BucketResult
