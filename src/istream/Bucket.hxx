@@ -9,6 +9,8 @@
 #include <cassert>
 #include <span>
 
+struct iovec;
+
 class IstreamBucket {
 public:
 	enum class Type {
@@ -45,7 +47,8 @@ public:
 };
 
 class IstreamBucketList {
-	using List = StaticVector<IstreamBucket, 64>;
+	static constexpr std::size_t CAPACITY = 64;
+	using List = StaticVector<IstreamBucket, CAPACITY>;
 	List list;
 
 public:
@@ -254,4 +257,10 @@ public:
 	 */
 	size_t CopyBuffersFrom(size_t skip,
 			       const IstreamBucketList &src) noexcept;
+
+	/**
+	 * Convert to an array of struct iovec.
+	 */
+	[[gnu::pure]]
+	StaticVector<struct iovec, CAPACITY> ToIovec() const noexcept;
 };

@@ -77,21 +77,7 @@ HttpServerConnection::TryWriteBuckets2()
 		std::throw_with_nested(std::runtime_error("error on HTTP response stream"));
 	}
 
-	StaticVector<struct iovec, 64> v;
-	std::size_t total = 0;
-
-	for (const auto &bucket : list) {
-		if (!bucket.IsBuffer())
-			break;
-
-		v.push_back(MakeIovec(bucket.GetBuffer()));
-		total += bucket.GetBuffer().size();
-
-		if (v.full())
-			break;
-	}
-
-	if (!v.empty()) [[likely]] {
+	if (const auto v = list.ToIovec(); !v.empty()) [[likely]] {
 		ssize_t nbytes = v.size() == 1
 			? socket->Write(ToSpan(v.front()))
 			: socket->WriteV(v);
@@ -115,7 +101,7 @@ HttpServerConnection::TryWriteBuckets2()
 		if (r.eof)
 			return BucketResult::DEPLETED;
 
-		if (static_cast<std::size_t>(nbytes) < total)
+		if (static_cast<std::size_t>(nbytes) < list.GetTotalBufferSize()) [[unlikely]]
 			/* not everything was submitted to the socket:
 			   a write event must be scheduled on our
 			   socket */

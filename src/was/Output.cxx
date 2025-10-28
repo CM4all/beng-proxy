@@ -7,7 +7,6 @@
 #include "event/DeferEvent.hxx"
 #include "event/CoarseTimerEvent.hxx"
 #include "net/TimeoutError.hxx"
-#include "io/Iovec.hxx"
 #include "io/Splice.hxx"
 #include "io/SpliceSupport.hxx"
 #include "io/FileDescriptor.hxx"
@@ -18,7 +17,6 @@
 #include "pool/pool.hxx"
 #include "pool/LeakDetector.hxx"
 #include "util/DestructObserver.hxx"
-#include "util/StaticVector.hxx"
 
 #include <was/protocol.h>
 
@@ -222,23 +220,7 @@ WasOutput::OnIstreamReady() noexcept
 
 	/* convert buckets to struct iovec array */
 
-	StaticVector<struct iovec, 64> v;
-	IstreamReadyResult result = IstreamReadyResult::OK;
-
-	for (const auto &i : list) {
-		if (!i.IsBuffer()) {
-			result = IstreamReadyResult::FALLBACK;
-			break;
-		}
-
-		if (v.full())
-			break;
-
-		const auto buffer = i.GetBuffer();
-
-		v.push_back(MakeIovec(buffer));
-	}
-
+	const auto v = list.ToIovec();
 	if (v.empty())
 		return IstreamReadyResult::OK;
 
@@ -268,7 +250,7 @@ WasOutput::OnIstreamReady() noexcept
 	}
 
 	ScheduleWrite();
-	return result;
+	return IstreamReadyResult::OK;
 }
 
 inline std::size_t

@@ -3,6 +3,7 @@
 // author: Max Kellermann <max.kellermann@ionos.com>
 
 #include "Bucket.hxx"
+#include "io/Iovec.hxx"
 
 void
 IstreamBucketList::SpliceFrom(IstreamBucketList &&src) noexcept
@@ -100,4 +101,15 @@ IstreamBucketList::CopyBuffersFrom(std::size_t skip,
 		CopyMoreFlagsFrom(src);
 
 	return total_size;
+}
+
+StaticVector<struct iovec, IstreamBucketList::CAPACITY>
+IstreamBucketList::ToIovec() const noexcept
+{
+	StaticVector<struct iovec, CAPACITY> v;
+
+	for (const auto &bucket : list)
+		v.push_back(MakeIovec(bucket.GetBuffer()));
+
+	return v;
 }
