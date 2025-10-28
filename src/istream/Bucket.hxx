@@ -50,9 +50,30 @@ class IstreamBucketList {
 
 public:
 	enum class More {
+		/**
+		 * This is all, there will not be any more data on
+		 * this #Istream.
+		 */
 		NO,
+
+		/**
+		 * More data will be available eventually and
+		 * IstreamHandler::OnIstreamReady() will be called.
+		 */
 		PUSH,
+
+		/**
+		 * More data is available now - call Istream::FillBucketList()
+		 * again (after consuming the data that was just returned).
+		 */
 		PULL,
+
+		/**
+		 * Is the producer unable to produce more bucket data,
+		 * i.e. shall the consumer fall back to
+		 * Istream::Read() instead of
+		 * Istream::FillBucketList()?
+		 */
 		FALLBACK,
 	};
 
@@ -75,8 +96,7 @@ public:
 	}
 
 	/**
-	 * More data will be available eventually and
-	 * IstreamHandler::OnIstreamReady() will be called.
+	 * @see More::PUSH
 	 */
 	constexpr void SetPushMore() noexcept {
 		if (more < More::PUSH)
@@ -84,8 +104,7 @@ public:
 	}
 
 	/**
-	 * More data is available now - call Istream::FillBucketList()
-	 * again (after consuming the data that was just returned).
+	 * @see More::PULL
 	 */
 	constexpr void SetPullMore() noexcept {
 		if (more < More::PULL)
@@ -117,9 +136,7 @@ public:
 	}
 
 	/**
-	 * Is the producer unable to produce more bucket data,
-	 * i.e. shall the consumer fall back to Istream::Read()
-	 * instead of Istream::FillBucketList()?
+	 * @see More::FALLBACK
 	 */
 	constexpr bool ShouldFallback() const noexcept {
 		return more == More::FALLBACK;
