@@ -16,7 +16,9 @@ public:
 	};
 
 private:
-	Type type;
+	/* this definition exists so we can eventually implement
+	   non-buffer buckets */
+	static constexpr Type type = Type::BUFFER;
 
 	union {
 		std::span<const std::byte> buffer;
@@ -24,8 +26,7 @@ private:
 
 public:
 	explicit constexpr IstreamBucket(std::span<const std::byte> _buffer) noexcept
-		:type(Type::BUFFER),
-		 buffer(_buffer) {}
+		:buffer(_buffer) {}
 
 
 	constexpr Type GetType() const noexcept {
