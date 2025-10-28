@@ -63,10 +63,20 @@ public:
 		PUSH,
 
 		/**
-		 * More data is available now - call Istream::FillBucketList()
-		 * again (after consuming the data that was just returned).
+		 * More data is available now (but may require doing
+		 * synchronous I/O).  Call Istream::FillBucketList()
+		 * again (after consuming the data that was just
+		 * returned).
 		 */
 		PULL,
+
+		/**
+		 * More data is available now without any I/O (but may
+		 * not fit into this object).  Call
+		 * Istream::FillBucketList() again (after consuming
+		 * the data that was just returned).
+		 */
+		AGAIN,
 
 		/**
 		 * Is the producer unable to produce more bucket data,
@@ -116,7 +126,7 @@ public:
 	 * object.
 	 */
 	constexpr void SetTruncated() noexcept {
-		SetPullMore();
+		UpdateMore(More::AGAIN);
 	}
 
 	constexpr bool HasMore() const noexcept {

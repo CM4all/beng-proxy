@@ -116,6 +116,11 @@ class HttpClient final : BufferedSocketHandler, IstreamSink, Cancellable, Destru
 		MORE,
 
 		/**
+		 * More data is available.  Repeat the call now.
+		 */
+		AGAIN,
+
+		/**
 		 * Writing to our socket blocks.
 		 */
 		BLOCKING,
@@ -404,6 +409,11 @@ private:
 	BucketResult TryWriteBuckets2();
 
 	/**
+	 * Like TryWriteBuckets2(), but handle AGAIN.
+	 */
+	BucketResult TryWriteBucketsLoop();
+
+	/**
 	 * Like TryWriteBuckets2(), but catches/handles its exceptions
 	 * and adds internal housekeeping.
 	 */
@@ -685,11 +695,30 @@ HttpClient::TryWriteBuckets2()
 	case IstreamBucketList::More::PULL:
 		return BucketResult::MORE;
 
+	case IstreamBucketList::More::AGAIN:
+		return BucketResult::AGAIN;
+
 	case IstreamBucketList::More::FALLBACK:
 		return BucketResult::FALLBACK;
 	}
 
 	std::unreachable();
+}
+
+inline HttpClient::BucketResult
+HttpClient::TryWriteBucketsLoop()
+{
+	assert(HasInput());
+
+	BucketResult result;
+
+	for (unsigned i = 0; i < 4; ++i) {
+		result = TryWriteBuckets2();
+		if (result != BucketResult::AGAIN)
+			break;
+	}
+
+	return result;
 }
 
 HttpClient::BucketResult
@@ -700,7 +729,7 @@ HttpClient::TryWriteBuckets() noexcept
 	BucketResult result;
 
 	try {
-		result = TryWriteBuckets2();
+		result = TryWriteBucketsLoop();
 	} catch (RequestBodyCanceled) {
 		assert(!HasInput());
 		stopwatch.RecordEvent("request_canceled");
@@ -719,6 +748,7 @@ HttpClient::TryWriteBuckets() noexcept
 
 	case BucketResult::MORE:
 	case BucketResult::BLOCKING:
+	case BucketResult::AGAIN:
 		assert(HasInput());
 		ScheduleWrite();
 		break;
@@ -1274,6 +1304,7 @@ HttpClient::OnBufferedWrite()
 
 	case BucketResult::MORE:
 	case BucketResult::BLOCKING:
+	case BucketResult::AGAIN:
 		assert(HasInput());
 		return true;
 

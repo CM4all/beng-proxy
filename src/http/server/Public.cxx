@@ -56,7 +56,7 @@ HttpServerConnection::NewRequest(HttpMethod method,
 					      method, uri);
 }
 
-HttpServerConnection::BucketResult
+inline HttpServerConnection::BucketResult
 HttpServerConnection::TryWriteBuckets2()
 {
 	assert(IsValid());
@@ -132,11 +132,30 @@ HttpServerConnection::TryWriteBuckets2()
 	case IstreamBucketList::More::PULL:
 		return BucketResult::MORE;
 
+	case IstreamBucketList::More::AGAIN:
+		return BucketResult::AGAIN;
+
 	case IstreamBucketList::More::FALLBACK:
 		return BucketResult::FALLBACK;
 	}
 
 	std::unreachable();
+}
+
+inline HttpServerConnection::BucketResult
+HttpServerConnection::TryWriteBucketsLoop()
+{
+	assert(HasInput());
+
+	BucketResult result;
+
+	for (unsigned i = 0; i < 4; ++i) {
+		result = TryWriteBuckets2();
+		if (result != BucketResult::AGAIN)
+			break;
+	}
+
+	return result;
 }
 
 HttpServerConnection::BucketResult
@@ -145,7 +164,7 @@ HttpServerConnection::TryWriteBuckets() noexcept
 	BucketResult result;
 
 	try {
-		result = TryWriteBuckets2();
+		result = TryWriteBucketsLoop();
 	} catch (...) {
 		assert(!HasInput());
 
@@ -165,6 +184,7 @@ HttpServerConnection::TryWriteBuckets() noexcept
 
 	case BucketResult::MORE:
 	case BucketResult::BLOCKING:
+	case BucketResult::AGAIN:
 		assert(HasInput());
 		ScheduleWrite();
 		break;
@@ -200,6 +220,7 @@ HttpServerConnection::TryWrite() noexcept
 	case BucketResult::MORE:
 	case BucketResult::BLOCKING:
 	case BucketResult::DEPLETED:
+	case BucketResult::AGAIN:
 		return true;
 
 	case BucketResult::DESTROYED:

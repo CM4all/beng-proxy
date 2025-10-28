@@ -28,6 +28,7 @@ HttpServerConnection::OnIstreamReady() noexcept
 
 	case BucketResult::MORE:
 	case BucketResult::BLOCKING:
+	case BucketResult::AGAIN:
 		return IstreamReadyResult::OK;
 
 	case BucketResult::DEPLETED:

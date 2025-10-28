@@ -80,6 +80,11 @@ struct HttpServerConnection final
 		MORE,
 
 		/**
+		 * More data is available.  Repeat the call now.
+		 */
+		AGAIN,
+
+		/**
 		 * Writing to our socket blocks.
 		 */
 		BLOCKING,
@@ -458,6 +463,11 @@ struct HttpServerConnection final
 	 * Throws on error.
 	 */
 	BucketResult TryWriteBuckets2();
+
+	/**
+	 * Like TryWriteBuckets2(), but handle AGAIN.
+	 */
+	BucketResult TryWriteBucketsLoop();
 
 	BucketResult TryWriteBuckets() noexcept;
 
