@@ -216,7 +216,7 @@ WasOutput::OnIstreamReady() noexcept
 		return IstreamReadyResult::CLOSED;
 	}
 
-	bool eof = !list.HasMore();
+	IstreamBucketList::More more = list.GetMore();
 
 	/* convert buckets to struct iovec array */
 
@@ -235,19 +235,34 @@ WasOutput::OnIstreamReady() noexcept
 		}
 
 		sent += nbytes;
-		eof = input.ConsumeBucketList(nbytes).eof;
+		const bool eof = input.ConsumeBucketList(nbytes).eof;
+
+		if (eof)
+			more = IstreamBucketList::More::NO;
+		else if (static_cast<std::size_t>(nbytes) < list.GetTotalBufferSize())
+			more = IstreamBucketList::More::PULL;
 	}
 
-	if (eof) {
-		/* we've just reached end of our input */
-
+	switch (more) {
+	case IstreamBucketList::More::NO:
 		CloseInput();
 		DestroyEof();
 		return IstreamReadyResult::CLOSED;
+
+	case IstreamBucketList::More::PUSH:
+		CancelWrite();
+		return IstreamReadyResult::OK;
+
+	case IstreamBucketList::More::PULL:
+	case IstreamBucketList::More::AGAIN:
+		ScheduleWrite();
+		return IstreamReadyResult::OK;
+
+	case IstreamBucketList::More::FALLBACK:
+		return IstreamReadyResult::FALLBACK;
 	}
 
-	ScheduleWrite();
-	return IstreamReadyResult::OK;
+	std::unreachable();
 }
 
 inline std::size_t
