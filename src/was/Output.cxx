@@ -168,9 +168,6 @@ WasOutput::WriteEventCallback(unsigned) noexcept
 
 	timeout_event.Cancel();
 
-	if (!CheckLength())
-		return;
-
 	switch (OnIstreamReady()) {
 	case IstreamReadyResult::OK:
 	case IstreamReadyResult::CLOSED:
@@ -197,9 +194,6 @@ WasOutput::OnDeferredWrite() noexcept
 	assert(HasPipe());
 	assert(HasInput());
 
-	if (!CheckLength())
-		return;
-
 	switch (OnIstreamReady()) {
 	case IstreamReadyResult::OK:
 	case IstreamReadyResult::CLOSED:
@@ -222,6 +216,9 @@ WasOutput::OnIstreamReady() noexcept
 {
 	assert(HasPipe());
 	assert(HasInput());
+
+	if (!CheckLength())
+		return IstreamReadyResult::CLOSED;
 
 	/* collect buckets */
 
