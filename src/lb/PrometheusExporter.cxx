@@ -41,7 +41,7 @@ class LbPrometheusExporter::AppendRequest final
 
 	const SocketAddress socket_address;
 
-	HttpAddress address{false, "dummy:80", "/"};
+	HttpAddress address{false, "dummy:80", "/metrics"};
 
 	CoarseTimerEvent timeout_event;
 
