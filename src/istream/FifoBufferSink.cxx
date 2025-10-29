@@ -48,8 +48,8 @@ FifoBufferSink::OnIstreamReady() noexcept
 		}
 	}
 
-	if (nbytes > 0)
-		input.ConsumeBucketList(nbytes);
+	if (nbytes > 0 && input.ConsumeBucketList(nbytes).eof)
+		more = false;
 
 	if (!more) {
 		CloseInput();
