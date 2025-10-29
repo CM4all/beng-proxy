@@ -216,36 +216,27 @@ WasOutput::OnIstreamReady() noexcept
 		return IstreamReadyResult::CLOSED;
 	}
 
-	if (list.IsEmpty() && !list.HasMore()) {
-		/* our input has ended */
-
-		CloseInput();
-		DestroyEof();
-		return IstreamReadyResult::CLOSED;
-	}
+	bool eof = !list.HasMore();
 
 	/* convert buckets to struct iovec array */
 
-	const auto v = list.ToIovec();
-	if (v.empty())
-		return IstreamReadyResult::OK;
+	if (const auto v = list.ToIovec(); !v.empty()) [[likely]] {
+		/* write this struct iovec array */
+		ssize_t nbytes = GetPipe().Write(v);
+		if (nbytes < 0) {
+			int e = errno;
+			if (e == EAGAIN) {
+				ScheduleWrite();
+				return IstreamReadyResult::OK;
+			}
 
-	/* write this struct iovec array */
-
-	ssize_t nbytes = GetPipe().Write(v);
-	if (nbytes < 0) {
-		int e = errno;
-		if (e == EAGAIN) {
-			ScheduleWrite();
-			return IstreamReadyResult::OK;
+			DestroyError(std::make_exception_ptr(MakeErrno(e, "Write to WAS process failed")));
+			return IstreamReadyResult::CLOSED;
 		}
 
-		DestroyError(std::make_exception_ptr(MakeErrno(e, "Write to WAS process failed")));
-		return IstreamReadyResult::CLOSED;
+		sent += nbytes;
+		eof = input.ConsumeBucketList(nbytes).eof;
 	}
-
-	sent += nbytes;
-	const auto eof = input.ConsumeBucketList(nbytes).eof;
 
 	if (eof) {
 		/* we've just reached end of our input */
