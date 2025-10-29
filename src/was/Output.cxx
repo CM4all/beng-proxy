@@ -171,6 +171,15 @@ WasOutput::WriteEventCallback(unsigned) noexcept
 	if (!CheckLength())
 		return;
 
+	switch (OnIstreamReady()) {
+	case IstreamReadyResult::OK:
+	case IstreamReadyResult::CLOSED:
+		return;
+
+	case IstreamReadyResult::FALLBACK:
+		break;
+	}
+
 	const DestructObserver destructed(*this);
 	got_data = false;
 
@@ -190,6 +199,15 @@ WasOutput::OnDeferredWrite() noexcept
 
 	if (!CheckLength())
 		return;
+
+	switch (OnIstreamReady()) {
+	case IstreamReadyResult::OK:
+	case IstreamReadyResult::CLOSED:
+		return;
+
+	case IstreamReadyResult::FALLBACK:
+		break;
+	}
 
 	input.Read();
 }
