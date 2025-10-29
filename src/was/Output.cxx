@@ -7,6 +7,7 @@
 #include "event/DeferEvent.hxx"
 #include "event/CoarseTimerEvent.hxx"
 #include "net/TimeoutError.hxx"
+#include "io/Iovec.hxx"
 #include "io/Splice.hxx"
 #include "io/SpliceSupport.hxx"
 #include "io/FileDescriptor.hxx"
@@ -237,7 +238,10 @@ WasOutput::OnIstreamReady() noexcept
 
 	if (const auto v = list.ToIovec(); !v.empty()) [[likely]] {
 		/* write this struct iovec array */
-		ssize_t nbytes = GetPipe().Write(v);
+		const FileDescriptor pipe = GetPipe();
+		ssize_t nbytes = v.size() == 1
+			? pipe.Write(ToSpan(v.front()))
+			: pipe.Write(v);
 		if (nbytes < 0) {
 			int e = errno;
 			if (e == EAGAIN) {
