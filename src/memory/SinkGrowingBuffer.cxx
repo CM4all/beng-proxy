@@ -9,40 +9,50 @@
 IstreamReadyResult
 GrowingBufferSink::OnIstreamReady() noexcept
 {
-	IstreamBucketList list;
+	while (true) {
+		IstreamBucketList list;
 
-	try {
-		input.FillBucketList(list);
-	} catch (...) {
-		handler.OnGrowingBufferSinkError(std::current_exception());
-		return IstreamReadyResult::CLOSED;
-	}
-
-	std::size_t nbytes = 0;
-	bool more = list.HasMore();
-
-	for (const auto &bucket : list) {
-		if (!bucket.IsBuffer()) {
-			more = true;
-			break;
+		try {
+			input.FillBucketList(list);
+		} catch (...) {
+			handler.OnGrowingBufferSinkError(std::current_exception());
+			return IstreamReadyResult::CLOSED;
 		}
 
-		auto r = bucket.GetBuffer();
-		buffer.Write(r);
-		nbytes += r.size();
+		std::size_t nbytes = 0;
+		auto more = list.GetMore();
+
+		for (const auto &bucket : list) {
+			if (!bucket.IsBuffer()) {
+				more = IstreamBucketList::More::FALLBACK;
+				break;
+			}
+
+			auto r = bucket.GetBuffer();
+			buffer.Write(r);
+			nbytes += r.size();
+		}
+
+		if (nbytes > 0 && input.ConsumeBucketList(nbytes).eof)
+			more = IstreamBucketList::More::NO;
+
+		switch (more) {
+		case IstreamBucketList::More::NO:
+			CloseInput();
+			handler.OnGrowingBufferSinkEof(std::move(buffer));
+			return IstreamReadyResult::CLOSED;
+
+		case IstreamBucketList::More::PUSH:
+			return IstreamReadyResult::OK;
+
+		case IstreamBucketList::More::PULL:
+		case IstreamBucketList::More::AGAIN:
+			break;
+
+		case IstreamBucketList::More::FALLBACK:
+			return IstreamReadyResult::FALLBACK;
+		}
 	}
-
-	const bool eof =  nbytes > 0
-		? input.ConsumeBucketList(nbytes).eof
-		: !more;
-
-	if (eof) {
-		CloseInput();
-		handler.OnGrowingBufferSinkEof(std::move(buffer));
-		return IstreamReadyResult::CLOSED;
-	}
-
-	return IstreamReadyResult::OK;
 }
 
 std::size_t
