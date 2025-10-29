@@ -117,6 +117,12 @@ private:
 		timeout_event.Schedule(was_output_timeout);
 	}
 
+	void CancelWrite() noexcept {
+		event.CancelWrite();
+		defer_write.Cancel();
+		timeout_event.Cancel();
+	}
+
 	void WriteEventCallback(unsigned events) noexcept;
 	void OnDeferredWrite() noexcept;
 
@@ -173,7 +179,7 @@ WasOutput::WriteEventCallback(unsigned) noexcept
 	if (!destructed && !got_data)
 		/* the Istream is not ready for reading, so cancel our
 		   write event */
-		event.CancelWrite();
+		CancelWrite();
 }
 
 inline void
