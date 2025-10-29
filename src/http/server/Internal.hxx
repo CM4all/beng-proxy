@@ -113,6 +113,8 @@ struct HttpServerConnection final
 		IstreamLength _GetLength() noexcept override;
 		void _Read() noexcept override;
 		void _ConsumeDirect(std::size_t nbytes) noexcept override;
+		void _FillBucketList(IstreamBucketList &list) override;
+		ConsumeBucketResult _ConsumeBucketList(std::size_t nbytes) noexcept override;
 		void _Close() noexcept override;
 	};
 
@@ -409,6 +411,9 @@ struct HttpServerConnection final
 	void DiscardRequestBody() noexcept;
 
 	void ReadRequestBody() noexcept;
+
+	void FillBucketList(IstreamBucketList &list) noexcept;
+	Istream::ConsumeBucketResult ConsumeBucketList(std::size_t nbytes) noexcept;
 
 	/**
 	 * @return false if the connection has been closed

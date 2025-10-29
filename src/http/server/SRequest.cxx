@@ -14,6 +14,22 @@ HttpServerConnection::FeedRequestBody(std::span<const std::byte> src) noexcept
 
 	const DestructObserver destructed(*this);
 
+	switch (request_body_reader->InvokeReady()) {
+	case IstreamReadyResult::OK:
+		/* refresh the request body timeout */
+		ScheduleReadTimeoutTimer();
+		return BufferedResult::OK;
+
+	case IstreamReadyResult::FALLBACK:
+		break;
+
+	case IstreamReadyResult::CLOSED:
+		if (destructed)
+			return BufferedResult::DESTROYED;
+
+		return BufferedResult::OK;
+	}
+
 	std::size_t nbytes = request_body_reader->FeedBody(src);
 	if (nbytes == 0) {
 		if (destructed)
@@ -137,6 +153,40 @@ HttpServerConnection::RequestBodyReader::_ConsumeDirect(std::size_t nbytes) noex
 	HttpBodyReader::_ConsumeDirect(nbytes);
 
 	connection.request.bytes_received += nbytes;
+}
+
+inline void
+HttpServerConnection::FillBucketList(IstreamBucketList &list) noexcept
+{
+	assert(IsValid());
+	assert(request.read_state == Request::BODY);
+	assert(request.body_state == Request::BodyState::READING);
+	assert(!response.pending_drained);
+
+	request_body_reader->FillBucketList(*socket, list);
+}
+
+void
+HttpServerConnection::RequestBodyReader::_FillBucketList(IstreamBucketList &list)
+{
+	connection.FillBucketList(list);
+}
+
+inline Istream::ConsumeBucketResult
+HttpServerConnection::ConsumeBucketList(std::size_t nbytes) noexcept
+{
+	assert(IsValid());
+	assert(request.read_state == Request::BODY);
+	assert(request.body_state == Request::BodyState::READING);
+	assert(!response.pending_drained);
+
+	return request_body_reader->ConsumeBucketList(*socket, nbytes);
+}
+
+Istream::ConsumeBucketResult
+HttpServerConnection::RequestBodyReader::_ConsumeBucketList(std::size_t nbytes) noexcept
+{
+	return connection.ConsumeBucketList(nbytes);
 }
 
 void
