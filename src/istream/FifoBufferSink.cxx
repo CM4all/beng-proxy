@@ -27,13 +27,11 @@ FifoBufferSink::OnIstreamReady() noexcept
 	}
 
 	std::size_t nbytes = 0;
-	IstreamReadyResult result = IstreamReadyResult::OK;
-	bool more = list.HasMore();
+	auto more = list.GetMore();
 
 	for (const auto &bucket : list) {
 		if (!bucket.IsBuffer()) {
-			result = IstreamReadyResult::FALLBACK;
-			more = true;
+			more = IstreamBucketList::More::FALLBACK;
 			break;
 		}
 
@@ -43,27 +41,36 @@ FifoBufferSink::OnIstreamReady() noexcept
 		nbytes += n_copy;
 
 		if (n_copy < r.size()) {
-			more = true;
+			more = IstreamBucketList::More::PULL;
 			break;
 		}
 	}
 
 	if (nbytes > 0 && input.ConsumeBucketList(nbytes).eof)
-		more = false;
+		more = IstreamBucketList::More::NO;
 
 	if (!handler.OnFifoBufferSinkData())
 		return IstreamReadyResult::CLOSED;
 
-	if (!more) {
+	switch (more) {
+	case IstreamBucketList::More::NO:
 		CloseInput();
 		handler.OnFifoBufferSinkEof();
 		return IstreamReadyResult::CLOSED;
+
+	case IstreamBucketList::More::PUSH:
+	case IstreamBucketList::More::PULL:
+		return IstreamReadyResult::OK;
+
+	case IstreamBucketList::More::AGAIN:
+		// TODO loop?
+		return IstreamReadyResult::OK;
+
+	case IstreamBucketList::More::FALLBACK:
+		return IstreamReadyResult::FALLBACK;
 	}
 
-	if (list.ShouldFallback())
-		result = IstreamReadyResult::FALLBACK;
-
-	return result;
+	std::unreachable();
 }
 
 std::size_t
