@@ -51,14 +51,14 @@ FifoBufferSink::OnIstreamReady() noexcept
 	if (nbytes > 0 && input.ConsumeBucketList(nbytes).eof)
 		more = false;
 
+	if (!handler.OnFifoBufferSinkData())
+		return IstreamReadyResult::CLOSED;
+
 	if (!more) {
 		CloseInput();
 		handler.OnFifoBufferSinkEof();
 		return IstreamReadyResult::CLOSED;
 	}
-
-	if (!handler.OnFifoBufferSinkData())
-		return IstreamReadyResult::CLOSED;
 
 	if (list.ShouldFallback())
 		result = IstreamReadyResult::FALLBACK;
