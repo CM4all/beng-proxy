@@ -161,7 +161,6 @@ subdir('libcommon/src/uri')
 util2 = static_library(
   'util2',
   'src/util/LimitedConcurrencyQueue.cxx',
-  'src/util/StringList.cxx',
   'src/util/StringSet.cxx',
   'src/uri/Base.cxx',
   'src/uri/Compare.cxx',
