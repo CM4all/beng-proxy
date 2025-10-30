@@ -259,6 +259,7 @@ LbControl::OnControlPacket(BengControl::Command command,
 	case Command::DISCONNECT_DATABASE:
 	case Command::DISABLE_URING:
 	case Command::RESET_LIMITER:
+	case Command::CANCEL_JOB:
 		/* not applicable */
 		break;
 

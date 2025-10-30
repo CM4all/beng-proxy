@@ -311,6 +311,24 @@ BanClient(const char *server, BengControl::Command command, std::span<const char
 }
 
 static void
+CancelJob(const char *server, std::span<const char *const> args)
+{
+	if (args.size() < 2)
+		throw Usage{"Not enough arguments"};
+
+	if (args.size() > 2)
+		throw Usage{"Too many arguments"};
+
+	const std::string_view partition_name = args[0];
+	const std::string_view job_id = args[1];
+
+	const auto payload = fmt::format("{}\0{}"sv, partition_name, job_id);
+
+	BengControl::Client client(server);
+	client.Send(BengControl::Command::CANCEL_JOB, AsBytes(payload));
+}
+
+static void
 Stopwatch(const char *server, std::span<const char *const> args)
 {
 	if (!args.empty())
@@ -427,6 +445,9 @@ try {
 	} else if (StringIsEqual(command, "tarpit-client")) {
 		BanClient(server, BengControl::Command::TARPIT_CLIENT, args);
 		return EXIT_SUCCESS;
+	} else if (StringIsEqual(command, "cancel-job")) {
+		CancelJob(server, args);
+		return EXIT_SUCCESS;
 	} else if (StringIsEqual(command, "stopwatch")) {
 		Stopwatch(server, args);
 		return EXIT_SUCCESS;
@@ -458,6 +479,7 @@ try {
 		"  reset-limiter ID\n"
 		"  reject-client DURATION ADDRESS\n"
 		"  tarpit-client DURATION ADDRESS\n"
+		"  cancel-job PARTITION ID\n"
 		"  stopwatch\n"
 		"\n"
 		"Names for tcache-invalidate:\n",

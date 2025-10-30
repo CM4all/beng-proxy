@@ -4,6 +4,7 @@ cm4all-beng-proxy (20.15) unstable; urgency=low
   * http_server, was: reduce the number of epoll_ctl() system calls
   * processor: fix another stalled transfer bug
   * widget: remove automatic charset conversion
+  * control: add packet CANCEL_JOB
 
  --   
 
