@@ -1003,6 +1003,8 @@ HttpCache::Serve(struct pool &caller_pool,
 		   to avoid use-after-free bugs */
 		: StringMap{caller_pool, document.response_headers};
 
+	headers.Add(caller_pool, x_cache_header, "HIT");
+
 	handler.InvokeResponse(document.status,
 			       std::move(headers),
 			       std::move(body));

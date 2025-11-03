@@ -48,6 +48,7 @@ constexpr StringMapKey upgrade_header{"upgrade"};
 constexpr StringMapKey user_agent_header{"user-agent"};
 constexpr StringMapKey vary_header{"vary"};
 constexpr StringMapKey via_header{"via"};
+constexpr StringMapKey x_cache_header{"x-cache"};
 constexpr StringMapKey x_cm4all_althost_header{"x-cm4all-althost"};
 constexpr StringMapKey x_cm4all_chain_header{"x-cm4all-chain"};
 constexpr StringMapKey x_cm4all_csrf_token_header{"x-cm4all-csrf-token"};
