@@ -70,13 +70,8 @@ Context::ReadBuckets2(std::size_t limit, bool consume_more)
 		const auto l = input.GetLength();
 	}
 
-	if (list.ShouldFallback())
-		bucket_fallback = true;
-
 	if (list.HasMore())
 		consume_more = false;
-
-	got_data = true;
 
 	BucketResult result = BucketResult::DEPLETED;
 	switch (list.GetMore()) {
@@ -96,6 +91,7 @@ Context::ReadBuckets2(std::size_t limit, bool consume_more)
 		break;
 
 	case IstreamBucketList::More::FALLBACK:
+		bucket_fallback = true;
 		result = BucketResult::FALLBACK;
 		break;
 	}
