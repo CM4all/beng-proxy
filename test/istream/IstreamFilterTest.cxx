@@ -76,8 +76,6 @@ Context::ReadBuckets2(std::size_t limit, bool consume_more)
 	if (list.HasMore())
 		consume_more = false;
 
-	got_data = true;
-
 	IstreamReadyResult rresult = IstreamReadyResult::OK;
 	bool result = true;
 	std::size_t consumed = 0;
@@ -96,6 +94,8 @@ Context::ReadBuckets2(std::size_t limit, bool consume_more)
 			result = false;
 			break;
 		}
+
+		got_data = true;
 
 		const auto b = i.GetBuffer();
 		std::size_t size = b.size();
