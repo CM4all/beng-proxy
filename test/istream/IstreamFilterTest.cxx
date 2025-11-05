@@ -73,12 +73,6 @@ Context::ReadBuckets2(std::size_t limit, bool consume_more)
 	if (list.ShouldFallback())
 		bucket_fallback = true;
 
-	if (list.IsEmpty() && list.HasMore())
-		return {
-			list.ShouldFallback() ? IstreamReadyResult::FALLBACK : IstreamReadyResult::OK,
-			false
-		};
-
 	if (list.HasMore())
 		consume_more = false;
 
@@ -87,6 +81,12 @@ Context::ReadBuckets2(std::size_t limit, bool consume_more)
 	IstreamReadyResult rresult = IstreamReadyResult::OK;
 	bool result = true;
 	std::size_t consumed = 0;
+
+	if (list.IsEmpty() && list.HasMore()) {
+		if (list.ShouldFallback())
+			rresult = IstreamReadyResult::FALLBACK;
+		result = false;
+	}
 
 	for (const auto &i : list) {
 		if (!i.IsBuffer()) {
@@ -128,8 +128,7 @@ Context::ReadBuckets2(std::size_t limit, bool consume_more)
 		[[maybe_unused]] const auto r = input.ConsumeBucketList(consumed + consume_more);
 		assert(r.consumed == consumed);
 		bucket_eof = eof = r.eof;
-	} else if (list.IsEmpty()) {
-		assert(!list.HasMore());
+	} else if (list.IsEmpty() && !list.HasMore()) {
 		bucket_eof = eof = true;
 	}
 
