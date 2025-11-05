@@ -29,7 +29,7 @@ struct RecordingHttpResponseHandler : HttpResponseHandler, StringSinkHandler {
 	EventLoop &event_loop;
 
 	HttpStatus status{};
-	std::multimap<std::string, std::string> headers;
+	std::multimap<std::string, std::string, std::less<>> headers;
 	std::string body;
 
 	std::exception_ptr error;
