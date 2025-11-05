@@ -472,6 +472,15 @@ run_istream_ctx(Context &ctx)
 }
 
 void
+Context::RunBuckets(std::size_t limit, bool consume_more)
+{
+	while (ReadBuckets(limit, consume_more)) {}
+
+	if (input.IsDefined())
+		run_istream_ctx(*this);
+}
+
+void
 run_istream_block(const IstreamFilterTestOptions &options,
 		  Instance &instance, PoolPtr pool,
 		  UnusedIstreamPtr istream,

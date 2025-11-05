@@ -225,6 +225,8 @@ struct Context final : IstreamSink {
 
 	void WaitForEndOfStream() noexcept;
 
+	void RunBuckets(std::size_t limit=1024*1024, bool consume_more=false);
+
 	/* virtual methods from class IstreamHandler */
 	IstreamReadyResult OnIstreamReady() noexcept override;
 	std::size_t OnData(std::span<const std::byte> src) noexcept override;
@@ -379,10 +381,7 @@ TYPED_TEST_P(IstreamFilterTest, Bucket)
 	if (ctx.options.expected_result.data() != nullptr)
 		ctx.record = true;
 
-	while (ctx.ReadBuckets(1024 * 1024)) {}
-
-	if (ctx.input.IsDefined())
-		run_istream_ctx(ctx);
+	ctx.RunBuckets();
 }
 
 /** test with Istream::FillBucketList(), but don't call input.GetAvailable() */
@@ -410,10 +409,7 @@ TYPED_TEST_P(IstreamFilterTest, BucketNoGetAvailable)
 	if (ctx.options.expected_result.data() != nullptr)
 		ctx.record = true;
 
-	while (ctx.ReadBuckets(1024 * 1024)) {}
-
-	if (ctx.input.IsDefined())
-		run_istream_ctx(ctx);
+	ctx.RunBuckets();
 }
 
 /** suspend the first half of the input */
@@ -441,10 +437,7 @@ TYPED_TEST_P(IstreamFilterTest, BucketHalfSuspend)
 	if (ctx.options.expected_result.data() != nullptr)
 		ctx.record = true;
 
-	while (ctx.ReadBuckets(1024 * 1024)) {}
-
-	if (ctx.input.IsDefined())
-		run_istream_ctx(ctx);
+	ctx.RunBuckets();
 }
 
 /** consume one more byte, expect _ConsumeBucketList() to assign this
@@ -471,10 +464,7 @@ TYPED_TEST_P(IstreamFilterTest, BucketMore)
 	if (ctx.options.expected_result.data() != nullptr)
 		ctx.record = true;
 
-	while (ctx.ReadBuckets(1024 * 1024, true)) {}
-
-	if (ctx.input.IsDefined())
-		run_istream_ctx(ctx);
+	ctx.RunBuckets(1024 * 1024, true);
 }
 
 /** test with Istream::FillBucketList() */
@@ -500,10 +490,7 @@ TYPED_TEST_P(IstreamFilterTest, SmallBucket)
 	if (ctx.options.expected_result.data() != nullptr)
 		ctx.record = true;
 
-	while (ctx.ReadBuckets(3)) {}
-
-	if (ctx.input.IsDefined())
-		run_istream_ctx(ctx);
+	ctx.RunBuckets(3);
 }
 
 /** Istream::FillBucketList() throws */
