@@ -32,6 +32,8 @@
 #include <string.h>
 #include <signal.h>
 
+using std::string_view_literals::operator""sv;
+
 struct Request final {
 	const char *tag = nullptr;
 
@@ -250,6 +252,14 @@ run_cache_test(Instance &instance, const Request &request, bool cached)
 
 			ASSERT_NE(j, h.second);
 			handler.headers.erase(j);
+		}
+
+		if (auto i = handler.headers.find("x-cache"sv); cached) {
+			ASSERT_NE(i, handler.headers.end());
+			ASSERT_EQ(i->second, "HIT"sv);
+			handler.headers.erase(i);
+		} else {
+			ASSERT_EQ(i, handler.headers.end());
 		}
 
 		ASSERT_TRUE(handler.headers.empty());
