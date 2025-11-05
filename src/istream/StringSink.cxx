@@ -29,8 +29,21 @@ public:
 	}
 
 private:
-	void Destroy() {
+	void Destroy() noexcept {
 		this->~StringSink();
+	}
+
+	void DestroyEof() noexcept {
+		auto &_handler = handler;
+		auto _value = std::move(value);
+		Destroy();
+		_handler.OnStringSinkSuccess(std::move(_value));
+	}
+
+	void DestroyError(std::exception_ptr &&error) noexcept {
+		auto &_handler = handler;
+		Destroy();
+		_handler.OnStringSinkError(std::move(error));
 	}
 
 	/* virtual methods from class Cancellable */
@@ -47,19 +60,12 @@ private:
 
 	void OnEof() noexcept override {
 		ClearInput();
-
-		auto &_handler = handler;
-		auto _value = std::move(value);
-		Destroy();
-		_handler.OnStringSinkSuccess(std::move(_value));
+		DestroyEof();
 	}
 
 	void OnError(std::exception_ptr &&ep) noexcept override {
 		ClearInput();
-
-		auto &_handler = handler;
-		Destroy();
-		_handler.OnStringSinkError(std::move(ep));
+		DestroyError(std::move(ep));
 	}
 };
 
