@@ -220,6 +220,7 @@ struct Context final : IstreamSink {
 	};
 
 	BucketResult ReadBuckets2(std::size_t limit, bool consume_more);
+	BucketResult ReadBucketsLoop(std::size_t limit, bool consume_more=false);
 	bool ReadBuckets(std::size_t limit, bool consume_more=false);
 	bool ReadBucketsOrFallback(std::size_t limit, bool consume_more=false);
 

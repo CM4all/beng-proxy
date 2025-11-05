@@ -158,6 +158,24 @@ Context::ReadBuckets2(std::size_t limit, bool consume_more)
 	return result;
 }
 
+Context::BucketResult
+Context::ReadBucketsLoop(std::size_t limit, bool consume_more)
+{
+	while (true) {
+		const auto result = ReadBuckets2(limit, consume_more);
+		switch (result) {
+		case BucketResult::FALLBACK:
+		case BucketResult::LATER:
+		case BucketResult::DEPLETED:
+			return result;
+
+		case BucketResult::MORE:
+		case BucketResult::AGAIN:
+			continue;
+		}
+	}
+}
+
 bool
 Context::ReadBuckets(std::size_t limit, bool consume_more)
 {
@@ -252,7 +270,7 @@ Context::OnIstreamReady() noexcept
 		return IstreamReadyResult::OK;
 
 	const auto result = on_ready_buckets
-		? ReadBuckets2(1024 * 1024, false)
+		? ReadBucketsLoop(1024 * 1024, false)
 		: BucketResult::FALLBACK;
 
 	switch (result) {
@@ -479,10 +497,26 @@ run_istream_ctx(Context &ctx)
 void
 Context::RunBuckets(std::size_t limit, bool consume_more)
 {
-	while (ReadBuckets(limit, consume_more)) {}
-
-	if (input.IsDefined())
+	switch (ReadBucketsLoop(limit, consume_more)) {
+	case Context::BucketResult::FALLBACK:
+		ASSERT_TRUE(input.IsDefined());
 		run_istream_ctx(*this);
+		break;
+
+	case Context::BucketResult::LATER:
+		ASSERT_TRUE(input.IsDefined());
+		instance.event_loop.Run();
+		break;
+
+	case Context::BucketResult::MORE:
+	case Context::BucketResult::AGAIN:
+		FAIL();
+
+	case Context::BucketResult::DEPLETED:
+		break;
+	}
+
+	ASSERT_FALSE(input.IsDefined());
 }
 
 void

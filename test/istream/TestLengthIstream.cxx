@@ -55,7 +55,7 @@ TEST(LengthIstream, TooLong_Buckets)
 	Context ctx(instance, std::move(pool), {}, std::move(istream));
 
 	try {
-		while (ctx.ReadBuckets(3)) {}
+		ctx.ReadBucketsLoop(3);
 		FAIL();
 	} catch (...) {
 	}
@@ -74,7 +74,7 @@ TEST(LengthIstream, TooShort_Buckets)
 	Context ctx(instance, std::move(pool), {}, std::move(istream));
 
 	try {
-		while (ctx.ReadBuckets(3)) {}
+		ctx.ReadBucketsLoop(3);
 		FAIL();
 	} catch (...) {
 	}
@@ -98,5 +98,6 @@ TEST(LengthIstream, Block_Buckets)
 
 	Context ctx(instance, std::move(pool), {}, std::move(istream));
 
-	while (ctx.ReadBuckets(3)) {}
+	const auto result = ctx.ReadBucketsLoop(3);
+	EXPECT_EQ(result, Context::BucketResult::DEPLETED);
 }
