@@ -345,14 +345,14 @@ TYPED_TEST_P(IstreamFilterTest, NoBucket)
 	if (ctx.options.expected_result.data() != nullptr)
 		ctx.record = true;
 
-	while (ctx.ReadBuckets(1024 * 1024)) {}
+	ctx.ReadBucketsLoop(1024 * 1024);
 
 	if (!ctx.bucket_eof && !ctx.bucket_fallback && ctx.input.IsDefined()) {
 		ctx.break_ready = true;
 		instance.event_loop.Run();
 
 		if (ctx.input.IsDefined())
-			while (ctx.ReadBuckets(1024 * 1024)) {}
+			ctx.ReadBucketsLoop(1024 * 1024);
 	}
 
 	EXPECT_TRUE(ctx.bucket_eof || ctx.bucket_fallback);
@@ -516,7 +516,7 @@ TYPED_TEST_P(IstreamFilterTest, BucketError)
 		ctx.record = true;
 
 	try {
-		while (ctx.ReadBuckets(3)) {}
+		ctx.ReadBucketsLoop(3);
 
 		if (traits.options.forwards_errors) {
 			FAIL();
