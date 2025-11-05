@@ -82,9 +82,10 @@ Context::ReadBuckets2(std::size_t limit, bool consume_more)
 	bool result = true;
 	std::size_t consumed = 0;
 
+	if (list.ShouldFallback())
+		rresult = IstreamReadyResult::FALLBACK;
+
 	if (list.IsEmpty() && list.HasMore()) {
-		if (list.ShouldFallback())
-			rresult = IstreamReadyResult::FALLBACK;
 		result = false;
 	}
 
