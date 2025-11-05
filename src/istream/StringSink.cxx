@@ -3,11 +3,14 @@
 // author: Max Kellermann <max.kellermann@ionos.com>
 
 #include "StringSink.hxx"
+#include "Bucket.hxx"
 #include "Sink.hxx"
 #include "UnusedPtr.hxx"
 #include "pool/pool.hxx"
 #include "util/Cancellable.hxx"
 #include "util/SpanCast.hxx"
+
+#include <cassert>
 
 class StringSink final : IstreamSink, Cancellable {
 	std::string value;
@@ -25,7 +28,17 @@ public:
 	}
 
 	void Read() noexcept {
-		input.Read();
+		switch (OnIstreamReady()) {
+		case IstreamReadyResult::OK:
+			break;
+
+		case IstreamReadyResult::FALLBACK:
+			input.Read();
+			break;
+
+		case IstreamReadyResult::CLOSED:
+			break;
+		}
 	}
 
 private:
@@ -53,6 +66,8 @@ private:
 
 	/* virtual methods from class IstreamHandler */
 
+	IstreamReadyResult OnIstreamReady() noexcept override;
+
 	size_t OnData(std::span<const std::byte> src) noexcept override {
 		value.append(ToStringView(src));
 		return src.size();
@@ -68,6 +83,60 @@ private:
 		DestroyError(std::move(ep));
 	}
 };
+
+IstreamReadyResult
+StringSink::OnIstreamReady() noexcept
+{
+	IstreamBucketList list;
+
+	try {
+		input.FillBucketList(list);
+	} catch (...) {
+		DestroyError(std::current_exception());
+		return IstreamReadyResult::CLOSED;
+	}
+
+	auto more = list.GetMore();
+
+	std::size_t nbytes = 0;
+
+	for (const auto &i : list) {
+		if (!i.IsBuffer()) {
+			more = IstreamBucketList::More::FALLBACK;
+			break;
+		}
+
+		value.append(ToStringView(i.GetBuffer()));
+		nbytes += i.GetBuffer().size();
+	}
+
+	if (nbytes > 0) {
+		const auto result = input.ConsumeBucketList(nbytes);
+		assert(result.consumed == nbytes);
+
+		if (result.eof)
+			more = IstreamBucketList::More::NO;
+	}
+
+	switch (more) {
+	case IstreamBucketList::More::NO:
+		DestroyEof();
+		return IstreamReadyResult::CLOSED;
+
+	case IstreamBucketList::More::PUSH:
+	case IstreamBucketList::More::PULL:
+		return IstreamReadyResult::OK;
+
+	case IstreamBucketList::More::AGAIN:
+		// TODO loop?
+		return IstreamReadyResult::OK;
+
+	case IstreamBucketList::More::FALLBACK:
+		return IstreamReadyResult::FALLBACK;
+	}
+
+	std::unreachable();
+}
 
 /*
  * constructor
