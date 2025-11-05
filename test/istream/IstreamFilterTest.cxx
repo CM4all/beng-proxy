@@ -41,14 +41,14 @@ Context::DeferredInject() noexcept
 		    std::exchange(defer_inject_error, std::exception_ptr()));
 }
 
-std::pair<IstreamReadyResult, bool>
+Context::BucketResult
 Context::ReadBuckets2(std::size_t limit, bool consume_more)
 {
 	if (abort_istream != nullptr)
 		/* don't attempt to read buckets when this option is
 		   set, because it's only properly implemented in
 		   OnData() */
-		return {IstreamReadyResult::FALLBACK, false};
+		return BucketResult::FALLBACK;
 
 	if (get_available_before_bucket) {
 		/* this Istream::GetLength() call is only here to
@@ -76,22 +76,36 @@ Context::ReadBuckets2(std::size_t limit, bool consume_more)
 	if (list.HasMore())
 		consume_more = false;
 
-	IstreamReadyResult rresult = IstreamReadyResult::OK;
-	bool result = true;
-	std::size_t consumed = 0;
+	got_data = true;
 
-	if (list.ShouldFallback())
-		rresult = IstreamReadyResult::FALLBACK;
+	BucketResult result = BucketResult::DEPLETED;
+	switch (list.GetMore()) {
+	case IstreamBucketList::More::NO:
+		break;
 
-	if (list.IsEmpty() && list.HasMore()) {
-		result = false;
+	case IstreamBucketList::More::PUSH:
+		result = BucketResult::LATER;
+		break;
+
+	case IstreamBucketList::More::PULL:
+		result = BucketResult::MORE;
+		break;
+
+	case IstreamBucketList::More::AGAIN:
+		result = BucketResult::AGAIN;
+		break;
+
+	case IstreamBucketList::More::FALLBACK:
+		result = BucketResult::FALLBACK;
+		break;
 	}
+
+	std::size_t consumed = 0;
 
 	for (const auto &i : list) {
 		if (!i.IsBuffer()) {
 			consume_more = false;
-			rresult = IstreamReadyResult::FALLBACK;
-			result = false;
+			result = BucketResult::FALLBACK;
 			break;
 		}
 
@@ -128,50 +142,69 @@ Context::ReadBuckets2(std::size_t limit, bool consume_more)
 	if (consumed + consume_more > 0) {
 		[[maybe_unused]] const auto r = input.ConsumeBucketList(consumed + consume_more);
 		assert(r.consumed == consumed);
-		bucket_eof = eof = r.eof;
-	} else if (list.IsEmpty() && !list.HasMore()) {
-		bucket_eof = eof = true;
-	}
 
-	// TODO check r.eof
+		if (r.eof)
+			result = BucketResult::DEPLETED;
+		else if (result == BucketResult::DEPLETED)
+			result = BucketResult::MORE;
+	}
 
 	[[maybe_unused]]
 	const auto l = input.GetLength();
 
-	if (result && !list.HasMore()) {
+	if (result == BucketResult::DEPLETED) {
+		bucket_eof = eof = true;
+
 		if (ready_eof_ok)
-			return {IstreamReadyResult::OK, result};
+			return BucketResult::MORE;
 
 		CloseInput();
-		result = false;
-		rresult = IstreamReadyResult::CLOSED;
 	}
 
-	return {rresult, result};
+	return result;
 }
 
 bool
 Context::ReadBuckets(std::size_t limit, bool consume_more)
 {
-	return ReadBuckets2(limit, consume_more).second;
+	switch (ReadBuckets2(limit, consume_more)) {
+	case BucketResult::FALLBACK:
+		return false;
+
+	case BucketResult::LATER:
+		return false;
+
+	case BucketResult::MORE:
+	case BucketResult::AGAIN:
+		return true;
+
+	case BucketResult::DEPLETED:
+		return false;
+	}
+
+	std::unreachable();
 }
 
 bool
 Context::ReadBucketsOrFallback(std::size_t limit, bool consume_more)
 {
-	const auto [rresult, result] = ReadBuckets2(limit, consume_more);
-
-	switch (rresult) {
-	case IstreamReadyResult::OK:
-	case IstreamReadyResult::CLOSED:
-		break;
-
-	case IstreamReadyResult::FALLBACK:
+	switch (ReadBuckets2(limit, consume_more)) {
+	case BucketResult::FALLBACK:
 		input.Read();
 		return input.IsDefined();
+
+	case BucketResult::LATER:
+		return false;
+
+	case BucketResult::MORE:
+	case BucketResult::AGAIN:
+		return true;
+
+	case BucketResult::DEPLETED:
+		return false;
 	}
 
-	return result;
+	std::unreachable();
 }
 
 void
@@ -225,20 +258,24 @@ Context::OnIstreamReady() noexcept
 		return IstreamReadyResult::OK;
 
 	const auto result = on_ready_buckets
-		? ReadBuckets2(1024 * 1024, false).first
-		: IstreamReadyResult::FALLBACK;
+		? ReadBuckets2(1024 * 1024, false)
+		: BucketResult::FALLBACK;
 
 	switch (result) {
-	case IstreamReadyResult::OK:
-	case IstreamReadyResult::FALLBACK:
-		break;
+	case BucketResult::FALLBACK:
+		return IstreamReadyResult::FALLBACK;
 
-	case IstreamReadyResult::CLOSED:
+	case BucketResult::LATER:
+	case BucketResult::MORE:
+	case BucketResult::AGAIN:
+		return IstreamReadyResult::OK;
+
+	case BucketResult::DEPLETED:
 		instance.event_loop.Break();
-		break;
+		return IstreamReadyResult::CLOSED;
 	}
 
-	return result;
+	std::unreachable();
 }
 
 std::size_t

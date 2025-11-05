@@ -189,7 +189,37 @@ struct Context final : IstreamSink {
 
 	void DeferredInject() noexcept;
 
-	std::pair<IstreamReadyResult, bool> ReadBuckets2(std::size_t limit, bool consume_more);
+	enum class BucketResult {
+		/**
+		 * No bucket data is available.  Fall back to
+		 * Istream::Read().
+		 */
+		FALLBACK,
+
+		/**
+		 * No data is available right now.  Wait for the
+		 * IstreamHandler::OnIstreamReady() call.
+		 */
+		LATER,
+
+		/**
+		 * Some data has been transferred, but more data is
+		 * available.  Try again.
+		 */
+		MORE,
+
+		/**
+		 * More data is available.  Repeat the call now.
+		 */
+		AGAIN,
+
+		/**
+		 * The #Istream is now empty (and has been closed).
+		 */
+		DEPLETED,
+	};
+
+	BucketResult ReadBuckets2(std::size_t limit, bool consume_more);
 	bool ReadBuckets(std::size_t limit, bool consume_more=false);
 	bool ReadBucketsOrFallback(std::size_t limit, bool consume_more=false);
 
