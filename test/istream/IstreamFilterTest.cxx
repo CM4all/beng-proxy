@@ -48,7 +48,7 @@ Context::ReadBuckets2(std::size_t limit, bool consume_more)
 		/* don't attempt to read buckets when this option is
 		   set, because it's only properly implemented in
 		   OnData() */
-		return {IstreamReadyResult::OK, false};
+		return {IstreamReadyResult::FALLBACK, false};
 
 	if (get_available_before_bucket) {
 		/* this Istream::GetLength() call is only here to
