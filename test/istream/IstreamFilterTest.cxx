@@ -151,10 +151,8 @@ Context::ReadBuckets2(std::size_t limit, bool consume_more)
 	if (result == BucketResult::DEPLETED) {
 		bucket_eof = eof = true;
 
-		if (ready_eof_ok)
-			return BucketResult::MORE;
-
-		CloseInput();
+		if (!ready_eof_ok)
+			CloseInput();
 	}
 
 	return result;
@@ -268,6 +266,13 @@ Context::OnIstreamReady() noexcept
 
 	case BucketResult::DEPLETED:
 		instance.event_loop.Break();
+
+		if (ready_eof_ok) {
+			assert(input.IsDefined());
+			return IstreamReadyResult::OK;
+		}
+
+		assert(!input.IsDefined());
 		return IstreamReadyResult::CLOSED;
 	}
 
