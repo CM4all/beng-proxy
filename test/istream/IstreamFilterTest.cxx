@@ -84,12 +84,14 @@ Context::ReadBuckets2(std::size_t limit, bool consume_more)
 
 	got_data = true;
 
+	IstreamReadyResult rresult = IstreamReadyResult::OK;
 	bool result = true;
 	std::size_t consumed = 0;
 
 	for (const auto &i : list) {
 		if (!i.IsBuffer()) {
 			consume_more = false;
+			rresult = IstreamReadyResult::FALLBACK;
 			result = false;
 			break;
 		}
@@ -135,8 +137,6 @@ Context::ReadBuckets2(std::size_t limit, bool consume_more)
 
 	[[maybe_unused]]
 	const auto l = input.GetLength();
-
-	IstreamReadyResult rresult = IstreamReadyResult::OK;
 
 	if (result && !list.HasMore()) {
 		if (ready_eof_ok)
