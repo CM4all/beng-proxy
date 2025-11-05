@@ -95,7 +95,7 @@ TEST(ReplaceIstream, Buckets)
 		IstreamBucketList list;
 		replace->FillBucketList(list);
 		EXPECT_TRUE(list.IsEmpty());
-		EXPECT_TRUE(list.HasMore());
+		EXPECT_EQ(list.GetMore(), IstreamBucketList::More::PUSH);
 	}
 
 	EXPECT_FALSE(replace->GetLength().exhaustive);
@@ -111,7 +111,7 @@ TEST(ReplaceIstream, Buckets)
 		IstreamBucketList list;
 		replace->FillBucketList(list);
 		EXPECT_FALSE(list.IsEmpty());
-		EXPECT_TRUE(list.HasMore());
+		EXPECT_EQ(list.GetMore(), IstreamBucketList::More::PUSH);
 
 		auto i = list.begin();
 		ASSERT_NE(i, list.end());
@@ -133,7 +133,7 @@ TEST(ReplaceIstream, Buckets)
 		IstreamBucketList list;
 		replace->FillBucketList(list);
 		EXPECT_FALSE(list.IsEmpty());
-		EXPECT_TRUE(list.HasMore());
+		EXPECT_EQ(list.GetMore(), IstreamBucketList::More::PUSH);
 
 		auto i = list.begin();
 		ASSERT_NE(i, list.end());
@@ -160,7 +160,7 @@ TEST(ReplaceIstream, Buckets)
 		IstreamBucketList list;
 		replace->FillBucketList(list);
 		EXPECT_FALSE(list.IsEmpty());
-		EXPECT_TRUE(list.HasMore());
+		EXPECT_EQ(list.GetMore(), IstreamBucketList::More::PUSH);
 
 		auto i = list.begin();
 		ASSERT_NE(i, list.end());
@@ -192,7 +192,7 @@ TEST(ReplaceIstream, Buckets)
 		IstreamBucketList list;
 		replace->FillBucketList(list);
 		EXPECT_FALSE(list.IsEmpty());
-		EXPECT_TRUE(list.HasMore());
+		EXPECT_EQ(list.GetMore(), IstreamBucketList::More::PUSH);
 
 		auto i = list.begin();
 		ASSERT_NE(i, list.end());
@@ -224,7 +224,7 @@ TEST(ReplaceIstream, Buckets)
 		IstreamBucketList list;
 		replace->FillBucketList(list);
 		EXPECT_FALSE(list.IsEmpty());
-		EXPECT_FALSE(list.HasMore());
+		EXPECT_EQ(list.GetMore(), IstreamBucketList::More::NO);
 
 		auto i = list.begin();
 		ASSERT_NE(i, list.end());
