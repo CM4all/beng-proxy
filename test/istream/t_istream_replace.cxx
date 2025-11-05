@@ -15,6 +15,9 @@
 
 using std::string_view_literals::operator""sv;
 
+/**
+ * Test input is ReplaceIstream's input.
+ */
 class IstreamReplaceTestTraits {
 public:
 	static constexpr IstreamFilterTestOptions options{
@@ -39,6 +42,9 @@ public:
 INSTANTIATE_TYPED_TEST_SUITE_P(Replace, IstreamFilterTest,
 			       IstreamReplaceTestTraits);
 
+/**
+ * Test input is a substitution.
+ */
 class IstreamReplace2TestTraits {
 public:
 	static constexpr IstreamFilterTestOptions options{
