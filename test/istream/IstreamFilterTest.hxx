@@ -7,6 +7,7 @@
 #include "../TestInstance.hxx"
 #include "istream/istream.hxx"
 #include "istream/Bucket.hxx"
+#include "istream/NoBucketIstream.hxx"
 #include "istream/Sink.hxx"
 #include "istream/ByteIstream.hxx"
 #include "istream/ConcatIstream.hxx"
@@ -308,33 +309,29 @@ TYPED_TEST_P(IstreamFilterTest, NoBucket)
 	auto pool = pool_new_linear(instance.root_pool, "test", 8192);
 	auto input_pool = pool_new_linear(instance.root_pool, "input", 8192);
 
-	class NoBucketIstream : public ForwardIstream {
+	class NoBucketIstream2 final : public NoBucketIstream {
 		bool has_read = false;
 
 	public:
-		NoBucketIstream(struct pool &p, UnusedIstreamPtr _input) noexcept
-			:ForwardIstream(p, std::move(_input)) {}
+		NoBucketIstream2(struct pool &p, UnusedIstreamPtr _input) noexcept
+			:NoBucketIstream(p, std::move(_input)) {}
 
 	protected:
 		IstreamLength _GetLength() noexcept override {
 			return has_read
-				? ForwardIstream::_GetLength()
+				? NoBucketIstream::_GetLength()
 				: IstreamLength{.length = 0, .exhaustive = false};
 		}
 
 		void _Read() noexcept override {
 			has_read = true;
-			ForwardIstream::_Read();
-		}
-
-		void _FillBucketList(IstreamBucketList &list) override {
-			list.EnableFallback();
+			NoBucketIstream::_Read();
 		}
 	};
 
 	auto istream = traits.CreateTest(instance.event_loop, pool,
-					 NewIstreamPtr<NoBucketIstream>(input_pool,
-									traits.CreateInput(input_pool)));
+					 NewIstreamPtr<NoBucketIstream2>(input_pool,
+									 traits.CreateInput(input_pool)));
 	ASSERT_TRUE(!!istream);
 	input_pool.reset();
 
