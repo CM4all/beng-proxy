@@ -42,7 +42,7 @@ Context::DeferredInject() noexcept
 }
 
 Context::BucketResult
-Context::ReadBuckets2(std::size_t limit, bool consume_more)
+Context::ReadBuckets(std::size_t limit, bool consume_more)
 {
 	if (abort_istream != nullptr)
 		/* don't attempt to read buckets when this option is
@@ -162,7 +162,7 @@ Context::BucketResult
 Context::ReadBucketsLoop(std::size_t limit, bool consume_more)
 {
 	while (true) {
-		const auto result = ReadBuckets2(limit, consume_more);
+		const auto result = ReadBuckets(limit, consume_more);
 		switch (result) {
 		case BucketResult::FALLBACK:
 		case BucketResult::LATER:
@@ -174,27 +174,6 @@ Context::ReadBucketsLoop(std::size_t limit, bool consume_more)
 			continue;
 		}
 	}
-}
-
-bool
-Context::ReadBuckets(std::size_t limit, bool consume_more)
-{
-	switch (ReadBuckets2(limit, consume_more)) {
-	case BucketResult::FALLBACK:
-		return false;
-
-	case BucketResult::LATER:
-		return false;
-
-	case BucketResult::MORE:
-	case BucketResult::AGAIN:
-		return true;
-
-	case BucketResult::DEPLETED:
-		return false;
-	}
-
-	std::unreachable();
 }
 
 void
