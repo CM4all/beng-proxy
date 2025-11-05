@@ -17,17 +17,17 @@ public:
 	/* virtual methods from class IstreamHandler */
 
 	std::size_t OnData(std::span<const std::byte>) noexcept override {
-		assert(state = State::OPEN);
+		assert(state == State::OPEN);
 		return 0;
 	}
 
 	void OnEof() noexcept override {
-		assert(state = State::OPEN);
+		assert(state == State::OPEN);
 		state = State::EOF_;
 	}
 
 	void OnError(std::exception_ptr &&) noexcept override {
-		assert(state = State::OPEN);
+		assert(state == State::OPEN);
 		state = State::ERROR;
 	}
 };
