@@ -222,7 +222,6 @@ struct Context final : IstreamSink {
 	BucketResult ReadBuckets2(std::size_t limit, bool consume_more);
 	BucketResult ReadBucketsLoop(std::size_t limit, bool consume_more=false);
 	bool ReadBuckets(std::size_t limit, bool consume_more=false);
-	bool ReadBucketsOrFallback(std::size_t limit, bool consume_more=false);
 
 	void WaitForEndOfStream() noexcept;
 
@@ -557,7 +556,7 @@ TYPED_TEST_P(IstreamFilterTest, BucketSecondFail)
 	ctx.fill_buckets_twice = true;
 
 	try {
-		while (ctx.ReadBucketsOrFallback(3)) {}
+		ctx.RunBuckets(3);
 
 		if (traits.options.forwards_errors) {
 			FAIL();

@@ -197,28 +197,6 @@ Context::ReadBuckets(std::size_t limit, bool consume_more)
 	std::unreachable();
 }
 
-bool
-Context::ReadBucketsOrFallback(std::size_t limit, bool consume_more)
-{
-	switch (ReadBuckets2(limit, consume_more)) {
-	case BucketResult::FALLBACK:
-		input.Read();
-		return input.IsDefined();
-
-	case BucketResult::LATER:
-		return false;
-
-	case BucketResult::MORE:
-	case BucketResult::AGAIN:
-		return true;
-
-	case BucketResult::DEPLETED:
-		return false;
-	}
-
-	std::unreachable();
-}
-
 void
 Context::WaitForEndOfStream() noexcept
 {
