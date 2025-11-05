@@ -3,8 +3,11 @@
 // author: Max Kellermann <max.kellermann@ionos.com>
 
 #include "IstreamFilterTest.hxx"
+#include "../RecordingStringSinkHandler.hxx"
 #include "istream/ReplaceIstream.hxx"
 #include "istream/LengthIstream.hxx"
+#include "istream/DelayedIstream.hxx"
+#include "istream/NoBucketIstream.hxx"
 #include "istream/OptionalIstream.hxx"
 #include "istream/PauseIstream.hxx"
 #include "istream/istream_string.hxx"
@@ -252,4 +255,45 @@ TEST(ReplaceIstream, Buckets)
 
 	EXPECT_EQ(handler.state, BlockingIstreamHandler::State::OPEN);
 	replace->Close();
+}
+
+/**
+ * First substitution blocks, second substitution requires fallback.
+ * When the first substitution becomes ready, fallback must be invoked
+ * on the second substitution.
+ */
+TEST(ReplaceIstream, Fallback)
+{
+	Instance instance;
+
+	auto &pool = instance.root_pool;
+
+	auto *replace = NewIstream<ReplaceIstream>(pool, instance.event_loop, istream_null_new(pool));
+
+	auto [delayed, control] = istream_delayed_new(pool, instance.event_loop);
+	replace->Add(0, 0, std::move(delayed));
+	replace->Add(0, 0, NewIstreamPtr<NoBucketIstream>(pool, istream_string_new(pool, "x"sv)));
+	replace->Finish();
+
+	{
+		IstreamBucketList list;
+		replace->FillBucketList(list);
+		EXPECT_TRUE(list.IsEmpty());
+		EXPECT_EQ(list.GetMore(), IstreamBucketList::More::PUSH);
+	}
+
+	EXPECT_FALSE(replace->GetLength().exhaustive);
+	EXPECT_EQ(replace->GetLength().length, 1);
+
+	RecordingStringSinkHandler handler;
+
+	NewStringSink(pool, UnusedIstreamPtr{replace}, handler, handler.cancel_ptr);
+
+	/* unblock the first substitution (asynchronously) - will, be
+	   handled by the EventLoop*/
+	control.Set(istream_null_new(pool));
+	instance.event_loop.Run();
+
+	ASSERT_FALSE(handler.IsAlive());
+	EXPECT_EQ(std::move(handler).TakeValue(), "x"sv);
 }
