@@ -211,6 +211,23 @@ CatIstream::OnInputReady(Input &i) noexcept
 		return IstreamReadyResult::OK;
 
 	auto result = InvokeReady();
+
+	if (result == IstreamReadyResult::FALLBACK &&
+	    is_current && !IsCurrent(i)) {
+		/* handle FALLBACK here because the istream that needs
+		   the callback might be a different one than our
+		   caller's */
+
+		result = IstreamReadyResult::OK;
+
+		const DestructObserver destructed{*this};
+		_Read();
+		if (destructed)
+			return IstreamReadyResult::CLOSED;
+
+		assert(!destructed);
+	}
+
 	if (result != IstreamReadyResult::CLOSED &&
 	    !(is_current ? IsCurrent(i) : HasInput(i)))
 		/* the input that is ready has meanwhile been

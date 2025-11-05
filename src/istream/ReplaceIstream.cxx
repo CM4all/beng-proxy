@@ -739,6 +739,22 @@ ReplaceIstream::OnSubstitutionReady(Substitution &s) noexcept
 	defer_read.Cancel();
 
 	auto result = InvokeReady();
+
+	if (result == IstreamReadyResult::FALLBACK &&
+	    substitutions.iterator_to(s) != substitutions.begin()) {
+		/* handle FALLBACK here because the istream that needs
+		   the callback might be a different one than our
+		   caller's */
+
+		result = IstreamReadyResult::OK;
+
+		const DestructObserver destructed{*this};
+		if (!TryRead() && destructed)
+			return IstreamReadyResult::CLOSED;
+
+		assert(!destructed);
+	}
+
 	if (result != IstreamReadyResult::CLOSED && substitutions.iterator_to(s) != substitutions.begin())
 		/* this substitution has been closed; we need to
 		   return CLOSED to its callback, even though
