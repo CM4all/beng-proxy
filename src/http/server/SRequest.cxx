@@ -164,6 +164,8 @@ HttpServerConnection::FillBucketList(IstreamBucketList &list) noexcept
 	assert(request.body_state == Request::BodyState::READING);
 	assert(!response.pending_drained);
 
+	MaybeSend100Continue();
+
 	request_body_reader->FillBucketList(*socket, list);
 }
 
