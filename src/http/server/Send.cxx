@@ -27,17 +27,12 @@
 using std::string_view_literals::operator""sv;
 
 bool
-HttpServerConnection::MaybeSend100Continue() noexcept
+HttpServerConnection::Send100Continue() noexcept
 {
 	assert(IsValid());
 	assert(request.read_state == Request::BODY);
-
-	if (!request.expect_100_continue)
-		return true;
-
 	assert(!HasInput());
-
-	request.expect_100_continue = false;
+	assert(!request.expect_100_continue);
 
 	/* this string is simple enough to expect that we don't need to
 	   check for partial writes, not before we have sent a single byte
@@ -57,6 +52,21 @@ HttpServerConnection::MaybeSend100Continue() noexcept
 	else if (nbytes != WRITE_DESTROYED)
 		SocketError("write error");
 	return false;
+}
+
+bool
+HttpServerConnection::MaybeSend100Continue() noexcept
+{
+	assert(IsValid());
+	assert(request.read_state == Request::BODY);
+
+	if (!request.expect_100_continue)
+		return true;
+
+	assert(!HasInput());
+
+	request.expect_100_continue = false;
+	return Send100Continue();
 }
 
 static void

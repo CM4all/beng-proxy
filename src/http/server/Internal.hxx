@@ -418,6 +418,11 @@ struct HttpServerConnection final
 	/**
 	 * @return false if the connection has been closed
 	 */
+	bool Send100Continue() noexcept;
+
+	/**
+	 * @return false if the connection has been closed
+	 */
 	bool MaybeSend100Continue() noexcept;
 
 	void SetResponseIstream(UnusedIstreamPtr r) noexcept;
