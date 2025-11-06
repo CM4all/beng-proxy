@@ -255,6 +255,14 @@ HttpServerConnection::OnBufferedWrite()
 
 	response.want_write = false;
 
+	if (request.send_100_continue) [[unlikely]] {
+		if (request.read_state == Request::BODY && !Send100Continue())
+			return false;
+
+		if (!HasInput())
+			return true;
+	}
+
 	if (!TryWrite())
 		return false;
 
@@ -314,6 +322,7 @@ HttpServerConnection::OnReadTimeout() noexcept
 		break;
 
 	case Request::HEADERS:
+		CancelSend100Continue();
 		request.read_state = Request::END;
 		keep_alive = false;
 		request.request->SendMessage(HttpStatus::REQUEST_TIMEOUT,

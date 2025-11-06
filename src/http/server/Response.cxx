@@ -181,6 +181,7 @@ HttpServerConnection::ResponseIstreamFinished() noexcept
 	/* check for end of chunked request body again, just in case
 	   DechunkIstream has announced this in a derred event */
 	if (request.read_state == Request::BODY && request_body_reader->IsEOF()) {
+		CancelSend100Continue();
 		request.read_state = Request::END;
 #ifndef NDEBUG
 		request.body_state = Request::BodyState::CLOSED;

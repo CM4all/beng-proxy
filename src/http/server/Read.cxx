@@ -460,8 +460,7 @@ HttpServerConnection::TryRequestBodyDirect(SocketDescriptor fd, FdType fd_type) 
 	assert(request.read_state == Request::BODY);
 	assert(!response.pending_drained);
 
-	if (!MaybeSend100Continue())
-		return DirectResult::CLOSED;
+	MaybeSend100Continue();
 
 	const DestructObserver destructed{*this};
 
@@ -489,6 +488,7 @@ HttpServerConnection::TryRequestBodyDirect(SocketDescriptor fd, FdType fd_type) 
 
 	case IstreamDirectResult::OK:
 		if (request_body_reader->IsEOF()) {
+			CancelSend100Continue();
 			request.read_state = Request::END;
 #ifndef NDEBUG
 			request.body_state = Request::BodyState::CLOSED;

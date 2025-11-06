@@ -227,6 +227,11 @@ struct HttpServerConnection final
 		/** did the client send an "Expect: 100-continue" header? */
 		bool expect_100_continue;
 
+		/**
+		 * Shall we send "100 Continue"?
+		 */
+		bool send_100_continue = false;
+
 		void Reset() noexcept {
 			error_status = {};
 			read_state = START;
@@ -420,10 +425,9 @@ struct HttpServerConnection final
 	 */
 	bool Send100Continue() noexcept;
 
-	/**
-	 * @return false if the connection has been closed
-	 */
-	bool MaybeSend100Continue() noexcept;
+	void MaybeSend100Continue() noexcept;
+
+	void CancelSend100Continue() noexcept;
 
 	void SetResponseIstream(UnusedIstreamPtr r) noexcept;
 

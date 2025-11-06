@@ -31,8 +31,10 @@ HttpServerConnection::Send100Continue() noexcept
 {
 	assert(IsValid());
 	assert(request.read_state == Request::BODY);
-	assert(!HasInput());
 	assert(!request.expect_100_continue);
+	assert(request.send_100_continue);
+
+	request.send_100_continue = false;
 
 	/* this string is simple enough to expect that we don't need to
 	   check for partial writes, not before we have sent a single byte
@@ -54,19 +56,38 @@ HttpServerConnection::Send100Continue() noexcept
 	return false;
 }
 
-bool
+void
 HttpServerConnection::MaybeSend100Continue() noexcept
 {
 	assert(IsValid());
 	assert(request.read_state == Request::BODY);
 
 	if (!request.expect_100_continue)
-		return true;
+		return;
 
 	assert(!HasInput());
+	assert(!request.send_100_continue);
 
 	request.expect_100_continue = false;
-	return Send100Continue();
+	request.send_100_continue = true;
+	DeferWrite();
+}
+
+void
+HttpServerConnection::CancelSend100Continue() noexcept
+{
+	if (!request.send_100_continue)
+		return;
+
+	request.send_100_continue = false;
+
+	if (!HasInput()) {
+		/* if we have no response yet, we need to unschedule
+		   writing which was only scheduled for the "100
+		   Continue" response */
+		response.want_write = false;
+		socket->UnscheduleWrite();
+	}
 }
 
 static void
@@ -107,12 +128,11 @@ HttpServerConnection::SubmitResponse(HttpStatus status,
 		score = HTTP_SERVER_ERROR;
 	}
 
-	if (request.read_state == HttpServerConnection::Request::BODY &&
+	if (request.read_state == HttpServerConnection::Request::BODY)
 	    /* if we didn't send "100 Continue" yet, we should do it now;
 	       we don't know if the request body will be used, but at
 	       least it hasn't been closed yet */
-	    !MaybeSend100Continue())
-		return;
+	    MaybeSend100Continue();
 
 	auto &request_pool = request.request->pool;
 

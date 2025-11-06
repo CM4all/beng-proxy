@@ -45,6 +45,7 @@ HttpServerConnection::FeedRequestBody(std::span<const std::byte> src) noexcept
 	assert(request.read_state == Request::BODY);
 
 	if (request_body_reader->IsEOF()) {
+		CancelSend100Continue();
 		request.read_state = Request::END;
 #ifndef NDEBUG
 		request.body_state = Request::BodyState::CLOSED;
@@ -83,6 +84,7 @@ HttpServerConnection::DiscardRequestBody() noexcept
 		assert(request.request == nullptr);
 	}
 
+	CancelSend100Continue();
 	request.read_state = Request::END;
 #ifndef NDEBUG
 	request.body_state = Request::BodyState::CLOSED;
@@ -128,8 +130,7 @@ HttpServerConnection::ReadRequestBody() noexcept
 	assert(request.body_state == Request::BodyState::READING);
 	assert(!response.pending_drained);
 
-	if (!MaybeSend100Continue())
-		return;
+	MaybeSend100Continue();
 
 	if (request.in_handler)
 		/* avoid recursion */
