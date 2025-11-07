@@ -295,6 +295,7 @@ LbHttpConnection::HandleHttpRequest(IncomingHttpRequest &request,
 
 			case BanAction::TARPIT:
 				++listener.GetHttpStats().n_delayed;
+				request.body.Clear();
 				NewFromPool<LbHttpTarpit>(request.pool, cancel_ptr);
 				// TODO shrink kernel socket buffers?
 				return;
