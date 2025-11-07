@@ -1,6 +1,7 @@
 cm4all-beng-proxy (21.2) unstable; urgency=low
 
   * http_server: fix missing "100 Continue"
+  * http_server: fix assertion failure with chunked request body
   * fcgi: fix crash bug
   * lb: fix crash with TARPIT and request body
 

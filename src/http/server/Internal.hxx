@@ -116,6 +116,10 @@ struct HttpServerConnection final
 		void _FillBucketList(IstreamBucketList &list) override;
 		ConsumeBucketResult _ConsumeBucketList(std::size_t nbytes) noexcept override;
 		void _Close() noexcept override;
+
+	protected:
+		/* virtual methods from class DechunkHandler */
+		DechunkInputAction OnDechunkEnd() noexcept final;
 	};
 
 	struct pool *const pool;

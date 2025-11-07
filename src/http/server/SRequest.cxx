@@ -205,3 +205,14 @@ HttpServerConnection::RequestBodyReader::_Close() noexcept
 
 	Destroy();
 }
+
+DechunkHandler::DechunkInputAction
+HttpServerConnection::RequestBodyReader::OnDechunkEnd() noexcept
+{
+	assert(connection.request.read_state == Request::BODY);
+
+	connection.DiscardRequestBody();
+	Destroy();
+
+	return DechunkInputAction::ABANDON;
+}
