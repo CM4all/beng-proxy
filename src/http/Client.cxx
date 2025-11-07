@@ -462,6 +462,7 @@ private:
 	void Cancel() noexcept override;
 
 	/* virtual methods from class IstreamHandler */
+	IstreamReadyResult OnIstreamReady() noexcept override;
 	std::size_t OnData(std::span<const std::byte> src) noexcept override;
 	IstreamDirectResult OnDirect(FdType type, FileDescriptor fd,
 				     off_t offset, std::size_t max_length,
@@ -1346,6 +1347,39 @@ HttpClient::OnBufferedError(std::exception_ptr ep) noexcept
  * istream handler for the request
  *
  */
+
+IstreamReadyResult
+HttpClient::OnIstreamReady() noexcept
+{
+	assert(IsConnected());
+
+	switch (TryWriteBuckets()) {
+	case BucketResult::FALLBACK:
+		assert(HasInput());
+		return IstreamReadyResult::FALLBACK;
+
+	case BucketResult::LATER:
+		assert(HasInput());
+		socket.UnscheduleWrite();
+		return IstreamReadyResult::OK;
+
+	case BucketResult::MORE:
+	case BucketResult::BLOCKING:
+	case BucketResult::AGAIN:
+		assert(HasInput());
+		return IstreamReadyResult::OK;
+
+	case BucketResult::DEPLETED:
+		assert(!HasInput());
+		socket.UnscheduleWrite();
+		return IstreamReadyResult::CLOSED;
+
+	case BucketResult::DESTROYED:
+		return IstreamReadyResult::CLOSED;
+	}
+
+	std::unreachable();
+}
 
 std::size_t
 HttpClient::OnData(std::span<const std::byte> src) noexcept
