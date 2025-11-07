@@ -51,8 +51,8 @@ class HttpBodyReader : public Istream, protected DechunkHandler {
 
 public:
 	template<typename P>
-	explicit HttpBodyReader(P &&_pool) noexcept
-		:Istream(std::forward<P>(_pool)) {}
+	explicit HttpBodyReader(P &&_pool TRACE_ARGS_DEFAULT) noexcept
+		:Istream(std::forward<P>(_pool) TRACE_ARGS_FWD) {}
 
 	UnusedIstreamPtr Init(EventLoop &event_loop, off_t content_length,
 			      bool chunked) noexcept;
