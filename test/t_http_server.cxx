@@ -3,6 +3,7 @@
 // author: Max Kellermann <max.kellermann@ionos.com>
 
 #include "TestInstance.hxx"
+#include "FlushEventLoop.hxx"
 #include "http/server/Public.hxx"
 #include "http/server/Handler.hxx"
 #include "http/IncomingRequest.hxx"
@@ -18,11 +19,16 @@
 #include "istream/UnusedHoldPtr.hxx"
 #include "istream/BlockIstream.hxx"
 #include "istream/ConcatIstream.hxx"
+#include "istream/DelayedIstream.hxx"
 #include "istream/InjectIstream.hxx"
 #include "istream/HeadIstream.hxx"
 #include "istream/BlockIstream.hxx"
 #include "istream/ZeroIstream.hxx"
 #include "istream/istream_string.hxx"
+#include "istream/New.hxx"
+#include "istream/NoBucketIstream.hxx"
+#include "istream/NoLengthIstream.hxx"
+#include "istream/NullSink.hxx"
 #include "istream/StringSink.hxx"
 #include "memory/GrowingBuffer.hxx"
 #include "memory/SinkGrowingBuffer.hxx"
@@ -40,6 +46,7 @@
 #include "stopwatch.hxx"
 
 #include <functional>
+#include <optional>
 #include <utility> // for std::unreachable()
 
 #include <stdio.h>
@@ -197,6 +204,10 @@ public:
 		server.SendRequest(method, uri, headers,
 				   std::move(body), expect_100,
 				   *this, cancel_ptr);
+	}
+
+	void Cancel() noexcept {
+		cancel_ptr.Cancel();
 	}
 
 	bool IsDone() const noexcept {
@@ -518,6 +529,103 @@ TestDiscardedHugeRequestBody(Server &server)
 	client.ExpectResponse(HttpStatus::OK, "foo"sv);
 }
 
+/**
+ * Send a chunked request body and cancel the request before the
+ * server sends a response.
+ */
+static void
+TestCancelAfterChunkedRequest(Server &server, bool buckets, bool delay_request_body)
+{
+	Client client{server.GetEventLoop()};
+
+	struct Handler : Cancellable {
+		Server &server;
+		Client &client;
+
+		UnusedHoldIstreamPtr request_body;
+
+		const bool buckets;
+
+		bool canceled = false;
+
+		Handler(Server &_server, Client &_client, bool _buckets) noexcept
+			:server(_server), client(_client), buckets(_buckets) {}
+
+		void HandleHttpRequest(IncomingHttpRequest &request, CancellablePointer &cancel_ptr) noexcept {
+			assert(request.body);
+			assert(!request.body.GetLength().exhaustive);
+			assert(!request_body);
+
+			UnusedIstreamPtr body = std::move(request.body);
+			if (!buckets)
+				body = NewIstreamPtr<NoBucketIstream>(request.pool, std::move(body));
+
+			cancel_ptr = *this;
+			request_body = UnusedHoldIstreamPtr{request.pool, std::move(body)};
+		}
+
+		void UseRequestBody() noexcept {
+			assert(request_body);
+
+			auto &null_sink = NewNullSink(server.GetPool(), std::move(request_body),
+						      BIND_THIS_METHOD(OnRequestBodyEnd));
+			ReadNullSink(null_sink);
+		}
+
+		void OnRequestBodyEnd(std::exception_ptr &&error) noexcept {
+			if (error)
+				PrintException(std::move(error));
+
+			client.Cancel();
+		}
+
+		void Cancel() noexcept override {
+			canceled = true;
+		}
+	} handler{server, client, buckets};
+
+	server.SetRequestHandler([&handler](IncomingHttpRequest &request, CancellablePointer &cancel_ptr) noexcept {
+		handler.HandleHttpRequest(request, cancel_ptr);
+	});
+
+	auto &pool = server.GetPool();
+
+	// wrap in NoLengthIstream to force chunking
+	auto real_request_body = NewIstreamPtr<NoLengthIstream>(pool, istream_string_new(server.GetPool(), "X"sv));
+
+	UnusedIstreamPtr request_body;
+	DelayedIstreamControl *delayed;
+
+	if (delay_request_body) {
+		auto _delayed = istream_delayed_new(pool, server.GetEventLoop());
+		request_body = std::move(_delayed.first);
+		delayed = &_delayed.second;
+	} else
+		request_body = std::move(real_request_body);
+
+	client.SendRequest(server,
+			   HttpMethod::POST, "/", {},
+			   std::move(request_body));
+
+	/* flush http_client's deferred send */
+	FlushIO(server.GetEventLoop());
+
+	handler.UseRequestBody();
+
+	if (delay_request_body)
+		delayed->Set(std::move(real_request_body));
+
+	/* two calls: one receives the request body and the second one
+	   detects hangup */
+	FlushIO(server.GetEventLoop());
+	FlushIO(server.GetEventLoop());
+
+	assert(client.IsDone());
+	client.AssertResponse(HttpStatus{}, {});
+
+	assert(handler.canceled);
+}
+
 int
 main(int argc, char **argv) noexcept
 try {
@@ -544,6 +652,15 @@ try {
 
 		server.CloseClientSocket();
 		instance.event_loop.Run();
+	}
+
+	for (bool buckets : {false, true}) {
+		for (bool delay_request_body : {false, true}) {
+			Server server(instance.root_pool, instance.event_loop);
+			TestCancelAfterChunkedRequest(server, buckets, delay_request_body);
+			server.CloseClientSocket();
+			instance.event_loop.Run();
+		}
 	}
 } catch (...) {
 	PrintException(std::current_exception());
