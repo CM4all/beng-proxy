@@ -227,7 +227,7 @@ public:
 					      int(status), int(expected_status));
 
 		if (response_body != expected_body)
-			throw FmtRuntimeError("Got response body '{}', expected '{}'",
+			throw FmtRuntimeError("Got response body {:?}, expected {:?}",
 					      response_body, expected_body);
 	}
 
