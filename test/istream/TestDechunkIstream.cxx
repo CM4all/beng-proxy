@@ -15,19 +15,23 @@
 struct MyDechunkHandler final : DechunkHandler {
 	const DechunkInputAction action;
 
-	bool end_seen = false;
+	enum class State {
+		INITIAL,
+		END_SEEN,
+		END,
+	} state = State::INITIAL;
 
 	explicit constexpr MyDechunkHandler(DechunkInputAction _action) noexcept
 		:action(_action) {}
 
 	void OnDechunkEndSeen() noexcept override {
-		assert(!end_seen);
-
-		end_seen = true;
+		assert(state == State::INITIAL);
+		state = State::END_SEEN;
 	}
 
 	DechunkInputAction OnDechunkEnd() noexcept override {
-		assert(end_seen);
+		assert(state == State::END_SEEN);
+		state = State::END;
 
 		return action;
 	}
