@@ -237,8 +237,15 @@ private:
 
 		(void)headers;
 
-		IstreamSink::SetInput(std::move(body));
-		input.Read();
+		if (body) {
+			IstreamSink::SetInput(std::move(body));
+			input.Read();
+		} else {
+			response_eof = true;
+
+			if (break_done)
+				event_loop.Break();
+		}
 	}
 
 	void OnHttpError(std::exception_ptr ep) noexcept override {
