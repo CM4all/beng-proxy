@@ -180,8 +180,6 @@ class Client final : HttpResponseHandler, StringSinkHandler {
 	std::string response_body;
 	HttpStatus status{};
 
-	bool response_eof = false;
-
 	bool break_done = false;
 
 public:
@@ -200,7 +198,7 @@ public:
 	}
 
 	bool IsDone() const noexcept {
-		return response_error || response_eof;
+		return !cancel_ptr;
 	}
 
 	void WaitDone() noexcept {
@@ -237,6 +235,8 @@ private:
 	/* virtual methods from class HttpResponseHandler */
 	void OnHttpResponse(HttpStatus _status, StringMap &&headers,
 			    UnusedIstreamPtr body) noexcept override {
+		cancel_ptr = {};
+
 		status = _status;
 
 		(void)headers;
@@ -244,8 +244,6 @@ private:
 		if (body) {
 			NewStringSink(*pool, std::move(body), *this, cancel_ptr);
 		} else {
-			response_eof = true;
-
 			if (break_done)
 				event_loop.Break();
 		}
@@ -258,14 +256,15 @@ private:
 	/* virtual methods from class StringSink */
 
 	void OnStringSinkSuccess(std::string &&value) noexcept override {
+		cancel_ptr = {};
 		response_body = std::move(value);
-		response_eof = true;
 
 		if (break_done)
 			event_loop.Break();
 	}
 
 	void OnStringSinkError(std::exception_ptr error) noexcept override {
+		cancel_ptr = {};
 		response_error = std::move(error);
 
 		if (break_done)
