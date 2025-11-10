@@ -30,6 +30,14 @@ private:
 		this->~NullSink();
 	}
 
+	void DestroyCallback(std::exception_ptr &&error) noexcept {
+		const auto _callback = callback;
+		Destroy();
+
+		if (_callback)
+			_callback(std::move(error));
+	}
+
 	/* virtual methods from class IstreamHandler */
 
 	std::size_t OnData(std::span<const std::byte> src) noexcept override {
@@ -68,20 +76,12 @@ private:
 
 	void OnEof() noexcept override {
 		ClearInput();
-		const auto _callback = callback;
-		Destroy();
-
-		if (_callback)
-			_callback({});
+		DestroyCallback({});
 	}
 
 	void OnError(std::exception_ptr &&error) noexcept override {
 		ClearInput();
-		const auto _callback = callback;
-		Destroy();
-
-		if (_callback)
-			_callback(std::move(error));
+		DestroyCallback(std::move(error));
 	}
 };
 
