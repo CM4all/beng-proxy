@@ -4,11 +4,9 @@
 
 #pragma once
 
+#include <cassert>
 #include <cstddef> // for std::nullptr_t
 #include <utility>
-
-#include <assert.h>
-#include <sys/types.h>
 
 struct IstreamLength;
 class Istream;
