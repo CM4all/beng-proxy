@@ -21,6 +21,11 @@ public:
 		input.SetDirect(ISTREAM_TO_CHARDEV);
 	}
 
+private:
+	void Destroy() noexcept {
+		this->~NullSink();
+	}
+
 	/* virtual methods from class IstreamHandler */
 
 	std::size_t OnData(std::span<const std::byte> src) noexcept override {
@@ -59,10 +64,12 @@ public:
 
 	void OnEof() noexcept override {
 		ClearInput();
+		Destroy();
 	}
 
 	void OnError(std::exception_ptr &&) noexcept override {
 		ClearInput();
+		Destroy();
 	}
 };
 
