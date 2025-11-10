@@ -4,11 +4,11 @@
 
 #include "../TestInstance.hxx"
 #include "../OpenFileLease.hxx"
+#include "../DeferBreak.hxx"
 #include "CountIstreamSink.hxx"
 #include "istream/UringSpliceIstream.hxx"
 #include "istream/UnusedPtr.hxx"
 #include "pool/pool.hxx"
-#include "event/DeferEvent.hxx"
 #include "io/uring/Queue.hxx"
 #include "system/Error.hxx"
 
@@ -60,27 +60,6 @@ try {
 	else
 		throw;
 }
-
-class DeferBreak {
-	DeferEvent event;
-
-public:
-	explicit DeferBreak(EventLoop &event_loop) noexcept
-		:event(event_loop, BIND_THIS_METHOD(Break)) {}
-
-	void ScheduleIdle() noexcept {
-		event.ScheduleIdle();
-	}
-
-	void ScheduleNext() noexcept {
-		event.ScheduleNext();
-	}
-
-private:
-	void Break() noexcept {
-		event.GetEventLoop().Break();
-	}
-};
 
 /**
  * Cancel before the io_uring splice operation was really submitted to
