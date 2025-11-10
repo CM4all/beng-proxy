@@ -172,7 +172,7 @@ private:
 class Client final : HttpResponseHandler, IstreamSink {
 	EventLoop &event_loop;
 
-	CancellablePointer client_cancel_ptr;
+	CancellablePointer cancel_ptr;
 
 	std::exception_ptr response_error;
 	std::string response_body;
@@ -192,22 +192,22 @@ public:
 			 UnusedIstreamPtr body, bool expect_100=false) noexcept {
 		server.SendRequest(method, uri, headers,
 				   std::move(body), expect_100,
-				   *this, client_cancel_ptr);
+				   *this, cancel_ptr);
 	}
 
-	bool IsClientDone() const noexcept {
+	bool IsDone() const noexcept {
 		return response_error || response_eof;
 	}
 
 	void WaitDone() noexcept {
-		if (IsClientDone())
+		if (IsDone())
 			return;
 
 		break_done = true;
 		event_loop.Run();
 		break_done = false;
 
-		assert(IsClientDone());
+		assert(IsDone());
 	}
 
 	void RethrowResponseError() const {
