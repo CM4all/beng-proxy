@@ -13,7 +13,12 @@
 #include <cassert>
 
 struct MyDechunkHandler final : DechunkHandler {
+	const DechunkInputAction action;
+
 	bool end_seen = false;
+
+	explicit constexpr MyDechunkHandler(DechunkInputAction _action) noexcept
+		:action(_action) {}
 
 	void OnDechunkEndSeen() noexcept override {
 		assert(!end_seen);
@@ -24,7 +29,7 @@ struct MyDechunkHandler final : DechunkHandler {
 	DechunkInputAction OnDechunkEnd() noexcept override {
 		assert(end_seen);
 
-		return DechunkInputAction::CLOSE;
+		return action;
 	}
 };
 
@@ -50,7 +55,7 @@ public:
 
 	UnusedIstreamPtr CreateTest(EventLoop &event_loop, struct pool &pool,
 				    UnusedIstreamPtr input) const noexcept {
-		auto *handler = NewFromPool<MyDechunkHandler>(pool);
+		auto *handler = NewFromPool<MyDechunkHandler>(pool, DechunkHandler::DechunkInputAction::CLOSE);
 		return istream_dechunk_new(pool, std::move(input),
 					   event_loop, *handler);
 	}
