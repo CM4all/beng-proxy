@@ -12,7 +12,7 @@
 
 #include <cassert>
 
-class MyDechunkHandler final : public DechunkHandler {
+struct MyDechunkHandler final : DechunkHandler {
 	bool end_seen = false;
 
 	void OnDechunkEndSeen() noexcept override {
