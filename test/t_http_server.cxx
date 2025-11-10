@@ -23,7 +23,7 @@
 #include "istream/BlockIstream.hxx"
 #include "istream/ZeroIstream.hxx"
 #include "istream/istream_string.hxx"
-#include "istream/Sink.hxx"
+#include "istream/StringSink.hxx"
 #include "memory/GrowingBuffer.hxx"
 #include "memory/SinkGrowingBuffer.hxx"
 #include "memory/SlicePool.hxx"
@@ -169,8 +169,10 @@ private:
 	}
 };
 
-class Client final : HttpResponseHandler, IstreamSink {
+class Client final : HttpResponseHandler, StringSinkHandler {
 	EventLoop &event_loop;
+
+	struct pool *pool;
 
 	CancellablePointer cancel_ptr;
 
@@ -190,6 +192,8 @@ public:
 			 HttpMethod method, const char *uri,
 			 const StringMap &headers,
 			 UnusedIstreamPtr body, bool expect_100=false) noexcept {
+		pool = &server.GetPool();
+
 		server.SendRequest(method, uri, headers,
 				   std::move(body), expect_100,
 				   *this, cancel_ptr);
@@ -238,8 +242,7 @@ private:
 		(void)headers;
 
 		if (body) {
-			IstreamSink::SetInput(std::move(body));
-			input.Read();
+			NewStringSink(*pool, std::move(body), *this, cancel_ptr);
 		} else {
 			response_eof = true;
 
@@ -252,24 +255,18 @@ private:
 		response_error = std::move(ep);
 	}
 
-	/* virtual methods from class IstreamHandler */
+	/* virtual methods from class StringSink */
 
-	size_t OnData(std::span<const std::byte> src) noexcept override {
-		response_body.append(ToStringView(src));
-		return src.size();
-	}
-
-	void OnEof() noexcept override {
-		IstreamSink::ClearInput();
+	void OnStringSinkSuccess(std::string &&value) noexcept override {
+		response_body = std::move(value);
 		response_eof = true;
 
 		if (break_done)
 			event_loop.Break();
 	}
 
-	void OnError(std::exception_ptr &&ep) noexcept override {
-		IstreamSink::ClearInput();
-		response_error = std::move(ep);
+	void OnStringSinkError(std::exception_ptr error) noexcept override {
+		response_error = std::move(error);
 
 		if (break_done)
 			event_loop.Break();
