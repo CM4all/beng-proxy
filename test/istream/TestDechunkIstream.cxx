@@ -12,23 +12,23 @@
 
 #include <cassert>
 
+class MyDechunkHandler final : public DechunkHandler {
+	bool end_seen = false;
+
+	void OnDechunkEndSeen() noexcept override {
+		assert(!end_seen);
+
+		end_seen = true;
+	}
+
+	DechunkInputAction OnDechunkEnd() noexcept override {
+		assert(end_seen);
+
+		return DechunkInputAction::CLOSE;
+	}
+};
+
 class IstreamDechunkTestTraits {
-	class MyDechunkHandler final : public DechunkHandler {
-		bool end_seen = false;
-
-		void OnDechunkEndSeen() noexcept override {
-			assert(!end_seen);
-
-			end_seen = true;
-		}
-
-		DechunkInputAction OnDechunkEnd() noexcept override {
-			assert(end_seen);
-
-			return DechunkInputAction::CLOSE;
-		}
-	};
-
 public:
 	static constexpr IstreamFilterTestOptions options{
 		.expected_result = "foo123456789",
