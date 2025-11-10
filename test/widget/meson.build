@@ -3,7 +3,6 @@ test(
   executable(
     't_rewrite_uri',
     't_rewrite_uri.cxx',
-    '../../src/PInstance.cxx',
     '../../src/widget/RewriteUri.cxx',
     '../../src/bp/session/Lease.cxx',
     '../../src/escape/Istream.cxx',
@@ -15,6 +14,7 @@ test(
       istream_dep,
       translation_dep,
       debug_resource_loader_dep,
+      test_instance_dep,
     ],
   ),
 )
@@ -24,12 +24,12 @@ test(
   executable(
     't_widget_registry',
     't_widget_registry.cxx',
-    '../../src/PInstance.cxx',
     '../../src/widget/Registry.cxx',
     include_directories: inc,
     dependencies: [
       gtest,
       widget_class_dep,
+      test_instance_dep,
     ],
   ),
 )

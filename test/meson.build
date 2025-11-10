@@ -112,10 +112,10 @@ endif
 
 executable('run_http_cache',
   'run_http_cache.cxx',
-  '../src/PInstance.cxx',
   include_directories: inc,
   dependencies: [
     http_cache_dep,
+    test_instance_dep,
   ])
 
 executable('run_http_server',
@@ -175,7 +175,6 @@ endif
 executable(
   'LaunchLocalHTTP',
   'LaunchLocalHTTP.cxx',
-  '../src/PInstance.cxx',
   include_directories: inc,
   dependencies: [
     expand_dep,
@@ -184,6 +183,7 @@ executable(
     net_dep,
     was_client_dep,
     stopwatch_dep,
+    test_instance_dep,
   ],
 )
 
@@ -275,12 +275,11 @@ test(
   executable(
     't_cache',
     't_cache.cxx',
-    '../src/PInstance.cxx',
     include_directories: inc,
     dependencies: [
       gtest,
       cache_dep,
-      pool_dep,
+      test_instance_dep,
     ],
   ),
 )
@@ -291,7 +290,6 @@ test(
     't_tcache',
     't_tcache.cxx',
     'RecordingTranslateHandler.cxx',
-    '../src/PInstance.cxx',
     include_directories: inc,
     dependencies: [
       gtest,
@@ -300,6 +298,7 @@ test(
       raddress_dep,
       stopwatch_dep,
       widget_class_dep,
+      test_instance_dep,
     ],
   ),
 )
