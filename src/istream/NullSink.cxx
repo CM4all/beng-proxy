@@ -3,11 +3,14 @@
 // author: Max Kellermann <max.kellermann@ionos.com>
 
 #include "NullSink.hxx"
+#include "Bucket.hxx"
 #include "Sink.hxx"
 #include "UnusedPtr.hxx"
 #include "pool/pool.hxx"
 #include "io/SpliceSupport.hxx"
 #include "io/UniqueFileDescriptor.hxx"
+
+#include <cassert>
 
 #include <fcntl.h> // for splice()
 
@@ -39,6 +42,8 @@ private:
 	}
 
 	/* virtual methods from class IstreamHandler */
+
+	IstreamReadyResult OnIstreamReady() noexcept override;
 
 	std::size_t OnData(std::span<const std::byte> src) noexcept override {
 		return src.size();
@@ -84,6 +89,49 @@ private:
 		DestroyCallback(std::move(error));
 	}
 };
+
+IstreamReadyResult
+NullSink::OnIstreamReady() noexcept
+{
+	while (true) {
+		IstreamBucketList list;
+
+		try {
+			input.FillBucketList(list);
+		} catch (...) {
+			ClearInput();
+			DestroyCallback(std::current_exception());
+			return IstreamReadyResult::CLOSED;
+		}
+
+		auto more = list.GetMore();
+
+		if (const std::size_t total_size = list.GetTotalBufferSize();
+		    total_size > 0) {
+			const auto result = input.ConsumeBucketList(total_size);
+			assert(result.consumed == total_size);
+
+			if (result.eof)
+				more = IstreamBucketList::More::NO;
+		}
+
+		switch (more) {
+		case IstreamBucketList::More::NO:
+			DestroyCallback({});
+			return IstreamReadyResult::CLOSED;
+
+		case IstreamBucketList::More::PUSH:
+		case IstreamBucketList::More::PULL:
+			return IstreamReadyResult::OK;
+
+		case IstreamBucketList::More::AGAIN:
+			continue;
+
+		case IstreamBucketList::More::FALLBACK:
+			return IstreamReadyResult::FALLBACK;
+		}
+	}
+}
 
 void
 NewNullSink(struct pool &p, UnusedIstreamPtr istream,
