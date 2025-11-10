@@ -77,9 +77,8 @@ public:
 		return client_fs.GetEventLoop();
 	}
 
-	template<typename T>
-	void SetRequestHandler(T &&handler) noexcept {
-		request_handler = std::forward<T>(handler);
+	void SetRequestHandler(std::invocable<IncomingHttpRequest &, CancellablePointer &> auto handler) noexcept {
+		request_handler = std::move(handler);
 	}
 
 	void CloseConnection() noexcept {
