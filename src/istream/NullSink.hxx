@@ -10,6 +10,7 @@
 
 struct pool;
 class UnusedIstreamPtr;
+class NullSink;
 
 /**
  * An istream handler which silently discards everything and ignores errors.
@@ -17,6 +18,9 @@ class UnusedIstreamPtr;
  * @param callback an optional function that will be invoked when the
  * #Istream ends (or fails)
  */
-void
+NullSink &
 NewNullSink(struct pool &p, UnusedIstreamPtr istream,
 	    BoundMethod<void(std::exception_ptr &&error) noexcept> callback=nullptr) noexcept;
+
+void
+ReadNullSink(NullSink &sink) noexcept;

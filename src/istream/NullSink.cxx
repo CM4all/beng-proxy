@@ -28,6 +28,20 @@ public:
 		input.SetDirect(ISTREAM_TO_CHARDEV);
 	}
 
+	void Read() noexcept {
+		switch (OnIstreamReady()) {
+		case IstreamReadyResult::OK:
+			break;
+
+		case IstreamReadyResult::FALLBACK:
+			input.Read();
+			break;
+
+		case IstreamReadyResult::CLOSED:
+			break;
+		}
+	}
+
 private:
 	void Destroy() noexcept {
 		this->~NullSink();
@@ -133,9 +147,15 @@ NullSink::OnIstreamReady() noexcept
 	}
 }
 
-void
+NullSink &
 NewNullSink(struct pool &p, UnusedIstreamPtr istream,
 	    BoundMethod<void(std::exception_ptr &&error) noexcept> callback) noexcept
 {
-	NewFromPool<NullSink>(p, std::move(istream), callback);
+	return *NewFromPool<NullSink>(p, std::move(istream), callback);
+}
+
+void
+ReadNullSink(NullSink &sink) noexcept
+{
+	sink.Read();
 }
