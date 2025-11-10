@@ -2,7 +2,7 @@
 // Copyright CM4all GmbH
 // author: Max Kellermann <max.kellermann@ionos.com>
 
-#include "sink_null.hxx"
+#include "NullSink.hxx"
 #include "Sink.hxx"
 #include "UnusedPtr.hxx"
 #include "pool/pool.hxx"
@@ -11,11 +11,11 @@
 
 #include <fcntl.h> // for splice()
 
-class SinkNull final : IstreamSink {
+class NullSink final : IstreamSink {
 	UniqueFileDescriptor dev_null;
 
 public:
-	explicit SinkNull(UnusedIstreamPtr &&_input)
+	explicit NullSink(UnusedIstreamPtr &&_input)
 		:IstreamSink(std::move(_input))
 	{
 		input.SetDirect(ISTREAM_TO_CHARDEV);
@@ -67,7 +67,7 @@ public:
 };
 
 void
-sink_null_new(struct pool &p, UnusedIstreamPtr istream)
+NewNullSink(struct pool &p, UnusedIstreamPtr istream)
 {
-	NewFromPool<SinkNull>(p, std::move(istream));
+	NewFromPool<NullSink>(p, std::move(istream));
 }

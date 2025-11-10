@@ -8,7 +8,7 @@
 #include "http/Status.hxx"
 #include "http/server/Public.hxx"
 #include "fs/FilteredSocket.hxx"
-#include "istream/sink_null.hxx"
+#include "istream/NullSink.hxx"
 #include "istream/BlockIstream.hxx"
 #include "istream/ByteIstream.hxx"
 #include "istream/DelayedIstream.hxx"
@@ -72,7 +72,7 @@ DemoHttpServerConnection::HandleHttpRequest(IncomingHttpRequest &request,
 
 	case Mode::MODE_NULL:
 		if (request.body)
-			sink_null_new(request.pool, std::move(request.body));
+			NewNullSink(request.pool, std::move(request.body));
 
 		request.SendResponse(HttpStatus::NO_CONTENT, {}, nullptr);
 		break;
@@ -99,7 +99,7 @@ DemoHttpServerConnection::HandleHttpRequest(IncomingHttpRequest &request,
 
 	case Mode::DUMMY:
 		if (request.body)
-			sink_null_new(request.pool, std::move(request.body));
+			NewNullSink(request.pool, std::move(request.body));
 
 		{
 			auto body = istream_head_new(request.pool,
@@ -114,7 +114,7 @@ DemoHttpServerConnection::HandleHttpRequest(IncomingHttpRequest &request,
 
 	case Mode::FIXED:
 		if (request.body)
-			sink_null_new(request.pool, std::move(request.body));
+			NewNullSink(request.pool, std::move(request.body));
 
 		request.SendResponse(HttpStatus::OK, {},
 				     istream_memory_new(request.pool,
@@ -123,7 +123,7 @@ DemoHttpServerConnection::HandleHttpRequest(IncomingHttpRequest &request,
 
 	case Mode::HUGE_:
 		if (request.body)
-			sink_null_new(request.pool, std::move(request.body));
+			NewNullSink(request.pool, std::move(request.body));
 
 		request.SendResponse(HttpStatus::OK, {},
 				     istream_head_new(request.pool,

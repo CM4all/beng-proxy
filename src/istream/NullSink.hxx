@@ -11,4 +11,4 @@ class UnusedIstreamPtr;
  * An istream handler which silently discards everything and ignores errors.
  */
 void
-sink_null_new(struct pool &p, UnusedIstreamPtr istream);
+NewNullSink(struct pool &p, UnusedIstreamPtr istream);

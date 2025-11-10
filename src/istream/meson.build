@@ -51,7 +51,7 @@ istream_basic = static_library(
 
   # IstreamSink implementations
   'StringSink.cxx',
-  'sink_null.cxx',
+  'NullSink.cxx',
 
   include_directories: inc,
 )
