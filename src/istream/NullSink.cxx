@@ -12,11 +12,15 @@
 #include <fcntl.h> // for splice()
 
 class NullSink final : IstreamSink {
+	const BoundMethod<void(std::exception_ptr &&error) noexcept> callback;
+
 	UniqueFileDescriptor dev_null;
 
 public:
-	explicit NullSink(UnusedIstreamPtr &&_input)
-		:IstreamSink(std::move(_input))
+	explicit NullSink(UnusedIstreamPtr &&_input,
+			  BoundMethod<void(std::exception_ptr &&error) noexcept> _callback) noexcept
+		:IstreamSink(std::move(_input)),
+		 callback(_callback)
 	{
 		input.SetDirect(ISTREAM_TO_CHARDEV);
 	}
@@ -64,17 +68,26 @@ private:
 
 	void OnEof() noexcept override {
 		ClearInput();
+		const auto _callback = callback;
 		Destroy();
+
+		if (_callback)
+			_callback({});
 	}
 
-	void OnError(std::exception_ptr &&) noexcept override {
+	void OnError(std::exception_ptr &&error) noexcept override {
 		ClearInput();
+		const auto _callback = callback;
 		Destroy();
+
+		if (_callback)
+			_callback(std::move(error));
 	}
 };
 
 void
-NewNullSink(struct pool &p, UnusedIstreamPtr istream)
+NewNullSink(struct pool &p, UnusedIstreamPtr istream,
+	    BoundMethod<void(std::exception_ptr &&error) noexcept> callback) noexcept
 {
-	NewFromPool<NullSink>(p, std::move(istream));
+	NewFromPool<NullSink>(p, std::move(istream), callback);
 }
