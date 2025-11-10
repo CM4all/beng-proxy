@@ -45,6 +45,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+using std::string_view_literals::operator""sv;
+
 class Server final
 	: PoolHolder,
 	  HttpServerConnectionHandler, HttpServerRequestHandler,
@@ -218,7 +220,7 @@ public:
 	}
 
 	void ExpectResponse(HttpStatus expected_status,
-			    const char *expected_body) {
+			    std::string_view expected_body) {
 		WaitDone();
 		RethrowResponseError();
 
@@ -331,7 +333,7 @@ TestSimple(Server &server)
 	client.SendRequest(server,
 			   HttpMethod::GET, "/", {},
 			   nullptr);
-	client.ExpectResponse(HttpStatus::OK, "foo");
+	client.ExpectResponse(HttpStatus::OK, "foo"sv);
 }
 
 static void
@@ -346,7 +348,7 @@ TestMirror(Server &server)
 	client.SendRequest(server,
 			   HttpMethod::POST, "/", {},
 			   istream_string_new(server.GetPool(), "foo"));
-	client.ExpectResponse(HttpStatus::OK, "foo");
+	client.ExpectResponse(HttpStatus::OK, "foo"sv);
 }
 
 class BufferedMirror final : GrowingBufferSinkHandler, Cancellable {
@@ -388,14 +390,14 @@ private:
 	}
 };
 
-static char *
+static std::string_view
 RandomString(AllocatorPtr alloc, std::size_t length) noexcept
 {
-	char *p = alloc.NewArray<char>(length + 1), *q = p;
+	char *p = alloc.NewArray<char>(length), *q = p;
 	for (std::size_t i = 0; i < length; ++i)
 		*q++ = 'A' + (i % 26);
 	*q = 0;
-	return p;
+	return {p, length};
 }
 
 static void
@@ -405,7 +407,7 @@ TestBufferedMirror(Server &server)
 		NewFromPool<BufferedMirror>(request.pool, request, cancel_ptr);
 	});
 
-	char *data = RandomString(server.GetPool(), 65536);
+	const std::string_view data = RandomString(server.GetPool(), 65536);
 
 	Client client{server.GetEventLoop()};
 	client.SendRequest(server,
@@ -426,7 +428,7 @@ TestAbortedRequestBody(Server &server)
 			server.GetEventLoop().Break();
 	});
 
-	char *data = RandomString(server.GetPool(), 65536);
+	const std::string_view data = RandomString(server.GetPool(), 65536);
 
 	auto [inject_istream, inject_control] = istream_inject_new(server.GetPool(),
 								   istream_block_new(server.GetPool()));
@@ -464,7 +466,7 @@ TestDiscardTinyRequestBody(Server &server)
 	client.SendRequest(server,
 			   HttpMethod::POST, "/", {},
 			   istream_string_new(server.GetPool(), "foo"));
-	client.ExpectResponse(HttpStatus::OK, "foo");
+	client.ExpectResponse(HttpStatus::OK, "foo"sv);
 }
 
 /**
@@ -509,7 +511,7 @@ TestDiscardedHugeRequestBody(Server &server)
 	client.SendRequest(server,
 			   HttpMethod::POST, "/", {},
 			   istream_zero_new(server.GetPool()));
-	client.ExpectResponse(HttpStatus::OK, "foo");
+	client.ExpectResponse(HttpStatus::OK, "foo"sv);
 }
 
 int
