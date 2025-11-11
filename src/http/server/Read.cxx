@@ -197,11 +197,14 @@ HttpServerConnection::HeadersFinished() noexcept
 	   be tracked by FilteredSocket (auto-refreshing) */
 	idle_timer.Cancel();
 
-	const char *const expect = r.headers.Get(expect_header);
-	request.expect_100_continue = expect != nullptr &&
-		StringIsEqual(expect, "100-continue");
-	if (expect != nullptr && !StringIsEqual(expect, "100-continue"))
-		request.SetError(HttpStatus::EXPECTATION_FAILED, "Unrecognized expectation\n");
+	request.expect_100_continue = false;
+	if (const char *const expect = r.headers.Get(expect_header);
+	    expect != nullptr) {
+		if (StringIsEqual(expect, "100-continue"))
+			request.expect_100_continue = true;
+		else
+			request.SetError(HttpStatus::EXPECTATION_FAILED, "Unrecognized expectation\n");
+	}
 
 	const char *const connection = r.headers.Get(connection_header);
 	keep_alive = connection == nullptr || !http_list_contains_i(connection, "close");
