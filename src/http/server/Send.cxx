@@ -115,6 +115,7 @@ HttpServerConnection::SubmitResponse(HttpStatus status,
 	assert(score != HTTP_SERVER_NEW);
 	assert(socket->IsConnected());
 	assert(request.read_state == Request::END ||
+	       request.read_state == Request::ABANDONED_BODY ||
 	       request.body_state == Request::BodyState::READING);
 
 	request.cancel_ptr = nullptr;

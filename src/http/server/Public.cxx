@@ -268,6 +268,7 @@ DirectResult
 HttpServerConnection::OnBufferedDirect(SocketDescriptor fd, FdType fd_type)
 {
 	assert(request.read_state != Request::END);
+	assert(request.read_state != Request::ABANDONED_BODY);
 	assert(!response.pending_drained);
 
 	return TryRequestBodyDirect(fd, fd_type);

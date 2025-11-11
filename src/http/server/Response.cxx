@@ -211,6 +211,13 @@ HttpServerConnection::ResponseIstreamFinished() noexcept
 			return false;
 	}
 
+	if (request.read_state == Request::ABANDONED_BODY) {
+		assert(request.body_state == Request::BodyState::CLOSED);
+
+		request.read_state = Request::END;
+		request_body_reader->Destroy();
+	}
+
 	assert(!read_timer.IsPending());
 
 	request.request->stopwatch.RecordEvent("response_end");
