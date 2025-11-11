@@ -320,6 +320,7 @@ public:
 	 */
 	ConsumeBucketResult ConsumeBucketList(std::size_t nbytes) noexcept {
 #ifndef NDEBUG
+		assert(nbytes > 0);
 		assert(!destroyed);
 		assert(!closing);
 		assert(!eof);
