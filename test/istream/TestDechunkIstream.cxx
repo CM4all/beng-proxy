@@ -3,7 +3,7 @@
 // author: Max Kellermann <max.kellermann@ionos.com>
 
 #include "IstreamFilterTest.hxx"
-#include "../DeferBreak.hxx"
+#include "../FlushEventLoop.hxx"
 #include "../RecordingStringSinkHandler.hxx"
 #include "istream/DechunkIstream.hxx"
 #include "istream/ByteIstream.hxx"
@@ -152,11 +152,8 @@ TestAction(EventLoop &event_loop, struct pool &pool,
 	ReadStringSink(sink);
 	EXPECT_GE(dechunk_handler.state, MyDechunkHandler::State::END_SEEN);
 
-	if (!buckets && handler.IsAlive()) {
-		DeferBreak defer_break{event_loop};
-		defer_break.ScheduleIdle();
-		event_loop.Run();
-	}
+	if (!buckets && handler.IsAlive())
+		FlushPending(event_loop);
 
 	EXPECT_EQ(dechunk_handler.state, MyDechunkHandler::State::END);
 	ASSERT_FALSE(handler.IsAlive());

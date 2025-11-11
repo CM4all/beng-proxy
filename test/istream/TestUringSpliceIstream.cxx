@@ -4,7 +4,7 @@
 
 #include "../TestInstance.hxx"
 #include "../OpenFileLease.hxx"
-#include "../DeferBreak.hxx"
+#include "../FlushEventLoop.hxx"
 #include "CountIstreamSink.hxx"
 #include "istream/UringSpliceIstream.hxx"
 #include "istream/UnusedPtr.hxx"
@@ -68,7 +68,6 @@ try {
 TEST(UringSpliceIstream, CancelEarly)
 try {
 	TestInstance instance;
-	DeferBreak defer_break{instance.event_loop};
 	instance.event_loop.EnableUring(1024, 0);
 	auto &uring = *instance.event_loop.GetUring();
 
@@ -78,8 +77,8 @@ try {
 		CountIstreamSink sink{std::move(i)};
 		sink.EnableDirect();
 		sink.Read();
-		defer_break.ScheduleIdle();
-		instance.event_loop.Run();
+
+		FlushIO(instance.event_loop);
 
 		/* the io_uring splice operation is now on the ring,
 		   but was not yet submitted via io_uring_submit() */
@@ -102,7 +101,6 @@ try {
 TEST(UringSpliceIstream, CancelLate)
 try {
 	TestInstance instance;
-	DeferBreak defer_break{instance.event_loop};
 	instance.event_loop.EnableUring(1024, 0);
 	auto &uring = *instance.event_loop.GetUring();
 
@@ -112,8 +110,8 @@ try {
 		CountIstreamSink sink{std::move(i)};
 		sink.EnableDirect();
 		sink.Read();
-		defer_break.ScheduleNext();
-		instance.event_loop.Run();
+
+		FlushPending(instance.event_loop);
 
 		/* the io_uring splice operation is now on the ring,
 		   but was not yet submitted via io_uring_submit() */
@@ -153,9 +151,7 @@ try {
 		sink.EnableDirect();
 		sink.Read();
 
-		DeferBreak defer_break{instance.event_loop};
-		defer_break.ScheduleIdle();
-		instance.event_loop.Run();
+		FlushPending(instance.event_loop);
 
 		/* the io_uring splice operation is now on the ring,
 		   but was not yet submitted via io_uring_submit() */
