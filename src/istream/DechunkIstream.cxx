@@ -100,6 +100,13 @@ class DechunkIstream final : public FacadeIstream, DestructAnchor {
 
 	DechunkHandler &dechunk_handler;
 
+	/**
+	 * This may point into the stack frame of OnIstreamReady().
+	 * It is a kludge that corrects its return value from CLOSED
+	 * to OK when our input has been abandoned, but not closed.
+	 */
+	bool *abandoned_ptr = nullptr;
+
 public:
 	DechunkIstream(struct pool &p, UnusedIstreamPtr &&_input,
 		       EventLoop &event_loop,
@@ -175,10 +182,26 @@ protected:
 	/* virtual methods from class IstreamHandler */
 
 	IstreamReadyResult OnIstreamReady() noexcept override {
+		assert(abandoned_ptr == nullptr);
+
+		bool abandoned = false;
+		abandoned_ptr = &abandoned;
+
 		auto result = InvokeReady();
-		if (result != IstreamReadyResult::CLOSED && !HasInput())
-			/* our input has meanwhile been closed */
-			result = IstreamReadyResult::CLOSED;
+
+		if (result != IstreamReadyResult::CLOSED) {
+			assert(abandoned_ptr == &abandoned);
+			abandoned_ptr = nullptr;
+
+			if (!HasInput())
+				/* our input has meanwhile been closed */
+				result = IstreamReadyResult::CLOSED;
+		}
+
+		if (abandoned) [[unlikely]]
+			/* our input was abandoned but was not closed
+			   - correct the result returned to it */
+			return IstreamReadyResult::OK;
 
 		return result;
 	}
@@ -218,6 +241,12 @@ DechunkIstream::InvokeDechunkEnd() noexcept
 
 	switch (action) {
 	case DechunkHandler::DechunkInputAction::ABANDON:
+		if (abandoned_ptr != nullptr)
+			*abandoned_ptr = true;
+
+		ClearInput();
+		break;
+
 	case DechunkHandler::DechunkInputAction::DESTROYED:
 		ClearInput();
 		break;
@@ -366,6 +395,9 @@ DechunkIstream::OnData(std::span<const std::byte> src) noexcept
 	if (chunks.empty() && parser.HasEnded()) {
 		switch (EofDetected()) {
 		case DechunkHandler::DechunkInputAction::ABANDON:
+			/* our input was abandoned but was not closed
+			   - return the number of bytes consumed
+			   instead of 0 */
 			break;
 
 		case DechunkHandler::DechunkInputAction::DESTROYED:
