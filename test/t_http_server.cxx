@@ -401,7 +401,6 @@ RandomString(AllocatorPtr alloc, std::size_t length) noexcept
 	char *p = alloc.NewArray<char>(length), *q = p;
 	for (std::size_t i = 0; i < length; ++i)
 		*q++ = 'A' + (i % 26);
-	*q = 0;
 	return {p, length};
 }
 
