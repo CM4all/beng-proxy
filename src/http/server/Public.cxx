@@ -232,7 +232,11 @@ HttpServerConnection::OnBufferedData()
 		switch (request_body_reader->InvokeReady()) {
 		case IstreamReadyResult::OK:
 			/* refresh the request body timeout */
-			ScheduleReadTimeoutTimer();
+			assert(request.read_state == Request::BODY ||
+			       request.read_state == Request::ABANDONED_BODY);
+
+			if (request.read_state != Request::ABANDONED_BODY) [[likely]]
+				ScheduleReadTimeoutTimer();
 			return BufferedResult::OK;
 
 		case IstreamReadyResult::FALLBACK:
@@ -364,6 +368,7 @@ HttpServerConnection::OnReadTimeout() noexcept
 
 		break;
 
+	case Request::ABANDONED_BODY:
 	case Request::END:
 		assert(false);
 	}
@@ -453,6 +458,13 @@ HttpServerConnection::CloseRequest() noexcept
 	auto *_request = std::exchange(request.request, nullptr);
 
 	if (request.WasSubmitted()) {
+		if (request.read_state == Request::ABANDONED_BODY) {
+			assert(request.body_state == Request::BodyState::CLOSED);
+
+			request.read_state = Request::END;
+			request_body_reader->Destroy();
+		}
+
 		if (HasInput())
 			CloseInput();
 		else if (request.cancel_ptr)

@@ -26,6 +26,14 @@ HttpServerConnection::FeedRequestBody(std::span<const std::byte> src) noexcept
 	request.bytes_received += nbytes;
 	socket->DisposeConsumed(nbytes);
 
+	if (request.read_state == Request::ABANDONED_BODY) {
+		assert(request.body_state == Request::BodyState::CLOSED);
+
+		request.read_state = Request::END;
+		request_body_reader->Destroy();
+		return BufferedResult::OK;
+	}
+
 	assert(request.read_state == Request::BODY);
 
 	if (request_body_reader->IsEOF()) {
@@ -201,8 +209,11 @@ HttpServerConnection::RequestBodyReader::OnDechunkEnd() noexcept
 {
 	assert(connection.request.read_state == Request::BODY);
 
-	connection.DiscardRequestBody();
-	Destroy();
+	connection.request.read_state = Request::ABANDONED_BODY;
+#ifndef NDEBUG
+	connection.request.body_state = Request::BodyState::CLOSED;
+#endif
 
+	connection.CancelReadTimeoutTimer();
 	return DechunkInputAction::ABANDON;
 }

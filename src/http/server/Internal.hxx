@@ -193,6 +193,13 @@ struct HttpServerConnection final
 			/** reading the request body */
 			BODY,
 
+			/**
+			 * The #RequestBodyReader has been abandoned
+			 * by the OnDechunkEnd() callback method.  It
+			 * should be destroyed by CloseRequest().
+			 */
+			ABANDONED_BODY,
+
 			/** the request has been consumed, and we are going to send the response */
 			END
 		} read_state = START;
