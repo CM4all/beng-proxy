@@ -268,6 +268,7 @@ HttpServerConnection::HeadersFinished() noexcept
 #ifndef NDEBUG
 	request.body_state = Request::BodyState::READING;
 #endif
+	request.in_read = false;
 
 	return true;
 }

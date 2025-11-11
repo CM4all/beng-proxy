@@ -224,6 +224,13 @@ struct HttpServerConnection final
 		bool in_handler;
 
 		/**
+		 * True if inside ReadRequestBody().  With this method
+		 * on the call stack, InvokeReady() must not be
+		 * called.
+		 */
+		bool in_read;
+
+		/**
 		 * Did the client send an "Upgrade" header?
 		 */
 		bool upgrade;

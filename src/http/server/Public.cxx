@@ -226,7 +226,7 @@ HttpServerConnection::TryWrite() noexcept
 BufferedResult
 HttpServerConnection::OnBufferedData()
 {
-	if (request.read_state == Request::BODY) {
+	if (request.read_state == Request::BODY && !request.in_read) {
 		const DestructObserver destructed{*this};
 
 		switch (request_body_reader->InvokeReady()) {

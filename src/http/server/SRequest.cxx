@@ -112,6 +112,7 @@ HttpServerConnection::ReadRequestBody() noexcept
 	assert(IsValid());
 	assert(request.read_state == Request::BODY);
 	assert(request.body_state == Request::BodyState::READING);
+	assert(!request.in_read);
 	assert(!response.pending_drained);
 
 	MaybeSend100Continue();
@@ -123,7 +124,12 @@ HttpServerConnection::ReadRequestBody() noexcept
 	if (socket->IsConnected())
 		socket->SetDirect(request_body_reader->CheckDirect(socket->GetType()));
 
-	socket->Read();
+	request.in_read = true;
+
+	const auto result = socket->Read();
+
+	if (result != BufferedReadResult::DESTROYED)
+		request.in_read = false;
 }
 
 void
