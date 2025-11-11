@@ -314,6 +314,10 @@ public:
 		   is ignored */
 	}
 
+	void ScheduleAnyHangup() noexcept {
+		base.ScheduleAnyHangup();
+	}
+
 	/**
 	 * Wrapper for BufferedSocket::DeferRead().  This works only
 	 * for the initial read.
