@@ -197,26 +197,26 @@ HttpServerConnection::HeadersFinished() noexcept
 	   be tracked by FilteredSocket (auto-refreshing) */
 	idle_timer.Cancel();
 
-	const char *value = r.headers.Get(expect_header);
-	request.expect_100_continue = value != nullptr &&
-		StringIsEqual(value, "100-continue");
-	if (value != nullptr && !StringIsEqual(value, "100-continue"))
+	const char *const expect = r.headers.Get(expect_header);
+	request.expect_100_continue = expect != nullptr &&
+		StringIsEqual(expect, "100-continue");
+	if (expect != nullptr && !StringIsEqual(expect, "100-continue"))
 		request.SetError(HttpStatus::EXPECTATION_FAILED, "Unrecognized expectation\n");
 
-	value = r.headers.Get(connection_header);
-	keep_alive = value == nullptr || !http_list_contains_i(value, "close");
+	const char *const connection = r.headers.Get(connection_header);
+	keep_alive = connection == nullptr || !http_list_contains_i(connection, "close");
 
 	request.upgrade = http_is_upgrade(r.headers);
 
-	value = r.headers.Get(transfer_encoding_header);
+	const char *const transfer_encoding = r.headers.Get(transfer_encoding_header);
 
 	off_t content_length = -1;
-	const bool chunked = value != nullptr && StringIsEqualIgnoreCase(value, "chunked");
+	const bool chunked = transfer_encoding != nullptr && StringIsEqualIgnoreCase(transfer_encoding, "chunked");
 	if (!chunked) {
-		value = r.headers.Get(content_length_header);
+		const char *content_length_string = r.headers.Get(content_length_header);
 
 		if (request.upgrade) {
-			if (value != nullptr) {
+			if (content_length_string != nullptr) {
 				ProtocolError("cannot upgrade with Content-Length request header");
 				return false;
 			}
@@ -224,7 +224,7 @@ HttpServerConnection::HeadersFinished() noexcept
 			/* forward incoming data as-is */
 
 			keep_alive = false;
-		} else if (value == nullptr) {
+		} else if (content_length_string == nullptr) {
 			/* no body at all */
 
 			request.read_state = Request::END;
@@ -236,7 +236,7 @@ HttpServerConnection::HeadersFinished() noexcept
 		} else {
 			char *endptr;
 
-			content_length = strtoul(value, &endptr, 10);
+			content_length = strtoul(content_length_string, &endptr, 10);
 			if (*endptr != 0 || content_length < 0) [[unlikely]] {
 				ProtocolError("invalid Content-Length header in HTTP request");
 				return false;
