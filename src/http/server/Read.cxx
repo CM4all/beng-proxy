@@ -198,7 +198,7 @@ HttpServerConnection::HeadersFinished() noexcept
 	idle_timer.Cancel();
 
 	request.expect_100_continue = false;
-	if (const char *const expect = r.headers.Get(expect_header);
+	if (const char *const expect = r.headers.Remove(expect_header);
 	    expect != nullptr) {
 		if (StringIsEqual(expect, "100-continue"))
 			request.expect_100_continue = true;
@@ -206,18 +206,17 @@ HttpServerConnection::HeadersFinished() noexcept
 			request.SetError(HttpStatus::EXPECTATION_FAILED, "Unrecognized expectation\n");
 	}
 
-	const char *const connection = r.headers.Get(connection_header);
+	const char *const connection = r.headers.Remove(connection_header);
 	keep_alive = connection == nullptr || !http_list_contains_i(connection, "close");
 
 	request.upgrade = http_is_upgrade(r.headers);
 
-	const char *const transfer_encoding = r.headers.Get(transfer_encoding_header);
+	const char *const transfer_encoding = r.headers.Remove(transfer_encoding_header);
+	const char *const content_length_string = r.headers.Remove(content_length_header);
 
 	off_t content_length = -1;
 	const bool chunked = transfer_encoding != nullptr && StringIsEqualIgnoreCase(transfer_encoding, "chunked");
 	if (!chunked) {
-		const char *content_length_string = r.headers.Get(content_length_header);
-
 		if (request.upgrade) {
 			if (content_length_string != nullptr) {
 				ProtocolError("cannot upgrade with Content-Length request header");
