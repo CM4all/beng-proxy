@@ -243,7 +243,7 @@ struct HttpServerConnection final
 		 */
 		bool send_100_continue = false;
 
-		void Reset() noexcept {
+		constexpr void Reset() noexcept {
 			error_status = {};
 			read_state = START;
 #ifndef NDEBUG
@@ -253,7 +253,7 @@ struct HttpServerConnection final
 			bytes_received = 0;
 		}
 
-		void SetError(HttpStatus _status, const char *_msg) noexcept {
+		constexpr void SetError(HttpStatus _status, const char *_msg) noexcept {
 			if (error_status != HttpStatus::UNDEFINED)
 				/* use only the first error */
 				return;
@@ -262,7 +262,7 @@ struct HttpServerConnection final
 			error_message = _msg;
 		}
 
-		bool ShouldEnableReadTimeout() const noexcept {
+		constexpr bool ShouldEnableReadTimeout() const noexcept {
 			/* "Upgrade" requests have no request body
 			   timeout, because an arbitrary protocol may
 			   be on the wire now */
