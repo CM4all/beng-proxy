@@ -262,6 +262,10 @@ struct HttpServerConnection final
 			error_message = _msg;
 		}
 
+		constexpr bool WasSubmitted() const noexcept {
+			return read_state > HEADERS;
+		}
+
 		constexpr bool ShouldEnableReadTimeout() const noexcept {
 			/* "Upgrade" requests have no request body
 			   timeout, because an arbitrary protocol may

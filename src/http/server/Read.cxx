@@ -416,9 +416,7 @@ HttpServerConnection::Feed(std::span<const std::byte> b) noexcept
 
 	case Request::HEADERS:
 		result = FeedHeaders(ToStringView(b));
-		if (result == BufferedResult::OK &&
-		    (request.read_state == Request::BODY ||
-		     request.read_state == Request::END)) {
+		if (result == BufferedResult::OK && request.WasSubmitted()) {
 			if (request.read_state == Request::BODY)
 				result = BufferedResult::AGAIN;
 

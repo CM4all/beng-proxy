@@ -452,8 +452,7 @@ HttpServerConnection::CloseRequest() noexcept
 
 	auto *_request = std::exchange(request.request, nullptr);
 
-	if (request.read_state == Request::BODY ||
-	    request.read_state == Request::END) {
+	if (request.WasSubmitted()) {
 		if (HasInput())
 			CloseInput();
 		else if (request.cancel_ptr)
