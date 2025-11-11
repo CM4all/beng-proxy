@@ -408,6 +408,8 @@ HttpServerConnection::HttpServerConnection(struct pool &_pool,
 
 	idle_timer.Schedule(idle_timeout);
 
+	socket->ScheduleAnyHangup();
+
 	/* read the first request, but not in this stack frame, because a
 	   failure may destroy the HttpServerConnection before it gets
 	   passed to the caller */
