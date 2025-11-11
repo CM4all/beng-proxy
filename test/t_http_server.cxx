@@ -219,9 +219,8 @@ public:
 			std::rethrow_exception(response_error);
 	}
 
-	void ExpectResponse(HttpStatus expected_status,
+	void AssertResponse(HttpStatus expected_status,
 			    std::string_view expected_body) {
-		WaitDone();
 		RethrowResponseError();
 
 		if (status != expected_status)
@@ -231,6 +230,12 @@ public:
 		if (response_body != expected_body)
 			throw FmtRuntimeError("Got response body {:?}, expected {:?}",
 					      response_body, expected_body);
+	}
+
+	void ExpectResponse(HttpStatus expected_status,
+			    std::string_view expected_body) {
+		WaitDone();
+		AssertResponse(expected_status, expected_body);
 	}
 
 private:
