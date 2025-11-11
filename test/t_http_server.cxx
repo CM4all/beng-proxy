@@ -431,6 +431,106 @@ TestBufferedMirror(Server &server)
 	client.ExpectResponse(HttpStatus::OK, data);
 }
 
+/**
+ * Send a chunked request body; server sends a reply after receiving
+ * the whole body.  This tests whether the ABANDONED_BODY state is
+ * handled correctly.
+ */
+static void
+TestChunkedRequest(Server &server, bool buckets, bool delay_request_body)
+{
+	Client client{server.GetEventLoop()};
+
+	struct Handler : Cancellable {
+		Server &server;
+		Client &client;
+
+		IncomingHttpRequest *request_ptr;
+		UnusedHoldIstreamPtr request_body;
+
+		const bool buckets;
+
+		bool canceled = false;
+
+		Handler(Server &_server, Client &_client, bool _buckets) noexcept
+			:server(_server), client(_client), buckets(_buckets) {}
+
+		void HandleHttpRequest(IncomingHttpRequest &request, CancellablePointer &cancel_ptr) noexcept {
+			assert(request.body);
+			assert(!request.body.GetLength().exhaustive);
+			assert(!request_body);
+
+			UnusedIstreamPtr body = std::move(request.body);
+			if (!buckets)
+				body = NewIstreamPtr<NoBucketIstream>(request.pool, std::move(body));
+
+			cancel_ptr = *this;
+			request_ptr = &request;
+			request_body = UnusedHoldIstreamPtr{request.pool, std::move(body)};
+		}
+
+		void UseRequestBody() noexcept {
+			assert(request_body);
+
+			auto &null_sink = NewNullSink(server.GetPool(), std::move(request_body),
+						      BIND_THIS_METHOD(OnRequestBodyEnd));
+			ReadNullSink(null_sink);
+		}
+
+		void OnRequestBodyEnd(std::exception_ptr &&error) noexcept {
+			if (error)
+				PrintException(std::move(error));
+
+			request_ptr->SendResponse(HttpStatus::NO_CONTENT, {}, {});
+		}
+
+		void Cancel() noexcept override {
+			canceled = true;
+		}
+	} handler{server, client, buckets};
+
+	server.SetRequestHandler([&handler](IncomingHttpRequest &request, CancellablePointer &cancel_ptr) noexcept {
+		handler.HandleHttpRequest(request, cancel_ptr);
+	});
+
+	auto &pool = server.GetPool();
+
+	// wrap in NoLengthIstream to force chunking
+	auto real_request_body = NewIstreamPtr<NoLengthIstream>(pool, istream_string_new(server.GetPool(), "X"sv));
+
+	UnusedIstreamPtr request_body;
+	DelayedIstreamControl *delayed;
+
+	if (delay_request_body) {
+		auto _delayed = istream_delayed_new(pool, server.GetEventLoop());
+		request_body = std::move(_delayed.first);
+		delayed = &_delayed.second;
+	} else
+		request_body = std::move(real_request_body);
+
+	client.SendRequest(server,
+			   HttpMethod::POST, "/", {},
+			   std::move(request_body));
+
+	/* flush http_client's deferred send */
+	FlushIO(server.GetEventLoop());
+
+	handler.UseRequestBody();
+
+	if (delay_request_body)
+		delayed->Set(std::move(real_request_body));
+
+	/* two calls: one receives the request body and the second one
+	   detects hangup */
+	FlushIO(server.GetEventLoop());
+	FlushIO(server.GetEventLoop());
+
+	assert(client.IsDone());
+	client.AssertResponse(HttpStatus::NO_CONTENT, {});
+
+	assert(!handler.canceled);
+}
+
 static void
 TestAbortedRequestBody(Server &server)
 {
@@ -639,6 +739,11 @@ try {
 		TestSimple(server);
 		TestMirror(server);
 		TestBufferedMirror(server);
+
+		for (bool buckets : {false, true})
+			for (bool delay_request_body : {false, true})
+				TestChunkedRequest(server, buckets, delay_request_body);
+
 		TestDiscardTinyRequestBody(server);
 		TestDiscardedHugeRequestBody(server);
 
