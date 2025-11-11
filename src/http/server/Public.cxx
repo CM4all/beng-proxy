@@ -226,8 +226,29 @@ HttpServerConnection::TryWrite() noexcept
 BufferedResult
 HttpServerConnection::OnBufferedData()
 {
+	if (request.read_state == Request::BODY) {
+		const DestructObserver destructed{*this};
+
+		switch (request_body_reader->InvokeReady()) {
+		case IstreamReadyResult::OK:
+			/* refresh the request body timeout */
+			ScheduleReadTimeoutTimer();
+			return BufferedResult::OK;
+
+		case IstreamReadyResult::FALLBACK:
+			break;
+
+		case IstreamReadyResult::CLOSED:
+			if (destructed)
+				return BufferedResult::DESTROYED;
+
+			return BufferedResult::OK;
+		}
+	}
+
 	auto r = socket->ReadBuffer();
-	assert(!r.empty());
+	if (r.empty()) [[unlikely]]
+		return BufferedResult::OK;
 
 	if (response.pending_drained) {
 		/* discard all incoming data while we're waiting for the

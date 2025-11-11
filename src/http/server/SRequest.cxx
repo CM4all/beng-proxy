@@ -14,22 +14,6 @@ HttpServerConnection::FeedRequestBody(std::span<const std::byte> src) noexcept
 
 	const DestructObserver destructed(*this);
 
-	switch (request_body_reader->InvokeReady()) {
-	case IstreamReadyResult::OK:
-		/* refresh the request body timeout */
-		ScheduleReadTimeoutTimer();
-		return BufferedResult::OK;
-
-	case IstreamReadyResult::FALLBACK:
-		break;
-
-	case IstreamReadyResult::CLOSED:
-		if (destructed)
-			return BufferedResult::DESTROYED;
-
-		return BufferedResult::OK;
-	}
-
 	std::size_t nbytes = request_body_reader->FeedBody(src);
 	if (nbytes == 0) {
 		if (destructed)
