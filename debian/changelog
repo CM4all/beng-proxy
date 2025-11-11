@@ -6,7 +6,7 @@ cm4all-beng-proxy (21.2) unstable; urgency=low
   * fcgi: fix crash bug
   * lb: fix crash with TARPIT and request body
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Tue, 11 Nov 2025 18:33:06 +0100
 
 cm4all-beng-proxy (21.1) unstable; urgency=low
 
