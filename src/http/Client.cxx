@@ -145,6 +145,10 @@ class HttpClient final : BufferedSocketHandler, IstreamSink, Cancellable, Destru
 
 		/* virtual methods from class Istream */
 
+		void _SetDirect(FdTypeMask mask) noexcept override {
+			GetClient().SetDirect(mask);
+		}
+
 		IstreamLength _GetLength() noexcept override {
 			return GetClient().GetLength();
 		}
@@ -299,14 +303,6 @@ private:
 		return socket.IsConnected();
 	}
 
-	[[gnu::pure]]
-	bool CheckDirect() const noexcept {
-		assert(socket.GetType() == FdType::FD_NONE || IsConnected());
-		assert(response.state == Response::State::BODY);
-
-		return response_body_reader.CheckDirect(socket.GetType());
-	}
-
 	void DeferWrite() noexcept {
 		assert(IsConnected());
 
@@ -386,6 +382,8 @@ private:
 	}
 
 	void ResponseFinished() noexcept;
+
+	void SetDirect(FdTypeMask mask) noexcept;
 
 	[[gnu::pure]]
 	IstreamLength GetLength() const noexcept;
@@ -537,6 +535,16 @@ HttpClient::AbortResponse(std::exception_ptr &&ep) noexcept
  *
  */
 
+inline void
+HttpClient::SetDirect(FdTypeMask mask) noexcept
+{
+	assert(response_body_reader.IsSocketDone(socket) || !socket.HasEnded());
+	assert(response.state == Response::State::BODY);
+
+	if (IsConnected())
+		socket.SetDirect((mask & static_cast<FdTypeMask>(socket.GetType())) != 0);
+}
+
 inline IstreamLength
 HttpClient::GetLength() const noexcept
 {
@@ -563,9 +571,6 @@ HttpClient::Read() noexcept
 	assert(response.state == Response::State::BODY);
 	assert(!response.in_read);
 	assert(response_body_reader.HasHandler());
-
-	if (IsConnected())
-		socket.SetDirect(CheckDirect());
 
 	if (response.in_handler)
 		/* avoid recursion; the http_response_handler caller will
@@ -872,9 +877,6 @@ HttpClient::HeadersFinished()
 
 	response.state = Response::State::BODY;
 	response.in_read = false;
-
-	if (!socket.IsReleased())
-		socket.SetDirect(CheckDirect());
 }
 
 inline void
@@ -978,15 +980,6 @@ HttpClient::FeedBody(std::span<const std::byte> b) noexcept
 	{
 		const DestructObserver destructed(*this);
 		nbytes = response_body_reader.FeedBody(b);
-
-		if (!destructed && IsConnected())
-			/* if BufferedSocket is currently flushing the
-			   input buffer to start the "direct"
-			   (=splice) transfer, and our response body
-			   handler has just cleared its "direct" flag,
-			   we need to keep BufferedSocket from doing
-			   the "direct" transfer */
-			socket.SetDirect(CheckDirect());
 
 		if (nbytes == 0)
 			return destructed
@@ -1110,7 +1103,6 @@ HttpClient::TryResponseDirect(SocketDescriptor fd, FdType fd_type) noexcept
 {
 	assert(IsConnected());
 	assert(response.state == Response::State::BODY);
-	assert(CheckDirect());
 
 	const DestructObserver destructed{*this};
 

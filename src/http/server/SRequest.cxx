@@ -103,6 +103,24 @@ HttpServerConnection::DiscardRequestBody() noexcept
 		keep_alive = false;
 }
 
+inline void
+HttpServerConnection::SetRequestBodyDirect(FdTypeMask mask) noexcept
+{
+	assert(IsValid());
+	assert(request.read_state == Request::BODY);
+	assert(request.body_state == Request::BodyState::READING);
+	assert(!response.pending_drained);
+
+	if (socket->IsConnected())
+		socket->SetDirect((mask & static_cast<FdTypeMask>(socket->GetType())) != 0);
+}
+
+void
+HttpServerConnection::RequestBodyReader:: _SetDirect(FdTypeMask mask) noexcept
+{
+	connection.SetRequestBodyDirect(mask);
+}
+
 IstreamLength
 HttpServerConnection::RequestBodyReader::_GetLength() noexcept
 {
@@ -128,9 +146,6 @@ HttpServerConnection::ReadRequestBody() noexcept
 	if (request.in_handler)
 		/* avoid recursion */
 		return;
-
-	if (socket->IsConnected())
-		socket->SetDirect(request_body_reader->CheckDirect(socket->GetType()));
 
 	request.in_read = true;
 

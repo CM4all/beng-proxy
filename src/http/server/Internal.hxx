@@ -110,6 +110,7 @@ struct HttpServerConnection final
 
 		/* virtual methods from class Istream */
 
+		void _SetDirect(FdTypeMask mask) noexcept override;
 		IstreamLength _GetLength() noexcept override;
 		void _Read() noexcept override;
 		void _ConsumeDirect(std::size_t nbytes) noexcept override;
@@ -437,6 +438,7 @@ struct HttpServerConnection final
 	 */
 	void DiscardRequestBody() noexcept;
 
+	void SetRequestBodyDirect(FdTypeMask mask) noexcept;
 	void ReadRequestBody() noexcept;
 
 	void FillBucketList(IstreamBucketList &list) noexcept;

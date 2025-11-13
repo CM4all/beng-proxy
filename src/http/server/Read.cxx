@@ -388,10 +388,6 @@ HttpServerConnection::SubmitRequest() noexcept
 
 		if (request.read_state == Request::BODY &&
 		    socket->IsConnected()) {
-			/* enable splice() if the handler supports
-			   it */
-			socket->SetDirect(request_body_reader->CheckDirect(socket->GetType()));
-
 			ScheduleReadTimeoutTimer();
 		}
 	}

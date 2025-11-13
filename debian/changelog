@@ -1,6 +1,7 @@
 cm4all-beng-proxy (21.3) unstable; urgency=low
 
   * http_{server,client}: fix splice() stall bug
+  * http_{server,client}: splice() more often
 
  --   
 

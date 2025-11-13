@@ -56,7 +56,6 @@ IstreamDirectResult
 HttpBodyReader::TryDirect(SocketDescriptor fd, FdType fd_type) noexcept
 {
 	assert(fd.IsDefined());
-	assert(CheckDirect(fd_type));
 
 	std::size_t max_size = INT_MAX;
 	bool then_eof = false;

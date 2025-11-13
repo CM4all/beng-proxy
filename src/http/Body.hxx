@@ -45,8 +45,6 @@ class HttpBodyReader : public Istream, protected DechunkHandler {
 	 */
 	off_t rest;
 
-	FdTypeMask direct_mask = 0;
-
 	bool end_seen;
 
 public:
@@ -176,10 +174,6 @@ public:
 
 	std::size_t FeedBody(std::span<const std::byte> src) noexcept;
 
-	bool CheckDirect(FdType type) const noexcept {
-		return (direct_mask & FdTypeMask(type)) != 0;
-       }
-
 	IstreamDirectResult TryDirect(SocketDescriptor fd, FdType fd_type) noexcept;
 
 	/**
@@ -258,10 +252,6 @@ private:
 
 public:
 	/* virtual methods from class Istream */
-
-	void _SetDirect(FdTypeMask mask) noexcept override {
-		direct_mask = mask;
-	}
 
 	void _ConsumeDirect(std::size_t nbytes) noexcept override {
 		Consumed(nbytes);
