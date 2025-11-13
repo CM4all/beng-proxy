@@ -97,6 +97,10 @@ public:
 		return socket->GetType();
 	}
 
+	bool GetDirect() const noexcept {
+		return !IsReleased() && socket->GetDirect();
+	}
+
 	void SetDirect(bool _direct) noexcept {
 		assert(!IsReleased());
 

@@ -264,6 +264,10 @@ public:
 
 	void AfterConsumed() noexcept;
 
+	bool GetDirect() const noexcept {
+		return base.GetDirect();
+	}
+
 	void SetDirect(bool _direct) noexcept {
 		assert(!_direct || !HasFilter());
 
