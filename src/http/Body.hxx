@@ -132,8 +132,16 @@ public:
 			    IstreamBucketList &list) noexcept {
 		const auto b = s.ReadBuffer();
 		if (b.empty()) {
-			if (!IsEOF())
-				list.SetPushMore();
+			if (!IsEOF()) {
+				if (s.GetDirect())
+					/* switch to fallback mode
+					   which will start
+					   splicing */
+					list.EnableFallback();
+				else
+					list.SetPushMore();
+			}
+
 			return;
 		}
 
@@ -141,6 +149,10 @@ public:
 		list.Push(t);
 		if (!then_eof)
 			list.SetPushMore();
+		else if (!list.HasMore() && s.GetDirect())
+			/* switch to fallback mode which will start
+			   splicing */
+			list.EnableFallback();
 	}
 
 	template<typename Socket>
