@@ -145,12 +145,14 @@ public:
 
 		const auto [t, then_eof] = TruncateInput(b);
 		list.Push(t);
-		if (!then_eof)
-			list.SetPushMore();
-		else if (!list.HasMore() && s.GetDirect())
-			/* switch to fallback mode which will start
-			   splicing */
-			list.EnableFallback();
+		if (!then_eof) {
+			if (!list.HasMore() && s.GetDirect())
+				/* switch to fallback mode which will start
+				   splicing */
+				list.EnableFallback();
+			else
+				list.SetPushMore();
+		}
 	}
 
 	template<typename Socket>
