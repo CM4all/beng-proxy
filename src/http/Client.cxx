@@ -1184,7 +1184,12 @@ HttpClient::OnBufferedData()
 			}
 		}
 
-		return FeedBody(socket.ReadBuffer());
+		/* this empty check is needed just in case
+		   InvokeReady() has drained it */
+		if (const auto r = socket.ReadBuffer(); !r.empty()) [[likely]]
+			return FeedBody(socket.ReadBuffer());
+
+		return BufferedResult::OK;
 
 	case Response::State::END:
 		break;
