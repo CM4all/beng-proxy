@@ -1172,8 +1172,13 @@ HttpClient::OnBufferedData()
 			SocketDone();
 
 		if (!response.in_read) {
+			const auto old_consumed_serial = response_body_reader.GetConsumedSerial();
 			switch (response_body_reader.InvokeReady()) {
 			case IstreamReadyResult::OK:
+				if (response_body_reader.RequireMore() &&
+				    response_body_reader.GetConsumedSerial() != old_consumed_serial)
+					return BufferedResult::MORE;
+
 				return BufferedResult::OK;
 
 			case IstreamReadyResult::FALLBACK:

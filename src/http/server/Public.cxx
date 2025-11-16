@@ -239,6 +239,9 @@ HttpServerConnection::OnBufferedData()
 			if (request.read_state != Request::ABANDONED_BODY &&
 			    request_body_reader->GetConsumedSerial() != old_consumed_serial) [[likely]] {
 				ScheduleReadTimeoutTimer();
+
+				if (request_body_reader->RequireMore())
+					return BufferedResult::MORE;
 			}
 
 			return BufferedResult::OK;
