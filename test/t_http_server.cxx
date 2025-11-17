@@ -865,6 +865,9 @@ TestCancelAfterChunkedRequest(HttpServerTest<F> &test, Server &server, bool buck
 	if (server.HasFilter()) {
 		test.FlushFilters();
 		FlushIO(server.GetEventLoop());
+		test.FlushFilters();
+		FlushIO(server.GetEventLoop());
+		FlushIO(server.GetEventLoop());
 	}
 
 	handler.UseRequestBody(false);
