@@ -4,6 +4,8 @@
 
 #include "t_client.hxx"
 #include "DemoHttpServerConnection.hxx"
+#include "NopThreadSocketFilterFactory.hxx"
+#include "NopSocketFilterFactory.hxx"
 #include "http/Client.hxx"
 #include "http/Headers.hxx"
 #include "system/SetupProcess.hxx"
@@ -14,10 +16,6 @@
 #include "system/Error.hxx"
 #include "fs/Factory.hxx"
 #include "fs/FilteredSocket.hxx"
-#include "fs/NopSocketFilter.hxx"
-#include "fs/NopThreadSocketFilter.hxx"
-#include "fs/ThreadSocketFilter.hxx"
-#include "thread/Pool.hxx"
 #include "pool/UniquePtr.hxx"
 #include "istream/New.hxx"
 #include "istream/DeferReadIstream.hxx"
@@ -479,39 +477,6 @@ REGISTER_TYPED_TEST_SUITE_P(HttpClientTest,
 			    IgnoredRequestBody,
 			    Expect100ContinueSplice,
 			    ManySmallChunks);
-
-class NopSocketFilterFactory final : public SocketFilterFactory {
-public:
-	SocketFilterPtr CreateFilter() override {
-		return SocketFilterPtr{new NopSocketFilter()};
-	}
-};
-
-class NopThreadSocketFilterFactory final : public SocketFilterFactory {
-	EventLoop &event_loop;
-
-public:
-	explicit NopThreadSocketFilterFactory(EventLoop &_event_loop) noexcept
-		:event_loop(_event_loop) {
-		/* keep the eventfd unregistered if the ThreadQueue is
-		   empty, so EventLoop::Dispatch() doesn't keep
-		   running after the HTTP request has completed */
-		thread_pool_set_volatile();
-	}
-
-	~NopThreadSocketFilterFactory() noexcept override {
-		thread_pool_stop();
-		thread_pool_join();
-		thread_pool_deinit();
-	}
-
-	SocketFilterPtr CreateFilter() override {
-		return SocketFilterPtr{
-			new ThreadSocketFilter(thread_pool_get_queue(event_loop),
-					       std::make_unique<NopThreadSocketFilter>())
-		};
-	}
-};
 
 class NullHttpClientFactory final : public HttpClientFactory {
 public:
