@@ -119,8 +119,9 @@ public:
 	}
 
 	void CloseClientSocket() noexcept {
-		if (client_fs.IsValid() && client_fs.IsConnected()) {
-			client_fs.Close();
+		if (client_fs.IsValid()) {
+			if (client_fs.IsConnected())
+				client_fs.Close();
 			client_fs.Destroy();
 		}
 	}
