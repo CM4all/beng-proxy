@@ -35,7 +35,6 @@
 #include "memory/SlicePool.hxx"
 #include "memory/istream_gb.hxx"
 #include "fs/FilteredSocket.hxx"
-#include "lib/fmt/RuntimeError.hxx"
 #include "event/FineTimerEvent.hxx"
 #include "net/SocketPair.hxx"
 #include "net/UniqueSocketDescriptor.hxx"
@@ -216,7 +215,7 @@ public:
 		return !cancel_ptr;
 	}
 
-	void WaitDone() noexcept {
+	void WaitDone() {
 		if (IsDone())
 			return;
 
@@ -224,7 +223,7 @@ public:
 		event_loop.Run();
 		break_done = false;
 
-		assert(IsDone());
+		ASSERT_TRUE(IsDone());
 	}
 
 	void RethrowResponseError() const {
@@ -236,13 +235,8 @@ public:
 			    std::string_view expected_body) {
 		RethrowResponseError();
 
-		if (status != expected_status)
-			throw FmtRuntimeError("Got status {}, expected {}\n",
-					      int(status), int(expected_status));
-
-		if (response_body != expected_body)
-			throw FmtRuntimeError("Got response body {:?}, expected {:?}",
-					      response_body, expected_body);
+		EXPECT_EQ(status, expected_status);
+		EXPECT_EQ(response_body, expected_body);
 	}
 
 	void ExpectResponse(HttpStatus expected_status,
@@ -527,10 +521,10 @@ TestChunkedRequest(Server &server, bool buckets, bool delay_request_body)
 	FlushIO(server.GetEventLoop());
 	FlushIO(server.GetEventLoop());
 
-	assert(client.IsDone());
+	EXPECT_TRUE(client.IsDone());
 	client.AssertResponse(HttpStatus::NO_CONTENT, {});
 
-	assert(!handler.canceled);
+	EXPECT_TRUE(!handler.canceled);
 }
 
 static void
@@ -563,7 +557,7 @@ TestAbortedRequestBody(Server &server)
 		break_request_received = true;
 		server.GetEventLoop().Run();
 		break_request_received = false;
-		assert(request_received);
+		EXPECT_TRUE(request_received);
 	}
 
 	InjectFault(std::move(inject_control), std::make_exception_ptr(std::runtime_error("Inject")));
@@ -722,10 +716,10 @@ TestCancelAfterChunkedRequest(Server &server, bool buckets, bool delay_request_b
 	FlushIO(server.GetEventLoop());
 	FlushIO(server.GetEventLoop());
 
-	assert(client.IsDone());
+	EXPECT_TRUE(client.IsDone());
 	client.AssertResponse(HttpStatus{}, {});
 
-	assert(handler.canceled);
+	EXPECT_TRUE(handler.canceled);
 }
 
 TEST(HttpServer, Misc)

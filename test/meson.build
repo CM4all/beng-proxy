@@ -422,7 +422,6 @@ test(
     dependencies: [
       gtest,
       test_instance_dep,
-      fmt_dep,
       http_server_dep,
       http_client_dep,
       system_dep,
