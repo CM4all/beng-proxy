@@ -420,6 +420,7 @@ test(
     '../src/net/InterfaceNameCache.cxx',
     include_directories: inc,
     dependencies: [
+      gtest,
       test_instance_dep,
       fmt_dep,
       http_server_dep,

@@ -45,6 +45,8 @@
 #include "util/PrintException.hxx"
 #include "stopwatch.hxx"
 
+#include <gtest/gtest.h>
+
 #include <functional>
 #include <optional>
 #include <utility> // for std::unreachable()
@@ -726,38 +728,39 @@ TestCancelAfterChunkedRequest(Server &server, bool buckets, bool delay_request_b
 	assert(handler.canceled);
 }
 
-int
-main(int argc, char **argv) noexcept
-try {
-	(void)argc;
-	(void)argv;
-
+TEST(HttpServer, Misc)
+{
 	TestInstance instance;
 
-	{
-		Server server(instance.root_pool, instance.event_loop);
-		TestSimple(server);
-		TestMirror(server);
-		TestBufferedMirror(server);
+	Server server(instance.root_pool, instance.event_loop);
+	TestSimple(server);
+	TestMirror(server);
+	TestBufferedMirror(server);
 
-		for (bool buckets : {false, true})
-			for (bool delay_request_body : {false, true})
-				TestChunkedRequest(server, buckets, delay_request_body);
+	for (bool buckets : {false, true})
+		for (bool delay_request_body : {false, true})
+			TestChunkedRequest(server, buckets, delay_request_body);
 
-		TestDiscardTinyRequestBody(server);
-		TestDiscardedHugeRequestBody(server);
+	TestDiscardTinyRequestBody(server);
+	TestDiscardedHugeRequestBody(server);
 
-		server.CloseClientSocket();
-		instance.event_loop.Run();
-	}
+	server.CloseClientSocket();
+	instance.event_loop.Run();
+}
 
-	{
-		Server server(instance.root_pool, instance.event_loop);
-		TestAbortedRequestBody(server);
+TEST(HttpServer, AbortedRequestBody)
+{
+	TestInstance instance;
+	Server server(instance.root_pool, instance.event_loop);
+	TestAbortedRequestBody(server);
 
-		server.CloseClientSocket();
-		instance.event_loop.Run();
-	}
+	server.CloseClientSocket();
+	instance.event_loop.Run();
+}
+
+TEST(HttpServer, CancelAfterChunkedRequest)
+{
+	TestInstance instance;
 
 	for (bool buckets : {false, true}) {
 		for (bool delay_request_body : {false, true}) {
@@ -767,7 +770,4 @@ try {
 			instance.event_loop.Run();
 		}
 	}
-} catch (...) {
-	PrintException(std::current_exception());
-	return EXIT_FAILURE;
 }
