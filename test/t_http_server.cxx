@@ -566,6 +566,7 @@ template<typename F>
 static void
 TestRequest(HttpServerTest<F> &test, Server &server,
 	    std::size_t request_body_size,
+	    bool send_100_continue,
 	    bool chunked, bool buckets, bool delay_request_body)
 {
 	Client client{server.GetEventLoop()};
@@ -624,7 +625,8 @@ TestRequest(HttpServerTest<F> &test, Server &server,
 
 	client.SendRequest(server,
 			   HttpMethod::POST, "/", {},
-			   std::move(request_body));
+			   std::move(request_body),
+			   send_100_continue);
 
 	/* flush http_client's deferred send */
 	FlushIO(server.GetEventLoop());
@@ -647,6 +649,15 @@ TestRequest(HttpServerTest<F> &test, Server &server,
 	FlushIO(server.GetEventLoop());
 	FlushIO(server.GetEventLoop());
 
+	if (send_100_continue) {
+		test.FlushFilters();
+		FlushIO(server.GetEventLoop());
+		FlushIO(server.GetEventLoop());
+		test.FlushFilters();
+		FlushIO(server.GetEventLoop());
+		FlushIO(server.GetEventLoop());
+	}
+
 	if (server.HasFilter()) {
 		/* the SocketFilter may require another flush */
 		test.FlushFilters();
@@ -659,6 +670,18 @@ TestRequest(HttpServerTest<F> &test, Server &server,
 
 	if (request_body_size > 4096) {
 		/* need a few more steps if the request body is big */
+		FlushIO(server.GetEventLoop());
+		test.FlushFilters();
+		FlushIO(server.GetEventLoop());
+		FlushIO(server.GetEventLoop());
+		test.FlushFilters();
+		FlushIO(server.GetEventLoop());
+		FlushIO(server.GetEventLoop());
+		test.FlushFilters();
+		FlushIO(server.GetEventLoop());
+		FlushIO(server.GetEventLoop());
+		test.FlushFilters();
+		FlushIO(server.GetEventLoop());
 		FlushIO(server.GetEventLoop());
 		test.FlushFilters();
 		FlushIO(server.GetEventLoop());
@@ -872,11 +895,13 @@ TYPED_TEST(HttpServerTest, Misc)
 	for (bool chunked : {false, true})
 		for (bool buckets : {false, true})
 			for (bool delay_request_body : {false, true})
-				for (unsigned request_body_size : {1, 70000})
-					TestRequest(*this, server,
-						    request_body_size,
-						    chunked, buckets,
-						    delay_request_body);
+				for (bool send_100_continue : {false, true})
+					for (unsigned request_body_size : {1, 70000})
+						TestRequest(*this, server,
+							    request_body_size,
+							    send_100_continue,
+							    chunked, buckets,
+							    delay_request_body);
 
 	TestDiscardTinyRequestBody(server);
 	TestDiscardedHugeRequestBody(server);
