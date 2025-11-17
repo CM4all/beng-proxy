@@ -53,9 +53,13 @@ HttpServerConnection::FeedRequestBody(std::span<const std::byte> src) noexcept
 		request_body_reader->DestroyEof();
 		if (destructed)
 			return BufferedResult::DESTROYED;
-	} else
+	} else {
 		/* refresh the request body timeout */
 		ScheduleReadTimeoutTimer();
+
+		if (request_body_reader->RequireMore())
+			return BufferedResult::MORE;
+	}
 
 	return BufferedResult::OK;
 }
