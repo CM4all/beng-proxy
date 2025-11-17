@@ -2,7 +2,7 @@
 // Copyright CM4all GmbH
 // author: Max Kellermann <max.kellermann@ionos.com>
 
-#include "istream_later.hxx"
+#include "LaterIstream.hxx"
 #include "ForwardIstream.hxx"
 #include "UnusedPtr.hxx"
 #include "New.hxx"
@@ -54,8 +54,8 @@ private:
 };
 
 UnusedIstreamPtr
-istream_later_new(struct pool &pool, UnusedIstreamPtr input,
-		  EventLoop &event_loop) noexcept
+NewLaterIstream(struct pool &pool, UnusedIstreamPtr &&input,
+		EventLoop &event_loop) noexcept
 {
 	return NewIstreamPtr<LaterIstream>(pool, std::move(input), event_loop);
 }

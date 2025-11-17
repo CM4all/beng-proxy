@@ -16,7 +16,7 @@
 #include "istream/HeadIstream.hxx"
 #include "istream/InjectIstream.hxx"
 #include "istream/istream_null.hxx"
-#include "istream/istream_later.hxx"
+#include "istream/LaterIstream.hxx"
 #include "istream/HalfSuspendIstream.hxx"
 #include "istream/ReadyIstream.hxx"
 #include "istream/SecondFailIstream.hxx"
@@ -935,8 +935,8 @@ TYPED_TEST_P(IstreamFilterTest, Later)
 
 	auto istream =
 		traits.CreateTest(instance.event_loop, pool,
-				  istream_later_new(input_pool, traits.CreateInput(input_pool),
-						    instance.event_loop));
+				  NewLaterIstream(input_pool, traits.CreateInput(input_pool),
+						  instance.event_loop));
 	input_pool.reset();
 
 	run_istream(traits.options, instance, std::move(pool),

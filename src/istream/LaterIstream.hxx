@@ -13,5 +13,5 @@ class EventLoop;
  * This is used in the test suite.
  */
 UnusedIstreamPtr
-istream_later_new(struct pool &pool, UnusedIstreamPtr input,
-		  EventLoop &event_loop) noexcept;
+NewLaterIstream(struct pool &pool, UnusedIstreamPtr &&input,
+		EventLoop &event_loop) noexcept;
