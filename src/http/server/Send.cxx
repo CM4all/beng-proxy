@@ -30,6 +30,7 @@ bool
 HttpServerConnection::Send100Continue() noexcept
 {
 	assert(IsValid());
+	assert(!HasInput());
 	assert(request.read_state == Request::BODY);
 	assert(!request.expect_100_continue);
 	assert(request.send_100_continue);
@@ -45,6 +46,7 @@ HttpServerConnection::Send100Continue() noexcept
 		/* re-enable the request body read timeout that was
 		   disabled by HeadersFinished() in the presence of an
 		   "expect:100-continue" request header */
+		socket->UnscheduleWrite();
 		ScheduleReadTimeoutTimer();
 		return true;
 	}
