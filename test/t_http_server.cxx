@@ -121,7 +121,7 @@ public:
 		}
 	}
 
-	void WaitClosed() noexcept {
+	void WaitClosed() {
 		if (connection == nullptr)
 			return;
 
@@ -129,7 +129,7 @@ public:
 		GetEventLoop().Run();
 		break_closed = false;
 
-		assert(connection == nullptr);
+		ASSERT_EQ(connection, nullptr);
 	}
 
 private:
@@ -478,8 +478,8 @@ TestChunkedRequest(Server &server, bool buckets, bool delay_request_body)
 			request_body = UnusedHoldIstreamPtr{request.pool, std::move(body)};
 		}
 
-		void UseRequestBody() noexcept {
-			assert(request_body);
+		void UseRequestBody() {
+			ASSERT_TRUE(request_body);
 
 			auto &null_sink = NewNullSink(server.GetPool(), std::move(request_body),
 						      BIND_THIS_METHOD(OnRequestBodyEnd));
@@ -673,8 +673,8 @@ TestCancelAfterChunkedRequest(Server &server, bool buckets, bool delay_request_b
 			request_body = UnusedHoldIstreamPtr{request.pool, std::move(body)};
 		}
 
-		void UseRequestBody() noexcept {
-			assert(request_body);
+		void UseRequestBody() {
+			ASSERT_TRUE(request_body);
 
 			auto &null_sink = NewNullSink(server.GetPool(), std::move(request_body),
 						      BIND_THIS_METHOD(OnRequestBodyEnd));
