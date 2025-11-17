@@ -4,6 +4,9 @@
 
 #include "TestInstance.hxx"
 #include "FlushEventLoop.hxx"
+#include "NullSocketFilterFactory.hxx"
+#include "NopThreadSocketFilterFactory.hxx"
+#include "NopSocketFilterFactory.hxx"
 #include "http/server/Public.hxx"
 #include "http/server/Handler.hxx"
 #include "http/IncomingRequest.hxx"
@@ -69,16 +72,23 @@ class Server final
 
 	FilteredSocket client_fs;
 
+	bool has_filter;
+
 	bool client_fs_released = false;
 
 	bool break_closed = false;
 
 public:
-	Server(struct pool &_pool, EventLoop &event_loop);
+	Server(struct pool &_pool, EventLoop &event_loop,
+	       SocketFilterFactory &factory);
 
 	~Server() noexcept {
 		CloseClientSocket();
 		CheckCloseConnection();
+	}
+
+	bool HasFilter() const noexcept {
+		return has_filter;
 	}
 
 	using PoolHolder::GetPool;
@@ -287,17 +297,29 @@ private:
 	}
 };
 
-Server::Server(struct pool &_pool, EventLoop &event_loop)
+Server::Server(struct pool &_pool, EventLoop &event_loop,
+	       SocketFilterFactory &factory)
 	:PoolHolder(pool_new_libc(&_pool, "catch")),
 	 client_fs(event_loop)
 {
 	auto [client_socket, server_socket] = CreateStreamSocketPair();
 
+	auto filter = factory.CreateFilter();
+	has_filter = !!filter;
+
+	auto socket = UniquePoolPtr<FilteredSocket>::Make(pool,
+							  event_loop,
+							  std::move(server_socket),
+							  FdType::FD_SOCKET,
+							  std::move(filter));
+	if (has_filter)
+		/* when there's a filter, reading must always be
+		   scheduled, but that is usually done by
+		   FilteredSocketListener which we skip here */
+		socket->ScheduleRead();
+
 	connection = http_server_connection_new(pool,
-						UniquePoolPtr<FilteredSocket>::Make(pool,
-										    event_loop,
-										    std::move(server_socket),
-										    FdType::FD_SOCKET),
+						std::move(socket),
 						nullptr, nullptr,
 						true,
 						request_slice_pool,
@@ -334,17 +356,36 @@ Server::HttpConnectionClosed() noexcept
 		GetEventLoop().Break();
 }
 
+template<typename F>
 class HttpServerTest : public testing::Test {
+	static constexpr F MakeFactory(EventLoop &event_loop) {
+		if constexpr (requires{ F{event_loop}; })
+			return F{event_loop};
+		else
+			return F{};
+	}
+
 protected:
-	TestInstance instance;
+	TestInstance instance_;
+	F factory_ = MakeFactory(instance_.event_loop);
 
 	Server MakeServer() {
 		return {
-			instance.root_pool,
-			instance.event_loop,
+			instance_.root_pool,
+			instance_.event_loop,
+			factory_,
 		};
 	}
+
+public:
+	void FlushFilters() noexcept {
+		if constexpr (requires{ factory_.Flush(); })
+			factory_.Flush();
+	}
 };
+
+using Factories = ::testing::Types<NullSocketFilterFactory, NopSocketFilterFactory, NopThreadSocketFilterFactory>;
+TYPED_TEST_SUITE(HttpServerTest, Factories);
 
 static void
 TestSimple(Server &server)
@@ -445,8 +486,9 @@ TestBufferedMirror(Server &server)
  * the whole body.  This tests whether the ABANDONED_BODY state is
  * handled correctly.
  */
+template<typename F>
 static void
-TestChunkedRequest(Server &server, bool buckets, bool delay_request_body)
+TestChunkedRequest(HttpServerTest<F> &test, Server &server, bool buckets, bool delay_request_body)
 {
 	Client client{server.GetEventLoop()};
 
@@ -524,6 +566,11 @@ TestChunkedRequest(Server &server, bool buckets, bool delay_request_body)
 	/* flush http_client's deferred send */
 	FlushIO(server.GetEventLoop());
 
+	if (server.HasFilter()) {
+		test.FlushFilters();
+		FlushIO(server.GetEventLoop());
+	}
+
 	handler.UseRequestBody();
 
 	if (delay_request_body)
@@ -533,6 +580,16 @@ TestChunkedRequest(Server &server, bool buckets, bool delay_request_body)
 	   detects hangup */
 	FlushIO(server.GetEventLoop());
 	FlushIO(server.GetEventLoop());
+
+	if (server.HasFilter()) {
+		/* the SocketFilter may require another flush */
+		test.FlushFilters();
+		FlushIO(server.GetEventLoop());
+		FlushIO(server.GetEventLoop());
+		test.FlushFilters();
+		FlushIO(server.GetEventLoop());
+		FlushIO(server.GetEventLoop());
+	}
 
 	EXPECT_TRUE(client.IsDone());
 	client.AssertResponse(HttpStatus::NO_CONTENT, {});
@@ -642,8 +699,9 @@ TestDiscardedHugeRequestBody(Server &server)
  * Send a chunked request body and cancel the request before the
  * server sends a response.
  */
+template<typename F>
 static void
-TestCancelAfterChunkedRequest(Server &server, bool buckets, bool delay_request_body)
+TestCancelAfterChunkedRequest(HttpServerTest<F> &test, Server &server, bool buckets, bool delay_request_body)
 {
 	Client client{server.GetEventLoop()};
 
@@ -719,6 +777,11 @@ TestCancelAfterChunkedRequest(Server &server, bool buckets, bool delay_request_b
 	/* flush http_client's deferred send */
 	FlushIO(server.GetEventLoop());
 
+	if (server.HasFilter()) {
+		test.FlushFilters();
+		FlushIO(server.GetEventLoop());
+	}
+
 	handler.UseRequestBody();
 
 	if (delay_request_body)
@@ -729,22 +792,33 @@ TestCancelAfterChunkedRequest(Server &server, bool buckets, bool delay_request_b
 	FlushIO(server.GetEventLoop());
 	FlushIO(server.GetEventLoop());
 
+	if (server.HasFilter()) {
+		/* the SocketFilter may require another flush */
+		test.FlushFilters();
+		FlushIO(server.GetEventLoop());
+		FlushIO(server.GetEventLoop());
+		test.FlushFilters();
+		FlushIO(server.GetEventLoop());
+		FlushIO(server.GetEventLoop());
+	}
+
 	EXPECT_TRUE(client.IsDone());
 	client.AssertResponse(HttpStatus{}, {});
 
 	EXPECT_TRUE(handler.canceled);
 }
 
-TEST_F(HttpServerTest, Misc)
+TYPED_TEST(HttpServerTest, Misc)
 {
-	auto server = MakeServer();
+	auto &instance = this->instance_;
+	auto server = this->MakeServer();
 	TestSimple(server);
 	TestMirror(server);
 	TestBufferedMirror(server);
 
 	for (bool buckets : {false, true})
 		for (bool delay_request_body : {false, true})
-			TestChunkedRequest(server, buckets, delay_request_body);
+			TestChunkedRequest(*this, server, buckets, delay_request_body);
 
 	TestDiscardTinyRequestBody(server);
 	TestDiscardedHugeRequestBody(server);
@@ -753,21 +827,23 @@ TEST_F(HttpServerTest, Misc)
 	instance.event_loop.Run();
 }
 
-TEST_F(HttpServerTest, AbortedRequestBody)
+TYPED_TEST(HttpServerTest, AbortedRequestBody)
 {
-	auto server = MakeServer();
+	auto &instance = this->instance_;
+	auto server = this->MakeServer();
 	TestAbortedRequestBody(server);
 
 	server.CloseClientSocket();
 	instance.event_loop.Run();
 }
 
-TEST_F(HttpServerTest, CancelAfterChunkedRequest)
+TYPED_TEST(HttpServerTest, CancelAfterChunkedRequest)
 {
+	auto &instance = this->instance_;
 	for (bool buckets : {false, true}) {
 		for (bool delay_request_body : {false, true}) {
-			auto server = MakeServer();
-			TestCancelAfterChunkedRequest(server, buckets, delay_request_body);
+			auto server = this->MakeServer();
+			TestCancelAfterChunkedRequest(*this, server, buckets, delay_request_body);
 			server.CloseClientSocket();
 			instance.event_loop.Run();
 		}
