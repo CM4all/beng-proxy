@@ -25,6 +25,7 @@
 #include "istream/DelayedIstream.hxx"
 #include "istream/InjectIstream.hxx"
 #include "istream/HeadIstream.hxx"
+#include "istream/LaterIstream.hxx"
 #include "istream/BlockIstream.hxx"
 #include "istream/ZeroIstream.hxx"
 #include "istream/istream_string.hxx"
@@ -410,10 +411,16 @@ public:
 		return canceled;
 	}
 
-	void UseRequestBody() {
+	void UseRequestBody(bool later) {
 		ASSERT_TRUE(request_body);
 
-		auto &null_sink = NewNullSink(server.GetPool(), std::move(request_body),
+		UnusedIstreamPtr istream = std::move(request_body);
+
+		if (later)
+			istream = NewLaterIstream(server.GetPool(), std::move(istream),
+						  server.GetEventLoop());
+
+		auto &null_sink = NewNullSink(server.GetPool(), std::move(istream),
 					      BIND_THIS_METHOD(OnRequestBodyEnd));
 		ReadNullSink(null_sink);
 	}
@@ -567,7 +574,9 @@ static void
 TestRequest(HttpServerTest<F> &test, Server &server,
 	    std::size_t request_body_size,
 	    bool send_100_continue,
-	    bool chunked, bool buckets, bool delay_request_body)
+	    bool chunked, bool buckets,
+	    bool delay_request_body,
+	    bool later_request_body)
 {
 	Client client{server.GetEventLoop()};
 
@@ -639,7 +648,7 @@ TestRequest(HttpServerTest<F> &test, Server &server,
 		FlushIO(server.GetEventLoop());
 	}
 
-	handler.UseRequestBody();
+	handler.UseRequestBody(later_request_body);
 
 	if (delay_request_body)
 		delayed->Set(std::move(real_request_body));
@@ -858,7 +867,7 @@ TestCancelAfterChunkedRequest(HttpServerTest<F> &test, Server &server, bool buck
 		FlushIO(server.GetEventLoop());
 	}
 
-	handler.UseRequestBody();
+	handler.UseRequestBody(false);
 
 	if (delay_request_body)
 		delayed->Set(std::move(real_request_body));
@@ -895,13 +904,15 @@ TYPED_TEST(HttpServerTest, Misc)
 	for (bool chunked : {false, true})
 		for (bool buckets : {false, true})
 			for (bool delay_request_body : {false, true})
-				for (bool send_100_continue : {false, true})
-					for (unsigned request_body_size : {1, 70000})
-						TestRequest(*this, server,
-							    request_body_size,
-							    send_100_continue,
-							    chunked, buckets,
-							    delay_request_body);
+				for (bool later_request_body : {false, true})
+					for (bool send_100_continue : {false, true})
+						for (unsigned request_body_size : {1, 70000})
+							TestRequest(*this, server,
+								    request_body_size,
+								    send_100_continue,
+								    chunked, buckets,
+								    delay_request_body,
+								    later_request_body);
 
 	TestDiscardTinyRequestBody(server);
 	TestDiscardedHugeRequestBody(server);
