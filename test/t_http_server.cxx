@@ -426,6 +426,8 @@ private:
 	void HandleHttpRequest(IncomingHttpRequest &request, CancellablePointer &cancel_ptr) noexcept {
 		assert(!request_body);
 
+		OnRequestBegin(request);
+
 		if (!request.body) {
 			OnRequestEnd(request, {});
 			return;
