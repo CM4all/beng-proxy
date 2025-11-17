@@ -67,7 +67,8 @@ ThreadSocketFilter::MoveDecryptedInput() noexcept
 
 	const std::scoped_lock lock{mutex};
 	const bool was_full = decrypted_input.IsDefinedAndFull();
-	unprotected_decrypted_input.MoveFromAllowBothNull(decrypted_input);
+	if (unprotected_decrypted_input.MoveFromAllowBothNull(decrypted_input) > 0)
+		++input_serial;
 	unprotected_decrypted_input.FreeIfEmpty();
 	return was_full;
 }
@@ -96,6 +97,7 @@ ThreadSocketFilter::SubmitDecryptedInput() noexcept
 
 		want_read = false;
 
+		const auto old_input_serial = input_serial;
 		switch (socket->InvokeData()) {
 		case BufferedResult::OK:
 			AfterConsumed();
@@ -107,15 +109,11 @@ ThreadSocketFilter::SubmitDecryptedInput() noexcept
 				return false;
 			}
 
-			{
-				const std::size_t available =
-					unprotected_decrypted_input.GetAvailable();
-				AfterConsumed();
-				if (unprotected_decrypted_input.GetAvailable() > available)
-					/* more data has just arrived from the
-					   worker thread; try again */
-					continue;
-			}
+			AfterConsumed();
+			if (input_serial != old_input_serial)
+				/* more data has just arrived from the
+				   worker thread; try again */
+				continue;
 
 			return true;
 

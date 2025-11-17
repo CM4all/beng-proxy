@@ -10,6 +10,7 @@
 #include "event/CoarseTimerEvent.hxx"
 #include "memory/SliceFifoBuffer.hxx"
 
+#include <cstdint>
 #include <exception> // for std::exception_ptr
 #include <memory>
 #include <mutex>
@@ -177,6 +178,14 @@ class ThreadSocketFilter final : public SocketFilter, ThreadSocketFilterInternal
 	 *
 	 */
 	CoarseTimerEvent handshake_timeout_event;
+
+	/**
+	 * This field is incremented each time data gets added to
+	 * #unprotected_decrypted_input.  It is used by
+	 * SubmitDecryptedInput() to check whether to repeat the
+	 * handler invocation.
+	 */
+	uint_least16_t input_serial = 0;
 
 	bool busy = false, done_pending = false;
 
