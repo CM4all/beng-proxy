@@ -36,6 +36,11 @@ public:
 
 	/* virtual methods from class IstreamHandler */
 
+	IstreamReadyResult OnIstreamReady() noexcept override {
+		Schedule();
+		return IstreamReadyResult::OK;
+	}
+
 	void OnEof() noexcept override {
 		ClearInput();
 		Schedule();
@@ -51,6 +56,15 @@ private:
 	}
 
 	void OnDeferred() noexcept {
+		switch (InvokeReady()) {
+		case IstreamReadyResult::OK:
+		case IstreamReadyResult::CLOSED:
+			return;
+
+		case IstreamReadyResult::FALLBACK:
+			break;
+		}
+
 		if (!HasInput())
 			DestroyEof();
 		else
