@@ -229,14 +229,18 @@ HttpServerConnection::OnBufferedData()
 	if (request.read_state == Request::BODY && !request.in_read) {
 		const DestructObserver destructed{*this};
 
+		const auto old_consumed_serial = request_body_reader->GetConsumedSerial();
 		switch (request_body_reader->InvokeReady()) {
 		case IstreamReadyResult::OK:
 			/* refresh the request body timeout */
 			assert(request.read_state == Request::BODY ||
 			       request.read_state == Request::ABANDONED_BODY);
 
-			if (request.read_state != Request::ABANDONED_BODY) [[likely]]
+			if (request.read_state != Request::ABANDONED_BODY &&
+			    request_body_reader->GetConsumedSerial() != old_consumed_serial) [[likely]] {
 				ScheduleReadTimeoutTimer();
+			}
+
 			return BufferedResult::OK;
 
 		case IstreamReadyResult::FALLBACK:

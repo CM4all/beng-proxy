@@ -8,6 +8,7 @@
 #include "istream/istream.hxx"
 #include "istream/Bucket.hxx"
 
+#include <cstdint>
 #include <utility> // for std::cmp_greater_equal()
 
 #include <assert.h>
@@ -45,6 +46,13 @@ class HttpBodyReader : public Istream, protected DechunkHandler {
 	 */
 	off_t rest;
 
+	/**
+	 * This field is incremented each time data gets consumed by
+	 * ConsumeBucketList().  It is used to check whether a
+	 * InvokeReady() call has consumed any data.
+	 */
+	uint_least16_t consumed_serial = 0;
+
 	bool end_seen;
 
 public:
@@ -54,6 +62,10 @@ public:
 
 	UnusedIstreamPtr Init(EventLoop &event_loop, off_t content_length,
 			      bool chunked) noexcept;
+
+	auto GetConsumedSerial() const noexcept {
+		return consumed_serial;
+	}
 
 	using Istream::GetPool;
 	using Istream::Destroy;
@@ -167,6 +179,7 @@ public:
 		s.DisposeConsumed(nbytes);
 		s.AfterConsumed();
 		Consumed(nbytes);
+		++consumed_serial;
 
 		if (nbytes > 0 && !IsEOF() && s.IsConnected())
 			s.ScheduleRead();
