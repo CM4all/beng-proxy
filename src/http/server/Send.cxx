@@ -30,7 +30,6 @@ bool
 HttpServerConnection::Send100Continue() noexcept
 {
 	assert(IsValid());
-	assert(!HasInput());
 	assert(request.read_state == Request::BODY);
 	assert(!request.expect_100_continue);
 	assert(request.send_100_continue);
@@ -43,10 +42,17 @@ HttpServerConnection::Send100Continue() noexcept
 	static constexpr auto response_string = "HTTP/1.1 100 Continue\r\n\r\n"sv;
 	ssize_t nbytes = socket->Write(std::as_bytes(std::span{response_string}));
 	if (nbytes == (ssize_t)response_string.size()) [[likely]] {
+		if (!HasInput()) {
+			/* if we have no response yet, we need to
+			   unschedule writing which was only scheduled
+			   for the "100 Continue" response */
+			response.want_write = false;
+			socket->UnscheduleWrite();
+		}
+
 		/* re-enable the request body read timeout that was
 		   disabled by HeadersFinished() in the presence of an
 		   "expect:100-continue" request header */
-		socket->UnscheduleWrite();
 		ScheduleReadTimeoutTimer();
 		return true;
 	}
