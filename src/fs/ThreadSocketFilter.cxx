@@ -104,7 +104,8 @@ ThreadSocketFilter::SubmitDecryptedInput() noexcept
 			return true;
 
 		case BufferedResult::MORE:
-			if (unprotected_decrypted_input.IsDefinedAndFull()) {
+			if (input_serial == old_input_serial &&
+			    unprotected_decrypted_input.IsDefinedAndFull()) {
 				socket->InvokeError(std::make_exception_ptr(SocketBufferFullError{}));
 				return false;
 			}
