@@ -387,6 +387,68 @@ public:
 using Factories = ::testing::Types<NullSocketFilterFactory, NopSocketFilterFactory, NopThreadSocketFilterFactory>;
 TYPED_TEST_SUITE(HttpServerTest, Factories);
 
+class CommonHandler : Cancellable {
+	Server &server;
+
+	IncomingHttpRequest *request_ptr;
+	UnusedHoldIstreamPtr request_body;
+
+	const bool buckets;
+
+	bool canceled = false;
+
+public:
+	CommonHandler(Server &_server, bool _buckets) noexcept
+		:server(_server), buckets(_buckets)
+	{
+		server.SetRequestHandler([this](IncomingHttpRequest &_request, CancellablePointer &_cancel_ptr) noexcept {
+			HandleHttpRequest(_request, _cancel_ptr);
+		});
+	}
+
+	bool IsCanceled() const noexcept {
+		return canceled;
+	}
+
+	void UseRequestBody() {
+		ASSERT_TRUE(request_body);
+
+		auto &null_sink = NewNullSink(server.GetPool(), std::move(request_body),
+					      BIND_THIS_METHOD(OnRequestBodyEnd));
+		ReadNullSink(null_sink);
+	}
+
+	virtual void OnRequestBegin(const IncomingHttpRequest &request) noexcept = 0;
+	virtual void OnRequestEnd(IncomingHttpRequest &request,
+				  std::exception_ptr &&error) noexcept = 0;
+
+private:
+	void HandleHttpRequest(IncomingHttpRequest &request, CancellablePointer &cancel_ptr) noexcept {
+		assert(!request_body);
+
+		if (!request.body) {
+			OnRequestEnd(request, {});
+			return;
+		}
+
+		UnusedIstreamPtr body = std::move(request.body);
+		if (!buckets)
+			body = NewIstreamPtr<NoBucketIstream>(request.pool, std::move(body));
+
+		cancel_ptr = *this;
+		request_ptr = &request;
+		request_body = UnusedHoldIstreamPtr{request.pool, std::move(body)};
+	}
+
+	void OnRequestBodyEnd(std::exception_ptr &&error) noexcept {
+		OnRequestEnd(*request_ptr, std::move(error));
+	}
+
+	void Cancel() noexcept override {
+		canceled = true;
+	}
+};
+
 static void
 TestSimple(Server &server)
 {
@@ -492,57 +554,22 @@ TestChunkedRequest(HttpServerTest<F> &test, Server &server, bool buckets, bool d
 {
 	Client client{server.GetEventLoop()};
 
-	struct Handler : Cancellable {
-		Server &server;
-		Client &client;
+	struct Handler final : CommonHandler {
+		Handler(Server &_server, bool _buckets) noexcept
+			:CommonHandler(_server, _buckets) {}
 
-		IncomingHttpRequest *request_ptr;
-		UnusedHoldIstreamPtr request_body;
-
-		const bool buckets;
-
-		bool canceled = false;
-
-		Handler(Server &_server, Client &_client, bool _buckets) noexcept
-			:server(_server), client(_client), buckets(_buckets) {}
-
-		void HandleHttpRequest(IncomingHttpRequest &request, CancellablePointer &cancel_ptr) noexcept {
+		void OnRequestBegin([[maybe_unused]] const IncomingHttpRequest &request) noexcept override {
 			assert(request.body);
 			assert(!request.body.GetLength().exhaustive);
-			assert(!request_body);
-
-			UnusedIstreamPtr body = std::move(request.body);
-			if (!buckets)
-				body = NewIstreamPtr<NoBucketIstream>(request.pool, std::move(body));
-
-			cancel_ptr = *this;
-			request_ptr = &request;
-			request_body = UnusedHoldIstreamPtr{request.pool, std::move(body)};
 		}
 
-		void UseRequestBody() {
-			ASSERT_TRUE(request_body);
+		void OnRequestEnd(IncomingHttpRequest &request, std::exception_ptr &&error) noexcept {
+                       if (error)
+                               PrintException(std::move(error));
 
-			auto &null_sink = NewNullSink(server.GetPool(), std::move(request_body),
-						      BIND_THIS_METHOD(OnRequestBodyEnd));
-			ReadNullSink(null_sink);
+                       request.SendResponse(HttpStatus::NO_CONTENT, {}, {});
 		}
-
-		void OnRequestBodyEnd(std::exception_ptr &&error) noexcept {
-			if (error)
-				PrintException(std::move(error));
-
-			request_ptr->SendResponse(HttpStatus::NO_CONTENT, {}, {});
-		}
-
-		void Cancel() noexcept override {
-			canceled = true;
-		}
-	} handler{server, client, buckets};
-
-	server.SetRequestHandler([&handler](IncomingHttpRequest &request, CancellablePointer &cancel_ptr) noexcept {
-		handler.HandleHttpRequest(request, cancel_ptr);
-	});
+	} handler{server, buckets};
 
 	auto &pool = server.GetPool();
 
@@ -594,7 +621,7 @@ TestChunkedRequest(HttpServerTest<F> &test, Server &server, bool buckets, bool d
 	EXPECT_TRUE(client.IsDone());
 	client.AssertResponse(HttpStatus::NO_CONTENT, {});
 
-	EXPECT_TRUE(!handler.canceled);
+	EXPECT_TRUE(!handler.IsCanceled());
 }
 
 static void
@@ -705,55 +732,24 @@ TestCancelAfterChunkedRequest(HttpServerTest<F> &test, Server &server, bool buck
 {
 	Client client{server.GetEventLoop()};
 
-	struct Handler : Cancellable {
-		Server &server;
+	struct Handler final : CommonHandler {
 		Client &client;
 
-		UnusedHoldIstreamPtr request_body;
-
-		const bool buckets;
-
-		bool canceled = false;
-
 		Handler(Server &_server, Client &_client, bool _buckets) noexcept
-			:server(_server), client(_client), buckets(_buckets) {}
+			:CommonHandler(_server, _buckets), client(_client) {}
 
-		void HandleHttpRequest(IncomingHttpRequest &request, CancellablePointer &cancel_ptr) noexcept {
+		void OnRequestBegin([[maybe_unused]] const IncomingHttpRequest &request) noexcept override {
 			assert(request.body);
 			assert(!request.body.GetLength().exhaustive);
-			assert(!request_body);
-
-			UnusedIstreamPtr body = std::move(request.body);
-			if (!buckets)
-				body = NewIstreamPtr<NoBucketIstream>(request.pool, std::move(body));
-
-			cancel_ptr = *this;
-			request_body = UnusedHoldIstreamPtr{request.pool, std::move(body)};
 		}
 
-		void UseRequestBody() {
-			ASSERT_TRUE(request_body);
-
-			auto &null_sink = NewNullSink(server.GetPool(), std::move(request_body),
-						      BIND_THIS_METHOD(OnRequestBodyEnd));
-			ReadNullSink(null_sink);
-		}
-
-		void OnRequestBodyEnd(std::exception_ptr &&error) noexcept {
-			if (error)
-				PrintException(std::move(error));
+		void OnRequestEnd([[maybe_unused]] IncomingHttpRequest &request, std::exception_ptr &&error) noexcept {
+                       if (error)
+                               PrintException(std::move(error));
 
 			client.Cancel();
 		}
-
-		void Cancel() noexcept override {
-			canceled = true;
-		}
 	} handler{server, client, buckets};
-
-	server.SetRequestHandler([&handler](IncomingHttpRequest &request, CancellablePointer &cancel_ptr) noexcept {
-		handler.HandleHttpRequest(request, cancel_ptr);
-	});
 
 	auto &pool = server.GetPool();
 
@@ -805,7 +801,7 @@ TestCancelAfterChunkedRequest(HttpServerTest<F> &test, Server &server, bool buck
 	EXPECT_TRUE(client.IsDone());
 	client.AssertResponse(HttpStatus{}, {});
 
-	EXPECT_TRUE(handler.canceled);
+	EXPECT_TRUE(handler.IsCanceled());
 }
 
 TYPED_TEST(HttpServerTest, Misc)
