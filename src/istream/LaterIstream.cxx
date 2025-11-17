@@ -29,6 +29,11 @@ public:
 		Schedule();
 	}
 
+	void _FillBucketList(IstreamBucketList &list) override {
+		if (HasInput())
+			ForwardIstream::_FillBucketList(list);
+	}
+
 	/* virtual methods from class IstreamHandler */
 
 	void OnEof() noexcept override {
