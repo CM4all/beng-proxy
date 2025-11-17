@@ -563,7 +563,8 @@ TestChunkedRequest(HttpServerTest<F> &test, Server &server, bool buckets, bool d
 			assert(!request.body.GetLength().exhaustive);
 		}
 
-		void OnRequestEnd(IncomingHttpRequest &request, std::exception_ptr &&error) noexcept {
+		void OnRequestEnd(IncomingHttpRequest &request,
+				  std::exception_ptr &&error) noexcept override {
                        if (error)
                                PrintException(std::move(error));
 
@@ -743,7 +744,8 @@ TestCancelAfterChunkedRequest(HttpServerTest<F> &test, Server &server, bool buck
 			assert(!request.body.GetLength().exhaustive);
 		}
 
-		void OnRequestEnd([[maybe_unused]] IncomingHttpRequest &request, std::exception_ptr &&error) noexcept {
+		void OnRequestEnd([[maybe_unused]] IncomingHttpRequest &request,
+				  std::exception_ptr &&error) noexcept override {
                        if (error)
                                PrintException(std::move(error));
 
