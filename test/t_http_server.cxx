@@ -55,11 +55,6 @@
 
 using std::string_view_literals::operator""sv;
 
-class HttpServerTest : public testing::Test {
-protected:
-	TestInstance instance;
-};
-
 class Server final
 	: PoolHolder,
 	  HttpServerConnectionHandler, HttpServerRequestHandler,
@@ -338,6 +333,18 @@ Server::HttpConnectionClosed() noexcept
 	if (break_closed)
 		GetEventLoop().Break();
 }
+
+class HttpServerTest : public testing::Test {
+protected:
+	TestInstance instance;
+
+	Server MakeServer() {
+		return {
+			instance.root_pool,
+			instance.event_loop,
+		};
+	}
+};
 
 static void
 TestSimple(Server &server)
@@ -730,7 +737,7 @@ TestCancelAfterChunkedRequest(Server &server, bool buckets, bool delay_request_b
 
 TEST_F(HttpServerTest, Misc)
 {
-	Server server(instance.root_pool, instance.event_loop);
+	auto server = MakeServer();
 	TestSimple(server);
 	TestMirror(server);
 	TestBufferedMirror(server);
@@ -748,7 +755,7 @@ TEST_F(HttpServerTest, Misc)
 
 TEST_F(HttpServerTest, AbortedRequestBody)
 {
-	Server server(instance.root_pool, instance.event_loop);
+	auto server = MakeServer();
 	TestAbortedRequestBody(server);
 
 	server.CloseClientSocket();
@@ -759,7 +766,7 @@ TEST_F(HttpServerTest, CancelAfterChunkedRequest)
 {
 	for (bool buckets : {false, true}) {
 		for (bool delay_request_body : {false, true}) {
-			Server server(instance.root_pool, instance.event_loop);
+			auto server = MakeServer();
 			TestCancelAfterChunkedRequest(server, buckets, delay_request_body);
 			server.CloseClientSocket();
 			instance.event_loop.Run();
