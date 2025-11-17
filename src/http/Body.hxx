@@ -148,6 +148,12 @@ public:
 					   which will start
 					   splicing */
 					list.EnableFallback();
+				else if (s.GetAvailable() > 0)
+					/* more data has just become
+					   available in a secondary
+					   buffer but not yet moved to
+					   the primary buffer */
+					list.SetPullMore();
 				else
 					list.SetPushMore();
 			}
@@ -162,6 +168,11 @@ public:
 				/* switch to fallback mode which will start
 				   splicing */
 				list.EnableFallback();
+			else if (s.GetAvailable() > b.size())
+				/* more data is available in a
+				   secondary buffer but not yet moved
+				   to the primary buffer */
+				list.SetPullMore();
 			else
 				list.SetPushMore();
 		}

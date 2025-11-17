@@ -2,7 +2,7 @@ cm4all-beng-proxy (21.5) unstable; urgency=low
 
   * http_server: fix assertion failure after sending "100 Continue"
   * http_client: fix assertion failure
-  * ssl: fix three stall bugs
+  * ssl: fix four stall bugs
 
  --   
 
