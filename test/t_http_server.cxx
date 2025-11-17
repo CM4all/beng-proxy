@@ -545,6 +545,13 @@ TestBufferedMirror(Server &server)
 	client.ExpectResponse(HttpStatus::OK, data);
 }
 
+static UnusedIstreamPtr
+MakeChunkedRequestBody(struct pool &pool) noexcept
+{
+	// wrap in NoLengthIstream to force chunking
+	return NewIstreamPtr<NoLengthIstream>(pool, istream_string_new(pool, "X"sv));
+}
+
 /**
  * Send a chunked request body; server sends a reply after receiving
  * the whole body.  This tests whether the ABANDONED_BODY state is
@@ -576,8 +583,7 @@ TestChunkedRequest(HttpServerTest<F> &test, Server &server, bool buckets, bool d
 
 	auto &pool = server.GetPool();
 
-	// wrap in NoLengthIstream to force chunking
-	auto real_request_body = NewIstreamPtr<NoLengthIstream>(pool, istream_string_new(server.GetPool(), "X"sv));
+	auto real_request_body = MakeChunkedRequestBody(pool);
 
 	UnusedIstreamPtr request_body;
 	DelayedIstreamControl *delayed;
