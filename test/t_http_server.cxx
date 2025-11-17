@@ -546,9 +546,9 @@ TestBufferedMirror(Server &server)
 }
 
 static UnusedIstreamPtr
-MakeRequestBody(struct pool &pool, bool chunked) noexcept
+MakeRequestBody(struct pool &pool, std::size_t size, bool chunked) noexcept
 {
-	auto istream = istream_string_new(pool, "X"sv);
+	auto istream = istream_string_new(pool, RandomString(pool, size));
 
 	if (chunked)
 		// wrap in NoLengthIstream to force chunking
@@ -565,17 +565,21 @@ MakeRequestBody(struct pool &pool, bool chunked) noexcept
 template<typename F>
 static void
 TestRequest(HttpServerTest<F> &test, Server &server,
+	    std::size_t request_body_size,
 	    bool chunked, bool buckets, bool delay_request_body)
 {
 	Client client{server.GetEventLoop()};
 
 	struct Handler final : CommonHandler {
+		const std::size_t request_body_size;
 		const bool chunked, delay_request_body;
 
 		Handler(Server &_server,
+			std::size_t _request_body_size,
 			bool _chunked, bool _buckets,
 			bool _delay_request_body) noexcept
 			:CommonHandler(_server, _buckets),
+			 request_body_size(_request_body_size),
 			 chunked(_chunked), delay_request_body(_delay_request_body) {}
 
 		void OnRequestBegin([[maybe_unused]] const IncomingHttpRequest &request) noexcept override {
@@ -585,7 +589,7 @@ TestRequest(HttpServerTest<F> &test, Server &server,
 				assert(!request.body.GetLength().exhaustive);
 			} else {
 				assert(request.body.GetLength().exhaustive);
-				assert(request.body.GetLength().length == 1);
+				assert(request.body.GetLength().length == request_body_size);
 			}
 		}
 
@@ -598,6 +602,7 @@ TestRequest(HttpServerTest<F> &test, Server &server,
 		}
 	} handler{
 		server,
+		request_body_size,
 		chunked,
 		buckets,
 		delay_request_body,
@@ -605,7 +610,7 @@ TestRequest(HttpServerTest<F> &test, Server &server,
 
 	auto &pool = server.GetPool();
 
-	auto real_request_body = MakeRequestBody(pool, chunked);
+	auto real_request_body = MakeRequestBody(pool, request_body_size, chunked);
 
 	UnusedIstreamPtr request_body;
 	DelayedIstreamControl *delayed;
@@ -627,6 +632,9 @@ TestRequest(HttpServerTest<F> &test, Server &server,
 	if (server.HasFilter()) {
 		test.FlushFilters();
 		FlushIO(server.GetEventLoop());
+		test.FlushFilters();
+		FlushIO(server.GetEventLoop());
+		FlushIO(server.GetEventLoop());
 	}
 
 	handler.UseRequestBody();
@@ -641,6 +649,23 @@ TestRequest(HttpServerTest<F> &test, Server &server,
 
 	if (server.HasFilter()) {
 		/* the SocketFilter may require another flush */
+		test.FlushFilters();
+		FlushIO(server.GetEventLoop());
+		FlushIO(server.GetEventLoop());
+		test.FlushFilters();
+		FlushIO(server.GetEventLoop());
+		FlushIO(server.GetEventLoop());
+	}
+
+	if (request_body_size > 4096) {
+		/* need a few more steps if the request body is big */
+		FlushIO(server.GetEventLoop());
+		test.FlushFilters();
+		FlushIO(server.GetEventLoop());
+		FlushIO(server.GetEventLoop());
+		test.FlushFilters();
+		FlushIO(server.GetEventLoop());
+		FlushIO(server.GetEventLoop());
 		test.FlushFilters();
 		FlushIO(server.GetEventLoop());
 		FlushIO(server.GetEventLoop());
@@ -847,7 +872,11 @@ TYPED_TEST(HttpServerTest, Misc)
 	for (bool chunked : {false, true})
 		for (bool buckets : {false, true})
 			for (bool delay_request_body : {false, true})
-				TestRequest(*this, server, chunked, buckets, delay_request_body);
+				for (unsigned request_body_size : {1, 70000})
+					TestRequest(*this, server,
+						    request_body_size,
+						    chunked, buckets,
+						    delay_request_body);
 
 	TestDiscardTinyRequestBody(server);
 	TestDiscardedHugeRequestBody(server);
