@@ -89,7 +89,7 @@ IsHttpClientRetryFailure(std::exception_ptr ep) noexcept
  * With a request body of this size or larger, we send "Expect:
  * 100-continue".
  */
-static constexpr off_t EXPECT_100_THRESHOLD = 1024;
+static constexpr off_t EXPECT_100_THRESHOLD = 8192;
 
 static constexpr auto http_client_timeout = std::chrono::minutes{2};
 
