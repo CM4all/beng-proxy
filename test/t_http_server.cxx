@@ -55,6 +55,11 @@
 
 using std::string_view_literals::operator""sv;
 
+class HttpServerTest : public testing::Test {
+protected:
+	TestInstance instance;
+};
+
 class Server final
 	: PoolHolder,
 	  HttpServerConnectionHandler, HttpServerRequestHandler,
@@ -722,10 +727,8 @@ TestCancelAfterChunkedRequest(Server &server, bool buckets, bool delay_request_b
 	EXPECT_TRUE(handler.canceled);
 }
 
-TEST(HttpServer, Misc)
+TEST_F(HttpServerTest, Misc)
 {
-	TestInstance instance;
-
 	Server server(instance.root_pool, instance.event_loop);
 	TestSimple(server);
 	TestMirror(server);
@@ -742,9 +745,8 @@ TEST(HttpServer, Misc)
 	instance.event_loop.Run();
 }
 
-TEST(HttpServer, AbortedRequestBody)
+TEST_F(HttpServerTest, AbortedRequestBody)
 {
-	TestInstance instance;
 	Server server(instance.root_pool, instance.event_loop);
 	TestAbortedRequestBody(server);
 
@@ -752,10 +754,8 @@ TEST(HttpServer, AbortedRequestBody)
 	instance.event_loop.Run();
 }
 
-TEST(HttpServer, CancelAfterChunkedRequest)
+TEST_F(HttpServerTest, CancelAfterChunkedRequest)
 {
-	TestInstance instance;
-
 	for (bool buckets : {false, true}) {
 		for (bool delay_request_body : {false, true}) {
 			Server server(instance.root_pool, instance.event_loop);
