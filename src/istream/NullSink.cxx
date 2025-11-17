@@ -135,9 +135,9 @@ NullSink::OnIstreamReady() noexcept
 			return IstreamReadyResult::CLOSED;
 
 		case IstreamBucketList::More::PUSH:
-		case IstreamBucketList::More::PULL:
 			return IstreamReadyResult::OK;
 
+		case IstreamBucketList::More::PULL:
 		case IstreamBucketList::More::AGAIN:
 			continue;
 
