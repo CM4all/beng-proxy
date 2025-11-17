@@ -411,82 +411,112 @@ test(
   ),
 )
 
-test('t_http_server', executable('t_http_server',
-  't_http_server.cxx',
-  '../src/net/PToString.cxx',
-  '../src/net/InterfaceNameCache.cxx',
-  include_directories: inc,
-  dependencies: [
-    test_instance_dep,
-    fmt_dep,
-    http_server_dep,
-    http_client_dep,
-    system_dep,
-  ]))
+test(
+  't_http_server',
+  executable(
+    't_http_server',
+    't_http_server.cxx',
+    '../src/net/PToString.cxx',
+    '../src/net/InterfaceNameCache.cxx',
+    include_directories: inc,
+    dependencies: [
+      test_instance_dep,
+      fmt_dep,
+      http_server_dep,
+      http_client_dep,
+      system_dep,
+    ],
+  ),
+)
 
-test('t_http_cache', executable('t_http_cache',
-  't_http_cache.cxx',
-  'RecordingHttpResponseHandler.cxx',
-  include_directories: inc,
-  dependencies: [
-    gtest,
-    test_instance_dep,
-    putil_dep,
-    http_cache_dep,
-  ]))
+test(
+  't_http_cache',
+  executable(
+    't_http_cache',
+    't_http_cache.cxx',
+    'RecordingHttpResponseHandler.cxx',
+    include_directories: inc,
+    dependencies: [
+      gtest,
+      test_instance_dep,
+      putil_dep,
+      http_cache_dep,
+    ],
+  ),
+)
 
-test('t_fcache', executable('t_fcache',
-  't_fcache.cxx',
-  '../src/http/cache/FilterCache.cxx',
-  include_directories: inc,
-  dependencies: [
-    fmt_dep,
-    cache_dep,
-    memory_istream_dep,
-    istream_dep,
-    raddress_dep,
-    http_dep,
-    stopwatch_dep,
-    debug_resource_loader_dep,
-  ]))
+test(
+  't_fcache',
+  executable(
+    't_fcache',
+    't_fcache.cxx',
+    '../src/http/cache/FilterCache.cxx',
+    include_directories: inc,
+    dependencies: [
+      fmt_dep,
+      cache_dep,
+      memory_istream_dep,
+      istream_dep,
+      raddress_dep,
+      http_dep,
+      stopwatch_dep,
+      debug_resource_loader_dep,
+    ],
+  ),
+)
 
-test('t_session', executable('t_session',
-  't_session.cxx',
-  'TestSessionId.cxx',
-  'TestCsrfProtection.cxx',
-  'TestSessionModulo.cxx',
-  '../src/bp/CsrfToken.cxx',
-  '../src/lb/Session.cxx',
-  include_directories: inc,
-  dependencies: [
-    gtest,
-    session_dep,
-  ]))
+test(
+  't_session',
+  executable(
+    't_session',
+    't_session.cxx',
+    'TestSessionId.cxx',
+    'TestCsrfProtection.cxx',
+    'TestSessionModulo.cxx',
+    '../src/bp/CsrfToken.cxx',
+    '../src/lb/Session.cxx',
+    include_directories: inc,
+    dependencies: [
+      gtest,
+      session_dep,
+    ],
+  ),
+)
 
-test('t_escape', executable('t_escape',
-  't_html_escape.cxx',
-  't_escape_css.cxx',
-  '../src/escape/Static.cxx',
-  include_directories: inc,
-  dependencies: [
-    gtest,
-    util_dep,
-  ]))
+test(
+  't_escape',
+  executable(
+    't_escape',
+    't_html_escape.cxx',
+    't_escape_css.cxx',
+    '../src/escape/Static.cxx',
+    include_directories: inc,
+    dependencies: [
+      gtest,
+      util_dep,
+    ],
+  ),
+)
 
-test('t_processor', executable('t_processor',
-  '../src/widget/FromSession.cxx',
-  '../src/widget/FromRequest.cxx',
-  '../src/escape/Istream.cxx',
-  't_processor.cxx',
-  include_directories: inc,
-  dependencies: [
-    gtest,
-    test_instance_dep,
-    processor_dep,
-    widget_dep,
-    session_dep,
-    debug_resource_loader_dep,
-  ]))
+test(
+  't_processor',
+  executable(
+    't_processor',
+    '../src/widget/FromSession.cxx',
+    '../src/widget/FromRequest.cxx',
+    '../src/escape/Istream.cxx',
+    't_processor.cxx',
+    include_directories: inc,
+    dependencies: [
+      gtest,
+      test_instance_dep,
+      processor_dep,
+      widget_dep,
+      session_dep,
+      debug_resource_loader_dep,
+    ],
+  ),
+)
 
 test(
   'TestBufferedResourceLoader',
