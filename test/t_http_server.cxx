@@ -546,10 +546,15 @@ TestBufferedMirror(Server &server)
 }
 
 static UnusedIstreamPtr
-MakeChunkedRequestBody(struct pool &pool) noexcept
+MakeRequestBody(struct pool &pool, bool chunked) noexcept
 {
-	// wrap in NoLengthIstream to force chunking
-	return NewIstreamPtr<NoLengthIstream>(pool, istream_string_new(pool, "X"sv));
+	auto istream = istream_string_new(pool, "X"sv);
+
+	if (chunked)
+		// wrap in NoLengthIstream to force chunking
+		istream = NewIstreamPtr<NoLengthIstream>(pool, std::move(istream));
+
+	return istream;
 }
 
 /**
@@ -559,17 +564,29 @@ MakeChunkedRequestBody(struct pool &pool) noexcept
  */
 template<typename F>
 static void
-TestChunkedRequest(HttpServerTest<F> &test, Server &server, bool buckets, bool delay_request_body)
+TestRequest(HttpServerTest<F> &test, Server &server,
+	    bool chunked, bool buckets, bool delay_request_body)
 {
 	Client client{server.GetEventLoop()};
 
 	struct Handler final : CommonHandler {
-		Handler(Server &_server, bool _buckets) noexcept
-			:CommonHandler(_server, _buckets) {}
+		const bool chunked, delay_request_body;
+
+		Handler(Server &_server,
+			bool _chunked, bool _buckets,
+			bool _delay_request_body) noexcept
+			:CommonHandler(_server, _buckets),
+			 chunked(_chunked), delay_request_body(_delay_request_body) {}
 
 		void OnRequestBegin([[maybe_unused]] const IncomingHttpRequest &request) noexcept override {
 			assert(request.body);
-			assert(!request.body.GetLength().exhaustive);
+
+			if (chunked || delay_request_body) {
+				assert(!request.body.GetLength().exhaustive);
+			} else {
+				assert(request.body.GetLength().exhaustive);
+				assert(request.body.GetLength().length == 1);
+			}
 		}
 
 		void OnRequestEnd(IncomingHttpRequest &request,
@@ -579,11 +596,16 @@ TestChunkedRequest(HttpServerTest<F> &test, Server &server, bool buckets, bool d
 
                        request.SendResponse(HttpStatus::NO_CONTENT, {}, {});
 		}
-	} handler{server, buckets};
+	} handler{
+		server,
+		chunked,
+		buckets,
+		delay_request_body,
+	};
 
 	auto &pool = server.GetPool();
 
-	auto real_request_body = MakeChunkedRequestBody(pool);
+	auto real_request_body = MakeRequestBody(pool, chunked);
 
 	UnusedIstreamPtr request_body;
 	DelayedIstreamControl *delayed;
@@ -822,9 +844,10 @@ TYPED_TEST(HttpServerTest, Misc)
 	TestMirror(server);
 	TestBufferedMirror(server);
 
-	for (bool buckets : {false, true})
-		for (bool delay_request_body : {false, true})
-			TestChunkedRequest(*this, server, buckets, delay_request_body);
+	for (bool chunked : {false, true})
+		for (bool buckets : {false, true})
+			for (bool delay_request_body : {false, true})
+				TestRequest(*this, server, chunked, buckets, delay_request_body);
 
 	TestDiscardTinyRequestBody(server);
 	TestDiscardedHugeRequestBody(server);
