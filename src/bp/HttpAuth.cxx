@@ -74,8 +74,14 @@ Request::HandleHttpAuth(UniquePoolPtr<TranslateResponse> _response) noexcept
 		return;
 	}
 
+	auto http_auth = response.http_auth;
+	if (!response.append_auth.empty()) {
+		const AllocatorPtr alloc{pool};
+		http_auth = alloc.LazyConcat(http_auth, response.append_auth);
+	}
+
 	auto t = NewFromPool<TranslateRequest>(pool);
-	t->http_auth = response.http_auth;
+	t->http_auth = http_auth;
 	t->authorization = authorization;
 	t->listener_tag = translate.request.listener_tag;
 	t->host = translate.request.host;

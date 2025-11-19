@@ -223,8 +223,12 @@ Request::HandleTokenAuth(UniquePoolPtr<TranslateResponse> _response) noexcept
 		}
 	}
 
+	auto token_auth = response.token_auth;
+	if (!response.append_auth.empty())
+		token_auth = alloc.LazyConcat(token_auth, response.append_auth);
+
 	auto t = alloc.New<TranslateRequest>();
-	t->token_auth = response.token_auth;
+	t->token_auth = token_auth;
 	t->auth_token = auth_token;
 	if (auth_token == nullptr)
 		t->recover_session = recover_session_from_cookie;
