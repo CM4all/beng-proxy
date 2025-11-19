@@ -948,7 +948,7 @@ result in a ``401 Unauthorized`` response (with headers
 If the ``Authorization`` header is available, :program:`beng-proxy`
 submits a new translation request with the following packets:
 
-- ``TOKEN_AUTH`` (echoing the response packet)
+- ``HTTP_AUTH`` (echoing the response packet)
 - ``AUTHORIZATION`` contains the ``Authorization`` request header
 - ``LISTENER_TAG``, ``HOST``
 
