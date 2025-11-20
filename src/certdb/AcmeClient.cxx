@@ -17,7 +17,7 @@
 #include "lib/fmt/RuntimeError.hxx"
 #include "lib/openssl/Buffer.hxx"
 #include "lib/openssl/UniqueBIO.hxx"
-#include "lib/sodium/Base64.hxx"
+#include "lib/sodium/Base64Alloc.hxx"
 #include "util/AllocatedString.hxx"
 #include "util/Exception.hxx"
 #include "util/MimeType.hxx"
