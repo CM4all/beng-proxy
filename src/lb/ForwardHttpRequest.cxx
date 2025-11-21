@@ -257,10 +257,10 @@ LbRequest::GetStickySource() const noexcept
 		if (const char *s = StringAfterPrefix(request.uri, cluster_config.sticky_hex_uuid_uri_prefix)) {
 			static constexpr std::size_t HEX_DIGITS = 32;
 			static constexpr std::size_t UUID_LENGTH = 36;
-			const std::string_view sv{s, HEX_DIGITS};
+			const std::string_view sv{s};
 
 			// TODO throw "400 Bad Request" on malformed UUID
-			if (sv.find('\0') == sv.npos && CheckChars(sv, IsLowerHexDigit)) {
+			if (sv.size() >= HEX_DIGITS && CheckChars(sv.substr(0, HEX_DIGITS), IsLowerHexDigit)) {
 				/* there are 32 hex digits in the URI,
 				   but to make it a UUID string, we
 				   need to insert four dashes */
