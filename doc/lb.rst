@@ -127,7 +127,8 @@ Example::
   ``sticky session_modulo``.
 
 - ``sticky_hex_uuid_uri_prefix``: if the request URI begins with this
-  prefix followed by 32 lower-case hex digits, then the ``sticky``
+  prefix followed by a UUID or 32 lower-case hex digits (i.e. a UUID
+  without hyphens), then the ``sticky``
   setting will be ignored and instead a UUID will be generated from
   those 32 hex digits (by inserting four dashes).  This is an
   experimental feature and may change or be removed at any time.

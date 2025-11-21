@@ -260,6 +260,22 @@ LbRequest::GetStickySource() const noexcept
 			const std::string_view sv{s};
 
 			// TODO throw "400 Bad Request" on malformed UUID
+
+			if (sv.size() >= UUID_LENGTH &&
+			    CheckChars(sv.substr(0, 8), IsLowerHexDigit) &&
+			    sv[8] == '-' &&
+			    CheckChars(sv.substr(9, 4), IsLowerHexDigit) &&
+			    sv[13] == '-' &&
+			    CheckChars(sv.substr(14, 4), IsLowerHexDigit) &&
+			    sv[18] == '-' &&
+			    CheckChars(sv.substr(19, 4), IsLowerHexDigit) &&
+			    sv[23] == '-' &&
+			    CheckChars(sv.substr(24, 12), IsLowerHexDigit)) {
+				/* it's already a well-formed UUID
+				   (with hyphens) */
+				return AsBytes(sv.substr(0, UUID_LENGTH));
+			}
+
 			if (sv.size() >= HEX_DIGITS && CheckChars(sv.substr(0, HEX_DIGITS), IsLowerHexDigit)) {
 				/* there are 32 hex digits in the URI,
 				   but to make it a UUID string, we

@@ -1,6 +1,6 @@
 cm4all-beng-proxy (21.7) unstable; urgency=low
 
-  * 
+  * lb: allow hyphen-formatted UUIDs with "sticky_hex_uuid_uri_prefix"
 
  --   
 
