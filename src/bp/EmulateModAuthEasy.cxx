@@ -7,6 +7,7 @@
 #include "AprMd5.hxx"
 #include "FileHeaders.hxx"
 #include "file/Address.hxx"
+#include "lib/sodium/Base64.hxx"
 #include "http/CommonHeaders.hxx"
 #include "http/Headers.hxx"
 #include "http/IncomingRequest.hxx"
@@ -94,8 +95,8 @@ ParseBasicAuth(const char *authorization) noexcept
 	size_t length;
 	const char *end;
 
-	if (sodium_base642bin((unsigned char *)buffer, sizeof(buffer),
-			      s, strlen(s),
+	if (sodium_base642bin(std::as_writable_bytes(std::span{buffer}),
+			      s,
 			      nullptr, &length, &end,
 			      sodium_base64_VARIANT_ORIGINAL) != 0)
 		return {};
