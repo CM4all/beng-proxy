@@ -603,7 +603,6 @@ executable(
   'src/bp/EmulateModAuthEasy.cxx',
   'src/bp/AprMd5.cxx',
   'src/bp/ProxyHandler.cxx',
-  'src/bp/Global.cxx',
   'src/bp/Base.cxx',
   'src/bp/Handler.cxx',
   'src/bp/CoHandler.cxx',

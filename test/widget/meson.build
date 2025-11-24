@@ -60,7 +60,6 @@ test(
     't_wembed.cxx',
     '../../src/widget/Inline.cxx',
     '../../src/escape/Istream.cxx',
-    '../../src/bp/Global.cxx',
     include_directories: inc,
     dependencies: [
       test_instance_dep,

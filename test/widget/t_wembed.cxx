@@ -4,6 +4,7 @@
 
 #include "../TestInstance.hxx"
 #include "http/rl/FailingResourceLoader.hxx"
+#include "translation/FailingService.hxx"
 #include "widget/Inline.hxx"
 #include "widget/Widget.hxx"
 #include "widget/Request.hxx"
@@ -107,12 +108,15 @@ test_abort_resolver()
 	bool ret;
 	DissectedUri dissected_uri;
 
+	FailingTranslationService translation_service;
 	FailingResourceLoader resource_loader;
 
 	auto pool = pool_new_linear(instance.root_pool, "test", 4096);
 
 	auto ctx = SharedPoolPtr<WidgetContext>::Make
 		(*pool, instance.event_loop,
+		 nullptr,
+		 translation_service,
 		 resource_loader, resource_loader,
 		 nullptr,
 		 nullptr, nullptr,

@@ -3,6 +3,7 @@
 // author: Max Kellermann <max.kellermann@ionos.com>
 
 #include "http/rl/FailingResourceLoader.hxx"
+#include "translation/FailingService.hxx"
 #include "../tconstruct.hxx"
 #include "widget/RewriteUri.hxx"
 #include "http/Address.hxx"
@@ -184,10 +185,13 @@ assert_rewrite_check4(EventLoop &event_loop,
 	SessionId session_id;
 	session_id.Clear();
 
+	FailingTranslationService translation_service;
 	FailingResourceLoader resource_loader;
 
 	auto ctx = SharedPoolPtr<WidgetContext>::Make
 		(pool, event_loop,
+		 nullptr,
+		 translation_service,
 		 resource_loader, resource_loader,
 		 nullptr,
 		 site_name, nullptr,

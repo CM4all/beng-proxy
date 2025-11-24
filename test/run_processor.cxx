@@ -10,6 +10,7 @@
 #include "widget/Widget.hxx"
 #include "widget/Ptr.hxx"
 #include "widget/RewriteUri.hxx"
+#include "translation/FailingService.hxx"
 #include "http/rl/FailingResourceLoader.hxx"
 #include "istream/OpenFileIstream.hxx"
 #include "istream/istream_string.hxx"
@@ -65,10 +66,13 @@ try {
 
 	TestInstance instance;
 
+	FailingTranslationService translation_service;
 	FailingResourceLoader resource_loader;
 
 	auto ctx = SharedPoolPtr<WidgetContext>::Make
 		(instance.root_pool, instance.event_loop,
+		 nullptr,
+		 translation_service,
 		 resource_loader, resource_loader,
 		 nullptr,
 		 nullptr, nullptr,

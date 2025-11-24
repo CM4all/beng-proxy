@@ -22,7 +22,6 @@
 #include "http/CommonHeaders.hxx"
 #include "http/CookieClient.hxx"
 #include "http/rl/ResourceLoader.hxx"
-#include "bp/Global.hxx"
 #include "translation/Transformation.hxx"
 #include "translation/SuffixRegistry.hxx"
 #include "translation/AddressSuffixRegistry.hxx"
@@ -426,7 +425,7 @@ WidgetRequest::FilterResponse(HttpStatus status,
 		forward_reveal_user(alloc, headers, ctx->user);
 
 	if (body)
-		body = NewAutoPipeIstream(&pool, std::move(body), global_pipe_stock);
+		body = NewAutoPipeIstream(&pool, std::move(body), ctx->pipe_stock);
 
 	ctx->filter_resource_loader
 		.SendRequest(pool,
@@ -727,7 +726,7 @@ WidgetRequest::OnSuffixRegistryError(std::exception_ptr ep) noexcept
 bool
 WidgetRequest::ContentTypeLookup() noexcept
 {
-	return suffix_registry_lookup(pool, *global_translation_service,
+	return suffix_registry_lookup(pool, ctx->translation_service,
 				      widget.GetAddress(),
 				      parent_stopwatch,
 				      *this, cancel_ptr);

@@ -15,6 +15,7 @@
 #include "http/HeaderParser.hxx"
 #include "http/ResponseHandler.hxx"
 #include "http/rl/ResourceLoader.hxx"
+#include "translation/FailingService.hxx"
 #include "bp/XmlProcessor.hxx"
 #include "bp/CssProcessor.hxx"
 #include "bp/TextProcessor.hxx"
@@ -260,10 +261,13 @@ TEST(WidgetHttpTest, CookieClient)
 
 	const auto session_id = session_manager.CreateSession()->id;
 
+	FailingTranslationService translation_service;
 	MyResourceLoader resource_loader;
 
 	auto ctx = SharedPoolPtr<WidgetContext>::Make
 		(*pool, instance.event_loop,
+		 nullptr,
+		 translation_service,
 		 resource_loader, resource_loader,
 		 nullptr,
 		 nullptr, nullptr,

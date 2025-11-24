@@ -7,7 +7,6 @@
 #include "Listener.hxx"
 #include "LStats.hxx"
 #include "Connection.hxx"
-#include "Global.hxx"
 #include "LSSHandler.hxx"
 #include "pool/pool.hxx"
 #include "memory/fb_pool.hxx"
@@ -573,9 +572,6 @@ try {
 		new BufferedResourceLoader(instance.event_loop,
 					   *instance.filter_resource_loader,
 					   instance.pipe_stock);
-
-	global_translation_service = instance.translation_service.get();
-	global_pipe_stock = instance.pipe_stock;
 
 	if (cmdline.debug_listener_tag == nullptr) {
 		for (const auto &i : instance.config.listen)

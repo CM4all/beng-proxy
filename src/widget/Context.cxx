@@ -6,6 +6,8 @@
 #include "Widget.hxx"
 
 WidgetContext::WidgetContext(EventLoop &_event_loop,
+			     PipeStock *_pipe_stock,
+			     TranslationService &_translation_service,
 			     ResourceLoader &_resource_loader,
 			     ResourceLoader &_filter_resource_loader,
 			     WidgetRegistry *_widget_registry,
@@ -23,6 +25,8 @@ WidgetContext::WidgetContext(EventLoop &_event_loop,
 			     const char *_realm,
 			     const StringMap *_request_headers)
 	:event_loop(_event_loop),
+	 pipe_stock(_pipe_stock),
+	 translation_service(_translation_service),
 	 resource_loader(_resource_loader),
 	 filter_resource_loader(_filter_resource_loader),
 	 widget_registry(_widget_registry),

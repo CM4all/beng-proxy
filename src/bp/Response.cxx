@@ -267,6 +267,8 @@ Request::NewWidgetContext() const noexcept
 
 	auto ctx = SharedPoolPtr<WidgetContext>::Make
 		(pool, instance.event_loop,
+		 instance.pipe_stock,
+		 *instance.translation_service,
 		 *instance.cached_resource_loader,
 		 *instance.buffered_filter_resource_loader,
 		 instance.widget_registry,

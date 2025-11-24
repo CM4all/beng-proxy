@@ -4,6 +4,7 @@
 
 #include "TestInstance.hxx"
 #include "http/rl/FailingResourceLoader.hxx"
+#include "translation/FailingService.hxx"
 #include "bp/XmlProcessor.hxx"
 #include "bp/WidgetLookupProcessor.hxx"
 #include "widget/Inline.hxx"
@@ -101,10 +102,13 @@ TEST(Processor, Abort)
 
 	auto pool = pool_new_libc(instance.root_pool, "test");
 
+	FailingTranslationService translation_service;
 	FailingResourceLoader resource_loader;
 
 	auto ctx = SharedPoolPtr<WidgetContext>::Make
 		(*pool, instance.event_loop,
+		 nullptr,
+		 translation_service,
 		 resource_loader, resource_loader,
 		 nullptr,
 		 nullptr, nullptr,

@@ -18,7 +18,6 @@
 #include "bp/session/Id.hxx"
 #include "widget/Inline.hxx"
 #include "widget/Registry.hxx"
-#include "bp/Global.hxx"
 #include "util/ScopeExit.hxx"
 #include "stopwatch.hxx"
 
@@ -82,7 +81,10 @@ public:
 
 		auto ctx = SharedPoolPtr<WidgetContext>::Make
 			(pool,
-			 event_loop, resource_loader, resource_loader,
+			 event_loop,
+			 nullptr,
+			 translation_service,
+			 resource_loader, resource_loader,
 			 &widget_registry,
 			 nullptr, nullptr,
 			 "localhost:8080",

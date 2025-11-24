@@ -11,6 +11,8 @@
 #include <string_view>
 
 class EventLoop;
+class PipeStock;
+class TranslationService;
 class ResourceLoader;
 class WidgetRegistry;
 class StringMap;
@@ -23,6 +25,10 @@ struct HeaderForwardSettings;
 
 struct WidgetContext {
 	EventLoop &event_loop;
+
+	PipeStock *pipe_stock;
+
+	TranslationService &translation_service;
 
 	ResourceLoader &resource_loader;
 	ResourceLoader &filter_resource_loader;
@@ -73,6 +79,8 @@ struct WidgetContext {
 	IntrusiveForwardList<Widget> root_widgets;
 
 	WidgetContext(EventLoop &_event_loop,
+		      PipeStock *_pipe_stock,
+		      TranslationService &_translation_service,
 		      ResourceLoader &_resource_loader,
 		      ResourceLoader &_filter_resource_loader,
 		      WidgetRegistry *_widget_registry,
