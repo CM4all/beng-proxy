@@ -260,7 +260,7 @@ LbRequest::GetStickySource() const noexcept
 
 			// TODO throw "400 Bad Request" on malformed UUID
 
-			if (sv.size() >= UUID_STRING_LENGTH && IsUuidString(sv.substr(0, UUID_STRING_LENGTH))) {
+			if (sv.size() >= UUID_STRING_LENGTH && IsLowerUuidString(sv.substr(0, UUID_STRING_LENGTH))) {
 				/* it's already a well-formed UUID
 				   (with hyphens) */
 				return AsBytes(sv.substr(0, UUID_STRING_LENGTH));
