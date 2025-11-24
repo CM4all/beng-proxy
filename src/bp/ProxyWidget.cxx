@@ -5,7 +5,6 @@
 #include "Request.hxx"
 #include "Instance.hxx"
 #include "CsrfProtection.hxx"
-#include "Global.hxx"
 #include "widget/Widget.hxx"
 #include "widget/Ref.hxx"
 #include "widget/Class.hxx"
@@ -111,7 +110,7 @@ ProxyWidget::OnHttpResponse(HttpStatus status, StringMap &&_headers,
 
 	if (body)
 		body = NewAutoPipeIstream(&request.pool, std::move(body),
-					  global_pipe_stock);
+					  request.instance.pipe_stock);
 
 	/* disable the following transformations, because they are meant
 	   for the template, not for this widget */
