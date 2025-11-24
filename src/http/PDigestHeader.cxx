@@ -13,7 +13,7 @@ using std::string_view_literals::operator""sv;
 
 [[gnu::pure]]
 static auto
-GenericHashHex(std::span<const std::byte> src) noexcept
+SHA256_Hex(std::span<const std::byte> src) noexcept
 {
 	const auto hash = SHA256(src);
 	return HexFormat(std::span{hash});
@@ -22,6 +22,6 @@ GenericHashHex(std::span<const std::byte> src) noexcept
 const char *
 GenerateDigestHeader(AllocatorPtr alloc, std::span<const std::byte> src) noexcept
 {
-	const auto hash_hex = GenericHashHex(src);
+	const auto hash_hex = SHA256_Hex(src);
 	return alloc.Concat("sha-256="sv, hash_hex);
 }
