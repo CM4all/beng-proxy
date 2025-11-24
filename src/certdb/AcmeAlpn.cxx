@@ -18,6 +18,8 @@
 
 #include <fmt/core.h>
 
+using std::string_view_literals::operator""sv;
+
 [[gnu::const]]
 static int
 GetAcmeIdentifierObjectId() noexcept
@@ -44,18 +46,16 @@ MakeCommonName(std::string_view host) noexcept
 	const auto sha256 = SHA256(AsBytes(host));
 	const auto hex = HexFormat(std::span{sha256}.first<20>());
 
-	std::string result{"acme-tls-alpn-01:"};
-	result.append(hex);
-	return result;
+	return fmt::format("acme-tls-alpn-01:{}"sv, (std::string_view)hex);
 }
 
 Alpn01ChallengeRecord::Alpn01ChallengeRecord(CertDatabase &_db,
 					     std::string_view _host)
 	:db(_db), host(_host),
-	 handle(std::string{"acme-tls-alpn-01:"} + host),
+	 handle(fmt::format("acme-tls-alpn-01:{}"sv, host)),
 	 cert(MakeSelfIssuedDummyCert(MakeCommonName(host)))
 {
-	std::string alt_name = std::string{"DNS:"} + host;
+	std::string alt_name = fmt::format("DNS:{}"sv, host);
 
 	AddExt(*cert, NID_subject_alt_name, alt_name.c_str());
 }
