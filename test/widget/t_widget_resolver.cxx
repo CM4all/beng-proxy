@@ -7,6 +7,7 @@
 #include "widget/Widget.hxx"
 #include "widget/Ptr.hxx"
 #include "widget/Class.hxx"
+#include "translation/FailingService.hxx"
 #include "pool/pool.hxx"
 #include "pool/Ptr.hxx"
 #include "pool/RootPool.hxx"
@@ -134,8 +135,8 @@ WidgetClass::FindViewByName([[maybe_unused]] const char *name) const noexcept
 TEST(WidgetResolver, Normal)
 {
 	Context data;
-	WidgetRegistry registry(data.root_pool,
-				*(TranslationService *)(size_t)0x1);
+	FailingTranslationService translation_service;
+	WidgetRegistry registry{data.root_pool, translation_service};
 
 	auto pool = pool_new_linear(data.root_pool, "test", 8192);
 	const AllocatorPtr alloc(pool);
@@ -169,8 +170,8 @@ TEST(WidgetResolver, Normal)
 TEST(WidgetResolver, Abort)
 {
 	Context data;
-	WidgetRegistry registry(data.root_pool,
-				*(TranslationService *)(size_t)0x1);
+	FailingTranslationService translation_service;
+	WidgetRegistry registry{data.root_pool, translation_service};
 
 	auto pool = pool_new_linear(data.root_pool, "test", 8192);
 	const AllocatorPtr alloc(pool);
@@ -204,8 +205,8 @@ TEST(WidgetResolver, Abort)
 TEST(WidgetResolver, TwoClients)
 {
 	Context data;
-	WidgetRegistry registry(data.root_pool,
-				*(TranslationService *)(size_t)0x1);
+	FailingTranslationService translation_service;
+	WidgetRegistry registry{data.root_pool, translation_service};
 
 	auto pool = pool_new_linear(data.root_pool, "test", 8192);
 	const AllocatorPtr alloc(pool);
@@ -245,8 +246,8 @@ TEST(WidgetResolver, TwoAbort)
 	Context data;
 	data.first.abort = true;
 
-	WidgetRegistry registry(data.root_pool,
-				*(TranslationService *)(size_t)0x1);
+	FailingTranslationService translation_service;
+	WidgetRegistry registry{data.root_pool, translation_service};
 
 	auto pool = pool_new_linear(data.root_pool, "test", 8192);
 	const AllocatorPtr alloc(pool);

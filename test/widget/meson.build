@@ -48,6 +48,7 @@ test(
       gtest,
       putil_dep,
       istream_dep,
+      translation_dep,
     ],
   ),
 )

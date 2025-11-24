@@ -17,6 +17,7 @@ translation2 = static_library(
   'InvalidateParser.cxx',
   'CoTranslate.cxx',
   'ListenStreamStockHandler.cxx',
+  'FailingService.cxx',
   include_directories: inc,
   dependencies: [
     coroutines_dep,

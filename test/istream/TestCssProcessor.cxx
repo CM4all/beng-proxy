@@ -4,6 +4,7 @@
 
 #include "IstreamFilterTest.hxx"
 #include "http/rl/FailingResourceLoader.hxx"
+#include "translation/FailingService.hxx"
 #include "istream/istream_string.hxx"
 #include "istream/istream.hxx"
 #include "pool/pool.hxx"
@@ -75,8 +76,9 @@ public:
 
 	UnusedIstreamPtr CreateTest(EventLoop &event_loop, struct pool &pool,
 				    UnusedIstreamPtr input) const noexcept {
+		FailingTranslationService translation_service;
 		FailingResourceLoader resource_loader;
-		WidgetRegistry widget_registry(pool, *(TranslationService *)(size_t)0x1);
+		WidgetRegistry widget_registry{pool, translation_service};
 
 		auto ctx = SharedPoolPtr<WidgetContext>::Make
 			(pool,
