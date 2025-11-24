@@ -6,7 +6,6 @@
 #include "AllocatorPtr.hxx"
 #include "lib/sodium/SHA256.hxx"
 #include "util/HexFormat.hxx"
-#include "util/SpanCast.hxx"
 
 #include <sodium/crypto_generichash.h>
 
@@ -24,5 +23,5 @@ const char *
 GenerateDigestHeader(AllocatorPtr alloc, std::span<const std::byte> src) noexcept
 {
 	const auto hash_hex = GenericHashHex(src);
-	return alloc.Concat("sha-256="sv, ToStringView(hash_hex));
+	return alloc.Concat("sha-256="sv, hash_hex);
 }

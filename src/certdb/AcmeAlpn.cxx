@@ -45,7 +45,7 @@ MakeCommonName(std::string_view host) noexcept
 	const auto hex = HexFormat(std::span{sha256}.first<20>());
 
 	std::string result{"acme-tls-alpn-01:"};
-	result.append(std::string_view{hex.data(), hex.size()});
+	result.append(hex);
 	return result;
 }
 
