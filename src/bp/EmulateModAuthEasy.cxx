@@ -16,6 +16,7 @@
 #include "io/FileDescriptor.hxx"
 #include "util/StringAPI.hxx"
 #include "util/StringCompare.hxx"
+#include "util/StringSplit.hxx"
 #include "util/StringStrip.hxx"
 #include "util/CharUtil.hxx"
 #include "util/ScopeExit.hxx"
@@ -93,7 +94,7 @@ ParseBasicAuth(const char *authorization) noexcept
 	size_t length;
 	const char *end;
 
-	if (sodium_base642bin((unsigned char *)buffer, sizeof(buffer) - 1,
+	if (sodium_base642bin((unsigned char *)buffer, sizeof(buffer),
 			      s, strlen(s),
 			      nullptr, &length, &end,
 			      sodium_base64_VARIANT_ORIGINAL) != 0)
@@ -103,14 +104,11 @@ ParseBasicAuth(const char *authorization) noexcept
 	if (*s != 0)
 		return {};
 
-	buffer[length] = 0;
-
-	const char *colon = strchr(buffer, ':');
-	if (colon == nullptr)
+	const auto [name, password] = Split({buffer, length}, ':');
+	if (password.data() == nullptr)
 		return {};
 
-	return std::make_pair(std::string(buffer, colon - buffer),
-			      std::string(colon + 1));
+	return std::make_pair(std::string{name}, std::string{password});
 }
 
 static char *
