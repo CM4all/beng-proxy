@@ -498,48 +498,7 @@ subdir('libcommon/src/thread')
 subdir('src/fs')
 
 subdir('libcommon/src/translation')
-
-libcommon_translation_dep = translation_dep
-
-
-translation2 = static_library(
-  'translation2',
-  'src/net/NetworkList.cxx',
-  'src/translation/Builder.cxx',
-  'src/translation/Multi.cxx',
-  'src/translation/Cache.cxx',
-  'src/translation/Stock.cxx',
-  'src/translation/Glue.cxx',
-  'src/translation/Layout.cxx',
-  'src/translation/Marshal.cxx',
-  'src/translation/Client.cxx',
-  'src/translation/Transformation.cxx',
-  'src/translation/FilterTransformation.cxx',
-  'src/translation/Vary.cxx',
-  'src/translation/InvalidateParser.cxx',
-  'src/translation/CoTranslate.cxx',
-  'src/translation/ListenStreamStockHandler.cxx',
-  include_directories: inc,
-  dependencies: [
-    coroutines_dep,
-    fmt_dep,
-    pcre_dep,
-  ],
-)
-
-translation_dep = declare_dependency(
-  link_with: translation2,
-  dependencies: [
-    coroutines_dep,
-    translation_dep,
-    event_dep,
-    putil_dep,
-    cache_dep,
-    raddress_dep,
-    socket_dep,
-    stopwatch_dep
-  ],
-)
+subdir('src/translation')
 
 http_common = static_library('http_common',
   'src/http/Body.cxx',
