@@ -35,6 +35,7 @@
 #include "util/FNVHash.hxx"
 #include "util/StringCompare.hxx"
 #include "util/StringVerify.hxx"
+#include "util/UuidString.hxx"
 #include "AllocatorPtr.hxx"
 #include "stopwatch.hxx"
 
@@ -255,32 +256,21 @@ LbRequest::GetStickySource() const noexcept
 {
 	if (!cluster_config.sticky_hex_uuid_uri_prefix.empty()) {
 		if (const char *s = StringAfterPrefix(request.uri, cluster_config.sticky_hex_uuid_uri_prefix)) {
-			static constexpr std::size_t HEX_DIGITS = 32;
-			static constexpr std::size_t UUID_LENGTH = 36;
 			const std::string_view sv{s};
 
 			// TODO throw "400 Bad Request" on malformed UUID
 
-			if (sv.size() >= UUID_LENGTH &&
-			    CheckChars(sv.substr(0, 8), IsLowerHexDigit) &&
-			    sv[8] == '-' &&
-			    CheckChars(sv.substr(9, 4), IsLowerHexDigit) &&
-			    sv[13] == '-' &&
-			    CheckChars(sv.substr(14, 4), IsLowerHexDigit) &&
-			    sv[18] == '-' &&
-			    CheckChars(sv.substr(19, 4), IsLowerHexDigit) &&
-			    sv[23] == '-' &&
-			    CheckChars(sv.substr(24, 12), IsLowerHexDigit)) {
+			if (sv.size() >= UUID_STRING_LENGTH && IsUuidString(sv.substr(0, UUID_STRING_LENGTH))) {
 				/* it's already a well-formed UUID
 				   (with hyphens) */
-				return AsBytes(sv.substr(0, UUID_LENGTH));
+				return AsBytes(sv.substr(0, UUID_STRING_LENGTH));
 			}
 
-			if (sv.size() >= HEX_DIGITS && CheckChars(sv.substr(0, HEX_DIGITS), IsLowerHexDigit)) {
+			if (sv.size() >= UUID_HEX_DIGITS && CheckChars(sv.substr(0, UUID_HEX_DIGITS), IsLowerHexDigit)) {
 				/* there are 32 hex digits in the URI,
 				   but to make it a UUID string, we
 				   need to insert four dashes */
-				const std::span<char, UUID_LENGTH> uuid{PoolAlloc<char>(pool, UUID_LENGTH), UUID_LENGTH};
+				const std::span<char, UUID_STRING_LENGTH> uuid{PoolAlloc<char>(pool, UUID_STRING_LENGTH), UUID_STRING_LENGTH};
 				char *p = uuid.data();
 				p = std::copy_n(s, 8, p);
 				*p++ = '-';
@@ -291,7 +281,7 @@ LbRequest::GetStickySource() const noexcept
 				p = std::copy_n(s + 16, 4, p);
 				*p++ = '-';
 				p = std::copy_n(s + 20, 12, p);
-				assert(p == uuid.data() + UUID_LENGTH);
+				assert(p == uuid.data() + UUID_STRING_LENGTH);
 				return std::as_bytes(uuid);
 			}
 		}
