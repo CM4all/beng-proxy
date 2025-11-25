@@ -117,11 +117,10 @@ Listen(Pg::AsyncConnection &c, const char *name)
 {
 	std::string sql("LISTEN \"");
 
-	const auto &schema = c.GetSchemaName();
-	if (!schema.empty() && schema != "public") {
+	if (!c.IsDefaultSchema()) {
 		/* prefix the notify name unless we're in the default
 		   schema */
-		sql += schema;
+		sql += c.GetSchemaName();
 		sql += ':';
 	}
 
