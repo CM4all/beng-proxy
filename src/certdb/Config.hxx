@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include "pg/Config.hxx"
 #include "WrapKey.hxx"
 
 #include <forward_list>
@@ -12,10 +13,7 @@
 
 class LineParser;
 
-struct CertDatabaseConfig {
-	std::string connect;
-	std::string schema;
-
+struct CertDatabaseConfig : Pg::Config {
 	std::map<std::string, WrapKey, std::less<>> wrap_keys;
 
 	std::string default_wrap_key;
