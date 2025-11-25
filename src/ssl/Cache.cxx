@@ -226,8 +226,7 @@ CertCache::CertCache(EventLoop &event_loop,
 		     const CertDatabaseConfig &_config) noexcept
 	:logger("CertCache"), config(_config),
 	 query_added_notify(event_loop, BIND_THIS_METHOD(StartQuery)),
-	 db(event_loop, config.connect.c_str(), config.schema.c_str(),
-	    *this),
+	 db(event_loop, Pg::Config{config.connect}, *this),
 	 name_cache(event_loop, _config, *this)
 {
 }
