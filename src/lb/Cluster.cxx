@@ -154,7 +154,7 @@ LbCluster::ZeroconfMember::ZeroconfMember(std::string_view key,
 	 monitor(monitors != nullptr
 		 ? std::make_unique<LbMonitorRef>(monitors->Add(key, _address))
 		 : std::unique_ptr<LbMonitorRef>()),
-	 address_hash(RendezvousHashAlgorithm::BinaryHash(SocketAddress{address}.GetSteadyPart())),
+	 address_hash(RendezvousHashAlgorithm::BinaryHash(address.GetSteadyPart())),
 	 negative_weight(-_weight),
 	 arch(_arch)
 {
@@ -168,7 +168,7 @@ LbCluster::ZeroconfMember::Update(const InetAddress &_address, Arch _arch, doubl
 	arch = _arch;
 	negative_weight = -_weight;
 	address = _address;
-	address_hash = RendezvousHashAlgorithm::BinaryHash(SocketAddress{address}.GetSteadyPart());
+	address_hash = RendezvousHashAlgorithm::BinaryHash(address.GetSteadyPart());
 }
 
 const char *
