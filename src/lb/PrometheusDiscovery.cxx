@@ -11,7 +11,7 @@
 #include "memory/GrowingBuffer.hxx"
 #include "memory/istream_gb.hxx"
 #include "lib/avahi/Explorer.hxx"
-#include "net/AllocatedSocketAddress.hxx"
+#include "net/InetAddress.hxx"
 #include "net/FormatAddress.hxx"
 
 using std::string_view_literals::operator""sv;
@@ -66,7 +66,7 @@ LbPrometheusDiscovery::HandleHttpRequest(IncomingHttpRequest &request,
 
 void
 LbPrometheusDiscovery::OnAvahiNewObject(const std::string &key,
-					SocketAddress address,
+					const InetAddress &address,
 					[[maybe_unused]] AvahiStringList *txt) noexcept
 {
 	members.insert_or_assign(key, address);

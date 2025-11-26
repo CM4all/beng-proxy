@@ -27,7 +27,7 @@
 #include "lib/fmt/SystemError.hxx"
 #include "event/ShutdownListener.hxx"
 #include "event/CoarseTimerEvent.hxx"
-#include "net/AllocatedSocketAddress.hxx"
+#include "net/InetAddress.hxx"
 #include "util/PrintException.hxx"
 
 #include <map>
@@ -48,7 +48,7 @@ struct Context final : TestInstance, Avahi::ServiceExplorerListener,
 
 	Avahi::ServiceExplorer explorer;
 
-	using MemberMap = std::map<std::string, AllocatedSocketAddress>;
+	using MemberMap = std::map<std::string, InetAddress>;
 	MemberMap members;
 
 	CoarseTimerEvent dump_event;
@@ -73,7 +73,7 @@ struct Context final : TestInstance, Avahi::ServiceExplorerListener,
 
 	/* virtual methods from class AvahiServiceExplorerListener */
 	void OnAvahiNewObject(const std::string &key,
-			      SocketAddress address,
+			      const InetAddress &address,
 			      AvahiStringList *txt) noexcept override;
 	void OnAvahiRemoveObject(const std::string &key) noexcept override;
 
@@ -116,7 +116,7 @@ Context::Dump() noexcept
 
 void
 Context::OnAvahiNewObject(const std::string &key,
-			  SocketAddress address,
+			  const InetAddress &address,
 			  [[maybe_unused]] AvahiStringList *txt) noexcept
 {
 	members.insert_or_assign(key, address);

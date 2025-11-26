@@ -22,6 +22,7 @@
 #include "net/PConnectSocket.hxx"
 #include "net/FailureManager.hxx"
 #include "net/FormatAddress.hxx"
+#include "net/InetAddress.hxx"
 #include "util/DereferenceIterator.hxx"
 #include "util/djb_hash.hxx"
 #include "util/FNVHash.hxx"
@@ -71,7 +72,7 @@ class LbCluster::StickyRing final
 	: public MemberHashRing<ZeroconfMemberMap::iterator> {};
 
 class LbCluster::ZeroconfMember final : LeakDetector {
-	AllocatedSocketAddress address;
+	InetAddress address;
 
 	const FailureRef failure;
 
@@ -105,7 +106,7 @@ class LbCluster::ZeroconfMember final : LeakDetector {
 public:
 	ZeroconfMember(std::string_view key,
 		       Arch _arch, double _weight,
-		       SocketAddress _address,
+		       const InetAddress &_address,
 		       ReferencedFailureInfo &_failure,
 		       LbMonitorStock *monitors) noexcept;
 	~ZeroconfMember() noexcept;
@@ -117,7 +118,7 @@ public:
 		return address;
 	}
 
-	void Update(SocketAddress _address, Arch _arch, double _weight) noexcept;
+	void Update(const InetAddress &_address, Arch _arch, double _weight) noexcept;
 
 	void CalculateRendezvousScore(std::span<const std::byte> sticky_source) noexcept;
 
@@ -146,14 +147,14 @@ public:
 
 LbCluster::ZeroconfMember::ZeroconfMember(std::string_view key,
 					  Arch _arch, double _weight,
-					  SocketAddress _address,
+					  const InetAddress &_address,
 					  ReferencedFailureInfo &_failure,
 					  LbMonitorStock *monitors) noexcept
 	:address(_address), failure(_failure),
 	 monitor(monitors != nullptr
 		 ? std::make_unique<LbMonitorRef>(monitors->Add(key, _address))
 		 : std::unique_ptr<LbMonitorRef>()),
-	 address_hash(RendezvousHashAlgorithm::BinaryHash(address.GetSteadyPart())),
+	 address_hash(RendezvousHashAlgorithm::BinaryHash(SocketAddress{address}.GetSteadyPart())),
 	 negative_weight(-_weight),
 	 arch(_arch)
 {
@@ -162,19 +163,19 @@ LbCluster::ZeroconfMember::ZeroconfMember(std::string_view key,
 LbCluster::ZeroconfMember::~ZeroconfMember() noexcept = default;
 
 inline void
-LbCluster::ZeroconfMember::Update(SocketAddress _address, Arch _arch, double _weight) noexcept
+LbCluster::ZeroconfMember::Update(const InetAddress &_address, Arch _arch, double _weight) noexcept
 {
 	arch = _arch;
 	negative_weight = -_weight;
 	address = _address;
-	address_hash = RendezvousHashAlgorithm::BinaryHash(address.GetSteadyPart());
+	address_hash = RendezvousHashAlgorithm::BinaryHash(SocketAddress{address}.GetSteadyPart());
 }
 
 const char *
 LbCluster::ZeroconfMember::GetLogName(const char *key) const noexcept
 {
 	if (log_name.empty()) {
-		if (address.IsNull())
+		if (!address.IsDefined())
 			return key;
 
 		log_name = key;
@@ -830,7 +831,7 @@ GetWeightFromTxt(AvahiStringList *txt) noexcept
 
 void
 LbCluster::OnAvahiNewObject(const std::string &key,
-			    SocketAddress address,
+			    const InetAddress &address,
 			    AvahiStringList *txt) noexcept
 {
 	const auto arch = GetArchFromTxt(txt);

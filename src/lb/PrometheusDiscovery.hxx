@@ -19,7 +19,7 @@ class AllocatedSocketAddress;
 class LbPrometheusDiscovery final : public HttpServerRequestHandler, Avahi::ServiceExplorerListener {
 	std::unique_ptr<Avahi::ServiceExplorer> explorer;
 
-	std::map<std::string, AllocatedSocketAddress, std::less<>> members;
+	std::map<std::string, InetAddress, std::less<>> members;
 
 public:
 	LbPrometheusDiscovery(const LbPrometheusDiscoveryConfig &config,
@@ -38,7 +38,7 @@ private:
 
 	/* virtual methods from class AvahiServiceExplorerListener */
 	void OnAvahiNewObject(const std::string &key,
-			      SocketAddress address,
+			      const InetAddress &address,
 			      AvahiStringList *txt) noexcept override;
 	void OnAvahiRemoveObject(const std::string &key) noexcept override;
 };
