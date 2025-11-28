@@ -1,6 +1,6 @@
 cm4all-beng-proxy (21.8) unstable; urgency=low
 
-  * 
+  * control: allow passing multiple addresses to "{reject,tarpit}-client"
 
  --   
 

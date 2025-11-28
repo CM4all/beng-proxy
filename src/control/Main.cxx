@@ -2,6 +2,7 @@
 // Copyright CM4all GmbH
 // author: Max Kellermann <max.kellermann@ionos.com>
 
+#include "net/control/Builder.hxx"
 #include "net/control/Client.hxx"
 #include "translation/Protocol.hxx"
 #include "lib/fmt/RuntimeError.hxx"
@@ -9,7 +10,6 @@
 #include "io/UniqueFileDescriptor.hxx"
 #include "system/Error.hxx"
 #include "time/Parser.hxx"
-#include "util/AllocatedArray.hxx"
 #include "util/ByteOrder.hxx"
 #include "util/PackedBigEndian.hxx"
 #include "util/PrintException.hxx"
@@ -290,24 +290,23 @@ BanClient(const char *server, BengControl::Command command, std::span<const char
 	if (args.size() < 2)
 		throw Usage{"Not enough arguments"};
 
-	if (args.size() > 2)
-		throw Usage{"Too many arguments"};
-
 	const auto duration = std::clamp(std::chrono::duration_cast<std::chrono::seconds>(ParseDuration(args[0]).first),
 					 std::chrono::seconds{0},
 					 std::chrono::seconds{0xffffffff});
 
-	const std::string_view address = args[1];
-	if (address.empty())
-		throw Usage{"Invalid address"};
+	const uint32_t duration_be = ToBE32(duration.count());
 
-	AllocatedArray<std::byte> payload{4 + address.size()};
-	std::byte *p = payload.data();
-	p = WriteUnalignedBE32(p, duration.count());
-	std::copy(address.begin(), address.end(), reinterpret_cast<char *>(p));
+	BengControl::Builder b;
+
+	for (const std::string_view address : args.subspan(1)) {
+		if (address.empty())
+			throw Usage{"Invalid address"};
+
+		b.Add(command, {ReferenceAsBytes(duration_be), AsBytes(address)});
+	}
 
 	BengControl::Client client(server);
-	client.Send(command, payload);
+	client.Send(b);
 }
 
 static void
@@ -477,8 +476,8 @@ try {
 		"  flush-filter-cache [TAG]\n"
 		"  discard-session ATTACH_ID\n"
 		"  reset-limiter ID\n"
-		"  reject-client DURATION ADDRESS\n"
-		"  tarpit-client DURATION ADDRESS\n"
+		"  reject-client DURATION ADDRESS...\n"
+		"  tarpit-client DURATION ADDRESS...\n"
 		"  cancel-job PARTITION ID\n"
 		"  stopwatch\n"
 		"\n"
