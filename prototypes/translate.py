@@ -1267,7 +1267,7 @@ if __name__ == '__main__':
                 src_dir = os.path.join(os.getcwd(), '../..')
 
         was_examples_path = os.path.join(src_dir, 'libwas', 'output', 'debug', 'examples')
-        libcommon_was_path = os.path.join(src_dir, 'libcommon', 'output', 'debug', 'test', 'was')
+        libcommon_was_path = os.path.join(src_dir, 'libcommon', 'output', 'debug', 'demo', 'was')
         coma_was = os.path.join(src_dir, 'cgi-coma/output/debug/coma-was')
         coma_demo = os.path.join(src_dir, 'cgi-coma/demo')
         image_processor_path = os.path.join(src_dir, 'image-processor/src')
