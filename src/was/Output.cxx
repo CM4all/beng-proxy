@@ -28,12 +28,12 @@
 
 static constexpr Event::Duration was_output_timeout = std::chrono::minutes(2);
 
-class WasOutput final : PoolLeakDetector, IstreamSink, DestructAnchor {
+class WasOutputSink final : PoolLeakDetector, IstreamSink, DestructAnchor {
 	PipeEvent event;
 	DeferEvent defer_write;
 	CoarseTimerEvent timeout_event;
 
-	WasOutputHandler &handler;
+	WasOutputSinkHandler &handler;
 
 	uint64_t sent = 0;
 
@@ -44,9 +44,9 @@ class WasOutput final : PoolLeakDetector, IstreamSink, DestructAnchor {
 	bool got_data;
 
 public:
-	WasOutput(struct pool &pool, EventLoop &event_loop, FileDescriptor fd,
+	WasOutputSink(struct pool &pool, EventLoop &event_loop, FileDescriptor fd,
 		  UnusedIstreamPtr _input,
-		  WasOutputHandler &_handler) noexcept
+		  WasOutputSinkHandler &_handler) noexcept
 		:PoolLeakDetector(pool),
 		 IstreamSink(std::move(_input)),
 		 event(event_loop, BIND_THIS_METHOD(WriteEventCallback), fd),
@@ -77,31 +77,31 @@ private:
 	}
 
 	void Destroy() noexcept {
-		this->~WasOutput();
+		this->~WasOutputSink();
 	}
 
 	void DestroyEof() noexcept {
 		assert(!HasInput());
 
 		auto &_handler = handler;
-		if (!known_length && !_handler.WasOutputLength(sent))
+		if (!known_length && !_handler.WasOutputSinkLength(sent))
 			return;
 
 		Destroy();
-		_handler.WasOutputEof();
+		_handler.WasOutputSinkEof();
 	}
 
 	void DestroyPremature(std::exception_ptr ep) noexcept {
 		const auto _sent = sent;
 		auto &_handler = handler;
 		Destroy();
-		_handler.WasOutputPremature(_sent, ep);
+		_handler.WasOutputSinkPremature(_sent, ep);
 	}
 
 	void DestroyError(std::exception_ptr ep) noexcept {
 		auto &_handler = handler;
 		Destroy();
-		_handler.WasOutputError(ep);
+		_handler.WasOutputSinkError(ep);
 	}
 
 	bool IsEof() const noexcept {
@@ -142,7 +142,7 @@ private:
 };
 
 bool
-WasOutput::CheckLength() noexcept
+WasOutputSink::CheckLength() noexcept
 {
 	if (known_length)
 		return true;
@@ -153,7 +153,7 @@ WasOutput::CheckLength() noexcept
 
 	known_length = true;
 	total_length = sent + input_length.length;
-	return handler.WasOutputLength(total_length);
+	return handler.WasOutputSinkLength(total_length);
 }
 
 /*
@@ -162,7 +162,7 @@ WasOutput::CheckLength() noexcept
  */
 
 inline void
-WasOutput::WriteEventCallback(unsigned) noexcept
+WasOutputSink::WriteEventCallback(unsigned) noexcept
 {
 	assert(HasPipe());
 	assert(HasInput());
@@ -190,7 +190,7 @@ WasOutput::WriteEventCallback(unsigned) noexcept
 }
 
 inline void
-WasOutput::OnDeferredWrite() noexcept
+WasOutputSink::OnDeferredWrite() noexcept
 {
 	assert(HasPipe());
 	assert(HasInput());
@@ -213,7 +213,7 @@ WasOutput::OnDeferredWrite() noexcept
  */
 
 IstreamReadyResult
-WasOutput::OnIstreamReady() noexcept
+WasOutputSink::OnIstreamReady() noexcept
 {
 	assert(HasPipe());
 	assert(HasInput());
@@ -285,7 +285,7 @@ WasOutput::OnIstreamReady() noexcept
 }
 
 inline std::size_t
-WasOutput::OnData(const std::span<const std::byte> src) noexcept
+WasOutputSink::OnData(const std::span<const std::byte> src) noexcept
 {
 	assert(HasPipe());
 	assert(HasInput());
@@ -322,7 +322,7 @@ WasOutput::OnData(const std::span<const std::byte> src) noexcept
 }
 
 IstreamDirectResult
-WasOutput::OnDirect(FdType, FileDescriptor source_fd, off_t source_offset,
+WasOutputSink::OnDirect(FdType, FileDescriptor source_fd, off_t source_offset,
 		    std::size_t max_length, bool then_eof) noexcept
 {
 	assert(HasPipe());
@@ -337,7 +337,7 @@ WasOutput::OnDirect(FdType, FileDescriptor source_fd, off_t source_offset,
 	if (then_eof && !known_length) {
 		known_length = true;
 		total_length = sent + max_length;
-		if (!handler.WasOutputLength(total_length))
+		if (!handler.WasOutputSinkLength(total_length))
 			return IstreamDirectResult::CLOSED;
 	}
 
@@ -382,7 +382,7 @@ WasOutput::OnDirect(FdType, FileDescriptor source_fd, off_t source_offset,
 }
 
 void
-WasOutput::OnEof() noexcept
+WasOutputSink::OnEof() noexcept
 {
 	assert(HasInput());
 
@@ -391,7 +391,7 @@ WasOutput::OnEof() noexcept
 }
 
 void
-WasOutput::OnError(std::exception_ptr &&ep) noexcept
+WasOutputSink::OnError(std::exception_ptr &&ep) noexcept
 {
 	assert(HasInput());
 
@@ -405,19 +405,19 @@ WasOutput::OnError(std::exception_ptr &&ep) noexcept
  *
  */
 
-WasOutput *
+WasOutputSink *
 was_output_new(struct pool &pool, EventLoop &event_loop,
 	       FileDescriptor fd, UnusedIstreamPtr input,
-	       WasOutputHandler &handler) noexcept
+	       WasOutputSinkHandler &handler) noexcept
 {
 	assert(fd.IsDefined());
 
-	return NewFromPool<WasOutput>(pool, pool, event_loop, fd,
+	return NewFromPool<WasOutputSink>(pool, pool, event_loop, fd,
 				      std::move(input), handler);
 }
 
 uint64_t
-was_output_free(WasOutput *output) noexcept
+was_output_free(WasOutputSink *output) noexcept
 {
 	assert(output != nullptr);
 
@@ -425,7 +425,7 @@ was_output_free(WasOutput *output) noexcept
 }
 
 bool
-was_output_check_length(WasOutput &output) noexcept
+was_output_check_length(WasOutputSink &output) noexcept
 {
 	return output.CheckLength();
 }

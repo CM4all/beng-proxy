@@ -106,7 +106,7 @@ WasServer::AbortUnused() noexcept
  */
 
 bool
-WasServer::WasOutputLength(uint64_t length) noexcept
+WasServer::WasOutputSinkLength(uint64_t length) noexcept
 {
 	assert(control.IsDefined());
 	assert(response.body != nullptr);
@@ -115,14 +115,14 @@ WasServer::WasOutputLength(uint64_t length) noexcept
 }
 
 bool
-WasServer::WasOutputPremature(uint64_t length, std::exception_ptr ep) noexcept
+WasServer::WasOutputSinkPremature(uint64_t length, std::exception_ptr ep) noexcept
 {
 	assert(response.body != nullptr);
 	response.body = nullptr;
 
 	if (!control.IsDefined())
 		/* this can happen if was_input_free() call destroys the
-		   WasOutput instance; this check means to work around this
+		   WasOutputSink instance; this check means to work around this
 		   circular call */
 		return true;
 
@@ -132,7 +132,7 @@ WasServer::WasOutputPremature(uint64_t length, std::exception_ptr ep) noexcept
 }
 
 void
-WasServer::WasOutputEof() noexcept
+WasServer::WasOutputSinkEof() noexcept
 {
 	assert(response.body != nullptr);
 
@@ -140,7 +140,7 @@ WasServer::WasOutputEof() noexcept
 }
 
 void
-WasServer::WasOutputError(std::exception_ptr ep) noexcept
+WasServer::WasOutputSinkError(std::exception_ptr ep) noexcept
 {
 	assert(response.body != nullptr);
 

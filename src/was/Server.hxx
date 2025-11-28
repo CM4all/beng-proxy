@@ -25,7 +25,7 @@ public:
 	virtual void OnWasClosed() noexcept = 0;
 };
 
-class WasServer final : Was::ControlHandler, WasOutputHandler, WasInputHandler {
+class WasServer final : Was::ControlHandler, WasOutputSinkHandler, WasInputHandler {
 	struct pool &pool;
 
 	WasSocket socket;
@@ -81,7 +81,7 @@ class WasServer final : Was::ControlHandler, WasOutputHandler, WasInputHandler {
 
 		char content_length_buffer[32];
 
-		WasOutput *body;
+		WasOutputSink *body;
 	} response;
 
 public:
@@ -140,12 +140,12 @@ private:
 	void OnWasControlHangup() noexcept override;
 	void OnWasControlError(std::exception_ptr ep) noexcept override;
 
-	/* virtual methods from class WasOutputHandler */
-	bool WasOutputLength(uint64_t length) noexcept override;
-	bool WasOutputPremature(uint64_t length,
+	/* virtual methods from class WasOutputSinkHandler */
+	bool WasOutputSinkLength(uint64_t length) noexcept override;
+	bool WasOutputSinkPremature(uint64_t length,
 				std::exception_ptr ep) noexcept override;
-	void WasOutputEof() noexcept override;
-	void WasOutputError(std::exception_ptr ep) noexcept override;
+	void WasOutputSinkEof() noexcept override;
+	void WasOutputSinkError(std::exception_ptr ep) noexcept override;
 
 	/* virtual methods from class WasInputHandler */
 	void WasInputClose(uint64_t received) noexcept override;

@@ -49,7 +49,7 @@ IsWasClientRetryFailure(std::exception_ptr error) noexcept
 }
 
 class WasClient final
-	: Was::ControlHandler, WasOutputHandler, WasInputHandler,
+	: Was::ControlHandler, WasOutputSinkHandler, WasInputHandler,
 	  PoolLeakDetector,
 	  Cancellable
 {
@@ -86,9 +86,9 @@ class WasClient final
 	FineTimerEvent submit_response_timer;
 
 	struct Request {
-		WasOutput *body;
+		WasOutputSink *body;
 
-		explicit Request(WasOutput *_body) noexcept:body(_body) {}
+		explicit Request(WasOutputSink *_body) noexcept:body(_body) {}
 
 		void ClearBody() noexcept {
 			if (body != nullptr)
@@ -220,7 +220,7 @@ private:
 	 * If the control channel is clean (i.e. buffers are empty), it
 	 * will attempt to reuse the WAS child process.
 	 *
-	 * Prior to calling this method, the #WasInput and the #WasOutput
+	 * Prior to calling this method, the #WasInput and the #WasOutputSink
 	 * must be released already.
 	 */
 	PutAction ReleaseControl() noexcept {
@@ -261,7 +261,7 @@ private:
 	}
 
 	/**
-	 * Destroys the objects Was::Control, WasInput, WasOutput and
+	 * Destroys the objects Was::Control, WasInput, WasOutputSink and
 	 * releases the socket lease.  Assumes the response body has not
 	 * been enabled.
 	 */
@@ -418,12 +418,12 @@ private:
 		AbortControlError(std::move(ep));
 	}
 
-	/* virtual methods from class WasOutputHandler */
-	bool WasOutputLength(uint64_t length) noexcept override;
-	bool WasOutputPremature(uint64_t length,
+	/* virtual methods from class WasOutputSinkHandler */
+	bool WasOutputSinkLength(uint64_t length) noexcept override;
+	bool WasOutputSinkPremature(uint64_t length,
 				std::exception_ptr ep) noexcept override;
-	void WasOutputEof() noexcept override;
-	void WasOutputError(std::exception_ptr ep) noexcept override;
+	void WasOutputSinkEof() noexcept override;
+	void WasOutputSinkError(std::exception_ptr ep) noexcept override;
 
 	/* virtual methods from class WasInputHandler */
 	void WasInputClose(uint64_t received) noexcept override;
@@ -789,7 +789,7 @@ WasClient::OnWasControlDrained() noexcept
  */
 
 bool
-WasClient::WasOutputLength(uint64_t length) noexcept
+WasClient::WasOutputSinkLength(uint64_t length) noexcept
 {
 	assert(!IsControlReleased());
 	assert(request.body != nullptr);
@@ -798,7 +798,7 @@ WasClient::WasOutputLength(uint64_t length) noexcept
 }
 
 bool
-WasClient::WasOutputPremature(uint64_t length, std::exception_ptr ep) noexcept
+WasClient::WasOutputSinkPremature(uint64_t length, std::exception_ptr ep) noexcept
 {
 	assert(!IsControlReleased());
 	assert(request.body != nullptr);
@@ -815,7 +815,7 @@ WasClient::WasOutputPremature(uint64_t length, std::exception_ptr ep) noexcept
 }
 
 void
-WasClient::WasOutputEof() noexcept
+WasClient::WasOutputSinkEof() noexcept
 {
 	assert(request.body != nullptr);
 
@@ -825,7 +825,7 @@ WasClient::WasOutputEof() noexcept
 }
 
 void
-WasClient::WasOutputError(std::exception_ptr ep) noexcept
+WasClient::WasOutputSinkError(std::exception_ptr ep) noexcept
 {
 	assert(request.body != nullptr);
 
@@ -954,7 +954,7 @@ SendRequest(Was::Control &control,
 	    HttpMethod method, const char *uri,
 	    const char *script_name, const char *path_info,
 	    const char *query_string,
-	    const StringMap &headers, WasOutput *request_body,
+	    const StringMap &headers, WasOutputSink *request_body,
 	    std::span<const char *const> params)
 {
 	const uint32_t method32 = (uint32_t)method;
