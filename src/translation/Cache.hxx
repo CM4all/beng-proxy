@@ -6,6 +6,7 @@
 
 #include "Service.hxx"
 
+#include <cstdint>
 #include <memory>
 #include <span>
 
