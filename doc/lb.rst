@@ -736,10 +736,6 @@ rejected if the client chooses not to send a certificate, and the
 headers described above will not be present. A client using an untrusted
 certificate will still be rejected.
 
-Note that due to technical limitations of the current implementation, it
-is not possible to combine client certificate and the certificate
-database.
-
 Wireshark
 ^^^^^^^^^
 
