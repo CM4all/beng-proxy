@@ -19,8 +19,15 @@ struct TranslationLayoutItem {
 		REGEX,
 	};
 
+	/**
+	 * The raw string as received from the translation server.
+	 */
 	std::string value;
 
+	/**
+	 * If #value is from a REGEX packet, then this field contains
+	 * the compiled regex.
+	 */
 	UniqueRegex regex;
 
 	TranslationLayoutItem() = default;
