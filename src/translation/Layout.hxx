@@ -31,7 +31,7 @@ struct TranslationLayoutItem {
 
 	struct Regex {};
 	TranslationLayoutItem(Regex, std::string_view _value)
-		:value(_value), regex(value.c_str(), {.anchored=true}) {}
+		:value(_value), regex(value, {.anchored=true}) {}
 
 	Type GetType() const noexcept {
 		return regex.IsDefined() ? Type::REGEX : Type::BASE;
