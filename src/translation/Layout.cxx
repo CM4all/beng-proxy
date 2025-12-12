@@ -5,11 +5,22 @@
 #include "Layout.hxx"
 #include "util/StringCompare.hxx"
 
+#include <cassert>
+
 bool
 TranslationLayoutItem::Match(const char *uri) const noexcept
 {
-	if (regex.IsDefined())
-		return regex.Match(uri);
+	switch (type) {
+	case Type::BASE:
+		assert(!regex.IsDefined());
 
-	return StringStartsWith(uri, value);
+		return StringStartsWith(uri, value);
+
+	case Type::REGEX:
+		assert(regex.IsDefined());
+
+		return regex.Match(uri);
+	}
+
+	std::unreachable();
 }

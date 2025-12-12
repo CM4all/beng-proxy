@@ -30,18 +30,20 @@ struct TranslationLayoutItem {
 	 */
 	UniqueRegex regex;
 
+	Type type;
+
 	TranslationLayoutItem() = default;
 
 	struct Base {};
 	TranslationLayoutItem(Base, std::string_view _value) noexcept
-		:value(_value) {}
+		:value(_value), type(Type::BASE) {}
 
 	struct Regex {};
 	TranslationLayoutItem(Regex, std::string_view _value)
-		:value(_value), regex(value, {.anchored=true}) {}
+		:value(_value), regex(value, {.anchored=true}), type(Type::REGEX) {}
 
 	Type GetType() const noexcept {
-		return regex.IsDefined() ? Type::REGEX : Type::BASE;
+		return type;
 	}
 
 	[[gnu::pure]]
