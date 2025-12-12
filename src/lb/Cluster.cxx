@@ -832,7 +832,8 @@ GetWeightFromTxt(AvahiStringList *txt) noexcept
 void
 LbCluster::OnAvahiNewObject(const std::string &key,
 			    const InetAddress &address,
-			    AvahiStringList *txt) noexcept
+			    AvahiStringList *txt,
+			    [[maybe_unused]] Flags flags) noexcept
 {
 	const auto arch = GetArchFromTxt(txt);
 	const auto weight = GetWeightFromTxt(txt);

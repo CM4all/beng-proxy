@@ -277,7 +277,8 @@ private:
 	/* virtual methods from class AvahiServiceExplorerListener */
 	void OnAvahiNewObject(const std::string &key,
 			      const InetAddress &address,
-			      AvahiStringList *txt) noexcept override;
+			      AvahiStringList *txt,
+			      Flags flags) noexcept override;
 	void OnAvahiRemoveObject(const std::string &key) noexcept override;
 #endif
 };
