@@ -11,6 +11,11 @@ bool
 TranslationLayoutItem::Match(const char *uri) const noexcept
 {
 	switch (type) {
+	case Type::EXACT:
+		assert(!regex.IsDefined());
+
+		return value == uri;
+
 	case Type::BASE:
 		assert(!regex.IsDefined());
 

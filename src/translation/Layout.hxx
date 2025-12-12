@@ -15,6 +15,7 @@
  */
 struct TranslationLayoutItem {
 	enum class Type {
+		EXACT,
 		BASE,
 		REGEX,
 	};

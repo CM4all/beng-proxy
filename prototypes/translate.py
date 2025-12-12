@@ -1098,6 +1098,8 @@ class Translation(Protocol):
                     response.packet(TRANSLATE_MESSAGE, 'foo\n')
                 elif request.regex == 'bar':
                     response.packet(TRANSLATE_MESSAGE, 'bar\n')
+                elif request.layout_uri == 'exact':
+                    response.packet(TRANSLATE_MESSAGE, 'exactly\n')
                 else:
                     response.status(404)
             else:
@@ -1106,6 +1108,7 @@ class Translation(Protocol):
                 response.packet(TRANSLATE_REGEX_TAIL)
                 response.packet(TRANSLATE_REGEX, 'foo')
                 response.packet(TRANSLATE_REGEX, 'bar')
+                response.packet(TRANSLATE_URI, 'exact')
         elif uri == '/tiny.gif':
             response.packet(TRANSLATE_TINY_IMAGE)
         elif uri.startswith('/same-site/'):

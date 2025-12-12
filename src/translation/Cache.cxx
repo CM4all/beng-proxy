@@ -419,6 +419,10 @@ tcache_uri_key(AllocatorPtr alloc, const char *uri, const char *host,
 
 		if (layout_item != nullptr) {
 			switch (layout_item->GetType()) {
+			case TranslationLayoutItem::Type::EXACT:
+				b.push_back("-=");
+				break;
+
 			case TranslationLayoutItem::Type::BASE:
 				b.push_back("--");
 				break;

@@ -723,11 +723,11 @@ response packets allow reusing cache items for different requests:
   layout.  Its payload is a non-empty opaque value which is mirrored
   in the next request.
 
-  This pakcet is followed by one or more ``BASE`` / ``REGEX`` packets
-  specifying URI bases or regular expressionswhich shall not share
-  cache items.  The first matching base/regex specfies where
-  translation cache items will be stored; all URIs without a match
-  have their own cache.
+  This packet is followed by one or more ``URI`` / ``BASE`` /
+  ``REGEX`` packets specifying exact URI matches, URI bases or regular
+  expressions which shall not share cache items.  The first matching
+  base/regex specfies where translation cache items will be stored;
+  all URIs without a match have their own cache.
 
   This way, cacheable URI bases can be constructed easily without
   excessively complex ``INVERSE_REGEX`` packets.
@@ -736,6 +736,7 @@ response packets allow reusing cache items for different requests:
 
   - ``BASE=/``
   - ``LAYOUT=[opaque]``
+  - ``URI=/robots.txt``
   - ``BASE=/.cm4all/private/``
   - ``BASE=/.cm4all/``
   - ``BASE=/.well-known/``
@@ -746,7 +747,7 @@ response packets allow reusing cache items for different requests:
   ``INVERSE_REGEX`` to exclude the specified bases.
 
   The following request will mirror the ``LAYOUT`` packet and the
-  matching ``BASE`` packet:
+  matching ``URI`` / ``BASE`` / ``REGEX` packet:
 
   - ``URI=/.cm4all/foo``
   - ``LAYOUT=[opaque]``
@@ -763,8 +764,27 @@ response packets allow reusing cache items for different requests:
   ``/.cm4all/``, except for URIs below ``/.cm4all/private/``.
 
   If ``LAYOUT`` is followed by ``REGEX_TAIL``, then all regular
-  expressions are matched against the tail of the URI after the given
-  ``BASE``.
+  expressions (and other URI comparisons) are matched against the tail
+  of the URI after the given ``BASE``.  Example ``LAYOUT`` response:
+
+  - ``BASE=/foo/``
+  - ``LAYOUT=[opaque]``
+  - ``REGEX_TAIL``
+  - ``URI=hello.txt``
+  - ``BASE=bar/``
+  - ``REGEX=\.php$``
+
+  In the follow-up request, these are mirrored; for example, after a
+  request to ``/foo/hello.txt``, the next translation request looks
+  like this:
+
+  - ``URI=/foo/hello.txt``
+  - ``LAYOUT=[opaque]``
+  - ``URI=hello.txt``
+
+  Note how there are now two ``URI`` packets: the first one is the
+  actual request URI and the second one mirrors the matching
+  ``LAYOUT`` item.
 
 .. _tstatic:
 

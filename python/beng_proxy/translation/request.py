@@ -89,6 +89,7 @@ class Request:
         self.plan: str|None = None
         self.cron: str|bool = False
         self.execute: str|bool = False
+        self.layout_uri: str|None = None
         self.base: str|None = None
         self.regex: str|None = None
 
@@ -116,7 +117,10 @@ class Request:
         elif packet.command == TRANSLATE_ALT_HOST:
             self.alt_host = packet.payload.decode('ascii')
         elif packet.command == TRANSLATE_URI:
-            self.raw_uri = packet.payload.decode('ascii')
+            if self.layout is not None:
+                self.layout_uri = packet.payload.decode('ascii')
+            else:
+                self.raw_uri = packet.payload.decode('ascii')
         elif packet.command == TRANSLATE_ARGS:
             self.args = packet.payload.decode('ascii')
         elif packet.command == TRANSLATE_QUERY_STRING:
