@@ -34,13 +34,13 @@ struct TranslationLayoutItem {
 
 	TranslationLayoutItem() = default;
 
-	struct Base {};
-	TranslationLayoutItem(Base, std::string_view _value) noexcept
-		:value(_value), type(Type::BASE) {}
-
-	struct Regex {};
-	TranslationLayoutItem(Regex, std::string_view _value)
-		:value(_value), regex(value, {.anchored=true}), type(Type::REGEX) {}
+	[[nodiscard]]
+	explicit TranslationLayoutItem(Type _type, std::string_view _value) noexcept
+		:value(_value), type(_type)
+	{
+		if (type == Type::REGEX)
+			regex.Compile(value, {.anchored=true});
+	}
 
 	Type GetType() const noexcept {
 		return type;

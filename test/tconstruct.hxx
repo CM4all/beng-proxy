@@ -28,7 +28,7 @@ struct MakeRequest : TranslateRequest {
 		layout = AsBytes(value);
 
 		if (item != nullptr) {
-			my_layout_item = TranslationLayoutItem{TranslationLayoutItem::Base{}, item};
+			my_layout_item = TranslationLayoutItem{TranslationLayoutItem::Type::BASE, item};
 			layout_item = &my_layout_item;
 		}
 
@@ -91,7 +91,7 @@ struct MakeResponse : TranslateResponse {
 		layout_items = std::make_shared<std::vector<TranslationLayoutItem>>();
 
 		for (const char *src : items)
-			layout_items->emplace_back(TranslationLayoutItem::Base{}, src);
+			layout_items->emplace_back(TranslationLayoutItem::Type::BASE, src);
 
 		return std::move(*this);
 	}
