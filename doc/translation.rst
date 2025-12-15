@@ -786,6 +786,13 @@ response packets allow reusing cache items for different requests:
   actual request URI and the second one mirrors the matching
   ``LAYOUT`` item.
 
+  As a shortcut for implementing CORS, a layout item may be followed
+  by ``ACCESS_CONTROL_ALLOW_ALL``.  All matching ``OPTIONS`` requests
+  will then lead to an empty response with
+  ``Access-Control-Allow-{Origin,Methods,Headers}: *``.  Use this for
+  API endpoints with unrestricted script access to avoid roundtrips to
+  the actual API process.
+
 .. _tstatic:
 
 Static files

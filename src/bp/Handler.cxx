@@ -581,6 +581,20 @@ Request::RepeatTranslation(UniquePoolPtr<TranslateResponse> _response) noexcept
 		translate.layout_items = response.layout_items;
 		translate.request.layout_item = FindLayoutItem(*response.layout_items,
 							       uri);
+
+		if (translate.request.layout_item != nullptr &&
+		    translate.request.layout_item->access_control_allow_all &&
+		    request.method == HttpMethod::OPTIONS) [[unlikely]] {
+			_response.reset();
+
+			HttpHeaders headers;
+			headers.Write("access-control-allow-origin"sv, "*"sv);
+			headers.Write("access-control-allow-methods"sv, "*"sv);
+			headers.Write("access-control-allow-headers"sv, "*"sv);
+			headers.Write("access-control-max-age"sv, "86400"sv);
+			DispatchResponseDirect(HttpStatus::NO_CONTENT, std::move(headers), {});
+			return;
+		}
 	}
 
 	bool save_previous = false;

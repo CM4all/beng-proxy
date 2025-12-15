@@ -33,6 +33,11 @@ struct TranslationLayoutItem {
 
 	Type type;
 
+	/**
+	 * @see TranslationCommand::ACCESS_CONTROL_ALLOW_ALL
+	 */
+	bool access_control_allow_all = false;
+
 	TranslationLayoutItem() = default;
 
 	[[nodiscard]]
