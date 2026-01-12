@@ -430,9 +430,10 @@ Response
 - ``REALM_FROM_AUTH_BASE``: Copy the ``AUTH`` or ``AUTH_FILE`` contents
   to ``REALM`` (i.e. without ``APPEND_AUTH``).
 
-- ``TRANSPARENT``: Transparent proxy: forward URI arguments to the
-  request handler instead of using them. As a side effect, session
-  handling is disabled.
+- ``TRANSPARENT``: Transparent proxy: forward URI path segment params
+  to the request handler instead of using them.  This disables legacy
+  handling of these params (which was used to control widget
+  rendering).
 
 - ``LANGUAGE``: overrides the ``Accept-Language`` request header for
   this session

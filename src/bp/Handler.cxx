@@ -876,10 +876,10 @@ Request::OnTranslateResponse(UniquePoolPtr<TranslateResponse> _response) noexcep
 		return;
 	}
 
-	if (response.transparent) {
-		MakeStateless();
+	if (response.transparent)
 		args.Clear();
-	} else if (response.discard_session)
+
+	if (response.discard_session)
 		DiscardSession();
 	else if (response.discard_realm_session)
 		DiscardRealmSession();
