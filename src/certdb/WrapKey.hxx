@@ -7,7 +7,6 @@
 #include "lib/sodium/SecretBoxTypes.hxx"
 
 #include <algorithm>
-#include <array>
 #include <cstddef>
 #include <span>
 
