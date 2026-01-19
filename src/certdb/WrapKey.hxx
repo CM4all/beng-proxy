@@ -4,6 +4,8 @@
 
 #pragma once
 
+#include "lib/sodium/SecretBoxTypes.hxx"
+
 #include <algorithm>
 #include <array>
 #include <cstddef>
@@ -11,8 +13,8 @@
 
 template<typename> class AllocatedArray;
 
-using WrapKeyBuffer = std::array<std::byte, 32>;
-using WrapKeyView = std::span<const std::byte, 32>;
+using WrapKeyBuffer = CryptoSecretBoxKey;
+using WrapKeyView = CryptoSecretBoxKeyView;
 
 class WrapKey {
 	WrapKeyBuffer key;
