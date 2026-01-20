@@ -7,8 +7,6 @@
 #include "lib/sodium/SHA256.hxx"
 #include "util/HexFormat.hxx"
 
-#include <sodium/crypto_generichash.h>
-
 using std::string_view_literals::operator""sv;
 
 [[gnu::pure]]
