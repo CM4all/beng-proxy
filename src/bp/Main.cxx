@@ -68,6 +68,8 @@
 #include "lib/dbus/Connection.hxx"
 #endif
 
+#include <sodium/core.h>
+
 #ifdef HAVE_LIBSYSTEMD
 #include <systemd/sd-daemon.h>
 #endif
@@ -313,6 +315,9 @@ try {
 	debug_mode = !HaveSetuid();
 #endif
 #endif
+
+	if (sodium_init() < 0)
+		throw std::runtime_error{"sodium_init() failed"};
 
 	/* configuration */
 	BpCmdLine cmdline;

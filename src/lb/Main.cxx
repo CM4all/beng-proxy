@@ -37,6 +37,8 @@
 #include "lib/avahi/Publisher.hxx"
 #endif
 
+#include <sodium/core.h>
+
 #ifdef HAVE_LIBSYSTEMD
 #include <systemd/sd-daemon.h>
 #endif
@@ -134,6 +136,9 @@ deinit_signals(LbInstance *instance)
 int
 main(int argc, char **argv)
 try {
+	if (sodium_init() < 0)
+		throw std::runtime_error{"sodium_init() failed"};
+
 	const ScopeFbPoolInit fb_pool_init;
 
 	/* configuration */

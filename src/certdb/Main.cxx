@@ -31,6 +31,8 @@
 #include "util/PrintException.hxx"
 #include "util/StringCompare.hxx"
 
+#include <sodium/core.h>
+
 #include <stdexcept>
 
 #include <stdio.h>
@@ -563,6 +565,9 @@ FindCommand(const char *name)
 int
 main(int argc, char **argv)
 try {
+	if (sodium_init() < 0)
+		throw std::runtime_error{"sodium_init() failed"};
+
 	std::span<const char *const> args{argv + 1, static_cast<std::size_t>(argc - 1)};
 
 	while (!args.empty() && *args.front() == '-') {
