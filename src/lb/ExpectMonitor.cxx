@@ -103,8 +103,6 @@ ExpectMonitor::Cancel() noexcept
 {
 	if (fd.IsDefined()) {
 		event.Cancel();
-		timeout_event.Cancel();
-		delay_event.Cancel();
 		fd.Close();
 	}
 
