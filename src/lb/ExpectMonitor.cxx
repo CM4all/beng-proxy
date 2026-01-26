@@ -139,9 +139,9 @@ ExpectMonitor::DelayCallback() noexcept
 
 	ssize_t nbytes = event.GetSocket().Receive(buffer, MSG_DONTWAIT);
 	if (nbytes < 0) {
-		auto e = MakeSocketError("Failed to receive");
+		const auto error = GetSocketError();
 		delete this;
-		_handler.Error(std::make_exception_ptr(e));
+		_handler.Error(std::make_exception_ptr(MakeSocketError(error, "Failed to receive")));
 	} else if (!config.fade_expect.empty() &&
 		   check_expectation(std::span{buffer}.first(nbytes),
 				     config.fade_expect)) {
