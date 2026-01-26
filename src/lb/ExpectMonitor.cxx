@@ -88,9 +88,9 @@ private:
 
 static bool
 check_expectation(std::span<const std::byte> received,
-		  const char *expect) noexcept
+		  std::string_view expect) noexcept
 {
-	return memmem(received.data(), received.size(), expect, strlen(expect)) != nullptr;
+	return memmem(received.data(), received.size(), expect.data(), expect.size()) != nullptr;
 }
 
 /*
@@ -146,12 +146,12 @@ ExpectMonitor::DelayCallback() noexcept
 		handler.Error(std::make_exception_ptr(e));
 	} else if (!config.fade_expect.empty() &&
 		   check_expectation(std::span{buffer}.first(nbytes),
-				     config.fade_expect.c_str())) {
+				     config.fade_expect)) {
 		fd.Close();
 		handler.Fade();
 	} else if (config.expect.empty() ||
 		   check_expectation(std::span{buffer}.first(nbytes),
-				     config.expect.c_str())) {
+				     config.expect)) {
 		fd.Close();
 		handler.Success();
 	} else {
