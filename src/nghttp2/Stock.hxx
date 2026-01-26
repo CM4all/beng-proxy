@@ -51,18 +51,10 @@ class Stock {
 
 	struct ItemHash {
 		[[gnu::pure]]
-		size_t operator()(const char *key) const noexcept;
-
-		[[gnu::pure]]
 		size_t operator()(std::string_view item) const noexcept;
 	};
 
 	struct ItemEqual {
-		[[gnu::pure]]
-		bool operator()(const char *a, std::string_view b) const noexcept {
-			return a == b;
-		}
-
 		[[gnu::pure]]
 		bool operator()(std::string_view a, std::string_view b) const noexcept {
 			return a == b;

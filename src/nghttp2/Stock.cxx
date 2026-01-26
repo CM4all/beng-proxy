@@ -321,12 +321,6 @@ Stock::ItemGetKey::operator()(const Item &item) const noexcept
 }
 
 inline size_t
-Stock::ItemHash::operator()(const char *key) const noexcept
-{
-	return djb_hash_string(key);
-}
-
-inline size_t
 Stock::ItemHash::operator()(std::string_view key) const noexcept
 {
 	return djb_hash(AsBytes(key));
@@ -356,18 +350,19 @@ Stock::Get(EventLoop &event_loop,
 	   StockGetHandler &handler,
 	   CancellablePointer &cancel_ptr) noexcept
 {
-	char key_buffer[1024];
+	char key_buffer[1024], *key_end;
 	try {
 		StringBuilder b(key_buffer);
 		MakeFilteredSocketStockKey(b, name, bind_address, address,
 					   filter_params);
+		key_end = b.GetTail();
 	} catch (StringBuilder::Overflow) {
 		/* shouldn't happen */
 		handler.OnNgHttp2StockError(std::current_exception());
 		return;
 	}
 
-	const char *key = key_buffer;
+	const std::string_view key{key_buffer, key_end};
 
 	if (auto i = items.find_if(key,
 				   [](const auto &j){return j.IsAvailable();});
