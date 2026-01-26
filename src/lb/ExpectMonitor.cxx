@@ -69,13 +69,15 @@ private:
 	void OnSocketConnectSuccess(UniqueSocketDescriptor fd) noexcept override;
 
 	void OnSocketConnectTimeout() noexcept override {
-		handler.Timeout();
+		auto &_handler = handler;
 		delete this;
+		_handler.Timeout();
 	}
 
 	void OnSocketConnectError(std::exception_ptr ep) noexcept override {
-		handler.Error(ep);
+		auto &_handler = handler;
 		delete this;
+		_handler.Error(ep);
 	}
 
 private:
@@ -121,37 +123,42 @@ inline void
 ExpectMonitor::OnTimeout() noexcept
 {
 	event.Close();
-	handler.Timeout();
 
+	auto &_handler = handler;
 	delete this;
+	_handler.Timeout();
 }
 
 void
 ExpectMonitor::DelayCallback() noexcept
 {
+	auto &_handler = handler;
+
 	std::byte buffer[1024];
 
 	ssize_t nbytes = event.GetSocket().Receive(buffer, MSG_DONTWAIT);
 	if (nbytes < 0) {
 		auto e = MakeSocketError("Failed to receive");
 		event.Close();
-		handler.Error(std::make_exception_ptr(e));
+		delete this;
+		_handler.Error(std::make_exception_ptr(e));
 	} else if (!config.fade_expect.empty() &&
 		   check_expectation(std::span{buffer}.first(nbytes),
 				     config.fade_expect)) {
 		event.Close();
-		handler.Fade();
+		delete this;
+		_handler.Fade();
 	} else if (config.expect.empty() ||
 		   check_expectation(std::span{buffer}.first(nbytes),
 				     config.expect)) {
 		event.Close();
-		handler.Success();
+		delete this;
+		_handler.Success();
 	} else {
 		event.Close();
-		handler.Error(std::make_exception_ptr(std::runtime_error("Expectation failed")));
+		delete this;
+		_handler.Error(std::make_exception_ptr(std::runtime_error("Expectation failed")));
 	}
-
-	delete this;
 }
 
 /*
@@ -165,8 +172,10 @@ ExpectMonitor::OnSocketConnectSuccess(UniqueSocketDescriptor new_fd) noexcept
 	if (!config.send.empty()) {
 		ssize_t nbytes = new_fd.Send(AsBytes(config.send), MSG_DONTWAIT);
 		if (nbytes < 0) {
-			handler.Error(std::make_exception_ptr(MakeSocketError("Failed to send")));
+			const auto error = GetSocketError();
+			auto &_handler = handler;
 			delete this;
+			_handler.Error(std::make_exception_ptr(MakeSocketError(error, "Failed to send")));
 			return;
 		}
 	}
