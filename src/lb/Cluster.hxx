@@ -32,7 +32,6 @@ class FailureManager;
 class BalancerMap;
 class FilteredSocketStock;
 class FilteredSocketBalancer;
-class StickyCache;
 namespace Avahi { class ServiceExplorer; }
 class StopwatchPtr;
 class SslSocketFilterParams;
@@ -75,11 +74,6 @@ class LbCluster final
 	 * This #AvahiServiceExplorer locates Zeroconf nodes.
 	 */
 	std::unique_ptr<Avahi::ServiceExplorer> explorer;
-
-	/**
-	 * @see LbClusterConfig::sticky_cache
-	 */
-	std::unique_ptr<StickyCache> sticky_cache;
 #endif
 
 	/**
@@ -208,15 +202,6 @@ private:
 	 */
 	ZeroconfMemberMap::const_reference PickZeroconfRendezvous(Expiry now, Arch arch,
 								  std::span<const std::byte> sticky_source) noexcept;
-
-	/**
-	 * Like PickZeroconf(), but pick using #StickyCache.  Returns
-	 * nullptr if the hash was not found in the cache.
-	 *
-	 * Zeroconf only.
-	 */
-	ZeroconfMemberMap::const_pointer PickZeroconfCache(Expiry now,
-							   sticky_hash_t sticky_hash) noexcept;
 
 	/**
 	 * Obtain a HTTP connection to a Zeroconf member.

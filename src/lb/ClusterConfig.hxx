@@ -97,17 +97,6 @@ struct LbClusterConfig {
 
 	bool mangle_via = false;
 
-#ifdef HAVE_AVAHI
-	enum class StickyMethod : uint_least8_t {
-		RENDEZVOUS_HASHING,
-
-		/**
-		 * Enable the #StickyCache for Zeroconf?
-		 */
-		CACHE,
-	} sticky_method = StickyMethod::RENDEZVOUS_HASHING;
-#endif
-
 	LbSimpleHttpResponse fallback;
 
 	StickyMode sticky_mode = StickyMode::NONE;

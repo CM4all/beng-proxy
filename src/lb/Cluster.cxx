@@ -11,7 +11,6 @@
 #include "fs/Balancer.hxx"
 #include "fs/Handler.hxx"
 #include "ssl/SslSocketFilterFactory.hxx"
-#include "cluster/StickyCache.hxx"
 #include "cluster/ConnectBalancer.hxx"
 #include "cluster/RoundRobinBalancer.cxx"
 #include "stock/GetHandler.hxx"
@@ -458,31 +457,6 @@ LbCluster::PickZeroconfRendezvous(Expiry now, const Arch arch,
 	return *active_zeroconf_members.front();
 }
 
-inline LbCluster::ZeroconfMemberMap::const_pointer
-LbCluster::PickZeroconfCache(Expiry now,
-			     sticky_hash_t sticky_hash) noexcept
-{
-	/* look up the sticky_hash in the StickyCache */
-	if (sticky_cache == nullptr)
-		/* lazy cache allocation */
-		sticky_cache = std::make_unique<StickyCache>();
-
-	const auto *cached = sticky_cache->Get(sticky_hash);
-	if (cached != nullptr) {
-		/* cache hit */
-		if (auto i = zeroconf_members.find(*cached);
-		    i != zeroconf_members.end() &&
-		    // TODO: allow FAILURE_FADE here?
-		    i->second.GetFailureInfo().Check(now))
-			/* the node is active, we can use it */
-			return &*i;
-
-		sticky_cache->Remove(sticky_hash);
-	}
-
-	return nullptr;
-}
-
 LbCluster::ZeroconfMemberMap::const_pointer
 LbCluster::PickZeroconf(const Expiry now, Arch arch,
 			std::span<const std::byte> sticky_source,
@@ -497,30 +471,10 @@ LbCluster::PickZeroconf(const Expiry now, Arch arch,
 		return nullptr;
 
 	if (sticky_hash != 0) {
-		assert(config.sticky_mode != StickyMode::NONE);
-
-		switch (config.sticky_method) {
-		case LbClusterConfig::StickyMethod::RENDEZVOUS_HASHING:
-			return &PickZeroconfRendezvous(now, arch, sticky_source);
-
-		case LbClusterConfig::StickyMethod::CACHE:
-			if (const auto *member = PickZeroconfCache(now,
-								   sticky_hash))
-				return member;
-
-			/* cache miss or cached node not active: fall
-			   back to round-robin and remember the new
-			   pick in the cache */
-			break;
-		}
+		return &PickZeroconfRendezvous(now, arch, sticky_source);
 	}
 
-	auto &i = PickNextGoodZeroconf(now);
-
-	if (sticky_hash != 0)
-		sticky_cache->Put(sticky_hash, i.first);
-
-	return &i;
+	return &PickNextGoodZeroconf(now);
 }
 
 void
