@@ -18,6 +18,7 @@
 #include "util/DeleteDisposer.hxx"
 #include "util/djb_hash.hxx"
 #include "util/IntrusiveList.hxx"
+#include "util/SpanCast.hxx"
 #include "util/StringBuilder.hxx"
 #include "AllocatorPtr.hxx"
 #include "stopwatch.hxx"
@@ -313,6 +314,12 @@ Stock::Item::OnIdleTimer() noexcept
 		idle_timer.Schedule(std::chrono::minutes(1));
 }
 
+inline std::string_view
+Stock::ItemGetKey::operator()(const Item &item) const noexcept
+{
+	return item.GetKey();
+}
+
 inline size_t
 Stock::ItemHash::operator()(const char *key) const noexcept
 {
@@ -320,21 +327,9 @@ Stock::ItemHash::operator()(const char *key) const noexcept
 }
 
 inline size_t
-Stock::ItemHash::operator()(const Item &item) const noexcept
+Stock::ItemHash::operator()(std::string_view key) const noexcept
 {
-	return djb_hash_string(item.GetKey().c_str());
-}
-
-inline bool
-Stock::ItemEqual::operator()(const char *a, const Item &b) const noexcept
-{
-	return a == b.GetKey();
-}
-
-inline bool
-Stock::ItemEqual::operator()(const Item &a, const Item &b) const noexcept
-{
-	return a.GetKey() == b.GetKey();
+	return djb_hash(AsBytes(key));
 }
 
 Stock::Stock() noexcept = default;

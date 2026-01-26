@@ -44,25 +44,34 @@ public:
 class Stock {
 	class Item;
 
+	struct ItemGetKey {
+		[[gnu::pure]]
+		std::string_view operator()(const Item &item) const noexcept;
+	};
+
 	struct ItemHash {
 		[[gnu::pure]]
 		size_t operator()(const char *key) const noexcept;
 
 		[[gnu::pure]]
-		size_t operator()(const Item &item) const noexcept;
+		size_t operator()(std::string_view item) const noexcept;
 	};
 
 	struct ItemEqual {
 		[[gnu::pure]]
-		bool operator()(const char *a, const Item &b) const noexcept;
+		bool operator()(const char *a, std::string_view b) const noexcept {
+			return a == b;
+		}
 
 		[[gnu::pure]]
-		bool operator()(const Item &a, const Item &b) const noexcept;
+		bool operator()(std::string_view a, std::string_view b) const noexcept {
+			return a == b;
+		}
 	};
 
 	using Set =
 		IntrusiveHashSet<Item, 4096,
-				 IntrusiveHashSetOperators<Item, std::identity,
+				 IntrusiveHashSetOperators<Item, ItemGetKey,
 							   ItemHash, ItemEqual>>;
 	Set items;
 
