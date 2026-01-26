@@ -27,6 +27,7 @@
 #include "io/FileCache.hxx"
 #include "io/StateDirectories.hxx"
 #include "util/Background.hxx"
+#include "util/TransparentHash.hxx"
 
 #ifdef HAVE_LIBSYSTEMD
 #include "event/systemd/Watchdog.hxx"
@@ -213,7 +214,7 @@ struct BpInstance final : PInstance, BengControl::Handler,
 	MultiWasStock *multi_was_stock = nullptr;
 	RemoteWasStock *remote_was_stock = nullptr;
 
-	std::unordered_map<std::string, float> was_metrics;
+	std::unordered_map<std::string, float, TransparentHash, std::equal_to<>> was_metrics;
 #endif
 
 	PipeStock *pipe_stock = nullptr;
