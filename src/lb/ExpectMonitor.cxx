@@ -46,6 +46,10 @@ public:
 		 delay_event(event_loop, BIND_THIS_METHOD(DelayCallback)),
 		 handler(_handler) {}
 
+	~ExpectMonitor() noexcept {
+		event.Close();
+	}
+
 	ExpectMonitor(const ExpectMonitor &other) = delete;
 
 	void Start(SocketAddress address, CancellablePointer &cancel_ptr) noexcept {
@@ -101,7 +105,6 @@ check_expectation(std::span<const std::byte> received,
 void
 ExpectMonitor::Cancel() noexcept
 {
-	event.Close();
 	delete this;
 }
 
@@ -122,8 +125,6 @@ ExpectMonitor::EventCallback(unsigned) noexcept
 inline void
 ExpectMonitor::OnTimeout() noexcept
 {
-	event.Close();
-
 	auto &_handler = handler;
 	delete this;
 	_handler.Timeout();
@@ -139,23 +140,19 @@ ExpectMonitor::DelayCallback() noexcept
 	ssize_t nbytes = event.GetSocket().Receive(buffer, MSG_DONTWAIT);
 	if (nbytes < 0) {
 		auto e = MakeSocketError("Failed to receive");
-		event.Close();
 		delete this;
 		_handler.Error(std::make_exception_ptr(e));
 	} else if (!config.fade_expect.empty() &&
 		   check_expectation(std::span{buffer}.first(nbytes),
 				     config.fade_expect)) {
-		event.Close();
 		delete this;
 		_handler.Fade();
 	} else if (config.expect.empty() ||
 		   check_expectation(std::span{buffer}.first(nbytes),
 				     config.expect)) {
-		event.Close();
 		delete this;
 		_handler.Success();
 	} else {
-		event.Close();
 		delete this;
 		_handler.Error(std::make_exception_ptr(std::runtime_error("Expectation failed")));
 	}
