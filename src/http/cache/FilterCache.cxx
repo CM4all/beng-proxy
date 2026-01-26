@@ -34,12 +34,11 @@
 #include "http/Date.hxx"
 #include "http/Method.hxx"
 #include "util/Cancellable.hxx"
-#include "util/djb_hash.hxx"
 #include "util/Exception.hxx"
 #include "util/IntrusiveHashSet.hxx"
 #include "util/IntrusiveList.hxx"
 #include "util/LeakDetector.hxx"
-#include "util/SpanCast.hxx"
+#include "util/TransparentHash.hxx"
 
 #include <stdio.h>
 #include <unistd.h>
@@ -97,18 +96,6 @@ struct FilterCacheItem final : PoolHolder, CacheItem, LeakDetector {
 	const size_t size;
 
 	const RubberAllocation body;
-
-	struct TagHash {
-		[[gnu::pure]]
-		std::size_t operator()(const char *_tag) const noexcept {
-			return djb_hash_string(_tag);
-		}
-
-		[[gnu::pure]]
-		std::size_t operator()(std::string_view _tag) const noexcept {
-			return djb_hash(AsBytes(_tag));
-		}
-	};
 
 	struct GetTag {
 		[[gnu::pure]]
@@ -245,7 +232,7 @@ class FilterCache final : LeakDetector {
 	IntrusiveHashSet<FilterCacheItem, 65536,
 			 IntrusiveHashSetOperators<FilterCacheItem,
 						   FilterCacheItem::GetTag,
-						   FilterCacheItem::TagHash,
+						   TransparentHash,
 						   std::equal_to<std::string_view>>,
 			 IntrusiveHashSetMemberHookTraits<&FilterCacheItem::per_tag_hook>> per_tag;
 

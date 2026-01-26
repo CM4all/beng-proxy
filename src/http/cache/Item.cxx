@@ -7,14 +7,6 @@
 #include "memory/istream_rubber.hxx"
 #include "istream/UnusedPtr.hxx"
 #include "pool/pool.hxx"
-#include "util/djb_hash.hxx"
-#include "util/SpanCast.hxx"
-
-std::size_t
-HttpCacheItem::TagHash::operator()(std::string_view _tag) const noexcept
-{
-	return djb_hash(AsBytes(_tag));
-}
 
 HttpCacheItem::HttpCacheItem(PoolPtr &&_pool,
 			     StringWithHash _key,

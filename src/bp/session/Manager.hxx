@@ -8,6 +8,7 @@
 #include "Prng.hxx"
 #include "event/FarTimerEvent.hxx"
 #include "util/IntrusiveHashSet.hxx"
+#include "util/TransparentHash.hxx"
 
 #include <chrono>
 #include <random>
@@ -47,11 +48,6 @@ class SessionManager {
 		std::span<const std::byte> operator()(const Session &session) const noexcept;
 	};
 
-	struct SessionAttachHash {
-		[[gnu::pure]]
-		size_t operator()(std::span<const std::byte> attach) const noexcept;
-	};
-
 	struct SessionAttachEqual {
 		[[gnu::pure]]
 		bool operator()(std::span<const std::byte> a, std::span<const std::byte> b) const noexcept;
@@ -74,7 +70,7 @@ class SessionManager {
 		Session, N_BUCKETS,
 		IntrusiveHashSetOperators<Session,
 					  SessionGetAttach,
-					  SessionAttachHash,
+					  TransparentHash,
 					  SessionAttachEqual>,
 		IntrusiveHashSetMemberHookTraits<&Session::by_attach_hook>,
 		IntrusiveHashSetOptions{.constant_time_size = true}>;

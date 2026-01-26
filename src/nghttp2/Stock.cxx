@@ -16,9 +16,7 @@
 #include "io/Logger.hxx"
 #include "util/Cancellable.hxx"
 #include "util/DeleteDisposer.hxx"
-#include "util/djb_hash.hxx"
 #include "util/IntrusiveList.hxx"
-#include "util/SpanCast.hxx"
 #include "util/StringBuilder.hxx"
 #include "AllocatorPtr.hxx"
 #include "stopwatch.hxx"
@@ -318,12 +316,6 @@ inline std::string_view
 Stock::ItemGetKey::operator()(const Item &item) const noexcept
 {
 	return item.GetKey();
-}
-
-inline size_t
-Stock::ItemHash::operator()(std::string_view key) const noexcept
-{
-	return djb_hash(AsBytes(key));
 }
 
 Stock::Stock() noexcept = default;

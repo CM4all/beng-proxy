@@ -6,6 +6,7 @@
 
 #include "event/Chrono.hxx"
 #include "util/IntrusiveHashSet.hxx"
+#include "util/TransparentHash.hxx"
 
 #include <exception>
 #include <memory>
@@ -49,11 +50,6 @@ class Stock {
 		std::string_view operator()(const Item &item) const noexcept;
 	};
 
-	struct ItemHash {
-		[[gnu::pure]]
-		size_t operator()(std::string_view item) const noexcept;
-	};
-
 	struct ItemEqual {
 		[[gnu::pure]]
 		bool operator()(std::string_view a, std::string_view b) const noexcept {
@@ -64,7 +60,7 @@ class Stock {
 	using Set =
 		IntrusiveHashSet<Item, 4096,
 				 IntrusiveHashSetOperators<Item, ItemGetKey,
-							   ItemHash, ItemEqual>>;
+							   TransparentHash, ItemEqual>>;
 	Set items;
 
 public:

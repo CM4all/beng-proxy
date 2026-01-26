@@ -14,7 +14,6 @@
 #include "util/Cancellable.hxx"
 #include "util/DeleteDisposer.hxx"
 #include "util/DisposablePointer.hxx"
-#include "util/djb_hash.hxx"
 #include "util/SharedLease.hxx"
 #include "util/SpanCast.hxx"
 #include "util/StringList.hxx"
@@ -256,12 +255,6 @@ ListenStreamStock::Item::OnListenStreamExit() noexcept
 		   process that fails repeatedly */
 		// TODO do we need to give up eventually?
 		rearm_timer.Schedule(std::chrono::seconds{10});
-}
-
-inline std::size_t
-ListenStreamStock::ItemHash::operator()(std::string_view key) const noexcept
-{
-	return djb_hash(AsBytes(key));
 }
 
 inline std::string_view

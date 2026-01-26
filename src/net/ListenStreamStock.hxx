@@ -5,6 +5,7 @@
 #pragma once
 
 #include "util/IntrusiveHashSet.hxx"
+#include "util/TransparentHash.hxx"
 
 #include <cstddef>
 #include <exception>
@@ -48,18 +49,13 @@ class ListenStreamStock {
 
 	class Item;
 
-	struct ItemHash {
-		[[gnu::pure]]
-		std::size_t operator()(std::string_view key) const noexcept;
-	};
-
 	struct ItemGetKey {
 		[[gnu::const]]
 		std::string_view operator()(const Item &item) const noexcept;
 	};
 
 	IntrusiveHashSet<Item, 1024,
-			 IntrusiveHashSetOperators<Item, ItemGetKey, ItemHash,
+			 IntrusiveHashSetOperators<Item, ItemGetKey, TransparentHash,
 						   std::equal_to<std::string_view>>> items;
 
 public:

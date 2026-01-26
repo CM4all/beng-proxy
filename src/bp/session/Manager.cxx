@@ -7,7 +7,6 @@
 #include "io/Logger.hxx"
 #include "system/Seed.hxx"
 #include "util/DeleteDisposer.hxx"
-#include "util/djb_hash.hxx"
 #include "util/StaticVector.hxx"
 #include "util/PrintException.hxx"
 
@@ -26,12 +25,6 @@ inline std::span<const std::byte>
 SessionManager::SessionGetAttach::operator()(const Session &session) const noexcept
 {
 	return session.attach;
-}
-
-inline size_t
-SessionManager::SessionAttachHash::operator()(std::span<const std::byte> attach) const noexcept
-{
-	return djb_hash(attach);
 }
 
 inline bool

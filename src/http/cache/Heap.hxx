@@ -9,6 +9,7 @@
 #include "memory/SlicePool.hxx"
 #include "memory/Rubber.hxx"
 #include "util/IntrusiveHashSet.hxx"
+#include "util/TransparentHash.hxx"
 
 #include <string>
 
@@ -41,7 +42,7 @@ class HttpCacheHeap {
 	IntrusiveHashSet<HttpCacheItem, 65536,
 			 IntrusiveHashSetOperators<HttpCacheItem,
 						   HttpCacheItem::GetTagFunction,
-						   HttpCacheItem::TagHash,
+						   TransparentHash,
 						   std::equal_to<std::string_view>>,
 			 IntrusiveHashSetMemberHookTraits<&HttpCacheItem::per_tag_hook>> per_tag;
 

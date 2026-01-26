@@ -25,11 +25,6 @@ public:
 	 */
 	IntrusiveHashSetHook<IntrusiveHookMode::AUTO_UNLINK> per_tag_hook;
 
-	struct TagHash {
-		[[gnu::pure]]
-		std::size_t operator()(std::string_view tag) const noexcept;
-	};
-
 	struct GetTagFunction {
 		[[gnu::pure]]
 		std::string_view operator()(const HttpCacheItem &item) const noexcept {

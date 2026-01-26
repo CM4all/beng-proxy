@@ -34,6 +34,7 @@
 #include "util/SpanCast.hxx"
 #include "util/StringAPI.hxx"
 #include "util/StringSplit.hxx"
+#include "util/TransparentHash.hxx"
 
 #include <algorithm> // for std::any_of()
 #include <cassert>
@@ -194,13 +195,6 @@ struct TranslateCacheItem final : PoolHolder, CacheItem {
 	bool Validate() const noexcept override;
 	void Destroy() noexcept override;
 
-	struct StringViewHash {
-		[[gnu::pure]]
-		std::size_t operator()(std::string_view key) const noexcept {
-			return djb_hash(AsBytes(key));
-		}
-	};
-
 	struct GetHost {
 		[[gnu::pure]]
 		std::string_view operator()(const TranslateCacheItem &item) const noexcept {
@@ -236,7 +230,7 @@ struct tcache final : private CacheHandler {
 		IntrusiveHashSet<TranslateCacheItem, N_BUCKETS,
 				 IntrusiveHashSetOperators<TranslateCacheItem,
 							   TranslateCacheItem::GetHost,
-							   TranslateCacheItem::StringViewHash,
+							   TransparentHash,
 							   std::equal_to<std::string_view>>,
 				 IntrusiveHashSetMemberHookTraits<&TranslateCacheItem::per_host_siblings>>;
 	PerHostSet per_host;
@@ -251,7 +245,7 @@ struct tcache final : private CacheHandler {
 		IntrusiveHashSet<TranslateCacheItem, N_BUCKETS,
 				 IntrusiveHashSetOperators<TranslateCacheItem,
 							   TranslateCacheItem::GetSite,
-							   TranslateCacheItem::StringViewHash,
+							   TransparentHash,
 							   std::equal_to<std::string_view>>,
 				 IntrusiveHashSetMemberHookTraits<&TranslateCacheItem::per_site_siblings>>;
 	PerSiteSet per_site;
@@ -266,7 +260,7 @@ struct tcache final : private CacheHandler {
 		IntrusiveHashSet<TranslateCacheItem::Tag, 256,
 				 IntrusiveHashSetOperators<TranslateCacheItem::Tag,
 							   TranslateCacheItem::Tag::GetTag,
-							   TranslateCacheItem::StringViewHash,
+							   TransparentHash,
 							   std::equal_to<std::string_view>>>;
 	PerTagSet per_tag;
 
