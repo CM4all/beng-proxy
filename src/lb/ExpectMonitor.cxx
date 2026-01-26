@@ -199,7 +199,7 @@ expect_monitor_run(EventLoop &event_loop,
 		   const LbMonitorConfig &config,
 		   SocketAddress address,
 		   LbMonitorHandler &handler,
-		   CancellablePointer &cancel_ptr)
+		   CancellablePointer &cancel_ptr) noexcept
 {
 	ExpectMonitor *expect = new ExpectMonitor(event_loop, config,
 						  handler);

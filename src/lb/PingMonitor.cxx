@@ -19,12 +19,12 @@ class LbPingMonitor final : PingClientHandler, Cancellable {
 
 public:
 	explicit LbPingMonitor(EventLoop &event_loop,
-			       LbMonitorHandler &_handler)
+			       LbMonitorHandler &_handler) noexcept
 		:ping(event_loop, *this),
 		 timeout_event(event_loop, BIND_THIS_METHOD(OnTimeout)),
 		 handler(_handler) {}
 
-	void Start(SocketAddress address, CancellablePointer &cancel_ptr) {
+	void Start(SocketAddress address, CancellablePointer &cancel_ptr) noexcept {
 		cancel_ptr = *this;
 		timeout_event.Schedule(std::chrono::seconds{10});
 		ping.Start(address);
@@ -58,7 +58,7 @@ ping_monitor_run(EventLoop &event_loop,
 		 const LbMonitorConfig &,
 		 SocketAddress address,
 		 LbMonitorHandler &handler,
-		 CancellablePointer &cancel_ptr)
+		 CancellablePointer &cancel_ptr) noexcept
 {
 	auto *ping = new LbPingMonitor(event_loop, handler);
 	ping->Start(address, cancel_ptr);

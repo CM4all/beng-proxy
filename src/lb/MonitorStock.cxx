@@ -18,7 +18,7 @@
 
 [[gnu::const]]
 static const LbMonitorClass &
-LookupMonitorClass(LbMonitorConfig::Type type)
+LookupMonitorClass(LbMonitorConfig::Type type) noexcept
 {
 	switch (type) {
 	case LbMonitorConfig::Type::NONE:
@@ -39,13 +39,13 @@ LookupMonitorClass(LbMonitorConfig::Type type)
 
 LbMonitorStock::LbMonitorStock(EventLoop &_event_loop,
 			       FailureManager &_failure_manager,
-			       const LbMonitorConfig &_config)
+			       const LbMonitorConfig &_config) noexcept
 	:event_loop(_event_loop), failure_manager(_failure_manager),
 	 config(_config), class_(LookupMonitorClass(config.type))
 {
 }
 
-LbMonitorStock::~LbMonitorStock()
+LbMonitorStock::~LbMonitorStock() noexcept
 {
 	/* at this point, all LbMonitorController references
 	   (LbMonitorRef) must be freed */
@@ -53,7 +53,7 @@ LbMonitorStock::~LbMonitorStock()
 }
 
 LbMonitorRef
-LbMonitorStock::Add(std::string_view node_name, SocketAddress address)
+LbMonitorStock::Add(std::string_view node_name, SocketAddress address) noexcept
 {
 	auto &m = map.emplace(std::piecewise_construct,
 			      std::forward_as_tuple(ToString(address)),
@@ -65,7 +65,7 @@ LbMonitorStock::Add(std::string_view node_name, SocketAddress address)
 }
 
 LbMonitorRef
-LbMonitorStock::Add(const LbNodeConfig &node, unsigned port)
+LbMonitorStock::Add(const LbNodeConfig &node, unsigned port) noexcept
 {
 	AllocatedSocketAddress address = node.address;
 	if (port > 0)

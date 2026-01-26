@@ -18,12 +18,12 @@ class LbSynMonitor final : ConnectSocketHandler, Cancellable {
 
 public:
 	LbSynMonitor(EventLoop &event_loop,
-		     LbMonitorHandler &_handler)
+		     LbMonitorHandler &_handler) noexcept
 		:connect(event_loop, *this),
 		 handler(_handler) {}
 
 	void Start(const LbMonitorConfig &config, SocketAddress address,
-		   CancellablePointer &cancel_ptr) {
+		   CancellablePointer &cancel_ptr) noexcept {
 		cancel_ptr = *this;
 
 		const auto timeout = config.timeout > Event::Duration{}
@@ -68,7 +68,7 @@ syn_monitor_run(EventLoop &event_loop,
 		const LbMonitorConfig &config,
 		SocketAddress address,
 		LbMonitorHandler &handler,
-		CancellablePointer &cancel_ptr)
+		CancellablePointer &cancel_ptr) noexcept
 {
 	auto *syn = new LbSynMonitor(event_loop, handler);
 	syn->Start(config, address, cancel_ptr);

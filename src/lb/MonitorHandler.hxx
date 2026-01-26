@@ -8,8 +8,8 @@
 
 class LbMonitorHandler {
 public:
-	virtual void Success() = 0;
-	virtual void Fade() = 0;
-	virtual void Timeout() = 0;
-	virtual void Error(std::exception_ptr e) = 0;
+	virtual void Success() noexcept = 0;
+	virtual void Fade() noexcept = 0;
+	virtual void Timeout() noexcept = 0;
+	virtual void Error(std::exception_ptr e) noexcept = 0;
 };

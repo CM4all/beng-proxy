@@ -11,7 +11,7 @@
 #include <fmt/core.h>
 
 void
-LbMonitorController::Success()
+LbMonitorController::Success() noexcept
 {
 	cancel_ptr = nullptr;
 	timeout_event.Cancel();
@@ -36,7 +36,7 @@ LbMonitorController::Success()
 }
 
 void
-LbMonitorController::Fade()
+LbMonitorController::Fade() noexcept
 {
 	cancel_ptr = nullptr;
 	timeout_event.Cancel();
@@ -53,7 +53,7 @@ LbMonitorController::Fade()
 }
 
 void
-LbMonitorController::Timeout()
+LbMonitorController::Timeout() noexcept
 {
 	cancel_ptr = nullptr;
 	timeout_event.Cancel();
@@ -67,7 +67,7 @@ LbMonitorController::Timeout()
 }
 
 void
-LbMonitorController::Error(std::exception_ptr e)
+LbMonitorController::Error(std::exception_ptr e) noexcept
 {
 	cancel_ptr = nullptr;
 	timeout_event.Cancel();

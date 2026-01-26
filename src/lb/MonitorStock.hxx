@@ -31,15 +31,15 @@ class LbMonitorStock {
 public:
 	LbMonitorStock(EventLoop &_event_loop,
 		       FailureManager &_failure_manager,
-		       const LbMonitorConfig &_config);
-	~LbMonitorStock();
+		       const LbMonitorConfig &_config) noexcept;
+	~LbMonitorStock() noexcept;
 
 	LbMonitorStock(const LbMonitorStock &) = delete;
 	LbMonitorStock &operator=(const LbMonitorStock &) = delete;
 
-	LbMonitorRef Add(std::string_view node_name, SocketAddress address);
+	LbMonitorRef Add(std::string_view node_name, SocketAddress address) noexcept;
 
-	LbMonitorRef Add(const LbNodeConfig &node, unsigned port);
+	LbMonitorRef Add(const LbNodeConfig &node, unsigned port) noexcept;
 
 	void Remove(LbMonitorController &m) noexcept;
 };

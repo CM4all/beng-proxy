@@ -14,5 +14,5 @@ struct LbMonitorClass {
 		    const LbMonitorConfig &config,
 		    SocketAddress address,
 		    LbMonitorHandler &handler,
-		    CancellablePointer &cancel_ptr);
+		    CancellablePointer &cancel_ptr) noexcept;
 };

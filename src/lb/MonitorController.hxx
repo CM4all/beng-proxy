@@ -71,8 +71,8 @@ private:
 	void TimeoutCallback() noexcept;
 
 	/* virtual methods from class LbMonitorHandler */
-	virtual void Success() override;
-	virtual void Fade() override;
-	virtual void Timeout() override;
-	virtual void Error(std::exception_ptr e) override;
+	void Success() noexcept override;
+	void Fade() noexcept override;
+	void Timeout() noexcept override;
+	void Error(std::exception_ptr e) noexcept override;
 };
