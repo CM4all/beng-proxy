@@ -24,8 +24,6 @@ class ExpectMonitor final : ConnectSocketHandler, Cancellable {
 
 	ConnectSocket connect;
 
-	SocketDescriptor fd = SocketDescriptor::Undefined();
-
 	SocketEvent event;
 	CoarseTimerEvent timeout_event;
 
@@ -101,11 +99,7 @@ check_expectation(std::span<const std::byte> received,
 void
 ExpectMonitor::Cancel() noexcept
 {
-	if (fd.IsDefined()) {
-		event.Cancel();
-		fd.Close();
-	}
-
+	event.Close();
 	delete this;
 }
 
@@ -126,7 +120,7 @@ ExpectMonitor::EventCallback(unsigned) noexcept
 inline void
 ExpectMonitor::OnTimeout() noexcept
 {
-	fd.Close();
+	event.Close();
 	handler.Timeout();
 
 	delete this;
@@ -137,23 +131,23 @@ ExpectMonitor::DelayCallback() noexcept
 {
 	std::byte buffer[1024];
 
-	ssize_t nbytes = fd.Receive(buffer, MSG_DONTWAIT);
+	ssize_t nbytes = event.GetSocket().Receive(buffer, MSG_DONTWAIT);
 	if (nbytes < 0) {
 		auto e = MakeSocketError("Failed to receive");
-		fd.Close();
+		event.Close();
 		handler.Error(std::make_exception_ptr(e));
 	} else if (!config.fade_expect.empty() &&
 		   check_expectation(std::span{buffer}.first(nbytes),
 				     config.fade_expect)) {
-		fd.Close();
+		event.Close();
 		handler.Fade();
 	} else if (config.expect.empty() ||
 		   check_expectation(std::span{buffer}.first(nbytes),
 				     config.expect)) {
-		fd.Close();
+		event.Close();
 		handler.Success();
 	} else {
-		fd.Close();
+		event.Close();
 		handler.Error(std::make_exception_ptr(std::runtime_error("Expectation failed")));
 	}
 
@@ -181,8 +175,7 @@ ExpectMonitor::OnSocketConnectSuccess(UniqueSocketDescriptor new_fd) noexcept
 	? config.timeout
 		  : std::chrono::seconds(10);
 
-	fd = new_fd.Release();
-	event.Open(fd);
+	event.Open(new_fd.Release());
 	event.ScheduleRead();
 	timeout_event.Schedule(expect_timeout);
 }
