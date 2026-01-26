@@ -2,6 +2,7 @@ cm4all-beng-proxy (21.11) unstable; urgency=low
 
   * spawn: fix memory warning timer bug
   * io_uring: disable the iowait state
+  * lb: add whitelist for REJECT_CLIENT and TARPIT_CLIENT
   * call sodium_init() on startup (to select optimized cipher implementations)
   * fix build with glibc 2.43
 

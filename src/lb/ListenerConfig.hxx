@@ -7,6 +7,7 @@
 #include "GotoConfig.hxx"
 #include "ssl/Config.hxx"
 #include "net/SocketConfig.hxx"
+#include "util/TransparentHash.hxx"
 #include "config.h"
 
 #ifdef HAVE_AVAHI
@@ -14,6 +15,7 @@
 #endif
 
 #include <string>
+#include <unordered_set>
 
 struct LbCertDatabaseConfig;
 
@@ -35,6 +37,8 @@ struct LbListenerConfig : SocketConfig {
 	const LbCertDatabaseConfig *cert_db = nullptr;
 
 	SslConfig ssl_config;
+
+	std::unordered_set<std::string, TransparentHash, std::equal_to<>> client_ban_host_whitelist;
 
 	/**
 	 * Enable or disable the access logger.

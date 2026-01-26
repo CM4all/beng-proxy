@@ -538,6 +538,11 @@ Known attributes:
   which can be edited by control commands :ref:`REJECT_CLIENT
   <reject_client>` and :ref:`TARPIT_CLIENT <tarpit_client>`.
 
+- ``client_ban_host_whitelist``: requests with the specified ``Host``
+  header ignore the ``client_ban_list`` (i.e. such requests are always
+  allowed).  May be specified multiple times to whitelist more than
+  one host.
+
 - ``verbose_response``: ``yes`` exposes internal error messages in
   HTTP responses.
 

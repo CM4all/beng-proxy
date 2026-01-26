@@ -14,6 +14,7 @@
 #include "DelayForwardHttpRequest.hxx"
 #include "Instance.hxx"
 #include "Listener.hxx"
+#include "http/CommonHeaders.hxx" // for host_header
 #include "http/IncomingRequest.hxx"
 #include "http/server/Public.hxx"
 #include "http/server/Handler.hxx"
@@ -252,6 +253,18 @@ private:
 	}
 };
 
+[[gnu::pure]]
+static bool
+IsClientBanWhitelisted(const LbListenerConfig &config,
+		       const StringMap &request_headers) noexcept
+{
+	const char *host = request_headers.Get(host_header);
+	if (host == nullptr)
+		return false;
+
+	return config.client_ban_host_whitelist.contains(host);
+}
+
 void
 LbHttpConnection::HandleHttpRequest(IncomingHttpRequest &request,
 				    const StopwatchPtr &parent_stopwatch,
@@ -281,7 +294,8 @@ LbHttpConnection::HandleHttpRequest(IncomingHttpRequest &request,
 		return;
 	}
 
-	if (listener_config.client_ban_list) {
+	if (listener_config.client_ban_list &&
+	    !IsClientBanWhitelisted(listener_config, request.headers)) {
 		if (const char *real_remote_host = rl.GetRealRemoteHost()) {
 			switch (instance.ban_list.Get(real_remote_host)) {
 			case BanAction::NONE:

@@ -1265,6 +1265,12 @@ LbConfigParser::Listener::ParseLine(FileLineParser &line)
 	} else if (StringIsEqual(word, "client_ban_list")) {
 		config.client_ban_list = line.NextBool();
 		line.ExpectEnd();
+	} else if (StringIsEqual(word, "client_ban_host_whitelist")) {
+		const std::string_view host = line.ExpectValueAndEnd();
+
+		auto [it, inserted] = config.client_ban_host_whitelist.emplace(host);
+		if (!inserted)
+			throw LineParser::Error("Duplicate client_ban_host_whitelist");
 	} else if (StringIsEqual(word, "verbose_response")) {
 		bool value = line.NextBool();
 
