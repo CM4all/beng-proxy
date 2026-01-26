@@ -179,7 +179,7 @@ private:
 	 *
 	 * @return true if at least one item was found and deleted
 	 */
-	bool Flush(const std::string &name) noexcept;
+	bool Flush(std::string_view name) noexcept;
 
 	/* virtual methods from Pg::AsyncConnectionHandler */
 	void OnConnect() override;
@@ -188,6 +188,6 @@ private:
 	void OnError(std::exception_ptr e) noexcept override;
 
 	/* virtual methods from class CertNameCacheHandler */
-	void OnCertModified(const std::string &name,
+	void OnCertModified(std::string_view name,
 			    bool deleted) noexcept override;
 };

@@ -477,7 +477,7 @@ CertCache::Apply(SSL &ssl, const char *host,
 }
 
 bool
-CertCache::Flush(const std::string &name) noexcept
+CertCache::Flush(const std::string_view name) noexcept
 {
 	auto r = map.equal_range(name);
 	if (r.first == r.second)
@@ -506,7 +506,7 @@ CertCache::Flush(const std::string &name) noexcept
 }
 
 void
-CertCache::OnCertModified(const std::string &name, bool deleted) noexcept
+CertCache::OnCertModified(const std::string_view name, bool deleted) noexcept
 {
 	const std::scoped_lock lock{mutex};
 

@@ -35,7 +35,7 @@ private:
 	}
 
 	/* virtual methods from CertNameCacheHandler */
-	void OnCertModified(const std::string &name,
+	void OnCertModified(std::string_view name,
 			    bool deleted) noexcept override {
 		fmt::print(stderr, "{}: {}\n"sv,
 			   deleted ? "deleted"sv : "modified"sv,

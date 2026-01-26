@@ -19,7 +19,7 @@ struct CertDatabaseConfig;
 
 class CertNameCacheHandler {
 public:
-	virtual void OnCertModified(const std::string &name,
+	virtual void OnCertModified(std::string_view name,
 				    bool deleted) noexcept = 0;
 };
 
@@ -102,10 +102,10 @@ private:
 		update_timer.Cancel();
 	}
 
-	void AddAltName(const std::string &common_name,
-			std::string &&alt_name) noexcept;
-	void RemoveAltName(const std::string &common_name,
-			   const std::string &alt_name) noexcept;
+	void AddAltName(std::string_view common_name,
+			std::string_view alt_name) noexcept;
+	void RemoveAltName(std::string_view common_name,
+			   std::string_view alt_name) noexcept;
 
 	/* virtual methods from Pg::AsyncConnectionHandler */
 	void OnConnect() override;

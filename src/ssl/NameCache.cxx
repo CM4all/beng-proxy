@@ -83,18 +83,18 @@ CertNameCache::ScheduleUpdate() noexcept
 }
 
 inline void
-CertNameCache::AddAltName(const std::string &common_name,
-			  std::string &&alt_name) noexcept
+CertNameCache::AddAltName(const std::string_view common_name,
+			  const std::string_view alt_name) noexcept
 {
 	/* create the alt_name if it doesn't exist yet */
-	auto i = alt_names.emplace(std::move(alt_name), std::set<std::string, std::less<>>{});
+	auto i = alt_names.emplace(alt_name, std::set<std::string, std::less<>>{});
 	/* add the common_name to the set */
 	i.first->second.emplace(common_name);
 }
 
 inline void
-CertNameCache::RemoveAltName(const std::string &common_name,
-			     const std::string &alt_name) noexcept
+CertNameCache::RemoveAltName(const std::string_view common_name,
+			     const std::string_view alt_name) noexcept
 {
 	auto i = alt_names.find(alt_name);
 	if (i != alt_names.end()) {
@@ -177,8 +177,8 @@ CertNameCache::OnResult(Pg::Result &&result)
 	const char *modified = nullptr;
 
 	for (const auto &row : result) {
-		std::string name{row.GetValueView(0)};
-		std::string alt_name{row.GetValueView(1)};
+		const std::string_view name = row.GetValueView(0);
+		const std::string_view alt_name = row.GetValueView(1);
 		modified = row.GetValue(2);
 		const bool deleted = complete && *row.GetValue(3) == 't';
 
@@ -190,7 +190,7 @@ CertNameCache::OnResult(Pg::Result &&result)
 
 		if (deleted) {
 			if (!alt_name.empty())
-				RemoveAltName(name, std::move(alt_name));
+				RemoveAltName(name, alt_name);
 
 			auto i = names.find(std::move(name));
 			if (i != names.end()) {
@@ -199,9 +199,9 @@ CertNameCache::OnResult(Pg::Result &&result)
 			}
 		} else {
 			if (!alt_name.empty())
-				AddAltName(name, std::move(alt_name));
+				AddAltName(name, alt_name);
 
-			auto i = names.emplace(std::move(name));
+			auto i = names.emplace(name);
 			if (i.second)
 				++n_added;
 			else
