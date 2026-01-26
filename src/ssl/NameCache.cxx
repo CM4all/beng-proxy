@@ -26,7 +26,7 @@ CertNameCache::Lookup(const char *_host) const noexcept
 		   complete */
 		return true;
 
-	const std::string host(_host);
+	const std::string_view host{_host};
 
 	const std::scoped_lock lock{mutex};
 	return names.find(host) != names.end() ||
@@ -87,7 +87,7 @@ CertNameCache::AddAltName(const std::string &common_name,
 			  std::string &&alt_name) noexcept
 {
 	/* create the alt_name if it doesn't exist yet */
-	auto i = alt_names.emplace(std::move(alt_name), std::set<std::string>());
+	auto i = alt_names.emplace(std::move(alt_name), std::set<std::string, std::less<>>{});
 	/* add the common_name to the set */
 	i.first->second.emplace(common_name);
 }

@@ -15,6 +15,7 @@
 #include "io/Logger.hxx"
 #include "util/Cancellable.hxx"
 #include "util/IntrusiveList.hxx"
+#include "util/TransparentHash.hxx"
 
 #include <unordered_map>
 #include <string>
@@ -95,12 +96,12 @@ class CertCache final : Pg::AsyncConnectionHandler, CertNameCacheHandler {
 	 * Map host names to SSL_CTX instances.  The key may be a
 	 * wildcard.
 	 */
-	std::unordered_multimap<std::string, Item> map;
+	std::unordered_multimap<std::string, Item, TransparentHash, std::equal_to<>> map;
 
 	struct Request;
 	class Query;
 
-	using QueryMap = std::map<std::string, Query>;
+	using QueryMap = std::map<std::string, Query, std::less<>>;
 	QueryMap queries;
 
 	/**

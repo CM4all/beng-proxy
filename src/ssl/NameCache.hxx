@@ -7,6 +7,7 @@
 #include "pg/AsyncConnection.hxx"
 #include "event/FineTimerEvent.hxx"
 #include "io/Logger.hxx"
+#include "util/TransparentHash.hxx"
 
 #include <unordered_set>
 #include <unordered_map>
@@ -44,13 +45,14 @@ class CertNameCache final : Pg::AsyncConnectionHandler, Pg::AsyncResultHandler {
 	/**
 	 * A list of host names found in the database.
 	 */
-	std::unordered_set<std::string> names;
+	std::unordered_set<std::string, TransparentHash, std::equal_to<>> names;
 
 	/**
 	 * A list of alt_names found in the database.  Each alt_name maps
 	 * to a list of common_name values it appears in.
 	 */
-	std::unordered_map<std::string, std::set<std::string>> alt_names;
+	std::unordered_map<std::string, std::set<std::string, std::less<>>,
+			   TransparentHash, std::equal_to<>> alt_names;
 
 	/**
 	 * The latest timestamp seen in a record.  This is used for

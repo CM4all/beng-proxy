@@ -297,7 +297,7 @@ CertCache::Add(UniqueCertKey &&ck, const char *special)
 		i->second.special = special;
 
 	/* create shadow items for all altNames */
-	std::set<std::string> alt_names;
+	std::set<std::string, std::less<>> alt_names;
 	for (auto &a : GetSubjectAltNames(*i->second.cert))
 		alt_names.emplace(std::move(a));
 
@@ -483,7 +483,7 @@ CertCache::Flush(const std::string &name) noexcept
 	if (r.first == r.second)
 		return false;
 
-	std::set<std::string> alt_names;
+	std::set<std::string, std::less<>> alt_names;
 
 	for (auto i = r.first; i != r.second;) {
 		const auto &item = i->second;
