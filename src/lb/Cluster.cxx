@@ -4,7 +4,6 @@
 
 #include "Cluster.hxx"
 #include "ClusterConfig.hxx"
-#include "MemberHash.hxx"
 #include "Context.hxx"
 #include "MonitorStock.hxx"
 #include "MonitorRef.hxx"
@@ -67,9 +66,6 @@ CalculateStickyHash(std::span<const std::byte> source) noexcept
 }
 
 #ifdef HAVE_AVAHI
-
-class LbCluster::StickyRing final
-	: public MemberHashRing<ZeroconfMemberMap::iterator> {};
 
 class LbCluster::ZeroconfMember final : LeakDetector {
 	InetAddress address;
@@ -425,29 +421,6 @@ LbCluster::PickNextGoodZeroconf(const Expiry now) noexcept
 }
 
 inline LbCluster::ZeroconfMemberMap::const_reference
-LbCluster::PickZeroconfHashRing(Expiry now,
-				sticky_hash_t sticky_hash) noexcept
-{
-	assert(!active_zeroconf_members.empty());
-	assert(sticky_ring != nullptr);
-
-	auto i = sticky_ring->Pick(sticky_hash);
-	assert(i != zeroconf_members.end());
-
-	unsigned retries = active_zeroconf_members.size();
-	while (true) {
-		if (--retries == 0 ||
-		    i->second.GetFailureInfo().Check(now))
-			return *i;
-
-		/* the node is known-bad; pick the next one in the ring */
-		const auto next = sticky_ring->FindNext(sticky_hash);
-		sticky_hash = next.first;
-		i = next.second;
-	}
-}
-
-inline LbCluster::ZeroconfMemberMap::const_reference
 LbCluster::PickZeroconfRendezvous(Expiry now, const Arch arch,
 				  std::span<const std::byte> sticky_source) noexcept
 {
@@ -527,9 +500,6 @@ LbCluster::PickZeroconf(const Expiry now, Arch arch,
 		assert(config.sticky_mode != StickyMode::NONE);
 
 		switch (config.sticky_method) {
-		case LbClusterConfig::StickyMethod::CONSISTENT_HASHING:
-			return &PickZeroconfHashRing(now, sticky_hash);
-
 		case LbClusterConfig::StickyMethod::RENDEZVOUS_HASHING:
 			return &PickZeroconfRendezvous(now, arch, sticky_source);
 
@@ -563,24 +533,6 @@ LbCluster::FillActive() noexcept
 
 	for (auto i = zeroconf_members.begin(); i != zeroconf_members.end(); ++i)
 		active_zeroconf_members.push_back(i);
-
-	switch (config.sticky_method) {
-	case LbClusterConfig::StickyMethod::CONSISTENT_HASHING:
-		if (sticky_ring == nullptr)
-			/* lazy allocation */
-			sticky_ring = std::make_unique<StickyRing>();
-
-		BuildMemberHashRing(*sticky_ring, active_zeroconf_members,
-				    [](ZeroconfMemberMap::const_iterator member) noexcept {
-					    return member->second.GetAddress();
-				    });
-
-		break;
-
-	case LbClusterConfig::StickyMethod::RENDEZVOUS_HASHING:
-	case LbClusterConfig::StickyMethod::CACHE:
-		break;
-	}
 }
 
 class LbCluster::ZeroconfHttpConnect final : StockGetHandler, Lease, Cancellable {

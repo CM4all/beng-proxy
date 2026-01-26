@@ -76,13 +76,6 @@ class LbCluster final
 	 */
 	std::unique_ptr<Avahi::ServiceExplorer> explorer;
 
-	class StickyRing;
-
-	/**
-	 * For consistent hashing.  It is populated by FillActive().
-	 */
-	std::unique_ptr<StickyRing> sticky_ring;
-
 	/**
 	 * @see LbClusterConfig::sticky_cache
 	 */
@@ -208,16 +201,6 @@ private:
 						      sticky_hash_t sticky_hash) noexcept;
 
 	/**
-	 * Like PickZeroconf(), but pick using Consistent Hashing (via
-	 * #HashRing).
-	 *
-	 * To be called by PickZeroconf(), which has already
-	 * lazy-initialized and verified everything.
-	 */
-	ZeroconfMemberMap::const_reference PickZeroconfHashRing(Expiry now,
-								sticky_hash_t sticky_hash) noexcept;
-
-	/**
 	 * Like PickZeroconf(), but pick using Rendezvous Hashing.
 	 *
 	 * To be called by PickZeroconf(), which has already
@@ -261,7 +244,7 @@ private:
 
 private:
 	/**
-	 * Fill #active_members and #sticky_ring.
+	 * Fill #active_members.
 	 *
 	 * Zeroconf only.
 	 */

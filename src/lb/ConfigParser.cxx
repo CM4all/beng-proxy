@@ -567,7 +567,8 @@ static LbClusterConfig::StickyMethod
 ParseStickyMethod(const char *s)
 {
 	if (StringIsEqual(s, "consistent_hashing"))
-		return LbClusterConfig::StickyMethod::CONSISTENT_HASHING;
+		// TODO remove legacy setting
+		return LbClusterConfig::StickyMethod::RENDEZVOUS_HASHING;
 	else if (StringIsEqual(s, "rendezvous_hashing"))
 		return LbClusterConfig::StickyMethod::RENDEZVOUS_HASHING;
 	else if (StringIsEqual(s, "cache"))
@@ -602,7 +603,7 @@ LbConfigParser::Cluster::ParseLine(FileLineParser &line)
 #ifdef HAVE_AVAHI
 		config.sticky_method = line.NextBool()
 			? LbClusterConfig::StickyMethod::CACHE
-			: LbClusterConfig::StickyMethod::CONSISTENT_HASHING;
+			: LbClusterConfig::StickyMethod::RENDEZVOUS_HASHING;
 		line.ExpectEnd();
 #else
 		throw LineParser::Error("Zeroconf support is disabled at compile time");

@@ -254,22 +254,6 @@ executable('run_client_balancer',
     cluster_dep,
   ])
 
-if avahi_dep.found()
-  executable(
-    'DumpZeroconfHashRing',
-    'DumpZeroconfHashRing.cxx',
-    '../src/lb/MemberHash.cxx',
-    include_directories: inc,
-    dependencies: [
-      test_instance_dep,
-      avahi_dep,
-      net_dep,
-      sodium_dep,
-      fmt_dep,
-    ],
-  )
-endif
-
 test(
   't_cache',
   executable(

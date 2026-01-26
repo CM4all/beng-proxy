@@ -114,9 +114,7 @@ Example::
 
 - ``sticky_method``: one of:
 
-  - ``consistent_hashing`` (the default)
-
-  - ``rendezvous_hashing``
+  - ``rendezvous_hashing`` (the default)
 
   - ``cache``: an assignment cache. The advantage of that cache is that
     existing clients will not be reassigned when new nodes appear. The
@@ -213,8 +211,8 @@ This requires ``avahi-daemon`` to be installed and running. And, of
 course, it requires the pool members to publish their service.
 
 If ``sticky`` is enabled on the pool, then :program:`beng-lb` uses
-`consistent hashing
-<https://en.wikipedia.org/wiki/Consistent_hashing>`__ to pick a member
+`rendezvous hashing
+<https://en.wikipedia.org/wiki/Rendezvous_hashing>`__ to pick a member
 (to reduce member reassignments).
 
 .. _lb_protocol:

@@ -786,7 +786,6 @@ executable(
   'src/lb/Setup.cxx',
   'src/lb/GotoMap.cxx',
   'src/lb/Branch.cxx',
-  'src/lb/MemberHash.cxx',
   'src/lb/Cluster.cxx',
   'src/lb/TranslationHandler.cxx',
   'src/lb/TranslationCache.cxx',

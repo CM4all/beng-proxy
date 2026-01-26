@@ -99,15 +99,13 @@ struct LbClusterConfig {
 
 #ifdef HAVE_AVAHI
 	enum class StickyMethod : uint_least8_t {
-		CONSISTENT_HASHING,
-
 		RENDEZVOUS_HASHING,
 
 		/**
 		 * Enable the #StickyCache for Zeroconf?
 		 */
 		CACHE,
-	} sticky_method = StickyMethod::CONSISTENT_HASHING;
+	} sticky_method = StickyMethod::RENDEZVOUS_HASHING;
 #endif
 
 	LbSimpleHttpResponse fallback;
