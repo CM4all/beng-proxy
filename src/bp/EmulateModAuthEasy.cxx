@@ -264,15 +264,11 @@ Request::EmulateModAuthEasy(const FileAddress &address,
 
 	const TranslateResponse &tr = *translate.response;
 
-	const char *override_content_type = translate.content_type;
-	if (override_content_type == nullptr)
-		override_content_type = address.content_type;
-
 	HttpHeaders headers;
 	GrowingBuffer &headers2 = headers.GetBuffer();
 	file_response_headers(headers2,
 			      instance.event_loop.GetSystemClockCache(),
-			      override_content_type,
+			      GetFileContentType(address),
 			      st,
 			      tr.GetExpiresRelative(HasQueryString()),
 			      IsProcessorFirst());

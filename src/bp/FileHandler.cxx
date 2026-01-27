@@ -102,6 +102,15 @@ Request::Handler::File::Close() noexcept
 	fd_lease = {};
 }
 
+const char *
+Request::GetFileContentType(const FileAddress &address) const noexcept
+{
+	if (translate.content_type != nullptr)
+		return translate.content_type;
+
+	return address.content_type;
+}
+
 void
 Request::DispatchFile(const char *path, FileDescriptor fd,
 		      const struct statx &st, SharedLease &&lease,
@@ -110,9 +119,7 @@ Request::DispatchFile(const char *path, FileDescriptor fd,
 	const TranslateResponse &tr = *translate.response;
 	const auto &address = *handler.file.address;
 
-	const char *override_content_type = translate.content_type;
-	if (override_content_type == nullptr)
-		override_content_type = address.content_type;
+	const char *override_content_type = GetFileContentType(address);
 
 	HttpHeaders headers;
 	GrowingBuffer &headers2 = headers.GetBuffer();

@@ -603,6 +603,9 @@ private:
 	bool EvaluateFileRequest(const struct statx &st,
 				 struct file_request &file_request) noexcept;
 
+	[[gnu::pure]]
+	const char *GetFileContentType(const FileAddress &address) const noexcept;
+
 	void DispatchFile(const char *path, FileDescriptor fd,
 			  const struct statx &st, SharedLease &&lease,
 			  const struct file_request &file_request) noexcept;
