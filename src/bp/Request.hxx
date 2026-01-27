@@ -26,6 +26,7 @@
 #include "util/StringWithHash.hxx"
 #include "stopwatch.hxx"
 
+#include <cstdint>
 #include <exception>
 #include <string_view>
 
@@ -57,6 +58,12 @@ namespace Co { template<typename T> class Task; }
 class Request final : public HttpResponseHandler,
 		      TranslateHandler,
 		      SuffixRegistryHandler, Cancellable, PoolLeakDetector {
+
+	/**
+	 * Responses shorter than this will not be auto-compressed
+	 * because it is not worth the overhead.
+	 */
+	static constexpr uint_least64_t AUTO_COMPRESS_MIN_SIZE = 512;
 
 public:
 	struct pool &pool;

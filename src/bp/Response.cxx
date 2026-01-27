@@ -243,7 +243,7 @@ Request::AutoDeflate(HttpHeaders &response_headers,
 	    (!translate.response->auto_compress_only_text ||
 	     IsTextMimeType(response_headers)) &&
 	    /* long enough for compression to be worth the overhead? */
-	    !IsShorterThan(response_body, 512)) {
+	    !IsShorterThan(response_body, AUTO_COMPRESS_MIN_SIZE)) {
 		response_headers.Write("vary"sv, "accept-encoding"sv);
 		ApplyAutoCompress(response_headers, response_body);
 	}
