@@ -24,10 +24,11 @@ struct file_request {
 	explicit constexpr file_request(off_t _size) noexcept:range(_size) {}
 };
 
+[[gnu::nonnull]]
 void
 file_response_headers(GrowingBuffer &headers,
 		      const ClockCache<std::chrono::system_clock> &system_clock,
-		      const char *override_content_type,
+		      const char *content_type,
 		      const struct statx &st,
 		      std::chrono::seconds expires_relative,
 		      bool processor_first) noexcept;

@@ -187,19 +187,16 @@ Request::EvaluateFileRequest(const struct statx &st,
 void
 file_response_headers(GrowingBuffer &headers,
 		      const ClockCache<std::chrono::system_clock> &system_clock,
-		      const char *override_content_type,
+		      const char *content_type,
 		      const struct statx &st,
 		      std::chrono::seconds expires_relative,
 		      bool processor_first) noexcept
 {
+	assert(content_type != nullptr);
+
 	if (!processor_first)
 		file_cache_headers(headers, system_clock,
 				   st, expires_relative);
 
-	if (override_content_type != nullptr) {
-		/* content type override from the translation server */
-		header_write(headers, "content-type", override_content_type);
-	} else {
-		header_write(headers, "content-type", "application/octet-stream");
-	}
+	header_write(headers, "content-type", content_type);
 }

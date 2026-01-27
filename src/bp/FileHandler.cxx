@@ -108,7 +108,10 @@ Request::GetFileContentType(const FileAddress &address) const noexcept
 	if (translate.content_type != nullptr)
 		return translate.content_type;
 
-	return address.content_type;
+	if (address.content_type != nullptr)
+		return address.content_type;
+
+	return "application/octet-stream";
 }
 
 void
@@ -119,13 +122,13 @@ Request::DispatchFile(const char *path, FileDescriptor fd,
 	const TranslateResponse &tr = *translate.response;
 	const auto &address = *handler.file.address;
 
-	const char *override_content_type = GetFileContentType(address);
+	const char *const content_type = GetFileContentType(address);
 
 	HttpHeaders headers;
 	GrowingBuffer &headers2 = headers.GetBuffer();
 	file_response_headers(headers2,
 			      instance.event_loop.GetSystemClockCache(),
-			      override_content_type,
+			      content_type,
 			      st,
 			      tr.GetExpiresRelative(HasQueryString()),
 			      IsProcessorFirst());
