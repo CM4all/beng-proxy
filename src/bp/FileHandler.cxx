@@ -4,6 +4,7 @@
 
 #include "Precompressed.hxx"
 #include "FileHeaders.hxx"
+#include "ClassifyMimeType.hxx"
 #include "file/Address.hxx"
 #include "Request.hxx"
 #include "Instance.hxx"
@@ -34,6 +35,22 @@
 #include <sys/stat.h>
 
 using std::string_view_literals::operator""sv;
+
+bool
+Request::Translate::HasFileAutoCompress(uint_least64_t size,
+					const char *effective_content_type) const noexcept
+{
+	assert(effective_content_type != nullptr);
+
+	/* some of these checks are duplicated from AutoDeflate() */
+
+	return response && HasAutoCompress() &&
+		/* long enough for compression to be worth the overhead? */
+		size >= AUTO_COMPRESS_MIN_SIZE &&
+		/* compress only text? */
+		(!response->auto_compress_only_text ||
+		 IsTextMimeType(effective_content_type));
+}
 
 inline bool
 Request::CheckFilePath(std::string_view path, bool relative) noexcept
@@ -178,7 +195,7 @@ Request::DispatchFile(const char *path, FileDescriptor fd,
 	DispatchResponse(status, std::move(headers),
 #ifdef HAVE_URING
 			 instance.uring
-			 ? (IsDirect()
+			 ? (IsDirect(end_offset - start_offset, content_type)
 			    /* if this response is going to be
 			       transmitted directly, use splice() with
 			       io_uring instead of sendfile() to avoid

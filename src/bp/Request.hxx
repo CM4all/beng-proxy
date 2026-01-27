@@ -110,7 +110,7 @@ private:
 	 */
 	const char *user = nullptr;
 
-	struct {
+	struct Translate {
 		TranslateRequest request;
 		UniquePoolPtr<TranslateResponse> response;
 
@@ -252,6 +252,15 @@ private:
 
 			return response && response->HasAutoCompress();
 		}
+
+		/**
+		 * Like HasAutoCompress(), but include additional
+		 * checks whether auto-compression should be enabled
+		 * for a specific file.
+		 */
+		[[gnu::pure]]
+		bool HasFileAutoCompress(uint_least64_t size,
+					 const char *effective_content_type) const noexcept;
 	} translate;
 
 	/**
@@ -711,10 +720,10 @@ private:
 		translate.chain = {};
 	}
 
-	bool IsDirect() const noexcept {
+	bool IsDirect(uint_least64_t size, const char *content_type) const noexcept {
 		return !HasTransformations() &&
 			translate.chain.data() == nullptr &&
-			!translate.HasAutoCompress();
+			!translate.HasFileAutoCompress(size, content_type);
 	}
 
 	const Transformation *PopTransformation() noexcept {
