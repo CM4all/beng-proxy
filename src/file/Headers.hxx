@@ -8,28 +8,14 @@
 
 #pragma once
 
-#include <sys/stat.h>
-#include <stddef.h>
-
 struct pool;
-class FileDescriptor;
 class StringMap;
 struct statx;
 
 void
-GetAnyETag(char *buffer, size_t size,
-	   FileDescriptor fd, const struct statx &st,
-	   bool use_xattr) noexcept;
+GetAnyETag(char *buffer, const struct statx &st) noexcept;
 
-bool
-load_xattr_content_type(char *buffer, size_t size, FileDescriptor fd) noexcept;
-
-/**
- * @param fd a file descriptor for loading xattr, or -1 to disable
- * xattr
- */
 StringMap
 static_response_headers(struct pool &pool,
-			FileDescriptor fd, const struct statx &st,
-			const char *content_type,
-			bool use_xattr) noexcept;
+			const struct statx &st,
+			const char *content_type) noexcept;

@@ -64,8 +64,6 @@ BpConfig::HandleSet(std::string_view name, const char *value)
 		/* deprecated */
 	} else if (name == "dump_widget_tree"sv) {
 		/* deprecated */
-	} else if (name == "use_xattr"sv) {
-		use_xattr = ParseBool(value);
 	} else if (name == "use_io_uring"sv) {
 		use_io_uring = ParseBool(value);
 	} else if (name == "http_io_uring"sv) {

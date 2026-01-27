@@ -15,7 +15,6 @@
 #include <sys/types.h>
 
 template<typename Clock> class ClockCache;
-class FileDescriptor;
 class GrowingBuffer;
 struct statx;
 
@@ -29,6 +28,6 @@ void
 file_response_headers(GrowingBuffer &headers,
 		      const ClockCache<std::chrono::system_clock> &system_clock,
 		      const char *override_content_type,
-		      FileDescriptor fd, const struct statx &st,
+		      const struct statx &st,
 		      std::chrono::seconds expires_relative,
-		      bool processor_first, bool use_xattr) noexcept;
+		      bool processor_first) noexcept;

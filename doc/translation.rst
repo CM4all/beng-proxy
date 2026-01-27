@@ -641,10 +641,6 @@ Response
   datagrams.  Without this packet, the value of the
   ``X-CM4all-Generator`` response header is used.
 
-If the translation server does not provide the ``CONTENT_TYPE``
-header, :program:`beng-proxy` will attempt to discover the file type
-from its extended attributes (see :ref:`xattr`).
-
 To send a standard error page, the translation server sends a response
 containing only the ``STATUS`` parameter with the desired HTTP status.
 

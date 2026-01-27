@@ -14,25 +14,6 @@
 #include <assert.h>
 #include <sys/stat.h>
 #include <sys/types.h>
-#include <sys/xattr.h>
-
-static bool
-ReadETag(FileDescriptor fd, char *buffer, size_t size) noexcept
-{
-	assert(fd.IsDefined());
-	assert(size > 4);
-
-	const auto nbytes = fgetxattr(fd.Get(), "user.ETag", buffer + 1, size - 3);
-	if (nbytes <= 0)
-		return false;
-
-	assert((size_t)nbytes < size);
-
-	buffer[0] = '"';
-	buffer[nbytes + 1] = '"';
-	buffer[nbytes + 2] = 0;
-	return true;
-}
 
 static constexpr void
 static_etag(char *p, const struct statx &st) noexcept
@@ -59,35 +40,16 @@ static_etag(char *p, const struct statx &st) noexcept
 }
 
 void
-GetAnyETag(char *buffer, size_t size,
-	   FileDescriptor fd, const struct statx &st,
-	   bool use_xattr) noexcept
+GetAnyETag(char *buffer,
+	   const struct statx &st) noexcept
 {
-	if (!use_xattr || !fd.IsDefined() || !ReadETag(fd, buffer, size))
-		static_etag(buffer, st);
-}
-
-bool
-load_xattr_content_type(char *buffer, size_t size, FileDescriptor fd) noexcept
-{
-	if (!fd.IsDefined())
-		return false;
-
-	ssize_t nbytes = fgetxattr(fd.Get(), "user.Content-Type",
-				   buffer, size - 1);
-	if (nbytes <= 0)
-		return false;
-
-	assert((size_t)nbytes < size);
-	buffer[nbytes] = 0;
-	return true;
+	static_etag(buffer, st);
 }
 
 StringMap
 static_response_headers(struct pool &pool,
-			FileDescriptor fd, const struct statx &st,
-			const char *content_type,
-			bool use_xattr) noexcept
+			const struct statx &st,
+			const char *content_type) noexcept
 {
 	assert(S_ISREG(st.stx_mode));
 
@@ -95,17 +57,15 @@ static_response_headers(struct pool &pool,
 
 	char buffer[256];
 
-	if (content_type == nullptr && use_xattr)
-		content_type = load_xattr_content_type(buffer, sizeof(buffer), fd)
-			? p_strdup(&pool, buffer)
-			: "application/octet-stream";
+	if (content_type == nullptr)
+		content_type = "application/octet-stream";
 
 	headers.Add(pool, content_type_header, content_type);
 
 	headers.Add(pool, last_modified_header,
 		    p_strdup(&pool, http_date_format(std::chrono::system_clock::from_time_t(st.stx_mtime.tv_sec))));
 
-	GetAnyETag(buffer, sizeof(buffer), fd, st, use_xattr);
+	GetAnyETag(buffer, st);
 	headers.Add(pool, etag_header, p_strdup(&pool, buffer));
 
 	return headers;

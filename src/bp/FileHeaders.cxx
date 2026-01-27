@@ -21,28 +21,8 @@
 
 #include <assert.h>
 #include <sys/stat.h>
-#include <sys/xattr.h>
 
 using std::string_view_literals::operator""sv;
-
-[[gnu::pure]]
-static std::chrono::seconds
-read_xattr_max_age(FileDescriptor fd) noexcept
-{
-	assert(fd.IsDefined());
-
-	char buffer[32];
-	ssize_t nbytes = fgetxattr(fd.Get(), "user.MaxAge",
-				   buffer, sizeof(buffer));
-	if (nbytes <= 0)
-		return std::chrono::seconds::zero();
-
-	unsigned max_age;
-	if (!ParseIntegerTo({buffer, static_cast<std::size_t>(nbytes)}, max_age))
-		return std::chrono::seconds::zero();
-
-	return std::chrono::seconds(max_age);
-}
 
 static void
 generate_expires(GrowingBuffer &headers,
@@ -61,9 +41,8 @@ generate_expires(GrowingBuffer &headers,
 
 [[gnu::pure]]
 static bool
-CheckETagList(const char *list, FileDescriptor fd,
-	      const struct statx &st,
-	      bool use_xattr) noexcept
+CheckETagList(const char *list,
+	      const struct statx &st) noexcept
 {
 	assert(list != nullptr);
 
@@ -71,16 +50,15 @@ CheckETagList(const char *list, FileDescriptor fd,
 		return true;
 
 	char buffer[256];
-	GetAnyETag(buffer, sizeof(buffer), fd, st, use_xattr);
+	GetAnyETag(buffer, st);
 	return http_list_contains(list, buffer);
 }
 
 static void
-MakeETag(GrowingBuffer &headers, FileDescriptor fd, const struct statx &st,
-	bool use_xattr) noexcept
+MakeETag(GrowingBuffer &headers, const struct statx &st) noexcept
 {
 	char buffer[512];
-	GetAnyETag(buffer, sizeof(buffer), fd, st, use_xattr);
+	GetAnyETag(buffer, st);
 
 	header_write(headers, "etag", buffer);
 }
@@ -88,16 +66,12 @@ MakeETag(GrowingBuffer &headers, FileDescriptor fd, const struct statx &st,
 static void
 file_cache_headers(GrowingBuffer &headers,
 		   const ClockCache<std::chrono::system_clock> &system_clock,
-		   FileDescriptor fd, const struct statx &st,
-		   std::chrono::seconds max_age,
-		   bool use_xattr) noexcept
+		   const struct statx &st,
+		   std::chrono::seconds max_age) noexcept
 {
 	header_write(headers, "last-modified"sv, std::chrono::system_clock::from_time_t(st.stx_mtime.tv_sec));
 
-	MakeETag(headers, fd, st, use_xattr);
-
-	if (use_xattr && max_age == std::chrono::seconds::zero() && fd.IsDefined())
-		max_age = read_xattr_max_age(fd);
+	MakeETag(headers, st);
 
 	if (max_age > std::chrono::seconds::zero())
 		generate_expires(headers, system_clock.now(), max_age);
@@ -107,9 +81,7 @@ file_cache_headers(GrowingBuffer &headers,
  * Verifies the If-Range request header (RFC 2616 14.27).
  */
 static bool
-check_if_range(const char *if_range,
-	       FileDescriptor fd, const struct statx &st,
-	       bool use_xattr) noexcept
+check_if_range(const char *if_range, const struct statx &st) noexcept
 {
 	if (if_range == nullptr)
 		return true;
@@ -119,7 +91,7 @@ check_if_range(const char *if_range,
 		return std::chrono::system_clock::from_time_t(st.stx_mtime.tv_sec) == t;
 
 	char etag[256];
-	GetAnyETag(etag, sizeof(etag), fd, st, use_xattr);
+	GetAnyETag(etag, st);
 	return StringIsEqual(if_range, etag);
 }
 
@@ -128,16 +100,14 @@ check_if_range(const char *if_range,
  */
 static void
 DispatchNotModified(Request &request2, const TranslateResponse &tr,
-		    FileDescriptor fd, const struct statx &st,
-		    bool use_xattr) noexcept
+		    const struct statx &st) noexcept
 {
 	HttpHeaders headers;
 	auto &headers2 = headers.GetBuffer();
 
 	file_cache_headers(headers2,
 			   request2.instance.event_loop.GetSystemClockCache(),
-			   fd, st, tr.GetExpiresRelative(request2.HasQueryString()),
-			   use_xattr);
+			   st, tr.GetExpiresRelative(request2.HasQueryString()));
 
 	write_translation_vary_header(headers2, tr);
 
@@ -146,28 +116,25 @@ DispatchNotModified(Request &request2, const TranslateResponse &tr,
 }
 
 bool
-Request::EvaluateFileRequest(FileDescriptor fd, const struct statx &st,
+Request::EvaluateFileRequest(const struct statx &st,
 			     struct file_request &file_request) noexcept
 {
 	const auto &request_headers = request.headers;
 	const auto &tr = *translate.response;
 	bool ignore_if_modified_since = false;
 
-	const bool use_xattr = instance.config.use_xattr;
-
 	if (tr.status == HttpStatus{} && request.method == HttpMethod::GET &&
 	    !IsTransformationEnabled()) {
 		const char *p = request_headers.Get(range_header);
 
 		if (p != nullptr &&
-		    check_if_range(request_headers.Get(if_range_header), fd, st,
-				   use_xattr))
+		    check_if_range(request_headers.Get(if_range_header), st))
 			file_request.range.ParseRangeHeader(p);
 	}
 
 	if (!IsTransformationEnabled()) {
 		const char *p = request_headers.Get(if_match_header);
-		if (p != nullptr && !CheckETagList(p, fd, st, use_xattr)) {
+		if (p != nullptr && !CheckETagList(p, st)) {
 			DispatchError(HttpStatus::PRECONDITION_FAILED,
 				      {}, nullptr);
 			return false;
@@ -175,9 +142,8 @@ Request::EvaluateFileRequest(FileDescriptor fd, const struct statx &st,
 
 		p = request_headers.Get(if_none_match_header);
 		if (p != nullptr) {
-			if (CheckETagList(p, fd, st, use_xattr)) {
-				DispatchNotModified(*this, tr, fd, st,
-						    use_xattr);
+			if (CheckETagList(p, st)) {
+				DispatchNotModified(*this, tr, st);
 				return false;
 			}
 
@@ -198,7 +164,7 @@ Request::EvaluateFileRequest(FileDescriptor fd, const struct statx &st,
 			const auto t = http_date_parse(p);
 			if (t != std::chrono::system_clock::from_time_t(-1) &&
 			    std::chrono::system_clock::from_time_t(st.stx_mtime.tv_sec) <= t) {
-				DispatchNotModified(*this, tr, fd, st, use_xattr);
+				DispatchNotModified(*this, tr, st);
 				return false;
 			}
 		}
@@ -222,24 +188,18 @@ void
 file_response_headers(GrowingBuffer &headers,
 		      const ClockCache<std::chrono::system_clock> &system_clock,
 		      const char *override_content_type,
-		      FileDescriptor fd, const struct statx &st,
+		      const struct statx &st,
 		      std::chrono::seconds expires_relative,
-		      bool processor_first, bool use_xattr) noexcept
+		      bool processor_first) noexcept
 {
 	if (!processor_first)
 		file_cache_headers(headers, system_clock,
-				   fd, st, expires_relative,
-				   use_xattr);
+				   st, expires_relative);
 
 	if (override_content_type != nullptr) {
 		/* content type override from the translation server */
 		header_write(headers, "content-type", override_content_type);
 	} else {
-		char content_type[256];
-		if (use_xattr && load_xattr_content_type(content_type, sizeof(content_type), fd)) {
-			header_write(headers, "content-type", content_type);
-		} else {
-			header_write(headers, "content-type", "application/octet-stream");
-		}
+		header_write(headers, "content-type", "application/octet-stream");
 	}
 }

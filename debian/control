@@ -40,7 +40,7 @@ Depends: ${misc:Depends}, ${shlibs:Depends},
 Recommends: cm4all-beng-proxy-translation | cm4all-jetserv-daemon,
  cm4all-spawn-reaper,
  libcm4all-beng-proxy-js (= ${source:Version})
-Suggests: attr, cm4all-coma-cgi,
+Suggests: cm4all-coma-cgi,
  cm4all-spawn-accessory,
  cm4all-beng-proxy-logging (= ${source:Version})
 Provides: httpd, httpd-cgi

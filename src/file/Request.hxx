@@ -23,5 +23,4 @@ static_file_get(EventLoop &event_loop,
 		struct pool &pool,
 		const char *base,
 		const char *path, const char *content_type,
-		bool use_xattr,
 		HttpResponseHandler &handler, CancellablePointer &cancel_ptr);

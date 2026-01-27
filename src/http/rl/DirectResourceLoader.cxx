@@ -73,7 +73,6 @@ try {
 #endif
 				pool, file->base, file->path,
 				file->content_type,
-				false,
 				handler, cancel_ptr);
 		return;
 

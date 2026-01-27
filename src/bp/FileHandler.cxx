@@ -119,10 +119,9 @@ Request::DispatchFile(const char *path, FileDescriptor fd,
 	file_response_headers(headers2,
 			      instance.event_loop.GetSystemClockCache(),
 			      override_content_type,
-			      fd, st,
+			      st,
 			      tr.GetExpiresRelative(HasQueryString()),
-			      IsProcessorFirst(),
-			      instance.config.use_xattr);
+			      IsProcessorFirst());
 	write_translation_vary_header(headers2, tr);
 
 	auto status = tr.status == HttpStatus{} ? HttpStatus::OK : tr.status;
@@ -190,7 +189,7 @@ Request::DispatchFile(const char *path, FileDescriptor fd,
 }
 
 inline bool
-Request::DispatchCompressedFile(const char *path, FileDescriptor fd,
+Request::DispatchCompressedFile(const char *path,
 				const struct statx &st,
 				std::string_view encoding,
 				UniqueFileDescriptor compressed_fd,
@@ -210,10 +209,9 @@ Request::DispatchCompressedFile(const char *path, FileDescriptor fd,
 	file_response_headers(headers2,
 			      instance.event_loop.GetSystemClockCache(),
 			      override_content_type,
-			      fd, st,
+			      st,
 			      tr.GetExpiresRelative(HasQueryString()),
-			      IsProcessorFirst(),
-			      instance.config.use_xattr);
+			      IsProcessorFirst());
 	write_translation_vary_header(headers2, tr);
 
 	headers.contains_content_encoding = true;
@@ -297,7 +295,7 @@ Request::OnPrecompressedOpenStat(UniqueFileDescriptor fd,
 
 	const auto &p = *handler.file.precompressed;
 
-	DispatchCompressedFile(p.compressed_path, p.original_fd, p.original_st,
+	DispatchCompressedFile(p.compressed_path, p.original_st,
 			       p.encoding,
 			       std::move(fd), st.stx_size);
 }
@@ -479,7 +477,7 @@ Request::HandleFileAddress(const FileAddress &address,
 
 	/* request options */
 
-	if (!EvaluateFileRequest(fd, st, file_request)) {
+	if (!EvaluateFileRequest(st, file_request)) {
 		return;
 	}
 

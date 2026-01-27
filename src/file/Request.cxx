@@ -43,23 +43,19 @@ class UringStaticFileGet final : Uring::OpenStatHandler, Cancellable {
 
 	HttpResponseHandler &handler;
 
-	const bool use_xattr;
-
 public:
 	UringStaticFileGet(Uring::Queue &uring,
 			   struct pool &_pool,
 			   UniqueFileDescriptor &&_base,
 			   const char *_path,
 			   const char *_content_type,
-			   bool _use_xattr,
 			   HttpResponseHandler &_handler) noexcept
 		:pool(_pool),
 		 base(std::move(_base)), // TODO: use io_uring to open it
 		 path(_path),
 		 content_type(_content_type),
 		 open_stat(new Uring::OpenStat(uring, *this)),
-		 handler(_handler),
-		 use_xattr(_use_xattr){}
+		 handler(_handler) {}
 
 	void Start(CancellablePointer &cancel_ptr) noexcept {
 		cancel_ptr = *this;
@@ -118,7 +114,7 @@ UringStaticFileGet::OnOpenStat(UniqueFileDescriptor fd,
 		return;
 	}
 
-	auto headers = static_response_headers(pool, fd, stx, _content_type, use_xattr);
+	auto headers = static_response_headers(pool, stx, _content_type);
 
 	auto *shared_fd = new SharedFd(std::move(fd));
 
@@ -139,7 +135,6 @@ static_file_get(EventLoop &event_loop,
 		struct pool &pool,
 		const char *_base,
 		const char *path, const char *content_type,
-		bool use_xattr,
 		HttpResponseHandler &handler, CancellablePointer &cancel_ptr)
 {
 	assert(path != nullptr);
@@ -161,7 +156,6 @@ static_file_get(EventLoop &event_loop,
 							  *uring, pool,
 							  std::move(base),
 							  path, content_type,
-							  use_xattr,
 							  handler);
 		o->Start(cancel_ptr);
 		return;
@@ -190,8 +184,7 @@ static_file_get(EventLoop &event_loop,
 		return;
 	}
 
-	auto headers = static_response_headers(pool, fd, st, content_type,
-					       use_xattr);
+	auto headers = static_response_headers(pool, st, content_type);
 
 	auto *shared_fd = NewFromPool<SharedFd>(pool, std::move(fd));
 
