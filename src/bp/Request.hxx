@@ -63,7 +63,7 @@ class Request final : public HttpResponseHandler,
 	 * Responses shorter than this will not be auto-compressed
 	 * because it is not worth the overhead.
 	 */
-	static constexpr uint_least64_t AUTO_COMPRESS_MIN_SIZE = 512;
+	static constexpr uint_least64_t AUTO_COMPRESS_MIN_SIZE = 1024;
 
 public:
 	struct pool &pool;
