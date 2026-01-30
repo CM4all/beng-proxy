@@ -192,7 +192,10 @@ file_response_headers(GrowingBuffer &headers,
 		      std::chrono::seconds expires_relative,
 		      bool processor_first) noexcept
 {
+#ifndef __clang__
+	/* disabled on clang due to -Wtautological-pointer-compare */
 	assert(content_type != nullptr);
+#endif
 
 	if (!processor_first)
 		file_cache_headers(headers, system_clock,
