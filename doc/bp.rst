@@ -429,6 +429,10 @@ The following settings are available:
   connections to the translation server. Set to 0 to disable the limit.
   The default is 64.
 
+- ``populate_io_buffers``: ``yes`` populates all I/O buffers on
+  startup.  This reduces waits for Linux kernel VM
+  compaction/migration.
+
 - ``use_io_uring``: Set to ``no`` to disable the use of ``io_uring``,
   which can make debugging with ``strace`` easier, because ``strace``
   cannot see ``io_uring`` operations.  This is the global knob; with

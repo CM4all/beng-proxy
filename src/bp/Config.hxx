@@ -114,6 +114,8 @@ struct BpConfig {
 
 	bool http_cache_obey_no_cache = true;
 
+	bool populate_io_buffers = false;
+
 	bool use_io_uring = true;
 
 	// disabled by default until the code has been debugged

@@ -67,6 +67,8 @@ struct LbConfig {
 	unsigned tcp_stock_limit = 256;
 	static constexpr std::size_t tcp_stock_max_idle = 256;
 
+	bool populate_io_buffers = false;
+
 	LbConfig() noexcept;
 	~LbConfig() noexcept;
 

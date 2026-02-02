@@ -864,3 +864,7 @@ The following settings are available:
 - ``tcp_stock_limit``: The maximum number of outgoing TCP connections
   per remote host.  0 means unlimited, which has shown to be a bad
   choice, because many servers do not scale well.
+
+- ``populate_io_buffers``: ``yes`` populates all I/O buffers on
+  startup.  This reduces waits for Linux kernel VM
+  compaction/migration.

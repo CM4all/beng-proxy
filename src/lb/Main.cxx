@@ -139,8 +139,6 @@ try {
 	if (sodium_init() < 0)
 		throw std::runtime_error{"sodium_init() failed"};
 
-	const ScopeFbPoolInit fb_pool_init;
-
 	/* configuration */
 
 	LbCmdLine cmdline;
@@ -157,6 +155,10 @@ try {
 		PrintException(std::current_exception());
 		return EX_CONFIG;
 	}
+
+	const ScopeFbPoolInit fb_pool_init;
+	if (config.populate_io_buffers)
+		fb_pool_get().Populate();
 
 	const ScopeSslGlobalInit ssl_init;
 

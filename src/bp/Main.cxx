@@ -355,6 +355,8 @@ try {
 #endif
 
 	const ScopeFbPoolInit fb_pool_init;
+	if (_config.populate_io_buffers)
+		fb_pool_get().Populate();
 
 	BpInstance instance{
 		std::move(_config),
