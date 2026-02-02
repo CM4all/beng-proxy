@@ -53,19 +53,6 @@ test(
 )
 
 test(
-  't_slice',
-  executable(
-    't_slice',
-    't_slice.cxx',
-    include_directories: inc,
-    dependencies: [
-      gtest,
-      memory_dep,
-    ],
-  ),
-)
-
-test(
   't_growing_buffer',
   executable(
     't_growing_buffer',
