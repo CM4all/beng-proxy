@@ -57,6 +57,8 @@ LbInstance::LbInstance(const LbConfig &_config)
 		  },
 		  event_loop)
 {
+	if (config.populate_io_buffers)
+		request_slice_pool.Populate();
 }
 
 LbInstance::~LbInstance() noexcept
