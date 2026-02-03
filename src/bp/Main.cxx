@@ -580,6 +580,8 @@ try {
 					   *instance.filter_resource_loader,
 					   instance.pipe_stock);
 
+	instance.ForkCow(false);
+
 	if (cmdline.debug_listener_tag == nullptr) {
 		for (const auto &i : instance.config.listen)
 			instance.AddListener(i, &cmdline.logger_user);

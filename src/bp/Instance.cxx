@@ -113,7 +113,6 @@ BpInstance::BpInstance(BpConfig &&_config,
 	if (config.populate_io_buffers)
 		request_slice_pool.Populate();
 
-	ForkCow(false);
 	ScheduleCompress();
 }
 
