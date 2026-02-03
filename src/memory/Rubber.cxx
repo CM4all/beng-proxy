@@ -609,6 +609,13 @@ Rubber::ForkCow(bool inherit) noexcept
 }
 
 void
+Rubber::Populate() noexcept
+{
+	populate = true;
+	PagesPopulateWrite(table.get(), table.size());
+}
+
+void
 Rubber::UseHole(Hole &hole, unsigned id, std::size_t size) noexcept
 {
 	const unsigned previous_id = hole.previous_id;
@@ -924,9 +931,11 @@ Rubber::Compress() noexcept
 	assert(offset == netto_size + table->GetSize());
 	assert(netto_size == GetBruttoSize());
 
-	/* tell the kernel that we won't need the data after our last
-	   allocation */
-	const std::size_t allocated = AlignHugePageUp(offset);
-	if (allocated < table.size())
-		DiscardPages(WriteAt(allocated), table.size() - allocated);
+	if (!populate) {
+		/* tell the kernel that we won't need the data after our last
+		   allocation */
+		const std::size_t allocated = AlignHugePageUp(offset);
+		if (allocated < table.size())
+			DiscardPages(WriteAt(allocated), table.size() - allocated);
+	}
 }

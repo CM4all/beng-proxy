@@ -71,6 +71,8 @@ class Rubber {
 	 */
 	std::array<HoleList, N_HOLE_THRESHOLDS> holes;
 
+	bool populate = false;
+
 public:
 	/**
 	 * Throws std::bad_alloc on error.
@@ -84,6 +86,12 @@ public:
 	 * This is enabled by default.
 	 */
 	void ForkCow(bool inherit) noexcept;
+
+	/**
+	 * Populate the memory area (using MADV_POPULATE_WRITE).  This
+	 * reduces waits for Linux kernel VM compaction/migration.
+	 */
+	void Populate() noexcept;
 
 	/**
 	 * Returns the maximum total size of all allocations.
