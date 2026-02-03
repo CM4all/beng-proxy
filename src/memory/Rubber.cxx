@@ -591,9 +591,7 @@ Rubber::Rubber(std::size_t _max_size, const char *vma_name)
 	if (vma_name != nullptr)
 		SetVmaName(table.get(), table.size(), vma_name);
 
-	const std::size_t table_size = table->GetSize();
-	EnableHugePages(WriteAt(table_size),
-			AlignHugePageDown(table.size() - table_size));
+	EnableHugePages(table.get(), table.size());
 }
 
 Rubber::~Rubber() noexcept
