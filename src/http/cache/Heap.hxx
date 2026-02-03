@@ -56,6 +56,7 @@ public:
 	}
 
 	void ForkCow(bool inherit) noexcept;
+	void Populate() noexcept;
 
 	[[gnu::pure]]
 	AllocatorStats GetStats() const noexcept;

@@ -1361,6 +1361,12 @@ TranslationCache::ForkCow(bool inherit) noexcept
 	cache->slice_pool.ForkCow(inherit);
 }
 
+void
+TranslationCache::Populate() noexcept
+{
+	cache->slice_pool.Populate();
+}
+
 CacheStats
 TranslationCache::GetStats() const noexcept
 {

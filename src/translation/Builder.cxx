@@ -65,6 +65,13 @@ TranslationCacheBuilder::ForkCow(bool inherit) noexcept
 		i.second->ForkCow(inherit);
 }
 
+void
+TranslationCacheBuilder::Populate() noexcept
+{
+	for (auto &i : m)
+		i.second->Populate();
+}
+
 CacheStats
 TranslationCacheBuilder::GetStats() const noexcept
 {

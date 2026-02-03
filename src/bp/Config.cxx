@@ -76,6 +76,14 @@ BpConfig::HandleSet(std::string_view name, const char *value)
 		io_uring_sqpoll = ParseBool(value);
 	} else if (name == "io_uring_sq_thread_cpu"sv) {
 		io_uring_sq_thread_cpu = ParseUnsignedLong(value);
+	} else if (name == "populate_translate_cache"sv) {
+		populate_translate_cache = ParseBool(value);
+	} else if (name == "populate_http_cache"sv) {
+		populate_http_cache = ParseBool(value);
+	} else if (name == "populate_filter_cache"sv) {
+		populate_filter_cache = ParseBool(value);
+	} else if (name == "populate_encoding_cache"sv) {
+		populate_encoding_cache = ParseBool(value);
 	} else if (name == "verbose_response"sv) {
 		verbose_response = ParseBool(value);
 	} else if (name == "session_cookie"sv) {

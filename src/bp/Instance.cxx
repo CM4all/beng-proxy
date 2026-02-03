@@ -199,6 +199,22 @@ BpInstance::ForkCow(bool inherit) noexcept
 }
 
 void
+BpInstance::ApplyPopulate() noexcept
+{
+	if (config.populate_translate_cache && translation_caches)
+		translation_caches->Populate();
+
+	if (config.populate_http_cache && http_cache != nullptr)
+		http_cache_populate(*http_cache);
+
+	if (config.populate_filter_cache && filter_cache != nullptr)
+		filter_cache_populate(*filter_cache);
+
+	if (config.populate_encoding_cache && encoding_cache)
+		encoding_cache->Populate();
+}
+
+void
 BpInstance::Compress() noexcept
 {
 	fb_pool_compress();

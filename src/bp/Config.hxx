@@ -123,6 +123,9 @@ struct BpConfig {
 
 	bool io_uring_sqpoll = false;
 
+	bool populate_translate_cache = false;
+	bool populate_http_cache = false, populate_filter_cache = false, populate_encoding_cache = false;
+
 	SpawnConfig spawn;
 
 	SslClientConfig ssl_client;

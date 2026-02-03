@@ -41,6 +41,10 @@ public:
 		rubber.ForkCow(inherit);
 	}
 
+	void Populate() noexcept {
+		rubber.Populate();
+	}
+
 	CacheStats GetStats() const noexcept {
 		stats.allocator = rubber.GetStats();
 		return stats;

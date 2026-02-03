@@ -264,6 +264,11 @@ public:
 		slice_pool.ForkCow(inherit);
 	}
 
+	void Populate() noexcept {
+		rubber.Populate();
+		slice_pool.Populate();
+	}
+
 	CacheStats GetStats() const noexcept {
 		stats.allocator = slice_pool.GetStats() + rubber.GetStats();
 		return stats;
@@ -687,6 +692,12 @@ void
 filter_cache_fork_cow(FilterCache &cache, bool inherit) noexcept
 {
 	cache.ForkCow(inherit);
+}
+
+void
+filter_cache_populate(FilterCache &cache) noexcept
+{
+	cache.Populate();
 }
 
 CacheStats

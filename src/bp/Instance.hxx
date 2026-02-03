@@ -242,6 +242,7 @@ struct BpInstance final : PInstance, BengControl::Handler,
 	void DisableSignals() noexcept;
 
 	void ForkCow(bool inherit) noexcept;
+	void ApplyPopulate() noexcept;
 
 	void Compress() noexcept;
 	void ScheduleCompress() noexcept;

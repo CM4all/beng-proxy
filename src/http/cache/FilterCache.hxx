@@ -35,6 +35,9 @@ filter_cache_close(FilterCache *cache) noexcept;
 void
 filter_cache_fork_cow(FilterCache &cache, bool inherit) noexcept;
 
+void
+filter_cache_populate(FilterCache &cache) noexcept;
+
 [[gnu::pure]]
 CacheStats
 filter_cache_get_stats(const FilterCache &cache) noexcept;

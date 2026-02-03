@@ -297,6 +297,10 @@ public:
 		heap.ForkCow(inherit);
 	}
 
+	void Populate() noexcept {
+		heap.Populate();
+	}
+
 	CacheStats GetStats() const noexcept {
 		stats.allocator = heap.GetStats();
 		return stats;
@@ -831,6 +835,12 @@ void
 http_cache_fork_cow(HttpCache &cache, bool inherit) noexcept
 {
 	cache.ForkCow(inherit);
+}
+
+void
+http_cache_populate(HttpCache &cache) noexcept
+{
+	cache.Populate();
 }
 
 CacheStats

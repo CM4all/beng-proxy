@@ -81,6 +81,13 @@ HttpCacheHeap::ForkCow(bool inherit) noexcept
 }
 
 void
+HttpCacheHeap::Populate() noexcept
+{
+	slice_pool.Populate();
+	rubber.Populate();
+}
+
+void
 HttpCacheHeap::Compress() noexcept
 {
 	slice_pool.Compress();

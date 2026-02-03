@@ -2,7 +2,8 @@ cm4all-beng-proxy (21.13) unstable; urgency=low
 
   * prometheus: export event loop metrics
   * translation: reject duplicate CACHE_TAGs
-  * add option "populate_io_buffers"
+  * add option "populate_io_buffers",
+  * add options "populate_{translate,http,filter,encoding}_cache"
   * fix Transparent Huge Page alignment of I/O buffers
 
  --   

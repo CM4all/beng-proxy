@@ -37,6 +37,9 @@ http_cache_close(HttpCache *cache) noexcept;
 void
 http_cache_fork_cow(HttpCache &cache, bool inherit) noexcept;
 
+void
+http_cache_populate(HttpCache &cache) noexcept;
+
 [[gnu::pure]]
 CacheStats
 http_cache_get_stats(const HttpCache &cache) noexcept;

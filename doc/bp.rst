@@ -433,6 +433,10 @@ The following settings are available:
   startup.  This reduces waits for Linux kernel VM
   compaction/migration.
 
+- ``populate_translate_cache``, ``populate_http_cache``,
+  ``populate_filter_cache``, ``populate_encoding_cache``: like
+  ``populate_io_buffers``, but for the respective cache subsystem.
+
 - ``use_io_uring``: Set to ``no`` to disable the use of ``io_uring``,
   which can make debugging with ``strace`` easier, because ``strace``
   cannot see ``io_uring`` operations.  This is the global knob; with

@@ -35,6 +35,8 @@ public:
 
 	void ForkCow(bool inherit) noexcept;
 
+	void Populate() noexcept;
+
 	[[gnu::pure]]
 	CacheStats GetStats() const noexcept;
 

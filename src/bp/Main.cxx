@@ -581,6 +581,7 @@ try {
 					   instance.pipe_stock);
 
 	instance.ForkCow(false);
+	instance.ApplyPopulate();
 
 	if (cmdline.debug_listener_tag == nullptr) {
 		for (const auto &i : instance.config.listen)
