@@ -150,6 +150,7 @@ inc = include_directories(
   '.',
 )
 
+libcommon_enable_EventLoopStats = true
 libcommon_require_cap = get_option('cap')
 libcommon_require_lua = get_option('lua')
 

@@ -30,6 +30,7 @@
 #include "net/TimeoutError.hxx"
 #include "memory/istream_gb.hxx"
 #include "memory/GrowingBuffer.hxx"
+#include "event/PrometheusStats.hxx"
 #include "stopwatch.hxx"
 
 using std::string_view_literals::operator""sv;
@@ -145,6 +146,7 @@ WriteStats(GrowingBuffer &buffer, const LbInstance &instance) noexcept
 {
 	constexpr auto process = "lb"sv;
 
+	buffer.Write(ToPrometheusString(instance.event_loop.GetStats(), process));
 	Prometheus::Write(buffer, process, instance.GetStats());
 
 	for (const auto &listener : instance.listeners)

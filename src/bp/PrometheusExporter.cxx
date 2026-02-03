@@ -23,6 +23,7 @@
 #include "stock/Stats.hxx"
 #include "memory/istream_gb.hxx"
 #include "memory/GrowingBuffer.hxx"
+#include "event/PrometheusStats.hxx"
 #include "tcp_stock.hxx"
 
 using std::string_view_literals::operator""sv;
@@ -48,6 +49,7 @@ BpPrometheusExporter::HandleHttpRequest(IncomingHttpRequest &request,
 	GrowingBuffer buffer;
 
 	constexpr auto process = "bp"sv;
+	buffer.Write(ToPrometheusString(instance.event_loop.GetStats(), process));
 	Prometheus::Write(buffer, process, instance.GetStats());
 
 	if (instance.spawn)
