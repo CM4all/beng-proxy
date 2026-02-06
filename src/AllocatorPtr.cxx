@@ -18,7 +18,7 @@ AllocatorPtr::Dup(std::span<const std::byte> src) const noexcept
 	if (src.empty())
 		return {(const std::byte *)"", 0};
 
-	return {(const std::byte *)Dup(src.data(), src.size()), src.size()};
+	return {(const std::byte *)p_memdup(&pool, src.data(), src.size()), src.size()};
 }
 
 std::string_view

@@ -74,10 +74,6 @@ public:
 		return PoolAlloc<T>(pool, n);
 	}
 
-	void *Dup(const void *data, size_t size) const noexcept {
-		return p_memdup(&pool, data, size);
-	}
-
 	std::span<const std::byte> Dup(std::span<const std::byte> src) const noexcept;
 
 	template<typename T>
