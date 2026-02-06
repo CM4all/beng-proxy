@@ -23,12 +23,12 @@ CopyLower(char *dest, const char *src, size_t n) noexcept
 	return std::transform(src, src + n, dest, ToLowerASCII);
 }
 
-void *
-p_memdup(struct pool *pool, const void *src, size_t length
+std::byte *
+p_memdup(struct pool &pool, std::span<const std::byte> src
 	 TRACE_ARGS_DECL) noexcept
 {
-	void *dest = p_malloc_fwd(pool, length);
-	memcpy(dest, src, length);
+	std::byte *dest = reinterpret_cast<std::byte *>(p_malloc_fwd(&pool, src.size()));
+	std::copy(src.begin(), src.end(), dest);
 	return dest;
 }
 
@@ -36,7 +36,7 @@ char *
 p_strdup(struct pool *pool, const char *src
 	 TRACE_ARGS_DECL) noexcept
 {
-	return (char *)p_memdup_fwd(pool, src, strlen(src) + 1);
+	return (char *)p_memdup_fwd(*pool, std::as_bytes(std::span{src, strlen(src) + 1}));
 }
 
 char *

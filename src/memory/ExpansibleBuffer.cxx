@@ -106,7 +106,7 @@ std::span<std::byte>
 ExpansibleBuffer::Dup(struct pool &_pool) const noexcept
 {
 	return {
-		(std::byte *)p_memdup(&_pool, buffer, size),
+		p_memdup(_pool, Read()),
 		size,
 	};
 }

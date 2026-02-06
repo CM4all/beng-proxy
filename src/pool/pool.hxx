@@ -13,6 +13,7 @@
 
 #include <cstddef>
 #include <new>
+#include <span>
 #include <string_view>
 #include <type_traits>
 #include <utility>
@@ -184,11 +185,11 @@ void
 p_free(struct pool *pool, const void *ptr, size_t size) noexcept;
 
 [[gnu::malloc]] [[gnu::returns_nonnull]]
-void *
-p_memdup(struct pool *pool, const void *src, size_t length
+std::byte *
+p_memdup(struct pool &pool, std::span<const std::byte> src
 	 TRACE_ARGS_DEFAULT) noexcept;
 
-#define p_memdup_fwd(pool, src, length) p_memdup(pool, src, length TRACE_ARGS_FWD)
+#define p_memdup_fwd(pool, src) p_memdup(pool, src TRACE_ARGS_FWD)
 
 [[gnu::malloc]] [[gnu::returns_nonnull]]
 char *
