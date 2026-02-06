@@ -73,9 +73,6 @@ public:
 	}
 
 	[[gnu::pure]]
-	const char *ReadString() noexcept;
-
-	[[gnu::pure]]
 	std::string_view ReadStringView() const noexcept;
 
 	std::span<std::byte> Dup(struct pool &_pool) const noexcept;

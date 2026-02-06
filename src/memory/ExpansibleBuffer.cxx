@@ -96,18 +96,6 @@ ExpansibleBuffer::Set(std::string_view p) noexcept
 	return Set(AsBytes(p));
 }
 
-const char *
-ExpansibleBuffer::ReadString() noexcept
-{
-	if (size == 0 || buffer[size - 1] != std::byte{})
-		/* append a null terminator */
-		Write("\0"sv);
-
-	/* the buffer is now a valid C string (assuming it doesn't contain
-	   any nulls */
-	return reinterpret_cast<const char *>(buffer);
-}
-
 std::string_view
 ExpansibleBuffer::ReadStringView() const noexcept
 {
