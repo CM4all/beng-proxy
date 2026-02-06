@@ -111,7 +111,7 @@ ExpansibleBuffer::ReadString() noexcept
 std::string_view
 ExpansibleBuffer::ReadStringView() const noexcept
 {
-	return { (const char *)buffer, size };
+	return ToStringView(Read());
 }
 
 std::span<std::byte>
