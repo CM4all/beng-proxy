@@ -17,6 +17,7 @@
 
 #ifdef HAVE_LIBSYSTEMD
 #include "spawn/CgroupWatchPtr.hxx"
+#include "event/SocketEvent.hxx"
 #endif
 
 #include <memory>
@@ -53,6 +54,7 @@ class ChildStockItem
 	SharedLease listen_stream_lease;
 
 #ifdef HAVE_LIBSYSTEMD
+	SocketEvent return_cgroup_event;
 	CgroupWatchPtr cgroup_watch;
 #endif
 
@@ -61,6 +63,10 @@ class ChildStockItem
 		IDLE,
 		BUSY,
 	} state = State::CREATE;
+
+#ifdef HAVE_LIBSYSTEMD
+	bool spawn_complete = false;
+#endif
 
 public:
 	ChildStockItem(CreateStockItem c,
@@ -116,6 +122,16 @@ public:
 
 
 private:
+#ifdef HAVE_LIBSYSTEMD
+	bool WaitingForCgroup() const noexcept {
+		return return_cgroup_event.IsDefined();
+	}
+#endif
+
+#ifdef HAVE_LIBSYSTEMD
+	void OnReturnCgroup(unsigned events) noexcept;
+#endif
+
 	/* virtual methods from class SpawnCompletionHandler */
 	void OnSpawnSuccess() noexcept override;
 	void OnSpawnError(std::exception_ptr error) noexcept override;

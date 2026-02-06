@@ -34,9 +34,18 @@ ChildStockItem::ChildStockItem(CreateStockItem c,
 			       std::string_view _tag) noexcept
 	:StockItem(c),
 	 child_stock(_child_stock),
-	 tag(_tag) {}
+	 tag(_tag)
+#ifdef HAVE_LIBSYSTEMD
+	, return_cgroup_event(c.stock.GetEventLoop(), BIND_THIS_METHOD(OnReturnCgroup))
+#endif
+{}
 
-ChildStockItem::~ChildStockItem() noexcept = default;
+ChildStockItem::~ChildStockItem() noexcept
+{
+#ifdef HAVE_LIBSYSTEMD
+	return_cgroup_event.Close();
+#endif
+}
 
 void
 ChildStockItem::Prepare(ChildStockClass &cls, const void *info,
@@ -121,18 +130,11 @@ ChildStockItem::Spawn(ChildStockClass &cls, const void *info,
 		if (p.return_cgroup.IsDefined())
 			p.return_cgroup.Close();
 
-		// TODO do not receive synchronously
-		const auto cgroup_fd = EasyReceiveMessageWithOneFD(return_cgroup);
-		if (!cgroup_fd.IsDefined())
-			/* this happens if the open file limit was
-			   exceeded; apparently the recvmsg() is
-			   successful, but returns no file
-			   descriptors */
-			throw std::runtime_error{"Failed to receive cgroup"};
-
-		cgroup_watch.SetCgroup(cgroup_fd);
-		if (cgroup_watch.IsBlocked())
-			throw SpawnResourcesExhaustedError{};
+		/* the cgroup_watch will be constructed by
+		   OnReturnCgroup() as soon as the socket becomes
+		   ready */
+		return_cgroup_event.Open(return_cgroup.Release());
+		return_cgroup_event.ScheduleRead();
 	}
 #endif // HAVE_LIBSYSTEMD
 }
@@ -203,6 +205,43 @@ ChildStockItem::Release() noexcept
 	return true;
 }
 
+#ifdef HAVE_LIBSYSTEMD
+
+inline void
+ChildStockItem::OnReturnCgroup([[maybe_unused]] unsigned events) noexcept
+try {
+	assert(state == State::CREATE);
+
+	if (!handle || IsFading()) [[unlikely]]
+		/* meanwhile, OnChildProcessExit() or Disconnected()
+		   has been called; we can't use this process */
+		throw std::runtime_error{"Child process exited prematurely"};
+
+	const auto cgroup_fd = EasyReceiveMessageWithOneFD(return_cgroup_event.GetSocket());
+	if (!cgroup_fd.IsDefined())
+		/* this happens if the open file limit was exceeded;
+		   apparently the recvmsg() is successful, but returns
+		   no file descriptors */
+		throw std::runtime_error{"Failed to receive cgroup"};
+
+	return_cgroup_event.Close();
+
+	cgroup_watch.SetCgroup(cgroup_fd);
+	if (cgroup_watch.IsBlocked())
+		throw SpawnResourcesExhaustedError{};
+
+	if (spawn_complete) {
+		/* OnSpawnSuccess() has already been called - we can
+		   report completion now */
+		state = State::BUSY;
+		InvokeCreateSuccess(*handler);
+	}
+} catch (...) {
+	InvokeCreateError(*handler, std::current_exception());
+}
+
+#endif
+
 void
 ChildStockItem::OnSpawnSuccess() noexcept
 {
@@ -215,6 +254,15 @@ ChildStockItem::OnSpawnSuccess() noexcept
 		return;
 	}
 
+#ifdef HAVE_LIBSYSTEMD
+	if (WaitingForCgroup()) {
+		/* InvokeCreateSuccess() will be called by
+		   OnReturnCgroup() */
+		spawn_complete = true;
+		return;
+	}
+#endif
+
 	state = State::BUSY;
 
 	InvokeCreateSuccess(*handler);
@@ -224,6 +272,9 @@ void
 ChildStockItem::OnSpawnError(std::exception_ptr error) noexcept
 {
 	assert(state == State::CREATE);
+#ifdef HAVE_LIBSYSTEMD
+	assert(!spawn_complete);
+#endif
 
 	InvokeCreateError(*handler, std::move(error));
 }
