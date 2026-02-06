@@ -313,9 +313,10 @@ ProbeOnePathSuffix(std::string_view prefix, std::string_view suffix) noexcept
 		/* path too long */
 		return false;
 
-	memcpy(path, prefix.data(), prefix.size());
-	memcpy(path + prefix.size(), suffix.data(), suffix.size());
-	path[prefix.size() + suffix.size()] = 0;
+	char *p = path;
+	p = std::copy(prefix.begin(), prefix.end(), p);
+	p = std::copy(suffix.begin(), suffix.end(), p);
+	*p = '\0';
 
 	struct statx stx;
 	return statx(-1, path, AT_STATX_DONT_SYNC, STATX_TYPE, &stx) == 0 &&
