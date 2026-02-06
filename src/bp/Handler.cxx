@@ -306,19 +306,16 @@ Request::CheckHandleRedirectBounceStatus(const TranslateResponse &response) noex
 
 [[gnu::pure]]
 static bool
-ProbeOnePathSuffix(const char *prefix, const char *suffix) noexcept
+ProbeOnePathSuffix(std::string_view prefix, std::string_view suffix) noexcept
 {
-	const size_t prefix_length = strlen(prefix);
-	const size_t suffix_length = strlen(suffix);
-
 	char path[PATH_MAX];
-	if (prefix_length + suffix_length >= sizeof(path))
+	if (prefix.size() + suffix.size() >= sizeof(path))
 		/* path too long */
 		return false;
 
-	memcpy(path, prefix, prefix_length);
-	memcpy(path + prefix_length, suffix, suffix_length);
-	path[prefix_length + suffix_length] = 0;
+	memcpy(path, prefix.data(), prefix.size());
+	memcpy(path + prefix.size(), suffix.data(), suffix.size());
+	path[prefix.size() + suffix.size()] = 0;
 
 	struct statx stx;
 	return statx(-1, path, AT_STATX_DONT_SYNC, STATX_TYPE, &stx) == 0 &&
@@ -327,7 +324,7 @@ ProbeOnePathSuffix(const char *prefix, const char *suffix) noexcept
 
 [[gnu::pure]]
 static const char *
-ProbePathSuffixes(const char *prefix,
+ProbePathSuffixes(std::string_view prefix,
 		  const std::span<const char *const> suffixes) noexcept
 {
 	assert(suffixes.data() != nullptr);
