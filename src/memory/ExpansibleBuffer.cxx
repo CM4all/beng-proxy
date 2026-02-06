@@ -96,12 +96,6 @@ ExpansibleBuffer::Set(std::string_view p) noexcept
 	return Set(AsBytes(p));
 }
 
-std::span<const std::byte>
-ExpansibleBuffer::Read() const noexcept
-{
-	return {(const std::byte *)buffer, size};
-}
-
 const char *
 ExpansibleBuffer::ReadString() noexcept
 {

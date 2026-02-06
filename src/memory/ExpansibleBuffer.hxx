@@ -68,8 +68,9 @@ public:
 
 	bool Set(std::string_view p) noexcept;
 
-	[[gnu::pure]]
-	std::span<const std::byte> Read() const noexcept;
+	std::span<const std::byte> Read() const noexcept {
+		return {buffer, size};
+	}
 
 	[[gnu::pure]]
 	const char *ReadString() noexcept;
