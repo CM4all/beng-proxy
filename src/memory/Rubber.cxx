@@ -716,7 +716,7 @@ Rubber::MoveLast(std::size_t max_object_size) noexcept
 unsigned
 Rubber::Add(std::size_t size) noexcept
 {
-	assert(netto_size + GetTotalHoleSize() == GetBruttoSize());
+	// too expensive: assert(netto_size + GetTotalHoleSize() == GetBruttoSize());
 	assert(size > 0);
 
 	if (size >= table.size())
@@ -753,7 +753,7 @@ Rubber::Add(std::size_t size) noexcept
 		netto_size += size;
 	}
 
-	assert(netto_size + GetTotalHoleSize() == GetBruttoSize());
+	// too expensive: assert(netto_size + GetTotalHoleSize() == GetBruttoSize());
 
 	return id;
 }
@@ -785,7 +785,7 @@ Rubber::Read(unsigned id) const noexcept
 void
 Rubber::Shrink(unsigned id, std::size_t new_size) noexcept
 {
-	assert(netto_size + GetTotalHoleSize() == GetBruttoSize());
+	// too expensive: assert(netto_size + GetTotalHoleSize() == GetBruttoSize());
 	assert(new_size > 0);
 
 	RubberObject *const o = &table->entries[id];
@@ -806,7 +806,7 @@ Rubber::Shrink(unsigned id, std::size_t new_size) noexcept
 	if (o->next != 0)
 		AddHoleAfter(id, hole_offset, hole_size);
 
-	assert(netto_size + GetTotalHoleSize() == GetBruttoSize());
+	// too expensive: assert(netto_size + GetTotalHoleSize() == GetBruttoSize());
 }
 
 inline void
