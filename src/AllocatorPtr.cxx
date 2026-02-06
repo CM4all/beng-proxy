@@ -4,6 +4,7 @@
 
 #include "AllocatorPtr.hxx"
 #include "pool/PSocketAddress.hxx"
+#include "util/SpanCast.hxx"
 #include "util/StringWithHash.hxx"
 
 using std::string_view_literals::operator""sv;
@@ -23,13 +24,7 @@ AllocatorPtr::Dup(std::span<const std::byte> src) const noexcept
 std::string_view
 AllocatorPtr::Dup(std::string_view src) const noexcept
 {
-	if (src.data() == nullptr)
-		return {};
-
-	if (src.empty())
-		return ""sv;
-
-	return {(const char *)Dup(src.data(), src.size()), src.size()};
+	return ToStringView(Dup(AsBytes(src)));
 }
 
 const char *
