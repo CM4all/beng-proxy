@@ -334,7 +334,7 @@ LbRequest::OnHttpResponse(HttpStatus status, StringMap &&_headers,
 {
 	failure->UnsetProtocol();
 
-	if (auto &rl = *(LbRequestLogger *)request.logger; rl.generator == nullptr)
+	if (auto &rl = *(LbRequestLogger *)request.logger; rl.generator != nullptr)
 		/* if there is a GENERATOR header, include it in the
 		   access log */
 		/* we remove the header here because usually the

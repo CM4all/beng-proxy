@@ -1,6 +1,6 @@
 cm4all-beng-proxy (21.15) unstable; urgency=low
 
-  * 
+  * lb: forward the X-CM4all-Generator header to the request logger
 
  --   
 
