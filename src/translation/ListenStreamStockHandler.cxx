@@ -71,7 +71,6 @@ public:
 void
 TranslationListenStreamStockHandler::Request::OnTranslateResponse(UniquePoolPtr<TranslateResponse> response) noexcept
 try {
-	assert(translation_cancel_ptr);
 	assert(translation_pool);
 
 	parent.Handle(socket_path, socket, std::move(response),
@@ -88,7 +87,6 @@ try {
 void
 TranslationListenStreamStockHandler::Request::OnTranslateError(std::exception_ptr _error) noexcept
 {
-	assert(translation_cancel_ptr);
 	assert(translation_pool);
 
 	auto &_handler = handler;
