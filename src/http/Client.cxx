@@ -165,6 +165,13 @@ class HttpClient final : BufferedSocketHandler, IstreamSink, Cancellable, Destru
 			return GetClient().ConsumeBucketList(nbytes);
 		}
 
+		void _ConsumeDirect(std::size_t nbytes) noexcept override {
+			HttpBodyReader::_ConsumeDirect(nbytes);
+
+			if (IsEOF())
+				GetClient().SocketDone();
+		}
+
 		void _Close() noexcept override {
 			GetClient().Close();
 		}
