@@ -186,7 +186,7 @@ static_file_get(EventLoop &event_loop,
 
 	auto headers = static_response_headers(pool, st, content_type);
 
-	auto *shared_fd = NewFromPool<SharedFd>(pool, std::move(fd));
+	auto *shared_fd = new SharedFd(std::move(fd));
 
 	handler.InvokeResponse(HttpStatus::OK,
 			       std::move(headers),
