@@ -35,4 +35,7 @@ protected:
 	void OnAbandoned() noexcept override {
 		delete this;
 	}
+
+private:
+	~SharedFd() noexcept = default;
 };
