@@ -32,9 +32,7 @@ public:
 	}
 
 protected:
-	void OnAbandoned() noexcept override {
-		delete this;
-	}
+	void OnAbandoned() noexcept override;
 
 private:
 	~SharedFd() noexcept = default;
