@@ -18,11 +18,11 @@
  * using the `new` operator and the memory is owned by all leases.
  */
 class SharedFd final : public SharedAnchor {
-	const UniqueFileDescriptor fd;
+	FileDescriptor fd;
 
 public:
 	explicit SharedFd(UniqueFileDescriptor &&_fd) noexcept
-		:fd(std::move(_fd))
+		:fd(_fd.Release())
 	{
 		assert(fd.IsDefined());
 	}
@@ -35,5 +35,5 @@ protected:
 	void OnAbandoned() noexcept override;
 
 private:
-	~SharedFd() noexcept = default;
+	~SharedFd() noexcept;
 };

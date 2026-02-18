@@ -4,6 +4,14 @@
 
 #include "SharedFd.hxx"
 
+inline
+SharedFd::~SharedFd() noexcept
+{
+	assert(fd.IsDefined());
+
+	fd.Close();
+}
+
 void
 SharedFd::OnAbandoned() noexcept
 {
