@@ -7,6 +7,8 @@
 #include "io/UniqueFileDescriptor.hxx"
 #include "util/SharedLease.hxx"
 
+#include <cassert>
+
 /**
  * A simple wrapper for a file descriptor that can be used by multiple
  * entities.  The reference counter and leases are managed by
@@ -20,7 +22,10 @@ class SharedFd final : public SharedAnchor {
 
 public:
 	explicit SharedFd(UniqueFileDescriptor &&_fd) noexcept
-		:fd(std::move(_fd)) {}
+		:fd(std::move(_fd))
+	{
+		assert(fd.IsDefined());
+	}
 
 	FileDescriptor Get() const noexcept {
 		return fd;
