@@ -284,7 +284,6 @@ ChildStockItem::Cancel() noexcept
 {
 	assert(!is_idle);
 	assert(state == State::CREATE);
-	assert(handle);
 
 	delete this;
 }
