@@ -5,9 +5,12 @@
 #pragma once
 
 #include "io/UniqueFileDescriptor.hxx"
+#include "io/uring/config.h" // for HAVE_URING
 #include "util/SharedLease.hxx"
 
 #include <cassert>
+
+namespace Uring { class Queue; }
 
 /**
  * A simple wrapper for a file descriptor that can be used by multiple
@@ -20,12 +23,22 @@
 class SharedFd final : public SharedAnchor {
 	FileDescriptor fd;
 
+#ifdef HAVE_URING
+	Uring::Queue *uring = nullptr;
+#endif
+
 public:
 	explicit SharedFd(UniqueFileDescriptor &&_fd) noexcept
 		:fd(_fd.Release())
 	{
 		assert(fd.IsDefined());
 	}
+
+#ifdef HAVE_URING
+	void EnableUring(Uring::Queue &_uring) noexcept {
+		uring = &_uring;
+	}
+#endif
 
 	FileDescriptor Get() const noexcept {
 		return fd;

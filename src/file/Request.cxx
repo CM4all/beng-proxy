@@ -117,6 +117,7 @@ UringStaticFileGet::OnOpenStat(UniqueFileDescriptor fd,
 	auto headers = static_response_headers(pool, stx, _content_type);
 
 	auto *shared_fd = new SharedFd(std::move(fd));
+	shared_fd->EnableUring(operation->GetQueue());
 
 	_handler.InvokeResponse(HttpStatus::OK,
 				std::move(headers),

@@ -248,6 +248,10 @@ Request::DispatchCompressedFile(const char *path,
 	/* finished, dispatch this response */
 
 	auto *shared_fd = new SharedFd(std::move(compressed_fd));
+#ifdef HAVE_URING
+	if (instance.uring)
+		shared_fd->EnableUring(*instance.uring);
+#endif
 
 	HttpStatus status = tr.status == HttpStatus{}
 		? HttpStatus::OK
