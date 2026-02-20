@@ -16,6 +16,12 @@ User=cm4all-beng-lb
 
 WatchdogSec=2m
 
+# Allow glibc to use no more than four malloc() arenas.  By default,
+# glibc scales this with the number of CPU cores, but that causes a
+# lot of overhead on big servers; this application doesn't use the
+# glibc allocator a lot, so contention is not a problem.
+Environment=MALLOC_ARENA_MAX=4
+
 # Allow reading TLS key files
 AmbientCapabilities=CAP_DAC_READ_SEARCH
 
