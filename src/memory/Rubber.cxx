@@ -591,7 +591,7 @@ Rubber::Rubber(std::size_t _max_size, const char *vma_name)
 	if (vma_name != nullptr)
 		SetVmaName(table.get(), table.size(), vma_name);
 
-	EnableHugePages({reinterpret_cast<std::byte *>(table.get()), table.size()});
+	EnableHugePages(table.raw());
 }
 
 Rubber::~Rubber() noexcept
@@ -603,14 +603,14 @@ Rubber::~Rubber() noexcept
 void
 Rubber::ForkCow(bool inherit) noexcept
 {
-	EnablePageFork({reinterpret_cast<std::byte *>(table.get()), table.size()}, inherit);
+	EnablePageFork(table.raw(), inherit);
 }
 
 void
 Rubber::Populate() noexcept
 {
 	populate = true;
-	PagesPopulateWrite({reinterpret_cast<std::byte *>(table.get()), table.size()});
+	PagesPopulateWrite(table.raw());
 }
 
 void
