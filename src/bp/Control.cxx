@@ -26,16 +26,16 @@
 #include "lib/avahi/Publisher.hxx"
 #endif
 
-static void
-control_tcache_invalidate(BpInstance *instance, std::span<const std::byte> payload)
+inline void
+BpInstance::HandleTcacheInvalidate(std::span<const std::byte> payload) noexcept
 {
 	if (payload.empty()) {
 		/* flush the translation cache if the payload is empty */
-		instance->FlushTranslationCaches();
+		FlushTranslationCaches();
 		return;
 	}
 
-	if (!instance->translation_caches)
+	if (!translation_caches)
 		return;
 
 	const TempPoolLease tpool;
@@ -52,7 +52,7 @@ control_tcache_invalidate(BpInstance *instance, std::span<const std::byte> paylo
 		return;
 	}
 
-	instance->translation_caches
+	translation_caches
 		->Invalidate(request,
 			     request.commands,
 			     request.site, request.tag);
@@ -130,7 +130,7 @@ BpInstance::OnControlPacket(BengControl::Command command,
 		break;
 
 	case Command::TCACHE_INVALIDATE:
-		control_tcache_invalidate(this, payload);
+		HandleTcacheInvalidate(payload);
 		break;
 
 	case Command::ENABLE_NODE:
