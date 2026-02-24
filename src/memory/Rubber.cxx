@@ -589,7 +589,7 @@ Rubber::Rubber(std::size_t _max_size, const char *vma_name)
 	static_assert(RUBBER_ALIGN >= sizeof(Hole), "Alignment too large");
 
 	if (vma_name != nullptr)
-		SetVmaName(table.get(), table.size(), vma_name);
+		SetVmaName(table.raw(), vma_name);
 
 	EnableHugePages(table.raw());
 }
