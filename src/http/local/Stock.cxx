@@ -26,9 +26,9 @@
 #include <string.h>
 
 static StockKey
-lhttp_stock_key(struct pool *pool, const LhttpAddress *address) noexcept
+lhttp_stock_key(AllocatorPtr alloc, const LhttpAddress *address) noexcept
 {
-	return address->GetServerId(AllocatorPtr(*pool));
+	return address->GetServerId(alloc);
 }
 
 /*
@@ -191,7 +191,7 @@ LhttpStock::Get(const LhttpAddress &address,
 		CancellablePointer &cancel_ptr) noexcept
 {
 	const TempPoolLease tpool;
-	mchild_stock.Get(lhttp_stock_key(tpool, &address),
+	mchild_stock.Get(lhttp_stock_key(*tpool, &address),
 			 ToNopPointer(const_cast<LhttpAddress *>(&address)),
 			 address.concurrency,
 			 handler, cancel_ptr);
