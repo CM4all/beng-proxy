@@ -4,10 +4,13 @@
 
 #pragma once
 
+#include "util/BindMethod.hxx"
+
 #include <cstdint>
 #include <map>
 #include <memory>
 #include <span>
+#include <string_view>
 
 struct CacheStats;
 class EventLoop;
@@ -16,6 +19,7 @@ class TranslationGlue;
 class TranslationCache;
 class TranslationService;
 struct TranslateRequest;
+struct TranslateResponse;
 enum class TranslationCommand : uint16_t;
 
 struct SocketAddressCompare {
@@ -52,6 +56,8 @@ class TranslationCacheBuilder final : public TranslationServiceBuilder {
 	std::map<SocketAddress, std::shared_ptr<TranslationCache>,
 		 SocketAddressCompare> m;
 
+	using ExpireCallback = BoundMethod<void(const TranslateResponse &response) noexcept>;
+
 public:
 	TranslationCacheBuilder(TranslationStockBuilder &_builder,
 				struct pool &_pool,
@@ -69,6 +75,8 @@ public:
 	void Invalidate(const TranslateRequest &request,
 			std::span<const TranslationCommand> vary,
 			const char *site, const char *tag) noexcept;
+
+	void ExpireTag(std::string_view tag, ExpireCallback callback) noexcept;
 
 	std::shared_ptr<TranslationService> Get(SocketAddress address,
 						EventLoop &event_loop) noexcept override;

@@ -87,6 +87,9 @@ namespace Avahi { class Client; class Publisher; }
 namespace Prometheus { struct Stats; }
 namespace Net::Log { class Sink; }
 
+struct TranslateResponse;
+struct ResourceAddress;
+
 struct BpInstance final : PInstance, BengControl::Handler,
 #ifdef HAVE_LIBWAS
 			  WasMetricsHandler,
@@ -275,7 +278,11 @@ struct BpInstance final : PInstance, BengControl::Handler,
 	Prometheus::Stats GetStats() const noexcept;
 
 	void HandleTcacheInvalidate(std::span<const std::byte> payload) noexcept;
+	void HandleExpireTcacheTag(std::span<const std::byte> payload) noexcept;
 	void HandleDisableUring(std::span<const std::byte> payload) noexcept;
+
+	void OnExpireTcacheRA(const ResourceAddress &address) noexcept;
+	void OnExpireTcache(const TranslateResponse &response) noexcept;
 
 	/* virtual methods from class BengControl::Handler */
 	void OnControlPacket(BengControl::Command command,

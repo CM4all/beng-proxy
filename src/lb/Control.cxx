@@ -249,6 +249,10 @@ LbControl::OnControlPacket(BengControl::Command command,
 		BanClient(BanAction::TARPIT, payload);
 		break;
 
+	case Command::EXPIRE_TCACHE_TAG:
+		// not applicable?
+		break;
+
 	case Command::FLUSH_FILTER_CACHE:
 	case Command::STOPWATCH_PIPE:
 	case Command::DISCARD_SESSION:

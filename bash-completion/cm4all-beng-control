@@ -23,6 +23,7 @@ _beng_control () {
                 COMPREPLY=( $(compgen -W "
                      nop
                      tcache-invalidate
+                     expire-tcache-tag
                      enable-node
                      fade-node
                      verbose

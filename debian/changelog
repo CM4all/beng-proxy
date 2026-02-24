@@ -6,6 +6,7 @@ cm4all-beng-proxy (21.17) unstable; urgency=low
   * http/local: reduce per-request overhead
   * translation: remove packet LOCAL_ADDRESS
   * control: empty FLUSH_HTTP_CACHE packet flushes everything
+  * control: add packet EXPIRE_TCACHE_TAG
 
  --   
 

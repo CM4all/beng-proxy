@@ -54,6 +54,10 @@ public:
 
 	void FadeTag(std::string_view tag) noexcept;
 
+	void FadeKey(StockKey key) noexcept {
+		mchild_stock.FadeKey(key);
+	}
+
 	void Get(StockKey key, const CgiChildParams &params,
 		 StockGetHandler &handler,
 		 CancellablePointer &cancel_ptr) noexcept;

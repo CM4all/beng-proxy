@@ -86,6 +86,16 @@ Commands
   - ``SITE``: optional identification or name of the site this resource belongs to
   - ``CACHE_TAG``: Mark a cache item with this tag (an opaque string)
 
+- ``EXPIRE_TCACHE_TAG``: Expire (invalidate) all cache items (and
+  other resources referenced by them, such as child processes) within
+  an arbitrary amount of time chosen by the recipient.  Payload is a
+  CACHE_TAG.
+
+  This combines ``TCACHE_INVALIDATE`` with ``FADE_CHILDREN`` and can
+  be used if this affects thousands of child processes.  By allowing
+  the recipient to choose an arbitrary delay, it avoids congesting the
+  server with bulk process restarts.
+
 - ``ENABLE_NODE``: Re-enable the specified node after a failure,
   remove all failure/fade states. The payload is the node name
   according to :file:`lb.conf`, followed by a colon and the port

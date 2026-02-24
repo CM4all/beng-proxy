@@ -886,6 +886,16 @@ TranslationCache::Invalidate(const TranslateRequest &request,
 	LogConcat(4, "TranslationCache", "invalidated ", removed, " cache items");
 }
 
+void
+TranslationCache::ExpireTag(std::string_view tag, ExpireCallback callback) noexcept
+{
+	per_tag.remove_and_dispose_key(tag, [this, callback](TranslateCacheItemTag *item_tag){
+		auto &item = item_tag->parent;
+		callback(item.response);
+		cache.Remove(item);
+	});
+}
+
 inline const TranslateCacheItem *
 TranslationCache::Store(const StringWithHash &_key, const TranslateRequest &request, bool find_base,
 			const TranslateResponse &response)

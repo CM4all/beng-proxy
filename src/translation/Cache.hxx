@@ -10,6 +10,7 @@
 #include "pool/Ptr.hxx"
 #include "stats/CacheStats.hxx"
 #include "memory/SlicePool.hxx"
+#include "util/BindMethod.hxx"
 #include "util/IntrusiveHashSet.hxx"
 #include "util/TransparentHash.hxx"
 
@@ -111,6 +112,8 @@ class TranslationCache final : public TranslationService, CacheHandler {
 	 */
 	bool active;
 
+	using ExpireCallback = BoundMethod<void(const TranslateResponse &response) noexcept>;
+
 public:
 	/**
 	 * @param handshake_cacheable if false, then all requests are
@@ -145,6 +148,8 @@ public:
 	void Invalidate(const TranslateRequest &request,
 			std::span<const TranslationCommand> vary,
 			const char *site, const char *tag) noexcept;
+
+	void ExpireTag(std::string_view tag, ExpireCallback callback) noexcept;
 
 	/* virtual methods from class TranslationService */
 	void SendRequest(AllocatorPtr alloc,

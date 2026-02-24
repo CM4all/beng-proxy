@@ -99,6 +99,14 @@ TranslationCacheBuilder::Invalidate(const TranslateRequest &request,
 		i.second->Invalidate(request, vary, site, tag);
 }
 
+void
+TranslationCacheBuilder::ExpireTag(std::string_view tag,
+				   ExpireCallback callback) noexcept
+{
+	for (auto &i : m)
+		i.second->ExpireTag(tag, callback);
+}
+
 std::shared_ptr<TranslationService>
 TranslationCacheBuilder::Get(SocketAddress address,
 			     EventLoop &event_loop) noexcept

@@ -103,6 +103,22 @@ TcacheInvalidate(const char *server, std::span<const char *const> args)
 }
 
 static void
+ExpireTcacheTag(const char *server, std::span<const char *const> args)
+{
+	if (args.empty())
+		throw Usage{"Tag missing"};
+
+	const std::string_view tag = args.front();
+	args = args.subspan(1);
+
+	if (!args.empty())
+		throw Usage{"Too many arguments"};
+
+	BengControl::Client client(server);
+	client.Send(BengControl::Command::EXPIRE_TCACHE_TAG, tag);
+}
+
+static void
 Verbose(const char *server, std::span<const char *const> args)
 {
 	if (args.empty())
@@ -381,6 +397,9 @@ try {
 	} else if (StringIsEqual(command, "tcache-invalidate")) {
 		TcacheInvalidate(server, args);
 		return EXIT_SUCCESS;
+	} else if (StringIsEqual(command, "expire-tcache-tag")) {
+		ExpireTcacheTag(server, args);
+		return EXIT_SUCCESS;
 	} else if (StringIsEqual(command, "enable-node")) {
 		EnableNode(server, args);
 		return EXIT_SUCCESS;
@@ -461,6 +480,7 @@ try {
 		"Commands:\n"
 		"  nop\n"
 		"  tcache-invalidate [KEY=VALUE...]\n"
+		"  expire-tcache-tag TAG\n"
 		"  enable-node NAME:PORT\n"
 		"  fade-node NAME:PORT\n"
 		"  verbose LEVEL\n"

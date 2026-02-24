@@ -8,10 +8,19 @@
 #include "session/Manager.hxx"
 #include "http/cache/FilterCache.hxx"
 #include "http/cache/Public.hxx"
+#include "http/local/Address.hxx"
+#include "http/local/Stock.hxx"
+#include "cgi/Address.hxx"
+#include "fcgi/Stock.hxx"
+#include "was/Stock.hxx"
+#include "was/MStock.hxx"
+#include "widget/View.hxx"
 #include "event/net/control/Server.hxx"
 #include "translation/Builder.hxx"
 #include "translation/Protocol.hxx"
 #include "translation/InvalidateParser.hxx"
+#include "translation/Response.hxx"
+#include "translation/Transformation.hxx"
 #include "pool/tpool.hxx"
 #include "pool/pool.hxx"
 #include "net/SocketAddress.hxx"
@@ -56,6 +65,107 @@ BpInstance::HandleTcacheInvalidate(std::span<const std::byte> payload) noexcept
 		->Invalidate(request,
 			     request.commands,
 			     request.site, request.tag);
+}
+
+inline void
+BpInstance::OnExpireTcacheRA(const ResourceAddress &address) noexcept
+{
+	switch (address.type) {
+	case ResourceAddress::Type::NONE:
+	case ResourceAddress::Type::LOCAL:
+	case ResourceAddress::Type::HTTP:
+	case ResourceAddress::Type::PIPE:
+	case ResourceAddress::Type::CGI:
+		// no (persistent) child process
+		break;
+
+	case ResourceAddress::Type::LHTTP:
+		if (lhttp_stock) {
+			const auto &lhttp = address.GetLhttp();
+			const TempPoolLease tpool;
+			const auto key = lhttp.GetChildId(*tpool);
+
+			// TODO implement randomized delay
+			lhttp_stock->FadeKey(key);
+		}
+
+		break;
+
+	case ResourceAddress::Type::FASTCGI:
+		if (const auto &cgi = address.GetCgi(); cgi.address_list.empty()) {
+			if (fcgi_stock) {
+				const TempPoolLease tpool;
+				const auto key = cgi.GetChildId(*tpool);
+
+				// TODO implement randomized delay
+				fcgi_stock->FadeKey(key);
+			}
+		}
+
+		break;
+
+	case ResourceAddress::Type::WAS:
+#ifdef HAVE_LIBWAS
+		if (const auto &cgi = address.GetCgi(); cgi.concurrency == 0) {
+			if (was_stock) {
+				const TempPoolLease tpool;
+				const auto key = cgi.GetChildId(*tpool);
+
+				// TODO implement randomized delay
+				was_stock->FadeKey(key);
+			}
+		} else if (cgi.address_list.empty()) {
+			if (multi_was_stock) {
+				const TempPoolLease tpool;
+				const auto key = cgi.GetChildId(*tpool);
+
+				// TODO implement randomized delay
+				multi_was_stock->FadeKey(key);
+			}
+		}
+#endif // HAVE_LIBWAS
+		break;
+	}
+}
+
+inline void
+BpInstance::OnExpireTcache(const TranslateResponse &response) noexcept
+{
+	OnExpireTcacheRA(response.address);
+
+	for (const auto &view : response.views) {
+		OnExpireTcacheRA(view.address);
+
+		for (const auto &transformation : view.transformations) {
+			switch (transformation.type) {
+			case Transformation::Type::PROCESS:
+			case Transformation::Type::PROCESS_CSS:
+			case Transformation::Type::PROCESS_TEXT:
+				break;
+
+			case Transformation::Type::FILTER:
+				OnExpireTcacheRA(transformation.u.filter.address);
+				break;
+			}
+		}
+	}
+}
+
+inline void
+BpInstance::HandleExpireTcacheTag(std::span<const std::byte> payload) noexcept
+{
+	if (payload.empty()) {
+		LogConcat(2, "control",
+			  "malformed EXPIRE_TCACHE_TAG control packet");
+		return;
+	}
+
+	if (!translation_caches)
+		return;
+
+	// TODO implement randomized delay
+	translation_caches->ExpireTag(ToStringView(payload),
+				      BIND_THIS_METHOD(OnExpireTcache));
 }
 
 static void
@@ -131,6 +241,10 @@ BpInstance::OnControlPacket(BengControl::Command command,
 
 	case Command::TCACHE_INVALIDATE:
 		HandleTcacheInvalidate(payload);
+		break;
+
+	case Command::EXPIRE_TCACHE_TAG:
+		HandleExpireTcacheTag(payload);
 		break;
 
 	case Command::ENABLE_NODE:
