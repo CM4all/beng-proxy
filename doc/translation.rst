@@ -1220,6 +1220,10 @@ described in this section.
   payload may specify additional ``tmpfs`` mount options such as
   ``size=64M``.
 
+  By default, code execution from this filesystem is disabled via
+  ``MS_NOEXEC``.  A follow-up ``MOUNT_TMP_TMPFS_EXEC`` packet disables
+  this behavior, i.e. allows executing code from this ``tmpfs``.
+
 - ``MOUNT_TMPFS`` mounts a new (user-writable) ``tmpfs`` on the given
   path. This is private to the namespace and is deleted when the
   process exits.
