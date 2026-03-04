@@ -61,6 +61,7 @@ struct LbHttpConnection final
 			 LbListener &_listener,
 			 const LbGoto &_destination,
 			 SocketAddress _client_address) noexcept;
+	~LbHttpConnection() noexcept;
 
 	void Destroy() noexcept;
 	void CloseAndDestroy() noexcept;

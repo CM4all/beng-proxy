@@ -56,6 +56,15 @@ LbHttpConnection::LbHttpConnection(PoolPtr &&_pool, LbInstance &_instance,
 {
 }
 
+inline
+LbHttpConnection::~LbHttpConnection() noexcept
+{
+	assert(!instance.http_connections.empty());
+
+	auto &connections = instance.http_connections;
+	connections.erase(connections.iterator_to(*this));
+}
+
 [[gnu::pure]]
 static int
 HttpServerLogLevel(std::exception_ptr e) noexcept
@@ -134,11 +143,6 @@ NewLbHttpConnection(LbInstance &instance,
 void
 LbHttpConnection::Destroy() noexcept
 {
-	assert(!instance.http_connections.empty());
-
-	auto &connections = instance.http_connections;
-	connections.erase(connections.iterator_to(*this));
-
 	this->~LbHttpConnection();
 }
 
