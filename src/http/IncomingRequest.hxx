@@ -22,7 +22,7 @@ class IncomingHttpRequestLogger;
 struct IncomingHttpRequest {
 	const PoolPtr pool;
 
-	const SocketAddress local_address, remote_address;
+	const SocketAddress remote_address;
 
 	/**
 	 * The local address (host and port) that was connected to.
@@ -55,13 +55,11 @@ struct IncomingHttpRequest {
 
 protected:
 	IncomingHttpRequest(PoolPtr &&_pool,
-			    SocketAddress _local_address,
 			    SocketAddress _remote_address,
 			    const char *_local_host_and_port,
 			    const char *_remote_host) noexcept;
 
 	IncomingHttpRequest(PoolPtr &&_pool,
-			    SocketAddress _local_address,
 			    SocketAddress _remote_address,
 			    const char *_local_host_and_port,
 			    const char *_remote_host,

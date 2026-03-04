@@ -11,12 +11,10 @@
 #include "http/Status.hxx"
 
 IncomingHttpRequest::IncomingHttpRequest(PoolPtr &&_pool,
-					 SocketAddress _local_address,
 					 SocketAddress _remote_address,
 					 const char *_local_host_and_port,
 					 const char *_remote_host) noexcept
 	:pool(std::move(_pool)),
-	 local_address(_local_address),
 	 remote_address(_remote_address),
 	 local_host_and_port(_local_host_and_port),
 	 remote_host(_remote_host),
@@ -26,14 +24,12 @@ IncomingHttpRequest::IncomingHttpRequest(PoolPtr &&_pool,
 }
 
 IncomingHttpRequest::IncomingHttpRequest(PoolPtr &&_pool,
-					 SocketAddress _local_address,
 					 SocketAddress _remote_address,
 					 const char *_local_host_and_port,
 					 const char *_remote_host,
 					 HttpMethod _method,
 					 std::string_view _uri) noexcept
 	:pool(std::move(_pool)),
-	 local_address(_local_address),
 	 remote_address(_remote_address),
 	 local_host_and_port(_local_host_and_port),
 	 remote_host(_remote_host),

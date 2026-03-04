@@ -152,7 +152,7 @@ struct HttpServerConnection final
 
 	/* info */
 
-	const SocketAddress local_address, remote_address;
+	const SocketAddress remote_address;
 
 	const char *const local_host_and_port;
 	const char *const remote_host;

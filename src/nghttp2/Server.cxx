@@ -117,7 +117,6 @@ public:
 	explicit Request(PoolPtr &&_pool,
 			 ServerConnection &_connection, uint32_t _id) noexcept
 		:IncomingHttpRequest(std::move(_pool),
-				     _connection.local_address,
 				     _connection.remote_address,
 				     _connection.local_host_and_port,
 				     _connection.remote_host),
@@ -609,11 +608,10 @@ ServerConnection::ServerConnection(struct pool &_pool,
 				   HttpServerConnectionHandler &_handler,
 				   HttpServerRequestHandler &_request_handler)
 	:pool(_pool), request_slice_pool(_request_slice_pool),
-	socket(std::move(_socket)),
+	 socket(std::move(_socket)),
 	 handler(_handler), request_handler(_request_handler),
-	 local_address(DupAddress(pool, _local_address)),
 	 remote_address(DupAddress(pool, _remote_address)),
-	 local_host_and_port(address_to_string(pool, local_address)),
+	 local_host_and_port(address_to_string(pool, _local_address)),
 	 remote_host(address_to_host_string(pool, remote_address)),
 	 idle_timer(socket->GetEventLoop(), BIND_THIS_METHOD(OnIdleTimeout))
 {

@@ -15,7 +15,6 @@ struct HttpServerRequest final : public IncomingHttpRequest {
 	RootStopwatchPtr stopwatch;
 
 	HttpServerRequest(PoolPtr &&_pool, HttpServerConnection &_connection,
-			  SocketAddress _local_address,
 			  SocketAddress _remote_address,
 			  const char *_local_host_and_port,
 			  const char *_remote_host,
