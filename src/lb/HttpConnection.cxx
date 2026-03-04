@@ -120,6 +120,9 @@ NewLbHttpConnection(LbInstance &instance,
 		connection->http2 = UniquePoolPtr<NgHttp2::ServerConnection>::Make(connection->GetPool(),
 										   connection->GetPool(),
 										   std::move(socket),
+										   local_address.IsDefined()
+										   ? (SocketAddress)local_address
+										   : nullptr,
 										   address,
 										   instance.request_slice_pool,
 										   *connection,

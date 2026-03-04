@@ -53,6 +53,7 @@ class ServerConnection final : BufferedSocketHandler {
 public:
 	ServerConnection(struct pool &_pool,
 			 UniquePoolPtr<FilteredSocket> _socket,
+			 SocketAddress local_address,
 			 SocketAddress remote_address,
 			 SlicePool &_request_slice_pool,
 			 HttpServerConnectionHandler &_handler,

@@ -11,6 +11,7 @@
 #include "memory/SlicePool.hxx"
 #include "event/Loop.hxx"
 #include "event/net/TemplateServerSocket.hxx"
+#include "net/StaticSocketAddress.hxx"
 #include "net/UniqueSocketDescriptor.hxx"
 #include "util/PrintException.hxx"
 #include "pool/RootPool.hxx"
@@ -31,7 +32,7 @@ public:
 		:http(pool,
 		      UniquePoolPtr<FilteredSocket>::Make(pool, event_loop,
 							  std::move(fd), FD_TCP),
-		      address,
+		      fd.GetLocalAddress(), address,
 		      request_slice_pool,
 		      *this, *this) {}
 
