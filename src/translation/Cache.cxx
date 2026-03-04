@@ -93,7 +93,6 @@ struct TranslateCacheItem final : PoolHolder, CacheItem {
 		std::span<const std::byte> realm_session;
 
 		const char *listener_tag;
-		SocketAddress local_address;
 
 		const char *remote_host;
 		const char *host;
@@ -734,12 +733,6 @@ tcache_buffer_match(std::span<const std::byte> a, std::span<const std::byte> b,
 		memcmp(a.data(), b.data(), a.size()) == 0;
 }
 
-static bool
-tcache_address_match(SocketAddress a, SocketAddress b, bool strict) noexcept
-{
-	return tcache_buffer_match(a, b, strict);
-}
-
 /**
  * @param strict in strict mode, nullptr values are a mismatch
  */
@@ -789,12 +782,6 @@ TranslateCacheItem::VaryMatch(const TranslateRequest &other_request,
 	case TranslationCommand::LISTENER_TAG:
 		return tcache_string_match(request.listener_tag,
 					   other_request.listener_tag, strict);
-
-	case TranslationCommand::LOCAL_ADDRESS:
-	case TranslationCommand::LOCAL_ADDRESS_STRING:
-		return tcache_address_match(request.local_address,
-					    other_request.local_address,
-					    strict);
 
 	case TranslationCommand::REMOTE_HOST:
 		return tcache_string_match(request.remote_host,
@@ -1050,13 +1037,6 @@ tcache_store(TranslateCacheRequest &tcr, const TranslateResponse &response)
 	item->request.listener_tag =
 		tcache_vary_copy(alloc, tcr.request.listener_tag,
 				 response, TranslationCommand::LISTENER_TAG);
-
-	item->request.local_address =
-		!tcr.request.local_address.IsNull() &&
-		(response.VaryContains(TranslationCommand::LOCAL_ADDRESS) ||
-		 response.VaryContains(TranslationCommand::LOCAL_ADDRESS_STRING))
-		? DupAddress(alloc, tcr.request.local_address)
-		: nullptr;
 
 	tcache_vary_copy(alloc, tcr.request.remote_host,
 			 response, TranslationCommand::REMOTE_HOST);

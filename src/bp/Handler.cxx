@@ -473,13 +473,6 @@ uri_without_query_string(AllocatorPtr alloc, const char *uri) noexcept
 }
 
 static void
-fill_translate_request_local_address(TranslateRequest &t,
-				     const IncomingHttpRequest &r) noexcept
-{
-	t.local_address = r.local_address;
-}
-
-static void
 fill_translate_request_remote_host(TranslateRequest &t,
 				   const char *remote_host_and_port) noexcept
 {
@@ -680,9 +673,6 @@ Request::RepeatTranslation(UniquePoolPtr<TranslateResponse> _response) noexcept
 				 1);
 		return;
 	}
-
-	if (response.Wants(TranslationCommand::LOCAL_ADDRESS))
-		fill_translate_request_local_address(translate.request, request);
 
 	if (response.Wants(TranslationCommand::REMOTE_HOST))
 		fill_translate_request_remote_host(translate.request,

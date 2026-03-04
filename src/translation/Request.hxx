@@ -21,10 +21,6 @@ struct TranslationLayoutItem;
 struct TranslateRequest {
 	const char *listener_tag = nullptr;
 
-#if TRANSLATION_ENABLE_HTTP
-	SocketAddress local_address = nullptr;
-#endif
-
 	const char *remote_host = nullptr;
 	const char *host = nullptr;
 	const char *alt_host = nullptr;

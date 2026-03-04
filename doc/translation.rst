@@ -85,10 +85,6 @@ Request
 - ``LISTENER_TAG``: The ``tag`` of the listener (as specified in the
   ``listener`` configuration section) that accepted the connection.
 
-- ``LOCAL_ADDRESS``: The local socket address the request was received
-  on. The payload is a ``struct sockaddr``. (This packet optional and is
-  only submitted if requested via ``WANT``, see page )
-
 - ``REMOTE_HOST``: the client’s address or host name and the port
   number (as string) (This packet optional and is only submitted if
   requested via ``WANT``, see page )
@@ -169,7 +165,7 @@ Request
   request again, with this packet echoed plus the requested packets. The
   payload is an array of 16-bit integers with requested packet ids. The
   following packets are allowed/supported here: ``LISTENER_TAG``,
-  ``LOCAL_ADDRESS``, ``REMOTE_HOST``, ``USER_AGENT``, ``USER``,
+  ``REMOTE_HOST``, ``USER_AGENT``, ``USER``,
   ``LANGUAGE``, ``ARGS``, ``QUERY_STRING``
 
 - ``WANT_FULL_URI``: causes beng-proxy to submit the same translation
@@ -486,7 +482,7 @@ Response
   response depends upon.
 
   The following request packets are currently supported: ``PARAM``,
-  ``SESSION``, ``LISTENER_TAG``, ``LOCAL_ADDRESS``, ``REMOTE_HOST``,
+  ``SESSION``, ``LISTENER_TAG``, ``REMOTE_HOST``,
   ``HOST``, ``LANGUAGE``, ``USER_AGENT``,
   ``QUERY_STRING``, ``USER``, ``INTERNAL_REDIRECT``, ``ENOTDIR``.
 

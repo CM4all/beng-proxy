@@ -35,30 +35,6 @@ TranslationMarshaller::Write(TranslationCommand command,
 	Write(command, AsBytes(payload));
 }
 
-void
-TranslationMarshaller::Write(TranslationCommand command,
-			     TranslationCommand command_string,
-			     SocketAddress address)
-{
-	assert(!address.IsNull());
-
-	Write(command, address);
-
-	char address_string[1024];
-
-	if (ToString(address_string, address))
-		Write(command_string, address_string);
-}
-
-void
-TranslationMarshaller::WriteOptional(TranslationCommand command,
-				     TranslationCommand command_string,
-				     SocketAddress address)
-{
-	if (!address.IsNull())
-		Write(command, command_string, address);
-}
-
 GrowingBuffer
 MarshalTranslateRequest(uint8_t PROTOCOL_VERSION,
 			const TranslateRequest &request)
@@ -75,9 +51,6 @@ MarshalTranslateRequest(uint8_t PROTOCOL_VERSION,
 
 	m.WriteOptional(TranslationCommand::LISTENER_TAG,
 			request.listener_tag);
-	m.WriteOptional(TranslationCommand::LOCAL_ADDRESS,
-			TranslationCommand::LOCAL_ADDRESS_STRING,
-			request.local_address);
 	m.WriteOptional(TranslationCommand::REMOTE_HOST,
 			request.remote_host);
 	m.WriteOptional(TranslationCommand::HOST, request.host);

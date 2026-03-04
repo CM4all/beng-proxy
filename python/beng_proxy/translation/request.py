@@ -60,8 +60,6 @@ class Request:
         self.param: str|None = None
         self.layout: bytes|None = None
         self.listener_tag: str|None = None
-        self.local_address: str|None = None
-        self.local_port: int|None = None
         self.remote_host: str|None = None
         self.user_agent: str|None = None
         self.ua_class: str|None = None
@@ -157,9 +155,6 @@ class Request:
             self.layout = packet.payload
         elif packet.command == TRANSLATE_LISTENER_TAG:
             self.listener_tag = packet.payload.decode('ascii')
-        elif packet.command == TRANSLATE_LOCAL_ADDRESS_STRING:
-            self.local_address = packet.payload.decode('ascii')
-            self.local_port = _parse_port(self.local_address)
         elif packet.command == TRANSLATE_REMOTE_HOST:
             self.remote_host = packet.payload.decode('ascii')
         elif packet.command == TRANSLATE_USER_AGENT:
@@ -224,7 +219,7 @@ class Request:
             self.base = packet.payload.decode('ascii')
         elif packet.command == TRANSLATE_REGEX:
             self.regex = packet.payload.decode('ascii')
-        elif packet.command != TRANSLATE_LOCAL_ADDRESS:
+        else:
             print("Invalid command:", packet.command)
         return False
 

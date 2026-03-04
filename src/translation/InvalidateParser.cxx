@@ -113,12 +113,6 @@ apply_translation_packet(TranslateRequest &request,
 		request.listener_tag = payload;
 		break;
 
-		/* XXX
-		   case TranslationCommand::LOCAL_ADDRESS:
-		   request.local_address = payload;
-		   break;
-		*/
-
 	case TranslationCommand::REMOTE_HOST:
 		request.remote_host = payload;
 		break;

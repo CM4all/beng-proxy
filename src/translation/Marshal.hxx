@@ -54,14 +54,6 @@ public:
 		WriteT<uint16_t>(command, payload);
 	}
 
-	void Write(TranslationCommand command,
-		   TranslationCommand command_string,
-		   SocketAddress address);
-
-	void WriteOptional(TranslationCommand command,
-			   TranslationCommand command_string,
-			   SocketAddress address);
-
 	GrowingBuffer Commit() {
 		return std::move(buffer);
 	}
