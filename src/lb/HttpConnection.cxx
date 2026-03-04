@@ -308,6 +308,10 @@ LbHttpConnection::HandleHttpRequest(IncomingHttpRequest &request,
 				return;
 
 			case BanAction::TARPIT:
+				/* do not log TARPIT requests (and do
+				   not record metrics) */
+				rl.skip = true;
+
 				++listener.GetHttpStats().n_delayed;
 				request.body.Clear();
 				NewFromPool<LbHttpTarpit>(request.pool, cancel_ptr);

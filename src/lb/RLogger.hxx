@@ -91,6 +91,11 @@ struct LbRequestLogger final : IncomingHttpRequestLogger {
 
 	const bool access_logger_only_errors;
 
+	/**
+	 * If true, then this request will not be logged.
+	 */
+	bool skip = false;
+
 	LbRequestLogger(LbInstance &_instance, HttpStats &_http_stats,
 			AccessLogGlue *_access_logger,
 			bool _access_logger_only_errors,

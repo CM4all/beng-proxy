@@ -1,6 +1,6 @@
 cm4all-beng-proxy (21.17) unstable; urgency=low
 
-  * 
+  * lb: do not log TARPIT_CLIENT requests
 
  --   
 

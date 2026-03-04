@@ -57,6 +57,9 @@ LbRequestLogger::LogHttpRequest(IncomingHttpRequest &request,
 				int_least64_t length,
 				uint_least64_t bytes_received, uint_least64_t bytes_sent) noexcept
 {
+	if (skip)
+		return;
+
 	const auto duration = clock.GetDuration(instance.event_loop.SteadyNow(), wait_duration);
 
 	instance.http_stats.AddRequest(status,
