@@ -46,12 +46,14 @@ inline
 LbHttpConnection::LbHttpConnection(PoolPtr &&_pool, LbInstance &_instance,
 				   LbListener &_listener,
 				   const LbGoto &_destination,
-				   SocketAddress _client_address) noexcept
+				   SocketAddress _client_address,
+				   const SslFilter *_ssl_filter) noexcept
 	:PoolHolder(std::move(_pool)), instance(_instance),
 	 listener(_listener),
 	 listener_config(listener.GetConfig()),
 	 initial_destination(_destination),
 	 client_address(_client_address),
+	 ssl_filter(_ssl_filter),
 	 logger(*this)
 {
 }
@@ -110,8 +112,7 @@ NewLbHttpConnection(LbInstance &instance,
 
 	auto *connection = NewFromPool<LbHttpConnection>(std::move(pool), instance,
 							 listener, destination,
-							 address);
-	connection->ssl_filter = ssl_filter;
+							 address, ssl_filter);
 
 	instance.http_connections.push_back(*connection);
 

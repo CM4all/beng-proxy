@@ -43,9 +43,9 @@ struct LbHttpConnection final
 
 	const StaticSocketAddress client_address;
 
-	const LazyDomainLogger logger;
+	const SslFilter *const ssl_filter;
 
-	const SslFilter *ssl_filter = nullptr;
+	const LazyDomainLogger logger;
 
 	HttpServerConnection *http = nullptr;
 
@@ -60,7 +60,8 @@ struct LbHttpConnection final
 	LbHttpConnection(PoolPtr &&_pool, LbInstance &_instance,
 			 LbListener &_listener,
 			 const LbGoto &_destination,
-			 SocketAddress _client_address) noexcept;
+			 SocketAddress _client_address,
+			 const SslFilter *_ssl_filter) noexcept;
 	~LbHttpConnection() noexcept;
 
 	void Destroy() noexcept;
