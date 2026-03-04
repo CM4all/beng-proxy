@@ -177,6 +177,8 @@ LbListener::LbListener(LbInstance &_instance,
 
 LbListener::~LbListener() noexcept
 {
+	assert(tarpit_connections == 0);
+
 #ifdef HAVE_AVAHI
 	if (avahi_service)
 		instance.GetAvahiPublisher().RemoveService(*avahi_service);

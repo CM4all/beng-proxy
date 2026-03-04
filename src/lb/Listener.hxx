@@ -47,6 +47,8 @@ class LbListener final : FilteredSocketListenerHandler {
 	std::unique_ptr<ClientAccountingMap> client_accounting;
 
 public:
+	uint_least64_t tarpit_connections = 0;
+
 	LbListener(LbInstance &_instance,
 		   AccessLogGlue *_access_logger,
 		   const LbListenerConfig &_config);

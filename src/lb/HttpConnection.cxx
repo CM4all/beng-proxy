@@ -63,6 +63,9 @@ LbHttpConnection::~LbHttpConnection() noexcept
 {
 	assert(!instance.http_connections.empty());
 
+	if (tarpit)
+		--listener.tarpit_connections;
+
 	auto &connections = instance.http_connections;
 	connections.erase(connections.iterator_to(*this));
 }
@@ -321,6 +324,12 @@ LbHttpConnection::HandleHttpRequest(IncomingHttpRequest &request,
 				rl.skip = true;
 
 				++listener.GetHttpStats().n_delayed;
+
+				if (!tarpit) {
+					tarpit = true;
+					++listener.tarpit_connections;
+				}
+
 				request.body.Clear();
 				NewFromPool<LbHttpTarpit>(request.pool, cancel_ptr);
 				// TODO shrink kernel socket buffers?

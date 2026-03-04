@@ -57,6 +57,8 @@ struct LbHttpConnection final
 
 	bool hsts_sent = false;
 
+	bool tarpit = false;
+
 	LbHttpConnection(PoolPtr &&_pool, LbInstance &_instance,
 			 LbListener &_listener,
 			 const LbGoto &_destination,

@@ -149,11 +149,22 @@ WriteStats(GrowingBuffer &buffer, const LbInstance &instance) noexcept
 	buffer.Write(ToPrometheusString(instance.event_loop.GetStats(), process));
 	Prometheus::Write(buffer, process, instance.GetStats());
 
-	for (const auto &listener : instance.listeners)
+	buffer.Write(R"(
+# HELP beng_proxy_tarpit_connections Number of connections currently in TARPIT
+# TYPE beng_proxy_tarpit_connections gauge
+)");
+
+	for (const auto &listener : instance.listeners) {
+		buffer.Fmt(R"(
+beng_proxy_tarpit_connections{{process={:?},listener={:?}}} {}
+)",
+			   process, listener.GetConfig().name, listener.tarpit_connections);
+
 		if (const auto *stats = listener.GetHttpStats())
 			Prometheus::Write(buffer, process,
 					  listener.GetConfig().name,
 					  *stats);
+	}
 }
 
 void
