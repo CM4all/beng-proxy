@@ -717,16 +717,16 @@ TranslateCacheItem::VaryMatch(const TranslateRequest &other_request,
 struct TranslateCacheMatchContext {
 	const TranslateRequest &request;
 	const bool find_base;
+
+	bool Match(const CacheItem &_item) noexcept;
 };
 
-static bool
-tcache_item_match(const CacheItem &_item, void *ctx) noexcept
+inline bool
+TranslateCacheMatchContext::Match(const CacheItem &_item) noexcept
 {
 	const auto &item = static_cast<const TranslateCacheItem &>(_item);
-	auto &tcr = *(TranslateCacheMatchContext *)ctx;
-	const TranslateRequest &request = tcr.request;
 
-	if (tcr.find_base && item.response.base == nullptr)
+	if (find_base && item.response.base == nullptr)
 		/* this is a "base" lookup, but this response does not contain
 		   a "BASE" packet */
 		return false;
@@ -760,7 +760,7 @@ TranslationCache::Get(const TranslateRequest &request,
 	TranslateCacheMatchContext match_ctx{request, find_base};
 
 	return (TranslateCacheItem *)
-		cache.GetMatch(key, tcache_item_match, &match_ctx);
+		cache.GetMatch(key, BIND_METHOD(match_ctx, &TranslateCacheMatchContext::Match));
 }
 
 TranslateCacheItem *
@@ -807,16 +807,13 @@ struct TranslationCacheInvalidate {
 	std::span<const TranslationCommand> vary;
 
 	const char *site, *tag;
+
+	bool Match(const CacheItem &_item) noexcept {
+		const auto &item = static_cast<const TranslateCacheItem &>(_item);
+
+		return item.InvalidateMatch(vary, tag, *request, site);
+	}
 };
-
-static bool
-tcache_invalidate_match(const CacheItem &_item, void *ctx) noexcept
-{
-	const auto &item = static_cast<const TranslateCacheItem &>(_item);
-	const auto &data = *(const TranslationCacheInvalidate *)ctx;
-
-	return item.InvalidateMatch(data.vary, data.tag, *data.request, data.site);
-}
 
 inline std::size_t
 TranslationCache::InvalidateHost(const TranslateRequest &request,
@@ -875,7 +872,7 @@ TranslationCache::Invalidate(const TranslateRequest &request,
 	else if (tag != nullptr)
 		removed = InvalidateTag(request, vary, tag);
 	else
-		removed = cache.RemoveAllMatch(tcache_invalidate_match, &data);
+		removed = cache.RemoveAllMatch(BIND_METHOD(data, &TranslationCacheInvalidate::Match));
 
 	LogConcat(4, "TranslationCache", "invalidated ", removed, " cache items");
 }
@@ -985,7 +982,7 @@ TranslationCache::Store(const StringWithHash &_key, const TranslateRequest &requ
 
 	++stats.stores;
 	TranslateCacheMatchContext match_ctx{request, find_base};
-	cache.PutMatch(*item, tcache_item_match, &match_ctx);
+	cache.PutMatch(*item, BIND_METHOD(match_ctx, &TranslateCacheMatchContext::Match));
 	return item;
 }
 

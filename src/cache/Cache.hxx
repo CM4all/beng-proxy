@@ -6,6 +6,7 @@
 
 #include "Item.hxx"
 #include "event/CleanupTimer.hxx"
+#include "util/BindMethod.hxx"
 #include "util/IntrusiveHashSet.hxx"
 #include "util/IntrusiveList.hxx"
 #include "util/SharedLease.hxx"
@@ -61,18 +62,17 @@ public:
 	[[gnu::pure]]
 	CacheItem *Get(StringWithHash key) noexcept;
 
+	using MatchFunction = BoundMethod<bool(const CacheItem &) noexcept>;
+
 	/**
 	 * Find the first CacheItem for a key which matches with the
 	 * specified matching function.
 	 *
 	 * @param key the cache item key
 	 * @param match the match callback function
-	 * @param ctx a context pointer for the callback
 	 */
 	[[gnu::pure]]
-	CacheItem *GetMatch(StringWithHash key,
-			    bool (*match)(const CacheItem &, void *),
-			    void *ctx) noexcept;
+	CacheItem *GetMatch(StringWithHash key, MatchFunction match) noexcept;
 
 	/**
 	 * Add an item to this cache.  Item with the same key are preserved.
@@ -91,11 +91,8 @@ public:
 	 * @param key the cache item key
 	 * @param item the new cache item
 	 * @param match the match callback function
-	 * @param ctx a context pointer for the callback
 	 */
-	bool PutMatch(CacheItem &item,
-		      bool (*match)(const CacheItem &, void *),
-		      void *ctx) noexcept;
+	bool PutMatch(CacheItem &item, MatchFunction match) noexcept;
 
 	void Remove(StringWithHash key) noexcept;
 
@@ -116,8 +113,7 @@ public:
 	 *
 	 * @return the number of items which were removed
 	 */
-	unsigned RemoveAllMatch(bool (*match)(const CacheItem &, void *),
-				void *ctx) noexcept;
+	unsigned RemoveAllMatch(MatchFunction match) noexcept;
 
 	void Flush() noexcept;
 

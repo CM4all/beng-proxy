@@ -11,7 +11,7 @@
 #include "AllocatorPtr.hxx"
 
 static bool
-http_cache_item_match(const CacheItem &_item, void *ctx) noexcept
+http_cache_item_match(void *ctx, const CacheItem &_item) noexcept
 {
 	const auto &item = static_cast<const HttpCacheItem &>(_item);
 	const auto &headers = *(const StringMap *)ctx;
@@ -23,8 +23,7 @@ HttpCacheDocument *
 HttpCacheHeap::Get(StringWithHash key, StringMap &request_headers) noexcept
 {
 	return (HttpCacheItem *)cache.GetMatch(key,
-					       http_cache_item_match,
-					       &request_headers);
+					       {&request_headers, http_cache_item_match});
 }
 
 void
@@ -52,8 +51,7 @@ HttpCacheHeap::Put(StringWithHash key, const char *tag,
 		per_tag.insert(*item);
 
 	cache.PutMatch(*item,
-		       http_cache_item_match,
-		       const_cast<void *>((const void *)&request_headers));
+		       {const_cast<void *>((const void *)&request_headers), http_cache_item_match});
 }
 
 void
