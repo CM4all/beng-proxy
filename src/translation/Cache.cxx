@@ -9,9 +9,7 @@
 #include "translation/Response.hxx"
 #include "translation/Protocol.hxx"
 #include "HttpMessageResponse.hxx"
-#include "cache/Cache.hxx"
 #include "cache/Item.hxx"
-#include "cache/Handler.hxx"
 #include "http/Status.hxx"
 #include "uri/Base.hxx"
 #include "uri/Verify.hxx"
@@ -23,18 +21,14 @@
 #include "AllocatorPtr.hxx"
 #include "pool/StringBuilder.hxx"
 #include "pool/PSocketAddress.hxx"
-#include "memory/SlicePool.hxx"
-#include "stats/CacheStats.hxx"
 #include "lib/fmt/Unsafe.hxx"
 #include "lib/pcre/UniqueRegex.hxx"
 #include "io/Logger.hxx"
 #include "util/djb_hash.hxx"
 #include "util/IntrusiveForwardList.hxx"
-#include "util/IntrusiveHashSet.hxx"
 #include "util/SpanCast.hxx"
 #include "util/StringAPI.hxx"
 #include "util/StringSplit.hxx"
-#include "util/TransparentHash.hxx"
 
 #include <algorithm> // for std::any_of()
 #include <cassert>
@@ -59,33 +53,32 @@ static constexpr std::size_t MAX_FILE_NOT_FOUND = 256;
 static constexpr std::size_t MAX_DIRECTORY_INDEX = 256;
 static constexpr std::size_t MAX_READ_FILE = 256;
 
+struct TranslateCacheItemTag final : IntrusiveHashSetHook<IntrusiveHookMode::AUTO_UNLINK>, IntrusiveForwardListHook {
+	TranslateCacheItem &parent;
+
+	const char *const value;
+
+	constexpr TranslateCacheItemTag(TranslateCacheItem &_parent, const char *_value) noexcept
+		:parent(_parent), value(_value) {}
+
+	[[gnu::pure]]
+	bool Match(const char *other) const noexcept {
+		return StringIsEqual(value, other);
+	}
+};
+
+constexpr std::string_view
+TranslationCache::GetTag::operator()(const TranslateCacheItemTag &tag) const noexcept
+{
+	assert(tag.value != nullptr);
+
+	return tag.value;
+}
+
 struct TranslateCacheItem final : PoolHolder, CacheItem {
 	IntrusiveHashSetHook<IntrusiveHookMode::AUTO_UNLINK> per_host_siblings, per_site_siblings;
 
-	struct Tag final : IntrusiveHashSetHook<IntrusiveHookMode::AUTO_UNLINK>, IntrusiveForwardListHook {
-		TranslateCacheItem &parent;
-
-		const char *const value;
-
-		constexpr Tag(TranslateCacheItem &_parent, const char *_value) noexcept
-			:parent(_parent), value(_value) {}
-
-		[[gnu::pure]]
-		bool Match(const char *other) const noexcept {
-			return StringIsEqual(value, other);
-		}
-
-		struct GetTag {
-			[[gnu::pure]]
-			constexpr std::string_view operator()(const Tag &tag) const noexcept {
-				assert(tag.value != nullptr);
-
-				return tag.value;
-			}
-		};
-	};
-
-	IntrusiveForwardList<Tag> tags;
+	IntrusiveForwardList<TranslateCacheItemTag> tags;
 
 	struct {
 		const char *param;
@@ -132,9 +125,9 @@ struct TranslateCacheItem final : PoolHolder, CacheItem {
 	using PoolHolder::GetPool;
 
 	[[nodiscard]]
-	Tag &AddTag(const char *value) noexcept {
+	TranslateCacheItemTag &AddTag(const char *value) noexcept {
 		const AllocatorPtr alloc{GetPool()};
-		auto *tag = alloc.New<Tag>(*this, alloc.Dup(value));
+		auto *tag = alloc.New<TranslateCacheItemTag>(*this, alloc.Dup(value));
 		tags.push_front(*tag);
 		return *tag;
 	}
@@ -193,129 +186,31 @@ struct TranslateCacheItem final : PoolHolder, CacheItem {
 	/* virtual methods from class CacheItem */
 	bool Validate() const noexcept override;
 	void Destroy() noexcept override;
-
-	struct GetHost {
-		[[gnu::pure]]
-		std::string_view operator()(const TranslateCacheItem &item) const noexcept {
-			return item.request.host != nullptr
-				? std::string_view{item.request.host}
-				: std::string_view{};
-		}
-	};
-
-	struct GetSite {
-		[[gnu::pure]]
-		std::string_view operator()(const TranslateCacheItem &item) const noexcept {
-			assert(item.response.site != nullptr);
-
-			return item.response.site;
-		}
-	};
 };
 
-struct tcache final : private CacheHandler {
-	const PoolPtr pool;
-	SlicePool slice_pool;
+std::string_view
+TranslationCache::GetHost::operator()(const TranslateCacheItem &item) const noexcept
+{
+	return item.request.host != nullptr
+		? std::string_view{item.request.host}
+		: std::string_view{};
+}
 
-	static constexpr std::size_t N_BUCKETS = 128 * 1024;
+std::string_view
+TranslationCache::GetSite::operator()(const TranslateCacheItem &item) const noexcept
+{
+	assert(item.response.site != nullptr);
 
-	/**
-	 * This hash table maps each host name to the
-	 * #TranslateCacheItem instances with that host.  This is used
-	 * to optimize the common INVALIDATE=HOST response, to avoid
-	 * traversing the whole cache.
-	 */
-	using PerHostSet =
-		IntrusiveHashSet<TranslateCacheItem, N_BUCKETS,
-				 IntrusiveHashSetOperators<TranslateCacheItem,
-							   TranslateCacheItem::GetHost,
-							   TransparentHash,
-							   std::equal_to<std::string_view>>,
-				 IntrusiveHashSetMemberHookTraits<&TranslateCacheItem::per_host_siblings>>;
-	PerHostSet per_host;
+	return item.response.site;
+}
 
-	/**
-	 * This hash table maps each site name to the
-	 * #TranslateCacheItem instances with that site.  This is used
-	 * to optimize the common INVALIDATE=SITE response, to avoid
-	 * traversing the whole cache.
-	 */
-	using PerSiteSet =
-		IntrusiveHashSet<TranslateCacheItem, N_BUCKETS,
-				 IntrusiveHashSetOperators<TranslateCacheItem,
-							   TranslateCacheItem::GetSite,
-							   TransparentHash,
-							   std::equal_to<std::string_view>>,
-				 IntrusiveHashSetMemberHookTraits<&TranslateCacheItem::per_site_siblings>>;
-	PerSiteSet per_site;
-
-	/**
-	 * This hash table maps each tag string to the
-	 * #TranslateCacheItem::Tag instances with that CACHE_TAG.
-	 * This is used to optimize the common INVALIDATE=CACHE_TAG
-	 * response, to avoid traversing the whole cache.
-	 */
-	using PerTagSet =
-		IntrusiveHashSet<TranslateCacheItem::Tag, 256,
-				 IntrusiveHashSetOperators<TranslateCacheItem::Tag,
-							   TranslateCacheItem::Tag::GetTag,
-							   TransparentHash,
-							   std::equal_to<std::string_view>>>;
-	PerTagSet per_tag;
-
-	Cache cache;
-
-	CacheStats stats{};
-
-	TranslationService &next;
-
-	/**
-	 * This flag may be set to false when initializing the translation
-	 * cache.  All responses will be regarded "non cacheable".  It
-	 * will be set to true as soon as the first response is received.
-	 */
-	bool active;
-
-	tcache(struct pool &_pool, EventLoop &event_loop,
-	       TranslationService &_next, unsigned max_size,
-	       bool handshake_cacheable);
-	tcache(struct tcache &) = delete;
-
-	~tcache() noexcept = default;
-
-	std::size_t InvalidateHost(const TranslateRequest &request,
-				   std::span<const TranslationCommand> vary,
-				   const char *tag) noexcept;
-
-	std::size_t InvalidateSite(const TranslateRequest &request,
-				   std::span<const TranslationCommand> vary,
-				   std::string_view site, const char *tag) noexcept;
-
-	std::size_t InvalidateTag(const TranslateRequest &request,
-				  std::span<const TranslationCommand> vary,
-				  std::string_view tag) noexcept;
-
-	void Invalidate(const TranslateRequest &request,
-			std::span<const TranslationCommand> vary,
-			const char *site, const char *tag) noexcept;
-
-private:
-	/* virtual methods from CacheHandler */
-	void OnCacheItemAdded(const CacheItem &_item) noexcept override {
-		const auto &item = (const TranslateCacheItem &)_item;
-		stats.allocator += item.stats;
-	}
-
-	void OnCacheItemRemoved(const CacheItem &_item) noexcept override {
-		const auto &item = (const TranslateCacheItem &)_item;
-		stats.allocator -= item.stats;
-	}
-};
+struct TranslationCache::PerHostSetHookTraits : IntrusiveHashSetMemberHookTraits<&TranslateCacheItem::per_host_siblings> {};
+struct TranslationCache::PerSiteSetHookTraits: IntrusiveHashSetMemberHookTraits<&TranslateCacheItem::per_site_siblings> {};
 
 struct TranslateCacheRequest final : TranslateHandler {
 	const AllocatorPtr alloc;
 
-	struct tcache *tcache;
+	TranslationCache &cache;
 
 	const TranslateRequest &request;
 
@@ -328,11 +223,11 @@ struct TranslateCacheRequest final : TranslateHandler {
 
 	TranslateHandler *handler;
 
-	TranslateCacheRequest(AllocatorPtr _alloc, struct tcache &_tcache,
+	TranslateCacheRequest(AllocatorPtr _alloc, TranslationCache &_cache,
 			      const TranslateRequest &_request, StringWithHash _key,
 			      bool _cacheable,
 			      TranslateHandler &_handler) noexcept
-		:alloc(_alloc), tcache(&_tcache), request(_request),
+		:alloc(_alloc), cache(_cache), request(_request),
 		 cacheable(_cacheable),
 		 find_base(false), key(_key),
 		 handler(&_handler) {}
@@ -858,21 +753,20 @@ tcache_item_match(const CacheItem *_item, void *ctx) noexcept
 	return item.VaryMatch(request, false);
 }
 
-static TranslateCacheItem *
-tcache_get(struct tcache &tcache, const TranslateRequest &request,
-	   StringWithHash key, bool find_base) noexcept
+TranslateCacheItem *
+TranslationCache::Get(const TranslateRequest &request,
+		    StringWithHash key, bool find_base) noexcept
 {
 	TranslateCacheMatchContext match_ctx{request, find_base};
 
 	return (TranslateCacheItem *)
-		tcache.cache.GetMatch(key, tcache_item_match, &match_ctx);
+		cache.GetMatch(key, tcache_item_match, &match_ctx);
 }
 
-static TranslateCacheItem *
-tcache_lookup(struct tcache &tcache,
-	      const TranslateRequest &request, StringWithHash key) noexcept
+TranslateCacheItem *
+TranslationCache::Lookup(const TranslateRequest &request, StringWithHash key) noexcept
 {
-	TranslateCacheItem *item = tcache_get(tcache, request, key, false);
+	TranslateCacheItem *item = Get(request, key, false);
 	if (item != nullptr || request.uri == nullptr)
 		return item;
 
@@ -894,7 +788,7 @@ tcache_lookup(struct tcache &tcache,
 		/* truncate string after slash */
 		key = StringWithHash{new_key.substr(0, slash + 1)};
 
-		item = tcache_get(tcache, request, key, true);
+		item = Get(request, key, true);
 		if (item != nullptr)
 			return item;
 
@@ -925,7 +819,7 @@ tcache_invalidate_match(const CacheItem *_item, void *ctx) noexcept
 }
 
 inline std::size_t
-tcache::InvalidateHost(const TranslateRequest &request,
+TranslationCache::InvalidateHost(const TranslateRequest &request,
 		       std::span<const TranslationCommand> vary,
 		       const char *tag) noexcept
 {
@@ -941,7 +835,7 @@ tcache::InvalidateHost(const TranslateRequest &request,
 }
 
 inline std::size_t
-tcache::InvalidateSite(const TranslateRequest &request,
+TranslationCache::InvalidateSite(const TranslateRequest &request,
 		       std::span<const TranslationCommand> vary,
 		       std::string_view site, const char *tag) noexcept
 {
@@ -953,19 +847,19 @@ tcache::InvalidateSite(const TranslateRequest &request,
 }
 
 inline std::size_t
-tcache::InvalidateTag(const TranslateRequest &request,
+TranslationCache::InvalidateTag(const TranslateRequest &request,
 		      std::span<const TranslationCommand> vary,
 		      std::string_view tag) noexcept
 {
-	return per_tag.remove_and_dispose_key_if(tag, [&request, vary](const TranslateCacheItem::Tag &i){
+	return per_tag.remove_and_dispose_key_if(tag, [&request, vary](const TranslateCacheItemTag &i){
 		return i.parent.InvalidateMatch(vary, nullptr, request);
-	}, [this](TranslateCacheItem::Tag *i){
+	}, [this](TranslateCacheItemTag *i){
 		cache.Remove(i->parent);
 	});
 }
 
 void
-tcache::Invalidate(const TranslateRequest &request,
+TranslationCache::Invalidate(const TranslateRequest &request,
 		   std::span<const TranslationCommand> vary,
 		   const char *site, const char *tag) noexcept
 {
@@ -986,19 +880,9 @@ tcache::Invalidate(const TranslateRequest &request,
 	LogConcat(4, "TranslationCache", "invalidated ", removed, " cache items");
 }
 
-void
-TranslationCache::Invalidate(const TranslateRequest &request,
-			     std::span<const TranslationCommand> vary,
-			     const char *site, const char *tag) noexcept
-{
-	cache->Invalidate(request, vary, site, tag);
-}
-
-/**
- * Throws std::runtime_error on error.
- */
-static const TranslateCacheItem *
-tcache_store(TranslateCacheRequest &tcr, const TranslateResponse &response)
+inline const TranslateCacheItem *
+TranslationCache::Store(const StringWithHash &_key, const TranslateRequest &request, bool find_base,
+			const TranslateResponse &response)
 {
 	auto max_age = response.max_age;
 	constexpr std::chrono::seconds max_max_age = std::chrono::hours(24);
@@ -1006,62 +890,61 @@ tcache_store(TranslateCacheRequest &tcr, const TranslateResponse &response)
 		/* limit to one day */
 		max_age = max_max_age;
 
-	auto new_pool = pool_new_slice(*tcr.tcache->pool, "tcache_item",
-				       tcr.tcache->slice_pool);
+	auto new_pool = pool_new_slice(*pool, "tcache_item", slice_pool);
 	const AllocatorPtr alloc{new_pool};
 
 	TranslateResponse new_response;
 
 	const StringWithHash key =
 		tcache_store_response(alloc, new_response, response,
-				      tcr.request, tcr.key);
+				      request, _key);
 
 	auto item = NewFromPool<TranslateCacheItem>(std::move(new_pool),
 						    key, std::move(new_response),
-						    tcr.tcache->cache.SteadyNow(),
+						    cache.SteadyNow(),
 						    max_age);
 
 
 	item->request.param =
-		tcache_vary_copy(alloc, tcr.request.param,
+		tcache_vary_copy(alloc, request.param,
 				 response, TranslationCommand::PARAM);
 
 	item->request.session =
-		tcache_vary_copy(alloc, tcr.request.session,
+		tcache_vary_copy(alloc, request.session,
 				 response, TranslationCommand::SESSION);
 
 	item->request.realm_session =
-		tcache_vary_copy(alloc, tcr.request.realm_session,
+		tcache_vary_copy(alloc, request.realm_session,
 				 response, TranslationCommand::REALM_SESSION);
 
 	item->request.listener_tag =
-		tcache_vary_copy(alloc, tcr.request.listener_tag,
+		tcache_vary_copy(alloc, request.listener_tag,
 				 response, TranslationCommand::LISTENER_TAG);
 
-	tcache_vary_copy(alloc, tcr.request.remote_host,
+	tcache_vary_copy(alloc, request.remote_host,
 			 response, TranslationCommand::REMOTE_HOST);
 	item->request.remote_host =
-		tcache_vary_copy(alloc, tcr.request.remote_host,
+		tcache_vary_copy(alloc, request.remote_host,
 				 response, TranslationCommand::REMOTE_HOST);
-	item->request.host = tcache_vary_copy(alloc, tcr.request.host,
+	item->request.host = tcache_vary_copy(alloc, request.host,
 					      response, TranslationCommand::HOST);
 	item->request.accept_language =
-		tcache_vary_copy(alloc, tcr.request.accept_language,
+		tcache_vary_copy(alloc, request.accept_language,
 				 response, TranslationCommand::LANGUAGE);
 	item->request.user_agent =
-		tcache_vary_copy(alloc, tcr.request.user_agent,
+		tcache_vary_copy(alloc, request.user_agent,
 				 response, TranslationCommand::USER_AGENT);
 	item->request.query_string =
-		tcache_vary_copy(alloc, tcr.request.query_string,
+		tcache_vary_copy(alloc, request.query_string,
 				 response, TranslationCommand::QUERY_STRING);
 	item->request.internal_redirect =
-		tcache_vary_copy(alloc, tcr.request.internal_redirect,
+		tcache_vary_copy(alloc, request.internal_redirect,
 				 response, TranslationCommand::INTERNAL_REDIRECT);
 	item->request.enotdir =
-		tcache_vary_copy(alloc, tcr.request.enotdir,
+		tcache_vary_copy(alloc, request.enotdir,
 				 response, TranslationCommand::ENOTDIR_);
 	item->request.user =
-		tcache_vary_copy(alloc, tcr.request.user,
+		tcache_vary_copy(alloc, request.user,
 				 response, TranslationCommand::USER);
 
 	assert(!item->response.easy_base ||
@@ -1092,17 +975,17 @@ tcache_store(TranslateCacheRequest &tcr, const TranslateResponse &response)
 	item->stats = pool_stats(item->GetPool());
 
 	if (response.VaryContains(TranslationCommand::HOST))
-		tcr.tcache->per_host.insert(*item);
+		per_host.insert(*item);
 
 	if (response.site != nullptr)
-		tcr.tcache->per_site.insert(*item);
+		per_site.insert(*item);
 
 	for (const char *i : response.cache_tags)
-		tcr.tcache->per_tag.insert(item->AddTag(i));
+		per_tag.insert(item->AddTag(i));
 
-	++tcr.tcache->stats.stores;
-	TranslateCacheMatchContext match_ctx{tcr.request, tcr.find_base};
-	tcr.tcache->cache.PutMatch(*item, tcache_item_match, &match_ctx);
+	++stats.stores;
+	TranslateCacheMatchContext match_ctx{request, find_base};
+	cache.PutMatch(*item, tcache_item_match, &match_ctx);
 	return item;
 }
 
@@ -1135,19 +1018,19 @@ UriWithoutQueryString(AllocatorPtr alloc, const char *uri) noexcept
 void
 TranslateCacheRequest::OnTranslateResponse(UniquePoolPtr<TranslateResponse> _response) noexcept
 try {
-	tcache->active = true;
+	cache.active = true;
 
 	auto &response = *_response;
 
 	if (!response.invalidate.empty())
-		tcache->Invalidate(request,
-				   response.invalidate,
-				   nullptr, nullptr);
+		cache.Invalidate(request,
+				 response.invalidate,
+				 nullptr, nullptr);
 
 	if (!cacheable) {
 		LogConcat(4, "TranslationCache", "ignore ", key.value);
 	} else if (tcache_response_evaluate(response)) {
-		tcache_store(*this, response);
+		cache.Store(key, request, find_base, response);
 	} else {
 		LogConcat(4, "TranslationCache", "nocache ", key.value);
 	}
@@ -1217,15 +1100,15 @@ tcache_hit(AllocatorPtr alloc,
 	handler.OnTranslateResponse(std::move(response));
 }
 
-static void
-tcache_miss(AllocatorPtr alloc, struct tcache &tcache,
-	    const TranslateRequest &request, StringWithHash key,
-	    bool cacheable,
-	    const StopwatchPtr &parent_stopwatch,
-	    TranslateHandler &handler,
-	    CancellablePointer &cancel_ptr) noexcept
+inline void
+TranslationCache::Miss(AllocatorPtr alloc,
+		       const TranslateRequest &request, StringWithHash key,
+		       bool cacheable,
+		       const StopwatchPtr &parent_stopwatch,
+		       TranslateHandler &handler,
+		       CancellablePointer &cancel_ptr) noexcept
 {
-	auto tcr = alloc.New<TranslateCacheRequest>(alloc, tcache,
+	auto tcr = alloc.New<TranslateCacheRequest>(alloc, *this,
 						    request, key,
 						    cacheable,
 						    handler);
@@ -1233,8 +1116,8 @@ tcache_miss(AllocatorPtr alloc, struct tcache &tcache,
 	if (cacheable)
 		LogConcat(4, "TranslationCache", "miss ", key.value);
 
-	tcache.next.SendRequest(alloc, request, parent_stopwatch,
-				*tcr, cancel_ptr);
+	next.SendRequest(alloc, request, parent_stopwatch,
+			 *tcr, cancel_ptr);
 }
 
 [[gnu::pure]]
@@ -1312,10 +1195,10 @@ TranslateCacheItem::Destroy() noexcept
  *
  */
 
-inline
-tcache::tcache(struct pool &_pool, EventLoop &event_loop,
-	       TranslationService &_next, unsigned max_size,
-	       bool handshake_cacheable)
+TranslationCache::TranslationCache(struct pool &_pool, EventLoop &event_loop,
+				   TranslationService &_next,
+				   unsigned max_size,
+				   bool handshake_cacheable)
 	:pool(pool_new_dummy(&_pool, "translate_cache")),
 	 slice_pool(4096, 32768, "translate_cache"),
 	 cache(event_loop, max_size, this),
@@ -1324,40 +1207,25 @@ tcache::tcache(struct pool &_pool, EventLoop &event_loop,
 	assert(max_size > 0);
 }
 
-TranslationCache::TranslationCache(struct pool &pool, EventLoop &event_loop,
-				   TranslationService &next,
-				   unsigned max_size,
-				   bool handshake_cacheable)
-	:cache(new tcache(pool, event_loop, next, max_size,
-			  handshake_cacheable))
-{
-}
-
 TranslationCache::~TranslationCache() noexcept = default;
 
 void
 TranslationCache::ForkCow(bool inherit) noexcept
 {
-	cache->slice_pool.ForkCow(inherit);
+	slice_pool.ForkCow(inherit);
 }
 
 void
 TranslationCache::Populate() noexcept
 {
-	cache->slice_pool.Populate();
-}
-
-CacheStats
-TranslationCache::GetStats() const noexcept
-{
-	return cache->stats;
+	slice_pool.Populate();
 }
 
 void
 TranslationCache::Flush() noexcept
 {
-	cache->cache.Flush();
-	cache->slice_pool.Compress();
+	cache.Flush();
+	slice_pool.Compress();
 }
 
 
@@ -1373,19 +1241,33 @@ TranslationCache::SendRequest(AllocatorPtr alloc,
 			      TranslateHandler &handler,
 			      CancellablePointer &cancel_ptr) noexcept
 {
-	const bool cacheable = cache->active && tcache_request_evaluate(request);
+	const bool cacheable = active && tcache_request_evaluate(request);
 	const auto key = tcache_request_key(alloc, request);
 	TranslateCacheItem *item = cacheable
-		? tcache_lookup(*cache, request, key)
+		? Lookup(request, key)
 		: nullptr;
 	if (item != nullptr) {
-		++cache->stats.hits;
+		++stats.hits;
 		tcache_hit(alloc, request.uri, request.host, request.user, key,
 			   *item, handler);
 	} else {
-		++cache->stats.misses;
-		tcache_miss(alloc, *cache, request, key, cacheable,
-			    parent_stopwatch,
-			    handler, cancel_ptr);
+		++stats.misses;
+		Miss(alloc, request, key, cacheable,
+		     parent_stopwatch,
+		     handler, cancel_ptr);
 	}
+}
+
+void
+TranslationCache::OnCacheItemAdded(const CacheItem &_item) noexcept
+{
+	const auto &item = (const TranslateCacheItem &)_item;
+	stats.allocator += item.stats;
+}
+
+void
+TranslationCache::OnCacheItemRemoved(const CacheItem &_item) noexcept
+{
+	const auto &item = (const TranslateCacheItem &)_item;
+	stats.allocator -= item.stats;
 }
