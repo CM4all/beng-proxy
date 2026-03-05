@@ -234,10 +234,10 @@ Cache::Remove(CacheItem &item) noexcept
 	RemoveItem(item);
 }
 
-unsigned
+std::size_t
 Cache::RemoveAllMatch(MatchFunction match) noexcept
 {
-	unsigned removed = 0;
+	std::size_t removed = 0;
 
 	for (auto i = sorted_items.begin(), end = sorted_items.end();
 	     i != end;) {

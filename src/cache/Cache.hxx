@@ -12,6 +12,7 @@
 #include "util/SharedLease.hxx"
 
 #include <chrono>
+#include <cstddef>
 #include <memory>
 
 #include <stddef.h>
@@ -113,7 +114,7 @@ public:
 	 *
 	 * @return the number of items which were removed
 	 */
-	unsigned RemoveAllMatch(MatchFunction match) noexcept;
+	std::size_t RemoveAllMatch(MatchFunction match) noexcept;
 
 	void Flush() noexcept;
 
