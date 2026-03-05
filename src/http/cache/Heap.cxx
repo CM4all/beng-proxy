@@ -11,9 +11,9 @@
 #include "AllocatorPtr.hxx"
 
 static bool
-http_cache_item_match(const CacheItem *_item, void *ctx) noexcept
+http_cache_item_match(const CacheItem &_item, void *ctx) noexcept
 {
-	const auto &item = *(const HttpCacheItem *)_item;
+	const auto &item = static_cast<const HttpCacheItem &>(_item);
 	const auto &headers = *(const StringMap *)ctx;
 
 	return item.VaryFits(headers);

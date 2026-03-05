@@ -71,7 +71,7 @@ public:
 	 */
 	[[gnu::pure]]
 	CacheItem *GetMatch(StringWithHash key,
-			    bool (*match)(const CacheItem *, void *),
+			    bool (*match)(const CacheItem &, void *),
 			    void *ctx) noexcept;
 
 	/**
@@ -94,7 +94,7 @@ public:
 	 * @param ctx a context pointer for the callback
 	 */
 	bool PutMatch(CacheItem &item,
-		      bool (*match)(const CacheItem *, void *),
+		      bool (*match)(const CacheItem &, void *),
 		      void *ctx) noexcept;
 
 	void Remove(StringWithHash key) noexcept;
@@ -116,7 +116,7 @@ public:
 	 *
 	 * @return the number of items which were removed
 	 */
-	unsigned RemoveAllMatch(bool (*match)(const CacheItem *, void *),
+	unsigned RemoveAllMatch(bool (*match)(const CacheItem &, void *),
 				void *ctx) noexcept;
 
 	void Flush() noexcept;

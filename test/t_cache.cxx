@@ -50,12 +50,12 @@ my_cache_item_new(struct pool *_pool, StringWithHash key, int match, int value)
 }
 
 static bool
-my_match(const CacheItem *item, void *ctx)
+my_match(const CacheItem &item, void *ctx)
 {
-	const MyCacheItem *i = (const MyCacheItem *)item;
+	const auto &i = static_cast<const MyCacheItem &>(item);
 	int match = ptr_to_match(ctx);
 
-	return i->match == match;
+	return i.match == match;
 }
 
 TEST(TranslationCache, Basic)

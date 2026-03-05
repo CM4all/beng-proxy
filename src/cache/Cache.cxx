@@ -113,7 +113,7 @@ Cache::Get(StringWithHash key) noexcept
 
 CacheItem *
 Cache::GetMatch(StringWithHash key,
-		bool (*match)(const CacheItem *, void *),
+		bool (*match)(const CacheItem &, void *),
 		void *ctx) noexcept
 {
 	const auto now = SteadyNow();
@@ -121,7 +121,7 @@ Cache::GetMatch(StringWithHash key,
 	auto i = items.expire_find_if(key, [now](const auto &item){
 		return !item.Validate(now);
 	}, ItemRemover{*this}, [match, ctx](const auto &item){
-		return match(&item, ctx);
+		return match(item, ctx);
 	});
 
 	if (i == items.end())
@@ -208,7 +208,7 @@ Cache::Put(CacheItem &item) noexcept
 
 bool
 Cache::PutMatch(CacheItem &item,
-		bool (*match)(const CacheItem *, void *), void *ctx) noexcept
+		bool (*match)(const CacheItem &, void *), void *ctx) noexcept
 {
 	auto *old = GetMatch(item.GetKey(), match, ctx);
 
@@ -240,7 +240,7 @@ Cache::Remove(CacheItem &item) noexcept
 }
 
 unsigned
-Cache::RemoveAllMatch(bool (*match)(const CacheItem *, void *),
+Cache::RemoveAllMatch(bool (*match)(const CacheItem &, void *),
 		      void *ctx) noexcept
 {
 	unsigned removed = 0;
@@ -249,7 +249,7 @@ Cache::RemoveAllMatch(bool (*match)(const CacheItem *, void *),
 	     i != end;) {
 		CacheItem &item = *i++;
 
-		if (!match(&item, ctx))
+		if (!match(item, ctx))
 			continue;
 
 		items.erase(items.iterator_to(item));

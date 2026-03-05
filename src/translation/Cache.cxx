@@ -720,9 +720,9 @@ struct TranslateCacheMatchContext {
 };
 
 static bool
-tcache_item_match(const CacheItem *_item, void *ctx) noexcept
+tcache_item_match(const CacheItem &_item, void *ctx) noexcept
 {
-	auto &item = *(const TranslateCacheItem *)_item;
+	const auto &item = static_cast<const TranslateCacheItem &>(_item);
 	auto &tcr = *(TranslateCacheMatchContext *)ctx;
 	const TranslateRequest &request = tcr.request;
 
@@ -810,9 +810,9 @@ struct TranslationCacheInvalidate {
 };
 
 static bool
-tcache_invalidate_match(const CacheItem *_item, void *ctx) noexcept
+tcache_invalidate_match(const CacheItem &_item, void *ctx) noexcept
 {
-	const TranslateCacheItem &item = *(const TranslateCacheItem *)_item;
+	const auto &item = static_cast<const TranslateCacheItem &>(_item);
 	const auto &data = *(const TranslationCacheInvalidate *)ctx;
 
 	return item.InvalidateMatch(data.vary, data.tag, *data.request, data.site);
