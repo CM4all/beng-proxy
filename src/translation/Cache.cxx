@@ -755,7 +755,7 @@ tcache_item_match(const CacheItem *_item, void *ctx) noexcept
 
 TranslateCacheItem *
 TranslationCache::Get(const TranslateRequest &request,
-		    StringWithHash key, bool find_base) noexcept
+		      StringWithHash key, bool find_base) noexcept
 {
 	TranslateCacheMatchContext match_ctx{request, find_base};
 
@@ -820,8 +820,8 @@ tcache_invalidate_match(const CacheItem *_item, void *ctx) noexcept
 
 inline std::size_t
 TranslationCache::InvalidateHost(const TranslateRequest &request,
-		       std::span<const TranslationCommand> vary,
-		       const char *tag) noexcept
+				 std::span<const TranslationCommand> vary,
+				 const char *tag) noexcept
 {
 	const std::string_view host = request.host != nullptr
 		? std::string_view{request.host}
@@ -836,8 +836,8 @@ TranslationCache::InvalidateHost(const TranslateRequest &request,
 
 inline std::size_t
 TranslationCache::InvalidateSite(const TranslateRequest &request,
-		       std::span<const TranslationCommand> vary,
-		       std::string_view site, const char *tag) noexcept
+				 std::span<const TranslationCommand> vary,
+				 std::string_view site, const char *tag) noexcept
 {
 	return per_site.remove_and_dispose_key_if(site, [&request, vary, tag](const TranslateCacheItem &item){
 		return item.InvalidateMatch(vary, tag, request);
@@ -848,8 +848,8 @@ TranslationCache::InvalidateSite(const TranslateRequest &request,
 
 inline std::size_t
 TranslationCache::InvalidateTag(const TranslateRequest &request,
-		      std::span<const TranslationCommand> vary,
-		      std::string_view tag) noexcept
+				std::span<const TranslationCommand> vary,
+				std::string_view tag) noexcept
 {
 	return per_tag.remove_and_dispose_key_if(tag, [&request, vary](const TranslateCacheItemTag &i){
 		return i.parent.InvalidateMatch(vary, nullptr, request);
@@ -860,8 +860,8 @@ TranslationCache::InvalidateTag(const TranslateRequest &request,
 
 void
 TranslationCache::Invalidate(const TranslateRequest &request,
-		   std::span<const TranslationCommand> vary,
-		   const char *site, const char *tag) noexcept
+			     std::span<const TranslationCommand> vary,
+			     const char *site, const char *tag) noexcept
 {
 	TranslationCacheInvalidate data{&request, vary, site, tag};
 
