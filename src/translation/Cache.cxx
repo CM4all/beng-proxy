@@ -860,8 +860,6 @@ TranslationCache::Invalidate(const TranslateRequest &request,
 			     std::span<const TranslationCommand> vary,
 			     const char *site, const char *tag) noexcept
 {
-	TranslationCacheInvalidate data{&request, vary, site, tag};
-
 	[[maybe_unused]]
 	std::size_t removed;
 
@@ -871,8 +869,10 @@ TranslationCache::Invalidate(const TranslateRequest &request,
 		removed = InvalidateHost(request, vary, tag);
 	else if (tag != nullptr)
 		removed = InvalidateTag(request, vary, tag);
-	else
+	else {
+		TranslationCacheInvalidate data{&request, vary, site, tag};
 		removed = cache.RemoveAllMatch(BIND_METHOD(data, &TranslationCacheInvalidate::Match));
+	}
 
 	LogConcat(4, "TranslationCache", "invalidated ", removed, " cache items");
 }
