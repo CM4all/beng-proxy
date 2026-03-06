@@ -151,6 +151,7 @@ private:
 			:cache(_cache) {}
 
 		void operator()(CacheItem *item) noexcept {
+			cache.sorted_items.erase(cache.sorted_items.iterator_to(*item));
 			cache.ItemRemoved(item);
 		}
 	};

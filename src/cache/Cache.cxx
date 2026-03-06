@@ -52,10 +52,8 @@ Cache::ItemRemoved(CacheItem *item) noexcept
 {
 	assert(item != nullptr);
 	assert(item->size > 0);
-	assert(!item->IsAbandoned() || !item->IsRemoved());
+	assert(item->IsRemoved());
 	assert(size >= item->size);
-
-	sorted_items.erase(sorted_items.iterator_to(*item));
 
 	size -= item->size;
 
@@ -247,6 +245,7 @@ Cache::RemoveAllMatch(MatchFunction match) noexcept
 			continue;
 
 		items.erase(items.iterator_to(item));
+		sorted_items.erase(sorted_items.iterator_to(item));
 		ItemRemoved(&item);
 		++removed;
 	}
