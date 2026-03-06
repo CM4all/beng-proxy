@@ -235,22 +235,12 @@ Cache::Remove(CacheItem &item) noexcept
 std::size_t
 Cache::RemoveAllMatch(MatchFunction match) noexcept
 {
-	std::size_t removed = 0;
-
-	for (auto i = sorted_items.begin(), end = sorted_items.end();
-	     i != end;) {
-		CacheItem &item = *i++;
-
-		if (!match(item))
-			continue;
-
-		items.erase(items.iterator_to(item));
-		sorted_items.erase(sorted_items.iterator_to(item));
-		ItemRemoved(&item);
-		++removed;
-	}
-
-	return removed;
+	return sorted_items.remove_and_dispose_if([match](const CacheItem &item){
+		return match(item);
+	}, [this](CacheItem *item){
+		items.erase(items.iterator_to(*item));
+		ItemRemoved(item);
+	});
 }
 
 /** clean up expired cache items every 60 seconds */
