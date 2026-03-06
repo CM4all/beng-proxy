@@ -77,7 +77,7 @@ Cache::Flush() noexcept
 void
 Cache::RefreshItem(CacheItem &item) noexcept
 {
-	/* move to the front of the linked list */
+	/* move to the back of the linked list */
 	sorted_items.erase(sorted_items.iterator_to(item));
 	sorted_items.push_back(item);
 }
