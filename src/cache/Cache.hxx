@@ -132,6 +132,12 @@ private:
 	bool ExpireCallback() noexcept;
 
 	/**
+	 * Update internal book-keeping after #item has been added
+	 * to the data structures of this #Cache.
+	 */
+	void ItemAdded(CacheItem &item) noexcept;
+
+	/**
 	 * Update internal book-keeping after #item has been removed
 	 * from the data structures of this #Cache.
 	 */

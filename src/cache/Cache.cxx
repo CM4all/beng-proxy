@@ -48,6 +48,20 @@ Cache::SystemNow() const noexcept
 }
 
 void
+Cache::ItemAdded(CacheItem &item) noexcept
+{
+	assert(item.size > 0);
+	assert(!item.IsRemoved());
+
+	size += item.size;
+
+	if (handler != nullptr)
+		handler->OnCacheItemAdded(item);
+
+	cleanup_timer.Enable();
+}
+
+void
 Cache::ItemRemoved(CacheItem *item) noexcept
 {
 	assert(item != nullptr);
@@ -162,12 +176,7 @@ Cache::Add(CacheItem &item) noexcept
 	items.insert(item);
 	sorted_items.push_back(item);
 
-	size += item.size;
-
-	if (handler != nullptr)
-		handler->OnCacheItemAdded(item);
-
-	cleanup_timer.Enable();
+	ItemAdded(item);
 	return true;
 }
 
@@ -188,15 +197,10 @@ Cache::Put(CacheItem &item) noexcept
 	if (!inserted)
 		it = RemoveItem(*it);
 
-	size += item.size;
-
 	items.insert_commit(it, item);
 	sorted_items.push_back(item);
 
-	if (handler != nullptr)
-		handler->OnCacheItemAdded(item);
-
-	cleanup_timer.Enable();
+	ItemAdded(item);
 	return true;
 }
 
