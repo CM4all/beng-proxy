@@ -95,6 +95,9 @@ public:
 	 */
 	bool PutMatch(CacheItem &item, MatchFunction match) noexcept;
 
+	/**
+	 * Remove all #CacheItem with the specified key.
+	 */
 	void Remove(StringWithHash key) noexcept;
 
 	/**
@@ -107,6 +110,9 @@ public:
 		items.remove_and_dispose_key_if(key, pred, ItemRemover{*this});
 	}
 
+	/**
+	 * Remove one #CacheItem by reference.
+	 */
 	void Remove(CacheItem &item) noexcept;
 
 	/**
@@ -116,14 +122,27 @@ public:
 	 */
 	std::size_t RemoveAllMatch(MatchFunction match) noexcept;
 
+	/**
+	 * Release all cache items.
+	 */
 	void Flush() noexcept;
 
 private:
 	/** clean up expired cache items every 60 seconds */
 	bool ExpireCallback() noexcept;
 
+	/**
+	 * Update internal book-keeping after #item has been removed
+	 * from the data structures of this #Cache.
+	 */
 	void ItemRemoved(CacheItem *item) noexcept;
 
+	/**
+	 * A class that can be used as disposer function for erasing
+	 * items from the #items map.  It removes the #CacheItem from
+	 * the #sorted_items list and releases it (by calling its
+	 * Release() method).
+	 */
 	class ItemRemover {
 		Cache &cache;
 
@@ -136,11 +155,27 @@ private:
 		}
 	};
 
+	/**
+	 * Remove an item from this cache and dispose of it.
+	 */
 	void RemoveItem(CacheItem &item) noexcept;
 
+	/**
+	 * Move the #item to the back of the #sorted_items list.  Call
+	 * this when it has just been used.
+	 */
 	void RefreshItem(CacheItem &item) noexcept;
 
+	/**
+	 * Release the least recently used item.
+	 */
 	void DestroyOldestItem() noexcept;
 
+	/**
+	 * Make room for a new item of the specified size.
+	 *
+	 * @return true on success, false if there is not enough room
+	 * in the cache
+	 */
 	bool NeedRoom(size_t _size) noexcept;
 };
