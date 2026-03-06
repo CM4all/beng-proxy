@@ -80,13 +80,13 @@ Cache::RefreshItem(CacheItem &item) noexcept
 	sorted_items.push_back(item);
 }
 
-void
+auto
 Cache::RemoveItem(CacheItem &item) noexcept
 {
 	assert(!item.IsRemoved());
 
-	items.erase_and_dispose(items.iterator_to(item),
-				ItemRemover(*this));
+	return items.erase_and_dispose(items.iterator_to(item),
+				       ItemRemover(*this));
 }
 
 CacheItem *
@@ -184,13 +184,13 @@ Cache::Put(CacheItem &item) noexcept
 		return false;
 	}
 
-	auto i = items.find(item.GetKey());
-	if (i != items.end())
-		RemoveItem(*i);
+	auto [it, inserted] = items.insert_check(item.GetKey());
+	if (!inserted)
+		it = RemoveItem(*it);
 
 	size += item.size;
 
-	items.insert(item);
+	items.insert_commit(it, item);
 	sorted_items.push_back(item);
 
 	if (handler != nullptr)

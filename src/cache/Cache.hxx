@@ -159,7 +159,7 @@ private:
 	/**
 	 * Remove an item from this cache and dispose of it.
 	 */
-	void RemoveItem(CacheItem &item) noexcept;
+	auto RemoveItem(CacheItem &item) noexcept;
 
 	/**
 	 * Move the #item to the back of the #sorted_items list.  Call
