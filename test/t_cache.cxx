@@ -143,6 +143,92 @@ TEST(TranslationCache, Basic)
 	ASSERT_EQ(i->value, 4);
 }
 
+TEST(TranslationCache, RemoveAllMatch)
+{
+	MyCacheItem *i;
+
+	PInstance instance;
+
+	Cache cache(instance.event_loop, 16);
+
+	const StringWithHash foo_key{"foo"};
+	const StringWithHash bar_key{"bar"};
+	const StringWithHash baz_key{"baz"};
+
+	/* RemoveAllMatch on empty cache returns 0 */
+
+	ASSERT_EQ(cache.RemoveAllMatch({match_to_ptr(1), my_match}), 0U);
+
+	/* populate cache with items across different keys */
+
+	i = my_cache_item_new(instance.root_pool, foo_key, 1, 10);
+	cache.PutMatch(*i, {match_to_ptr(1), my_match});
+
+	i = my_cache_item_new(instance.root_pool, foo_key, 2, 20);
+	cache.PutMatch(*i, {match_to_ptr(2), my_match});
+
+	i = my_cache_item_new(instance.root_pool, bar_key, 1, 30);
+	cache.PutMatch(*i, {match_to_ptr(1), my_match});
+
+	i = my_cache_item_new(instance.root_pool, baz_key, 3, 40);
+	cache.PutMatch(*i, {match_to_ptr(3), my_match});
+
+	/* RemoveAllMatch with no matching items returns 0 */
+
+	ASSERT_EQ(cache.RemoveAllMatch({match_to_ptr(99), my_match}), 0U);
+
+	/* all four items still present */
+
+	i = (MyCacheItem *)cache.GetMatch(foo_key, {match_to_ptr(1), my_match});
+	ASSERT_NE(i, nullptr);
+	ASSERT_EQ(i->value, 10);
+
+	i = (MyCacheItem *)cache.GetMatch(foo_key, {match_to_ptr(2), my_match});
+	ASSERT_NE(i, nullptr);
+	ASSERT_EQ(i->value, 20);
+
+	i = (MyCacheItem *)cache.GetMatch(bar_key, {match_to_ptr(1), my_match});
+	ASSERT_NE(i, nullptr);
+	ASSERT_EQ(i->value, 30);
+
+	i = (MyCacheItem *)cache.GetMatch(baz_key, {match_to_ptr(3), my_match});
+	ASSERT_NE(i, nullptr);
+	ASSERT_EQ(i->value, 40);
+
+	/* remove all items with match==1 (spans foo and bar keys) */
+
+	ASSERT_EQ(cache.RemoveAllMatch({match_to_ptr(1), my_match}), 2U);
+
+	/* match==1 items are gone */
+
+	i = (MyCacheItem *)cache.GetMatch(foo_key, {match_to_ptr(1), my_match});
+	ASSERT_EQ(i, nullptr);
+
+	i = (MyCacheItem *)cache.GetMatch(bar_key, {match_to_ptr(1), my_match});
+	ASSERT_EQ(i, nullptr);
+
+	/* other items still present */
+
+	i = (MyCacheItem *)cache.GetMatch(foo_key, {match_to_ptr(2), my_match});
+	ASSERT_NE(i, nullptr);
+	ASSERT_EQ(i->value, 20);
+
+	i = (MyCacheItem *)cache.GetMatch(baz_key, {match_to_ptr(3), my_match});
+	ASSERT_NE(i, nullptr);
+	ASSERT_EQ(i->value, 40);
+
+	/* remove remaining items one group at a time */
+
+	ASSERT_EQ(cache.RemoveAllMatch({match_to_ptr(2), my_match}), 1U);
+	ASSERT_EQ(cache.RemoveAllMatch({match_to_ptr(3), my_match}), 1U);
+
+	/* cache is now empty */
+
+	ASSERT_EQ(cache.Get(foo_key), nullptr);
+	ASSERT_EQ(cache.Get(bar_key), nullptr);
+	ASSERT_EQ(cache.Get(baz_key), nullptr);
+}
+
 TEST(TranslationCache, GetMatchExpired)
 {
 	MyCacheItem *i;
