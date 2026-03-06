@@ -207,15 +207,25 @@ Cache::Put(CacheItem &item) noexcept
 bool
 Cache::PutMatch(CacheItem &item, MatchFunction match) noexcept
 {
-	auto *old = GetMatch(item.GetKey(), match);
+	/* XXX size constraints */
 
 	assert(item.size > 0);
 	assert(item.IsAbandoned());
 
-	if (old != nullptr)
-		RemoveItem(*old);
+	if (!NeedRoom(item.size)) {
+		item.Destroy();
+		return false;
+	}
 
-	return Add(item);
+	auto [it, inserted] = items.insert_check_if(item.GetKey(), match);
+	if (!inserted)
+		it = RemoveItem(*it);
+
+	items.insert_commit(it, item);
+	sorted_items.push_back(item);
+
+	ItemAdded(item);
+	return true;
 }
 
 void
