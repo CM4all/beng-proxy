@@ -173,6 +173,11 @@ private:
 			delete r;
 			on_success(fd, stx, *this);
 		});
+
+		if (!IsWatching())
+			/* if we havn't registered inotify on this
+			   file, don't cache the statx() result */
+			next_stx_mask = stx.stx_mask = 0;
 	}
 
 	/**
