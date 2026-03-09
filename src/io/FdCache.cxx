@@ -328,7 +328,6 @@ FdCache::Item::Start(FileDescriptor directory, std::size_t strip_length,
 		fd = TryOpen({directory, p}, how);
 		if (fd.IsDefined()) {
 			RegisterInotify();
-			InvokeSuccess();
 		} else {
 			SetError(errno);
 		}
