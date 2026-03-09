@@ -153,6 +153,18 @@ struct FdCache::Item final
 		 CancellablePointer &cancel_ptr) noexcept;
 
 private:
+	/**
+	 * Does this item point to a directory?  This is according to
+	 * how the item was created, not what the pointed-to inode
+	 * actually is.
+	 *
+	 * The implementation is a kludge: requests for a directory
+	 * usually come with a zero statx() mask.
+	 */
+	bool IsDirectory() const noexcept {
+		return next_stx_mask == 0;
+	}
+
 	void StartStatx() noexcept;
 
 	/**
@@ -201,9 +213,9 @@ private:
 	}
 
 	void RegisterInotify() noexcept {
-		if (next_stx_mask != 0)
-			/* this kludge-y check omits inotify
-			   registrations for regular files */
+		if (!IsDirectory())
+			/* omit inotify registrations for regular
+			   files */
 			return;
 
 		/* tell the kernel to notify us when the directory
