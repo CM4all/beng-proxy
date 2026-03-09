@@ -212,17 +212,24 @@ private:
 		});
 	}
 
+	/**
+	 * Tell the kernel to notify us when the inode gets modified;
+	 * if that happens, this cache item is stale and we need to
+	 * discard it.
+	 */
 	void RegisterInotify() noexcept {
-		if (!IsDirectory())
+		if (IsDirectory()) {
+			/* IN_MOVE_SELF means the inode itself has
+			   been moved */
+			TryAddWatch(ProcFdPath(fd),
+				    IN_MOVE_SELF|IN_ONESHOT|IN_ONLYDIR|IN_MASK_CREATE);
+		} else {
 			/* omit inotify registrations for regular
 			   files */
-			return;
+		}
 
-		/* tell the kernel to notify us when the directory
-		   gets deleted or moved; if that happens, we need to
-		   discard this item */
-		TryAddWatch(ProcFdPath(fd),
-			    IN_MOVE_SELF|IN_ONESHOT|IN_ONLYDIR|IN_MASK_CREATE);
+		/* unfortunately, IN_DELETE_SELF does not work as long
+		   as we're holding a file descriptor */
 	}
 
 	void SetError(int _error) noexcept {
