@@ -188,6 +188,21 @@ struct TranslateCacheItem final : PoolHolder, CacheItem {
 	void Destroy() noexcept override;
 };
 
+struct TranslateCacheItemRemoveDisposer {
+	Cache &cache;
+
+	constexpr explicit TranslateCacheItemRemoveDisposer(Cache &_cache) noexcept
+		:cache(_cache) {}
+
+	void operator()(TranslateCacheItem *item){
+		cache.Remove(*item);
+	}
+
+	void operator()(TranslateCacheItemTag *i){
+		operator()(&i->parent);
+	}
+};
+
 std::string_view
 TranslationCache::GetHost::operator()(const TranslateCacheItem &item) const noexcept
 {
@@ -826,9 +841,7 @@ TranslationCache::InvalidateHost(const TranslateRequest &request,
 
 	return per_host.remove_and_dispose_key_if(host, [&request, vary, tag](const TranslateCacheItem &item){
 		return item.InvalidateMatch(vary, tag, request);
-	}, [this](TranslateCacheItem *item){
-		cache.Remove(*item);
-	});
+	}, TranslateCacheItemRemoveDisposer{cache});
 }
 
 inline std::size_t
@@ -838,9 +851,7 @@ TranslationCache::InvalidateSite(const TranslateRequest &request,
 {
 	return per_site.remove_and_dispose_key_if(site, [&request, vary, tag](const TranslateCacheItem &item){
 		return item.InvalidateMatch(vary, tag, request);
-	}, [this](TranslateCacheItem *item){
-		cache.Remove(*item);
-	});
+	}, TranslateCacheItemRemoveDisposer{cache});
 }
 
 inline std::size_t
@@ -850,9 +861,7 @@ TranslationCache::InvalidateTag(const TranslateRequest &request,
 {
 	return per_tag.remove_and_dispose_key_if(tag, [&request, vary](const TranslateCacheItemTag &i){
 		return i.parent.InvalidateMatch(vary, nullptr, request);
-	}, [this](TranslateCacheItemTag *i){
-		cache.Remove(i->parent);
-	});
+	}, TranslateCacheItemRemoveDisposer{cache});
 }
 
 void
