@@ -31,7 +31,7 @@
 
 using std::string_view_literals::operator""sv;
 
-inline std::size_t
+constexpr std::size_t
 FdCache::Key::Hash::operator()(const Key &key) const noexcept
 {
 	return djb_hash(AsBytes(key.path)) ^ key.flags;
@@ -383,7 +383,7 @@ FdCache::Item::Get(SuccessCallback on_success,
 	}
 }
 
-inline FdCache::Key
+constexpr FdCache::Key
 FdCache::ItemGetKey::operator()(const Item &item) const noexcept
 {
 	return {item.path, item.flags};

@@ -38,16 +38,14 @@ class FdCache final {
 						  const Key &) noexcept = default;
 
 		struct Hash {
-			[[gnu::pure]]
-			std::size_t operator()(const Key &key) const noexcept;
+			constexpr std::size_t operator()(const Key &key) const noexcept;
 		};
 	};
 
 	struct Item;
 
 	struct ItemGetKey {
-		[[gnu::pure]]
-		Key operator()(const Item &item) const noexcept;
+		constexpr Key operator()(const Item &item) const noexcept;
 	};
 
 	CoarseTimerEvent expire_timer;
