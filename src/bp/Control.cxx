@@ -199,8 +199,12 @@ BpInstance::OnControlPacket(BengControl::Command command,
 		break;
 
 	case Command::FLUSH_HTTP_CACHE:
-		if (http_cache != nullptr)
-			http_cache_flush_tag(*http_cache, ToStringView(payload));
+		if (http_cache != nullptr) {
+			if (payload.empty())
+				http_cache_flush(*http_cache);
+			else
+				http_cache_flush_tag(*http_cache, ToStringView(payload));
+		}
 
 		break;
 
