@@ -16,7 +16,7 @@ struct ChildErrorLogOptions;
 class StockItem;
 class StockGetHandler;
 class FcgiStock;
-struct ChildOptions;
+struct CgiChildParams;
 class EventLoop;
 class SpawnService;
 class ListenStreamStock;
@@ -49,12 +49,11 @@ public:
 	}
 
 	/**
-	 * @param args command-line arguments
+	 * @param params a description of the FastCGI process; the
+	 * pointed-to object must remain valid until the request
+	 * completes
 	 */
-	void Get(StockKey key, const ChildOptions &options,
-		 const char *executable_path,
-		 std::span<const char *const> args,
-		 unsigned parallelism, unsigned concurrency,
+	void Get(StockKey key, const CgiChildParams &params,
 		 StockGetHandler &handler,
 		 CancellablePointer &cancel_ptr) noexcept;
 

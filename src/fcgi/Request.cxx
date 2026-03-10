@@ -9,6 +9,7 @@
 #include "http/PendingRequest.hxx"
 #include "http/ResponseHandler.hxx"
 #include "cgi/Address.hxx"
+#include "cgi/ChildParams.hxx"
 #include "stock/AbstractStock.hxx"
 #include "stock/GetHandler.hxx"
 #include "stock/Item.hxx"
@@ -89,13 +90,18 @@ public:
 	}
 
 	void BeginConnect() noexcept {
+		auto *params = NewFromPool<CgiChildParams>(pool,
+							   address.GetAction(),
+							   address.args.ToArray(pool),
+							   address.options,
+							   address.parallelism,
+							   address.concurrency,
+							   false);
+
 		const TempPoolLease tpool;
 		const auto key = address.GetChildId(*tpool);
 
-		fcgi_stock.Get(key, address.options,
-			       address.GetAction(), address.args.ToArray(pool),
-			       address.parallelism, address.concurrency,
-			       *this, cancel_ptr);
+		fcgi_stock.Get(key, *params, *this, cancel_ptr);
 	}
 
 private:

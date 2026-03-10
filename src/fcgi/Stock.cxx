@@ -192,21 +192,16 @@ FcgiStock::FadeTag(std::string_view tag) noexcept
 }
 
 void
-FcgiStock::Get(StockKey key, const ChildOptions &options,
-	       const char *executable_path,
-	       std::span<const char *const> args,
-	       unsigned parallelism, unsigned concurrency,
+FcgiStock::Get(StockKey key, const CgiChildParams &params,
 	       StockGetHandler &handler,
 	       CancellablePointer &cancel_ptr) noexcept
 {
+	unsigned concurrency = params.concurrency;
 	if (concurrency <= 1)
 		/* no concurrency by default */
 		concurrency = 1;
 
-	auto r = ToDeletePointer(new CgiChildParams(executable_path,
-						    args, options,
-						    parallelism, concurrency, false));
-	mchild_stock.Get(key, std::move(r),
+	mchild_stock.Get(key, ToNopPointer(&params),
 			 concurrency,
 			 handler, cancel_ptr);
 }
