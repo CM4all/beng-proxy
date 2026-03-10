@@ -65,6 +65,10 @@ public:
 
 	void FadeTag(std::string_view tag) noexcept;
 
+	void FadeKey(StockKey key) noexcept {
+		mchild_stock.FadeKey(key);
+	}
+
 	/**
 	 * The resulting #StockItem will be a #WasStockConnection
 	 * instance.

@@ -64,6 +64,10 @@ public:
 
 	void FadeTag(std::string_view tag) noexcept;
 
+	void FadeKey(StockKey key) noexcept {
+		mchild_stock.FadeKey(key);
+	}
+
 private:
 	/* virtual methods from class MultiStockClass */
 	StockOptions GetOptions(const void *request,
