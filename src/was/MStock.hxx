@@ -12,7 +12,7 @@
 #include <span>
 
 class AllocatorPtr;
-struct ChildOptions;
+struct CgiChildParams;
 class StockItem;
 struct WasSocket;
 class SocketDescriptor;
@@ -72,13 +72,12 @@ public:
 	/**
 	 * The resulting #StockItem will be a #WasStockConnection
 	 * instance.
+	 *
+	 * @param params a description of the WAS process; the
+	 * pointed-to object must remain valid until the request
+	 * completes
 	 */
-	void Get(AllocatorPtr alloc,
-		 StockKey key,
-		 const ChildOptions &options,
-		 const char *executable_path,
-		 std::span<const char *const> args,
-		 unsigned parallelism, unsigned concurrency,
+	void Get(StockKey key, const CgiChildParams &params,
 		 StockGetHandler &handler,
 		 CancellablePointer &cancel_ptr) noexcept;
 

@@ -11,6 +11,7 @@
 #include "pool/tpool.hxx"
 #include "stopwatch.hxx"
 #include "cgi/Address.hxx"
+#include "cgi/ChildParams.hxx"
 #include "net/FormatAddress.hxx"
 #include "util/StringCompare.hxx"
 #include "AllocatorPtr.hxx"
@@ -52,13 +53,17 @@ public:
 
 protected:
 	void GetStockItem() noexcept override {
+		auto r = NewFromPool<CgiChildParams>(pool, address.GetAction(),
+						     address.args.ToArray(pool),
+						     address.options,
+						     address.parallelism,
+						     address.concurrency,
+						     address.disposable);
+
 		const TempPoolLease tpool;
 		const auto key = address.GetChildId(*tpool);
 
-		stock.Get(pool, key,
-			  address.options,
-			  address.GetAction(), args,
-			  address.parallelism, address.concurrency,
+		stock.Get(key, *r,
 			  *this, cancel_ptr);
 	}
 };

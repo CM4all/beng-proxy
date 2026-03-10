@@ -16,7 +16,7 @@
 
 namespace Net::Log { class Sink; }
 class AllocatorPtr;
-struct ChildOptions;
+struct CgiChildParams;
 struct WasSocket;
 class SpawnService;
 class ListenStreamStock;
@@ -88,14 +88,11 @@ public:
 	 * The resulting #StockItem will be a #WasStockConnection
 	 * instance.
 	 *
-	 * @param args command-line arguments
+	 * @param params a description of the WAS process; the
+	 * pointed-to object must remain valid until the request
+	 * completes
 	 */
-	void Get(AllocatorPtr alloc,
-		 StockKey key,
-		 const ChildOptions &options,
-		 const char *executable_path,
-		 std::span<const char *const> args,
-		 unsigned parallelism, bool disposable,
+	void Get(StockKey key, const CgiChildParams &params,
 		 StockGetHandler &handler,
 		 CancellablePointer &cancel_ptr) noexcept;
 

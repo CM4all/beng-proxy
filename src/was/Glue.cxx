@@ -6,6 +6,7 @@
 #include "Stock.hxx"
 #include "SRequest.hxx"
 #include "cgi/Address.hxx"
+#include "cgi/ChildParams.hxx"
 #include "pool/pool.hxx"
 #include "pool/tpool.hxx"
 #include "util/StringCompare.hxx"
@@ -16,7 +17,6 @@
 class WasRequest final : WasStockRequest {
 	WasStock &was_stock;
 	const CgiAddress &address;
-	const std::span<const char *const> args;
 
 public:
 	WasRequest(struct pool &_pool, WasStock &_was_stock,
@@ -37,8 +37,7 @@ public:
 				 _address.params.ToArray(_pool),
 				 _metrics_handler, _handler),
 		 was_stock(_was_stock),
-		 address(_address),
-		 args(address.args.ToArray(pool)) {}
+		 address(_address) {}
 
 	using WasStockRequest::WasStockRequest;
 
@@ -49,13 +48,17 @@ public:
 
 protected:
 	void GetStockItem() noexcept override {
+		auto r = NewFromPool<CgiChildParams>(pool, address.GetAction(),
+						     address.args.ToArray(pool),
+						     address.options,
+						     address.parallelism,
+						     address.concurrency,
+						     address.disposable);
+
 		const TempPoolLease tpool;
 		const auto key = address.GetChildId(*tpool);
 
-		was_stock.Get(pool, key,
-			      address.options,
-			      address.GetAction(), args,
-			      address.parallelism, address.disposable,
+		was_stock.Get(key, *r,
 			      *this, cancel_ptr);
 	}
 };

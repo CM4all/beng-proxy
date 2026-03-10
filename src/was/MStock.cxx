@@ -206,19 +206,11 @@ MultiWasStock::FadeTag(std::string_view tag) noexcept
 }
 
 void
-MultiWasStock::Get(AllocatorPtr alloc,
-		   StockKey key,
-		   const ChildOptions &options,
-		   const char *executable_path,
-		   std::span<const char *const> args,
-		   unsigned parallelism, unsigned concurrency,
+MultiWasStock::Get(StockKey key, const CgiChildParams &params,
 		   StockGetHandler &handler,
 		   CancellablePointer &cancel_ptr) noexcept
 {
-	auto r = NewDisposablePointer<CgiChildParams>(alloc, executable_path,
-						      args, options,
-						      parallelism, concurrency,
-						      false);
-
-	mchild_stock.Get(key, std::move(r), concurrency, handler, cancel_ptr);
+	mchild_stock.Get(key, ToNopPointer(&params),
+			 params.concurrency,
+			 handler, cancel_ptr);
 }

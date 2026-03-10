@@ -136,21 +136,10 @@ WasChild::~WasChild() noexcept = default;
  */
 
 void
-WasStock::Get(AllocatorPtr alloc,
-	      StockKey key,
-	      const ChildOptions &options,
-	      const char *executable_path,
-	      std::span<const char *const> args,
-	      unsigned parallelism, bool disposable,
+WasStock::Get(StockKey key, const CgiChildParams &params,
 	      StockGetHandler &handler,
 	      CancellablePointer &cancel_ptr) noexcept
 {
-
-	auto r = NewDisposablePointer<CgiChildParams>(alloc, executable_path,
-						      args, options,
-						      parallelism,
-						      0,
-						      disposable);
-
-	stock.Get(key, std::move(r), handler, cancel_ptr);
+	stock.Get(key, ToNopPointer(&params),
+		  handler, cancel_ptr);
 }
