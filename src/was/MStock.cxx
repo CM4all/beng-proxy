@@ -125,7 +125,7 @@ StockOptions
 MultiWasStock::GetOptions(const void *request,
 			  StockOptions o) const noexcept
 {
-	const auto &params = *(const CgiChildParams *)request;
+	const auto &params = *reinterpret_cast<const CgiChildParams *>(request);
 	if (params.parallelism > 0)
 		o.limit = params.parallelism;
 
@@ -147,14 +147,14 @@ MultiWasStock::PreserveRequest(StockRequest request) noexcept
 bool
 MultiWasStock::WantStderrPond(const void *info) const noexcept
 {
-	const auto &params = *(const CgiChildParams *)info;
+	const auto &params = *reinterpret_cast<const CgiChildParams *>(info);
 	return params.options.stderr_pond;
 }
 
 std::string_view
 MultiWasStock::GetChildTag(const void *info) const noexcept
 {
-	const auto &params = *(const CgiChildParams *)info;
+	const auto &params = *reinterpret_cast<const CgiChildParams *>(info);
 
 	return params.options.tag;
 }
@@ -172,7 +172,7 @@ void
 MultiWasStock::PrepareChild(const void *info, PreparedChildProcess &p,
 			    FdHolder &close_fds)
 {
-	const auto &params = *(const CgiChildParams *)info;
+	const auto &params = *reinterpret_cast<const CgiChildParams *>(info);
 
 	p.Append(params.executable_path);
 	for (auto i : params.args)
@@ -184,7 +184,7 @@ MultiWasStock::PrepareChild(const void *info, PreparedChildProcess &p,
 StockItem *
 MultiWasStock::Create(CreateStockItem c, StockItem &shared_item)
 {
-	auto &child = (MultiWasChild &)shared_item;
+	auto &child = static_cast<MultiWasChild &>(shared_item);
 
 	auto *connection = new MultiWasConnection(c, child);
 
@@ -200,7 +200,7 @@ void
 MultiWasStock::FadeTag(std::string_view tag) noexcept
 {
 	mchild_stock.FadeIf([tag](const StockItem &item){
-		const auto &child = (const MultiWasChild &)item;
+		const auto &child = static_cast<const MultiWasChild &>(item);
 		return child.IsTag(tag);
 	});
 }
