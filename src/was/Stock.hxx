@@ -84,6 +84,10 @@ public:
 		stock.FadeKey(key);
 	}
 
+	void ExpireKey(StockKey key, Event::TimePoint time) noexcept {
+		stock.ExpireKey(key, time);
+	}
+
 	/**
 	 * The resulting #StockItem will be a #WasStockConnection
 	 * instance.

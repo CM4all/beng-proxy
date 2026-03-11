@@ -67,6 +67,10 @@ public:
 		mchild_stock.FadeKey(key);
 	}
 
+	void ExpireKey(StockKey key, Event::TimePoint time) noexcept {
+		mchild_stock.ExpireKey(key, time);
+	}
+
 private:
 	/* virtual methods from class MultiStockClass */
 	StockOptions GetOptions(const void *request,

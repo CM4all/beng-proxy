@@ -58,6 +58,10 @@ public:
 		mchild_stock.FadeKey(key);
 	}
 
+	void ExpireKey(StockKey key, Event::TimePoint time) noexcept {
+		mchild_stock.ExpireKey(key, time);
+	}
+
 	void Get(StockKey key, const CgiChildParams &params,
 		 StockGetHandler &handler,
 		 CancellablePointer &cancel_ptr) noexcept;
