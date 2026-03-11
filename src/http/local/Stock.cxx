@@ -4,7 +4,7 @@
 
 #include "Stock.hxx"
 #include "Connection.hxx"
-#include "Address.hxx"
+#include "cgi/ChildParams.hxx"
 #include "http/Client.hxx" // for class HttpClientError
 #include "stock/Stock.hxx"
 #include "stock/Class.hxx"
@@ -13,6 +13,7 @@
 #include "pool/WithPoolDisposablePointer.hxx"
 #include "AllocatorPtr.hxx"
 #include "lib/fmt/ToBuffer.hxx"
+#include "spawn/ChildOptions.hxx"
 #include "spawn/Prepared.hxx"
 #include "net/UniqueSocketDescriptor.hxx"
 #include "io/FdHolder.hxx"
@@ -25,12 +26,6 @@
 #include <unistd.h>
 #include <string.h>
 
-static StockKey
-lhttp_stock_key(AllocatorPtr alloc, const LhttpAddress *address) noexcept
-{
-	return address->GetChildId(alloc);
-}
-
 /*
  * child_stock class
  *
@@ -40,7 +35,7 @@ StockOptions
 LhttpStock::GetOptions(const void *request,
 		      StockOptions o) const noexcept
 {
-	const auto &address = *reinterpret_cast<const LhttpAddress *>(request);
+	const auto &address = *reinterpret_cast<const CgiChildParams *>(request);
 
 	if (address.parallelism > 0)
 		o.limit = address.parallelism;
@@ -66,21 +61,21 @@ LhttpStock::GetChildOptions(const void *request,
 StockRequest
 LhttpStock::PreserveRequest(StockRequest request) noexcept
 {
-	const auto &src = *reinterpret_cast<const LhttpAddress *>(request.get());
-	return WithPoolDisposablePointer<LhttpAddress>::New(pool_new_linear(pool, "LhttpAddress", 4096), src);
+	const auto &src = *reinterpret_cast<const CgiChildParams *>(request.get());
+	return WithPoolDisposablePointer<CgiChildParams>::New(pool_new_linear(pool, "LhttpAddress", 4096), src);
 }
 
 bool
 LhttpStock::WantStderrPond(const void *info) const noexcept
 {
-	const auto &address = *reinterpret_cast<const LhttpAddress *>(info);
+	const auto &address = *reinterpret_cast<const CgiChildParams *>(info);
 	return address.options.stderr_pond;
 }
 
 int
 LhttpStock::GetChildSocketType(const void *info) const noexcept
 {
-	const auto &address = *reinterpret_cast<const LhttpAddress *>(info);
+	const auto &address = *reinterpret_cast<const CgiChildParams *>(info);
 
 	int type = SOCK_STREAM;
 	if (!address.blocking)
@@ -92,7 +87,7 @@ LhttpStock::GetChildSocketType(const void *info) const noexcept
 unsigned
 LhttpStock::GetChildBacklog(const void *info) const noexcept
 {
-	const auto &address = *reinterpret_cast<const LhttpAddress *>(info);
+	const auto &address = *reinterpret_cast<const CgiChildParams *>(info);
 
 	/* use the concurrency for the listener backlog to ensure that
 	   we'll never get ECONNREFUSED/EAGAIN while the child process
@@ -105,7 +100,7 @@ LhttpStock::GetChildBacklog(const void *info) const noexcept
 std::string_view
 LhttpStock::GetChildTag(const void *info) const noexcept
 {
-	const auto &address = *reinterpret_cast<const LhttpAddress *>(info);
+	const auto &address = *reinterpret_cast<const CgiChildParams *>(info);
 
 	return address.options.tag;
 }
@@ -114,7 +109,7 @@ void
 LhttpStock::PrepareChild(const void *info, PreparedChildProcess &p,
 			 FdHolder &close_fds)
 {
-	const auto &address = *reinterpret_cast<const LhttpAddress *>(info);
+	const auto &address = *reinterpret_cast<const CgiChildParams *>(info);
 
 	address.CopyTo(p, close_fds);
 }
@@ -187,13 +182,12 @@ LhttpStock::FadeTag(std::string_view tag) noexcept
 }
 
 void
-LhttpStock::Get(const LhttpAddress &address,
+LhttpStock::Get(StockKey key, const CgiChildParams &params,
 		StockGetHandler &handler,
 		CancellablePointer &cancel_ptr) noexcept
 {
 	const TempPoolLease tpool;
-	mchild_stock.Get(lhttp_stock_key(*tpool, &address),
-			 ToNopPointer(const_cast<LhttpAddress *>(&address)),
-			 address.concurrency,
+	mchild_stock.Get(key, ToNopPointer(&params),
+			 params.concurrency,
 			 handler, cancel_ptr);
 }

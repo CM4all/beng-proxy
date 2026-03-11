@@ -6,6 +6,7 @@
 #include "Stock.hxx"
 #include "Connection.hxx"
 #include "Address.hxx"
+#include "cgi/ChildParams.hxx"
 #include "http/Client.hxx"
 #include "http/PendingRequest.hxx"
 #include "http/ResponseHandler.hxx"
@@ -17,10 +18,12 @@
 #include "istream/UnusedPtr.hxx"
 #include "http/HeaderWriter.hxx"
 #include "pool/pool.hxx"
+#include "pool/tpool.hxx"
 #include "pool/LeakDetector.hxx"
 #include "event/FineTimerEvent.hxx"
 #include "net/SocketDescriptor.hxx"
 #include "util/Cancellable.hxx"
+#include "AllocatorPtr.hxx"
 #include "stopwatch.hxx"
 
 class LhttpLease final : public Lease, PoolLeakDetector {
@@ -136,7 +139,19 @@ private:
 inline void
 LhttpRequest::Start() noexcept
 {
-	stock.Get(address, *this, cancel_ptr);
+	auto *params = NewFromPool<CgiChildParams>(pool,
+						   address.path,
+						   address.args.ToArray(pool),
+						   address.options,
+						   address.parallelism,
+						   address.concurrency,
+						   false);
+	params->blocking = address.blocking;
+
+	const TempPoolLease tpool;
+	const auto key = address.GetChildId(*tpool);
+
+	stock.Get(key, *params, *this, cancel_ptr);
 }
 
 void

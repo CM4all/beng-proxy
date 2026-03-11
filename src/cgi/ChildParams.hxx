@@ -23,6 +23,8 @@ struct CgiChildParams {
 
 	bool disposable;
 
+	bool blocking = true;
+
 	CgiChildParams(const char *_executable_path,
 		       std::span<const char *const> _args,
 		       const ChildOptions &_options,

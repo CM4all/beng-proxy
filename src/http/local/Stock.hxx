@@ -16,7 +16,7 @@ struct ChildErrorLogOptions;
 class LhttpStock;
 class StockGetHandler;
 class CancellablePointer;
-struct LhttpAddress;
+struct CgiChildParams;
 class EventLoop;
 class SpawnService;
 class ListenStreamStock;
@@ -54,7 +54,7 @@ public:
 
 	void FadeTag(std::string_view tag) noexcept;
 
-	void Get(const LhttpAddress &address,
+	void Get(StockKey key, const CgiChildParams &params,
 		 StockGetHandler &handler,
 		 CancellablePointer &cancel_ptr) noexcept;
 
