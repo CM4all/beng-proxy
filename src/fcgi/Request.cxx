@@ -47,7 +47,6 @@ class FcgiRequest final
 	PendingHttpRequest pending_request;
 
 	const char *const site_name;
-	const char *const action;
 	const char *const remote_addr;
 
 	UniqueFileDescriptor stderr_fd;
@@ -65,7 +64,6 @@ public:
 		    const StopwatchPtr &parent_stopwatch,
 		    const char *_site_name,
 		    const CgiAddress &_address,
-		    const char *_action,
 		    HttpMethod _method,
 		    const char *_remote_addr,
 		    StringMap &&_headers, UnusedIstreamPtr &&_body,
@@ -76,12 +74,11 @@ public:
 		 pool(_pool),
 		 fcgi_stock(_fcgi_stock),
 		 retry_timer(fcgi_stock.GetEventLoop(), BIND_THIS_METHOD(BeginConnect)),
-		 stopwatch(parent_stopwatch, "fcgi", _action),
+		 stopwatch(parent_stopwatch, "fcgi", _address.GetAction()),
 		 address(_address),
 		 pending_request(_pool, _method, address.GetURI(pool),
 				 std::move(_headers), std::move(_body)),
 		 site_name(_site_name),
-		 action(_action),
 		 remote_addr(_remote_addr),
 		 stderr_fd(std::move(_stderr_fd)),
 		 handler(_handler),
@@ -96,7 +93,7 @@ public:
 		const auto key = address.GetChildId(*tpool);
 
 		fcgi_stock.Get(key, address.options,
-			       action, address.args.ToArray(pool),
+			       address.GetAction(), address.args.ToArray(pool),
 			       address.parallelism, address.concurrency,
 			       *this, cancel_ptr);
 	}
@@ -267,7 +264,7 @@ fcgi_request(struct pool *pool,
 	     CancellablePointer &cancel_ptr) noexcept
 {
 	auto *request = NewFromPool<FcgiRequest>(*pool, *pool, *fcgi_stock, parent_stopwatch,
-						 site_name, address, address.GetAction(), method,
+						 site_name, address, method,
 						 remote_addr,
 						 std::move(headers), std::move(body),
 						 std::move(stderr_fd),

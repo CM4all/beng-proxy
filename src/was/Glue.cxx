@@ -16,7 +16,6 @@
 class WasRequest final : WasStockRequest {
 	WasStock &was_stock;
 	const CgiAddress &address;
-	const char *const action;
 	const std::span<const char *const> args;
 
 public:
@@ -39,7 +38,6 @@ public:
 				 _metrics_handler, _handler),
 		 was_stock(_was_stock),
 		 address(_address),
-		 action(address.GetAction()),
 		 args(address.args.ToArray(pool)) {}
 
 	using WasStockRequest::WasStockRequest;
@@ -56,7 +54,7 @@ protected:
 
 		was_stock.Get(pool, key,
 			      address.options,
-			      action, args,
+			      address.GetAction(), args,
 			      address.parallelism, address.disposable,
 			      *this, cancel_ptr);
 	}
