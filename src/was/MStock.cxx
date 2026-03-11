@@ -174,11 +174,7 @@ MultiWasStock::PrepareChild(const void *info, PreparedChildProcess &p,
 {
 	const auto &params = *reinterpret_cast<const CgiChildParams *>(info);
 
-	p.Append(params.executable_path);
-	for (auto i : params.args)
-		p.Append(i);
-
-	params.options.CopyTo(p, close_fds);
+	params.CopyTo(p, close_fds);
 }
 
 StockItem *

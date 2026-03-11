@@ -4,6 +4,7 @@
 
 #include "ChildParams.hxx"
 #include "spawn/ChildOptions.hxx"
+#include "spawn/Prepared.hxx"
 #include "pool/StringBuilder.hxx"
 #include "stock/Key.hxx"
 #include "util/djb_hash.hxx"
@@ -18,4 +19,15 @@ CgiChildParams::CgiChildParams(AllocatorPtr alloc, const CgiChildParams &src) no
 	 concurrency(src.concurrency),
 	 disposable(src.disposable)
 {
+}
+
+void
+CgiChildParams::CopyTo(PreparedChildProcess &dest, FdHolder &close_fds) const noexcept
+{
+	dest.Append(executable_path);
+
+	for (const char *i : args)
+		dest.Append(i);
+
+	options.CopyTo(dest, close_fds);
 }

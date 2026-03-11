@@ -108,7 +108,6 @@ FcgiStock::PrepareChild(const void *info, PreparedChildProcess &p,
 			FdHolder &close_fds)
 {
 	const auto &params = *(const CgiChildParams *)info;
-	const ChildOptions &options = params.options;
 
 	/* the FastCGI protocol defines a channel for stderr, so we could
 	   close its "real" stderr here, but many FastCGI applications
@@ -119,11 +118,7 @@ FcgiStock::PrepareChild(const void *info, PreparedChildProcess &p,
 	    null_fd.Open("/dev/null", O_WRONLY))
 		p.stdout_fd = close_fds.Insert(std::move(null_fd));
 
-	p.Append(params.executable_path);
-	for (auto i : params.args)
-		p.Append(i);
-
-	options.CopyTo(p, close_fds);
+	params.CopyTo(p, close_fds);
 }
 
 void

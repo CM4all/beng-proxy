@@ -7,8 +7,10 @@
 #include <span>
 
 struct ChildOptions;
+struct PreparedChildProcess;
 struct StringWithHash;
 class AllocatorPtr;
+class FdHolder;
 
 struct CgiChildParams {
 	const char *executable_path;
@@ -34,4 +36,6 @@ struct CgiChildParams {
 		 disposable(_disposable) {}
 
 	CgiChildParams(AllocatorPtr alloc, const CgiChildParams &src) noexcept;
+
+	void CopyTo(PreparedChildProcess &dest, FdHolder &close_fds) const noexcept;
 };
