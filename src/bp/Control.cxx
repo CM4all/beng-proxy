@@ -25,8 +25,8 @@
 #include "pool/pool.hxx"
 #include "net/SocketAddress.hxx"
 #include "io/Logger.hxx"
-#include "util/PackedBigEndian.hxx"
 #include "util/SpanCast.hxx"
+#include "util/UnalignedBigEndian.hxx"
 #include "AllocatorPtr.hxx"
 #include "stopwatch.hxx"
 #include "config.h"
@@ -213,7 +213,7 @@ BpInstance::HandleDisableUring(std::span<const std::byte> payload) noexcept
 	if (payload.empty()) {
 		DisableUringFor(Event::Duration::max());
 	} else if (payload.size() == 4) {
-		const uint_least32_t seconds = *reinterpret_cast<const PackedBE32 *>(payload.data());
+		const uint_least32_t seconds = ReadUnalignedBE32(payload.first<4>());
 		DisableUringFor(std::chrono::duration<uint_least32_t>{seconds});
 	}
 }
