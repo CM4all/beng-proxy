@@ -28,7 +28,7 @@
 static StockKey
 lhttp_stock_key(AllocatorPtr alloc, const LhttpAddress *address) noexcept
 {
-	return address->GetServerId(alloc);
+	return address->GetChildId(alloc);
 }
 
 /*

@@ -41,7 +41,7 @@ LhttpAddress::LhttpAddress(AllocatorPtr alloc,
 }
 
 StockKey
-LhttpAddress::GetServerId(AllocatorPtr alloc) const noexcept
+LhttpAddress::GetChildId(AllocatorPtr alloc) const noexcept
 {
 	PoolStringBuilder<256> b;
 	b.push_back(path);
@@ -61,7 +61,7 @@ LhttpAddress::GetServerId(AllocatorPtr alloc) const noexcept
 StringWithHash
 LhttpAddress::GetId(AllocatorPtr alloc) const noexcept
 {
-	StringWithHash id = GetServerId(alloc); // TODO eliminate copy
+	StringWithHash id = GetChildId(alloc); // TODO eliminate copy
 
 	if (host_and_port != nullptr)
 		id = resource_tag_concat(alloc, id, ";h="sv, StringWithHash{host_and_port});

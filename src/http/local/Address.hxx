@@ -85,12 +85,12 @@ struct LhttpAddress {
 	LhttpAddress &operator=(const LhttpAddress &) = delete;
 
 	/**
-	 * Generates a string identifying the server process.  This can be
-	 * used as a key in a hash table.  The string will be allocated by
-	 * the specified pool.
+	 * Generates a string identifying the child process.  This can
+	 * be used as a key in a hash table.  The string will be
+	 * allocated by the specified pool.
 	 */
 	[[gnu::pure]]
-	StringWithHash GetServerId(AllocatorPtr alloc) const noexcept;
+	StringWithHash GetChildId(AllocatorPtr alloc) const noexcept;
 
 	/**
 	 * Generates a string identifying the address.  This can be used as a
