@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include "event/Chrono.hxx"
 #include "util/BindMethod.hxx"
 
 #include <cstdint>
@@ -56,7 +57,8 @@ class TranslationCacheBuilder final : public TranslationServiceBuilder {
 	std::map<SocketAddress, std::shared_ptr<TranslationCache>,
 		 SocketAddressCompare> m;
 
-	using ExpireCallback = BoundMethod<void(const TranslateResponse &response) noexcept>;
+	using ExpireCallback = BoundMethod<void(const TranslateResponse &response,
+						Event::TimePoint time) noexcept>;
 
 public:
 	TranslationCacheBuilder(TranslationStockBuilder &_builder,

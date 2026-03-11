@@ -9,6 +9,7 @@
 #include "cache/Handler.hxx"
 #include "pool/Ptr.hxx"
 #include "stats/CacheStats.hxx"
+#include "event/Chrono.hxx"
 #include "memory/SlicePool.hxx"
 #include "util/BindMethod.hxx"
 #include "util/IntrusiveHashSet.hxx"
@@ -112,7 +113,13 @@ class TranslationCache final : public TranslationService, CacheHandler {
 	 */
 	bool active;
 
-	using ExpireCallback = BoundMethod<void(const TranslateResponse &response) noexcept>;
+	/**
+	 * @param time the time point when resources (e.g. child
+	 * processes) described by this #TranslateResponse shall
+	 * expire
+	 */
+	using ExpireCallback = BoundMethod<void(const TranslateResponse &response,
+						Event::TimePoint time) noexcept>;
 
 public:
 	/**

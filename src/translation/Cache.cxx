@@ -26,6 +26,7 @@
 #include "io/Logger.hxx"
 #include "util/djb_hash.hxx"
 #include "util/IntrusiveForwardList.hxx"
+#include "util/RoundPowerOfTwo.hxx"
 #include "util/SpanCast.hxx"
 #include "util/StringAPI.hxx"
 #include "util/StringSplit.hxx"
@@ -886,13 +887,60 @@ TranslationCache::Invalidate(const TranslateRequest &request,
 	LogConcat(4, "TranslationCache", "invalidated ", removed, " cache items");
 }
 
+/**
+ * Overload for RoundUpToPowerOfTwo() (from
+ * `util/RoundPowerOfTwo.hxx`) which takes/returns an Event::Duration.
+ */
+static constexpr Event::Duration
+RoundUpToPowerOfTwo(Event::Duration value) noexcept
+{
+	using rep = Event::Duration::rep;
+	using unsigned_rep = std::make_unsigned_t<rep>;
+
+	const auto scalar = RoundUpToPowerOfTwo(static_cast<unsigned_rep>(value.count()));
+	return Event::Duration{static_cast<rep>(scalar)};
+}
+
+/**
+ * Calculate an EXPIRE_TCACHE_TAG delay for the specified SITE string.
+ * All translation cache items and child processes for this site shall
+ * expire at the same time, but each site should get a different
+ * expiry.
+ */
+static constexpr Event::Duration
+CalculateExpireDelayForSite(const char *site) noexcept
+{
+	if (site == nullptr)
+		return {};
+
+	/**
+	 * An approximation for the maximum delay, the range over
+	 * which all sites are going to be distributed.
+	 */
+	static constexpr Event::Duration APPROXIMATE_MAX_DELAY = std::chrono::minutes{5};
+
+	/**
+	 * This is the real maximum delay, calculated as the next
+	 * power of two, which can then be used to derive a bit mask
+	 * to be applied to the site hash with bit-wise "and".
+	 */
+	static constexpr Event::Duration MAX_DELAY = RoundUpToPowerOfTwo(APPROXIMATE_MAX_DELAY);
+	static constexpr std::size_t MASK = MAX_DELAY.count() - 1;
+
+	const std::size_t hash = djb_hash_string(site);
+	return Event::Duration(hash & MASK);
+}
+
 void
 TranslationCache::ExpireTag(std::string_view tag, ExpireCallback callback) noexcept
 {
-	per_tag.remove_and_dispose_key(tag, [this, callback](TranslateCacheItemTag *item_tag){
-		auto &item = item_tag->parent;
-		callback(item.response);
-		cache.Remove(item);
+	const auto now = cache.SteadyNow();
+	per_tag.for_each_key(tag, [callback, now](TranslateCacheItemTag &item_tag){
+		auto &item = item_tag.parent;
+		const auto delay = CalculateExpireDelayForSite(item.response.site);
+		const auto expires = now + delay;
+		item.SetExpires(expires);
+		callback(item.response, expires);
 	});
 }
 

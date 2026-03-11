@@ -281,8 +281,10 @@ struct BpInstance final : PInstance, BengControl::Handler,
 	void HandleExpireTcacheTag(std::span<const std::byte> payload) noexcept;
 	void HandleDisableUring(std::span<const std::byte> payload) noexcept;
 
-	void OnExpireTcacheRA(const ResourceAddress &address) noexcept;
-	void OnExpireTcache(const TranslateResponse &response) noexcept;
+	void OnExpireTcacheRA(const ResourceAddress &address,
+			      Event::TimePoint time) noexcept;
+	void OnExpireTcache(const TranslateResponse &response,
+			    Event::TimePoint time) noexcept;
 
 	/* virtual methods from class BengControl::Handler */
 	void OnControlPacket(BengControl::Command command,

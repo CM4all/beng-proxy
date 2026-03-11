@@ -25,6 +25,7 @@
 #include "pool/pool.hxx"
 #include "net/SocketAddress.hxx"
 #include "io/Logger.hxx"
+#include "util/djb_hash.hxx"
 #include "util/SpanCast.hxx"
 #include "util/UnalignedBigEndian.hxx"
 #include "AllocatorPtr.hxx"
@@ -68,7 +69,8 @@ BpInstance::HandleTcacheInvalidate(std::span<const std::byte> payload) noexcept
 }
 
 inline void
-BpInstance::OnExpireTcacheRA(const ResourceAddress &address) noexcept
+BpInstance::OnExpireTcacheRA(const ResourceAddress &address,
+			     Event::TimePoint time) noexcept
 {
 	switch (address.type) {
 	case ResourceAddress::Type::NONE:
@@ -85,8 +87,7 @@ BpInstance::OnExpireTcacheRA(const ResourceAddress &address) noexcept
 			const TempPoolLease tpool;
 			const auto key = lhttp.GetChildId(*tpool);
 
-			// TODO implement randomized delay
-			lhttp_stock->FadeKey(key);
+			lhttp_stock->ExpireKey(key, time);
 		}
 
 		break;
@@ -97,8 +98,7 @@ BpInstance::OnExpireTcacheRA(const ResourceAddress &address) noexcept
 				const TempPoolLease tpool;
 				const auto key = cgi.GetChildId(*tpool);
 
-				// TODO implement randomized delay
-				fcgi_stock->FadeKey(key);
+				fcgi_stock->ExpireKey(key, time);
 			}
 		}
 
@@ -111,16 +111,14 @@ BpInstance::OnExpireTcacheRA(const ResourceAddress &address) noexcept
 				const TempPoolLease tpool;
 				const auto key = cgi.GetChildId(*tpool);
 
-				// TODO implement randomized delay
-				was_stock->FadeKey(key);
+				was_stock->ExpireKey(key, time);
 			}
 		} else if (cgi.address_list.empty()) {
 			if (multi_was_stock) {
 				const TempPoolLease tpool;
 				const auto key = cgi.GetChildId(*tpool);
 
-				// TODO implement randomized delay
-				multi_was_stock->FadeKey(key);
+				multi_was_stock->ExpireKey(key, time);
 			}
 		}
 #endif // HAVE_LIBWAS
@@ -129,12 +127,12 @@ BpInstance::OnExpireTcacheRA(const ResourceAddress &address) noexcept
 }
 
 inline void
-BpInstance::OnExpireTcache(const TranslateResponse &response) noexcept
+BpInstance::OnExpireTcache(const TranslateResponse &response, Event::TimePoint time) noexcept
 {
-	OnExpireTcacheRA(response.address);
+	OnExpireTcacheRA(response.address, time);
 
 	for (const auto &view : response.views) {
-		OnExpireTcacheRA(view.address);
+		OnExpireTcacheRA(view.address, time);
 
 		for (const auto &transformation : view.transformations) {
 			switch (transformation.type) {
@@ -144,7 +142,7 @@ BpInstance::OnExpireTcache(const TranslateResponse &response) noexcept
 				break;
 
 			case Transformation::Type::FILTER:
-				OnExpireTcacheRA(transformation.u.filter.address);
+				OnExpireTcacheRA(transformation.u.filter.address, time);
 				break;
 			}
 		}
