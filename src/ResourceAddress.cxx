@@ -242,6 +242,10 @@ ResourceAddress::PostCacheStore(AllocatorPtr alloc) noexcept
 	case Type::PIPE:
 		break;
 
+	case Type::LHTTP:
+		GetLhttp().PostCacheStore(alloc);
+		break;
+
 	case Type::CGI:
 	case Type::FASTCGI:
 	case Type::WAS:
@@ -250,7 +254,6 @@ ResourceAddress::PostCacheStore(AllocatorPtr alloc) noexcept
 
 	case Type::LOCAL:
 	case Type::HTTP:
-	case Type::LHTTP:
 		break;
 	}
 }

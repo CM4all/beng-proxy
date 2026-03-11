@@ -33,6 +33,7 @@ LhttpAddress::LhttpAddress(AllocatorPtr alloc,
 	 options(alloc, src.options),
 	 host_and_port(alloc.CheckDup(src.host_and_port)),
 	 uri(alloc.Dup(src.uri)),
+	 cached_child_id(alloc.Dup(src.cached_child_id)),
 	 parallelism(src.parallelism),
 	 concurrency(src.concurrency),
 	 blocking(src.blocking),
@@ -40,9 +41,22 @@ LhttpAddress::LhttpAddress(AllocatorPtr alloc,
 {
 }
 
+void
+LhttpAddress::PostCacheStore(AllocatorPtr alloc) noexcept
+{
+	/* cache the GetChildId() call only if we expect future calls
+           to have the same result, i.e. none of the relevant fields
+           are "expandable" */
+	if (!IsChildExpandable())
+		cached_child_id = GetChildId(alloc);
+}
+
 StockKey
 LhttpAddress::GetChildId(AllocatorPtr alloc) const noexcept
 {
+	if (!cached_child_id.IsNull())
+		return cached_child_id;
+
 	PoolStringBuilder<256> b;
 	b.push_back(path);
 

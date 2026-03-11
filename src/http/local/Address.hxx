@@ -6,6 +6,7 @@
 
 #include "spawn/ChildOptions.hxx"
 #include "adata/ExpandableStringList.hxx"
+#include "util/StringWithHash.hxx"
 #include "util/TagStructs.hxx"
 
 #include <string_view>
@@ -30,6 +31,8 @@ struct LhttpAddress {
 	const char *host_and_port;
 
 	const char *uri;
+
+	StringWithHash cached_child_id{nullptr};
 
 	/**
 	 * The maximum number of parallel child processes of this
@@ -63,6 +66,7 @@ struct LhttpAddress {
 		 options(shallow_copy, src.options),
 		 host_and_port(src.host_and_port),
 		 uri(src.uri),
+		 cached_child_id(src.cached_child_id),
 		 parallelism(src.parallelism),
 		 concurrency(src.concurrency),
 		 blocking(src.blocking),
@@ -83,6 +87,8 @@ struct LhttpAddress {
 	LhttpAddress(AllocatorPtr alloc, const LhttpAddress &src) noexcept;
 
 	LhttpAddress &operator=(const LhttpAddress &) = delete;
+
+	void PostCacheStore(AllocatorPtr alloc) noexcept;
 
 	/**
 	 * Generates a string identifying the child process.  This can
@@ -161,14 +167,18 @@ struct LhttpAddress {
 					   const LhttpAddress &apply_base,
 					   std::string_view relative) const;
 
+	[[gnu::pure]]
+	bool IsChildExpandable() const noexcept {
+		return options.IsExpandable() ||
+			args.IsExpandable();
+	}
+
 	/**
 	 * Does this address need to be expanded with lhttp_address_expand()?
 	 */
 	[[gnu::pure]]
 	bool IsExpandable() const noexcept {
-		return options.IsExpandable() ||
-			expand_uri ||
-			args.IsExpandable();
+		return expand_uri || IsChildExpandable();
 	}
 
 	void Expand(AllocatorPtr alloc, const MatchData &match_data) noexcept;
