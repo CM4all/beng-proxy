@@ -40,7 +40,8 @@ StockOptions
 LhttpStock::GetOptions(const void *request,
 		      StockOptions o) const noexcept
 {
-	const auto &address = *(const LhttpAddress *)request;
+	const auto &address = *reinterpret_cast<const LhttpAddress *>(request);
+
 	if (address.parallelism > 0)
 		o.limit = address.parallelism;
 
@@ -72,14 +73,14 @@ LhttpStock::PreserveRequest(StockRequest request) noexcept
 bool
 LhttpStock::WantStderrPond(const void *info) const noexcept
 {
-	const auto &address = *(const LhttpAddress *)info;
+	const auto &address = *reinterpret_cast<const LhttpAddress *>(info);
 	return address.options.stderr_pond;
 }
 
 int
 LhttpStock::GetChildSocketType(const void *info) const noexcept
 {
-	const auto &address = *(const LhttpAddress *)info;
+	const auto &address = *reinterpret_cast<const LhttpAddress *>(info);
 
 	int type = SOCK_STREAM;
 	if (!address.blocking)
@@ -91,7 +92,7 @@ LhttpStock::GetChildSocketType(const void *info) const noexcept
 unsigned
 LhttpStock::GetChildBacklog(const void *info) const noexcept
 {
-	const auto &address = *(const LhttpAddress *)info;
+	const auto &address = *reinterpret_cast<const LhttpAddress *>(info);
 
 	/* use the concurrency for the listener backlog to ensure that
 	   we'll never get ECONNREFUSED/EAGAIN while the child process
@@ -104,7 +105,7 @@ LhttpStock::GetChildBacklog(const void *info) const noexcept
 std::string_view
 LhttpStock::GetChildTag(const void *info) const noexcept
 {
-	const auto &address = *(const LhttpAddress *)info;
+	const auto &address = *reinterpret_cast<const LhttpAddress *>(info);
 
 	return address.options.tag;
 }
@@ -113,7 +114,7 @@ void
 LhttpStock::PrepareChild(const void *info, PreparedChildProcess &p,
 			 FdHolder &close_fds)
 {
-	const auto &address = *(const LhttpAddress *)info;
+	const auto &address = *reinterpret_cast<const LhttpAddress *>(info);
 
 	address.CopyTo(p, close_fds);
 }
