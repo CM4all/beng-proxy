@@ -44,7 +44,7 @@ public:
 				 _metrics_handler, _handler),
 		 stock(_stock),
 		 address(_address),
-		 action(address.action != nullptr ? address.action : address.path),
+		 action(address.GetAction()),
 		 args(address.args.ToArray(pool)) {}
 
 	void Start(CancellablePointer &caller_cancel_ptr) noexcept {

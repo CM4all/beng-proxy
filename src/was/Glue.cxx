@@ -39,7 +39,7 @@ public:
 				 _metrics_handler, _handler),
 		 was_stock(_was_stock),
 		 address(_address),
-		 action(address.action != nullptr ? address.action : address.path),
+		 action(address.GetAction()),
 		 args(address.args.ToArray(pool)) {}
 
 	using WasStockRequest::WasStockRequest;

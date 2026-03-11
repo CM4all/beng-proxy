@@ -266,12 +266,8 @@ fcgi_request(struct pool *pool,
 	     HttpResponseHandler &handler,
 	     CancellablePointer &cancel_ptr) noexcept
 {
-	const char *action = address.action;
-	if (action == nullptr)
-		action = address.path;
-
 	auto *request = NewFromPool<FcgiRequest>(*pool, *pool, *fcgi_stock, parent_stopwatch,
-						 site_name, address, action, method,
+						 site_name, address, address.GetAction(), method,
 						 remote_addr,
 						 std::move(headers), std::move(body),
 						 std::move(stderr_fd),

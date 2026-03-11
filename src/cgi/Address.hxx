@@ -133,6 +133,12 @@ struct CgiAddress {
 		return path_info;
 	}
 
+	const char *GetAction() const noexcept {
+		return action != nullptr
+			? action
+			: path;
+	}
+
 	/**
 	 * Generates a string identifying the child process.  This can
 	 * be used as a key in a hash table.  The string will be
