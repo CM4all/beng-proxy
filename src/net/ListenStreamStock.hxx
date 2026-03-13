@@ -68,6 +68,14 @@ public:
 	void FadeTag(std::string_view tag) noexcept;
 
 	/**
+	 * Discard all sockets that are no longer used (referenced via
+	 * #SharedLease) by anybody.
+	 *
+	 * @return the number of items that have been discarded
+	 */
+	std::size_t DiscardUnused() noexcept;
+
+	/**
 	 * Create a temporary directory containing a listener socket.
 	 *
 	 * Throws on error.

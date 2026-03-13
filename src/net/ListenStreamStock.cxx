@@ -293,6 +293,14 @@ ListenStreamStock::FadeTag(std::string_view tag) noexcept
 	});
 }
 
+std::size_t
+ListenStreamStock::DiscardUnused() noexcept
+{
+	return items.remove_and_dispose_if([](const auto &item){
+		return item.IsAbandoned();
+	}, DeleteDisposer{});
+}
+
 std::pair<const char *, SharedLease>
 ListenStreamStock::Get(std::string_view key)
 {

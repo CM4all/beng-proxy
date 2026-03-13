@@ -319,6 +319,12 @@ BpInstance::HandleMemoryWarning() noexcept
 		n += multi_was_stock->DiscardSome();
 #endif
 
+	if (listen_stream_stock)
+		/* stop the MOUNT_LISTEN_STREAM processes that are no
+		   longer referenced (because the LHTTP processes
+		   using them were just discarded) */
+		n += listen_stream_stock->DiscardUnused();
+
 	if (n > 0)
 		fmt::print(stderr, "Discarded {} child processes\n", n);
 }

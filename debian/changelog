@@ -1,6 +1,6 @@
 cm4all-beng-proxy (21.18) unstable; urgency=low
 
-  * 
+  * bp: discard MOUNT_LISTEN_STREAM processes under memory pressure
 
  --   
 
