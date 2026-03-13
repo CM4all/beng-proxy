@@ -170,6 +170,10 @@ private:
 		idle_timer.Schedule(std::chrono::minutes{5});
 	}
 
+	void OnBroken() noexcept override {
+		Fade();
+	}
+
 	// virtual methods from class ListenStreamReadyHandler
 	void OnListenStreamSuccess(DisposablePointer server,
 				   std::string_view tags) noexcept override;
