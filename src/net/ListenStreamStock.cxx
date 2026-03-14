@@ -167,7 +167,7 @@ private:
 		}
 
 		/* keep the process around for some time */
-		idle_timer.Schedule(std::chrono::minutes{5});
+		idle_timer.Schedule(std::chrono::minutes{2});
 	}
 
 	void OnBroken() noexcept override {
