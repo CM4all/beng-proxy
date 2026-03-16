@@ -1198,7 +1198,7 @@ HttpClient::OnBufferedData()
 		/* this empty check is needed just in case
 		   InvokeReady() has drained it */
 		if (const auto r = socket.ReadBuffer(); !r.empty()) [[likely]]
-			return FeedBody(socket.ReadBuffer());
+			return FeedBody(r);
 
 		return BufferedResult::OK;
 
