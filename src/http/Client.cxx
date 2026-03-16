@@ -192,8 +192,7 @@ class HttpClient final : BufferedSocketHandler, IstreamSink, Cancellable, Destru
 		DechunkInputAction OnDechunkEnd() noexcept final {
 			GetClient().SocketDone();
 			GetClient().stopwatch.RecordEvent("end");
-			GetClient().Destroy();
-			return DechunkInputAction::DESTROYED;
+			return DechunkInputAction::CLOSE;
 		}
 	};
 
