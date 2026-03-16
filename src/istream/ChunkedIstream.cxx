@@ -20,6 +20,8 @@
 using std::string_view_literals::operator""sv;
 
 class ChunkedIstream final : public FacadeIstream, DestructAnchor {
+	static constexpr std::size_t MAX_CHUNK_SIZE = 0x8000;
+
 	static constexpr std::size_t CHUNK_START_SIZE = 6;
 	static constexpr std::string_view CHUNK_END = "\r\n"sv;
 	static constexpr std::string_view EOF_CHUNK = "0\r\n\r\n"sv;
@@ -175,9 +177,9 @@ ChunkedIstream::StartChunk(size_t length) noexcept
 	assert(buffer.empty());
 	assert(missing_from_current_chunk == 0);
 
-	if (length > 0x8000)
+	if (length > MAX_CHUNK_SIZE)
 		/* maximum chunk size is 32kB for now */
-		length = 0x8000;
+		length = MAX_CHUNK_SIZE;
 
 	missing_from_current_chunk = length;
 
