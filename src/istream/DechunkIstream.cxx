@@ -33,6 +33,7 @@ public:
 			const auto b = i->GetBuffer().subspan(position);
 			assert(!b.empty());
 			if (b.size() <= size) {
+				size -= b.size();
 				result += b.size();
 				++i;
 				position = 0;
