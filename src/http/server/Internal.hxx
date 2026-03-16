@@ -398,6 +398,7 @@ struct HttpServerConnection final
 	/**
 	 * @return false if the connection has been closed
 	 */
+	[[nodiscard]]
 	bool HeadersFinished() noexcept;
 
 	/**

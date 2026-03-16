@@ -327,7 +327,8 @@ HttpServerConnection::FeedHeaders(const std::string_view b) noexcept
 
 		request.SetError(HttpStatus::REQUEST_HEADER_FIELDS_TOO_LARGE,
 				 "Too many request headers\n");
-		HeadersFinished();
+		if (!HeadersFinished())
+			return BufferedResult::DESTROYED;
 
 		/* reset the keep_alive flag after it was set by
 		   HeadersFinished(); we need to disable keep-alive
