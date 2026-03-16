@@ -29,11 +29,6 @@ public:
 		 * Close the #DechunkIstream.
 		 */
 		CLOSE,
-
-		/**
-		 * The method has destroyed the #DechunkIstream.
-		 */
-		DESTROYED,
 	};
 
 	/**

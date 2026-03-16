@@ -249,10 +249,6 @@ DechunkIstream::InvokeDechunkEnd() noexcept
 		ClearInput();
 		break;
 
-	case DechunkHandler::DechunkInputAction::DESTROYED:
-		ClearInput();
-		break;
-
 	case DechunkHandler::DechunkInputAction::CLOSE:
 		CloseInput();
 		break;
@@ -405,7 +401,6 @@ DechunkIstream::OnData(std::span<const std::byte> src) noexcept
 			   instead of 0 */
 			break;
 
-		case DechunkHandler::DechunkInputAction::DESTROYED:
 		case DechunkHandler::DechunkInputAction::CLOSE:
 			return 0;
 		}

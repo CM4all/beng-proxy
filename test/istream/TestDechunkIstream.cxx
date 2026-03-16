@@ -41,9 +41,6 @@ struct MyDechunkHandler final : DechunkHandler {
 		assert(state == State::END_SEEN);
 		state = State::END;
 
-		if (action == DechunkInputAction::DESTROYED)
-			input->Close();
-
 		return action;
 	}
 };
@@ -146,7 +143,6 @@ TestAction(EventLoop &event_loop, struct pool &pool,
 	MyDechunkHandler dechunk_handler{action};
 
 	switch (action) {
-	case DechunkHandler::DechunkInputAction::DESTROYED:
 	case DechunkHandler::DechunkInputAction::ABANDON:
 		/* this kludge extracts a pointer to the input */
 		dechunk_handler.input = input.Steal();
@@ -235,22 +231,4 @@ TEST(DechunkIstream, CloseActionBuckets)
 TEST(DechunkIstream, CloseActionBuckets2)
 {
 	TestAction(DechunkHandler::DechunkInputAction::CLOSE, true, true);
-}
-
-/**
- * Test DechunkInputAction::DESTROYED.
- */
-TEST(DechunkIstream, DestroyedAction)
-{
-	TestAction(DechunkHandler::DechunkInputAction::DESTROYED, false);
-}
-
-TEST(DechunkIstream, DestroyedActionBuckets)
-{
-	TestAction(DechunkHandler::DechunkInputAction::DESTROYED, true);
-}
-
-TEST(DechunkIstream, DestroyedActionBuckets2)
-{
-	TestAction(DechunkHandler::DechunkInputAction::DESTROYED, true, true);
 }
