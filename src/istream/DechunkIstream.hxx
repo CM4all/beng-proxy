@@ -45,11 +45,6 @@ public:
 
 /**
  * This istream filter removes HTTP chunking.
- *
- * @param eof_callback a callback function which is called when the
- * last chunk is being consumed; note that this occurs inside the
- * data() callback, so the istream doesn't know yet how much is
- * consumed
  */
 UnusedIstreamPtr
 istream_dechunk_new(struct pool &pool, UnusedIstreamPtr input,
