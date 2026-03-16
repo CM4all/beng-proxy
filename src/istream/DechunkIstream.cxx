@@ -158,6 +158,7 @@ private:
 			chunks.emplace_back().data = size;
 			return true;
 		} else
+			// TODO this is a dead code path - verify this method!
 			return false;
 	}
 
