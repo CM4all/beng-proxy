@@ -302,9 +302,13 @@ HttpServerConnection::HandleLine(std::string_view line) noexcept
 			return true;
 		}
 
-		header_parse_line(*request.request->pool,
-				  request.request->headers,
-				  line);
+		if (!header_parse_line(*request.request->pool,
+				       request.request->headers,
+				       line)) {
+			ProtocolError("malformed HTTP header line");
+			return false;
+		}
+
 		return true;
 	} else {
 		assert(request.read_state == Request::HEADERS);
