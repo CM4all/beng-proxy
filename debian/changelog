@@ -4,6 +4,7 @@ cm4all-beng-proxy (21.18) unstable; urgency=low
   * bp: reduce MOUNT_LISTEN_STREAM idle timeout to 2 minutes
   * http_client: fix use-after-free bug
   * http_server: fix use-after-free bug
+  * http_server: do not log LENGTH attribute for response without body
   * istream/dechunk: fix integer overflow
 
  --   

@@ -211,10 +211,6 @@ HttpServerConnection::SubmitResponse(HttpStatus status,
 	GrowingBuffer headers3 = headers.ToBuffer();
 	headers3.Write("\r\n"sv);
 
-	/* make sure the access logger gets a negative value if there
-	   is no response body */
-	response.length -= !body;
-
 #ifdef HAVE_URING
 	if (auto *uring_queue = socket->GetUringQueue()) {
 		assert(uring_send == nullptr);
@@ -231,6 +227,10 @@ HttpServerConnection::SubmitResponse(HttpStatus status,
 	const auto header_length = header_stream.GetLength();
 	assert(header_length.exhaustive);
 	response.length = -header_length.length;
+
+	/* make sure the access logger gets a negative value if there
+	   is no response body */
+	response.length -= !body;
 
 	SetResponseIstream(NewConcatIstream(request_pool, std::move(header_stream),
 					    std::move(body)));
