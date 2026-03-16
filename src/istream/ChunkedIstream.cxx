@@ -310,7 +310,7 @@ ChunkedIstream::OnError(std::exception_ptr &&ep) noexcept
  */
 
 IstreamLength
-ChunkedIstream:: _GetLength() noexcept
+ChunkedIstream::_GetLength() noexcept
 {
 	IstreamLength result{
 		.length = buffer.Read().size(),
