@@ -238,7 +238,7 @@ HttpServerConnection::HeadersFinished() noexcept
 		} else {
 			char *endptr;
 
-			content_length = strtoul(content_length_string, &endptr, 10);
+			content_length = (off_t)strtoull(content_length_string, &endptr, 10);
 			if (*endptr != 0 || content_length < 0) [[unlikely]] {
 				ProtocolError("invalid Content-Length header in HTTP request");
 				return false;
