@@ -215,8 +215,13 @@ HttpServerConnection::SubmitResponse(HttpStatus status,
 	if (auto *uring_queue = socket->GetUringQueue()) {
 		assert(uring_send == nullptr);
 
-		if (body)
+		if (body) {
+			response.length = 0;
 			SetResponseIstream(std::move(body));
+		} else
+			/* negative value means the access logger
+			   suppresses the LENGTH attribute */
+			response.length = -1;
 
 		StartUringSend(*uring_queue, std::move(headers3));
 		return;
