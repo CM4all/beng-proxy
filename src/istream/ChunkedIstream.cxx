@@ -8,6 +8,7 @@
 #include "New.hxx"
 #include "UnusedPtr.hxx"
 #include "util/DestructObserver.hxx"
+#include "util/DivideRoundUp.hxx"
 #include "util/HexFormat.hxx"
 #include "util/SpanCast.hxx"
 
@@ -328,9 +329,12 @@ ChunkedIstream::_GetLength() noexcept
 		const auto from_input = input.GetLength();
 		result += from_input;
 
-		if (std::cmp_greater(from_input.length, missing_from_current_chunk))
-			/* new chunk header and end */
-			result.length += CHUNK_START_SIZE + CHUNK_END.size();
+		if (std::cmp_greater(from_input.length, missing_from_current_chunk)) {
+			/* new chunk header(s) and end(s) */
+			const auto remaining = from_input.length - missing_from_current_chunk;
+			const auto num_chunks = DivideRoundUp(remaining, MAX_CHUNK_SIZE);
+			result.length += num_chunks * (CHUNK_START_SIZE + CHUNK_END.size());
+		}
 
 		result.length += EOF_CHUNK.size();
 	}
