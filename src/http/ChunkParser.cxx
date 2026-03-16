@@ -42,6 +42,12 @@ HttpChunkParser::Parse(std::span<const std::byte> _input)
 				remaining_chunk = 0;
 			}
 
+			if (remaining_chunk >= 0x1000000)
+				/* put an upper bound on the chunk
+				   size to avoid integer overflow
+				   bugs */
+				throw std::runtime_error{"chunk too large"};
+
 			++p;
 			remaining_chunk = remaining_chunk * 0x10 + digit;
 			break;
