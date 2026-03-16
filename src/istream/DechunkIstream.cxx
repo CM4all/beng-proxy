@@ -314,6 +314,8 @@ DechunkIstream::ParseInput(std::span<const std::byte> src)
 size_t
 DechunkIstream::OnData(std::span<const std::byte> src) noexcept
 {
+	had_input = true;
+
 	const DestructObserver destructed{*this};
 
 	const auto begin = src.begin();
@@ -368,6 +370,7 @@ DechunkIstream::OnData(std::span<const std::byte> src) noexcept
 
 			const std::size_t data_size = std::min(src.size(), chunk.data);
 			if (data_size > 0) {
+				had_output = true;
 				std::size_t n = InvokeData(src.first(data_size));
 				if (n == 0 && destructed)
 					return 0;
