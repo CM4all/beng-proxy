@@ -21,8 +21,9 @@ using std::string_view_literals::operator""sv;
 
 class ChunkedIstream final : public FacadeIstream, DestructAnchor {
 	static constexpr std::size_t CHUNK_START_SIZE = 6;
-	static constexpr std::size_t CHUNK_END_SIZE = 2;
-	static constexpr std::size_t EOF_SIZE = 5;
+	static constexpr std::string_view CHUNK_END = "\r\n"sv;
+	static constexpr std::string_view EOF_CHUNK = "0\r\n\r\n"sv;
+	static constexpr std::string_view END_AND_EOF_CHUNK = "\r\n0\r\n\r\n"sv;
 
 	template<std::size_t SIZE>
 	class Buffer {
@@ -254,7 +255,7 @@ ChunkedIstream::Feed(const std::span<const std::byte> src) noexcept
 		missing_from_current_chunk -= nbytes;
 		if (missing_from_current_chunk == 0) {
 			/* a chunk ends with "\r\n" */
-			buffer.Set("\r\n"sv);
+			buffer.Set(CHUNK_END);
 		}
 	} while ((!buffer.empty() || total < src.size()) && nbytes == rest);
 
@@ -287,7 +288,7 @@ ChunkedIstream::OnEof() noexcept
 
 	/* write EOF chunk (length 0) */
 
-	buffer.Append("0\r\n\r\n"sv);
+	buffer.Append(EOF_CHUNK);
 
 	/* flush the buffer */
 
@@ -319,7 +320,7 @@ ChunkedIstream::_GetLength() noexcept
 
 	if (missing_from_current_chunk > 0)
 		/* end of the current chunk */
-		result.length += CHUNK_END_SIZE;
+		result.length += CHUNK_END.size();
 
 	if (input.IsDefined()) {
 		const auto from_input = input.GetLength();
@@ -327,10 +328,9 @@ ChunkedIstream::_GetLength() noexcept
 
 		if (std::cmp_greater(from_input.length, missing_from_current_chunk))
 			/* new chunk header and end */
-			result.length += CHUNK_START_SIZE + CHUNK_END_SIZE;
+			result.length += CHUNK_START_SIZE + CHUNK_END.size();
 
-		/* EOF chunk */
-		result.length += EOF_SIZE;
+		result.length += EOF_CHUNK.size();
 	}
 
 	return result;
@@ -376,7 +376,7 @@ ChunkedIstream::_FillBucketList(IstreamBucketList &list)
 		CloseInput();
 
 		/* write EOF chunk (length 0) */
-		buffer.Append("0\r\n\r\n"sv);
+		buffer.Append(EOF_CHUNK);
 	}
 
 	auto b = buffer.Read();
@@ -416,7 +416,7 @@ ChunkedIstream::_FillBucketList(IstreamBucketList &list)
 			/* the rest of the chunk has been added to the
 			   list: push the end-of-chunk marker (and
 			   maybe the end-of-stream marker) */
-			list.Push(AsBytes(list.HasMore() ? "\r\n"sv : "\r\n0\r\n\r\n"sv));
+			list.Push(AsBytes(list.HasMore() ? CHUNK_END : END_AND_EOF_CHUNK));
 		}
 	} else if (sub.HasMore()) {
 		list.CopyMoreFlagsFrom(sub);
@@ -453,9 +453,9 @@ ChunkedIstream::_ConsumeBucketList(size_t nbytes) noexcept
 		if (missing_from_current_chunk == 0) {
 			if (HasInput()) {
 				/* a chunk ends with "\r\n" */
-				buffer.Set("\r\n"sv);
+				buffer.Set(CHUNK_END);
 			} else {
-				buffer.Set("\r\n0\r\n\r\n"sv);
+				buffer.Set(END_AND_EOF_CHUNK);
 			}
 
 			size = ConsumeBuffer(nbytes);
