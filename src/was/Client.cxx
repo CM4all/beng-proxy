@@ -542,11 +542,10 @@ static bool
 HandleMetric(WasMetricsHandler &handler,
 	     std::span<const std::byte> payload)
 {
-	const float &value = *(const float *)(const void *)payload.data();
-
-	if (payload.size() <= sizeof(value))
+	if (payload.size() <= sizeof(float))
 		return false;
 
+	const auto value = LoadUnaligned<float>(payload.data());
 	if (!std::isfinite(value))
 		return false;
 
