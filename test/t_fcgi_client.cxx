@@ -255,7 +255,7 @@ public:
 		     [[maybe_unused]] bool expect_100,
 		     HttpResponseHandler &handler,
 		     CancellablePointer &cancel_ptr) noexcept override {
-		fcgi_client_request(&pool, nullptr,
+		fcgi_client_request(pool, nullptr,
 				    socket, lease,
 				    method, uri, uri, nullptr, nullptr, nullptr,
 				    nullptr, "192.168.1.100",

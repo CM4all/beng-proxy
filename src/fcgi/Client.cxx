@@ -1315,7 +1315,7 @@ FcgiClient::FcgiClient(struct pool &_pool,
 }
 
 void
-fcgi_client_request(struct pool *pool,
+fcgi_client_request(struct pool &pool,
 		    StopwatchPtr stopwatch,
 		    BufferedSocket &socket, Lease &lease,
 		    HttpMethod method, const char *uri,
@@ -1407,9 +1407,9 @@ fcgi_client_request(struct pool *pool,
 
 	if (body)
 		/* format the request body */
-		request = NewConcatIstream(*pool,
-					   istream_gb_new(*pool, std::move(buffer)),
-					   istream_fcgi_new(*pool, std::move(body),
+		request = NewConcatIstream(pool,
+					   istream_gb_new(pool, std::move(buffer)),
+					   istream_fcgi_new(pool, std::move(body),
 							    header.request_id));
 	else {
 		/* no request body - append an empty STDIN packet */
@@ -1417,10 +1417,10 @@ fcgi_client_request(struct pool *pool,
 		header.content_length = 0;
 		buffer.WriteT(header);
 
-		request = istream_gb_new(*pool, std::move(buffer));
+		request = istream_gb_new(pool, std::move(buffer));
 	}
 
-	auto client = NewFromPool<FcgiClient>(*pool, *pool,
+	auto client = NewFromPool<FcgiClient>(pool, pool,
 					      std::move(stopwatch),
 					      socket, lease,
 					      std::move(stderr_fd),

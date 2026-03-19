@@ -50,7 +50,7 @@ IsFcgiClientRetryFailure(const std::exception_ptr &error) noexcept;
  * @param async_ref a handle which may be used to abort the operation
  */
 void
-fcgi_client_request(struct pool *pool,
+fcgi_client_request(struct pool &pool,
 		    StopwatchPtr stopwatch,
 		    BufferedSocket &socket, Lease &lease,
 		    HttpMethod method, const char *uri,

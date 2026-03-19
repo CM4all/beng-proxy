@@ -127,7 +127,7 @@ FcgiRemoteRequest::OnStockItemReady(StockItem &item) noexcept
 	stock_item = &item;
 	cancel_ptr = {};
 
-	fcgi_client_request(&pool, std::move(stopwatch),
+	fcgi_client_request(pool, std::move(stopwatch),
 			    tcp_stock_item_get(item),
 			    *this,
 			    pending_request.method, pending_request.uri,
