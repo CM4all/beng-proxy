@@ -243,7 +243,7 @@ WasServer::OnWasControlPacket(enum was_command cmd,
 			return false;
 		}
 
-		method = static_cast<HttpMethod>(*(const uint32_t *)(const void *)payload.data());
+		method = static_cast<HttpMethod>(LoadUnaligned<uint32_t>(payload.data()));
 		if (request.method != HttpMethod::GET &&
 		    method != request.method) {
 			/* sending that packet twice is illegal */
