@@ -25,7 +25,7 @@ MakeCommonName(const char *common_name)
 static void
 CopyCommonName(X509_REQ &req, X509 &src)
 {
-	X509_NAME *src_subject = X509_get_subject_name(&src);
+	const X509_NAME *src_subject = X509_get_subject_name(&src);
 	if (src_subject == nullptr)
 		return;
 
@@ -33,9 +33,14 @@ CopyCommonName(X509_REQ &req, X509 &src)
 	if (i < 0)
 		return;
 
-	auto *common_name = X509_NAME_get_entry(src_subject, i);
-	auto *dest_subject = X509_REQ_get_subject_name(&req);
-	X509_NAME_add_entry(dest_subject, common_name, -1, 0);
+	const auto *common_name = X509_NAME_get_entry(src_subject, i);
+
+	UniqueX509_NAME dest_subject{X509_NAME_new()};
+	if (dest_subject == nullptr)
+		throw "X509_NAME_new() failed";
+
+	X509_NAME_add_entry(dest_subject.get(), common_name, -1, 0);
+	X509_REQ_set_subject_name(&req, dest_subject.get());
 }
 
 /**

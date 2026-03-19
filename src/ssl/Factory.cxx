@@ -31,7 +31,7 @@ GetCertificateNames(X509 &cert) noexcept
 {
 	std::forward_list<Name> names;
 
-	if (X509_NAME *subject = X509_get_subject_name(&cert);
+	if (const X509_NAME *subject = X509_get_subject_name(&cert);
 	    subject != nullptr) {
 		if (auto common_name = NidToString(*subject, NID_commonName);
 		    common_name != nullptr)

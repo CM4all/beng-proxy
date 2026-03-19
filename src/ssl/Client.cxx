@@ -91,7 +91,7 @@ SslClientCerts::SslClientCerts(const std::vector<NamedSslCertKeyConfig> &config)
 							      i.name);
 			}
 
-			X509_NAME *issuer = X509_get_issuer_name(ck.cert.get());
+			const X509_NAME *issuer = X509_get_issuer_name(ck.cert.get());
 			if (issuer != nullptr) {
 				UniqueX509_NAME issuer2(X509_NAME_dup(issuer));
 				if (issuer2)
