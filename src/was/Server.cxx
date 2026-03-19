@@ -365,7 +365,7 @@ WasServer::OnWasControlPacket(enum was_command cmd,
 
 	case WAS_COMMAND_PREMATURE:
 		if (payload.size() != sizeof(uint64_t)) {
-			AbortError(std::make_exception_ptr("malformed PREMATURE packet"));
+			AbortProtocolError("malformed PREMATURE packet");
 			return false;
 		}
 
