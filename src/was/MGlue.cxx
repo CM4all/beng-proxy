@@ -22,7 +22,6 @@ class MultiWasRequest final : WasStockRequest
 {
 	MultiWasStock &stock;
 	const CgiAddress &address;
-	const std::span<const char *const> args;
 
 public:
 	MultiWasRequest(struct pool &_pool, MultiWasStock &_stock,
@@ -43,8 +42,7 @@ public:
 				 _address.params.ToArray(_pool),
 				 _metrics_handler, _handler),
 		 stock(_stock),
-		 address(_address),
-		 args(address.args.ToArray(pool)) {}
+		 address(_address) {}
 
 	void Start(CancellablePointer &caller_cancel_ptr) noexcept {
 		caller_cancel_ptr = *this;
