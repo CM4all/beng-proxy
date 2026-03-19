@@ -25,6 +25,11 @@ enum class FcgiRecordType : uint8_t {
 	UNKNOWN_TYPE = 11,
 };
 
+/**
+ * Special request_id value for management records.
+ */
+static constexpr uint16_t FCGI_NULL_REQUEST_ID = 0;
+
 struct FcgiRecordHeader {
 	uint8_t version;
 	FcgiRecordType type;

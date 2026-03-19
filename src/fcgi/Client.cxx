@@ -1330,8 +1330,11 @@ fcgi_client_request(struct pool *pool,
 		    HttpResponseHandler &handler,
 		    CancellablePointer &cancel_ptr) noexcept
 {
-	static unsigned next_request_id = 1;
+	static uint16_t next_request_id = 1;
 	++next_request_id;
+	if (next_request_id == FCGI_NULL_REQUEST_ID)
+		/* this request id is reserved, skip it */
+		++next_request_id;
 
 	FcgiRecordHeader header{
 		.version = FCGI_VERSION_1,
