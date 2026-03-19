@@ -451,7 +451,8 @@ WasServer::SendResponse(HttpStatus status,
 		body.Clear();
 	}
 
-	Was::SendMap(control, WAS_COMMAND_HEADER, headers);
+	if (!Was::SendMap(control, WAS_COMMAND_HEADER, headers))
+		return;
 
 	if (body) {
 		response.body = was_output_new(*request.pool,

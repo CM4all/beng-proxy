@@ -12,6 +12,7 @@ namespace Was {
 
 class Control;
 
+[[nodiscard]]
 bool
 SendMap(Control &control, enum was_command cmd,
 	const StringMap &map) noexcept;
