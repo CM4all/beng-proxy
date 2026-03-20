@@ -1,4 +1,4 @@
-CREATE TABLE acme_account (
+CREATE TABLE IF NOT EXISTS acme_account (
     --------------------------------
     -- Internal PostgreSQL columns
     --------------------------------
@@ -49,7 +49,7 @@ CREATE TABLE acme_account (
 );
 
 -- for obtaining the least recently used account
-CREATE INDEX acme_account_used ON acme_account(time_used) WHERE enabled;
+CREATE INDEX IF NOT EXISTS acme_account_used ON acme_account(time_used) WHERE enabled;
 
 -- for obtaining the least recently used account
-CREATE UNIQUE INDEX acme_account_location ON acme_account(location) WHERE enabled;
+CREATE UNIQUE INDEX IF NOT EXISTS acme_account_location ON acme_account(location) WHERE enabled;

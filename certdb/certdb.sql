@@ -1,4 +1,4 @@
-CREATE TABLE server_certificate (
+CREATE TABLE IF NOT EXISTS server_certificate (
     --------------------------------
     -- Internal PostgreSQL columns
     --------------------------------
@@ -57,7 +57,7 @@ CREATE TABLE server_certificate (
     key_wrap_name varchar(32) NULL
 );
 
-CREATE TABLE server_certificate_alt_name (
+CREATE TABLE IF NOT EXISTS server_certificate_alt_name (
     --------------------------------
     -- Internal PostgreSQL columns
     --------------------------------
@@ -78,19 +78,19 @@ CREATE TABLE server_certificate_alt_name (
 );
 
 -- for looking up a certificate by its name
-CREATE UNIQUE INDEX server_certificate_name_special ON server_certificate(common_name, special);
+CREATE UNIQUE INDEX IF NOT EXISTS server_certificate_name_special ON server_certificate(common_name, special);
 
 -- for looking up a certificate by its handle
-CREATE UNIQUE INDEX server_certificate_handle ON server_certificate(handle);
+CREATE UNIQUE INDEX IF NOT EXISTS server_certificate_handle ON server_certificate(handle);
 
 -- for looking up a certificate by its alternative name
-CREATE INDEX server_certificate_alt_name_name ON server_certificate_alt_name(name);
+CREATE INDEX IF NOT EXISTS server_certificate_alt_name_name ON server_certificate_alt_name(name);
 
 -- for looking up a certificate by its owner (for faster "ON DELETE CASCADE")
-CREATE INDEX server_certificate_alt_name_owner ON server_certificate_alt_name(server_certificate_id);
+CREATE INDEX IF NOT EXISTS server_certificate_alt_name_owner ON server_certificate_alt_name(server_certificate_id);
 
 -- for getting the latest updates
-CREATE INDEX server_certificate_modified ON server_certificate(modified);
+CREATE INDEX IF NOT EXISTS server_certificate_modified ON server_certificate(modified);
 
 -- for finding expired certificates
-CREATE INDEX server_certificate_not_after ON server_certificate(not_after);
+CREATE INDEX IF NOT EXISTS server_certificate_not_after ON server_certificate(not_after);
