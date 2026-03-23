@@ -846,14 +846,14 @@ Request::DispatchResponse(HttpStatus status, HttpHeaders &&headers,
 							     std::move(headers),
 							     UnusedHoldIstreamPtr{pool, std::move(response_body)});
 
-		TranslateRequest chain_request;
-		chain_request.chain = std::exchange(translate.chain,
-						    std::span<const std::byte>{});
-		chain_request.chain_header =
+		auto *chain_request = NewFromPool<TranslateRequest>(pool);
+		chain_request->chain = std::exchange(translate.chain,
+						     std::span<const std::byte>{});
+		chain_request->chain_header =
 			std::exchange(translate.chain_header, nullptr);
-		chain_request.status = status;
+		chain_request->status = status;
 
-		GetTranslationService().SendRequest(pool, chain_request,
+		GetTranslationService().SendRequest(pool, *chain_request,
 						    stopwatch,
 						    *this,
 						    cancel_ptr);
