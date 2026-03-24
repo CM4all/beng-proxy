@@ -1,6 +1,6 @@
 cm4all-beng-proxy (21.20) unstable; urgency=low
 
-  * 
+  * spawn: do not log spawn errors of killed processes
 
  --   
 
