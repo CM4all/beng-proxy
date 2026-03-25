@@ -27,6 +27,7 @@ public:
 	const char *const site_name;
 
 	const char *const remote_host;
+	const char *const document_root;
 
 	PendingHttpRequest pending_request;
 	const char *const script_name;
@@ -41,11 +42,15 @@ public:
 
 	unsigned retries;
 
+	const bool tls;
+
 public:
 	WasStockRequest(struct pool &_pool,
 			StopwatchPtr &&_stopwatch,
 			const char *_site_name,
 			const char *_remote_host,
+			bool _tls,
+			const char *_document_root,
 			HttpMethod _method, const char *_uri,
 			const char *_script_name, const char *_path_info,
 			const char *_query_string,
@@ -59,6 +64,7 @@ public:
 		 stopwatch(std::move(_stopwatch)),
 		 site_name(_site_name),
 		 remote_host(_remote_host),
+		 document_root(_document_root),
 		 pending_request(_pool, _method, _uri,
 				 std::move(_headers), std::move(_body)),
 		 script_name(_script_name),
@@ -66,7 +72,8 @@ public:
 		 parameters(_parameters),
 		 metrics_handler(_metrics_handler),
 		 handler(_handler),
-		 retries(pending_request.body ? 0 : 2) {}
+		 retries(pending_request.body ? 0 : 2),
+		 tls(_tls) {}
 
 	virtual ~WasStockRequest() noexcept = default;
 

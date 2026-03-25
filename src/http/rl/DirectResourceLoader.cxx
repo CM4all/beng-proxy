@@ -23,7 +23,7 @@
 #include "pool/pool.hxx"
 #include "AllocatorPtr.hxx"
 #include "io/UniqueFileDescriptor.hxx"
-#include "util/StringStrip.hxx"
+#include "util/StringAPI.hxx"
 
 #include <string.h>
 
@@ -41,6 +41,14 @@ GetRemoteHost(const XForwardedForConfig &config, AllocatorPtr alloc,
 		return nullptr;
 
 	return alloc.DupZ(remote_host);
+}
+
+[[gnu::pure]]
+static bool
+IsTLS(const StringMap &headers) noexcept
+{
+	const char *https = headers.Get(x_cm4all_https_header);
+	return https != nullptr && StringIsEqual(https, "on");
 }
 
 void
@@ -135,6 +143,8 @@ try {
 				    params.site_name,
 				    *cgi,
 				    GetRemoteHost(xff, pool, headers),
+				    IsTLS(headers),
+				    cgi->document_root,
 				    method,
 				    std::move(headers), std::move(body),
 				    params.want_metrics ? metrics_handler : nullptr,
@@ -144,6 +154,8 @@ try {
 					     parent_stopwatch,
 					     *cgi,
 					     GetRemoteHost(xff, pool, headers),
+					     IsTLS(headers),
+					     cgi->document_root,
 					     method,
 					     std::move(headers), std::move(body),
 					     params.want_metrics ? metrics_handler : nullptr,
@@ -153,6 +165,8 @@ try {
 					    params.site_name,
 					    *cgi,
 					    GetRemoteHost(xff, pool, headers),
+					    IsTLS(headers),
+					    cgi->document_root,
 					    method,
 					    std::move(headers), std::move(body),
 					    params.want_metrics ? metrics_handler : nullptr,

@@ -331,7 +331,7 @@ public:
 		was_client_request(pool, nullptr,
 				   *control, socket.input, socket.output,
 				   *this,
-				   nullptr,
+				   nullptr, false, nullptr,
 				   method, uri, uri, nullptr, nullptr,
 				   headers, std::move(body), {},
 				   nullptr,

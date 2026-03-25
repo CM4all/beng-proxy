@@ -1,6 +1,6 @@
 cm4all-beng-proxy (21.21) unstable; urgency=low
 
-  * 
+  * was: support packets DOCUMENT_ROOT, TLS (protocol v1.31)
 
  --   
 

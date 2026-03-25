@@ -171,6 +171,8 @@ public:
 		  CancellablePointer &cancel_ptr) noexcept;
 
 	void SendRequest(const char *remote_host,
+			 bool tls,
+			 const char *document_root,
 			 HttpMethod method, const char *uri,
 			 const char *script_name, const char *path_info,
 			 const char *query_string,
@@ -952,6 +954,8 @@ static bool
 SendRequest(Was::Control &control,
 	    bool enable_metrics,
 	    const char *remote_host,
+	    bool tls,
+	    const char *document_root,
 	    HttpMethod method, const char *uri,
 	    const char *script_name, const char *path_info,
 	    const char *query_string,
@@ -975,6 +979,9 @@ SendRequest(Was::Control &control,
 		control.SendArray(WAS_COMMAND_PARAMETER, params) &&
 		(remote_host == nullptr ||
 		 control.SendString(WAS_COMMAND_REMOTE_HOST, remote_host)) &&
+		(!tls || control.Send(WAS_COMMAND_TLS)) &&
+		(document_root == nullptr ||
+		 control.SendString(WAS_COMMAND_DOCUMENT_ROOT, document_root)) &&
 		control.Send(request_body != nullptr
 			     ? WAS_COMMAND_DATA
 			     : WAS_COMMAND_NO_DATA) &&
@@ -983,6 +990,8 @@ SendRequest(Was::Control &control,
 
 inline void
 WasClient::SendRequest(const char *remote_host,
+		       bool tls,
+		       const char *document_root,
 		       HttpMethod method, const char *uri,
 		       const char *script_name, const char *path_info,
 		       const char *query_string,
@@ -990,7 +999,7 @@ WasClient::SendRequest(const char *remote_host,
 		       std::span<const char *const> params) noexcept
 {
 	::SendRequest(control, metrics_handler != nullptr,
-		      remote_host,
+		      remote_host, tls, document_root,
 		      method, uri, script_name, path_info,
 		      query_string, headers, request.body,
 		      params);
@@ -1003,6 +1012,8 @@ was_client_request(struct pool &caller_pool,
 		   FileDescriptor input_fd, FileDescriptor output_fd,
 		   WasLease &lease,
 		   const char *remote_host,
+		   bool tls,
+		   const char *document_root,
 		   HttpMethod method, const char *uri,
 		   const char *script_name, const char *path_info,
 		   const char *query_string,
@@ -1021,7 +1032,7 @@ was_client_request(struct pool &caller_pool,
 					     lease, method, std::move(body),
 					     metrics_handler,
 					     handler, cancel_ptr);
-	client->SendRequest(remote_host,
+	client->SendRequest(remote_host, tls, document_root,
 			    method, uri, script_name, path_info,
 			    query_string, headers,
 			    params);

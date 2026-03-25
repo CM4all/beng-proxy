@@ -26,6 +26,8 @@ WasStockRequest::OnStockItemReady(StockItem &item) noexcept
 			   connection.GetOutput(),
 			   lease,
 			   remote_host,
+			   tls,
+			   document_root,
 			   pending_request.method, pending_request.uri,
 			   script_name, path_info,
 			   query_string,
