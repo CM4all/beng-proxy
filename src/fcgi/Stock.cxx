@@ -41,7 +41,7 @@ StockOptions
 FcgiStock::GetOptions(const void *request,
 		      StockOptions o) const noexcept
 {
-	const auto &params = *(const CgiChildParams *)request;
+	const auto &params = *static_cast<const CgiChildParams *>(request);
 	if (params.parallelism > 0)
 		o.limit = params.parallelism;
 
@@ -65,7 +65,7 @@ FcgiStock::GetChildOptions(const void *request, StockOptions o) const noexcept
 StockRequest
 FcgiStock::PreserveRequest(StockRequest request) noexcept
 {
-	const auto &src = *reinterpret_cast<const CgiChildParams *>(request.get());
+	const auto &src = *static_cast<const CgiChildParams *>(request.get());
 	return WithPoolDisposablePointer<CgiChildParams>::New(pool_new_linear(pool, "CgiChildParams", 4096), src);
 }
 
@@ -78,14 +78,14 @@ FcgiStock::WantStderrFd(const void *) const noexcept
 bool
 FcgiStock::WantStderrPond(const void *info) const noexcept
 {
-	const auto &params = *(const CgiChildParams *)info;
+	const auto &params = *static_cast<const CgiChildParams *>(info);
 	return params.options.stderr_pond;
 }
 
 unsigned
 FcgiStock::GetChildBacklog(const void *info) const noexcept
 {
-	const auto &address = *(const CgiChildParams *)info;
+	const auto &address = *static_cast<const CgiChildParams *>(info);
 
 	/* use the concurrency for the listener backlog to ensure that
 	   we'll never get ECONNREFUSED/EAGAIN while the child process
@@ -98,7 +98,7 @@ FcgiStock::GetChildBacklog(const void *info) const noexcept
 std::string_view
 FcgiStock::GetChildTag(const void *info) const noexcept
 {
-	const auto &params = *(const CgiChildParams *)info;
+	const auto &params = *static_cast<const CgiChildParams *>(info);
 
 	return params.options.tag;
 }
@@ -107,7 +107,7 @@ void
 FcgiStock::PrepareChild(const void *info, PreparedChildProcess &p,
 			FdHolder &close_fds)
 {
-	const auto &params = *(const CgiChildParams *)info;
+	const auto &params = *static_cast<const CgiChildParams *>(info);
 
 	/* the FastCGI protocol defines a channel for stderr, so we could
 	   close its "real" stderr here, but many FastCGI applications
@@ -137,7 +137,7 @@ FcgiStock::PrepareListenChild(const void *, UniqueSocketDescriptor fd,
 StockItem *
 FcgiStock::Create(CreateStockItem c, StockItem &shared_item)
 {
-	auto &child = (ListenChildStockItem &)shared_item;
+	auto &child = static_cast<ListenChildStockItem &>(shared_item);
 
 	try {
 		return new FcgiStockConnection(c, child, child.Connect());

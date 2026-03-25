@@ -99,7 +99,7 @@ RemoteWasStock::MultiClientStockClass::Create(CreateStockItem c,
 					      StockGetHandler &handler,
 					      CancellablePointer &)
 {
-	const auto &params = *(const RemoteMultiWasParams *)request.get();
+	const auto &params = *static_cast<const RemoteMultiWasParams *>(request.get());
 
 	auto *connection =
 		new RemoteMultiWasConnection(c,
@@ -118,7 +118,7 @@ StockOptions
 RemoteWasStock::GetOptions(const void *request,
 		      StockOptions o) const noexcept
 {
-	const auto &params = *(const RemoteMultiWasParams *)request;
+	const auto &params = *static_cast<const RemoteMultiWasParams *>(request);
 	if (params.parallelism > 0)
 		o.limit = params.parallelism;
 
@@ -128,7 +128,7 @@ RemoteWasStock::GetOptions(const void *request,
 StockItem *
 RemoteWasStock::Create(CreateStockItem c, StockItem &shared_item)
 {
-	auto &multi_connection = (RemoteMultiWasConnection &)shared_item;
+	auto &multi_connection = static_cast<RemoteMultiWasConnection &>(shared_item);
 
 	auto *connection = new WasStockConnection(c, multi_connection.Connect());
 

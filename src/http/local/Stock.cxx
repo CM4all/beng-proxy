@@ -35,7 +35,7 @@ StockOptions
 LhttpStock::GetOptions(const void *request,
 		      StockOptions o) const noexcept
 {
-	const auto &address = *reinterpret_cast<const CgiChildParams *>(request);
+	const auto &address = *static_cast<const CgiChildParams *>(request);
 
 	if (address.parallelism > 0)
 		o.limit = address.parallelism;
@@ -61,21 +61,21 @@ LhttpStock::GetChildOptions(const void *request,
 StockRequest
 LhttpStock::PreserveRequest(StockRequest request) noexcept
 {
-	const auto &src = *reinterpret_cast<const CgiChildParams *>(request.get());
+	const auto &src = *static_cast<const CgiChildParams *>(request.get());
 	return WithPoolDisposablePointer<CgiChildParams>::New(pool_new_linear(pool, "LhttpAddress", 4096), src);
 }
 
 bool
 LhttpStock::WantStderrPond(const void *info) const noexcept
 {
-	const auto &address = *reinterpret_cast<const CgiChildParams *>(info);
+	const auto &address = *static_cast<const CgiChildParams *>(info);
 	return address.options.stderr_pond;
 }
 
 int
 LhttpStock::GetChildSocketType(const void *info) const noexcept
 {
-	const auto &address = *reinterpret_cast<const CgiChildParams *>(info);
+	const auto &address = *static_cast<const CgiChildParams *>(info);
 
 	int type = SOCK_STREAM;
 	if (!address.blocking)
@@ -87,7 +87,7 @@ LhttpStock::GetChildSocketType(const void *info) const noexcept
 unsigned
 LhttpStock::GetChildBacklog(const void *info) const noexcept
 {
-	const auto &address = *reinterpret_cast<const CgiChildParams *>(info);
+	const auto &address = *static_cast<const CgiChildParams *>(info);
 
 	/* use the concurrency for the listener backlog to ensure that
 	   we'll never get ECONNREFUSED/EAGAIN while the child process
@@ -100,7 +100,7 @@ LhttpStock::GetChildBacklog(const void *info) const noexcept
 std::string_view
 LhttpStock::GetChildTag(const void *info) const noexcept
 {
-	const auto &address = *reinterpret_cast<const CgiChildParams *>(info);
+	const auto &address = *static_cast<const CgiChildParams *>(info);
 
 	return address.options.tag;
 }
@@ -109,7 +109,7 @@ void
 LhttpStock::PrepareChild(const void *info, PreparedChildProcess &p,
 			 FdHolder &close_fds)
 {
-	const auto &address = *reinterpret_cast<const CgiChildParams *>(info);
+	const auto &address = *static_cast<const CgiChildParams *>(info);
 
 	address.CopyTo(p, close_fds);
 }

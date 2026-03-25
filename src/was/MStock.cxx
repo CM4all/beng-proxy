@@ -125,7 +125,7 @@ StockOptions
 MultiWasStock::GetOptions(const void *request,
 			  StockOptions o) const noexcept
 {
-	const auto &params = *reinterpret_cast<const CgiChildParams *>(request);
+	const auto &params = *static_cast<const CgiChildParams *>(request);
 	if (params.parallelism > 0)
 		o.limit = params.parallelism;
 
@@ -140,21 +140,21 @@ MultiWasStock::GetOptions(const void *request,
 StockRequest
 MultiWasStock::PreserveRequest(StockRequest request) noexcept
 {
-	const auto &src = *reinterpret_cast<const CgiChildParams *>(request.get());
+	const auto &src = *static_cast<const CgiChildParams *>(request.get());
 	return WithPoolDisposablePointer<CgiChildParams>::New(pool_new_linear(pool, "CgiChildParams", 4096), src);
 }
 
 bool
 MultiWasStock::WantStderrPond(const void *info) const noexcept
 {
-	const auto &params = *reinterpret_cast<const CgiChildParams *>(info);
+	const auto &params = *static_cast<const CgiChildParams *>(info);
 	return params.options.stderr_pond;
 }
 
 std::string_view
 MultiWasStock::GetChildTag(const void *info) const noexcept
 {
-	const auto &params = *reinterpret_cast<const CgiChildParams *>(info);
+	const auto &params = *static_cast<const CgiChildParams *>(info);
 
 	return params.options.tag;
 }
@@ -172,7 +172,7 @@ void
 MultiWasStock::PrepareChild(const void *info, PreparedChildProcess &p,
 			    FdHolder &close_fds)
 {
-	const auto &params = *reinterpret_cast<const CgiChildParams *>(info);
+	const auto &params = *static_cast<const CgiChildParams *>(info);
 
 	params.CopyTo(p, close_fds);
 }

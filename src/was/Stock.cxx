@@ -21,7 +21,7 @@ WasStock::WasStockMap::GetOptions(const void *request,
 				  StockOptions o) const noexcept
 
 {
-	auto &params = *(const CgiChildParams *)request;
+	const auto &params = *static_cast<const CgiChildParams *>(request);
 	if (params.parallelism > 0)
 		o.limit = params.parallelism;
 
@@ -90,7 +90,7 @@ void
 WasStock::FadeTag(std::string_view tag) noexcept
 {
 	stock.FadeIf([tag](const StockItem &item){
-		const auto &child = (const WasChild &)item;
+		const auto &child = static_cast<const WasChild &>(item);
 		return child.IsTag(tag);
 	});
 }
@@ -100,7 +100,7 @@ WasStock::Create(CreateStockItem c, StockRequest _request,
 		 StockGetHandler &handler,
 		 CancellablePointer &)
 {
-	auto &params = *(CgiChildParams *)_request.get();
+	const auto &params = *static_cast<const CgiChildParams *>(_request.get());
 
 	assert(params.executable_path != nullptr);
 
