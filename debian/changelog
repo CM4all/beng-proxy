@@ -1,5 +1,6 @@
 cm4all-beng-proxy (21.20) unstable; urgency=low
 
+  * spawn: fix rlimits EPERM with PID_NAMESPACE_NAME
   * spawn: keep new FastCGI, WAS, LHTTP processes on cancellation
   * spawn: do not log spawn errors of killed processes
 
