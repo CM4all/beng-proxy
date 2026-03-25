@@ -66,6 +66,10 @@ public:
 	 */
 	virtual void PrepareChild(const void *info, PreparedChildProcess &p,
 				  FdHolder &close_fds) = 0;
+
+	virtual bool ShouldContinueOnCancel([[maybe_unused]] const void *request) const noexcept {
+		return false;
+	}
 };
 
 class ChildStockMapClass : public ChildStockClass {
@@ -159,6 +163,7 @@ private:
 	void Create(CreateStockItem c, StockRequest request,
 		    StockGetHandler &handler,
 		    CancellablePointer &cancel_ptr) override;
+	bool ShouldContinueOnCancel(const void *request) const noexcept override;
 };
 
 /**

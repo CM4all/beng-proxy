@@ -177,6 +177,13 @@ MultiWasStock::PrepareChild(const void *info, PreparedChildProcess &p,
 	params.CopyTo(p, close_fds);
 }
 
+bool
+MultiWasStock::ShouldContinueOnCancel(const void *request) const noexcept
+{
+	const auto &params = *static_cast<const CgiChildParams *>(request);
+	return !params.disposable;
+}
+
 StockItem *
 MultiWasStock::Create(CreateStockItem c, StockItem &shared_item)
 {

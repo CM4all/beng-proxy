@@ -105,4 +105,5 @@ private:
 	void Create(CreateStockItem c, StockRequest request,
 		    StockGetHandler &handler,
 		    CancellablePointer &cancel_ptr) override;
+	bool ShouldContinueOnCancel(const void *request) const noexcept override;
 };

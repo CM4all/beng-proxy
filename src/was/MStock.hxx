@@ -100,4 +100,5 @@ private:
 						    ChildStock &child_stock) override;
 	void PrepareChild(const void *info, PreparedChildProcess &p,
 			  FdHolder &close_fds) override;
+	bool ShouldContinueOnCancel(const void *request) const noexcept override;
 };

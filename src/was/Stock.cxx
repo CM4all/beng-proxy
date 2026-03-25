@@ -128,6 +128,13 @@ WasStock::Create(CreateStockItem c, StockRequest _request,
 	child->InvokeCreateSuccess(handler);
 }
 
+bool
+WasStock::ShouldContinueOnCancel(const void *request) const noexcept
+{
+	const auto &params = *static_cast<const CgiChildParams *>(request);
+	return !params.disposable;
+}
+
 WasChild::~WasChild() noexcept = default;
 
 /*

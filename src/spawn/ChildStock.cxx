@@ -125,6 +125,12 @@ ChildStock::Create(CreateStockItem c, StockRequest request,
 	queue_item->Start(spawn_service);
 }
 
+bool
+ChildStock::ShouldContinueOnCancel(const void *request) const noexcept
+{
+	return cls.ShouldContinueOnCancel(request);
+}
+
 /*
  * interface
  *

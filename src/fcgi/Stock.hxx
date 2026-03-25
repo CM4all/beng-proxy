@@ -84,6 +84,7 @@ private:
 	std::string_view GetChildTag(const void *info) const noexcept override;
 	void PrepareChild(const void *info, PreparedChildProcess &p,
 			  FdHolder &close_fds) override;
+	bool ShouldContinueOnCancel(const void *request) const noexcept override;
 
 	/* virtual methods from class ChildStockMapClass */
 	StockOptions GetChildOptions(const void *request,
