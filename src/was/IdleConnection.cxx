@@ -88,6 +88,8 @@ try {
 		case WAS_COMMAND_QUERY_STRING:
 		case WAS_COMMAND_PARAMETER:
 		case WAS_COMMAND_REMOTE_HOST:
+		case WAS_COMMAND_DOCUMENT_ROOT:
+		case WAS_COMMAND_TLS:
 			throw SocketProtocolError{"unexpected data from idle WAS control connection"};
 
 		case WAS_COMMAND_PREMATURE:

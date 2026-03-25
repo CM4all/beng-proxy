@@ -24,7 +24,7 @@ Build-Depends: debhelper (>= 13.3~), dh-python,
  libavahi-client-dev,
  liburing-dev,
  zlib1g-dev,
- libcm4all-was-protocol-dev (>= 1.26),
+ libcm4all-was-protocol-dev (>= 1.31),
  pkg-config,
  python3-sphinx
 Standards-Version: 3.9.1

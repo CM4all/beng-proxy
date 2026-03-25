@@ -234,6 +234,8 @@ MalformedPrematureWasServer::OnWasControlPacket(enum was_command cmd,
 	case WAS_COMMAND_HEADER:
 	case WAS_COMMAND_PARAMETER:
 	case WAS_COMMAND_REMOTE_HOST:
+	case WAS_COMMAND_DOCUMENT_ROOT:
+	case WAS_COMMAND_TLS:
 		break;
 
 	case WAS_COMMAND_STATUS:
