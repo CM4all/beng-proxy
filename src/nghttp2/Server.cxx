@@ -329,7 +329,7 @@ ServerConnection::Request::OnHttpHeader(std::string_view name,
 {
 	AllocatorPtr alloc{pool};
 
-	if (value.size() >= 8192) {
+	if (value.size() >= MAX_HTTP_HEADER_SIZE) {
 		SetError(HttpStatus::REQUEST_HEADER_FIELDS_TOO_LARGE,
 			 "Request header is too long\n");
 		return 0;
