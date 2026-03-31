@@ -556,6 +556,8 @@ Acme(std::span<const char *const> args)
 			"  --account-db  load the ACME account key from the database\n"
 			"  --account-key FILE\n"
 			"                load the ACME account key from this file\n"
+			"  --account-key-id ID\n"
+			"                use this ACME account key identifier\n"
 			"  --alpn\n"
 			"                enable tls-alpn-01\n"
 			"  --dns-txt-program PATH\n"
