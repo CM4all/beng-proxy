@@ -350,10 +350,18 @@ ServerConnection::Request::OnHttpHeader(std::string_view name,
 	if (name == "cookie"sv) {
 		const char *old_value = headers.Remove(cookie_header);
 		const char *allocated_value;
-		if (old_value != nullptr)
-			allocated_value = alloc.Concat(old_value, "; ",
+		if (old_value != nullptr) {
+			const std::string_view old_value_sv{old_value};
+
+			/* since this concatenation is quadratic,
+			   prevent abuse by counting redundant
+			   copies of old values against
+			   MAX_TOTAL_HTTP_HEADER_SIZE */
+			total_header_size += old_value_sv.size();
+
+			allocated_value = alloc.Concat(old_value_sv, "; "sv,
 						       value);
-		else
+		} else
 			allocated_value = alloc.DupZ(value);
 		headers.Add(alloc, cookie_header, allocated_value);
 		return 0;
