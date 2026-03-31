@@ -19,6 +19,7 @@
 #include "util/NumberParser.hxx"
 #include "util/StaticVector.hxx"
 #include "http/CommonHeaders.hxx"
+#include "http/HeaderLimits.hxx"
 #include "http/Method.hxx"
 #include "http/ResponseHandler.hxx"
 #include "stopwatch.hxx"
@@ -56,6 +57,8 @@ class ClientConnection::Request final
 	std::unique_ptr<IstreamDataSource> request_body;
 
 	int32_t id = -1;
+
+	uint_least32_t total_header_size = 0;
 
 	HttpStatus status = HttpStatus::OK;
 
@@ -350,6 +353,11 @@ inline int
 ClientConnection::Request::OnHttpHeader(std::string_view name,
 					std::string_view value) noexcept
 {
+	if (value.size() >= MAX_HTTP_HEADER_SIZE) {
+		AbortResponseHeaders(std::make_exception_ptr(SocketProtocolError{"Response header is too long"}));
+		return 0;
+	}
+
 	response_headers.Add(alloc, alloc.DupZ(name), alloc.DupZ(value));
 	return 0;
 }
@@ -358,6 +366,12 @@ inline int
 ClientConnection::Request::OnHeaderCallback(std::string_view name,
 					    std::string_view value) noexcept
 {
+	total_header_size += name.size() + value.size();
+	if (total_header_size > MAX_TOTAL_HTTP_HEADER_SIZE) {
+		AbortResponseHeaders(std::make_exception_ptr(SocketProtocolError{"Too many response headers"}));
+		return 0;
+	}
+
 	if (name.size() < 2)
 		return 0;
 	else if (name.front() == ':')
