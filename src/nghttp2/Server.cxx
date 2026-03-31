@@ -197,6 +197,8 @@ public:
 		return request->OnStreamCloseCallback(error_code);
 	}
 
+	int OnSpecialHeader(std::string_view name, std::string_view value) noexcept;
+	int OnHttpHeader(std::string_view name, std::string_view value) noexcept;
 	int OnHeaderCallback(std::string_view name, std::string_view value) noexcept;
 
 	static int OnHeaderCallback(nghttp2_session *session,
@@ -290,10 +292,10 @@ ParseHttpMethod(std::string_view s) noexcept
 }
 
 inline int
-ServerConnection::Request::OnHeaderCallback(std::string_view name,
-					    std::string_view value) noexcept
+ServerConnection::Request::OnSpecialHeader(std::string_view name,
+					   std::string_view value) noexcept
 {
-	AllocatorPtr alloc(pool);
+	AllocatorPtr alloc{pool};
 
 	if (name == ":method"sv) {
 		method = ParseHttpMethod(value);
@@ -316,41 +318,61 @@ ServerConnection::Request::OnHeaderCallback(std::string_view name,
 		}
 
 		headers.Add(alloc, host_header, alloc.DupZ(value));
-	} else if (name.size() >= 2 && name.front() != ':') {
-		if (value.size() >= 8192) {
-			SetError(HttpStatus::REQUEST_HEADER_FIELDS_TOO_LARGE,
-				 "Request header is too long\n");
-			return 0;
-		}
-
-		const char *allocated_name = alloc.DupZ(name);
-		const char *allocated_value;
-
-		/* the Cookie request header is special: multiple
-		   headers are not concatenated with comma (RFC 2616
-		   4.2), but with semicolon (RFC 6265 4.2.1); to avoid
-		   confusion, it would be best to not concatenate
-		   them, but leave them as separate headers, but when
-		   proxying to Apache, Apache will conatenate them
-		   unconditionally with comma via
-		   apr_table_compress(APR_OVERLAP_TABLES_MERGE), which
-		   breaks PHP's session management; as a workaround,
-		   we concatenate all Cookie headers with a semicolon
-		   here before Apache does the wrong thing */
-		if (StringIsEqual(allocated_name, "cookie")) {
-			const char *old_value = headers.Remove(cookie_header);
-			if (old_value != nullptr)
-				allocated_value = alloc.Concat(old_value, "; ",
-							       value);
-			else
-				allocated_value = alloc.DupZ(value);
-		} else
-			allocated_value = alloc.DupZ(value);
-
-		headers.Add(alloc, allocated_name, allocated_value);
 	}
 
 	return 0;
+}
+
+inline int
+ServerConnection::Request::OnHttpHeader(std::string_view name,
+					std::string_view value) noexcept
+{
+	AllocatorPtr alloc{pool};
+
+	if (value.size() >= 8192) {
+		SetError(HttpStatus::REQUEST_HEADER_FIELDS_TOO_LARGE,
+			 "Request header is too long\n");
+		return 0;
+	}
+
+	const char *allocated_name = alloc.DupZ(name);
+	const char *allocated_value;
+
+	/* the Cookie request header is special: multiple
+	   headers are not concatenated with comma (RFC 2616
+	   4.2), but with semicolon (RFC 6265 4.2.1); to avoid
+	   confusion, it would be best to not concatenate
+	   them, but leave them as separate headers, but when
+	   proxying to Apache, Apache will conatenate them
+	   unconditionally with comma via
+	   apr_table_compress(APR_OVERLAP_TABLES_MERGE), which
+	   breaks PHP's session management; as a workaround,
+	   we concatenate all Cookie headers with a semicolon
+	   here before Apache does the wrong thing */
+	if (StringIsEqual(allocated_name, "cookie")) {
+		const char *old_value = headers.Remove(cookie_header);
+		if (old_value != nullptr)
+			allocated_value = alloc.Concat(old_value, "; ",
+						       value);
+		else
+			allocated_value = alloc.DupZ(value);
+	} else
+		allocated_value = alloc.DupZ(value);
+
+	headers.Add(alloc, allocated_name, allocated_value);
+	return 0;
+}
+
+inline int
+ServerConnection::Request::OnHeaderCallback(std::string_view name,
+					    std::string_view value) noexcept
+{
+	if (name.size() < 2)
+		return 0;
+	else if (name.front() == ':')
+		return OnSpecialHeader(name, value);
+	else
+		return OnHttpHeader(name, value);
 }
 
 void

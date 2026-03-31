@@ -136,6 +136,8 @@ public:
 		return request->OnStreamCloseCallback(error_code);
 	}
 
+	int OnSpecialHeader(std::string_view name, std::string_view value) noexcept;
+	int OnHttpHeader(std::string_view name, std::string_view value) noexcept;
 	int OnHeaderCallback(std::string_view name, std::string_view value) noexcept;
 
 	static int OnHeaderCallback(nghttp2_session *session,
@@ -326,8 +328,8 @@ ClientConnection::Request::Cancel() noexcept
 }
 
 inline int
-ClientConnection::Request::OnHeaderCallback(std::string_view name,
-					    std::string_view value) noexcept
+ClientConnection::Request::OnSpecialHeader(std::string_view name,
+					   std::string_view value) noexcept
 {
 	if (name == ":status"sv) {
 		char buffer[4];
@@ -345,10 +347,27 @@ ClientConnection::Request::OnHeaderCallback(std::string_view name,
 		status = _status;
 	}
 
-	if (name.size() >= 2 && name.front() != ':')
-		response_headers.Add(alloc, alloc.DupZ(name), alloc.DupZ(value));
-
 	return 0;
+}
+
+inline int
+ClientConnection::Request::OnHttpHeader(std::string_view name,
+					std::string_view value) noexcept
+{
+	response_headers.Add(alloc, alloc.DupZ(name), alloc.DupZ(value));
+	return 0;
+}
+
+inline int
+ClientConnection::Request::OnHeaderCallback(std::string_view name,
+					    std::string_view value) noexcept
+{
+	if (name.size() < 2)
+		return 0;
+	else if (name.front() == ':')
+		return OnSpecialHeader(name, value);
+	else
+		return OnHttpHeader(name, value);
 }
 
 inline int
