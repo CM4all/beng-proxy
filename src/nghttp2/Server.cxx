@@ -543,20 +543,21 @@ ServerConnection::Request::SendResponse(HttpStatus status,
 	StaticVector<nghttp2_nv, 256> hdrs;
 
 	const fmt::format_int status_string{static_cast<unsigned>(status)};
-	hdrs.push_back(MakeNv(":status", status_string.c_str()));
+	hdrs.push_back(MakeNv(":status"sv, status_string.c_str()));
 
 	if (response_headers.generate_date_header)
 		/* RFC 2616 14.18: Date */
-		hdrs.push_back(MakeNv("date", http_date_format(connection.socket->GetEventLoop().SystemNow())));
+		hdrs.push_back(MakeNv("date"sv,
+				      http_date_format(connection.socket->GetEventLoop().SystemNow())));
 
 	if (response_headers.generate_server_header)
 		/* RFC 2616 3.8: Product Tokens */
-		hdrs.push_back(MakeNv("server", BRIEF_PRODUCT_TOKEN));
+		hdrs.push_back(MakeNv("server"sv, BRIEF_PRODUCT_TOKEN));
 
 	if (generate_hsts_header)
 		/* TODO: hard-coded to 90 days (7776000 seconds), but
 		   this should probably be configurable */
-		hdrs.push_back(MakeNv("strict-transport-security", "max-age=7776000"));
+		hdrs.push_back(MakeNv("strict-transport-security"sv, "max-age=7776000"sv));
 
 	char content_length_buffer[32];
 	if (_response_body) {

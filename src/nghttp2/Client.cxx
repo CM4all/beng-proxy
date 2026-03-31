@@ -272,14 +272,14 @@ ClientConnection::Request::SendRequest(HttpMethod method, const char *uri,
 	assert(state == State::INITIAL);
 
 	StaticVector<nghttp2_nv, 256> hdrs;
-	hdrs.push_back(MakeNv(":method", http_method_to_string(method)));
-	hdrs.push_back(MakeNv(":scheme", "http")); // TODO
+	hdrs.push_back(MakeNv(":method"sv, http_method_to_string(method)));
+	hdrs.push_back(MakeNv(":scheme"sv, "http"sv)); // TODO
 
 	const char *host = headers.Remove(host_header);
 	if (host != nullptr)
-		hdrs.push_back(MakeNv(":authority", host));
+		hdrs.push_back(MakeNv(":authority"sv, host));
 
-	hdrs.push_back(MakeNv(":path", uri));
+	hdrs.push_back(MakeNv(":path"sv, uri));
 
 	char content_length_buffer[32];
 	if (body) {
