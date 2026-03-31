@@ -23,5 +23,6 @@ UnusedIstreamPtr
 cgi_launch(EventLoop &event_loop, struct pool *pool, HttpMethod method,
 	   const CgiAddress *address,
 	   const char *remote_addr,
+	   bool tls,
 	   const StringMap &headers, UnusedIstreamPtr body,
 	   SpawnService &spawn_service);

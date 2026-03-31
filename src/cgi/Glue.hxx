@@ -27,6 +27,7 @@ cgi_new(SpawnService &spawn_service, EventLoop &event_loop,
 	HttpMethod method,
 	const CgiAddress *address,
 	const char *remote_addr,
+	bool tls,
 	const StringMap &headers, UnusedIstreamPtr body,
 	HttpResponseHandler &_handler,
 	CancellablePointer &cancel_ptr);

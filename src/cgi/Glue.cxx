@@ -18,6 +18,7 @@ cgi_new(SpawnService &spawn_service, EventLoop &event_loop,
 	HttpMethod method,
 	const CgiAddress *address,
 	const char *remote_addr,
+	bool tls,
 	const StringMap &headers, UnusedIstreamPtr body,
 	HttpResponseHandler &handler,
 	CancellablePointer &cancel_ptr)
@@ -30,7 +31,8 @@ cgi_new(SpawnService &spawn_service, EventLoop &event_loop,
 
 	try {
 		input = cgi_launch(event_loop, pool, method, address,
-				   remote_addr, headers, std::move(body),
+				   remote_addr, tls,
+				   headers, std::move(body),
 				   spawn_service);
 	} catch (...) {
 		if (abort_flag.aborted) {

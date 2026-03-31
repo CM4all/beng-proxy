@@ -10,7 +10,6 @@
 #include "product.h"
 #include "spawn/IstreamSpawn.hxx"
 #include "spawn/Prepared.hxx"
-#include "http/CommonHeaders.hxx"
 #include "http/Method.hxx"
 #include "io/FdHolder.hxx"
 #include "util/CharUtil.hxx"
@@ -49,6 +48,7 @@ PrepareCgi(struct pool &pool, PreparedChildProcess &p,
 	   HttpMethod method,
 	   const CgiAddress &address,
 	   const char *remote_addr,
+	   bool tls,
 	   const StringMap &headers,
 	   const IstreamLength content_length)
 {
@@ -120,8 +120,7 @@ PrepareCgi(struct pool &pool, PreparedChildProcess &p,
 		p.SetEnv("CONTENT_LENGTH", fmt::format_int{content_length.length}.c_str());
 	}
 
-	const char *https = headers.Get(x_cm4all_https_header);
-	if (https != nullptr && StringIsEqual(https, "on"))
+	if (tls)
 		p.PutEnv("HTTPS=on");
 
 	p.Append(path);
@@ -138,13 +137,14 @@ cgi_launch(EventLoop &event_loop, struct pool *pool,
 	   HttpMethod method,
 	   const CgiAddress *address,
 	   const char *remote_addr,
+	   bool tls,
 	   const StringMap &headers, UnusedIstreamPtr body,
 	   SpawnService &spawn_service)
 {
 	FdHolder close_fds;
 	PreparedChildProcess p;
 	PrepareCgi(*pool, p, close_fds, method,
-		   *address, remote_addr, headers,
+		   *address, remote_addr, tls, headers,
 		   body ? body.GetLength() : IstreamLength{.length = 0, .exhaustive = true});
 
 	return SpawnChildProcess(event_loop, pool,

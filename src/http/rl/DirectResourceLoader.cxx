@@ -98,6 +98,7 @@ try {
 		cgi_new(spawn_service, event_loop, &pool, parent_stopwatch,
 			method, &address.GetCgi(),
 			GetRemoteHost(xff, pool, headers),
+			IsTLS(headers),
 			headers, std::move(body),
 			handler, cancel_ptr);
 		return;
