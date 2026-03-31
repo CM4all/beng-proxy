@@ -16,6 +16,7 @@
 #include "lib/fmt/Unsafe.hxx"
 #include "net/SocketProtocolError.hxx"
 #include "util/Cancellable.hxx"
+#include "util/NumberParser.hxx"
 #include "util/StaticVector.hxx"
 #include "http/CommonHeaders.hxx"
 #include "http/Method.hxx"
@@ -26,7 +27,8 @@
 
 #include <nghttp2/nghttp2.h>
 
-#include <assert.h>
+#include <cassert>
+#include <type_traits> // for std::underlying_type_t
 
 using std::string_view_literals::operator""sv;
 
@@ -332,19 +334,13 @@ ClientConnection::Request::OnSpecialHeader(std::string_view name,
 					   std::string_view value) noexcept
 {
 	if (name == ":status"sv) {
-		char buffer[4];
 		if (value.size() != 3)
 			return 0;
 
-		*std::copy(value.begin(), value.end(), buffer) = 0;
-
-		char *endptr;
-		auto _status = (HttpStatus)strtoul(buffer, &endptr, 10);
-		if (endptr != buffer + value.size() ||
-		    !http_status_is_valid(_status))
-			return 0;
-
-		status = _status;
+		if (std::underlying_type_t<HttpStatus> numeric_status;
+		    ParseIntegerTo(value, numeric_status) &&
+		    http_status_is_valid(static_cast<HttpStatus>(numeric_status)))
+			status = static_cast<HttpStatus>(numeric_status);
 	}
 
 	return 0;
