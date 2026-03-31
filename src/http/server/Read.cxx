@@ -209,7 +209,9 @@ HttpServerConnection::HeadersFinished() noexcept
 	const char *const connection = r.headers.Remove(connection_header);
 	keep_alive = connection == nullptr || !http_list_contains_i(connection, "close");
 
-	request.upgrade = http_is_upgrade(r.headers);
+	request.upgrade = connection != nullptr &&
+		http_list_contains_i(connection, "upgrade") &&
+		http_is_upgrade(r.headers);
 
 	const char *const transfer_encoding = r.headers.Remove(transfer_encoding_header);
 	const char *const content_length_string = r.headers.Remove(content_length_header);
