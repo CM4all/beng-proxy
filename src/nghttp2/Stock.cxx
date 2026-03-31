@@ -285,7 +285,7 @@ Stock::Item::OnNgHttp2ConnectionError(std::exception_ptr e) noexcept
 	assert(connection);
 	assert(get_requests.empty());
 
-	LogConcat(1, key.c_str(), e);
+	LogConcat(1, key, e);
 
 	stock.DeleteItem(this);
 }
