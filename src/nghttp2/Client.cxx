@@ -403,7 +403,7 @@ ClientConnection::Request::SubmitResponse(bool has_response_body) noexcept
 		if (content_length != nullptr) {
 			char *endptr;
 			auto length = strtoul(content_length, &endptr, 10);
-			if (endptr > content_length)
+			if (endptr > content_length && *endptr == 0)
 				body = NewIstreamPtr<LengthIstream>(alloc.GetPool(),
 								    std::move(body),
 								    length);

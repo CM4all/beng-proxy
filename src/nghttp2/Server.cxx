@@ -537,7 +537,7 @@ ServerConnection::Request::OnReceiveRequest(bool has_request_body) noexcept
 		if (content_length != nullptr) {
 			char *endptr;
 			auto length = strtoul(content_length, &endptr, 10);
-			if (endptr > content_length)
+			if (endptr > content_length && *endptr == 0)
 				body = NewIstreamPtr<LengthIstream>(pool,
 								    std::move(body),
 								    length);
