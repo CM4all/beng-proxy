@@ -32,7 +32,6 @@
 #include "net/log/ContentType.hxx"
 #include "util/Cancellable.hxx"
 #include "util/StaticVector.hxx"
-#include "util/StringAPI.hxx"
 #include "stopwatch.hxx"
 #include "product.h" // for BRIEF_PRODUCT_TOKEN
 
@@ -349,7 +348,7 @@ ServerConnection::Request::OnHttpHeader(std::string_view name,
 	   breaks PHP's session management; as a workaround,
 	   we concatenate all Cookie headers with a semicolon
 	   here before Apache does the wrong thing */
-	if (StringIsEqual(allocated_name, "cookie")) {
+	if (name == "cookie"sv) {
 		const char *old_value = headers.Remove(cookie_header);
 		if (old_value != nullptr)
 			allocated_value = alloc.Concat(old_value, "; ",
