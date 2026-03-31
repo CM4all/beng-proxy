@@ -76,6 +76,8 @@ class ServerConnection::Request final
 
 	const uint32_t id;
 
+	uint_least32_t total_header_size = 0;
+
 	/**
 	 * The response body status.  This is set by SendResponse(),
 	 * and is used later for the access logger.
@@ -365,6 +367,13 @@ inline int
 ServerConnection::Request::OnHeaderCallback(std::string_view name,
 					    std::string_view value) noexcept
 {
+	total_header_size += name.size() + value.size();
+	if (total_header_size > MAX_TOTAL_HTTP_HEADER_SIZE) {
+		SetError(HttpStatus::REQUEST_HEADER_FIELDS_TOO_LARGE,
+			 "Too many request headers\n");
+		return 0;
+	}
+
 	if (name.size() < 2)
 		return 0;
 	else if (name.front() == ':')
