@@ -352,8 +352,7 @@ test_post(PoolPtr pool, Context *c)
 	cgi_new(c->spawn_service, c->event_loop,
 		pool, nullptr, HttpMethod::POST, &address,
 		nullptr, {},
-		UnusedIstreamPtr(OpenFileIstream(c->event_loop, *pool,
-						 "build.ninja")),
+		OpenFileIstream(c->event_loop, *pool, "build.ninja"),
 		*c, c->cancel_ptr);
 
 	pool.reset();
