@@ -221,7 +221,7 @@ struct Context final
 
 	/* virtual methods from class NgHttp2::ConnectionHandler */
 	void OnNgHttp2ConnectionIdle() noexcept override;
-	void OnNgHttp2ConnectionError(std::exception_ptr e) noexcept override;
+	void OnNgHttp2ConnectionError(std::exception_ptr &&e) noexcept override;
 	void OnNgHttp2ConnectionClosed() noexcept override;
 };
 
@@ -246,9 +246,9 @@ Context::OnNgHttp2ConnectionIdle() noexcept
 }
 
 void
-Context::OnNgHttp2ConnectionError(std::exception_ptr e) noexcept
+Context::OnNgHttp2ConnectionError(std::exception_ptr &&e) noexcept
 {
-	PrintException(e);
+	PrintException(std::move(e));
 	CancelAllRequests();
 	connection.reset();
 }

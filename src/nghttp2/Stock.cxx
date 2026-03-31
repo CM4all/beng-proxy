@@ -143,7 +143,7 @@ private:
 	/* virtual methods from class ConnectionHandler */
 	void OnNgHttp2ConnectionIdle() noexcept override;
 	void OnNgHttp2ConnectionGoAway() noexcept override;
-	void OnNgHttp2ConnectionError(std::exception_ptr e) noexcept override;
+	void OnNgHttp2ConnectionError(std::exception_ptr &&e) noexcept override;
 	void OnNgHttp2ConnectionClosed() noexcept override;
 };
 
@@ -280,12 +280,12 @@ Stock::Item::OnNgHttp2ConnectionGoAway() noexcept
 }
 
 void
-Stock::Item::OnNgHttp2ConnectionError(std::exception_ptr e) noexcept
+Stock::Item::OnNgHttp2ConnectionError(std::exception_ptr &&e) noexcept
 {
 	assert(connection);
 	assert(get_requests.empty());
 
-	LogConcat(1, key, e);
+	LogConcat(1, key, std::move(e));
 
 	stock.DeleteItem(this);
 }

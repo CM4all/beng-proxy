@@ -109,7 +109,7 @@ public:
 		rbc->SetEof();
 	}
 
-	void AbortError(std::exception_ptr e) noexcept;
+	void AbortError(std::exception_ptr &&e) noexcept;
 
 	void DeferWrite() noexcept {
 		connection.DeferWrite();
@@ -196,13 +196,13 @@ private:
 		DeferWrite();
 	}
 
-	void AbortResponseHeaders(std::exception_ptr e) noexcept {
+	void AbortResponseHeaders(std::exception_ptr &&e) noexcept {
 		auto &_handler = handler;
 		Destroy();
 		_handler.InvokeError(std::move(e));
 	}
 
-	void AbortResponseBody(std::exception_ptr e) noexcept {
+	void AbortResponseBody(std::exception_ptr &&e) noexcept {
 		Consume(response_body_control->GetAvailable());
 		response_body_control->DestroyError(std::move(e));
 		response_body_control = nullptr;
@@ -249,7 +249,7 @@ private:
 };
 
 void
-ClientConnection::Request::AbortError(std::exception_ptr e) noexcept
+ClientConnection::Request::AbortError(std::exception_ptr &&e) noexcept
 {
 	switch (state) {
 	case State::INITIAL:
@@ -535,10 +535,10 @@ ClientConnection::RemoveRequest(Request &request) noexcept
 }
 
 void
-ClientConnection::AbortAllRequests(std::exception_ptr e) noexcept
+ClientConnection::AbortAllRequests(std::exception_ptr &&e) noexcept
 {
 	while (!requests.empty())
-		requests.front().AbortError(e);
+		requests.front().AbortError(std::exception_ptr{e});
 }
 
 ssize_t
@@ -617,7 +617,7 @@ ClientConnection::OnBufferedWrite()
 void
 ClientConnection::OnBufferedError(std::exception_ptr e) noexcept
 {
-	AbortAllRequests(e);
+	AbortAllRequests(std::exception_ptr{e});
 
 	handler.OnNgHttp2ConnectionError(std::move(e));
 }

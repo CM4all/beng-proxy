@@ -27,7 +27,7 @@ class ConnectionHandler {
 public:
 	virtual void OnNgHttp2ConnectionIdle() noexcept {}
 	virtual void OnNgHttp2ConnectionGoAway() noexcept {}
-	virtual void OnNgHttp2ConnectionError(std::exception_ptr e) noexcept = 0;
+	virtual void OnNgHttp2ConnectionError(std::exception_ptr &&error) noexcept = 0;
 	virtual void OnNgHttp2ConnectionClosed() noexcept = 0;
 };
 
@@ -96,7 +96,7 @@ private:
 
 	void RemoveRequest(Request &request) noexcept;
 
-	void AbortAllRequests(std::exception_ptr e) noexcept;
+	void AbortAllRequests(std::exception_ptr &&e) noexcept;
 
 	ssize_t SendCallback(std::span<const std::byte> src) noexcept;
 
