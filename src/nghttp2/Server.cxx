@@ -334,9 +334,6 @@ ServerConnection::Request::OnHttpHeader(std::string_view name,
 		return 0;
 	}
 
-	const char *allocated_name = alloc.DupZ(name);
-	const char *allocated_value;
-
 	/* the Cookie request header is special: multiple
 	   headers are not concatenated with comma (RFC 2616
 	   4.2), but with semicolon (RFC 6265 4.2.1); to avoid
@@ -350,15 +347,17 @@ ServerConnection::Request::OnHttpHeader(std::string_view name,
 	   here before Apache does the wrong thing */
 	if (name == "cookie"sv) {
 		const char *old_value = headers.Remove(cookie_header);
+		const char *allocated_value;
 		if (old_value != nullptr)
 			allocated_value = alloc.Concat(old_value, "; ",
 						       value);
 		else
 			allocated_value = alloc.DupZ(value);
-	} else
-		allocated_value = alloc.DupZ(value);
+		headers.Add(alloc, cookie_header, allocated_value);
+		return 0;
+	}
 
-	headers.Add(alloc, allocated_name, allocated_value);
+	headers.Add(alloc, alloc.DupZ(name), alloc.DupZ(value));
 	return 0;
 }
 
