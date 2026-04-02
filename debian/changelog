@@ -5,7 +5,7 @@ cm4all-beng-proxy (21.22) unstable; urgency=low
   * nghttp2/client: implement header size limits
   * certdb/acme: fix ES256 signature padding
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Thu, 02 Apr 2026 09:08:46 +0200
 
 cm4all-beng-proxy (21.21) unstable; urgency=low
 
