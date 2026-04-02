@@ -191,8 +191,7 @@ private:
 	 * Zeroconf only.
 	 */
 	ZeroconfMemberMap::const_pointer PickZeroconf(Expiry now, Arch arch,
-						      std::span<const std::byte> sticky_source,
-						      sticky_hash_t sticky_hash) noexcept;
+						      std::span<const std::byte> sticky_source) noexcept;
 
 	/**
 	 * Like PickZeroconf(), but pick using Rendezvous Hashing.
@@ -212,7 +211,6 @@ private:
 				 SocketAddress bind_address,
 				 Arch arch,
 				 std::span<const std::byte> sticky_source,
-				 sticky_hash_t sticky_hash,
 				 Event::Duration timeout,
 				 FilteredSocketBalancerHandler &handler,
 				 CancellablePointer &cancel_ptr) noexcept;
