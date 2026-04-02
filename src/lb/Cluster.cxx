@@ -49,8 +49,6 @@ CalculateStickyHash(std::span<const std::byte> source) noexcept
 #ifdef HAVE_AVAHI
 
 class LbCluster::ZeroconfMember final : public RendezvousHashing::Node, LeakDetector {
-	InetAddress address;
-
 	const FailureRef failure;
 
 	const std::unique_ptr<LbMonitorRef> monitor;
@@ -66,16 +64,6 @@ public:
 
 	ZeroconfMember(const ZeroconfMember &) = delete;
 	ZeroconfMember &operator=(const ZeroconfMember &) = delete;
-
-	SocketAddress GetAddress() const noexcept {
-		return address;
-	}
-
-	void Update(const InetAddress &_address, AvahiStringList *txt,
-		    Avahi::ObjectFlags _flags) noexcept {
-		RendezvousHashing::Node::Update(_address, txt, _flags);
-		address = _address;
-	}
 
 	auto &GetFailureRef() const noexcept {
 		return failure;
@@ -96,7 +84,7 @@ LbCluster::ZeroconfMember::ZeroconfMember(std::string_view key,
 					  const InetAddress &_address,
 					  ReferencedFailureInfo &_failure,
 					  LbMonitorStock *monitors) noexcept
-	:address(_address), failure(_failure),
+	:failure(_failure),
 	 monitor(monitors != nullptr
 		 ? std::make_unique<LbMonitorRef>(monitors->Add(key, _address))
 		 : std::unique_ptr<LbMonitorRef>())
@@ -109,13 +97,13 @@ const char *
 LbCluster::ZeroconfMember::GetLogName(const char *key) const noexcept
 {
 	if (log_name.empty()) {
-		if (!address.IsDefined())
+		if (!GetAddress().IsDefined())
 			return key;
 
 		log_name = key;
 
 		char buffer[512];
-		if (ToString(buffer, address)) {
+		if (ToString(buffer, GetAddress())) {
 			log_name += " (";
 			log_name += buffer;
 			log_name += ")";
