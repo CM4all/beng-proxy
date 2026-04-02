@@ -32,8 +32,9 @@
 
 #ifdef HAVE_AVAHI
 #include "system/Arch.hxx"
+#include "lib/avahi/Arch.hxx"
 #include "lib/avahi/Explorer.hxx"
-#include "lib/avahi/StringListCast.hxx"
+#include "lib/avahi/Weight.hxx"
 
 #include <cmath> // for std::log()
 #include <limits> // for std::numeric_limits
@@ -697,45 +698,14 @@ LbCluster::ConnectZeroconfTcp(AllocatorPtr alloc,
 			  handler, cancel_ptr);
 }
 
-[[gnu::pure]]
-static Arch
-GetArchFromTxt(AvahiStringList *txt) noexcept
-{
-	constexpr std::string_view prefix = "arch="sv;
-	txt = avahi_string_list_find(txt, "arch");
-	return txt != nullptr
-		? ParseArch(Avahi::ToStringView(*txt).substr(prefix.size()))
-		: Arch::NONE;
-}
-
-[[gnu::pure]]
-static double
-GetWeightFromTxt(AvahiStringList *txt) noexcept
-{
-	constexpr std::string_view prefix = "weight="sv;
-	txt = avahi_string_list_find(txt, "weight");
-	if (txt == nullptr)
-		/* there's no "weight" record */
-		return 1.0;
-
-	const char *s = reinterpret_cast<const char *>(txt->text) + prefix.size();
-	char *endptr;
-	double value = strtod(s, &endptr);
-	if (endptr == s || *endptr != '\0' || value <= 0 || value > 1e6)
-		/* parser failed: fall back to default value */
-		return 1.0;
-
-	return value;
-}
-
 void
 LbCluster::OnAvahiNewObject(const std::string &key,
 			    const InetAddress &address,
 			    AvahiStringList *txt,
 			    [[maybe_unused]] Flags flags) noexcept
 {
-	const auto arch = GetArchFromTxt(txt);
-	const auto weight = GetWeightFromTxt(txt);
+	const auto arch = Avahi::GetArchFromTxt(txt);
+	const auto weight = Avahi::GetWeightFromTxt(txt);
 
 	auto [it, inserted] = zeroconf_members.try_emplace(key, key, arch, weight, address,
 							   failure_manager.Make(address),
