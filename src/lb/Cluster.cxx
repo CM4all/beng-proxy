@@ -61,7 +61,6 @@ class LbCluster::ZeroconfMember final : public RendezvousHashing::Node, LeakDete
 
 public:
 	ZeroconfMember(std::string_view key,
-		       Arch _arch, double _weight,
 		       const InetAddress &_address,
 		       ReferencedFailureInfo &_failure,
 		       LbMonitorStock *monitors) noexcept;
@@ -92,12 +91,10 @@ public:
 };
 
 LbCluster::ZeroconfMember::ZeroconfMember(std::string_view key,
-					  Arch _arch, double _weight,
 					  const InetAddress &_address,
 					  ReferencedFailureInfo &_failure,
 					  LbMonitorStock *monitors) noexcept
-	:RendezvousHashing::Node(_address, _arch, _weight),
-	 address(_address), failure(_failure),
+	:address(_address), failure(_failure),
 	 monitor(monitors != nullptr
 		 ? std::make_unique<LbMonitorRef>(monitors->Add(key, _address))
 		 : std::unique_ptr<LbMonitorRef>())
@@ -604,13 +601,10 @@ LbCluster::OnAvahiNewObject(const std::string &key,
 	const auto arch = Avahi::GetArchFromTxt(txt);
 	const auto weight = Avahi::GetWeightFromTxt(txt);
 
-	auto [it, inserted] = zeroconf_members.try_emplace(key, key, arch, weight, address,
+	auto [it, inserted] = zeroconf_members.try_emplace(key, key, address,
 							   failure_manager.Make(address),
 							   monitors);
-	if (!inserted) {
-		/* update existing member */
-		it->second.Update(address, arch, weight);
-	}
+	it->second.Update(address, arch, weight);
 
 	dirty = true;
 }
