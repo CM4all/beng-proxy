@@ -32,9 +32,7 @@
 
 #ifdef HAVE_AVAHI
 #include "system/Arch.hxx"
-#include "lib/avahi/Arch.hxx"
 #include "lib/avahi/Explorer.hxx"
-#include "lib/avahi/Weight.hxx"
 #endif
 
 using std::string_view_literals::operator""sv;
@@ -73,7 +71,10 @@ public:
 		return address;
 	}
 
-	void Update(const InetAddress &_address, Arch _arch, double _weight) noexcept;
+	void Update(const InetAddress &_address, AvahiStringList *txt) noexcept {
+		RendezvousHashing::Node::Update(_address, txt);
+		address = _address;
+	}
 
 	auto &GetFailureRef() const noexcept {
 		return failure;
@@ -102,13 +103,6 @@ LbCluster::ZeroconfMember::ZeroconfMember(std::string_view key,
 }
 
 LbCluster::ZeroconfMember::~ZeroconfMember() noexcept = default;
-
-inline void
-LbCluster::ZeroconfMember::Update(const InetAddress &_address, Arch _arch, double _weight) noexcept
-{
-	RendezvousHashing::Node::Update(_address, _arch, _weight);
-	address = _address;
-}
 
 const char *
 LbCluster::ZeroconfMember::GetLogName(const char *key) const noexcept
@@ -598,13 +592,10 @@ LbCluster::OnAvahiNewObject(const std::string &key,
 			    AvahiStringList *txt,
 			    [[maybe_unused]] Avahi::ObjectFlags flags) noexcept
 {
-	const auto arch = Avahi::GetArchFromTxt(txt);
-	const auto weight = Avahi::GetWeightFromTxt(txt);
-
 	auto [it, inserted] = zeroconf_members.try_emplace(key, key, address,
 							   failure_manager.Make(address),
 							   monitors);
-	it->second.Update(address, arch, weight);
+	it->second.Update(address, txt);
 
 	dirty = true;
 }
