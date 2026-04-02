@@ -71,8 +71,9 @@ public:
 		return address;
 	}
 
-	void Update(const InetAddress &_address, AvahiStringList *txt) noexcept {
-		RendezvousHashing::Node::Update(_address, txt);
+	void Update(const InetAddress &_address, AvahiStringList *txt,
+		    Avahi::ObjectFlags _flags) noexcept {
+		RendezvousHashing::Node::Update(_address, txt, _flags);
 		address = _address;
 	}
 
@@ -590,12 +591,12 @@ void
 LbCluster::OnAvahiNewObject(const std::string &key,
 			    const InetAddress &address,
 			    AvahiStringList *txt,
-			    [[maybe_unused]] Avahi::ObjectFlags flags) noexcept
+			    Avahi::ObjectFlags flags) noexcept
 {
 	auto [it, inserted] = zeroconf_members.try_emplace(key, key, address,
 							   failure_manager.Make(address),
 							   monitors);
-	it->second.Update(address, txt);
+	it->second.Update(address, txt, flags);
 
 	dirty = true;
 }
