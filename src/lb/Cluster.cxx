@@ -577,6 +577,7 @@ LbCluster::ConnectZeroconfTcp(AllocatorPtr alloc,
 
 void
 LbCluster::OnAvahiNewObject(const std::string &key,
+			    [[maybe_unused]] const char *host_name,
 			    const InetAddress &address,
 			    AvahiStringList *txt,
 			    Avahi::ObjectFlags flags) noexcept
