@@ -21,9 +21,9 @@
 #include "net/FailureManager.hxx"
 #include "net/FormatAddress.hxx"
 #include "net/InetAddress.hxx"
+#include "net/rh/Node.hxx"
 #include "util/DereferenceIterator.hxx"
 #include "util/djb_hash.hxx"
-#include "util/FNVHash.hxx"
 #include "util/LeakDetector.hxx"
 #include "AllocatorPtr.hxx"
 #include "HttpMessageResponse.hxx"
@@ -35,26 +35,9 @@
 #include "lib/avahi/Arch.hxx"
 #include "lib/avahi/Explorer.hxx"
 #include "lib/avahi/Weight.hxx"
-
-#include <cmath> // for std::log()
-#include <limits> // for std::numeric_limits
-
-#include <stdlib.h> // for strtod()
 #endif
 
 using std::string_view_literals::operator""sv;
-
-/**
- * The hash algorithm we use for Rendezvous Hashing.  FNV1a is fast
- * and has just the right properties for a good distribution among all
- * nodes.
- *
- * DJB is inferior when the node addresses are too similar (which is
- * often the case when all nodes are on the same local network) and
- * when the sticky_source is too short (e.g. when database serial
- * numbers are used) due to its small prime (33).
- */
-using RendezvousHashAlgorithm = FNV1aAlgorithm<FNVTraits<uint32_t>>;
 
 [[gnu::pure]]
 static sticky_hash_t
@@ -67,7 +50,7 @@ CalculateStickyHash(std::span<const std::byte> source) noexcept
 
 #ifdef HAVE_AVAHI
 
-class LbCluster::ZeroconfMember final : LeakDetector {
+class LbCluster::ZeroconfMember final : public RendezvousHashing::Node, LeakDetector {
 	InetAddress address;
 
 	const FailureRef failure;
@@ -75,29 +58,6 @@ class LbCluster::ZeroconfMember final : LeakDetector {
 	const std::unique_ptr<LbMonitorRef> monitor;
 
 	mutable std::string log_name;
-
-	/**
-	 * The precalculated hash of #address for Rendezvous
-	 * Hashing.
-	 */
-	sticky_hash_t address_hash;
-
-	/**
-	 * The weight of this node (received in a Zeroconf TXT
-	 * record).  We store the negative value because this
-	 * eliminates one minus operator from the method
-	 * CalculateRendezvousScore().
-	 */
-	double negative_weight;
-
-	/**
-	 * A score for rendezvous hashing calculated from the hash of
-	 * the sticky attribute of the current request (e.g. the
-	 * "Host" header) and this server address.
-	 */
-	double rendezvous_score;
-
-	Arch arch;
 
 public:
 	ZeroconfMember(std::string_view key,
@@ -115,16 +75,6 @@ public:
 	}
 
 	void Update(const InetAddress &_address, Arch _arch, double _weight) noexcept;
-
-	void CalculateRendezvousScore(std::span<const std::byte> sticky_source) noexcept;
-
-	Arch GetArch() const noexcept {
-		return arch;
-	}
-
-	double GetRendezvousScore() const noexcept {
-		return rendezvous_score;
-	}
 
 	auto &GetFailureRef() const noexcept {
 		return failure;
@@ -146,13 +96,11 @@ LbCluster::ZeroconfMember::ZeroconfMember(std::string_view key,
 					  const InetAddress &_address,
 					  ReferencedFailureInfo &_failure,
 					  LbMonitorStock *monitors) noexcept
-	:address(_address), failure(_failure),
+	:RendezvousHashing::Node(_address, _arch, _weight),
+	 address(_address), failure(_failure),
 	 monitor(monitors != nullptr
 		 ? std::make_unique<LbMonitorRef>(monitors->Add(key, _address))
-		 : std::unique_ptr<LbMonitorRef>()),
-	 address_hash(RendezvousHashAlgorithm::BinaryHash(address.GetSteadyPart())),
-	 negative_weight(-_weight),
-	 arch(_arch)
+		 : std::unique_ptr<LbMonitorRef>())
 {
 }
 
@@ -161,10 +109,8 @@ LbCluster::ZeroconfMember::~ZeroconfMember() noexcept = default;
 inline void
 LbCluster::ZeroconfMember::Update(const InetAddress &_address, Arch _arch, double _weight) noexcept
 {
-	arch = _arch;
-	negative_weight = -_weight;
+	RendezvousHashing::Node::Update(_address, _arch, _weight);
 	address = _address;
-	address_hash = RendezvousHashAlgorithm::BinaryHash(address.GetSteadyPart());
 }
 
 const char *
@@ -185,45 +131,6 @@ LbCluster::ZeroconfMember::GetLogName(const char *key) const noexcept
 	}
 
 	return log_name.c_str();
-}
-
-/**
- * Convert a quasi-random unsigned 64 bit integer to a
- * double-precision float in the range 0..1, preserving as many bits
- * as possible.  The returned value has no arithmetic meaning; the
- * goal of this function is only to convert a hash value to a floating
- * point value.
- */
-template<std::unsigned_integral I>
-static constexpr double
-UintToDouble(const I i) noexcept
-{
-	constexpr unsigned SRC_BITS = std::numeric_limits<I>::digits;
-
-	/* the mantissa has 53 bits, and this is how many bits we can
-	   preserve in the conversion */
-	constexpr unsigned DEST_BITS = std::numeric_limits<double>::digits;
-
-	if constexpr (DEST_BITS < SRC_BITS) {
-		/* discard upper bits that don't fit into the mantissa */
-		constexpr uint_least64_t mask = (~I{}) >> (SRC_BITS - DEST_BITS);
-		constexpr double max = I{1} << DEST_BITS;
-
-		return (i & mask) / max;
-	} else {
-		/* don't discard anything */
-		static_assert(std::numeric_limits<uintmax_t>::digits > std::numeric_limits<I>::digits);
-		constexpr double max = std::uintmax_t{1} << SRC_BITS;
-
-		return i / max;
-	}
-}
-
-inline void
-LbCluster::ZeroconfMember::CalculateRendezvousScore(std::span<const std::byte> sticky_source) noexcept
-{
-	const auto rendezvous_hash = RendezvousHashAlgorithm::BinaryHash(sticky_source, address_hash);
-	rendezvous_score = negative_weight / std::log(UintToDouble(rendezvous_hash));
 }
 
 #endif // HAVE_AVAHI
@@ -427,7 +334,7 @@ LbCluster::PickZeroconfRendezvous(Expiry now, const Arch arch,
 	assert(!active_zeroconf_members.empty());
 
 	for (auto &i : active_zeroconf_members)
-		i->second.CalculateRendezvousScore(sticky_source);
+		i->second.UpdateRendezvousScore(sticky_source);
 
 	/* sort the list of active Zeroconf members by a mix of its
 	   address hash and the request's hash */
@@ -435,17 +342,7 @@ LbCluster::PickZeroconfRendezvous(Expiry now, const Arch arch,
 		  active_zeroconf_members.end(),
 		  [arch](ZeroconfMemberMap::const_iterator a,
 			 ZeroconfMemberMap::const_iterator b) noexcept {
-			  if (arch != Arch::NONE &&
-			      a->second.GetArch() != b->second.GetArch()) {
-				  [[unlikely]]
-
-				  if (a->second.GetArch() == arch)
-					  return true;
-				  if (b->second.GetArch() == arch)
-					  return false;
-			  }
-
-			  return a->second.GetRendezvousScore() > b->second.GetRendezvousScore();
+			  return RendezvousHashing::Node::Compare(arch, a->second, b->second);
 		  });
 
 	/* return the first "good" member */

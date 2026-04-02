@@ -381,6 +381,12 @@ subdir('src/control')
 libcommon_require_avahi = get_option('zeroconf')
 subdir('libcommon/src/lib/avahi')
 
+if avahi_dep.found()
+  subdir('libcommon/src/net/rh')
+else
+  net_rh_dep = avahi_dep
+endif
+
 if get_option('certdb')
   subdir('libcommon/src/lib/curl')
 endif
@@ -820,6 +826,7 @@ executable(
     libpcre,
     sodium_dep,
     avahi_dep,
+    net_rh_dep,
     pool_dep,
     io_dep,
     io_config_dep,
