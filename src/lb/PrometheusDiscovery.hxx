@@ -40,6 +40,6 @@ private:
 	void OnAvahiNewObject(const std::string &key,
 			      const InetAddress &address,
 			      AvahiStringList *txt,
-			      Flags flags) noexcept override;
+			      Avahi::ObjectFlags flags) noexcept override;
 	void OnAvahiRemoveObject(const std::string &key) noexcept override;
 };

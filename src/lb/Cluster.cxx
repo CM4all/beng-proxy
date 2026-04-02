@@ -596,7 +596,7 @@ void
 LbCluster::OnAvahiNewObject(const std::string &key,
 			    const InetAddress &address,
 			    AvahiStringList *txt,
-			    [[maybe_unused]] Flags flags) noexcept
+			    [[maybe_unused]] Avahi::ObjectFlags flags) noexcept
 {
 	const auto arch = Avahi::GetArchFromTxt(txt);
 	const auto weight = Avahi::GetWeightFromTxt(txt);

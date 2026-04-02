@@ -68,7 +68,7 @@ void
 LbPrometheusDiscovery::OnAvahiNewObject(const std::string &key,
 					const InetAddress &address,
 					[[maybe_unused]] AvahiStringList *txt,
-					[[maybe_unused]] Flags flags) noexcept
+					[[maybe_unused]] Avahi::ObjectFlags flags) noexcept
 {
 	members.insert_or_assign(key, address);
 }
