@@ -90,7 +90,7 @@ class LbCluster::ZeroconfMember final : LeakDetector {
 	double negative_weight;
 
 	/**
-	 * A score for rendezvous hasing calculated from the hash of
+	 * A score for rendezvous hashing calculated from the hash of
 	 * the sticky attribute of the current request (e.g. the
 	 * "Host" header) and this server address.
 	 */
