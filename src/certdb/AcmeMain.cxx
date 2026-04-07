@@ -287,11 +287,15 @@ AcmeAuthorize(const CertDatabaseConfig &db_config, const AcmeConfig &config,
 	}
 }
 
+/**
+ * Wait for the status of an #AcmeOrder to change to something other
+ * than #not_status.
+ */
 static AcmeOrder
-WaitOrderFinishProcessing(EVP_PKEY &account_key,
-			  AcmeClient &client, AcmeOrder &&order)
+WaitOrderStatusNot(EVP_PKEY &account_key, AcmeClient &client,
+		   AcmeOrder &&order, AcmeOrder::Status not_status)
 {
-	while (order.status == AcmeOrder::Status::PROCESSING) {
+	while (order.status == not_status) {
 		std::this_thread::sleep_for(std::chrono::seconds{1});
 		order = client.PollOrder(account_key, order.location.c_str());
 	}
@@ -335,7 +339,8 @@ AcmeNewOrder(const CertDatabaseConfig &db_config, const AcmeConfig &config,
 	order = client.FinalizeOrder(account_key, order, *req);
 	progress();
 
-	order = WaitOrderFinishProcessing(account_key, client, std::move(order));
+	order = WaitOrderStatusNot(account_key, client, std::move(order),
+				   AcmeOrder::Status::PROCESSING);
 	if (order.status != AcmeOrder::Status::VALID)
 		throw FmtRuntimeError("Bad order status: {}",
 				      AcmeOrder::FormatStatus(order.status));
@@ -431,7 +436,8 @@ AcmeRenewCert(const CertDatabaseConfig &db_config, const AcmeConfig &config,
 	order = client.FinalizeOrder(account_key, order, *req);
 	progress();
 
-	order = WaitOrderFinishProcessing(account_key, client, std::move(order));
+	order = WaitOrderStatusNot(account_key, client, std::move(order),
+				   AcmeOrder::Status::PROCESSING);
 	if (order.status != AcmeOrder::Status::VALID)
 		throw FmtRuntimeError("Bad order status: {}",
 				      AcmeOrder::FormatStatus(order.status));
