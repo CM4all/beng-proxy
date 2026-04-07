@@ -303,6 +303,23 @@ WaitOrderStatusNot(EVP_PKEY &account_key, AcmeClient &client,
 	return std::move(order);
 }
 
+/**
+ * Wait for an #AcmeOrder to become ready for finalization.
+ */
+static AcmeOrder
+WaitOrderReady(EVP_PKEY &account_key, AcmeClient &client,
+	       AcmeOrder &&order)
+{
+	order = WaitOrderStatusNot(account_key, client, std::move(order),
+				   AcmeOrder::Status::PENDING);
+
+	if (order.status != AcmeOrder::Status::READY)
+		throw FmtRuntimeError("Unexpected order status before finalize: {}",
+				      AcmeOrder::FormatStatus(order.status));
+
+	return std::move(order);
+}
+
 static void
 AcmeNewOrder(const CertDatabaseConfig &db_config, const AcmeConfig &config,
 	     EVP_PKEY &account_key,
@@ -332,6 +349,8 @@ AcmeNewOrder(const CertDatabaseConfig &db_config, const AcmeConfig &config,
 
 	AcmeAuthorize(db_config, config, account_key, db, client, progress,
 		      identifiers, order.authorizations);
+
+	order = WaitOrderReady(account_key, client, std::move(order));
 
 	const auto cert_key = GenerateEcKey();
 	const auto req = MakeCertRequest(*cert_key, nullptr, identifiers);
@@ -430,6 +449,8 @@ AcmeRenewCert(const CertDatabaseConfig &db_config, const AcmeConfig &config,
 
 	AcmeAuthorize(db_config, config, account_key, db, client, progress,
 		      names, order.authorizations);
+
+	order = WaitOrderReady(account_key, client, std::move(order));
 
 	const auto req = MakeCertRequest(new_key, old_cert);
 
