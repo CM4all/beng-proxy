@@ -5,8 +5,6 @@
 #include "ClientAccounting.hxx"
 #include "event/Loop.hxx"
 #include "net/SocketAddress.hxx"
-#include "net/IPv4Address.hxx"
-#include "net/IPv6Address.hxx"
 #include "util/DeleteDisposer.hxx"
 
 AccountedClientConnection::~AccountedClientConnection() noexcept
@@ -37,41 +35,9 @@ AccountedClientConnection::GetDelay() const noexcept
 		: Event::Duration{};
 }
 
-static constexpr uint_least64_t
-Read64(const uint8_t *src) noexcept
-{
-	uint_least64_t value{};
-	for (unsigned i = 0; i < 8; ++i)
-		value = (value << 8) | src[i];
-	return value;
-}
-
-static constexpr uint_least64_t
-ToInteger(const struct in6_addr &addr) noexcept
-{
-	return Read64(addr.s6_addr) ^ Read64(addr.s6_addr + 8);
-}
-
-static uint_least64_t
-ToInteger(SocketAddress address) noexcept
-{
-	if (address.IsNull())
-		return 0;
-
-	switch (address.GetFamily()) {
-	case AF_INET:
-		return IPv4Address::Cast(address).GetNumericAddressBE();
-
-	case AF_INET6:
-		return ToInteger(IPv6Address::Cast(address).GetAddress());
-
-	default:
-		return 0;
-	}
-}
-
+inline
 PerClientAccounting::PerClientAccounting(ClientAccountingMap &_map,
-					 uint_least64_t _address) noexcept
+					 const BareInetAddress &_address) noexcept
 	:map(_map), address(_address)
 {
 }
@@ -150,8 +116,8 @@ PerClientAccounting::NoteResponseFinished() noexcept
 PerClientAccounting *
 ClientAccountingMap::Get(SocketAddress _address) noexcept
 {
-	const uint_least64_t address = ToInteger(_address);
-	if (address == 0)
+	BareInetAddress address;
+	if (!address.CopyFrom(_address))
 		return nullptr;
 
 	auto [i, inserted] = map.insert_check(address);

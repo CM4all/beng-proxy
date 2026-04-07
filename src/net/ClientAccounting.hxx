@@ -5,6 +5,7 @@
 #pragma once
 
 #include "event/FarTimerEvent.hxx"
+#include "net/BareInetAddress.hxx"
 #include "util/IntrusiveHashSet.hxx"
 #include "util/IntrusiveList.hxx"
 
@@ -47,11 +48,17 @@ class PerClientAccounting final
 
 	ClientAccountingMap &map;
 
-	const uint_least64_t address;
+	const BareInetAddress address;
 
 	struct GetKey {
-		constexpr uint_least64_t operator()(const PerClientAccounting &item) const noexcept {
+		constexpr const BareInetAddress &operator()(const PerClientAccounting &item) const noexcept {
 			return item.address;
+		}
+	};
+
+	struct Hash {
+		constexpr std::size_t operator()(const BareInetAddress &a) const noexcept {
+			return a.Hash();
 		}
 	};
 
@@ -82,7 +89,7 @@ class PerClientAccounting final
 	Event::Duration delay;
 
 public:
-	PerClientAccounting(ClientAccountingMap &_map, uint_least64_t _address) noexcept;
+	PerClientAccounting(ClientAccountingMap &_map, const BareInetAddress &_address) noexcept;
 
 	[[gnu::pure]]
 	bool Check() const noexcept;
@@ -108,8 +115,8 @@ class ClientAccountingMap {
 	using Map = IntrusiveHashSet<PerClientAccounting, 65536,
 				     IntrusiveHashSetOperators<PerClientAccounting,
 							       PerClientAccounting::GetKey,
-							       std::hash<uint_least64_t>,
-							       std::equal_to<uint_least64_t>>>;
+							       PerClientAccounting::Hash,
+							       std::equal_to<BareInetAddress>>>;
 	Map map;
 
 	FarTimerEvent cleanup_timer;

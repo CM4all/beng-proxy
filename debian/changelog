@@ -1,6 +1,6 @@
 cm4all-beng-proxy (21.23) unstable; urgency=low
 
-  * 
+  * lb: do not truncate IP addresses for max_connections_per_ip/tarpit
 
  --   
 
