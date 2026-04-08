@@ -16,6 +16,7 @@
 #include "http/Status.hxx"
 #include "lib/fmt/RuntimeError.hxx"
 #include "lib/openssl/Buffer.hxx"
+#include "lib/openssl/MemBio.hxx"
 #include "lib/openssl/UniqueBIO.hxx"
 #include "lib/sodium/Base64Alloc.hxx"
 #include "util/AllocatedString.hxx"
@@ -399,7 +400,7 @@ AcmeClient::DownloadCertificate(EVP_PKEY &key, const AcmeOrder &order)
 	    GetMimeTypeBase(ct->second) != "application/pem-certificate-chain"sv)
 		throw std::runtime_error("Wrong Content-Type in certificate download");
 
-	UniqueBIO in(BIO_new_mem_buf(response.body.data(), response.body.length()));
+	const auto in = BIO_new_mem_buf(AsBytes(response.body));
 	return UniqueX509((X509 *)PEM_ASN1_read_bio((d2i_of_void *)d2i_X509,
 						    PEM_STRING_X509, in.get(),
 						    nullptr, nullptr, nullptr));

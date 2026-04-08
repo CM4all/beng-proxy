@@ -18,11 +18,12 @@
 #include "lib/openssl/UniqueBIO.hxx"
 #include "lib/openssl/UniqueCertKey.hxx"
 #include "http/Status.hxx"
-#include <span>
 #include "util/MimeType.hxx"
+#include "util/SpanCast.hxx"
 #include "util/StringAPI.hxx"
 
 #include <set>
+#include <span>
 #include <string>
 
 using std::string_view_literals::operator""sv;
@@ -67,7 +68,7 @@ ObtainPukiCertificate(const PukiConfig &config, X509_REQ &req)
 	    GetMimeTypeBase(ct->second) != "application/x-pem-file"sv)
 		throw std::runtime_error("Wrong Content-Type in certificate download");
 
-	UniqueBIO in{BIO_new_mem_buf(response.body.data(), response.body.length())};
+	const auto in = BIO_new_mem_buf(AsBytes(response.body));
 	return UniqueX509{
 		PEM_read_bio_X509(in.get(), nullptr, nullptr, nullptr)
 	};
