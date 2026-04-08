@@ -5,7 +5,7 @@ cm4all-beng-proxy (21.23) unstable; urgency=low
   * certdb/acme: fix JWK EC padding
   * certdb/acme: support P-384 and P-521 account keys
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Wed, 08 Apr 2026 14:59:08 +0200
 
 cm4all-beng-proxy (21.22) unstable; urgency=low
 
