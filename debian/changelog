@@ -3,6 +3,7 @@ cm4all-beng-proxy (21.23) unstable; urgency=low
   * lb: do not truncate IP addresses for max_connections_per_ip/tarpit
   * certdb/acme: wait for ACME order to become ready
   * certdb/acme: fix JWK EC padding
+  * certdb/acme: support P-384 and P-521 account keys
 
  --   
 
