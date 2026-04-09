@@ -23,6 +23,7 @@
 #include "event/FineTimerEvent.hxx"
 #include "http/HeaderLimits.hxx"
 #include "http/HeaderName.hxx"
+#include "http/HeaderValue.hxx"
 #include "http/Method.hxx"
 #include "util/Cancellable.hxx"
 #include "util/CharUtil.hxx"
@@ -506,18 +507,6 @@ WasClient::OnDeferredInputUpdate() noexcept
  * Was::ControlHandler
  */
 
-static constexpr bool
-IsValidHeaderValueChar(char ch) noexcept
-{
-	return ch != '\0' && ch != '\n' && ch != '\r';
-}
-
-static constexpr bool
-IsValidHeaderValue(std::string_view value) noexcept
-{
-	return std::all_of(value.begin(), value.end(), IsValidHeaderValueChar);
-}
-
 static void
 ParseHeaderPacket(AllocatorPtr alloc, StringMap &headers,
 		  std::string_view payload)
@@ -525,7 +514,7 @@ ParseHeaderPacket(AllocatorPtr alloc, StringMap &headers,
 	const auto [name, value] = Split(payload, '=');
 
 	if (value.data() == nullptr || !http_header_name_valid(name) ||
-	    !IsValidHeaderValue(value))
+	    !IsValidHttpHeaderValue(value)) [[unlikely]]
 		throw SocketProtocolError{"Malformed WAS HEADER packet"};
 
 	headers.Add(alloc, alloc.DupToLower(name), alloc.DupZ(value));

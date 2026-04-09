@@ -7,6 +7,7 @@
 #include "strmap.hxx"
 #include "memory/GrowingBuffer.hxx"
 #include "http/HeaderName.hxx"
+#include "http/HeaderValue.hxx"
 #include "util/StaticFifoBuffer.hxx"
 #include "util/StringCompare.hxx"
 #include "util/StringSplit.hxx"
@@ -17,23 +18,6 @@
 
 #include <string.h>
 
-static constexpr bool
-IsValidHeaderValueChar(char ch) noexcept
-{
-	return ch != '\0' && ch != '\n' && ch != '\r';
-}
-
-[[gnu::pure]]
-static bool
-IsValidHeaderValue(std::string_view value) noexcept
-{
-	for (char ch : value)
-		if (!IsValidHeaderValueChar(ch))
-			return false;
-
-	return true;
-}
-
 bool
 header_parse_line(AllocatorPtr alloc, StringMap &headers,
 		  std::string_view line) noexcept
@@ -42,7 +26,7 @@ header_parse_line(AllocatorPtr alloc, StringMap &headers,
 
 	if (value.data() == nullptr ||
 	    !http_header_name_valid(name) ||
-	    !IsValidHeaderValue(value)) [[unlikely]]
+	    !IsValidHttpHeaderValue(value)) [[unlikely]]
 		return false;
 
 	value = StripLeft(value);
