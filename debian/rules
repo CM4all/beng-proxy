@@ -11,6 +11,7 @@ MESON_OPTIONS = \
 	-Dseccomp=enabled \
 	-Dstopwatch=false \
 	-Dsystemd=enabled \
+	-Dtest=enabled \
 	-Dwas=enabled \
 	-Dzeroconf=enabled
 
