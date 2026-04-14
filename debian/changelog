@@ -3,7 +3,7 @@ cm4all-beng-proxy (21.24) unstable; urgency=low
   * http: stricter header name syntax check
   * certdb/acme: fix JWK regression with RSA account keys
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Tue, 14 Apr 2026 08:31:37 +0200
 
 cm4all-beng-proxy (21.23) unstable; urgency=low
 
