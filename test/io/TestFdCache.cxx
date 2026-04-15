@@ -13,6 +13,7 @@
 #include "system/Error.hxx"
 #include "util/Cancellable.hxx"
 #include "util/ScopeExit.hxx"
+#include "util/SpanCast.hxx"
 
 #ifdef HAVE_URING
 #include "io/uring/Queue.hxx"
@@ -20,6 +21,7 @@
 
 #include <gtest/gtest.h>
 
+#include <cstdlib>
 #include <errno.h>
 #include <fcntl.h>
 #include <linux/openat2.h> // for RESOLVE_*
@@ -29,6 +31,11 @@ using std::string_view_literals::operator""sv;
 
 static constexpr struct open_how open_directory_path{
 	.flags = O_PATH|O_DIRECTORY|O_NOFOLLOW|O_CLOEXEC,
+	.resolve = RESOLVE_NO_MAGICLINKS,
+};
+
+static constexpr struct open_how open_read_only_file{
+	.flags = O_RDONLY|O_NOCTTY|O_CLOEXEC|O_NONBLOCK,
 	.resolve = RESOLVE_NO_MAGICLINKS,
 };
 
@@ -99,12 +106,13 @@ public:
 
 	void Start(FileDescriptor directory,
 		   std::string_view path,
-		   const struct open_how &how) noexcept {
+		   const struct open_how &how,
+		   unsigned stx_mask=0) noexcept {
 		assert(!IsPending());
 		error = -1;
 		DiscardLease();
 
-		fd_cache.Get(directory, "/tmp/"sv, path, how, 0,
+		fd_cache.Get(directory, "/tmp/"sv, path, how, stx_mask,
 			     BIND_THIS_METHOD(OnSuccess), BIND_THIS_METHOD(OnError),
 			     cancel_ptr);
 	}
@@ -320,6 +328,44 @@ TEST(TestFdCache, FlushOnCompletion)
 	r.Wait();
 	EXPECT_EQ(r.GetError(), 0);
 }
+
+#ifdef HAVE_URING
+
+/**
+ * Reproduce a bug where a regular-file cache item is flushed while a
+ * second request is waiting for an async statx() update, and the last
+ * old lease then deletes the disabled item via OnAbandoned().
+ */
+TEST(TestFdCache, DebugDeathOnFlushPendingRegularFileStatx)
+{
+	TestFdCacheInstance instance;
+
+	UniqueFileDescriptor fd;
+	if (!fd.Open({instance.dir, "file"},
+		     O_WRONLY|O_CREAT|O_TRUNC|O_CLOEXEC, 0600))
+		std::_Exit(1);
+
+	fd.FullWrite(AsBytes("x"sv));
+
+	Request r1{instance.fd_cache, false};
+	r1.Start(instance.dir, "/tmp/file"sv, open_read_only_file,
+		 STATX_TYPE|STATX_SIZE);
+	r1.Wait();
+
+	Request r2{instance.fd_cache, true};
+	r2.Start(instance.dir, "/tmp/file"sv, open_read_only_file,
+		 STATX_TYPE|STATX_SIZE);
+	if (!r2.IsPending())
+		std::_Exit(2);
+
+	instance.fd_cache.Flush();
+
+	/* dropping the last pre-flush lease triggers
+	   FdCache::Item::OnAbandoned() */
+	r1.DiscardLease();
+}
+
+#endif // HAVE_URING
 
 TEST(TestFdCache, Inotify)
 {
