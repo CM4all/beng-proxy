@@ -303,7 +303,7 @@ private:
 
 	/* virtual methods from SharedAnchor */
 	void OnAbandoned() noexcept override {
-		if (IsDisabled()) {
+		if (IsDisabled() && requests.empty()) {
 			delete this;
 		}
 	}
