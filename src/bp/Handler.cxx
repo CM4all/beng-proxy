@@ -44,9 +44,6 @@
 
 using std::string_view_literals::operator""sv;
 
-static unsigned translation_protocol_version;
-static bool translation_protocol_version_received = false;
-
 static const char *
 GetBounceUri(AllocatorPtr alloc, const IncomingHttpRequest &request,
 	     const char *scheme, const char *host,
@@ -884,10 +881,6 @@ Request::OnTranslateResponse(UniquePoolPtr<TranslateResponse> _response) noexcep
 
 	if (response.session_cookie_same_site != CookieSameSite::DEFAULT)
 		session_cookie_same_site = response.session_cookie_same_site;
-
-	translation_protocol_version_received = true;
-	if (response.protocol_version > translation_protocol_version)
-		translation_protocol_version = response.protocol_version;
 
 	if (response.HasAuth())
 		HandleAuth(std::move(_response));
