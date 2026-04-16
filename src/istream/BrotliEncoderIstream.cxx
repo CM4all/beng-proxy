@@ -78,8 +78,8 @@ BrotliEncoderFilter::SimpleRun(SliceFifoBuffer &input, SliceFifoBuffer &output,
 					 nullptr))
 		throw std::runtime_error{"Brotli error"};
 
-	input.Consume(reinterpret_cast<const std::byte *>(next_in) - r.data());
-	output.Append(reinterpret_cast<std::byte *>(next_out) - w.data());
+	input.Consume(r.size() - available_in);
+	output.Append(w.size() - available_out);
 
 	return {
 		.drained = params.finish && BrotliEncoderIsFinished(state),
