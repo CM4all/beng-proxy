@@ -10,6 +10,7 @@
 #include <brotli/encode.h>
 
 #include <cassert>
+#include <exception> // for std::terminate()
 #include <stdexcept>
 
 class BrotliEncoderFilter final : public SimpleThreadIstreamFilter {
@@ -44,6 +45,10 @@ BrotliEncoderFilter::CreateEncoder() noexcept
 	assert(state == nullptr);
 
 	state = BrotliEncoderCreateInstance(nullptr, nullptr, nullptr);
+	if (state == nullptr) [[unlikely]]
+		/* this function can only fail if the situation is
+		   hopeless anyway */
+		std::terminate();
 
 	/* use medium quality; doesn't use too much CPU, but
 	   compresses reasonably well */
