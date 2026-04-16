@@ -67,18 +67,17 @@ class ThreadIstream final : public FacadeIstream {
 		 * conditions for Run() are not met
 		 */
 		[[nodiscard]]
-		bool PreRun() noexcept {
+		bool PreRun(std::unique_lock<std::mutex> &&lock) noexcept {
 			assert(filter);
 
-			{
-				const std::scoped_lock lock{mutex};
-				istream.unprotected_output.MoveFromAllowNull(output);
-				output.AllocateIfNull(fb_pool_get());
+			istream.unprotected_output.MoveFromAllowNull(output);
+			output.AllocateIfNull(fb_pool_get());
 
-				output_full = output.IsFull();
-				if (output_full)
-					return false;
-			}
+			output_full = output.IsFull();
+			if (output_full)
+				return false;
+
+			lock.unlock();
 
 			return filter->PreRun(*this);
 		}
@@ -89,10 +88,10 @@ class ThreadIstream final : public FacadeIstream {
 			filter->PostRun(*this);
 		}
 
-		void Schedule() noexcept {
+		void Schedule(std::unique_lock<std::mutex> &&lock) noexcept {
 			assert(filter);
 
-			if (PreRun())
+			if (PreRun(std::move(lock)))
 				istream.queue.Add(*this);
 		}
 
@@ -224,12 +223,14 @@ ThreadIstream::Internal::Done() noexcept
 		input.FreeIfEmpty();
 		_again = ThreadIstreamInternal::again || ThreadJob::again;
 		ThreadIstreamInternal::again = false;
-	}
 
-	if (_again && !output_full)
-		Schedule();
-	else
-		PostRun();
+		if (_again && !output_full) {
+			Schedule(std::move(lock));
+		} else {
+			lock.unlock();
+			PostRun();
+		}
+	}
 
 	/* copy reference to stack because the following block may
 	   destroy this object */
@@ -352,7 +353,7 @@ ThreadIstream::ReadBucketsFromInput()
 	}
 
 	if (schedule)
-		internal->Schedule();
+		internal->Schedule(std::unique_lock{internal->mutex});
 
 	if (list.ShouldFallback()) {
 		assert(more);
@@ -425,28 +426,24 @@ ThreadIstream::OutputConsumed() noexcept
 	if (!internal)
 		return false;
 
-	bool dispose_internal;
+	std::unique_lock lock{internal->mutex};
 
-	{
-		const std::scoped_lock lock{internal->mutex};
-		if (internal->output.empty()) {
-			assert(!internal->output_full);
-			return false;
-		}
-
-		unprotected_output.MoveFromAllowNull(internal->output);
-
-		dispose_internal = internal->IsIdle() && internal->output.empty() && internal->input.empty() && !internal->has_input && internal->drained;
+	if (internal->output.empty()) {
+		assert(!internal->output_full);
+		return false;
 	}
 
-	if (dispose_internal) {
+	unprotected_output.MoveFromAllowNull(internal->output);
+
+	if (internal->IsIdle() && internal->output.empty() && internal->input.empty() && !internal->has_input && internal->drained) {
+		lock.unlock();
 		internal.reset();
 		return true;
 	}
 
 	if (internal->output_full) {
 		internal->output_full = false;
-		internal->Schedule();
+		internal->Schedule(std::move(lock));
 	}
 
 	return true;
@@ -523,7 +520,7 @@ ThreadIstream::OnData(std::span<const std::byte> src) noexcept
 
 	const auto [nbytes, was_empty] = internal->LockAppendInput(src);
 	if (was_empty && nbytes > 0)
-		internal->Schedule();
+		internal->Schedule(std::unique_lock{internal->mutex});
 
 	return nbytes;
 }
@@ -536,7 +533,7 @@ ThreadIstream::OnEof() noexcept
 
 	ClearInput();
 	internal->has_input = false;
-	internal->Schedule();
+	internal->Schedule(std::unique_lock{internal->mutex});
 }
 
 void
