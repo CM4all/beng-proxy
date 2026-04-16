@@ -237,7 +237,7 @@ ThreadIstream::Internal::Done() noexcept
 	auto &_istream = istream;
 
 	bool destroyed = false;
-	if (!has_input && input_empty && drained && !_again) {
+	if (!_again && !has_input && input_empty && drained) {
 		/* there is no more input and the filter's output
 		   buffers are drained: we don't need it anymore, we
 		   already have all we need */
