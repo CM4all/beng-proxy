@@ -347,12 +347,13 @@ ThreadIstream::ReadBucketsFromInput()
 
 	if (!more) {
 		CloseInput();
-		internal->has_input = false;
-		schedule = true;
-		result = IstreamReadyResult::CLOSED;
-	}
 
-	if (schedule)
+		result = IstreamReadyResult::CLOSED;
+
+		std::unique_lock lock{internal->mutex};
+		internal->has_input = false;
+		internal->Schedule(std::move(lock));
+	} else if (schedule)
 		internal->Schedule(std::unique_lock{internal->mutex});
 
 	if (list.ShouldFallback()) {
@@ -532,8 +533,10 @@ ThreadIstream::OnEof() noexcept
 	assert(internal->has_input);
 
 	ClearInput();
+
+	std::unique_lock lock{internal->mutex};
 	internal->has_input = false;
-	internal->Schedule(std::unique_lock{internal->mutex});
+	internal->Schedule(std::move(lock));
 }
 
 void
