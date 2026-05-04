@@ -105,6 +105,8 @@ AcmeClient::AcmeClient(const AcmeConfig &config)
 {
 	if (config.debug)
 		glue_http_client.EnableVerbose();
+	if (config.dump)
+		glue_http_client.EnableDump();
 }
 
 AcmeClient::~AcmeClient() noexcept = default;

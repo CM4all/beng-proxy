@@ -524,6 +524,9 @@ Acme(std::span<const char *const> args)
 		} else if (StringIsEqual(arg, "--debug")) {
 			args = args.subspan(1);
 			config.debug = true;
+		} else if (StringIsEqual(arg, "--dump")) {
+			args = args.subspan(1);
+			config.dump = true;
 		} else if (StringIsEqual(arg, "--account-db")) {
 			args = args.subspan(1);
 			config.account_db = true;
@@ -580,6 +583,7 @@ Acme(std::span<const char *const> args)
 			"                use this ACME server\n"
 			"  --tls-ca FILE accept this CA certificate for TLS\n"
 			"  --debug       enable debug mode\n"
+			"  --dump        enable dump mode\n"
 			"  --account-db  load the ACME account key from the database\n"
 			"  --account-key FILE\n"
 			"                load the ACME account key from this file\n"

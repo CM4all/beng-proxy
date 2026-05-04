@@ -18,7 +18,7 @@ class CurlEasy;
 class GlueHttpClient {
 	const char *const tls_ca;
 
-	bool verbose = false;
+	bool verbose = false, dump = false;
 
 	static constexpr Curl::StringOptions default_options{
 		.max_size = 1024 * 1024,
@@ -33,6 +33,10 @@ public:
 
 	void EnableVerbose() noexcept {
 		verbose = true;
+	}
+
+	void EnableDump() noexcept {
+		dump = true;
 	}
 
 	Curl::StringResponse Request(HttpMethod method, const char *uri,

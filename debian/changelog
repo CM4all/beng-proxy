@@ -5,6 +5,7 @@ cm4all-beng-proxy (21.25) unstable; urgency=low
   * lua: fix crash on error() with non-string parameter
   * certdb: delay PostgreSQL reconnect after repeated errors
   * certdb/acme: limit the HTTP response body size
+  * certdb/acme: add option "--dump"
 
  --   
 

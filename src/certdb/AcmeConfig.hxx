@@ -27,6 +27,7 @@ struct AcmeConfig {
 	bool account_db = false;
 
 	bool debug = false;
+	bool dump = false;
 
 	bool staging = false;
 

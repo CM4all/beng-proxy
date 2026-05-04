@@ -7,6 +7,9 @@
 #include "lib/curl/Easy.hxx"
 #include "lib/curl/Slist.hxx"
 #include "lib/curl/StringGlue.hxx"
+#include "util/SpanCast.hxx"
+
+#include <fmt/core.h>
 
 inline CurlEasy
 GlueHttpClient::PrepareRequest(HttpMethod method, const char *uri,
@@ -40,8 +43,21 @@ GlueHttpClient::Request(HttpMethod method, const char *uri,
 			std::span<const std::byte> body,
 			Curl::StringOptions options)
 {
+	if (dump) {
+		fmt::print(stderr, "{} {}\n",
+			   http_method_to_string(method), uri);
+		if (body.data() != nullptr) {
+			fmt::print(stderr, "=== REQUEST BODY ===\n{}\n=== END ===\n", ToStringView(body));
+		}
+	}
+
 	CurlSlist header_list;
 
-	return Curl::StringRequest(PrepareRequest(method, uri, header_list, body),
-				   options);
+	auto response = Curl::StringRequest(PrepareRequest(method, uri, header_list, body),
+					    options);
+
+	if (dump)
+		fmt::print(stderr, "=== RESPONSE BODY ===\n{}\n=== END ===\n", ToStringView(response.body));
+
+	return response;
 }
