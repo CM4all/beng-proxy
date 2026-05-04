@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include "lib/curl/StringOptions.hxx"
 #include "lib/curl/StringResponse.hxx"
 
 #include <cstdint>
@@ -19,6 +20,10 @@ class GlueHttpClient {
 
 	bool verbose = false;
 
+	static constexpr Curl::StringOptions default_options{
+		.max_size = 1024 * 1024,
+	};
+
 public:
 	explicit GlueHttpClient(const char *_tls_ca) noexcept
 		:tls_ca(_tls_ca) {}
@@ -31,7 +36,8 @@ public:
 	}
 
 	Curl::StringResponse Request(HttpMethod method, const char *uri,
-				     std::span<const std::byte> body);
+				     std::span<const std::byte> body,
+				     Curl::StringOptions options=default_options);
 
 private:
 	CurlEasy PrepareRequest(HttpMethod method, const char *uri,

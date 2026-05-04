@@ -56,7 +56,7 @@ ObtainPukiCertificate(const PukiConfig &config, X509_REQ &req)
 	request_headers.Append("Content-Type: text/plain");
 	easy.SetRequestHeaders(request_headers.Get());
 
-	const auto response = Curl::StringRequest(std::move(easy));
+	const auto response = Curl::StringRequest(std::move(easy), {.max_size = 1024 * 1024});
 
 	if (!http_status_is_success(response.status))
 		throw FmtRuntimeError("Status {} from PUKI: {}",
