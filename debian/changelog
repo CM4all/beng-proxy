@@ -10,7 +10,7 @@ cm4all-beng-proxy (21.25) unstable; urgency=low
   * certdb/acme: don't fail if "dns-persist-01" authorization exists
   * certdb/acme: use the "Location" header when polling orders
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Mon, 04 May 2026 22:27:30 +0200
 
 cm4all-beng-proxy (21.24) unstable; urgency=low
 
