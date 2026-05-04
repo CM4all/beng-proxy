@@ -16,7 +16,6 @@
 #include "pexpand.hxx"
 #include "spawn/Prepared.hxx"
 #include "stock/Key.hxx"
-#include "resource_tag.hxx"
 
 using std::string_view_literals::operator""sv;
 
@@ -90,15 +89,36 @@ LhttpAddress::GetChildId(AllocatorPtr alloc) const noexcept
 StringWithHash
 LhttpAddress::GetId(AllocatorPtr alloc) const noexcept
 {
-	StringWithHash id = GetChildId(alloc); // TODO eliminate copy
+	PoolStringBuilder<256> b;
+	std::size_t hash;
 
-	if (host_and_port != nullptr)
-		id = resource_tag_concat(alloc, id, ";h="sv, StringWithHash{host_and_port});
+	char child_options_buffer[16384];
+	if (cached_child_id.IsNull()) {
+		hash = BuildChildId(b, child_options_buffer);
+	} else {
+		/* thie first part of the id (the part that is
+                   specific to the child process) was already
+                   calculated, so let's use that */
+		hash = cached_child_id.hash;
+		b.push_back(cached_child_id.value);
+	}
 
-	if (uri != nullptr)
-		id = resource_tag_concat(alloc, id, ";u="sv, StringWithHash{uri});
+	if (host_and_port != nullptr) {
+		b.push_back(";h=");
+		hash = djb_hash_string(host_and_port, hash);
+		b.push_back(host_and_port);
+	}
 
-	return id;
+	if (uri != nullptr) {
+		b.push_back(";u=");
+		hash = djb_hash_string(uri, hash);
+		b.push_back(uri);
+	}
+
+	return StringWithHash{
+		b.MakeView(alloc),
+		hash,
+	};
 }
 
 LhttpAddress *
