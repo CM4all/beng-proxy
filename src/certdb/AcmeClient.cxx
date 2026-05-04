@@ -383,7 +383,7 @@ AcmeClient::PollOrder(EVP_PKEY &key, const char *url)
 
 	const auto root = ParseJson(std::move(response));
 	CheckThrowError(root, "Failed to poll order");
-	return root.get<AcmeOrder>();
+	return WithLocation(root.get<AcmeOrder>(), response);
 }
 
 UniqueX509
