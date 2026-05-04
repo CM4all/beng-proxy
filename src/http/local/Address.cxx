@@ -10,6 +10,8 @@
 #include "uri/PRelative.hxx"
 #include "uri/Relative.hxx"
 #include "uri/Extract.hxx"
+#include "util/djb_hash.hxx"
+#include "util/SpanCast.hxx"
 #include "util/StringAPI.hxx"
 #include "pexpand.hxx"
 #include "spawn/Prepared.hxx"
@@ -51,6 +53,28 @@ LhttpAddress::PostCacheStore(AllocatorPtr alloc) noexcept
 		cached_child_id = GetChildId(alloc);
 }
 
+inline std::size_t
+LhttpAddress::BuildChildId(PoolStringBuilder<256> &b,
+			   std::span<char, 16384> options_buffer) const noexcept
+{
+	std::size_t hash = options.GetHash();
+
+	const std::string_view path_sv{path};
+	b.push_back(path_sv);
+	hash = djb_hash(AsBytes(path_sv), hash);
+
+	for (std::string_view i : args) {
+		b.push_back("!");
+		b.push_back(i);
+		hash = djb_hash(AsBytes(i), hash);
+	}
+
+	b.emplace_back(options_buffer.data(),
+		       options.MakeId(options_buffer.data()));
+
+	return hash;
+}
+
 StockKey
 LhttpAddress::GetChildId(AllocatorPtr alloc) const noexcept
 {
@@ -58,18 +82,9 @@ LhttpAddress::GetChildId(AllocatorPtr alloc) const noexcept
 		return cached_child_id;
 
 	PoolStringBuilder<256> b;
-	b.push_back(path);
-
 	char child_options_buffer[16384];
-	b.emplace_back(child_options_buffer,
-		       options.MakeId(child_options_buffer));
-
-	for (auto i : args) {
-		b.push_back("!");
-		b.push_back(i);
-	}
-
-	return StockKey{b.MakeView(alloc)};
+	std::size_t hash = BuildChildId(b, child_options_buffer);
+	return StringWithHash{b.MakeView(alloc), hash};
 }
 
 StringWithHash
