@@ -164,9 +164,7 @@ try {
 	char message[1024];
 	StringBuilder b(message);
 
-	b.CheckAppend(indent);
-	std::fill_n(b.GetTail(), indent, ' ');
-	b.Extend(indent);
+	b.Fill(' ', indent);
 
 	b.Append(name);
 
