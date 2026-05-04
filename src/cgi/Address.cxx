@@ -117,12 +117,6 @@ CgiAddress::BuildChildId(PoolStringBuilder<256> &b,
 		hash = djb_hash(AsBytes(i), hash);
 	}
 
-	for (std::string_view i : options.env) {
-		b.push_back("$");
-		b.push_back(i);
-		hash = djb_hash(AsBytes(i), hash);
-	}
-
 	b.emplace_back(options_buffer.data(),
 		       options.MakeId(options_buffer.data()));
 
