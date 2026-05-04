@@ -35,11 +35,11 @@ GlueHttpClient::PrepareRequest(HttpMethod method, const char *uri,
 	return easy;
 }
 
-StringCurlResponse
+Curl::StringResponse
 GlueHttpClient::Request(HttpMethod method, const char *uri,
 			std::span<const std::byte> body)
 {
 	CurlSlist header_list;
 
-	return StringCurlRequest(PrepareRequest(method, uri, header_list, body));
+	return Curl::StringRequest(PrepareRequest(method, uri, header_list, body));
 }

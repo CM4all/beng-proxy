@@ -34,7 +34,7 @@ using json = nlohmann::json;
 
 [[gnu::pure]]
 static bool
-IsJson(const StringCurlResponse &response) noexcept
+IsJson(const Curl::StringResponse &response) noexcept
 {
 	auto i = response.headers.find("content-type");
 	if (i == response.headers.end())
@@ -48,7 +48,7 @@ IsJson(const StringCurlResponse &response) noexcept
 
 [[gnu::pure]]
 static json
-ParseJson(StringCurlResponse &&response)
+ParseJson(Curl::StringResponse &&response)
 {
 	if (!IsJson(response))
 		throw std::runtime_error("JSON expected");
@@ -76,7 +76,7 @@ CheckThrowError(const json &root, const char *msg)
  */
 [[noreturn]]
 static void
-ThrowError(StringCurlResponse &&response, const char *msg)
+ThrowError(Curl::StringResponse &&response, const char *msg)
 {
 	if (IsJson(response)) {
 		const auto root = json::parse(response.body);
@@ -92,7 +92,7 @@ ThrowError(StringCurlResponse &&response, const char *msg)
  */
 [[noreturn]]
 static void
-ThrowStatusError(StringCurlResponse &&response, const char *msg)
+ThrowStatusError(Curl::StringResponse &&response, const char *msg)
 {
 	ThrowError(std::move(response),
 		   fmt::format("{} ({})"sv, msg, http_status_to_string(response.status)).c_str());
@@ -203,7 +203,7 @@ MakeHeader(const EVP_PKEY &key, const char *url, const char *kid,
 	return root;
 }
 
-StringCurlResponse
+Curl::StringResponse
 AcmeClient::Request(HttpMethod method, const char *uri,
 		    std::span<const std::byte> body)
 {
@@ -219,7 +219,7 @@ AcmeClient::Request(HttpMethod method, const char *uri,
 	return response;
 }
 
-StringCurlResponse
+Curl::StringResponse
 AcmeClient::SignedRequest(EVP_PKEY &key,
 			  HttpMethod method, const char *uri,
 			  std::span<const std::byte> payload)
@@ -246,7 +246,7 @@ AcmeClient::SignedRequest(EVP_PKEY &key,
 	return Request(method, uri, AsBytes(root.dump()));
 }
 
-StringCurlResponse
+Curl::StringResponse
 AcmeClient::SignedRequestRetry(EVP_PKEY &key,
 			       HttpMethod method, const char *uri,
 			       std::span<const std::byte> payload)
@@ -275,7 +275,7 @@ AcmeClient::SignedRequestRetry(EVP_PKEY &key,
 
 template<typename T>
 static auto
-WithLocation(T &&t, const StringCurlResponse &response) noexcept
+WithLocation(T &&t, const Curl::StringResponse &response) noexcept
 {
 	auto location = response.headers.find("location");
 	if (location != response.headers.end())

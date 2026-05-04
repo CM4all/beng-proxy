@@ -30,8 +30,8 @@ public:
 		verbose = true;
 	}
 
-	StringCurlResponse Request(HttpMethod method, const char *uri,
-				   std::span<const std::byte> body);
+	Curl::StringResponse Request(HttpMethod method, const char *uri,
+				     std::span<const std::byte> body);
 
 private:
 	CurlEasy PrepareRequest(HttpMethod method, const char *uri,

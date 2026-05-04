@@ -102,22 +102,22 @@ private:
 	 */
 	void EnsureDirectory();
 
-	StringCurlResponse FakeRequest(HttpMethod method, const char *uri,
-				       std::span<const std::byte> body);
+	Curl::StringResponse FakeRequest(HttpMethod method, const char *uri,
+					 std::span<const std::byte> body);
 
-	StringCurlResponse Request(HttpMethod method, const char *uri,
-				   std::span<const std::byte> body);
+	Curl::StringResponse Request(HttpMethod method, const char *uri,
+				     std::span<const std::byte> body);
 
-	StringCurlResponse Request(HttpMethod method, const char *uri,
-				   std::nullptr_t=nullptr) {
+	Curl::StringResponse Request(HttpMethod method, const char *uri,
+				     std::nullptr_t=nullptr) {
 		return Request(method, uri, std::span<const std::byte>{});
 	}
 
-	StringCurlResponse SignedRequest(EVP_PKEY &key,
-					 HttpMethod method, const char *uri,
-					 std::span<const std::byte> payload);
+	Curl::StringResponse SignedRequest(EVP_PKEY &key,
+					   HttpMethod method, const char *uri,
+					   std::span<const std::byte> payload);
 
-	StringCurlResponse SignedRequestRetry(EVP_PKEY &key,
-					      HttpMethod method, const char *uri,
-					      std::span<const std::byte> payload);
+	Curl::StringResponse SignedRequestRetry(EVP_PKEY &key,
+						HttpMethod method, const char *uri,
+						std::span<const std::byte> payload);
 };
