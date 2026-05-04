@@ -37,6 +37,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <sysexits.h> // for EX_*
 #include <sys/stat.h>
 
 using std::string_view_literals::operator""sv;
@@ -618,7 +619,7 @@ try {
 			   "  --progress[=MIN,MAX]  print Workshop job progress\n"
 			   "  --workshop-control    use the Workshop control channel for progress\n");
 
-		return EXIT_FAILURE;
+		return EX_USAGE;
 	}
 
 	/* force line buffering, because this program may be used
@@ -633,7 +634,7 @@ try {
 	const auto *cmd2 = FindCommand(cmd);
 	if (cmd2 == nullptr) {
 		fmt::print(stderr, "Unknown command: {}\n", cmd);
-		return EXIT_FAILURE;
+		return EX_USAGE;
 	}
 
 	try {
@@ -645,7 +646,7 @@ try {
 		else
 			fmt::print(stderr, "Usage: {} {}\n", argv[0],
 				   cmd2->name);
-		return EXIT_FAILURE;
+		return EX_USAGE;
 	}
 
 	return EXIT_SUCCESS;
@@ -654,7 +655,7 @@ try {
 	return EXIT_FAILURE;
 } catch (Usage u) {
 	fmt::print(stderr, "Usage: {} {}\n", argv[0], u.text);
-	return EXIT_FAILURE;
+	return EX_USAGE;
 } catch (const char *msg) {
 	fmt::print(stderr, "{}\n", msg);
 	return EXIT_FAILURE;
