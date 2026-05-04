@@ -191,5 +191,5 @@ try {
 
 	for (const auto &child : children)
 		child->Dump(root_time, indent);
-} catch (StringBuilder::Overflow) {
+} catch (TooLargeError) {
 }

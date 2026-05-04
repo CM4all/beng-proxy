@@ -439,7 +439,7 @@ AnyHttpClient::ProbeHTTP2(struct pool &pool,
 					   bind_address,
 					   *address.addresses.begin(), // TODO
 					   &filter_params);
-	} catch (StringBuilder::Overflow) {
+	} catch (TooLargeError) {
 		/* shouldn't happen */
 		handler.InvokeError(std::current_exception());
 		return;

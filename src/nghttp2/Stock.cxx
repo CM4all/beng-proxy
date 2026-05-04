@@ -348,7 +348,7 @@ Stock::Get(EventLoop &event_loop,
 		MakeFilteredSocketStockKey(b, name, bind_address, address,
 					   filter_params);
 		key_end = b.GetTail();
-	} catch (StringBuilder::Overflow) {
+	} catch (TooLargeError) {
 		/* shouldn't happen */
 		handler.OnNgHttp2StockError(std::current_exception());
 		return;

@@ -327,7 +327,7 @@ FilteredSocketStock::Get(AllocatorPtr alloc,
 		StringBuilder b(key_buffer);
 		MakeFilteredSocketStockKey(b, name, bind_address, address,
 					   filter_params);
-	} catch (StringBuilder::Overflow) {
+	} catch (TooLargeError) {
 		/* shouldn't happen */
 		handler.OnStockItemError(std::current_exception());
 		return;
