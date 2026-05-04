@@ -39,7 +39,7 @@ class AnyHttpClient {
 	struct Request;
 	struct Waiting;
 	class Probe;
-	std::map<std::string, Probe> probes;
+	std::map<std::string, Probe, std::less<>> probes;
 #endif
 
 	SslClientFactory *const ssl_client_factory;
