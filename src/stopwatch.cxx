@@ -180,7 +180,7 @@ try {
 
 	b.Append('\n');
 
-	if (stopwatch_fd.Write(AsBytes(std::string_view{message})) < 0) {
+	if (stopwatch_fd.Write(AsBytes(b.ToStringView(message))) < 0) {
 		stopwatch_fd.Close();
 		return;
 	}

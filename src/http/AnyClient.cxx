@@ -164,7 +164,7 @@ class AnyHttpClient::Probe final : NgHttp2::AlpnHandler {
 	} state = State::UNKNOWN;
 
 public:
-	explicit Probe(AnyHttpClient &_parent, const char *_key) noexcept
+	explicit Probe(AnyHttpClient &_parent, std::string_view _key) noexcept
 		:parent(_parent), key(_key),
 		 defer_again(parent.GetEventLoop(), BIND_THIS_METHOD(OnAgain))
 	{
@@ -429,6 +429,7 @@ AnyHttpClient::ProbeHTTP2(struct pool &pool,
 			  CancellablePointer &cancel_ptr) noexcept
 {
 	char key_buffer[1024];
+	std::string_view key;
 
 	try {
 		StringBuilder b(key_buffer);
@@ -439,13 +440,16 @@ AnyHttpClient::ProbeHTTP2(struct pool &pool,
 					   bind_address,
 					   *address.addresses.begin(), // TODO
 					   &filter_params);
+		key = b.ToStringView(key_buffer);
 	} catch (TooLargeError) {
 		/* shouldn't happen */
 		handler.InvokeError(std::current_exception());
 		return;
 	}
 
-	auto &probe = probes.try_emplace(key_buffer, *this, key_buffer)
+	auto &probe = probes.emplace(std::piecewise_construct,
+				     std::forward_as_tuple(key),
+				     std::forward_as_tuple(*this, key))
 		.first->second;
 	probe.SendRequest(pool, parent_stopwatch, sticky_hash,
 			  filter_params, method, address,

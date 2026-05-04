@@ -323,17 +323,20 @@ FilteredSocketStock::Get(AllocatorPtr alloc,
 	assert(!address.IsNull());
 
 	char key_buffer[1024];
+	std::string_view key_sv;
+
 	try {
 		StringBuilder b(key_buffer);
 		MakeFilteredSocketStockKey(b, name, bind_address, address,
 					   filter_params);
+		key_sv = b.ToStringView(key_buffer);
 	} catch (TooLargeError) {
 		/* shouldn't happen */
 		handler.OnStockItemError(std::current_exception());
 		return;
 	}
 
-	const StockKey key{key_buffer};
+	const StockKey key{key_sv};
 
 	auto request =
 		NewDisposablePointer<FilteredSocketStockRequest>(alloc,
