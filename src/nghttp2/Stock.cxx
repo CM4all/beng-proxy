@@ -342,19 +342,19 @@ Stock::Get(EventLoop &event_loop,
 	   StockGetHandler &handler,
 	   CancellablePointer &cancel_ptr) noexcept
 {
-	char key_buffer[1024], *key_end;
+	char key_buffer[1024];
+	std::string_view key;
+
 	try {
 		StringBuilder b(key_buffer);
 		MakeFilteredSocketStockKey(b, name, bind_address, address,
 					   filter_params);
-		key_end = b.GetTail();
+		key = b.ToStringView(key_buffer);
 	} catch (TooLargeError) {
 		/* shouldn't happen */
 		handler.OnNgHttp2StockError(std::current_exception());
 		return;
 	}
-
-	const std::string_view key{key_buffer, key_end};
 
 	if (auto i = items.find_if(key,
 				   [](const auto &j){return j.IsAvailable();});
