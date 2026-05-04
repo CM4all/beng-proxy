@@ -134,7 +134,9 @@ from_json(const nlohmann::json &j, AcmeChallenge &challenge)
 	j.at("type"sv).get_to(challenge.type);
 	j.at("url"sv).get_to(challenge.uri);
 	j.at("status"sv).get_to(challenge.status);
-	j.at("token"sv).get_to(challenge.token);
+
+	if (const auto token = j.find("token"sv); token != j.end())
+		token->get_to(challenge.token);
 
 	try {
 		CheckThrowError(j);
