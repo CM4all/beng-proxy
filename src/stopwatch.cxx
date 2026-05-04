@@ -168,7 +168,7 @@ try {
 	std::fill_n(b.GetTail(), indent, ' ');
 	b.Extend(indent);
 
-	b.Append(name.c_str());
+	b.Append(name);
 
 	auto w = b.Write();
 	char *p = fmt::format_to_n(w.data(), w.size(), " init={}ms", ToMs(time - root_time)).out;
