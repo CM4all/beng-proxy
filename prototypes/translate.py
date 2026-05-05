@@ -39,9 +39,6 @@ apache_lhttpd = '/usr/lib/cm4all/lhttp/bin/apache-lhttpd'
 functions_api = os.path.join(was_path, 'functions-api')
 
 davos_plain = os.path.join(was_path, 'davos-plain')
-davos_od = os.path.join(was_path, 'davos-od')
-od_conf = '/etc/cm4all/davos/od.conf'
-od_section = 'test'
 
 cgi_re = re.compile(r'\.(?:sh|rb|py|pl|cgi)$')
 php_re = re.compile(r'^(.*\.php\d*)((?:/.*)?)$')
@@ -849,33 +846,6 @@ class Translation(Protocol):
             response.pair('DAVOS_MOUNT', '/dav/')
             response.request_header_forward((HEADER_GROUP_OTHER, HEADER_FORWARD_YES))
             response.response_header_forward((HEADER_GROUP_OTHER, HEADER_FORWARD_YES))
-        elif uri[:8] == '/dav-od/':
-            uri = uri[8:]
-            i = uri.find('/')
-            if i > 0:
-                site = uri[:i]
-                response.packet(TRANSLATE_BASE, '/dav-od/' + site + '/')
-            elif i < 0:
-                response.packet(TRANSLATE_BASE, "/dav-od/")
-                if len(uri) == 0:
-                    response.status(404)
-                    return
-                site = uri
-            else:
-                response.status(404)
-                return
-
-            response.packet(TRANSLATE_REGEX, "^/dav-od/([^/]+)")
-            response.packet(TRANSLATE_WAS, davos_od)
-            response.packet(TRANSLATE_NO_NEW_PRIVS)
-            response.packet(TRANSLATE_APPEND, od_conf)
-            response.packet(TRANSLATE_APPEND, od_section)
-            response.pair('DAVOS_MOUNT', '/dav-od/' + site + '/')
-            response.packet(TRANSLATE_EXPAND_PAIR, r'DAVOS_MOUNT=/dav-od/\1/')
-            response.pair('DAVOS_SITE', site)
-            response.packet(TRANSLATE_EXPAND_PAIR, r'DAVOS_SITE=\1')
-            response.request_header_forward((HEADER_GROUP_OTHER, HEADER_FORWARD_YES))
-            response.response_header_forward((HEADER_GROUP_OTHER, HEADER_FORWARD_YES))
         elif uri == '/validate_mtime':
             response.path(os.path.join(demo_path, 'hello.txt'))
             stamp_path = '/tmp/stamp'
@@ -1281,9 +1251,6 @@ if __name__ == '__main__':
         sed_fastcgi = os.path.join(src_dir, 'sed/sed/fsed')
         functions_api = os.path.join(src_dir, 'workshop/output/debug/functions-api')
         davos_plain = os.path.join(src_dir, 'davos/output/debug/davos-plain')
-        davos_od = os.path.join(src_dir, 'davos/output/debug/davos-od')
-        od_conf = '/home/max/people/cmag/od/od.conf'
-        od_section = 'test'
 
     if len(argv) >= 2:
         path = argv[1]
