@@ -18,6 +18,7 @@ class MatchData;
  */
 struct FileAddress {
 	const char *path;
+	const char *append_path = nullptr;
 	const char *gzipped = nullptr;
 
 	/**

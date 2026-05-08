@@ -15,6 +15,7 @@
 FileAddress::FileAddress(AllocatorPtr alloc, const FileAddress &src,
 			 const char *_path) noexcept
 	:path(_path),
+	 append_path(alloc.CheckDup(src.append_path)),
 	 gzipped(alloc.CheckDup(src.gzipped)),
 	 beneath(alloc.CheckDup(src.beneath)),
 	 base(alloc.CheckDup(src.base)),
@@ -136,6 +137,10 @@ FileAddress::Expand(AllocatorPtr alloc, const MatchData &match_data)
 }
 
 void
-FileAddress::Finalize([[maybe_unused]] AllocatorPtr alloc) noexcept
+FileAddress::Finalize(AllocatorPtr alloc) noexcept
 {
+	if (append_path != nullptr) {
+		path = alloc.Concat(path, append_path);
+		append_path = nullptr;
+	}
 }

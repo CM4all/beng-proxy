@@ -805,6 +805,9 @@ served.  The following packets are available:
 - ``EXPAND_PATH``: Override the path with the given value (after
   expanding); see :ref:`tresponse`.
 
+- ``APPEND_PATH``: Append this string to the ``PATH`` (after applying
+  ``BASE`` or ``EXPAND_PATH``).
+
 - ``AUTO_BROTLI_PATH``: Build the precompressed Brotli path by
   appending :file:`.br` to the ``PATH``.
 
