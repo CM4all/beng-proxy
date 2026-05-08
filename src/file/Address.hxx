@@ -103,4 +103,9 @@ public:
 	 * Throws std::runtime_error on error.
 	 */
 	void Expand(AllocatorPtr alloc, const MatchData &match_data);
+
+	/**
+	 * Finalize pending edits to this object before it will be used.
+	 */
+	void Finalize(AllocatorPtr alloc) noexcept;
 };

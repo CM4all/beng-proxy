@@ -724,3 +724,24 @@ ResourceAddress::Expand(AllocatorPtr alloc, const MatchData &match_data)
 		break;
 	}
 }
+
+void
+ResourceAddress::Finalize(AllocatorPtr alloc) noexcept
+{
+	switch (type) {
+	case Type::NONE:
+		break;
+
+	case Type::LOCAL:
+		u.file->Finalize(alloc);
+		break;
+
+	case Type::PIPE:
+	case Type::CGI:
+	case Type::FASTCGI:
+	case Type::WAS:
+	case Type::HTTP:
+	case Type::LHTTP:
+		break;
+	}
+}

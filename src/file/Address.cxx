@@ -134,3 +134,8 @@ FileAddress::Expand(AllocatorPtr alloc, const MatchData &match_data)
 		path = expand_string_unescaped(alloc, path, match_data);
 	}
 }
+
+void
+FileAddress::Finalize([[maybe_unused]] AllocatorPtr alloc) noexcept
+{
+}

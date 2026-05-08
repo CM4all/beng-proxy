@@ -336,6 +336,11 @@ public:
 	 */
 	void Expand(AllocatorPtr alloc, const MatchData &match_data);
 
+	/**
+	 * Finalize pending edits to this object before it will be used.
+	 */
+	void Finalize(AllocatorPtr alloc) noexcept;
+
 private:
 	void PostCacheStore(AllocatorPtr alloc) noexcept;
 };

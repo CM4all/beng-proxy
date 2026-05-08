@@ -807,6 +807,8 @@ Request::HandleChainResponse(UniquePoolPtr<TranslateResponse> _response) noexcep
 void
 Request::OnTranslateResponse(UniquePoolPtr<TranslateResponse> _response) noexcept
 {
+	_response->Finalize(*request.pool);
+
 	const auto &response = *_response;
 
 	if (response.protocol_version < 2) {
