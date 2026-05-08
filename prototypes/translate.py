@@ -335,9 +335,8 @@ class Translation(Protocol):
         response.packet(TRANSLATE_DOCUMENT_ROOT, document_root)
 
         if request.probe_path_suffixes is None:
-            response.packet(TRANSLATE_REGEX, r'^(.*)$')
-            response.packet(TRANSLATE_REGEX_TAIL)
-            response.packet(TRANSLATE_EXPAND_TEST_PATH, document_root + r'/\1')
+            response.packet(TRANSLATE_EASY_BASE)
+            response.packet(TRANSLATE_TEST_PATH, document_root + r'/')
             response.packet(TRANSLATE_PROBE_PATH_SUFFIXES, 'pps')
             response.packet(TRANSLATE_PROBE_SUFFIX, '.py')
             response.packet(TRANSLATE_PROBE_SUFFIX, '.php')
