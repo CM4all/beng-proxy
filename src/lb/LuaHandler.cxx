@@ -17,6 +17,7 @@
 #include "lua/sodium/Init.hxx"
 #include "lua/event/Init.hxx"
 #include "lua/json/Init.hxx"
+#include "lua/jwt/Init.hxx"
 #include "lib/fmt/RuntimeError.hxx"
 #include "util/ScopeExit.hxx"
 
@@ -41,6 +42,7 @@ LbLuaHandler::LbLuaHandler(EventLoop &event_loop,
 
 	Lua::InitJson(L);
 	Lua::InitSodium(L);
+	Lua::InitJwt(L);
 
 	Lua::InitEvent(L, event_loop);
 

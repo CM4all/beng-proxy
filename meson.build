@@ -362,7 +362,6 @@ ssl2_sources = []
 
 if get_option('certdb')
   subdir('libcommon/src/pg')
-  subdir('libcommon/src/jwt')
 
   ssl2_sources += [
     '../certdb/CertDatabase.cxx',
@@ -377,6 +376,16 @@ if get_option('certdb')
   ]
 else
   pg_dep = dependency('', required: false)
+endif
+
+if get_option('certdb') or lua_dep.found()
+  subdir('libcommon/src/jwt')
+endif
+
+if lua_dep.found()
+  subdir('libcommon/src/lua/jwt')
+else
+  lua_jwt_dep = lua_dep
 endif
 
 subdir('src/ssl')
@@ -859,6 +868,7 @@ executable(
     lua_dep,
     lua_event_dep,
     lua_json_dep,
+    lua_jwt_dep,
     lua_sodium_dep,
     pcre_dep,
     cluster_dep,
