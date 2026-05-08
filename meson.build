@@ -235,6 +235,9 @@ subdir('libcommon/src/http')
 subdir('libcommon/src/lua')
 subdir('libcommon/src/memory')
 
+libcommon_enable_json = lua_dep.found() or get_option('certdb')
+subdir('libcommon/src/lib/nlohmann_json')
+
 subdir('src/memory')
 subdir('src/prometheus')
 
@@ -281,7 +284,9 @@ subdir('src/cache')
 if lua_dep.found()
   subdir('libcommon/src/lua/sodium')
   subdir('libcommon/src/lua/event')
+  subdir('libcommon/src/lua/json')
 else
+  lua_json_dep = lua_dep
   lua_sodium_dep = lua_dep
   lua_event_dep = lua_dep
 endif
@@ -357,7 +362,6 @@ ssl2_sources = []
 
 if get_option('certdb')
   subdir('libcommon/src/pg')
-  subdir('libcommon/src/lib/nlohmann_json')
   subdir('libcommon/src/jwt')
 
   ssl2_sources += [
@@ -854,6 +858,7 @@ executable(
     odbus_dep,
     lua_dep,
     lua_event_dep,
+    lua_json_dep,
     lua_sodium_dep,
     pcre_dep,
     cluster_dep,
