@@ -572,6 +572,10 @@ Response
   directory. :program:`beng-proxy` will repeat the translation request with this
   packet echoed.
 
+- ``DIRECTORY_INDEX_SLASH``: If ``DIRECTORY_INDEX`` applies but the
+  request URI path does not end with a slash, automatically send a
+  redirect appending the slash.
+
 - ``TEST_PATH``: Test the specified file. If this packet is not
   present, then the path from the resource address is used (``PATH``,
   ``CGI``, ``FASTCGI``, ``LHTTP_PATH``). Affects the packets

@@ -260,11 +260,6 @@ class Translation(Protocol):
             response.packet(TRANSLATE_PATH_INFO, os.path.join(cgi_path, 'directory_index.py'))
             response.pair('DIRECTORY', '/dummy')
             response.packet(TRANSLATE_EXPAND_PAIR, r'DIRECTORY=%s/\1' % document_root)
-        elif request.directory_index:
-            # directory without trailing slash: redirect with slash appended
-            response.packet(TRANSLATE_REGEX, r'^(.*)$')
-            response.packet(TRANSLATE_REDIRECT, 'dummy')
-            response.packet(TRANSLATE_EXPAND_REDIRECT, r'\1/')
         elif uri[-4:] == '.cls':
             # run COMA-FastCGI
             response.packet(TRANSLATE_REGEX, r'^(.*\.cls)$')
@@ -328,6 +323,7 @@ class Translation(Protocol):
             response.packet(TRANSLATE_AUTO_GZIPPED)
             response.packet(TRANSLATE_ENOTDIR, 'foo')
             response.packet(TRANSLATE_DIRECTORY_INDEX, 'foo')
+            response.packet(TRANSLATE_DIRECTORY_INDEX_SLASH)
 
     def _handle_probe(self, request, response, base, uri,
                       document_root: str='/var/www'):

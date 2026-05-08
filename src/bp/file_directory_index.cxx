@@ -6,14 +6,37 @@
 #include "Instance.hxx"
 #include "translation/Response.hxx"
 #include "io/FileAt.hxx"
+#include "AllocatorPtr.hxx"
 
 #include <assert.h>
 #include <fcntl.h>
 #include <sys/stat.h>
 
+using std::string_view_literals::operator""sv;
+
+inline void
+Request::RedirectWithTrailingSlash() noexcept
+{
+	const AllocatorPtr alloc{pool};
+
+	const char *redirect_uri = alloc.Concat(dissected_uri.base, '/',
+						dissected_uri.args.data() != nullptr ? ";"sv : ""sv,
+						dissected_uri.args,
+						dissected_uri.path_info,
+						dissected_uri.query.data() != nullptr ? "?"sv : ""sv,
+						dissected_uri.query);
+	DispatchRedirect(HttpStatus::SEE_OTHER, redirect_uri, {});
+}
+
 inline void
 Request::SubmitDirectoryIndex(const TranslateResponse &response) noexcept
 {
+	if (response.directory_index_slash &&
+	    !dissected_uri.base.ends_with('/')) {
+		RedirectWithTrailingSlash();
+		return;
+	}
+
 	if (++translate.n_directory_index > 4) {
 		LogDispatchError(HttpStatus::BAD_GATEWAY,
 				 "Got too many consecutive DIRECTORY_INDEX packets",

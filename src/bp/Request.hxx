@@ -567,6 +567,11 @@ private:
 	UniquePoolPtr<PendingResponse> CheckRedirectBounceStatus(const TranslateResponse &response) noexcept;
 	bool CheckHandleRedirectBounceStatus(const TranslateResponse &response) noexcept;
 
+	/**
+	 * Submit a redirect to the current request URI with a trailing slash.
+	 */
+	void RedirectWithTrailingSlash() noexcept;
+
 	bool DoContentTypeLookup(const ResourceAddress &address) noexcept;
 
 public:
