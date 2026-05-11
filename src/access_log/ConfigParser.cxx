@@ -55,6 +55,10 @@ AccessLogConfigParser::ParseLine(FileLineParser &line)
 			throw LineParser::Error("Number is too large");
 
 		line.ExpectEnd();
+	} else if (StringIsEqual(word, "send_backend_errors") &&
+		   !is_child_error_logger) {
+		config.send_backend_errors = line.NextBool();
+		line.ExpectEnd();
 	} else if (StringIsEqual(word, "forward_child_errors") &&
 		   !is_child_error_logger) {
 		config.forward_child_errors = line.NextBool();
@@ -88,7 +92,8 @@ AccessLogConfigParser::Finish()
 		config.send_access_logs = false;
 	}
 
-	if (!config.send_access_logs && !config.forward_child_errors)
+	if (!config.send_access_logs && !config.send_backend_errors &&
+	    !config.forward_child_errors)
 		config.type = AccessLogConfig::Type::DISABLED;
 
 	if (!type_selected)

@@ -102,6 +102,10 @@ The following ``access_logger`` options are available:
   if the ``Host`` header is “localhost” and the response status is
   ``200 OK``.
 
+- ``send_backend_errors``: ``yes`` sends internal backend errors
+  (e.g. spawner errors or HTTP/FastCGI/WAS client errors) to the
+  logger.
+
 - ``forward_child_errors``: “yes” forwards error messages from child
   processes (``stderr``) to the logger (and not to the local journal).
 

@@ -58,12 +58,18 @@ struct BpRequestLogger final : IncomingHttpRequestLogger {
 	 */
 	std::string_view stats_tag{};
 
+	const bool send_backend_errors;
+
 	const bool access_logger_only_errors;
 
 	BpRequestLogger(BpInstance &_instance,
 			BpListenerStats &_http_stats,
 			AccessLogGlue *_access_logger,
 			bool _access_logger_only_errors) noexcept;
+
+	void LogHttpError(IncomingHttpRequest &request,
+			  HttpStatus status,
+			  std::string_view message) noexcept;
 
 	/* virtual methods from class IncomingHttpRequestLogger */
 	void LogHttpRequest(IncomingHttpRequest &request,

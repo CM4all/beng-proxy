@@ -7,6 +7,7 @@
  */
 
 #include "Request.hxx"
+#include "RLogger.hxx"
 #include "Instance.hxx"
 #include "http/Client.hxx"
 #include "cgi/Error.hxx"
@@ -159,6 +160,9 @@ Request::LogDispatchError(HttpStatus status,
 		msg = alloc.Dup(log_msg);
 	}
 
+	if (auto &rl = *(BpRequestLogger *)request.logger; rl.send_backend_errors)
+		rl.LogHttpError(request, status, log_msg);
+
 	DispatchError(status, msg);
 }
 
@@ -185,6 +189,9 @@ Request::LogDispatchError(std::exception_ptr ep) noexcept
 	logger(response.status == HttpStatus::INTERNAL_SERVER_ERROR ? 1 : 2,
 	       "error on '", request.uri, "': ", ep);
 
+	if (auto &rl = *(BpRequestLogger *)request.logger; rl.send_backend_errors)
+		rl.LogHttpError(request, response.status, GetFullMessage(ep));
+
 	DispatchError(response.status, response.message);
 }
 
@@ -198,6 +205,9 @@ Request::LogDispatchError(HttpStatus status, std::string_view msg,
 		return;
 
 	logger(log_level, "error on '", request.uri, "': ", ep);
+
+	if (auto &rl = *(BpRequestLogger *)request.logger; rl.send_backend_errors)
+		rl.LogHttpError(request, status, GetFullMessage(ep));
 
 	if (instance.config.verbose_response)
 		msg = p_strdup(pool, GetFullMessage(ep));
@@ -217,6 +227,9 @@ Request::LogDispatchErrno(int error, std::string_view msg) noexcept
 
 	logger(response.status == HttpStatus::INTERNAL_SERVER_ERROR ? 1 : 2,
 	       "error on '", request.uri, "': ", msg, ": ", strerror(error));
+
+	if (auto &rl = *(BpRequestLogger *)request.logger; rl.send_backend_errors)
+		rl.LogHttpError(request, response.status, msg);
 
 	DispatchError(response.status, response.message);
 }

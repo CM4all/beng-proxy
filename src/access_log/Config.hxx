@@ -60,6 +60,12 @@ struct AccessLogConfig {
 	bool send_access_logs = true;
 
 	/**
+	 * If a backend fails, shall the error message be sent to the
+	 * Pond server?
+	 */
+	bool send_backend_errors = false;
+
+	/**
 	 * Forward error messages printed by child processes into their
 	 * stderr pipe to the Pond server?
 	 */

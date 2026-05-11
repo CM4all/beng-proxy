@@ -157,6 +157,49 @@ AccessLogGlue::Log(std::chrono::system_clock::time_point now,
 	    duration);
 }
 
+void
+AccessLogGlue::LogHttpError(std::chrono::system_clock::time_point now,
+			    const IncomingHttpRequest &request, const char *site,
+			    const char *generator,
+			    const char *forwarded_to,
+			    HttpStatus status,
+			    std::string_view message) noexcept
+{
+	assert(http_method_is_valid(request.method));
+	assert(status == HttpStatus{} || http_status_is_valid(status));
+
+	const char *remote_host = request.headers.Get(host_header);
+	const char *x_forwarded_for = request.headers.Get(x_forwarded_for_header);
+
+	std::string buffer;
+
+	if (const auto r = config.xff.GetRealRemoteHost(remote_host, request.remote_address,
+							x_forwarded_for);
+	    !r.empty()) {
+		buffer.assign(r);
+		remote_host = buffer.c_str();
+	}
+
+	auto d = Net::Log::Datagram{
+		.timestamp = Net::Log::FromSystem(now),
+		.remote_host = remote_host,
+		.host = request.headers.Get(host_header),
+		.site = site,
+		.generator = generator,
+		.forwarded_to = forwarded_to,
+		.http_uri = NullableStringView(request.uri),
+		.message = message,
+		.http_method = request.method,
+		.http_status = status,
+		.type = Net::Log::Type::HTTP_ERROR,
+	};
+
+	d.TruncateHttpUri(1024);
+	d.TruncateMessage(1024);
+
+	Log(d);
+}
+
 Net::Log::Sink *
 AccessLogGlue::GetChildSink() noexcept
 {

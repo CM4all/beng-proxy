@@ -19,8 +19,24 @@ BpRequestLogger::BpRequestLogger(BpInstance &_instance,
 	 instance(_instance), http_stats(_http_stats),
 	 access_logger(_access_logger),
 	 clock(instance.event_loop.SteadyNow()),
+	 send_backend_errors(access_logger != nullptr && access_logger->GetSendBackendErrors()),
 	 access_logger_only_errors(_access_logger_only_errors)
 {
+}
+
+void
+BpRequestLogger::LogHttpError(IncomingHttpRequest &request,
+			      HttpStatus status,
+			      std::string_view message) noexcept
+{
+	assert(send_backend_errors);
+	assert(access_logger != nullptr);
+
+	access_logger->LogHttpError(instance.event_loop.SystemNow(),
+				    request, site_name,
+				    generator != nullptr && *generator != 0 ? generator : nullptr,
+				    nullptr,
+				    status, message);
 }
 
 void

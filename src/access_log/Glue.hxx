@@ -47,6 +47,10 @@ public:
 		return config.send_access_logs;
 	}
 
+	bool GetSendBackendErrors() const noexcept {
+		return config.send_backend_errors;
+	}
+
 	void Log(const Net::Log::Datagram &d) noexcept;
 
 	/**
@@ -84,6 +88,13 @@ public:
 		 int64_t length,
 		 uint64_t bytes_received, uint64_t bytes_sent,
 		 std::chrono::steady_clock::duration duration) noexcept;
+
+	void LogHttpError(std::chrono::system_clock::time_point now,
+			  const IncomingHttpRequest &request, const char *site,
+			  const char *generator,
+			  const char *forwarded_to,
+			  HttpStatus status,
+			  std::string_view message) noexcept;
 
 	/**
 	 * Returns the connected log sink to be used to send child
