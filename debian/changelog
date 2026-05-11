@@ -3,7 +3,7 @@ cm4all-beng-proxy (21.28) unstable; urgency=low
   * bp: support ENOTDIR with LAYOUT
   * bp: fix ENOTDIR with only a trailing slash
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Mon, 11 May 2026 22:46:39 +0200
 
 cm4all-beng-proxy (21.27) unstable; urgency=low
 
