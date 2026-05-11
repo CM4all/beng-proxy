@@ -863,6 +863,11 @@ Request::OnTranslateResponse(UniquePoolPtr<TranslateResponse> _response) noexcep
 		return;
 	}
 
+	if (response.no_query_string && dissected_uri.query.data() != nullptr) {
+		DispatchError(HttpStatus::NOT_FOUND, "Not found");
+		return;
+	}
+
 	if (response.transparent)
 		args.Clear();
 

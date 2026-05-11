@@ -324,6 +324,7 @@ class Translation(Protocol):
             response.packet(TRANSLATE_ENOTDIR, 'foo')
             response.packet(TRANSLATE_DIRECTORY_INDEX, 'foo')
             response.packet(TRANSLATE_DIRECTORY_INDEX_SLASH)
+            response.packet(TRANSLATE_NO_QUERY_STRING)
 
     def _handle_probe(self, request, response, base, uri,
                       document_root: str='/var/www'):
