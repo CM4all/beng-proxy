@@ -3,7 +3,7 @@ cm4all-beng-proxy (21.27) unstable; urgency=low
   * http: allow 0x80..0xff in header values
   * translation: add packet NO_QUERY_STRING
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Mon, 11 May 2026 14:47:50 +0200
 
 cm4all-beng-proxy (21.26) unstable; urgency=low
 
