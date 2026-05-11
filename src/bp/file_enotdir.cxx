@@ -39,6 +39,10 @@ Request::SubmitEnotdir(const TranslateResponse &response) noexcept
 		translate.request.uri = translate.enotdir_uri =
 			p_strdup(&pool, uri);
 		translate.enotdir_path_info = uri + strlen(uri);
+
+		/* since the request URI was modified, we need to
+		   restart the LAYOUT translation */
+		translate.request.layout = {};
 	}
 
 	const char *slash = (const char *)
