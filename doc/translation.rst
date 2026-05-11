@@ -631,6 +631,10 @@ Response
   URI.  This can be combined with ``EAGER_CACHE`` to prevent
   cache-busting with random query strings.
 
+- ``NO_QUERY_STRING``: No query string is allowed/supported on this
+  request URI.  The webserver is allowed to reject requests with a
+  query string.
+
 - ``AUTO_FLUSH_CACHE``: All (successful) modifying requests (``POST``,
   ``PUT`` ...) flush the HTTP cache of the specified ``CACHE_TAG``.
 
