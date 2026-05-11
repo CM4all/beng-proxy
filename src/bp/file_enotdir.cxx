@@ -58,9 +58,26 @@ Request::SubmitEnotdir(const TranslateResponse &response) noexcept
 }
 
 inline void
-Request::OnEnotdirStat([[maybe_unused]] const struct statx &st) noexcept
+Request::OnEnotdirStat(const struct statx &st) noexcept
 {
 	assert(translate.pending_response);
+
+	if (!S_ISDIR(st.stx_mode)) {
+		const auto &response = *translate.pending_response;
+		const auto &address = response.address.GetFile();
+		const std::string_view path{address.path};
+		assert(!path.empty());
+
+		if (path.back() == '/') {
+			/* this trailing slash was stripped by
+			  StatFileAddressAfterBase(), but since this
+			  turns out to not be a directory, we handle
+			  this as if it were ENOTDIR */
+
+			if (!SubmitEnotdir(response))
+				return;
+		}
+	}
 
 	OnTranslateResponseAfterEnotdir(std::move(translate.pending_response));
 }
