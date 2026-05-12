@@ -140,7 +140,13 @@ void
 FileAddress::Finalize(AllocatorPtr alloc) noexcept
 {
 	if (append_path != nullptr) {
-		path = alloc.Concat(path, append_path);
+		if (StringIsEqual(path, "."))
+			/* this is a special path set by SaveBase() or
+			   LoadBase() and should be discarded */
+			path = append_path;
+		else
+			path = alloc.Concat(path, append_path);
+
 		append_path = nullptr;
 	}
 }

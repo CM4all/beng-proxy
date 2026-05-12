@@ -1,5 +1,6 @@
 cm4all-beng-proxy (21.29) unstable; urgency=low
 
+  * bp: fix APPEND_PATH with BASE
   * access_log: add option "send_backend_errors"
 
  --   
