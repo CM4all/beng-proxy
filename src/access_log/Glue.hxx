@@ -43,6 +43,10 @@ public:
 		return config.xff;
 	}
 
+	bool GetSendAccessLogs() const noexcept {
+		return config.send_access_logs;
+	}
+
 	void Log(const Net::Log::Datagram &d) noexcept;
 
 	/**

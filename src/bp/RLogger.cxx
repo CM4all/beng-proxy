@@ -44,6 +44,7 @@ BpRequestLogger::LogHttpRequest(IncomingHttpRequest &request,
 			      duration);
 
 	if (access_logger != nullptr &&
+	    access_logger->GetSendAccessLogs() &&
 	    (!access_logger_only_errors || http_status_is_error(status)))
 		access_logger->Log(instance.event_loop.SystemNow(),
 				   request, site_name,

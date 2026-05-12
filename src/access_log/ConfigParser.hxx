@@ -12,7 +12,7 @@
  */
 class AccessLogConfigParser : public ConfigParser {
 	AccessLogConfig config;
-	bool enabled = true, type_selected = false;
+	bool type_selected = false;
 
 	const bool is_child_error_logger;
 

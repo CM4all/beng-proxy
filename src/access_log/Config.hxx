@@ -55,6 +55,11 @@ struct AccessLogConfig {
 	unsigned max_size = 1452;
 
 	/**
+	 * Send logs of every HTTP request to this logger?
+	 */
+	bool send_access_logs = true;
+
+	/**
 	 * Forward error messages printed by child processes into their
 	 * stderr pipe to the Pond server?
 	 */

@@ -16,8 +16,8 @@ AccessLogConfigParser::ParseLine(FileLineParser &line)
 	const char *word = line.ExpectWord();
 
 	if (StringIsEqual(word, "enabled") && !is_child_error_logger) {
-		enabled = line.NextBool();
-		line.ExpectEnd();
+		config.send_access_logs = line.NextBool();
+		type_selected = true;
 	} else if (StringIsEqual(word, "send_to")) {
 		if (type_selected)
 			throw LineParser::Error("Access logger already defined");
@@ -83,13 +83,13 @@ AccessLogConfigParser::ParseLine(FileLineParser &line)
 void
 AccessLogConfigParser::Finish()
 {
-	if (is_child_error_logger)
+	if (is_child_error_logger) {
 		config.forward_child_errors = true;
-
-	if (!enabled) {
-		config.type = AccessLogConfig::Type::DISABLED;
-		type_selected = true;
+		config.send_access_logs = false;
 	}
+
+	if (!config.send_access_logs && !config.forward_child_errors)
+		config.type = AccessLogConfig::Type::DISABLED;
 
 	if (!type_selected)
 		throw std::runtime_error("Empty access_logger block");
