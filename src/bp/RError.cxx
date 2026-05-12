@@ -190,7 +190,7 @@ Request::LogDispatchError(std::exception_ptr ep) noexcept
 	       "error on '", request.uri, "': ", ep);
 
 	if (auto &rl = *(BpRequestLogger *)request.logger; rl.send_backend_errors)
-		rl.LogHttpError(request, response.status, GetFullMessage(ep));
+		rl.LogHttpError(request, response.status, GetInnerMessage(ep));
 
 	DispatchError(response.status, response.message);
 }
@@ -207,7 +207,7 @@ Request::LogDispatchError(HttpStatus status, std::string_view msg,
 	logger(log_level, "error on '", request.uri, "': ", ep);
 
 	if (auto &rl = *(BpRequestLogger *)request.logger; rl.send_backend_errors)
-		rl.LogHttpError(request, status, GetFullMessage(ep));
+		rl.LogHttpError(request, status, GetInnerMessage(ep));
 
 	if (instance.config.verbose_response)
 		msg = p_strdup(pool, GetFullMessage(ep));
