@@ -39,9 +39,13 @@ AccessLogConfigParser::ParseLine(FileLineParser &line)
 	} else if (StringIsEqual(word, "trust_xff") && !is_child_error_logger) {
 		const char *value = line.ExpectValueAndEnd();
 
-		if (*value != '/' && *value != '@' && strchr(value, '/') != nullptr)
-			config.xff.trust_networks.emplace_front(value);
-		else
+		if (*value != '/' && *value != '@' && strchr(value, '/') != nullptr) {
+			MaskedInetAddress mask;
+			if (!mask.Parse(value))
+				    throw LineParser::Error{"Failed to parse address"};
+
+			config.xff.trust_networks.push_back(mask);
+		} else
 			config.xff.trust.emplace(value);
 	} else if (StringIsEqual(word, "trust_xff_interface") && !is_child_error_logger) {
 		config.xff.trust_interfaces.emplace(line.ExpectValueAndEnd());

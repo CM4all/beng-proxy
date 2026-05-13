@@ -5,6 +5,8 @@
 #include "http/XForwardedFor.hxx"
 #include "net/Parser.hxx"
 #include "net/Literals.hxx"
+#include "net/IPv6Address.hxx"
+#include "net/AllocatedSocketAddress.hxx"
 
 #include <gtest/gtest.h>
 
@@ -15,9 +17,9 @@ TEST(HttpUtil, XFF)
 	const XForwardedForConfig config{
 		{"192.168.0.1", "127.0.0.1", "::1", "dead::beef", "localhost"},
 		{
-			MaskedSocketAddress{"c0ff:ee::/32"},
-			MaskedSocketAddress{"10.42.0.0/16"},
-			MaskedSocketAddress{"192.168.128.0/18"},
+			{IPv6Address{0xc0ff, 0xee, 0, 0, 0, 0, 0, 0, 42}, 32},
+			{"10.42.0.0"_ipv4, 96+16},
+			{"192.168.128.0"_ipv4, 96+18},
 		},
 	};
 

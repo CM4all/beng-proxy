@@ -4,11 +4,11 @@
 
 #pragma once
 
-#include "net/MaskedSocketAddress.hxx"
+#include "net/MaskedInetAddress.hxx"
 
-#include <forward_list>
 #include <string>
 #include <set>
+#include <vector>
 
 /**
  * Configuration which describes whether and how to log HTTP requests.
@@ -24,7 +24,7 @@ struct XForwardedForConfig {
 	 * Like #trust, but contains a list of network addresses
 	 * (IPv4/IPv6 address with netmask).
 	 */
-	std::forward_list<MaskedSocketAddress> trust_networks;
+	std::vector<MaskedInetAddress> trust_networks;
 
 	/**
 	 * The "X-Forwarded-For" entries of all proxy servers on these
