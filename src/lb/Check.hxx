@@ -4,10 +4,10 @@
 
 #pragma once
 
-#include "net/MaskedSocketAddress.hxx"
+#include "net/MaskedInetAddress.hxx"
 
 #include <string>
-#include <forward_list>
+#include <vector>
 
 class SocketAddress;
 
@@ -17,7 +17,7 @@ struct LbHttpCheckConfig {
 	std::string file_exists;
 	std::string success_message;
 
-	std::forward_list<MaskedSocketAddress> client_addresses;
+	std::vector<MaskedInetAddress> client_addresses;
 
 	[[gnu::pure]]
 	bool MatchClientAddress(SocketAddress address) const noexcept;

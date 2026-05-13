@@ -1415,7 +1415,11 @@ LbConfigParser::GlobalHttpCheck::ParseLine(FileLineParser &line)
 		if (*value == 0)
 			throw LineParser::Error("'client' must not be empty");
 
-		config.client_addresses.emplace_front(value);
+		MaskedInetAddress m;
+		if (!m.Parse(value))
+			throw LineParser::Error("Failed to parse address");
+
+		config.client_addresses.push_back(m);
 	} else if (StringIsEqual(word, "file_exists")) {
 		if (!config.file_exists.empty())
 			throw LineParser::Error("'file_exists' already specified");
