@@ -6,9 +6,10 @@
 
 #include "net/MaskedSocketAddress.hxx"
 
-#include <algorithm>
 #include <string>
 #include <forward_list>
+
+class SocketAddress;
 
 struct LbHttpCheckConfig {
 	std::string host;
@@ -19,15 +20,7 @@ struct LbHttpCheckConfig {
 	std::forward_list<MaskedSocketAddress> client_addresses;
 
 	[[gnu::pure]]
-	bool MatchClientAddress(SocketAddress address) const noexcept {
-		if (client_addresses.empty())
-			return true;
-
-		return std::any_of(client_addresses.begin(), client_addresses.end(),
-				   [=](const MaskedSocketAddress &i){
-					   return i.Matches(address);
-				   });
-	}
+	bool MatchClientAddress(SocketAddress address) const noexcept;
 
 	[[gnu::pure]]
 	bool Match(const char *request_uri,
