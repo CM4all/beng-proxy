@@ -3,9 +3,10 @@
 // author: Max Kellermann <max.kellermann@ionos.com>
 
 #include "ConditionConfig.hxx"
+#include "net/SocketAddress.hxx"
 
 bool
 LbConditionConfig::MatchAddress(SocketAddress address) const noexcept
 {
-	return std::get<MaskedSocketAddress>(value).Matches(address);
+	return std::get<MaskedInetAddress>(value).Matches(address);
 }

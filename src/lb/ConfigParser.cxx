@@ -826,7 +826,11 @@ ParseCondition(FileLineParser &line)
 		if (s == nullptr)
 			throw LineParser::Error("Value expected");
 
-		return {std::move(a), negate, MaskedSocketAddress{s}};
+		MaskedInetAddress m;
+		if (!m.Parse(s))
+			throw LineParser::Error("Failed to parse address");
+
+		return {std::move(a), negate, m};
 	}
 
 	bool re, negate;

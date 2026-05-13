@@ -6,7 +6,7 @@
 
 #include "http/Method.hxx"
 #include "lib/pcre/UniqueRegex.hxx"
-#include "net/MaskedSocketAddress.hxx"
+#include "net/MaskedInetAddress.hxx"
 
 #include <cassert>
 #include <string>
@@ -70,7 +70,7 @@ struct LbConditionConfig {
 
 	bool negate;
 
-	std::variant<std::string, UniqueRegex, MaskedSocketAddress> value;
+	std::variant<std::string, UniqueRegex, MaskedInetAddress> value;
 
 	LbConditionConfig(LbAttributeReference &&a, bool _negate,
 			  const char *_string) noexcept
@@ -83,9 +83,9 @@ struct LbConditionConfig {
 		 negate(_negate), value(std::move(_regex)) {}
 
 	LbConditionConfig(LbAttributeReference &&a, bool _negate,
-			  MaskedSocketAddress &&_mask) noexcept
+			  const MaskedInetAddress _mask) noexcept
 		:attribute_reference(std::move(a)),
-		 negate(_negate), value(std::move(_mask)) {}
+		 negate(_negate), value(_mask) {}
 
 	LbConditionConfig(LbConditionConfig &&other) = default;
 
@@ -125,7 +125,7 @@ private:
 			return v.Match(s);
 		}
 
-		bool operator()(const MaskedSocketAddress &) const noexcept {
+		bool operator()(const MaskedInetAddress &) const noexcept {
 			/* unreachable - handled as a special case */
 			std::unreachable();
 		}
