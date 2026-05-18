@@ -1,6 +1,6 @@
 cm4all-beng-proxy (21.30) unstable; urgency=low
 
-  * 
+  * spawn: fix SYMLINK conflict in virtual directories
 
  --   
 
