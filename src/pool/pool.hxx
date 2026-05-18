@@ -203,24 +203,20 @@ p_strndup(struct pool *pool, const char *src, size_t length
 #define p_strndup_fwd(pool, src, length) p_strndup(pool, src, length TRACE_ARGS_FWD)
 
 template<typename T>
+requires std::is_trivially_default_constructible_v<T>
 [[gnu::malloc]] [[gnu::returns_nonnull]]
 T *
 PoolAlloc(pool &p) noexcept
 {
-	static_assert(std::is_trivially_default_constructible<T>::value,
-		      "Must be trivially constructible");
-
 	return (T *)p_malloc_type(p, sizeof(T) TYPE_ARG(T));
 }
 
 template<typename T>
+requires std::is_trivially_default_constructible_v<T>
 [[gnu::malloc]] [[gnu::returns_nonnull]]
 T *
 PoolAlloc(pool &p, size_t n) noexcept
 {
-	static_assert(std::is_trivially_default_constructible<T>::value,
-		      "Must be trivially constructible");
-
 	return (T *)p_malloc_type(p, sizeof(T) * n TYPE_ARG(T));
 }
 
