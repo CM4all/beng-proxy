@@ -68,9 +68,8 @@ public:
 	}
 
 	template<typename T>
+	requires std::is_trivial_v<T>
 	T *NewArray(size_t n) const noexcept {
-		static_assert(std::is_trivial_v<T>);
-
 		return PoolAlloc<T>(pool, n);
 	}
 
@@ -90,9 +89,8 @@ public:
 	 * allocated array wrapped in a std::span.
 	 */
 	template<typename T>
+	requires std::is_trivially_destructible_v<T>
 	std::span<const T> Dup(std::initializer_list<T> src) const noexcept {
-		static_assert(std::is_trivially_destructible_v<T>);
-
 		auto *dest = NewArray<T>(src.size());
 		std::copy(src.begin(), src.end(), dest);
 
@@ -103,9 +101,8 @@ public:
 	 * Construct an array with items from a std::initializer_list.
 	 */
 	template<typename T, typename U>
+	requires std::is_trivially_destructible_v<T>
 	std::span<const T> ConstructArray(std::initializer_list<U> src) const noexcept {
-		static_assert(std::is_trivially_destructible_v<T>);
-
 		auto *dest = NewArray<T>(src.size());
 		std::transform(src.begin(), src.end(), dest, [](const U &i){
 			return T{i};
@@ -119,9 +116,8 @@ public:
 	 * AllocatorPtr &, const T &" for each item.
 	 */
 	template<typename T>
+	requires std::is_trivially_destructible_v<T>
 	std::span<const T> CloneArray(std::span<const T> src) const noexcept {
-		static_assert(std::is_trivially_destructible_v<T>);
-
 		if (src.data() == nullptr)
 			return {};
 
