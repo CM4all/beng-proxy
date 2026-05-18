@@ -224,14 +224,6 @@ PoolAlloc(pool &p, size_t n) noexcept
 	return (T *)p_malloc_type(p, sizeof(T) * n TYPE_ARG(T));
 }
 
-template<>
-[[gnu::malloc]] [[gnu::returns_nonnull]]
-inline void *
-PoolAlloc<void>(pool &p, size_t n) noexcept
-{
-	return p_malloc(&p, n);
-}
-
 template<typename T, typename... Args>
 [[gnu::malloc]] [[gnu::returns_nonnull]]
 T *
