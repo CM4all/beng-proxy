@@ -76,6 +76,7 @@ public:
 	std::span<const std::byte> Dup(std::span<const std::byte> src) const noexcept;
 
 	template<typename T>
+	requires std::is_standard_layout_v<T> && std::is_trivially_copyable_v<T>
 	std::span<const T> Dup(std::span<const T> src) const noexcept {
 		auto dest = Dup(std::as_bytes(src));
 		return {
