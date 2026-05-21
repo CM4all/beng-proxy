@@ -804,7 +804,12 @@ class StockItemPrinter:
         self.val = val
 
     def to_string(self):
-        return f"StockItem{{{self.val.dynamic_type} {self.val.address}}}"
+        flags = ''
+        if self.val['fade']:
+            flags += ' fade'
+        if self.val['unclean']:
+            flags += ' unclean'
+        return f"StockItem{{{self.val.dynamic_type} {self.val.address}{flags}}}"
 
 class StockMapPrinter:
     def __init__(self, val):
