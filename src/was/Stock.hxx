@@ -84,6 +84,12 @@ public:
 		stock.FadeKey(key);
 	}
 
+	void TerminateAll() noexcept {
+		stock.TerminateAll();
+	}
+
+	void TerminateTag(std::string_view tag) noexcept;
+
 	void ExpireKey(StockKey key, Event::TimePoint time) noexcept {
 		stock.ExpireKey(key, time);
 	}

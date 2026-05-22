@@ -113,6 +113,11 @@ public:
 		}
 	}
 
+	void Terminate() noexcept {
+		Fade();
+		server = {};
+	}
+
 	void Borrow() {
 		if (error && !ExpireError())
 			std::rethrow_exception(error);
@@ -290,6 +295,23 @@ ListenStreamStock::FadeTag(std::string_view tag) noexcept
 	items.for_each([tag](auto &i){
 		if (i.IsTag(tag))
 			i.Fade();
+	});
+}
+
+void
+ListenStreamStock::TerminateAll() noexcept
+{
+	items.for_each([](auto &i){
+		i.Terminate();
+	});
+}
+
+void
+ListenStreamStock::TerminateTag(std::string_view tag) noexcept
+{
+	items.for_each([tag](auto &i){
+		if (i.IsTag(tag))
+			i.Terminate();
 	});
 }
 

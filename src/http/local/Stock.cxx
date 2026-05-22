@@ -182,6 +182,16 @@ LhttpStock::FadeTag(std::string_view tag) noexcept
 }
 
 void
+LhttpStock::TerminateTag(std::string_view tag) noexcept
+{
+	mchild_stock.TerminateIf([tag](const StockItem &_item){
+		auto &item = (const ChildStockItem &)_item;
+		return StringListContains(item.GetTag(), '\0',
+					  tag);
+	});
+}
+
+void
 LhttpStock::Get(StockKey key, const CgiChildParams &params,
 		StockGetHandler &handler,
 		CancellablePointer &cancel_ptr) noexcept

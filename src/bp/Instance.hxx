@@ -259,6 +259,12 @@ struct BpInstance final : PInstance, BengControl::Handler,
 	void FadeChildren() noexcept;
 	void FadeTaggedChildren(std::string_view tag) noexcept;
 
+	/**
+	 * Handler for #CONTROL_TERMINATE_CHILDREN
+	 */
+	void TerminateChildren() noexcept;
+	void TerminateTaggedChildren(std::string_view tag) noexcept;
+
 	void ReloadState() noexcept;
 
 	void ShutdownCallback() noexcept;

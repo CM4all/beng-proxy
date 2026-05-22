@@ -205,6 +205,12 @@ ChildStockItem::Release() noexcept
 	return true;
 }
 
+void
+ChildStockItem::Terminate() noexcept
+{
+	handle.reset();
+}
+
 #ifdef HAVE_LIBSYSTEMD
 
 inline void

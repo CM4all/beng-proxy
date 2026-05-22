@@ -278,6 +278,46 @@ BpInstance::FadeTaggedChildren(std::string_view tag) noexcept
 }
 
 void
+BpInstance::TerminateChildren() noexcept
+{
+	if (lhttp_stock != nullptr)
+		lhttp_stock->TerminateAll();
+
+	if (fcgi_stock != nullptr)
+		fcgi_stock->TerminateAll();
+
+#ifdef HAVE_LIBWAS
+	if (was_stock != nullptr)
+		was_stock->TerminateAll();
+	if (multi_was_stock != nullptr)
+		multi_was_stock->TerminateAll();
+#endif
+
+	if (listen_stream_stock)
+		listen_stream_stock->TerminateAll();
+}
+
+void
+BpInstance::TerminateTaggedChildren(std::string_view tag) noexcept
+{
+	if (lhttp_stock != nullptr)
+		lhttp_stock->TerminateTag(tag);
+
+	if (fcgi_stock != nullptr)
+		fcgi_stock->TerminateTag(tag);
+
+#ifdef HAVE_LIBWAS
+	if (was_stock != nullptr)
+		was_stock->TerminateTag(tag);
+	if (multi_was_stock != nullptr)
+		multi_was_stock->TerminateTag(tag);
+#endif
+
+	if (listen_stream_stock)
+		listen_stream_stock->TerminateTag(tag);
+}
+
+void
 BpInstance::FlushTranslationCaches() noexcept
 {
 	if (widget_registry != nullptr)

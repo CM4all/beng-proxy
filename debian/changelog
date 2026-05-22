@@ -1,5 +1,6 @@
 cm4all-beng-proxy (21.31) unstable; urgency=low
 
+  * bp/control: implement TERMINATE_CHILDREN
   * stock: fix use-after-free bug
 
  --   

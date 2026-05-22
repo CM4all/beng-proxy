@@ -96,6 +96,15 @@ WasStock::FadeTag(std::string_view tag) noexcept
 }
 
 void
+WasStock::TerminateTag(std::string_view tag) noexcept
+{
+	stock.TerminateIf([tag](const StockItem &item){
+		const auto &child = static_cast<const WasChild &>(item);
+		return child.IsTag(tag);
+	});
+}
+
+void
 WasStock::Create(CreateStockItem c, StockRequest _request,
 		 StockGetHandler &handler,
 		 CancellablePointer &)

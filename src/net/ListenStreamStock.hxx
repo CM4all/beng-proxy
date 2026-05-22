@@ -67,6 +67,9 @@ public:
 	void FadeAll() noexcept;
 	void FadeTag(std::string_view tag) noexcept;
 
+	void TerminateAll() noexcept;
+	void TerminateTag(std::string_view tag) noexcept;
+
 	/**
 	 * Discard all sockets that are no longer used (referenced via
 	 * #SharedLease) by anybody.

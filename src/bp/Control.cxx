@@ -256,7 +256,14 @@ BpInstance::OnControlPacket(BengControl::Command command,
 		break;
 
 	case Command::TERMINATE_CHILDREN:
-		// TODO terminate immediately, no fade
+		if (!payload.empty())
+			/* tagged fade is allowed for any unprivileged client */
+			TerminateTaggedChildren(ToStringView(payload));
+		else if (is_privileged)
+			/* unconditional fade is only allowed for privileged
+			   clients */
+			TerminateChildren();
+		break;
 
 	case Command::FADE_CHILDREN:
 		if (!payload.empty())

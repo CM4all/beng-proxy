@@ -119,6 +119,7 @@ public:
 	/* virtual methods from class StockItem */
 	bool Borrow() noexcept override;
 	bool Release() noexcept override;
+	void Terminate() noexcept override;
 
 
 private:

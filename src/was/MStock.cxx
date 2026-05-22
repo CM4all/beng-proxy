@@ -209,6 +209,15 @@ MultiWasStock::FadeTag(std::string_view tag) noexcept
 }
 
 void
+MultiWasStock::TerminateTag(std::string_view tag) noexcept
+{
+	mchild_stock.TerminateIf([tag](const StockItem &item){
+		const auto &child = static_cast<const MultiWasChild &>(item);
+		return child.IsTag(tag);
+	});
+}
+
+void
 MultiWasStock::Get(StockKey key, const CgiChildParams &params,
 		   StockGetHandler &handler,
 		   CancellablePointer &cancel_ptr) noexcept
