@@ -41,7 +41,7 @@ struct TranslationLayoutItem {
 	TranslationLayoutItem() = default;
 
 	[[nodiscard]]
-	explicit TranslationLayoutItem(Type _type, std::string_view _value) noexcept
+	explicit TranslationLayoutItem(Type _type, std::string_view _value)
 		:value(_value), type(_type)
 	{
 		if (type == Type::REGEX)
