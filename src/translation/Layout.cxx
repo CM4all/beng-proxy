@@ -7,6 +7,14 @@
 
 #include <cassert>
 
+TranslationLayoutItem::TranslationLayoutItem(Type _type,
+					     std::string_view _value)
+	:value(_value), type(_type)
+{
+	if (type == Type::REGEX)
+		regex.Compile(value, {.anchored=true});
+}
+
 bool
 TranslationLayoutItem::Match(const char *uri) const noexcept
 {
