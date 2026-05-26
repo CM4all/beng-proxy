@@ -26,6 +26,8 @@ class TranslationGlue::Request final
 {
 	const AllocatorPtr alloc;
 
+	Pcre::Cache &pcre_cache;
+
 	[[no_unique_address]]
 	StopwatchPtr stopwatch;
 
@@ -40,12 +42,14 @@ class TranslationGlue::Request final
 
 public:
 	Request(AllocatorPtr _alloc,
+		Pcre::Cache &_pcre_cache,
 		const TranslateRequest &_request,
 		const StopwatchPtr &parent_stopwatch,
 		TranslateHandler &_handler,
 		CancellablePointer &_cancel_ptr) noexcept
 		:PoolLeakDetector(_alloc),
 		 alloc(_alloc),
+		 pcre_cache(_pcre_cache),
 		 stopwatch(parent_stopwatch, "translate",
 			   _request.GetDiagnosticName()),
 		 request(_request),
@@ -95,7 +99,9 @@ TranslationGlue::Request::OnStockItemReady(StockItem &_item) noexcept
 	/* cancellation will not be handled by this class from here on;
 	   instead, we pass the caller's CancellablePointer to
 	   translate() */
-	translate(alloc, _item.GetStock().GetEventLoop(), std::move(stopwatch),
+	translate(alloc, _item.GetStock().GetEventLoop(),
+		  pcre_cache,
+		  std::move(stopwatch),
 		  TranslationStock::GetSocket(_item),
 		  *this,
 		  request, handler,
@@ -121,7 +127,7 @@ TranslationGlue::SendRequest(AllocatorPtr alloc,
 			      TranslateHandler &handler,
 			      CancellablePointer &cancel_ptr) noexcept
 {
-	auto r = alloc.New<Request>(alloc, request,
+	auto r = alloc.New<Request>(alloc, pcre_cache, request,
 				    parent_stopwatch,
 				    handler, cancel_ptr);
 	r->Start(stock);

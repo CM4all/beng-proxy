@@ -38,12 +38,13 @@ TranslationStockBuilder::~TranslationStockBuilder() noexcept = default;
 
 std::shared_ptr<TranslationService>
 TranslationStockBuilder::Get(SocketAddress address,
-			     EventLoop &event_loop) noexcept
+			     EventLoop &event_loop,
+			     Pcre::Cache &pcre_cache) noexcept
 {
 	auto e = m.try_emplace(address, nullptr);
 	if (e.second)
 		e.first->second = std::make_shared<TranslationGlue>
-			(event_loop, address, limit);
+			(event_loop, pcre_cache, address, limit);
 
 	return e.first->second;
 }
@@ -109,14 +110,15 @@ TranslationCacheBuilder::ExpireTag(std::string_view tag,
 
 std::shared_ptr<TranslationService>
 TranslationCacheBuilder::Get(SocketAddress address,
-			     EventLoop &event_loop) noexcept
+			     EventLoop &event_loop,
+			     Pcre::Cache &pcre_cache) noexcept
 {
 	auto e = m.try_emplace(address, nullptr);
 	if (e.second)
 		e.first->second = std::make_shared<TranslationCache>
 			(pool, event_loop,
 			 // TODO: refactor to std::shared_ptr?
-			 *builder.Get(address, event_loop),
+			 *builder.Get(address, event_loop, pcre_cache),
 			 max_size, false);
 
 	return e.first->second;

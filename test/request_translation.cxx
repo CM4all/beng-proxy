@@ -14,6 +14,7 @@
 #include "http/Address.hxx"
 #include "file/Address.hxx"
 #include "cgi/Address.hxx"
+#include "lib/pcre/Cache.hxx"
 #include "net/LocalSocketAddress.hxx"
 #include "util/Cancellable.hxx"
 #include "util/PrintException.hxx"
@@ -137,8 +138,10 @@ main(int argc, char **argv)
 
 	static constexpr LocalSocketAddress translation_socket{"@translation"sv};
 
+	Pcre::Cache pcre_cache;
 	TranslationGlue stock{
 		instance.event_loop,
+		pcre_cache,
 		translation_socket,
 		0,
 	};

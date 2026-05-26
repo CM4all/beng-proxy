@@ -6,6 +6,7 @@
 
 #include "Goto.hxx"
 #include "translation/Glue.hxx"
+#include "lib/pcre/Cache.hxx"
 #include "util/StringLess.hxx"
 
 #include <map>
@@ -23,6 +24,9 @@ class LbTranslationCache;
 
 class LbTranslationHandler final {
 	const char *const name;
+
+	// TODO eliminate; REGEX not used by beng-lb
+	Pcre::Cache pcre_cache;
 
 	TranslationGlue stock;
 

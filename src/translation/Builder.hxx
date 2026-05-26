@@ -22,6 +22,7 @@ class TranslationService;
 struct TranslateRequest;
 struct TranslateResponse;
 enum class TranslationCommand : uint16_t;
+namespace Pcre { class Cache; }
 
 struct SocketAddressCompare {
 	bool operator()(SocketAddress a, SocketAddress b) const noexcept;
@@ -30,7 +31,8 @@ struct SocketAddressCompare {
 class TranslationServiceBuilder {
 public:
 	virtual std::shared_ptr<TranslationService> Get(SocketAddress address,
-							EventLoop &event_loop) noexcept = 0;
+							EventLoop &event_loop,
+							Pcre::Cache &pcre_cache) noexcept = 0;
 };
 
 class TranslationStockBuilder final : public TranslationServiceBuilder {
@@ -44,7 +46,8 @@ public:
 	~TranslationStockBuilder() noexcept;
 
 	std::shared_ptr<TranslationService> Get(SocketAddress address,
-						EventLoop &event_loop) noexcept override;
+						EventLoop &event_loop,
+						Pcre::Cache &pcre_cache) noexcept override;
 };
 
 class TranslationCacheBuilder final : public TranslationServiceBuilder {
@@ -81,5 +84,6 @@ public:
 	void ExpireTag(std::string_view tag, ExpireCallback callback) noexcept;
 
 	std::shared_ptr<TranslationService> Get(SocketAddress address,
-						EventLoop &event_loop) noexcept override;
+						EventLoop &event_loop,
+						Pcre::Cache &pcre_cache) noexcept override;
 };

@@ -15,6 +15,7 @@
 #ifdef HAVE_LIBWAS
 #include "was/MetricsHandler.hxx"
 #endif
+#include "lib/pcre/Cache.hxx"
 #include "memory/SlicePool.hxx"
 #include "event/SignalEvent.hxx"
 #include "event/ShutdownListener.hxx"
@@ -177,6 +178,8 @@ struct BpInstance final : PInstance, BengControl::Handler,
 
 	/* stock */
 	FailureManager failure_manager;
+
+	Pcre::Cache pcre_cache;
 
 	std::unique_ptr<TranslationStockBuilder> translation_clients;
 	std::shared_ptr<MultiTranslationService> uncached_translation_service;

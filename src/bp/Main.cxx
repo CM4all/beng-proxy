@@ -241,12 +241,13 @@ BpInstance::DisableSignals() noexcept
 }
 
 static std::shared_ptr<TranslationService>
-MakeTranslationService(EventLoop &event_loop, TranslationServiceBuilder &b,
+MakeTranslationService(EventLoop &event_loop, Pcre::Cache &pcre_cache,
+		       TranslationServiceBuilder &b,
 		       const std::forward_list<LocalSocketAddress> &l)
 {
 	auto multi = std::make_shared<MultiTranslationService>();
 	for (const SocketAddress a : l)
-		multi->Add(b.Get(a, event_loop));
+		multi->Add(b.Get(a, event_loop, pcre_cache));
 
 	return multi;
 }
@@ -275,7 +276,7 @@ BpInstance::AddListener(const BpListenerConfig &c, const UidGid *logger_user)
 {
 	auto ts = c.translation_sockets.empty()
 		? translation_service
-		: MakeTranslationService(event_loop,
+		: MakeTranslationService(event_loop, pcre_cache,
 					 GetTranslationServiceBuilder(),
 					 c.translation_sockets);
 
@@ -436,12 +437,14 @@ try {
 	for (const auto &config : instance.config.translation_sockets) {
 		instance.uncached_translation_service
 			->Add(instance.translation_clients->Get(config,
-								instance.event_loop));
+								instance.event_loop,
+								instance.pcre_cache));
 
 		if (instance.config.translate_cache_size > 0)
 			instance.cached_translation_service
 				->Add(instance.translation_caches->Get(config,
-								       instance.event_loop));
+								       instance.event_loop,
+								       instance.pcre_cache));
 	}
 
 	instance.translation_service = instance.config.translate_cache_size > 0

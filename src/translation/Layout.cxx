@@ -3,16 +3,19 @@
 // author: Max Kellermann <max.kellermann@ionos.com>
 
 #include "Layout.hxx"
+#include "lib/pcre/Cache.hxx"
+#include "lib/pcre/Options.hxx"
 #include "util/StringCompare.hxx"
 
 #include <cassert>
 
 TranslationLayoutItem::TranslationLayoutItem(Type _type,
-					     std::string_view _value)
+					     std::string_view _value,
+					     Pcre::Cache &pcre_cache) noexcept
 	:value(_value), type(_type)
 {
 	if (type == Type::REGEX)
-		regex.Compile(value, {.anchored=true});
+		regex = pcre_cache.Get(value, static_cast<int>(Pcre::CompileOptions{.anchored=true}));
 }
 
 bool

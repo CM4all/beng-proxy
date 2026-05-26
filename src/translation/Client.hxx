@@ -12,12 +12,14 @@ class SocketDescriptor;
 class StopwatchPtr;
 struct TranslateRequest;
 class TranslateHandler;
+namespace Pcre { class Cache; }
 
 /**
  * Call the translation server.
  */
 void
 translate(AllocatorPtr alloc, EventLoop &event_loop,
+	  Pcre::Cache &pcre_cache,
 	  StopwatchPtr stopwatch,
 	  SocketDescriptor fd, Lease &lease,
 	  const TranslateRequest &request,

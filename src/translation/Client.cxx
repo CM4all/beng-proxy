@@ -48,6 +48,7 @@ class TranslateClient final : BufferedSocketHandler, Cancellable {
 
 public:
 	TranslateClient(AllocatorPtr alloc, EventLoop &event_loop,
+			Pcre::Cache &pcre_cache,
 			StopwatchPtr &&_stopwatch,
 			SocketDescriptor fd, Lease &lease,
 			const TranslateRequest &request2,
@@ -211,6 +212,7 @@ TranslateClient::TryWrite() noexcept
 
 inline
 TranslateClient::TranslateClient(AllocatorPtr alloc, EventLoop &event_loop,
+				 Pcre::Cache &pcre_cache,
 				 StopwatchPtr &&_stopwatch,
 				 SocketDescriptor fd, Lease &lease,
 				 const TranslateRequest &request2,
@@ -223,7 +225,7 @@ TranslateClient::TranslateClient(AllocatorPtr alloc, EventLoop &event_loop,
 	 request(std::move(_request)),
 	 handler(_handler),
 	 response(UniquePoolPtr<TranslateResponse>::Make(alloc.GetPool())),
-	 parser(alloc, request2, *response)
+	 parser(alloc, pcre_cache, request2, *response)
 {
 	socket.Init(fd, FdType::FD_SOCKET, write_timeout, *this);
 
@@ -234,6 +236,7 @@ TranslateClient::TranslateClient(AllocatorPtr alloc, EventLoop &event_loop,
 
 void
 translate(AllocatorPtr alloc, EventLoop &event_loop,
+	  Pcre::Cache &pcre_cache,
 	  StopwatchPtr stopwatch,
 	  SocketDescriptor fd, Lease &lease,
 	  const TranslateRequest &request,
@@ -254,6 +257,7 @@ try {
 						   request);
 
 	alloc.New<TranslateClient>(alloc, event_loop,
+				   pcre_cache,
 				   std::move(stopwatch),
 				   fd, lease,
 				   request, std::move(gb),

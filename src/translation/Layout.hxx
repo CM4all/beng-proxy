@@ -4,9 +4,11 @@
 
 #pragma once
 
-#include "lib/pcre/UniqueRegex.hxx"
+#include "lib/pcre/SharedRegex.hxx"
 
 #include <string>
+
+namespace Pcre { class Cache; }
 
 /**
  * An item in a URI layout.
@@ -29,7 +31,7 @@ struct TranslationLayoutItem {
 	 * If #value is from a REGEX packet, then this field contains
 	 * the compiled regex.
 	 */
-	UniqueRegex regex;
+	Pcre::SharedRegex regex;
 
 	Type type;
 
@@ -41,7 +43,12 @@ struct TranslationLayoutItem {
 	TranslationLayoutItem() = default;
 
 	[[nodiscard]]
-	explicit TranslationLayoutItem(Type _type, std::string_view _value);
+	explicit constexpr TranslationLayoutItem(Type _type, std::string_view _value) noexcept
+		:value(_value), type(_type) {}
+
+	[[nodiscard]]
+	explicit TranslationLayoutItem(Type _type, std::string_view _value,
+				       Pcre::Cache &pcre_cache) noexcept;
 
 	Type GetType() const noexcept {
 		return type;
