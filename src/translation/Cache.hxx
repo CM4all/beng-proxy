@@ -26,6 +26,7 @@ struct TranslateCacheItem;
 struct TranslateCacheItemTag;
 struct TranslateRequest;
 struct TranslateResponse;
+namespace Pcre { class Cache; }
 
 /**
  * Cache for translation server responses.
@@ -35,6 +36,8 @@ class TranslationCache final : public TranslationService, CacheHandler {
 
 	const PoolPtr pool;
 	SlicePool slice_pool;
+
+	Pcre::Cache &pcre_cache;
 
 	static constexpr std::size_t N_BUCKETS = 128 * 1024;
 
@@ -127,6 +130,7 @@ public:
 	 * deemed uncacheable until the first response is received
 	 */
 	TranslationCache(struct pool &pool, EventLoop &event_loop,
+			 Pcre::Cache &_pcre_cache,
 			 TranslationService &next,
 			 unsigned max_size, bool handshake_cacheable=true);
 

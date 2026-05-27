@@ -116,7 +116,7 @@ TranslationCacheBuilder::Get(SocketAddress address,
 	auto e = m.try_emplace(address, nullptr);
 	if (e.second)
 		e.first->second = std::make_shared<TranslationCache>
-			(pool, event_loop,
+			(pool, event_loop, pcre_cache,
 			 // TODO: refactor to std::shared_ptr?
 			 *builder.Get(address, event_loop, pcre_cache),
 			 max_size, false);

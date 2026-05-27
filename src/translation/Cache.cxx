@@ -22,7 +22,7 @@
 #include "pool/StringBuilder.hxx"
 #include "pool/PSocketAddress.hxx"
 #include "lib/fmt/Unsafe.hxx"
-#include "lib/pcre/UniqueRegex.hxx"
+#include "lib/pcre/SharedRegex.hxx"
 #include "io/Logger.hxx"
 #include "util/djb_hash.hxx"
 #include "util/IntrusiveForwardList.hxx"
@@ -104,7 +104,7 @@ struct TranslateCacheItem final : PoolHolder, CacheItem {
 
 	TranslateResponse response;
 
-	UniqueRegex regex, inverse_regex;
+	Pcre::SharedRegex regex, inverse_regex;
 
 	AllocatorStats stats;
 
@@ -1018,7 +1018,7 @@ TranslationCache::Store(const StringWithHash &_key, const TranslateRequest &requ
 
 	if (response.regex != nullptr) {
 		try {
-			item->regex = response.CompileRegex();
+			item->regex = response.CompileRegex(pcre_cache);
 		} catch (...) {
 			item->Destroy();
 			throw;
@@ -1029,7 +1029,7 @@ TranslationCache::Store(const StringWithHash &_key, const TranslateRequest &requ
 
 	if (response.inverse_regex != nullptr) {
 		try {
-			item->inverse_regex = response.CompileInverseRegex();
+			item->inverse_regex = response.CompileInverseRegex(pcre_cache);
 		} catch (...) {
 			item->Destroy();
 			throw;
@@ -1102,7 +1102,7 @@ try {
 	if (request.uri != nullptr && response.IsExpandable()) {
 		const char *uri = UriWithoutQueryString(alloc, request.uri);
 		tcache_expand_response(alloc, response,
-				       response.CompileRegex(),
+				       response.CompileRegex(cache.pcre_cache),
 				       uri, request.host,
 				       request.user);
 	} else if (response.easy_base) {
@@ -1260,11 +1260,13 @@ TranslateCacheItem::Destroy() noexcept
  */
 
 TranslationCache::TranslationCache(struct pool &_pool, EventLoop &event_loop,
+				   Pcre::Cache &_pcre_cache,
 				   TranslationService &_next,
 				   unsigned max_size,
 				   bool handshake_cacheable)
 	:pool(pool_new_dummy(&_pool, "translate_cache")),
 	 slice_pool(4096, 32768, "translate_cache"),
+	 pcre_cache(_pcre_cache),
 	 cache(event_loop, max_size, this),
 	 next(_next), active(handshake_cacheable)
 {

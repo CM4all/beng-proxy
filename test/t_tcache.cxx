@@ -21,6 +21,7 @@
 #include "spawn/NamespaceOptions.hxx"
 #include "pool/pool.hxx"
 #include "PInstance.hxx"
+#include "lib/pcre/Cache.hxx"
 #include "util/Cancellable.hxx"
 #include "util/StringAPI.hxx"
 #include "stopwatch.hxx"
@@ -40,11 +41,12 @@ public:
 };
 
 struct Instance : PInstance {
+	Pcre::Cache pcre_cache;
 	MyTranslationService ts;
 	TranslationCache cache;
 
 	Instance()
-		:cache(root_pool, event_loop, ts, 1024) {}
+		:cache(root_pool, event_loop, pcre_cache, ts, 1024) {}
 };
 
 const TranslateResponse *next_response;
