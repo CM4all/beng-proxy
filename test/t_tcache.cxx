@@ -1113,28 +1113,28 @@ TEST(TranslationCache, Layout)
 	       MakeResponse(pool).Base("/")
 	       .Layout("_foo", {"/foo/", "/bar/"}));
 
-	CachedError(pool, cache, MakeRequest("/").Layout("_foo", nullptr));
+	CachedError(pool, cache, MakeRequest("/").Layout(pool, "_foo", nullptr));
 
-	Feed(pool, cache, MakeRequest("/index").Layout("_foo", nullptr),
+	Feed(pool, cache, MakeRequest("/index").Layout(pool, "_foo", nullptr),
 	     MakeResponse(pool).EasyBase("/").File(".", "/mnt/root/"),
 	     MakeResponse(pool).EasyBase("/").File("index", "/mnt/root/"));
-	Feed(pool, cache, MakeRequest("/bar/c/d").Layout("_foo", "/bar/"),
+	Feed(pool, cache, MakeRequest("/bar/c/d").Layout(pool, "_foo", "/bar/"),
 	     MakeResponse(pool).EasyBase("/bar/c/").File(".", "/mnt/bar/C/"),
 	     MakeResponse(pool).EasyBase("/bar/c/").File("d", "/mnt/bar/C/"));
-	Feed(pool, cache, MakeRequest("/bar/e/f").Layout("_foo", "/bar/"),
+	Feed(pool, cache, MakeRequest("/bar/e/f").Layout(pool, "_foo", "/bar/"),
 	     MakeResponse(pool).EasyBase("/bar/e/").File(".", "/mnt/bar/E/"),
 	     MakeResponse(pool).EasyBase("/bar/e/").File("f", "/mnt/bar/E/"));
-	Feed(pool, cache, MakeRequest("/foo/a/b").Layout("_foo", "/foo/"),
+	Feed(pool, cache, MakeRequest("/foo/a/b").Layout(pool, "_foo", "/foo/"),
 	     MakeResponse(pool).EasyBase("/foo/").File(".", "/mnt/foo/"),
 	     MakeResponse(pool).EasyBase("/foo/").File("a/b", "/mnt/foo/"));
 
-	Cached(pool, cache, MakeRequest("/x/y/z").Layout("_foo", nullptr),
+	Cached(pool, cache, MakeRequest("/x/y/z").Layout(pool, "_foo", nullptr),
 	       MakeResponse(pool).EasyBase("/").File("x/y/z", "/mnt/root/"));
-	Cached(pool, cache, MakeRequest("/bar/c/blubb").Layout("_foo", "/bar/"),
+	Cached(pool, cache, MakeRequest("/bar/c/blubb").Layout(pool, "_foo", "/bar/"),
 	       MakeResponse(pool).EasyBase("/bar/c/").File("blubb", "/mnt/bar/C/"));
-	Cached(pool, cache, MakeRequest("/bar/e/blubb").Layout("_foo", "/bar/"),
+	Cached(pool, cache, MakeRequest("/bar/e/blubb").Layout(pool, "_foo", "/bar/"),
 	       MakeResponse(pool).EasyBase("/bar/e/").File("blubb", "/mnt/bar/E/"));
-	Cached(pool, cache, MakeRequest("/foo/blubb").Layout("_foo", "/foo/"),
+	Cached(pool, cache, MakeRequest("/foo/blubb").Layout(pool, "_foo", "/foo/"),
 	       MakeResponse(pool).EasyBase("/foo/").File("blubb", "/mnt/foo/"));
 }
 

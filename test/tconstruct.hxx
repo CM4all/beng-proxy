@@ -18,18 +18,15 @@
 #include <string.h>
 
 struct MakeRequest : TranslateRequest {
-	TranslationLayoutItem my_layout_item;
-
 	explicit MakeRequest(const char *_uri) {
 		uri = _uri;
 	}
 
-	auto &&Layout(std::string_view value, const char *item) && noexcept {
+	auto &&Layout(AllocatorPtr alloc, std::string_view value, const char *item) && noexcept {
 		layout = AsBytes(value);
 
 		if (item != nullptr) {
-			my_layout_item = TranslationLayoutItem{TranslationLayoutItem::Type::BASE, item};
-			layout_item = &my_layout_item;
+			layout_item = alloc.New<TranslationLayoutItem>(TranslationLayoutItem::Type::BASE, item);
 		}
 
 		return std::move(*this);
