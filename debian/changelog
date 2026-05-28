@@ -4,7 +4,7 @@ cm4all-beng-proxy (21.31) unstable; urgency=low
   * stock: fix use-after-free bug
   * translation: add REGEX cache for LAYOUT entries
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Thu, 28 May 2026 10:07:20 +0200
 
 cm4all-beng-proxy (21.30) unstable; urgency=low
 
