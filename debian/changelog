@@ -1,6 +1,6 @@
 cm4all-beng-proxy (21.32) unstable; urgency=low
 
-  * 
+  * prometheus: add "beng_proxy_stock_total_create_duration"
 
  --   
 
