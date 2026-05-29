@@ -55,8 +55,8 @@ public:
 	}
 #endif
 
-	std::size_t DiscardSome() noexcept {
-		return mchild_stock.DiscardOldestIdle(64);
+	std::size_t DiscardOldestIdle(std::size_t n) noexcept {
+		return mchild_stock.DiscardOldestIdle(n);
 	}
 
 	void FadeAll() noexcept {

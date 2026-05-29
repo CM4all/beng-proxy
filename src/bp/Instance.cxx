@@ -349,16 +349,18 @@ BpInstance::ReloadState() noexcept
 void
 BpInstance::OnCgroupPressure(unsigned repeat) noexcept
 {
+	constexpr std::size_t discard_request = 64;
+
 	(void)repeat; // TODO use this
 
 	std::size_t n = 0;
 
 	if (lhttp_stock != nullptr)
-		n += lhttp_stock->DiscardSome();
+		n += lhttp_stock->DiscardOldestIdle(discard_request);
 
 #ifdef HAVE_LIBWAS
 	if (multi_was_stock != nullptr)
-		n += multi_was_stock->DiscardSome();
+		n += multi_was_stock->DiscardOldestIdle(discard_request);
 #endif
 
 	if (listen_stream_stock)
