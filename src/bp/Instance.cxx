@@ -349,9 +349,11 @@ BpInstance::ReloadState() noexcept
 void
 BpInstance::OnCgroupPressure(unsigned repeat) noexcept
 {
-	constexpr std::size_t discard_request = 64;
-
-	(void)repeat; // TODO use this
+	/* the number of processes we discard in each call grows
+	   exponentially (but no more than 512 at a time), just in
+	   case we're spawning new processes faster than this method
+	   shuts them down */
+	const std::size_t discard_request = std::size_t{32} << std::min(repeat, 4U);
 
 	std::size_t n = 0;
 

@@ -1,5 +1,6 @@
 cm4all-beng-proxy (21.32) unstable; urgency=low
 
+  * bp: discard an exponential number of processes on memory pressure
   * prometheus: add "beng_proxy_stock_total_create_duration"
   * spawn: eliminate epoll_wait() roundtrip
 
