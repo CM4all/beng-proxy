@@ -321,7 +321,7 @@ struct BpInstance final : PInstance, BengControl::Handler,
 
 #ifdef HAVE_LIBSYSTEMD
 	// virtual methods from class CgroupPressureHandler
-	void OnCgroupPressure() noexcept override;
+	void OnCgroupPressure(unsigned repeat) noexcept override;
 #endif
 
 

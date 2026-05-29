@@ -68,15 +68,17 @@ CgroupMemoryThrottle::OnMemoryWarning(uint_least64_t usage) noexcept
 {
 	last_check = GetEventLoop().SteadyNow();
 
-	if (limit > 0 && usage < light_pressure_threshold)
+	if (limit > 0 && usage < light_pressure_threshold) {
 		/* false alarm - we're well below the configured
 		   limit */
+		repeat_counter = 0;
 		return;
+	}
 
 	fmt::print(stderr, "Spawner memory warning: {} of {} bytes used\n",
 		   usage, limit);
 
-	handler.OnCgroupPressure();
+	handler.OnCgroupPressure(repeat_counter);
 
 	if (limit > 0)
 		repeat_timer.ScheduleEarlier(std::chrono::seconds{2});
@@ -90,17 +92,21 @@ CgroupMemoryThrottle::OnRepeatTimer() noexcept
 	last_check = GetEventLoop().SteadyNow();
 
 	const uint_least64_t usage = IsUnderLightPressure();
-	if (usage == 0)
+	if (usage == 0) {
+		repeat_counter = 0;
 		return;
+	}
 
 	/* repeat until we have a safe margin below the configured
 	   memory limit to avoid too much kernel shrinker
 	   contention */
 
-	fmt::print(stderr, "Spawner memory warning (repeat): {} of {} bytes used\n",
-		   usage, limit);
+	++repeat_counter;
 
-	handler.OnCgroupPressure();
+	fmt::print(stderr, "Spawner memory warning (repeat {}): {} of {} bytes used\n",
+		   repeat_counter, usage, limit);
+
+	handler.OnCgroupPressure(repeat_counter);
 
 	repeat_timer.Schedule(std::chrono::seconds{2});
 }
@@ -120,13 +126,15 @@ CgroupMemoryThrottle::MaybeCheckMemoryWarning() noexcept
 	last_check = now;
 
 	const auto usage = IsUnderLightPressure();
-	if (usage == 0)
+	if (usage == 0) {
+		repeat_counter = 0;
 		return;
+	}
 
 	fmt::print(stderr, "Spawner memory warning: {} of {} bytes used\n",
 		   usage, limit);
 
-	handler.OnCgroupPressure();
+	handler.OnCgroupPressure(repeat_counter);
 
 	repeat_timer.Schedule(std::chrono::seconds{2});
 }

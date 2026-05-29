@@ -14,6 +14,11 @@ public:
 	 * processes.  The handler shall do something to reduce
 	 * resource usage (e.g. kill some processes or throttle
 	 * spawning more processes).
+	 *
+	 * @param repeat how many times this call has been repeated;
+	 * the first call means zero, and repeated calls increment
+	 * this number; once we fall below the threshold, the counter
+	 * is reset to zero
 	 */
-	virtual void OnCgroupPressure() noexcept = 0;
+	virtual void OnCgroupPressure(unsigned repeat) noexcept = 0;
 };

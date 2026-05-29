@@ -71,15 +71,17 @@ CgroupPidsThrottle::OnPidsWarning(uint_least64_t usage) noexcept
 {
 	last_check = GetEventLoop().SteadyNow();
 
-	if (usage < light_pressure_threshold)
+	if (usage < light_pressure_threshold) {
 		/* false alarm - we're well below the configured
 		   limit */
+		repeat_counter = 0;
 		return;
+	}
 
 	fmt::print(stderr, "Spawner PIDs warning: {} of {} pids used\n",
 		   usage, limit);
 
-	handler.OnCgroupPressure();
+	handler.OnCgroupPressure(repeat_counter);
 
 	repeat_timer.ScheduleEarlier(std::chrono::seconds{2});
 }
@@ -96,10 +98,12 @@ CgroupPidsThrottle::OnRepeatTimer() noexcept
 	/* repeat until we have a safe margin below the configured
 	   pids limit to avoid hitting the limit */
 
-	fmt::print(stderr, "Spawner PIDs warning (repeat): {} of {} pids used\n",
-		   usage, limit);
+	++repeat_counter;
 
-	handler.OnCgroupPressure();
+	fmt::print(stderr, "Spawner PIDs warning (repeat {}): {} of {} pids used\n",
+		   repeat_counter, usage, limit);
+
+	handler.OnCgroupPressure(repeat_counter);
 
 	repeat_timer.Schedule(std::chrono::seconds{2});
 }
@@ -115,13 +119,15 @@ CgroupPidsThrottle::MaybeCheckPidsWarning() noexcept
 	last_check = now;
 
 	const auto usage = IsUnderLightPressure();
-	if (usage == 0)
+	if (usage == 0) {
+		repeat_counter = 0;
 		return;
+	}
 
 	fmt::print(stderr, "Spawner PIDs warning: {} of {} pids used\n",
 		   usage, limit);
 
-	handler.OnCgroupPressure();
+	handler.OnCgroupPressure(repeat_counter);
 
 	repeat_timer.Schedule(std::chrono::seconds{2});
 }

@@ -347,8 +347,10 @@ BpInstance::ReloadState() noexcept
 #ifdef HAVE_LIBSYSTEMD
 
 void
-BpInstance::OnCgroupPressure() noexcept
+BpInstance::OnCgroupPressure(unsigned repeat) noexcept
 {
+	(void)repeat; // TODO use this
+
 	std::size_t n = 0;
 
 	if (lhttp_stock != nullptr)

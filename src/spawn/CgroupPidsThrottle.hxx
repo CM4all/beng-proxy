@@ -70,6 +70,8 @@ class CgroupPidsThrottle final : public SpawnService {
 	 */
 	Event::TimePoint last_check;
 
+	unsigned repeat_counter = 0;
+
 public:
 	CgroupPidsThrottle(EventLoop &event_loop,
 			   FileDescriptor group_fd,
