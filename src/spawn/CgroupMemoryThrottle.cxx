@@ -3,6 +3,7 @@
 // author: Max Kellermann <max.kellermann@ionos.com>
 
 #include "CgroupMemoryThrottle.hxx"
+#include "CgroupPressureHandler.hxx"
 #include "spawn/ProcessHandle.hxx"
 #include "event/Loop.hxx"
 #include "util/Cancellable.hxx"
@@ -31,9 +32,9 @@ struct CgroupMemoryThrottle::Waiting final : IntrusiveListHook<IntrusiveHookMode
 CgroupMemoryThrottle::CgroupMemoryThrottle(EventLoop &event_loop,
 					   FileDescriptor group_fd,
 					   SpawnService &_next_spawn_service,
-					   BoundMethod<void() noexcept> _callback,
+					   CgroupPressureHandler &_handler,
 					   uint_least64_t _limit)
-	:callback(_callback),
+	:handler(_handler),
 	 limit(_limit),
 	 light_pressure_threshold(limit / 10 * 9),
 	 heavy_pressure_threshold(limit / 16 * 15),
@@ -75,7 +76,7 @@ CgroupMemoryThrottle::OnMemoryWarning(uint_least64_t usage) noexcept
 	fmt::print(stderr, "Spawner memory warning: {} of {} bytes used\n",
 		   usage, limit);
 
-	callback();
+	handler.OnCgroupPressure();
 
 	if (limit > 0)
 		repeat_timer.ScheduleEarlier(std::chrono::seconds{2});
@@ -99,7 +100,7 @@ CgroupMemoryThrottle::OnRepeatTimer() noexcept
 	fmt::print(stderr, "Spawner memory warning (repeat): {} of {} bytes used\n",
 		   usage, limit);
 
-	callback();
+	handler.OnCgroupPressure();
 
 	repeat_timer.Schedule(std::chrono::seconds{2});
 }
@@ -125,7 +126,7 @@ CgroupMemoryThrottle::MaybeCheckMemoryWarning() noexcept
 	fmt::print(stderr, "Spawner memory warning: {} of {} bytes used\n",
 		   usage, limit);
 
-	callback();
+	handler.OnCgroupPressure();
 
 	repeat_timer.Schedule(std::chrono::seconds{2});
 }

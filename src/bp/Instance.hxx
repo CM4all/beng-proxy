@@ -20,6 +20,9 @@
 #include "event/SignalEvent.hxx"
 #include "event/ShutdownListener.hxx"
 #include "event/FarTimerEvent.hxx"
+#ifdef HAVE_LIBSYSTEMD
+#include "spawn/CgroupPressureHandler.hxx"
+#endif
 #include "spawn/ZombieReaper.hxx"
 #include "event/net/control/Handler.hxx"
 #include "net/FailureManager.hxx"
@@ -92,6 +95,9 @@ struct TranslateResponse;
 struct ResourceAddress;
 
 struct BpInstance final : PInstance, BengControl::Handler,
+#ifdef HAVE_LIBSYSTEMD
+			  CgroupPressureHandler,
+#endif
 #ifdef HAVE_LIBWAS
 			  WasMetricsHandler,
 #endif
@@ -313,10 +319,13 @@ struct BpInstance final : PInstance, BengControl::Handler,
 
 	SharedLeasePtr<BpPerSite> MakePerSite(std::string_view site) noexcept;
 
-private:
 #ifdef HAVE_LIBSYSTEMD
-	void HandleMemoryWarning() noexcept;
+	// virtual methods from class CgroupPressureHandler
+	void OnCgroupPressure() noexcept override;
 #endif
+
+
+private:
 
 	bool AllocatorCompressCallback() noexcept;
 

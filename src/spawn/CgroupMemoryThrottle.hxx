@@ -10,6 +10,8 @@
 #include "event/FineTimerEvent.hxx"
 #include "util/IntrusiveList.hxx"
 
+class CgroupPressureHandler;
+
 /**
  * Wraps #CgroupMemoryWatch and adds a timer that checks whether we
  * have fallen below the configured limit.
@@ -18,7 +20,7 @@
  * throttles the Enqueue() method as long as we're under pressure.
  */
 class CgroupMemoryThrottle final : public SpawnService {
-	const BoundMethod<void() noexcept> callback;
+	CgroupPressureHandler &handler;
 
 	/**
 	 * The configured memory limit [bytes].  Zero if none is
@@ -72,7 +74,7 @@ public:
 	CgroupMemoryThrottle(EventLoop &event_loop,
 			     FileDescriptor group_fd,
 			     SpawnService &_next_spawn_service,
-			     BoundMethod<void() noexcept> _callback,
+			     CgroupPressureHandler &_handler,
 			     uint_least64_t _limit);
 
 	~CgroupMemoryThrottle() noexcept;

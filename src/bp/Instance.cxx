@@ -89,7 +89,7 @@ BpInstance::BpInstance(BpConfig &&_config,
 				? std::make_unique<CgroupMemoryThrottle>(event_loop,
 									 spawner.cgroup,
 									 *spawn,
-									 BIND_THIS_METHOD(HandleMemoryWarning),
+									 *this,
 									 GetMemoryLimit(config.spawn.systemd_scope_properties))
 				: nullptr),
 	 spawn_service(cgroup_memory_throttle ? static_cast<SpawnService *>(cgroup_memory_throttle.get()) : spawn.get()),
@@ -103,7 +103,7 @@ BpInstance::BpInstance(BpConfig &&_config,
 		if (config.spawn.systemd_scope_properties.tasks_max > 0) {
 			cgroup_pids_throttle = std::make_unique<CgroupPidsThrottle>(event_loop, spawner.cgroup,
 										    *spawn_service,
-										    BIND_THIS_METHOD(HandleMemoryWarning),
+										    *this,
 										    config.spawn.systemd_scope_properties.tasks_max);
 			spawn_service = cgroup_pids_throttle.get();
 		}
@@ -347,7 +347,7 @@ BpInstance::ReloadState() noexcept
 #ifdef HAVE_LIBSYSTEMD
 
 void
-BpInstance::HandleMemoryWarning() noexcept
+BpInstance::OnCgroupPressure() noexcept
 {
 	std::size_t n = 0;
 

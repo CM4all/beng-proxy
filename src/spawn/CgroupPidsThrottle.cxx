@@ -3,6 +3,7 @@
 // author: Max Kellermann <max.kellermann@ionos.com>
 
 #include "CgroupPidsThrottle.hxx"
+#include "CgroupPressureHandler.hxx"
 #include "spawn/ProcessHandle.hxx"
 #include "event/Loop.hxx"
 #include "util/Cancellable.hxx"
@@ -31,9 +32,9 @@ struct CgroupPidsThrottle::Waiting final : IntrusiveListHook<IntrusiveHookMode::
 CgroupPidsThrottle::CgroupPidsThrottle(EventLoop &event_loop,
 				       FileDescriptor group_fd,
 				       SpawnService &_next_spawn_service,
-				       BoundMethod<void() noexcept> _callback,
+				       CgroupPressureHandler &_handler,
 				       uint_least64_t _limit)
-	:callback(_callback),
+	:handler(_handler),
 	 limit(_limit),
 	 light_pressure_threshold(limit / 10 * 9),
 	 heavy_pressure_threshold(limit / 16 * 15),
@@ -78,7 +79,7 @@ CgroupPidsThrottle::OnPidsWarning(uint_least64_t usage) noexcept
 	fmt::print(stderr, "Spawner PIDs warning: {} of {} pids used\n",
 		   usage, limit);
 
-	callback();
+	handler.OnCgroupPressure();
 
 	repeat_timer.ScheduleEarlier(std::chrono::seconds{2});
 }
@@ -98,7 +99,7 @@ CgroupPidsThrottle::OnRepeatTimer() noexcept
 	fmt::print(stderr, "Spawner PIDs warning (repeat): {} of {} pids used\n",
 		   usage, limit);
 
-	callback();
+	handler.OnCgroupPressure();
 
 	repeat_timer.Schedule(std::chrono::seconds{2});
 }
@@ -120,7 +121,7 @@ CgroupPidsThrottle::MaybeCheckPidsWarning() noexcept
 	fmt::print(stderr, "Spawner PIDs warning: {} of {} pids used\n",
 		   usage, limit);
 
-	callback();
+	handler.OnCgroupPressure();
 
 	repeat_timer.Schedule(std::chrono::seconds{2});
 }
