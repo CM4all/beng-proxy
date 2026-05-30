@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include "stats/CgroupPressureStats.hxx"
 #include "spawn/CgroupMemoryWatch.hxx"
 #include "spawn/Interface.hxx"
 #include "event/CoarseTimerEvent.hxx"
@@ -86,6 +87,8 @@ class CgroupMemoryThrottle final : public SpawnService {
 
 	unsigned repeat_counter = 0;
 
+	CgroupPressureStats stats;
+
 public:
 	CgroupMemoryThrottle(EventLoop &event_loop,
 			     FileDescriptor group_fd,
@@ -97,6 +100,10 @@ public:
 
 	auto &GetEventLoop() const noexcept {
 		return watch.GetEventLoop();
+	}
+
+	const auto &GetStats() const noexcept {
+		return stats;
 	}
 
 private:

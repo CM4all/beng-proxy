@@ -3,6 +3,7 @@ prometheus = static_library(
   'Stats.cxx',
   'HttpStats.cxx',
   'SpawnStats.cxx',
+  'CgroupPressureStats.cxx',
   'StockStats.cxx',
   include_directories: inc,
   dependencies: [

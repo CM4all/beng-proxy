@@ -14,17 +14,31 @@
 #include <cassert>
 
 struct CgroupMemoryThrottle::Waiting final : IntrusiveListHook<IntrusiveHookMode::AUTO_UNLINK>, Cancellable {
+	CgroupMemoryThrottle &parent;
+	const Event::TimePoint start_time;
+
 	const EnqueueCallback callback;
 	CancellablePointer &cancel_ptr;
 
-	Waiting(EnqueueCallback _callback,
+	Waiting(CgroupMemoryThrottle &_parent,
+		EnqueueCallback _callback,
 		CancellablePointer &_cancel_ptr) noexcept
-		:callback(_callback), cancel_ptr(_cancel_ptr) {
+		:parent(_parent),
+		 start_time(parent.GetEventLoop().SteadyNow()),
+		 callback(_callback),
+		 cancel_ptr(_cancel_ptr)
+	{
 		cancel_ptr = *this;
+		++parent.stats.n_throttled;
+	}
+
+	~Waiting() noexcept {
+		parent.stats.total_throttle_duration += parent.GetEventLoop().SteadyNow() - start_time;
 	}
 
 	// virtual methods from Cancellable
 	void Cancel() noexcept override {
+		++parent.stats.n_canceled;
 		delete this;
 	}
 };
@@ -164,7 +178,7 @@ CgroupMemoryThrottle::Enqueue(EnqueueCallback _callback, CancellablePointer &can
 		return;
 	}
 
-	auto *w = new Waiting(_callback, cancel_ptr);
+	auto *w = new Waiting(*this, _callback, cancel_ptr);
 	waiting.push_back(*w);
 
 	retry_waiting_timer.ScheduleEarlier(std::chrono::milliseconds{250});

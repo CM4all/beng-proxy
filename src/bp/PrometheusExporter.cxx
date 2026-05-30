@@ -26,6 +26,11 @@
 #include "event/PrometheusStats.hxx"
 #include "tcp_stock.hxx"
 
+#ifdef HAVE_LIBSYSTEMD
+#include "spawn/CgroupMemoryThrottle.hxx"
+#include "prometheus/CgroupPressureStats.hxx"
+#endif
+
 using std::string_view_literals::operator""sv;
 
 namespace Prometheus {
@@ -101,6 +106,11 @@ BpPrometheusExporter::HandleHttpRequest(IncomingHttpRequest &request,
 		buffer.Fmt("beng_proxy_was_metric{{name={:?}}} {:e}\n",
 			   name, value);
 #endif
+
+#ifdef HAVE_LIBSYSTEMD
+	if (instance.cgroup_memory_throttle)
+		Prometheus::Write(buffer, "memory"sv, instance.cgroup_memory_throttle->GetStats());
+#endif // HAVE_LIBSYSTEMD
 
 	HttpHeaders headers;
 	headers.Write("content-type", "text/plain;version=0.0.4");
