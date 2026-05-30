@@ -74,8 +74,8 @@ beng_proxy_stock_rejects{{process={:?},stock={:?}}} {}
 beng_proxy_stock_busy{{process={:?},stock={:?}}} {}
 beng_proxy_stock_idle{{process={:?},stock={:?}}} {}
 beng_proxy_stock_waiting{{process={:?},stock={:?}}} {}
-beng_proxy_stock_total_create_duration{{process={:?},stock={:?}}} {}
-beng_proxy_stock_total_wait_duration{{process={:?},stock={:?}}} {}
+beng_proxy_stock_total_create_duration{{process={:?},stock={:?}}} {:e}
+beng_proxy_stock_total_wait_duration{{process={:?},stock={:?}}} {:e}
 )"sv,
 		   process, stock, stats.total_creates,
 		   process, stock, stats.canceled_creates,
