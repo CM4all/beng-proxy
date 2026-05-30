@@ -6,7 +6,7 @@ cm4all-beng-proxy (21.32) unstable; urgency=low
   * prometheus: add "beng_proxy_stock_total_create_duration"
   * spawn: eliminate epoll_wait() roundtrip
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Sat, 30 May 2026 20:55:31 +0200
 
 cm4all-beng-proxy (21.31) unstable; urgency=low
 
