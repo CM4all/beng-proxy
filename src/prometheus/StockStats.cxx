@@ -5,6 +5,7 @@
 #include "StockStats.hxx"
 #include "stock/Stats.hxx"
 #include "memory/GrowingBuffer.hxx"
+#include "time/Cast.hxx"
 
 using std::string_view_literals::operator""sv;
 
@@ -88,8 +89,8 @@ beng_proxy_stock_total_wait_duration{{process={:?},stock={:?}}} {}
 		   process, stock, stats.busy,
 		   process, stock, stats.idle,
 		   process, stock, stats.waiting,
-		   process, stock, std::chrono::duration_cast<std::chrono::duration<double>>(stats.total_create_duration).count(),
-		   process, stock, std::chrono::duration_cast<std::chrono::duration<double>>(stats.total_wait_duration).count());
+		   process, stock, ToFloatSeconds(stats.total_create_duration),
+		   process, stock, ToFloatSeconds(stats.total_wait_duration));
 }
 
 } // namespace Prometheus

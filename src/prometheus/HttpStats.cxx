@@ -8,6 +8,7 @@
 #include "stats/PerGeneratorStats.hxx"
 #include "memory/GrowingBuffer.hxx"
 #include "lib/fmt/ToBuffer.hxx"
+#include "time/Cast.hxx"
 
 using std::string_view_literals::operator""sv;
 
@@ -60,7 +61,7 @@ beng_proxy_http_traffic{{{}direction="out"}} {}
 	       labels, stats.n_rejected,
 	       labels, stats.n_delayed,
 	       labels, stats.n_invalid_frames,
-	       labels, std::chrono::duration_cast<std::chrono::duration<double>>(stats.total_duration).count(),
+	       labels, ToFloatSeconds(stats.total_duration),
 	       labels, stats.traffic_received,
 	       labels, stats.traffic_sent);
 
