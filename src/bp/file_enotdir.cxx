@@ -62,7 +62,8 @@ Request::OnEnotdirStat(const struct statx &st) noexcept
 {
 	assert(translate.pending_response);
 
-	if (!S_ISDIR(st.stx_mode)) {
+	if (!S_ISDIR(st.stx_mode) &&
+	    translate.pending_response->address.type == ResourceAddress::Type::LOCAL) {
 		const auto &response = *translate.pending_response;
 		const auto &address = response.address.GetFile();
 		const std::string_view path{address.path};
