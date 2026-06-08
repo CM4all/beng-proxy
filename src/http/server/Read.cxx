@@ -391,7 +391,8 @@ HttpServerConnection::SubmitRequest() noexcept
 		request.in_handler = false;
 
 		if (request.read_state == Request::BODY &&
-		    socket->IsConnected()) {
+		    socket->IsConnected() &&
+		    !request_body_reader->IsSocketDone(*socket)) {
 			ScheduleReadTimeoutTimer();
 		}
 	}

@@ -471,9 +471,13 @@ struct HttpServerConnection final
 			    UnusedIstreamPtr body);
 
 	void ScheduleReadTimeoutTimer() noexcept {
+		assert(socket);
 		assert(request.read_state == Request::BODY);
 
 		if (request.ShouldEnableReadTimeout()) {
+			assert(request_body_reader != nullptr);
+			assert(!request_body_reader->IsSocketDone(*socket));
+
 			read_timer.Schedule(read_timeout);
 			wait_tracker.Set(GetEventLoop(), WAIT_RECEIVE_REQUEST);
 		}
