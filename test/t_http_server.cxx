@@ -17,9 +17,11 @@
 #include "lease.hxx"
 #include "pool/pool.hxx"
 #include "pool/Holder.hxx"
+#include "pool/SharedPtr.hxx"
 #include "pool/UniquePtr.hxx"
 #include "istream/UnusedPtr.hxx"
 #include "istream/UnusedHoldPtr.hxx"
+#include "istream/ApproveIstream.hxx"
 #include "istream/BlockIstream.hxx"
 #include "istream/ConcatIstream.hxx"
 #include "istream/DelayedIstream.hxx"
@@ -39,13 +41,16 @@
 #include "memory/SlicePool.hxx"
 #include "memory/istream_gb.hxx"
 #include "fs/FilteredSocket.hxx"
+#include "fs/Lease.hxx"
 #include "event/FineTimerEvent.hxx"
 #include "net/SocketPair.hxx"
 #include "net/UniqueSocketDescriptor.hxx"
 #include "system/Error.hxx"
 #include "util/Cancellable.hxx"
 #include "util/Exception.hxx"
+#include "util/IterableSplitString.hxx"
 #include "util/PrintException.hxx"
+#include "util/StringCompare.hxx"
 #include "stopwatch.hxx"
 
 #include <gtest/gtest.h>
@@ -58,6 +63,103 @@
 #include <stdlib.h>
 
 using std::string_view_literals::operator""sv;
+
+class RawClient final : BufferedSocketHandler {
+	static constexpr Event::Duration TIMEOUT = std::chrono::minutes{2};
+
+	EventLoop &event_loop;
+
+	FilteredSocketLease socket;
+
+	std::string response;
+
+	std::exception_ptr error;
+
+	bool released = false;
+
+public:
+	RawClient(FilteredSocket &_socket, Lease &lease) noexcept
+		:event_loop(_socket.GetEventLoop()),
+		 socket(_socket, lease, TIMEOUT, *this)
+	{
+		socket.ScheduleRead();
+	}
+
+	~RawClient() noexcept {
+		if (!socket.IsReleased())
+			socket.Release(false, PutAction::DESTROY);
+	}
+
+	void Write(std::span<const std::byte> src) {
+		const auto nbytes = socket.Write(src);
+		if (nbytes < 0)
+			throw MakeErrno("Failed to send request");
+
+		if (static_cast<std::size_t>(nbytes) < src.size())
+			throw std::runtime_error{"Short send"};
+	}
+
+	std::string_view GetResponse() const {
+		if (error)
+			std::rethrow_exception(error);
+
+		return response;
+	}
+
+	void SkipResponse(std::size_t n) noexcept {
+		assert(!error);
+		assert(response.size() >= n);
+
+		response.erase(0, n);
+	}
+
+	bool SkipResponse(std::string_view needle) {
+		if (error)
+			std::rethrow_exception(error);
+
+		if (!GetResponse().starts_with(needle))
+			return false;
+
+		SkipResponse(needle.size());
+		return true;
+	}
+
+	std::string TakeResponse() {
+		if (error)
+			std::rethrow_exception(error);
+
+		return std::move(response);
+	}
+
+	void ReleaseSocket(bool preserve, PutAction action) noexcept {
+		socket.Release(preserve, action);
+	}
+
+private:
+	/* virtual methods from class BufferedSocketHandler */
+	BufferedResult OnBufferedData() override {
+		const auto r = socket.ReadBuffer();
+		response.append(ToStringView(r));
+		socket.DisposeConsumed(r.size());
+		event_loop.Break();
+		return BufferedResult::OK;
+	}
+
+	bool OnBufferedClosed() noexcept override {
+		socket.Close();
+		event_loop.Break();
+		return true;
+	}
+
+	bool OnBufferedWrite() override {
+		return true;
+	}
+
+	void OnBufferedError(std::exception_ptr e) noexcept override {
+		error = std::move(e);
+		event_loop.Break();
+	}
+};
 
 class Server final
 	: PoolHolder,
@@ -110,6 +212,11 @@ public:
 	void CheckCloseConnection() noexcept {
 		if (connection != nullptr)
 			CloseConnection();
+	}
+
+	std::unique_ptr<RawClient> MakeRawClient() noexcept {
+		Lease &lease = *this;
+		return std::make_unique<RawClient>(client_fs, lease);
 	}
 
 	void SendRequest(HttpMethod method, const char *uri,
@@ -945,4 +1052,278 @@ TYPED_TEST(HttpServerTest, CancelAfterChunkedRequest)
 			instance.event_loop.Run();
 		}
 	}
+}
+
+/**
+ * Various tests with a "raw" client, i.e. sending raw HTTP requests
+ * directly to the HTTP server.
+ */
+TYPED_TEST(HttpServerTest, Raw)
+{
+	auto &instance = this->instance_;
+	auto server = this->MakeServer();
+	server.SetRequestHandler([](IncomingHttpRequest &request, CancellablePointer &) noexcept {
+		request.SendResponse(HttpStatus::OK, {},
+				     std::move(request.body));
+	});
+
+	// simple GET
+
+	{
+		auto client = server.MakeRawClient();
+		client->Write(AsBytes("GET / HTTP/1.1\r\n\r\n"sv));
+		instance.event_loop.Run();
+
+		const auto response_buffer = client->TakeResponse();
+		std::string_view response = response_buffer;
+		EXPECT_TRUE(SkipPrefix(response, "HTTP/1.1 200 OK\r\n"sv));
+		EXPECT_TRUE(RemoveSuffix(response, "\n\r\n"sv));
+
+		std::string_view content_length;
+
+		for (std::string_view i : IterableSplitString(response, '\n')) {
+			EXPECT_TRUE(RemoveSuffix(i, "\r"sv));
+
+			if (SkipPrefix(i, "content-length: "sv))
+				content_length = i;
+		}
+
+		EXPECT_EQ(content_length, "0"sv);
+
+		client->ReleaseSocket(false, PutAction::REUSE);
+	}
+
+	// simple POST
+
+	{
+		auto client = server.MakeRawClient();
+		client->Write(AsBytes("POST / HTTP/1.1\r\ncontent-length: 1\r\n\r\nA"sv));
+		instance.event_loop.Run();
+
+		const auto response_buffer = client->TakeResponse();
+		std::string_view response = response_buffer;
+		EXPECT_TRUE(SkipPrefix(response, "HTTP/1.1 200 OK\r\n"sv));
+		EXPECT_TRUE(RemoveSuffix(response, "\n\r\nA"sv));
+
+		std::string_view content_length;
+
+		for (std::string_view i : IterableSplitString(response, '\n')) {
+			EXPECT_TRUE(RemoveSuffix(i, "\r"sv));
+
+			if (SkipPrefix(i, "content-length: "sv))
+				content_length = i;
+		}
+
+		EXPECT_EQ(content_length, "1"sv);
+
+		client->ReleaseSocket(false, PutAction::REUSE);
+	}
+
+	// expect:100-continue
+
+	{
+		auto client = server.MakeRawClient();
+		client->Write(AsBytes("POST / HTTP/1.1\r\ncontent-length: 3\r\nexpect: 100-continue\r\n\r\n"sv));
+		instance.event_loop.Run();
+
+		EXPECT_TRUE(client->SkipResponse("HTTP/1.1 100 Continue\r\n\r\n"sv));
+
+		if (client->GetResponse().empty())
+			instance.event_loop.Run();
+
+		const auto response_buffer = client->TakeResponse();
+		std::string_view response = response_buffer;
+		EXPECT_TRUE(SkipPrefix(response, "HTTP/1.1 200 OK\r\n"sv));
+		EXPECT_TRUE(RemoveSuffix(response, "\n\r\n"sv));
+
+		std::string_view content_length;
+
+		for (std::string_view i : IterableSplitString(response, '\n')) {
+			EXPECT_TRUE(RemoveSuffix(i, "\r"sv));
+
+			if (SkipPrefix(i, "content-length: "sv))
+				content_length = i;
+		}
+
+		EXPECT_EQ(content_length, "3"sv);
+
+		client->Write(AsBytes("A"sv));
+		instance.event_loop.Run();
+		EXPECT_EQ(client->TakeResponse(), "A"sv);
+
+		client->Write(AsBytes("BC"sv));
+		instance.event_loop.Run();
+		EXPECT_EQ(client->TakeResponse(), "BC"sv);
+
+		client->ReleaseSocket(false, PutAction::REUSE);
+	}
+
+	// expect:100-continue but send the first byte right away (no "!00 Continue")
+
+	{
+		auto client = server.MakeRawClient();
+		client->Write(AsBytes("POST / HTTP/1.1\r\ncontent-length: 3\r\nexpect: 100-continue\r\n\r\nA"sv));
+		instance.event_loop.Run();
+
+		const auto response_buffer = client->TakeResponse();
+		std::string_view response = response_buffer;
+		EXPECT_TRUE(SkipPrefix(response, "HTTP/1.1 200 OK\r\n"sv));
+		EXPECT_TRUE(RemoveSuffix(response, "\n\r\nA"sv));
+
+		std::string_view content_length;
+
+		for (std::string_view i : IterableSplitString(response, '\n')) {
+			EXPECT_TRUE(RemoveSuffix(i, "\r"sv));
+
+			if (SkipPrefix(i, "content-length: "sv))
+				content_length = i;
+		}
+
+		EXPECT_EQ(content_length, "3"sv);
+
+		client->Write(AsBytes("BC"sv));
+		instance.event_loop.Run();
+		EXPECT_EQ(client->TakeResponse(), "BC"sv);
+
+		client->ReleaseSocket(false, PutAction::REUSE);
+
+	}
+
+	// expect:100-continue but server doesn't want the request body
+
+	server.SetRequestHandler([](IncomingHttpRequest &request, CancellablePointer &) noexcept {
+		request.body.Clear();
+		request.SendResponse(HttpStatus::OK, {}, istream_string_new(request.pool, "foobar"sv));
+	});
+
+	{
+		auto client = server.MakeRawClient();
+		client->Write(AsBytes("POST / HTTP/1.1\r\ncontent-length: 3\r\nexpect: 100-continue\r\n\r\n"sv));
+		instance.event_loop.Run();
+
+		const auto response_buffer = client->TakeResponse();
+		std::string_view response = response_buffer;
+		EXPECT_TRUE(SkipPrefix(response, "HTTP/1.1 200 OK\r\n"sv));
+		EXPECT_TRUE(RemoveSuffix(response, "\n\r\nfoobar"sv));
+
+		std::string_view content_length;
+
+		for (std::string_view i : IterableSplitString(response, '\n')) {
+			EXPECT_TRUE(RemoveSuffix(i, "\r"sv));
+
+			if (SkipPrefix(i, "content-length: "sv))
+				content_length = i;
+		}
+
+		EXPECT_EQ(content_length, "6"sv);
+
+		client->ReleaseSocket(false, PutAction::REUSE);
+	}
+
+	// expect:100-continue; server delays the "100 Continue"
+
+	IncomingHttpRequest *delayed_request = nullptr;
+
+	server.SetRequestHandler([&delayed_request](IncomingHttpRequest &request, CancellablePointer &) noexcept {
+		delayed_request = &request;
+	});
+
+	{
+		auto client = server.MakeRawClient();
+		client->Write(AsBytes("POST / HTTP/1.1\r\ncontent-length: 3\r\nexpect: 100-continue\r\n\r\n"sv));
+
+		FlushIO(instance.event_loop);
+		this->FlushFilters();
+		FlushIO(instance.event_loop);
+		EXPECT_EQ(client->GetResponse(), ""sv);
+
+		ASSERT_TRUE(delayed_request != nullptr);
+
+		delayed_request->SendResponse(HttpStatus::OK, {},
+					      std::move(delayed_request->body));
+
+		instance.event_loop.Run();
+
+		EXPECT_TRUE(client->SkipResponse("HTTP/1.1 100 Continue\r\n\r\n"sv));
+
+		if (client->GetResponse().empty())
+			instance.event_loop.Run();
+
+		const auto response_buffer = client->TakeResponse();
+		std::string_view response = response_buffer;
+		EXPECT_TRUE(SkipPrefix(response, "HTTP/1.1 200 OK\r\n"sv));
+		EXPECT_TRUE(RemoveSuffix(response, "\n\r\n"sv));
+
+		std::string_view content_length;
+
+		for (std::string_view i : IterableSplitString(response, '\n')) {
+			EXPECT_TRUE(RemoveSuffix(i, "\r"sv));
+
+			if (SkipPrefix(i, "content-length: "sv))
+				content_length = i;
+		}
+
+		EXPECT_EQ(content_length, "3"sv);
+
+		client->Write(AsBytes("ABC"sv));
+		instance.event_loop.Run();
+		EXPECT_EQ(client->TakeResponse(), "ABC"sv);
+
+		client->ReleaseSocket(false, PutAction::REUSE);
+	}
+
+}
+
+/**
+ * Test with raw client; the server holds back the request body and we
+ * approve it byte by byte.
+ */
+TYPED_TEST(HttpServerTest, RawPostHold)
+{
+	auto &instance = this->instance_;
+	auto server = this->MakeServer();
+
+	SharedPoolPtr<ApproveIstreamControl> approve;
+
+	server.SetRequestHandler([&instance, &approve](IncomingHttpRequest &request, CancellablePointer &) noexcept {
+		UnusedIstreamPtr body;
+		std::tie(body, approve) = NewApproveIstream(request.pool, instance.event_loop, std::move(request.body));
+		request.SendResponse(HttpStatus::OK, {}, std::move(body));
+	});
+
+	auto client = server.MakeRawClient();
+	client->Write(AsBytes("POST / HTTP/1.1\r\ncontent-length: 3\r\n\r\nA"sv));
+	instance.event_loop.Run();
+
+	const auto response_buffer = client->TakeResponse();
+	std::string_view response = response_buffer;
+	EXPECT_TRUE(SkipPrefix(response, "HTTP/1.1 200 OK\r\n"sv));
+	EXPECT_TRUE(RemoveSuffix(response, "\n\r\n"sv));
+
+	std::string_view content_length;
+
+	for (std::string_view i : IterableSplitString(response, '\n')) {
+		EXPECT_TRUE(RemoveSuffix(i, "\r"sv));
+
+		if (SkipPrefix(i, "content-length: "sv))
+			content_length = i;
+	}
+
+	EXPECT_EQ(content_length, "3"sv);
+
+	approve->Approve(1);
+	instance.event_loop.Run();
+	EXPECT_EQ(client->TakeResponse(), "A"sv);
+
+	client->Write(AsBytes("BC"sv));
+	approve->Approve(1);
+	instance.event_loop.Run();
+	EXPECT_EQ(client->TakeResponse(), "B"sv);
+
+	approve->Approve(1);
+	approve.reset();
+	instance.event_loop.Run();
+	EXPECT_EQ(client->TakeResponse(), "C"sv);
+
+	client->ReleaseSocket(false, PutAction::REUSE);
 }
