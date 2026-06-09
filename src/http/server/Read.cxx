@@ -175,11 +175,8 @@ HttpServerConnection::ParseRequestLine(std::string_view line) noexcept
 	return true;
 }
 
-/**
- * @return false if the connection has been closed
- */
 inline bool
-HttpServerConnection::HeadersFinished() noexcept
+HttpServerConnection::HeadersFinished(bool has_more) noexcept
 {
 	assert(request.body_state == Request::BodyState::START);
 
@@ -201,7 +198,10 @@ HttpServerConnection::HeadersFinished() noexcept
 	if (const char *const expect = r.headers.Remove(expect_header);
 	    expect != nullptr) {
 		if (StringIsEqual(expect, "100-continue"))
-			request.expect_100_continue = true;
+			/* ignore the "expect:100-continue" if we
+			   already have some request body data in the
+			   socket buffer */
+			request.expect_100_continue = !has_more;
 		else
 			request.SetError(HttpStatus::EXPECTATION_FAILED, "Unrecognized expectation\n");
 	}
@@ -277,11 +277,8 @@ HttpServerConnection::HeadersFinished() noexcept
 	return true;
 }
 
-/**
- * @return false if the connection has been closed
- */
 inline bool
-HttpServerConnection::HandleLine(std::string_view line) noexcept
+HttpServerConnection::HandleLine(std::string_view line, bool has_more) noexcept
 {
 	assert(request.read_state == Request::START ||
 	       request.read_state == Request::HEADERS);
@@ -316,7 +313,7 @@ HttpServerConnection::HandleLine(std::string_view line) noexcept
 		assert(request.read_state == Request::HEADERS);
 		assert(request.request != nullptr);
 
-		return HeadersFinished();
+		return HeadersFinished(has_more);
 	}
 }
 
@@ -333,7 +330,7 @@ HttpServerConnection::FeedHeaders(const std::string_view b) noexcept
 
 		request.SetError(HttpStatus::REQUEST_HEADER_FIELDS_TOO_LARGE,
 				 "Too many request headers\n");
-		if (!HeadersFinished())
+		if (!HeadersFinished(true))
 			return BufferedResult::DESTROYED;
 
 		/* reset the keep_alive flag after it was set by
@@ -357,7 +354,7 @@ HttpServerConnection::FeedHeaders(const std::string_view b) noexcept
 
 		line = StripRight(line);
 
-		if (!HandleLine(line))
+		if (!HandleLine(line, !remaining.empty()))
 			return BufferedResult::DESTROYED;
 
 		if (request.read_state != Request::HEADERS)

@@ -396,15 +396,17 @@ struct HttpServerConnection final
 	bool ParseRequestLine(std::string_view line) noexcept;
 
 	/**
+	 * @param has_more is there more data in the input buffer?
 	 * @return false if the connection has been closed
 	 */
 	[[nodiscard]]
-	bool HeadersFinished() noexcept;
+	bool HeadersFinished(bool has_more) noexcept;
 
 	/**
+	 * @param has_more is there more data in the input buffer?
 	 * @return false if the connection has been closed
 	 */
-	bool HandleLine(std::string_view line) noexcept;
+	bool HandleLine(std::string_view line, bool has_more) noexcept;
 
 	BufferedResult FeedHeaders(std::string_view b) noexcept;
 
