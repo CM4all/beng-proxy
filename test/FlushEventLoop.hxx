@@ -15,7 +15,7 @@ inline void
 FlushPending(EventLoop &event_loop) noexcept
 {
 	DeferBreak b{event_loop};
-	b.ScheduleNext();
+	b.ScheduleIdle();
 	event_loop.Run();
 }
 
