@@ -35,7 +35,7 @@ Write(GrowingBuffer &buffer, std::string_view process,
 # TYPE beng_proxy_children gauge
 
 beng_proxy_children_spawned{{process={:?}}} {}
-beng_proxy_total_spawn_duration{{{}}} {:e}
+beng_proxy_total_spawn_duration{{process={:?}}} {:e}
 beng_proxy_spawn_errors{{process={:?}}} {}
 beng_proxy_children_killed{{process={:?}}} {}
 beng_proxy_children_exited{{process={:?}}} {}
