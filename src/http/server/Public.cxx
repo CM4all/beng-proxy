@@ -235,14 +235,17 @@ HttpServerConnection::OnBufferedData()
 			assert(request.read_state == Request::BODY ||
 			       request.read_state == Request::ABANDONED_BODY);
 
-			if (request.read_state != Request::ABANDONED_BODY &&
-			    request_body_reader->GetConsumedSerial() != old_consumed_serial) [[likely]] {
-				if (!request_body_reader->IsSocketDone(*socket))
-					ScheduleReadTimeoutTimer();
+			if (request.read_state == Request::ABANDONED_BODY) [[unlikely]]
+				return BufferedResult::OK;
 
-				if (request_body_reader->RequireMore())
-					return BufferedResult::MORE;
-			}
+			if (request_body_reader->GetConsumedSerial() == old_consumed_serial) [[unlikely]]
+				return BufferedResult::OK;
+
+			if (!request_body_reader->IsSocketDone(*socket))
+				ScheduleReadTimeoutTimer();
+
+			if (request_body_reader->RequireMore())
+				return BufferedResult::MORE;
 
 			return BufferedResult::OK;
 
