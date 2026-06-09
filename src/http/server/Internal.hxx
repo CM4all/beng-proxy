@@ -251,6 +251,16 @@ struct HttpServerConnection final
 		 */
 		bool send_100_continue = false;
 
+		/**
+		 * If true, then the request body handler currently
+		 * blocks (i.e. accepts no input).  It is initially
+		 * true because we don't know yet whether it blocks;
+		 * it will be set to false by
+		 * RequestBodyReader::_Read() (once the handler
+		 * requests data from the Istream).
+		 */
+		bool body_handler_blocks = true;
+
 		constexpr void Reset() noexcept {
 			error_status = {};
 			read_state = START;
@@ -280,7 +290,10 @@ struct HttpServerConnection final
 			   be on the wire now */
 			/* no timeout as long as the client is waiting
 			   for "100 Continue" */
-			return !upgrade && !expect_100_continue;
+			/* no timeout if the request body
+			   IstreamHandler does not accept any data
+			   currently */
+			return !upgrade && !expect_100_continue && !body_handler_blocks;
 		}
 	} request;
 

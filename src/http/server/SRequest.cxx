@@ -19,10 +19,12 @@ HttpServerConnection::FeedRequestBody(std::span<const std::byte> src) noexcept
 		if (destructed)
 			return BufferedResult::DESTROYED;
 
+		request.body_handler_blocks = true;
 		CancelReadTimeoutTimer();
 		return BufferedResult::OK;
 	}
 
+	request.body_handler_blocks = false;
 	request.bytes_received += nbytes;
 	socket->DisposeConsumed(nbytes);
 
@@ -152,6 +154,7 @@ HttpServerConnection::ReadRequestBody() noexcept
 		/* avoid recursion */
 		return;
 
+	request.body_handler_blocks = false;
 	request.in_read = true;
 
 	const auto result = socket->Read();
@@ -181,6 +184,8 @@ HttpServerConnection::FillBucketList(IstreamBucketList &list) noexcept
 	assert(request.read_state == Request::BODY);
 	assert(request.body_state == Request::BodyState::READING);
 	assert(!response.pending_drained);
+
+	request.body_handler_blocks = false;
 
 	MaybeSend100Continue();
 

@@ -238,7 +238,8 @@ HttpServerConnection::OnBufferedData()
 			if (request.read_state == Request::ABANDONED_BODY) [[unlikely]]
 				return BufferedResult::OK;
 
-			if (request_body_reader->GetConsumedSerial() == old_consumed_serial) [[unlikely]]
+			request.body_handler_blocks = request_body_reader->GetConsumedSerial() == old_consumed_serial;
+			if (request.body_handler_blocks) [[unlikely]]
 				return BufferedResult::OK;
 
 			if (!request_body_reader->IsSocketDone(*socket))

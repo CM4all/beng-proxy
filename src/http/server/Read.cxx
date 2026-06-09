@@ -470,6 +470,7 @@ HttpServerConnection::TryRequestBodyDirect(SocketDescriptor fd, FdType fd_type) 
 	switch (request_body_reader->TryDirect(fd, fd_type)) {
 	case IstreamDirectResult::BLOCKING:
 		/* the destination fd blocks */
+		request.body_handler_blocks = true;
 		CancelReadTimeoutTimer();
 		return DirectResult::BLOCKING;
 
@@ -507,6 +508,8 @@ HttpServerConnection::TryRequestBodyDirect(SocketDescriptor fd, FdType fd_type) 
 				? DirectResult::CLOSED
 				: DirectResult::OK;
 		}
+
+		request.body_handler_blocks = false;
 
 		/* refresh the request body timeout */
 		ScheduleReadTimeoutTimer();
