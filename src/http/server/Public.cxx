@@ -296,8 +296,13 @@ HttpServerConnection::OnBufferedWrite()
 		if (request.read_state == Request::BODY && !Send100Continue())
 			return false;
 
-		if (!HasInput())
+		if (!HasInput()) {
+			/* there is no response yet, and this write
+			   event has been scheduled only for the "100
+			   Continue" intermediate response */
+			socket->UnscheduleWrite();
 			return true;
+		}
 	}
 
 	if (!TryWrite())
