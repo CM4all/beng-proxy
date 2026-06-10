@@ -94,12 +94,18 @@ HttpServerConnection::DiscardRequestBody() noexcept
 	if (socket->IsConnected())
 		socket->SetDirect(false);
 
-	if (request.expect_100_continue)
+	if (request.expect_100_continue) {
 		/* the request body was optional, and we did not send the "100
 		   Continue" response (yet): pretend there never was a request
 		   body */
 		request.expect_100_continue = false;
-	else if (request_body_reader->Discard(*socket))
+
+		/* disable keep-alive to avoid confusing the request
+		   body that the client may have just started sending
+		   (without waiting for "100 Continue") with a new
+		   pipelined request (request smuggling) */
+		keep_alive = false;
+	} else if (request_body_reader->Discard(*socket))
 		/* the remaining data has already been received into the input
 		   buffer, and we only need to discard it from there to have a
 		   "clean" connection */
