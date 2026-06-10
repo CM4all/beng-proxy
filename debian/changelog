@@ -4,7 +4,7 @@ cm4all-beng-proxy (21.34) unstable; urgency=low
   * http_server: disable keep-alive if optional request body is discarded
   * spawn: eliminate redundant open("/proc/PID")
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Wed, 10 Jun 2026 22:48:03 +0200
 
 cm4all-beng-proxy (21.33) unstable; urgency=low
 
