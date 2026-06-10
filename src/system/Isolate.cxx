@@ -5,7 +5,8 @@
 #include "Isolate.hxx"
 #include "system/Mount.hxx"
 #include "system/linux/pivot_root.h"
-#include "io/FileDescriptor.hxx"
+#include "io/UniqueFileDescriptor.hxx"
+#include "io/linux/ProcPid.hxx"
 #include "io/linux/UserNamespace.hxx"
 
 #include <sched.h>
@@ -36,9 +37,10 @@ isolate_from_filesystem(bool allow_dbus,
 	   or else the mkdir() calls below fail */
 	/* for dbus "AUTH EXTERNAL", libdbus needs to obtain the "real"
 	   uid from geteuid(), so set up the mapping */
-	DenySetGroups(0);
-	SetupGidMap(0, gid);
-	SetupUidMap(0, uid);
+	const auto proc_pid = OpenProcPid(0);
+	DenySetGroups(proc_pid);
+	SetupGidMap(proc_pid, gid);
+	SetupUidMap(proc_pid, uid);
 
 	/* convert all "shared" mounts to "private" mounts */
 	MountSetAttr(FileDescriptor::Undefined(), "/",
