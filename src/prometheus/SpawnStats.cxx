@@ -16,6 +16,9 @@ Write(GrowingBuffer &buffer, std::string_view process,
       const SpawnStats &stats) noexcept
 {
 	buffer.Fmt(R"(
+# HELP beng_proxy_spawn_pending Number of child processes being spawned currently
+# TYPE beng_proxy_spawn_pending gauge
+
 # HELP beng_proxy_children_spawned Total number of child processes spawned
 # TYPE beng_proxy_children_spawned counter
 
@@ -34,6 +37,7 @@ Write(GrowingBuffer &buffer, std::string_view process,
 # HELP beng_proxy_children Number of child processes
 # TYPE beng_proxy_children gauge
 
+beng_proxy_spawn_pending{{process={:?}}} {}
 beng_proxy_children_spawned{{process={:?}}} {}
 beng_proxy_total_spawn_duration{{process={:?}}} {:e}
 beng_proxy_spawn_errors{{process={:?}}} {}
@@ -41,6 +45,7 @@ beng_proxy_children_killed{{process={:?}}} {}
 beng_proxy_children_exited{{process={:?}}} {}
 beng_proxy_children{{process={:?}}} {}
 )"sv,
+		   process, stats.pending,
 		   process, stats.spawned,
 		   process, ToFloatSeconds(stats.total_spawn_duration),
 		   process, stats.errors,
