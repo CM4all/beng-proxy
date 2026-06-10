@@ -288,12 +288,21 @@ HttpServerConnection::OnBufferedDirect(SocketDescriptor fd, FdType fd_type)
 bool
 HttpServerConnection::OnBufferedWrite()
 {
+	assert(socket);
 	assert(!response.pending_drained);
 
 	response.want_write = false;
 
 	if (request.send_100_continue) [[unlikely]] {
-		if (request.read_state == Request::BODY && !Send100Continue())
+		if (!socket->IsEmpty())
+			/* meanwhile, request body data has been
+			   received (but may not have been evaluated
+			   by OnBufferedData() yet), i.e. the client
+			   has started sending the request body, and
+			   the "100 Continue" is no longer
+			   necessary */
+			request.send_100_continue = false;
+		else if (request.read_state == Request::BODY && !Send100Continue())
 			return false;
 
 		if (!HasInput()) {
