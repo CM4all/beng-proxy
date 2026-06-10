@@ -1189,37 +1189,6 @@ TYPED_TEST(HttpServerTest, Raw)
 
 	}
 
-	// expect:100-continue but server doesn't want the request body
-
-	server.SetRequestHandler([](IncomingHttpRequest &request, CancellablePointer &) noexcept {
-		request.body.Clear();
-		request.SendResponse(HttpStatus::OK, {}, istream_string_new(request.pool, "foobar"sv));
-	});
-
-	{
-		auto client = server.MakeRawClient();
-		client->Write(AsBytes("POST / HTTP/1.1\r\ncontent-length: 3\r\nexpect: 100-continue\r\n\r\n"sv));
-		instance.event_loop.Run();
-
-		const auto response_buffer = client->TakeResponse();
-		std::string_view response = response_buffer;
-		EXPECT_TRUE(SkipPrefix(response, "HTTP/1.1 200 OK\r\n"sv));
-		EXPECT_TRUE(RemoveSuffix(response, "\n\r\nfoobar"sv));
-
-		std::string_view content_length;
-
-		for (std::string_view i : IterableSplitString(response, '\n')) {
-			EXPECT_TRUE(RemoveSuffix(i, "\r"sv));
-
-			if (SkipPrefix(i, "content-length: "sv))
-				content_length = i;
-		}
-
-		EXPECT_EQ(content_length, "6"sv);
-
-		client->ReleaseSocket(false, PutAction::REUSE);
-	}
-
 	// expect:100-continue; server delays the "100 Continue"
 
 	IncomingHttpRequest *delayed_request = nullptr;
@@ -1272,6 +1241,36 @@ TYPED_TEST(HttpServerTest, Raw)
 		client->ReleaseSocket(false, PutAction::REUSE);
 	}
 
+	// expect:100-continue but server doesn't want the request body
+
+	server.SetRequestHandler([](IncomingHttpRequest &request, CancellablePointer &) noexcept {
+		request.body.Clear();
+		request.SendResponse(HttpStatus::OK, {}, istream_string_new(request.pool, "foobar"sv));
+	});
+
+	{
+		auto client = server.MakeRawClient();
+		client->Write(AsBytes("POST / HTTP/1.1\r\ncontent-length: 3\r\nexpect: 100-continue\r\n\r\n"sv));
+		instance.event_loop.Run();
+
+		const auto response_buffer = client->TakeResponse();
+		std::string_view response = response_buffer;
+		EXPECT_TRUE(SkipPrefix(response, "HTTP/1.1 200 OK\r\n"sv));
+		EXPECT_TRUE(RemoveSuffix(response, "\n\r\nfoobar"sv));
+
+		std::string_view content_length;
+
+		for (std::string_view i : IterableSplitString(response, '\n')) {
+			EXPECT_TRUE(RemoveSuffix(i, "\r"sv));
+
+			if (SkipPrefix(i, "content-length: "sv))
+				content_length = i;
+		}
+
+		EXPECT_EQ(content_length, "6"sv);
+
+		client->ReleaseSocket(false, PutAction::REUSE);
+	}
 }
 
 /**
