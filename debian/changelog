@@ -5,6 +5,7 @@ cm4all-beng-proxy (21.33) unstable; urgency=low
   * http_server: no read timeout if the request body has been received already
   * spawn: asynchronous waits, parallelize execve()
   * prometheus: add "beng_proxy_total_spawn_duration", "beng_proxy_spawn_pending"
+  * apply "populate_io_buffers" only to the first memory area
 
  --   
 
