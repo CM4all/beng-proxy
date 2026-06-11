@@ -489,7 +489,6 @@ struct HttpServerConnection final
 
 		if (request.ShouldEnableReadTimeout()) {
 			assert(request_body_reader != nullptr);
-			assert(!request_body_reader->IsSocketDone(*socket));
 
 			read_timer.Schedule(read_timeout);
 			wait_tracker.Set(GetEventLoop(), WAIT_RECEIVE_REQUEST);
