@@ -231,7 +231,6 @@ HttpServerConnection::OnBufferedData()
 		const auto old_consumed_serial = request_body_reader->GetConsumedSerial();
 		switch (request_body_reader->InvokeReady()) {
 		case IstreamReadyResult::OK:
-			/* refresh the request body timeout */
 			assert(request.read_state == Request::BODY ||
 			       request.read_state == Request::ABANDONED_BODY);
 
@@ -242,11 +241,12 @@ HttpServerConnection::OnBufferedData()
 			if (request.body_handler_blocks) [[unlikely]]
 				return BufferedResult::OK;
 
-			if (!request_body_reader->IsSocketDone(*socket))
+			if (request_body_reader->RequireMore()) {
+				/* refresh the request body timeout */
 				ScheduleReadTimeoutTimer();
 
-			if (request_body_reader->RequireMore())
 				return BufferedResult::MORE;
+			}
 
 			return BufferedResult::OK;
 

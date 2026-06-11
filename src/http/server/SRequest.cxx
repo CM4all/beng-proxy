@@ -56,12 +56,12 @@ HttpServerConnection::FeedRequestBody(std::span<const std::byte> src) noexcept
 		if (destructed)
 			return BufferedResult::DESTROYED;
 	} else {
-		/* refresh the request body timeout */
-		if (!request_body_reader->IsSocketDone(*socket))
+		if (request_body_reader->RequireMore()) {
+			/* refresh the request body timeout */
 			ScheduleReadTimeoutTimer();
 
-		if (request_body_reader->RequireMore())
 			return BufferedResult::MORE;
+		}
 	}
 
 	return BufferedResult::OK;
