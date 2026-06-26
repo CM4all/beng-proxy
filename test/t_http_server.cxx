@@ -75,8 +75,6 @@ class RawClient final : BufferedSocketHandler {
 
 	std::exception_ptr error;
 
-	bool released = false;
-
 public:
 	RawClient(FilteredSocket &_socket, Lease &lease) noexcept
 		:event_loop(_socket.GetEventLoop()),
