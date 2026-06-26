@@ -388,6 +388,8 @@ else
   lua_jwt_dep = lua_dep
 endif
 
+subdir('libcommon/src/thread')
+subdir('src/fs')
 subdir('src/ssl')
 subdir('src/control')
 
@@ -515,8 +517,6 @@ raddress_dep = declare_dependency(
 )
 
 subdir('src/was')
-subdir('libcommon/src/thread')
-subdir('src/fs')
 
 subdir('libcommon/src/translation')
 subdir('src/translation')
