@@ -24,7 +24,7 @@
 #include "util/MimeType.hxx"
 #include "util/SpanCast.hxx"
 
-#include <fmt/core.h>
+#include <fmt/format.h>
 #include <nlohmann/json.hpp>
 
 #include <memory>

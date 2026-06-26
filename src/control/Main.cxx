@@ -17,6 +17,8 @@
 #include "util/StringCompare.hxx"
 #include "util/UnalignedBigEndian.hxx"
 
+#include <fmt/format.h>
+
 #include <algorithm> // for std::clamp()
 #include <chrono>
 #include <span>

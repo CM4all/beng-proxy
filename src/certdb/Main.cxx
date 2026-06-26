@@ -31,6 +31,8 @@
 #include "util/PrintException.hxx"
 #include "util/StringCompare.hxx"
 
+#include <fmt/format.h>
+#include <fmt/std.h>
 #include <sodium/core.h>
 
 #include <stdexcept>
