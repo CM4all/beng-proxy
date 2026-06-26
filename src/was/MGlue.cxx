@@ -58,7 +58,8 @@ protected:
 						     address.options,
 						     address.parallelism,
 						     address.concurrency,
-						     address.disposable);
+						     address.disposable,
+						     address.instant_fade);
 
 		const TempPoolLease tpool;
 		const auto key = address.GetChildId(*tpool);

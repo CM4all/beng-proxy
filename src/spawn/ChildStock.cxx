@@ -101,6 +101,9 @@ ChildStock::DoSpawn(CreateStockItem c, StockRequest request,
 		    CancellablePointer &caller_cancel_ptr) noexcept
 try {
 	auto item = cls.CreateChild(c, request.get(), *this);
+	if (cls.WantInstantFade(request.get()))
+		item->EnableInstantFade();
+
 	item->Spawn(cls, request.get(),
 		    log_sink, log_options);
 

@@ -145,7 +145,8 @@ LhttpRequest::Start() noexcept
 						   address.options,
 						   address.parallelism,
 						   address.concurrency,
-						   false);
+						   false,
+						   address.instant_fade);
 	params->blocking = address.blocking;
 
 	const TempPoolLease tpool;

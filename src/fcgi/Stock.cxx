@@ -82,6 +82,13 @@ FcgiStock::WantStderrPond(const void *info) const noexcept
 	return params.options.stderr_pond;
 }
 
+bool
+FcgiStock::WantInstantFade(const void *info) const noexcept
+{
+	const auto &params = *static_cast<const CgiChildParams *>(info);
+	return params.instant_fade;
+}
+
 unsigned
 FcgiStock::GetChildBacklog(const void *info) const noexcept
 {

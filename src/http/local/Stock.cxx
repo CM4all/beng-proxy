@@ -72,6 +72,13 @@ LhttpStock::WantStderrPond(const void *info) const noexcept
 	return address.options.stderr_pond;
 }
 
+bool
+LhttpStock::WantInstantFade(const void *info) const noexcept
+{
+	const auto &address = *static_cast<const CgiChildParams *>(info);
+	return address.instant_fade;
+}
+
 int
 LhttpStock::GetChildSocketType(const void *info) const noexcept
 {

@@ -54,6 +54,11 @@ public:
 	 */
 	virtual bool WantStderrPond(const void *) const noexcept = 0;
 
+	/**
+	 * @see #TranslationCommand::INSTANT_FADE
+	 */
+	virtual bool WantInstantFade(const void *) const noexcept = 0;
+
 	[[gnu::pure]]
 	virtual std::string_view GetChildTag(const void *info) const noexcept;
 

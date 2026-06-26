@@ -37,6 +37,7 @@ LhttpAddress::LhttpAddress(AllocatorPtr alloc,
 	 cached_child_id(alloc.Dup(src.cached_child_id)),
 	 parallelism(src.parallelism),
 	 concurrency(src.concurrency),
+	 instant_fade(src.instant_fade),
 	 blocking(src.blocking),
 	 expand_uri(src.expand_uri)
 {

@@ -73,6 +73,11 @@ struct CgiAddress {
 	bool disposable = false;
 
 	/**
+	 * @see TranslationCommand::INSTANT_FADE
+	 */
+	bool instant_fade = false;
+
+	/**
 	 * Pass the CGI parameter "REQUEST_URI" verbatim instead of
 	 * building it from SCRIPT_NAME, PATH_INFO and QUERY_STRING.
 	 */
@@ -101,6 +106,7 @@ struct CgiAddress {
 		 cached_child_id(src.cached_child_id),
 		 concurrency(src.concurrency),
 		 disposable(src.disposable),
+		 instant_fade(src.instant_fade),
 		 request_uri_verbatim(src.request_uri_verbatim),
 		 expand_path(src.expand_path),
 		 expand_uri(src.expand_uri),

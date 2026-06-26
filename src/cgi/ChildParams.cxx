@@ -17,7 +17,8 @@ CgiChildParams::CgiChildParams(AllocatorPtr alloc, const CgiChildParams &src) no
 	 options(*alloc.New<ChildOptions>(alloc, src.options)),
 	 parallelism(src.parallelism),
 	 concurrency(src.concurrency),
-	 disposable(src.disposable)
+	 disposable(src.disposable),
+	 instant_fade(src.instant_fade)
 {
 }
 

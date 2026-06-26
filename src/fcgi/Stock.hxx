@@ -87,6 +87,7 @@ private:
 	StockRequest PreserveRequest(StockRequest request) noexcept override;
 	bool WantStderrFd(const void *info) const noexcept override;
 	bool WantStderrPond(const void *info) const noexcept override;
+	bool WantInstantFade(const void *info) const noexcept override;
 	std::string_view GetChildTag(const void *info) const noexcept override;
 	void PrepareChild(const void *info, PreparedChildProcess &p,
 			  FdHolder &close_fds) override;

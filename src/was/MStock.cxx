@@ -151,6 +151,13 @@ MultiWasStock::WantStderrPond(const void *info) const noexcept
 	return params.options.stderr_pond;
 }
 
+bool
+MultiWasStock::WantInstantFade(const void *info) const noexcept
+{
+	const auto &params = *static_cast<const CgiChildParams *>(info);
+	return params.instant_fade;
+}
+
 std::string_view
 MultiWasStock::GetChildTag(const void *info) const noexcept
 {

@@ -23,6 +23,8 @@ struct CgiChildParams {
 
 	bool disposable;
 
+	bool instant_fade = false;
+
 	bool blocking = true;
 
 	CgiChildParams(const char *_executable_path,
@@ -30,12 +32,14 @@ struct CgiChildParams {
 		       const ChildOptions &_options,
 		       unsigned _parallelism,
 		       unsigned _concurrency,
-		       bool _disposable) noexcept
+		       bool _disposable,
+		       bool _instant_fade) noexcept
 		:executable_path(_executable_path), args(_args),
 		 options(_options),
 		 parallelism(_parallelism),
 		 concurrency(_concurrency),
-		 disposable(_disposable) {}
+		 disposable(_disposable),
+		 instant_fade(_instant_fade) {}
 
 	CgiChildParams(AllocatorPtr alloc, const CgiChildParams &src) noexcept;
 

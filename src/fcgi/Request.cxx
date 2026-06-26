@@ -96,7 +96,8 @@ public:
 							   address.options,
 							   address.parallelism,
 							   address.concurrency,
-							   false);
+							   false,
+							   address.instant_fade);
 
 		const TempPoolLease tpool;
 		const auto key = address.GetChildId(*tpool);

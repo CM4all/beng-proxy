@@ -47,6 +47,11 @@ struct LhttpAddress {
 	unsigned concurrency = 1;
 
 	/**
+	 * @see TranslationCommand::INSTANT_FADE
+	 */
+	bool instant_fade = false;
+
+	/**
 	 * Pass a blocking listener socket to the child process?  The
 	 * default is true; sets SOCK_NONBLOCK if false.
 	 */
@@ -70,6 +75,7 @@ struct LhttpAddress {
 		 cached_child_id(src.cached_child_id),
 		 parallelism(src.parallelism),
 		 concurrency(src.concurrency),
+		 instant_fade(src.instant_fade),
 		 blocking(src.blocking),
 		 expand_uri(src.expand_uri)
 	{

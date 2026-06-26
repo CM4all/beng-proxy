@@ -100,6 +100,7 @@ private:
 	/* virtual methods from class ChildStockClass */
 	StockRequest PreserveRequest(StockRequest request) noexcept override;
 	bool WantStderrPond(const void *info) const noexcept override;
+	bool WantInstantFade(const void *info) const noexcept override;
 	std::string_view GetChildTag(const void *info) const noexcept override;
 	std::unique_ptr<ChildStockItem> CreateChild(CreateStockItem c,
 						    const void *info,

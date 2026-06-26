@@ -40,6 +40,7 @@ CgiAddress::CgiAddress(AllocatorPtr alloc, const CgiAddress &src) noexcept
 	 parallelism(src.parallelism),
 	 concurrency(src.concurrency),
 	 disposable(src.disposable),
+	 instant_fade(src.instant_fade),
 	 request_uri_verbatim(src.request_uri_verbatim),
 	 expand_path(src.expand_path),
 	 expand_uri(src.expand_uri),
