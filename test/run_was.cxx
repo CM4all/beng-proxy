@@ -17,7 +17,7 @@
 #include "istream/OpenFileIstream.hxx"
 #include "spawn/Config.hxx"
 #include "spawn/ChildOptions.hxx"
-#include "spawn/Registry.hxx"
+#include "spawn/Terminator.hxx"
 #include "spawn/Local.hxx"
 #include "io/Logger.hxx"
 #include "io/SpliceSupport.hxx"
@@ -235,9 +235,12 @@ try {
 	ChildOptions child_options;
 	child_options.no_new_privs = true;
 
-	ChildProcessRegistry child_process_registry;
-	LocalSpawnService spawn_service(spawn_config, context.event_loop,
-					child_process_registry);
+	ChildProcessTerminator child_process_terminator;
+	LocalSpawnService spawn_service{
+		spawn_config,
+		context.event_loop,
+		child_process_terminator,
+	};
 
 	context.process = was_launch(spawn_service, nullptr, "was",
 				     path, args,

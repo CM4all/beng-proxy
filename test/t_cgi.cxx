@@ -14,7 +14,7 @@
 #include "istream/UnusedPtr.hxx"
 #include "istream/istream.hxx"
 #include "spawn/Config.hxx"
-#include "spawn/Registry.hxx"
+#include "spawn/Terminator.hxx"
 #include "spawn/Local.hxx"
 #include "system/SetupProcess.hxx"
 #include "system/KernelVersion.hxx"
@@ -32,7 +32,7 @@
 static SpawnConfig spawn_config;
 
 struct Context final : TestInstance, HttpResponseHandler, IstreamSink {
-	ChildProcessRegistry child_process_registry;
+	ChildProcessTerminator child_process_terminator;
 	LocalSpawnService spawn_service;
 
 	CancellablePointer cancel_ptr;
@@ -51,7 +51,7 @@ struct Context final : TestInstance, HttpResponseHandler, IstreamSink {
 
 	Context()
 		:spawn_service(spawn_config, event_loop,
-			       child_process_registry)
+			       child_process_terminator)
 	{
 	}
 
