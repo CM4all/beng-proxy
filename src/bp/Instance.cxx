@@ -349,11 +349,38 @@ BpInstance::ReloadState() noexcept
 void
 BpInstance::OnCgroupPressure(unsigned repeat) noexcept
 {
+	/**
+	 * The maximum number of processes that may be exiting
+	 * currently.  If there are more than that, we wait until the
+	 * next call.  This avoids heavy concurrency that will only
+	 * lead to lock contention in the kernel.  And, more
+	 * importantly, we don't want to discard more processes than
+	 * necessary; if we have discarded a bunch of processes, we
+	 * should wait until they really exit and actually free some
+	 * RAM before we decide to kill more.
+	 */
+	static constexpr std::size_t MAX_PENDING_EXITS = 512;
+
+	std::size_t max_discard = MAX_PENDING_EXITS;
+	if (spawn) {
+		const auto pending_exits = spawn->GetTerminatorStats().GetPendingExits();
+		if (pending_exits >= MAX_PENDING_EXITS) {
+			fmt::print(stderr, "Not discarding child processes because {} exits are pending\n",
+				   pending_exits);
+			return;
+		}
+
+		/* allow discarding a few more ("/2") to have some
+		   headroom for the next call */
+		max_discard -= pending_exits / 2;
+	}
+
 	/* the number of processes we discard in each call grows
 	   exponentially (but no more than 512 at a time), just in
 	   case we're spawning new processes faster than this method
 	   shuts them down */
-	const std::size_t discard_request = std::size_t{32} << std::min(repeat, 4U);
+	const std::size_t discard_request = std::min(std::size_t{32} << std::min(repeat, 4U),
+						     max_discard);
 
 	std::size_t n = 0;
 
