@@ -57,8 +57,10 @@ BpPrometheusExporter::HandleHttpRequest(IncomingHttpRequest &request,
 	buffer.Write(ToPrometheusString(instance.event_loop.GetStats(), process));
 	Prometheus::Write(buffer, process, instance.GetStats());
 
-	if (instance.spawn)
+	if (instance.spawn) {
+		Prometheus::Write(buffer, process, instance.spawn->GetTerminatorStats());
 		Prometheus::Write(buffer, process, instance.spawn->GetStats());
+	}
 
 	for (const auto &[name, stats] : instance.listener_stats)
 		Prometheus::Write(buffer, process, name, stats);

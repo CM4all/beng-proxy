@@ -8,8 +8,13 @@
 
 class GrowingBuffer;
 struct SpawnStats;
+struct ChildProcessTerminatorStats;
 
 namespace Prometheus {
+
+void
+Write(GrowingBuffer &buffer, std::string_view process,
+      const ChildProcessTerminatorStats &stats) noexcept;
 
 void
 Write(GrowingBuffer &buffer, std::string_view process,

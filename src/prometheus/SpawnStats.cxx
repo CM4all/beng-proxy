@@ -13,6 +13,39 @@ namespace Prometheus {
 
 void
 Write(GrowingBuffer &buffer, std::string_view process,
+      const ChildProcessTerminatorStats &stats) noexcept
+{
+	buffer.Fmt(R"(
+# HELP beng_proxy_terminator_signals Number of signals sent to child processes
+# TYPE beng_proxy_terminator_signals counter
+
+# HELP beng_proxy_terminator_failed_signals Number of failures to send signals to child processes
+# TYPE beng_proxy_terminator_failed_signals counter
+
+# HELP beng_proxy_terminator_exits Number of child terminated child processes that have exited
+# TYPE beng_proxy_terminator_exits counter
+
+# HELP beng_proxy_terminator_timeouts Number of child terminated child processes that have not within the timeout
+# TYPE beng_proxy_terminator_timeouts counter
+
+# HELP beng_proxy_terminator_duration Total duration waiting for terminated child processes to exit
+# TYPE beng_proxy_terminator_duration counter
+
+beng_proxy_terminator_signals{{process={:?}}} {}
+beng_proxy_terminator_failed_signals{{process={:?}}} {}
+beng_proxy_terminator_exits{{process={:?}}} {}
+beng_proxy_terminator_timeouts{{process={:?}}} {}
+beng_proxy_terminator_duration{{process={:?}}} {:e}
+)"sv,
+		   process, stats.n_signals,
+		   process, stats.n_failed_signals,
+		   process, stats.n_exits,
+		   process, stats.n_timeouts,
+		   process, ToFloatSeconds(stats.total_shutdown_duration));
+}
+
+void
+Write(GrowingBuffer &buffer, std::string_view process,
       const SpawnStats &stats) noexcept
 {
 	buffer.Fmt(R"(
