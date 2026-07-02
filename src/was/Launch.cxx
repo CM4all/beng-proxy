@@ -13,6 +13,8 @@
 #include "io/FdHolder.hxx"
 #include "AllocatorPtr.hxx"
 
+#include <fmt/format.h>
+
 static auto
 WasLaunch(SpawnService &spawn_service,
 	  ListenStreamStock *listen_stream_stock,
@@ -53,6 +55,15 @@ WasLaunch(SpawnService &spawn_service,
 
 	if (!p.stderr_fd.IsDefined())
 		p.stderr_fd = stderr_fd;
+
+#ifdef HAVE_LIBSYSTEMD
+	if (p.sigkill && p.cgroup != nullptr && p.cgroup->name != nullptr && p.cgroup_session == nullptr) {
+		// TODO use a better session cgroup name
+		static unsigned session_id_counter = 0;
+		p.strings.emplace_front(fmt::format("session-{}", ++session_id_counter));
+		p.cgroup_session = p.strings.front().c_str();
+	}
+#endif // HAVE_LIBSYSTEMD
 
 	return spawn_service.SpawnChildProcess(name, std::move(p));
 }

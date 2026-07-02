@@ -268,6 +268,11 @@ Response
   give it a very short idle timeout (or none at all).  To be used for
   processes that will likely only be used once.
 
+- ``SIGKILL``: Terminate the child process with ``SIGKILL`` instead of
+  ``SIGTERM``.  This is sometimes useful on stateless processes to
+  skip the costly shutdown (i.e. because the bulk ``munmap()`` calls
+  are unnecessary overhead).
+
 - ``NON_BLOCKING``: If present, make the socket passed to a child
   process non-blocking (LHTTP only currently). This is needed by NodeJS
   0.12.

@@ -24,6 +24,8 @@
 #include "net/UniqueSocketDescriptor.hxx"
 #endif // HAVE_LIBSYSTEMD
 
+#include <fmt/format.h>
+
 #include <cassert>
 
 #include <sys/socket.h>
@@ -73,6 +75,13 @@ ChildStockItem::Spawn(ChildStockClass &cls, const void *info,
 				throw SpawnResourcesExhaustedError{};
 
 			std::tie(return_cgroup, p.return_cgroup) = CreateSocketPair(SOCK_SEQPACKET);
+		}
+
+		if (p.sigkill && p.cgroup_session == nullptr) {
+			// TODO use a better session cgroup name
+			static unsigned session_id_counter = 0;
+			p.strings.emplace_front(fmt::format("session-{}", ++session_id_counter));
+			p.cgroup_session = p.strings.front().c_str();
 		}
 	}
 #endif // HAVE_LIBSYSTEMD

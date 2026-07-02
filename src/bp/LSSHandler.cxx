@@ -20,6 +20,8 @@
 #include "io/FdHolder.hxx"
 #include "util/DisposablePointer.hxx"
 
+#include <fmt/format.h>
+
 BpListenStreamStockHandler::BpListenStreamStockHandler(BpInstance &_instance,
 						       Net::Log::Sink *_log_sink,
 						       const ChildErrorLogOptions &_log_options) noexcept
@@ -147,6 +149,15 @@ BpListenStreamStockHandler::Process::Start(EventLoop &event_loop, SpawnService &
 		log.EnableClient(p, close_fds,
 				 event_loop, _log_sink, _log_options,
 				 options.child_options.stderr_pond);
+
+#ifdef HAVE_LIBSYSTEMD
+	if (p.sigkill && p.cgroup != nullptr && p.cgroup->name != nullptr && p.cgroup_session == nullptr) {
+		// TODO use a better session cgroup name
+		static unsigned session_id_counter = 0;
+		p.strings.emplace_front(fmt::format("session-{}", ++session_id_counter));
+		p.cgroup_session = p.strings.front().c_str();
+	}
+#endif // HAVE_LIBSYSTEMD
 
 	process = service.SpawnChildProcess(name, std::move(p));
 
