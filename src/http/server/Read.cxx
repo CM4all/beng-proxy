@@ -118,6 +118,12 @@ ParseHttpMethod(const char *s) noexcept
 			return {HttpMethod::UNLOCK, unlock};
 
 		break;
+
+	case 'Q':
+		if (auto query = StringAfterPrefix(s + 1, "UERY "sv))
+			return {HttpMethod::QUERY, query};
+
+		break;
 	}
 
 	return {};
