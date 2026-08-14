@@ -10,7 +10,6 @@ project('CM4all beng-proxy', 'cpp', version: '21.39',
     'fmt:cpp_std=c++23',
 
     'libwas:apreq2=disabled',
-    'libwas:xios=disabled',
     'libwas:documentation=disabled',
   ],
 )
