@@ -7,11 +7,11 @@
 #include "io/Logger.hxx"
 #include "system/Seed.hxx"
 #include "util/DeleteDisposer.hxx"
+#include "util/SpanCast.hxx"
 #include "util/StaticVector.hxx"
 #include "util/PrintException.hxx"
 
 #include <cassert>
-#include <cstring> // for memcmp()
 
 static constexpr unsigned MAX_SESSIONS = 65536;
 
@@ -31,7 +31,7 @@ inline bool
 SessionManager::SessionAttachEqual::operator()(std::span<const std::byte> a,
 					       std::span<const std::byte> b) const noexcept
 {
-	return a.size() == b.size() && memcmp(a.data(), b.data(), a.size()) == 0;
+	return ToStringView(a) == ToStringView(b);
 }
 
 void
