@@ -88,7 +88,7 @@ SessionManager::~SessionManager() noexcept
 	sessions.clear_and_dispose(DeleteDisposer{});
 }
 
-void
+inline void
 SessionManager::AdjustNewSessionId(SessionId &id) const noexcept
 {
 	if (cluster_size > 0)
