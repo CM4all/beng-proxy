@@ -146,6 +146,11 @@ SessionManager::Purge() noexcept
 inline SessionId
 SessionManager::GenerateSessionId() noexcept
 {
+	if (++reseed_counter >= 256) {
+		reseed_counter = 0;
+		SeedPrng();
+	}
+
 	SessionId id;
 	id.Generate(prng);
 	AdjustNewSessionId(id);

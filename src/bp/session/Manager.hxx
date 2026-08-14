@@ -79,6 +79,8 @@ class SessionManager {
 
 	FarTimerEvent cleanup_timer;
 
+	unsigned reseed_counter = 0;
+
 public:
 	SessionManager(EventLoop &event_loop, std::chrono::seconds idle_timeout,
 		       unsigned _cluster_size, unsigned _cluster_node) noexcept;

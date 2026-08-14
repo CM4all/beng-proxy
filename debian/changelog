@@ -1,6 +1,7 @@
 cm4all-beng-proxy (21.39) unstable; urgency=low
 
   * support HTTP QUERY (RFC 10008)
+  * bp/session: reseed the PRNG more often
   * zeroconf: do not add hostname to Zeroconf service name
 
  --   
