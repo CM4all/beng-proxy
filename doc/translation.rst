@@ -1153,6 +1153,13 @@ capabilities. This is a precondition for some of the other namespaces.
 
 Requires Linux 3.8 or newer.
 
+The following packets are available to configure the user namespace:
+
+- ``MAX_INOTIFY``: sets the per-namespace sysctls
+  ``user.max_inotify_instances`` and ``user.max_inotify_watches``.
+  Payload is two 32 bit integers.
+
+
 PID Namespaces
 ^^^^^^^^^^^^^^
 
