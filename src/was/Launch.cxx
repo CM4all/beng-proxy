@@ -4,6 +4,7 @@
 
 #include "Launch.hxx"
 #include "pool/tpool.hxx"
+#include "cgi/ChildParams.hxx"
 #include "spawn/Interface.hxx"
 #include "spawn/Mount.hxx"
 #include "spawn/Prepared.hxx"
@@ -20,9 +21,7 @@ WasLaunch(SpawnService &spawn_service,
 	  ListenStreamStock *listen_stream_stock,
 	  SharedLease &listen_stream_lease,
 	  std::string_view name,
-	  const char *executable_path,
-	  std::span<const char *const> args,
-	  const ChildOptions &options,
+	  const CgiChildParams &params,
 	  UniqueFileDescriptor &&stderr_fd,
 	  WasSocket &&socket)
 {
@@ -46,12 +45,8 @@ WasLaunch(SpawnService &spawn_service,
 		listen_stream_lease = listen_stream_stock->Apply(alloc, p.ns.mount);
 	}
 
-	p.Append(executable_path);
-	for (auto i : args)
-		p.Append(i);
-
 	FdHolder close_fds;
-	options.CopyTo(p, close_fds);
+	params.CopyTo(p, close_fds);
 
 	if (!p.stderr_fd.IsDefined())
 		p.stderr_fd = stderr_fd;
@@ -72,9 +67,7 @@ WasProcess
 was_launch(SpawnService &spawn_service,
 	   ListenStreamStock *listen_stream_stock,
 	   std::string_view name,
-	   const char *executable_path,
-	   std::span<const char *const> args,
-	   const ChildOptions &options,
+	   const CgiChildParams &params,
 	   UniqueFileDescriptor stderr_fd)
 {
 	auto s = WasSocket::CreatePair();
@@ -85,8 +78,8 @@ was_launch(SpawnService &spawn_service,
 
 	process.handle = WasLaunch(spawn_service, listen_stream_stock,
 				   process.listen_stream_lease,
-				   name, executable_path, args,
-				   options, std::move(stderr_fd),
+				   name, params,
+				   std::move(stderr_fd),
 				   std::move(s.second));
 	return process;
 }

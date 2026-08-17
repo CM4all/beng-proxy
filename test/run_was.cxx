@@ -15,6 +15,7 @@
 #include "istream/sink_fd.hxx"
 #include "istream/UnusedPtr.hxx"
 #include "istream/OpenFileIstream.hxx"
+#include "cgi/ChildParams.hxx"
 #include "spawn/Config.hxx"
 #include "spawn/ChildOptions.hxx"
 #include "spawn/Terminator.hxx"
@@ -243,8 +244,10 @@ try {
 	};
 
 	context.process = was_launch(spawn_service, nullptr, "was",
-				     path, args,
-				     child_options,
+				     CgiChildParams{
+					     path, args, child_options,
+					     0, 0, false, false,
+				     },
 				     FileDescriptor{STDERR_FILENO}.Duplicate());
 	context.control.emplace(context.event_loop, std::move(context.process.control), context);
 

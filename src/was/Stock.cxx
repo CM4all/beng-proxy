@@ -116,9 +116,7 @@ WasStock::Create(CreateStockItem c, StockRequest _request,
 	ChildErrorLog log;
 	auto process = was_launch(spawn_service, listen_stream_stock,
 				  c.GetStockNameView(),
-				  params.executable_path,
-				  params.args,
-				  params.options,
+				  params,
 				  log.EnableClient(GetEventLoop(),
 						   log_sink, log_options,
 						   params.options.stderr_pond));

@@ -15,7 +15,7 @@
 class SpawnService;
 class ListenStreamStock;
 class ChildProcessHandle;
-struct ChildOptions;
+struct CgiChildParams;
 
 struct WasProcess : WasSocket {
 	std::unique_ptr<ChildProcessHandle> handle;
@@ -40,7 +40,5 @@ WasProcess
 was_launch(SpawnService &spawn_service,
 	   ListenStreamStock *listen_stream_stock,
 	   std::string_view name,
-	   const char *executable_path,
-	   std::span<const char *const> args,
-	   const ChildOptions &options,
+	   const CgiChildParams &params,
 	   UniqueFileDescriptor stderr_fd);

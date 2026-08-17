@@ -150,6 +150,7 @@ if libwas.found()
   executable(
     'run_was',
     'run_was.cxx',
+    '../src/cgi/ChildParams.cxx',
     include_directories: inc,
     dependencies: [
       test_instance_dep,
