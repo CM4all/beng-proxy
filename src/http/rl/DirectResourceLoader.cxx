@@ -87,7 +87,8 @@ try {
 	case ResourceAddress::Type::PIPE:
 		cgi = &address.GetCgi();
 		pipe_filter(spawn_service, event_loop, pool, parent_stopwatch,
-			    cgi->path, cgi->args.ToArray(pool),
+			    cgi->path, cgi->process_name,
+			    cgi->args.ToArray(pool),
 			    cgi->options,
 			    params.status != HttpStatus{} ? params.status : HttpStatus::OK,
 			    std::move(headers), std::move(body),

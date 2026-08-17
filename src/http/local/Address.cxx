@@ -30,6 +30,7 @@ LhttpAddress::LhttpAddress(const char *_path) noexcept
 LhttpAddress::LhttpAddress(AllocatorPtr alloc,
 			   const LhttpAddress &src) noexcept
 	:path(alloc.Dup(src.path)),
+	 process_name(alloc.CheckDup(src.process_name)),
 	 args(alloc, src.args),
 	 options(alloc, src.options),
 	 host_and_port(alloc.CheckDup(src.host_and_port)),

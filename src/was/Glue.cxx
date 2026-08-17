@@ -51,6 +51,7 @@ public:
 protected:
 	void GetStockItem() noexcept override {
 		auto r = NewFromPool<CgiChildParams>(pool, address.GetAction(),
+						     address.process_name,
 						     address.args.ToArray(pool),
 						     address.options,
 						     address.parallelism,

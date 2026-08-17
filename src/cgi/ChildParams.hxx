@@ -14,6 +14,7 @@ class FdHolder;
 
 struct CgiChildParams {
 	const char *executable_path;
+	const char *process_name;
 
 	std::span<const char *const> args;
 
@@ -28,13 +29,16 @@ struct CgiChildParams {
 	bool blocking = true;
 
 	CgiChildParams(const char *_executable_path,
+		       const char *_process_name,
 		       std::span<const char *const> _args,
 		       const ChildOptions &_options,
 		       unsigned _parallelism,
 		       unsigned _concurrency,
 		       bool _disposable,
 		       bool _instant_fade) noexcept
-		:executable_path(_executable_path), args(_args),
+		:executable_path(_executable_path),
+		 process_name(_process_name),
+		 args(_args),
 		 options(_options),
 		 parallelism(_parallelism),
 		 concurrency(_concurrency),

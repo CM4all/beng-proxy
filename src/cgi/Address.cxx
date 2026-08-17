@@ -25,6 +25,7 @@
 
 CgiAddress::CgiAddress(AllocatorPtr alloc, const CgiAddress &src) noexcept
 	:path(alloc.Dup(src.path)),
+	 process_name(alloc.CheckDup(src.process_name)),
 	 args(alloc, src.args),
 	 params(alloc, src.params),
 	 options(alloc, src.options),
@@ -153,6 +154,13 @@ CgiAddress::GetId(AllocatorPtr alloc) const noexcept
                    calculated, so let's use that */
 		hash = cached_child_id.hash;
 		b.push_back(cached_child_id.value);
+	}
+
+	if (process_name != nullptr) {
+		b.push_back(";n=");
+		const std::string_view value{process_name};
+		b.push_back(value);
+		hash = djb_hash(AsBytes(value), hash);
 	}
 
 	if (action != nullptr) {

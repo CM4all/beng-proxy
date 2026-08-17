@@ -22,6 +22,11 @@ template<size_t MAX> class PoolStringBuilder;
 struct LhttpAddress {
 	const char *path;
 
+	/**
+	 * A string for argv[0], which will become the process name.
+	 */
+	const char *process_name = nullptr;
+
 	ExpandableStringList args;
 
 	ChildOptions options;
@@ -68,6 +73,7 @@ struct LhttpAddress {
 	constexpr LhttpAddress(ShallowCopy shallow_copy,
 			       const LhttpAddress &src) noexcept
 		:path(src.path),
+		 process_name(src.process_name),
 		 args(shallow_copy, src.args),
 		 options(shallow_copy, src.options),
 		 host_and_port(src.host_and_port),

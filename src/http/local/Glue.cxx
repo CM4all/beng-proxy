@@ -141,6 +141,7 @@ LhttpRequest::Start() noexcept
 {
 	auto *params = NewFromPool<CgiChildParams>(pool,
 						   address.path,
+						   address.process_name,
 						   address.args.ToArray(pool),
 						   address.options,
 						   address.parallelism,

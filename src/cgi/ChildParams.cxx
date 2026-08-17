@@ -13,6 +13,7 @@
 
 CgiChildParams::CgiChildParams(AllocatorPtr alloc, const CgiChildParams &src) noexcept
 	:executable_path(alloc.Dup(src.executable_path)),
+	 process_name(alloc.CheckDup(src.process_name)),
 	 args(alloc.CloneStringArray(src.args)),
 	 options(*alloc.New<ChildOptions>(alloc, src.options)),
 	 parallelism(src.parallelism),
@@ -29,6 +30,9 @@ CgiChildParams::CopyTo(PreparedChildProcess &dest, FdHolder &close_fds) const no
 
 	for (const char *i : args)
 		dest.Append(i);
+
+	if (process_name != nullptr)
+		dest.SetProcessName(process_name);
 
 	options.CopyTo(dest, close_fds);
 }

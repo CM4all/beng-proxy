@@ -891,6 +891,9 @@ The following packets can be used to specify more details:
 - ``EXPAND_PATH``: Override the executable path with the given value
   (after expanding); see :ref:`tresponse`.
 
+- ``PROCESS_NAME``: A string for ``argv[0]``, which will become the
+  process name.
+
 - ``APPEND``: appends an argument to the command line
 
 - ``EXPAND_APPEND``: provide a cache expansion for the preceding

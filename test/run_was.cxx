@@ -245,7 +245,7 @@ try {
 
 	context.process = was_launch(spawn_service, nullptr, "was",
 				     CgiChildParams{
-					     path, args, child_options,
+					     path, nullptr, args, child_options,
 					     0, 0, false, false,
 				     },
 				     FileDescriptor{STDERR_FILENO}.Duplicate());

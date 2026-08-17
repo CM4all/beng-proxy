@@ -92,6 +92,7 @@ public:
 	void BeginConnect() noexcept {
 		auto *params = NewFromPool<CgiChildParams>(pool,
 							   address.GetAction(),
+							   address.process_name,
 							   address.args.ToArray(pool),
 							   address.options,
 							   address.parallelism,

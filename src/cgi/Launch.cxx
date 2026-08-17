@@ -129,6 +129,9 @@ PrepareCgi(struct pool &pool, PreparedChildProcess &p,
 	if (arg != nullptr)
 		p.Append(arg);
 
+	if (address.process_name != nullptr)
+		p.SetProcessName(address.process_name);
+
 	address.options.CopyTo(p, close_fds);
 }
 

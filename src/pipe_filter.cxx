@@ -67,6 +67,7 @@ pipe_filter(SpawnService &spawn_service, EventLoop &event_loop,
 	    struct pool &pool,
 	    const StopwatchPtr &parent_stopwatch,
 	    const char *path,
+	    const char *process_name,
 	    std::span<const char *const> args,
 	    const ChildOptions &options,
 	    HttpStatus status, StringMap &&headers, UnusedIstreamPtr body,
@@ -89,6 +90,9 @@ pipe_filter(SpawnService &spawn_service, EventLoop &event_loop,
 	p.Append(path);
 	for (auto i : args)
 		p.Append(i);
+
+	if (process_name != nullptr)
+		p.SetProcessName(process_name);
 
 	UnusedIstreamPtr response;
 

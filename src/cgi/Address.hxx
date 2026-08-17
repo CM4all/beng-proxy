@@ -24,6 +24,11 @@ struct CgiAddress {
 	const char *path;
 
 	/**
+	 * A string for argv[0], which will become the process name.
+	 */
+	const char *process_name = nullptr;
+
+	/**
 	 * Command-line arguments.
 	 */
 	ExpandableStringList args;
@@ -97,6 +102,7 @@ struct CgiAddress {
 	constexpr CgiAddress(ShallowCopy shallow_copy,
 			     const CgiAddress &src) noexcept
 		:path(src.path),
+		 process_name(src.process_name),
 		 args(shallow_copy, src.args), params(shallow_copy, src.params),
 		 options(shallow_copy, src.options),
 		 interpreter(src.interpreter), action(src.action),
