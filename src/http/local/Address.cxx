@@ -263,14 +263,3 @@ LhttpAddress::Expand(AllocatorPtr alloc, const MatchData &match_data) noexcept
 
 	args.Expand(alloc, match_data);
 }
-
-void
-LhttpAddress::CopyTo(PreparedChildProcess &dest, FdHolder &close_fds) const noexcept
-{
-	dest.Append(path);
-
-	for (const char *i : args)
-		dest.Append(i);
-
-	options.CopyTo(dest, close_fds);
-}

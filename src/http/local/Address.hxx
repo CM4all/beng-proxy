@@ -190,11 +190,6 @@ struct LhttpAddress {
 
 	void Expand(AllocatorPtr alloc, const MatchData &match_data) noexcept;
 
-	/**
-	 * Throws std::runtime_error on error.
-	 */
-	void CopyTo(PreparedChildProcess &dest, FdHolder &close_fds) const noexcept;
-
 private:
 	std::size_t BuildChildId(PoolStringBuilder<256> &b,
 				 std::span<char, 16384> options_buffer) const noexcept;
