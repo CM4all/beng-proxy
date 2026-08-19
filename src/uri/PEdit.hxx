@@ -14,8 +14,8 @@ class AllocatorPtr;
 
 [[gnu::pure]]
 const char *
-uri_insert_query_string(AllocatorPtr alloc, const char *uri,
-			const char *query_string) noexcept;
+uri_insert_query_string(AllocatorPtr alloc, std::string_view uri,
+			std::string_view query_string) noexcept;
 
 /**
  * Appends the specified query string at the end.  Adds a '?' or '&'

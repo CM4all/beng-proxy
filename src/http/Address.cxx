@@ -165,7 +165,7 @@ HttpAddress::HasQueryString() const noexcept
 
 HttpAddress *
 HttpAddress::InsertQueryString(AllocatorPtr alloc,
-			       const char *query_string) const noexcept
+			       std::string_view query_string) const noexcept
 {
 	return http_address_with_path(alloc, this,
 				      uri_insert_query_string(alloc, path,

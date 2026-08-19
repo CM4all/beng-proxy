@@ -113,7 +113,7 @@ struct HttpAddress {
 	 */
 	[[gnu::malloc]]
 	HttpAddress *InsertQueryString(AllocatorPtr alloc,
-				       const char *query_string) const noexcept;
+				       std::string_view query_string) const noexcept;
 
 	/**
 	 * Duplicates this #http_address object and inserts the specified

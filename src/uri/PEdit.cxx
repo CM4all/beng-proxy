@@ -5,25 +5,22 @@
 #include "PEdit.hxx"
 #include "AllocatorPtr.hxx"
 #include "util/StringCompare.hxx"
+#include "util/StringSplit.hxx"
 
 #include <assert.h>
 #include <string.h>
 
 const char *
-uri_insert_query_string(AllocatorPtr alloc, const char *uri,
-			const char *query_string) noexcept
+uri_insert_query_string(AllocatorPtr alloc, std::string_view uri,
+			std::string_view query_string) noexcept
 {
-	assert(uri != nullptr);
-	assert(query_string != nullptr);
+	const auto [prefix, old_query_string] = Split(uri, '?');
 
-	const char *qmark = strchr(uri, '?');
-
-	if (qmark != nullptr) {
-		++qmark;
-		return alloc.Concat(std::string_view(uri, qmark),
+	if (old_query_string.data() != nullptr) {
+		return alloc.Concat(prefix, '?',
 				    query_string,
 				    '&',
-				    qmark);
+				    old_query_string);
 	} else
 		return alloc.Concat(uri, '?', query_string);
 }

@@ -161,7 +161,7 @@ LhttpAddress::HasQueryString() const noexcept
 
 LhttpAddress *
 LhttpAddress::InsertQueryString(AllocatorPtr alloc,
-				const char *query_string) const noexcept
+				std::string_view query_string) const noexcept
 {
 	return alloc.New<LhttpAddress>(ShallowCopy(), *this,
 				       uri_insert_query_string(alloc, uri,

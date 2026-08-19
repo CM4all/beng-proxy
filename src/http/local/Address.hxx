@@ -141,7 +141,7 @@ struct LhttpAddress {
 	 */
 	[[gnu::malloc]]
 	LhttpAddress *InsertQueryString(AllocatorPtr alloc,
-					const char *query_string) const noexcept;
+					std::string_view query_string) const noexcept;
 
 	/**
 	 * Duplicates this #lhttp_address object and inserts the specified
