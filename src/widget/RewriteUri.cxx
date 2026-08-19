@@ -136,8 +136,8 @@ uri_add_site_suffix(AllocatorPtr alloc, const char *uri, const char *site_name,
 		   will render an error message */
 		return uri;
 
-	const char *path = UriPathQueryFragment(uri);
-	if (path == nullptr)
+	const std::string_view path = UriPathQueryFragment(uri);
+	if (path.data() == nullptr)
 		/* without an absolute path, we cannot build a new absolute
 		   URI */
 		return uri;
@@ -164,8 +164,8 @@ uri_add_raw_site_suffix(AllocatorPtr alloc, const char *uri, const char *site_na
 		   will render an error message */
 		return uri;
 
-	const char *path = UriPathQueryFragment(uri);
-	if (path == nullptr)
+	const std::string_view path = UriPathQueryFragment(uri);
+	if (path.data() == nullptr)
 		/* without an absolute path, we cannot build a new absolute
 		   URI */
 		return uri;

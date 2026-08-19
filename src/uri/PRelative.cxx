@@ -5,6 +5,7 @@
 #include "PRelative.hxx"
 #include "uri/Extract.hxx"
 #include "util/StringCompare.hxx"
+#include "util/StringSplit.hxx"
 #include "AllocatorPtr.hxx"
 
 #include <assert.h>
@@ -105,17 +106,18 @@ uri_compress(AllocatorPtr alloc, const char *uri) noexcept
 	return dest;
 }
 
-static const char *
-uri_after_last_slash(const char *uri) noexcept
+static std::string_view 
+uri_after_last_slash(std::string_view uri) noexcept
 {
-	const char *path = UriPathQueryFragment(uri);
-	if (path == nullptr)
-		return nullptr;
+	const std::string_view path = UriPathQueryFragment(uri);
+	if (path.data() == nullptr)
+		return path;
 
-	uri = strrchr(path, '/');
-	if (uri != nullptr)
-		++uri;
-	return uri;
+	const auto [a, b] = SplitLast(path, '/');
+	if (b.data() != nullptr)
+		return b;
+
+	return path;
 }
 
 const char *
@@ -141,20 +143,20 @@ uri_absolute(AllocatorPtr alloc, const char *base,
 		if (base[0] == '/' && base[1] != '/')
 			return alloc.DupZ(uri);
 
-		const char *base_path = UriPathQueryFragment(base);
-		if (base_path == nullptr)
+		const std::string_view base_path = UriPathQueryFragment(base);
+		if (base_path.data() == nullptr)
 			return alloc.Concat(base, uri);
 
-		base_length = base_path - base;
+		base_length = base_path.data() - base;
 	} else if (uri[0] == '?') {
 		const char *qmark = strchr(base, '?');
 		base_length = qmark != nullptr ? (size_t)(qmark - base) : strlen(base);
 	} else {
-		const char *base_end = uri_after_last_slash(base);
-		if (base_end == nullptr)
+		const std::string_view base_end = uri_after_last_slash(base);
+		if (base_end.data() == nullptr)
 			return alloc.Concat(base, "/", uri);
 
-		base_length = base_end - base;
+		base_length = base_end.data() - base;
 	}
 
 	return alloc.Concat(std::string_view{base, base_length}, uri);
