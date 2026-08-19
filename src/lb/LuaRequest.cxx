@@ -306,7 +306,7 @@ LbLuaRequestIndex(lua_State *L)
 	} else if (StringIsEqual(name, "query_table")) {
 		lua_newtable(L);
 
-		if (const char *const query = UriQuery(data.request.uri)) {
+		if (const std::string_view query = UriQuery(data.request.uri); !query.empty()) {
 			for (const auto &[key, value] : MapQueryString(query)) {
 				Lua::SetTable(L, Lua::RelativeStackIndex{-1}, key, value);
 			}

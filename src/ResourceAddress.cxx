@@ -102,7 +102,7 @@ ResourceAddress::WithQueryStringFrom(AllocatorPtr alloc,
 	case Type::HTTP:
 		assert(u.http != nullptr);
 
-		if (const char *query_string = UriQuery(uri); query_string != nullptr)
+		if (const auto query_string = UriQuery(uri); !query_string.empty())
 			return *u.http->InsertQueryString(alloc, query_string);
 		else
 			/* no query string in URI */
@@ -111,7 +111,7 @@ ResourceAddress::WithQueryStringFrom(AllocatorPtr alloc,
 	case Type::LHTTP:
 		assert(u.lhttp != nullptr);
 
-		if (const char *query_string = UriQuery(uri); query_string != nullptr)
+		if (const auto query_string = UriQuery(uri); !query_string.empty())
 			return *u.lhttp->InsertQueryString(alloc, query_string);
 		else
 			/* no query string in URI */
@@ -122,7 +122,7 @@ ResourceAddress::WithQueryStringFrom(AllocatorPtr alloc,
 	case Type::WAS:
 		assert(u.cgi->path != nullptr);
 
-		if (const char *query_string = UriQuery(uri); query_string != nullptr) {
+		if (const auto query_string = UriQuery(uri); !query_string.empty()) {
 			auto *cgi = alloc.New<CgiAddress>(ShallowCopy(), GetCgi());
 			cgi->InsertQueryString(alloc, query_string);
 			return {type, *cgi};
