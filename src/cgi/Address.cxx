@@ -262,12 +262,12 @@ CgiAddress::IsSameBase(const CgiAddress &other) const noexcept
 
 void
 CgiAddress::InsertQueryString(AllocatorPtr alloc,
-			      const char *new_query_string) noexcept
+			      std::string_view new_query_string) noexcept
 {
 	if (query_string != nullptr)
 		query_string = alloc.Concat(new_query_string, "&", query_string);
 	else
-		query_string = alloc.Dup(new_query_string);
+		query_string = alloc.DupZ(new_query_string);
 }
 
 void

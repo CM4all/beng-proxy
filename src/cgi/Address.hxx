@@ -184,7 +184,7 @@ struct CgiAddress {
 	}
 
 	void InsertQueryString(AllocatorPtr alloc,
-			       const char *new_query_string) noexcept;
+			       std::string_view new_query_string) noexcept;
 
 	void InsertArgs(AllocatorPtr alloc, std::string_view new_args,
 			std::string_view new_path_info) noexcept;
