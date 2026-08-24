@@ -67,6 +67,9 @@ public:
 	void Set(const BareInetAddress &address, BanAction action, Event::Duration duration) noexcept;
 
 private:
+	[[gnu::pure]]
+	auto Find(Event::TimePoint now, const BareInetAddress &address) noexcept;
+
 	void OnCleanupTimer() noexcept;
 	void ScheduleCleanup() noexcept;
 };

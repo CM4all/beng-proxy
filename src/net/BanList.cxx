@@ -43,17 +43,22 @@ BanList::~BanList() noexcept
 	map.clear_and_dispose(DeleteDisposer{});
 }
 
+inline auto
+BanList::Find(Event::TimePoint now, const BareInetAddress &address) noexcept
+{
+	return map.expire_find_if(address, [now](const auto &item){
+		return item.expires <= now;
+	}, DeleteDisposer{}, [](const auto &){
+		return true;
+	});
+}
+
 BanAction
 BanList::Get(const BareInetAddress &address) noexcept
 {
 	const auto now = GetEventLoop().SteadyNow();
 
-	auto i = map.expire_find_if(address, [now](const auto &item){
-		return item.expires <= now;
-	}, DeleteDisposer{}, [](const auto &){
-		return true;
-	});
-
+	auto i = Find(now, address);
 	if (i == map.end())
 		return BanAction::NONE;
 
