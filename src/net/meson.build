@@ -8,6 +8,7 @@ net2 = static_library(
   'ListenStreamStock.cxx',
   'ConnectSocketX.cxx',
   'BufferedSocketLease.cxx',
+  'ParseBareInetAddress.cxx',
   include_directories: inc,
 )
 
