@@ -4,7 +4,7 @@ cm4all-beng-proxy (21.40) unstable; urgency=low
     and TARPIT_CLIENT
   * spawn: postpone lowering rlimits to the end
 
- --   
+ -- Max Kellermann <max.kellermann@ionos.com>  Mon, 24 Aug 2026 22:15:41 +0200
 
 cm4all-beng-proxy (21.39) unstable; urgency=low
 
