@@ -294,24 +294,7 @@ subdir('libcommon/src/net')
 subdir('libcommon/src/net/control')
 subdir('libcommon/src/net/log')
 
-net2 = static_library(
-  'net2',
-  'src/net/BanList.cxx',
-  'src/net/FailureManager.cxx',
-  'src/net/FailureInfo.cxx',
-  'src/net/FailureRef.cxx',
-  'src/net/ClientAccounting.cxx',
-  'src/net/ListenStreamStock.cxx',
-  'src/net/ConnectSocketX.cxx',
-  'src/net/BufferedSocketLease.cxx',
-  include_directories: inc,
-)
-net_dep = declare_dependency(
-  link_with: net2,
-  dependencies: [
-    net_dep,
-  ],
-)
+subdir('src/net')
 
 subdir('libcommon/src/event/net')
 subdir('libcommon/src/event/net/control')
