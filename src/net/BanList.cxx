@@ -4,30 +4,32 @@
 
 #include "BanList.hxx"
 #include "event/Loop.hxx"
+#include "net/BareInetAddress.hxx"
 #include "util/DeleteDisposer.hxx"
 #include "util/FNVHash.hxx"
 #include "util/SpanCast.hxx"
 
 struct BanList::Item : IntrusiveHashSetHook<> {
-	/**
-	 * We store only the hash, not the whole host name, for
-	 * performance reasons.  Let's see if we can get away with
-	 * this - this may overblock due to hash collisions.
-	 */
-	const uint_least64_t hash;
+	const BareInetAddress address;
 
 	BanAction action;
 
 	Event::TimePoint expires;
 
-	Item(uint_least64_t _hash, BanAction _action, Event::TimePoint _expires) noexcept
-		:hash(_hash), action(_action), expires(_expires) {}
+	Item(const BareInetAddress &_address, BanAction _action, Event::TimePoint _expires) noexcept
+		:address(_address), action(_action), expires(_expires) {}
 };
 
-inline uint_least64_t
+inline const BareInetAddress &
 BanList::GetKey::operator()(const Item &item) const noexcept
 {
-	return item.hash;
+	return item.address;
+}
+
+inline uint_least64_t
+BanList::Hash::operator()(const BareInetAddress &address) const noexcept
+{
+	return FNV1aHash64(ReferenceAsBytes(address));
 }
 
 BanList::BanList(EventLoop &event_loop) noexcept
@@ -41,19 +43,12 @@ BanList::~BanList() noexcept
 	map.clear_and_dispose(DeleteDisposer{});
 }
 
-constexpr uint_least64_t
-BanList::CalcHash(std::string_view host) noexcept
-{
-	return FNV1aHash64(AsBytes(host));
-}
-
 BanAction
-BanList::Get(std::string_view host) noexcept
+BanList::Get(const BareInetAddress &address) noexcept
 {
-	const auto hash = CalcHash(host);
 	const auto now = GetEventLoop().SteadyNow();
 
-	auto i = map.expire_find_if(hash, [now](const auto &item){
+	auto i = map.expire_find_if(address, [now](const auto &item){
 		return item.expires <= now;
 	}, DeleteDisposer{}, [](const auto &){
 		return true;
@@ -66,19 +61,18 @@ BanList::Get(std::string_view host) noexcept
 }
 
 void
-BanList::Set(std::string_view host, BanAction action, Event::Duration duration) noexcept
+BanList::Set(const BareInetAddress &address, BanAction action, Event::Duration duration) noexcept
 {
-	const auto hash = CalcHash(host);
 	const auto now = GetEventLoop().SteadyNow();
 	const auto expires = now + duration;
 
-	auto [it, inserted] = map.insert_check(hash);
+	auto [it, inserted] = map.insert_check(address);
 	if (inserted) {
 		if (duration <= Event::Duration::zero())
 			/* no item exists, that's fine */
 			return;
 
-		auto *item = new Item(hash, action, expires);
+		auto *item = new Item(address, action, expires);
 		it = map.insert_commit(it, *item);
 	} else {
 		if (duration <= Event::Duration::zero()) {

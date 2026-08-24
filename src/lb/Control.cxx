@@ -8,6 +8,8 @@
 #include "pool/tpool.hxx"
 #include "pool/pool.hxx"
 #include "translation/InvalidateParser.hxx"
+#include "net/BareInetAddress.hxx"
+#include "net/ParseBareInetAddress.hxx"
 #include "net/FormatAddress.hxx"
 #include "net/FailureManager.hxx"
 #include "net/FailureRef.hxx"
@@ -128,9 +130,9 @@ LbControl::BanClient(BanAction action, std::span<const std::byte> payload) noexc
 		return;
 
 	const std::chrono::seconds duration{ReadUnalignedBE32(payload.first<4>())};
-	const auto address = ToStringView(payload.subspan(4));
-
-	if (!CheckChars(address, IsPrintableASCII))
+	const auto address_string = ToStringView(payload.subspan(4));
+	BareInetAddress address;
+	if (!ParseBareInetAddress(address, address_string))
 		return;
 
 	instance.ban_list.Set(address, action, duration);

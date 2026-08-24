@@ -12,6 +12,8 @@
 #include <cstdint>
 #include <string_view>
 
+class BareInetAddress;
+
 enum class BanAction : uint_least8_t {
 	NONE,
 	REJECT,
@@ -25,14 +27,17 @@ class BanList {
 	struct Item;
 
 	struct GetKey {
-		uint_least64_t operator()(const Item &item) const noexcept;
+		const BareInetAddress &operator()(const Item &item) const noexcept;
+	};
+
+	struct Hash {
+		uint_least64_t operator()(const BareInetAddress &address) const noexcept;
 	};
 
 	using Map = IntrusiveHashSet<Item, 4096,
 				     IntrusiveHashSetOperators<Item,
-							       GetKey,
-							       std::hash<uint_least64_t>,
-							       std::equal_to<uint_least64_t>>>;
+							       GetKey, Hash,
+							       std::equal_to<BareInetAddress>>>;
 
 	Map map;
 
@@ -54,16 +59,14 @@ public:
 	 * Check whether a host is banned.
 	 */
 	[[gnu::pure]]
-	BanAction Get(std::string_view host) noexcept;
+	BanAction Get(const BareInetAddress &address) noexcept;
 
 	/**
 	 * Set a ban on a host.
 	 */
-	void Set(std::string_view host, BanAction action, Event::Duration duration) noexcept;
+	void Set(const BareInetAddress &address, BanAction action, Event::Duration duration) noexcept;
 
 private:
-	static constexpr uint_least64_t CalcHash(std::string_view host) noexcept;
-
 	void OnCleanupTimer() noexcept;
 	void ScheduleCleanup() noexcept;
 };

@@ -25,6 +25,7 @@
 #include "ssl/Filter.hxx"
 #include "uri/Verify.hxx"
 #include "lib/fmt/SocketAddressFormatter.hxx"
+#include "net/ParseBareInetAddress.hxx"
 #include "net/SocketProtocolError.hxx"
 #include "net/TimeoutError.hxx"
 #include "system/Error.hxx"
@@ -307,8 +308,11 @@ LbHttpConnection::HandleHttpRequest(IncomingHttpRequest &request,
 
 	if (listener_config.client_ban_list &&
 	    !IsClientBanWhitelisted(listener_config, request.headers)) {
-		if (const char *real_remote_host = rl.GetRealRemoteHost()) {
-			switch (instance.ban_list.Get(real_remote_host)) {
+		BareInetAddress real_remote_address;
+		if (const char *real_remote_host = rl.GetRealRemoteHost();
+		    real_remote_host != nullptr &&
+		    ParseBareInetAddress(real_remote_address, real_remote_host)) {
+			switch (instance.ban_list.Get(real_remote_address)) {
 			case BanAction::NONE:
 				break;
 
