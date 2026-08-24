@@ -53,14 +53,37 @@ BanList::Find(Event::TimePoint now, const BareInetAddress &address) noexcept
 	});
 }
 
+static constexpr BareInetAddress
+GetParentNetwork(const BareInetAddress &address) noexcept
+{
+	/* the prefix length for IPv4 / IPv6 networks we assume for
+	   the BanList; it's /24 for IPv4 and /64 for IPv6, because
+	   attackers sometimes have access to the whole network that
+	   was assigned to them */
+	static constexpr unsigned V4_PREFIX = 128 - 8;
+	static constexpr unsigned V6_PREFIX = 64;
+
+	return address.ToNetwork(address.IsV4Mapped() ? V4_PREFIX : V6_PREFIX);
+}
+
 BanAction
 BanList::Get(const BareInetAddress &address) noexcept
 {
 	const auto now = GetEventLoop().SteadyNow();
 
 	auto i = Find(now, address);
-	if (i == map.end())
+	if (i == map.end()) {
+		/* check if the whole /64 network (or /24 for IPv6) of
+		   the specified address is banned */
+		if (const auto network = GetParentNetwork(address);
+		    network != address) {
+			i = Find(now, network);
+			if (i != map.end())
+				return i->action;
+		}
+
 		return BanAction::NONE;
+	}
 
 	return i->action;
 }
