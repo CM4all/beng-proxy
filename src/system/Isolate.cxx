@@ -9,6 +9,7 @@
 #include "io/linux/ProcPid.hxx"
 #include "io/linux/UserNamespace.hxx"
 
+#include <fcntl.h> // for AT_*
 #include <sched.h>
 #include <stdio.h>
 #include <unistd.h>
