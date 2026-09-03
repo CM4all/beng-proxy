@@ -212,6 +212,7 @@ io_dep = declare_dependency(
 libcommon_require_uring = get_option('io_uring')
 subdir('libcommon/src/io/uring')
 subdir('libcommon/src/system')
+subdir('libcommon/src/system/linux')
 
 system2 = static_library(
   'system2',
@@ -221,6 +222,7 @@ system2 = static_library(
   include_directories: inc,
   dependencies: [
     threads,
+    system_linux_dep,
   ],
 )
 system_dep = declare_dependency(

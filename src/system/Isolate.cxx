@@ -3,7 +3,7 @@
 // author: Max Kellermann <max.kellermann@ionos.com>
 
 #include "Isolate.hxx"
-#include "system/Mount.hxx"
+#include "system/linux/Mount.hxx"
 #include "system/linux/pivot_root.h"
 #include "io/UniqueFileDescriptor.hxx"
 #include "io/linux/ProcPid.hxx"
