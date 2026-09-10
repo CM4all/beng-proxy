@@ -5,6 +5,7 @@
 #include "Isolate.hxx"
 #include "system/linux/Mount.hxx"
 #include "system/linux/pivot_root.h"
+#include "io/FileAt.hxx"
 #include "io/UniqueFileDescriptor.hxx"
 #include "io/linux/ProcPid.hxx"
 #include "io/linux/UserNamespace.hxx"
@@ -44,7 +45,7 @@ isolate_from_filesystem(bool allow_dbus,
 	SetupUidMap(proc_pid, uid);
 
 	/* convert all "shared" mounts to "private" mounts */
-	MountSetAttr(FileDescriptor::Undefined(), "/",
+	MountSetAttr({FileDescriptor::Undefined(), "/"},
 		     AT_RECURSIVE|AT_SYMLINK_NOFOLLOW|AT_NO_AUTOMOUNT,
 		     0, 0, MS_PRIVATE);
 
