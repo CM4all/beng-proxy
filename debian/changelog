@@ -3,7 +3,7 @@ cm4all-beng-proxy (21.42) unstable; urgency=low
   * lb: support banning IPv6 /48 networks in REJECT_CLIENT and
     TARPIT_CLIENT
 
- --   
+ -- Max Kellermann <max.kellermann@ionos.com>  Thu, 10 Sep 2026 14:18:26 +0200
 
 cm4all-beng-proxy (21.41) unstable; urgency=low
 
