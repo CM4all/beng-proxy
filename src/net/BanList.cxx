@@ -73,7 +73,7 @@ BanList::Get(const BareInetAddress &address) noexcept
 
 	auto i = Find(now, address);
 	if (i == map.end()) {
-		/* check if the whole /64 network (or /24 for IPv6) of
+		/* check if the whole /64 network (or /24 for IPv4) of
 		   the specified address is banned */
 		if (const auto network = GetParentNetwork(address);
 		    network != address) {
