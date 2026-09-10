@@ -80,6 +80,17 @@ BanList::Get(const BareInetAddress &address) noexcept
 			i = Find(now, network);
 			if (i != map.end())
 				return i->action;
+
+			if (!network.IsV4Mapped()) {
+				if (const auto network2 = network.ToNetwork(48);
+				    network2 != network) {
+					/* support banning IPv6 /48
+					   networks, too */
+					i = Find(now, network2);
+					if (i != map.end())
+						return i->action;
+				}
+			}
 		}
 
 		return BanAction::NONE;

@@ -113,19 +113,39 @@ TEST(BanList, Ipv6Network)
 	BanList ban_list{event_loop};
 
 	const auto network = ParseAddress("2001:1234:5678:abcd::"sv);
+	const auto network48 = ParseAddress("2001:1234:5678::"sv);
 	const auto host1 = ParseAddress("2001:1234:5678:abcd::1"sv);
 	const auto host2 = ParseAddress("2001:1234:5678:abcd::2"sv);
+	const auto host3 = ParseAddress("2001:1234:5678:ef::2"sv);
 	const auto other_subnet = ParseAddress("2001:1234:5678:abce::1"sv);
+	const auto other_subnet2 = ParseAddress("2001:1234:5679:abce::1"sv);
 
 	/* the /64 network address of host1 and host2 */
 	ASSERT_EQ(host1.ToNetwork(64), network);
 	ASSERT_EQ(host2.ToNetwork(64), network);
+	ASSERT_NE(host3.ToNetwork(64), network);
 	ASSERT_NE(other_subnet.ToNetwork(64), network);
+	ASSERT_NE(other_subnet2.ToNetwork(64), network);
+
+	ASSERT_EQ(host1.ToNetwork(48), network48);
+	ASSERT_EQ(host2.ToNetwork(48), network48);
+	ASSERT_EQ(host3.ToNetwork(48), network48);
+	ASSERT_EQ(other_subnet.ToNetwork(48), network48);
+	ASSERT_NE(other_subnet2.ToNetwork(48), network48);
 
 	ban_list.Set(network, BanAction::TARPIT, std::chrono::minutes{5});
 	EXPECT_EQ(ban_list.Get(host1), BanAction::TARPIT);
 	EXPECT_EQ(ban_list.Get(host2), BanAction::TARPIT);
+	EXPECT_EQ(ban_list.Get(host3), BanAction::NONE);
 	EXPECT_EQ(ban_list.Get(other_subnet), BanAction::NONE);
+	EXPECT_EQ(ban_list.Get(other_subnet2), BanAction::NONE);
+
+	ban_list.Set(network48, BanAction::REJECT, std::chrono::minutes{5});
+	EXPECT_EQ(ban_list.Get(host1), BanAction::TARPIT);
+	EXPECT_EQ(ban_list.Get(host2), BanAction::TARPIT);
+	EXPECT_EQ(ban_list.Get(host3), BanAction::REJECT);
+	EXPECT_EQ(ban_list.Get(other_subnet), BanAction::REJECT);
+	EXPECT_EQ(ban_list.Get(other_subnet2), BanAction::NONE);
 
 	ban_list.BeginShutdown();
 }
