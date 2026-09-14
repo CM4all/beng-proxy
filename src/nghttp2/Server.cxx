@@ -715,6 +715,12 @@ ServerConnection::~ServerConnection() noexcept
 		requests.front().Destroy();
 }
 
+SocketDescriptor
+ServerConnection::GetSocket() const noexcept
+{
+	return socket->GetSocket();
+}
+
 inline void
 ServerConnection::OnIdleTimeout() noexcept
 {

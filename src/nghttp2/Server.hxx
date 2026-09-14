@@ -65,6 +65,9 @@ public:
 		return idle_timer.GetEventLoop();
 	}
 
+	[[gnu::pure]]
+	SocketDescriptor GetSocket() const noexcept;
+
 	void Consume(std::size_t nbytes) noexcept {
 		nghttp2_session_consume_connection(session.get(),
 						   nbytes);

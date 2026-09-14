@@ -9,6 +9,7 @@ struct pool;
 template<typename T> class UniquePoolPtr;
 class FilteredSocket;
 class SocketAddress;
+class SocketDescriptor;
 
 struct HttpServerConnection;
 class HttpServerConnectionHandler;
@@ -57,6 +58,10 @@ http_server_connection_new(struct pool &pool,
 
 void
 http_server_connection_close(HttpServerConnection *connection) noexcept;
+
+[[gnu::pure]]
+SocketDescriptor
+http_server_connection_get_socket(const HttpServerConnection &connection) noexcept;
 
 void
 http_server_connection_graceful(HttpServerConnection *connection) noexcept;

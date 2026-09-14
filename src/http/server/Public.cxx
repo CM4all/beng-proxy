@@ -592,6 +592,12 @@ HttpServerConnection::SocketErrorErrno(const char *msg) noexcept
 	}
 }
 
+SocketDescriptor
+http_server_connection_get_socket(const HttpServerConnection &connection) noexcept
+{
+	return connection.GetSocket();
+}
+
 void
 http_server_connection_graceful(HttpServerConnection *connection) noexcept
 {

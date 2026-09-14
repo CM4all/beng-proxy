@@ -393,6 +393,10 @@ struct HttpServerConnection final
 		return idle_timer.GetEventLoop();
 	}
 
+	SocketDescriptor GetSocket() const noexcept {
+		return socket->GetSocket();
+	}
+
 	[[gnu::pure]]
 	bool IsValid() const noexcept {
 		return socket->IsValid() && socket->IsConnected();
