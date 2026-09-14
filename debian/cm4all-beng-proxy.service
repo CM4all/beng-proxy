@@ -69,6 +69,9 @@ AmbientCapabilities=CAP_KILL
 # things that could probably be fixed)
 AmbientCapabilities=CAP_SYS_ADMIN
 
+# For OPEN_TREE_NAMESPACE + setns()
+AmbientCapabilities=CAP_SYS_CHROOT
+
 # For the CAP_SYS_RESOURCE spawner option
 AmbientCapabilities=CAP_SYS_RESOURCE
 
