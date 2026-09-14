@@ -71,6 +71,18 @@ LbHttpConnection::~LbHttpConnection() noexcept
 	connections.erase(connections.iterator_to(*this));
 }
 
+inline SocketDescriptor
+LbHttpConnection::GetSocket() const noexcept
+{
+#ifdef HAVE_NGHTTP2
+	if (http2)
+		return http2->GetSocket();
+#endif
+
+	assert(http != nullptr);
+	return http_server_connection_get_socket(*http);
+}
+
 [[gnu::pure]]
 static int
 HttpServerLogLevel(std::exception_ptr e) noexcept
@@ -332,11 +344,19 @@ LbHttpConnection::HandleHttpRequest(IncomingHttpRequest &request,
 				if (!tarpit) {
 					tarpit = true;
 					++listener.tarpit_connections;
+
+					/* minimize kernel buffer
+					   memory for this stalled
+					   connection; the kernel
+					   clamps these sizes to its
+					   minimum; failure is
+					   harmless */
+					if (const auto s = GetSocket(); s.IsDefined())
+						s.SetIntOption(SOL_SOCKET, SO_RCVBUF, 1);
 				}
 
 				request.body.Clear();
 				NewFromPool<LbHttpTarpit>(request.pool, cancel_ptr);
-				// TODO shrink kernel socket buffers?
 				return;
 			}
 		}

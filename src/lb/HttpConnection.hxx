@@ -14,6 +14,7 @@
 #include "util/IntrusiveList.hxx"
 
 template<typename T> class UniquePoolPtr;
+class SocketDescriptor;
 class FilteredSocket;
 class SslFilter;
 struct HttpServerConnection;
@@ -70,6 +71,9 @@ struct LbHttpConnection final
 	void CloseAndDestroy() noexcept;
 
 	using PoolHolder::GetPool;
+
+	[[gnu::pure]]
+	SocketDescriptor GetSocket() const noexcept;
 
 	bool IsEncrypted() const noexcept {
 		return ssl_filter != nullptr;
