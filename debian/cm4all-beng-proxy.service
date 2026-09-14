@@ -63,7 +63,7 @@ AmbientCapabilities=CAP_FSETID
 
 # Needed by the spawner
 AmbientCapabilities=CAP_KILL
-#TODO: check CAP_SYS_NICE CAP_SYS_PTRACE CAP_SYS_RESOURCE
+#TODO: check CAP_SYS_NICE CAP_SYS_PTRACE
 
 # The spawner needs this sledge hammer for setns() (and for other
 # things that could probably be fixed)
