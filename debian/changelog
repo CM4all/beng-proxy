@@ -3,7 +3,7 @@ cm4all-beng-proxy (21.43) unstable; urgency=low
   * spawn: use OPEN_TREE_NAMESPACE if available
   * lb: minimize kernel socket buffer for tarpit
 
- --   
+ -- Max Kellermann <max.kellermann@ionos.com>  Mon, 14 Sep 2026 21:55:31 +0200
 
 cm4all-beng-proxy (21.42) unstable; urgency=low
 
