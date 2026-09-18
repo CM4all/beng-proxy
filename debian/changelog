@@ -1,6 +1,7 @@
 cm4all-beng-proxy (21.45) unstable; urgency=low
 
   * spawn: don't follow symlinks while building the mount namespace
+  * spawn: verify the sender of JobRemoved/UnitRemoved DBus signals
 
  --   
 
