@@ -104,6 +104,7 @@ Request::OpenBase(const FileAddress &address,
 		  Handler::File::OpenBaseCallback callback) noexcept
 {
 	handler.file.base_path = {};
+	handler.file.address = &address;
 
 	if (address.beneath != nullptr)
 		OpenBeneath(address, callback);
