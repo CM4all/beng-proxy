@@ -48,9 +48,13 @@ header_parse_buffer(AllocatorPtr alloc, StringMap &headers,
 	while (true) {
 		/* copy gb to buffer */
 
+		bool buffer_full = false;
+
 		if (!drained) {
 			auto w = buffer.Write();
-			if (!w.empty()) {
+			if (w.empty()) {
+				buffer_full = true;
+			} else {
 				auto src = reader.Read();
 				if (!src.empty()) {
 					size_t nbytes = std::min(src.size(),
@@ -102,7 +106,14 @@ header_parse_buffer(AllocatorPtr alloc, StringMap &headers,
 				break;
 		}
 
-		buffer.Consume(p - src);
+		if (p > src)
+			buffer.Consume(p - src);
+		else if (buffer_full)
+			/* the buffer is full, but it contains no
+			   newline: this header line is too long to be
+			   parsed; give up instead of spinning
+			   forever */
+			break;
 	}
 }
 
