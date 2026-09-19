@@ -76,6 +76,12 @@ uri_compress(AllocatorPtr alloc, const char *uri) noexcept
 		/* kill it */
 
 		memmove(q + 1, p + 4, strlen(p + 4) + 1);
+
+		/* backtracking may have moved a ".." to the start of
+		   the (relative) string, e.g. "foo/../../bar"; reject
+		   that */
+		if (IsDotDot(dest))
+			return nullptr;
 	}
 
 	/* eliminate trailing "/." and "/.." */

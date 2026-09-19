@@ -33,6 +33,9 @@ TEST(UriRelativeTest, Compress)
 	EXPECT_EQ(uri_compress(alloc, "/a/../../"), nullptr);
 	EXPECT_EQ(uri_compress(alloc, "/.."), nullptr);
 	EXPECT_EQ(uri_compress(alloc, ".."), nullptr);
+	EXPECT_EQ(uri_compress(alloc, "foo/../../bar"), nullptr);
+	EXPECT_EQ(uri_compress(alloc, "foo/../.."), nullptr);
+	EXPECT_EQ(uri_compress(alloc, "a/b/../../../c"), nullptr);
 	EXPECT_STREQ(uri_compress(alloc, "/1/2/.."), "/1/");
 }
 

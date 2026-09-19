@@ -22,6 +22,7 @@ cm4all-beng-proxy (21.45) unstable; urgency=low
   * brotli, gzip: fix crash bug
   * bp: fix crash on DISCARD_REALM_SESSION
   * bp: fix crash on TOKEN_AUTH
+  * widget: reject "../" at beginning of compressed URI
   * access_log: log the client address in error records
   * log-split: validate the "site" value
   * log-split: don't follow symlinks
