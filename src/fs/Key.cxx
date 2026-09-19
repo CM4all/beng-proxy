@@ -45,9 +45,6 @@ MakeFilteredSocketStockKey(StringBuilder &b, std::string_view name,
 
 	if (filter_params != nullptr) {
 		b.Append('|');
-
-		const char *id = filter_params->GetFilterId();
-		if (id != nullptr)
-			b.Append(id);
+		filter_params->AppendFilterId(b);
 	}
 }

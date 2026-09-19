@@ -34,6 +34,8 @@
 
 #include "Ptr.hxx"
 
+class StringBuilder;
+
 /**
  * Contains pool-allocated parameters to create a
  * #SocketFilterFactory.
@@ -41,11 +43,14 @@
 class SocketFilterParams {
 public:
 	/**
-	 * Return an identifier for filters created by this factory.  This
-	 * is used to match existing connections for reuse.
+	 * Append an identifier for filters created by this factory.
+	 * This is used to match existing connections for reuse, and
+	 * therefore it must include every parameter which affects the
+	 * identity of the connection.
+	 *
+	 * Throws on error (e.g. StringBuilder overflow).
 	 */
-	[[gnu::pure]]
-	virtual const char *GetFilterId() const noexcept = 0;
+	virtual void AppendFilterId(StringBuilder &b) const = 0;
 
 	/**
 	 * Create a #SocketFilterFactory with these parameters,

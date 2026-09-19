@@ -4,6 +4,40 @@
 
 #include "SslSocketFilterFactory.hxx"
 #include "Client.hxx"
+#include "util/StringBuilder.hxx"
+
+void
+SslSocketFilterParams::AppendFilterId(StringBuilder &b) const
+{
+	if (host != nullptr)
+		b.Append(std::string_view{host});
+
+	/* the client certificate and the ALPN setting determine the
+	   identity of the TLS connection, and therefore they need to
+	   be part of the identifier; without them, a connection which
+	   was authenticated with one certificate could be reused for
+	   a request which specifies a different certificate */
+
+	if (certificate != nullptr) {
+		b.Append('/');
+		b.Append(std::string_view{certificate});
+	}
+
+	using std::string_view_literals::operator""sv;
+
+	switch (alpn) {
+	case SslClientAlpn::NONE:
+		break;
+
+	case SslClientAlpn::HTTP_2:
+		b.Append("|h2"sv);
+		break;
+
+	case SslClientAlpn::HTTP_ANY:
+		b.Append("|h*"sv);
+		break;
+	}
+}
 
 SocketFilterPtr
 SslSocketFilterFactory::CreateFilter()

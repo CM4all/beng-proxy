@@ -11,6 +11,7 @@
 #include <string>
 
 class EventLoop;
+class StringBuilder;
 class SslClientFactory;
 
 class SslSocketFilterFactory final : public SocketFilterFactory {
@@ -51,9 +52,7 @@ public:
 		 host(_host),
 		 certificate(_certificate), alpn(_alpn) {}
 
-	const char *GetFilterId() const noexcept override {
-		return host;
-	}
+	void AppendFilterId(StringBuilder &b) const override;
 
 	SocketFilterFactoryPtr CreateFactory() const noexcept override;
 };
