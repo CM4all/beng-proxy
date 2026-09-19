@@ -15,6 +15,7 @@
 #include "istream/istream_null.hxx"
 #include "http/List.hxx"
 #include "util/SpanCast.hxx"
+#include "util/StringAPI.hxx"
 #include "util/StringCompare.hxx"
 #include "util/StringSplit.hxx"
 #include "util/StringStrip.hxx"
@@ -237,6 +238,14 @@ HttpServerConnection::HeadersFinished(bool has_more) noexcept
 
 	off_t content_length = -1;
 	const bool chunked = transfer_encoding != nullptr && StringIsEqualIgnoreCase(transfer_encoding, "chunked");
+	if (transfer_encoding != nullptr && !chunked) [[unlikely]] {
+		/* unknown Transfer-Encoding - we have no idea how it
+		   works, so we should reject the whole request and
+		   shut down the connection */
+		ProtocolError("unsupported Transfer-Encoding request header");
+		return false;
+	}
+
 	if (!chunked) {
 		if (request.upgrade) {
 			if (content_length_string != nullptr) {
