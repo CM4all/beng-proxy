@@ -6,6 +6,7 @@
 #include "widget/Context.hxx"
 #include "widget/Widget.hxx"
 #include "pool/tpool.hxx"
+#include "http/HeaderValue.hxx"
 #include "uri/Escape.hxx"
 #include "util/CharUtil.hxx"
 #include "util/StringCompare.hxx"
@@ -308,6 +309,11 @@ WidgetContainerParser::OnXmlTagFinished(const XmlParserTag &xml_tag) noexcept
 			size_t length = unescape_inplace(&html_escape_class,
 							 value, strlen(value));
 			value[length] = 0;
+		}
+
+		if (!IsValidHttpHeaderValue(value)) {
+			container.logger(3, "invalid widget HTTP header value");
+			return true;
 		}
 
 		widget.widget->from_template.headers->Add(widget.pool,
