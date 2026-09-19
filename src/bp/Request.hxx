@@ -85,7 +85,13 @@ public:
 
 private:
 	/**
-	 * The name of the session cookie.
+	 * The name of the session cookie.  Initialized by
+	 * DetermineSession() (and only valid after that call), even
+	 * for "stateless" requests, because it is also used to filter
+	 * our own cookie from the headers forwarded to and from the
+	 * backend.
+	 *
+	 * @see #stateless
 	 */
 	const char *session_cookie;
 

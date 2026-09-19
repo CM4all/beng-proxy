@@ -100,6 +100,14 @@ Request::DetermineSession() noexcept
 {
 	const char *user_agent = request.headers.Get(user_agent_header);
 
+	/* determine the session cookie name even for stateless
+	   requests, because it is also used to filter our own cookie
+	   from the headers forwarded to/from the backend if
+	   COOKIE=both is set */
+	session_cookie = build_session_cookie_name(pool,
+						   &instance.config,
+						   request.headers);
+
 	/* note: this method is called very early in the request handler,
 	   and the "stateless" flag may later be updated by
 	   MakeStateless() if the TranslateResponse suggests to do so */
@@ -107,10 +115,6 @@ Request::DetermineSession() noexcept
 	if (stateless) {
 		return;
 	}
-
-	session_cookie = build_session_cookie_name(pool,
-						   &instance.config,
-						   request.headers);
 
 	const auto sid = GetCookieSessionId();
 	if (sid.empty())
