@@ -19,7 +19,12 @@ BpListener::DropSomeConnections() noexcept
 	/* collect a list of the lowest-score connections */
 
 	for (auto &c : connections) {
-		enum http_server_score score = http_server_connection_score(c.http);
+		/* HTTP/2 connections have no HttpServerConnection and
+		   thus no score; assume they are in use */
+		const enum http_server_score score = c.http != nullptr
+			? http_server_connection_score(c.http)
+			/* TODO score not implemented on HTTP/2 */
+			: HTTP_SERVER_SUCCESS;
 
 		if (score < min_score) {
 			/* found a new minimum - clear the old list */
