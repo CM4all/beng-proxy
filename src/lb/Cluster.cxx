@@ -476,7 +476,10 @@ LbCluster::ZeroconfHttpConnect::Start() noexcept
 			     fairness_hash,
 			     cluster.config.transparent_source,
 			     bind_address,
-			     member->second.GetAddress(),
+			     /* copy the address because the
+				ZeroconfMember may be removed while
+				the request waits in the stock */
+			     alloc.Dup(member->second.GetAddress()),
 			     timeout, filter_params,
 			     *this, cancel_ptr);
 }
