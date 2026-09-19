@@ -603,8 +603,10 @@ FcgiClient::SubmitResponse() noexcept
 	p = response.headers.Remove(content_length_header);
 	if (p != nullptr) {
 		char *endptr;
+		errno = 0;
 		unsigned long long l = strtoull(p, &endptr, 10);
-		if (endptr > p && *endptr == 0)
+		if (endptr > p && *endptr == 0 && errno != ERANGE &&
+		    std::cmp_less_equal(l, std::numeric_limits<off_t>::max()))
 			response.remaining.SetKnown(l);
 	}
 
