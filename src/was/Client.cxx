@@ -639,7 +639,7 @@ WasClient::OnWasControlPacket(enum was_command cmd,
 	case WAS_COMMAND_NO_DATA:
 		if (!response.IsReceivingMetadata()) {
 			stopwatch.RecordEvent("control_error");
-			AbortResponseBody(std::make_exception_ptr(SocketProtocolError("NO_DATA after body start")));
+			AbortResponse(std::make_exception_ptr(SocketProtocolError("NO_DATA after body start")));
 			return false;
 		}
 
@@ -660,7 +660,7 @@ WasClient::OnWasControlPacket(enum was_command cmd,
 	case WAS_COMMAND_DATA:
 		if (!response.IsReceivingMetadata()) {
 			stopwatch.RecordEvent("control_error");
-			AbortResponseBody(std::make_exception_ptr(SocketProtocolError("DATA after body start")));
+			AbortResponse(std::make_exception_ptr(SocketProtocolError("DATA after body start")));
 			return false;
 		}
 
@@ -682,19 +682,19 @@ WasClient::OnWasControlPacket(enum was_command cmd,
 
 		if (response.body == nullptr) {
 			stopwatch.RecordEvent("control_error");
-			AbortResponseBody(std::make_exception_ptr(SocketProtocolError("LENGTH after NO_DATA")));
+			AbortResponse(std::make_exception_ptr(SocketProtocolError("LENGTH after NO_DATA")));
 			return false;
 		}
 
 		if (response.pending_input_type >= Response::PendingInputType::LENGTH) {
 			stopwatch.RecordEvent("control_error");
-			AbortResponseBody(std::make_exception_ptr(SocketProtocolError("Misplaced LENGTH")));
+			AbortResponse(std::make_exception_ptr(SocketProtocolError("Misplaced LENGTH")));
 			return false;
 		}
 
 		if (payload.size() != sizeof(uint64_t)) {
 			stopwatch.RecordEvent("control_error");
-			AbortResponseBody(std::make_exception_ptr(SocketProtocolError("malformed LENGTH packet")));
+			AbortResponse(std::make_exception_ptr(SocketProtocolError("malformed LENGTH packet")));
 			return false;
 		}
 
@@ -715,13 +715,13 @@ WasClient::OnWasControlPacket(enum was_command cmd,
 
 		if (response.pending_input_type >= Response::PendingInputType::PREMATURE) {
 			stopwatch.RecordEvent("control_error");
-			AbortResponseBody(std::make_exception_ptr(SocketProtocolError("Misplaced PREMATURE")));
+			AbortResponse(std::make_exception_ptr(SocketProtocolError("Misplaced PREMATURE")));
 			return false;
 		}
 
 		if (payload.size() != sizeof(uint64_t)) {
 			stopwatch.RecordEvent("control_error");
-			AbortResponseBody(std::make_exception_ptr(SocketProtocolError("malformed PREMATURE packet")));
+			AbortResponse(std::make_exception_ptr(SocketProtocolError("malformed PREMATURE packet")));
 			return false;
 		}
 

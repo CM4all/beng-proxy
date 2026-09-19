@@ -19,7 +19,7 @@ cm4all-beng-proxy (21.45) unstable; urgency=low
   * fcgi: stricter Content-Length validation
   * fcgi, cgi: don't forward request headers which might collide when folded
   * cgi: limit the total response header size
-  * was: fix crash bug
+  * was: fix two crash bugs
   * brotli, gzip: fix crash bug
   * bp: fix crash on DISCARD_REALM_SESSION
   * bp: fix crash on TOKEN_AUTH
