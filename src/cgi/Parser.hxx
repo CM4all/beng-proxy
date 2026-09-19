@@ -43,6 +43,11 @@ struct CGIParser {
 
 	StringMap headers;
 
+	/**
+	 * The number of header bytes received so far.
+	 */
+	std::size_t total_header_size = 0;
+
 	bool finished = false;
 
 	/**

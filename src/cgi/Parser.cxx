@@ -5,6 +5,7 @@
 #include "Parser.hxx"
 #include "Error.hxx"
 #include "http/CommonHeaders.hxx"
+#include "http/HeaderLimits.hxx"
 #include "http/HeaderParser.hxx"
 #include "util/ForeignFifoBuffer.hxx"
 #include "util/StringStrip.hxx"
@@ -74,6 +75,10 @@ CGIParser::FeedHeaders(struct pool &pool, ForeignFifoBuffer<std::byte> &buffer)
 			buffer.Consume(next - data);
 			return Finish(buffer);
 		}
+
+		total_header_size += line_length;
+		if (total_header_size >= MAX_TOTAL_HTTP_HEADER_SIZE)
+			throw CgiError{"Too many CGI response headers"};
 
 		if (!header_parse_line(pool, headers, {start, line_length}))
 			throw CgiError("Malformed CGI response header line");
