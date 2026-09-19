@@ -865,6 +865,10 @@ XmlProcessor::OnXmlAttributeFinished(const XmlParserAttribute &attr) noexcept
 		if (StringIsEqualIgnoreCase(attr.name, "href"sv)) {
 			PostponeUriRewrite(attr);
 		} else if (HasOptionPrefixId() &&
+			   /* due to a limitation in the processor and
+			      istream_replace, we cannot edit
+			      attributes followed by a URI attribute */
+			   !postponed_rewrite.pending &&
 			   StringIsEqualIgnoreCase(attr.name, "name"sv))
 			HandleIdAttribute(attr);
 
