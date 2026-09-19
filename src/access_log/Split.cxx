@@ -9,6 +9,7 @@
 
 #include "Server.hxx"
 #include "net/log/OneLine.hxx"
+#include "io/FileName.hxx"
 #include "time/Convert.hxx"
 #include "util/StringAPI.hxx"
 
@@ -63,7 +64,7 @@ static const char *
 expand(const char *name, size_t length, const Net::Log::Datagram &d)
 {
 	if (string_equals(name, length, "site"))
-		return d.site;
+		return IsValidFilename(d.site) ? d.site : nullptr;
 	else if (string_equals(name, length, "date"))
 		return expand_timestamp("%Y-%m-%d", d);
 	else if (string_equals(name, length, "year"))

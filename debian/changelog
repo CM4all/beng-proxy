@@ -10,6 +10,7 @@ cm4all-beng-proxy (21.45) unstable; urgency=low
   * fcgi: start new PARAMS record if maximum size is reached
   * fcgi: stricter Content-Length validation
   * fcgi, cgi: don't forward request headers which might collide when folded
+  * log-split: validate the "site" value
 
  --   
 

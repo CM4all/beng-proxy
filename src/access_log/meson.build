@@ -80,6 +80,7 @@ executable(
   dependencies: [
     system_dep,
     net_log_dep,
+    io_dep,
     http_dep,
   ],
   install: true,
