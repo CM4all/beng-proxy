@@ -326,8 +326,14 @@ ClientConnection::Request::SendRequest(HttpMethod method, const char *uri,
 		}
 	}
 
-	for (const auto &i : headers)
+	for (const auto &i : headers) {
+		if (hdrs.full()) {
+			AbortResponseHeaders(std::make_exception_ptr(std::runtime_error{"Too many request headers"}));
+			return;
+		}
+
 		hdrs.push_back(MakeNv(i.key, i.value));
+	}
 
 	nghttp2_data_provider dp, *dpp = nullptr;
 	if (body) {
