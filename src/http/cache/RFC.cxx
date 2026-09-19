@@ -192,6 +192,11 @@ http_cache_response_evaluate(const HttpCacheRequestInfo &request_info,
 
 	HttpCacheResponseInfo info;
 	info.expires = std::chrono::system_clock::from_time_t(-1);
+
+	/* may this response be shared with other clients even though
+	   it sets a cookie? */
+	bool explicitly_shareable = false;
+
 	if (const char *cache_control = headers.Get(cache_control_header)) {
 		for (std::string_view s : IterableSplitString(cache_control, ',')) {
 			s = Strip(s);
@@ -200,6 +205,10 @@ http_cache_response_evaluate(const HttpCacheRequestInfo &request_info,
 			    IsCacheControlDirective(s, "no-cache"sv) ||
 			    IsCacheControlDirective(s, "no-store"sv))
 				return std::nullopt;
+
+			if (IsCacheControlDirective(s, "public"sv) ||
+			    IsCacheControlDirective(s, "s-maxage"sv))
+				explicitly_shareable = true;
 
 			if (SkipPrefixIgnoreCase(s, "max-age="sv)) {
 				/* RFC 2616 14.9.3 */
@@ -217,6 +226,14 @@ http_cache_response_evaluate(const HttpCacheRequestInfo &request_info,
 			}
 		}
 	}
+
+	if (!explicitly_shareable &&
+	    (headers.Contains(set_cookie_header) ||
+	     headers.Contains(set_cookie2_header)))
+		/* this response sets a cookie, which means it is
+		   probably personalized; don't store it in this shared
+		   cache unless the origin explicitly allows it */
+		return std::nullopt;
 
 	const auto now = std::chrono::system_clock::now();
 
