@@ -16,6 +16,7 @@
 #include "http/IncomingRequest.hxx"
 #include "http/Headers.hxx"
 #include "http/ResponseHandler.hxx"
+#include "uri/PRelative.hxx"
 #include "WidgetLookupProcessor.hxx"
 #include "istream/AutoPipeIstream.hxx"
 #include "pool/pool.hxx"
@@ -239,12 +240,27 @@ ProxyWidget::Continue()
 		}
 
 		if (widget->cls->direct_addressing &&
-		    !request.dissected_uri.path_info.empty())
+		    !request.dissected_uri.path_info.empty()) {
 			/* apply new-style path_info to frame top widget (direct
 			   addressing) */
-			widget->from_request.path_info =
+			const char *path_info =
 				p_strdup(request.pool,
 					 request.dissected_uri.path_info.substr(1));
+
+			/* eliminate "." and ".." so the client cannot
+			   escape the widget's base URI */
+			path_info = uri_compress(request.pool, path_info);
+			if (path_info == nullptr) {
+				widget->Cancel();
+				auto &_request = request;
+				Destroy();
+				_request.DispatchError(HttpStatus::FORBIDDEN,
+						       "Forbidden");
+				return;
+			}
+
+			widget->from_request.path_info = path_info;
+		}
 
 		widget->from_request.frame = true;
 
