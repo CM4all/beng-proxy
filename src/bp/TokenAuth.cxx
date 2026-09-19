@@ -167,6 +167,9 @@ ExtractAuthToken(AllocatorPtr alloc, DissectedUri &dissected_uri)
 		if (name != "access_token"sv)
 			continue;
 
+		if (escaped_value.data() == nullptr)
+			throw std::invalid_argument{"Malformed auth token"};
+
 		auth_token = uri_unescape_dup(alloc, escaped_value);
 		if (auth_token == nullptr)
 			throw std::invalid_argument("Malformed auth token");
