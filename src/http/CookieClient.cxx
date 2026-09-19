@@ -11,10 +11,12 @@
 #include "strmap.hxx"
 #include "pool/tpool.hxx"
 #include "pool/pool.hxx"
+#include "util/CharUtil.hxx"
 #include "util/DeleteDisposer.hxx"
 #include "util/NumberParser.hxx"
 #include "util/StringCompare.hxx"
 #include "util/StringStrip.hxx"
+#include "util/StringVerify.hxx"
 #include "AllocatorPtr.hxx"
 
 #include <iterator>
@@ -40,6 +42,33 @@ domain_matches(const char *domain, const char *match) noexcept
 		    3.2.2): */
 		 (domain_length > match_length &&
 		  domain[domain_length - match_length - 1] == '.'));
+}
+
+/**
+ * May this value be used in a cookie "Domain" attribute?  It must not
+ * be a public suffix (e.g. ".com"), because that would allow one
+ * server to inject cookies into the requests to unrelated servers.
+ *
+ * This is only an approximation of RFC 6265 5.3 (which requires a
+ * public suffix list): the domain must consist of at least two labels
+ * and must not look like a fragment of an IP address.
+ */
+[[gnu::pure]]
+static bool
+IsAcceptableCookieDomain(const char *domain) noexcept
+{
+	if (*domain == '.')
+		++domain;
+
+	const char *const dot = strrchr(domain, '.');
+	if (dot == nullptr || dot == domain)
+		/* no embedded dot */
+		return false;
+
+	/* the last label must not consist of digits only (and must
+	   not be empty), or else this is a fragment of an IP
+	   address */
+	return !CheckChars(dot + 1, IsDigitASCII);
 }
 
 [[gnu::pure]]
@@ -115,7 +144,8 @@ apply_next_cookie(CookieJar &jar, struct pool &tpool, std::string_view &input,
 
 	if (cookie->domain == nullptr) {
 		cookie->domain = domain;
-	} else if (!domain_matches(domain, cookie->domain.c_str())) {
+	} else if (!domain_matches(domain, cookie->domain.c_str()) ||
+		   !IsAcceptableCookieDomain(cookie->domain.c_str())) {
 		/* discard if domain mismatch */
 		return false;
 	}
