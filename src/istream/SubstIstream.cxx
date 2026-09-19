@@ -946,7 +946,8 @@ SubstIstream::_ConsumeBucketList(size_t nbytes) noexcept
 		} else {
 			// WriteMismatch()
 			nbytes = analysis.ClampConsumeMismatch(nbytes);
-			return {BucketConsumed(nbytes), false};
+
+			return {BucketConsumed(nbytes), analysis.mismatch.empty()};
 		}
 	} else {
 		assert(input.IsDefined());
