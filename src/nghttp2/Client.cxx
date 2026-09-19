@@ -595,6 +595,17 @@ ClientConnection::OnFrameRecvCallback(const nghttp2_frame &frame) noexcept
 				return 0;
 
 			auto &request = *(Request *)stream_data;
+
+			if (frame.headers.cat != NGHTTP2_HCAT_RESPONSE)
+				/* this is a trailer; the response has
+				   been submitted already (and
+				   OnHeaderCallback() has ignored this
+				   header block), so all we can do is
+				   finish the response body */
+				return (frame.hd.flags & NGHTTP2_FLAG_END_STREAM) != 0
+					? request.OnEndDataFrame()
+					: 0;
+
 			return request.SubmitResponse((frame.hd.flags & NGHTTP2_FLAG_END_STREAM) == 0);
 		}
 		break;
