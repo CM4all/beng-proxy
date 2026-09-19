@@ -1315,7 +1315,10 @@ TranslationCache::SendRequest(AllocatorPtr alloc,
 			      CancellablePointer &cancel_ptr) noexcept
 {
 	const bool cacheable = active && tcache_request_evaluate(request);
-	const auto key = tcache_request_key(alloc, request);
+
+	const auto key = cacheable
+		? tcache_request_key(alloc, request)
+		: StringWithHash{nullptr};
 	TranslateCacheItem *item = cacheable
 		? Lookup(request, key)
 		: nullptr;
