@@ -7,6 +7,7 @@
 #include "CertDatabase.hxx"
 #include "Config.hxx"
 #include "CRequest.hxx"
+#include "Names.hxx"
 #include "lib/curl/Easy.hxx"
 #include "lib/curl/Slist.hxx"
 #include "lib/curl/StringGlue.hxx"
@@ -106,6 +107,7 @@ NewCert(const CertDatabaseConfig &db_config, const PukiConfig &config,
 {
 	const auto key = GenerateEcKey();
 	const auto cert = ObtainPukiCertificate(config, *key, hosts);
+	CheckCertificateNames(*cert, hosts);
 
 	const auto [wrap_key_name, wrap_key] = db_config.GetDefaultWrapKey();
 
@@ -131,6 +133,7 @@ RenewCert(const CertDatabaseConfig &db_config, const PukiConfig &config,
 	auto &new_key = old_key;
 
 	const auto cert = ObtainNewPukiCertificate(config, new_key, old_cert);
+	CheckCertificateNames(*cert, AllNames(old_cert));
 
 	const auto [wrap_key_name, wrap_key] = db_config.GetDefaultWrapKey();
 

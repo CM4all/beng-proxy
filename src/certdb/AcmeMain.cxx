@@ -6,7 +6,7 @@
 #include "CRequest.hxx"
 #include "Main.hxx"
 #include "Progress.hxx"
-#include "AcmeUtil.hxx"
+#include "Names.hxx"
 #include "AcmeClient.hxx"
 #include "AcmeAccount.hxx"
 #include "AcmeOrder.hxx"
@@ -370,6 +370,7 @@ AcmeNewOrder(const CertDatabaseConfig &db_config, const AcmeConfig &config,
 	progress();
 
 	const auto cert = client.DownloadCertificate(account_key, order);
+	CheckCertificateNames(*cert, identifiers);
 	progress();
 
 	const auto [wrap_key_name, wrap_key] = db_config.GetDefaultWrapKey();
@@ -382,24 +383,6 @@ AcmeNewOrder(const CertDatabaseConfig &db_config, const AcmeConfig &config,
 	db.NotifyModified();
 
 	progress();
-}
-
-[[gnu::pure]]
-static std::set<std::string, std::less<>>
-AllNames(const X509 &cert) noexcept
-{
-	std::set<std::string, std::less<>> result;
-
-	for (auto &i : GetSubjectAltNames(cert))
-		if (!IsAcmeInvalid(i))
-			/* ignore "*.acme.invalid" */
-			result.emplace(std::move(i));
-
-	const auto cn = GetCommonName(cert);
-	if (cn != nullptr)
-		result.emplace(cn.c_str());
-
-	return result;
 }
 
 [[gnu::pure]]
@@ -470,6 +453,7 @@ AcmeRenewCert(const CertDatabaseConfig &db_config, const AcmeConfig &config,
 	progress();
 
 	const auto cert = client.DownloadCertificate(account_key, order);
+	CheckCertificateNames(*cert, names);
 	progress();
 
 	const auto [wrap_key_name, wrap_key] = db_config.GetDefaultWrapKey();

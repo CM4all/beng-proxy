@@ -886,6 +886,7 @@ if get_option('certdb')
     'src/certdb/AcmeKey.cxx',
     'src/certdb/AcmeMain.cxx',
     'src/certdb/Puki.cxx',
+    'src/certdb/Names.cxx',
     'src/certdb/Main.cxx',
     'src/ssl/CAMap.cxx',
     'src/access_log/ConfigParser.cxx',
