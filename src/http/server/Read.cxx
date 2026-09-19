@@ -215,6 +215,14 @@ HttpServerConnection::HeadersFinished(bool has_more) noexcept
 	const char *const connection = r.headers.Remove(connection_header);
 	keep_alive = connection == nullptr || !http_list_contains_i(connection, "close");
 
+	if (request.ignore_headers)
+		/* we have skipped at least one header, which means we
+		   have no information about a possible request body;
+		   close the connection after sending the error
+		   response, because otherwise the request body moght
+		   be parsed as another request */
+		keep_alive = false;
+
 	request.upgrade = connection != nullptr &&
 		http_list_contains_i(connection, "upgrade") &&
 		http_is_upgrade(r.headers);
