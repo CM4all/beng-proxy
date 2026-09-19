@@ -421,8 +421,7 @@ WidgetRequest::FilterResponse(HttpStatus status,
 		? resource_tag_append_filter(alloc, source_tag, filter.GetId(alloc))
 		: StringWithHash{nullptr};
 
-	if (filter.reveal_user)
-		forward_reveal_user(alloc, headers, ctx->user);
+	forward_reveal_user(alloc, headers, filter.reveal_user ? ctx->user : nullptr);
 
 	if (body)
 		body = NewAutoPipeIstream(&pool, std::move(body), ctx->pipe_stock);

@@ -729,8 +729,7 @@ Request::ApplyFilter(HttpStatus status, StringMap &&headers2,
 		? resource_tag_append_filter(alloc, source_tag, filter.GetId(alloc))
 		: StringWithHash{nullptr};
 
-	if (filter.reveal_user)
-		forward_reveal_user(pool, headers2, user);
+	forward_reveal_user(pool, headers2, filter.reveal_user ? user : nullptr);
 
 	if (filter.no_body)
 		pending_filter_response =
