@@ -35,6 +35,20 @@ CookieJar::Expire(Expiry now) noexcept
 	}, DeleteDisposer{});
 }
 
+/**
+ * Compare two strings; both may be nullptr (which is the case for
+ * cookies without a "Path" attribute).
+ */
+[[gnu::pure]]
+static bool
+StringIsEqualNullable(const char *a, const char *b) noexcept
+{
+	if (a == nullptr || b == nullptr)
+		return a == b;
+
+	return StringIsEqual(a, b);
+}
+
 [[gnu::pure]]
 static Cookie *
 Find(IntrusiveList<Cookie> &list, const char *domain,
@@ -42,7 +56,7 @@ Find(IntrusiveList<Cookie> &list, const char *domain,
 {
 	for (auto &i : list) {
 		if (StringIsEqual(i.domain.c_str(), domain) &&
-		    StringIsEqual(i.path.c_str(), path) &&
+		    StringIsEqualNullable(i.path.c_str(), path) &&
 		    StringIsEqual(i.name.c_str(), name))
 			return &i;
 	}
