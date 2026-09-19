@@ -892,6 +892,8 @@ WasClient::WasInputError() noexcept
 
 	stopwatch.RecordEvent("error");
 
+	request.ClearBody();
+
 	response.body = nullptr;
 
 	lease.ReleaseWas(PutAction::DESTROY);
