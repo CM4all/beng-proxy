@@ -17,6 +17,7 @@ cm4all-beng-proxy (21.45) unstable; urgency=low
   * translation: validate HTTP header values
   * translation: validate the expanded REDIRECT
   * translation: normalize and validate REDIRECT with BASE
+  * translation: fix CHECK_HEADER cache key collision
   * translation: fix crash with auto-generated "Vary" HTTP response header
   * spawn: don't follow symlinks while building the mount namespace
   * spawn: verify the sender of JobRemoved/UnitRemoved DBus signals

@@ -45,6 +45,7 @@ using std::string_view_literals::operator""sv;
 
 static constexpr std::size_t MAX_CACHE_LAYOUT = 256;
 static constexpr std::size_t MAX_CACHE_CHECK = 256;
+static constexpr std::size_t MAX_CACHE_CHECK_HEADER = 256;
 static constexpr std::size_t MAX_CACHE_WFU = 256;
 static constexpr std::size_t MAX_CONTENT_TYPE_LOOKUP = 256;
 static constexpr std::size_t MAX_CHAIN = 256;
@@ -350,9 +351,11 @@ tcache_uri_key(AllocatorPtr alloc, const char *uri, const char *host,
 		b.emplace_back(UriEscapeView(check_buffer, check));
 	}
 
+	char ch_buffer[MAX_CACHE_CHECK_HEADER * 3];
 	if (check_header != nullptr) {
 		b.push_back("|CH=");
-		b.push_back(check_header);
+		b.emplace_back(UriEscapeView(ch_buffer,
+					     std::string_view{check_header}));
 	}
 
 	if (host != nullptr) {
@@ -473,6 +476,8 @@ tcache_request_evaluate(const TranslateRequest &request) noexcept
 		request.auth.data() == nullptr &&
 		request.mount_listen_stream.size() < MAX_MOUNT_LISTEN_STREAM &&
 		request.check.size() < MAX_CACHE_CHECK &&
+		(request.check_header == nullptr ||
+		 strlen(request.check_header) <= MAX_CACHE_CHECK_HEADER) &&
 		request.want_full_uri.size() <= MAX_CACHE_WFU &&
 		request.probe_path_suffixes.size() <= MAX_PROBE_PATH_SUFFIXES &&
 		request.file_not_found.size() <= MAX_FILE_NOT_FOUND &&
