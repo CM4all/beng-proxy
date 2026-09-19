@@ -24,6 +24,18 @@
 
 using std::string_view_literals::operator""sv;
 
+/**
+ * Does the given Cache-Control directive have the specified name?
+ *
+ * @see RFC 9111 5.2
+ */
+[[gnu::pure]]
+static bool
+IsCacheControlDirective(std::string_view s, std::string_view name) noexcept
+{
+	return SkipPrefixIgnoreCase(s, name) && (s.empty() || s.front() == '=');
+}
+
 std::optional<HttpCacheRequestInfo>
 http_cache_request_evaluate(HttpMethod method,
 			    const ResourceAddress &address,
@@ -51,12 +63,12 @@ http_cache_request_evaluate(HttpMethod method,
 		for (std::string_view s : IterableSplitString(cache_control, ',')) {
 			s = Strip(s);
 
-			if (s == "only-if-cached"sv)
+			if (IsCacheControlDirective(s, "only-if-cached"sv))
 				only_if_cached = true;
 			else if (obey_no_cache) {
-				if (s == "no-cache"sv)
+				if (IsCacheControlDirective(s, "no-cache"sv))
 					no_cache = true;
-				else if (s == "no-store"sv)
+				else if (IsCacheControlDirective(s, "no-store"sv))
 					return std::nullopt;
 			}
 		}
@@ -184,11 +196,12 @@ http_cache_response_evaluate(const HttpCacheRequestInfo &request_info,
 		for (std::string_view s : IterableSplitString(cache_control, ',')) {
 			s = Strip(s);
 
-			if (s.starts_with("private"sv) ||
-			    s == "no-cache"sv || s == "no-store"sv)
+			if (StringStartsWithIgnoreCase(s, "private"sv) ||
+			    IsCacheControlDirective(s, "no-cache"sv) ||
+			    IsCacheControlDirective(s, "no-store"sv))
 				return std::nullopt;
 
-			if (SkipPrefix(s, "max-age="sv)) {
+			if (SkipPrefixIgnoreCase(s, "max-age="sv)) {
 				/* RFC 2616 14.9.3 */
 				char value[16];
 				int seconds;
