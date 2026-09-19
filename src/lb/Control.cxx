@@ -189,8 +189,8 @@ LbControl::OnControlPacket(BengControl::Command command,
 	logger(5, "command=", int(command), " uid=", uid,
 	       " payload_length=", unsigned(payload.size()));
 
-	/* only local clients are allowed to use most commands */
-	const bool is_privileged = uid >= 0;
+	/* only local root clients are allowed to use most commands */
+	const bool is_privileged = uid == 0;
 
 	switch (command) {
 	case Command::NOP:

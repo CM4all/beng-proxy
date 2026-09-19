@@ -22,6 +22,7 @@
 #include "translation/Response.hxx"
 #include "translation/Transformation.hxx"
 #include "pool/tpool.hxx"
+
 #include "pool/pool.hxx"
 #include "net/SocketAddress.hxx"
 #include "io/Logger.hxx"
@@ -35,6 +36,8 @@
 #ifdef HAVE_AVAHI
 #include "lib/avahi/Publisher.hxx"
 #endif
+
+#include <unistd.h> // for geteuid()
 
 inline void
 BpInstance::HandleTcacheInvalidate(std::span<const std::byte> payload) noexcept
@@ -229,8 +232,8 @@ BpInstance::OnControlPacket(BengControl::Command command,
 	LogConcat(5, "control", "command=", int(command), " uid=", uid,
 		  " payload_length=", unsigned(payload.size()));
 
-	/* only local clients are allowed to use most commands */
-	const bool is_privileged = uid >= 0;
+	/* only local root clients are allowed to use most commands */
+	const bool is_privileged = uid == 0;
 
 	switch (command) {
 	case Command::NOP:
