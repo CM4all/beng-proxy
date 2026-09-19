@@ -219,6 +219,11 @@ HttpServerConnection::HeadersFinished(bool has_more) noexcept
 		http_list_contains_i(connection, "upgrade") &&
 		http_is_upgrade(r.headers);
 
+	if (!request.upgrade)
+		/* drop the hop-by-hop "Upgrade" header unless this
+		   really is an upgrade request */
+		r.headers.Remove(upgrade_header);
+
 	const char *const transfer_encoding = r.headers.Remove(transfer_encoding_header);
 	const char *const content_length_string = r.headers.Remove(content_length_header);
 
