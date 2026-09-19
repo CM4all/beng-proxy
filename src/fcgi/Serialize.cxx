@@ -5,6 +5,7 @@
 #include "Serialize.hxx"
 #include "Protocol.hxx"
 #include "memory/GrowingBuffer.hxx"
+#include "http/CgiHeaderName.hxx"
 #include "strmap.hxx"
 #include "util/ByteOrder.hxx"
 #include "util/CharUtil.hxx"
@@ -109,6 +110,10 @@ FcgiParamsSerializer::Headers(const StringMap &headers) noexcept
 	for (const auto &pair : headers) {
 		if (StringIsEqual(pair.key, "x-cm4all-https"))
 			/* this will be translated to HTTPS */
+			continue;
+
+		if (!IsCgiCompatibleHeaderName(pair.key))
+			/* this header might collide after folding */
 			continue;
 
 		size_t i;

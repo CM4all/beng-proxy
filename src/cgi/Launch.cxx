@@ -10,6 +10,7 @@
 #include "product.h"
 #include "spawn/IstreamSpawn.hxx"
 #include "spawn/Prepared.hxx"
+#include "http/CgiHeaderName.hxx"
 #include "http/Method.hxx"
 #include "io/FdHolder.hxx"
 #include "util/CharUtil.hxx"
@@ -95,6 +96,10 @@ PrepareCgi(struct pool &pool, PreparedChildProcess &p,
 
 		if (StringIsEqual(pair.key, "x-cm4all-https"))
 			/* this will be translated to HTTPS */
+			continue;
+
+		if (!IsCgiCompatibleHeaderName(pair.key))
+			/* this header might collide after folding */
 			continue;
 
 		char buffer[512] = "HTTP_";
