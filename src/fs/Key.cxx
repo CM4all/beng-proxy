@@ -21,27 +21,20 @@ AppendSocketAddress(StringBuilder &b, SocketAddress address)
 		b.Extend(strlen(w.data()));
 }
 
-static void
-MakeKey(StringBuilder &b, SocketAddress bind_address,
-	SocketAddress address) noexcept
+void
+MakeFilteredSocketStockKey(StringBuilder &b, std::string_view name,
+			   SocketAddress bind_address, SocketAddress address,
+			   const SocketFilterParams *filter_params)
 {
 	if (!bind_address.IsNull()) {
 		AppendSocketAddress(b, bind_address);
 		b.Append('>');
 	}
 
-	AppendSocketAddress(b, address);
-}
-
-void
-MakeFilteredSocketStockKey(StringBuilder &b, std::string_view name,
-			   SocketAddress bind_address, SocketAddress address,
-			   const SocketFilterParams *filter_params)
-{
 	if (!name.empty())
 		b.Append(name);
 	else
-		MakeKey(b, bind_address, address);
+		AppendSocketAddress(b, address);
 
 	if (filter_params != nullptr) {
 		b.Append('|');
