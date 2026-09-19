@@ -40,6 +40,12 @@ check_escape(const char *p, const char *q)
 }
 
 static void
+check_escape_size(std::string_view p, size_t expected)
+{
+	ASSERT_EQ(escape_size(&css_escape_class, p), expected);
+}
+
+static void
 check_escape_char(char p, std::string_view q)
 {
 	const auto result = escape_char(&css_escape_class, p);
@@ -63,4 +69,8 @@ TEST(CssEscape, Basic)
 	check_escape("foobar", "foobar");
 	check_escape("foo\\bar", "foo\\\\bar");
 	check_escape("foo'bar", "foo\\'bar");
+
+	check_escape_size("foobar", 6);
+	check_escape_size("foo\\bar", 8);
+	check_escape_size("foo'bar", 8);
 }

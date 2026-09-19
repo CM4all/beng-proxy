@@ -60,6 +60,8 @@ css_escape_size(std::string_view _p) noexcept
 		else
 			/* XXX implement newline and hex codes */
 			++size;
+
+		++p;
 	}
 
 	return size;

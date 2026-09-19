@@ -31,6 +31,7 @@ cm4all-beng-proxy (21.45) unstable; urgency=low
   * widget: refuse to add headers starting with "x-cm4all-"
   * widget: validate header values
   * processor: fix crash bug
+  * css_processor: fix infinite loop
   * access_log: log the client address in error records
   * log-split: validate the "site" value
   * log-split: don't follow symlinks
