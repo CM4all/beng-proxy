@@ -168,7 +168,7 @@ AccessLogGlue::LogHttpError(std::chrono::system_clock::time_point now,
 	assert(http_method_is_valid(request.method));
 	assert(status == HttpStatus{} || http_status_is_valid(status));
 
-	const char *remote_host = request.headers.Get(host_header);
+	const char *remote_host = request.remote_host;
 	const char *x_forwarded_for = request.headers.Get(x_forwarded_for_header);
 
 	std::string buffer;
