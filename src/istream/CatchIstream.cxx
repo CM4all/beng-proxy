@@ -69,7 +69,7 @@ CatchIstream::SendSpace() noexcept
 
 	if (chunk > space.size()) {
 		std::unique_ptr<char[]> buffer(new char[chunk]);
-		std::fill_n(buffer.get(), ' ', chunk);
+		std::fill_n(buffer.get(), chunk, ' ');
 		std::size_t nbytes = ForwardIstream::OnData(std::as_bytes(std::span{buffer.get(), chunk}));
 		if (nbytes == 0)
 			return;
