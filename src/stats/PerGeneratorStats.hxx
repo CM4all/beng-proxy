@@ -18,20 +18,43 @@ struct PerGeneratorStats {
 };
 
 struct PerGeneratorStatsMap {
+	/**
+	 * The maximum number of generators tracked by this map.  This
+	 * is a safety limit because the generator name may be
+	 * supplied by an untrusted backend (via the
+	 * "X-CM4all-Generator" response header) and this map is never
+	 * pruned.
+	 */
+	static constexpr std::size_t MAX_GENERATORS = 256;
+
+	/**
+	 * The maximum length of a generator name.
+	 */
+	static constexpr std::size_t MAX_GENERATOR_LENGTH = 64;
+
 	std::map<std::string, PerGeneratorStats, std::less<>> per_generator;
+
+	std::size_t n_generators = 0;
 
 	void AddRequest(std::string_view generator,
 			HttpStatus status) noexcept {
-		auto &s = FindOrEmplace(generator);
-		s.AddRequest(status);
+		if (auto *s = FindOrEmplace(generator))
+			s->AddRequest(status);
 	}
 
 private:
 	[[gnu::pure]]
-	PerGeneratorStats &FindOrEmplace(std::string_view generator) noexcept {
+	PerGeneratorStats *FindOrEmplace(std::string_view generator) noexcept {
 		if (auto i = per_generator.find(generator); i != per_generator.end())
-			return i->second;
+			return &i->second;
 
-		return per_generator.try_emplace(std::string{generator}).first->second;
+		if (generator.size() > MAX_GENERATOR_LENGTH ||
+		    n_generators >= MAX_GENERATORS)
+			/* too many (or too long) generator names;
+			   ignore this one */
+			return nullptr;
+
+		++n_generators;
+		return &per_generator.try_emplace(std::string{generator}).first->second;
 	}
 };
