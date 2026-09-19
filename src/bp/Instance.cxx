@@ -409,7 +409,15 @@ BpInstance::OnCgroupPressure(unsigned repeat) noexcept
 void
 BpInstance::OnWasMetric(std::string_view name, float value) noexcept
 {
-	was_metrics[std::string{name}] += value;
+	/* the metric names are received from (untrusted) WAS
+	   applications and this map is never pruned, so the number of
+	   entries needs to be limited */
+	static constexpr std::size_t MAX_WAS_METRICS = 4096;
+
+	if (auto i = was_metrics.find(name); i != was_metrics.end())
+		i->second += value;
+	else if (was_metrics.size() < MAX_WAS_METRICS)
+		was_metrics.emplace(name, value);
 }
 
 #endif

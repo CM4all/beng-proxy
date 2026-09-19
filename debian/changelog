@@ -30,6 +30,7 @@ cm4all-beng-proxy (22.0) unstable; urgency=low
   * fcgi, cgi: don't forward request headers which might collide when folded
   * cgi: limit the total response header size
   * was: fix three crash bugs
+  * was: limit the number of metrics
   * brotli, gzip: fix crash bug
   * bp: fix crash on DISCARD_REALM_SESSION
   * bp: fix crash on TOKEN_AUTH
