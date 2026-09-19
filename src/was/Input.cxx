@@ -628,12 +628,13 @@ WasInput::_FillBucketList(IstreamBucketList &list)
 			throw;
 		}
 
-		if (!CheckReleasePipe()) {
-			// TODO: deal with this condition properly or improve error message
-			handler.WasInputError();
-			Destroy();
+		if (!CheckReleasePipe())
+			/* this object has been destroyed already (and
+			   the handler has been notified); we must not
+			   touch "this" or "handler" anymore, but we
+			   still need to tell our caller that this
+			   Istream is gone */
 			throw std::runtime_error("WAS peer failed");
-		}
 
 		r = buffer.Read();
 		if (r.empty()) {
