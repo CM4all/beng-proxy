@@ -5,6 +5,7 @@
 #pragma once
 
 #include "fs/FilteredSocket.hxx"
+#include "net/ClientAccounting.hxx"
 #include "cluster/StickyHash.hxx"
 #include "pool/Holder.hxx"
 #include "pool/UniquePtr.hxx"
@@ -25,6 +26,7 @@ struct LbInstance;
 
 class LbTcpConnection final
 	: PoolHolder, LoggerDomainFactory, ConnectSocketHandler,
+	  public AccountedClientConnection,
 	  public IntrusiveListHook<IntrusiveHookMode::NORMAL>
 {
 	LbInstance &instance;

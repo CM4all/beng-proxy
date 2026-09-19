@@ -101,6 +101,7 @@ LbListener::OnFilteredSocketConnect(PoolPtr pool,
 				    const SslFilter *ssl_filter) noexcept
 try {
 	LbHttpConnection *http_connection;
+	LbTcpConnection *tcp_connection;
 
 	switch (protocol) {
 	case LbProtocol::HTTP:
@@ -121,11 +122,17 @@ try {
 	case LbProtocol::TCP:
 		assert(std::holds_alternative<LbCluster *>(destination.destination));
 
-		LbTcpConnection::New(instance, config,
-				     *std::get<LbCluster *>(destination.destination),
-				     std::move(pool),
-				     std::move(socket),
-				     address);
+		tcp_connection = LbTcpConnection::New(instance, config,
+						      *std::get<LbCluster *>(destination.destination),
+						      std::move(pool),
+						      std::move(socket),
+						      address);
+
+		if (client_accounting)
+			if (auto *per_client = client_accounting->Get(address);
+			    per_client != nullptr)
+				per_client->AddConnection(*tcp_connection);
+
 		break;
 	}
 } catch (...) {
