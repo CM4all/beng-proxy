@@ -8,7 +8,6 @@
 
 #pragma once
 
-#include "Prng.hxx"
 
 #include <memory>
 
@@ -35,4 +34,4 @@ session_read_file_header(BufferedReader &r);
  * Throws on error.
  */
 std::unique_ptr<Session>
-session_read(BufferedReader &r, SessionPrng &prng);
+session_read(BufferedReader &r);

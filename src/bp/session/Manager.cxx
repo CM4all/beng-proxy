@@ -5,7 +5,6 @@
 #include "Manager.hxx"
 #include "Lease.hxx"
 #include "io/Logger.hxx"
-#include "system/Seed.hxx"
 #include "util/DeleteDisposer.hxx"
 #include "util/SpanCast.hxx"
 #include "util/StaticVector.hxx"
@@ -55,14 +54,6 @@ SessionManager::Cleanup() noexcept
 	if (!sessions.empty())
 		cleanup_timer.Schedule(cleanup_interval);
 
-	try {
-		/* reseed the session id generator every few minutes;
-		   this isn't about cleanup, but this timer is a good
-		   hook for calling it */
-		SeedPrng();
-	} catch (...) {
-		PrintException(std::current_exception());
-	}
 }
 
 SessionManager::SessionManager(EventLoop &event_loop,
@@ -71,16 +62,8 @@ SessionManager::SessionManager(EventLoop &event_loop,
 			       unsigned _cluster_node) noexcept
 	:cluster_size(_cluster_size), cluster_node(_cluster_node),
 	 idle_timeout(_idle_timeout),
-	 prng(MakeSeeded<SessionPrng>()),
 	 cleanup_timer(event_loop, BIND_THIS_METHOD(Cleanup))
 {
-}
-
-void
-SessionManager::SeedPrng()
-{
-	auto ss = GenerateSeedSeq<SessionPrng>();
-	prng.seed(ss);
 }
 
 SessionManager::~SessionManager() noexcept
@@ -146,13 +129,8 @@ SessionManager::Purge() noexcept
 inline SessionId
 SessionManager::GenerateSessionId() noexcept
 {
-	if (++reseed_counter >= 256) {
-		reseed_counter = 0;
-		SeedPrng();
-	}
-
 	SessionId id;
-	id.Generate(prng);
+	id.Generate();
 	AdjustNewSessionId(id);
 	return id;
 }
@@ -164,7 +142,7 @@ SessionManager::CreateSession() noexcept
 		Purge();
 
 	SessionId csrf_salt;
-	csrf_salt.Generate(prng);
+	csrf_salt.Generate();
 
 	Session *session = new Session(GenerateSessionId(), csrf_salt);
 	Insert(*session);

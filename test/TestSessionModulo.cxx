@@ -35,14 +35,13 @@ MakeHeaders(AllocatorPtr alloc, SessionId id,
 
 TEST(SessionModulo, Basic)
 {
-	SessionPrng prng;
 
 	RootPool pool;
 	const AllocatorPtr alloc{pool};
 
 	for (unsigned cluster_size = 2; cluster_size <= 16; ++cluster_size) {
 		SessionId id;
-		id.Generate(prng);
+		id.Generate();
 
 		for (unsigned cluster_node = 0; cluster_node < cluster_size;
 		     ++cluster_node) {

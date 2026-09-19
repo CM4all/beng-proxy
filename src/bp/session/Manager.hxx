@@ -5,7 +5,6 @@
 #pragma once
 
 #include "Session.hxx"
-#include "Prng.hxx"
 #include "event/FarTimerEvent.hxx"
 #include "util/IntrusiveHashSet.hxx"
 #include "util/TransparentHash.hxx"
@@ -28,8 +27,6 @@ class SessionManager {
 	 * The idle timeout of sessions [seconds].
 	 */
 	const std::chrono::seconds idle_timeout;
-
-	SessionPrng prng;
 
 	struct SessionGetId {
 		[[gnu::const]]
@@ -78,8 +75,6 @@ class SessionManager {
 	ByAttach sessions_by_attach;
 
 	FarTimerEvent cleanup_timer;
-
-	unsigned reseed_counter = 0;
 
 public:
 	SessionManager(EventLoop &event_loop, std::chrono::seconds idle_timeout,
@@ -165,8 +160,6 @@ public:
 	bool Load(BufferedReader &r);
 
 private:
-	void SeedPrng();
-
 	SessionId GenerateSessionId() noexcept;
 	void EraseAndDispose(Session &session);
 };

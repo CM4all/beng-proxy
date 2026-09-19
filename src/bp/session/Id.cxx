@@ -3,11 +3,22 @@
 // author: Max Kellermann <max.kellermann@ionos.com>
 
 #include "Id.hxx"
+#include "system/Urandom.hxx"
 #include "util/HexFormat.hxx"
 #include "util/HexParse.hxx"
+#include "util/SpanCast.hxx"
 #include "util/StringBuffer.hxx"
 
-#include <assert.h>
+#include <cassert>
+
+void
+SessionId::Generate() noexcept
+{
+	/* if UrandomFill() fails, this process will std::terminate(),
+	   but that's okay - here, we expect getrandom() to never
+	   fail */
+	UrandomFill(ReferenceAsWritableBytes(data));
+}
 
 static auto
 ToClusterNode(uint64_t id,

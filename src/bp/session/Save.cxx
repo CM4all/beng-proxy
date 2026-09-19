@@ -50,7 +50,7 @@ SessionManager::Load(BufferedReader &r)
 		else if (magic != MAGIC_SESSION)
 			return false;
 
-		auto session = session_read(r, prng);
+		auto session = session_read(r);
 		assert(session);
 
 		if (session->expires.IsExpired(now)) {

@@ -4,7 +4,6 @@
 
 #include "bp/CsrfToken.hxx"
 #include "bp/session/Id.hxx"
-#include "bp/session/Prng.hxx"
 
 #include <gtest/gtest.h>
 
@@ -18,10 +17,9 @@ TEST(CsrfProtectionTest, Time)
 
 TEST(CsrfProtectionTest, FormatAndParse)
 {
-	SessionPrng prng;
 
 	SessionId salt;
-	salt.Generate(prng);
+	salt.Generate();
 	EXPECT_TRUE(salt.IsDefined());
 
 	CsrfToken a;

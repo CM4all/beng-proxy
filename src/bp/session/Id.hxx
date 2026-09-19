@@ -4,7 +4,6 @@
 
 #pragma once
 
-#include "Prng.hxx"
 #include "cluster/StickyHash.hxx"
 
 #include <array>
@@ -33,13 +32,7 @@ public:
 		std::fill(data.begin(), data.end(), 0);
 	}
 
-	template<typename Engine>
-	void Generate(Engine &prng) noexcept {
-		static_assert(Engine::word_size == sizeof(data.front()) * 8);
-
-		for (auto &i : data)
-			i = prng();
-	}
+	void Generate() noexcept;
 
 	/**
 	 * Manipulate the modulo of GetClusterHash() so that it results in

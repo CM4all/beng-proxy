@@ -3,14 +3,12 @@
 // author: Max Kellermann <max.kellermann@ionos.com>
 
 #include "bp/session/Id.hxx"
-#include "bp/session/Prng.hxx"
 #include "util/StringBuffer.hxx"
 
 #include <gtest/gtest.h>
 
 TEST(SessionIdTest, IsDefined)
 {
-	SessionPrng prng;
 
 	SessionId a;
 	a.Clear();
@@ -18,7 +16,7 @@ TEST(SessionIdTest, IsDefined)
 	EXPECT_EQ(a, a);
 
 	SessionId b;
-	b.Generate(prng);
+	b.Generate();
 	EXPECT_TRUE(b.IsDefined());
 	EXPECT_EQ(b, b);
 	EXPECT_NE(a, b);
@@ -27,10 +25,9 @@ TEST(SessionIdTest, IsDefined)
 
 TEST(SessionIdTest, FormatAndParse)
 {
-	SessionPrng prng;
 
 	SessionId a;
-	a.Generate(prng);
+	a.Generate();
 	EXPECT_TRUE(a.IsDefined());
 
 	const auto s = a.Format();
@@ -44,12 +41,11 @@ TEST(SessionIdTest, FormatAndParse)
 
 TEST(SessionIdTest, ClusterHash)
 {
-	SessionPrng prng;
 
 	for (unsigned cluster_size = 2; cluster_size <= 16; ++cluster_size) {
 		for (unsigned cluster_node = 0; cluster_node < cluster_size; ++cluster_node) {
 			SessionId a;
-			a.Generate(prng);
+			a.Generate();
 			EXPECT_TRUE(a.IsDefined());
 
 			a.SetClusterNode(cluster_size, cluster_node);
