@@ -5,6 +5,7 @@ cm4all-beng-proxy (21.45) unstable; urgency=low
   * lb/zeroconf: fix use-after-free crash bug
   * certdb: fix crash on PostgreSQL error
   * certdb: require CURL 7.85
+  * certdb: restrict CURL to HTTPS
   * ssl: don't share connection with client certificate
   * http_server: drop the "Upgrade" header from non-upgrade requests
   * http_server: disable keep-alive after status 414/431

@@ -18,6 +18,12 @@ GlueHttpClient::PrepareRequest(HttpMethod method, const char *uri,
 {
 	CurlEasy easy{uri};
 
+	/* all URLs are supplied by the ACME server; restrict them to
+	   HTTPS so that a malicious server cannot make us connect to
+	   arbitrary services (SSRF) */
+	easy.SetOption(CURLOPT_PROTOCOLS_STR, "https");
+	easy.SetOption(CURLOPT_REDIR_PROTOCOLS_STR, "https");
+
 	if (tls_ca != nullptr)
 		easy.SetOption(CURLOPT_CAINFO, tls_ca);
 
