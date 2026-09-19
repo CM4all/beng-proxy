@@ -612,12 +612,19 @@ HttpCacheRequest::OnHttpResponse(HttpStatus status, StringMap &&_headers,
 					GetEventLoop().SystemNow(),
 					_info->expires);
 
-			const AllocatorPtr item_alloc{item.GetPool()};
+			/* updating the headers leaks pool memory each
+			   time (the old value is never freed), so this
+			   is allowed only a limited number of times */
+			if (item.IsHeaderUpdateAllowed()) {
+				const AllocatorPtr item_alloc{item.GetPool()};
 
-			/* TODO: this leaks pool memory each time we update
-			   headers; how to fix this? */
-			UpdateHeader(item_alloc, document->response_headers, _headers, expires_header);
-			UpdateHeader(item_alloc, document->response_headers, _headers, cache_control_header);
+				const bool expires_updated =
+					UpdateHeader(item_alloc, document->response_headers, _headers, expires_header);
+				const bool cache_control_updated =
+					UpdateHeader(item_alloc, document->response_headers, _headers, cache_control_header);
+				if (expires_updated || cache_control_updated)
+					item.AccountHeaderUpdate();
+			}
 		}
 
 		LogConcat(5, "HttpCache", "not_modified ", key.value);

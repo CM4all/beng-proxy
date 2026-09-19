@@ -19,6 +19,18 @@ class HttpCacheItem final : PoolHolder, public HttpCacheDocument, public CacheIt
 
 	const RubberAllocation body;
 
+	/**
+	 * The number of times the response headers have been updated
+	 * by a "304 Not Modified" response.
+	 */
+	unsigned n_header_updates = 0;
+
+	/**
+	 * How many header updates are allowed.  This limits how much
+	 * additional memory for new header values can be allocated.
+	 */
+	static constexpr unsigned MAX_HEADER_UPDATES = 64;
+
 public:
 	/**
 	 * For #HttpCacheHeap::per_tag.
@@ -51,6 +63,17 @@ public:
 
 	const char *GetTag() const noexcept {
 		return tag;
+	}
+
+	/**
+	 * May the response headers be updated once more?
+	 */
+	bool IsHeaderUpdateAllowed() const noexcept {
+		return n_header_updates < MAX_HEADER_UPDATES;
+	}
+
+	void AccountHeaderUpdate() noexcept {
+		++n_header_updates;
 	}
 
 	void SetExpires(std::chrono::steady_clock::time_point steady_now,
