@@ -150,6 +150,7 @@ ConnectFilteredSocketOperation::OnSocketConnectSuccess(UniqueSocketDescriptor fd
 		stopwatch.RecordEvent("error");
 		handler.OnConnectFilteredSocketError(std::current_exception());
 		delete this;
+		return;
 	}
 
 	if (filter_factory) {
