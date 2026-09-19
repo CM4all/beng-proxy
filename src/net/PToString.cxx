@@ -86,6 +86,11 @@ address_to_string(AllocatorPtr alloc, SocketAddress address) noexcept
 			return nullptr;
 		break;
 
+	case AF_LOCAL:
+		/* a local socket has an arbitrary peer-chosen string;
+		   don't return that as-is */
+		return "local";
+
 	default:
 		if (!ToString(host, address) || *host == 0)
 			return nullptr;
@@ -114,6 +119,11 @@ address_to_host_string(AllocatorPtr alloc, SocketAddress address) noexcept
 		if (!V6HostWithScopeToString(std::span{host}, IPv6Address::Cast(address)))
 			return nullptr;
 		break;
+
+	case AF_LOCAL:
+		/* a local socket has an arbitrary peer-chosen string;
+		   don't return that as-is */
+		return "local";
 
 	default:
 		if (!HostToString(host, address) || *host == 0)

@@ -46,6 +46,7 @@ cm4all-beng-proxy (21.45) unstable; urgency=low
   * zeroconf: fix leak bug
   * control: allow privileged commands only for root
   * access_log: log the client address in error records
+  * access_log: AF_LOCAL client addresses are displayed as "local"
   * log-split: validate the "site" value
   * log-split: don't follow symlinks
 
