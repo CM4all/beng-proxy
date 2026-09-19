@@ -90,7 +90,12 @@ generate_path(const char *template_, const Net::Log::Datagram &d)
 	while (true) {
 		const char *escape = strchr(template_, '%');
 		if (escape == nullptr) {
-			strcpy(dest, template_);
+			const size_t length = strlen(template_);
+			if (dest + length >= buffer + sizeof(buffer))
+				/* too long */
+				return nullptr;
+
+			memcpy(dest, template_, length + 1);
 			return buffer;
 		}
 
