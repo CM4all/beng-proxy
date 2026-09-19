@@ -243,6 +243,11 @@ ThreadIstream::Internal::Done() noexcept
 		   already have all we need */
 		filter.reset();
 
+		/* without a filter, this job must never be scheduled
+		   again; clear the flag which would cause
+		   OutputConsumed() to call Schedule() */
+		output_full = false;
+
 		/* if the output buffer is also empty: we can destroy
 		   this Internal instance as well */
 		if (output_empty) {
