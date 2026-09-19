@@ -13,10 +13,12 @@
 #include "lib/fmt/SystemError.hxx"
 #include "system/Error.hxx"
 #include "io/FileAt.hxx"
+#include "io/Beneath.hxx"
 #include "io/Open.hxx"
 #include "io/SharedFd.hxx"
 #include "io/UniqueFileDescriptor.hxx"
 #include "http/Status.hxx"
+#include "util/StringCompare.hxx"
 
 #ifdef HAVE_URING
 #include "io/uring/Handler.hxx"
@@ -134,13 +136,27 @@ static_file_get(EventLoop &event_loop,
 		Uring::Queue *uring,
 #endif
 		struct pool &pool,
-		const char *_base,
+		const char *_beneath, const char *_base,
 		const char *path, const char *content_type,
 		HttpResponseHandler &handler, CancellablePointer &cancel_ptr)
 {
 	assert(path != nullptr);
 
 	UniqueFileDescriptor base;
+
+	if (_base == nullptr && _beneath != nullptr) {
+		/* no BASE: resolve the path beneath the BENEATH
+		   directory, so symlinks cannot escape it */
+		const char *relative = StringAfterPrefix(path, _beneath);
+		if (relative == nullptr || *relative != '/') {
+			handler.InvokeResponse(pool, HttpStatus::NOT_FOUND,
+					       "Not found");
+			return;
+		}
+
+		path = relative + 1;
+		_base = _beneath;
+	}
 
 	if (_base != nullptr) {
 		try {
@@ -169,7 +185,13 @@ static_file_get(EventLoop &event_loop,
 	struct statx st;
 
 	try {
-		fd = OpenReadOnly({base.IsDefined() ? base : FileDescriptor::Undefined(), path}, O_NOFOLLOW);
+		if (base.IsDefined())
+			/* resolve the path beneath the base directory
+			   so symlinks cannot escape it */
+			fd = OpenReadOnlyBeneath({base, path});
+		else
+			fd = OpenReadOnly({FileDescriptor::Undefined(), path},
+					  O_NOFOLLOW);
 		if (statx(fd.Get(), "", AT_EMPTY_PATH,
 			  STATX_TYPE|STATX_MTIME|STATX_INO|STATX_SIZE,
 			  &st) < 0)
