@@ -144,7 +144,12 @@ LbHttpRequest::OnTranslateResponse(UniquePoolPtr<TranslateResponse> _response) n
 		}
 
 		if (response.canonical_host != nullptr)
-			rl.canonical_host = response.canonical_host;
+			/* copy the string because it points into the
+			   LbTranslationCache item which may be
+			   evicted while this request is still
+			   running */
+			rl.canonical_host = p_strdup(request.pool,
+						     response.canonical_host);
 
 		_response.reset();
 

@@ -1,6 +1,7 @@
 cm4all-beng-proxy (21.45) unstable; urgency=low
 
   * lb/lua: fix crash on malformed query string
+  * lb/translation: fix use-after-free crash bug
   * lb/zeroconf: fix use-after-free crash bug
   * certdb: fix crash on PostgreSQL error
   * ssl: don't share connection with client certificate
