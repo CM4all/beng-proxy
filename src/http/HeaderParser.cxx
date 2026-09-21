@@ -8,6 +8,7 @@
 #include "memory/GrowingBuffer.hxx"
 #include "http/HeaderName.hxx"
 #include "http/HeaderValue.hxx"
+#include "util/IterableSplitString.hxx"
 #include "util/StaticFifoBuffer.hxx"
 #include "util/StringCompare.hxx"
 #include "util/StringSplit.hxx"
@@ -112,13 +113,9 @@ IsHeaderLineNamed(std::string_view line, std::string_view name) noexcept
 std::string_view
 header_parse_find(std::string_view haystack, std::string_view name) noexcept
 {
-	while (!haystack.empty()) {
-		auto [line, rest] = Split(haystack, '\n');
-
+	for (const std::string_view line : IterableSplitString(haystack, '\n')) {
 		if (auto value = IsHeaderLineNamed(line, name); value.data() != nullptr)
 			return value;
-
-		haystack = rest;
 	}
 
 	return {};
