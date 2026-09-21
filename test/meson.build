@@ -110,6 +110,25 @@ if nghttp2_client_dep.found()
   )
 endif
 
+if nghttp2_client_dep.found()
+  test(
+    'TestNgHttp2Client',
+    executable(
+      'TestNgHttp2Client',
+      'TestNgHttp2Client.cxx',
+      'RecordingHttpResponseHandler.cxx',
+      include_directories: inc,
+      dependencies: [
+        gtest,
+        test_instance_dep,
+        nghttp2_client_dep,
+        istream_dep,
+        socket_dep,
+       ],
+    ),
+  )
+endif
+
 executable('run_http_cache',
   'run_http_cache.cxx',
   include_directories: inc,
