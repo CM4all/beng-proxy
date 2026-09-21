@@ -33,6 +33,19 @@ FcgiRecordSerializer::Commit(size_t content_length) noexcept
 	header->content_length = content_length;
 }
 
+void
+FcgiRecordSerializer::Restart(size_t content_length) noexcept
+{
+	Commit(content_length);
+
+	/* the new record header is a clone of the previous one; only
+	   the content_length field differs */
+	const auto *previous = header;
+	header = (FcgiRecordHeader *)buffer.Write(sizeof(*header));
+	*header = *previous;
+	header->content_length = 0;
+}
+
 static size_t
 fcgi_serialize_length(GrowingBuffer &gb, std::size_t length) noexcept
 {
@@ -69,6 +82,21 @@ FcgiParamsSerializer &
 FcgiParamsSerializer::operator()(std::string_view name,
 				 std::string_view value) noexcept
 {
+	const std::size_t max_pair_size = 2 * sizeof(uint32_t) +
+		name.size() + value.size();
+
+	if (max_pair_size > record.MAX_CONTENT_LENGTH)
+		/* this pair does not fit into a record; refuse to
+		   serialize it because splitting a name/value pair
+		   across two records is not allowed */
+		return *this;
+
+	if (content_length + max_pair_size > record.MAX_CONTENT_LENGTH) {
+		/* the current record is full; start a new one */
+		record.Restart(content_length);
+		content_length = 0;
+	}
+
 	content_length += fcgi_serialize_pair(record.GetBuffer(), name, value);
 	return *this;
 }

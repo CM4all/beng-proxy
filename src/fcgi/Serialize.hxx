@@ -20,7 +20,7 @@ class StringMap;
 
 class FcgiRecordSerializer {
 	GrowingBuffer &buffer;
-	FcgiRecordHeader *const header;
+	FcgiRecordHeader *header;
 
 public:
 	/**
@@ -36,6 +36,12 @@ public:
 	}
 
 	void Commit(size_t content_length) noexcept;
+
+	/**
+	 * Finish the current record and start a new one with the same
+	 * type and request id.
+	 */
+	void Restart(size_t content_length) noexcept;
 };
 
 class FcgiParamsSerializer {
