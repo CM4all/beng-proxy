@@ -109,6 +109,8 @@ public:
 	}
 
 	void DestroyEof() noexcept {
+		assert(response_body_control != nullptr);
+
 		auto *rbc = response_body_control;
 		Destroy();
 		rbc->SetEof();
@@ -192,6 +194,8 @@ public:
 
 private:
 	void Consume(size_t nbytes) noexcept {
+		assert(id >= 0);
+
 #ifndef NDEBUG
 		assert(connection.unconsumed >= nbytes);
 		connection.unconsumed -= nbytes;
@@ -202,12 +206,18 @@ private:
 	}
 
 	void AbortResponseHeaders(std::exception_ptr &&e) noexcept {
+		assert(state != State::BODY);
+		assert(response_body_control == nullptr);
+
 		auto &_handler = handler;
 		Destroy();
 		_handler.InvokeError(std::move(e));
 	}
 
 	void AbortResponseBody(std::exception_ptr &&e) noexcept {
+		assert(state == State::BODY);
+		assert(response_body_control != nullptr);
+
 		Consume(response_body_control->GetAvailable());
 		response_body_control->DestroyError(std::move(e));
 		response_body_control = nullptr;
@@ -229,10 +239,17 @@ private:
 
 	/* virtual methods from class MultiFifoBufferIstreamHandler */
 	void OnFifoBufferIstreamConsumed(size_t nbytes) noexcept override {
+		assert(state == State::BODY);
+		assert(response_body_control != nullptr);
+
 		Consume(nbytes);
 	}
 
 	void OnFifoBufferIstreamClosed() noexcept override {
+		assert(state == State::BODY);
+		assert(response_body_control != nullptr);
+		assert(id >= 0);
+
 		/* TOOD don't bother to send RST if the end of the
 		   stream is near */
 
@@ -277,6 +294,8 @@ ClientConnection::Request::SendRequest(HttpMethod method, const char *uri,
 				       UnusedIstreamPtr body) noexcept
 {
 	assert(state == State::INITIAL);
+	assert(id < 0);
+	assert(response_body_control == nullptr);
 
 	StaticVector<nghttp2_nv, 256> hdrs;
 	hdrs.push_back(MakeNv(":method"sv, http_method_to_string(method)));
@@ -326,6 +345,8 @@ ClientConnection::Request::SendRequest(HttpMethod method, const char *uri,
 void
 ClientConnection::Request::Cancel() noexcept
 {
+	assert(id >= 0);
+
 	nghttp2_submit_rst_stream(connection.session.get(), NGHTTP2_FLAG_NONE,
 				  id, NGHTTP2_CANCEL);
 	DeferWrite();
@@ -399,6 +420,9 @@ ClientConnection::Request::OnDataChunkReceivedCallback(std::span<const std::byte
 int
 ClientConnection::Request::SubmitResponse(bool has_response_body) noexcept
 {
+	assert(state != State::BODY);
+	assert(response_body_control == nullptr);
+
 	// TODO close stream if response body is ignored?
 
 	if (has_response_body && !http_status_is_empty(status)) {
@@ -536,6 +560,8 @@ ClientConnection::DeferWrite() noexcept
 void
 ClientConnection::RemoveRequest(Request &request) noexcept
 {
+	assert(!requests.empty());
+
 	requests.erase(requests.iterator_to(request));
 
 	if (requests.empty()) {
