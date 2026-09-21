@@ -383,6 +383,23 @@ t_client_sources = []
 t_client_dependencies = []
 
 if libwas.found()
+  test(
+    'TestWasInput',
+    executable(
+      'TestWasInput',
+      'TestWasInput.cxx',
+      include_directories: inc,
+      dependencies: [
+        gtest,
+        test_instance_dep,
+        was_client_dep,
+        istream_dep,
+      ],
+    ),
+  )
+endif
+
+if libwas.found()
   t_client_sources += 't_was_client.cxx'
   t_client_dependencies += [was_client_dep, was_server_dep]
 endif
