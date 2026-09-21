@@ -446,7 +446,7 @@ private:
 
 static void
 UpdateHeader(AllocatorPtr alloc, StringMap &dest,
-	     const StringMap &src, const char *name) noexcept
+	     const StringMap &src, const StringMapKey name) noexcept
 {
 	const char *value = src.Get(name);
 	if (value != nullptr)
@@ -605,8 +605,8 @@ HttpCacheRequest::OnHttpResponse(HttpStatus status, StringMap &&_headers,
 
 			/* TODO: this leaks pool memory each time we update
 			   headers; how to fix this? */
-			UpdateHeader(item_alloc, document->response_headers, _headers, "expires");
-			UpdateHeader(item_alloc, document->response_headers, _headers, "cache-control");
+			UpdateHeader(item_alloc, document->response_headers, _headers, expires_header);
+			UpdateHeader(item_alloc, document->response_headers, _headers, cache_control_header);
 		}
 
 		LogConcat(5, "HttpCache", "not_modified ", key.value);
