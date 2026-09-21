@@ -76,11 +76,11 @@ header_parse_buffer(AllocatorPtr alloc, StringMap &headers,
 		while (true) {
 			p = StripLeft(p, end);
 
-			const char *eol = (const char *)memchr(p, '\n', end - p);
-			if (eol == nullptr) {
-				if (drained)
-					eol = end;
-				else
+			const char *eol = std::find(p, end, '\n');
+			const bool found_newline = eol != end;
+
+			if (!found_newline) {
+				if (!drained)
 					break;
 			}
 
