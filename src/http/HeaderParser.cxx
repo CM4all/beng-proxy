@@ -70,16 +70,16 @@ header_parse_buffer(AllocatorPtr alloc, StringMap &headers,
 			break;
 
 		const char *const src = (const char *)r.data();
+		const char *const end = src + r.size();
 		const char *p = src;
-		const size_t length = r.size();
 
 		while (true) {
-			p = StripLeft(p, src + length);
+			p = StripLeft(p, end);
 
-			const char *eol = (const char *)memchr(p, '\n', src + length - p);
+			const char *eol = (const char *)memchr(p, '\n', end - p);
 			if (eol == nullptr) {
 				if (drained)
-					eol = src + length;
+					eol = end;
 				else
 					break;
 			}
