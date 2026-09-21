@@ -41,15 +41,14 @@ header_parse_buffer(AllocatorPtr alloc, StringMap &headers,
 		    GrowingBuffer &&_gb) noexcept
 {
 	GrowingBufferReader reader(std::move(_gb));
+	bool drained = false;
 
 	StaticFifoBuffer<char, 4096> buffer;
-
-	const auto *gb = &_gb;
 
 	while (true) {
 		/* copy gb to buffer */
 
-		if (gb != nullptr) {
+		if (!drained) {
 			auto w = buffer.Write();
 			if (!w.empty()) {
 				auto src = reader.Read();
@@ -60,14 +59,14 @@ header_parse_buffer(AllocatorPtr alloc, StringMap &headers,
 					buffer.Append(nbytes);
 					reader.Consume(nbytes);
 				} else
-					gb = nullptr;
+					drained = true;
 			}
 		}
 
 		/* parse lines from the buffer */
 
 		auto r = buffer.Read();
-		if (r.empty() && gb == nullptr)
+		if (r.empty() && drained)
 			break;
 
 		const char *const src = (const char *)r.data();
@@ -79,7 +78,7 @@ header_parse_buffer(AllocatorPtr alloc, StringMap &headers,
 
 			const char *eol = (const char *)memchr(p, '\n', src + length - p);
 			if (eol == nullptr) {
-				if (gb == nullptr)
+				if (drained)
 					eol = src + length;
 				else
 					break;
