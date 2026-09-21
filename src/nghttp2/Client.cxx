@@ -126,6 +126,14 @@ public:
 			 StringMap &&headers,
 			 UnusedIstreamPtr body) noexcept;
 
+	/**
+	 * Are we still waiting for the (final) response header block?
+	 * If not, then a HEADERS frame is a trailer.
+	 */
+	bool IsReceivingHeaders() const noexcept {
+		return state == State::HEADERS;
+	}
+
 	int SubmitResponse(bool has_response_body) noexcept;
 
 	int OnEndDataFrame() noexcept;
@@ -152,8 +160,7 @@ public:
 				    const uint8_t *name, size_t namelen,
 				    const uint8_t *value, size_t valuelen,
 				    uint8_t, void *) noexcept {
-		if (frame->hd.type != NGHTTP2_HEADERS ||
-		    frame->headers.cat != NGHTTP2_HCAT_RESPONSE)
+		if (frame->hd.type != NGHTTP2_HEADERS)
 			return 0;
 
 		auto *request = (Request *)
@@ -387,6 +394,10 @@ inline int
 ClientConnection::Request::OnHeaderCallback(std::string_view name,
 					    std::string_view value) noexcept
 {
+	if (!IsReceivingHeaders())
+		/* this is a trailer; ignore it */
+		return 0;
+
 	total_header_size += name.size() + value.size();
 	if (total_header_size > MAX_TOTAL_HTTP_HEADER_SIZE) {
 		AbortResponseHeaders(std::make_exception_ptr(SocketProtocolError{"Too many response headers"}));
@@ -420,8 +431,17 @@ ClientConnection::Request::OnDataChunkReceivedCallback(std::span<const std::byte
 int
 ClientConnection::Request::SubmitResponse(bool has_response_body) noexcept
 {
-	assert(state != State::BODY);
+	assert(state == State::HEADERS);
 	assert(response_body_control == nullptr);
+
+	if (http_status_is_info(status)) {
+		/* this is an interim response (1xx); discard it and
+		   wait for the final response (which nghttp2 reports
+		   with category NGHTTP2_HCAT_HEADERS) */
+		status = HttpStatus::OK;
+		response_headers.Clear();
+		return 0;
+	}
 
 	// TODO close stream if response body is ignored?
 
@@ -596,7 +616,7 @@ ClientConnection::OnFrameRecvCallback(const nghttp2_frame &frame) noexcept
 
 			auto &request = *(Request *)stream_data;
 
-			if (frame.headers.cat != NGHTTP2_HCAT_RESPONSE)
+			if (!request.IsReceivingHeaders())
 				/* this is a trailer; the response has
 				   been submitted already (and
 				   OnHeaderCallback() has ignored this
