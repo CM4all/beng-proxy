@@ -31,6 +31,7 @@ test(
   executable(
     'TestHttpUtil',
     'TestXFF.cxx',
+    'TestHeaderParser.cxx',
     include_directories: inc,
     dependencies: [
       http_util_dep,
