@@ -9,6 +9,7 @@
 #include "uri/Escape.hxx"
 #include "util/CharUtil.hxx"
 #include "util/StringCompare.hxx"
+#include "util/StringVerify.hxx"
 #include "escape/Class.hxx"
 #include "escape/HTML.hxx"
 #include "escape/Pool.hxx"
@@ -212,20 +213,16 @@ WidgetContainerParser::OnXmlAttributeFinished(const XmlParserAttribute &attr) no
 
 [[gnu::pure]]
 static bool
-header_name_valid(const char *name, size_t length) noexcept
+IsAllowedWidgetHeader(std::string_view name) noexcept
 {
 	/* name must start with "X-" */
-	if (length < 3 ||
-	    (name[0] != 'x' && name[0] != 'X') ||
-	    name[1] != '-')
+	if (!SkipPrefixIgnoreCase(name, "x-"sv))
 		return false;
 
 	/* the rest must be letters, digits or dash */
-	for (size_t i = 2; i < length;  ++i)
-		if (!IsAlphaNumericASCII(name[i]) && name[i] != '-')
-			return false;
-
-	return true;
+	return CheckCharsNonEmpty(name, [](char ch) noexcept {
+		return IsAlphaNumericASCII(ch) || ch == '-';
+	});
 }
 
 static bool
@@ -292,7 +289,7 @@ WidgetContainerParser::OnXmlTagFinished(const XmlParserTag &xml_tag) noexcept
 			return true;
 
 		const auto name = widget.param.name.ReadStringView();
-		if (!header_name_valid(name.data(), name.size())) {
+		if (!IsAllowedWidgetHeader(name)) {
 			container.logger(3, "invalid widget HTTP header name");
 			return true;
 		}
