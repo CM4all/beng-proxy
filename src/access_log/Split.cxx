@@ -183,13 +183,13 @@ open_log_file(const char *path)
 		cache_fd.Close();
 	}
 
-	if (!cache_fd.Open(path, O_CREAT|O_APPEND|O_WRONLY, 0666) &&
+	if (!cache_fd.Open(path, O_CREAT|O_APPEND|O_WRONLY|O_NOFOLLOW, 0666) &&
 	    errno == ENOENT) {
 		if (!make_parent_directory(path))
 			return cache_fd;
 
 		/* try again */
-		cache_fd.Open(path, O_CREAT|O_APPEND|O_WRONLY, 0666);
+		cache_fd.Open(path, O_CREAT|O_APPEND|O_WRONLY|O_NOFOLLOW, 0666);
 	}
 
 	if (!cache_fd.IsDefined()) {
