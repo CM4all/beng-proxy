@@ -23,6 +23,11 @@ class FcgiRecordSerializer {
 	FcgiRecordHeader *const header;
 
 public:
+	/**
+	 * The maximum number of content bytes in one FastCGI record.
+	 */
+	static constexpr std::size_t MAX_CONTENT_LENGTH = 0xffff;
+
 	FcgiRecordSerializer(GrowingBuffer &_buffer, FcgiRecordType type,
 			     uint16_t request_id_be) noexcept;
 

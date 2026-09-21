@@ -29,7 +29,7 @@ FcgiRecordSerializer::FcgiRecordSerializer(GrowingBuffer &_buffer,
 void
 FcgiRecordSerializer::Commit(size_t content_length) noexcept
 {
-	assert(content_length < (1 << 16));
+	assert(content_length <= MAX_CONTENT_LENGTH);
 	header->content_length = content_length;
 }
 
