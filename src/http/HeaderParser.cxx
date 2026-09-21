@@ -107,7 +107,12 @@ IsHeaderLineNamed(std::string_view line, std::string_view name) noexcept
 	if (line.empty() || line.front() != ':')
 		return {};
 
-	return StripLeft(line.substr(1));
+	std::string_view value = StripLeft(line.substr(1));
+
+	if (value.ends_with('\r'))
+		value.remove_suffix(1);
+
+	return value;
 }
 
 std::string_view
