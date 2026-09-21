@@ -142,21 +142,44 @@ RunValidPremature(WasServer &server, struct pool &pool,
 }
 
 class MalformedPrematureWasServer final : Was::ControlHandler {
+public:
+	enum class Mode {
+		/**
+		 * Announce a 1 kB response body, then send a PREMATURE
+		 * packet with a larger value.
+		 */
+		MALFORMED_PREMATURE,
+
+		/**
+		 * Send DATA immediately followed by NO_DATA.  Both
+		 * packets are written at once, so the client
+		 * evaluates the second one while the response is
+		 * still "pending", i.e. after DATA but before the
+		 * response was passed to the #HttpResponseHandler.
+		 */
+		PENDING_ERROR,
+	};
+
+private:
 	WasSocket socket;
 
 	Was::Control control;
 
 	FineTimerEvent defer_premature;
 
+	const Mode mode;
+
 	WasServerHandler &handler;
 
 public:
 	MalformedPrematureWasServer(EventLoop &event_loop,
 				    WasSocket &&_socket,
-				    WasServerHandler &_handler) noexcept
+				    WasServerHandler &_handler,
+				    Mode _mode=Mode::MALFORMED_PREMATURE) noexcept
 		:socket(std::move(_socket)),
 		 control(event_loop, std::move(socket.control), *this),
 		 defer_premature(event_loop, BIND_THIS_METHOD(SendPremature)),
+		 mode(_mode),
 		 handler(_handler)
 		{
 		}
@@ -244,12 +267,28 @@ MalformedPrematureWasServer::OnWasControlPacket(enum was_command cmd,
 
 	case WAS_COMMAND_NO_DATA:
 	case WAS_COMMAND_DATA:
-		/* announce a response body of 1 kB */
-		if (!control.Send(WAS_COMMAND_DATA) ||
-		    !control.SendUint64(WAS_COMMAND_LENGTH, 1024))
-			return false;
+		switch (mode) {
+		case Mode::MALFORMED_PREMATURE:
+			/* announce a response body of 1 kB */
+			if (!control.Send(WAS_COMMAND_DATA) ||
+			    !control.SendUint64(WAS_COMMAND_LENGTH, 1024))
+				return false;
 
-		defer_premature.Schedule(std::chrono::milliseconds(1));
+			defer_premature.Schedule(std::chrono::milliseconds(1));
+			break;
+
+		case Mode::PENDING_ERROR:
+			/* announce a response body and contradict it
+			   right away; both packets are flushed
+			   together, so the client sees the NO_DATA
+			   while the response is still "pending" */
+			if (!control.Send(WAS_COMMAND_DATA) ||
+			    !control.Send(WAS_COMMAND_NO_DATA))
+				return false;
+
+			break;
+		}
+
 		return true;
 
 	case WAS_COMMAND_LENGTH:
@@ -307,6 +346,19 @@ public:
 		server2 = NewFromPool<MalformedPrematureWasServer>(pool, event_loop,
 								   MakeWasSocket(),
 								   handler);
+	}
+
+	struct PendingError{};
+
+	WasConnection(struct pool &pool, EventLoop &_event_loop,
+		      PendingError)
+		:event_loop(_event_loop)
+	{
+		WasServerHandler &handler = *this;
+		server2 = NewFromPool<MalformedPrematureWasServer>(pool, event_loop,
+								   MakeWasSocket(),
+								   handler,
+								   MalformedPrematureWasServer::Mode::PENDING_ERROR);
 	}
 
 	~WasConnection() noexcept override {
@@ -462,6 +514,11 @@ struct WasFactory {
 		return new WasConnection(pool, event_loop,
 					 WasConnection::MalformedPremature{});
 	}
+
+	auto *NewPendingError(struct pool &pool, EventLoop &event_loop) {
+		return new WasConnection(pool, event_loop,
+					 WasConnection::PendingError{});
+	}
 };
 
 INSTANTIATE_TYPED_TEST_SUITE_P(WasClient, ClientTest, WasFactory);
@@ -494,6 +551,32 @@ TEST(WasClient, MalformedHeaderValue)
 	Context c{instance};
 
 	c.connection = factory.NewMalformedHeaderValue(*c.pool, c.event_loop);
+	c.connection->Request(c.pool, c,
+			      HttpMethod::GET, "/foo", {},
+			      nullptr,
+			      false,
+
+			      c, c.cancel_ptr);
+
+	c.event_loop.Run();
+
+	EXPECT_EQ(c.status, HttpStatus{});
+	EXPECT_TRUE(c.request_error);
+	EXPECT_TRUE(c.released);
+}
+
+/**
+ * A protocol error which arrives after DATA, but before the response
+ * was submitted to the #HttpResponseHandler ("pending" state), must
+ * be reported to the handler instead of tripping an assertion.
+ */
+TEST(WasClient, PendingError)
+{
+	Instance instance;
+	WasFactory factory{instance.event_loop};
+	Context c{instance};
+
+	c.connection = factory.NewPendingError(*c.pool, c.event_loop);
 	c.connection->Request(c.pool, c,
 			      HttpMethod::GET, "/foo", {},
 			      nullptr,
