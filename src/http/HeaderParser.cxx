@@ -79,16 +79,27 @@ header_parse_buffer(AllocatorPtr alloc, StringMap &headers,
 			const char *eol = std::find(p, end, '\n');
 			const bool found_newline = eol != end;
 
-			if (!found_newline) {
-				if (!drained)
-					break;
-			}
+			const char *next;
+
+			if (found_newline)
+				next = eol + 1;
+			else if (drained)
+				/* unterminated last line */
+				next = eol;
+			else
+				/* wait for more data */
+				break;
 
 			while (eol > p && eol[-1] == '\r')
 				--eol;
 
 			header_parse_line(alloc, headers, {p, eol});
-			p = eol + 1;
+
+			p = next;
+
+			if (!found_newline)
+				/* unterminated last line */
+				break;
 		}
 
 		buffer.Consume(p - src);
