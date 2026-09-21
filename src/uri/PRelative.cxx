@@ -13,6 +13,13 @@
 
 using std::string_view_literals::operator""sv;
 
+static constexpr bool
+IsDotDot(const char *uri) noexcept
+{
+	return uri[0] == '.' && uri[1] == '.' &&
+		(uri[2] == '/' || uri[2] == 0);
+}
+
 const char *
 uri_compress(AllocatorPtr alloc, const char *uri) noexcept
 {
@@ -21,8 +28,7 @@ uri_compress(AllocatorPtr alloc, const char *uri) noexcept
 	while (uri[0] == '.' && uri[1] == '/')
 		uri += 2;
 
-	if (uri[0] == '.' && uri[1] == '.' &&
-	    (uri[2] == '/' || uri[2] == 0))
+	if (IsDotDot(uri))
 		return nullptr;
 
 	if (strstr(uri, "//") == nullptr &&
