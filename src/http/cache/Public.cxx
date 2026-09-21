@@ -444,13 +444,24 @@ private:
 	}
 };
 
-static void
+/**
+ * @return true if the header was updated, false if there was no change
+ */
+static bool
 UpdateHeader(AllocatorPtr alloc, StringMap &dest,
 	     const StringMap &src, const StringMapKey name) noexcept
 {
 	const char *value = src.Get(name);
-	if (value != nullptr)
-		dest.SecureSet(alloc, name, alloc.Dup(value));
+	if (value == nullptr)
+		return false;
+
+	if (const char *old_value = dest.Get(name);
+	    old_value != nullptr && StringIsEqual(old_value, value))
+		/* unchanged; don't waste memory on a copy */
+		return false;
+
+	dest.SecureSet(alloc, name, alloc.Dup(value));
+	return true;
 }
 
 static StringWithHash
