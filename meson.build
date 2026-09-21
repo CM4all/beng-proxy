@@ -59,6 +59,11 @@ test_global_common_flags = [
 
 add_global_link_arguments(
   compiler.get_supported_link_arguments(
+    # with werror=true, Meson adds -Wl,--fatal-warnings, but since we
+    # can't suppress individual warnings, so we have to make them all
+    # non-fatal
+    '-Wl,--no-fatal-warnings',
+
     # make relocations read-only (hardening)
     '-Wl,-z,relro',
 
