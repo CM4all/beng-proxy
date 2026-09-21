@@ -24,7 +24,6 @@
 
 using std::string_view_literals::operator""sv;
 
-/* check whether the request could produce a cacheable response */
 std::optional<HttpCacheRequestInfo>
 http_cache_request_evaluate(HttpMethod method,
 			    const ResourceAddress &address,

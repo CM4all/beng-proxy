@@ -24,6 +24,8 @@ struct HttpCacheRequestInfo;
 struct HttpCacheResponseInfo;
 
 /**
+ * Check whether the request could produce a cacheable response.
+ *
  * @param obey_no_cache if false, then "no-cache" requests will be
  * ignored
  */
