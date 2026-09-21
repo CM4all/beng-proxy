@@ -31,10 +31,12 @@ test(
   executable(
     'TestHttpUtil',
     'TestXFF.cxx',
+    'TestHttpCacheRFC.cxx',
     'TestHeaderParser.cxx',
     include_directories: inc,
     dependencies: [
       http_util_dep,
+      http_cache_dep,
       net_dep,
       gtest,
     ],
