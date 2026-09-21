@@ -12,10 +12,12 @@
 #include "istream/FourIstream.hxx"
 #include "istream/HeadIstream.hxx"
 #include "istream/BlockIstream.hxx"
+#include "istream/istream_null.hxx"
 #include "thread/Pool.hxx"
 #include "memory/fb_pool.hxx"
 #include "pool/pool.hxx"
 
+#include <algorithm>
 #include <chrono>
 #include <thread>
 
@@ -399,3 +401,133 @@ public:
 
 INSTANTIATE_TYPED_TEST_SUITE_P(ThreadIstreamFinish, IstreamFilterTest,
 			       FinishThreadIstreamTestTraits);
+
+/**
+ * A filter which ignores its input and emits a fixed number of filler
+ * bytes.  It is "drained" only after all of them have been written to
+ * the #ThreadIstreamInternal output buffer.
+ */
+class FillerThreadIstreamFilter final : public ThreadIstreamFilter {
+	std::size_t remaining;
+
+public:
+	explicit FillerThreadIstreamFilter(std::size_t _remaining) noexcept
+		:remaining(_remaining) {}
+
+	void Run(ThreadIstreamInternal &i) override {
+		const std::scoped_lock lock{i.mutex};
+
+		auto w = i.output.Write();
+		const std::size_t n = std::min(w.size(), remaining);
+		std::fill_n(w.begin(), n, std::byte{'x'});
+		i.output.Append(n);
+		remaining -= n;
+
+		i.drained = remaining == 0;
+
+		/* if there is more to write, run again (even if the
+		   output buffer is full right now - then Done() will
+		   leave "output_full" set and OutputConsumed() will
+		   reschedule us) */
+		i.again = remaining > 0;
+	}
+};
+
+/**
+ * An #IstreamSink which refuses all data until Accept() is called.
+ */
+class BlockingSink final : IstreamSink {
+	std::size_t accept = 0;
+
+public:
+	std::size_t consumed = 0;
+	bool eof = false;
+	std::exception_ptr error;
+
+	explicit BlockingSink(UnusedIstreamPtr _input) noexcept
+		:IstreamSink(std::move(_input)) {}
+
+	using IstreamSink::HasInput;
+
+	void Read() noexcept {
+		input.Read();
+	}
+
+	/**
+	 * Allow the sink to consume up to the given number of bytes
+	 * on the next OnData() call.
+	 */
+	void Accept(std::size_t n) noexcept {
+		accept = n;
+	}
+
+private:
+	/* virtual methods from class IstreamHandler */
+	std::size_t OnData(std::span<const std::byte> src) noexcept override {
+		const std::size_t n = std::min(accept, src.size());
+		accept -= n;
+		consumed += n;
+		return n;
+	}
+
+	void OnEof() noexcept override {
+		ClearInput();
+		eof = true;
+	}
+
+	void OnError(std::exception_ptr &&_error) noexcept override {
+		ClearInput();
+		error = std::move(_error);
+	}
+};
+
+/**
+ * Releasing the #ThreadIstreamFilter must not leave the job
+ * schedulable; scheduling it again would dereference the null filter.
+ *
+ * To get there, the filter must finish at a moment when the
+ * #ThreadIstream's own output buffer is full (so Done() cannot move
+ * anything out of the internal output buffer, which therefore stays
+ * full) - hence the sink which refuses all data, and a filler size of
+ * two buffers.
+ */
+TEST(ThreadIstream, ReleaseFilterWithFullOutput)
+{
+	Instance instance;
+
+	thread_pool_set_volatile();
+
+	{
+		const auto pool = pool_new_linear(instance.root_pool, "test", 8192);
+
+		BlockingSink sink{
+			NewThreadIstream(pool, thread_pool_get_queue(instance.event_loop),
+					 istream_null_new(pool),
+					 std::make_unique<FillerThreadIstreamFilter>(2 * FB_SIZE)),
+		};
+
+		/* let the filter run; the sink refuses all data, so
+		   both output buffers end up full and the filter is
+		   released while its output buffer is still full */
+		sink.Read();
+		instance.event_loop.Run();
+
+		ASSERT_TRUE(sink.HasInput());
+		ASSERT_EQ(sink.consumed, 0u);
+
+		/* now consume a little; this used to reschedule the
+		   job which had no filter anymore */
+		sink.Accept(1024);
+		sink.Read();
+		instance.event_loop.Run();
+
+		EXPECT_EQ(sink.consumed, 1024u);
+		EXPECT_FALSE(sink.error);
+	}
+
+	instance.event_loop.Run();
+
+	thread_pool_stop();
+	thread_pool_join();
+	thread_pool_deinit();
+}
