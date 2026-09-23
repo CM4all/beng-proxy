@@ -299,12 +299,9 @@ public:
 	/**
 	 * Load an address from a cached object, and apply any BASE
 	 * changes (if a BASE is present).
-	 *
-	 * Throws std::runtime_error on error.
 	 */
 	void CacheLoad(AllocatorPtr alloc, const ResourceAddress &src,
-		       const char *uri, const char *base,
-		       bool unsafe_base, bool expandable);
+		       const char *tail) noexcept;
 
 	[[gnu::pure]]
 	ResourceAddress Apply(AllocatorPtr alloc,

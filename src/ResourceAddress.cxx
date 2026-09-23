@@ -9,9 +9,7 @@
 #include "http/Status.hxx"
 #include "cgi/Address.hxx"
 #include "uri/Extract.hxx"
-#include "uri/Verify.hxx"
 #include "uri/Base.hxx"
-#include "uri/PNormalize.hxx"
 #include "util/StringWithHash.hxx"
 #include "AllocatorPtr.hxx"
 #include "HttpMessageResponse.hxx"
@@ -342,23 +340,9 @@ ResourceAddress::LoadBase(AllocatorPtr alloc,
 
 void
 ResourceAddress::CacheLoad(AllocatorPtr alloc, const ResourceAddress &src,
-			   const char *uri, const char *base,
-			   bool unsafe_base, bool expandable)
+			   const char *tail) noexcept
 {
-	if (base != nullptr && !expandable) {
-		const char *tail = require_base_tail(uri, base);
-
-		/* strip leading slashes before normalizing the URI;
-		   merging adjacent slashes is part of normalization,
-		   but "tail" already comes after a slash */
-		while (*tail == '/')
-			++tail;
-
-		tail = NormalizeUriPath(alloc, tail);
-
-		if (!unsafe_base && !uri_path_verify_paranoid(tail))
-			throw HttpMessageResponse(HttpStatus::BAD_REQUEST, "Malformed URI");
-
+	if (tail != nullptr) {
 		if (src.type == Type::NONE) {
 			/* see code comment in tcache_store_address() */
 			type = Type::NONE;

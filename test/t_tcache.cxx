@@ -559,7 +559,7 @@ TEST(TranslationCache, EasyBaseUriNormalize)
 	     .Uri("/modified/"),
 	     MakeResponse(pool).EasyBase("/easy_base_uri/")
 	     .File("foo/bar", "/var/www/")
-	     .Uri("/modified/foo//./bar"));
+	     .Uri("/modified/foo/bar"));
 
 	Cached(pool, cache, MakeRequest("/easy_base_uri/hansi"),
 	       MakeResponse(pool).EasyBase("/easy_base_uri/")
