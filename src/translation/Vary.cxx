@@ -12,29 +12,36 @@
 #include "AllocatorPtr.hxx"
 
 #include <algorithm> // for std::copy()
+#include <array>
 
 using std::string_view_literals::operator""sv;
 
-static constexpr std::string_view
-translation_vary_name(TranslationCommand cmd) noexcept
+static constexpr struct {
+	TranslationCommand cmd;
+	std::string_view http_header;
+} translation_vary_headers[] = {
+	{TranslationCommand::SESSION, "cookie2"sv}, // TODO need both "cookie2" and "cookie"?
+	{TranslationCommand::LANGUAGE, "accept-language"sv},
+	{TranslationCommand::AUTHORIZATION, "authorization"sv},
+	{TranslationCommand::USER_AGENT, "user-agent"sv},
+};
+
+static constexpr auto
+CollectTranslationVary(std::span<const TranslationCommand> vary) noexcept
 {
-	switch (cmd) {
-	case TranslationCommand::SESSION:
-		/* XXX need both "cookie2" and "cookie"? */
-		return "cookie2"sv;
+	static constexpr std::size_t N = std::size(translation_vary_headers);
+	std::array<bool, N> result{};
 
-	case TranslationCommand::LANGUAGE:
-		return "accept-language"sv;
-
-	case TranslationCommand::AUTHORIZATION:
-		return "authorization"sv;
-
-	case TranslationCommand::USER_AGENT:
-		return "user-agent"sv;
-
-	default:
-		return {};
+	for (const auto cmd : vary) {
+		for (std::size_t i = 0; i < N; ++i) {
+			if (cmd == translation_vary_headers[i].cmd) {
+				result[i] = true;
+				break;
+			}
+		}
 	}
+
+	return result;
 }
 
 static std::string_view
@@ -43,13 +50,16 @@ translation_vary_header(const TranslateResponse &response) noexcept
 	static char buffer[256];
 	char *p = buffer;
 
-	for (const auto cmd : response.vary) {
-		const std::string_view name = translation_vary_name(cmd);
-		if (name.empty())
+	const auto vary = CollectTranslationVary(response.vary);
+	for (std::size_t i = 0; i < vary.size(); ++i) {
+		if (!vary[i])
 			continue;
 
 		if (p > buffer)
 			*p++ = ',';
+
+		const std::string_view name = translation_vary_headers[i].http_header;
+		assert(!name.empty());
 
 		p = std::copy(name.begin(), name.end(), p);
 	}
@@ -71,9 +81,10 @@ write_translation_vary_header(GrowingBuffer &headers,
 			      const TranslateResponse &response) noexcept
 {
 	bool active = false;
-	for (const auto cmd : response.vary) {
-		const std::string_view name = translation_vary_name(cmd);
-		if (name.empty())
+
+	const auto vary = CollectTranslationVary(response.vary);
+	for (std::size_t i = 0; i < vary.size(); ++i) {
+		if (!vary[i])
 			continue;
 
 		if (active) {
@@ -83,6 +94,8 @@ write_translation_vary_header(GrowingBuffer &headers,
 			header_write_begin(headers, "vary");
 		}
 
+		const std::string_view name = translation_vary_headers[i].http_header;
+		assert(!name.empty());
 		headers.Write(name);
 	}
 
