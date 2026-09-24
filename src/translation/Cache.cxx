@@ -475,6 +475,8 @@ tcache_request_evaluate(const TranslateRequest &request) noexcept
 		request.token_auth.data() == nullptr && // TODO: allow caching TOKEN_AUTH
 		request.auth.data() == nullptr &&
 		request.mount_listen_stream.size() < MAX_MOUNT_LISTEN_STREAM &&
+		request.chain.size() <= MAX_CHAIN &&
+		request.layout.size() <= MAX_CACHE_LAYOUT &&
 		request.check.size() < MAX_CACHE_CHECK &&
 		(request.check_header == nullptr ||
 		 strlen(request.check_header) <= MAX_CACHE_CHECK_HEADER) &&
