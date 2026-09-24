@@ -4,7 +4,6 @@
 
 #include "PToString.hxx"
 #include "InterfaceNameCache.hxx"
-#include "pool/pool.hxx"
 #include "net/SocketAddress.hxx"
 #include "net/FormatAddress.hxx"
 #include "net/IPv4Address.hxx"
