@@ -11,8 +11,8 @@ class GrowingBuffer;
 
 void
 add_translation_vary_header(AllocatorPtr alloc, StringMap &headers,
-			    const TranslateResponse &response);
+			    const TranslateResponse &response) noexcept;
 
 void
 write_translation_vary_header(GrowingBuffer &headers,
-			      const TranslateResponse &response);
+			      const TranslateResponse &response) noexcept;

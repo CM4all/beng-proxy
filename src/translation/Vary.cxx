@@ -15,8 +15,8 @@
 
 using std::string_view_literals::operator""sv;
 
-static const char *
-translation_vary_name(TranslationCommand cmd)
+static constexpr const char *
+translation_vary_name(TranslationCommand cmd) noexcept
 {
 	switch (cmd) {
 	case TranslationCommand::SESSION:
@@ -38,7 +38,7 @@ translation_vary_name(TranslationCommand cmd)
 }
 
 static const char *
-translation_vary_header(const TranslateResponse &response)
+translation_vary_header(const TranslateResponse &response) noexcept
 {
 	static char buffer[256];
 	char *p = buffer;
@@ -61,7 +61,7 @@ translation_vary_header(const TranslateResponse &response)
 
 void
 add_translation_vary_header(AllocatorPtr alloc, StringMap &headers,
-			    const TranslateResponse &response)
+			    const TranslateResponse &response) noexcept
 {
 	const char *value = translation_vary_header(response);
 	if (value == nullptr)
@@ -76,7 +76,7 @@ add_translation_vary_header(AllocatorPtr alloc, StringMap &headers,
 
 void
 write_translation_vary_header(GrowingBuffer &headers,
-			      const TranslateResponse &response)
+			      const TranslateResponse &response) noexcept
 {
 	bool active = false;
 	for (const auto cmd : response.vary) {
