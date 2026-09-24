@@ -56,7 +56,11 @@ translation_vary_header(const TranslateResponse &response) noexcept
 		p += length;
 	}
 
-	return p > buffer ? buffer : nullptr;
+	if (p == buffer)
+		return nullptr;
+
+	*p = 0;
+	return buffer;
 }
 
 void
