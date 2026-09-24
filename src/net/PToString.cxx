@@ -9,6 +9,7 @@
 #include "net/FormatAddress.hxx"
 #include "net/IPv4Address.hxx"
 #include "net/IPv6Address.hxx"
+#include "AllocatorPtr.hxx"
 
 #include <fmt/core.h>
 
@@ -83,7 +84,7 @@ V6ToString(std::span<char> buffer, const IPv6Address &address) noexcept
 }
 
 const char *
-address_to_string(struct pool &pool, SocketAddress address)
+address_to_string(AllocatorPtr alloc, SocketAddress address)
 {
 	if (address.IsNull())
 		return nullptr;
@@ -108,11 +109,11 @@ address_to_string(struct pool &pool, SocketAddress address)
 			return nullptr;
 	}
 
-	return p_strdup(&pool, host);
+	return alloc.Dup(host);
 }
 
 const char *
-address_to_host_string(struct pool &pool, SocketAddress address)
+address_to_host_string(AllocatorPtr alloc, SocketAddress address)
 {
 	if (address.IsNull())
 		return nullptr;
@@ -137,5 +138,5 @@ address_to_host_string(struct pool &pool, SocketAddress address)
 			return nullptr;
 	}
 
-	return p_strdup(&pool, host);
+	return alloc.Dup(host);
 }

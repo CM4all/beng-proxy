@@ -23,6 +23,7 @@
 #include "system/Error.hxx"
 #include "util/Exception.hxx"
 #include "pool/pool.hxx"
+#include "AllocatorPtr.hxx"
 
 #ifdef HAVE_NGHTTP2
 #include "nghttp2/Server.hxx"
@@ -38,7 +39,7 @@ BpConnection::BpConnection(PoolPtr &&_pool, BpInstance &_instance,
 	 instance(_instance),
 	 listener(_listener),
 	 config(_instance.config),
-	 remote_host_and_port(address_to_string(pool, remote_address)),
+	 remote_host_and_port(address_to_string(AllocatorPtr{pool}, remote_address)),
 	 logger(remote_host_and_port != nullptr
 		? remote_host_and_port
 		: "unknown"),
