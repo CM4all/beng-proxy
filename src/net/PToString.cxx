@@ -5,7 +5,6 @@
 #include "PToString.hxx"
 #include "InterfaceNameCache.hxx"
 #include "net/SocketAddress.hxx"
-#include "net/FormatAddress.hxx"
 #include "net/IPv4Address.hxx"
 #include "net/IPv6Address.hxx"
 #include "AllocatorPtr.hxx"
@@ -84,7 +83,7 @@ address_to_string(AllocatorPtr alloc, SocketAddress address) noexcept
 	case AF_INET6:
 		if (!V6ToString(std::span{host}, IPv6Address::Cast(address)))
 			return nullptr;
-		break;
+		return alloc.Dup(host);
 
 	case AF_LOCAL:
 		/* a local socket has an arbitrary peer-chosen string;
@@ -92,11 +91,9 @@ address_to_string(AllocatorPtr alloc, SocketAddress address) noexcept
 		return "local";
 
 	default:
-		if (!ToString(host, address) || *host == 0)
-			return nullptr;
+		// unsupported
+		return nullptr;
 	}
-
-	return alloc.Dup(host);
 }
 
 const char *
@@ -113,12 +110,12 @@ address_to_host_string(AllocatorPtr alloc, SocketAddress address) noexcept
 	case AF_INET:
 		if (!V4HostToString(std::span{host}, IPv4Address::Cast(address)))
 			return nullptr;
-		break;
+		return alloc.Dup(host);
 
 	case AF_INET6:
 		if (!V6HostWithScopeToString(std::span{host}, IPv6Address::Cast(address)))
 			return nullptr;
-		break;
+		return alloc.Dup(host);
 
 	case AF_LOCAL:
 		/* a local socket has an arbitrary peer-chosen string;
@@ -126,9 +123,7 @@ address_to_host_string(AllocatorPtr alloc, SocketAddress address) noexcept
 		return "local";
 
 	default:
-		if (!HostToString(host, address) || *host == 0)
-			return nullptr;
+		// unsupported
+		return nullptr;
 	}
-
-	return alloc.Dup(host);
 }
