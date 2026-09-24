@@ -11,29 +11,29 @@
 #include "http/HeaderWriter.hxx"
 #include "AllocatorPtr.hxx"
 
-#include <string.h>
+#include <algorithm> // for std::copy()
 
 using std::string_view_literals::operator""sv;
 
-static constexpr const char *
+static constexpr std::string_view
 translation_vary_name(TranslationCommand cmd) noexcept
 {
 	switch (cmd) {
 	case TranslationCommand::SESSION:
 		/* XXX need both "cookie2" and "cookie"? */
-		return "cookie2";
+		return "cookie2"sv;
 
 	case TranslationCommand::LANGUAGE:
-		return "accept-language";
+		return "accept-language"sv;
 
 	case TranslationCommand::AUTHORIZATION:
-		return "authorization";
+		return "authorization"sv;
 
 	case TranslationCommand::USER_AGENT:
-		return "user-agent";
+		return "user-agent"sv;
 
 	default:
-		return nullptr;
+		return {};
 	}
 }
 
@@ -44,16 +44,14 @@ translation_vary_header(const TranslateResponse &response) noexcept
 	char *p = buffer;
 
 	for (const auto cmd : response.vary) {
-		const char *name = translation_vary_name(cmd);
-		if (name == nullptr)
+		const std::string_view name = translation_vary_name(cmd);
+		if (name.empty())
 			continue;
 
 		if (p > buffer)
 			*p++ = ',';
 
-		size_t length = strlen(name);
-		memcpy(p, name, length);
-		p += length;
+		p = std::copy(name.begin(), name.end(), p);
 	}
 
 	return {buffer, p};
@@ -74,8 +72,8 @@ write_translation_vary_header(GrowingBuffer &headers,
 {
 	bool active = false;
 	for (const auto cmd : response.vary) {
-		const char *name = translation_vary_name(cmd);
-		if (name == nullptr)
+		const std::string_view name = translation_vary_name(cmd);
+		if (name.empty())
 			continue;
 
 		if (active) {
