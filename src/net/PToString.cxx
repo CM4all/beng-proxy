@@ -68,7 +68,7 @@ V6ToString(std::span<char> buffer, const IPv6Address &address) noexcept
 }
 
 const char *
-address_to_string(AllocatorPtr alloc, SocketAddress address)
+address_to_string(AllocatorPtr alloc, SocketAddress address) noexcept
 {
 	if (address.IsNull())
 		return nullptr;
@@ -95,7 +95,7 @@ address_to_string(AllocatorPtr alloc, SocketAddress address)
 }
 
 const char *
-address_to_host_string(AllocatorPtr alloc, SocketAddress address)
+address_to_host_string(AllocatorPtr alloc, SocketAddress address) noexcept
 {
 	if (address.IsNull())
 		return nullptr;

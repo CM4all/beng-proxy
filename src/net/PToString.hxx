@@ -13,7 +13,7 @@ class SocketAddress;
  */
 [[gnu::pure]]
 const char *
-address_to_string(AllocatorPtr alloc, SocketAddress address);
+address_to_string(AllocatorPtr alloc, SocketAddress address) noexcept;
 
 /**
  * Converts a sockaddr into a human-readable string containing the
@@ -21,4 +21,4 @@ address_to_string(AllocatorPtr alloc, SocketAddress address);
  */
 [[gnu::pure]]
 const char *
-address_to_host_string(AllocatorPtr alloc, SocketAddress address);
+address_to_host_string(AllocatorPtr alloc, SocketAddress address) noexcept;
