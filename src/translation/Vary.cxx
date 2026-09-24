@@ -37,7 +37,7 @@ translation_vary_name(TranslationCommand cmd) noexcept
 	}
 }
 
-static const char *
+static std::string_view
 translation_vary_header(const TranslateResponse &response) noexcept
 {
 	static char buffer[256];
@@ -56,23 +56,16 @@ translation_vary_header(const TranslateResponse &response) noexcept
 		p += length;
 	}
 
-	if (p == buffer)
-		return nullptr;
-
-	*p = 0;
-	return buffer;
+	return {buffer, p};
 }
 
 void
 add_translation_vary_header(AllocatorPtr alloc, StringMap &headers,
 			    const TranslateResponse &response) noexcept
 {
-	const char *value = translation_vary_header(response);
-	if (value == nullptr)
-		return;
-
-	value = alloc.Dup(value);
-	headers.Add(alloc, vary_header, value);
+	if (const std::string_view value = translation_vary_header(response);
+	    !value.empty())
+		headers.Add(alloc, vary_header, alloc.DupZ(value));
 }
 
 void
