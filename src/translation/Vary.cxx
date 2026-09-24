@@ -72,11 +72,6 @@ add_translation_vary_header(AllocatorPtr alloc, StringMap &headers,
 		return;
 
 	value = alloc.Dup(value);
-
-	const char *old = headers.Get(vary_header);
-	if (old != nullptr)
-		value = alloc.Concat(old, ",", value);
-
 	headers.Add(alloc, vary_header, value);
 }
 
