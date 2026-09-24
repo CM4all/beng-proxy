@@ -22,21 +22,6 @@ V4HostToString(std::span<char> buffer, const IPv4Address &address) noexcept
 }
 
 static bool
-V4ToString(std::span<char> buffer, const IPv4Address &address) noexcept
-{
-	const auto port = address.GetPort();
-	if (port == 0)
-		return V4HostToString(buffer, address);
-
-	if (!V4HostToString(buffer.first(buffer.size() - 8), address))
-		return false;
-
-	buffer = buffer.subspan(strlen(buffer.data()));
-	*fmt::format_to(buffer.data(), ":{}", port) = '\0';
-	return true;
-}
-
-static bool
 V6HostToString(std::span<char> buffer, const IPv6Address &address) noexcept
 {
 	return inet_ntop(AF_INET6, &address.GetAddress(), buffer.data(), buffer.size()) != nullptr;
@@ -95,9 +80,7 @@ address_to_string(AllocatorPtr alloc, SocketAddress address)
            NI_NUMERICSCOPE */
 	switch (address.GetFamily()) {
 	case AF_INET:
-		if (!V4ToString(std::span{host}, IPv4Address::Cast(address)))
-			return nullptr;
-		break;
+		return alloc.CheckDup(IPv4Address::Cast(address).Format(host));
 
 	case AF_INET6:
 		if (!V6ToString(std::span{host}, IPv6Address::Cast(address)))
