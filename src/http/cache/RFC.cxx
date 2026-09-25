@@ -213,6 +213,8 @@ http_cache_response_evaluate(const HttpCacheRequestInfo &request_info,
 	   it sets a cookie? */
 	bool explicitly_shareable = false;
 
+	std::chrono::system_clock::duration max_age{-1}, s_maxage{-1};
+
 	if (const char *cache_control = headers.Get(cache_control_header)) {
 		for (std::string_view s : IterableSplitString(cache_control, ',')) {
 			s = Strip(s);
@@ -222,15 +224,19 @@ http_cache_response_evaluate(const HttpCacheRequestInfo &request_info,
 			    IsCacheControlDirective(s, "no-store"sv))
 				return std::nullopt;
 
-			else if (IsCacheControlDirective(s, "public"sv) ||
-				 IsCacheControlDirective(s, "s-maxage"sv))
+			else if (IsCacheControlDirective(s, "public"sv))
 				explicitly_shareable = true;
 
 			else if (SkipPrefixIgnoreCase(s, "max-age="sv)) {
 				/* RFC 2616 14.9.3 */
+				max_age = ParseMaxAge(s);
+			} else if (SkipPrefixIgnoreCase(s, "s-maxage="sv)) {
+				s_maxage = ParseMaxAge(s);
 
-				if (const auto seconds = ParseMaxAge(s); seconds.count() > 0)
-					info.expires = now + seconds;
+				if (s_maxage.count() > 0)
+					/* only a positive "s-maxage"
+					   permits shared reuse */
+					explicitly_shareable = true;
 			}
 		}
 	}
@@ -249,7 +255,17 @@ http_cache_response_evaluate(const HttpCacheRequestInfo &request_info,
 		   server does not provide its system time */
 		return std::nullopt;
 
-	if (info.expires == std::chrono::system_clock::from_time_t(-1)) {
+	/* RFC 9111 4.2.1: for a shared cache, "s-maxage" defines the
+	   freshness lifetime and overrides both "max-age" and
+	   "Expires" */
+	if (const auto freshness = s_maxage.count() >= 0 ? s_maxage : max_age;
+	    freshness.count() >= 0) {
+		/* a zero (or negative) lifetime leaves info.expires
+		   unset, which makes this response stale from the
+		   start: it must be revalidated before every reuse */
+		if (freshness.count() > 0)
+			info.expires = now + freshness;
+	} else {
 		/* RFC 2616 14.9.3: "If a response includes both an Expires
 		   header and a max-age directive, the max-age directive
 		   overrides the Expires header" */

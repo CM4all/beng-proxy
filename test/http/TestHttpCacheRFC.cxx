@@ -328,3 +328,90 @@ TEST(HttpCacheRFC, RemoteDateOffset)
 			  now + std::chrono::hours{1} + std::chrono::minutes{1});
 	}
 }
+
+/*
+ * s-maxage
+ *
+ */
+
+/**
+ * RFC 9111 4.2.1: in a shared cache, "s-maxage" defines the freshness
+ * lifetime and overrides "max-age".
+ */
+TEST(HttpCacheRFC, SMaxAgeDefinesFreshness)
+{
+	Instance instance;
+
+	const auto info = instance.Evaluate({{"cache-control", "s-maxage=60, max-age=86400"}});
+	ASSERT_TRUE(info);
+	EXPECT_EQ(info->expires, now + std::chrono::seconds{60});
+}
+
+/**
+ * ... and it overrides the "Expires" header, too.
+ */
+TEST(HttpCacheRFC, SMaxAgeOverridesExpires)
+{
+	Instance instance;
+
+	const std::string expires_header =
+		http_date_format(now + std::chrono::hours{1});
+
+	const auto info = instance.Evaluate({{"cache-control", "s-maxage=60"},
+					     {"expires", expires_header.c_str()}});
+	ASSERT_TRUE(info);
+	EXPECT_EQ(info->expires, now + std::chrono::seconds{60});
+}
+
+/**
+ * "s-maxage=0" means the response is stale from the start: a shared
+ * cache must revalidate it before every reuse.
+ */
+TEST(HttpCacheRFC, SMaxAgeZero)
+{
+	Instance instance;
+
+	/* with a validator, the response is storable but has no
+	   expiry time stamp */
+	const auto info = instance.Evaluate({{"cache-control", "s-maxage=0, max-age=300"},
+					     {"last-modified", "Fri, 30 Aug 2024 12:00:00 GMT"}});
+	ASSERT_TRUE(info);
+	EXPECT_EQ(info->expires, no_expiry);
+
+	/* without a validator there is nothing left to store */
+	EXPECT_FALSE(instance.Evaluate({{"cache-control", "s-maxage=0, max-age=300"}}));
+}
+
+/**
+ * "s-maxage=0" must not be mistaken for an opt-in to sharing a
+ * response which sets a cookie; it expresses the opposite.
+ */
+TEST(HttpCacheRFC, SMaxAgeZeroSetCookie)
+{
+	Instance instance;
+
+	EXPECT_FALSE(instance.Evaluate({{"cache-control", "s-maxage=0, max-age=300"},
+					{"set-cookie", "a=b"}}));
+
+	/* ... while a positive "s-maxage" does permit it */
+	EXPECT_TRUE(instance.Evaluate({{"cache-control", "s-maxage=300"},
+				       {"set-cookie", "a=b"}}));
+}
+
+/**
+ * "max-age=0" overrides a future "Expires" header (RFC 9111 4.2.1
+ * gives max-age precedence).
+ */
+TEST(HttpCacheRFC, MaxAgeZeroOverridesExpires)
+{
+	Instance instance;
+
+	const std::string expires_header =
+		http_date_format(now + std::chrono::hours{1});
+
+	const auto info = instance.Evaluate({{"cache-control", "max-age=0"},
+					     {"expires", expires_header.c_str()},
+					     {"etag", "\"abc\""}});
+	ASSERT_TRUE(info);
+	EXPECT_EQ(info->expires, no_expiry);
+}
