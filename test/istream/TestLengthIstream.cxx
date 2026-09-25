@@ -12,7 +12,10 @@
 #include "istream/FourIstream.hxx"
 #include "istream/HeadIstream.hxx"
 #include "istream/BlockIstream.hxx"
+#include "istream/Sink.hxx"
 #include "pool/pool.hxx"
+
+#include <exception>
 
 using std::string_view_literals::operator""sv;
 
@@ -100,4 +103,92 @@ TEST(LengthIstream, Block_Buckets)
 
 	const auto result = ctx.ReadBucketsLoop(3);
 	EXPECT_EQ(result, Context::BucketResult::DEPLETED);
+}
+
+namespace {
+
+/**
+ * A sink which consumes everything it is given and never uses the
+ * bucket API, so that #LengthIstream takes the OnData()/OnEof() path.
+ */
+class PushSink final : public IstreamSink {
+public:
+	std::exception_ptr error;
+
+	std::size_t consumed = 0;
+
+	unsigned n_eof = 0, n_error = 0;
+
+	explicit PushSink(UnusedIstreamPtr &&_input) noexcept
+		:IstreamSink(std::move(_input)) {}
+
+	using IstreamSink::HasInput;
+
+	void Read() noexcept {
+		input.Read();
+	}
+
+private:
+	/* virtual methods from class IstreamHandler */
+	std::size_t OnData(std::span<const std::byte> src) noexcept override {
+		consumed += src.size();
+		return src.size();
+	}
+
+	void OnEof() noexcept override {
+		ClearInput();
+		++n_eof;
+	}
+
+	void OnError(std::exception_ptr &&_error) noexcept override {
+		ClearInput();
+		++n_error;
+		error = std::move(_error);
+	}
+};
+
+} // anonymous namespace
+
+/**
+ * Control group for TooShort_Push: an input of exactly the declared
+ * length reaches end-of-file.
+ */
+TEST(LengthIstream, Exact_Push)
+{
+	Instance instance;
+
+	auto pool = pool_new_linear(instance.root_pool, "test", 8192);
+
+	PushSink sink{NewIstreamPtr<LengthIstream>(pool,
+						   istream_string_new(pool, "foo"sv),
+						   3)};
+	sink.Read();
+
+	EXPECT_EQ(sink.consumed, 3u);
+	EXPECT_EQ(sink.n_eof, 1u);
+	EXPECT_EQ(sink.n_error, 0u);
+	EXPECT_FALSE(sink.HasInput());
+}
+
+/**
+ * The input ends before the declared length was reached.  It has
+ * destroyed itself before invoking OnEof() (DestroyEof()), so
+ * #LengthIstream must not close it again while failing.
+ */
+TEST(LengthIstream, TooShort_Push)
+{
+	Instance instance;
+
+	auto pool = pool_new_linear(instance.root_pool, "test", 8192);
+
+	PushSink sink{NewIstreamPtr<LengthIstream>(pool,
+						   istream_string_new(pool, "foo"sv),
+						   6)};
+	sink.Read();
+
+	EXPECT_EQ(sink.consumed, 3u);
+	EXPECT_EQ(sink.n_eof, 0u);
+	EXPECT_EQ(sink.n_error, 1u);
+	EXPECT_TRUE(sink.error);
+	EXPECT_FALSE(sink.HasInput());
 }
