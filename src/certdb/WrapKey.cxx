@@ -129,7 +129,7 @@ DecryptSecretBox(WrapKeyView key, std::span<const std::byte> src)
 	const auto nonce = src.first<crypto_secretbox_NONCEBYTES>();
 	src = src.subspan(crypto_secretbox_NONCEBYTES);
 
-	if (!crypto_secretbox_open_easy(result.data(), src, nonce, key))
+	if (crypto_secretbox_open_easy(result.data(), src, nonce, key) != 0)
 		throw std::invalid_argument{"Failed to decrypt key"};
 
 	return result;
