@@ -599,12 +599,13 @@ HttpCacheRequest::OnHttpResponse(HttpStatus status, StringMap &&_headers,
 	if (document != nullptr && status == HttpStatus::NOT_MODIFIED) {
 		assert(!body);
 
-		if (auto _info = http_cache_response_evaluate(request_info,
+		const auto now = GetEventLoop().SystemNow();
+		if (auto _info = http_cache_response_evaluate(request_info, now,
 							      alloc,
 							      eager_cache,
 							      HttpStatus::OK,
 							      _headers, 0);
-		    _info && _info->expires >= GetEventLoop().SystemNow()) {
+		    _info && _info->expires >= now) {
 			/* copy the new "Expires" (or "max-age") value from the
 			   "304 Not Modified" response */
 			auto &item = *(HttpCacheItem *)document;
@@ -652,7 +653,8 @@ HttpCacheRequest::OnHttpResponse(HttpStatus status, StringMap &&_headers,
 		? body.GetLength().length
 		: 0;
 
-	if (auto _info = http_cache_response_evaluate(request_info, alloc,
+	if (auto _info = http_cache_response_evaluate(request_info, GetEventLoop().SystemNow(),
+						      alloc,
 						      eager_cache,
 						      status, _headers,
 						      body_length);

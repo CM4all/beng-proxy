@@ -42,7 +42,9 @@ struct Instance {
 		for (const auto &i : h)
 			headers.Add(alloc, i.first, i.second);
 
-		return http_cache_response_evaluate(request_info, alloc,
+		return http_cache_response_evaluate(request_info,
+						    std::chrono::system_clock::now(),
+						    alloc,
 						    eager_cache,
 						    HttpStatus::OK, headers,
 						    1024);

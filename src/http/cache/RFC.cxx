@@ -178,6 +178,7 @@ GetServerDateOffset(const HttpCacheRequestInfo &request_info,
 
 std::optional<HttpCacheResponseInfo>
 http_cache_response_evaluate(const HttpCacheRequestInfo &request_info,
+			     const std::chrono::system_clock::time_point now,
 			     AllocatorPtr alloc,
 			     bool eager_cache,
 			     HttpStatus status, const StringMap &headers,
@@ -222,7 +223,7 @@ http_cache_response_evaluate(const HttpCacheRequestInfo &request_info,
 
 				seconds = atoi(value);
 				if (seconds > 0)
-					info.expires = std::chrono::system_clock::now() + std::chrono::seconds(seconds);
+					info.expires = now + std::chrono::seconds(seconds);
 			}
 		}
 	}
@@ -234,8 +235,6 @@ http_cache_response_evaluate(const HttpCacheRequestInfo &request_info,
 		   probably personalized; don't store it in this shared
 		   cache unless the origin explicitly allows it */
 		return std::nullopt;
-
-	const auto now = std::chrono::system_clock::now();
 
 	const auto offset = GetServerDateOffset(request_info, now, headers);
 	if (offset == std::chrono::system_clock::duration::min())

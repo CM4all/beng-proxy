@@ -9,6 +9,7 @@
 
 #pragma once
 
+#include <chrono>
 #include <cstdint>
 #include <optional>
 
@@ -58,6 +59,7 @@ http_cache_request_invalidate(HttpMethod method) noexcept;
 [[nodiscard]] [[gnu::pure]]
 std::optional<HttpCacheResponseInfo>
 http_cache_response_evaluate(const HttpCacheRequestInfo &request_info,
+			     std::chrono::system_clock::time_point now,
 			     AllocatorPtr alloc,
 			     bool eager_cache,
 			     HttpStatus status, const StringMap &headers,
