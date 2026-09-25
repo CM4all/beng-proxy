@@ -28,9 +28,10 @@ BpInstance::GetStats() const noexcept
 	tcp_stock->AddStats(tcp_stock_stats);
 	fs_stock->AddStats(tcp_stock_stats);
 
-	stats.incoming_connections = 0;
-	for (const auto &i : listeners)
+	for (const auto &i : listeners) {
 		stats.incoming_connections += i.GetConnectionCount();
+		stats.incoming_handshaking_connections += i.GetPendingCount();
+	}
 
 	stats.outgoing_connections = tcp_stock_stats.busy + tcp_stock_stats.idle;
 	stats.sessions = session_manager->Count();

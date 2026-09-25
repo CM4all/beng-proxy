@@ -22,6 +22,12 @@ struct Stats {
 	uint_least32_t incoming_connections;
 
 	/**
+	 * Number of incoming connections that are currently
+	 * performing a TLS handshake.
+	 */
+	uint_least32_t incoming_handshaking_connections;
+
+	/**
 	 * Number of open outgoing connections.
 	 */
 	uint_least32_t outgoing_connections;

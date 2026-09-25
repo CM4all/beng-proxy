@@ -51,6 +51,9 @@ Write(GrowingBuffer &buffer, std::string_view process,
 # HELP beng_proxy_connections Number of connections
 # TYPE beng_proxy_connections gauge
 
+# HELP beng_proxy_handshaking_connections Number of connections performing a TLS handshake
+# TYPE beng_proxy_handshaking_connections gauge
+
 # HELP beng_proxy_sessions Number of sessions
 # TYPE beng_proxy_sessions gauge
 
@@ -73,10 +76,12 @@ Write(GrowingBuffer &buffer, std::string_view process,
 # TYPE beng_proxy_buffer_size gauge
 
 beng_proxy_connections{{process={:?},direction="in"}} {}
+beng_proxy_handshaking_connections{{process={:?},direction="in"}} {}
 beng_proxy_connections{{process={:?},direction="out"}} {}
 beng_proxy_sessions{{process={:?}}} {}
 )",
 	       process, stats.incoming_connections,
+	       process, stats.incoming_handshaking_connections,
 	       process, stats.outgoing_connections,
 	       process, stats.sessions);
 

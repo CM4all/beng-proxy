@@ -119,6 +119,10 @@ public:
 		return connections.size();
 	}
 
+	std::size_t GetPendingCount() const noexcept {
+		return listener.GetPendingCount();
+	}
+
 	void CloseConnection(BpConnection &connection) noexcept;
 
 	/**

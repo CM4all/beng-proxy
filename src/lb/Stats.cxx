@@ -3,6 +3,7 @@
 // author: Max Kellermann <max.kellermann@ionos.com>
 
 #include "Instance.hxx"
+#include "Listener.hxx"
 #include "prometheus/Stats.hxx"
 #include "fs/Stock.hxx"
 #include "stock/Stats.hxx"
@@ -19,6 +20,9 @@ LbInstance::GetStats() const noexcept
 	StockStats tcp_stock_stats{};
 
 	fs_stock->AddStats(tcp_stock_stats);
+
+	for (const auto &i : listeners)
+		stats.incoming_handshaking_connections += i.GetPendingCount();
 
 	stats.incoming_connections = http_connections.size() +
 		tcp_connections.size();

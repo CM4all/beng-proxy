@@ -75,6 +75,10 @@ public:
 		return config;
 	}
 
+	std::size_t GetPendingCount() const noexcept {
+		return listener.GetPendingCount();
+	}
+
 	HttpStats &GetHttpStats() noexcept {
 		return http_stats;
 	}
