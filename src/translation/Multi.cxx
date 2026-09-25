@@ -8,13 +8,19 @@
 #include "translation/Handler.hxx"
 #include "util/Cancellable.hxx"
 #include "AllocatorPtr.hxx"
+#include "stopwatch.hxx"
 
 class MultiTranslationService::Request final
 	: PoolLeakDetector, TranslateHandler, Cancellable {
 
 	const AllocatorPtr alloc;
 	const TranslateRequest &request;
-	const StopwatchPtr &parent_stopwatch;
+
+	/* this needs to be a copy, just in case the caller has passed
+	   a reference to a temporary */
+	[[no_unique_address]]
+	const StopwatchPtr parent_stopwatch;
+
 	TranslateHandler &handler;
 
 	List::const_iterator i;
