@@ -18,6 +18,7 @@ cm4all-beng-proxy (22.0) unstable; urgency=low
   * nghttp2/Client: ignore 1xx responses
   * nghttp2/client: ignore trailer HEADERS frames
   * nghttp2/client: fix crash when there are too many response headers
+  * nghttp2: fix crash on premature end of stream
   * translation: validate HTTP header values
   * translation: validate the expanded REDIRECT
   * translation: normalize and validate REDIRECT with BASE

@@ -96,6 +96,10 @@ LengthIstream::OnEof() noexcept
 {
 	if (remaining == 0)
 		ForwardIstream::OnEof();
-	else
+	else {
+		/* our input has destroyed itself already */
+		ClearInput();
+
 		DestroyError(std::make_exception_ptr(std::runtime_error("Premature end of stream")));
+	}
 }
