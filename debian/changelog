@@ -47,6 +47,7 @@ cm4all-beng-proxy (22.0) unstable; urgency=low
   * bp: fix BASE with TEST_PATH and DIRECTORY_INDEX|FILE_NOT_FOUND|ENOTDIR
   * bp: fix crash with LAYOUT and ENOTDIR
   * bp: fix crash with io_uring and TLS
+  * bp: count handshake-pending connections against max_connections
   * session: always use getrandom() to generate session ids
   * cookie: reject public-suffix cookie domains
   * widget: reject "../" at beginning of compressed URI

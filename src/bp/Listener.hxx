@@ -135,6 +135,8 @@ private:
 	std::unique_ptr<Avahi::Service> MakeAvahiService(const BpListenerConfig &config) const noexcept;
 
 	/* virtual methods from class FilteredSocketListenerHandler */
+	UniqueSocketDescriptor OnFilteredSocketAccept(UniqueSocketDescriptor s,
+						      SocketAddress address) override;
 	void OnFilteredSocketConnect(PoolPtr pool,
 				     UniquePoolPtr<FilteredSocket> socket,
 				     SocketAddress address,

@@ -119,22 +119,26 @@ BpListener::SetZeroconfVisible(bool _visible) noexcept
 
 #endif
 
+UniqueSocketDescriptor
+BpListener::OnFilteredSocketAccept(UniqueSocketDescriptor s, SocketAddress)
+{
+	if (const auto count = GetConnectionCount() + listener.GetPendingCount();
+	    count >= instance.config.max_connections &&
+	    DropSomeConnections() == 0) {
+		LogFmt(1, "connection", "too many connections ({}), dropping",
+		       count);
+		s.Close();
+	}
+
+	return s;
+}
+
 void
 BpListener::OnFilteredSocketConnect(PoolPtr pool,
 				    UniquePoolPtr<FilteredSocket> socket,
 				    SocketAddress address,
 				    const SslFilter *ssl_filter) noexcept
 {
-	if (GetConnectionCount() >= instance.config.max_connections) {
-		unsigned num_dropped = DropSomeConnections();
-
-		if (num_dropped == 0) {
-			LogFmt(1, "connection", "too many connections ({}), dropping",
-			       GetConnectionCount());
-			return;
-		}
-	}
-
 	auto *connection = new_connection(std::move(pool), instance, *this,
 					  prometheus_exporter.get(),
 					  std::move(socket), ssl_filter,
