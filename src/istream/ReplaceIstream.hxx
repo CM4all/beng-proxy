@@ -29,9 +29,6 @@ class ReplaceIstream : public FacadeIstream, DestructAnchor {
 	 */
 	DeferEvent defer_read;
 
-	bool finished = false;
-	bool had_input, had_output;
-
 	GrowingBuffer buffer;
 	off_t source_length = 0, position = 0;
 
@@ -46,6 +43,9 @@ class ReplaceIstream : public FacadeIstream, DestructAnchor {
 #ifndef NDEBUG
 	off_t last_substitution_end = 0;
 #endif
+
+	bool finished = false;
+	bool had_input, had_output;
 
 public:
 	ReplaceIstream(struct pool &p, EventLoop &event_loop,
