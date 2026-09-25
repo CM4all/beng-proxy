@@ -4,6 +4,7 @@
 
 #include "http/cache/RFC.hxx"
 #include "http/cache/Info.hxx"
+#include "http/Date.hxx"
 #include "http/Status.hxx"
 #include "pool/RootPool.hxx"
 #include "AllocatorPtr.hxx"
@@ -11,20 +12,38 @@
 
 #include <gtest/gtest.h>
 
+#include <string>
+
 using std::string_view_literals::operator""sv;
 
 namespace {
+
+/**
+ * A fixed "current time", so that the resulting time stamps are
+ * deterministic.
+ */
+static constexpr std::chrono::system_clock::time_point now{
+	std::chrono::seconds{1700000000},
+};
+
+/**
+ * The value of HttpCacheResponseInfo::expires when no expiry time is
+ * known.
+ */
+static const auto no_expiry = std::chrono::system_clock::from_time_t(-1);
 
 struct Instance {
 	RootPool root_pool;
 
 	/**
-	 * Evaluate a response with the given headers; the request is
-	 * a plain GET to a local (non-remote) server, so no "Date"
-	 * response header is required.
+	 * Evaluate a response with the given headers; by default, the
+	 * request is a plain GET to a local (non-remote) server, so
+	 * no "Date" response header is required.
 	 */
 	std::optional<HttpCacheResponseInfo> Evaluate(std::initializer_list<std::pair<const char *, const char *>> h,
-						      bool eager_cache=false) {
+						      bool eager_cache=false,
+						      bool is_remote=false,
+						      bool has_query_string=false) {
 		const AllocatorPtr alloc{root_pool};
 
 		const HttpCacheRequestInfo request_info{
@@ -32,18 +51,17 @@ struct Instance {
 			.if_none_match = nullptr,
 			.if_modified_since = nullptr,
 			.if_unmodified_since = nullptr,
-			.is_remote = false,
+			.is_remote = is_remote,
 			.no_cache = false,
 			.only_if_cached = false,
-			.has_query_string = false,
+			.has_query_string = has_query_string,
 		};
 
 		StringMap headers;
 		for (const auto &i : h)
 			headers.Add(alloc, i.first, i.second);
 
-		return http_cache_response_evaluate(request_info,
-						    std::chrono::system_clock::now(),
+		return http_cache_response_evaluate(request_info, now,
 						    alloc,
 						    eager_cache,
 						    HttpStatus::OK, headers,
@@ -122,4 +140,191 @@ TEST(HttpCacheRFC, CaseInsensitiveDirectives)
 	/* a directive which merely starts with a known name is not a
 	   match */
 	EXPECT_TRUE(instance.Evaluate({{"cache-control", "max-age=300, no-cache-foo"}}));
+}
+
+/*
+ * HttpCacheResponseInfo
+ *
+ */
+
+/**
+ * "max-age" defines the expiry time stamp relative to the current
+ * time.
+ */
+TEST(HttpCacheRFC, ExpiresFromMaxAge)
+{
+	Instance instance;
+
+	const auto info = instance.Evaluate({{"cache-control", "max-age=300"}});
+	ASSERT_TRUE(info);
+	EXPECT_EQ(info->expires, now + std::chrono::seconds{300});
+	EXPECT_EQ(info->last_modified, nullptr);
+	EXPECT_EQ(info->etag, nullptr);
+	EXPECT_EQ(info->vary, nullptr);
+}
+
+/**
+ * Without "max-age", the "Expires" header defines the expiry time
+ * stamp.
+ */
+TEST(HttpCacheRFC, ExpiresFromExpiresHeader)
+{
+	Instance instance;
+
+	const auto expires = now + std::chrono::hours{1};
+	const std::string expires_header = http_date_format(expires);
+
+	const auto info = instance.Evaluate({{"expires", expires_header.c_str()}});
+	ASSERT_TRUE(info);
+	EXPECT_EQ(info->expires, expires);
+}
+
+/**
+ * RFC 2616 14.9.3: "If a response includes both an Expires header and
+ * a max-age directive, the max-age directive overrides the Expires
+ * header".
+ */
+TEST(HttpCacheRFC, MaxAgeOverridesExpires)
+{
+	Instance instance;
+
+	const std::string expires_header =
+		http_date_format(now + std::chrono::hours{1});
+
+	const auto info = instance.Evaluate({{"cache-control", "max-age=300"},
+					     {"expires", expires_header.c_str()}});
+	ASSERT_TRUE(info);
+	EXPECT_EQ(info->expires, now + std::chrono::seconds{300});
+}
+
+/**
+ * A response with validators but no expiry is storable without an
+ * expiry time stamp; it will be revalidated before each reuse.
+ */
+TEST(HttpCacheRFC, Validators)
+{
+	Instance instance;
+
+	const auto info = instance.Evaluate({{"last-modified", "Fri, 30 Aug 2024 12:00:00 GMT"},
+					     {"etag", "\"abc\""}});
+	ASSERT_TRUE(info);
+	EXPECT_EQ(info->expires, no_expiry);
+	EXPECT_STREQ(info->last_modified, "Fri, 30 Aug 2024 12:00:00 GMT");
+	EXPECT_STREQ(info->etag, "\"abc\"");
+	EXPECT_EQ(info->vary, nullptr);
+}
+
+/**
+ * Without an expiry and without a validator, the response is not
+ * storable ...
+ */
+TEST(HttpCacheRFC, NoExpiryNoValidator)
+{
+	Instance instance;
+
+	EXPECT_FALSE(instance.Evaluate({}));
+}
+
+/**
+ * ... unless "eager_cache" is enabled, which invents a one hour
+ * expiry.
+ */
+TEST(HttpCacheRFC, EagerCache)
+{
+	Instance instance;
+
+	const auto info = instance.Evaluate({}, true);
+	ASSERT_TRUE(info);
+	EXPECT_EQ(info->expires, now + std::chrono::hours{1});
+}
+
+TEST(HttpCacheRFC, Vary)
+{
+	Instance instance;
+
+	{
+		const auto info = instance.Evaluate({{"cache-control", "max-age=300"},
+						     {"vary", "accept-encoding"}});
+		ASSERT_TRUE(info);
+		EXPECT_STREQ(info->vary, "accept-encoding");
+	}
+
+	/* multiple "Vary" headers are concatenated */
+	{
+		const auto info = instance.Evaluate({{"cache-control", "max-age=300"},
+						     {"vary", "accept-encoding"},
+						     {"vary", "cookie"}});
+		ASSERT_TRUE(info);
+		EXPECT_STREQ(info->vary, "accept-encoding, cookie");
+	}
+
+	/* an empty value is ignored */
+	{
+		const auto info = instance.Evaluate({{"cache-control", "max-age=300"},
+						     {"vary", ""}});
+		ASSERT_TRUE(info);
+		EXPECT_EQ(info->vary, nullptr);
+	}
+
+	/* RFC 2616 13.6: "*" never matches, so the response is not
+	   storable */
+	EXPECT_FALSE(instance.Evaluate({{"cache-control", "max-age=300"},
+					{"vary", "*"}}));
+}
+
+/**
+ * RFC 2616 13.9: a response to a request with a query string is only
+ * storable if the server provides an explicit expiration time.
+ */
+TEST(HttpCacheRFC, QueryString)
+{
+	Instance instance;
+
+	EXPECT_FALSE(instance.Evaluate({{"last-modified", "Fri, 30 Aug 2024 12:00:00 GMT"}},
+				       false, false, true));
+
+	const auto info = instance.Evaluate({{"cache-control", "max-age=300"}},
+					    false, false, true);
+	ASSERT_TRUE(info);
+	EXPECT_EQ(info->expires, now + std::chrono::seconds{300});
+}
+
+/**
+ * A remote server must send a "Date" header, and the "Expires" value
+ * is adjusted by the difference between its clock and ours.
+ */
+TEST(HttpCacheRFC, RemoteDateOffset)
+{
+	Instance instance;
+
+	const std::string expires_header =
+		http_date_format(now + std::chrono::hours{1});
+
+	/* without a "Date" header we cannot compute the offset */
+	EXPECT_FALSE(instance.Evaluate({{"expires", expires_header.c_str()}},
+				       false, true, false));
+
+	/* the server clock matches ours */
+	{
+		const std::string date_header = http_date_format(now);
+
+		const auto info = instance.Evaluate({{"date", date_header.c_str()},
+						     {"expires", expires_header.c_str()}},
+						    false, true, false);
+		ASSERT_TRUE(info);
+		EXPECT_EQ(info->expires, now + std::chrono::hours{1});
+	}
+
+	/* the server clock is one minute behind ours */
+	{
+		const std::string date_header =
+			http_date_format(now - std::chrono::minutes{1});
+
+		const auto info = instance.Evaluate({{"date", date_header.c_str()},
+						     {"expires", expires_header.c_str()}},
+						    false, true, false);
+		ASSERT_TRUE(info);
+		EXPECT_EQ(info->expires,
+			  now + std::chrono::hours{1} + std::chrono::minutes{1});
+	}
 }
