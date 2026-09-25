@@ -14,6 +14,7 @@ cm4all-beng-proxy (22.0) unstable; urgency=low
   * http_cache: compare Cache-Control directives case-insensitively
   * http_cache: don't store responses which set a cookie
   * http_cache: limit the number of header updates per item
+  * http_client: withhold the Upgrade request body until 101
   * http: fix crash bug with long HTTP headers
   * http: fix infinite loop with long HTTP headers
   * nghttp2/Client: ignore 1xx responses

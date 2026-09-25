@@ -1059,10 +1059,19 @@ HttpClient::FeedHeaders(std::span<const std::byte> b)
 		/* try again */
 		return BufferedResult::AGAIN;
 	} else if (request.pending_body) {
-		/* the server begins sending a response - he's not interested
-		   in the request body, discard it now */
-		request.pending_body->Discard();
-		request.pending_body.reset();
+		if (http_is_upgrade(response.status)) {
+			/* the server switches protocols; only now may
+			   the client's bytes be forwarded */
+			request.pending_body->Resume();
+			request.pending_body.reset();
+
+			DeferWrite();
+		} else {
+			/* the server begins sending a response - he's not
+			   interested in the request body, discard it now */
+			request.pending_body->Discard();
+			request.pending_body.reset();
+		}
 	}
 
 	if ((response.state == Response::State::END ||
@@ -1563,6 +1572,15 @@ HttpClient::HttpClient(struct pool &_pool, struct pool &_caller_pool,
 		const char *value = headers.Get(upgrade_header);
 		if (value != nullptr)
 			header_write(headers2, "upgrade", value);
+
+		/* the bytes following the request headers are not a
+		   request body; withhold them until the server has
+		   agreed to switch protocols, or else a server which
+		   declines the upgrade parses them as further
+		   pipelined requests */
+		auto optional = istream_optional_new(GetPool(), std::move(body));
+		body = std::move(optional.first);
+		request.pending_body = std::move(optional.second);
 	} else if (body) {
 		const auto body_length = body.GetLength();
 
