@@ -36,6 +36,23 @@ IsCacheControlDirective(std::string_view s, std::string_view name) noexcept
 	return SkipPrefixIgnoreCase(s, name) && (s.empty() || s.front() == '=');
 }
 
+/**
+ * Parse the argument of a "max-age" Cache-Control directive.
+ *
+ * Returns a negative value on error.
+ */
+[[gnu::pure]]
+static std::chrono::seconds
+ParseMaxAge(std::string_view s) noexcept
+{
+	char value[16];
+	if (s.size() >= sizeof(value))
+		return std::chrono::seconds{-1};
+
+	*std::copy(s.begin(), s.end(), value) = 0;
+	return std::chrono::seconds{atoi(value)};
+}
+
 std::optional<HttpCacheRequestInfo>
 http_cache_request_evaluate(HttpMethod method,
 			    const ResourceAddress &address,
@@ -213,17 +230,9 @@ http_cache_response_evaluate(const HttpCacheRequestInfo &request_info,
 
 			if (SkipPrefixIgnoreCase(s, "max-age="sv)) {
 				/* RFC 2616 14.9.3 */
-				char value[16];
-				int seconds;
 
-				if (s.size() >= sizeof(value))
-					continue;
-
-				*std::copy(s.begin(), s.end(), value) = 0;
-
-				seconds = atoi(value);
-				if (seconds > 0)
-					info.expires = now + std::chrono::seconds(seconds);
+				if (const auto seconds = ParseMaxAge(s); seconds.count() > 0)
+					info.expires = now + seconds;
 			}
 		}
 	}
