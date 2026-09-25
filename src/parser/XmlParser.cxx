@@ -79,7 +79,7 @@ XmlParser::Feed(const char *start, size_t length) noexcept
 				++buffer;
 			} else {
 				nbytes = handler.OnXmlCdata("<", true,
-							    position + buffer - start);
+							    position + buffer - start - 1);
 				assert(nbytes <= (size_t)(end - buffer));
 
 				if (nbytes == 0) {
@@ -411,7 +411,7 @@ XmlParser::Feed(const char *start, size_t length) noexcept
 						assert(cdend_match < 3);
 
 						nbytes = handler.OnXmlCdata({"]]", cdend_match}, false,
-									    position + buffer - start);
+									    position + buffer - start - cdend_match);
 						assert(nbytes <= cdend_match);
 
 						cdend_match -= nbytes;
