@@ -40,9 +40,19 @@ class ReplaceIstream : public FacadeIstream, DestructAnchor {
 
 	SubstitutionList substitutions;
 
+	std::exception_ptr postponed_error;
+
 #ifndef NDEBUG
 	off_t last_substitution_end = 0;
 #endif
+
+	/**
+	 * Are we currently inside Parse()?  That method must not
+	 * destroy this instance, so an error raised by a substitution
+	 * #Istream (which Parse() may have fed) is stored here and
+	 * rethrown by AppendToBuffer().
+	 */
+	bool parsing = false;
 
 	bool finished = false;
 	bool had_input, had_output;

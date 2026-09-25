@@ -52,7 +52,7 @@ cm4all-beng-proxy (22.0) unstable; urgency=low
   * widget: reject "../" at beginning of compressed URI
   * widget: refuse to add headers starting with "x-cm4all-"
   * widget: validate header values
-  * processor: fix three crash bugs
+  * processor: fix four crash bugs
   * css_processor: fix infinite loop
   * stock: fix use-after-free bug
   * zeroconf: fix leak bug

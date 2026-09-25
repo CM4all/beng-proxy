@@ -8,6 +8,7 @@
 #include "Sink.hxx"
 #include "pool/pool.hxx"
 #include "util/DestructObserver.hxx"
+#include "util/ScopeExit.hxx"
 
 #include <stdexcept>
 
@@ -159,6 +160,13 @@ void
 ReplaceIstream::Substitution::OnError(std::exception_ptr &&ep) noexcept
 {
 	ClearInput();
+
+	if (replace.parsing) {
+		/* we are inside the parent's Parse(), which must not
+		   destroy it; postpone the error */
+		replace.postponed_error = std::move(ep);
+		return;
+	}
 
 	replace.DestroyError(std::move(ep));
 }
@@ -343,7 +351,15 @@ ReplaceIstream::AppendToBuffer(const std::span<const std::byte> src)
 	buffer.Write(src);
 	source_length += (off_t)src.size();
 
-	Parse(src);
+	{
+		AtScopeExit(this) { parsing = false; };
+		parsing = true;
+
+		Parse(src);
+	}
+
+	if (postponed_error)
+		std::rethrow_exception(std::move(postponed_error));
 }
 
 /*
