@@ -7,6 +7,7 @@
 #include "ClassifyMimeType.hxx"
 #include "file/Address.hxx"
 #include "Request.hxx"
+#include "Connection.hxx"
 #include "Instance.hxx"
 #include "memory/GrowingBuffer.hxx"
 #include "http/HeaderWriter.hxx"
@@ -195,7 +196,8 @@ Request::DispatchFile(const char *path, FileDescriptor fd,
 	DispatchResponse(status, std::move(headers),
 #ifdef HAVE_URING
 			 instance.uring
-			 ? (IsDirect(end_offset - start_offset, content_type)
+			 ? (connection.CanSplice() &&
+			    IsDirect(end_offset - start_offset, content_type)
 			    /* if this response is going to be
 			       transmitted directly, use splice() with
 			       io_uring instead of sendfile() to avoid

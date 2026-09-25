@@ -62,6 +62,27 @@ struct BpConnection final
 		void operator()(BpConnection *c) noexcept;
 	};
 
+	bool IsHTTP1() const noexcept {
+#ifdef HAVE_NGHTTP2
+		return http != nullptr;
+#else
+		return true;
+#endif
+	}
+
+	/**
+	 * Can this connection splice data from a pipe?
+	 *
+	 * Only plain HTTP/1.1 can do that (no TLS).
+	 *
+	 * (HTTP/2 can read from a pipe, but loses its performance
+	 * advantage, therefore.)
+	 */
+	[[gnu::pure]]
+	bool CanSplice() const noexcept {
+		return IsHTTP1() && !ssl;
+	}
+
 	/* virtual methods from class HttpServerConnectionHandler */
 	void RequestHeadersFinished(IncomingHttpRequest &request) noexcept override;
 	void HandleHttpRequest(IncomingHttpRequest &request,
