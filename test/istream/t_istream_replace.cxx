@@ -16,6 +16,9 @@
 #include "util/SpanCast.hxx"
 #include "BlockingIstreamHandler.hxx"
 
+#include <stdexcept>
+#include <utility> // for std::exchange()
+
 using std::string_view_literals::operator""sv;
 
 /**
@@ -296,4 +299,108 @@ TEST(ReplaceIstream, Fallback)
 
 	ASSERT_FALSE(handler.IsAlive());
 	EXPECT_EQ(std::move(handler).TakeValue(), "x"sv);
+}
+
+namespace {
+
+/**
+ * An #Istream which does nothing until the test makes it fail.
+ */
+class FailingIstream final : public Istream {
+public:
+	explicit FailingIstream(struct pool &p) noexcept
+		:Istream(p) {}
+
+	void Fail() noexcept {
+		DestroyError(std::make_exception_ptr(std::runtime_error{"Failed"}));
+	}
+
+	/* virtual methods from class Istream */
+	void _Read() noexcept override {}
+};
+
+/**
+ * Emulates the nested #CssProcessor which is created and then fails
+ * (by exceeding its own size limit) while the parent #XmlProcessor is
+ * inside Parse().
+ */
+class NestedFailureReplaceIstream final : public ReplaceIstream {
+	bool *const destroyed;
+	bool *const destroyed_during_parse;
+
+	bool done = false;
+
+public:
+	NestedFailureReplaceIstream(struct pool &p, EventLoop &event_loop,
+				    UnusedIstreamPtr _input,
+				    bool &_destroyed,
+				    bool &_destroyed_during_parse) noexcept
+		:ReplaceIstream(p, event_loop, std::move(_input)),
+		 destroyed(&_destroyed),
+		 destroyed_during_parse(&_destroyed_during_parse) {}
+
+	~NestedFailureReplaceIstream() noexcept override {
+		*destroyed = true;
+	}
+
+protected:
+	/* virtual methods from class ReplaceIstream */
+	void Parse(std::span<const std::byte>) override {
+		if (done)
+			return;
+
+		done = true;
+
+		auto *substitution = NewIstream<FailingIstream>(GetPool());
+		Add(0, 0, UnusedIstreamPtr{substitution});
+
+		/* copy to the stack because this object may - against
+		   the documented Parse() contract - be destroyed by
+		   Fail() */
+		bool *const _destroyed = destroyed;
+		bool *const _destroyed_during_parse = destroyed_during_parse;
+
+		substitution->Fail();
+
+		*_destroyed_during_parse = *_destroyed;
+	}
+
+	void ParseEnd() override {
+		Finish();
+	}
+};
+
+} // anonymous namespace
+
+/**
+ * A substitution which fails while the parent is inside Parse() must
+ * not destroy the parent; ReplaceIstream.hxx documents that Parse()
+ * "must not destroy this #ReplaceIstream instance".  The error is
+ * reported to our handler after Parse() has returned.
+ */
+TEST(ReplaceIstream, SubstitutionErrorDuringParse)
+{
+	Instance instance;
+
+	auto pool = pool_new_linear(instance.root_pool, "test", 8192);
+
+	bool destroyed = false, destroyed_during_parse = false;
+
+	auto *replace =
+		NewIstream<NestedFailureReplaceIstream>(pool, instance.event_loop,
+							istream_string_new(pool, "abc"sv),
+							destroyed,
+							destroyed_during_parse);
+
+	BlockingIstreamHandler handler;
+	replace->SetHandler(handler);
+
+	replace->Read();
+
+	/* the parent must have survived its own Parse() ... */
+	EXPECT_FALSE(destroyed_during_parse);
+
+	/* ... but the error must have been reported afterwards */
+	EXPECT_TRUE(destroyed);
+	EXPECT_EQ(handler.state, BlockingIstreamHandler::State::ERROR);
 }
