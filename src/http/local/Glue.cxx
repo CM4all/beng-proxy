@@ -68,6 +68,7 @@ class LhttpRequest final
 	 */
 	FineTimerEvent retry_timer;
 
+	[[no_unique_address]]
 	StopwatchPtr stopwatch;
 
 	const char *const site_name;

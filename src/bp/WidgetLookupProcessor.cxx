@@ -23,6 +23,7 @@
 #include <string.h>
 
 class WidgetLookupProcessor final : IstreamSink, WidgetContainerParser, Cancellable, DestructAnchor {
+	[[no_unique_address]]
 	const StopwatchPtr stopwatch;
 
 	const char *const lookup_id;

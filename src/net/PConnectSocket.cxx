@@ -15,6 +15,7 @@
 class PConnectSocket final : Cancellable, ConnectSocketHandler {
 	ConnectSocket connect;
 
+	[[no_unique_address]]
 	const StopwatchPtr stopwatch;
 
 	ConnectSocketHandler &handler;

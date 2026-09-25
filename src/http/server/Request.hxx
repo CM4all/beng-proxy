@@ -12,6 +12,7 @@ struct HttpServerConnection;
 struct HttpServerRequest final : public IncomingHttpRequest {
 	HttpServerConnection &connection;
 
+	[[no_unique_address]]
 	RootStopwatchPtr stopwatch;
 
 	HttpServerRequest(PoolPtr &&_pool, HttpServerConnection &_connection,

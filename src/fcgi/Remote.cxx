@@ -36,6 +36,7 @@ class FcgiRemoteRequest final
 
 	UniqueFileDescriptor stderr_fd;
 
+	[[no_unique_address]]
 	StopwatchPtr stopwatch;
 
 	HttpResponseHandler &handler;

@@ -44,6 +44,7 @@ class ClientConnection::Request final
 {
 	const AllocatorPtr alloc;
 
+	[[no_unique_address]]
 	const StopwatchPtr stopwatch;
 
 	ClientConnection &connection;

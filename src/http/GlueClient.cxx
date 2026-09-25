@@ -32,6 +32,7 @@ class HttpRequest final
 
 	FilteredSocketBalancer &fs_balancer;
 
+	[[no_unique_address]]
 	StopwatchPtr stopwatch;
 
 	const SocketFilterParams *const filter_params;

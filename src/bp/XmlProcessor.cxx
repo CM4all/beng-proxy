@@ -66,6 +66,7 @@ class XmlProcessor final : public ReplaceIstream, WidgetContainerParser {
 		void _Close() noexcept override;
 	};
 
+	[[no_unique_address]]
 	const StopwatchPtr stopwatch;
 
 	const unsigned options;

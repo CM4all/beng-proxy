@@ -200,6 +200,8 @@ class HttpClient final : BufferedSocketHandler, IstreamSink, Cancellable, Destru
 	struct pool &caller_pool;
 
 	const char *const peer_name;
+
+	[[no_unique_address]]
 	const StopwatchPtr stopwatch;
 
 	EventLoop &event_loop;

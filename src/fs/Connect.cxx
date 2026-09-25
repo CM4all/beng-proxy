@@ -26,6 +26,7 @@ class ConnectFilteredSocketOperation final
 {
 	ConnectFilteredSocketHandler &handler;
 
+	[[no_unique_address]]
 	const StopwatchPtr stopwatch;
 
 	CoarseTimerEvent timeout_event;

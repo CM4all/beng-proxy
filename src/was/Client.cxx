@@ -57,6 +57,7 @@ class WasClient final
 	const AllocatorPtr alloc;
 	struct pool &caller_pool;
 
+	[[no_unique_address]]
 	const StopwatchPtr stopwatch;
 
 	WasLease &lease;

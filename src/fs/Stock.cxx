@@ -30,6 +30,7 @@
 using std::string_view_literals::operator""sv;
 
 struct FilteredSocketStockRequest {
+	[[no_unique_address]]
 	StopwatchPtr stopwatch;
 
 	const uint_least64_t fairness_hash;

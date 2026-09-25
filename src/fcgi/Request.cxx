@@ -41,6 +41,7 @@ class FcgiRequest final
 	 */
 	FineTimerEvent retry_timer;
 
+	[[no_unique_address]]
 	StopwatchPtr stopwatch;
 
 	const CgiAddress &address;

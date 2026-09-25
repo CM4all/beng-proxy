@@ -20,6 +20,7 @@ class GlueRequest final : Cancellable, StockGetHandler {
 	AlpnHandler *const alpn_handler;
 	HttpResponseHandler &handler;
 
+	[[no_unique_address]]
 	const StopwatchPtr stopwatch;
 
 	const SocketFilterParams *const filter_params;

@@ -22,6 +22,7 @@ protected:
 	struct pool &pool;
 
 public:
+	[[no_unique_address]]
 	StopwatchPtr stopwatch;
 
 	const char *const site_name;

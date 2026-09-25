@@ -20,6 +20,7 @@
 #include <string.h>
 
 struct CssProcessor final : public ReplaceIstream {
+	[[no_unique_address]]
 	const StopwatchPtr stopwatch;
 
 	Widget &container;

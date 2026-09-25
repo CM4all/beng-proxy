@@ -33,6 +33,7 @@ using std::string_view_literals::operator""sv;
 struct TcpStockRequest {
 	AllocatorPtr alloc;
 
+	[[no_unique_address]]
 	StopwatchPtr stopwatch;
 
 	const bool ip_transparent;

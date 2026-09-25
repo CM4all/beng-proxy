@@ -72,6 +72,7 @@ class ServerConnection::Request final
 
 	std::unique_ptr<IstreamDataSource> response_body;
 
+	[[no_unique_address]]
 	RootStopwatchPtr stopwatch;
 
 	const uint32_t id;

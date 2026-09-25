@@ -78,6 +78,7 @@ class FcgiClient final
 
 	UniqueFileDescriptor stderr_fd;
 
+	[[no_unique_address]]
 	const StopwatchPtr stopwatch;
 
 	HttpResponseHandler &handler;

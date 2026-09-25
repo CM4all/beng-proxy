@@ -22,6 +22,7 @@
 #include <stdlib.h>
 
 class CGIClient final : Istream, IstreamSink, Cancellable, DestructAnchor {
+	[[no_unique_address]]
 	const StopwatchPtr stopwatch;
 
 	SliceFifoBuffer buffer;

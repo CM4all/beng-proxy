@@ -75,6 +75,7 @@ private:
 	const LLogger logger;
 
 public:
+	[[no_unique_address]]
 	StopwatchPtr stopwatch;
 
 	IncomingHttpRequest &request;
