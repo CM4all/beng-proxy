@@ -21,6 +21,7 @@
 #include "util/StringStrip.hxx"
 #include "AllocatorPtr.hxx"
 
+#include <iterator> // for std::next()
 #include <utility> // for std::unreachable()
 
 #include <string.h>
@@ -200,6 +201,12 @@ HttpServerConnection::HeadersFinished(bool has_more) noexcept
 	/* disable the idle+headers timeout; the request body timeout will
 	   be tracked by FilteredSocket (auto-refreshing) */
 	idle_timer.Cancel();
+
+	if (const auto h = r.headers.EqualRange(host_header);
+	    h.first != h.second && std::next(h.first) != h.second)
+		/* RFC 9112 3.2: more than one "Host" header makes the
+		   request malformed */
+		request.SetError(HttpStatus::BAD_REQUEST, "Duplicate Host header\n");
 
 	request.expect_100_continue = false;
 	if (const char *const expect = r.headers.Remove(expect_header);

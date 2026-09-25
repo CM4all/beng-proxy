@@ -336,6 +336,20 @@ ServerConnection::Request::OnHttpHeader(std::string_view name,
 		return 0;
 	}
 
+	if (name == "host"sv) {
+		if (const char *authority = headers.Get(host_header)) {
+			/* RFC 9113 8.3.1: a "Host" header which
+			   disagrees with ":authority" makes the
+			   request malformed */
+			if (value != std::string_view{authority})
+				SetError(HttpStatus::BAD_REQUEST,
+					 "Malformed Host header\n");
+
+			/* don't add the redundant header */
+			return 0;
+		}
+	}
+
 	/* the Cookie request header is special: multiple
 	   headers are not concatenated with comma (RFC 2616
 	   4.2), but with semicolon (RFC 6265 4.2.1); to avoid

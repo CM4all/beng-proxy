@@ -10,6 +10,7 @@ cm4all-beng-proxy (22.0) unstable; urgency=low
   * http_server: drop the "Upgrade" header from non-upgrade requests
   * http_server: disable keep-alive after status 414/431
   * http_server: reject unsupported Transfer-Encoding
+  * http_server: reject duplicate Host headers
   * http_cache: compare Cache-Control directives case-insensitively
   * http_cache: don't store responses which set a cookie
   * http_cache: limit the number of header updates per item
@@ -18,6 +19,7 @@ cm4all-beng-proxy (22.0) unstable; urgency=low
   * nghttp2/Client: ignore 1xx responses
   * nghttp2/client: ignore trailer HEADERS frames
   * nghttp2/client: fix crash when there are too many response headers
+  * nghttp2/server: reject conflicting Host headers
   * nghttp2: fix crash on premature end of stream
   * translation: validate HTTP header values
   * translation: validate the expanded REDIRECT
