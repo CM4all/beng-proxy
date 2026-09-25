@@ -15,12 +15,11 @@
 #include "http/Method.hxx"
 #include "http/Status.hxx"
 #include "util/IterableSplitString.hxx"
+#include "util/NumberParser.hxx"
 #include "util/StringAPI.hxx"
 #include "util/StringCompare.hxx"
 #include "util/StringStrip.hxx"
 #include "AllocatorPtr.hxx"
-
-#include <stdlib.h>
 
 using std::string_view_literals::operator""sv;
 
@@ -45,12 +44,11 @@ IsCacheControlDirective(std::string_view s, std::string_view name) noexcept
 static std::chrono::system_clock::duration
 ParseMaxAge(std::string_view s) noexcept
 {
-	char value[16];
-	if (s.size() >= sizeof(value))
+	unsigned value;
+	if (!ParseIntegerTo(s, value))
 		return std::chrono::system_clock::duration{-1};
 
-	*std::copy(s.begin(), s.end(), value) = 0;
-	return std::chrono::seconds{atoi(value)};
+	return std::chrono::seconds{value};
 }
 
 std::optional<HttpCacheRequestInfo>
