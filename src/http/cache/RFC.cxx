@@ -42,12 +42,12 @@ IsCacheControlDirective(std::string_view s, std::string_view name) noexcept
  * Returns a negative value on error.
  */
 [[gnu::pure]]
-static std::chrono::seconds
+static std::chrono::system_clock::duration
 ParseMaxAge(std::string_view s) noexcept
 {
 	char value[16];
 	if (s.size() >= sizeof(value))
-		return std::chrono::seconds{-1};
+		return std::chrono::system_clock::duration{-1};
 
 	*std::copy(s.begin(), s.end(), value) = 0;
 	return std::chrono::seconds{atoi(value)};
