@@ -69,6 +69,13 @@ public:
 			       UniqueSocketDescriptor _socket) noexcept;
 	~FilteredSocketListener() noexcept;
 
+	/**
+	 * Drop some pending connections.
+	 *
+	 * @return the number of connections which were dropped
+	 */
+	std::size_t DropSomePendingConnections() noexcept;
+
 protected:
 	void OnAccept(UniqueSocketDescriptor s,
 		      SocketAddress address) noexcept override;

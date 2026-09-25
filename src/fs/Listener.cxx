@@ -116,6 +116,16 @@ FilteredSocketListener::~FilteredSocketListener() noexcept
 	pending.clear_and_dispose(NoPoolDisposer{});
 }
 
+std::size_t
+FilteredSocketListener::DropSomePendingConnections() noexcept
+{
+	std::size_t n;
+	for (n = 0; n < 4 && !pending.empty(); ++n)
+		pending.pop_front_and_dispose(NoPoolDisposer{});
+
+	return n;
+}
+
 void
 FilteredSocketListener::OnAccept(UniqueSocketDescriptor s,
 				 SocketAddress address) noexcept

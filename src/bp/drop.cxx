@@ -12,6 +12,11 @@
 std::size_t
 BpListener::DropSomeConnections() noexcept
 {
+	if (const auto n = listener.DropSomePendingConnections())
+		/* connections which have not yet finished the TLS
+		   handshake have been dropped */
+		return n;
+
 	BpConnection *candidates[32];
 	std::size_t num_candidates = 0;
 	http_server_score min_score = std::numeric_limits<http_server_score>::max();
