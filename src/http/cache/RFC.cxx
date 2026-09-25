@@ -294,7 +294,7 @@ http_cache_response_evaluate(const HttpCacheRequestInfo &request_info,
 	    info.etag == nullptr) {
 		if (eager_cache)
 			// TODO
-			info.expires = std::chrono::system_clock::now() + std::chrono::hours(1);
+			info.expires = now + std::chrono::hours(1);
 		else
 			return std::nullopt;
 	}
