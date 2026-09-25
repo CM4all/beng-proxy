@@ -477,6 +477,14 @@ ServerConnection::Request::OnFrameRecvCallback(const nghttp2_frame &frame) noexc
 
 	switch (frame.hd.type) {
 	case NGHTTP2_HEADERS:
+		if (frame.headers.cat != NGHTTP2_HCAT_REQUEST)
+			/* a trailer header block; it does not start
+			   another request, it only ends the request
+			   body */
+			return (frame.hd.flags & NGHTTP2_FLAG_END_STREAM) != 0
+				? OnEndDataFrame()
+				: 0;
+
 		if (frame.hd.flags & NGHTTP2_FLAG_END_HEADERS)
 			return OnReceiveRequest((frame.hd.flags & NGHTTP2_FLAG_END_STREAM) == 0);
 
