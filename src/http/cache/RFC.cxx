@@ -222,11 +222,11 @@ http_cache_response_evaluate(const HttpCacheRequestInfo &request_info,
 			    IsCacheControlDirective(s, "no-store"sv))
 				return std::nullopt;
 
-			if (IsCacheControlDirective(s, "public"sv) ||
-			    IsCacheControlDirective(s, "s-maxage"sv))
+			else if (IsCacheControlDirective(s, "public"sv) ||
+				 IsCacheControlDirective(s, "s-maxage"sv))
 				explicitly_shareable = true;
 
-			if (SkipPrefixIgnoreCase(s, "max-age="sv)) {
+			else if (SkipPrefixIgnoreCase(s, "max-age="sv)) {
 				/* RFC 2616 14.9.3 */
 
 				if (const auto seconds = ParseMaxAge(s); seconds.count() > 0)
