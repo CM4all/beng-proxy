@@ -27,10 +27,15 @@ static unsigned n_children;
 static Child children[MAX_CHILDREN];
 
 static bool
-Forward(SocketDescriptor src)
+Forward(SocketDescriptor src, const bool is_datagram)
 {
 	std::byte buffer[65536];
 	ssize_t nbytes = src.Receive(buffer);
+	if (nbytes == 0 && is_datagram)
+		/* on a datagram socket, there can be zero-length
+		   datagrams and is not end-of-stream */
+		return true;
+
 	if (nbytes <= 0) {
 		if (nbytes < 0) {
 			if (errno == EAGAIN || errno == EINTR)
@@ -69,7 +74,9 @@ try {
 		child.fd = process.fd.Release();
 	}
 
-	while (Forward(src)) {}
+	const bool is_datagram = src.GetType() == SOCK_DGRAM;
+
+	while (Forward(src, is_datagram)) {}
 	return EXIT_SUCCESS;
 } catch (const std::exception &e) {
 	PrintException(e);

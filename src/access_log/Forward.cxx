@@ -46,9 +46,21 @@ try {
 
 	const SocketDescriptor src{STDIN_FILENO};
 
+	const bool is_datagram = src.GetType() == SOCK_DGRAM;
+
 	static std::byte buffer[16384];
 	ssize_t nbytes;
-	while ((nbytes = src.Receive(buffer)) > 0) {
+	while ((nbytes = src.Receive(buffer)) >= 0) {
+		if (nbytes == 0) {
+			if (!is_datagram)
+				break;
+
+			/* on a datagram socket, there can be
+			   zero-length datagrams and is not
+			   end-of-stream */
+			continue;
+		}
+
 		size_t length = (size_t)nbytes;
 		for (unsigned i = 0; i < num_destinations; ++i) {
 			nbytes = destinations[i].fd.WriteNoWait({buffer, length});

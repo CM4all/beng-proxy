@@ -8,6 +8,9 @@
 #include <sys/socket.h>
 #include <stdlib.h>
 
+AccessLogServer::AccessLogServer(SocketDescriptor _fd) noexcept
+	:fd(_fd), is_datagram(fd.GetType() == SOCK_DGRAM) {}
+
 AccessLogServer::AccessLogServer() noexcept
 	:AccessLogServer(SocketDescriptor(STDIN_FILENO)) {}
 
@@ -39,10 +42,13 @@ AccessLogServer::Fill() noexcept
 		return false;
 
 	for (n_payloads = 0; n_payloads < size_t(n); ++n_payloads) {
-		if (msgs[n_payloads].msg_len == 0)
+		if (msgs[n_payloads].msg_len == 0 && !is_datagram)
 			/* when the peer closes the socket, recvmmsg() doesn't
 			   return 0; instead, it fills the mmsghdr array with
 			   empty packets */
+			/* on a datagram socket, there can be
+			   zero-length datagrams and is not
+			   end-of-stream */
 			break;
 
 		if (msgs[n_payloads].msg_hdr.msg_namelen >= sizeof(struct sockaddr))

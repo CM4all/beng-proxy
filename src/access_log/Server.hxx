@@ -30,6 +30,12 @@ struct ReceivedAccessLogDatagram : Net::Log::Datagram {
 class AccessLogServer {
 	const SocketDescriptor fd;
 
+	/**
+	 * Is #fd a datagram socket?  Then a zero-length message is
+	 * ordinary input and not end-of-stream.
+	 */
+	const bool is_datagram;
+
 	ReceivedAccessLogDatagram datagram;
 
 	static constexpr size_t N = 32;
@@ -39,7 +45,7 @@ class AccessLogServer {
 	size_t n_payloads = 0, current_payload = 0;
 
 public:
-	explicit AccessLogServer(SocketDescriptor _fd) noexcept:fd(_fd) {}
+	explicit AccessLogServer(SocketDescriptor _fd) noexcept;
 
 	/**
 	 * Construct an instance with the default socket (STDIN_FILENO).

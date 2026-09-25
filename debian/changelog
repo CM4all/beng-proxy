@@ -58,6 +58,7 @@ cm4all-beng-proxy (22.0) unstable; urgency=low
   * control: allow privileged commands only for root
   * access_log: log the client address in error records
   * access_log: AF_LOCAL client addresses are displayed as "local"
+  * access_log: don't treat an empty datagram as end-of-stream
   * log-split: validate the "site" value
   * log-split: don't follow symlinks
 
