@@ -43,6 +43,7 @@ Request::SubmitEnotdir(const TranslateResponse &response) noexcept
 		/* since the request URI was modified, we need to
 		   restart the LAYOUT translation */
 		translate.request.layout = {};
+		translate.request.layout_item = nullptr;
 	}
 
 	const char *slash = (const char *)
