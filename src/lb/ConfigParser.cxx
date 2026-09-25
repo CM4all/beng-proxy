@@ -952,6 +952,10 @@ LbConfigParser::Branch::Finish()
 	if (config.GetProtocol() != LbProtocol::HTTP)
 		throw LineParser::Error("Only HTTP pools allowed in branch");
 
+	for (const auto &i : config.conditions)
+		if (i.destination.GetProtocol() != LbProtocol::HTTP)
+			throw LineParser::Error("Only HTTP pools allowed in branch");
+
 	auto i = parent.config.branches.emplace(std::string(config.name),
 						std::move(config));
 	if (!i.second)
