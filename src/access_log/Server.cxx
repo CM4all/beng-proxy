@@ -8,11 +8,11 @@
 #include <sys/socket.h>
 #include <stdlib.h>
 
-AccessLogServer::AccessLogServer()
+AccessLogServer::AccessLogServer() noexcept
 	:AccessLogServer(SocketDescriptor(STDIN_FILENO)) {}
 
 bool
-AccessLogServer::Fill()
+AccessLogServer::Fill() noexcept
 {
 	assert(current_payload >= n_payloads);
 
@@ -58,7 +58,7 @@ AccessLogServer::Fill()
 }
 
 const ReceivedAccessLogDatagram *
-AccessLogServer::Receive()
+AccessLogServer::Receive() noexcept
 {
 	while (true) {
 		if (current_payload >= n_payloads && !Fill())

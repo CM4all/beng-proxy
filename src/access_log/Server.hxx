@@ -39,17 +39,17 @@ class AccessLogServer {
 	size_t n_payloads = 0, current_payload = 0;
 
 public:
-	explicit AccessLogServer(SocketDescriptor _fd):fd(_fd) {}
+	explicit AccessLogServer(SocketDescriptor _fd) noexcept:fd(_fd) {}
 
 	/**
 	 * Construct an instance with the default socket (STDIN_FILENO).
 	 */
-	AccessLogServer();
+	AccessLogServer() noexcept;
 
 	AccessLogServer(const AccessLogServer &) = delete;
 	AccessLogServer &operator=(const AccessLogServer &) = delete;
 
-	const ReceivedAccessLogDatagram *Receive();
+	const ReceivedAccessLogDatagram *Receive() noexcept;
 
 	template<typename F>
 	void Run(F &&f) {
@@ -58,5 +58,5 @@ public:
 	}
 
 private:
-	bool Fill();
+	bool Fill() noexcept;
 };
