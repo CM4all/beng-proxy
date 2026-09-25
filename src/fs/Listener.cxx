@@ -26,9 +26,11 @@ FilteredSocketListenerHandler::OnFilteredSocketAccept(UniqueSocketDescriptor s,
 
 class FilteredSocketListener::Pending final
 	: PoolHolder,
-	  public AutoUnlinkIntrusiveListHook,
+	  public IntrusiveListHook<>,
 	  BufferedSocketHandler
 {
+	FilteredSocketListener &listener;
+
 	UniquePoolPtr<FilteredSocket> socket;
 
 	const SocketAddress address;
@@ -39,16 +41,22 @@ class FilteredSocketListener::Pending final
 
 public:
 	Pending(PoolPtr &&_pool,
+		FilteredSocketListener &_listener,
 		UniquePoolPtr<FilteredSocket> &&_socket,
 		SocketAddress _address,
 		const SslFilter *_ssl_filter,
 		FilteredSocketListenerHandler &_handler) noexcept
 		:PoolHolder(std::move(_pool)),
+		 listener(_listener),
 		 socket(std::move(_socket)),
 		 address(DupAddress((AllocatorPtr)pool, _address)),
 		 ssl_filter(_ssl_filter), handler(_handler)
 	{
 		socket->Reinit(Event::Duration(-1), *this);
+	}
+
+	~Pending() noexcept {
+		listener.pending.erase(listener.pending.iterator_to(*this));
 	}
 
 	void Destroy() noexcept {
@@ -180,6 +188,7 @@ try {
 #endif
 
 	auto *p = NewFromPool<Pending>(std::move(connection_pool),
+				       *this,
 				       std::move(socket),
 				       address, &ssl_filter, handler);
 	pending.push_front(*p);

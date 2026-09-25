@@ -57,7 +57,14 @@ class FilteredSocketListener final : public ServerSocket {
 	FilteredSocketListenerHandler &handler;
 
 	class Pending;
-	IntrusiveList<Pending> pending;
+
+	/**
+	 * Connections which have been accepted, but whose TLS
+	 * handshake has not finished yet.
+	 */
+	IntrusiveList<Pending,
+		      IntrusiveListBaseHookTraits<Pending>,
+		      IntrusiveListOptions{.constant_time_size = true}> pending;
 
 public:
 	FilteredSocketListener(struct pool &_pool, EventLoop &event_loop,
@@ -68,6 +75,14 @@ public:
 			       FilteredSocketListenerHandler &_handler,
 			       UniqueSocketDescriptor _socket) noexcept;
 	~FilteredSocketListener() noexcept;
+
+	/**
+	 * The number of connections which have been accepted, but
+	 * whose TLS handshake has not finished yet.
+	 */
+	std::size_t GetPendingCount() const noexcept {
+		return pending.size();
+	}
 
 	/**
 	 * Drop some pending connections.
