@@ -107,6 +107,13 @@ public:
 		 idle_timer(c.stock.GetEventLoop(),
 			    BIND_THIS_METHOD(OnIdleTimeout))
 	{
+		/* this item is injected as an idle item, so police
+		   the socket like Release() does; without Reinit(),
+		   its handler would be the (already deleted) connect
+		   operation */
+		socket->Reinit(Event::Duration(-1), *this);
+		socket->ScheduleRead();
+		idle_timer.Schedule(std::chrono::minutes(1));
 	}
 
 	~FilteredSocketStockConnection() override {
