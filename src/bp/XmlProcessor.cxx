@@ -235,6 +235,13 @@ private:
 	}
 
 	void ParseEnd() override {
+		StopCdataIstream();
+
+		/* the request body could not be submitted to the
+		   focused widget, because we didn't find it; dispose
+		   it now */
+		container.DiscardForFocused();
+
 		ReplaceIstream::Finish();
 	}
 
@@ -1069,11 +1076,9 @@ XmlProcessor::OnEof() noexcept
 {
 	stopwatch.RecordEvent("eof");
 
-	StopCdataIstream();
-
-	/* the request body could not be submitted to the focused widget,
-	   because we didn't find it; dispose it now */
-	container.DiscardForFocused();
+	/* note: the StopCdataIstream() and DiscardForFocused() calls
+	   are in ParseEnd(), because that one is also called on the
+	   bucket path which never invokes this method */
 
 	ReplaceIstream::OnEof();
 }
