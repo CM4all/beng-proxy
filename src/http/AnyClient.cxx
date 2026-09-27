@@ -192,6 +192,15 @@ public:
 	}
 
 private:
+	/**
+	 * Dispatch the next queued request (if any) in the next event
+	 * loop iteration.
+	 */
+	void ScheduleAgain() noexcept {
+		if (!waiting.empty())
+			defer_again.Schedule();
+	}
+
 	bool IsPending(const Waiting &w) const noexcept {
 		return state == State::PENDING && &waiting.front() == &w;
 	}
@@ -303,6 +312,7 @@ AnyHttpClient::Probe::OnAgain() noexcept
 		if (auto r = std::move(w.request); true) {
 			waiting.erase_and_dispose(waiting.iterator_to(w),
 						  Waiting::Disposer{});
+			ScheduleAgain();
 			r.SendHTTP2(GetEventLoop(), parent.nghttp2_stock,
 				    nullptr, r.caller_cancel_ptr);
 		}
@@ -314,6 +324,7 @@ AnyHttpClient::Probe::OnAgain() noexcept
 		if (auto r = std::move(w.request); true) {
 			waiting.erase_and_dispose(waiting.iterator_to(w),
 						  Waiting::Disposer{});
+			ScheduleAgain();
 			r.SendHTTP1(GetEventLoop(), parent.fs_balancer);
 		}
 
