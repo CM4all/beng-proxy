@@ -169,7 +169,7 @@ SendRedirect(lua_State *L)
 	UnusedIstreamPtr response_body;
 	if (!msg.empty() && !http_status_is_empty(status)) {
 		response_headers.Add(alloc, content_type_header, "text/plain");
-		response_body = istream_string_new(pool, msg);
+		response_body = istream_string_new(pool, alloc.Dup(msg));
 	}
 
 	data.stale = true;
@@ -237,7 +237,7 @@ SendRedirectHost(lua_State *L)
 	UnusedIstreamPtr response_body;
 	if (!msg.empty() && !http_status_is_empty(status)) {
 		response_headers.Add(alloc, content_type_header, "text/plain");
-		response_body = istream_string_new(pool, msg);
+		response_body = istream_string_new(pool, alloc.Dup(msg));
 	}
 
 	data.stale = true;
