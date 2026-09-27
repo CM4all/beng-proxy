@@ -116,11 +116,6 @@ Request::HandleTranslatedRequest2(const TranslateResponse &response) noexcept
 		return;
 	}
 
-	if (response.discard_query_string && dissected_uri.query.data() != nullptr) {
-		dissected_uri.query = {};
-		request.uri = RecomposeUri(*request.pool, dissected_uri);
-	}
-
 	using namespace BengProxy;
 	if ((response.request_header_forward[HeaderGroup::COOKIE] != HeaderForwardMode::MANGLE &&
 	     response.request_header_forward[HeaderGroup::COOKIE] != HeaderForwardMode::BOTH) ||
@@ -402,6 +397,14 @@ Request::HandleTranslatedRequest(UniquePoolPtr<TranslateResponse> _response) noe
 {
 	translate.response = std::move(_response);
 	const auto &response = *translate.response;
+
+	if (response.discard_query_string && dissected_uri.query.data() != nullptr) {
+		/* this must happen before the ResourceAddress (and
+		   its id, which is the cache key) is completed with
+		   the query string */
+		dissected_uri.query = {};
+		request.uri = RecomposeUri(*request.pool, dissected_uri);
+	}
 
 	/* copy the ResourceAddress from the TranslateResponse and
 	   complete it with data which wasn't passed to the
