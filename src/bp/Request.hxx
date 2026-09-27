@@ -205,6 +205,12 @@ private:
 		uint_least8_t n_file_not_found = 0;
 
 		/**
+		 * Number of ENOTDIR packets followed so far.  This
+		 * variable is used for loop detection.
+		 */
+		uint_least8_t n_enotdir = 0;
+
+		/**
 		 * Number of #TRANSLATE_DIRECTORY_INDEX packets followed so
 		 * far.  This variable is used for loop detection.
 		 */

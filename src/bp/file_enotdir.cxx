@@ -32,6 +32,13 @@ get_file_path(const TranslateResponse &response)
 inline bool
 Request::SubmitEnotdir(const TranslateResponse &response) noexcept
 {
+	if (++translate.n_enotdir > 20) {
+		LogDispatchError(HttpStatus::BAD_GATEWAY,
+				 "Got too many consecutive ENOTDIR packets",
+				 1);
+		return false;
+	}
+
 	translate.request.enotdir = response.enotdir;
 
 	const char *const uri = request.uri;
