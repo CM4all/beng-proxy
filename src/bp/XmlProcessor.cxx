@@ -567,6 +567,12 @@ XmlProcessor::TransformUriAttribute(const XmlParserAttribute &attr,
 	}
 
 	case UriBase::PARENT:
+		if (mode == RewriteUriMode::DIRECT)
+			/* this would disclose the parent's widget
+			   server address and its template parameters
+			   to this widget */
+			return;
+
 		target_widget = container.parent;
 		if (target_widget == nullptr)
 			return;
