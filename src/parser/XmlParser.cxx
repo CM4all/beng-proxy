@@ -224,7 +224,8 @@ XmlParser::Feed(const char *start, size_t length) noexcept
 					/* there is no value (probably malformed XML) -
 					   use the current position as start and end
 					   offset because that's the best we can do */
-					attr.value_start = attr.value_end = position + (off_t)(buffer - start);
+					attr.value_start = attr.value_end = attr.end =
+						position + (off_t)(buffer - start);
 
 					InvokeAttributeFinished();
 					state = State::ELEMENT_TAG;
