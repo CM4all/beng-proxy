@@ -66,7 +66,7 @@ cm4all-beng-proxy (22.0) unstable; urgency=low
   * cookie: reject public-suffix cookie domains
   * widget: reject duplicate "type" attribute
   * widget: reject "../" at beginning of compressed URI
-  * widget: refuse to add headers starting with "x-cm4all-"
+  * widget: refuse to add headers starting with "x-cm4all-" and "x-forwarded-"
   * widget: validate header values
   * widget: fix crash after rewriting absolute URI
   * widget: fix crash after rewriting URI with unescaping

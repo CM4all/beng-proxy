@@ -245,6 +245,12 @@ IsAllowedWidgetHeader(std::string_view name) noexcept
 	if (StringStartsWithIgnoreCase(name, "cm4all-"sv))
 		return false;
 
+	/* ... and neither in the "X-Forwarded-" namespace, which we
+	   generate as well (and which becomes REMOTE_ADDR, for
+	   exampple) */
+	if (StringStartsWithIgnoreCase(name, "forwarded-"sv))
+		return false;
+
 	/* the rest must be letters, digits or dash */
 	return CheckCharsNonEmpty(name, [](char ch) noexcept {
 		return IsAlphaNumericASCII(ch) || ch == '-';
