@@ -1544,7 +1544,9 @@ HttpClient::HttpClient(struct pool &_pool, struct pool &_caller_pool,
 		       CancellablePointer &cancel_ptr) noexcept
 	:PoolLeakDetector(_pool),
 	 pool(_pool), caller_pool(_caller_pool),
-	 peer_name(_peer_name),
+	 /* copy the name because it is owned by the socket lease
+	    which is released before we are done */
+	 peer_name(p_strdup(&_pool, _peer_name)),
 	 stopwatch(std::move(_stopwatch)),
 	 event_loop(_socket.GetEventLoop()),
 	 socket(_socket, lease, http_client_timeout, *this),
