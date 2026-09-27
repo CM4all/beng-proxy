@@ -214,6 +214,12 @@ Request::EmulateModAuthEasy(const FileAddress &address,
 			    const struct statx &st,
 			    SharedLease &lease) noexcept
 {
+	if (StringEndsWith(address.path, "/.access")) {
+		/* never hand out the credential file itself */
+		DispatchError(HttpStatus::FORBIDDEN);
+		return true;
+	}
+
 	if (!CheckAccessFileFor(handler.file.base, handler.file.base_relative,
 				request.headers,
 				address.path)) {
