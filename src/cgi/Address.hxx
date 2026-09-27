@@ -110,6 +110,7 @@ struct CgiAddress {
 		 query_string(src.query_string), document_root(src.document_root),
 		 address_list(shallow_copy, src.address_list),
 		 cached_child_id(src.cached_child_id),
+		 parallelism(src.parallelism),
 		 concurrency(src.concurrency),
 		 disposable(src.disposable),
 		 instant_fade(src.instant_fade),
