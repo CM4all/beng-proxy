@@ -95,6 +95,7 @@ class XmlProcessor final : public ReplaceIstream, WidgetContainerParser {
 		bool pending = false;
 
 		off_t uri_start, uri_end;
+		bool value_quoted;
 		ExpansibleBuffer value;
 
 		/**
@@ -178,6 +179,16 @@ private:
 
 	void ReplaceAttributeValue(const XmlParserAttribute &attr,
 				   UnusedIstreamPtr value) noexcept {
+		if (!attr.value_quoted)
+			/* the replacement may contain characters
+			   which would end an unquoted attribute value
+			   (and start another attribute), so enclose
+			   it in quotes */
+			value = NewConcatIstream(GetPool(),
+						 istream_string_new(GetPool(), "\""),
+						 std::move(value),
+						 istream_string_new(GetPool(), "\""));
+
 		Replace(attr.value_start, attr.value_end, std::move(value));
 	}
 
@@ -189,10 +200,12 @@ private:
 	}
 
 	void PostponeUriRewrite(off_t start, off_t end,
-				std::string_view value) noexcept;
+				std::string_view value,
+				bool value_quoted) noexcept;
 
 	void PostponeUriRewrite(const XmlParserAttribute &attr) noexcept {
-		PostponeUriRewrite(attr.value_start, attr.value_end, attr.value);
+		PostponeUriRewrite(attr.value_start, attr.value_end, attr.value,
+				   attr.value_quoted);
 	}
 
 	void PostponeRefreshRewrite(const XmlParserAttribute &attr) noexcept;
@@ -312,7 +325,8 @@ CanRewriteUri(std::string_view uri, bool rewrite_empty) noexcept
 
 void
 XmlProcessor::PostponeUriRewrite(off_t start, off_t end,
-				 std::string_view value) noexcept
+				 std::string_view value,
+				 bool value_quoted) noexcept
 {
 	assert(start <= end);
 
@@ -329,6 +343,7 @@ XmlProcessor::PostponeUriRewrite(off_t start, off_t end,
 
 	postponed_rewrite.uri_start = start;
 	postponed_rewrite.uri_end = end;
+	postponed_rewrite.value_quoted = value_quoted;
 
 	bool success = postponed_rewrite.value.Set(value);
 
@@ -380,7 +395,10 @@ XmlProcessor::PostponeRefreshRewrite(const XmlParserAttribute &attr) noexcept
 
 	PostponeUriRewrite(attr.value_start + delta,
 			   attr.value_start + delta + p.size(),
-			   p);
+			   p,
+			   /* the URL is enclosed in single quotes
+			      inside the attribute value */
+			   true);
 }
 
 inline void
@@ -389,6 +407,7 @@ XmlProcessor::CommitUriRewrite() noexcept
 	XmlParserAttribute uri_attribute;
 	uri_attribute.value_start = postponed_rewrite.uri_start;
 	uri_attribute.value_end = postponed_rewrite.uri_end;
+	uri_attribute.value_quoted = postponed_rewrite.value_quoted;
 
 	assert(postponed_rewrite.pending);
 

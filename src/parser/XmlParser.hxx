@@ -31,6 +31,13 @@ struct XmlParserTag {
 struct XmlParserAttribute {
 	off_t name_start, value_start, value_end, end;
 	std::string_view name, value;
+
+	/**
+	 * Was the value enclosed in quotes?  If not, then a
+	 * substitution must add them, because the value may not
+	 * contain whitespace.
+	 */
+	bool value_quoted;
 };
 
 class XmlParserHandler {

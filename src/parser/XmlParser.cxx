@@ -226,6 +226,7 @@ XmlParser::Feed(const char *start, size_t length) noexcept
 					   offset because that's the best we can do */
 					attr.value_start = attr.value_end = attr.end =
 						position + (off_t)(buffer - start);
+					attr.value_quoted = false;
 
 					InvokeAttributeFinished();
 					state = State::ELEMENT_TAG;
@@ -242,12 +243,14 @@ XmlParser::Feed(const char *start, size_t length) noexcept
 					attr_value_delimiter = *buffer;
 					++buffer;
 					attr.value_start = position + (off_t)(buffer - start);
+					attr.value_quoted = true;
 					break;
 				} else if (IsWhitespaceOrNull(*buffer)) {
 					++buffer;
 				} else {
 					state = State::ATTR_VALUE_COMPAT;
 					attr.value_start = position + (off_t)(buffer - start);
+					attr.value_quoted = false;
 					break;
 				}
 			} while (buffer < end);
