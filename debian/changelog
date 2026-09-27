@@ -3,6 +3,7 @@ cm4all-beng-proxy (22.2) unstable; urgency=low
   * bp: REQUEST_HEADER_FORWARD/FORWARD controls "X-Forwarded-" headers
   * bp: skip filter/encoding cache for non-shareable resources
   * bp: reject dot segments in the TRANSPARENT args path info
+  * bp: generate a new session id on login
   * dbus: dispatch libdbus timeouts
   * fcgi: use non-blocking write for STDERR pipes
   * http_cache: make Cache-Control case-insensitive

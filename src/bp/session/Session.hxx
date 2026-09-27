@@ -147,7 +147,7 @@ struct Session {
 	IntrusiveHashSetHook<IntrusiveHookMode::AUTO_UNLINK> by_attach_hook;
 
 	/** identification number of this session */
-	const SessionId id;
+	SessionId id;
 
 	/** a secret used to generate CSRF tokens */
 	const SessionId csrf_salt;

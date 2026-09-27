@@ -149,6 +149,14 @@ SessionManager::CreateSession() noexcept
 	return {*this, session};
 }
 
+void
+SessionManager::ReplaceSessionId(Session &session) noexcept
+{
+	sessions.erase(sessions.iterator_to(session));
+	session.id = GenerateSessionId();
+	sessions.insert(session);
+}
+
 SessionLease
 SessionManager::Find(SessionId id) noexcept
 {

@@ -142,6 +142,13 @@ public:
 	 */
 	void Insert(Session &session) noexcept;
 
+	/**
+	 * Generate a new id for the given session, invalidating the
+	 * old one.  This is a countermeasure against session
+	 * fixation.
+	 */
+	void ReplaceSessionId(Session &session) noexcept;
+
 	void EraseAndDispose(SessionId id) noexcept;
 
 	void DiscardRealmSession(SessionId id, std::string_view realm) noexcept;

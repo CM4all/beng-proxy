@@ -360,8 +360,26 @@ Request::ApplyTranslateSession(const TranslateResponse &response) noexcept
 			if (!session)
 				session = MakeRealmSession();
 
-			if (session)
+			if (session) {
+				if (session->user == nullptr &&
+				    session->parent.attach == nullptr) {
+					/* the session id becomes an
+					   authentication token now,
+					   so discard the old one
+					   which may have been planted
+					   by an attacker; this is
+					   skipped for attached
+					   sessions, because those may
+					   be referenced by session
+					   cookies of other hosts
+					   which we cannot update */
+					instance.session_manager->ReplaceSessionId(session->parent);
+					session_id = session->parent.id;
+					send_session_cookie = true;
+				}
+
 				session->SetUser(response.user, response.user_max_age);
+			}
 		}
 	}
 
