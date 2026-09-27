@@ -22,7 +22,7 @@ namespace Uring { class Queue; }
  */
 class PipeStock final : public Stock, StockClass {
 #ifdef HAVE_URING
-	Uring::Queue *uring_queue;
+	Uring::Queue *uring_queue = nullptr;
 #endif // HAVE_URING
 
 public:
