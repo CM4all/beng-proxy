@@ -931,6 +931,11 @@ XmlProcessor::PrepareEmbedWidget(WidgetPtr child_widget)
 	if (child_widget->class_name == nullptr)
 		throw std::runtime_error("widget without a class");
 
+	if ((options & PROCESSOR_CONTAINER) == 0)
+		/* this view was not granted the right to embed other
+		   widgets (same check as in processor_lookup_widget()) */
+		throw std::runtime_error("not a container");
+
 	/* enforce the SELF_CONTAINER flag */
 	const bool self_container =
 		(options & PROCESSOR_SELF_CONTAINER) != 0;
