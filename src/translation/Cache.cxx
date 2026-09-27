@@ -879,7 +879,13 @@ TranslationCache::InvalidateTag(const TranslateRequest &request,
 				std::span<const TranslationCommand> vary,
 				std::string_view tag) noexcept
 {
-	return per_tag.remove_and_dispose_key_if(tag, [&request, vary](const TranslateCacheItemTag &i){
+	/* an item may have several #TranslateCacheItemTag instances,
+	   and the disposer destroys all of them - including ones
+	   which are still in this bucket; use
+	   safe_remove_and_dispose_key_if() because it finishes
+	   walking the bucket before invoking the first disposer */
+
+	return per_tag.safe_remove_and_dispose_key_if(tag, [&request, vary](const TranslateCacheItemTag &i){
 		return i.parent.InvalidateMatch(vary, nullptr, request);
 	}, TranslateCacheItemRemoveDisposer{cache});
 }
