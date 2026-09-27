@@ -203,7 +203,7 @@ Request::HandleTokenAuth(UniquePoolPtr<TranslateResponse> _response) noexcept
 	try {
 		auth_token = ExtractAuthToken(alloc, dissected_uri);
 	} catch (const std::invalid_argument &e) {
-		DispatchError(HttpStatus::BAD_REQUEST, e.what());
+		DispatchError(HttpStatus::BAD_REQUEST, alloc.Dup(e.what()));
 		return;
 	}
 
