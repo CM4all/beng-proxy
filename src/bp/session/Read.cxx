@@ -147,6 +147,7 @@ ReadCookie(FileReader &file)
 					       std::move(value));
 	cookie->domain = file.ReadString();
 	cookie->path = file.ReadString();
+	cookie->host_only = file.ReadBool();
 	file.Read(cookie->expires);
 	Expect32(file, MAGIC_END_OF_RECORD);
 	return cookie;

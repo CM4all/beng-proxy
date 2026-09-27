@@ -140,6 +140,7 @@ WriteCookie(FileWriter &file, const Cookie &cookie)
 	file.Write(cookie.value);
 	file.Write(cookie.domain);
 	file.Write(cookie.path);
+	file.WriteBool(cookie.host_only);
 	file.Write(cookie.expires);
 	file.Write32(MAGIC_END_OF_RECORD);
 }

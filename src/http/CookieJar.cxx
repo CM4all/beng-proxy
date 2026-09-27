@@ -48,7 +48,9 @@ CookieData::DomainMatches(const char *request_domain) const noexcept
 	assert(domain != nullptr);
 	assert(request_domain != nullptr);
 
-	return domain_matches(request_domain, domain.c_str());
+	return host_only
+		? StringIsEqualIgnoreCase(request_domain, domain.c_str())
+		: domain_matches(request_domain, domain.c_str());
 }
 
 bool

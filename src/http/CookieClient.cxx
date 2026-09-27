@@ -121,7 +121,10 @@ apply_next_cookie(CookieJar &jar, struct pool &tpool, std::string_view &input,
 	if (cookie == nullptr)
 		return false;
 
-	if (cookie->domain == nullptr) {
+	cookie->host_only = cookie->domain == nullptr;
+	if (cookie->host_only) {
+		/* without a "Domain" attribute, the cookie may only
+		   be sent back to this very host (RFC 6265 5.3) */
 		cookie->domain = domain;
 	} else if (!cookie->DomainMatches(domain) ||
 		   !IsAcceptableCookieDomain(cookie->domain.c_str())) {

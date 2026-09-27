@@ -14,6 +14,13 @@ struct CookieData {
 	AllocatedString domain, path;
 	Expiry expires = Expiry::Never();
 
+	/**
+	 * Was this cookie received without a "Domain" attribute?  If
+	 * so, it may only be sent to the exact host which has set it
+	 * (RFC 6265 5.3).
+	 */
+	bool host_only;
+
 	template<typename N, typename V>
 	CookieData(N &&_name, V &&_value)
 		:name(std::forward<N>(_name)),

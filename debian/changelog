@@ -71,6 +71,7 @@ cm4all-beng-proxy (22.0) unstable; urgency=low
   * session: always use getrandom() to generate session ids
   * session: limit the number of realms per session
   * cookie: reject public-suffix cookie domains
+  * cookie: cookies without a "Domain" attribute are host-only
   * widget: reject duplicate "type" attribute
   * widget: reject "../" at beginning of compressed URI
   * widget: refuse to add headers starting with "x-cm4all-" and "x-forwarded-"
