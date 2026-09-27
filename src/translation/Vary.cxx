@@ -32,7 +32,11 @@ CollectTranslationVary(std::span<const TranslationCommand> vary) noexcept
 	static constexpr std::size_t N = std::size(translation_vary_headers);
 	std::array<bool, N> result{};
 
-	for (const auto cmd : vary) {
+	for (auto cmd : vary) {
+		if (cmd == TranslationCommand::REALM_SESSION ||
+		    cmd == TranslationCommand::USER)
+			cmd = TranslationCommand::SESSION;
+
 		for (std::size_t i = 0; i < N; ++i) {
 			if (cmd == translation_vary_headers[i].cmd) {
 				result[i] = true;
