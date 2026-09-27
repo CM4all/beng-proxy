@@ -61,6 +61,7 @@ cm4all-beng-proxy (22.0) unstable; urgency=low
   * bp: obey DISCARD_SESSION in the AUTH response
   * bp: apply REQUIRE_CSRF_TOKEN to the original request method
   * session: always use getrandom() to generate session ids
+  * session: limit the number of realms per session
   * cookie: reject public-suffix cookie domains
   * widget: reject duplicate "type" attribute
   * widget: reject "../" at beginning of compressed URI

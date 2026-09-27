@@ -192,6 +192,11 @@ struct Session {
 
 	using RealmSessionSet = std::map<std::string, RealmSession, std::less<>>;
 
+	/**
+	 * The maximum number of #realms; see GetRealm().
+	 */
+	static constexpr std::size_t MAX_REALMS_PER_SESSION = 32;
+
 	RealmSessionSet realms;
 
 	Session(SessionId _id, SessionId _csrf_salt) noexcept;

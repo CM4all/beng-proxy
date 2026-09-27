@@ -278,6 +278,12 @@ Session::GetRealm(std::string_view realm_name) noexcept
 	if (auto i = realms.find(realm_name); i != realms.end())
 		return &i->second;
 
+	if (realms.size() >= MAX_REALMS_PER_SESSION)
+		/* the realm name is usually derived from the client's
+		   "Host" request header, so refuse to let one client
+		   fill this session with arbitrarily many realms */
+		return nullptr;
+
 	// TODO optimize, use hint with lower_bound()
 	return &realms.emplace(realm_name, *this).first->second;
 }
