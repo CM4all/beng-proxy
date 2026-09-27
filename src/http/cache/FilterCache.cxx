@@ -447,7 +447,19 @@ filter_cache_response_evaluate(EventLoop &event_loop, FilterCacheInfo &info,
 		return false;
 
 	p = headers.Get(cache_control_header);
-	if (p != nullptr && http_list_contains(p, "no-store"))
+	if (p != nullptr &&
+	    (http_list_contains(p, "no-store") ||
+	     http_list_contains(p, "no-cache") ||
+	     http_list_contains(p, "private")))
+		return false;
+
+	if ((p == nullptr || !http_list_contains(p, "public")) &&
+	    (headers.Contains(set_cookie_header) ||
+	     headers.Contains(set_cookie2_header)))
+		/* this response sets a cookie, which means it is
+		   probably personalized; don't store it in this
+		   shared cache unless the origin explicitly allows
+		   it */
 		return false;
 
 	const auto now = event_loop.SystemNow();
