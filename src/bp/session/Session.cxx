@@ -64,7 +64,10 @@ Session::Session(SessionId _id, SessionId _csrf_salt) noexcept
 {
 }
 
-Session::~Session() noexcept = default;
+Session::~Session() noexcept
+{
+	delete external_manager;
+}
 
 unsigned
 Session::GetPurgeScore() const noexcept
