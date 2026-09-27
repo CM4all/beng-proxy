@@ -33,6 +33,8 @@
 #include "pool/pool.hxx"
 #include "pool/LeakDetector.hxx"
 #include "pool/SharedPtr.hxx"
+#include "uri/PRelative.hxx"
+#include "util/StringSplit.hxx"
 #include "AllocatorPtr.hxx"
 #include "lib/fmt/ToBuffer.hxx"
 #include "util/Cancellable.hxx"
@@ -41,6 +43,8 @@
 
 #include <assert.h>
 #include <string.h>
+
+using std::string_view_literals::operator""sv;
 
 class WidgetRequest final
 	: PoolLeakDetector, HttpResponseHandler, SuffixRegistryHandler, Cancellable
@@ -262,9 +266,26 @@ WidgetRequest::HandleRedirect(const char *location, UnusedIstreamPtr &body) noex
 		/* a static or CGI widget cannot send redirects */
 		return false;
 
-	const auto p = widget.RelativeUri(pool, true, location);
+	AllocatorPtr alloc{pool};
+
+	auto p = widget.RelativeUri(alloc, true, location);
 	if (p.data() == nullptr)
 		return false;
+
+	if (const auto [path, query_string] = Split(p, '?');
+	    !path.empty()) {
+		/* resolve dot segments before deciding that the
+		   Location is below the widget's base URI */
+		const char *compressed = uri_compress(alloc, alloc.DupZ(path));
+		if (compressed == nullptr)
+			return false;
+
+		p = query_string.data() != nullptr
+			? alloc.ConcatView(std::string_view{compressed},
+					   "?"sv,
+					   query_string)
+			: std::string_view{compressed};
+	}
 
 	widget.CopyFromRedirectLocation(p, GetSessionIfStateful().get());
 
