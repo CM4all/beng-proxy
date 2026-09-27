@@ -78,11 +78,13 @@ WidgetContainerParser::OnXmlTagStart(const XmlParserTag &xml_tag) noexcept
 
 	tag = Tag::IGNORE;
 
+	if (widget.widget != nullptr)
+		/* no substitution may be registered inside a
+		   <c:widget> element */
+		return OnStartElementInWidget(xml_tag.type, xml_tag.name);
+
 	if (xml_tag.type == XmlParserTagType::PI)
 		return OnProcessingInstruction(xml_tag.name);
-
-	if (widget.widget != nullptr)
-		return OnStartElementInWidget(xml_tag.type, xml_tag.name);
 
 	if (OnXmlTagStart2(xml_tag)) {
 		return true;
