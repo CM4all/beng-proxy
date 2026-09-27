@@ -96,6 +96,15 @@ public:
 			if (response_body_control)
 				Consume(response_body_control->GetAvailable());
 
+			if (request_body) {
+				/* this call makes libnghttp2 discard
+				   the #IstreamDataSource pointer */
+				nghttp2_submit_rst_stream(connection.session.get(),
+							  NGHTTP2_FLAG_NONE,
+							  id, NGHTTP2_CANCEL);
+				connection.DeferWrite();
+			}
+
 			/* clear stream_user_data to ignore future
 			   callbacks on this stream */
 			nghttp2_session_set_stream_user_data(connection.session.get(),
@@ -265,6 +274,11 @@ private:
 					  NGHTTP2_FLAG_NONE,
 					  id, NGHTTP2_CANCEL);
 		DeferWrite();
+
+		/* the stream is now CLOSING, so libnghttp2 has
+		   dropped its reference to #request_body */
+		request_body.reset();
+
 		Destroy();
 	}
 
@@ -364,6 +378,11 @@ ClientConnection::Request::Cancel() noexcept
 	nghttp2_submit_rst_stream(connection.session.get(), NGHTTP2_FLAG_NONE,
 				  id, NGHTTP2_CANCEL);
 	DeferWrite();
+
+	/* the stream is now CLOSING, so libnghttp2 has dropped its
+	   reference to #request_body */
+	request_body.reset();
+
 	Destroy();
 }
 
