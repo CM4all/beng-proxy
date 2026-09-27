@@ -118,6 +118,9 @@ parser_widget_attr_finished(Widget &widget,
 		if (value.empty())
 			throw std::runtime_error("empty widget class name");
 
+		if (widget.class_name != nullptr)
+			throw std::runtime_error("duplicate widget 'type' attribute");
+
 		widget.SetClassName(value);
 	} else if (name == "id"sv) {
 		if (!value.empty())
