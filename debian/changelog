@@ -14,6 +14,7 @@ cm4all-beng-proxy (22.0) unstable; urgency=low
   * http_server: disable keep-alive after status 414/431
   * http_server: reject unsupported Transfer-Encoding
   * http_server: reject duplicate Host headers
+  * http_server: fix crash on request line without URI
   * http_cache: compare Cache-Control directives case-insensitively
   * http_cache: don't store responses which set a cookie
   * http_cache: limit the number of header updates per item

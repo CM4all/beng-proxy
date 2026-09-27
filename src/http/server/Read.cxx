@@ -151,6 +151,14 @@ HttpServerConnection::ParseRequestLine(std::string_view line) noexcept
 		return false;
 	}
 
+	if (rest > line.data() + line.size()) [[unlikely]] {
+		/* ParseHttpMethod() has matched the space which
+		   StripRight() has removed from this line, i.e. the
+		   request line contains no URI */
+		ProtocolError("malformed request line");
+		return false;
+	}
+
 	line.remove_prefix(rest - line.data());
 
 	const auto space = line.find(' ');
