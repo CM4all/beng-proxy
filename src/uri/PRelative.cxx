@@ -13,6 +13,19 @@
 
 using std::string_view_literals::operator""sv;
 
+[[gnu::pure]]
+static bool
+ContainsEncodedDot(const char *uri) noexcept
+{
+	while ((uri = strchr(uri, '%')) != nullptr) {
+		++uri;
+		if (uri[0] == '2' && (uri[1] == 'e' || uri[1] == 'E'))
+			return true;
+	}
+
+	return false;
+}
+
 static constexpr bool
 IsDotDot(const char *uri) noexcept
 {
@@ -24,6 +37,12 @@ const char *
 uri_compress(AllocatorPtr alloc, const char *uri) noexcept
 {
 	assert(uri != nullptr);
+
+	if (ContainsEncodedDot(uri))
+		/* this function resolves dot segments textually; a
+		   percent-encoded dot would be invisible here, but
+		   the server on the other end would resolve it */
+		return nullptr;
 
 	while (uri[0] == '.' && uri[1] == '/')
 		uri += 2;

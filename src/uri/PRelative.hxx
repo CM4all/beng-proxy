@@ -14,7 +14,9 @@ class AllocatorPtr;
 
 /**
  * Compresses an URI (eliminates all "/./" and "/../"), and returns
- * the result.  May return NULL if there are too many "/../".
+ * the result.  May return NULL if there are too many "/../" or if the
+ * URI contains a percent-encoded dot (which this function cannot
+ * resolve, but the server on the other end would).
  */
 [[gnu::pure]]
 const char *
