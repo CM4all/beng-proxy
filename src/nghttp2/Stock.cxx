@@ -246,6 +246,7 @@ Stock::Item::OnConnectFilteredSocket(std::unique_ptr<FilteredSocket> socket) noe
 
 		/* this item stays in the map so it can serve
 		   future requests quickly */
+		idle_timer.Schedule(std::chrono::minutes{5});
 		return;
 	}
 
