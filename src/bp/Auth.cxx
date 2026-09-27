@@ -25,6 +25,11 @@ Request::OnAuthTranslateResponse(UniquePoolPtr<TranslateResponse> &&_response) n
 {
 	const auto &response = *_response;
 
+	if (response.discard_session)
+		DiscardSession();
+	else if (response.discard_realm_session)
+		DiscardRealmSession();
+
 	bool is_authenticated = false;
 	{
 		auto session = ApplyTranslateSession(response);
