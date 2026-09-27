@@ -105,6 +105,15 @@ public:
 private:
 	Co::InvokeTask Run();
 
+	/**
+	 * Pop a #Request from the #requests list and return a
+	 * pointer; or the #requests list is empty, destroy this
+	 * #Query object and return nullptr.  After nullptr was
+	 * returned, this object is gone and CertCache::current_query
+	 * is invalid; the caller must reset it.
+	 */
+	Request *LockPopRequest() noexcept;
+
 	void OnCompletion(std::exception_ptr &&error) noexcept;
 };
 
@@ -188,6 +197,27 @@ CertCache::Query::Run()
 	});
 }
 
+inline CertCache::Request *
+CertCache::Query::LockPopRequest() noexcept
+{
+	assert(&cache.current_query->second == this);
+
+	const std::scoped_lock lock{cache.mutex};
+
+	if (requests.empty()) {
+		/* erase the query while still holding the
+		   lock; else a worker thread could add
+		   another Request to this (already drained)
+		   query just before it gets destructed */
+		cache.queries.erase(cache.current_query);
+		return nullptr;
+	}
+
+	auto *request = &requests.front();
+	requests.pop_front();
+	return request;
+}
+
 inline void
 CertCache::Query::OnCompletion(std::exception_ptr &&error) noexcept
 {
@@ -198,23 +228,20 @@ CertCache::Query::OnCompletion(std::exception_ptr &&error) noexcept
 	if (error)
 		cache.logger(1, std::move(error));
 
+	/* copy the "cache" reference to the stack because the
+	   last LockPopRequest() will delete this object */
+	auto &_cache = cache;
+
 	/* invoke all remaining SslCompletionHandlers; this is
 	   only relevant if Run() has not finished
 	   sucessfully */
-	LockClearAndDispose(cache.mutex, requests, [this, new_state](Request *request){
-		cache.state_idx.Set(request->ssl, new_state);
+	while (auto *request = LockPopRequest()) {
+		_cache.state_idx.Set(request->ssl, new_state);
 		InvokeSslCompletionHandler(request->ssl);
 		delete request;
-	});
-
-	/* copy the "cache" reference to the stack because the
-	   following erase() call will delete this object */
-	auto &_cache = cache;
-
-	{
-		const std::scoped_lock lock{_cache.mutex};
-		_cache.queries.erase(_cache.current_query);
 	}
+
+	/* this Query instance is now deleted */
 
 	_cache.current_query = _cache.queries.end();
 
