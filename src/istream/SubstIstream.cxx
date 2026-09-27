@@ -864,7 +864,9 @@ SubstIstream::_FillBucketList(IstreamBucketList &list)
 			return;
 		}
 	} else {
-		assert(input.IsDefined());
+		/* without input, the only state we can be in is
+		   INSERT (see OnEof()) */
+		assert(input.IsDefined() || analysis.state == State::INSERT);
 	}
 
 	switch (analysis.state) {
@@ -917,7 +919,8 @@ SubstIstream::_FillBucketList(IstreamBucketList &list)
 		assert(analysis.a_match == strlen(analysis.match->leaf.a));
 
 		list.Push(analysis.GetB());
-		list.EnableFallback(); // TODO eliminate
+		if (input.IsDefined())
+			list.EnableFallback(); // TODO eliminate
 
 		// TODO: read more
 		UpdateBucketAvailable(list);
@@ -950,7 +953,9 @@ SubstIstream::_ConsumeBucketList(size_t nbytes) noexcept
 			return {BucketConsumed(nbytes), analysis.mismatch.empty()};
 		}
 	} else {
-		assert(input.IsDefined());
+		/* without input, the only state we can be in is
+		   INSERT (see OnEof()) */
+		assert(input.IsDefined() || analysis.state == State::INSERT);
 	}
 
 	switch (analysis.state) {
@@ -979,7 +984,8 @@ SubstIstream::_ConsumeBucketList(size_t nbytes) noexcept
 		/* finished sending substitution? */
 		if (consumed == length)
 			analysis.state = State::NONE;
-		return {BucketConsumed(consumed), false};
+		return {BucketConsumed(consumed),
+			consumed == length && !input.IsDefined()};
 	}
 	}
 
