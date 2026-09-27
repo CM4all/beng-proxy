@@ -112,6 +112,16 @@ WidgetContainerParser::OnXmlTagStart(const XmlParserTag &xml_tag) noexcept
 	}
 }
 
+[[gnu::pure]]
+static constexpr bool
+IsValidWidgetId(std::string_view id) noexcept
+{
+	return CheckCharsNonEmpty(id, [](char ch) noexcept {
+		return IsAlphaNumericASCII(ch) ||
+			ch == '-' || ch == '_' || ch == '.';
+	});
+}
+
 static void
 parser_widget_attr_finished(Widget &widget,
 			    std::string_view name, std::string_view value)
@@ -125,8 +135,12 @@ parser_widget_attr_finished(Widget &widget,
 
 		widget.SetClassName(value);
 	} else if (name == "id"sv) {
-		if (!value.empty())
+		if (!value.empty()) {
+			if (!IsValidWidgetId(value))
+				throw std::runtime_error("malformed widget 'id' attribute");
+
 			widget.SetId(value);
+		}
 	} else if (name == "display"sv) {
 		if (value == "inline"sv)
 			widget.display = Widget::Display::INLINE;
