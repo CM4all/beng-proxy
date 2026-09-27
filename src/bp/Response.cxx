@@ -1059,7 +1059,10 @@ Request::OnHttpResponse(HttpStatus status, StringMap &&_headers,
 		/* if there is a GENERATOR header, include it in the
 		   access log */
 		if (const auto *generator_header = headers.Get(x_cm4all_generator_header))
-			rl.generator = generator_header;
+			/* copy the value because the header map may
+			   be owned by a cache pool which is freed at
+			   body EOF, before the request is logged */
+			rl.generator = p_strdup(&pool, generator_header);
 
 	auto new_headers = ForwardResponseHeaders(status, headers,
 						  RelocateCallback, this,
