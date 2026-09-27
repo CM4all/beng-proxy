@@ -45,8 +45,10 @@ inline
 LbLuaRequestData::LbLuaRequestData(lua_State *L,
 				   const LbHttpConnection &_connection,
 				   IncomingHttpRequest &_request,
+				   bool _has_body,
 				   HttpResponseHandler &_handler) noexcept
-	:connection(_connection), request(_request), handler(_handler)
+	:connection(_connection), request(_request), handler(_handler),
+	 has_body(_has_body)
 {
 	lua_newtable(L);
 	lua_setfenv(L, -2);
@@ -324,7 +326,7 @@ LbLuaRequestIndex(lua_State *L)
 
 		return 1;
 	} else if (StringIsEqual(name, "has_body")) {
-		Lua::Push(L, data.request.HasBody());
+		Lua::Push(L, data.has_body);
 		return 1;
 	} else if (StringIsEqual(name, "remote_host")) {
 		Lua::Push(L, data.request.remote_host);
@@ -371,8 +373,8 @@ RegisterLuaRequest(lua_State *L)
 
 LbLuaRequestData *
 NewLuaRequest(lua_State *L, const LbHttpConnection &connection,
-	      IncomingHttpRequest &request,
+	      IncomingHttpRequest &request, bool has_body,
 	      HttpResponseHandler &handler)
 {
-	return LbLuaRequest::New(L, L, connection, request, handler);
+	return LbLuaRequest::New(L, L, connection, request, has_body, handler);
 }
