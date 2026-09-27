@@ -41,17 +41,19 @@ Request::SubmitEnotdir(const TranslateResponse &response) noexcept
 
 	translate.request.enotdir = response.enotdir;
 
-	const char *const uri = request.uri;
 	if (translate.enotdir_uri == nullptr) {
 		translate.request.uri = translate.enotdir_uri =
-			p_strdup(&pool, uri);
-		translate.enotdir_path_info = uri + strlen(uri);
+			p_strdup(&pool, request.uri);
+		translate.enotdir_path_info = translate.enotdir_uri +
+			strlen(translate.enotdir_uri);
 
 		/* since the request URI was modified, we need to
 		   restart the LAYOUT translation */
 		translate.request.layout = {};
 		translate.request.layout_item = nullptr;
 	}
+
+	const char *const uri = translate.enotdir_uri;
 
 	const char *slash = (const char *)
 		memrchr(uri, '/', translate.enotdir_path_info - uri);
