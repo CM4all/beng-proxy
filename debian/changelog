@@ -61,7 +61,7 @@ cm4all-beng-proxy (22.0) unstable; urgency=low
   * widget: refuse to add headers starting with "x-cm4all-"
   * widget: validate header values
   * processor: fix four crash bugs
-  * css_processor: fix infinite loop
+  * css_processor: two fix infinite loop bugs
   * stock: fix use-after-free bug
   * zeroconf: fix leak bug
   * control: allow privileged commands only for root

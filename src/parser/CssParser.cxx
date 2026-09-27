@@ -221,10 +221,16 @@ CssParser::Feed(const char *start, size_t length) noexcept
 			if (buffer < end) {
 				switch (*buffer) {
 				case '}':
-					/* end of block */
-					if (block)
+					if (block) {
+						/* there is no block to
+						   end; this is part of
+						   the value */
+						state = State::VALUE;
+						value_buffer.clear();
 						break;
+					}
 
+					/* end of block */
 					state = State::NONE;
 					++buffer;
 					break;
@@ -295,10 +301,14 @@ CssParser::Feed(const char *start, size_t length) noexcept
 			if (buffer < end) {
 				switch (*buffer) {
 				case '}':
-					/* end of block */
-					if (block)
+					if (block) {
+						/* there is no block to
+						   end */
+						state = State::BLOCK;
 						break;
+					}
 
+					/* end of block */
 					state = State::NONE;
 					++buffer;
 					break;
