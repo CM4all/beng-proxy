@@ -283,9 +283,11 @@ BpInstance::AddListener(const BpListenerConfig &c, const UidGid *logger_user)
 	listeners.emplace_front(*this,
 				listener_stats[c.tag],
 				config.access_log.FindXForwardedForConfig(c.access_logger_name),
-				access_log.Make(event_loop,
-						config.access_log, logger_user,
-						c.access_logger_name),
+				c.access_logger
+				? access_log.Make(event_loop,
+						  config.access_log, logger_user,
+						  c.access_logger_name)
+				: nullptr,
 				std::move(ts),
 				c, c.Create(SOCK_STREAM));
 }
