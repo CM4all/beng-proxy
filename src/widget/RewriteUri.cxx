@@ -339,12 +339,13 @@ UriRewriter::ResolverCallback() noexcept
 		}
 
 		const TempPoolLease tpool;
-		bool is_unescaped = value.find('&') != value.npos;
-		if (is_unescaped)
-			value = unescape_dup(*tpool, *escape, value);
+
+		std::string_view unescaped = value;
+		if (unescaped.find('&') != unescaped.npos)
+			unescaped = unescape_dup(*tpool, *escape, unescaped);
 
 		uri = do_rewrite_widget_uri(alloc, *ctx, widget,
-					    value, mode, stateful,
+					    unescaped, mode, stateful,
 					    view);
 		if (uri != nullptr) {
 			value = uri;
