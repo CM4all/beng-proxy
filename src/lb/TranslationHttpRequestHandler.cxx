@@ -100,15 +100,19 @@ LbHttpRequest::OnTranslateResponse(UniquePoolPtr<TranslateResponse> _response) n
 		if (status == HttpStatus{})
 			status = HttpStatus::MOVED_PERMANENTLY;
 
-		const char *msg = response.message;
-		if (msg == nullptr)
-			msg = "This page requires \"https\"";
+		const AllocatorPtr alloc{_request.pool};
+
+		/* copy the message because the response body Istream
+		   may outlive the translation cache item */
+		const std::string_view msg = response.message != nullptr
+			? alloc.Dup(std::string_view{response.message})
+			: "This page requires \"https\""sv;
 
 		const auto https_only = response.https_only;
 		_response.reset();
 
 		_request.SendRedirect(status,
-				      MakeHttpsRedirect(AllocatorPtr{_request.pool},
+				      MakeHttpsRedirect(alloc,
 							host,
 							https_only,
 							_request.uri),
@@ -126,8 +130,12 @@ LbHttpRequest::OnTranslateResponse(UniquePoolPtr<TranslateResponse> _response) n
 			? std::string_view{response.redirect}
 			: std::string_view{};
 
+		const AllocatorPtr alloc{_request.pool};
+
+		/* copy the message because the response body Istream
+		   may outlive the translation cache item */
 		const std::string_view body = response.message != nullptr
-			? std::string_view{response.message}
+			? alloc.Dup(std::string_view{response.message})
 			: http_status_to_string(status);
 
 		_request.SendSimpleResponse(status, location, body);

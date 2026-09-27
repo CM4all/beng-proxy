@@ -6,7 +6,7 @@ cm4all-beng-proxy (22.0) unstable; urgency=low
   * lb/lua: fix use-after-free bug in send_redirect()
   * lb/lua/json: limit the recursion depth
   * lb/prometheus: fix crash after receiving body-less response
-  * lb/translation: fix use-after-free crash bug
+  * lb/translation: fix two use-after-free crash bugs
   * lb/zeroconf: fix use-after-free crash bug
   * lb: fix IPv6 /48 ban list lookup
   * lb: support max_connections_per_ip for TCP connections
