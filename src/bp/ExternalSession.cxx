@@ -28,6 +28,11 @@ public:
 		:PoolHolder(std::move(_pool)),
 		 address(GetPool(), _address) {}
 
+	void Destroy() noexcept {
+		unlink();
+		this->~ExternalSessionRefresh();
+	}
+
 	void SendRequest(BpInstance &instance, const SessionId session_id) {
 		http_request(pool, instance.event_loop, *instance.fs_balancer,
 			     nullptr,
@@ -48,13 +53,13 @@ public:
 			LogConcat(3, "ExternalSessionManager", "Status ", int(status),
 				  " from manager '", address.path, "'");
 
-		unlink();
+		Destroy();
 	}
 
 	void OnHttpError(std::exception_ptr ep) noexcept override {
 		LogConcat(2, "ExternalSessionManager", "Failed to refresh external session: ", ep);
 
-		unlink();
+		Destroy();
 	}
 };
 
