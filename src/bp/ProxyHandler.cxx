@@ -65,7 +65,7 @@ Request::HandleProxyAddress() noexcept
 				      address.IsAnyHttp());
 
 	if (tr.require_csrf_token &&
-	    MethodNeedsCsrfProtection(forward.method) &&
+	    MethodNeedsCsrfProtection(request.method) &&
 	    !CheckCsrfToken())
 		return;
 
