@@ -78,6 +78,13 @@ struct WidgetContext {
 
 	IntrusiveForwardList<Widget> root_widgets;
 
+	/**
+	 * Did the client request carry a valid CSRF token?
+	 *
+	 * @see #TranslationCommand::REQUIRE_CSRF_TOKEN
+	 */
+	bool has_valid_csrf_token;
+
 	WidgetContext(EventLoop &_event_loop,
 		      PipeStock *_pipe_stock,
 		      TranslationService &_translation_service,

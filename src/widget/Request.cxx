@@ -12,6 +12,7 @@
 #include "http/CommonHeaders.hxx"
 #include "http/ResponseHandler.hxx"
 #include "FilterStatus.hxx"
+#include "bp/CsrfProtection.hxx"
 #include "bp/ProcessorHeaders.hxx"
 #include "bp/XmlProcessor.hxx"
 #include "bp/WidgetLookupProcessor.hxx"
@@ -663,6 +664,13 @@ WidgetRequest::SendRequest() noexcept
 		? widget.cls->cookie_host
 		: a_view->address.GetHostAndPort();
 	transformations = {ShallowCopy{}, t_view->transformations};
+
+	if (widget.cls->require_csrf_token &&
+	    MethodNeedsCsrfProtection(widget.from_request.method) &&
+	    !ctx->has_valid_csrf_token) {
+		DispatchError(WidgetErrorCode::FORBIDDEN, "Bad CSRF token");
+		return;
+	}
 
 	const auto &address = widget.GetAddress();
 

@@ -290,6 +290,7 @@ Request::NewWidgetContext() const noexcept
 	ctx->peer_subject = connection.peer_subject;
 	ctx->peer_issuer_subject = connection.peer_issuer_subject;
 	ctx->user = user;
+	ctx->has_valid_csrf_token = HasValidCsrfToken();
 
 	return ctx;
 }

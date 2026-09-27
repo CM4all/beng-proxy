@@ -68,6 +68,7 @@ cm4all-beng-proxy (22.0) unstable; urgency=low
   * widget: validate header values
   * widget: fix crash after rewriting absolute URI
   * widget: fix crash after rewriting URI with unescaping
+  * widget: check REQUIRE_CSRF_TOKEN for inline widgets
   * processor: fix eight crash bugs
   * css_processor: two fix infinite loop bugs
   * stock: fix use-after-free bug
