@@ -129,7 +129,11 @@ try {
 
 	auto &_control = control;
 	Destroy();
-	_control.Set(std::move(body));
+
+	if (body)
+		_control.Set(std::move(body));
+	else
+		_control.SetEof();
 } catch (...) {
 	DestroyError(std::current_exception());
 }
