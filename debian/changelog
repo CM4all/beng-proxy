@@ -63,6 +63,7 @@ cm4all-beng-proxy (22.0) unstable; urgency=low
   * bp: fix EXTERNAL_SESSION_KEEPALIVE memory leak
   * bp: obey DISCARD_SESSION in the AUTH response
   * bp: apply REQUIRE_CSRF_TOKEN to the original request method
+  * bp: filter the ERROR_DOCUMENT response headers
   * session: always use getrandom() to generate session ids
   * session: limit the number of realms per session
   * cookie: reject public-suffix cookie domains

@@ -6,6 +6,7 @@
 #include "CoLoadResource.hxx"
 #include "PendingResponse.hxx"
 #include "Instance.hxx"
+#include "http/Headers.hxx"
 #include "http/IncomingRequest.hxx"
 #include "http/Method.hxx"
 #include "translation/CoTranslate.hxx"
@@ -57,7 +58,10 @@ Request::DispatchErrdocResponse(std::span<const std::byte> error_document)
 
 	/* submit the error document which we just received */
 	co_return PendingResponse(response->status,
-				  std::move(response->headers),
+				  ForwardResponseHeaders(response->status,
+							 std::move(response->headers).ToMap(pool),
+							 nullptr, nullptr,
+							 t.response_header_forward),
 				  std::move(response->body));
 }
 
