@@ -3,6 +3,7 @@ cm4all-beng-proxy (22.0) unstable; urgency=low
   * lb/lua: fix crash on malformed query string
   * lb/translation: fix use-after-free crash bug
   * lb/zeroconf: fix use-after-free crash bug
+  * lb: fix IPv6 /48 ban list lookup
   * certdb: fix crash on PostgreSQL error
   * certdb: require CURL 7.85
   * certdb: restrict CURL to HTTPS
