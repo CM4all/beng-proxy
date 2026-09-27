@@ -197,6 +197,12 @@ Widget::AbsoluteUri(AllocatorPtr alloc, bool stateful,
 
 	const char *uri = uri_absolute(alloc, base, relative_uri);
 	assert(uri != nullptr);
+	if (*uri != '/')
+		/* uri_absolute() returns values with a scheme
+		   verbatim; such a value cannot be combined with the
+		   widget's address */
+		return nullptr;
+
 	if (!relative_uri.empty() &&
 	    from_template.query_string != nullptr)
 		/* the relative_uri is non-empty, and uri_absolute() has

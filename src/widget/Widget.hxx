@@ -426,6 +426,10 @@ public:
 	ResourceAddress GetBaseAddress(AllocatorPtr alloc,
 				       bool stateful) const noexcept;
 
+	/**
+	 * @return the absolute URI or nullptr if #relative_uri
+	 * cannot be resolved against this widget's address
+	 */
 	[[gnu::pure]]
 	const char *AbsoluteUri(AllocatorPtr alloc, bool stateful,
 				std::string_view relative_uri) const noexcept;
