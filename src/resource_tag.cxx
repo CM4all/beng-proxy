@@ -4,8 +4,8 @@
 
 #include "resource_tag.hxx"
 #include "strmap.hxx"
+#include "http/cache/CacheControl.hxx"
 #include "http/CommonHeaders.hxx"
-#include "http/List.hxx"
 #include "util/djb_hash.hxx"
 #include "util/SpanCast.hxx"
 #include "util/StringWithHash.hxx"
@@ -45,7 +45,7 @@ StringWithHash
 resource_tag_append_etag(AllocatorPtr alloc, const StringWithHash tag,
 			 const StringMap &headers) noexcept
 {
-	const char *etag, *p;
+	const char *etag;
 
 	if (tag.IsNull())
 		return StringWithHash{nullptr};
@@ -54,8 +54,7 @@ resource_tag_append_etag(AllocatorPtr alloc, const StringWithHash tag,
 	if (etag == NULL)
 		return StringWithHash{nullptr};
 
-	p = headers.Get(cache_control_header);
-	if (p != NULL && http_list_contains(p, "no-store"))
+	if (HasCacheControlDirective(headers, "no-store"))
 		/* generating a resource tag for the cache is pointless,
 		   because we are not allowed to store the response anyway */
 		return StringWithHash{nullptr};

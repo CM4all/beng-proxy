@@ -215,8 +215,10 @@ http_cache_response_evaluate(const HttpCacheRequestInfo &request_info,
 
 	std::chrono::system_clock::duration max_age{-1}, s_maxage{-1};
 
-	if (const char *cache_control = headers.Get(cache_control_header)) {
-		for (std::string_view s : IterableSplitString(cache_control, ',')) {
+	const auto cache_control_range = headers.EqualRange(cache_control_header);
+	for (auto i = cache_control_range.first;
+	     i != cache_control_range.second; ++i) {
+		for (std::string_view s : IterableSplitString(i->value, ',')) {
 			s = Strip(s);
 
 			if (StringStartsWithIgnoreCase(s, "private"sv) ||
