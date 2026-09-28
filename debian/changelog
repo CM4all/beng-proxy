@@ -57,9 +57,9 @@ cm4all-beng-proxy (22.0) unstable; urgency=low
   * bp: count handshake-pending connections against max_connections
   * bp: strip X-CM4all-BENG-User from filter requests
   * bp: fix EXTERNAL_SESSION_KEEPALIVE memory leak
-  * bp/widget: reject duplicate "type" attribute
   * session: always use getrandom() to generate session ids
   * cookie: reject public-suffix cookie domains
+  * widget: reject duplicate "type" attribute
   * widget: reject "../" at beginning of compressed URI
   * widget: refuse to add headers starting with "x-cm4all-"
   * widget: validate header values
