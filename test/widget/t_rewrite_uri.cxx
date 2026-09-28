@@ -164,19 +164,19 @@ assert_istream_equals(struct pool *pool, UnusedIstreamPtr _istream,
 	ASSERT_STREQ(ctx.value.c_str(), value);
 }
 
+/**
+ * @param value2 the attribute value as it appears in the template,
+ * i.e. HTML-escaped
+ */
 static void
-assert_rewrite_check4(EventLoop &event_loop,
+assert_rewrite_check5(EventLoop &event_loop,
 		      struct pool *widget_pool, const char *site_name,
 		      Widget *widget,
-		      const char *value, RewriteUriMode mode, bool stateful,
+		      std::string_view value2, RewriteUriMode mode, bool stateful,
 		      const char *view,
 		      const char *result)
 {
 	auto pool = pool_new_libc(widget_pool, "rewrite");
-
-	std::string_view value2{};
-	if (value != nullptr)
-		value2 = escape_dup(*widget_pool, html_escape_class, value);
 
 	if (result != NULL) {
 		result = p_strdup(*widget_pool, escape_dup(*widget_pool, html_escape_class, result));
@@ -210,6 +210,22 @@ assert_rewrite_check4(EventLoop &event_loop,
 		ASSERT_FALSE(istream);
 	else
 		assert_istream_equals(pool, std::move(istream), result);
+}
+
+static void
+assert_rewrite_check4(EventLoop &event_loop,
+		      struct pool *widget_pool, const char *site_name,
+		      Widget *widget,
+		      const char *value, RewriteUriMode mode, bool stateful,
+		      const char *view,
+		      const char *result)
+{
+	std::string_view value2{};
+	if (value != nullptr)
+		value2 = escape_dup(*widget_pool, html_escape_class, value);
+
+	assert_rewrite_check5(event_loop, widget_pool, site_name, widget,
+			      value2, mode, stateful, view, result);
 }
 
 static void
@@ -508,4 +524,85 @@ TEST(RewriteUriTest, Basic)
 				      "/1/123", RewriteUriMode::FOCUS, false,
 				      nullptr, "//mysite_urss/index.html;focus=urss_id&path=123");
 	}
+}
+
+namespace {
+
+/**
+ * A container widget plus one embedded widget of class "1", whose
+ * widget server address is "http://widget-server/1/".
+ */
+struct RewriteUriInstance : PInstance {
+	const PoolPtr pool{pool_new_libc(root_pool, "pool")};
+
+	Widget container{Widget::RootTag(), *pool, "foobar"};
+	Widget widget{*pool, nullptr};
+
+	RewriteUriInstance() noexcept {
+		widget.class_name = "1";
+		widget.parent = &container;
+		widget.SetId("1");
+
+		/* resolve the class right away so that
+		   rewrite_widget_uri() takes the synchronous code
+		   path, which reports failure by returning nullptr */
+		auto *cls = NewFromPool<MakeWidgetClass>(*pool, *pool, "/1/");
+		widget.cls = cls;
+		widget.from_template.view = widget.from_request.view =
+			&cls->views.front();
+	}
+
+	void Check(const char *value, const char *result) {
+		assert_rewrite_check(event_loop, pool, &widget, value,
+				     RewriteUriMode::DIRECT, result);
+	}
+
+	void CheckEscaped(std::string_view value, const char *result) {
+		assert_rewrite_check5(event_loop, pool, nullptr, &widget,
+				      value, RewriteUriMode::DIRECT, true,
+				      nullptr, result);
+	}
+};
+
+} // anonymous namespace
+
+/**
+ * The documented "~/" prefix (which disables the session) and a colon
+ * which does not introduce a scheme are not affected by the
+ * scheme check in Widget::AbsoluteUri().
+ */
+TEST(RewriteUriTest, DirectModeNoScheme)
+{
+	RewriteUriInstance instance;
+
+	instance.Check("~/foo", "http://widget-server/1/foo");
+	instance.Check("tel:1", "http://widget-server/1/tel:1");
+	instance.Check("~/tel:1", "http://widget-server/1/tel:1");
+}
+
+/**
+ * uri_absolute() returns URIs which have a scheme verbatim, and
+ * HttpAddress::GetAbsoluteURI() checks its "override_path" parameter
+ * with assert() only; such a value must therefore never reach it.
+ *
+ * rewrite_widget_uri() refuses UriHasAuthority() values, but the "~/"
+ * prefix hides the scheme from that check.
+ */
+TEST(RewriteUriTest, DirectModeSchemeAfterTilde)
+{
+	RewriteUriInstance instance;
+
+	instance.Check("~/http://evil/x", nullptr);
+}
+
+/**
+ * Like DirectModeSchemeAfterTilde, but the scheme is hidden from the
+ * UriHasAuthority() check by HTML-escaping the colon;
+ * rewrite_widget_uri() unescapes the value only afterwards.
+ */
+TEST(RewriteUriTest, DirectModeSchemeAfterUnescape)
+{
+	RewriteUriInstance instance;
+
+	instance.CheckEscaped("http&#58;//evil/x"sv, nullptr);
 }
