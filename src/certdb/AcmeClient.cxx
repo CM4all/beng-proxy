@@ -403,9 +403,7 @@ AcmeClient::DownloadCertificate(EVP_PKEY &key, const AcmeOrder &order)
 		throw std::runtime_error("Wrong Content-Type in certificate download");
 
 	const auto in = BIO_new_mem_buf(AsBytes(response.body));
-	return UniqueX509((X509 *)PEM_ASN1_read_bio((d2i_of_void *)d2i_X509,
-						    PEM_STRING_X509, in.get(),
-						    nullptr, nullptr, nullptr));
+	return UniqueX509{PEM_read_bio_X509(in.get(), nullptr, nullptr, nullptr)};
 }
 
 AcmeAuthorization
