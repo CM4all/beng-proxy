@@ -341,10 +341,6 @@ libcommon_enable_libsystemd = dependency('libsystemd', required: get_option('sys
 
 subdir('libcommon/src/was/async')
 subdir('libcommon/src/stock')
-
-openssl_min_version = '3'
-openssl_api_compat = '0x30000000L'
-
 subdir('libcommon/src/lib/openssl')
 
 ssl2_sources = []
