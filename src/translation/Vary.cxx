@@ -20,7 +20,7 @@ static constexpr struct {
 	TranslationCommand cmd;
 	std::string_view http_header;
 } translation_vary_headers[] = {
-	{TranslationCommand::SESSION, "cookie2"sv}, // TODO need both "cookie2" and "cookie"?
+	{TranslationCommand::SESSION, "cookie"sv},
 	{TranslationCommand::LANGUAGE, "accept-language"sv},
 	{TranslationCommand::AUTHORIZATION, "authorization"sv},
 	{TranslationCommand::USER_AGENT, "user-agent"sv},
