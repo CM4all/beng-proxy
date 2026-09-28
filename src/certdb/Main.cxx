@@ -15,7 +15,6 @@
 #include "lib/fmt/ToBuffer.hxx"
 #include "lib/openssl/Buffer.hxx"
 #include "lib/openssl/Dummy.hxx"
-#include "lib/openssl/Key.hxx"
 #include "lib/openssl/LoadFile.hxx"
 #include "lib/openssl/Name.hxx"
 #include "lib/openssl/UniqueEVP.hxx"
@@ -107,8 +106,6 @@ LoadCertificate(const CertDatabaseConfig &db_config,
 	const auto common_name = GetCommonName(*cert);
 
 	const auto key = LoadKeyFile(key_path);
-	if (!MatchModulus(*cert, *key))
-		throw "Key and certificate do not match.";
 
 	const auto [wrap_key_name, wrap_key] = db_config.GetDefaultWrapKey();
 

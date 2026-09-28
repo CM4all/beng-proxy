@@ -9,6 +9,7 @@
 #include "WrapKey.hxx"
 #include "lib/openssl/Buffer.hxx"
 #include "lib/openssl/Time.hxx"
+#include "lib/openssl/Key.hxx"
 #include "lib/openssl/Name.hxx"
 #include "lib/openssl/AltName.hxx"
 #include "lib/openssl/UniqueCertKey.hxx"
@@ -155,6 +156,9 @@ CertDatabase::LoadServerCertificate(const char *handle, const char *special,
 		throw "Certificate has no common name";
 
 	const auto issuer_common_name = GetIssuerCommonName(cert);
+
+	if (!MatchModulus(cert, key))
+		throw "Key and certificate do not match";
 
 	const SslBuffer cert_buffer(cert);
 	const Pg::BinaryValue cert_der(cert_buffer.get());
