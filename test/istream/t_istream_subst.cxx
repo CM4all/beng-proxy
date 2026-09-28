@@ -208,3 +208,117 @@ TEST(SubstIstream, PartialMatchConsumedInSteps)
 	EXPECT_EQ(r.consumed, 1u);
 	EXPECT_TRUE(r.eof);
 }
+
+/**
+ * If the input ends right after a complete substitution key while the
+ * handler is blocked, the replacement stays pending and the input is
+ * gone.  Draining the replacement through the bucket API must report
+ * end-of-file; it used to return eof=false and ask for a fallback
+ * Read(), which read from the cleared input.
+ */
+TEST(SubstIstream, EofAfterInsert)
+{
+	Instance instance;
+
+	struct pool &pool = instance.root_pool;
+
+	SubstTree tree;
+	tree.Add(pool, "foo", "X");
+
+	/* the input ends with the complete key "foo" */
+	BucketSink sink{istream_subst_new(&pool,
+					  istream_string_new(pool, "abcfoo"sv),
+					  std::move(tree))};
+
+	/* the first bucket list ends before the 'f' which starts the
+	   match */
+	{
+		IstreamBucketList list;
+		sink.FillBucketList(list);
+		EXPECT_EQ(ToString(list), "abc"sv);
+		EXPECT_EQ(list.GetMore(), IstreamBucketList::More::FALLBACK);
+
+		const auto r = sink.ConsumeBucketList(3);
+		EXPECT_EQ(r.consumed, 3u);
+		EXPECT_FALSE(r.eof);
+	}
+
+	/* the rest is the key, so there is nothing to push */
+	{
+		IstreamBucketList list;
+		sink.FillBucketList(list);
+		EXPECT_TRUE(list.IsEmpty());
+		EXPECT_EQ(list.GetMore(), IstreamBucketList::More::FALLBACK);
+	}
+
+	/* the fallback Read() feeds "foo" to the parser and then
+	   reports EOF; because our OnData() returns 0, the
+	   replacement is left pending */
+	sink.Read();
+	ASSERT_FALSE(sink.eof);
+	ASSERT_FALSE(sink.error);
+
+	/* the pending replacement is now a plain buffer, and there is
+	   nothing to fall back to */
+	{
+		IstreamBucketList list;
+		sink.FillBucketList(list);
+		EXPECT_EQ(ToString(list), "X"sv);
+		EXPECT_FALSE(list.HasMore());
+	}
+
+	/* ... and consuming it must report end-of-file */
+	const auto r = sink.ConsumeBucketList(1);
+	EXPECT_EQ(r.consumed, 1u);
+	EXPECT_TRUE(r.eof);
+}
+
+/**
+ * Like EofAfterInsert, but the pending replacement is consumed byte
+ * by byte; only the last byte may report end-of-file.
+ */
+TEST(SubstIstream, InsertConsumedInSteps)
+{
+	Instance instance;
+
+	struct pool &pool = instance.root_pool;
+
+	SubstTree tree;
+	tree.Add(pool, "foo", "XYZ");
+
+	BucketSink sink{istream_subst_new(&pool,
+					  istream_string_new(pool, "foo"sv),
+					  std::move(tree))};
+
+	/* enter the pending-INSERT state */
+	{
+		IstreamBucketList list;
+		sink.FillBucketList(list);
+		EXPECT_TRUE(list.IsEmpty());
+	}
+
+	sink.Read();
+	ASSERT_FALSE(sink.eof);
+	ASSERT_FALSE(sink.error);
+
+	for (unsigned i = 0; i < 2; ++i) {
+		IstreamBucketList list;
+		sink.FillBucketList(list);
+		EXPECT_FALSE(list.IsEmpty());
+		EXPECT_FALSE(list.HasMore());
+
+		const auto r = sink.ConsumeBucketList(1);
+		EXPECT_EQ(r.consumed, 1u);
+		EXPECT_FALSE(r.eof);
+	}
+
+	{
+		IstreamBucketList list;
+		sink.FillBucketList(list);
+		EXPECT_EQ(ToString(list), "Z"sv);
+	}
+
+	const auto r = sink.ConsumeBucketList(1);
+	EXPECT_EQ(r.consumed, 1u);
+	EXPECT_TRUE(r.eof);
+}
