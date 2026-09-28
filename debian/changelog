@@ -4,6 +4,7 @@ cm4all-beng-proxy (22.0) unstable; urgency=low
   * lb/lua: fix bogus "has_body" value
   * lb/lua: ignored optional send_redirect() parameters (off-by-one bugs)
   * lb/lua: fix use-after-free bug in send_redirect()
+  * lb/lua/json: limit the recursion depth
   * lb/prometheus: fix crash after receiving body-less response
   * lb/translation: fix use-after-free crash bug
   * lb/zeroconf: fix use-after-free crash bug
