@@ -312,7 +312,8 @@ BpInstance::OnControlPacket(BengControl::Command command,
 		break;
 
 	case Command::STOPWATCH_PIPE:
-		HandleStopwatchPipe(payload, fds);
+		if (is_privileged)
+			HandleStopwatchPipe(payload, fds);
 		break;
 
 	case Command::DISCARD_SESSION:
