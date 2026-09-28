@@ -28,20 +28,42 @@ operator<<(std::ostream &os, const CdataCall &c)
 	return os << "{\"" << c.text << "\", " << c.start << '}';
 }
 
+struct AttributeCall {
+	std::string name, value;
+	off_t name_start, value_start, value_end, end;
+
+	bool operator==(const AttributeCall &) const noexcept = default;
+};
+
+std::ostream &
+operator<<(std::ostream &os, const AttributeCall &a)
+{
+	return os << "{\"" << a.name << "\", \"" << a.value << "\", "
+		  << a.name_start << ", " << a.value_start << ", "
+		  << a.value_end << ", " << a.end << '}';
+}
+
 class RecordingXmlParserHandler final : public XmlParserHandler {
 public:
 	std::vector<CdataCall> cdata;
+	std::vector<AttributeCall> attributes;
 
 	/* virtual methods from class XmlParserHandler */
 	bool OnXmlTagStart(const XmlParserTag &) noexcept override {
-		return false;
+		/* parse attributes */
+		return true;
 	}
 
 	bool OnXmlTagFinished(const XmlParserTag &) noexcept override {
 		return true;
 	}
 
-	void OnXmlAttributeFinished(const XmlParserAttribute &) noexcept override {}
+	void OnXmlAttributeFinished(const XmlParserAttribute &attr) noexcept override {
+		attributes.emplace_back(std::string{attr.name},
+					std::string{attr.value},
+					attr.name_start, attr.value_start,
+					attr.value_end, attr.end);
+	}
 
 	size_t OnXmlCdata(std::string_view text, bool,
 			  off_t start) noexcept override {
@@ -76,6 +98,22 @@ ExpectMonotonic(const std::vector<CdataCall> &cdata) noexcept
 	for (const auto &i : cdata) {
 		EXPECT_GE(i.start, end);
 		end = i.start + (off_t)i.text.size();
+	}
+}
+
+/**
+ * Every reported attribute must satisfy
+ * name_start <= value_start <= value_end <= end; #XmlProcessor feeds
+ * (name_start, end) to ReplaceIstream::Add() to delete a c:base /
+ * c:mode / xmlns:c attribute, which asserts start <= end.
+ */
+void
+ExpectWellFormed(const std::vector<AttributeCall> &attributes) noexcept
+{
+	for (const auto &i : attributes) {
+		EXPECT_LE(i.name_start, i.value_start);
+		EXPECT_LE(i.value_start, i.value_end);
+		EXPECT_LE(i.value_end, i.end);
 	}
 }
 
@@ -168,4 +206,65 @@ TEST(XmlParser, ScriptRestoredBracket)
 	};
 
 	EXPECT_EQ(instance.handler.cdata, expected);
+}
+
+/**
+ * An attribute without a value used to be reported with the `end`
+ * offset of the previously parsed attribute, which is before its own
+ * `name_start`.
+ */
+TEST(XmlParser, AttributeWithoutValue)
+{
+	Instance instance;
+
+	/*             0123456789 */
+	instance.Feed("<a href=\"x\" c:base>"sv);
+
+	ExpectWellFormed(instance.handler.attributes);
+
+	const std::vector<AttributeCall> expected{
+		{"href", "x", 3, 9, 10, 11},
+		{"c:base", "", 12, 18, 18, 18},
+	};
+
+	EXPECT_EQ(instance.handler.attributes, expected);
+}
+
+/**
+ * Like AttributeWithoutValue, but there are two of them; the first
+ * one ends where the second one begins.
+ */
+TEST(XmlParser, TwoAttributesWithoutValue)
+{
+	Instance instance;
+
+	instance.Feed("<a href=\"x\" c:base c:mode>"sv);
+
+	ExpectWellFormed(instance.handler.attributes);
+
+	const std::vector<AttributeCall> expected{
+		{"href", "x", 3, 9, 10, 11},
+		{"c:base", "", 12, 19, 19, 19},
+		{"c:mode", "", 19, 25, 25, 25},
+	};
+
+	EXPECT_EQ(instance.handler.attributes, expected);
+}
+
+/**
+ * A value without quotes.
+ */
+TEST(XmlParser, UnquotedAttributeValue)
+{
+	Instance instance;
+
+	instance.Feed("<a href=x>"sv);
+
+	ExpectWellFormed(instance.handler.attributes);
+
+	const std::vector<AttributeCall> expected{
+		{"href", "x", 3, 8, 9, 9},
+	};
+
+	EXPECT_EQ(instance.handler.attributes, expected);
 }
