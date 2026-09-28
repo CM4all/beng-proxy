@@ -105,8 +105,6 @@ LoadCertificate(const CertDatabaseConfig &db_config,
 {
 	const auto cert = LoadCertFile(cert_path);
 	const auto common_name = GetCommonName(*cert);
-	if (common_name == nullptr)
-		throw "Certificate has no common name";
 
 	const auto key = LoadKeyFile(key_path);
 	if (!MatchModulus(*cert, *key))
@@ -123,6 +121,8 @@ LoadCertificate(const CertDatabaseConfig &db_config,
 						    *cert, *key, wrap_key_name,
 						    wrap_key);
 	});
+
+	assert(common_name != nullptr);
 
 	fmt::print("{}: {}\n", inserted ? "insert"sv : "update"sv,
 		   common_name.c_str());

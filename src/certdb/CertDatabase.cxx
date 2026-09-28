@@ -151,7 +151,8 @@ CertDatabase::LoadServerCertificate(const char *handle, const char *special,
 				    const WrapKey *wrap_key)
 {
 	const auto common_name = GetCommonName(cert);
-	assert(common_name != nullptr);
+	if (common_name == nullptr)
+		throw "Certificate has no common name";
 
 	const auto issuer_common_name = GetIssuerCommonName(cert);
 
