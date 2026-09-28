@@ -6,9 +6,12 @@
 #include "Config.hxx"
 #include "pg/Result.hxx"
 #include "lib/openssl/Certificate.hxx"
+#include "lib/openssl/Error.hxx"
 #include "lib/openssl/Key.hxx"
 #include "lib/openssl/UniqueCertKey.hxx"
 #include "util/AllocatedArray.hxx"
+
+#include <openssl/err.h>
 
 UniqueX509
 LoadCertificate(const Pg::Result &result, unsigned row, unsigned column)
@@ -50,8 +53,9 @@ LoadCertificateKey(const CertDatabaseConfig &config,
 		LoadWrappedKey(config, result, row, column + 1),
 	};
 
-	if (!MatchModulus(*ck.cert, *ck.key))
-		throw std::runtime_error("Key does not match certificate");
+	ERR_clear_error();
+	if (X509_check_private_key(ck.cert.get(), ck.key.get()) != 1)
+		throw SslError{"Key does not match certificate"};
 
 	return ck;
 }

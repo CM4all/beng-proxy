@@ -8,6 +8,7 @@
 #include "Config.hxx"
 #include "WrapKey.hxx"
 #include "lib/openssl/Buffer.hxx"
+#include "lib/openssl/Error.hxx"
 #include "lib/openssl/Time.hxx"
 #include "lib/openssl/Key.hxx"
 #include "lib/openssl/Name.hxx"
@@ -18,6 +19,7 @@
 #include "util/AllocatedString.hxx"
 
 #include <openssl/aes.h>
+#include <openssl/err.h>
 
 /**
  * A callable which invokes Pg::Connection::ExecuteParams().
@@ -157,8 +159,9 @@ CertDatabase::LoadServerCertificate(const char *handle, const char *special,
 
 	const auto issuer_common_name = GetIssuerCommonName(cert);
 
-	if (!MatchModulus(cert, key))
-		throw "Key and certificate do not match";
+	ERR_clear_error();
+	if (X509_check_private_key(&cert, &key) != 1)
+		throw SslError{"Key does not match certificate"};
 
 	const SslBuffer cert_buffer(cert);
 	const Pg::BinaryValue cert_der(cert_buffer.get());
