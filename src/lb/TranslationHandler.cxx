@@ -112,6 +112,8 @@ LbTranslationHandler::Pick(struct pool &pool, const IncomingHttpRequest &request
 			   TranslateHandler &handler,
 			   CancellablePointer &cancel_ptr)
 {
+	const AllocatorPtr alloc{pool};
+
 	if (cache) {
 		const auto *item = cache->Get(request, listener_tag);
 		if (item != nullptr) {
@@ -136,11 +138,10 @@ LbTranslationHandler::Pick(struct pool &pool, const IncomingHttpRequest &request
 		}
 	}
 
-	auto *r = NewFromPool<LbTranslateHandlerRequest>(pool,
-							 *this, name, listener_tag,
-							 request,
-							 handler);
-	stock.SendRequest(pool, r->request,
+	auto *r = alloc.New<LbTranslateHandlerRequest>(*this, name, listener_tag,
+						       request,
+						       handler);
+	stock.SendRequest(alloc, r->request,
 			  nullptr,
 			  *r, cancel_ptr);
 }
