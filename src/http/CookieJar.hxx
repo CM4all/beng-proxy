@@ -18,6 +18,38 @@ struct CookieData {
 	CookieData(N &&_name, V &&_value)
 		:name(std::forward<N>(_name)),
 		 value(std::forward<V>(_value)) {}
+
+	/**
+	 * Is this cookie exactly the specified domain?
+	 *
+	 * @param request_domain the domain to compare with (not nullptr)
+	 */
+	[[gnu::pure]]
+	bool IsDomain(const char *request_domain) const noexcept;
+
+	/**
+	 * Does the given cookie apply to a request to the given host?
+	 *
+	 * @param request_domain the domain to compare with (not nullptr)
+	 */
+	[[gnu::pure]]
+	bool DomainMatches(const char *request_domain) const noexcept;
+
+	/**
+	 * Is this cookie exactly the specified path?
+	 *
+	 * @param request_path the path to compare with; may be nullptr
+	 */
+	[[gnu::pure]]
+	bool IsPath(const char *request_path) const noexcept;
+
+	/**
+	 * Does the given cookie apply to a request to the given path?
+	 *
+	 * @param request_path the path to compare with (not nullptr)
+	 */
+	[[gnu::pure]]
+	bool PathMatches(const char *request_path) const noexcept;
 };
 
 struct Cookie : IntrusiveListHook<IntrusiveHookMode::NORMAL>, CookieData {

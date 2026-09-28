@@ -5,6 +5,68 @@
 #include "CookieJar.hxx"
 #include "util/DeleteDisposer.hxx"
 #include "util/StringAPI.hxx"
+#include "util/StringCompare.hxx"
+
+[[gnu::pure]]
+static bool
+domain_matches(const char *domain, const char *match) noexcept
+{
+	size_t domain_length = strlen(domain);
+	size_t match_length = strlen(match);
+
+	return domain_length >= match_length &&
+		strcasecmp(domain + domain_length - match_length, match) == 0 &&
+		(domain_length == match_length || /* "a.b" matches "a.b" */
+		 match[0] == '.' || /* "a.b" matches ".b" */
+		 /* "a.b" matches "b" (implicit dot according to RFC 2965
+		    3.2.2): */
+		 (domain_length > match_length &&
+		  domain[domain_length - match_length - 1] == '.'));
+}
+
+[[gnu::pure]]
+static bool
+path_matches(const char *path, const char *match) noexcept
+{
+	assert(path != nullptr);
+
+	return match == nullptr || StringStartsWith(path, match);
+}
+
+bool
+CookieData::IsDomain(const char *request_domain) const noexcept
+{
+	assert(domain != nullptr);
+	assert(request_domain != nullptr);
+
+	return StringIsEqualIgnoreCase(domain.c_str(), request_domain);
+}
+
+bool
+CookieData::DomainMatches(const char *request_domain) const noexcept
+{
+	assert(domain != nullptr);
+	assert(request_domain != nullptr);
+
+	return domain_matches(request_domain, domain.c_str());
+}
+
+bool
+CookieData::IsPath(const char *request_path) const noexcept
+{
+	if (path == nullptr || request_path == nullptr)
+		return path == nullptr && request_path == nullptr;
+
+	return StringIsEqual(path.c_str(), request_path);
+}
+
+bool
+CookieData::PathMatches(const char *request_path) const noexcept
+{
+	assert(request_path != nullptr);
+
+	return path_matches(request_path, path.c_str());
+}
 
 CookieJar::CookieJar(const CookieJar &src)
 {

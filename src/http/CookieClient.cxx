@@ -28,23 +28,6 @@
 
 using std::string_view_literals::operator""sv;
 
-[[gnu::pure]]
-static bool
-domain_matches(const char *domain, const char *match) noexcept
-{
-	size_t domain_length = strlen(domain);
-	size_t match_length = strlen(match);
-
-	return domain_length >= match_length &&
-		strcasecmp(domain + domain_length - match_length, match) == 0 &&
-		(domain_length == match_length || /* "a.b" matches "a.b" */
-		 match[0] == '.' || /* "a.b" matches ".b" */
-		 /* "a.b" matches "b" (implicit dot according to RFC 2965
-		    3.2.2): */
-		 (domain_length > match_length &&
-		  domain[domain_length - match_length - 1] == '.'));
-}
-
 /**
  * May this value be used in a cookie "Domain" attribute?  It must not
  * be a public suffix (e.g. ".com"), because that would allow one
@@ -72,13 +55,6 @@ IsAcceptableCookieDomain(const char *domain) noexcept
 	return !CheckChars(dot + 1, IsDigitASCII);
 }
 
-[[gnu::pure]]
-static bool
-path_matches(const char *path, const char *match) noexcept
-{
-	return match == nullptr || StringStartsWith(path, match);
-}
-
 template<typename L>
 static void
 cookie_list_delete_match(L &list,
@@ -92,11 +68,8 @@ cookie_list_delete_match(L &list,
 		   (name, domain, path); only a cookie with the very
 		   same tuple is replaced, and not one which merely
 		   contains or is contained by the new one */
-		return StringIsEqualIgnoreCase(cookie.domain.c_str(), domain) &&
-			(cookie.path == nullptr
-			 ? path == nullptr
-			 : (path != nullptr &&
-			    StringIsEqual(cookie.path.c_str(), path))) &&
+		return cookie.IsDomain(domain) &&
+			cookie.IsPath(path) &&
 			name == cookie.name;
 	},
 		DeleteDisposer{});
@@ -150,13 +123,13 @@ apply_next_cookie(CookieJar &jar, struct pool &tpool, std::string_view &input,
 
 	if (cookie->domain == nullptr) {
 		cookie->domain = domain;
-	} else if (!domain_matches(domain, cookie->domain.c_str()) ||
+	} else if (!cookie->DomainMatches(domain) ||
 		   !IsAcceptableCookieDomain(cookie->domain.c_str())) {
 		/* discard if domain mismatch */
 		return false;
 	}
 
-	if (path != nullptr && !path_matches(path, cookie->path.c_str())) {
+	if (path != nullptr && !cookie->PathMatches(path)) {
 		/* discard if path mismatch */
 		return false;
 	}
@@ -220,8 +193,8 @@ cookie_jar_http_header_value(const CookieJar &jar,
 
 		auto *const cookie = &*i;
 
-		if (!domain_matches(domain, cookie->domain.c_str()) ||
-		    !path_matches(path, cookie->path.c_str()))
+		if (!cookie->DomainMatches(domain) ||
+		    !cookie->PathMatches(path))
 			continue;
 
 		const std::string_view name{cookie->name};
