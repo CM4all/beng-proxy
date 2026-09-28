@@ -111,7 +111,7 @@ public:
 	 * existing certificate has been updated
 	 */
 	bool LoadServerCertificate(const char *handle, const char *special,
-				   X509 &cert, const EVP_PKEY &key,
+				   const X509 &cert, const EVP_PKEY &key,
 				   const char *key_wrap_name,
 				   const WrapKey *wrap_key);
 

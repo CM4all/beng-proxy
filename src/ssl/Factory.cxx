@@ -27,7 +27,7 @@
 template<typename Name>
 [[gnu::pure]]
 static auto
-GetCertificateNames(X509 &cert) noexcept
+GetCertificateNames(const X509 &cert) noexcept
 {
 	std::forward_list<Name> names;
 

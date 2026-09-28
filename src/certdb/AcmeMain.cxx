@@ -386,7 +386,7 @@ AcmeNewOrder(const CertDatabaseConfig &db_config, const AcmeConfig &config,
 
 [[gnu::pure]]
 static std::set<std::string>
-AllNames(X509 &cert) noexcept
+AllNames(const X509 &cert) noexcept
 {
 	std::set<std::string> result;
 
