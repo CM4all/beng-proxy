@@ -83,7 +83,7 @@ ObtainPukiCertificate(const PukiConfig &config, X509_REQ &req)
 
 static UniqueX509
 ObtainPukiCertificate(const PukiConfig &config, EVP_PKEY &key,
-		      const std::set<std::string> &hosts)
+		      const std::set<std::string, std::less<>> &hosts)
 {
 	assert(!hosts.empty());
 
@@ -102,7 +102,7 @@ static void
 NewCert(const CertDatabaseConfig &db_config, const PukiConfig &config,
 	CertDatabase &db,
 	const char *handle,
-	const std::set<std::string> &hosts)
+	const std::set<std::string, std::less<>> &hosts)
 {
 	const auto key = GenerateEcKey();
 	const auto cert = ObtainPukiCertificate(config, *key, hosts);
