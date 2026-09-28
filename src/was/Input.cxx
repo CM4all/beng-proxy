@@ -42,6 +42,15 @@ class WasInput final : Istream {
 
 	bool closed = false, known_length = false;
 
+	/**
+	 * If not nullptr, then we are inside _FillBucketList().  Our
+	 * #IstreamHandler is the caller of that method and must not be
+	 * destroyed from within it; therefore a failure is stored here
+	 * instead of being passed to DestroyError(), and
+	 * _FillBucketList() throws it.
+	 */
+	std::exception_ptr *fill_bucket_list_error = nullptr;
+
 public:
 	WasInput(struct pool &p, EventLoop &event_loop, FileDescriptor fd,
 		 WasInputHandler &_handler) noexcept
@@ -465,8 +474,20 @@ WasInput::Free(std::exception_ptr ep) noexcept
 	defer_read.Cancel();
 	event.Cancel();
 
-	if (!closed && enabled)
-		DestroyError(std::move(ep));
+	if (!closed && enabled) {
+		if (fill_bucket_list_error != nullptr) {
+			/* we are inside _FillBucketList(); notifying
+			   the IstreamHandler here would destroy our
+			   caller, and the exception which
+			   _FillBucketList() throws would then unwind
+			   through destructed frames */
+			assert(ep);
+
+			*fill_bucket_list_error = std::move(ep);
+			Destroy();
+		} else
+			DestroyError(std::move(ep));
+	}
 }
 
 void
@@ -628,13 +649,20 @@ WasInput::_FillBucketList(IstreamBucketList &list)
 			throw;
 		}
 
-		if (!CheckReleasePipe())
-			/* this object has been destroyed already (and
-			   the handler has been notified); we must not
-			   touch "this" or "handler" anymore, but we
-			   still need to tell our caller that this
-			   Istream is gone */
-			throw std::runtime_error("WAS peer failed");
+		std::exception_ptr error;
+		fill_bucket_list_error = &error;
+
+		if (!CheckReleasePipe()) {
+			/* this object has been destroyed already; we
+			   must not touch "this" or "handler" anymore,
+			   but we still need to tell our caller that
+			   this Istream is gone */
+			assert(error);
+
+			std::rethrow_exception(std::move(error));
+		}
+
+		fill_bucket_list_error = nullptr;
 
 		r = buffer.Read();
 		if (r.empty()) {
