@@ -30,6 +30,8 @@ public:
 	explicit MySink(UnusedIstreamPtr &&_input) noexcept
 		:IstreamSink(std::move(_input)) {}
 
+	using IstreamSink::HasInput;
+
 	void FillBucketList(IstreamBucketList &list) {
 		input.FillBucketList(list);
 	}
@@ -85,6 +87,34 @@ public:
 	}
 };
 
+/**
+ * Like #FailingReleaseHandler, but WasInputRelease() succeeds.
+ */
+class SucceedingReleaseHandler final : public WasInputHandler {
+public:
+	WasInput *input = nullptr;
+
+	unsigned n_close = 0, n_release = 0, n_eof = 0, n_error = 0;
+
+	/* virtual methods from class WasInputHandler */
+	void WasInputClose(uint64_t) noexcept override {
+		++n_close;
+	}
+
+	bool WasInputRelease() noexcept override {
+		++n_release;
+		return true;
+	}
+
+	void WasInputEof() noexcept override {
+		++n_eof;
+	}
+
+	void WasInputError() noexcept override {
+		++n_error;
+	}
+};
+
 } // anonymous namespace
 
 /**
@@ -111,7 +141,16 @@ TEST(WasInput, FillBucketListReleaseFails)
 	MySink sink{was_input_enable(*handler.input)};
 
 	IstreamBucketList list;
-	EXPECT_THROW(sink.FillBucketList(list), std::runtime_error);
+
+	try {
+		sink.FillBucketList(list);
+		FAIL() << "FillBucketList() did not throw";
+	} catch (const std::runtime_error &e) {
+		/* the error which WasInputRelease() has reported must
+		   be the one which gets thrown, and must not be
+		   replaced by a generic message */
+		EXPECT_STREQ(e.what(), "control error");
+	}
 
 	EXPECT_EQ(handler.n_release, 1u);
 
@@ -120,6 +159,52 @@ TEST(WasInput, FillBucketListReleaseFails)
 	   WasClient */
 	EXPECT_EQ(handler.n_error, 0u);
 
-	EXPECT_TRUE(sink.error);
+	/* throwing from FillBucketList() already means "this Istream
+	   is gone" (see IstreamPointer::FillBucketList()); invoking
+	   OnError() as well would make every consumer in the chain
+	   destroy itself twice - once from OnError() and once while
+	   the exception unwinds through its FillBucketList() frame */
+	EXPECT_FALSE(sink.error);
 	EXPECT_FALSE(sink.eof);
+
+	/* ... and the caller's IstreamPointer was cleared by the
+	   exception */
+	EXPECT_FALSE(sink.HasInput());
+}
+
+/**
+ * When WasInputHandler::WasInputRelease() succeeds, the #WasInput
+ * survives, and a later failure is reported to the #IstreamHandler
+ * again.
+ */
+TEST(WasInput, FillBucketListReleaseSucceeds)
+{
+	TestInstance instance;
+
+	auto [r, w] = CreatePipe();
+	w.Write(AsBytes(payload));
+	w.Close();
+
+	SucceedingReleaseHandler handler;
+	handler.input = was_input_new(instance.root_pool, instance.event_loop,
+				      r, handler);
+
+	ASSERT_TRUE(was_input_set_length(handler.input, payload.size()));
+
+	MySink sink{was_input_enable(*handler.input)};
+
+	IstreamBucketList list;
+	sink.FillBucketList(list);
+
+	EXPECT_EQ(handler.n_release, 1u);
+	EXPECT_EQ(list.GetTotalBufferSize(), payload.size());
+	EXPECT_FALSE(sink.error);
+
+	/* this failure is not inside FillBucketList(), so it goes to
+	   the IstreamHandler as usual */
+	was_input_free(std::exchange(handler.input, nullptr),
+		       std::make_exception_ptr(std::runtime_error{"later error"}));
+
+	EXPECT_TRUE(sink.error);
+	EXPECT_FALSE(sink.HasInput());
 }
