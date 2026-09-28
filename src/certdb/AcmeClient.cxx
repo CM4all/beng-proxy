@@ -16,6 +16,7 @@
 #include "http/Status.hxx"
 #include "lib/fmt/RuntimeError.hxx"
 #include "lib/openssl/Buffer.hxx"
+#include "lib/openssl/Error.hxx"
 #include "lib/openssl/MemBio.hxx"
 #include "lib/openssl/UniqueBIO.hxx"
 #include "lib/sodium/Base64Alloc.hxx"
@@ -26,6 +27,7 @@
 
 #include <fmt/format.h>
 #include <nlohmann/json.hpp>
+#include <openssl/err.h> // for ERR_clear_error()
 
 #include <memory>
 
@@ -403,7 +405,13 @@ AcmeClient::DownloadCertificate(EVP_PKEY &key, const AcmeOrder &order)
 		throw std::runtime_error("Wrong Content-Type in certificate download");
 
 	const auto in = BIO_new_mem_buf(AsBytes(response.body));
-	return UniqueX509{PEM_read_bio_X509(in.get(), nullptr, nullptr, nullptr)};
+
+	ERR_clear_error();
+	X509 *cert = PEM_read_bio_X509(in.get(), nullptr, nullptr, nullptr);
+	if (cert == nullptr)
+		throw SslError{"Failed to parse certificate"};
+
+	return UniqueX509{cert};
 }
 
 AcmeAuthorization
