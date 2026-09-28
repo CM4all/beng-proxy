@@ -164,3 +164,68 @@ TEST(CookieClientTest, RegularDomain)
 	cookie_jar_http_header(jar, "example.org", "/", headers, alloc);
 	EXPECT_EQ(headers.Get("cookie"), nullptr);
 }
+
+/**
+ * RFC 6265 5.3: a cookie is identified by the tuple (name, domain,
+ * path), and setting one replaces only the cookie with that very
+ * tuple.  A cookie for a broader path must not delete the cookies of
+ * narrower paths.
+ */
+TEST(CookieClientTest, ReplaceOnlyExactPath)
+{
+	RootPool pool;
+	const AllocatorPtr alloc(pool);
+	StringMap headers;
+
+	CookieJar jar;
+
+	cookie_jar_set_cookie2(jar, "a=1;path=\"/foo\"", "foo.bar", "/foo/x");
+	cookie_jar_http_header(jar, "foo.bar", "/foo/x", headers, alloc);
+	EXPECT_STREQ(headers.Get("cookie"), "a=1");
+
+	/* this cookie has the same name and domain, but a different
+	   path, so it is a different cookie */
+	headers.Clear();
+	cookie_jar_set_cookie2(jar, "a=2;path=\"/\"", "foo.bar", "/");
+	cookie_jar_http_header(jar, "foo.bar", "/foo/x", headers, alloc);
+	EXPECT_STREQ(headers.Get("cookie"), "a=2; a=1");
+
+	/* ... and only the new one applies outside "/foo" */
+	headers.Clear();
+	cookie_jar_http_header(jar, "foo.bar", "/", headers, alloc);
+	EXPECT_STREQ(headers.Get("cookie"), "a=2");
+
+	/* setting it again replaces just this one */
+	headers.Clear();
+	cookie_jar_set_cookie2(jar, "a=3;path=\"/\"", "foo.bar", "/");
+	cookie_jar_http_header(jar, "foo.bar", "/foo/x", headers, alloc);
+	EXPECT_STREQ(headers.Get("cookie"), "a=3; a=1");
+}
+
+/**
+ * Like ReplaceOnlyExactPath, but for the domain: a host-only cookie
+ * must not delete the cookie which a parent domain has set.
+ */
+TEST(CookieClientTest, ReplaceOnlyExactDomain)
+{
+	RootPool pool;
+	const AllocatorPtr alloc(pool);
+	StringMap headers;
+
+	CookieJar jar;
+
+	cookie_jar_set_cookie2(jar, "a=1;domain=.example.com",
+			       "foo.example.com", nullptr);
+
+	/* same name, but this one has no "domain" attribute, so it
+	   belongs to "foo.example.com" only */
+	cookie_jar_set_cookie2(jar, "a=2", "foo.example.com", nullptr);
+
+	cookie_jar_http_header(jar, "foo.example.com", "/", headers, alloc);
+	EXPECT_STREQ(headers.Get("cookie"), "a=2; a=1");
+
+	/* the domain cookie is still there for the other host */
+	headers.Clear();
+	cookie_jar_http_header(jar, "bar.example.com", "/", headers, alloc);
+	EXPECT_STREQ(headers.Get("cookie"), "a=1");
+}
