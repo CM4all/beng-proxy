@@ -149,7 +149,7 @@ SendRedirect(lua_State *L)
 		return luaL_argerror(L, i, "Malformed URL");
 
 	++i;
-	if (i < top) {
+	if (i <= top) {
 		if (lua_type(L, i) != LUA_TSTRING)
 			return luaL_argerror(L, i, "String expected");
 
@@ -157,7 +157,7 @@ SendRedirect(lua_State *L)
 		++i;
 	}
 
-	if (i < top)
+	if (i <= top)
 		return luaL_error(L, "Too many parameters");
 
 	auto &pool = data.request.pool;
@@ -214,7 +214,7 @@ SendRedirectHost(lua_State *L)
 		return luaL_argerror(L, i, "Malformed host");
 
 	++i;
-	if (i < top) {
+	if (i <= top) {
 		if (lua_type(L, i) != LUA_TSTRING)
 			return luaL_argerror(L, i, "String expected");
 
@@ -222,7 +222,7 @@ SendRedirectHost(lua_State *L)
 		++i;
 	}
 
-	if (i < top)
+	if (i <= top)
 		return luaL_error(L, "Too many parameters");
 
 	auto &pool = data.request.pool;
