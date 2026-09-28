@@ -156,8 +156,7 @@ apply_next_cookie(CookieJar &jar, struct pool &tpool, std::string_view &input,
 		return false;
 	}
 
-	if (path != nullptr && cookie->path != nullptr &&
-	    !path_matches(path, cookie->path.c_str())) {
+	if (path != nullptr && !path_matches(path, cookie->path.c_str())) {
 		/* discard if path mismatch */
 		return false;
 	}
