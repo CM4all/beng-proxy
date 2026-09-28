@@ -14,6 +14,7 @@
 #include "util/CharUtil.hxx"
 #include "util/DeleteDisposer.hxx"
 #include "util/NumberParser.hxx"
+#include "util/StringAPI.hxx"
 #include "util/StringCompare.hxx"
 #include "util/StringStrip.hxx"
 #include "util/StringVerify.hxx"
@@ -87,10 +88,15 @@ cookie_list_delete_match(L &list,
 	assert(domain != nullptr);
 
 	list.remove_and_dispose_if([=](const Cookie &cookie){
-		return domain_matches(domain, cookie.domain.c_str()) &&
+		/* RFC 6265 5.3: a cookie is identified by the tuple
+		   (name, domain, path); only a cookie with the very
+		   same tuple is replaced, and not one which merely
+		   contains or is contained by the new one */
+		return StringIsEqualIgnoreCase(cookie.domain.c_str(), domain) &&
 			(cookie.path == nullptr
 			 ? path == nullptr
-			 : path_matches(cookie.path.c_str(), path)) &&
+			 : (path != nullptr &&
+			    StringIsEqual(cookie.path.c_str(), path))) &&
 			name == cookie.name;
 	},
 		DeleteDisposer{});
