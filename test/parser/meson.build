@@ -11,3 +11,18 @@ test(
     ],
   ),
 )
+
+test(
+  'TestCssParser',
+  executable(
+    'TestCssParser',
+    'TestCssParser.cxx',
+    '../../src/parser/CssParser.cxx',
+    include_directories: inc,
+    dependencies: [
+      gtest,
+      util_dep,
+    ],
+  ),
+  timeout: 10,
+)
