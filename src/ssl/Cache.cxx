@@ -491,7 +491,8 @@ CertCache::Flush(const std::string_view name) noexcept
 		/* if this is a primary item (not a shadow item for an
 		   altName), collect all altNames to be flushed
 		   later */
-		if (name == GetCommonName(*item.cert).c_str())
+		if (const auto item_name = GetCommonName(*item.cert).c_str();
+		    item_name != nullptr && name == item_name)
 			for (auto &a : GetSubjectAltNames(*item.cert))
 				alt_names.emplace(std::move(a));
 
