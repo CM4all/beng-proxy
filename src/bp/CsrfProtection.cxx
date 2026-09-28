@@ -13,7 +13,7 @@
 #include "http/Headers.hxx"
 
 bool
-Request::HasValidCsrfToken() noexcept
+Request::HasValidCsrfToken() const noexcept
 {
 	CsrfToken given_csrf_token;
 	if (!given_csrf_token.Parse(request.headers.Get(x_cm4all_csrf_token_header)))

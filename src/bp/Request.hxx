@@ -534,7 +534,7 @@ private:
 	}
 
 	[[gnu::pure]]
-	bool HasValidCsrfToken() noexcept;
+	bool HasValidCsrfToken() const noexcept;
 
 public:
 	/**
