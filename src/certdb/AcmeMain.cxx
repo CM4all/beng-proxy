@@ -146,7 +146,7 @@ SelectChallenge(const AcmeConfig &config,
 
 static bool
 ValidateIdentifier(const AcmeAuthorization &authz,
-		   const std::set<std::string> &identifiers) noexcept
+		   const std::set<std::string, std::less<>> &identifiers) noexcept
 {
 	return identifiers.find(authz.identifier) != identifiers.end() ||
 		/* if a wildcard certificate is requested, the ACME
@@ -163,7 +163,7 @@ CollectPendingAuthorizations(const CertDatabaseConfig &db_config,
 			     CertDatabase &db,
 			     AcmeClient &client,
 			     StepProgress &progress,
-			     const std::set<std::string> &identifiers,
+			     const std::set<std::string, std::less<>> &identifiers,
 			     const std::forward_list<std::string> &authorizations)
 {
 	std::forward_list<PendingAuthorization> pending_authz;
@@ -245,7 +245,7 @@ AcmeAuthorize(const CertDatabaseConfig &db_config, const AcmeConfig &config,
 	      CertDatabase &db,
 	      AcmeClient &client,
 	      StepProgress &progress,
-	      const std::set<std::string> &identifiers,
+	      const std::set<std::string, std::less<>> &identifiers,
 	      const std::forward_list<std::string> &authorizations)
 {
 	auto pending_authz = CollectPendingAuthorizations(db_config, config,
@@ -327,7 +327,7 @@ AcmeNewOrder(const CertDatabaseConfig &db_config, const AcmeConfig &config,
 	     AcmeClient &client,
 	     WorkshopProgress _progress,
 	     const char *handle,
-	     const std::set<std::string> &identifiers)
+	     const std::set<std::string, std::less<>> &identifiers)
 {
 	if (config.challenge_directory.empty() &&
 	    !config.alpn &&
@@ -385,10 +385,10 @@ AcmeNewOrder(const CertDatabaseConfig &db_config, const AcmeConfig &config,
 }
 
 [[gnu::pure]]
-static std::set<std::string>
+static std::set<std::string, std::less<>>
 AllNames(const X509 &cert) noexcept
 {
-	std::set<std::string> result;
+	std::set<std::string, std::less<>> result;
 
 	for (auto &i : GetSubjectAltNames(cert))
 		if (!IsAcmeInvalid(i))
@@ -688,7 +688,7 @@ Acme(std::span<const char *const> args)
 		const char *handle = args.front();
 		args = args.subspan(1);
 
-		std::set<std::string> identifiers;
+		std::set<std::string, std::less<>> identifiers;
 		for (const char *i : args)
 			identifiers.emplace(i);
 
