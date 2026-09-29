@@ -78,7 +78,7 @@ Request::OpenBeneath(const FileAddress &address,
 	handler.file.open_base_callback = callback;
 	handler.file.address = &address;
 
-	instance.fd_cache.Get(FileDescriptor::Undefined(), {}, address.beneath,
+	instance.fd_cache.Get(FileDescriptor::Undefined(), {}, {}, address.beneath,
 			      open_directory_path, 0,
 			      BIND_THIS_METHOD(OnBeneathOpen),
 			      BIND_THIS_METHOD(OnBaseOpenError),
@@ -91,7 +91,7 @@ Request::OpenBase(std::string_view path,
 {
 	handler.file.open_base_callback = callback;
 
-	instance.fd_cache.Get(FileDescriptor::Undefined(), {},
+	instance.fd_cache.Get(FileDescriptor::Undefined(), {}, {},
 			      NormalizePath(path),
 			      open_directory_path, 0,
 			      BIND_THIS_METHOD(OnBaseOpen),

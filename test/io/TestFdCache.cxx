@@ -112,7 +112,7 @@ public:
 		error = -1;
 		DiscardLease();
 
-		fd_cache.Get(directory, "/tmp/"sv, path, how, stx_mask,
+		fd_cache.Get(directory, {}, "/tmp/"sv, path, how, stx_mask,
 			     BIND_THIS_METHOD(OnSuccess), BIND_THIS_METHOD(OnError),
 			     cancel_ptr);
 	}

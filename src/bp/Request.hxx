@@ -294,6 +294,14 @@ private:
 			FileDescriptor base;
 
 			/**
+			 * The lease for #base; OpenBase() fills either
+			 * #beneath_lease or #base_lease, never both.
+			 */
+			const SharedLease &GetBaseLease() const noexcept {
+				return beneath_lease ? beneath_lease : base_lease;
+			}
+
+			/**
 			 * If defined, then this is a O_RDONLY file
 			 * descriptor for the file referred to by
 			 * #base.

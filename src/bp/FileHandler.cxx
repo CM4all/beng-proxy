@@ -472,7 +472,7 @@ Request::HandleFileAddressAfterBase(FileDescriptor base, std::string_view strip_
 		.resolve = RESOLVE_BENEATH|RESOLVE_NO_MAGICLINKS,
 	};
 
-	instance.fd_cache.Get(base, strip_base, path,
+	instance.fd_cache.Get(base, handler.file.GetBaseLease(), strip_base, path,
 			      base.IsDefined() ? open_read_only_beneath : open_read_only,
 			      STATX_TYPE|STATX_MTIME|STATX_INO|STATX_SIZE,
 			      BIND_THIS_METHOD(OnOpenStat),
@@ -582,7 +582,7 @@ Request::StatFileAddressAfterBase(FileDescriptor base, std::string_view strip_ba
 		.resolve = RESOLVE_BENEATH|RESOLVE_NO_MAGICLINKS,
 	};
 
-	instance.fd_cache.Get(base, strip_base, path,
+	instance.fd_cache.Get(base, handler.file.GetBaseLease(), strip_base, path,
 			      base.IsDefined() ? open_read_only_beneath : open_read_only,
 			      STATX_TYPE|STATX_MTIME|STATX_INO|STATX_SIZE,
 			      BIND_THIS_METHOD(OnStatOpenStatSuccess),

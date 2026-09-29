@@ -119,6 +119,11 @@ public:
 	 * @param directory an optional directory descriptor (only
 	 * used on cache miss)
 	 *
+	 * @param directory_lease a lease on #directory; it is held
+	 * until an asynchronous open has completed, because io_uring
+	 * resolves the descriptor number only when the operation is
+	 * issued
+	 *
 	 * @param strip_path the absolute path of the #directory
 	 * parameter; it is stripped from the #path parameter
 	 * (necessary if using RESOLVE_BENEATH)
@@ -132,6 +137,7 @@ public:
 	 * @param on_error the callback to be used on error
 	 */
 	void Get(FileDescriptor directory,
+		 const SharedLease &directory_lease,
 		 std::string_view strip_path,
 		 std::string_view path,
 		 const struct open_how &how,

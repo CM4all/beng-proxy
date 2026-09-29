@@ -91,6 +91,14 @@ struct FdCache::Item final
 
 #ifdef HAVE_URING
 	Uring::Open *uring_open = nullptr;
+
+	/**
+	 * A lease on the directory item which #uring_open resolves
+	 * the path against.  We hold it to prevent it from getting
+	 * closed before the io_uring openat2 operation is picked up
+	 * by the kernel.
+	 */
+	SharedLease uring_directory_lease;
 #endif // HAVE_URING
 
 	struct statx stx;
@@ -143,7 +151,9 @@ struct FdCache::Item final
 		return SharedAnchor::IsAbandoned() && requests.empty();
 	}
 
-	void Start(FileDescriptor directory, std::size_t strip_length,
+	void Start(FileDescriptor directory,
+		   const SharedLease &directory_lease,
+		   std::size_t strip_length,
 		   const struct open_how &how,
 		   unsigned requested_stx_mask) noexcept;
 
@@ -268,6 +278,7 @@ private:
 
 		delete uring_open;
 		uring_open = nullptr;
+		uring_directory_lease = {};
 
 		fd = std::move(_fd);
 		RegisterInotify();
@@ -288,6 +299,7 @@ private:
 
 		delete uring_open;
 		uring_open = nullptr;
+		uring_directory_lease = {};
 
 		SetError(_error);
 	}
@@ -320,7 +332,9 @@ private:
 };
 
 inline void
-FdCache::Item::Start(FileDescriptor directory, std::size_t strip_length,
+FdCache::Item::Start(FileDescriptor directory,
+		     [[maybe_unused]] const SharedLease &directory_lease,
+		     std::size_t strip_length,
 		     const struct open_how &how,
 		     unsigned requested_stx_mask) noexcept
 {
@@ -340,6 +354,8 @@ FdCache::Item::Start(FileDescriptor directory, std::size_t strip_length,
 	assert(uring_open == nullptr);
 
 	if (cache.uring_queue != nullptr) {
+		uring_directory_lease = directory_lease;
+
 		uring_open = new Uring::Open(*cache.uring_queue, *this);
 		uring_open->StartOpen({directory, p}, how);
 	} else {
@@ -467,6 +483,7 @@ StripLength(std::string_view strip_path, std::string_view path)
 
 void
 FdCache::Get(FileDescriptor directory,
+	     const SharedLease &directory_lease,
 	     std::string_view strip_path,
 	     std::string_view path,
 	     const struct open_how &how,
@@ -534,7 +551,8 @@ FdCache::Get(FileDescriptor directory,
 	   destroyed if Start() finishes synchronously */
 	const SharedLease lock{*item};
 
-	item->Start(directory, StripLength(strip_path, path), how, stx_mask);
+	item->Start(directory, directory_lease,
+		    StripLength(strip_path, path), how, stx_mask);
 	item->Get(on_success, on_error, stx_mask, cancel_ptr);
 
 	assert(IsShuttingDown() != expire_timer.IsPending());
