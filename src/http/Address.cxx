@@ -16,6 +16,8 @@
 
 #include <stdexcept>
 
+using std::string_view_literals::operator""sv;
+
 HttpAddress::HttpAddress(bool _ssl,
 			 const char *_host_and_port, const char *_path) noexcept
 	:ssl(_ssl),
@@ -155,6 +157,20 @@ char *
 HttpAddress::GetAbsoluteURI(AllocatorPtr alloc) const noexcept
 {
 	return GetAbsoluteURI(alloc, path);
+}
+
+const char *
+HttpAddress::GetId(AllocatorPtr alloc) const noexcept
+{
+	const char *id = GetAbsoluteURI(alloc);
+
+	if (ssl)
+		id = alloc.Concat("ssl|"sv, id);
+
+	if (certificate != nullptr)
+		id = alloc.Concat("cert="sv, certificate, "|"sv, id);
+
+	return id;
 }
 
 bool

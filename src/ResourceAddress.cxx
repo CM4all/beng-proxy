@@ -466,7 +466,7 @@ ResourceAddress::GetId(AllocatorPtr alloc) const noexcept
 		return StringWithHash{alloc.Dup(std::string_view{u.file->path})};
 
 	case Type::HTTP:
-		return StringWithHash{u.http->GetAbsoluteURI(alloc)};
+		return StringWithHash{u.http->GetId(alloc)};
 
 	case Type::LHTTP:
 		return u.lhttp->GetId(alloc);

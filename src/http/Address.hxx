@@ -104,6 +104,12 @@ struct HttpAddress {
 	[[gnu::malloc]]
 	char *GetAbsoluteURI(AllocatorPtr alloc) const noexcept;
 
+	/**
+	 * Generates a string identifying this address.
+	 */
+	[[gnu::pure]]
+	const char *GetId(AllocatorPtr alloc) const noexcept;
+
 	[[gnu::pure]]
 	bool HasQueryString() const noexcept;
 
