@@ -60,7 +60,8 @@ Request::SubmitEnotdir(const TranslateResponse &response) noexcept
 	if (slash == nullptr || slash == uri)
 		return true;
 
-	translate.enotdir_uri[slash - uri] = 0;
+	const AllocatorPtr alloc{pool};
+	translate.request.uri = alloc.DupZ({uri, slash});
 	translate.enotdir_path_info = slash;
 
 	SubmitTranslateRequest();

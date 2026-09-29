@@ -157,7 +157,7 @@ private:
 		 */
 		const char *content_type = nullptr;
 
-		char *enotdir_uri = nullptr;
+		const char *enotdir_uri = nullptr;
 		const char *enotdir_path_info = nullptr;
 
 		/**
