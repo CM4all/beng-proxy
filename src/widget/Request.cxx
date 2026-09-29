@@ -642,6 +642,9 @@ WidgetRequest::OnHttpResponse(HttpStatus status, StringMap &&headers,
 		}
 	}
 
+	if (content_type != nullptr)
+		headers.Set(pool, content_type_header, content_type);
+
 	/* select a new view? */
 
 	try {
@@ -652,9 +655,6 @@ WidgetRequest::OnHttpResponse(HttpStatus status, StringMap &&headers,
 		DispatchError(std::current_exception());
 		return;
 	}
-
-	if (content_type != nullptr)
-		headers.Set(pool, content_type_header, content_type);
 
 	if (widget.session_save_pending &&
 	    Transformation::HasProcessor(transformations)) {

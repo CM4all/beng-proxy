@@ -90,6 +90,7 @@ cm4all-beng-proxy (22.0) unstable; urgency=low
   * widget: reject URI paths with encoded dots
   * widget: resolve dot segments in a redirect Location
   * widget: refuse c:base="parent" with c:mode="direct"
+  * widget: apply Content-Type from suffix registration before evaluating it
   * processor: fix eight crash bugs
   * processor: quote substitutions into unquoted attributes
   * css_processor: two fix infinite loop bugs
