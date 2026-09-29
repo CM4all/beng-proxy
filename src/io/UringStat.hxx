@@ -18,3 +18,9 @@ UringStat(Uring::Queue &queue, FileAt file, int flags, unsigned mask,
 	  UringStatSuccessCallback on_success,
 	  UringStatErrorCallback on_error,
 	  CancellablePointer &cancel_ptr) noexcept;
+
+void
+UringStatBeneath(Uring::Queue &queue, FileAt file,
+		 UringStatSuccessCallback on_success,
+		 UringStatErrorCallback on_error,
+		 CancellablePointer &cancel_ptr) noexcept;

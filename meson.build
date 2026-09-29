@@ -573,6 +573,7 @@ if uring_dep.found()
     'src/io/UringOpen.cxx',
     'src/io/UringOpenStat.cxx',
     'src/io/UringStat.cxx',
+    'src/io/UringStatBeneath.cxx',
   ]
 endif
 

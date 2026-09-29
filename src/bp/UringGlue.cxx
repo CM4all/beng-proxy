@@ -78,6 +78,35 @@ UringGlue::Stat(FileAt file, int flags, unsigned mask,
 		UringStatErrorCallback on_error,
 		CancellablePointer &cancel_ptr) noexcept
 {
+	if (file.directory.IsDefined()) {
+		/* there's no RESOLVE_BENEATH option in statx(),
+		   therefore first open an O_PATH file descriptor and
+		   then statx() it */
+
+#ifdef HAVE_URING
+		if (uring) [[likely]] {
+			// TODO flags and mask is ignored
+			UringStatBeneath(*uring, file,
+					 on_success, on_error, cancel_ptr);
+			return;
+		}
+#endif
+
+		const auto path_fd = TryOpenPathBeneath(file);
+		if (!path_fd.IsDefined()) {
+			on_error(errno);
+			return;
+		}
+
+		struct statx st;
+		if (statx(path_fd.Get(), "", flags|AT_EMPTY_PATH, mask, &st) == 0)
+			on_success(st);
+		else
+			on_error(errno);
+
+		return;
+	}
+
 #ifdef HAVE_URING
 	if (uring) [[likely]] {
 		UringStat(*uring, file, flags, mask,
