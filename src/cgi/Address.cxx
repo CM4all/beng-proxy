@@ -201,7 +201,6 @@ CgiAddress::GetId(AllocatorPtr alloc) const noexcept
 
 	if (path_info != nullptr) {
 		b.push_back(";p=");
-		b.push_back(path_info);
 		const std::string_view value{path_info};
 		b.push_back(value);
 		hash = djb_hash(AsBytes(value), hash);
