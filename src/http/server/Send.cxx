@@ -212,7 +212,12 @@ HttpServerConnection::SubmitResponse(HttpStatus status,
 	headers3.Write("\r\n"sv);
 
 #ifdef HAVE_URING
-	if (auto *uring_queue = socket->GetUringQueue()) {
+	/* note: not with a filter, because UringSend writes to the raw
+	   socket, which would send the headers of a TLS connection in
+	   cleartext */
+	if (auto *uring_queue = socket->HasFilter()
+	    ? nullptr
+	    : socket->GetUringQueue()) {
 		assert(uring_send == nullptr);
 
 		if (body) {
