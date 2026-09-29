@@ -515,6 +515,14 @@ public:
 	[[gnu::pure]]
 	SocketAddress GetRemoteAdress() const noexcept;
 
+	/**
+	 * Determine the client address to be reported to the backend
+	 * (e.g. as CGI REMOTE_ADDR).  This is the connection peer,
+	 * unless a trusted proxy has sent "X-Forwarded-For".
+	 */
+	[[gnu::pure]]
+	const char *GetRealRemoteHost() const noexcept;
+
 	void HandleHttpRequest(CancellablePointer &caller_cancel_ptr) noexcept;
 
 private:

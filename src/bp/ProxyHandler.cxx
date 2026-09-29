@@ -89,6 +89,7 @@ Request::HandleProxyAddress() noexcept
 			       .eager_cache = tr.eager_cache,
 			       .auto_flush_cache = tr.auto_flush_cache,
 			       .want_metrics = translate.enable_metrics,
+			       .remote_host = GetRealRemoteHost(),
 			       .address_id = translate.address_id,
 			       .cache_tag = tr.address_cache_tag,
 			       .site_name = tr.site,

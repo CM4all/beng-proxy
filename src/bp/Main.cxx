@@ -540,12 +540,7 @@ try {
 					 instance.remote_was_stock,
 					 &instance,
 #endif
-					 instance.ssl_client_factory.get(),
-
-					 /* TODO how to support
-					    per-listener XFF
-					    setting? */
-					 instance.config.access_log.main.xff);
+					 instance.ssl_client_factory.get());
 
 	if (instance.config.http_cache_size > 0) {
 		instance.http_cache = http_cache_new(instance.root_pool,

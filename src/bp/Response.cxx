@@ -287,6 +287,7 @@ Request::NewWidgetContext() const noexcept
 		 session_id, realm,
 		 &request.headers);
 
+	ctx->real_remote_host = GetRealRemoteHost();
 	ctx->peer_subject = connection.peer_subject;
 	ctx->peer_issuer_subject = connection.peer_issuer_subject;
 	ctx->user = user;
@@ -747,6 +748,7 @@ Request::ApplyFilter(HttpStatus status, StringMap &&headers2,
 				      .sticky_hash = session_id.GetClusterHash(),
 				      .status = status,
 				      .want_metrics = translate.enable_metrics,
+				      .remote_host = GetRealRemoteHost(),
 				      .body_etag = source_tag,
 				      .cache_tag = filter.cache_tag,
 				      .site_name = translate.response->site,

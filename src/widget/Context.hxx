@@ -46,6 +46,14 @@ struct WidgetContext {
 	const char *local_host;
 	const char *remote_host;
 
+	/**
+	 * The client address to be reported to widget servers as
+	 * REMOTE_ADDR; unlike #remote_host (which is the connection
+	 * peer and is appended to "X-Forwarded-For"), this honours a
+	 * trusted proxy's "X-Forwarded-For".
+	 */
+	const char *real_remote_host = nullptr;
+
 	const char *peer_subject = nullptr, *peer_issuer_subject = nullptr;
 
 	/**

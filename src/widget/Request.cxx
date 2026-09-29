@@ -304,6 +304,7 @@ WidgetRequest::HandleRedirect(const char *location, UnusedIstreamPtr &body) noex
 					 parent_stopwatch,
 					 {
 						 .sticky_hash = ctx->session_id.GetClusterHash(),
+						 .remote_host = ctx->real_remote_host,
 						 .site_name = ctx->site_name,
 					 },
 					 HttpMethod::GET, address,
@@ -454,6 +455,7 @@ WidgetRequest::FilterResponse(HttpStatus status,
 			     {
 				     .sticky_hash = ctx->session_id.GetClusterHash(),
 				     .status = status,
+				     .remote_host = ctx->real_remote_host,
 				     .body_etag = source_tag,
 				     .cache_tag = filter.cache_tag,
 				     .site_name = ctx->site_name,
@@ -724,6 +726,7 @@ WidgetRequest::SendRequest() noexcept
 	ctx->resource_loader.SendRequest(pool, parent_stopwatch,
 					 {
 						 .sticky_hash = ctx->session_id.GetClusterHash(),
+						 .remote_host = ctx->real_remote_host,
 						 .address_id = resource_tag,
 						 .site_name = ctx->site_name,
 					 },

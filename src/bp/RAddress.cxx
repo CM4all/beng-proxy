@@ -10,7 +10,23 @@
 #include "http/CommonHeaders.hxx"
 #include "http/IncomingRequest.hxx"
 #include "net/Parser.hxx"
+#include "pool/pool.hxx"
 #include "AllocatorPtr.hxx"
+
+const char *
+Request::GetRealRemoteHost() const noexcept
+{
+	if (const auto *const config = connection.listener.GetXForwardedForConfig()) {
+		if (const auto r =
+		    config->GetRealRemoteHost(request.remote_host,
+					      request.remote_address,
+					      request.headers.Get(x_forwarded_for_header));
+		    !r.empty())
+			return p_strdup(pool, r);
+	}
+
+	return request.remote_host;
+}
 
 SocketAddress
 Request::GetRemoteAdress() const noexcept

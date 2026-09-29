@@ -47,6 +47,14 @@ struct ResourceRequestParams {
 	bool want_metrics;
 
 	/**
+	 * The client address to be passed to CGI/FastCGI/WAS as
+	 * REMOTE_ADDR.  nullptr means "unknown"; it must be the
+	 * connection peer unless a trusted proxy's
+	 * "X-Forwarded-For" says otherwise.
+	 */
+	const char *remote_host = nullptr;
+
+	/**
 	 * If this is set, then the caller has already invoked
 	 * ResourceAddress::GetId() and the cache doesn't need to do
 	 * it again.

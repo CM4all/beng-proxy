@@ -799,6 +799,7 @@ Request::HandleChainResponse(UniquePoolPtr<TranslateResponse> _response) noexcep
 			       .sticky_hash = session_id.GetClusterHash(),
 			       .status = pr.status,
 			       .want_metrics = translate.enable_metrics,
+			       .remote_host = GetRealRemoteHost(),
 		       },
 		       method, response.address,
 		       std::move(pr.headers).ToMap(pool),

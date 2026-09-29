@@ -5,7 +5,6 @@
 #include "DirectResourceLoader.hxx"
 #include "ResourceAddress.hxx"
 #include "http/CommonHeaders.hxx"
-#include "http/XForwardedFor.hxx"
 #include "http/ResponseHandler.hxx"
 #include "file/Address.hxx"
 #include "file/Request.hxx"
@@ -26,22 +25,6 @@
 #include "util/StringAPI.hxx"
 
 #include <string.h>
-
-[[gnu::pure]]
-static const char *
-GetRemoteHost(const XForwardedForConfig &config, AllocatorPtr alloc,
-	      const StringMap &headers) noexcept
-{
-	const char *xff = headers.Get(x_forwarded_for_header);
-	if (xff == nullptr)
-		return nullptr;
-
-	const auto remote_host = config.GetRealRemoteHost(xff);
-	if (remote_host.empty())
-		return nullptr;
-
-	return alloc.DupZ(remote_host);
-}
 
 [[gnu::pure]]
 static bool
@@ -98,7 +81,7 @@ try {
 	case ResourceAddress::Type::CGI:
 		cgi_new(spawn_service, event_loop, &pool, parent_stopwatch,
 			method, &address.GetCgi(),
-			GetRemoteHost(xff, pool, headers),
+			params.remote_host,
 			IsTLS(headers),
 			headers, std::move(body),
 			handler, cancel_ptr);
@@ -113,7 +96,7 @@ try {
 			stderr_fd = cgi->options.OpenStderrPath();
 		}
 
-		const char *remote_ip = GetRemoteHost(xff, pool, headers);
+		const char *remote_ip = params.remote_host;
 
 		if (cgi->address_list.empty())
 			fcgi_request(&pool, fcgi_stock, parent_stopwatch,
@@ -144,7 +127,7 @@ try {
 			was_request(pool, *was_stock, parent_stopwatch,
 				    params.site_name,
 				    *cgi,
-				    GetRemoteHost(xff, pool, headers),
+				    params.remote_host,
 				    IsTLS(headers),
 				    cgi->document_root,
 				    method,
@@ -155,7 +138,7 @@ try {
 			SendRemoteWasRequest(pool, *remote_was_stock,
 					     parent_stopwatch,
 					     *cgi,
-					     GetRemoteHost(xff, pool, headers),
+					     params.remote_host,
 					     IsTLS(headers),
 					     cgi->document_root,
 					     method,
@@ -166,7 +149,7 @@ try {
 			SendMultiWasRequest(pool, *multi_was_stock, parent_stopwatch,
 					    params.site_name,
 					    *cgi,
-					    GetRemoteHost(xff, pool, headers),
+					    params.remote_host,
 					    IsTLS(headers),
 					    cgi->document_root,
 					    method,

@@ -22,7 +22,6 @@ namespace Uring { class Queue; }
 class FilteredSocketBalancer;
 class SslClientFactory;
 namespace NgHttp2 { class Stock; }
-struct XForwardedForConfig;
 
 /**
  * A #ResourceLoader implementation which integrates all client-side
@@ -45,8 +44,6 @@ class DirectResourceLoader final : public ResourceLoader {
 	WasMetricsHandler *const metrics_handler;
 #endif
 
-	const XForwardedForConfig &xff;
-
 public:
 	DirectResourceLoader(EventLoop &_event_loop,
 #ifdef HAVE_URING
@@ -66,8 +63,7 @@ public:
 			     RemoteWasStock *_remote_was_stock,
 			     WasMetricsHandler *_metrics_handler,
 #endif
-			     SslClientFactory *_ssl_client_factory,
-			     const XForwardedForConfig &_xff) noexcept
+			     SslClientFactory *_ssl_client_factory) noexcept
 		:event_loop(_event_loop),
 #ifdef HAVE_URING
 		 uring(_uring),
@@ -80,14 +76,13 @@ public:
 				 _ssl_client_factory),
 		 spawn_service(_spawn_service),
 		 lhttp_stock(_lhttp_stock),
-		 fcgi_stock(_fcgi_stock),
+		 fcgi_stock(_fcgi_stock)
 #ifdef HAVE_LIBWAS
-		 was_stock(_was_stock),
+		, was_stock(_was_stock),
 		 multi_was_stock(_multi_was_stock),
 		 remote_was_stock(_remote_was_stock),
-		 metrics_handler(_metrics_handler),
+		 metrics_handler(_metrics_handler)
 #endif
-		 xff(_xff)
 	{
 	}
 
