@@ -11,6 +11,8 @@
 #include "http/IncomingRequest.hxx"
 #include "pool/pool.hxx"
 #include "io/FileAt.hxx"
+#include "uri/Verify.hxx"
+#include "util/StringSplit.hxx"
 #include "AllocatorPtr.hxx"
 
 #include <assert.h>
@@ -61,6 +63,16 @@ Request::SubmitEnotdir(const TranslateResponse &response) noexcept
 		return true;
 
 	const AllocatorPtr alloc{pool};
+
+	if (!response.unsafe_base) {
+		const std::string_view path = Split(std::string_view{slash}, '?').first;
+		if (!uri_path_verify_paranoid(path)) {
+			LogDispatchError(HttpStatus::BAD_REQUEST,
+					 "Malformed URI", 1);
+			return false;
+		}
+	}
+
 	translate.request.uri = alloc.DupZ({uri, slash});
 	translate.enotdir_path_info = slash;
 
