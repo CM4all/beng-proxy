@@ -10,9 +10,21 @@
 
 #include <array>
 
+/**
+ * The maximum number of bytes we are willing to discard after a
+ * PREMATURE packet; the peer chooses this number and discarding
+ * happens synchronously, so it must not be unbounded.  This is twice
+ * the maximum pipe capacity (/proc/sys/fs/pipe-max-size defaults to 1
+ * MB).
+ */
+static constexpr uint_least64_t MAX_DISCARD = 2ull * 1024ull * 1024ull;
+
 void
 DiscardInput(FileDescriptor input, uint_least64_t remaining)
 {
+	if (remaining > MAX_DISCARD)
+		throw SocketProtocolError{"PREMATURE too large"};
+
 	while (remaining > 0) {
 		std::array<std::byte, 16384> buffer;
 		std::span<std::byte> dest = buffer;
