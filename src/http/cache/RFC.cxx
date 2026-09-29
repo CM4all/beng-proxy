@@ -9,7 +9,9 @@
 #include "ResourceAddress.hxx"
 #include "io/Logger.hxx"
 #include "http/CommonHeaders.hxx"
+#include "http/CombinedHeaders.hxx"
 #include "http/Date.hxx"
+#include "http/List.hxx"
 #include "http/PHeaderUtil.hxx"
 #include "http/PList.hxx"
 #include "http/Method.hxx"
@@ -110,15 +112,10 @@ http_cache_request_evaluate(HttpMethod method,
 bool
 http_cache_vary_fits(const StringMap &vary, const StringMap &headers) noexcept
 {
-	for (const auto &i : vary) {
-		const char *value = headers.Get(i.key);
-		if (value == nullptr)
-			value = "";
-
-		if (!StringIsEqual(i.value, value))
+	for (const auto &i : vary)
+		if (!CombinedHeaderEquals(headers, i.key, i.value))
 			/* mismatch in one of the "Vary" request headers */
 			return false;
-	}
 
 	return true;
 }
@@ -292,26 +289,15 @@ http_cache_response_evaluate(const HttpCacheRequestInfo &request_info,
 	info.last_modified = headers.Get(last_modified_header);
 	info.etag = headers.Get(etag_header);
 
-	info.vary = nullptr;
-	const auto vary = headers.EqualRange(vary_header);
-	for (auto i = vary.first; i != vary.second; ++i) {
-		const char *value = i->value;
-		if (*value == 0)
-			continue;
+	const std::string_view vary = GetCombinedHeader(alloc, headers, vary_header, false);
+	if (http_list_contains(vary, "*"sv))
+		/* RFC 2616 13.6: A Vary header field-value of "*"
+		   always fails to match and subsequent requests on
+		   that resource can only be properly interpreted by
+		   the origin server. */
+		return std::nullopt;
 
-		if (StringIsEqual(value, "*"))
-			/* RFC 2616 13.6: A Vary header field-value of
-			   "*" always fails to match and subsequent
-			   requests on that resource can only be
-			   properly interpreted by the origin
-			   server. */
-			return std::nullopt;
-
-		if (info.vary == nullptr)
-			info.vary = value;
-		else
-			info.vary = alloc.Concat(info.vary, ","sv, value);
-	}
+	info.vary = vary.data();
 
 	if (info.expires == std::chrono::system_clock::from_time_t(-1) &&
 	    info.last_modified == nullptr &&
@@ -335,11 +321,11 @@ http_cache_copy_vary(AllocatorPtr alloc, const char *vary,
 	for (const char *const*list = http_list_split(alloc, vary);
 	     *list != nullptr; ++list) {
 		const char *name = *list;
-		const char *value = request_headers.Get(name);
-		if (value == nullptr)
-			value = "";
-		else
-			value = alloc.Dup(value);
+
+		const char *value = GetCombinedHeader(alloc, request_headers, name, true).data();
+                if (value == nullptr)
+                        value = "";
+
 		dest.Set(alloc, name, value);
 	}
 
