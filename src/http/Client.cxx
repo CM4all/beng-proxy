@@ -349,10 +349,22 @@ private:
 
 		defer_socket_done.Cancel();
 
-		if (IsConnected())
-			/* we don't need the socket anymore, we've got everything we
-			   need in the input buffer */
-			ReleaseSocket(true, keep_alive ? PutAction::REUSE : PutAction::DESTROY);
+		if (!IsConnected())
+			return;
+
+		if (response.state == Response::State::END
+		    ? !socket.IsEmpty()
+		    : response_body_reader.HasExcessData(socket)) {
+			/* the server has sent more than this
+			   response, so the connection is out of sync
+			   and must not be reused */
+			LogConcat(2, peer_name, "excess data after HTTP response");
+			keep_alive = false;
+		}
+
+		/* we don't need the socket anymore, we've got
+		   everything we need in the input buffer */
+		ReleaseSocket(true, keep_alive ? PutAction::REUSE : PutAction::DESTROY);
 	}
 
 	void Destroy() noexcept {

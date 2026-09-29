@@ -218,6 +218,18 @@ public:
 	}
 
 	/**
+	 * Does the socket contain more data than the remainder of
+	 * this response body?  Those bytes do not belong to this
+	 * response, i.e. the connection is out of sync.
+	 */
+	template<typename Socket>
+	[[gnu::pure]]
+	bool HasExcessData(const Socket &s) const noexcept {
+		return !IsChunked() && KnownLength() &&
+			std::cmp_greater(s.GetAvailable(), rest);
+	}
+
+	/**
 	 * The underlying socket has been closed by the remote.
 	 *
 	 * @return true if there is data left in the buffer, false if the body
