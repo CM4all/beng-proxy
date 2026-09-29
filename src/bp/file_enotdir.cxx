@@ -164,7 +164,11 @@ Request::ApplyFileEnotdir() noexcept
 			translate.address.Apply(pool, translate.enotdir_path_info);
 		if (address.IsDefined()) {
 			translate.address = std::move(address);
+
+			/* recalculate the address_id after editing
+			   the ResourceAddress */
 			translate.address_id = StringWithHash{nullptr};
+			resource_tag = translate.address.GetId(pool);
 		}
 	}
 }
