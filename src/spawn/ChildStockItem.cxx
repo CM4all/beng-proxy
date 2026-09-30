@@ -50,6 +50,18 @@ ChildStockItem::~ChildStockItem() noexcept
 }
 
 void
+ChildStockItem::CheckAllCompleted() noexcept
+{
+	assert(state == State::CREATE);
+
+	if (!IsAllCompleted())
+		return;
+
+	state = State::BUSY;
+	InvokeCreateSuccess(*handler);
+}
+
+void
 ChildStockItem::Prepare(ChildStockClass &cls, const void *info,
 			PreparedChildProcess &p,
 			FdHolder &close_fds)
@@ -238,12 +250,7 @@ try {
 	if (cgroup_watch.IsBlocked())
 		throw SpawnResourcesExhaustedError{};
 
-	if (spawn_complete) {
-		/* OnSpawnSuccess() has already been called - we can
-		   report completion now */
-		state = State::BUSY;
-		InvokeCreateSuccess(*handler);
-	}
+	CheckAllCompleted();
 } catch (...) {
 	InvokeCreateError(*handler, std::current_exception());
 }
@@ -254,6 +261,7 @@ void
 ChildStockItem::OnSpawnSuccess() noexcept
 {
 	assert(state == State::CREATE);
+	assert(!spawn_complete);
 
 	if (!handle || IsFading()) {
 		/* meanwhile, OnChildProcessExit() or Disconnected()
@@ -262,27 +270,15 @@ ChildStockItem::OnSpawnSuccess() noexcept
 		return;
 	}
 
-#ifdef HAVE_LIBSYSTEMD
-	if (WaitingForCgroup()) {
-		/* InvokeCreateSuccess() will be called by
-		   OnReturnCgroup() */
-		spawn_complete = true;
-		return;
-	}
-#endif
-
-	state = State::BUSY;
-
-	InvokeCreateSuccess(*handler);
+	spawn_complete = true;
+	CheckAllCompleted();
 }
 
 void
 ChildStockItem::OnSpawnError(std::exception_ptr error) noexcept
 {
 	assert(state == State::CREATE);
-#ifdef HAVE_LIBSYSTEMD
 	assert(!spawn_complete);
-#endif
 
 	InvokeCreateError(*handler, std::move(error));
 }

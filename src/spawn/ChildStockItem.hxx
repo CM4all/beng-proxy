@@ -75,9 +75,7 @@ class ChildStockItem
 		BUSY,
 	} state = State::CREATE;
 
-#ifdef HAVE_LIBSYSTEMD
 	bool spawn_complete = false;
-#endif
 
 public:
 	ChildStockItem(CreateStockItem c,
@@ -134,11 +132,27 @@ public:
 
 
 private:
-#ifdef HAVE_LIBSYSTEMD
 	bool WaitingForCgroup() const noexcept {
+#ifdef HAVE_LIBSYSTEMD
 		return return_cgroup_event.IsDefined();
-	}
+#else
+		return false;
 #endif
+	}
+
+	/**
+	 * Has launching the new child process completed, and
+	 * #StockGetHandler can be invoked?
+	 */
+	[[gnu::pure]]
+	bool IsAllCompleted() const noexcept {
+		return spawn_complete && !WaitingForCgroup();
+	}
+
+	/**
+	 * Invoke #StockGetHandler if IsAllCompleted() returns true.
+	 */
+	void CheckAllCompleted() noexcept;
 
 #ifdef HAVE_LIBSYSTEMD
 	void OnReturnCgroup(unsigned events) noexcept;
