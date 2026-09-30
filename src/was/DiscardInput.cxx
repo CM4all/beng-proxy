@@ -36,6 +36,11 @@ DiscardInput(FileDescriptor input, uint_least64_t remaining)
 					    SocketProtocolError{"WAS input pipe error"});
 		else if (nbytes == 0)
 			throw SocketClosedPrematurelyError{"WAS input pipe closed unexpectedly"};
+		else if (static_cast<std::size_t>(nbytes) < dest.size())
+			/* we don't accept partial reads because
+			   PREMATURE implies that all data is already
+			   in the pipe */
+			throw SocketClosedPrematurelyError{"Short read on WAS input pipe after PREMATURE"};
 
 		remaining -= nbytes;
 	}
