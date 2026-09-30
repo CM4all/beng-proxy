@@ -501,14 +501,12 @@ tcache_response_evaluate(const TranslateResponse &response) noexcept
 /**
  * Returns the string that shall be used for (inverse) regex matching.
  */
-static const char *
+static std::string_view
 tcache_regex_input(AllocatorPtr alloc,
-		   const char *uri, const char *host, const char *user,
+		   std::string_view uri, const char *host, const char *user,
 		   const TranslateResponse &response,
 		   bool inverse=false) noexcept
 {
-	assert(uri != nullptr);
-
 	if (response.regex_tail) {
 		assert(response.base != nullptr);
 		assert(response.regex != nullptr ||
@@ -522,14 +520,16 @@ tcache_regex_input(AllocatorPtr alloc,
 		assert(response.regex != nullptr ||
 		       response.inverse_regex != nullptr);
 
-		uri = uri_unescape_dup(alloc, uri);
-		if (uri == nullptr)
-			return nullptr;
+		const char *unescaped_uri = uri_unescape_dup(alloc, uri);
+		if (unescaped_uri == nullptr)
+			return {};
+
+		uri = unescaped_uri;
 	}
 
 	if (response.regex_on_host_uri) {
-		if (*uri == '/')
-			++uri;
+		if (uri.starts_with('/'))
+			uri.remove_prefix(1);
 		uri = alloc.Concat(host, '/', uri);
 	}
 
@@ -548,10 +548,9 @@ tcache_regex_input(AllocatorPtr alloc,
 static void
 tcache_expand_response(AllocatorPtr alloc, TranslateResponse &response,
 		       RegexPointer regex,
-		       const char *uri, const char *host, const char *user)
+		       std::string_view uri, const char *host, const char *user)
 {
 	assert(regex.IsDefined());
-	assert(uri != nullptr);
 
 	assert(response.regex != nullptr);
 	assert(response.base != nullptr);
@@ -565,9 +564,9 @@ tcache_expand_response(AllocatorPtr alloc, TranslateResponse &response,
 
 	uri = tcache_regex_input(t_alloc, uri, host, user, response);
 	if (!response.regex_raw)
-		uri = NormalizeUriPath(t_alloc, uri);
-	if (uri == nullptr || (!response.unsafe_base &&
-			       !uri_path_verify_paranoid(uri)))
+		uri = NormalizeUriPath(t_alloc, t_alloc.DupZ(uri));
+	if (uri.data() == nullptr || (!response.unsafe_base &&
+				      !uri_path_verify_paranoid(uri)))
 		throw HttpMessageResponse(HttpStatus::BAD_REQUEST,
 					  "Malformed URI");
 
@@ -761,7 +760,7 @@ TranslateCacheMatchContext::Match(const CacheItem &_item) noexcept
 		auto input = tcache_regex_input(AllocatorPtr{tpool},
 						request.uri, request.host,
 						request.user, item.response, true);
-		if (input == nullptr || item.inverse_regex.Match(input))
+		if (input.data() == nullptr || item.inverse_regex.Match(input))
 			/* the URI matches the inverse regular expression */
 			return false;
 	}
@@ -770,7 +769,7 @@ TranslateCacheMatchContext::Match(const CacheItem &_item) noexcept
 		auto input = tcache_regex_input(AllocatorPtr{tpool},
 						request.uri, request.host,
 						request.user, item.response);
-		if (input == nullptr || !item.regex.Match(input))
+		if (input.data() == nullptr || !item.regex.Match(input))
 			return false;
 	}
 

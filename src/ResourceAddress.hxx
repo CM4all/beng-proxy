@@ -301,7 +301,7 @@ public:
 	 * changes (if a BASE is present).
 	 */
 	void CacheLoad(AllocatorPtr alloc, const ResourceAddress &src,
-		       const char *tail) noexcept;
+		       std::string_view tail) noexcept;
 
 	[[gnu::pure]]
 	ResourceAddress Apply(AllocatorPtr alloc,

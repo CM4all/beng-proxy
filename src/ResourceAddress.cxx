@@ -340,9 +340,9 @@ ResourceAddress::LoadBase(AllocatorPtr alloc,
 
 void
 ResourceAddress::CacheLoad(AllocatorPtr alloc, const ResourceAddress &src,
-			   const char *tail) noexcept
+			   std::string_view tail) noexcept
 {
-	if (tail != nullptr) {
+	if (tail.data() != nullptr) {
 		if (src.type == Type::NONE) {
 			/* see code comment in tcache_store_address() */
 			type = Type::NONE;
