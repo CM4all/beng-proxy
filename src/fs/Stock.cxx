@@ -178,11 +178,7 @@ private:
 	void OnBufferedError(std::exception_ptr e) noexcept override;
 
 	/* virtual methods from class StockItem */
-	bool Borrow() noexcept override {
-		idle_timer.Cancel();
-		return true;
-	}
-
+	bool Borrow() noexcept override;
 	bool Release() noexcept override;
 };
 
@@ -286,6 +282,13 @@ FilteredSocketStock::GetFairnessHash(const void *_request) const noexcept
 {
 	const auto &request = *(const FilteredSocketStockRequest *)_request;
 	return request.fairness_hash;
+}
+
+bool
+FilteredSocketStockConnection::Borrow() noexcept
+{
+	idle_timer.Cancel();
+	return true;
 }
 
 bool
