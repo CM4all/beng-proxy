@@ -59,8 +59,19 @@ class ChildStockItem
 #endif
 
 	enum class State : uint_least8_t {
+		/**
+		 * Submitted to spawner, waiting for completion.
+		 */
 		CREATE,
+
+		/**
+		 * Ready and idle.
+		 */
 		IDLE,
+
+		/**
+		 * Ready and busy.
+		 */
 		BUSY,
 	} state = State::CREATE;
 
