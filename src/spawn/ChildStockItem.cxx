@@ -36,14 +36,16 @@ ChildStockItem::ChildStockItem(CreateStockItem c,
 			       std::string_view _tag) noexcept
 	:StockItem(c),
 	 child_stock(_child_stock),
-	 tag(_tag)
+	 tag(_tag),
 #ifdef HAVE_LIBSYSTEMD
-	, return_cgroup_event(c.stock.GetEventLoop(), BIND_THIS_METHOD(OnReturnCgroup))
+	 return_cgroup_event(c.stock.GetEventLoop(), BIND_THIS_METHOD(OnReturnCgroup)),
 #endif
+	 return_stderr_event(c.stock.GetEventLoop(), BIND_THIS_METHOD(OnReturnStderr))
 {}
 
 ChildStockItem::~ChildStockItem() noexcept
 {
+	return_stderr_event.Close();
 #ifdef HAVE_LIBSYSTEMD
 	return_cgroup_event.Close();
 #endif
@@ -134,10 +136,8 @@ ChildStockItem::Spawn(ChildStockClass &cls, const void *info,
 	handle->SetExitListener(*this);
 
 	if (stderr_socket1.IsDefined()) {
-		if (p.return_stderr.IsDefined())
-			p.return_stderr.Close();
-
-		stderr_fd = EasyReceiveMessageWithOneFD(stderr_socket1);
+		return_stderr_event.Open(stderr_socket1.Release());
+		return_stderr_event.ScheduleRead();
 	}
 
 #ifdef HAVE_LIBSYSTEMD
@@ -256,6 +256,29 @@ try {
 }
 
 #endif
+
+inline void
+ChildStockItem::OnReturnStderr([[maybe_unused]] unsigned events) noexcept
+try {
+	assert(state == State::CREATE);
+
+	if (!handle || IsFading()) [[unlikely]]
+		/* meanwhile, OnChildProcessExit() or Disconnected()
+		   has been called; we can't use this process */
+		throw std::runtime_error{"Child process exited prematurely"};
+
+	stderr_fd = EasyReceiveMessageWithOneFD(return_stderr_event.GetSocket());
+	if (!stderr_fd.IsDefined())
+		/* this happens if the open file limit was exceeded;
+		   apparently the recvmsg() is successful, but returns
+		   no file descriptors */
+		throw std::runtime_error{"Failed to receive stderr"};
+
+	return_stderr_event.Close();
+	CheckAllCompleted();
+} catch (...) {
+	InvokeCreateError(*handler, std::current_exception());
+}
 
 void
 ChildStockItem::OnSpawnSuccess() noexcept

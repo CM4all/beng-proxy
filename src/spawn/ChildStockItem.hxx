@@ -9,6 +9,7 @@
 #include "access_log/ChildErrorLog.hxx"
 #include "stock/AbstractStock.hxx"
 #include "stock/Item.hxx"
+#include "event/SocketEvent.hxx"
 #include "io/UniqueFileDescriptor.hxx"
 #include "util/Cancellable.hxx"
 #include "util/IntrusiveList.hxx"
@@ -17,7 +18,6 @@
 
 #ifdef HAVE_LIBSYSTEMD
 #include "spawn/CgroupWatchPtr.hxx"
-#include "event/SocketEvent.hxx"
 #endif
 
 #include <memory>
@@ -57,6 +57,8 @@ class ChildStockItem
 	SocketEvent return_cgroup_event;
 	CgroupWatchPtr cgroup_watch;
 #endif
+
+	SocketEvent return_stderr_event;
 
 	enum class State : uint_least8_t {
 		/**
@@ -140,13 +142,17 @@ private:
 #endif
 	}
 
+	bool WaitingForStderr() const noexcept {
+		return return_stderr_event.IsDefined();
+	}
+
 	/**
 	 * Has launching the new child process completed, and
 	 * #StockGetHandler can be invoked?
 	 */
 	[[gnu::pure]]
 	bool IsAllCompleted() const noexcept {
-		return spawn_complete && !WaitingForCgroup();
+		return spawn_complete && !WaitingForCgroup() && !WaitingForStderr();
 	}
 
 	/**
@@ -157,6 +163,8 @@ private:
 #ifdef HAVE_LIBSYSTEMD
 	void OnReturnCgroup(unsigned events) noexcept;
 #endif
+
+	void OnReturnStderr(unsigned events) noexcept;
 
 	/* virtual methods from class SpawnCompletionHandler */
 	void OnSpawnSuccess() noexcept override;
