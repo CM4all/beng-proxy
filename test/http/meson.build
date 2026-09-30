@@ -33,6 +33,7 @@ test(
     'TestXFF.cxx',
     'TestHttpCacheRFC.cxx',
     'TestHeaderParser.cxx',
+    'TestCombinedHeaders.cxx',
     include_directories: inc,
     dependencies: [
       http_util_dep,
