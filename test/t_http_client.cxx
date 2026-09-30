@@ -221,6 +221,17 @@ struct HttpClientFactory {
 	}
 
 
+	/**
+	 * A "chunked" response which is truncated: the terminating
+	 * chunk never arrives, the peer just closes the socket.
+	 */
+	auto *NewTruncatedChunks(struct pool &, EventLoop &event_loop) {
+		return NewForkWrite(event_loop, "HTTP/1.1 200 OK\r\n"
+				    "transfer-encoding: chunked\r\n"
+				    "\r\n"
+				    "6\r\nfoobar\r\n"sv);
+	}
+
 	auto *NewHold(struct pool &pool, EventLoop &event_loop) noexcept {
 		return NewWithServer(pool, event_loop,
 				     DemoHttpServerConnection::Mode::HOLD);
@@ -472,11 +483,54 @@ TYPED_TEST_P(HttpClientTest, ManySmallChunks)
 	EXPECT_EQ(c.body_error, nullptr);
 }
 
+/**
+ * The peer closes the connection in the middle of a "chunked"
+ * response while body bytes are still buffered (the consumer did not
+ * consume anything from inside OnBufferedData()), and the rest is
+ * drained through the bucket API.  The truncation must be reported to
+ * the consumer rather than leaving the request waiting forever.
+ */
+TYPED_TEST_P(HttpClientTest, TruncatedChunksBuckets)
+{
+	Instance instance;
+	TypeParam factory{instance.event_loop};
+	Context c{instance};
+
+	c.use_buckets = true;
+
+	/* don't consume anything from inside OnBufferedData(), so
+	   that body bytes are still buffered when the peer's FIN is
+	   processed - that is what makes HttpBodyReader::SocketEOF()
+	   leave the end detection to the dechunker */
+	c.buckets_after_data = true;
+
+	c.connection = factory.NewTruncatedChunks(*c.pool, c.event_loop);
+	c.connection->Request(c.pool, c,
+			      HttpMethod::GET, "/",
+			      {}, {},
+			      true,
+			      c, c.cancel_ptr);
+
+	c.WaitForEnd();
+
+	EXPECT_EQ(c.status, HttpStatus::OK);
+
+	/* the buffered part of the body was delivered ... */
+	EXPECT_EQ(c.consumed_body_data, 6);
+
+	/* ... and then the truncation was reported instead of
+	   waiting forever */
+	EXPECT_FALSE(c.body_eof);
+	EXPECT_NE(c.body_error, nullptr);
+	EXPECT_TRUE(c.released);
+}
+
 REGISTER_TYPED_TEST_SUITE_P(HttpClientTest,
 			    NoKeepalive,
 			    IgnoredRequestBody,
 			    Expect100ContinueSplice,
-			    ManySmallChunks);
+			    ManySmallChunks,
+			    TruncatedChunksBuckets);
 
 class NullHttpClientFactory final : public HttpClientFactory {
 public:
