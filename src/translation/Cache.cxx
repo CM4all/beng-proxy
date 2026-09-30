@@ -1113,7 +1113,7 @@ try {
 	}
 
 	if (request.uri != nullptr && response.IsExpandable()) {
-		const char *uri = UriWithoutQueryString(alloc, request.uri);
+		const std::string_view uri = UriWithoutQueryString(request.uri);
 		tcache_expand_response(alloc, response,
 				       response.CompileRegex(cache.pcre_cache),
 				       uri, request.host,
