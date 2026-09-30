@@ -255,7 +255,7 @@ TEST(HttpCacheRFC, Vary)
 						     {"vary", "accept-encoding"},
 						     {"vary", "cookie"}});
 		ASSERT_TRUE(info);
-		EXPECT_STREQ(info->vary, "accept-encoding, cookie");
+		EXPECT_STREQ(info->vary, "accept-encoding,cookie");
 	}
 
 	/* an empty value is ignored */

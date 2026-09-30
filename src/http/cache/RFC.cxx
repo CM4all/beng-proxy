@@ -310,7 +310,7 @@ http_cache_response_evaluate(const HttpCacheRequestInfo &request_info,
 		if (info.vary == nullptr)
 			info.vary = value;
 		else
-			info.vary = alloc.Concat(info.vary, ", ", value);
+			info.vary = alloc.Concat(info.vary, ","sv, value);
 	}
 
 	if (info.expires == std::chrono::system_clock::from_time_t(-1) &&
