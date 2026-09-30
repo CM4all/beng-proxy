@@ -29,6 +29,15 @@ require_base_tail(const char *uri, std::string_view base) noexcept
 	return uri + base.size();
 }
 
+std::string_view
+require_base_tail(std::string_view uri, std::string_view base) noexcept
+{
+	assert(is_base(base));
+	assert(uri.starts_with(base));
+
+	return uri.substr(base.size());
+}
+
 std::size_t
 base_string(std::string_view uri, std::string_view tail) noexcept
 {

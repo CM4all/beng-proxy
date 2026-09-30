@@ -32,6 +32,10 @@ base_tail(const char *uri, std::string_view base) noexcept;
 const char *
 require_base_tail(const char *uri, std::string_view base) noexcept;
 
+[[gnu::pure]]
+std::string_view
+require_base_tail(std::string_view uri, std::string_view base) noexcept;
+
 /**
  * Determine the length of the base prefix in the given string.
  *
