@@ -266,7 +266,8 @@ ResourceAddress::CacheStore(AllocatorPtr alloc,
 		CopyFrom(alloc, src);
 		PostCacheStore(alloc);
 		return;
-	} else if (const char *tail = base_tail(uri, base)) {
+	} else if (const auto tail = base_tail(uri, base);
+		   tail.data() != nullptr) {
 		/* we received a valid BASE packet - store only the base
 		   URI */
 

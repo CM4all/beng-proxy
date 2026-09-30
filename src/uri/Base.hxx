@@ -22,8 +22,8 @@
  * stored in the cache item
  */
 [[gnu::pure]]
-const char *
-base_tail(const char *uri, std::string_view base) noexcept;
+std::string_view
+base_tail(std::string_view uri, std::string_view base) noexcept;
 
 /**
  * Similar to base_tail(), but assert that there is a base match.

@@ -7,14 +7,12 @@
 
 #include <cassert>
 
-const char *
-base_tail(const char *uri, std::string_view base) noexcept
+std::string_view
+base_tail(std::string_view uri, std::string_view base) noexcept
 {
-	assert(uri != nullptr);
-
 	if (!is_base(base))
 		/* not a valid base */
-		return nullptr;
+		return {};
 
 	return StringAfterPrefix(uri, base);
 }
