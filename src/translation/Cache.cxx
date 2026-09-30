@@ -1060,6 +1060,12 @@ TranslationCache::Store(const StringWithHash &_key, const TranslateRequest &requ
 	return item;
 }
 
+static constexpr std::string_view
+UriWithoutQueryString(std::string_view uri) noexcept
+{
+	return Split(uri, '?').first;
+}
+
 /**
  * Return a null-terminated string with the given URI minus the query
  * string.  This function is only needed because various functions
@@ -1117,9 +1123,9 @@ try {
 		const char *uri = UriWithoutQueryString(alloc, request.uri);
 		response.CacheLoad(alloc, response, uri);
 	} else if (response.base != nullptr) {
-		const char *uri = request.uri;
-		const char *tail = require_base_tail(uri, response.base);
-		tail = UriWithoutQueryString(alloc, tail);
+		const std::string_view uri = request.uri;
+		std::string_view tail = require_base_tail(uri, response.base);
+		tail = UriWithoutQueryString(tail);
 		if (!response.unsafe_base && !uri_path_verify_paranoid(tail))
 			throw HttpMessageResponse(HttpStatus::BAD_REQUEST,
 						  "Malformed URI");
