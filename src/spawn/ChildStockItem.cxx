@@ -132,13 +132,6 @@ ChildStockItem::Spawn(ChildStockClass &cls, const void *info,
 	if (return_cgroup.IsDefined()) {
 		assert(cgroup_watch);
 
-		/* close the other side of the socketpair if it's
-		   still open to avoid blocking the following receive
-		   call if the spawner has closed the socket without
-		   sending something */
-		if (p.return_cgroup.IsDefined())
-			p.return_cgroup.Close();
-
 		/* the cgroup_watch will be constructed by
 		   OnReturnCgroup() as soon as the socket becomes
 		   ready */
