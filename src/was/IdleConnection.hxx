@@ -102,13 +102,6 @@ private:
 	};
 
 	/**
-	 * Discard the given amount of data from the input pipe.
-	 *
-	 * Throws on error.
-	 */
-	void DiscardInput(uint64_t remaining);
-
-	/**
 	 * Attempt to recover after the WAS client sent STOP to the
 	 * application.  Handles a PREMATURE packet and discards
 	 * excess data from the pipe.

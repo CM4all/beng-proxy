@@ -3,6 +3,7 @@
 // author: Max Kellermann <max.kellermann@ionos.com>
 
 #include "Input.hxx"
+#include "DiscardInput.hxx"
 #include "event/PipeEvent.hxx"
 #include "event/DeferEvent.hxx"
 #include "istream/istream.hxx"
@@ -563,23 +564,7 @@ WasInput::PrematureThrow(uint64_t _length)
 	if (_length < received)
 		throw SocketProtocolError{"announced premature length is too small"};
 
-	uint64_t remaining = _length - received;
-
-	while (remaining > 0) {
-		std::array<std::byte, 4096> discard_buffer;
-		std::span<std::byte> dest{discard_buffer};
-		if (dest.size() > remaining)
-			dest = dest.first(remaining);
-		ssize_t nbytes = GetPipe().Read(dest);
-		if (nbytes < 0)
-			throw NestException(std::make_exception_ptr(MakeErrno("Read error")),
-					    SocketProtocolError{"read error on WAS data connection"});
-
-		if (nbytes == 0)
-			throw SocketClosedPrematurelyError("server closed the WAS data connection");
-
-		remaining -= nbytes;
-	}
+	DiscardInput(GetPipe(), _length - received);
 }
 
 inline void

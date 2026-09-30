@@ -10,6 +10,7 @@ was_common = static_library(
   'Map.cxx',
   'Output.cxx',
   'Input.cxx',
+  'DiscardInput.cxx',
   include_directories: inc,
   dependencies: [
     libwas,

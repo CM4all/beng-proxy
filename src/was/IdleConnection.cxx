@@ -3,6 +3,7 @@
 // author: Max Kellermann <max.kellermann@ionos.com>
 
 #include "IdleConnection.hxx"
+#include "DiscardInput.hxx"
 #include "was/async/Socket.hxx"
 #include "system/Error.hxx"
 #include "net/SocketError.hxx"
@@ -24,24 +25,6 @@ WasIdleConnection::WasIdleConnection(EventLoop &event_loop,
 {
 }
 
-inline void
-WasIdleConnection::DiscardInput(uint64_t remaining)
-{
-	while (remaining > 0) {
-		std::array<std::byte, 16384> buffer;
-		std::span<std::byte> dest = buffer;
-		if (dest.size() > remaining)
-			dest = dest.first(remaining);
-		ssize_t nbytes = input.Read(dest);
-		if (nbytes < 0)
-			throw MakeErrno("error on idle WAS input pipe");
-		else if (nbytes == 0)
-			throw SocketClosedPrematurelyError{"WAS input pipe closed unexpectedly"};
-
-		remaining -= nbytes;
-	}
-}
-
 inline bool
 WasIdleConnection::OnPrematureControlPacket(std::span<const std::byte> payload)
 {
@@ -53,7 +36,7 @@ WasIdleConnection::OnPrematureControlPacket(std::span<const std::byte> payload)
 	if (premature < input_received)
 		throw SocketProtocolError{"Bogus PREMATURE payload"};
 
-	DiscardInput(premature - input_received);
+	DiscardInput(input, premature - input_received);
 
 	stopping = false;
 	handler.OnWasIdleConnectionClean();
