@@ -42,7 +42,7 @@ FileAddress::IsValidBase() const noexcept
 }
 
 bool
-FileAddress::SplitBase(AllocatorPtr alloc, const char *suffix) noexcept
+FileAddress::SplitBase(AllocatorPtr alloc, std::string_view suffix) noexcept
 {
 	if (base != nullptr || expand_path)
 		/* no-op and no error */

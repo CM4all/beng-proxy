@@ -87,7 +87,7 @@ public:
 	[[gnu::pure]]
 	bool IsValidBase() const noexcept;
 
-	bool SplitBase(AllocatorPtr alloc, const char *suffix) noexcept;
+	bool SplitBase(AllocatorPtr alloc, std::string_view suffix) noexcept;
 
 	FileAddress *SaveBase(AllocatorPtr alloc,
 			      std::string_view suffix) const noexcept;
