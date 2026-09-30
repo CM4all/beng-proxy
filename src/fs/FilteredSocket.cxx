@@ -26,6 +26,30 @@ FilteredSocket::~FilteredSocket() noexcept
 	}
 }
 
+bool
+FilteredSocket::IsAliveAndEmpty() const noexcept
+{
+	assert(IsValid());
+	assert(IsConnected());
+
+	if (!IsEmpty()) [[unlikely]]
+		return false;
+
+	/* if any of these flags are in GetReadyFlags(), then the
+	   socket is not healthy, but we haven't handled this event
+	   yet */
+	unsigned ready_mask = SocketEvent::DEAD_MASK;
+
+	/* if there is no filter, then READ means more (application)
+	   data is already in the kernel receive buffer; with a
+	   filter, that may just be control data (e.g. TLS
+	   renegotiation) */
+	if (!HasFilter())
+		ready_mask |= SocketEvent::READ;
+
+	return (base.GetReadyFlags() & ready_mask) == 0;
+}
+
 /*
  * buffered_socket_handler
  *

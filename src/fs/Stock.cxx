@@ -287,6 +287,14 @@ FilteredSocketStock::GetFairnessHash(const void *_request) const noexcept
 bool
 FilteredSocketStockConnection::Borrow() noexcept
 {
+	assert(socket);
+
+	if (!socket->IsAliveAndEmpty()) [[unlikely]]
+		/* the peer has hung up (epoll event not yet handled)
+		   or has sent data which does not belong to any
+		   response */
+		return false;
+
 	idle_timer.Cancel();
 	return true;
 }

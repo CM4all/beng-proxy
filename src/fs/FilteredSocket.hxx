@@ -242,6 +242,21 @@ public:
 	bool IsEmpty() const noexcept;
 
 	/**
+	 * Is the socket alive (i.e. not known to be hung up, not
+	 * failed) and there is no pending input data?
+	 *
+	 * This is usually used to check whether a client socket can
+	 * be reused for the next request.
+	 *
+	 * This may only be called if the socket is currently known to
+	 * be connected (IsValid() and IsConnected() return true).
+	 * This method checks pending epoll events, but not whether
+	 * this object has been closed manually.
+	 */
+	[[nodiscard]] [[gnu::pure]]
+	bool IsAliveAndEmpty() const noexcept;
+
+	/**
 	 * Is the input buffer full?
 	 */
 	[[nodiscard]] [[gnu::pure]]
