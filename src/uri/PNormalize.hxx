@@ -4,6 +4,8 @@
 
 #pragma once
 
+#include <string_view>
+
 class AllocatorPtr;
 
 /**
@@ -14,5 +16,5 @@ class AllocatorPtr;
  * (Unlike uri_compress(), this doesn't resolve "/../")
  */
 [[gnu::pure]]
-const char *
-NormalizeUriPath(AllocatorPtr alloc, const char *uri) noexcept;
+std::string_view
+NormalizeUriPath(AllocatorPtr alloc, std::string_view uri) noexcept;

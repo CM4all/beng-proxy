@@ -10,25 +10,26 @@
 
 #include <string.h>
 
-const char *
-NormalizeUriPath(AllocatorPtr alloc, const char *uri) noexcept
+using std::string_view_literals::operator""sv;
+
+std::string_view
+NormalizeUriPath(AllocatorPtr alloc, std::string_view uri) noexcept
 {
-	assert(uri != nullptr);
+	while (uri.starts_with("./"sv))
+		uri.remove_prefix(2);
 
-	while (uri[0] == '.' && uri[1] == '/')
-		uri += 2;
-
-	if (StringIsEqual(uri, "."))
+	if (uri == "."sv)
 		return "";
 
-	if (strstr(uri, "//") == nullptr &&
-	    strstr(uri, "/./") == nullptr &&
-	    !StringEndsWith(uri, "/."))
+	if (!uri.contains("//"sv) &&
+	    !uri.contains("/./"sv) &&
+	    !uri.ends_with("/."sv))
 		/* cheap route: the URI is already compressed, do not
 		   duplicate anything */
 		return uri;
 
-	char *dest = alloc.Dup(uri);
+	char *dest = alloc.NewArray<char>(uri.size() + 1);
+	*std::copy(uri.begin(), uri.end(), dest) = '\0';
 
 	/* eliminate "//" */
 

@@ -564,7 +564,7 @@ tcache_expand_response(AllocatorPtr alloc, TranslateResponse &response,
 
 	uri = tcache_regex_input(t_alloc, uri, host, user, response);
 	if (!response.regex_raw)
-		uri = NormalizeUriPath(t_alloc, t_alloc.DupZ(uri));
+		uri = NormalizeUriPath(t_alloc, uri);
 	if (uri.data() == nullptr || (!response.unsafe_base &&
 				      !uri_path_verify_paranoid(uri)))
 		throw HttpMessageResponse(HttpStatus::BAD_REQUEST,
@@ -1066,27 +1066,6 @@ UriWithoutQueryString(std::string_view uri) noexcept
 	return Split(uri, '?').first;
 }
 
-/**
- * Return a null-terminated string with the given URI minus the query
- * string.  This function is only needed because various functions
- * such as uri_path_verify_paranoid() require a null-terminated
- * string, but cannot cope with a query string.
- */
-static const char *
-UriWithoutQueryString(AllocatorPtr alloc, const char *uri) noexcept
-{
-	const char *qmark = strchr(uri, '?');
-	if (qmark == nullptr)
-		/* optimized fast path: return the original URI
-		   pointer without allocations and without copying any
-		   data */
-		return uri;
-
-	/* slow path: copy the string so the caller gets a
-	   null-terminated string */
-	return alloc.DupZ({uri, qmark});
-}
-
 /*
  * translate callback
  *
@@ -1120,7 +1099,7 @@ try {
 				       request.user);
 	} else if (response.easy_base) {
 		/* create a writable copy and apply the BASE */
-		const char *uri = UriWithoutQueryString(alloc, request.uri);
+		const std::string_view uri = UriWithoutQueryString(request.uri);
 		response.CacheLoad(alloc, response, uri);
 	} else if (response.base != nullptr) {
 		const std::string_view uri = request.uri;

@@ -8,34 +8,36 @@
 
 #include <gtest/gtest.h>
 
+using std::string_view_literals::operator""sv;
+
 TEST(UriPNormalize, NormalizeUriPath)
 {
 	TestPool pool;
 	AllocatorPtr alloc(pool);
 
-	EXPECT_STREQ(NormalizeUriPath(alloc, "//"), "/");
-	EXPECT_STREQ(NormalizeUriPath(alloc, "//."), "/");
-	EXPECT_STREQ(NormalizeUriPath(alloc, "."), "");
-	EXPECT_STREQ(NormalizeUriPath(alloc, "./"), "");
-	EXPECT_STREQ(NormalizeUriPath(alloc, "./."), "");
-	EXPECT_STREQ(NormalizeUriPath(alloc, "././"), "");
-	EXPECT_STREQ(NormalizeUriPath(alloc, "././././"), "");
-	EXPECT_STREQ(NormalizeUriPath(alloc, "/foo/bar"), "/foo/bar");
-	EXPECT_STREQ(NormalizeUriPath(alloc, "/foo/./bar"), "/foo/bar");
-	EXPECT_STREQ(NormalizeUriPath(alloc, "/./foo/bar"), "/foo/bar");
-	EXPECT_STREQ(NormalizeUriPath(alloc, "/foo/bar/./"), "/foo/bar/");
-	EXPECT_STREQ(NormalizeUriPath(alloc, "./foo/bar/"), "foo/bar/");
-	EXPECT_STREQ(NormalizeUriPath(alloc, "/foo//bar/"), "/foo/bar/");
-	EXPECT_STREQ(NormalizeUriPath(alloc, "/foo///bar/"), "/foo/bar/");
-	EXPECT_STREQ(NormalizeUriPath(alloc, "/1/2/../3/"), "/1/2/../3/");
-	EXPECT_STREQ(NormalizeUriPath(alloc, "/1/2/../../3/"), "/1/2/../../3/");
-	EXPECT_STREQ(NormalizeUriPath(alloc, "foo/../bar"), "foo/../bar");
-	EXPECT_STREQ(NormalizeUriPath(alloc, "foo//../bar"), "foo/../bar");
-	EXPECT_STREQ(NormalizeUriPath(alloc, "foo/.."), "foo/..");
-	EXPECT_STREQ(NormalizeUriPath(alloc, "foo/../."), "foo/../");
+	EXPECT_EQ(NormalizeUriPath(alloc, "//"sv), "/"sv);
+	EXPECT_EQ(NormalizeUriPath(alloc, "//."sv), "/"sv);
+	EXPECT_EQ(NormalizeUriPath(alloc, "."sv), ""sv);
+	EXPECT_EQ(NormalizeUriPath(alloc, "./"sv), ""sv);
+	EXPECT_EQ(NormalizeUriPath(alloc, "./."sv), ""sv);
+	EXPECT_EQ(NormalizeUriPath(alloc, "././"sv), ""sv);
+	EXPECT_EQ(NormalizeUriPath(alloc, "././././"sv), ""sv);
+	EXPECT_EQ(NormalizeUriPath(alloc, "/foo/bar"sv), "/foo/bar"sv);
+	EXPECT_EQ(NormalizeUriPath(alloc, "/foo/./bar"sv), "/foo/bar"sv);
+	EXPECT_EQ(NormalizeUriPath(alloc, "/./foo/bar"sv), "/foo/bar"sv);
+	EXPECT_EQ(NormalizeUriPath(alloc, "/foo/bar/./"sv), "/foo/bar/"sv);
+	EXPECT_EQ(NormalizeUriPath(alloc, "./foo/bar/"sv), "foo/bar/"sv);
+	EXPECT_EQ(NormalizeUriPath(alloc, "/foo//bar/"sv), "/foo/bar/"sv);
+	EXPECT_EQ(NormalizeUriPath(alloc, "/foo///bar/"sv), "/foo/bar/"sv);
+	EXPECT_EQ(NormalizeUriPath(alloc, "/1/2/../3/"sv), "/1/2/../3/"sv);
+	EXPECT_EQ(NormalizeUriPath(alloc, "/1/2/../../3/"sv), "/1/2/../../3/"sv);
+	EXPECT_EQ(NormalizeUriPath(alloc, "foo/../bar"sv), "foo/../bar"sv);
+	EXPECT_EQ(NormalizeUriPath(alloc, "foo//../bar"sv), "foo/../bar"sv);
+	EXPECT_EQ(NormalizeUriPath(alloc, "foo/.."sv), "foo/.."sv);
+	EXPECT_EQ(NormalizeUriPath(alloc, "foo/../."sv), "foo/../"sv);
 
-	EXPECT_STREQ(NormalizeUriPath(alloc, "/../"), "/../");
-	EXPECT_STREQ(NormalizeUriPath(alloc, "/.."), "/..");
-	EXPECT_STREQ(NormalizeUriPath(alloc, ".."), "..");
-	EXPECT_STREQ(NormalizeUriPath(alloc, "/1/2/.."), "/1/2/..");
+	EXPECT_EQ(NormalizeUriPath(alloc, "/../"sv), "/../"sv);
+	EXPECT_EQ(NormalizeUriPath(alloc, "/.."sv), "/.."sv);
+	EXPECT_EQ(NormalizeUriPath(alloc, ".."sv), ".."sv);
+	EXPECT_EQ(NormalizeUriPath(alloc, "/1/2/.."sv), "/1/2/.."sv);
 }
