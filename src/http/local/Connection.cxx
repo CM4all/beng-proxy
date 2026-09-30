@@ -77,7 +77,7 @@ LhttpConnection::OnBufferedError(std::exception_ptr e) noexcept
 bool
 LhttpConnection::Borrow() noexcept
 {
-	return true;
+	return socket.IsAliveAndEmpty();
 }
 
 bool
