@@ -5,9 +5,18 @@
 #pragma once
 
 #include "PerHttpStatusCounters.hxx"
+#include "util/CharUtil.hxx"
+#include "util/StringVerify.hxx"
 
 #include <map>
 #include <string>
+
+constexpr bool
+IsAllowedGeneratorChar(char ch) noexcept
+{
+	return IsAlphaNumericASCII(ch) ||
+		ch == '-' || ch == '_' || ch == '.' || ch == ':' || ch == '/';
+}
 
 struct PerGeneratorStats {
 	PerHttpStatusCounters n_per_status{};
@@ -52,6 +61,12 @@ private:
 		    n_generators >= MAX_GENERATORS)
 			/* too many (or too long) generator names;
 			   ignore this one */
+			return nullptr;
+
+		if (!CheckChars(generator, IsAllowedGeneratorChar))
+			/* this name becomes a Prometheus label value;
+			   refuse everything which would need escaping
+			   there */
 			return nullptr;
 
 		++n_generators;
