@@ -96,8 +96,11 @@ LbHttpRequest::OnTranslateResponse(UniquePoolPtr<TranslateResponse> _response) n
 			return;
 		}
 
+		/* the STATUS packet may be meant for the encrypted
+		   connection (e.g. "503 over https, redirect over
+		   http"), and SendRedirect() allows only 3xx */
 		HttpStatus status = response.status;
-		if (status == HttpStatus{})
+		if (!http_status_is_redirect(status))
 			status = HttpStatus::MOVED_PERMANENTLY;
 
 		const AllocatorPtr alloc{_request.pool};

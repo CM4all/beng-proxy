@@ -12,6 +12,7 @@ cm4all-beng-proxy (22.0) unstable; urgency=low
   * lb/zeroconf: fix use-after-free crash bug
   * lb: fix IPv6 /48 ban list lookup
   * lb: support max_connections_per_ip for TCP connections
+  * lb: fix crash on HTTPS_ONLY redirect with non-redirect STATUS
   * certdb: fix crash on PostgreSQL error
   * certdb: require CURL 7.85
   * certdb: restrict CURL to HTTPS
