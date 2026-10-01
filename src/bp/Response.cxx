@@ -1020,7 +1020,10 @@ Request::OnHttpResponse(HttpStatus status, StringMap &&_headers,
 		/* get the X-CM4all-Chain header from the unfiltered
 		   response headers, to be sent to the translation
 		   server later when CHAIN is evaluated */
-		translate.chain_header = headers.Remove(x_cm4all_chain_header);
+		/* copy the value because the header map may be owned
+		   by a cache pool which is freed before CHAIN is
+		   evaluated */
+		translate.chain_header = alloc.CheckDup(headers.Remove(x_cm4all_chain_header));
 
 	if (http_status_is_success(status)) {
 		using namespace BengProxy;
