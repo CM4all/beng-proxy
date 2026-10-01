@@ -599,6 +599,24 @@ HttpCacheRequest::OnHttpResponse(HttpStatus status, StringMap &&_headers,
 	if (document != nullptr && status == HttpStatus::NOT_MODIFIED) {
 		assert(!body);
 
+		if (const char *etag = _headers.Get(etag_header);
+		    etag != nullptr && document->info.etag != nullptr &&
+		    !StringIsEqual(etag, document->info.etag)) {
+			/* this "304" does not refer to the
+			   representation we have cached (we sent only
+			   our own validators, see
+			   HttpCache::Revalidate()), so it must not
+			   renew it (RFC 9111 4.3.4) */
+			LogFmt(2, "HttpCache", "mismatching etag in 304 for {:?}"sv, key.value);
+
+			cache.Remove(document);
+
+			auto &_handler = handler;
+			Destroy();
+			_handler.InvokeError(std::make_exception_ptr(std::runtime_error("Mismatching ETag in 304 response")));
+			return;
+		}
+
 		const auto now = GetEventLoop().SystemNow();
 		if (auto _info = http_cache_response_evaluate(request_info, now,
 							      alloc,
