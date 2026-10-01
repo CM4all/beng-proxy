@@ -191,6 +191,20 @@ HttpServerConnection::ParseRequestLine(std::string_view line) noexcept
 	return true;
 }
 
+/**
+ * Is this a protocol we are willing to upgrade to?  Only WebSocket is
+ * supported; forwarding another protocol (e.g. "h2c") would turn the
+ * connection into a tunnel which carries requests past our per-request
+ * policy.
+ */
+[[gnu::pure]]
+static bool
+IsSupportedUpgrade(const char *upgrade) noexcept
+{
+	return upgrade != nullptr &&
+		StringIsEqualIgnoreCase(upgrade, "websocket");
+}
+
 inline bool
 HttpServerConnection::HeadersFinished(bool has_more) noexcept
 {
@@ -241,7 +255,7 @@ HttpServerConnection::HeadersFinished(bool has_more) noexcept
 
 	request.upgrade = connection != nullptr &&
 		http_list_contains_i(connection, "upgrade") &&
-		http_is_upgrade(r.headers);
+		IsSupportedUpgrade(r.headers.Get(upgrade_header));
 
 	if (!request.upgrade)
 		/* drop the hop-by-hop "Upgrade" header unless this
