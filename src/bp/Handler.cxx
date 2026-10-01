@@ -26,6 +26,7 @@
 #include "uri/Args.hxx"
 #include "uri/PEdit.hxx"
 #include "uri/PEscape.hxx"
+#include "uri/PNormalize.hxx"
 #include "uri/Recompose.hxx"
 #include "uri/RedirectHttps.hxx"
 #include "uri/Verify.hxx"
@@ -567,6 +568,15 @@ Request::RepeatTranslation(UniquePoolPtr<TranslateResponse> _response) noexcept
 				return;
 			}
 		}
+
+		/* select the layout item by the normalized URI path,
+		   because that is the string the cached response is
+		   eventually applied to
+		   (TranslateResponse::CacheLoad()); a "//" or "/./"
+		   must not move a request into a different (more
+		   permissive) cache itembucket; both
+		   NormalizeUriPath() results are null-terminated. */
+		uri = NormalizeUriPath(alloc, std::string_view{uri}).data();
 
 		translate.request.layout = response.layout;
 		translate.layout_items = response.layout_items;
