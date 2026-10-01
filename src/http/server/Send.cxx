@@ -188,7 +188,12 @@ HttpServerConnection::SubmitResponse(HttpStatus status,
 		headers.Write("content-length", fmt::format_int{body_length.length}.c_str());
 	}
 
-	const bool upgrade = body && http_is_upgrade(status, headers);
+	/* a protocol upgrade is possible only if the client has asked
+	   for one (RFC 9110 7.8); without this check, we would tell the
+	   client that the connection has switched protocols while we
+	   continue to frame the "body" as HTTP/1.1 */
+	const bool upgrade = body && request.upgrade &&
+		http_is_upgrade(status, headers);
 	if (upgrade) {
 		headers.Write("connection", "upgrade");
 		headers.MoveToBuffer(upgrade_header);
