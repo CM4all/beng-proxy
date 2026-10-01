@@ -1390,6 +1390,15 @@ LbConfigParser::Listener::Finish()
 	if (config.hsts && config.destination.GetProtocol() != LbProtocol::HTTP)
 		throw LineParser::Error{"HSTS only available with HTTP"};
 
+	/* the ban list is consulted in LbHttpConnection only */
+	if (config.client_ban_list &&
+	    config.destination.GetProtocol() != LbProtocol::HTTP)
+		throw LineParser::Error{"client_ban_list only available with HTTP"};
+
+	if (!config.client_ban_host_whitelist.empty() &&
+	    config.destination.GetProtocol() != LbProtocol::HTTP)
+		throw LineParser::Error{"client_ban_host_whitelist only available with HTTP"};
+
 	parent.config.listeners.emplace_back(std::move(config));
 
 	ConfigParser::Finish();
