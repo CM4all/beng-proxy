@@ -20,6 +20,7 @@ cm4all-beng-proxy (22.0) unstable; urgency=low
   * certdb/{acme,puki}: validate certificates signed by CA
   * certdb/acme: stricter ACME http-01 challenge token check
   * ssl: don't share connection with client certificate
+  * ssl: fix busy loop during asynchronous certificate lookup
   * http_server: drop the "Upgrade" header from non-upgrade requests
   * http_server: disable keep-alive after status 414/431
   * http_server: reject unsupported Transfer-Encoding

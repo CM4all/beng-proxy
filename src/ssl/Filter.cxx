@@ -262,6 +262,10 @@ SslFilter::Run(ThreadSocketFilterInternal &f)
 
 	ERR_clear_error();
 
+	/* is the handshake waiting for an asynchronous certificate
+	   lookup? */
+	bool suspended = false;
+
 	if (handshaking) [[unlikely]] {
 		int result = SSL_do_handshake(ssl.get());
 		if (result == 1) {
@@ -277,7 +281,8 @@ SslFilter::Run(ThreadSocketFilterInternal &f)
 			}
 
 			throw SslError{};
-		}
+		} else if (error == SSL_ERROR_WANT_X509_LOOKUP)
+			suspended = true;
 	}
 
 	if (!handshaking) [[likely]] {
@@ -314,13 +319,15 @@ SslFilter::Run(ThreadSocketFilterInternal &f)
 		f.encrypted_output.MoveFromAllowNull(encrypted_output);
 		f.drained = plain_output.empty() && encrypted_output.empty();
 
-		if (!decrypted_input.IsDefinedAndFull() && !f.encrypted_input.empty())
+		if (!suspended &&
+		    !decrypted_input.IsDefinedAndFull() && !f.encrypted_input.empty())
 			/* there's more data to be decrypted and we
 			   still have room in the destination buffer,
 			   so let's run again */
 			f.again = true;
 
-		if (!f.plain_output.empty() && !plain_output.IsDefinedAndFull() &&
+		if (!suspended &&
+		    !f.plain_output.empty() && !plain_output.IsDefinedAndFull() &&
 		    !encrypted_output.IsDefinedAndFull())
 			/* there's more data, and we're ready to handle it: try
 			   again */
