@@ -40,6 +40,32 @@ TEST(UriRelativeTest, Compress)
 }
 
 /**
+ * The server on the other end ends the path at '?' and '#' (and some
+ * servers strip ";" path parameters), and resolves the dot segment in
+ * front of it.
+ */
+TEST(UriRelativeTest, CompressDotDotEnd)
+{
+	TestPool pool;
+	AllocatorPtr alloc(pool);
+
+	EXPECT_EQ(uri_compress(alloc, "..?"), nullptr);
+	EXPECT_EQ(uri_compress(alloc, "..?x"), nullptr);
+	EXPECT_EQ(uri_compress(alloc, "..#x"), nullptr);
+	EXPECT_EQ(uri_compress(alloc, "..;x"), nullptr);
+	EXPECT_EQ(uri_compress(alloc, "/..?x"), nullptr);
+	EXPECT_EQ(uri_compress(alloc, "/..#x"), nullptr);
+	EXPECT_EQ(uri_compress(alloc, "/..;x"), nullptr);
+	EXPECT_EQ(uri_compress(alloc, "/a/../..?x"), nullptr);
+	EXPECT_EQ(uri_compress(alloc, "/a/..;/b"), nullptr);
+
+	/* a ".." which is not a complete path segment is not a dot
+	   segment */
+	EXPECT_STREQ(uri_compress(alloc, "/a/..b?x"), "/a/..b?x");
+	EXPECT_STREQ(uri_compress(alloc, "/a/b..?x"), "/a/b..?x");
+}
+
+/**
  * uri_compress() resolves dot segments textually, so a percent-encoded
  * dot would be invisible to it, but would be resolved by the server on
  * the other end.

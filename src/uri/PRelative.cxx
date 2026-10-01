@@ -26,11 +26,23 @@ ContainsEncodedDot(const char *uri) noexcept
 	return false;
 }
 
+/**
+ * Does this character end a ".." path segment?  Not only the slash
+ * does: the server on the other end cuts the path at the first '?' and
+ * '#', and some servers strip ";" path parameters, and all of them
+ * resolve the dot segment afterwards.
+ */
+static constexpr bool
+IsDotDotEnd(char ch) noexcept
+{
+	return ch == '/' || ch == 0 || ch == '?' || ch == '#' || ch == ';';
+}
+
 static constexpr bool
 IsDotDot(const char *uri) noexcept
 {
 	return uri[0] == '.' && uri[1] == '.' &&
-		(uri[2] == '/' || uri[2] == 0);
+		IsDotDotEnd(uri[2]);
 }
 
 const char *
@@ -102,6 +114,14 @@ uri_compress(AllocatorPtr alloc, const char *uri) noexcept
 		if (IsDotDot(dest))
 			return nullptr;
 	}
+
+	/* a ".." segment which is not terminated by a slash was not
+	   resolved by the loop above, but the server on the other end
+	   would resolve it; refuse to pass it on */
+
+	for (p = dest; (p = strstr(p, "/..")) != nullptr; p += 3)
+		if (p[3] != 0 && IsDotDotEnd(p[3]))
+			return nullptr;
 
 	/* eliminate trailing "/." and "/.." */
 
