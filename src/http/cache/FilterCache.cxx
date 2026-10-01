@@ -808,8 +808,14 @@ FilterCache::Get(struct pool &caller_pool,
 		 HttpResponseHandler &handler,
 		 CancellablePointer &cancel_ptr) noexcept
 {
-	auto *info = filter_cache_request_evaluate(caller_pool, cache_tag, address,
-						   source_id, headers);
+	auto *info = body
+		? filter_cache_request_evaluate(caller_pool, cache_tag, address,
+						source_id, headers)
+		/* the source response has no body (e.g. because the
+		   client sent HEAD); its filter output is not the
+		   representation of this resource, and must neither
+		   be stored nor served */
+		: nullptr;
 	if (info != nullptr) {
 		FilterCacheItem *item
 			= (FilterCacheItem *)cache.Get(info->key);
