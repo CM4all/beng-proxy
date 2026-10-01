@@ -676,10 +676,8 @@ WasInput::_Close() noexcept
 		   reported to the IstreamHandler; no need to send
 		   STOP */
 
-		if (HasPipe() && !ReleasePipe())
-			return;
-
-		handler.WasInputEof();
+		if (!HasPipe() || ReleasePipe())
+			handler.WasInputEof();
 	} else
 		handler.WasInputClose(received);
 
