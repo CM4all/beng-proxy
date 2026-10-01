@@ -52,6 +52,7 @@ cm4all-beng-proxy (22.0) unstable; urgency=low
   * translation: reject WRITE_FILE without a null separator
   * translation: stricter site name check
   * translation: validate the SESSION_SITE payload
+  * translation: validate the URI payload inside of a LAYOUT
   * spawn: don't follow symlinks while building the mount namespace
   * spawn: don't follow STDERR_PATH symlinks
   * spawn: verify the sender of JobRemoved/UnitRemoved DBus signals
