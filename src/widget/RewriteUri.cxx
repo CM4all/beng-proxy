@@ -327,7 +327,12 @@ void
 UriRewriter::ResolverCallback() noexcept
 {
 	bool escape_flag = false;
-	if (widget.cls != nullptr && widget.HasDefaultView()) {
+	if (widget.cls != nullptr && widget.HasDefaultView() &&
+	    /* the group approval can only be checked after the widget
+	       class has been looked up; generating an URI for a widget
+	       class the container may not embed would disclose its
+	       address */
+	    widget.IsApproved()) {
 		const char *uri;
 
 		if (widget.session_sync_pending) {
@@ -404,6 +409,12 @@ rewrite_widget_uri(struct pool &pool,
 		if (!widget.HasDefaultView())
 			/* refuse to rewrite URIs when an invalid view name was
 			   specified */
+			return nullptr;
+
+		if (!widget.IsApproved())
+			/* generating an URI for a widget class the
+			   container may not embed would disclose its
+			   address */
 			return nullptr;
 
 		const TempPoolLease tpool;
