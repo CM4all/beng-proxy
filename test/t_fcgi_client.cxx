@@ -272,7 +272,7 @@ public:
 
 struct FcgiClientFactory {
 	static constexpr ClientTestOptions options{
-		.can_cancel_request_body = true,
+		.can_cancel_request_body = false,
 		.have_content_length_header = false,
 		.enable_buckets = true,
 		.enable_premature_close_headers = true,
