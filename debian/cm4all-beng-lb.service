@@ -41,7 +41,7 @@ TimerSlackNSec=10ms
 # enable crash dumps
 LimitCORE=infinity
 
-LimitNOFILE=262144
+LimitNOFILE=1048576
 
 # Limit memory usage to avoid the global oomkiller when this service
 # leaks

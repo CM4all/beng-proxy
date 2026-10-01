@@ -85,7 +85,7 @@ LimitCORE=infinity
 # for io_uring
 LimitMEMLOCK=64M
 
-LimitNOFILE=262144
+LimitNOFILE=1048576
 
 # Limit memory usage to avoid the global oomkiller when this service
 # leaks; this does not include spawned processes which live in their
