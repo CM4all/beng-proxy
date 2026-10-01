@@ -39,7 +39,8 @@ public:
 
 private:
 	void InvalidateTranslationCache(std::span<const std::byte> payload,
-					SocketAddress address);
+					SocketAddress address,
+					bool is_privileged);
 
 	void EnableNode(const char *payload, size_t length);
 	void FadeNode(const char *payload, size_t length);

@@ -40,10 +40,15 @@ LbControl::LbControl(LbInstance &_instance, const LbControlConfig &config)
 
 inline void
 LbControl::InvalidateTranslationCache(std::span<const std::byte> payload,
-				      SocketAddress address)
+				      SocketAddress address,
+				      bool is_privileged)
 {
 	if (payload.empty()) {
 		/* flush the translation cache if the payload is empty */
+
+		if (!is_privileged)
+			/* only root may flush the whole cache */
+			return;
 
 #ifdef HAVE_LIBSYSTEMD
 		char address_buffer[256];
@@ -81,6 +86,13 @@ LbControl::InvalidateTranslationCache(std::span<const std::byte> payload,
 			"PRIORITY=%i", LOG_DEBUG,
 			nullptr);
 #endif
+
+	if (request.site == nullptr && request.host == nullptr &&
+	    request.listener_tag == nullptr && !is_privileged)
+		/* this request matches every cache item (the lb
+		   translation cache knows no other selectors), i.e. it
+		   is a full flush in disguise */
+		return;
 
 	instance.InvalidateTranslationCaches(request);
 }
@@ -197,7 +209,7 @@ LbControl::OnControlPacket(BengControl::Command command,
 		break;
 
 	case Command::TCACHE_INVALIDATE:
-		InvalidateTranslationCache(payload, address);
+		InvalidateTranslationCache(payload, address, is_privileged);
 		break;
 
 	case Command::FADE_CHILDREN:
