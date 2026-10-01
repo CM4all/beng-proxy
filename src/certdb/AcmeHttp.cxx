@@ -7,7 +7,9 @@
 #include "lib/sodium/UrlSafeBase64SHA256.hxx"
 #include "jwt/OsslJWK.hxx"
 #include "io/FileWriter.hxx"
+#include "util/CharUtil.hxx"
 #include "util/SpanCast.hxx"
+#include "util/StringVerify.hxx"
 
 #include <nlohmann/json.hpp>
 
@@ -41,12 +43,18 @@ CreateFile(const char *path, std::string_view contents)
 	CreateFile(path, AsBytes(contents));
 }
 
-[[gnu::pure]]
-static bool
-IsValidAcmeChallengeToken(const std::string &token) noexcept
+static constexpr bool
+IsAcmeChallengeTokenChar(char ch) noexcept
 {
-	return !token.empty() && token.front() != '.' &&
-		token.find('/') == token.npos;
+	return IsAlphaNumericASCII(ch) || ch == '-' || ch == '_';
+}
+
+[[gnu::pure]]
+static constexpr bool
+IsValidAcmeChallengeToken(std::string_view token) noexcept
+{
+	/* RFC 8555 8.3: the token is base64url-encoded */
+	return CheckCharsNonEmpty(token, IsAcmeChallengeTokenChar);
 }
 
 static std::string
