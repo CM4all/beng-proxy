@@ -18,6 +18,7 @@
 #include "http/PHeaderUtil.hxx"
 #include "http/HeaderWriter.hxx"
 #include "http/cache/EncodingCache.hxx"
+#include "http/cache/CacheControl.hxx"
 #include "http/rl/ResourceLoader.hxx"
 #include "ForwardHeaders.hxx"
 #include "widget/Widget.hxx"
@@ -117,6 +118,11 @@ GetEncodingCacheKey(AllocatorPtr alloc,
 		    std::string_view encoding,
 		    const HttpHeaders &response_headers) noexcept
 {
+	if (!IsSharedCacheable(response_headers.GetMap()))
+		/* the EncodingCache is shared by all users, but this
+		   response is not */
+		return StringWithHash{nullptr};
+
 	if (const auto digest = response_headers.GetSloppy(digest_header);
 	    digest.data() != nullptr)
 		/* if there's a "Digest" response header, use that,

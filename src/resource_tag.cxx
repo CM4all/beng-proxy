@@ -54,9 +54,11 @@ resource_tag_append_etag(AllocatorPtr alloc, const StringWithHash tag,
 	if (etag == NULL)
 		return StringWithHash{nullptr};
 
-	if (HasCacheControlDirective(headers, "no-store"))
+	if (!IsSharedCacheable(headers))
 		/* generating a resource tag for the cache is pointless,
-		   because we are not allowed to store the response anyway */
+		   because we are not allowed to store anything derived
+		   from this response in a cache which is shared by all
+		   users */
 		return StringWithHash{nullptr};
 
 	const std::string_view etag_v{etag};
