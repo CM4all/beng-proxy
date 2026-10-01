@@ -242,6 +242,28 @@ public:
 
 private:
 	/**
+	 * Release the socket lease.  If the request was not written
+	 * completely, the request #Istream is closed (so it cannot
+	 * write to the released lease) and the connection is
+	 * destroyed, because it is in an undefined protocol state.
+	 */
+	void ReleaseSocket(bool preserve, PutAction action) noexcept {
+		assert(!socket.IsReleased());
+
+		if (HasInput()) {
+			/* the request body is still being transferred */
+			CloseInput();
+			socket.UnscheduleWrite();
+
+			/* a partially transmitted request leaves the
+			   FastCGI connection in an undefined state */
+			action = PutAction::DESTROY;
+		}
+
+		socket.Release(preserve, action);
+	}
+
+	/**
 	 * Abort receiving the response status/headers from the FastCGI
 	 * server, and notify the HTTP response handler.
 	 */
@@ -1072,7 +1094,7 @@ FcgiClient::_FillBucketList(IstreamBucketList &list)
 	}
 
 	if (fill_bucket_handler.release_socket && !socket.IsReleased())
-		socket.Release(true, fill_bucket_handler.put_action);
+		ReleaseSocket(true, fill_bucket_handler.put_action);
 
 	/* report EOF only after we have received the whole
 	   END_REQUEST payload/padding */
@@ -1216,10 +1238,10 @@ FcgiClient::OnBufferedData()
 		    analysis.end_request_offset <= r.size())
 			/* found it: we no longer need the socket, everything we
 			   need is already in the given buffer */
-			socket.Release(true,
-				       analysis.end_request_offset == r.size()
-				       ? PutAction::REUSE
-				       : PutAction::DESTROY);
+			ReleaseSocket(true,
+				      analysis.end_request_offset == r.size()
+				      ? PutAction::REUSE
+				      : PutAction::DESTROY);
 	}
 
 	return ConsumeInput(r);
@@ -1231,7 +1253,7 @@ FcgiClient::OnBufferedClosed() noexcept
 	stopwatch.RecordEvent("socket_closed");
 
 	/* the rest of the response may already be in the input buffer */
-	socket.Release(false, PutAction::DESTROY);
+	ReleaseSocket(false, PutAction::DESTROY);
 	return true;
 }
 
