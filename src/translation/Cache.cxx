@@ -543,6 +543,13 @@ tcache_regex_input(AllocatorPtr alloc,
 	if (response.regex_on_user_uri)
 		uri = alloc.Concat(user != nullptr ? user : "", '@', uri);
 
+	if (!response.regex_raw)
+		/* the cached response is applied to the normalized URI
+		   path (TranslateResponse::CacheLoad()), so the
+		   (inverse) regex must be matched against that same
+		   string */
+		uri = NormalizeUriPath(alloc, uri);
+
 	return uri;
 }
 
@@ -570,8 +577,6 @@ tcache_expand_response(AllocatorPtr alloc, TranslateResponse &response,
 					  "Malformed Host header");
 
 	uri = tcache_regex_input(t_alloc, uri, host, user, response);
-	if (!response.regex_raw)
-		uri = NormalizeUriPath(t_alloc, uri);
 	if (uri.data() == nullptr || (!response.unsafe_base &&
 				      !uri_path_verify_paranoid(uri)))
 		throw HttpMessageResponse(HttpStatus::BAD_REQUEST,

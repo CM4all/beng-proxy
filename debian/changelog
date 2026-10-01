@@ -13,6 +13,7 @@ cm4all-beng-proxy (22.2) unstable; urgency=low
   * widget: find no widgets inside a <script> element in the lookup processor
   * processor: resolve dot segments in <c:path-info>
   * processor: escape the "&c:id;" substitution
+  * translation: match the REGEX/INVERSE_REGEX against the normalized URI
 
  --   
 
