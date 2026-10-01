@@ -220,6 +220,12 @@ class HttpClient final : BufferedSocketHandler, IstreamSink, Cancellable, Destru
 		SharedPoolPtr<OptionalIstreamControl> pending_body;
 
 		/**
+		 * Did this request ask for a protocol upgrade?  Only
+		 * then may the server answer with "101".
+		 */
+		bool upgrade;
+
+		/**
 		 * This flag is set when the request istream has submitted
 		 * data.  It is used to check whether the request istream is
 		 * unavailable, to unschedule the socket write event.
@@ -848,6 +854,15 @@ HttpClient::HeadersFinished()
 		transfer_encoding == nullptr && content_length_string == nullptr &&
 		http_is_upgrade(response.status, response_headers);
 	if (upgrade) {
+		if (!request.upgrade)
+			/* RFC 9110 7.8: the server must not switch to
+			   a protocol the client did not ask for; this
+			   would turn the connection into a tunnel
+			   nobody asked for, and our own HTTP server
+			   would still frame its "body" */
+			throw HttpClientError(HttpClientErrorCode::UNSPECIFIED,
+					      "unsolicited \"101\" response");
+
 		keep_alive = false;
 	}
 
@@ -1580,6 +1595,7 @@ HttpClient::HttpClient(struct pool &_pool, struct pool &_caller_pool,
 	/* headers */
 
 	const bool upgrade = body && http_is_upgrade(headers);
+	request.upgrade = upgrade;
 	if (upgrade) {
 		/* forward hop-by-hop headers requesting the protocol
 		   upgrade */
