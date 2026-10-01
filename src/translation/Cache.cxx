@@ -362,6 +362,13 @@ tcache_uri_key(AllocatorPtr alloc, const char *uri, const char *host,
 		/* workaround for a scalability problem in a large hosting
 		   environment: include the Host request header in the cache
 		   key */
+
+		/* the '|' separates the host from the (client-supplied,
+		   variable-length) escaped CHECK/CHECK_HEADER value in
+		   front of it; without it, the field boundary would be
+		   ambiguous, because both alphabets share the
+		   unreserved characters */
+		b.push_back("|");
 		b.push_back(host);
 		b.push_back(":");
 	}
