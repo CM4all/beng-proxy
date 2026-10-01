@@ -20,6 +20,10 @@
 #include "util/StringVerify.hxx"
 #include "AllocatorPtr.hxx"
 
+#ifdef HAVE_LIBPSL
+#include <libpsl.h>
+#endif
+
 #include <iterator>
 #include <memory>
 #include <string_view>
@@ -30,12 +34,9 @@ using std::string_view_literals::operator""sv;
 
 /**
  * May this value be used in a cookie "Domain" attribute?  It must not
- * be a public suffix (e.g. ".com"), because that would allow one
- * server to inject cookies into the requests to unrelated servers.
- *
- * This is only an approximation of RFC 6265 5.3 (which requires a
- * public suffix list): the domain must consist of at least two labels
- * and must not look like a fragment of an IP address.
+ * be a public suffix (e.g. ".com" or ".co.uk"), because that would
+ * allow one server to inject cookies into the requests to unrelated
+ * servers (RFC 6265 5.3).
  */
 [[gnu::pure]]
 static bool
@@ -52,7 +53,18 @@ IsAcceptableCookieDomain(const char *domain) noexcept
 	/* the last label must not consist of digits only (and must
 	   not be empty), or else this is a fragment of an IP
 	   address */
-	return !CheckChars(dot + 1, IsDigitASCII);
+	if (CheckChars(dot + 1, IsDigitASCII))
+		return false;
+
+#ifdef HAVE_LIBPSL
+	if (const psl_ctx_t *psl = psl_builtin();
+	    psl != nullptr && psl_is_public_suffix(psl, domain))
+		/* this is a public suffix (e.g. "co.uk" or
+		   "github.io") */
+		return false;
+#endif // HAVE_LIBPSL
+
+	return true;
 }
 
 template<typename L>

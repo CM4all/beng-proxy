@@ -118,6 +118,28 @@ TEST(CookieClientTest, PublicSuffixDomain)
 	cookie_jar_set_cookie2(jar, "c=d;domain=com", "foo.com", nullptr);
 	cookie_jar_http_header(jar, "foo.com", "/", headers, alloc);
 	EXPECT_EQ(headers.Get("cookie"), nullptr);
+
+#ifdef HAVE_LIBPSL
+	/* a public suffix which consists of several labels */
+	headers.Clear();
+	cookie_jar_set_cookie2(jar, "e=f;domain=co.uk", "foo.co.uk", nullptr);
+	cookie_jar_http_header(jar, "bar.co.uk", "/", headers, alloc);
+	EXPECT_EQ(headers.Get("cookie"), nullptr);
+
+	/* ... and one from the "private" section of the list */
+	headers.Clear();
+	cookie_jar_set_cookie2(jar, "g=h;domain=github.io", "foo.github.io", nullptr);
+	cookie_jar_http_header(jar, "bar.github.io", "/", headers, alloc);
+	EXPECT_EQ(headers.Get("cookie"), nullptr);
+#endif
+
+	/* a registrable domain below a multi-label public suffix is
+	   still allowed */
+	headers.Clear();
+	cookie_jar_set_cookie2(jar, "i=j;domain=example.co.uk", "a.example.co.uk",
+			       nullptr);
+	cookie_jar_http_header(jar, "b.example.co.uk", "/", headers, alloc);
+	EXPECT_STREQ(headers.Get("cookie"), "i=j");
 }
 
 /**

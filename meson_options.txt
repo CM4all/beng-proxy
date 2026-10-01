@@ -10,6 +10,7 @@ option('cap', type: 'feature', description: 'Linux capability support (using lib
 option('http2', type: 'feature', description: 'HTTP2 protocol support')
 option('io_uring', type: 'feature', description: 'io_uring support using liburing')
 option('lua', type: 'feature', description: 'Lua scripting support (using luajit)')
+option('psl', type: 'feature', description: 'Public Suffix List support for cookie domains (using libpsl)')
 option('seccomp', type: 'feature', description: 'seccomp support (using libseccomp)')
 option('stopwatch', type: 'boolean', value: true, description: 'enable stopwatch support')
 option('systemd', type: 'feature', description: 'systemd support (using libsystemd)')

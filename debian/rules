@@ -8,6 +8,7 @@ MESON_OPTIONS = \
 	-Dhttp2=enabled \
 	-Dio_uring=enabled \
 	-Dlua=enabled \
+	-Dpsl=enabled \
 	-Dseccomp=enabled \
 	-Dstopwatch=false \
 	-Dsystemd=enabled \

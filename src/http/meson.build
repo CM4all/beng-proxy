@@ -43,6 +43,13 @@ http_extra_dep = declare_dependency(
   link_with: http_extra,
 )
 
+cookie_compile_args = []
+
+libpsl = dependency('libpsl', required: get_option('psl'))
+if libpsl.found()
+  cookie_compile_args += '-DHAVE_LIBPSL'
+endif
+
 cookie = static_library(
   'cookie',
   'CookieJar.cxx',
@@ -51,13 +58,19 @@ cookie = static_library(
   'CookieSameSite.cxx',
   'CookieServer.cxx',
   'CookieString.cxx',
+  cpp_args: cookie_compile_args,
   include_directories: inc,
+  dependencies: [
+    libpsl,
+  ],
 )
 
 cookie_dep = declare_dependency(
+  compile_args: cookie_compile_args,
   link_with: cookie,
   dependencies: [
     http_util_dep,
     putil_dep,
+    libpsl,
   ],
 )
