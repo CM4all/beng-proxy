@@ -337,7 +337,8 @@ Response
   translation requests will feature the new listener tag.
 
 - ``SITE``: optional identification or name of the site this resource
-  belongs to
+  belongs to; consists of alphanumeric characters, underscore, dash or
+  colon.
 
 - ``EXPAND_SITE``: provide a cache expansion for the preceding ``SITE``
 
