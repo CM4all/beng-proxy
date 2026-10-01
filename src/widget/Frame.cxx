@@ -65,6 +65,7 @@ frame_parent_widget(struct pool &pool, Widget &widget, const char *id,
 		}
 
 		widget.CheckApproval();
+		widget.CheckHost(ctx->untrusted_host, ctx->site_name);
 	} catch (...) {
 		widget.Cancel();
 		ctx.reset();
