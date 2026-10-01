@@ -1258,6 +1258,27 @@ HttpCache::Start(struct pool &caller_pool,
 		}
 	}
 
+	switch (address.type) {
+	case ResourceAddress::Type::CGI:
+	case ResourceAddress::Type::FASTCGI:
+	case ResourceAddress::Type::WAS:
+		/* the client's "Host" header is forwarded to these
+		   programs (as HTTP_HOST), but unlike HttpAddress and
+		   LhttpAddress, CgiAddress has no authority which would
+		   be part of its id; include it in the cache key,
+		   because the program may render it */
+		if (const char *host = headers.Get(host_header)) {
+			const AllocatorPtr alloc{caller_pool};
+			key.value = alloc.Concat(host, ";host="sv, key.value);
+			key.hash ^= djb_hash_string(host);
+		}
+
+		break;
+
+	default:
+		break;
+	}
+
 	if (auto info = http_cache_request_evaluate(method, address, headers,
 						    obey_no_cache && !params.ignore_no_cache,
 						    body)) {
