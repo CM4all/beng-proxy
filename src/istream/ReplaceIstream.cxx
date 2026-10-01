@@ -556,74 +556,78 @@ try {
 		input_more = ReadInputBuckets();
 	}
 
-	off_t fill_position = position;
-	for (auto s = substitutions.begin();; ++s) {
-		off_t end = GetBufferEndOffsetUntil(fill_position, s);
-		if (end < 0) {
-			/* after last substitution and the "settled" position:
-			   not yet ready to read */
-			if (input_more == IstreamBucketList::More::NO)
-				input_more = IstreamBucketList::More::PUSH;
-			list.UpdateMore(input_more);
-			return;
-		}
-
-		assert(end >= fill_position);
-		assert(end <= source_length);
-
-		if (end > fill_position) {
-			/* supply data from the buffer until the first
-			   substitution */
-			const size_t before_size = end - fill_position;
-
-			IstreamBucketList tmp;
-			buffer.FillBucketList(tmp, fill_position - position);
-			size_t nbytes = list.SpliceBuffersFrom(std::move(tmp),
-							       before_size);
-			if (nbytes < before_size) {
-				return;
-			}
-		}
-
-		if (s == substitutions.end()) {
-			if (input.IsDefined() || !finished) {
+	while (true) {
+		off_t fill_position = position;
+		for (auto s = substitutions.begin();; ++s) {
+			off_t end = GetBufferEndOffsetUntil(fill_position, s);
+			if (end < 0) {
+				/* after last substitution and the "settled" position:
+				   not yet ready to read */
 				if (input_more == IstreamBucketList::More::NO)
 					input_more = IstreamBucketList::More::PUSH;
 				list.UpdateMore(input_more);
+				return;
 			}
 
-			return;
+			assert(end >= fill_position);
+			assert(end <= source_length);
+
+			if (end > fill_position) {
+				/* supply data from the buffer until the first
+				   substitution */
+				const size_t before_size = end - fill_position;
+
+				IstreamBucketList tmp;
+				buffer.FillBucketList(tmp, fill_position - position);
+				size_t nbytes = list.SpliceBuffersFrom(std::move(tmp),
+								       before_size);
+				if (nbytes < before_size) {
+					return;
+				}
+			}
+
+			if (s == substitutions.end()) {
+				if (input.IsDefined() || !finished) {
+					if (input_more == IstreamBucketList::More::NO)
+						input_more = IstreamBucketList::More::PUSH;
+					list.UpdateMore(input_more);
+				}
+
+				return;
+			}
+
+
+			if (end < s->start) {
+				if (input_more == IstreamBucketList::More::NO)
+					input_more = IstreamBucketList::More::PUSH;
+				list.UpdateMore(input_more);
+				return;
+			}
+
+			if (!s->FillBucketList(list) && s->IsActive()) {
+				/* this (active) substitution is empty -
+				   remove it and try again; getting rid of
+				   empty substitutions is important because
+				   otherwise OnIstreamReady() calls from the
+				   following substitutions would be ignored;
+				   while reading buckets, nobody else would do
+				   that */
+				assert(fill_position == position);
+				assert(end == fill_position);
+
+				ToNextSubstitution(*s);
+
+				list.ResetMoreFlags();
+
+				/* restart the "substitutions" loop */
+				break;
+			}
+
+			if (list.HasMore())
+				return;
+
+			fill_position = s->end;
 		}
-
-		if (end < s->start) {
-			if (input_more == IstreamBucketList::More::NO)
-				input_more = IstreamBucketList::More::PUSH;
-			list.UpdateMore(input_more);
-			return;
-		}
-
-		if (!s->FillBucketList(list) && s->IsActive()) {
-			/* this (active) substitution is empty -
-			   remove it and try again; getting rid of
-			   empty substitutions is important because
-			   otherwise OnIstreamReady() calls from the
-			   following substitutions would be ignored;
-			   while reading buckets, nobody else would do
-			   that */
-			assert(fill_position == position);
-			assert(end == fill_position);
-
-			ToNextSubstitution(*s);
-
-			// TODO refactor the loop to avoid this recursive call
-			list.ResetMoreFlags();
-			return _FillBucketList(list);
-		}
-
-		if (list.HasMore())
-			return;
-
-		fill_position = s->end;
 	}
 } catch (...) {
 	Destroy();
