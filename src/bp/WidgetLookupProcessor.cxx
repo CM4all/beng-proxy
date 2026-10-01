@@ -231,6 +231,14 @@ WidgetLookupProcessor::OnXmlTagFinished(const XmlParserTag &xml_tag) noexcept
 {
 	had_input = true;
 
+	if (tag == Tag::SCRIPT && xml_tag.type == XmlParserTagType::OPEN) {
+		/* the contents of a <script> element are character
+		   data, not markup; switch the parser so no element
+		   (especially no <c:widget>) is recognized in there */
+		parser.Script();
+		return true;
+	}
+
 	return WidgetContainerParser::OnXmlTagFinished(xml_tag);
 }
 

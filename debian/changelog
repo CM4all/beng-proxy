@@ -8,6 +8,7 @@ cm4all-beng-proxy (22.2) unstable; urgency=low
   * widget: resolve trailing ".." URI segments before '?', '#' and ';'
   * widget: don't rewrite URIs for a widget class which may not be embedded
   * widget: check the untrusted host for every widget of a frame chain
+  * widget: find no widgets inside a <script> element in the lookup processor
 
  --   
 
