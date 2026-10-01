@@ -463,8 +463,13 @@ public:
 	 * widget group approval of the parent widget.  This is a
 	 * postponed check because a widget's group is only known
 	 * after its widget class has been looked up.
-	 *
-	 * Throws if the widget is not approved.
+	 */
+	[[gnu::pure]]
+	bool IsApproved() noexcept;
+
+	/**
+	 * Throws if the widget is not approved (IsApproved() returns
+	 * false).
 	 */
 	void CheckApproval();
 

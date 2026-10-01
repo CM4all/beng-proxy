@@ -61,8 +61,8 @@ widget_check_group_approval(const Widget *widget) noexcept
 	return widget->parent->cls->MayEmbed(*widget->cls);
 }
 
-void
-Widget::CheckApproval()
+bool
+Widget::IsApproved() noexcept
 {
 	assert(parent != nullptr);
 
@@ -71,7 +71,13 @@ Widget::CheckApproval()
 			? Approval::GIVEN
 			: Approval::DENIED;
 
-	if (approval != Approval::GIVEN)
+	return approval == Approval::GIVEN;
+}
+
+void
+Widget::CheckApproval()
+{
+	if (!IsApproved())
 		throw WidgetError(*parent, WidgetErrorCode::FORBIDDEN,
 				  FmtBuffer<256>("not allowed to embed widget class '{}'",
 						 class_name));
