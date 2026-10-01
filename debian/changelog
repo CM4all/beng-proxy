@@ -44,6 +44,7 @@ cm4all-beng-proxy (22.0) unstable; urgency=low
   * http_client: refuse an unsolicited "101" response
   * http: fix crash bug with long HTTP headers
   * http: fix infinite loop with long HTTP headers
+  * http: never forward the "HTTP2-Settings" request header
   * nghttp2/Client: ignore 1xx responses
   * nghttp2/client: ignore trailer HEADERS frames
   * nghttp2/client: fix crash when there are too many response headers
