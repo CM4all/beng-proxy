@@ -45,7 +45,7 @@ Request::SubmitEnotdir(const TranslateResponse &response) noexcept
 
 	if (translate.enotdir_uri == nullptr) {
 		translate.request.uri = translate.enotdir_uri =
-			p_strdup(&pool, request.uri);
+			p_strdup(&pool, translate.request.uri);
 		translate.enotdir_path_info = translate.enotdir_uri +
 			strlen(translate.enotdir_uri);
 
@@ -64,13 +64,11 @@ Request::SubmitEnotdir(const TranslateResponse &response) noexcept
 
 	const AllocatorPtr alloc{pool};
 
-	if (!response.unsafe_base) {
-		const std::string_view path = Split(std::string_view{slash}, '?').first;
-		if (!uri_path_verify_paranoid(path)) {
-			LogDispatchError(HttpStatus::BAD_REQUEST,
-					 "Malformed URI", 1);
-			return false;
-		}
+	if (!response.unsafe_base &&
+	    !uri_path_verify_paranoid(std::string_view{slash})) {
+		LogDispatchError(HttpStatus::BAD_REQUEST,
+				 "Malformed URI", 1);
+		return false;
 	}
 
 	translate.request.uri = alloc.DupZ({uri, slash});
