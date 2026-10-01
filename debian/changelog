@@ -53,6 +53,7 @@ cm4all-beng-proxy (22.0) unstable; urgency=low
   * translation: stricter SITE, *HOST validation
   * translation: validate the SESSION_SITE payload
   * translation: validate the URI payload inside of a LAYOUT
+  * translation: validate expanded URI, SITE and COOKIE_HOST
   * spawn: don't follow symlinks while building the mount namespace
   * spawn: don't follow STDERR_PATH symlinks
   * spawn: verify the sender of JobRemoved/UnitRemoved DBus signals
