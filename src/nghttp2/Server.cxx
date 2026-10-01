@@ -642,9 +642,14 @@ ServerConnection::Request::SendResponse(HttpStatus status,
 	}
 
 	for (const auto &i : response_header_map) {
-		if (hdrs.full())
-			// TODO: what now?
+		if (hdrs.full()) [[unlikely]] {
+			/* too many response headers; send error instead */
+			the_status = HttpStatus::BAD_GATEWAY;
+			hdrs.clear();
+			hdrs.push_back(MakeNv(":status"sv, "502"sv));
+			_response_body.Clear();
 			break;
+		}
 
 		hdrs.push_back(MakeNv(i.key, i.value));
 	}

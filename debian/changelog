@@ -6,6 +6,7 @@ cm4all-beng-proxy (22.2) unstable; urgency=low
   * dbus: dispatch libdbus timeouts
   * fcgi: use non-blocking write for STDERR pipes
   * http_cache: make Cache-Control case-insensitive
+  * nghttp2/server: send "502" instead of droppping too many headers silently
   * spawn: make a dropped forbidden-syscall rule fatal
   * was: fix crash bug
   * widget: resolve trailing ".." URI segments before '?', '#' and ';'
