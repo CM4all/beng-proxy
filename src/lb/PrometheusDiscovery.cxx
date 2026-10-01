@@ -57,6 +57,8 @@ LbPrometheusDiscovery::HandleHttpRequest(IncomingHttpRequest &request,
 					 const StopwatchPtr &,
 					 CancellablePointer &) noexcept
 {
+	request.body.Clear();
+
 	HttpHeaders headers;
 	headers.Write("content-type", "application/json");
 

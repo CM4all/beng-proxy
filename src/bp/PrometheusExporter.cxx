@@ -51,6 +51,8 @@ BpPrometheusExporter::HandleHttpRequest(IncomingHttpRequest &request,
 					const StopwatchPtr &,
 					CancellablePointer &) noexcept
 {
+	request.body.Clear();
+
 	GrowingBuffer buffer;
 
 	constexpr auto process = "bp"sv;

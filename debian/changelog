@@ -131,6 +131,7 @@ cm4all-beng-proxy (22.0) unstable; urgency=low
   * control: allow privileged commands only for root
   * prometheus: add `incoming_handshaking_connections`
   * prometheus: limit the number of generators
+  * prometheus: discard the request body
   * access_log: log the client address in error records
   * access_log: AF_LOCAL client addresses are displayed as "local"
   * access_log: don't treat an empty datagram as end-of-stream

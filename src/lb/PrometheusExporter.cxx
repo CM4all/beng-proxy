@@ -176,6 +176,8 @@ LbPrometheusExporter::HandleHttpRequest(IncomingHttpRequest &request,
 					const StopwatchPtr &,
 					CancellablePointer &) noexcept
 {
+	request.body.Clear();
+
 	auto &pool = request.pool;
 
 	GrowingBuffer buffer;
