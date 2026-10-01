@@ -1087,6 +1087,16 @@ HttpCache::Revalidate(struct pool &caller_pool,
 
 	LogConcat(4, "HttpCache", "test ", request->GetKey().value);
 
+	/* the client's own preconditions must not be forwarded: the
+	   origin server shall validate our cache item, and the client's
+	   preconditions are evaluated against the result (RFC 9111
+	   4.3.1) */
+	headers.RemoveAll(if_match_header);
+	headers.RemoveAll(if_none_match_header);
+	headers.RemoveAll(if_modified_since_header);
+	headers.RemoveAll(if_unmodified_since_header);
+	headers.RemoveAll(if_range_header);
+
 	if (document.info.last_modified != nullptr)
 		headers.Set(request->GetPool(),
 			    if_modified_since_header, document.info.last_modified);
