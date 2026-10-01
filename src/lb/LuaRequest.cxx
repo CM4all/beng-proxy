@@ -5,6 +5,7 @@
 #include "LuaRequest.hxx"
 #include "HttpConnection.hxx"
 #include "istream/istream_string.hxx"
+#include "istream/UnusedPtr.hxx"
 #include "pool/pool.hxx"
 #include "lua/Class.hxx"
 #include "lua/FenvCache.hxx"
@@ -105,12 +106,14 @@ SendMessage(lua_State *L)
 
 	msg = lua_tostring(L, i);
 
-	if (http_status_is_empty(status))
-		msg = nullptr;
-
 	data.stale = true;
-	data.handler.InvokeResponse(data.request.pool, status,
-				    p_strdup(data.request.pool, msg));
+
+	if (http_status_is_empty(status))
+		/* this status does not allow a response body */
+		data.handler.InvokeResponse(status, {}, UnusedIstreamPtr{});
+	else
+		data.handler.InvokeResponse(data.request.pool, status,
+					    p_strdup(data.request.pool, msg));
 	return 0;
 }
 
