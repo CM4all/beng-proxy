@@ -193,8 +193,16 @@ Commands
   Payload is the Workshop partition name and the job id (as string),
   separated by a null byte.
 
-Only ``TCACHE_INVALIDATE``, ``FLUSH_FILTER_CACHE`` are allowed when
-received via IP. The other commands are only accepted from clients
+Only the following commands are allowed when
+received via IP:
+
+- ``TCACHE_INVALIDATE`` with "vary" payload
+- with tag: ``EXPIRE_TCACHE_TAG``, ``FLUSH_HTTP_CACHE``,
+  ``FLUSH_FILTER_CACHE``, ``TERMINATE_CHILDREN``, ``FADE_CHILDREN``
+- ``DISCARD_SESSION``, ``RESET_LIMITER``, ``REJECT_CLIENT``,
+  ``TARPIT_CLIENT``
+
+The other commands are only accepted from clients
 connected on a local socket (aka Unix Domain Socket, ``AF_LOCAL``).
 
 
