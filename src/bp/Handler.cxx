@@ -415,10 +415,18 @@ Request::HandleTranslatedRequest(UniquePoolPtr<TranslateResponse> _response) noe
 	if (address.IsDefined()) {
 		if (response.transparent &&
 		    (dissected_uri.args.data() != nullptr ||
-		     !dissected_uri.path_info.empty()))
+		     !dissected_uri.path_info.empty())) {
+			if (!response.unsafe_base &&
+			    !uri_path_verify_paranoid(dissected_uri.path_info)) {
+				DispatchError(HttpStatus::BAD_REQUEST,
+					      "Malformed URI");
+				return;
+			}
+
 			address = address.WithArgs(pool,
 						   dissected_uri.args,
 						   dissected_uri.path_info);
+		}
 
 		processor_focus =
 			/* the IsProcessorEnabled() check was disabled
