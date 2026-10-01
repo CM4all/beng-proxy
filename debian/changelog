@@ -81,6 +81,7 @@ cm4all-beng-proxy (22.0) unstable; urgency=low
   * bp: filter the ERROR_DOCUMENT response headers
   * bp: use RESOLVE_BENEATH for TEST_PATH
   * bp/control: allow only root to use STOPWATCH_PIPE
+  * bp/control: add missing user checks to TCACHE_INVALIDATE, FLUSH_HTTP_CACHE, RELOAD_STATE
   * bp/io_uring: keep the directory descriptor until the open completes
   * bp/mod_auth_easy: never serve the ".access" file
   * session: always use getrandom() to generate session ids

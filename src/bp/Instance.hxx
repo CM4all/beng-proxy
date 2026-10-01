@@ -292,7 +292,7 @@ struct BpInstance final : PInstance, BengControl::Handler,
 	[[gnu::pure]]
 	Prometheus::Stats GetStats() const noexcept;
 
-	void HandleTcacheInvalidate(std::span<const std::byte> payload) noexcept;
+	void HandleTcacheInvalidate(std::span<const std::byte> payload, bool is_privileged) noexcept;
 	void HandleExpireTcacheTag(std::span<const std::byte> payload) noexcept;
 	void HandleDisableUring(std::span<const std::byte> payload) noexcept;
 

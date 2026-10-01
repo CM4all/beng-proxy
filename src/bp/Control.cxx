@@ -40,11 +40,13 @@
 #include <unistd.h> // for geteuid()
 
 inline void
-BpInstance::HandleTcacheInvalidate(std::span<const std::byte> payload) noexcept
+BpInstance::HandleTcacheInvalidate(std::span<const std::byte> payload,
+				   bool is_privileged) noexcept
 {
 	if (payload.empty()) {
 		/* flush the translation cache if the payload is empty */
-		FlushTranslationCaches();
+		if (is_privileged)
+			FlushTranslationCaches();
 		return;
 	}
 
@@ -241,7 +243,7 @@ BpInstance::OnControlPacket(BengControl::Command command,
 		break;
 
 	case Command::TCACHE_INVALIDATE:
-		HandleTcacheInvalidate(payload);
+		HandleTcacheInvalidate(payload, is_privileged);
 		break;
 
 	case Command::EXPIRE_TCACHE_TAG:
@@ -323,16 +325,17 @@ BpInstance::OnControlPacket(BengControl::Command command,
 
 	case Command::FLUSH_HTTP_CACHE:
 		if (http_cache != nullptr) {
-			if (payload.empty())
-				http_cache_flush(*http_cache);
-			else
+			if (!payload.empty())
 				http_cache_flush_tag(*http_cache, ToStringView(payload));
+			else if (is_privileged)
+				http_cache_flush(*http_cache);
 		}
 
 		break;
 
 	case Command::RELOAD_STATE:
-		ReloadState();
+		if (is_privileged)
+			ReloadState();
 		break;
 
 	case Command::DISABLE_URING:
