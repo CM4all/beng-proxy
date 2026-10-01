@@ -9,6 +9,7 @@
 #include "pool/tpool.hxx"
 #include "http/HeaderValue.hxx"
 #include "uri/Escape.hxx"
+#include "uri/PRelative.hxx"
 #include "util/CharUtil.hxx"
 #include "util/StringCompare.hxx"
 #include "util/StringVerify.hxx"
@@ -196,9 +197,17 @@ WidgetContainerParser::OnXmlAttributeFinished(const XmlParserAttribute &attr) no
 	case Tag::WIDGET_PATH_INFO:
 		assert(widget.widget != nullptr);
 
-		if (attr.name == "value"sv)
-			widget.widget->from_template.path_info
-				= p_strdup(widget.pool, attr.value);
+		if (attr.name == "value"sv) {
+			const char *path_info =
+				uri_compress(widget.pool,
+					     p_strdup(widget.pool, attr.value));
+			if (path_info == nullptr) {
+				container.logger(3, "invalid widget path info");
+				return;
+			}
+
+			widget.widget->from_template.path_info = path_info;
+		}
 
 		break;
 
