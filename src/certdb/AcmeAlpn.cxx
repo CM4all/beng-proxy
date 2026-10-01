@@ -64,6 +64,7 @@ Alpn01ChallengeRecord::~Alpn01ChallengeRecord() noexcept
 {
 	try {
 		db.DeleteServerCertificateByHandle(handle.c_str());
+		db.NotifyModified();
 	} catch (...) {
 		fmt::print("Failed to remove certdb record of '{}': ",
 			   host);
