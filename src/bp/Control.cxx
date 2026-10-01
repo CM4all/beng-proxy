@@ -303,12 +303,13 @@ BpInstance::OnControlPacket(BengControl::Command command,
 
 	case Command::FLUSH_FILTER_CACHE:
 		if (filter_cache != nullptr) {
-			if (payload.empty())
-				filter_cache_flush(*filter_cache);
-			else
+			if (!payload.empty())
 				filter_cache_flush_tag(*filter_cache,
 						       std::string((const char *)payload.data(),
 								   payload.size()));
+			else if (is_privileged)
+				/* only root may flush the whole cache */
+				filter_cache_flush(*filter_cache);
 		}
 
 		break;
