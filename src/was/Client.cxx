@@ -644,13 +644,13 @@ WasClient::OnWasControlPacket(enum was_command cmd,
 			return false;
 		}
 
-		response.receiving_metadata = false;
-
 		if (response.body != nullptr)
 			was_input_free_unused(std::exchange(response.body, nullptr));
 
 		if (!CancelRequestBody())
 			return false;
+
+		response.receiving_metadata = false;
 
 		put_action = ReleaseControl();
 
