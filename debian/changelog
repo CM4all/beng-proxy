@@ -50,7 +50,7 @@ cm4all-beng-proxy (22.0) unstable; urgency=low
   * translation: for VARY=SESSION, add "cookie", not "cookie2" to "Vary
   * translation: keep a cached path-absolute REDIRECT path-absolute
   * translation: reject WRITE_FILE without a null separator
-  * translation: stricter site name check
+  * translation: stricter SITE, *HOST validation
   * translation: validate the SESSION_SITE payload
   * translation: validate the URI payload inside of a LAYOUT
   * spawn: don't follow symlinks while building the mount namespace
