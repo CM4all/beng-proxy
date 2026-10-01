@@ -5,6 +5,7 @@
 #include "WidgetContainerParser.hxx"
 #include "widget/Context.hxx"
 #include "widget/Widget.hxx"
+#include "pool/pool.hxx"
 #include "pool/tpool.hxx"
 #include "http/HeaderValue.hxx"
 #include "uri/Escape.hxx"
@@ -341,8 +342,10 @@ WidgetContainerParser::OnXmlTagFinished(const XmlParserTag &xml_tag) noexcept
 			return true;
 		}
 
+		/* the name must be lower case, because that is how
+		   StringMap stores (and compares) header names */
 		widget.widget->from_template.headers->Add(widget.pool,
-							  widget.param.name.StringDup(widget.pool),
+							  p_strdup_lower(widget.pool, name),
 							  value);
 	} else if (tag == Tag::SCRIPT) {
 		tag = Tag::NONE;
