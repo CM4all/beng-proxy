@@ -1048,7 +1048,11 @@ HttpCache::Serve(struct pool &caller_pool,
 inline void
 HttpCacheRequest::Serve() noexcept
 {
-	if (!CheckCacheRequest(pool, request_info, *document, handler))
+	/* use the caller pool, because a response generated here
+	   (e.g.  "304 Not Modified") has no body which could keep our
+	   own pool alive; it is freed as soon as this object is
+	   destroyed */
+	if (!CheckCacheRequest(caller_pool, request_info, *document, handler))
 		return;
 
 	cache.Serve(caller_pool, *document, key, handler);
