@@ -122,6 +122,7 @@ cm4all-beng-proxy (22.0) unstable; urgency=low
   * processor: fix eight crash bugs
   * processor: quote substitutions into unquoted attributes
   * css_processor: two fix infinite loop bugs
+  * css_processor: two crash on empty "style" attribute
   * stock: two fix use-after-free bugs
   * zeroconf: fix leak bug
   * control: allow privileged commands only for root

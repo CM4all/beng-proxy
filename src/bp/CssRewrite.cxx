@@ -63,6 +63,11 @@ css_rewrite_block_uris(struct pool &pool,
 		       const std::string_view block,
 		       const struct escape_class *escape) noexcept
 {
+	if (block.empty())
+		/* nothing to rewrite (and CssParser::Feed() must not be
+		   called with an empty buffer) */
+		return nullptr;
+
 	struct css_rewrite rewrite;
 
 	{
