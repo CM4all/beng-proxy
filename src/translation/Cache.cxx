@@ -1137,7 +1137,8 @@ tcache_hit(AllocatorPtr alloc,
 	LogConcat(4, "TranslationCache", "hit ", key.value);
 
 	try {
-		response->CacheLoad(alloc, item.response, uri);
+		response->CacheLoad(alloc, item.response,
+				    uri ? std::string_view{uri} : std::string_view{});
 	} catch (...) {
 		handler.OnTranslateError(std::current_exception());
 		return;
