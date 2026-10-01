@@ -27,6 +27,7 @@
 #include "net/SocketError.hxx"
 #include "net/SocketProtocolError.hxx"
 #include "net/TimeoutError.hxx"
+#include "io/Iovec.hxx" // for MakeIovec()
 #include "io/UniqueFileDescriptor.hxx"
 #include "io/SpliceSupport.hxx"
 #include "util/DestructObserver.hxx"
@@ -44,6 +45,7 @@
 
 #include <string.h>
 #include <errno.h>
+#include <sys/uio.h> // for pwritev2()
 #include <stdlib.h>
 #include <stdio.h>
 #include <unistd.h>
@@ -435,11 +437,35 @@ FcgiClient::_Close() noexcept
 	Istream::_Close();
 }
 
+static auto
+WriteNoWait(FileDescriptor fd, std::span<const std::byte> src) noexcept
+{
+	const auto v = MakeIovec(src);
+	return pwritev2(fd.Get(), &v, 1, -1, RWF_NOWAIT);
+}
+
+/**
+ * Write to the given file descriptor, but never block.  Fall back to
+ * regular write() if the file descriptor does not support RWF_NOWAIT.
+ */
+static void
+WriteNoWaitFallback(FileDescriptor fd, std::span<const std::byte> src) noexcept
+{
+	if (WriteNoWait(fd, src) < 0 && errno == EOPNOTSUPP)
+		/* RWF_NOWAIT is not supported for this file (e.g. a
+		   regular file from STDERR_PATH): fall back to
+		   regular write() */
+		fd.Write(src);
+}
+
 void
 FcgiClient::HandleStderrPayload(std::span<const std::byte> payload) noexcept
 {
 	if (stderr_fd.IsDefined())
-		stderr_fd.Write(payload);
+		/* try RWF_NOWAIT just in case this file descriptor
+		   that we share with the FastCGI process is not
+		   non-blocking */
+		WriteNoWaitFallback(stderr_fd, payload);
 	else
 		fwrite(payload.data(), 1, payload.size(), stderr);
 }
