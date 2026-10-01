@@ -27,6 +27,7 @@ cm4all-beng-proxy (22.0) unstable; urgency=low
   * http_server: reject duplicate Host headers
   * http_server: fix crash on request line without URI
   * http_server: don't send response headers with io_uring on TLS connection
+  * http_server: don't send response body until io_uring has sent headers
   * http_server: send "101" only for an Upgrade request
   * http_server: upgrade only to WebSocket
   * http_cache: compare Cache-Control directives case-insensitively

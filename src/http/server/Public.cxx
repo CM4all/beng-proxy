@@ -68,6 +68,12 @@ HttpServerConnection::TryWriteBuckets2()
 	if (socket->HasFilter())
 		return BucketResult::FALLBACK;
 
+	if (HaveUringSend())
+		/* the status line and the headers are still being
+		   sent by io_uring; writing response body data to the
+		   socket now would reorder it */
+		return BucketResult::LATER;
+
 	IstreamBucketList list;
 
 	try {
@@ -292,6 +298,11 @@ HttpServerConnection::OnBufferedWrite()
 	assert(!response.pending_drained);
 
 	response.want_write = false;
+
+	if (HaveUringSend())
+		/* wait for io_uring to finish sending the status line
+		   and the headers; OnUringSendDone() resumes */
+		return true;
 
 	if (request.send_100_continue) [[unlikely]] {
 		if (!socket->IsEmpty())
