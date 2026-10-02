@@ -78,6 +78,7 @@ cm4all-beng-proxy (22.0) unstable; urgency=low
   * spawn: force chdir() after CHROOT
   * spawn: require the "@cm4all-spawn" daemon to be root
   * spawn: forbid more multicast socket options
+  * spawn: forbid io_uring
   * spawn: validate CGROUP_SET and CGROUP_XATTR again
   * spawn: fail on truncated packet
   * spawn: larger receive buffer
