@@ -415,6 +415,29 @@ struct FcgiClientFactory {
 	}
 
 	/**
+	 * The server sends the whole response without reading the
+	 * request body, and only drains STDIN afterwards (so the
+	 * connection stays open while the client evaluates
+	 * END_REQUEST).
+	 */
+	auto *NewIgnoreRequestBody(struct pool &, EventLoop &event_loop) {
+		return New(event_loop, [](struct pool &pool, FcgiServer &server){
+			const auto request = server.ReadRequest(pool);
+
+			server.WriteStdout(request, "content-length: 5\n\nhello"sv);
+			server.EndResponse(request);
+			server.FlushOutput();
+
+			try {
+				server.DiscardRequestBody(request);
+			} catch (...) {
+				/* the client has closed the connection
+				   without finishing the request body */
+			}
+		});
+	}
+
+	/**
 	 * The server blocks after the last STDOUT and sends
 	 * END_REQUEST later.
 	 */
@@ -697,6 +720,47 @@ TEST_P(FcgiClientB, BlockingStderr)
 	EXPECT_TRUE(c.released);
 	EXPECT_EQ(c.lease_action, PutAction::REUSE);
 	EXPECT_EQ(ReadStderr(stderr_r), "bar\n"sv);
+}
+
+/**
+ * The server answers before it has read the request body.  The
+ * connection must not be reused, because only a part of the request
+ * was transmitted, and the request body #Istream must not be left
+ * attached to the released socket lease.
+ */
+TEST_P(FcgiClientB, IgnoredRequestBody)
+{
+	Instance instance;
+	FcgiClientFactory factory{instance.event_loop};
+	Context c{instance};
+
+	c.use_buckets = GetParam();
+
+	/* a request body which is much larger than the socket buffer,
+	   so the client cannot have finished writing it when the
+	   response arrives */
+	auto request_body = istream_head_new(c.pool, istream_zero_new(*c.pool),
+					     4 * 1024 * 1024, true);
+
+	c.connection = factory.NewIgnoreRequestBody(*c.pool, c.event_loop);
+	c.connection->Request(c.pool, c,
+			      HttpMethod::POST, "/foo", {},
+			      std::move(request_body),
+			      false,
+			      c, c.cancel_ptr);
+
+	c.event_loop.Run();
+
+	/* the response was delivered completely */
+	EXPECT_FALSE(c.request_error);
+	EXPECT_FALSE(c.body_error);
+	EXPECT_EQ(c.status, HttpStatus::OK);
+	EXPECT_EQ(c.body_data, 5);
+	EXPECT_TRUE(c.body_eof);
+
+	/* ... but the connection is in an undefined protocol state */
+	EXPECT_TRUE(c.released);
+	EXPECT_EQ(c.lease_action, PutAction::DESTROY);
 }
 
 INSTANTIATE_TEST_SUITE_P(FcgiClient,
