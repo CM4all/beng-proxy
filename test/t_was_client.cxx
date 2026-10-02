@@ -13,6 +13,13 @@
 #include "istream/SuspendIstream.hxx"
 #include "event/FineTimerEvent.hxx"
 #include "strmap.hxx"
+#include "util/SpanCast.hxx"
+
+#include <was/protocol.h>
+
+#include <string.h> // for memcpy()
+
+using std::string_view_literals::operator""sv;
 
 #include <functional>
 #include <optional>
@@ -158,6 +165,16 @@ public:
 		 * response was passed to the #HttpResponseHandler.
 		 */
 		PENDING_ERROR,
+
+		/**
+		 * Announce a response body, and send the last of it
+		 * together with a PREMATURE packet; the control
+		 * channel is written first, so the client defers the
+		 * PREMATURE and then releases the pipe (and the WAS
+		 * process) while that deferred update is still
+		 * pending.
+		 */
+		PREMATURE_AT_END,
 	};
 
 private:
@@ -220,6 +237,31 @@ private:
 
 protected:
 	void SendPremature() noexcept {
+		if (mode == Mode::PREMATURE_AT_END) {
+			/* write the control packet directly to the
+			   socket, because Was::Control would only defer
+			   the write; this way, the control channel
+			   becomes readable before the pipe ... */
+			const struct was_header header{
+				.length = sizeof(uint64_t),
+				.command = WAS_COMMAND_PREMATURE,
+			};
+
+			static constexpr uint64_t premature_length = 3;
+
+			std::byte buffer[sizeof(header) + sizeof(premature_length)];
+			memcpy(buffer, &header, sizeof(header));
+			memcpy(buffer + sizeof(header), &premature_length,
+			       sizeof(premature_length));
+			control.GetSocket().Send(buffer);
+
+			/* ... and only then complete the announced
+			   response body, so the client releases the pipe
+			   while the PREMATURE packet is still deferred */
+			socket.output.Write(AsBytes("hello"sv));
+			return;
+		}
+
 		/* the response body was announced as 1 kB - and now
 		   we tell the client he already sent 4 kB */
 		control.SendUint64(WAS_COMMAND_PREMATURE, 4096);
@@ -287,6 +329,16 @@ MalformedPrematureWasServer::OnWasControlPacket(enum was_command cmd,
 				return false;
 
 			break;
+
+		case Mode::PREMATURE_AT_END:
+			/* announce a 5 byte response body, but send
+			   it later (see SendPremature()) */
+			if (!control.Send(WAS_COMMAND_DATA) ||
+			    !control.SendUint64(WAS_COMMAND_LENGTH, 5))
+				return false;
+
+			defer_premature.Schedule(std::chrono::milliseconds(10));
+			break;
 		}
 
 		return true;
@@ -349,6 +401,19 @@ public:
 	}
 
 	struct PendingError{};
+
+	struct PrematureAtEnd{};
+
+	WasConnection(struct pool &pool, EventLoop &_event_loop,
+		      PrematureAtEnd)
+		:event_loop(_event_loop)
+	{
+		WasServerHandler &handler = *this;
+		server2 = NewFromPool<MalformedPrematureWasServer>(pool, event_loop,
+								   MakeWasSocket(),
+								   handler,
+								   MalformedPrematureWasServer::Mode::PREMATURE_AT_END);
+	}
 
 	WasConnection(struct pool &pool, EventLoop &_event_loop,
 		      PendingError)
@@ -519,6 +584,11 @@ struct WasFactory {
 		return new WasConnection(pool, event_loop,
 					 WasConnection::PendingError{});
 	}
+
+	auto *NewPrematureAtEnd(struct pool &pool, EventLoop &event_loop) {
+		return new WasConnection(pool, event_loop,
+					 WasConnection::PrematureAtEnd{});
+	}
 };
 
 INSTANTIATE_TYPED_TEST_SUITE_P(WasClient, ClientTest, WasFactory);
@@ -589,4 +659,48 @@ TEST(WasClient, PendingError)
 	EXPECT_EQ(c.status, HttpStatus{});
 	EXPECT_TRUE(c.request_error);
 	EXPECT_TRUE(c.released);
+}
+
+/**
+ * A PREMATURE packet which was received before the last chunk of the
+ * response body must not be applied to the #WasInput after its pipe
+ * (and the WAS process lease) have been released.
+ */
+TEST(WasClient, PrematureAfterPipeRelease)
+{
+	Instance instance;
+	WasFactory factory{instance.event_loop};
+	Context c{instance};
+
+	/* don't consume the response body, so the #WasInput is still
+	   alive when the deferred PREMATURE packet is evaluated */
+	c.data_blocking = 1;
+
+	c.connection = factory.NewPrematureAtEnd(*c.pool, c.event_loop);
+	c.connection->Request(c.pool, c,
+			      HttpMethod::GET, "/foo", {},
+			      nullptr,
+			      false,
+			      c, c.cancel_ptr);
+
+	c.event_loop.Run();
+
+	/* the client has received the whole announced response body
+	   and has released the WAS process */
+	EXPECT_FALSE(c.request_error);
+	EXPECT_EQ(c.status, HttpStatus::OK);
+	EXPECT_EQ(c.body_data, 5u);
+	EXPECT_FALSE(c.body_eof);
+	EXPECT_TRUE(c.released);
+	EXPECT_EQ(c.lease_action, PutAction::REUSE);
+
+	/* now the deferred PREMATURE packet is evaluated; it must not
+	   touch the released pipe and must not release the lease a
+	   second time */
+	c.event_loop.Run();
+
+	/* the packet was discarded, so no error was reported */
+	EXPECT_FALSE(c.body_error);
+	EXPECT_TRUE(c.released);
+	EXPECT_EQ(c.lease_action, PutAction::REUSE);
 }
