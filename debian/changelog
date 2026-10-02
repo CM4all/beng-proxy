@@ -155,7 +155,7 @@ cm4all-beng-proxy (22.0) unstable; urgency=low
   * log-split: don't follow symlinks
   * systemd: raise LimitNOFILE to 1M
 
- --   
+ -- Max Kellermann <max.kellermann@ionos.com>  Fri, 02 Oct 2026 19:32:44 +0200
 
 cm4all-beng-proxy (21.44) unstable; urgency=low
 
