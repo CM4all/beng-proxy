@@ -865,6 +865,11 @@ WasClient::WasInputRelease() noexcept
 
 	response.released = true;
 
+	/* the pipe is gone, and a deferred LENGTH/PREMATURE packet
+	   cannot be applied anymore */
+	defer_update_input.Cancel();
+	response.pending_input_type = Response::PendingInputType::NONE;
+
 	if (!CancelRequestBody())
 		return false;
 
