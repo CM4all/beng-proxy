@@ -58,6 +58,7 @@ jobs:
             libnghttp2-dev \
             libpcre2-dev \
             libpq-dev \
+            libpsl-dev \
             libseccomp-dev \
             libsodium-dev \
             libssl-dev \
