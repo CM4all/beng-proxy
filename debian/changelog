@@ -1,6 +1,6 @@
 cm4all-beng-proxy (22.1) unstable; urgency=low
 
-  * widget: allow headers "x-beng-realm" and "x-cm4all-accountid"
+  * widget: refuse only well-known "x-cm4all-" headers
 
  --   
 
