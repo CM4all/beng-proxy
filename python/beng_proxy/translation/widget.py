@@ -170,6 +170,8 @@ class _Lookup:
             response.packet(TRANSLATE_ANCHOR_ABSOLUTE)
         elif line == 'widget_info':
             response.packet(TRANSLATE_WIDGET_INFO)
+        elif line == 'no_new_privs':
+            response.packet(TRANSLATE_NO_NEW_PRIVS)
         else:
             raise MalformedLineError(self.path, line)
         return None
