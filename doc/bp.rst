@@ -1324,14 +1324,15 @@ Passing HTTP headers to widgets
 Example::
 
    <c:widget id="foo" type="date">
-     <c:header name="X-CM4all-Foo" value="Bar" />
+     <c:header name="X-Foo" value="Bar" />
    </c:widget>
 
 ``header`` elements create HTTP request headers. Headers are replaced,
 i.e. if a header with such a name was about to be forwarded from the
 client to the widget, the client’s value will be removed. In the header
 name, only letters, digits and the dash is allowed. It must start with
-“X-”.
+``X-`` (but must not be within the reserved prefixes ``X-Forwarded-``
+and ``X-CM4all-``).
 
 Selecting the widget view
 -------------------------
