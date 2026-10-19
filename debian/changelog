@@ -2,6 +2,7 @@ cm4all-beng-proxy (22.2) unstable; urgency=low
 
   * bp: REQUEST_HEADER_FORWARD/FORWARD controls "X-Forwarded-" headers
   * fcgi: use non-blocking write for STDERR pipes
+  * spawn: make a dropped forbidden-syscall rule fatal
   * was: fix crash bug
 
  --   
