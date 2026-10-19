@@ -20,7 +20,7 @@ HasCacheControlDirective(const StringMap &headers,
 	const auto r = headers.EqualRange(cache_control_header);
 
 	for (auto i = r.first; i != r.second; ++i)
-		if (http_list_contains(i->value, directive))
+		if (http_list_contains_i(i->value, directive))
 			return true;
 
 	return false;
