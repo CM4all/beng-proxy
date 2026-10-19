@@ -8,11 +8,13 @@
 #include "istream/Sink.hxx"
 #include "istream/UnusedPtr.hxx"
 #include "io/Pipe.hxx"
+#include "io/SpliceSupport.hxx"
 #include "io/UniqueFileDescriptor.hxx"
 #include "util/SpanCast.hxx"
 
 #include <gtest/gtest.h>
 
+#include <algorithm> // for std::min()
 #include <stdexcept>
 #include <utility>
 
@@ -115,6 +117,65 @@ public:
 	}
 };
 
+/**
+ * Emulates HttpServerConnection::OnDirect(): splice the response body
+ * and close it from inside the callback.  At that moment, the
+ * #WasInput has received everything it announced, but has not yet
+ * released the pipe - the only state in which _Close() can observe
+ * CanRelease() && HasPipe().
+ */
+class DirectCloseSink final : public IstreamSink {
+public:
+	std::size_t n_direct = 0;
+
+	explicit DirectCloseSink(UnusedIstreamPtr &&_input) noexcept
+		:IstreamSink(std::move(_input))
+	{
+		input.SetDirect(ISTREAM_TO_TCP);
+	}
+
+	using IstreamSink::HasInput;
+
+	void Read() noexcept {
+		input.Read();
+	}
+
+private:
+	/* virtual methods from class IstreamHandler */
+	std::size_t OnData(std::span<const std::byte>) noexcept override {
+		return 0;
+	}
+
+	IstreamDirectResult OnDirect(FdType, FileDescriptor fd, off_t,
+				     std::size_t max_length,
+				     bool then_eof) noexcept override {
+		std::byte buffer[64];
+		const auto nbytes =
+			fd.Read(std::span{buffer}.first(std::min(max_length,
+								 sizeof(buffer))));
+		if (nbytes <= 0)
+			return IstreamDirectResult::ERRNO;
+
+		input.ConsumeDirect(nbytes);
+		n_direct += nbytes;
+
+		if (then_eof && static_cast<std::size_t>(nbytes) == max_length) {
+			CloseInput();
+			return IstreamDirectResult::CLOSED;
+		}
+
+		return IstreamDirectResult::OK;
+	}
+
+	void OnEof() noexcept override {
+		ClearInput();
+	}
+
+	void OnError(std::exception_ptr &&) noexcept override {
+		ClearInput();
+	}
+};
+
 } // anonymous namespace
 
 /**
@@ -207,4 +268,42 @@ TEST(WasInput, FillBucketListReleaseSucceeds)
 
 	EXPECT_TRUE(sink.error);
 	EXPECT_FALSE(sink.HasInput());
+}
+
+/**
+ * _Close() must destroy the #WasInput even when
+ * WasInputHandler::WasInputRelease() fails: the handler cannot do it,
+ * because was_input_free() does nothing on an already-closed
+ * #WasInput.  Without the destruction, Istream::InvokeDirect()
+ * asserts that a handler which returned CLOSED really did destroy the
+ * #Istream, and the #PoolLeakDetector would report the leaked object
+ * when the root pool is destroyed.
+ */
+TEST(WasInput, CloseWhileReleasingPipe)
+{
+	TestInstance instance;
+
+	auto [r, w] = CreatePipe();
+	w.Write(AsBytes(payload));
+	w.Close();
+
+	FailingReleaseHandler handler;
+	handler.input = was_input_new(instance.root_pool, instance.event_loop,
+				      r, handler);
+
+	/* announce the exact length; the pipe is released only after
+	   the last chunk was submitted to the #IstreamHandler */
+	ASSERT_TRUE(was_input_set_length(handler.input, payload.size()));
+
+	DirectCloseSink sink{was_input_enable(*handler.input)};
+	sink.Read();
+
+	EXPECT_EQ(sink.n_direct, payload.size());
+	EXPECT_EQ(handler.n_release, 1u);
+	EXPECT_FALSE(sink.HasInput());
+
+	/* WasInputRelease() failed, so the end of the body was never
+	   reported */
+	EXPECT_EQ(handler.n_eof, 0u);
+	EXPECT_EQ(handler.n_close, 0u);
 }
