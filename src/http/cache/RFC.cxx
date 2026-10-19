@@ -3,6 +3,7 @@
 // author: Max Kellermann <max.kellermann@ionos.com>
 
 #include "RFC.hxx"
+#include "CacheControl.hxx"
 #include "Document.hxx"
 #include "Internal.hxx"
 #include "strmap.hxx"
@@ -17,41 +18,12 @@
 #include "http/Method.hxx"
 #include "http/Status.hxx"
 #include "util/IterableSplitString.hxx"
-#include "util/NumberParser.hxx"
 #include "util/StringAPI.hxx"
 #include "util/StringCompare.hxx"
 #include "util/StringStrip.hxx"
 #include "AllocatorPtr.hxx"
 
 using std::string_view_literals::operator""sv;
-
-/**
- * Does the given Cache-Control directive have the specified name?
- *
- * @see RFC 9111 5.2
- */
-[[gnu::pure]]
-static bool
-IsCacheControlDirective(std::string_view s, std::string_view name) noexcept
-{
-	return SkipPrefixIgnoreCase(s, name) && (s.empty() || s.front() == '=');
-}
-
-/**
- * Parse the argument of a "max-age" Cache-Control directive.
- *
- * Returns a negative value on error.
- */
-[[gnu::pure]]
-static std::chrono::system_clock::duration
-ParseMaxAge(std::string_view s) noexcept
-{
-	unsigned value;
-	if (!ParseIntegerTo(s, value))
-		return std::chrono::system_clock::duration{-1};
-
-	return std::chrono::seconds{value};
-}
 
 std::optional<HttpCacheRequestInfo>
 http_cache_request_evaluate(HttpMethod method,

@@ -5,7 +5,25 @@
 #include "CacheControl.hxx"
 #include "http/CommonHeaders.hxx"
 #include "http/List.hxx"
+#include "util/NumberParser.hxx"
+#include "util/StringCompare.hxx"
 #include "strmap.hxx"
+
+bool
+IsCacheControlDirective(std::string_view s, std::string_view name) noexcept
+{
+	return SkipPrefixIgnoreCase(s, name) && (s.empty() || s.front() == '=');
+}
+
+std::chrono::system_clock::duration
+ParseMaxAge(std::string_view s) noexcept
+{
+	unsigned value;
+	if (!ParseIntegerTo(s, value))
+		return std::chrono::system_clock::duration{-1};
+
+	return std::chrono::seconds{value};
+}
 
 bool
 HasCacheControlDirective(const StringMap &headers,
