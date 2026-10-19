@@ -459,11 +459,10 @@ public:
 	bool InitApproval(bool self_container) noexcept;
 
 	/**
-	 * Check the "approval" value.  If it is
-	 * #WIDGET_APPROVAL_UNKNOWN, check the widget group approval
-	 * of the parent widget.  This is a postponed check because a
-	 * widget's group is only known after its widget class has
-	 * been looked up.
+	 * Check the #approval value.  If it is #UNKNOWN, check the
+	 * widget group approval of the parent widget.  This is a
+	 * postponed check because a widget's group is only known
+	 * after its widget class has been looked up.
 	 *
 	 * Throws if the widget is not approved.
 	 */
