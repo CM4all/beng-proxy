@@ -17,6 +17,7 @@
 #include "AllocatorPtr.hxx"
 
 using namespace BengProxy;
+using std::string_view_literals::operator""sv;
 
 [[gnu::pure]]
 static bool
@@ -160,9 +161,15 @@ ClassifyRequestHeader(const char *name, const bool with_body,
 				   per-request DocumentRoot, and should never be forwarded
 				   from the outside to apache-lhttpd */
 				return HeaderGroup::MAX;
-		} else if (StringIsEqual(name, "x-forwarded-for"))
-			/* TODO: use HeaderGroup::IDENTITY */
-			return HeaderGroup::MAX;
+		} else if (auto x_forwarded = StringAfterPrefix(name, "x-forwarded-"sv)) {
+			if (StringIsEqual(x_forwarded, "for"))
+				/* TODO: use HeaderGroup::IDENTITY */
+				return HeaderGroup::MAX;
+
+			/* other "X-Forwarded-*" headers describe the
+			   original request */
+			return HeaderGroup::FORWARD;
+		}
 
 		break;
 	}
@@ -273,7 +280,8 @@ forward_request_headers(AllocatorPtr alloc, const StringMap &src,
 			if (StringIsEqual(key, "host")) {
 				if (!exclude_host)
 					dest.Add(alloc, key, value);
-				if (settings[HeaderGroup::FORWARD] == HeaderForwardMode::MANGLE)
+				if (settings[HeaderGroup::FORWARD] == HeaderForwardMode::MANGLE ||
+				    settings[HeaderGroup::FORWARD] == HeaderForwardMode::BOTH)
 					dest.Add(alloc, x_forwarded_host_header, value);
 			} else if (forward_charset &&
 				   StringIsEqual(key, "accept-charset")) {
@@ -313,7 +321,8 @@ forward_request_headers(AllocatorPtr alloc, const StringMap &src,
 					if (value != nullptr)
 						break;
 				}
-			}
+			} else if (group == HeaderGroup::FORWARD)
+				break;
 
 			continue;
 

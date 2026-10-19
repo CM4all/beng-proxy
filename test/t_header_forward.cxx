@@ -186,6 +186,111 @@ TEST(HeaderForwardTest, HostRequestHeader)
 	EXPECT_EQ(strmap_to_string(a), "host=foo;x-forwarded-host=foo;"sv);
 }
 
+/**
+ * The FORWARD group controls the whole "X-Forwarded-" namespace
+ * (except X-Forwarded-For, which belongs to IDENTITY): under MANGLE
+ * and BOTH, we generate X-Forwarded-Host from the "Host" header, and
+ * only YES and BOTH forward the client's own ones - under MANGLE,
+ * they must never survive next to ours.
+ */
+TEST(HeaderForwardTest, XForwardedRequestHeaders)
+{
+	HeaderForwardSettings settings = HeaderForwardSettings::AllNo();
+
+	TestPool pool;
+	const AllocatorPtr alloc(pool);
+
+	const StringMap headers{alloc,
+				{
+					{"host", "foo"},
+					{"x-forwarded-host", "evil"},
+					{"x-forwarded-proto", "https"},
+
+					/* a name nobody knows is covered
+					   as well */
+					{"x-forwarded-prefix", "/evil"},
+
+					/* ... but this one belongs to
+					   IDENTITY, not to FORWARD */
+					{"x-forwarded-for", "evil"},
+				}};
+
+	/* none of them is in the OTHER group */
+	settings[HeaderGroup::OTHER] = HeaderForwardMode::YES;
+	auto a = forward_request_headers(alloc, headers,
+					 true, false, false, false, false,
+					 settings);
+	EXPECT_EQ(strmap_to_string(a), ""sv);
+
+	/* FORWARD=YES forwards the client's values as-is;
+	   X-Forwarded-For is unaffected (IDENTITY is NO) */
+	settings[HeaderGroup::FORWARD] = HeaderForwardMode::YES;
+	a = forward_request_headers(alloc, headers,
+				    true, false, false, false, false,
+				    settings);
+	EXPECT_EQ(strmap_to_string(a),
+		  "x-forwarded-host=evil;x-forwarded-prefix=/evil;x-forwarded-proto=https;"sv);
+
+	/* FORWARD=MANGLE generates our own and discards all of the
+	   client's */
+	settings[HeaderGroup::FORWARD] = HeaderForwardMode::MANGLE;
+	a = forward_request_headers(alloc, headers,
+				    true, false, false, false, false,
+				    settings);
+	EXPECT_EQ(strmap_to_string(a), "x-forwarded-host=foo;"sv);
+
+	/* the same without excluding the "Host" header */
+	a = forward_request_headers(alloc, headers,
+				    false, false, false, false, false,
+				    settings);
+	EXPECT_EQ(strmap_to_string(a), "host=foo;x-forwarded-host=foo;"sv);
+
+	/* ... and with several client-supplied values */
+	const StringMap headers2{alloc,
+				 {
+					 {"host", "foo"},
+					 {"x-forwarded-host", "evil1"},
+					 {"x-forwarded-host", "evil2"},
+				 }};
+	a = forward_request_headers(alloc, headers2,
+				    true, false, false, false, false,
+				    settings);
+	EXPECT_EQ(strmap_to_string(a), "x-forwarded-host=foo;"sv);
+
+	/* without a "Host" header, there is nothing to generate, and
+	   the client's values are discarded nevertheless */
+	const StringMap headers3{alloc,
+				 {
+					 {"x-forwarded-host", "evil"},
+					 {"x-forwarded-proto", "https"},
+				 }};
+	a = forward_request_headers(alloc, headers3,
+				    true, false, false, false, false,
+				    settings);
+	EXPECT_EQ(strmap_to_string(a), ""sv);
+
+	/* FORWARD=BOTH generates ours and forwards the client's ones
+	   as well; ours is the first one */
+	settings[HeaderGroup::FORWARD] = HeaderForwardMode::BOTH;
+	a = forward_request_headers(alloc, headers,
+				    true, false, false, false, false,
+				    settings);
+	EXPECT_EQ(strmap_to_string(a),
+		  "x-forwarded-host=foo;x-forwarded-host=evil;x-forwarded-prefix=/evil;x-forwarded-proto=https;"sv);
+
+	a = forward_request_headers(alloc, headers2,
+				    true, false, false, false, false,
+				    settings);
+	EXPECT_EQ(strmap_to_string(a),
+		  "x-forwarded-host=foo;x-forwarded-host=evil1;x-forwarded-host=evil2;"sv);
+
+	a = forward_request_headers(alloc, headers3,
+				    true, false, false, false, false,
+				    settings);
+	EXPECT_EQ(strmap_to_string(a),
+		  "x-forwarded-host=evil;x-forwarded-proto=https;"sv);
+}
+
 TEST(HeaderForwardTest, AuthRequestHeaders)
 {
 	HeaderForwardSettings settings = HeaderForwardSettings::AllNo();

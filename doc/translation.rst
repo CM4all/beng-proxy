@@ -988,8 +988,13 @@ Group is one of:
 - ``COOKIE``: ``Cookie[2]``, ``Set-Cookie[2]``
 
 - ``FORWARD``: forward information about the original request/response
-  that would usually not be visible. If set to ``MANGLE``, then
-  ``Host`` is translated to ``X-Forwarded-Host``.
+  that would usually not be visible.  This group covers the whole
+  ``X-Forwarded-*`` namespace (except for ``X-Forwarded-For``, which
+  belongs to ``IDENTITY``).
+
+  ``NO`` (the default) removes those headers from the request, and
+  ``YES`` forwards the client's ones unchanged.  If set to ``MANGLE``
+  or ``BOTH``, then ``Host`` is translated to ``X-Forwarded-Host``.
 
 - ``CORS``: forward `CORS <http://www.w3.org/TR/cors/#syntax>`__
   request/response headers
