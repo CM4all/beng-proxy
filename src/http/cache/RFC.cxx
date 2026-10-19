@@ -6,6 +6,7 @@
 #include "CacheControl.hxx"
 #include "Document.hxx"
 #include "Internal.hxx"
+#include "CacheControl.hxx"
 #include "strmap.hxx"
 #include "ResourceAddress.hxx"
 #include "io/Logger.hxx"
@@ -175,12 +176,11 @@ http_cache_response_evaluate(const HttpCacheRequestInfo &request_info,
 		/* too large for the cache */
 		return std::nullopt;
 
+	if (!IsSharedCacheable(headers))
+		return std::nullopt;
+
 	HttpCacheResponseInfo info;
 	info.expires = std::chrono::system_clock::from_time_t(-1);
-
-	/* may this response be shared with other clients even though
-	   it sets a cookie? */
-	bool explicitly_shareable = false;
 
 	std::chrono::system_clock::duration max_age{-1}, s_maxage{-1};
 
@@ -190,35 +190,14 @@ http_cache_response_evaluate(const HttpCacheRequestInfo &request_info,
 		for (std::string_view s : IterableSplitString(i->value, ',')) {
 			s = Strip(s);
 
-			if (StringStartsWithIgnoreCase(s, "private"sv) ||
-			    IsCacheControlDirective(s, "no-cache"sv) ||
-			    IsCacheControlDirective(s, "no-store"sv))
-				return std::nullopt;
-
-			else if (IsCacheControlDirective(s, "public"sv))
-				explicitly_shareable = true;
-
-			else if (SkipPrefixIgnoreCase(s, "max-age="sv)) {
+			if (SkipPrefixIgnoreCase(s, "max-age="sv)) {
 				/* RFC 2616 14.9.3 */
 				max_age = ParseMaxAge(s);
 			} else if (SkipPrefixIgnoreCase(s, "s-maxage="sv)) {
 				s_maxage = ParseMaxAge(s);
-
-				if (s_maxage.count() > 0)
-					/* only a positive "s-maxage"
-					   permits shared reuse */
-					explicitly_shareable = true;
 			}
 		}
 	}
-
-	if (!explicitly_shareable &&
-	    (headers.Contains(set_cookie_header) ||
-	     headers.Contains(set_cookie2_header)))
-		/* this response sets a cookie, which means it is
-		   probably personalized; don't store it in this shared
-		   cache unless the origin explicitly allows it */
-		return std::nullopt;
 
 	const auto offset = GetServerDateOffset(request_info, now, headers);
 	if (offset == std::chrono::system_clock::duration::min())

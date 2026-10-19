@@ -35,3 +35,14 @@ ParseMaxAge(std::string_view s) noexcept;
 bool
 HasCacheControlDirective(const StringMap &headers,
 			 std::string_view directive) noexcept;
+
+/**
+ * May this response (and everything derived from it, e.g. its filtered
+ * or compressed form) be stored in a cache which is shared by all
+ * users?
+ *
+ * @see RFC 9111 5.2.2.7
+ */
+[[gnu::pure]]
+bool
+IsSharedCacheable(const StringMap &headers) noexcept;
