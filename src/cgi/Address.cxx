@@ -6,6 +6,7 @@
 #include "pool/pool.hxx"
 #include "pool/tpool.hxx"
 #include "pool/StringBuilder.hxx"
+#include "util/HexFormat.hxx"
 #include "AllocatorPtr.hxx"
 #include "uri/Base.hxx"
 #include "uri/Unescape.hxx"
@@ -107,6 +108,18 @@ CgiAddress::BuildChildId(PoolStringBuilder<256> &b,
 {
 	std::size_t hash = options.GetHash();
 
+	char *buffer = options_buffer.data();
+
+	for (const std::span<const std::byte> i : address_list) {
+		b.push_back(";a=");
+
+		char *end = HexFormat(buffer, i);
+		b.emplace_back(buffer, end);
+		buffer = end;
+
+		hash = djb_hash(i, hash);
+	}
+
 	{
 		const std::string_view value{action != nullptr ? action : path};
 		b.push_back(value);
@@ -119,8 +132,7 @@ CgiAddress::BuildChildId(PoolStringBuilder<256> &b,
 		hash = djb_hash(AsBytes(i), hash);
 	}
 
-	b.emplace_back(options_buffer.data(),
-		       options.MakeId(options_buffer.data()));
+	b.emplace_back(buffer, options.MakeId(buffer));
 
 	return hash;
 }
