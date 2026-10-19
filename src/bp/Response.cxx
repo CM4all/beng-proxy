@@ -981,6 +981,8 @@ Request::OnHttpResponse(HttpStatus status, StringMap &&_headers,
 {
 	assert(!response_sent);
 
+	const AllocatorPtr alloc{pool};
+
 	/* move the StringMap rvalue reference to the stack to avoid
 	   use-after-free bugs when pending_filter_response gets moved
 	   into it, which, by closing the given response body, may
@@ -994,7 +996,7 @@ Request::OnHttpResponse(HttpStatus status, StringMap &&_headers,
 			/* discard successful responses and use the
 			   pending response */
 			status = pending_filter_response->status;
-			headers = std::move(pending_filter_response->headers).ToMap(pool);
+			headers = std::move(pending_filter_response->headers).ToMap(alloc);
 			body = std::move(pending_filter_response->body);
 		} else {
 			/* unsucessful response: use that one and
@@ -1064,7 +1066,7 @@ Request::OnHttpResponse(HttpStatus status, StringMap &&_headers,
 			/* copy the value because the header map may
 			   be owned by a cache pool which is freed at
 			   body EOF, before the request is logged */
-			rl.generator = p_strdup(&pool, generator_header);
+			rl.generator = alloc.Dup(generator_header);
 
 	auto new_headers = ForwardResponseHeaders(status, headers,
 						  RelocateCallback, this,
@@ -1074,7 +1076,7 @@ Request::OnHttpResponse(HttpStatus status, StringMap &&_headers,
 	    identity_forward == BengProxy::HeaderForwardMode::MANGLE)
 		/* the GENERATOR value from the translation server
 		   overrides the header */
-		new_headers.Add(pool, x_cm4all_generator_header, generator);
+		new_headers.Add(alloc, x_cm4all_generator_header, generator);
 
 	HttpHeaders headers2(std::move(new_headers));
 
