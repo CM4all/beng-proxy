@@ -1,5 +1,6 @@
 http_cache = static_library(
   'http_cache',
+  'CacheControl.cxx',
   'Public.cxx',
   'Document.cxx',
   'Age.cxx',

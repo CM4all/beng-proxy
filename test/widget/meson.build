@@ -94,6 +94,7 @@ test(
       processor_dep,
       time_dep,
       http_dep,
+      http_cache_dep,
     ],
   ),
 )

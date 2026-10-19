@@ -480,6 +480,7 @@ test(
       istream_dep,
       raddress_dep,
       http_dep,
+      http_cache_dep,
       stopwatch_dep,
       debug_resource_loader_dep,
     ],
