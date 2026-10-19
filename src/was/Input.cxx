@@ -230,28 +230,7 @@ private:
 	ConsumeBucketResult _ConsumeBucketList(std::size_t nbytes) noexcept override;
 	void _ConsumeDirect(std::size_t nbytes) noexcept override;
 
-	void _Close() noexcept override {
-		buffer.FreeIfDefined();
-		event.Cancel();
-
-		/* protect against recursive Free() call within the istream
-		   handler */
-		closed = true;
-
-		if (CanRelease()) {
-			/* end-of-file was already reached, but was
-			   not yet reported to the IstreamHandler; no
-			   need to send STOP */
-
-			if (HasPipe() && !ReleasePipe())
-				return;
-
-			handler.WasInputEof();
-		} else
-			handler.WasInputClose(received);
-
-		Destroy();
-	}
+	void _Close() noexcept override;
 };
 
 bool
@@ -680,4 +659,29 @@ void
 WasInput::_ConsumeDirect(std::size_t nbytes) noexcept
 {
 	received += nbytes;
+}
+
+void
+WasInput::_Close() noexcept
+{
+	buffer.FreeIfDefined();
+	event.Cancel();
+
+	/* protect against recursive Free() call within the istream
+	   handler */
+	closed = true;
+
+	if (CanRelease()) {
+		/* end-of-file was already reached, but was not yet
+		   reported to the IstreamHandler; no need to send
+		   STOP */
+
+		if (HasPipe() && !ReleasePipe())
+			return;
+
+		handler.WasInputEof();
+	} else
+		handler.WasInputClose(received);
+
+	Destroy();
 }
