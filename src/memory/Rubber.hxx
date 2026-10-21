@@ -5,6 +5,7 @@
 #pragma once
 
 #include "system/LargeObject.hxx"
+#include "util/ByteSizes.hxx"
 #include "util/IntrusiveList.hxx"
 
 #include <array>
@@ -39,7 +40,7 @@ class Rubber {
 	 * of searching a hole that fits.
 	 */
 	static constexpr std::size_t HOLE_THRESHOLDS[] = {
-		1024 * 1024, 64 * 1024, 32 * 1024, 16 * 1024, 8192, 4096, 2048, 1024, 64, 0
+		1_MiB, 64_KiB, 32_KiB, 16_KiB, 8_KiB, 4_KiB, 2_KiB, 1_KiB, 64, 0
 	};
 
 	static constexpr unsigned LookupHoleThreshold(std::size_t size) noexcept {

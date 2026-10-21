@@ -6,6 +6,7 @@
 #include "stock/Item.hxx"
 #include "system/Error.hxx"
 #include "io/UniqueFileDescriptor.hxx"
+#include "util/ByteSizes.hxx"
 
 #ifdef HAVE_URING
 #include "io/uring/Close.hxx"
@@ -37,7 +38,7 @@ PipeStockItem::PipeStockItem(CreateStockItem c)
 
 	/* enlarge the pipe buffer to 256 kB to reduce the number of
 	   splice() system calls */
-	constexpr unsigned PIPE_BUFFER_SIZE = 256 * 1024;
+	constexpr unsigned PIPE_BUFFER_SIZE = 256_KiB;
 	fds[1].SetPipeCapacity(PIPE_BUFFER_SIZE);
 }
 

@@ -4,14 +4,16 @@
 
 #pragma once
 
+#include "util/ByteSizes.hxx"
+
 #include <cstddef>
 
 /**
  * The maximum length of one HTTP header.
  */
-static constexpr std::size_t MAX_HTTP_HEADER_SIZE = 8192;
+static constexpr std::size_t MAX_HTTP_HEADER_SIZE = 8_KiB;
 
 /**
  * The maximum total size of all HTTP headers.
  */
-static constexpr std::size_t MAX_TOTAL_HTTP_HEADER_SIZE = 64 * 1024;
+static constexpr std::size_t MAX_TOTAL_HTTP_HEADER_SIZE = 64_KiB;

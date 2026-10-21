@@ -19,6 +19,7 @@
 #include "pool/pool.hxx"
 #include "http/Method.hxx"
 #include "http/ResponseHandler.hxx"
+#include "util/ByteSizes.hxx"
 #include "stopwatch.hxx"
 #include "strmap.hxx"
 
@@ -75,7 +76,7 @@ TEST(BufferedResourceLoader, Large)
 	MirrorResourceLoader rl;
 	BufferedResourceLoader brl(instance.event_loop, rl, nullptr);
 
-	constexpr size_t size = 128 * 1024;
+	constexpr size_t size = 128_KiB;
 	char *data = (char *)p_malloc(instance.root_pool, size + 1);
 	memset(data, 'X', size);
 	data[size] = 0;
@@ -102,7 +103,7 @@ TEST(BufferedResourceLoader, LargeFail)
 	FailingResourceLoader rl;
 	BufferedResourceLoader brl(instance.event_loop, rl, nullptr);
 
-	constexpr size_t size = 128 * 1024;
+	constexpr size_t size = 128_KiB;
 	char *data = (char *)p_malloc(instance.root_pool, size + 1);
 	memset(data, 'X', size);
 	data[size] = 0;
@@ -194,7 +195,7 @@ TEST(BufferedResourceLoader, CancelNext)
 	BlockingResourceLoader rl;
 	BufferedResourceLoader brl(instance.event_loop, rl, nullptr);
 
-	constexpr size_t size = 128 * 1024;
+	constexpr size_t size = 128_KiB;
 	char *data = (char *)p_malloc(instance.root_pool, size + 1);
 	memset(data, 'X', size);
 	data[size] = 0;

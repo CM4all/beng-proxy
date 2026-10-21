@@ -6,6 +6,7 @@
 #include "system/Error.hxx"
 #include "net/SocketProtocolError.hxx"
 #include "io/FileDescriptor.hxx"
+#include "util/ByteSizes.hxx"
 #include "util/Exception.hxx" // for NestException()
 
 #include <array>
@@ -17,7 +18,7 @@
  * the maximum pipe capacity (/proc/sys/fs/pipe-max-size defaults to 1
  * MB).
  */
-static constexpr uint_least64_t MAX_DISCARD = 2ull * 1024ull * 1024ull;
+static constexpr uint_least64_t MAX_DISCARD = 2_MiB;
 
 void
 DiscardInput(FileDescriptor input, uint_least64_t remaining)

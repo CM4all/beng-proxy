@@ -5,7 +5,8 @@
 #pragma once
 
 #include "Public.hxx"
+#include "util/ByteSizes.hxx"
 
 #include <sys/types.h>
 
-constexpr off_t cacheable_size_limit = 512 * 1024;
+constexpr off_t cacheable_size_limit = 512_KiB;

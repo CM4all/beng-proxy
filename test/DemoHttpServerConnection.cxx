@@ -19,6 +19,7 @@
 #include "istream/istream.hxx"
 #include "pool/UniquePtr.hxx"
 #include "net/UniqueSocketDescriptor.hxx"
+#include "util/ByteSizes.hxx"
 #include "util/PrintException.hxx"
 
 DemoHttpServerConnection::DemoHttpServerConnection(struct pool &pool,
@@ -128,7 +129,7 @@ DemoHttpServerConnection::HandleHttpRequest(IncomingHttpRequest &request,
 		request.SendResponse(HttpStatus::OK, {},
 				     istream_head_new(request.pool,
 						      istream_zero_new(request.pool),
-						      512 * 1024, true));
+						      512_KiB, true));
 		break;
 
 	case Mode::HOLD:

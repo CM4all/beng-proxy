@@ -7,6 +7,7 @@
 #include "Bucket.hxx"
 #include "Sink.hxx"
 #include "pool/pool.hxx"
+#include "util/ByteSizes.hxx"
 #include "util/DestructObserver.hxx"
 #include "util/ScopeExit.hxx"
 
@@ -345,7 +346,7 @@ ReplaceIstream::TryRead() noexcept
 void
 ReplaceIstream::AppendToBuffer(const std::span<const std::byte> src)
 {
-	if (source_length >= 8 * 1024 * 1024)
+	if (source_length >= (off_t)8_MiB)
 		throw std::runtime_error{"file too large for processor"};
 
 	buffer.Write(src);

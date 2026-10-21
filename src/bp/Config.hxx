@@ -12,6 +12,7 @@
 #include "net/SocketConfig.hxx"
 #include "spawn/Config.hxx"
 #include "stock/Options.hxx"
+#include "util/ByteSizes.hxx"
 #include "config.h"
 
 #include <chrono>
@@ -61,13 +62,13 @@ struct BpConfig {
 	/** maximum number of simultaneous connections */
 	unsigned max_connections = 32768;
 
-	size_t http_cache_size = 512 * 1024 * 1024;
+	size_t http_cache_size = 512_MiB;
 
-	size_t filter_cache_size = 128 * 1024 * 1024;
+	size_t filter_cache_size = 128_MiB;
 
 	std::size_t encoding_cache_size = 0;
 
-	unsigned translate_cache_size = 131072;
+	unsigned translate_cache_size = 128_KiB;
 	unsigned translate_stock_limit = 32;
 
 	unsigned tcp_stock_limit = 0;

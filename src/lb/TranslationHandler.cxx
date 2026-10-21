@@ -13,6 +13,7 @@
 #include "http/IncomingRequest.hxx"
 #include "pool/pool.hxx"
 #include "stats/CacheStats.hxx"
+#include "util/ByteSizes.hxx"
 #include "stopwatch.hxx"
 #include "AllocatorPtr.hxx"
 
@@ -157,7 +158,7 @@ LbTranslationHandler::PutCache(const IncomingHttpRequest &request,
 
 	if (!cache)
 		// TODO configurable cache size
-		cache.reset(new LbTranslationCache(256 * std::size_t{1024 * 1024}));
+		cache.reset(new LbTranslationCache(256_MiB));
 
 	cache->Put(request, listener_tag, response);
 }

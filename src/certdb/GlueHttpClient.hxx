@@ -6,6 +6,7 @@
 
 #include "lib/curl/StringOptions.hxx"
 #include "lib/curl/StringResponse.hxx"
+#include "util/ByteSizes.hxx"
 
 #include <cstdint>
 #include <span>
@@ -21,7 +22,7 @@ class GlueHttpClient {
 	bool verbose = false, dump = false;
 
 	static constexpr Curl::StringOptions default_options{
-		.max_size = 1024 * 1024,
+		.max_size = 1_MiB,
 	};
 
 public:

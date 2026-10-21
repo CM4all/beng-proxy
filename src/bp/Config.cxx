@@ -31,7 +31,7 @@ void
 BpConfig::HandleSet(std::string_view name, const char *value)
 {
 	if (name == "max_connections"sv) {
-		max_connections = ParsePositiveLong(value, 1024 * 1024);
+		max_connections = ParsePositiveLong(value, 1_MiB);
 	} else if (name == "tcp_stock_limit"sv) {
 		tcp_stock_limit = ParseUnsignedLong(value);
 	} else if (SkipPrefix(name, "lhttp_stock_"sv)) {

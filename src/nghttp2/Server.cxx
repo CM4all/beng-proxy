@@ -30,6 +30,7 @@
 #include "net/PToString.hxx"
 #include "net/StaticSocketAddress.hxx"
 #include "net/log/ContentType.hxx"
+#include "util/ByteSizes.hxx"
 #include "util/Cancellable.hxx"
 #include "util/StaticVector.hxx"
 #include "stopwatch.hxx"
@@ -727,7 +728,7 @@ ServerConnection::ServerConnection(struct pool &_pool,
 	   performance */
 	nghttp2_session_set_local_window_size(session.get(),
 					      NGHTTP2_NV_FLAG_NONE,
-					      0, 256 * 1024);
+					      0, 256_KiB);
 
 	idle_timer.Schedule(idle_timeout);
 

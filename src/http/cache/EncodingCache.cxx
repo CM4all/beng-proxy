@@ -14,12 +14,13 @@
 #include "event/CoarseTimerEvent.hxx"
 #include "event/Loop.hxx"
 #include "io/Logger.hxx"
+#include "util/ByteSizes.hxx"
 #include "util/Cancellable.hxx"
 #include "util/LeakDetector.hxx"
 
 #include <string>
 
-static constexpr off_t cacheable_size_limit = 512 * 1024;
+static constexpr off_t cacheable_size_limit = 512_KiB;
 
 /**
  * The default "expires" duration [s] if no expiration was given for
