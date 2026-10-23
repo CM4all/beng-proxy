@@ -165,8 +165,7 @@ SslClientFactory::Create(EventLoop &event_loop,
 	SSL_set_connect_state(ssl.get());
 
 	if (hostname != nullptr)
-		/* why the fuck does OpenSSL want a non-const string? */
-		SSL_set_tlsext_host_name(ssl.get(), const_cast<char *>(hostname));
+		SSL_set_tlsext_host_name(ssl.get(), hostname);
 
 	if (certificate != nullptr) {
 		const auto *c = certs != nullptr
