@@ -19,6 +19,7 @@ cm4all-beng-proxy (22.2) unstable; urgency=low
   * ssl/cache: fix crash bug
   * translation: match the REGEX/INVERSE_REGEX against the normalized URI
   * translation: select the LAYOUT item by the normalized URI path
+  * debian: use "debhelper-compat" instead of "debian/compat"
 
  --   
 
