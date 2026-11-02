@@ -678,6 +678,13 @@ ReplaceIstream::_ConsumeBucketList(size_t nbytes) noexcept
 		assert(r.eof);
 	}
 
+	/* skip substitutions which deliver no data (i.e. deletions);
+	   they would make IsEOF() return false even though there is
+	   nothing left to deliver */
+	if (!substitutions.empty() && substitutions.front().IsActive() &&
+	    !substitutions.front().IsDefined())
+		ToNextSubstitutionLoop();
+
 	return {total, IsEOF()};
 }
 
