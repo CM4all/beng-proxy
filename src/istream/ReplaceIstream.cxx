@@ -701,6 +701,23 @@ ReplaceIstream::Add(off_t start, off_t end,
 	if (!contents && start == end)
 		return;
 
+	if (!contents && !substitutions.empty()) {
+		auto &previous = substitutions.back();
+		if (previous.end == start) {
+			/* this deletion is adjacent to the previous
+			   substitution: instead of adding another
+			   #Substitution, just grow that one */
+			previous.end = settled_position = end;
+
+#ifndef NDEBUG
+			last_substitution_end = end;
+#endif
+
+			defer_read.Schedule();
+			return;
+		}
+	}
+
 	auto s = NewFromPool<Substitution>(GetPool(), *this, start, end,
 					   std::move(contents));
 
