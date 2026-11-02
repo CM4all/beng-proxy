@@ -8,7 +8,6 @@
 #include "fs/NopThreadSocketFilter.hxx"
 #include "fs/ThreadSocketFilter.hxx"
 #include "thread/Pool.hxx"
-#include "thread/Queue.hxx"
 
 class NopThreadSocketFilterFactory final : public SocketFilterFactory {
 	EventLoop &event_loop;
@@ -29,9 +28,5 @@ public:
 			new ThreadSocketFilter(thread_pool_get_queue(event_loop),
 					       std::make_unique<NopThreadSocketFilter>())
 		};
-	}
-
-	void Flush() noexcept {
-		thread_pool_get_queue(event_loop).FlushSynchronously();
 	}
 };

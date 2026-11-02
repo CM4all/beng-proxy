@@ -3,7 +3,6 @@
 // author: Max Kellermann <max.kellermann@ionos.com>
 
 #include "TestInstance.hxx"
-#include "FlushEventLoop.hxx"
 #include "NullSocketFilterFactory.hxx"
 #include "NopThreadSocketFilterFactory.hxx"
 #include "NopSocketFilterFactory.hxx"
@@ -482,12 +481,6 @@ protected:
 			factory_,
 		};
 	}
-
-public:
-	void FlushFilters() noexcept {
-		if constexpr (requires{ factory_.Flush(); })
-			factory_.Flush();
-	}
 };
 
 using Factories = ::testing::Types<NullSocketFilterFactory, NopSocketFilterFactory, NopThreadSocketFilterFactory>;
@@ -503,6 +496,8 @@ class CommonHandler : Cancellable {
 
 	bool canceled = false;
 
+	bool break_request = false, break_canceled = false;
+
 public:
 	CommonHandler(Server &_server, bool _buckets) noexcept
 		:server(_server), buckets(_buckets)
@@ -516,7 +511,31 @@ public:
 		return canceled;
 	}
 
+	/**
+	 * Run the #EventLoop until the request has been canceled by
+	 * the HTTP server.
+	 */
+	void WaitCanceled() {
+		if (!canceled) {
+			break_canceled = true;
+			server.GetEventLoop().Run();
+			break_canceled = false;
+		}
+
+		ASSERT_TRUE(canceled);
+	}
+
 	void UseRequestBody(bool later) {
+		if (!request_body) {
+			/* wait until the request has arrived; this
+			   may need several EventLoop iterations, and
+			   with a #ThreadSocketFilter, it needs to
+			   wait for a worker thread */
+			break_request = true;
+			server.GetEventLoop().Run();
+			break_request = false;
+		}
+
 		ASSERT_TRUE(request_body);
 
 		UnusedIstreamPtr istream = std::move(request_body);
@@ -552,6 +571,9 @@ private:
 		cancel_ptr = *this;
 		request_ptr = &request;
 		request_body = UnusedHoldIstreamPtr{request.pool, std::move(body)};
+
+		if (break_request)
+			server.GetEventLoop().Break();
 	}
 
 	void OnRequestBodyEnd(std::exception_ptr &&error) noexcept {
@@ -560,6 +582,9 @@ private:
 
 	void Cancel() noexcept override {
 		canceled = true;
+
+		if (break_canceled)
+			server.GetEventLoop().Break();
 	}
 };
 
@@ -674,9 +699,8 @@ MakeRequestBody(struct pool &pool, std::size_t size, bool chunked) noexcept
  * the whole body.  This tests whether the ABANDONED_BODY state is
  * handled correctly.
  */
-template<typename F>
 static void
-TestRequest(HttpServerTest<F> &test, Server &server,
+TestRequest(Server &server,
 	    std::size_t request_body_size,
 	    bool send_100_continue,
 	    bool chunked, bool buckets,
@@ -742,76 +766,12 @@ TestRequest(HttpServerTest<F> &test, Server &server,
 			   std::move(request_body),
 			   send_100_continue);
 
-	/* flush http_client's deferred send */
-	FlushIO(server.GetEventLoop());
-
-	if (server.HasFilter()) {
-		test.FlushFilters();
-		FlushIO(server.GetEventLoop());
-		test.FlushFilters();
-		FlushIO(server.GetEventLoop());
-		FlushIO(server.GetEventLoop());
-	}
-
 	handler.UseRequestBody(later_request_body);
 
 	if (delay_request_body)
 		delayed->Set(std::move(real_request_body));
 
-	/* two calls: one receives the request body and the second one
-	   detects hangup */
-	FlushIO(server.GetEventLoop());
-	FlushIO(server.GetEventLoop());
-
-	if (send_100_continue) {
-		test.FlushFilters();
-		FlushIO(server.GetEventLoop());
-		FlushIO(server.GetEventLoop());
-		test.FlushFilters();
-		FlushIO(server.GetEventLoop());
-		FlushIO(server.GetEventLoop());
-	}
-
-	if (server.HasFilter()) {
-		/* the SocketFilter may require another flush */
-		test.FlushFilters();
-		FlushIO(server.GetEventLoop());
-		FlushIO(server.GetEventLoop());
-		test.FlushFilters();
-		FlushIO(server.GetEventLoop());
-		FlushIO(server.GetEventLoop());
-	}
-
-	if (request_body_size > 4096) {
-		/* need a few more steps if the request body is big */
-		FlushIO(server.GetEventLoop());
-		test.FlushFilters();
-		FlushIO(server.GetEventLoop());
-		FlushIO(server.GetEventLoop());
-		test.FlushFilters();
-		FlushIO(server.GetEventLoop());
-		FlushIO(server.GetEventLoop());
-		test.FlushFilters();
-		FlushIO(server.GetEventLoop());
-		FlushIO(server.GetEventLoop());
-		test.FlushFilters();
-		FlushIO(server.GetEventLoop());
-		FlushIO(server.GetEventLoop());
-		test.FlushFilters();
-		FlushIO(server.GetEventLoop());
-		FlushIO(server.GetEventLoop());
-		test.FlushFilters();
-		FlushIO(server.GetEventLoop());
-		FlushIO(server.GetEventLoop());
-		test.FlushFilters();
-		FlushIO(server.GetEventLoop());
-		FlushIO(server.GetEventLoop());
-		test.FlushFilters();
-		FlushIO(server.GetEventLoop());
-		FlushIO(server.GetEventLoop());
-	}
-
-	EXPECT_TRUE(client.IsDone());
+	client.WaitDone();
 	client.AssertResponse(HttpStatus::NO_CONTENT, {});
 
 	EXPECT_TRUE(!handler.IsCanceled());
@@ -919,9 +879,8 @@ TestDiscardedHugeRequestBody(Server &server)
  * Send a chunked request body and cancel the request before the
  * server sends a response.
  */
-template<typename F>
 static void
-TestCancelAfterChunkedRequest(HttpServerTest<F> &test, Server &server, bool buckets, bool delay_request_body)
+TestCancelAfterChunkedRequest(Server &server, bool buckets, bool delay_request_body)
 {
 	Client client{server.GetEventLoop()};
 
@@ -964,41 +923,15 @@ TestCancelAfterChunkedRequest(HttpServerTest<F> &test, Server &server, bool buck
 			   HttpMethod::POST, "/", {},
 			   std::move(request_body));
 
-	/* flush http_client's deferred send */
-	FlushIO(server.GetEventLoop());
-
-	if (server.HasFilter()) {
-		test.FlushFilters();
-		FlushIO(server.GetEventLoop());
-		test.FlushFilters();
-		FlushIO(server.GetEventLoop());
-		FlushIO(server.GetEventLoop());
-	}
-
 	handler.UseRequestBody(false);
 
 	if (delay_request_body)
 		delayed->Set(std::move(real_request_body));
 
-	/* two calls: one receives the request body and the second one
-	   detects hangup */
-	FlushIO(server.GetEventLoop());
-	FlushIO(server.GetEventLoop());
-
-	if (server.HasFilter()) {
-		/* the SocketFilter may require another flush */
-		test.FlushFilters();
-		FlushIO(server.GetEventLoop());
-		FlushIO(server.GetEventLoop());
-		test.FlushFilters();
-		FlushIO(server.GetEventLoop());
-		FlushIO(server.GetEventLoop());
-	}
+	handler.WaitCanceled();
 
 	EXPECT_TRUE(client.IsDone());
 	client.AssertResponse(HttpStatus{}, {});
-
-	EXPECT_TRUE(handler.IsCanceled());
 }
 
 TYPED_TEST(HttpServerTest, Misc)
@@ -1015,7 +948,7 @@ TYPED_TEST(HttpServerTest, Misc)
 				for (bool later_request_body : {false, true})
 					for (bool send_100_continue : {false, true})
 						for (unsigned request_body_size : {1, 70000})
-							TestRequest(*this, server,
+							TestRequest(server,
 								    request_body_size,
 								    send_100_continue,
 								    chunked, buckets,
@@ -1045,7 +978,7 @@ TYPED_TEST(HttpServerTest, CancelAfterChunkedRequest)
 	for (bool buckets : {false, true}) {
 		for (bool delay_request_body : {false, true}) {
 			auto server = this->MakeServer();
-			TestCancelAfterChunkedRequest(*this, server, buckets, delay_request_body);
+			TestCancelAfterChunkedRequest(server, buckets, delay_request_body);
 			server.CloseClientSocket();
 			instance.event_loop.Run();
 		}
@@ -1191,17 +1124,19 @@ TYPED_TEST(HttpServerTest, Raw)
 
 	IncomingHttpRequest *delayed_request = nullptr;
 
-	server.SetRequestHandler([&delayed_request](IncomingHttpRequest &request, CancellablePointer &) noexcept {
+	server.SetRequestHandler([&delayed_request, &instance](IncomingHttpRequest &request, CancellablePointer &) noexcept {
 		delayed_request = &request;
+
+		/* stop the EventLoop so the test can check that no
+		   "100 Continue" was sent yet */
+		instance.event_loop.Break();
 	});
 
 	{
 		auto client = server.MakeRawClient();
 		client->Write(AsBytes("POST / HTTP/1.1\r\ncontent-length: 3\r\nexpect: 100-continue\r\n\r\n"sv));
 
-		FlushIO(instance.event_loop);
-		this->FlushFilters();
-		FlushIO(instance.event_loop);
+		instance.event_loop.Run();
 		EXPECT_EQ(client->GetResponse(), ""sv);
 
 		ASSERT_TRUE(delayed_request != nullptr);
