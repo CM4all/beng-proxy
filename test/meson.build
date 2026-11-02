@@ -413,6 +413,7 @@ test(
     't_fcgi_client.cxx',
     'fcgi_server.cxx',
     'DemoHttpServerConnection.cxx',
+    'NopThreadSocketFilterFactory.cxx',
     '../src/net/PToString.cxx',
     '../src/net/InterfaceNameCache.cxx',
     t_client_sources,
@@ -437,6 +438,7 @@ test(
   executable(
     't_http_server',
     't_http_server.cxx',
+    'NopThreadSocketFilterFactory.cxx',
     '../src/net/PToString.cxx',
     '../src/net/InterfaceNameCache.cxx',
     include_directories: inc,

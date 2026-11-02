@@ -22,11 +22,7 @@ public:
 		thread_pool_set_volatile();
 	}
 
-	~NopThreadSocketFilterFactory() noexcept override {
-		thread_pool_stop();
-		thread_pool_join();
-		thread_pool_deinit();
-	}
+	~NopThreadSocketFilterFactory() noexcept override;
 
 	SocketFilterPtr CreateFilter() override {
 		return SocketFilterPtr{
