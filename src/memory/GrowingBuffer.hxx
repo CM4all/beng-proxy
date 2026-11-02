@@ -103,6 +103,14 @@ class GrowingBuffer {
 		explicit Buffer(size_type _size) noexcept
 			:size(_size) {}
 
+		std::byte *GetData() noexcept {
+			return data;
+		}
+
+		const std::byte *GetData() const noexcept {
+			return data;
+		}
+
 		bool IsFull() const noexcept {
 			return fill == size;
 		}
@@ -250,7 +258,7 @@ public:
 		assert(head->fill >= position);
 
 		position -= length;
-		return head->data + position;
+		return head->GetData() + position;
 	}
 
 	void FillBucketList(IstreamBucketList &list,
@@ -283,7 +291,7 @@ GrowingBuffer::BufferPtr::ForEachBuffer(size_type skip,
 		i->Check();
 		i->next.Check();
 
-		std::span<const std::byte> b{i->data, i->fill};
+		std::span<const std::byte> b{i->GetData(), i->fill};
 		if (skip > 0) {
 			if (skip >= b.size()) {
 				skip -= b.size();

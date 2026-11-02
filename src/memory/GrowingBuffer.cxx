@@ -53,7 +53,7 @@ GrowingBuffer::Buffer::Write() noexcept
 {
 	Check();
 
-	return {data + fill, size - fill};
+	return {GetData() + fill, size - fill};
 }
 
 GrowingBuffer::size_type
@@ -93,7 +93,7 @@ GrowingBuffer::BeginWrite(size_type size) noexcept
 
 	assert(buffer->fill + size <= buffer->size);
 
-	return buffer->data + buffer->fill;
+	return buffer->GetData() + buffer->fill;
 }
 
 std::span<std::byte>
@@ -196,7 +196,7 @@ GrowingBuffer::Read() const noexcept
 	head.Check();
 	assert(position < head->size);
 
-	return { head->data + position, head->fill - position };
+	return { head->GetData() + position, head->fill - position };
 }
 
 void
@@ -283,7 +283,7 @@ GrowingBufferReader::Read() const noexcept
 
 	assert(position < buffer->fill);
 
-	return { buffer->data + position, buffer->fill - position };
+	return { buffer->GetData() + position, buffer->fill - position };
 }
 
 void
