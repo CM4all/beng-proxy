@@ -301,6 +301,159 @@ TEST(ReplaceIstream, Fallback)
 	EXPECT_EQ(std::move(handler).TakeValue(), "x"sv);
 }
 
+/**
+ * Lots of adjacent empty substitutions must be drained iteratively;
+ * one stack frame per substitution overflows the stack, because the
+ * input decides how many of them there are.
+ */
+TEST(ReplaceIstream, ManyEmptySubstitutions)
+{
+	/* with one stack frame per substitution, this needs more
+	   than 60 MB of stack */
+	static constexpr std::size_t N = 50000;
+
+	Instance instance;
+	BlockingIstreamHandler handler;
+
+	auto &pool = instance.root_pool;
+
+	auto *replace = NewIstream<ReplaceIstream>(pool, instance.event_loop,
+						   istream_string_new(pool, "abc"sv));
+	replace->SetHandler(handler);
+
+	for (std::size_t i = 0; i < N; ++i)
+		replace->Add(0, 0, istream_null_new(pool));
+
+	replace->Finish();
+
+	IstreamBucketList list;
+	replace->FillBucketList(list);
+
+	/* all substitutions were drained, and what follows them is
+	   the buffer */
+
+	EXPECT_EQ(list.GetMore(), IstreamBucketList::More::NO);
+
+	auto i = list.begin();
+	ASSERT_NE(i, list.end());
+	EXPECT_TRUE(i->IsBuffer());
+	EXPECT_EQ(ToStringView(i->GetBuffer()), "abc"sv);
+
+	++i;
+	ASSERT_EQ(i, list.end());
+
+	/* cleanup */
+
+	EXPECT_EQ(handler.state, BlockingIstreamHandler::State::OPEN);
+	replace->Close();
+}
+
+/**
+ * Adjacent deletions are coalesced into one substitution, so that many
+ * deleted elements do not allocate one #Substitution each.
+ */
+TEST(ReplaceIstream, AdjacentDeletions)
+{
+	static constexpr std::size_t N = 1000;
+
+	const std::string source = "a" + std::string(N, 'x') + "bcd";
+
+	Instance instance;
+
+	auto pool = pool_new_linear(instance.root_pool, "test", 8192);
+
+	auto *replace = NewIstream<ReplaceIstream>(pool, instance.event_loop,
+						   istream_string_new(pool, source));
+
+	const std::size_t netto_size = pool_netto_size(pool);
+
+	/* delete all the 'x' characters, one call per character;
+	   these deletions are all adjacent */
+	for (std::size_t i = 1; i <= N; ++i)
+		replace->Add(i, i + 1, nullptr);
+
+	/* ... which must have allocated only one #Substitution */
+	EXPECT_LT(pool_netto_size(pool) - netto_size, 1024U);
+
+	/* one more deletion ('c') which is not adjacent to the
+	   previous one, because the 'b' is between them */
+	replace->Add(N + 2, N + 3, nullptr);
+
+	replace->Finish();
+
+	RecordingStringSinkHandler handler;
+
+	NewStringSink(pool, UnusedIstreamPtr{replace}, handler, handler.cancel_ptr);
+	instance.event_loop.Run();
+
+	ASSERT_FALSE(handler.IsAlive());
+	EXPECT_EQ(std::move(handler).TakeValue(), "abd"sv);
+}
+
+/**
+ * A deletion which is adjacent to a substitution that inserts an
+ * #Istream is merged into that substitution.
+ */
+TEST(ReplaceIstream, DeletionAfterSubstitution)
+{
+	Instance instance;
+
+	auto pool = pool_new_linear(instance.root_pool, "test", 8192);
+
+	auto *replace = NewIstream<ReplaceIstream>(pool, instance.event_loop,
+						   istream_string_new(pool, "abcdefghij"sv));
+
+	/* replace the 'd' with "123" ... */
+	replace->Add(3, 4, istream_string_new(pool, "123"sv));
+
+	const std::size_t netto_size = pool_netto_size(pool);
+
+	/* ... and delete the 'e' and the 'f', which are adjacent to
+	   it */
+	replace->Add(4, 5, nullptr);
+	replace->Add(5, 6, nullptr);
+
+	/* no additional #Substitution was allocated */
+	EXPECT_EQ(pool_netto_size(pool), netto_size);
+
+	replace->Finish();
+
+	RecordingStringSinkHandler handler;
+
+	NewStringSink(pool, UnusedIstreamPtr{replace}, handler, handler.cancel_ptr);
+	instance.event_loop.Run();
+
+	ASSERT_FALSE(handler.IsAlive());
+	EXPECT_EQ(std::move(handler).TakeValue(), "abc123ghij"sv);
+}
+
+/**
+ * A deletion at the end of the source delivers no data, and therefore
+ * _FillBucketList() reports end-of-file; _ConsumeBucketList() must
+ * report the same, or else it claims that there is more data which it
+ * can never deliver.
+ */
+TEST(ReplaceIstream, TrailingDeletion)
+{
+	Instance instance;
+
+	auto &pool = instance.root_pool;
+
+	auto *replace = NewIstream<ReplaceIstream>(pool, instance.event_loop,
+						   istream_string_new(pool, "abcdefghij"sv));
+
+	replace->Add(9, 10, nullptr);
+	replace->Finish();
+
+	RecordingStringSinkHandler handler;
+
+	NewStringSink(pool, UnusedIstreamPtr{replace}, handler, handler.cancel_ptr);
+	instance.event_loop.Run();
+
+	ASSERT_FALSE(handler.IsAlive());
+	EXPECT_EQ(std::move(handler).TakeValue(), "abcdefghi"sv);
+}
+
 namespace {
 
 /**
