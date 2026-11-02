@@ -18,7 +18,7 @@ GrowingBuffer::BufferPtr::Allocate() noexcept
 	assert(buffer == nullptr);
 
 	auto a = allocator.Allocate();
-	buffer = ::new(a.data()) Buffer(a.size() - sizeof(*buffer) + sizeof(buffer->data));
+	buffer = ::new(a.data()) Buffer(a.size() - sizeof(*buffer));
 	return *buffer;
 }
 

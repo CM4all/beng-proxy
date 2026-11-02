@@ -98,17 +98,20 @@ class GrowingBuffer {
 
 		const size_type size;
 		size_type fill = 0;
-		std::byte data[sizeof(size_type)];
 
 		explicit Buffer(size_type _size) noexcept
 			:size(_size) {}
 
+		/**
+		 * Returns a pointer to the data area which follows
+		 * this object in the same allocation.
+		 */
 		std::byte *GetData() noexcept {
-			return data;
+			return reinterpret_cast<std::byte *>(this + 1);
 		}
 
 		const std::byte *GetData() const noexcept {
-			return data;
+			return reinterpret_cast<const std::byte *>(this + 1);
 		}
 
 		bool IsFull() const noexcept {
@@ -119,7 +122,7 @@ class GrowingBuffer {
 		 * Debug checks.
 		 */
 		void Check() const noexcept {
-			assert(size == DefaultChunkAllocator::GetChunkSize() - sizeof(*this) + sizeof(data));
+			assert(size == DefaultChunkAllocator::GetChunkSize() - sizeof(*this));
 			assert(fill <= size);
 		}
 
