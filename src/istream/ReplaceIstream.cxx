@@ -513,7 +513,7 @@ ReplaceIstream::_FillBucketList(IstreamBucketList &list)
 		size_t total = 0;
 		bool only_buffers = true;
 		for (const auto &i : tmp) {
-			if (i.GetType() != IstreamBucket::Type::BUFFER) {
+			if (!i.IsBuffer()) {
 				input_more = IstreamBucketList::More::FALLBACK;
 				only_buffers = false;
 				break;
