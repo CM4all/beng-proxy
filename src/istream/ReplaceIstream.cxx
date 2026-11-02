@@ -497,7 +497,7 @@ ReplaceIstream::_Read() noexcept
 
 void
 ReplaceIstream::_FillBucketList(IstreamBucketList &list)
-{
+try {
 	assert(!list.HasMore());
 
 	defer_read.Cancel();
@@ -506,7 +506,7 @@ ReplaceIstream::_FillBucketList(IstreamBucketList &list)
 	if (HasInput()) {
 		/* fill our buffer from the input */
 		IstreamBucketList tmp;
-		FillBucketListFromInput(tmp);
+		input.FillBucketList(tmp);
 
 		input_more = tmp.GetMore();
 
@@ -520,26 +520,13 @@ ReplaceIstream::_FillBucketList(IstreamBucketList &list)
 			}
 
 			const auto b = i.GetBuffer();
-
-			try {
-				AppendToBuffer(b);
-			} catch (...) {
-				Destroy();
-				throw;
-			}
-
+			AppendToBuffer(b);
 			total += b.size();
 		}
 
 		if (only_buffers && input_more == IstreamBucketList::More::NO) {
 			CloseInput();
-
-			try {
-				ParseEnd();
-			} catch (...) {
-				Destroy();
-				throw;
-			}
+			ParseEnd();
 		} else if (total > 0)
 			input.ConsumeBucketList(total);
 	}
@@ -591,13 +578,7 @@ ReplaceIstream::_FillBucketList(IstreamBucketList &list)
 		}
 
 		IstreamBucketList tmp;
-
-		try {
-			s->FillBucketList(tmp);
-		} catch (...) {
-			Destroy();
-			throw;
-		}
+		s->FillBucketList(tmp);
 
 		if (tmp.IsEmpty() && !tmp.HasMore() && s->IsActive()) {
 			/* this (active) substitution is empty -
@@ -623,6 +604,9 @@ ReplaceIstream::_FillBucketList(IstreamBucketList &list)
 
 		fill_position = s->end;
 	}
+} catch (...) {
+	Destroy();
+	throw;
 }
 
 Istream::ConsumeBucketResult
