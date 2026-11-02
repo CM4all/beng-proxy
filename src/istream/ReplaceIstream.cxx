@@ -495,6 +495,42 @@ ReplaceIstream::_Read() noexcept
 	} while (!destructed && had_input && !had_output && HasInput());
 }
 
+inline IstreamBucketList::More
+ReplaceIstream::ReadInputBuckets()
+{
+	assert(HasInput());
+
+	IstreamBucketList tmp;
+	input.FillBucketList(tmp);
+
+	IstreamBucketList::More more = tmp.GetMore();
+
+	size_t total = 0;
+	bool only_buffers = true;
+	for (const auto &i : tmp) {
+		if (!i.IsBuffer()) {
+			more = IstreamBucketList::More::FALLBACK;
+			only_buffers = false;
+			break;
+		}
+
+		const auto b = i.GetBuffer();
+
+		AppendToBuffer(b);
+
+		total += b.size();
+	}
+
+	if (only_buffers && more == IstreamBucketList::More::NO) {
+		CloseInput();
+
+		ParseEnd();
+	} else if (total > 0)
+		input.ConsumeBucketList(total);
+
+	return more;
+}
+
 void
 ReplaceIstream::_FillBucketList(IstreamBucketList &list)
 try {
@@ -505,30 +541,7 @@ try {
 	IstreamBucketList::More input_more = IstreamBucketList::More::NO;
 	if (HasInput()) {
 		/* fill our buffer from the input */
-		IstreamBucketList tmp;
-		input.FillBucketList(tmp);
-
-		input_more = tmp.GetMore();
-
-		size_t total = 0;
-		bool only_buffers = true;
-		for (const auto &i : tmp) {
-			if (!i.IsBuffer()) {
-				input_more = IstreamBucketList::More::FALLBACK;
-				only_buffers = false;
-				break;
-			}
-
-			const auto b = i.GetBuffer();
-			AppendToBuffer(b);
-			total += b.size();
-		}
-
-		if (only_buffers && input_more == IstreamBucketList::More::NO) {
-			CloseInput();
-			ParseEnd();
-		} else if (total > 0)
-			input.ConsumeBucketList(total);
+		input_more = ReadInputBuckets();
 	}
 
 	off_t fill_position = position;

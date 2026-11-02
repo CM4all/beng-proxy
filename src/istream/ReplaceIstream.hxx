@@ -5,6 +5,7 @@
 #pragma once
 
 #include "FacadeIstream.hxx"
+#include "Bucket.hxx" // for IstreamBucketList::More
 #include "event/DeferEvent.hxx"
 #include "memory/GrowingBuffer.hxx"
 #include "util/IntrusiveForwardList.hxx"
@@ -155,6 +156,14 @@ private:
 	void ToNextSubstitutionLoop() noexcept;
 
 	IstreamReadyResult OnSubstitutionReady(Substitution &s) noexcept;
+
+	/**
+	 * Read from our #input using FillBucketList(), append it to
+	 * the #buffer and feed it to Parse().
+	 *
+	 * Throws on error.
+	 */
+	IstreamBucketList::More ReadInputBuckets();
 
 protected:
 	/**
