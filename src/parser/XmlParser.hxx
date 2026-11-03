@@ -118,6 +118,12 @@ class XmlParser final {
 	size_t tag_name_length;
 
 	/**
+	 * Was #tag_name too long?  The tag is parsed as usual, but
+	 * the handler never sees it.
+	 */
+	bool tag_name_overflow;
+
+	/**
 	 * Is the handler interested in the current tag?  If not, the
 	 * handler is not invoked and no attribute value is collected.
 	 */
@@ -126,6 +132,13 @@ class XmlParser final {
 	/* attribute */
 	char attr_name[64];
 	size_t attr_name_length;
+
+	/**
+	 * Was #attr_name or #attr_value too long?  The attribute is
+	 * parsed as usual, but it is not passed to the handler,
+	 * because its name or value would be truncated.
+	 */
+	bool attr_overflow;
 	char attr_value_delimiter;
 	ExpansibleBuffer attr_value;
 	XmlParserAttribute attr;
@@ -163,8 +176,10 @@ private:
 	 *
 	 * @return false if the hard limit was exceeded
 	 */
-	bool WriteAttributeValue(std::string_view src) noexcept {
-		return !tag_interesting || attr_value.Write(src);
+	void WriteAttributeValue(std::string_view src) noexcept {
+		if (!attr_overflow && tag_interesting &&
+		    !attr_value.Write(src))
+			attr_overflow = true;
 	}
 
 	void InvokeAttributeFinished() noexcept;

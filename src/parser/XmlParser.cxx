@@ -19,7 +19,7 @@ XmlParser::XmlParser(struct pool &pool,
 inline void
 XmlParser::InvokeAttributeFinished() noexcept
 {
-	if (!tag_interesting)
+	if (!tag_interesting || attr_overflow)
 		return;
 
 	attr.name = {attr_name, attr_name_length};
@@ -71,6 +71,7 @@ XmlParser::Feed(const char *start, size_t length) noexcept
 				? State::ELEMENT_NAME
 				: State::SCRIPT_ELEMENT_NAME;
 			tag_name_length = 0;
+			tag_name_overflow = false;
 			tag.type = XmlParserTagType::OPEN;
 			buffer = p + 1;
 			break;
@@ -100,13 +101,16 @@ XmlParser::Feed(const char *start, size_t length) noexcept
 			/* copy element name */
 			while (buffer < end) {
 				if (is_html_name_char(*buffer)) {
-					if (tag_name_length == sizeof(tag_name)) {
-						/* name buffer overflowing */
-						state = State::NONE;
-						break;
-					}
+					if (tag_name_length == sizeof(tag_name))
+						/* name buffer overflowing;
+						   keep parsing the tag, but
+						   don't show it to the
+						   handler */
+						tag_name_overflow = true;
+					else
+						tag_name[tag_name_length++] = ToLowerASCII(*buffer);
 
-					tag_name[tag_name_length++] = ToLowerASCII(*buffer++);
+					++buffer;
 				} else if (*buffer == '/' && tag_name_length == 0) {
 					tag.type = XmlParserTagType::CLOSE;
 					++buffer;
@@ -119,7 +123,8 @@ XmlParser::Feed(const char *start, size_t length) noexcept
 					   tag_name_length > 0) {
 					tag.name = {tag_name, tag_name_length};
 
-					tag_interesting = handler.OnXmlTagStart(tag);
+					tag_interesting = !tag_name_overflow &&
+						handler.OnXmlTagStart(tag);
 
 					state = State::ELEMENT_TAG;
 					break;
@@ -167,6 +172,7 @@ XmlParser::Feed(const char *start, size_t length) noexcept
 					state = State::ATTR_NAME;
 					attr.name_start = position + (off_t)(buffer - start);
 					attr_name_length = 0;
+					attr_overflow = false;
 					attr_value.Clear();
 					break;
 				}
@@ -178,13 +184,15 @@ XmlParser::Feed(const char *start, size_t length) noexcept
 			/* copy attribute name */
 			do {
 				if (is_html_attribute_name_char(*buffer)) {
-					if (attr_name_length == sizeof(attr_name)) {
-						/* name buffer overflowing */
-						state = State::ELEMENT_TAG;
-						break;
-					}
+					if (attr_name_length == sizeof(attr_name))
+						/* name buffer overflowing;
+						   keep parsing the attribute,
+						   but drop it */
+						attr_overflow = true;
+					else
+						attr_name[attr_name_length++] = ToLowerASCII(*buffer);
 
-					attr_name[attr_name_length++] = ToLowerASCII(*buffer++);
+					++buffer;
 				} else {
 					state = State::AFTER_ATTR_NAME;
 					break;
@@ -244,17 +252,11 @@ XmlParser::Feed(const char *start, size_t length) noexcept
 			p = (const char *)memchr(buffer, attr_value_delimiter,
 						 end - buffer);
 			if (p == nullptr) {
-				if (!WriteAttributeValue({buffer, end})) {
-					state = State::ELEMENT_TAG;
-					break;
-				}
+				WriteAttributeValue({buffer, end});
 
 				buffer = end;
 			} else {
-				if (!WriteAttributeValue({buffer, p})) {
-					state = State::ELEMENT_TAG;
-					break;
-				}
+				WriteAttributeValue({buffer, p});
 
 				buffer = p + 1;
 				attr.end = position + (off_t)(buffer - start);
@@ -269,10 +271,7 @@ XmlParser::Feed(const char *start, size_t length) noexcept
 			/* wait till the value is finished */
 			do {
 				if (!IsWhitespaceOrNull(*buffer) && *buffer != '>') {
-					if (!WriteAttributeValue({buffer, 1})) {
-						state = State::ELEMENT_TAG;
-						break;
-					}
+					WriteAttributeValue({buffer, 1});
 
 					++buffer;
 				} else {
