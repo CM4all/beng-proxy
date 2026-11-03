@@ -36,11 +36,22 @@ struct ReplaceIstream::Substitution final : IntrusiveForwardListHook, IstreamSin
 		input.Read();
 	}
 
-	void FillBucketList(IstreamBucketList &list) {
+	/**
+	 * @return false if the substitution is empty
+	 */
+	bool FillBucketList(IstreamBucketList &list) {
 		if (!IsDefined())
-			return;
+			return false;
 
-		input.FillBucketList(list);
+		IstreamBucketList tmp;
+		input.FillBucketList(tmp);
+
+		if (tmp.IsEmpty() && !tmp.HasMore()) {
+			return false;
+		}
+
+		list.SpliceBuffersFrom(std::move(tmp));
+		return true;
 	}
 
 	auto ConsumeBucketList(size_t nbytes) noexcept {
@@ -590,10 +601,7 @@ try {
 			return;
 		}
 
-		IstreamBucketList tmp;
-		s->FillBucketList(tmp);
-
-		if (tmp.IsEmpty() && !tmp.HasMore() && s->IsActive()) {
+		if (!s->FillBucketList(list) && s->IsActive()) {
 			/* this (active) substitution is empty -
 			   remove it and try again; getting rid of
 			   empty substitutions is important because
@@ -611,7 +619,6 @@ try {
 			return _FillBucketList(list);
 		}
 
-		list.SpliceBuffersFrom(std::move(tmp));
 		if (list.HasMore())
 			return;
 
