@@ -457,6 +457,51 @@ TEST(ReplaceIstream, TrailingDeletion)
 namespace {
 
 /**
+ * An #Istream whose _FillBucketList() throws (after destroying
+ * itself, as the API requires).
+ */
+class ThrowingBucketIstream final : public Istream {
+public:
+	explicit ThrowingBucketIstream(struct pool &p) noexcept
+		:Istream(p) {}
+
+	void _Read() noexcept override {}
+
+	void _FillBucketList(IstreamBucketList &) override {
+		Destroy();
+		throw std::runtime_error{"Failed"};
+	}
+};
+
+} // anonymous namespace
+
+/**
+ * An error which is raised after an empty substitution was drained
+ * must destroy this #ReplaceIstream exactly once.
+ */
+TEST(ReplaceIstream, ErrorAfterEmptySubstitution)
+{
+	Instance instance;
+	auto &pool = instance.root_pool;
+
+	auto *replace = NewIstream<ReplaceIstream>(pool, instance.event_loop,
+						   istream_string_new(pool, "abc"sv));
+	/* an empty substitution, which gets drained first ... */
+	replace->Add(0, 0, istream_null_new(pool));
+	/* ... and then one which throws */
+	replace->Add(0, 0, UnusedIstreamPtr{NewIstream<ThrowingBucketIstream>(pool)});
+	replace->Finish();
+
+	BlockingIstreamHandler handler;
+	replace->SetHandler(handler);
+
+	IstreamBucketList list;
+	EXPECT_THROW(replace->FillBucketList(list), std::runtime_error);
+}
+
+namespace {
+
+/**
  * An #Istream which does nothing until the test makes it fail.
  */
 class FailingIstream final : public Istream {
