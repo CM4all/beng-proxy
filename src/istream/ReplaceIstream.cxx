@@ -47,6 +47,7 @@ struct ReplaceIstream::Substitution final : IntrusiveForwardListHook, IstreamSin
 		input.FillBucketList(tmp);
 
 		if (tmp.IsEmpty() && !tmp.HasMore()) {
+			CloseInput();
 			return false;
 		}
 
