@@ -23,3 +23,13 @@ is_html_name_char(char ch) noexcept
 	return is_html_name_start_char(ch) || IsDigitASCII(ch) ||
 		ch == '-' || ch == '.';
 }
+
+/**
+ * Is this a character which belongs to an attribute name?
+ */
+constexpr bool
+is_html_attribute_name_char(char ch) noexcept
+{
+	return !IsWhitespaceOrNull(ch) &&
+		ch != '/' && ch != '>' && ch != '=';
+}

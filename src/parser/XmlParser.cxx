@@ -144,6 +144,10 @@ XmlParser::Feed(const char *start, size_t length) noexcept
 					state = State::SHORT;
 					++buffer;
 					break;
+				} else if (*buffer == '/') {
+					/* a stray '/' (e.g. in a closing
+					   tag); HTML ignores it */
+					++buffer;
 				} else if (*buffer == '?' && tag.type == XmlParserTagType::PI) {
 					state = State::SHORT;
 					++buffer;
@@ -159,24 +163,11 @@ XmlParser::Feed(const char *start, size_t length) noexcept
 
 					PoisonUndefinedT(tag);
 					break;
-				} else if (is_html_name_start_char(*buffer)) {
+				} else {
 					state = State::ATTR_NAME;
 					attr.name_start = position + (off_t)(buffer - start);
 					attr_name_length = 0;
 					attr_value.Clear();
-					break;
-				} else {
-					/* ignore this syntax error and just close the
-					   element tag */
-
-					tag.end = position + (off_t)(buffer - start);
-					state = State::INSIDE;
-
-					if (tag_interesting &&
-					    !handler.OnXmlTagFinished(tag))
-						return 0;
-
-					state = State::NONE;
 					break;
 				}
 			} while (buffer < end);
@@ -186,7 +177,7 @@ XmlParser::Feed(const char *start, size_t length) noexcept
 		case State::ATTR_NAME:
 			/* copy attribute name */
 			do {
-				if (is_html_name_char(*buffer)) {
+				if (is_html_attribute_name_char(*buffer)) {
 					if (attr_name_length == sizeof(attr_name)) {
 						/* name buffer overflowing */
 						state = State::ELEMENT_TAG;
