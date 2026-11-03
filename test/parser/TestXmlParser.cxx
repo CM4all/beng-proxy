@@ -72,6 +72,56 @@ public:
 	}
 };
 
+/**
+ * Like #RecordingXmlParserHandler, but only "c:" elements are
+ * "interesting", just like #WidgetContainerParser does.  Records the
+ * name of every element the parser finds.
+ */
+class BoringXmlParserHandler final : public XmlParserHandler {
+public:
+	std::vector<std::string> tags;
+	std::vector<CdataCall> cdata;
+
+	/* virtual methods from class XmlParserHandler */
+	bool OnXmlTagStart(const XmlParserTag &tag) noexcept override {
+		tags.emplace_back(tag.name);
+		return tag.name.starts_with("c:"sv);
+	}
+
+	bool OnXmlTagFinished(const XmlParserTag &) noexcept override {
+		return true;
+	}
+
+	void OnXmlAttributeFinished(const XmlParserAttribute &) noexcept override {
+	}
+
+	size_t OnXmlCdata(std::string_view text, bool,
+			  off_t start) noexcept override {
+		cdata.emplace_back(std::string{text}, start);
+		return text.size();
+	}
+};
+
+struct BoringInstance {
+	RootPool root_pool;
+
+	BoringXmlParserHandler handler;
+
+	XmlParser parser{root_pool, handler};
+
+	void Feed(std::string_view src) noexcept {
+		parser.Feed(src.data(), src.size());
+	}
+
+	[[nodiscard]]
+	std::string GetCdata() const noexcept {
+		std::string result;
+		for (const auto &i : handler.cdata)
+			result += i.text;
+		return result;
+	}
+};
+
 struct Instance {
 	RootPool root_pool;
 
@@ -267,4 +317,183 @@ TEST(XmlParser, UnquotedAttributeValue)
 	};
 
 	EXPECT_EQ(instance.handler.attributes, expected);
+}
+
+/**
+ * A '>' inside a quoted attribute value of an uninteresting element
+ * must not end the tag; else the rest of the value is parsed as
+ * markup and the attacker can inject elements into the template.
+ */
+TEST(XmlParser, BoringTagQuotedGreaterThan)
+{
+	BoringInstance instance;
+
+	instance.Feed("<input value=\"x><c:widget type='t' id='i'/>\">text"sv);
+
+	const std::vector<std::string> expected_tags{"input"};
+	EXPECT_EQ(instance.handler.tags, expected_tags);
+	EXPECT_EQ(instance.GetCdata(), "text"sv);
+}
+
+/**
+ * Like BoringTagQuotedGreaterThan, but the injected markup is a
+ * comment, which would swallow the rest of the document.
+ */
+TEST(XmlParser, BoringTagQuotedComment)
+{
+	BoringInstance instance;
+
+	instance.Feed("<div title=\"x><!--\">text"sv);
+
+	const std::vector<std::string> expected_tags{"div"};
+	EXPECT_EQ(instance.handler.tags, expected_tags);
+	EXPECT_EQ(instance.GetCdata(), "text"sv);
+}
+
+/**
+ * An unquoted attribute value still ends at '>'.
+ */
+TEST(XmlParser, BoringTagUnquotedGreaterThan)
+{
+	BoringInstance instance;
+
+	instance.Feed("<input value=x><c:widget type='t' id='i'/>text"sv);
+
+	const std::vector<std::string> expected_tags{"input", "c:widget"};
+	EXPECT_EQ(instance.handler.tags, expected_tags);
+	EXPECT_EQ(instance.GetCdata(), "text"sv);
+}
+
+/**
+ * An attribute name which starts with a character that is not a XML
+ * name start character (e.g. the Angular/Vue syntax) must not close
+ * the tag; else the following attribute values are parsed as markup.
+ */
+TEST(XmlParser, AngularAttributeName)
+{
+	BoringInstance instance;
+
+	instance.Feed("<a @click=\"f()\" title=\"<c:widget type='t' id='i'/>\">text"sv);
+
+	const std::vector<std::string> expected_tags{"a"};
+	EXPECT_EQ(instance.handler.tags, expected_tags);
+	EXPECT_EQ(instance.GetCdata(), "text"sv);
+}
+
+/**
+ * Like AngularAttributeName, with a bracket and a comment.
+ */
+TEST(XmlParser, BracketAttributeName)
+{
+	BoringInstance instance;
+
+	instance.Feed("<img [src]=\"u\" alt=\"<!--\">text"sv);
+
+	const std::vector<std::string> expected_tags{"img"};
+	EXPECT_EQ(instance.handler.tags, expected_tags);
+	EXPECT_EQ(instance.GetCdata(), "text"sv);
+}
+
+/**
+ * A closing tag with a stray slash must not loop forever.
+ */
+TEST(XmlParser, StraySlashInClosingTag)
+{
+	BoringInstance instance;
+
+	instance.Feed("</div/>text"sv);
+
+	const std::vector<std::string> expected_tags{"div"};
+	EXPECT_EQ(instance.handler.tags, expected_tags);
+	EXPECT_EQ(instance.GetCdata(), "text"sv);
+}
+
+/**
+ * An attribute value which is too long for the buffer must still be
+ * consumed up to its closing delimiter; else its text is parsed as
+ * markup.  The attribute itself is dropped, because its value would
+ * be truncated.
+ */
+TEST(XmlParser, OverlongAttributeValue)
+{
+	BoringInstance instance;
+
+	std::string input{"<a href=\""};
+	input.append(9000, 'x');
+	input += "<c:widget type='t' id='i'/>\">text";
+
+	instance.Feed(input);
+
+	const std::vector<std::string> expected_tags{"a"};
+	EXPECT_EQ(instance.handler.tags, expected_tags);
+	EXPECT_EQ(instance.GetCdata(), "text"sv);
+}
+
+/**
+ * Like OverlongAttributeValue, but the element is "interesting", so
+ * the attribute would be passed to the handler.
+ */
+TEST(XmlParser, OverlongAttributeValueInteresting)
+{
+	Instance instance;
+
+	std::string input{"<c:widget href=\""};
+	input.append(9000, 'x');
+	input += "<c:widget type='t' id='i'/>\">text";
+
+	instance.Feed(input);
+
+	/* the over-long attribute was dropped ... */
+	EXPECT_TRUE(instance.handler.attributes.empty());
+
+	/* ... but the parser stayed inside the tag */
+	ExpectMonotonic(instance.handler.cdata);
+	ExpectWellFormed(instance.handler.attributes);
+
+	std::string cdata;
+	for (const auto &i : instance.handler.cdata)
+		cdata += i.text;
+	EXPECT_EQ(cdata, "text"sv);
+}
+
+/**
+ * An over-long unquoted attribute value is consumed up to the end of
+ * the tag, and the attribute is dropped instead of being reported
+ * with a truncated value.
+ */
+TEST(XmlParser, OverlongUnquotedAttributeValue)
+{
+	Instance instance;
+
+	std::string input{"<c:widget href="};
+	input.append(9000, 'x');
+	input += ">text";
+
+	instance.Feed(input);
+
+	EXPECT_TRUE(instance.handler.attributes.empty());
+
+	std::string cdata;
+	for (const auto &i : instance.handler.cdata)
+		cdata += i.text;
+	EXPECT_EQ(cdata, "text"sv);
+}
+
+/**
+ * An over-long element name must not leave the tag either.
+ */
+TEST(XmlParser, OverlongElementName)
+{
+	BoringInstance instance;
+
+	std::string input{"<"};
+	input.append(100, 'x');
+	input += " href=\"<c:widget type='t' id='i'/>\">text";
+
+	instance.Feed(input);
+
+	/* the element name was too long, so the handler never saw
+	   the element */
+	EXPECT_TRUE(instance.handler.tags.empty());
+	EXPECT_EQ(instance.GetCdata(), "text"sv);
 }
