@@ -80,9 +80,6 @@ class XmlParser final {
 		/** inside the element tag */
 		ELEMENT_TAG,
 
-		/** inside the element tag, but ignore attributes */
-		ELEMENT_BORING,
-
 		/** parsing attribute name */
 		ATTR_NAME,
 
@@ -120,6 +117,12 @@ class XmlParser final {
 	char tag_name[64];
 	size_t tag_name_length;
 
+	/**
+	 * Is the handler interested in the current tag?  If not, the
+	 * handler is not invoked and no attribute value is collected.
+	 */
+	bool tag_interesting;
+
 	/* attribute */
 	char attr_name[64];
 	size_t attr_name_length;
@@ -154,5 +157,15 @@ public:
 	}
 
 private:
+	/**
+	 * Append to #attr_value, but only if the value is going to be
+	 * used.
+	 *
+	 * @return false if the hard limit was exceeded
+	 */
+	bool WriteAttributeValue(std::string_view src) noexcept {
+		return !tag_interesting || attr_value.Write(src);
+	}
+
 	void InvokeAttributeFinished() noexcept;
 };

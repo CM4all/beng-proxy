@@ -19,6 +19,9 @@ XmlParser::XmlParser(struct pool &pool,
 inline void
 XmlParser::InvokeAttributeFinished() noexcept
 {
+	if (!tag_interesting)
+		return;
+
 	attr.name = {attr_name, attr_name_length};
 	attr.value = attr_value.ReadStringView();
 
@@ -114,13 +117,11 @@ XmlParser::Feed(const char *start, size_t length) noexcept
 				} else if ((IsWhitespaceOrNull(*buffer) || *buffer == '/' ||
 					    *buffer == '?' || *buffer == '>') &&
 					   tag_name_length > 0) {
-					bool interesting;
-
 					tag.name = {tag_name, tag_name_length};
 
-					interesting = handler.OnXmlTagStart(tag);
+					tag_interesting = handler.OnXmlTagStart(tag);
 
-					state = interesting ? State::ELEMENT_TAG : State::ELEMENT_BORING;
+					state = State::ELEMENT_TAG;
 					break;
 				} else if (*buffer == '!' && tag_name_length == 0) {
 					state = State::DECLARATION_NAME;
@@ -152,7 +153,8 @@ XmlParser::Feed(const char *start, size_t length) noexcept
 					++buffer;
 					tag.end = position + (off_t)(buffer - start);
 
-					if (!handler.OnXmlTagFinished(tag))
+					if (tag_interesting &&
+					    !handler.OnXmlTagFinished(tag))
 						return 0;
 
 					PoisonUndefinedT(tag);
@@ -170,7 +172,8 @@ XmlParser::Feed(const char *start, size_t length) noexcept
 					tag.end = position + (off_t)(buffer - start);
 					state = State::INSIDE;
 
-					if (!handler.OnXmlTagFinished(tag))
+					if (tag_interesting &&
+					    !handler.OnXmlTagFinished(tag))
 						return 0;
 
 					state = State::NONE;
@@ -178,18 +181,6 @@ XmlParser::Feed(const char *start, size_t length) noexcept
 				}
 			} while (buffer < end);
 
-			break;
-
-		case State::ELEMENT_BORING:
-			/* ignore this tag */
-
-			p = (const char *)memchr(buffer, '>', end - buffer);
-			if (p != nullptr) {
-				/* the "boring" tag has been closed */
-				buffer = p + 1;
-				state = State::NONE;
-			} else
-				buffer = end;
 			break;
 
 		case State::ATTR_NAME:
@@ -262,14 +253,14 @@ XmlParser::Feed(const char *start, size_t length) noexcept
 			p = (const char *)memchr(buffer, attr_value_delimiter,
 						 end - buffer);
 			if (p == nullptr) {
-				if (!attr_value.Write({buffer, end})) {
+				if (!WriteAttributeValue({buffer, end})) {
 					state = State::ELEMENT_TAG;
 					break;
 				}
 
 				buffer = end;
 			} else {
-				if (!attr_value.Write({buffer, p})) {
+				if (!WriteAttributeValue({buffer, p})) {
 					state = State::ELEMENT_TAG;
 					break;
 				}
@@ -287,7 +278,7 @@ XmlParser::Feed(const char *start, size_t length) noexcept
 			/* wait till the value is finished */
 			do {
 				if (!IsWhitespaceOrNull(*buffer) && *buffer != '>') {
-					if (!attr_value.Write({buffer, 1})) {
+					if (!WriteAttributeValue({buffer, 1})) {
 						state = State::ELEMENT_TAG;
 						break;
 					}
@@ -313,7 +304,8 @@ XmlParser::Feed(const char *start, size_t length) noexcept
 					++buffer;
 					tag.end = position + (off_t)(buffer - start);
 
-					if (!handler.OnXmlTagFinished(tag))
+					if (tag_interesting &&
+					    !handler.OnXmlTagFinished(tag))
 						return 0;
 
 					PoisonUndefinedT(tag);
@@ -326,7 +318,8 @@ XmlParser::Feed(const char *start, size_t length) noexcept
 					tag.end = position + (off_t)(buffer - start);
 					state = State::INSIDE;
 
-					if (!handler.OnXmlTagFinished(tag))
+					if (tag_interesting &&
+					    !handler.OnXmlTagFinished(tag))
 						return 0;
 
 					PoisonUndefinedT(tag);
