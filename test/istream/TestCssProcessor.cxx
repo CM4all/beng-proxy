@@ -3,6 +3,8 @@
 // author: Max Kellermann <max.kellermann@ionos.com>
 
 #include "IstreamFilterTest.hxx"
+#include "../RecordingStringSinkHandler.hxx"
+#include "istream/StringSink.hxx"
 #include "http/rl/FailingResourceLoader.hxx"
 #include "translation/FailingService.hxx"
 #include "istream/istream_string.hxx"
@@ -107,3 +109,56 @@ public:
 
 INSTANTIATE_TYPED_TEST_SUITE_P(CssProcessor, IstreamFilterTest,
 			       IstreamCssProcessorTestTraits);
+
+/**
+ * A "-c-mode" inside an escaped string must not be acted upon; the
+ * parser used to end the string at the escaped quote, so the rest of
+ * the attacker's value was processed as CSS.
+ */
+TEST(CssProcessor, EscapedQuoteInUrl)
+{
+	Instance instance;
+	auto &pool = instance.root_pool;
+
+	FailingTranslationService translation_service;
+	FailingResourceLoader resource_loader;
+	WidgetRegistry widget_registry{pool, translation_service};
+
+	auto ctx = SharedPoolPtr<WidgetContext>::Make
+		(pool,
+		 instance.event_loop,
+		 nullptr,
+		 translation_service,
+		 resource_loader, resource_loader,
+		 &widget_registry,
+		 nullptr, nullptr,
+		 "localhost:8080",
+		 "localhost:8080",
+		 "/beng.html",
+		 "http://localhost:8080/beng.html",
+		 "/beng.html"sv,
+		 nullptr,
+		 nullptr, nullptr, SessionId{}, nullptr,
+		 nullptr);
+	auto &widget = ctx->AddRootWidget(MakeRootWidget(pool, nullptr));
+
+	static constexpr auto input =
+		"body{background-image:url(\"a\\\"); -c-mode:partial; x{y:url(z)\");}"sv;
+
+	auto istream = css_processor(pool, nullptr,
+				     istream_string_new(pool, input),
+				     widget, std::move(ctx),
+				     CSS_PROCESSOR_REWRITE_URL);
+
+	RecordingStringSinkHandler handler;
+	auto &sink = NewStringSink(pool, std::move(istream), handler,
+				   handler.cancel_ptr);
+	ReadStringSink(sink);
+	instance.event_loop.Run();
+
+	ASSERT_FALSE(handler.IsAlive());
+
+	/* the whole string is one CSS string, so nothing inside it
+	   was processed */
+	EXPECT_EQ(std::move(handler).TakeValue(), input);
+}

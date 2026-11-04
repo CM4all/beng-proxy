@@ -115,3 +115,67 @@ TEST(CssParser, StyleSheet)
 	EXPECT_EQ(recorder.n_blocks, 1u);
 	EXPECT_EQ(recorder.urls, expected_urls);
 }
+
+/**
+ * A backslash escapes the following byte; an escaped quote must not
+ * end the string, or else the rest of the attacker's string is parsed
+ * as CSS and the URL rewrite breaks the string boundary.
+ */
+TEST(CssParser, EscapedQuoteInUrl)
+{
+	Recorder recorder;
+	recorder.Feed(false, "a{background:url(\"x\\\");}.evil{color:red\");}"sv);
+
+	const std::vector<std::string> expected_urls{"x\\\");}.evil{color:red"};
+
+	EXPECT_EQ(recorder.urls, expected_urls);
+	EXPECT_EQ(recorder.n_blocks, 1u);
+}
+
+/**
+ * An escaped backslash does not escape the quote which follows it.
+ */
+TEST(CssParser, EscapedBackslashInUrl)
+{
+	Recorder recorder;
+	recorder.Feed(false, "a{background:url(\"x\\\\\");color:red;}"sv);
+
+	const std::vector<std::string> expected_urls{"x\\\\"};
+	const std::vector<Property> expected_properties{{"color", "red"}};
+
+	EXPECT_EQ(recorder.urls, expected_urls);
+	EXPECT_EQ(recorder.properties, expected_properties);
+}
+
+/**
+ * An escaped quote in a discarded string must not end it either.
+ */
+TEST(CssParser, EscapedQuoteInDiscardedString)
+{
+	Recorder recorder;
+	recorder.Feed(false, "a{\"x\\\"}.evil{background:url(\\\"y\\\")\";color:red;}"sv);
+
+	EXPECT_TRUE(recorder.urls.empty());
+
+	const std::vector<Property> expected_properties{{"color", "red"}};
+	EXPECT_EQ(recorder.properties, expected_properties);
+}
+
+/**
+ * The escape state must survive a chunk boundary.
+ */
+TEST(CssParser, EscapeAcrossChunks)
+{
+	Recorder recorder;
+
+	CssParser parser{false, Recorder::handler, &recorder};
+
+	static constexpr auto a = "a{background:url(\"x\\"sv;
+	static constexpr auto b = "\");}.evil{color:red\");}"sv;
+
+	EXPECT_EQ(parser.Feed(a.data(), a.size()), a.size());
+	EXPECT_EQ(parser.Feed(b.data(), b.size()), b.size());
+
+	const std::vector<std::string> expected_urls{"x\\\");}.evil{color:red"};
+	EXPECT_EQ(recorder.urls, expected_urls);
+}
