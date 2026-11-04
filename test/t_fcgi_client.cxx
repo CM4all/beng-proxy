@@ -126,6 +126,21 @@ fcgi_server_malformed_header_value(struct pool &pool, FcgiServer &server)
 	server.EndResponse(request);
 }
 
+/**
+ * Sends the response header block split across two STDOUT records,
+ * followed by END_REQUEST.
+ */
+static void
+fcgi_server_split_headers(struct pool &pool, FcgiServer &server)
+{
+	const auto request = server.ReadRequest(pool);
+
+	server.DiscardRequestBody(request);
+	server.WriteStdout(request, "content-length: 5\nx-foo: "sv);
+	server.WriteStdout(request, "bar\n\nhello"sv);
+	server.EndResponse(request);
+}
+
 static void
 fcgi_server_huge(struct pool &pool, FcgiServer &server)
 {
@@ -322,6 +337,10 @@ struct FcgiClientFactory {
 		return New(event_loop, fcgi_server_malformed_header_value);
 	}
 
+	auto *NewSplitHeaders(struct pool &, EventLoop &event_loop) {
+		return New(event_loop, fcgi_server_split_headers);
+	}
+
 	auto *NewHuge(struct pool &, EventLoop &event_loop) {
 		return New(event_loop, fcgi_server_huge);
 	}
@@ -503,6 +522,34 @@ TEST(FcgiClient, MalformedHeaderName)
 	EXPECT_EQ(c.status, HttpStatus{});
 	EXPECT_TRUE(c.request_error);
 	EXPECT_TRUE(c.released);
+}
+
+/**
+ * The response header block is split across two STDOUT records.  The
+ * client used to release the socket as soon as it saw END_REQUEST in
+ * the buffer, and then stall forever because the header block could
+ * not be parsed; cancelling such a request aborted the process.
+ */
+TEST(FcgiClient, SplitHeaders)
+{
+	Instance instance;
+	FcgiClientFactory factory{instance.event_loop};
+	Context c{instance};
+
+	c.connection = factory.NewSplitHeaders(*c.pool, c.event_loop);
+	c.connection->Request(c.pool, c,
+			      HttpMethod::GET, "/foo", {},
+			      nullptr,
+			      false,
+
+			      c, c.cancel_ptr);
+
+	c.event_loop.Run();
+
+	/* the request must not stall: either the headers were parsed
+	   or the request failed */
+	EXPECT_TRUE(c.released);
+	EXPECT_TRUE(c.status != HttpStatus{} || c.request_error);
 }
 
 TEST(FcgiClient, MalformedHeaderValue)
