@@ -193,6 +193,23 @@ struct HttpClientFactory {
 				    "HTTP/1.1 200 OK\r\n\r\n"sv);
 	}
 
+	auto *NewUnsolicited101(struct pool &, EventLoop &event_loop) {
+		return NewForkWrite(event_loop,
+				    "HTTP/1.1 101 Switching Protocols\r\n"
+				    "content-length: 0\r\n"
+				    "\r\n"sv);
+	}
+
+	auto *NewEarlyHints(struct pool &, EventLoop &event_loop) {
+		return NewForkWrite(event_loop,
+				    "HTTP/1.1 103 Early Hints\r\n"
+				    "link: </x.css>; rel=preload\r\n"
+				    "\r\n"
+				    "HTTP/1.1 200 OK\r\n"
+				    "content-length: 0\r\n"
+				    "\r\n"sv);
+	}
+
 	auto *NewClose100(struct pool &, EventLoop &event_loop) {
 		return NewForkWrite(event_loop, "HTTP/1.1 100 Continue\n\n"sv);
 	}
@@ -490,6 +507,56 @@ TYPED_TEST_P(HttpClientTest, ManySmallChunks)
  * drained through the bucket API.  The truncation must be reported to
  * the consumer rather than leaving the request waiting forever.
  */
+/**
+ * A "101" response to a request which did not ask for an upgrade must
+ * be rejected, even if it has framing headers; it used to be passed to
+ * the handler as if it were the final response.
+ */
+TYPED_TEST_P(HttpClientTest, Unsolicited101)
+{
+	Instance instance;
+	TypeParam factory{instance.event_loop};
+	Context c{instance};
+
+	c.connection = factory.NewUnsolicited101(*c.pool, c.event_loop);
+	c.connection->Request(c.pool, c,
+			      HttpMethod::GET, "/foo", {},
+			      nullptr, false,
+			      c, c.cancel_ptr);
+	pool_commit();
+
+	c.event_loop.Run();
+
+	EXPECT_TRUE(c.aborted);
+	EXPECT_NE(c.request_error, nullptr);
+	EXPECT_NE(strstr(GetFullMessage(c.request_error).c_str(),
+			 "unexpected interim response"), nullptr);
+}
+
+/**
+ * Like Unsolicited101, with a "103" interim response.
+ */
+TYPED_TEST_P(HttpClientTest, EarlyHints)
+{
+	Instance instance;
+	TypeParam factory{instance.event_loop};
+	Context c{instance};
+
+	c.connection = factory.NewEarlyHints(*c.pool, c.event_loop);
+	c.connection->Request(c.pool, c,
+			      HttpMethod::GET, "/foo", {},
+			      nullptr, false,
+			      c, c.cancel_ptr);
+	pool_commit();
+
+	c.event_loop.Run();
+
+	EXPECT_TRUE(c.aborted);
+	EXPECT_NE(c.request_error, nullptr);
+	EXPECT_NE(strstr(GetFullMessage(c.request_error).c_str(),
+			 "unexpected interim response"), nullptr);
+}
+
 TYPED_TEST_P(HttpClientTest, TruncatedChunksBuckets)
 {
 	Instance instance;
@@ -530,7 +597,9 @@ REGISTER_TYPED_TEST_SUITE_P(HttpClientTest,
 			    IgnoredRequestBody,
 			    Expect100ContinueSplice,
 			    ManySmallChunks,
-			    TruncatedChunksBuckets);
+			    TruncatedChunksBuckets,
+			    Unsolicited101,
+			    EarlyHints);
 
 class NullHttpClientFactory final : public HttpClientFactory {
 public:

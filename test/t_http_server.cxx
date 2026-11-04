@@ -372,7 +372,12 @@ private:
 		(void)headers;
 
 		if (body) {
-			NewStringSink(*pool, std::move(body), *this, cancel_ptr);
+			auto &sink = NewStringSink(*pool, std::move(body),
+						   *this, cancel_ptr);
+
+			/* the body may be empty, in which case nobody
+			   else would ever read it */
+			ReadStringSink(sink);
 		} else {
 			if (break_done)
 				event_loop.Break();
@@ -934,11 +939,35 @@ TestCancelAfterChunkedRequest(Server &server, bool buckets, bool delay_request_b
 	client.AssertResponse(HttpStatus{}, {});
 }
 
+/**
+ * An informational status from the request handler must never be sent
+ * as the final response; it would stop this connection's framing.
+ */
+static void
+TestInterimStatus(Server &server)
+{
+	for (const HttpStatus status : {HttpStatus::SWITCHING_PROTOCOLS,
+					HttpStatus::PROCESSING,
+					HttpStatus::EARLY_HINTS}) {
+		server.SetRequestHandler([status](IncomingHttpRequest &request,
+						  CancellablePointer &) noexcept {
+			request.SendResponse(status, {}, nullptr);
+		});
+
+		Client client{server.GetEventLoop()};
+		client.SendRequest(server,
+				   HttpMethod::GET, "/", {},
+				   nullptr);
+		client.ExpectResponse(HttpStatus::BAD_GATEWAY, {});
+	}
+}
+
 TYPED_TEST(HttpServerTest, Misc)
 {
 	auto &instance = this->instance_;
 	auto server = this->MakeServer();
 	TestSimple(server);
+	TestInterimStatus(server);
 	TestMirror(server);
 	TestBufferedMirror(server);
 
