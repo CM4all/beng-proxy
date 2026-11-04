@@ -1270,7 +1270,19 @@ FcgiClient::OnBufferedData()
 				      : PutAction::DESTROY);
 	}
 
-	return ConsumeInput(r);
+	const auto result = ConsumeInput(r);
+
+	if (result == BufferedResult::OK && socket.IsReleased() &&
+	    response.receiving_headers) {
+		/* the socket has been released, so no more data can
+		   arrive, but the response header block is still
+		   incomplete */
+		AbortResponseHeaders(std::make_exception_ptr(FcgiClientError(FcgiClientErrorCode::GARBAGE,
+									     "Incomplete response headers from FastCGI application")));
+		return BufferedResult::DESTROYED;
+	}
+
+	return result;
 }
 
 bool
@@ -1330,7 +1342,6 @@ FcgiClient::Cancel() noexcept
 	/* Cancellable::Cancel() can only be used before the
 	   response was delivered to our callback */
 	assert(!response.WasResponseSubmitted());
-	assert(!socket.IsReleased());
 
 	stopwatch.RecordEvent("cancel");
 
