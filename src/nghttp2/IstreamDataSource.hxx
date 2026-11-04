@@ -6,6 +6,7 @@
 
 #include "istream/FifoBufferSink.hxx"
 #include "istream/UnusedPtr.hxx"
+#include "util/DestructObserver.hxx"
 
 #include <nghttp2/nghttp2.h>
 
@@ -20,7 +21,7 @@ public:
 /**
  * Adapter between an #Istream and a #nghttp2_data_source.
  */
-class IstreamDataSource final : FifoBufferSinkHandler {
+class IstreamDataSource final : FifoBufferSinkHandler, public DestructAnchor {
 	IstreamDataSourceHandler &handler;
 
 	FifoBufferSink sink;

@@ -24,8 +24,17 @@ IstreamDataSource::ReadCallback(uint8_t *buf, size_t length,
 			data_flags |= NGHTTP2_DATA_FLAG_EOF;
 			return 0;
 		} else {
+			const DestructObserver destructed{*this};
+
 			handler.OnIstreamDataSourceWaiting();
 			sink.Read();
+
+			if (destructed)
+				/* the request was canceled while we
+				   were reading, and this object was
+				   freed */
+				return NGHTTP2_ERR_TEMPORAL_CALLBACK_FAILURE;
+
 			if (error) {
 				// TODO
 				return NGHTTP2_ERR_TEMPORAL_CALLBACK_FAILURE;
