@@ -112,6 +112,12 @@ class CssParser final : DestructAnchor {
 
 	char quote;
 
+	/**
+	 * Is the next byte escaped by a backslash at the end of the
+	 * previous chunk?  Only used while parsing a string.
+	 */
+	bool escaped;
+
 	off_t name_start;
 	StringBuffer<64> name_buffer;
 

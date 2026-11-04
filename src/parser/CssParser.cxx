@@ -22,6 +22,30 @@ at_url_start(const char *p, size_t length) noexcept
 		 IsWhitespaceOrNull(p[length - 5]));
 }
 
+/**
+ * Find the end of a CSS string.  A backslash escapes the following
+ * byte, so an escaped quote does not end the string.
+ *
+ * @param escaped is the first byte escaped by a backslash at the end
+ * of the previous chunk?
+ * @return a pointer to the closing quote or nullptr if the string
+ * continues in the next chunk
+ */
+static const char *
+FindStringEnd(std::string_view haystack, char quote, bool &escaped) noexcept
+{
+	for (const char &ch : haystack) {
+		if (escaped)
+			escaped = false;
+		else if (ch == '\\')
+			escaped = true;
+		else if (ch == quote)
+			return &ch;
+	}
+
+	return nullptr;
+}
+
 size_t
 CssParser::Feed(const char *start, size_t length) noexcept
 {
@@ -146,6 +170,7 @@ CssParser::Feed(const char *start, size_t length) noexcept
 				case '"':
 					state = State::DISCARD_QUOTED;
 					quote = *buffer;
+					escaped = false;
 					break;
 
 				default:
@@ -163,7 +188,7 @@ CssParser::Feed(const char *start, size_t length) noexcept
 			break;
 
 		case State::DISCARD_QUOTED:
-			p = (const char *)memchr(buffer, quote, end - buffer);
+			p = FindStringEnd({buffer, end}, quote, escaped);
 			if (p == nullptr) {
 				size_t nbytes = end - start;
 				position += (off_t)nbytes;
@@ -209,6 +234,7 @@ CssParser::Feed(const char *start, size_t length) noexcept
 				case '"':
 					state = State::DISCARD_QUOTED;
 					quote = *buffer;
+					escaped = false;
 					break;
 				}
 
@@ -279,6 +305,7 @@ CssParser::Feed(const char *start, size_t length) noexcept
 				case '"':
 					state = State::DISCARD_QUOTED;
 					quote = *buffer;
+					escaped = false;
 					break;
 
 				default:
@@ -317,6 +344,7 @@ CssParser::Feed(const char *start, size_t length) noexcept
 				case '"':
 					state = State::URL;
 					quote = *buffer++;
+					escaped = false;
 					url_start = position + (off_t)(buffer - start);
 					url_buffer.clear();
 					break;
@@ -329,7 +357,7 @@ CssParser::Feed(const char *start, size_t length) noexcept
 			break;
 
 		case State::URL:
-			p = (const char *)memchr(buffer, quote, end - buffer);
+			p = FindStringEnd({buffer, end}, quote, escaped);
 			if (p == nullptr) {
 				url_buffer.AppendTruncated({buffer, end});
 				position += (off_t)length;
@@ -382,6 +410,7 @@ CssParser::Feed(const char *start, size_t length) noexcept
 					if (*buffer == '"') {
 						++buffer;
 						state = State::IMPORT;
+						escaped = false;
 						url_start = position + (off_t)(buffer - start);
 						url_buffer.clear();
 					} else
@@ -395,7 +424,7 @@ CssParser::Feed(const char *start, size_t length) noexcept
 			break;
 
 		case State::IMPORT:
-			p = (const char *)memchr(buffer, '"', end - buffer);
+			p = FindStringEnd({buffer, end}, '"', escaped);
 			if (p == nullptr) {
 				url_buffer.AppendTruncated({buffer, end});
 				position += (off_t)length;
