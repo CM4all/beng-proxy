@@ -331,10 +331,9 @@ CssParser::Feed(const char *start, size_t length) noexcept
 		case State::URL:
 			p = (const char *)memchr(buffer, quote, end - buffer);
 			if (p == nullptr) {
-				size_t nbytes = end - start;
-				url_buffer.AppendTruncated({buffer, nbytes});
-				position += (off_t)nbytes;
-				return nbytes;
+				url_buffer.AppendTruncated({buffer, end});
+				position += (off_t)length;
+				return length;
 			}
 
 			{
@@ -398,10 +397,9 @@ CssParser::Feed(const char *start, size_t length) noexcept
 		case State::IMPORT:
 			p = (const char *)memchr(buffer, '"', end - buffer);
 			if (p == nullptr) {
-				size_t nbytes = end - start;
-				url_buffer.AppendTruncated({buffer, nbytes});
-				position += (off_t)nbytes;
-				return nbytes;
+				url_buffer.AppendTruncated({buffer, end});
+				position += (off_t)length;
+				return length;
 			}
 
 			{
