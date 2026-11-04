@@ -4,7 +4,6 @@
 # Author: Max Kellermann <max.kellermann@ionos.com>
 #
 
-import six
 import array
 import struct
 from typing import Collection, Iterable, Tuple
@@ -12,6 +11,10 @@ from urllib.parse import urlparse
 
 from .protocol import *
 from .serialize import packet_header
+
+def _ensure_binary(value: bytes|str) -> bytes:
+    """Encode a `str` as UTF-8, and pass `bytes` through unchanged."""
+    return value if isinstance(value, bytes) else value.encode('utf-8')
 
 class Response:
     """Generator for a translation response.  The BEGIN and END
@@ -40,7 +43,7 @@ class Response:
 
         # this automatic conversion allows passing a `str` payload in
         # Python 3
-        payload = six.ensure_binary(payload)
+        payload = _ensure_binary(payload)
 
         self._data += packet_header(command, len(payload))
         self._data += payload
@@ -186,25 +189,25 @@ class Response:
         assert len(name) > 0
         assert name.find('=') < 0
         return self.packet(TRANSLATE_PAIR,
-                           six.ensure_binary(name) + b'=' + six.ensure_binary(value))
+                           _ensure_binary(name) + b'=' + _ensure_binary(value))
 
     def expand_pair(self, name: str, value: str|bytes) -> 'Response':
         assert len(name) > 0
         assert name.find('=') < 0
         return self.packet(TRANSLATE_EXPAND_PAIR,
-                           six.ensure_binary(name) + b'=' + six.ensure_binary(value))
+                           _ensure_binary(name) + b'=' + _ensure_binary(value))
 
     def setenv(self, name: str, value: str|bytes) -> 'Response':
         assert len(name) > 0
         assert name.find('=') < 0
         return self.packet(TRANSLATE_SETENV,
-                           six.ensure_binary(name) + b'=' + six.ensure_binary(value))
+                           _ensure_binary(name) + b'=' + _ensure_binary(value))
 
     def expand_setenv(self, name: str, value: str|bytes) -> 'Response':
         assert len(name) > 0
         assert name.find('=') < 0
         return self.packet(TRANSLATE_EXPAND_SETENV,
-                           six.ensure_binary(name) + b'=' + six.ensure_binary(value))
+                           _ensure_binary(name) + b'=' + _ensure_binary(value))
 
     def content_type(self, content_type: str) -> 'Response':
         assert content_type.find('/') > 0
@@ -226,15 +229,15 @@ class Response:
 
     def response_header(self, name: str|bytes, value: str|bytes) -> 'Response':
         return self.packet(TRANSLATE_HEADER,
-                           six.ensure_binary(name) + b':' + six.ensure_binary(value))
+                           _ensure_binary(name) + b':' + _ensure_binary(value))
 
     def request_header(self, name: str|bytes, value: str|bytes) -> 'Response':
         return self.packet(TRANSLATE_REQUEST_HEADER,
-                           six.ensure_binary(name) + b':' + six.ensure_binary(value))
+                           _ensure_binary(name) + b':' + _ensure_binary(value))
 
     def expand_request_header(self, name: str|bytes, value: str|bytes) -> 'Response':
         return self.packet(TRANSLATE_EXPAND_REQUEST_HEADER,
-                           six.ensure_binary(name) + b':' + six.ensure_binary(value))
+                           _ensure_binary(name) + b':' + _ensure_binary(value))
 
     def header(self, name: str|bytes, value: str|bytes) -> 'Response':
         """Deprecated.  Use response_header() instead."""
@@ -242,14 +245,14 @@ class Response:
 
     def validate_mtime(self, mtime: int, path: str|bytes) -> 'Response':
         return self.packet(TRANSLATE_VALIDATE_MTIME,
-                           struct.pack('L', int(mtime)) + six.ensure_binary(path))
+                           struct.pack('L', int(mtime)) + _ensure_binary(path))
 
     def bind_mount(self, source: str|bytes, target: str|bytes,
                    expand: bool=False, writable: bool=False) -> 'Response':
-        source = six.ensure_binary(source)
+        source = _ensure_binary(source)
         assert source[0] == ord('/')
 
-        target = six.ensure_binary(target)
+        target = _ensure_binary(target)
         assert target[0] == ord('/')
 
         if writable:
