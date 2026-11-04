@@ -824,6 +824,17 @@ HttpClient::HeadersFinished()
 {
 	stopwatch.RecordEvent("headers");
 
+	if (http_status_is_info(response.status) &&
+	    response.status != HttpStatus::CONTINUE &&
+	    !(response.status == HttpStatus::SWITCHING_PROTOCOLS &&
+	      request.upgrade))
+		/* an interim response must never be passed to the
+		   handler as if it were the final one; RFC 9110 7.8
+		   also forbids switching to a protocol the client did
+		   not ask for */
+		throw HttpClientError(HttpClientErrorCode::UNSPECIFIED,
+				      "unexpected interim response");
+
 	auto &response_headers = response.headers;
 
 	if (const char *header_connection = response_headers.Remove(connection_header);
@@ -854,14 +865,9 @@ HttpClient::HeadersFinished()
 		transfer_encoding == nullptr && content_length_string == nullptr &&
 		http_is_upgrade(response.status, response_headers);
 	if (upgrade) {
-		if (!request.upgrade)
-			/* RFC 9110 7.8: the server must not switch to
-			   a protocol the client did not ask for; this
-			   would turn the connection into a tunnel
-			   nobody asked for, and our own HTTP server
-			   would still frame its "body" */
-			throw HttpClientError(HttpClientErrorCode::UNSPECIFIED,
-					      "unsolicited \"101\" response");
+		/* unsolicited "101" responses were already rejected
+		   above */
+		assert(request.upgrade);
 
 		keep_alive = false;
 	}
