@@ -302,19 +302,17 @@ XmlParser::Feed(const char *start, size_t length) noexcept
 
 					break;
 				} else {
-					/* ignore this syntax error and just close the
-					   element tag */
+					/* this was not the "/>" (or "?>")
+					   which ends the tag; the HTML
+					   tokenizer reconsumes this byte in
+					   the "before attribute name"
+					   state, and the tag is not
+					   self-closing */
 
-					tag.end = position + (off_t)(buffer - start);
-					state = State::INSIDE;
+					if (tag.type == XmlParserTagType::SHORT)
+						tag.type = XmlParserTagType::OPEN;
 
-					if (tag_interesting &&
-					    !handler.OnXmlTagFinished(tag))
-						return 0;
-
-					PoisonUndefinedT(tag);
-					state = State::NONE;
-
+					state = State::ELEMENT_TAG;
 					break;
 				}
 			} while (buffer < end);

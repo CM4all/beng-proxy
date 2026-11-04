@@ -21,6 +21,7 @@ cm4all-beng-proxy (22.2) unstable; urgency=low
   * processor: don't end a tag at a '>' inside a quoted attribute value
   * processor: don't end a tag at an unusual attribute name
   * processor: don't parse over-long attribute values as markup
+  * processor: don't end a tag at a stray '/'
   * ssl/cache: fix crash bug
   * translation: match the REGEX/INVERSE_REGEX against the normalized URI
   * translation: select the LAYOUT item by the normalized URI path
