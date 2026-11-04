@@ -497,3 +497,67 @@ TEST(XmlParser, OverlongElementName)
 	EXPECT_TRUE(instance.handler.tags.empty());
 	EXPECT_EQ(instance.GetCdata(), "text"sv);
 }
+
+/**
+ * A '/' which is not followed by '>' must not end the tag; else the
+ * following attribute value is parsed as markup.
+ */
+TEST(XmlParser, StraySlashInOpeningTag)
+{
+	BoringInstance instance;
+
+	instance.Feed("<div / title=\"<c:widget type='t' id='i'/>\">text"sv);
+
+	const std::vector<std::string> expected_tags{"div"};
+	EXPECT_EQ(instance.handler.tags, expected_tags);
+	EXPECT_EQ(instance.GetCdata(), "text"sv);
+}
+
+/**
+ * Like StraySlashInOpeningTag, without whitespace after the slash.
+ */
+TEST(XmlParser, StraySlashBeforeAttribute)
+{
+	BoringInstance instance;
+
+	instance.Feed("<input/ value=\"<c:widget type='t' id='i'/>\">text"sv);
+
+	const std::vector<std::string> expected_tags{"input"};
+	EXPECT_EQ(instance.handler.tags, expected_tags);
+	EXPECT_EQ(instance.GetCdata(), "text"sv);
+}
+
+/**
+ * The attribute after a stray '/' is reported with correct offsets,
+ * and the tag is not "short".
+ */
+TEST(XmlParser, StraySlashAttributeOffsets)
+{
+	Instance instance;
+
+	/*             0123456789012345678901234 */
+	instance.Feed("<c:widget href=\"x\"/ c:base=\"w\">text"sv);
+
+	ExpectWellFormed(instance.handler.attributes);
+
+	const std::vector<AttributeCall> expected{
+		{"href", "x", 10, 16, 17, 18},
+		{"c:base", "w", 20, 28, 29, 30},
+	};
+
+	EXPECT_EQ(instance.handler.attributes, expected);
+}
+
+/**
+ * A "/>" still ends the tag.
+ */
+TEST(XmlParser, ShortTag)
+{
+	BoringInstance instance;
+
+	instance.Feed("<div/><c:widget type='t' id='i'/>text"sv);
+
+	const std::vector<std::string> expected_tags{"div", "c:widget"};
+	EXPECT_EQ(instance.handler.tags, expected_tags);
+	EXPECT_EQ(instance.GetCdata(), "text"sv);
+}
