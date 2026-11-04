@@ -130,6 +130,16 @@ HttpServerConnection::SubmitResponse(HttpStatus status,
 
 	request.request->stopwatch.RecordEvent("response_headers");
 
+	if (http_status_is_info(status) &&
+	    !(status == HttpStatus::SWITCHING_PROTOCOLS && request.upgrade)) {
+		/* an interim response must never be sent as the final
+		   response: it would stop this connection's framing,
+		   and a pooling intermediary could attribute the
+		   following responses to the wrong request */
+		status = HttpStatus::BAD_GATEWAY;
+		body.Clear();
+	}
+
 	if (http_status_is_success(status)) {
 		if (score == HTTP_SERVER_FIRST)
 			score = HTTP_SERVER_SUCCESS;
