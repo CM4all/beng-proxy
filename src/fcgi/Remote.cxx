@@ -130,7 +130,7 @@ FcgiRemoteRequest::OnStockItemReady(StockItem &item) noexcept
 
 	fcgi_client_request(pool, std::move(stopwatch),
 			    tcp_stock_item_get(item),
-			    *this,
+			    *this, {},
 			    pending_request.method, pending_request.uri,
 			    address.path,
 			    address.script_name, address.path_info,

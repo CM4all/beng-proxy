@@ -18,6 +18,7 @@
 #include "pool/tpool.hxx"
 #include "pool/LeakDetector.hxx"
 #include "event/FineTimerEvent.hxx"
+#include "event/Loop.hxx"
 #include "net/SocketDescriptor.hxx"
 #include "io/UniqueFileDescriptor.hxx"
 #include "util/Cancellable.hxx"
@@ -26,6 +27,12 @@
 #include "stopwatch.hxx"
 
 #include <sys/socket.h>
+
+/**
+ * If the child process has had the complete request for this long
+ * without sending response headers, it is considered stuck.
+ */
+static constexpr Event::Duration fcgi_stuck_timeout = std::chrono::seconds{30};
 
 class FcgiRequest final
 	: Lease, Cancellable, StockGetHandler, HttpResponseHandler, PoolLeakDetector
@@ -45,6 +52,14 @@ class FcgiRequest final
 	StopwatchPtr stopwatch;
 
 	const CgiAddress &address;
+
+	/**
+	 * The time when the request was sent to the child process
+	 * completely; from this point on, only the child process can
+	 * be blamed for the response not arriving.  Zero means the
+	 * request has not been sent (completely) yet.
+	 */
+	Event::TimePoint request_sent_time{};
 
 	PendingHttpRequest pending_request;
 
@@ -88,6 +103,12 @@ public:
 		 retries(pending_request.body ? 0 : 2)
 	{
 		caller_cancel_ptr = *this;
+	}
+
+	void OnRequestSent() noexcept {
+		assert(request_sent_time <= Event::TimePoint{});
+
+		request_sent_time = retry_timer.GetEventLoop().SteadyNow();
 	}
 
 	void BeginConnect() noexcept {
@@ -141,7 +162,12 @@ private:
 void
 FcgiRequest::Cancel() noexcept
 {
-	if (stock_item != nullptr)
+	if (stock_item != nullptr && request_sent_time > Event::TimePoint{} &&
+	    retry_timer.GetEventLoop().SteadyNow() - request_sent_time >= fcgi_stuck_timeout)
+		/* if the FastCGI process has had the complete request
+		   for a long time without sending response headers,
+		   mark the request as "aborted" which will discard
+		   the process */
 		fcgi_stock_aborted(*stock_item);
 
 	auto _cancel_ptr = std::move(cancel_ptr);
@@ -161,6 +187,7 @@ FcgiRequest::OnStockItemReady(StockItem &item) noexcept
 	assert(stock_item == nullptr);
 	stock_item = &item;
 	cancel_ptr = {};
+	request_sent_time = {};
 
 	stopwatch.RecordEvent("launch");
 
@@ -177,6 +204,7 @@ FcgiRequest::OnStockItemReady(StockItem &item) noexcept
 	fcgi_client_request(pool, std::move(stopwatch),
 			    fcgi_stock_item_get(*stock_item),
 			    *this,
+			    BIND_THIS_METHOD(OnRequestSent),
 			    pending_request.method, pending_request.uri,
 			    script_filename,
 			    address.script_name, address.path_info,

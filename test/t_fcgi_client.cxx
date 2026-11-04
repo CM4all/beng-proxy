@@ -272,6 +272,7 @@ public:
 		     CancellablePointer &cancel_ptr) noexcept override {
 		fcgi_client_request(pool, nullptr,
 				    socket, lease,
+				    {},
 				    method, uri, uri, nullptr, nullptr, nullptr,
 				    nullptr, "192.168.1.100",
 				    std::move(headers), std::move(body),

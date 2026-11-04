@@ -4,6 +4,8 @@
 
 #pragma once
 
+#include "util/BindMethod.hxx"
+
 #include <cstdint>
 #include <exception>
 #include <span>
@@ -25,6 +27,13 @@ class StopwatchPtr;
 [[gnu::pure]]
 bool
 IsFcgiClientRetryFailure(const std::exception_ptr &error) noexcept;
+
+/**
+ * Invoked as soon as the request (including its body) has been sent
+ * to the FastCGI application completely.  From this point on, we are
+ * only waiting for the application.
+ */
+using FcgiRequestSentCallback = BoundMethod<void() noexcept>;
 
 /**
  * Sends a HTTP request on a socket to an FastCGI server, and passes
@@ -53,6 +62,7 @@ void
 fcgi_client_request(struct pool &pool,
 		    StopwatchPtr stopwatch,
 		    BufferedSocket &socket, Lease &lease,
+		    FcgiRequestSentCallback on_request_sent,
 		    HttpMethod method, const char *uri,
 		    const char *script_filename,
 		    const char *script_name, const char *path_info,

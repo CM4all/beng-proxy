@@ -80,6 +80,12 @@ class FcgiClient final
 
 	UniqueFileDescriptor stderr_fd;
 
+	/**
+	 * Invoked when the request has been sent completely; see
+	 * #FcgiRequestSentCallback.
+	 */
+	const FcgiRequestSentCallback on_request_sent;
+
 	[[no_unique_address]]
 	const StopwatchPtr stopwatch;
 
@@ -227,6 +233,7 @@ public:
 	FcgiClient(struct pool &_pool,
 		   StopwatchPtr &&_stopwatch,
 		   BufferedSocket &_socket, Lease &lease,
+		   FcgiRequestSentCallback _on_request_sent,
 		   UniqueFileDescriptor &&_stderr_fd,
 		   uint16_t _id, HttpMethod method,
 		   UnusedIstreamPtr &&request_istream,
@@ -245,6 +252,11 @@ public:
 	}
 
 private:
+	void InvokeRequestSent() noexcept {
+		if (on_request_sent)
+			on_request_sent();
+	}
+
 	/**
 	 * Release the socket lease.  If the request was not written
 	 * completely, the request #Istream is closed (so it cannot
@@ -893,6 +905,7 @@ FcgiClient::OnDirect(FdType type, FileDescriptor fd, off_t offset,
 
 			CloseInput();
 			socket.UnscheduleWrite();
+			InvokeRequestSent();
 			return IstreamDirectResult::CLOSED;
 		}
 
@@ -923,6 +936,7 @@ FcgiClient::OnEof() noexcept
 	stopwatch.RecordEvent("request_end");
 
 	socket.UnscheduleWrite();
+	InvokeRequestSent();
 }
 
 void
@@ -1359,6 +1373,7 @@ inline
 FcgiClient::FcgiClient(struct pool &_pool,
 		       StopwatchPtr &&_stopwatch,
 		       BufferedSocket &_socket, Lease &lease,
+		       FcgiRequestSentCallback _on_request_sent,
 		       UniqueFileDescriptor &&_stderr_fd,
 		       uint16_t _id, HttpMethod method,
 		       UnusedIstreamPtr &&request_istream,
@@ -1368,6 +1383,7 @@ FcgiClient::FcgiClient(struct pool &_pool,
 	 IstreamSink(std::move(request_istream)),
 	 socket(_socket, lease, fcgi_client_timeout, *this),
 	 stderr_fd(std::move(_stderr_fd)),
+	 on_request_sent(_on_request_sent),
 	 stopwatch(std::move(_stopwatch)),
 	 handler(_handler),
 	 id(_id),
@@ -1382,6 +1398,7 @@ void
 fcgi_client_request(struct pool &pool,
 		    StopwatchPtr stopwatch,
 		    BufferedSocket &socket, Lease &lease,
+		    FcgiRequestSentCallback on_request_sent,
 		    HttpMethod method, const char *uri,
 		    const char *script_filename,
 		    const char *script_name, const char *path_info,
@@ -1486,7 +1503,7 @@ fcgi_client_request(struct pool &pool,
 
 	auto client = NewFromPool<FcgiClient>(pool, pool,
 					      std::move(stopwatch),
-					      socket, lease,
+					      socket, lease, on_request_sent,
 					      std::move(stderr_fd),
 					      header.request_id, method,
 					      std::move(request),

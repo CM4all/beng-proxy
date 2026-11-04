@@ -100,9 +100,8 @@ fcgi_stock_item_get_stderr(const StockItem &item) noexcept
 }
 
 /**
- * Let the fcgi_stock know that the client is being aborted.  The
- * fcgi_stock may then figure out that the client process is faulty
- * and kill it at the next chance.  Note that this function will not
+ * Let the fcgi_stock know that the child process appears to be stuck
+ * and shall not be reused.  Note that this function will not
  * release the process - fcgi_stock_put() stil needs to be called
  * after this function.
  */
