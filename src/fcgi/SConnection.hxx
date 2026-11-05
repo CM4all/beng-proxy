@@ -18,11 +18,6 @@ class FcgiStockConnection final : public StockItem, BufferedSocketHandler {
 
 	BufferedSocket socket;
 
-	/**
-	 * Is this a fresh connection to the FastCGI child process?
-	 */
-	bool fresh = true;
-
 public:
 	explicit FcgiStockConnection(CreateStockItem c, ListenChildStockItem &_child,
 				     UniqueSocketDescriptor &&socket) noexcept;

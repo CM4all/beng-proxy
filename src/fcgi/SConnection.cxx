@@ -24,8 +24,7 @@ FcgiStockConnection::~FcgiStockConnection() noexcept = default;
 void
 FcgiStockConnection::SetAborted() noexcept
 {
-	if (fresh)
-		child.Fade();
+	child.Fade();
 }
 
 BufferedResult
@@ -82,8 +81,6 @@ FcgiStockConnection::Borrow() noexcept
 bool
 FcgiStockConnection::Release() noexcept
 {
-	fresh = false;
-
 	socket.Reinit(Event::Duration(-1), *this);
 	socket.UnscheduleWrite();
 
