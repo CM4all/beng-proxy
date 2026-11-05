@@ -243,6 +243,11 @@ class FcgiClientConnection final : public ClientConnection {
 	UniqueFileDescriptor stderr_w;
 
 public:
+	/**
+	 * Was the "request sent" callback invoked?
+	 */
+	bool request_sent = false;
+
 	FcgiClientConnection(EventLoop &_event_loop, std::thread &&_thread,
 			     UniqueSocketDescriptor &&_fd)
 		:event_loop(_event_loop),
@@ -272,7 +277,7 @@ public:
 		     CancellablePointer &cancel_ptr) noexcept override {
 		fcgi_client_request(pool, nullptr,
 				    socket, lease,
-				    {},
+				    BIND_THIS_METHOD(OnRequestSent),
 				    method, uri, uri, nullptr, nullptr, nullptr,
 				    nullptr, "192.168.1.100",
 				    std::move(headers), std::move(body),
@@ -284,6 +289,14 @@ public:
 	void InjectSocketFailure() noexcept override {
 		socket.GetSocket().Shutdown();
 	}
+
+private:
+	void OnRequestSent() noexcept {
+		assert(!request_sent);
+		request_sent = true;
+	}
+
+public:
 };
 
 struct FcgiClientFactory {
@@ -551,6 +564,39 @@ TEST(FcgiClient, SplitHeaders)
 	   or the request failed */
 	EXPECT_TRUE(c.released);
 	EXPECT_TRUE(c.status != HttpStatus{} || c.request_error);
+}
+
+/**
+ * The "request sent" callback must be invoked once the request has
+ * been sent to the application completely - with and without a
+ * request body.
+ */
+TEST(FcgiClient, RequestSentCallback)
+{
+	for (const bool with_body : {false, true}) {
+		Instance instance;
+		FcgiClientFactory factory{instance.event_loop};
+		Context c{instance};
+
+		auto *connection = factory.NewMirror(*c.pool, c.event_loop);
+		c.connection = connection;
+
+		EXPECT_FALSE(connection->request_sent);
+
+		c.connection->Request(c.pool, c,
+				      with_body ? HttpMethod::POST : HttpMethod::GET,
+				      "/foo", {},
+				      with_body
+				      ? istream_string_new(*c.pool, "hello"sv)
+				      : nullptr,
+				      false,
+
+				      c, c.cancel_ptr);
+
+		c.event_loop.Run();
+
+		EXPECT_TRUE(connection->request_sent);
+	}
 }
 
 TEST(FcgiClient, MalformedHeaderValue)
