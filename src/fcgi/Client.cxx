@@ -238,6 +238,8 @@ public:
 	using Istream::GetPool;
 
 	void Start() noexcept {
+		assert(HasInput());
+
 		socket.ScheduleRead();
 		input.Read();
 	}
