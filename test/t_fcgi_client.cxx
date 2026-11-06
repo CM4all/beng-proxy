@@ -244,9 +244,12 @@ class FcgiClientConnection final : public ClientConnection {
 
 public:
 	/**
-	 * Was the "request sent" callback invoked?
+	 * If not nullptr, the "request sent" callback sets this flag.
+	 * It is owned by the caller because Context::ReleaseLease()
+	 * destroys this object as soon as the client releases the
+	 * socket, which happens before the test can check it.
 	 */
-	bool request_sent = false;
+	bool *request_sent = nullptr;
 
 	FcgiClientConnection(EventLoop &_event_loop, std::thread &&_thread,
 			     UniqueSocketDescriptor &&_fd)
@@ -292,8 +295,10 @@ public:
 
 private:
 	void OnRequestSent() noexcept {
-		assert(!request_sent);
-		request_sent = true;
+		if (request_sent != nullptr) {
+			assert(!*request_sent);
+			*request_sent = true;
+		}
 	}
 
 public:
@@ -578,10 +583,11 @@ TEST(FcgiClient, RequestSentCallback)
 		FcgiClientFactory factory{instance.event_loop};
 		Context c{instance};
 
+		bool request_sent = false;
+
 		auto *connection = factory.NewMirror(*c.pool, c.event_loop);
 		c.connection = connection;
-
-		EXPECT_FALSE(connection->request_sent);
+		connection->request_sent = &request_sent;
 
 		c.connection->Request(c.pool, c,
 				      with_body ? HttpMethod::POST : HttpMethod::GET,
@@ -595,7 +601,7 @@ TEST(FcgiClient, RequestSentCallback)
 
 		c.event_loop.Run();
 
-		EXPECT_TRUE(connection->request_sent);
+		EXPECT_TRUE(request_sent);
 	}
 }
 
