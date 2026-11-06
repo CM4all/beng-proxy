@@ -174,7 +174,8 @@ assert_rewrite_check5(EventLoop &event_loop,
 		      Widget *widget,
 		      std::string_view value2, RewriteUriMode mode, bool stateful,
 		      const char *view,
-		      const char *result)
+		      const char *result,
+		      const char *untrusted_host=nullptr)
 {
 	auto pool = pool_new_libc(widget_pool, "rewrite");
 
@@ -194,7 +195,7 @@ assert_rewrite_check5(EventLoop &event_loop,
 		 translation_service,
 		 resource_loader, resource_loader,
 		 nullptr,
-		 site_name, nullptr,
+		 site_name, untrusted_host,
 		 nullptr, nullptr,
 		 nullptr, nullptr,
 		 "/index.html"sv,
@@ -218,14 +219,16 @@ assert_rewrite_check4(EventLoop &event_loop,
 		      Widget *widget,
 		      const char *value, RewriteUriMode mode, bool stateful,
 		      const char *view,
-		      const char *result)
+		      const char *result,
+		      const char *untrusted_host=nullptr)
 {
 	std::string_view value2{};
 	if (value != nullptr)
 		value2 = escape_dup(*widget_pool, html_escape_class, value);
 
 	assert_rewrite_check5(event_loop, widget_pool, site_name, widget,
-			      value2, mode, stateful, view, result);
+			      value2, mode, stateful, view, result,
+			      untrusted_host);
 }
 
 static void
@@ -562,6 +565,15 @@ struct RewriteUriInstance : PInstance {
 				      value, RewriteUriMode::DIRECT, true,
 				      nullptr, result);
 	}
+
+	/**
+	 * Like Check(), but the request is on an untrusted host.
+	 */
+	void CheckUntrusted(const char *value, const char *result) {
+		assert_rewrite_check4(event_loop, pool, "mysite", &widget,
+				      value, RewriteUriMode::DIRECT, true,
+				      nullptr, result, "untrusted.example.com");
+	}
 };
 
 } // anonymous namespace
@@ -605,4 +617,16 @@ TEST(RewriteUriTest, DirectModeSchemeAfterUnescape)
 	RewriteUriInstance instance;
 
 	instance.CheckEscaped("http&#58;//evil/x"sv, nullptr);
+}
+
+/**
+ * On an untrusted host, a DIRECT link to a trusted widget class must
+ * not be rewritten; it would disclose the class's address.
+ */
+TEST(RewriteUriTest, DirectModeOnUntrustedHost)
+{
+	RewriteUriInstance instance;
+
+	instance.Check("/foo", "http://widget-server/foo");
+	instance.CheckUntrusted("/foo", nullptr);
 }
