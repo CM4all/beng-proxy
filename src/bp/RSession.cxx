@@ -202,6 +202,8 @@ Request::DiscardSession() noexcept
 void
 Request::DiscardRealmSession() noexcept
 {
+	assert(realm != nullptr);
+
 	if (!session_id.IsDefined())
 		return;
 

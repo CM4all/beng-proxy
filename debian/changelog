@@ -4,6 +4,7 @@ cm4all-beng-proxy (22.2) unstable; urgency=low
   * bp: skip filter/encoding cache for non-shareable resources
   * bp: fix dangling "Server" and "Date" response header pointers
   * bp: fix crash on precompressed file without content type
+  * bp: fix crash on DISCARD_REALM_SESSION with REALM_FROM_AUTH_BASE
   * bp: reject dot segments in the TRANSPARENT args path info
   * bp: generate a new session id on login
   * bp: do not leak query string into PATH_INFO with ENOTDIR

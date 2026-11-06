@@ -115,6 +115,10 @@ Request::HandleAuth(UniquePoolPtr<TranslateResponse> _response)
 	/* we need to validate the session realm early */
 	ApplyTranslateRealm(response, auth_base);
 
+	if (response.discard_realm_session && response.realm_from_auth_base)
+		/* only now is the realm known */
+		DiscardRealmSession();
+
 	bool is_authenticated = false;
 	{
 		auto session = GetRealmSession();

@@ -895,13 +895,14 @@ Request::OnTranslateResponse(UniquePoolPtr<TranslateResponse> _response) noexcep
 
 	if (response.discard_session)
 		DiscardSession();
-	else if (response.discard_realm_session) {
-		if (!response.realm_from_auth_base)
-			/* the realm is usually determined later (by
-			   HandleAuth() or
-			   ApplyTranslateResponseSession()), but we
-			   need it now */
-			ApplyTranslateRealm(response, {});
+	else if (response.discard_realm_session &&
+		 !response.realm_from_auth_base) {
+		/* the realm is usually determined later (by
+		   HandleAuth() or ApplyTranslateResponseSession()),
+		   but we need it now; with REALM_FROM_AUTH_BASE, only
+		   HandleAuth() can determine it, and it discards the
+		   realm session itself */
+		ApplyTranslateRealm(response, {});
 
 		DiscardRealmSession();
 	}
