@@ -150,9 +150,11 @@ Request::ForwardResponseHeaders(HttpStatus status,
 
 	add_translation_vary_header(pool, headers, *translate.response);
 
-	product_token = headers.Remove(server_header);
-
-	date = headers.Remove(date_header);
+	/* duplicate these, because they are used after the originating
+	   pool may have been freed */
+	const AllocatorPtr alloc{pool};
+	product_token = alloc.CheckDup(headers.Remove(server_header));
+	date = alloc.CheckDup(headers.Remove(date_header));
 
 	return headers;
 }
