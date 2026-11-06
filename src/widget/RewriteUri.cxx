@@ -323,6 +323,26 @@ private:
 	}
 };
 
+/**
+ * Is this widget class allowed on the current host?  Generating an
+ * URI would disclose its address.
+ */
+static bool
+CheckWidgetHost(const Widget &widget, const WidgetContext &ctx) noexcept
+{
+	if (ctx.untrusted_host == nullptr)
+		/* on a trusted host, linking to an untrusted widget
+		   class is what the "untrusted" settings are for */
+		return true;
+
+	try {
+		widget.CheckHost(ctx.untrusted_host, ctx.site_name);
+		return true;
+	} catch (...) {
+		return false;
+	}
+}
+
 void
 UriRewriter::ResolverCallback() noexcept
 {
@@ -332,7 +352,8 @@ UriRewriter::ResolverCallback() noexcept
 	       class has been looked up; generating an URI for a widget
 	       class the container may not embed would disclose its
 	       address */
-	    widget.IsApproved()) {
+	    widget.IsApproved() &&
+	    CheckWidgetHost(widget, *ctx)) {
 		const char *uri;
 
 		if (widget.session_sync_pending) {
@@ -415,6 +436,11 @@ rewrite_widget_uri(struct pool &pool,
 			/* generating an URI for a widget class the
 			   container may not embed would disclose its
 			   address */
+			return nullptr;
+
+		if (!CheckWidgetHost(widget, *ctx))
+			/* ... and so would one for a widget class
+			   which is not allowed on this host */
 			return nullptr;
 
 		const TempPoolLease tpool;
