@@ -116,6 +116,7 @@ if nghttp2_client_dep.found()
     executable(
       'TestNgHttp2Client',
       'TestNgHttp2Client.cxx',
+      'TestNgHttp2Stock.cxx',
       'RecordingHttpResponseHandler.cxx',
       include_directories: inc,
       dependencies: [
@@ -124,6 +125,7 @@ if nghttp2_client_dep.found()
         nghttp2_client_dep,
         istream_dep,
         socket_dep,
+        ssl_dep,
        ],
     ),
   )
