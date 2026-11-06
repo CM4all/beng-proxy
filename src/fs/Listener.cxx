@@ -121,15 +121,20 @@ FilteredSocketListener::FilteredSocketListener(struct pool &_pool,
 
 FilteredSocketListener::~FilteredSocketListener() noexcept
 {
-	pending.clear_and_dispose(NoPoolDisposer{});
+	/* ~Pending() erases the item from the list, so it must not be
+	   unlinked here as well */
+	while (!pending.empty())
+		pending.front().Destroy();
 }
 
 std::size_t
 FilteredSocketListener::DropSomePendingConnections() noexcept
 {
+	/* ~Pending() erases the item from the list, so it must not be
+	   unlinked here as well */
 	std::size_t n;
 	for (n = 0; n < 4 && !pending.empty(); ++n)
-		pending.pop_front_and_dispose(NoPoolDisposer{});
+		pending.front().Destroy();
 
 	return n;
 }
