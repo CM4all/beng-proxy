@@ -1391,8 +1391,13 @@ HttpClient::OnBufferedBroken() noexcept
 
 	keep_alive = false;
 
-	if (HasInput())
+	if (HasInput()) {
 		CloseInput();
+
+		/* cancel the write interest, including the
+		   SocketFilter's own */
+		socket.UnscheduleWrite();
+	}
 
 	socket.ScheduleRead();
 
