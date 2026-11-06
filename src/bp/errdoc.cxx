@@ -56,6 +56,10 @@ Request::DispatchErrdocResponse(std::span<const std::byte> error_document)
 		   as-is */
 		co_return std::move(*co_response);
 
+	/* the transformations and the CHAIN were selected for the
+	   original resource, not for the error document */
+	CancelChainAndTransformations();
+
 	/* submit the error document which we just received */
 	co_return PendingResponse(response->status,
 				  ForwardResponseHeaders(response->status,
