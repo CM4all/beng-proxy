@@ -133,6 +133,11 @@ struct MakeResponse : TranslateResponse {
 		return std::move(*this);
 	}
 
+	MakeResponse &&InverseRegexTail(const char *value) {
+		regex_tail = true;
+		return InverseRegex(value);
+	}
+
 	MakeResponse &&Uri(const char *value) {
 		uri = value;
 		return std::move(*this);

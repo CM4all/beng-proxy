@@ -1319,3 +1319,37 @@ TEST(TranslationCache, InvalidateHost)
 	Cached(pool, cache, request3, response3);  // remains (no host)
 	CachedError(pool, cache, request4);  // removed (host1.example.com)
 }
+
+/**
+ * A REGEX_TAIL (inverse) regex must not be matched against a tail
+ * which the response would be applied to with its leading slashes and
+ * dot segments collapsed away; the exclusion would be evaded.
+ */
+TEST(TranslationCache, RegexTailNonCanonical)
+{
+	Instance instance;
+	struct pool &pool = instance.root_pool;
+	auto &cache = instance.cache;
+
+	/* an item which excludes "admin/" */
+	const auto request1 = MakeRequest("/app/public/x");
+	const auto response1 = MakeResponse(pool)
+		.File("public/x", "/var/www/app/")
+		.Base("/app/").InverseRegexTail("^admin/");
+	Feed(pool, cache, request1, response1);
+
+	/* the excluded sub-tree is not served from that item */
+	CachedError(pool, cache, MakeRequest("/app/admin/x"));
+
+	/* ... and neither is it through a non-canonical URI */
+	CachedError(pool, cache, MakeRequest("/app//admin/x"));
+	CachedError(pool, cache, MakeRequest("/app///admin/x"));
+	CachedError(pool, cache, MakeRequest("/app/.//admin/x"));
+
+	/* the item still works */
+	const auto request2 = MakeRequest("/app/public/y");
+	const auto response2 = MakeResponse(pool)
+		.File("public/y", "/var/www/app/")
+		.Base("/app/").InverseRegexTail("^admin/");
+	Cached(pool, cache, request2, response2);
+}
