@@ -137,6 +137,7 @@ private:
 	/* virtual methods from class ConnectSocketHandler */
 	void OnConnectFilteredSocket(std::unique_ptr<FilteredSocket> socket) noexcept override;
 	void OnConnectFilteredSocketError(std::exception_ptr e) noexcept override {
+		connect_cancel = nullptr;
 		AbortConnectError(std::move(e));
 	}
 
@@ -212,7 +213,7 @@ Stock::Item::CancelGetRequest(GetRequest &request) noexcept
 	get_requests.erase_and_dispose(get_requests.iterator_to(request),
 				       [](GetRequest *r) { r->~GetRequest(); });
 
-	if (get_requests.empty())
+	if (get_requests.empty() && connect_cancel)
 		Cancel();
 }
 
@@ -220,6 +221,7 @@ inline void
 Stock::Item::Cancel() noexcept
 {
 	assert(get_requests.empty());
+	assert(connect_cancel);
 	assert(!connection);
 
 	connect_cancel.Cancel();
@@ -233,6 +235,8 @@ Stock::Item::OnConnectFilteredSocket(std::unique_ptr<FilteredSocket> socket) noe
 	assert(socket);
 	assert(!get_requests.empty());
 	assert(!connection);
+
+	connect_cancel = nullptr;
 
 	const auto *ssl_filter = ssl_filter_cast_from(socket->GetFilter());
 	if (ssl_filter != nullptr && !IsAlpnHttp2(*ssl_filter)) {
