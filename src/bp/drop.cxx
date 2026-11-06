@@ -7,7 +7,26 @@
 #include "http/server/Public.hxx"
 #include "io/Logger.hxx"
 
+#ifdef HAVE_NGHTTP2
+#include "nghttp2/Server.hxx"
+#endif
+
 #include <limits>
+#include <utility> // for std::unreachable()
+
+[[gnu::pure]]
+static HttpServerScore
+GetScore(const BpConnection &c) noexcept
+{
+	if (c.http != nullptr)
+		return http_server_connection_score(c.http);
+
+#ifdef HAVE_NGHTTP2
+	return c.http2->GetScore();
+#else
+	std::unreachable();
+#endif
+}
 
 std::size_t
 BpListener::DropSomeConnections() noexcept
@@ -24,12 +43,7 @@ BpListener::DropSomeConnections() noexcept
 	/* collect a list of the lowest-score connections */
 
 	for (auto &c : connections) {
-		/* HTTP/2 connections have no HttpServerConnection and
-		   thus no score; assume they are in use */
-		const HttpServerScore score = c.http != nullptr
-			? http_server_connection_score(c.http)
-			/* TODO score not implemented on HTTP/2 */
-			: HttpServerScore::SUCCESS;
+		const HttpServerScore score = GetScore(c);
 
 		if (score < min_score) {
 			/* found a new minimum - clear the old list */

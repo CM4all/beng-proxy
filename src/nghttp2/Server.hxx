@@ -5,6 +5,8 @@
 #pragma once
 
 #include "Session.hxx"
+#include "http/server/Score.hxx"
+#include "http/Status.hxx"
 #include "pool/UniquePtr.hxx"
 #include "event/net/BufferedSocket.hxx"
 #include "net/SocketAddress.hxx"
@@ -50,6 +52,8 @@ class ServerConnection final : BufferedSocketHandler {
 
 	static constexpr Event::Duration idle_timeout = std::chrono::minutes{2};
 
+	HttpServerScore score = HttpServerScore::NEW;
+
 public:
 	ServerConnection(struct pool &_pool,
 			 UniquePoolPtr<FilteredSocket> _socket,
@@ -68,6 +72,10 @@ public:
 	[[gnu::pure]]
 	SocketDescriptor GetSocket() const noexcept;
 
+	HttpServerScore GetScore() const noexcept {
+		return score;
+	}
+
 	void Consume(std::size_t nbytes) noexcept {
 		nghttp2_session_consume_connection(session.get(),
 						   nbytes);
@@ -75,6 +83,17 @@ public:
 	}
 
 	void RemoveRequest(Request &request) noexcept;
+
+	/**
+	 * Update #score after a response has been submitted.
+	 */
+	void OnResponse(HttpStatus status) noexcept {
+		if (http_status_is_success(status)) {
+			if (score == HttpServerScore::FIRST)
+				score = HttpServerScore::SUCCESS;
+		} else
+			score = HttpServerScore::ERROR;
+	}
 
 private:
 	void DeferWrite() noexcept;

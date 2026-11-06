@@ -714,6 +714,8 @@ ServerConnection::Request::SendResponse(HttpStatus status,
 		hdrs.push_back(MakeNv(i.key, i.value));
 	}
 
+	connection.OnResponse(the_status);
+
 	nghttp2_data_provider dp, *dpp = nullptr;
 	if (_response_body) {
 		dp = MakeResponseDataProvider(std::move(_response_body));
@@ -878,6 +880,9 @@ ServerConnection::OnBeginHeaderCallback(const nghttp2_frame &frame) noexcept
 
 		assert(requests.empty() == idle_timer.IsPending());
 		idle_timer.Cancel();
+
+		if (score == HttpServerScore::NEW)
+			score = HttpServerScore::FIRST;
 
 		auto *request = NewFromPool<Request>(std::move(stream_pool),
 						     *this, frame.hd.stream_id);
