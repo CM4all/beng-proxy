@@ -97,5 +97,5 @@ struct WidgetView final : IntrusiveForwardListHook {
 	 *
 	 * Throws std::runtime_error on error.
 	 */
-	void Expand(AllocatorPtr alloc, const MatchData &match_data) noexcept;
+	void Expand(AllocatorPtr alloc, const MatchData &match_data);
 };

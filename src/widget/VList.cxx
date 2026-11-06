@@ -57,7 +57,7 @@ IsAnyExpandable(const WidgetViewList &list) noexcept
 
 void
 Expand(AllocatorPtr alloc, WidgetViewList &list,
-       const MatchData &match_data) noexcept
+       const MatchData &match_data)
 {
 	for (auto &i : list)
 		i.Expand(alloc, match_data);

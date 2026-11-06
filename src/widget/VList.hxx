@@ -37,4 +37,4 @@ IsAnyExpandable(const WidgetViewList &list) noexcept;
  */
 void
 Expand(AllocatorPtr alloc, WidgetViewList &list,
-       const MatchData &match_data) noexcept;
+       const MatchData &match_data);

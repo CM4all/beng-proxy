@@ -77,7 +77,7 @@ WidgetView::IsExpandable() const noexcept
 }
 
 void
-WidgetView::Expand(AllocatorPtr alloc, const MatchData &match_data) noexcept
+WidgetView::Expand(AllocatorPtr alloc, const MatchData &match_data)
 {
 	address.Expand(alloc, match_data);
 	Transformation::ExpandChain(alloc, transformations, match_data);

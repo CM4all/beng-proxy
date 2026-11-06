@@ -194,7 +194,7 @@ struct LhttpAddress {
 		return expand_uri || IsChildExpandable();
 	}
 
-	void Expand(AllocatorPtr alloc, const MatchData &match_data) noexcept;
+	void Expand(AllocatorPtr alloc, const MatchData &match_data);
 
 private:
 	std::size_t BuildChildId(PoolStringBuilder<256> &b,

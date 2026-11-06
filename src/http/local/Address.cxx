@@ -253,7 +253,7 @@ LhttpAddress::RelativeToApplied(AllocatorPtr alloc,
 }
 
 void
-LhttpAddress::Expand(AllocatorPtr alloc, const MatchData &match_data) noexcept
+LhttpAddress::Expand(AllocatorPtr alloc, const MatchData &match_data)
 {
 	options.Expand(alloc, match_data);
 
