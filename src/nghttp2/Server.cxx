@@ -511,6 +511,9 @@ ServerConnection::Request::OnFrameSendCallback(const nghttp2_frame &frame) noexc
 	traffic_sent += FRAME_HEADER_SIZE + frame.hd.length;
 
 	switch (frame.hd.type) {
+	case NGHTTP2_HEADERS:
+		/* a response without a body ends the stream with the
+		   HEADERS frame */
 	case NGHTTP2_DATA:
 		if ((frame.hd.flags & NGHTTP2_FLAG_END_STREAM) != 0 &&
 		    request_body_closed && !request_body_eof) {
