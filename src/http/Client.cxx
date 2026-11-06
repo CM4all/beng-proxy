@@ -1280,6 +1280,13 @@ HttpClient::OnBufferedClosed() noexcept
 {
 	stopwatch.RecordEvent("end");
 
+	if (HasInput()) {
+		/* the peer will not read the request body anymore,
+		   and our callbacks require a connected socket */
+		CloseInput();
+		socket.UnscheduleWrite();
+	}
+
 	/* close the socket, but don't release it just yet; data may be
 	   still in flight in a SocketFilter (e.g. SSL/TLS); we'll do that
 	   in OnBufferedRemaining() which gets called after the
