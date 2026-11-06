@@ -1095,6 +1095,12 @@ HttpClient::FeedHeaders(std::span<const std::byte> b)
 		return BufferedResult::AGAIN;
 	} else if (request.pending_body) {
 		if (http_is_upgrade(response.status)) {
+			if (!IsConnected())
+				/* a SocketFilter may deliver these
+				   headers after the peer has closed */
+				throw HttpClientError(HttpClientErrorCode::UNSPECIFIED,
+						      "Peer closed the socket prematurely after status 101");
+
 			/* the server switches protocols; only now may
 			   the client's bytes be forwarded */
 			request.pending_body->Resume();
