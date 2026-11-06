@@ -154,7 +154,7 @@ Stock::Item::Item(Stock &_stock, EventLoop &event_loop, K &&_key) noexcept
 {
 }
 
-void
+inline void
 Stock::Item::Start(SocketAddress bind_address,
 		   SocketAddress address,
 		   Event::Duration timeout,
@@ -186,7 +186,7 @@ Stock::Item::FinishOne(std::unique_ptr<FilteredSocket> &&socket,
 	get_handler.OnNgHttp2StockReady(*connection);
 }
 
-void
+inline void
 Stock::Item::AddGetHandler(AllocatorPtr alloc,
 			   const StopwatchPtr &parent_stopwatch,
 			   StockGetHandler &handler,
@@ -204,7 +204,7 @@ Stock::Item::AddGetHandler(AllocatorPtr alloc,
 	}
 }
 
-void
+inline void
 Stock::Item::CancelGetRequest(GetRequest &request) noexcept
 {
 	assert(!get_requests.empty());
@@ -216,7 +216,7 @@ Stock::Item::CancelGetRequest(GetRequest &request) noexcept
 		Cancel();
 }
 
-void
+inline void
 Stock::Item::Cancel() noexcept
 {
 	assert(get_requests.empty());
@@ -300,7 +300,7 @@ Stock::Item::OnNgHttp2ConnectionClosed() noexcept
 	stock.DeleteItem(this);
 }
 
-void
+inline void
 Stock::Item::OnIdleTimer() noexcept
 {
 	assert(get_requests.empty());
