@@ -561,3 +561,46 @@ TEST(XmlParser, ShortTag)
 	EXPECT_EQ(instance.handler.tags, expected_tags);
 	EXPECT_EQ(instance.GetCdata(), "text"sv);
 }
+
+/**
+ * A byte which is not in the ASCII name set must not end the tag;
+ * else the following attribute value is parsed as markup.
+ */
+TEST(XmlParser, NonAsciiElementName)
+{
+	BoringInstance instance;
+
+	instance.Feed("<my-\xc3\xa9l title=\"<c:widget type='t' id='i'/>\">text"sv);
+
+	const std::vector<std::string> expected_tags{"my-\xc3\xa9l"};
+	EXPECT_EQ(instance.handler.tags, expected_tags);
+	EXPECT_EQ(instance.GetCdata(), "text"sv);
+}
+
+/**
+ * Like NonAsciiElementName, with an at sign in the element name.
+ */
+TEST(XmlParser, AtSignInElementName)
+{
+	BoringInstance instance;
+
+	instance.Feed("<a@b title=\"<!--\">text"sv);
+
+	const std::vector<std::string> expected_tags{"a@b"};
+	EXPECT_EQ(instance.handler.tags, expected_tags);
+	EXPECT_EQ(instance.GetCdata(), "text"sv);
+}
+
+/**
+ * A '<' which is not followed by a name character is text, and a
+ * declaration is still recognized.
+ */
+TEST(XmlParser, NoElementName)
+{
+	BoringInstance instance;
+
+	instance.Feed("<%foo><!DOCTYPE html><c:widget type='t' id='i'/>text"sv);
+
+	const std::vector<std::string> expected_tags{"c:widget"};
+	EXPECT_EQ(instance.handler.tags, expected_tags);
+}
