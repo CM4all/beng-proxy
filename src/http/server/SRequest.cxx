@@ -246,5 +246,10 @@ HttpServerConnection::RequestBodyReader::OnDechunkEnd() noexcept
 #endif
 
 	connection.CancelReadTimeoutTimer();
+
+	/* we are leaving the BODY state; there is nobody left who
+	   would send the "100 Continue" we may still owe */
+	connection.CancelSend100Continue();
+
 	return DechunkInputAction::ABANDON;
 }

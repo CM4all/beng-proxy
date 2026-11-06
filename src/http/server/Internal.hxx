@@ -262,6 +262,8 @@ struct HttpServerConnection final
 		bool body_handler_blocks = true;
 
 		constexpr void Reset() noexcept {
+			assert(!send_100_continue);
+
 			error_status = {};
 			read_state = START;
 #ifndef NDEBUG
