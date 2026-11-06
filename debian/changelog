@@ -25,6 +25,7 @@ cm4all-beng-proxy (22.2) unstable; urgency=low
   * nghttp2/client: fix use-after-free on aborted request body
   * nghttp2/client: fix crash when a stock request cancels a sibling
   * nghttp2/server: cancel the request body after a bodyless response
+  * nghttp2/server: add timeouts for receiving request headers
   * spawn: make a dropped forbidden-syscall rule fatal
   * was: fix crash bug
   * widget: resolve trailing ".." URI segments before '?', '#' and ';'

@@ -67,6 +67,15 @@ class ServerConnection::Request final
 	static constexpr WaitTracker::mask_t WAIT_SEND_RESPONSE = 1 << 1;
 
 	/**
+	 * Fires if the client fails to send the request headers or
+	 * more request body data in time.
+	 */
+	CoarseTimerEvent read_timer;
+
+	static constexpr Event::Duration request_header_timeout = std::chrono::seconds{10};
+	static constexpr Event::Duration read_timeout = std::chrono::seconds{30};
+
+	/**
 	 * The response body if #error_status is set.
 	 */
 	const char *error_message;
@@ -123,8 +132,12 @@ public:
 				     _connection.remote_address,
 				     _connection.local_host_and_port,
 				     _connection.remote_host),
-		 connection(_connection), id(_id)
+		 connection(_connection),
+		 read_timer(_connection.GetEventLoop(),
+			    BIND_THIS_METHOD(OnReadTimeout)),
+		 id(_id)
 	{
+		read_timer.Schedule(request_header_timeout);
 	}
 
 	~Request() noexcept {
@@ -266,6 +279,15 @@ private:
 					       id, nbytes);
 		DeferWrite();
 	}
+
+	void ScheduleReadTimeout() noexcept {
+		if (the_status == HttpStatus{})
+			/* while the response is being sent, only the
+			   socket's write timeout applies */
+			read_timer.Schedule(read_timeout);
+	}
+
+	void OnReadTimeout() noexcept;
 
 	/* virtual methods from class MultiFifoBufferIstreamHandler */
 	void OnFifoBufferIstreamConsumed(size_t nbytes) noexcept override;
@@ -423,6 +445,7 @@ ServerConnection::Request::OnFifoBufferIstreamConsumed(size_t nbytes) noexcept
 	Consume(nbytes);
 
 	wait_tracker.Set(GetEventLoop(), WAIT_RECEIVE_REQUEST);
+	ScheduleReadTimeout();
 }
 
 void
@@ -434,6 +457,7 @@ ServerConnection::Request::OnFifoBufferIstreamClosed() noexcept
 	request_body_closed = true;
 
 	wait_tracker.Clear(GetEventLoop(), WAIT_RECEIVE_REQUEST);
+	read_timer.Cancel();
 }
 
 void
@@ -464,6 +488,7 @@ ServerConnection::Request::OnDataChunkReceivedCallback(std::span<const std::byte
 
 	if (request_body_control) {
 		wait_tracker.Clear(GetEventLoop(), WAIT_RECEIVE_REQUEST);
+		read_timer.Cancel();
 
 		request_body_control->Push(data);
 		request_body_control->SubmitBuffer();
@@ -537,6 +562,10 @@ ServerConnection::Request::OnFrameSendCallback(const nghttp2_frame &frame) noexc
 inline int
 ServerConnection::Request::OnReceiveRequest(bool has_request_body) noexcept
 {
+	/* the request headers are complete; cancel the
+	   request_header_timeout */
+	read_timer.Cancel();
+
 	if (error_status != HttpStatus{}) {
 		SendMessage(error_status, error_message);
 		return 0;
@@ -571,6 +600,7 @@ ServerConnection::Request::OnReceiveRequest(bool has_request_body) noexcept
 		}
 
 		wait_tracker.Set(GetEventLoop(), WAIT_RECEIVE_REQUEST);
+		ScheduleReadTimeout();
 	}
 
 	stopwatch = RootStopwatchPtr(uri);
@@ -580,6 +610,30 @@ ServerConnection::Request::OnReceiveRequest(bool has_request_body) noexcept
 						     cancel_ptr);
 
 	return 0;
+}
+
+inline void
+ServerConnection::Request::OnReadTimeout() noexcept
+{
+	assert(the_status == HttpStatus{});
+
+	if (uri == nullptr) {
+		/* the request headers are still incomplete, so we
+		   cannot submit a response */
+		nghttp2_submit_rst_stream(connection.session.get(),
+					  NGHTTP2_FLAG_NONE,
+					  id, NGHTTP2_CANCEL);
+		DeferWrite();
+		Destroy();
+		return;
+	}
+
+	assert(cancel_ptr);
+
+	/* this cancels the request body Istream, too */
+	cancel_ptr.Cancel();
+
+	SendMessage(HttpStatus::REQUEST_TIMEOUT, "Request body timeout"sv);
 }
 
 inline int
@@ -592,6 +646,7 @@ ServerConnection::Request::OnEndDataFrame() noexcept
 
 	std::exchange(request_body_control, nullptr)->SetEof();
 	wait_tracker.Clear(GetEventLoop(), WAIT_RECEIVE_REQUEST);
+	read_timer.Cancel();
 	return 0;
 }
 
@@ -601,6 +656,7 @@ ServerConnection::Request::SendResponse(HttpStatus status,
 					UnusedIstreamPtr _response_body) noexcept
 {
 	cancel_ptr = nullptr;
+	read_timer.Cancel();
 
 	the_status = status;
 
