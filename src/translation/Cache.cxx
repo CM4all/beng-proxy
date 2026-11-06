@@ -506,6 +506,20 @@ tcache_response_evaluate(const TranslateResponse &response) noexcept
 }
 
 /**
+ * Does this REGEX_TAIL input start with something which the
+ * "LoadBase" implementations and uri_absolute() collapse away?  The
+ * regex would then be matched against a different string than the one
+ * the response is applied to.
+ */
+static constexpr bool
+IsNonCanonicalTail(std::string_view tail) noexcept
+{
+	return tail.starts_with('/') ||
+		tail == "."sv || tail.starts_with("./"sv) ||
+		tail == ".."sv || tail.starts_with("../"sv);
+}
+
+/**
  * Returns the string that shall be used for (inverse) regex matching.
  */
 static std::string_view
@@ -520,6 +534,12 @@ tcache_regex_input(AllocatorPtr alloc,
 		       response.inverse_regex != nullptr);
 
 		uri = require_base_tail(uri, response.base);
+
+		if (IsNonCanonicalTail(uri))
+			/* the tail which the response is applied to
+			   has these collapsed away, so matching them
+			   here would check a different string */
+			return {};
 	}
 
 	if (inverse ? response.inverse_regex_unescape : response.regex_unescape) {
