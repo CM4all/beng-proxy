@@ -23,16 +23,19 @@ class Connection final
 	: public AutoUnlinkIntrusiveListHook,
 	  HttpServerConnectionHandler, HttpServerRequestHandler
 {
+	const StaticSocketAddress local_address;
+
 	NgHttp2::ServerConnection http;
 
 public:
 	Connection(struct pool &pool, EventLoop &event_loop,
 		   SlicePool &request_slice_pool,
 		   UniqueSocketDescriptor fd, SocketAddress address)
-		:http(pool,
+		:local_address(fd.GetLocalAddress()),
+		 http(pool,
 		      UniquePoolPtr<FilteredSocket>::Make(pool, event_loop,
 							  std::move(fd), FD_TCP),
-		      fd.GetLocalAddress(), address,
+		      local_address, address,
 		      request_slice_pool,
 		      *this, *this) {}
 
