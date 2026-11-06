@@ -100,7 +100,9 @@ XmlParser::Feed(const char *start, size_t length) noexcept
 		case State::ELEMENT_NAME:
 			/* copy element name */
 			while (buffer < end) {
-				if (is_html_name_char(*buffer)) {
+				if (tag_name_length > 0
+				    ? is_html_tag_name_char(*buffer)
+				    : is_html_name_char(*buffer)) {
 					if (tag_name_length == sizeof(tag_name))
 						/* name buffer overflowing;
 						   keep parsing the tag, but

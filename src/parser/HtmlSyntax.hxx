@@ -25,6 +25,18 @@ is_html_name_char(char ch) noexcept
 }
 
 /**
+ * Is this a character which continues a tag name?  The HTML tokenizer
+ * ends a tag name only at whitespace, '/' and '>'; the '?' is ours,
+ * for processing instructions.
+ */
+constexpr bool
+is_html_tag_name_char(char ch) noexcept
+{
+	return !IsWhitespaceOrNull(ch) &&
+		ch != '/' && ch != '?' && ch != '>';
+}
+
+/**
  * Is this a character which belongs to an attribute name?
  */
 constexpr bool
