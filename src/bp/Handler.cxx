@@ -581,18 +581,30 @@ Request::RepeatTranslation(UniquePoolPtr<TranslateResponse> _response) noexcept
 			}
 		}
 
-		/* select the layout item by the normalized URI path,
-		   because that is the string the cached response is
-		   eventually applied to
-		   (TranslateResponse::CacheLoad()); a "//" or "/./"
-		   must not move a request into a different (more
-		   permissive) cache itembucket */
-		uri = NormalizeUriPath(alloc, uri);
+		const auto *const layout_item =
+			FindLayoutItem(*response.layout_items, uri);
+
+		/* the cached response is eventually applied to the
+		   normalized URI path
+		   (TranslateResponse::CacheLoad()), so a "//" or "/./"
+		   must not select a different (more permissive) layout
+		   item than the one the normalized path belongs to; we
+		   cannot simply look up the normalized path, because
+		   the LAYOUT_ITEM packet needs to be consistent with
+		   the URI packet, so refuse the request if the two
+		   disagree */
+		if (const std::string_view normalized = NormalizeUriPath(alloc, uri);
+		    normalized != uri &&
+		    FindLayoutItem(*response.layout_items, normalized) != layout_item) {
+			_response.reset();
+			LogDispatchError(HttpStatus::BAD_REQUEST,
+					 "Ambiguous URI", 1);
+			return;
+		}
 
 		translate.request.layout = response.layout;
 		translate.layout_items = response.layout_items;
-		translate.request.layout_item = FindLayoutItem(*response.layout_items,
-							       uri);
+		translate.request.layout_item = layout_item;
 
 		if (translate.request.layout_item != nullptr &&
 		    translate.request.layout_item->access_control_allow_all &&
