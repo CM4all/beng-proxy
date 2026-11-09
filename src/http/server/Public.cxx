@@ -624,7 +624,7 @@ http_server_connection_graceful(HttpServerConnection *connection) noexcept
 		connection->keep_alive = false;
 }
 
-enum http_server_score
+HttpServerScore
 http_server_connection_score(const HttpServerConnection *connection) noexcept
 {
 	return connection->score;

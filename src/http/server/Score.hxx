@@ -9,25 +9,25 @@
  * estimate which connections should be dropped first, as a remedy for
  * denial of service attacks.
  */
-enum http_server_score {
+enum class HttpServerScore {
 	/**
 	 * Connection has been accepted, but client hasn't sent any data
 	 * yet.
 	 */
-	HTTP_SERVER_NEW,
+	NEW,
 
 	/**
 	 * Client is transmitting the very first request.
 	 */
-	HTTP_SERVER_FIRST,
+	FIRST,
 
 	/**
 	 * At least one request was completed, but none was successful.
 	 */
-	HTTP_SERVER_ERROR,
+	ERROR,
 
 	/**
 	 * At least one request was completed successfully.
 	 */
-	HTTP_SERVER_SUCCESS,
+	SUCCESS,
 };

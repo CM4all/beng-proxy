@@ -466,8 +466,8 @@ HttpServerConnection::Feed(std::span<const std::byte> b) noexcept
 		BufferedResult result;
 
 	case Request::START:
-		if (score == HTTP_SERVER_NEW)
-			score = HTTP_SERVER_FIRST;
+		if (score == HttpServerScore::NEW)
+			score = HttpServerScore::FIRST;
 
 		if (!read_timer.IsPending())
 			read_timer.Schedule(request_header_timeout);

@@ -40,5 +40,5 @@ http_server_connection_get_socket(const HttpServerConnection &connection) noexce
 void
 http_server_connection_graceful(HttpServerConnection *connection) noexcept;
 
-enum http_server_score
+HttpServerScore
 http_server_connection_score(const HttpServerConnection *connection) noexcept;

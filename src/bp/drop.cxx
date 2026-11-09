@@ -19,17 +19,17 @@ BpListener::DropSomeConnections() noexcept
 
 	BpConnection *candidates[32];
 	std::size_t num_candidates = 0;
-	http_server_score min_score = std::numeric_limits<http_server_score>::max();
+	HttpServerScore min_score = std::numeric_limits<HttpServerScore>::max();
 
 	/* collect a list of the lowest-score connections */
 
 	for (auto &c : connections) {
 		/* HTTP/2 connections have no HttpServerConnection and
 		   thus no score; assume they are in use */
-		const enum http_server_score score = c.http != nullptr
+		const HttpServerScore score = c.http != nullptr
 			? http_server_connection_score(c.http)
 			/* TODO score not implemented on HTTP/2 */
-			: HTTP_SERVER_SUCCESS;
+			: HttpServerScore::SUCCESS;
 
 		if (score < min_score) {
 			/* found a new minimum - clear the old list */
@@ -42,7 +42,7 @@ BpListener::DropSomeConnections() noexcept
 		    num_candidates < std::size(candidates)) {
 			candidates[num_candidates++] = &c;
 
-			if (score == HTTP_SERVER_NEW &&
+			if (score == HttpServerScore::NEW &&
 			    num_candidates >= std::size(candidates))
 				break;
 		}

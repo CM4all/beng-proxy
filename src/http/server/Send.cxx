@@ -120,7 +120,7 @@ HttpServerConnection::SubmitResponse(HttpStatus status,
 				     UnusedIstreamPtr body)
 {
 	assert(http_status_is_valid(status));
-	assert(score != HTTP_SERVER_NEW);
+	assert(score != HttpServerScore::NEW);
 	assert(socket->IsConnected());
 	assert(request.read_state == Request::END ||
 	       request.read_state == Request::ABANDONED_BODY ||
@@ -141,10 +141,10 @@ HttpServerConnection::SubmitResponse(HttpStatus status,
 	}
 
 	if (http_status_is_success(status)) {
-		if (score == HTTP_SERVER_FIRST)
-			score = HTTP_SERVER_SUCCESS;
+		if (score == HttpServerScore::FIRST)
+			score = HttpServerScore::SUCCESS;
 	} else {
-		score = HTTP_SERVER_ERROR;
+		score = HttpServerScore::ERROR;
 	}
 
 	if (request.read_state == HttpServerConnection::Request::BODY)

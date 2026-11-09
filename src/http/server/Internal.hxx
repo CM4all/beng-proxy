@@ -372,7 +372,7 @@ struct HttpServerConnection final
 #endif
 	}
 
-	enum http_server_score score = HTTP_SERVER_NEW;
+	HttpServerScore score = HttpServerScore::NEW;
 
 	bool date_header;
 
