@@ -26,12 +26,12 @@
 #include "io/Logger.hxx"
 #include "util/djb_hash.hxx"
 #include "util/IntrusiveForwardList.hxx"
-#include "util/RoundPowerOfTwo.hxx"
 #include "util/SpanCast.hxx"
 #include "util/StringAPI.hxx"
 #include "util/StringSplit.hxx"
 
 #include <algorithm> // for std::any_of()
+#include <bit> // for std::bit_ceil()
 #include <cassert>
 
 #include <time.h>
@@ -942,7 +942,7 @@ RoundUpToPowerOfTwo(Event::Duration value) noexcept
 	using rep = Event::Duration::rep;
 	using unsigned_rep = std::make_unsigned_t<rep>;
 
-	const auto scalar = RoundUpToPowerOfTwo(static_cast<unsigned_rep>(value.count()));
+	const auto scalar = std::bit_ceil(static_cast<unsigned_rep>(value.count()));
 	return Event::Duration{static_cast<rep>(scalar)};
 }
 

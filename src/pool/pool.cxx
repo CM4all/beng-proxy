@@ -20,6 +20,7 @@
 
 #include <fmt/format.h>
 
+#include <bit> // for std::bit_ceil()
 #include <utility> // for std::unreachable()
 
 #include <assert.h>
@@ -46,7 +47,7 @@
 
 using std::string_view_literals::operator""sv;
 
-static constexpr size_t ALIGN_SIZE = RoundUpToPowerOfTwo(alignof(std::max_align_t));
+static constexpr std::size_t ALIGN_SIZE = std::bit_ceil(alignof(std::max_align_t));
 
 static constexpr unsigned RECYCLER_MAX_POOLS = 256;
 static constexpr unsigned RECYCLER_MAX_LINEAR_AREAS = 256;
