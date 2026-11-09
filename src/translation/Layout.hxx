@@ -55,5 +55,5 @@ struct TranslationLayoutItem {
 	}
 
 	[[gnu::pure]]
-	bool Match(const char *uri) const noexcept;
+	bool Match(std::string_view uri) const noexcept;
 };

@@ -19,7 +19,7 @@ TranslationLayoutItem::TranslationLayoutItem(Type _type,
 }
 
 bool
-TranslationLayoutItem::Match(const char *uri) const noexcept
+TranslationLayoutItem::Match(std::string_view uri) const noexcept
 {
 	switch (type) {
 	case Type::EXACT:
@@ -30,7 +30,7 @@ TranslationLayoutItem::Match(const char *uri) const noexcept
 	case Type::BASE:
 		assert(!regex.IsDefined());
 
-		return StringStartsWith(uri, value);
+		return uri.starts_with(value);
 
 	case Type::REGEX:
 		assert(regex.IsDefined());

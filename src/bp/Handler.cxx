@@ -542,7 +542,7 @@ fill_translate_request_user(Request &request,
 [[gnu::pure]]
 static const TranslationLayoutItem *
 FindLayoutItem(std::span<const TranslationLayoutItem> items,
-	       const char *uri) noexcept
+	       std::string_view uri) noexcept
 {
 	for (const auto &i : items)
 		if (i.Match(uri))
