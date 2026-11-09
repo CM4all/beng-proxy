@@ -19,6 +19,7 @@
 #include "util/djb_hash.hxx"
 #include "util/SpanCast.hxx"
 #include "util/StringAPI.hxx"
+#include "util/StringBuilder.hxx"
 #include "util/StringWithHash.hxx"
 #include "pexpand.hxx"
 
@@ -104,18 +105,21 @@ CgiAddress::GetURI(AllocatorPtr alloc) const noexcept
 
 inline std::size_t
 CgiAddress::BuildChildId(PoolStringBuilder<256> &b,
-			 std::span<char, 16384> options_buffer) const noexcept
+			 std::span<char, 16384> options_buffer) const
 {
 	std::size_t hash = options.GetHash();
 
-	char *buffer = options_buffer.data();
+	std::span<char> buffer = options_buffer;
 
 	for (const std::span<const std::byte> i : address_list) {
 		b.push_back(";a=");
 
-		char *end = HexFormat(buffer, i);
-		b.emplace_back(buffer, end);
-		buffer = end;
+		if (i.size() * 2 >= buffer.size())
+			throw TooLargeError{};
+
+		char *end = HexFormat(buffer.data(), i);
+		b.emplace_back(buffer.data(), end);
+		buffer = buffer.subspan(end - buffer.data());
 
 		hash = djb_hash(i, hash);
 	}
@@ -132,14 +136,16 @@ CgiAddress::BuildChildId(PoolStringBuilder<256> &b,
 		hash = djb_hash(AsBytes(i), hash);
 	}
 
-	b.emplace_back(buffer, options.MakeId(buffer));
+	StringBuilder builder{buffer};
+	options.MakeId(builder);
+	b.emplace_back(builder.ToStringView(buffer));
 
 	return hash;
 }
 
 StringWithHash
 CgiAddress::GetChildId(AllocatorPtr alloc) const noexcept
-{
+try {
 	if (!cached_child_id.IsNull())
 		return cached_child_id;
 
@@ -149,6 +155,8 @@ CgiAddress::GetChildId(AllocatorPtr alloc) const noexcept
 	std::size_t hash = BuildChildId(b, child_options_buffer);
 
 	return StringWithHash{b.MakeView(alloc), hash};
+} catch (TooLargeError) {
+	return StringWithHash{nullptr};
 }
 
 StringWithHash
@@ -159,7 +167,11 @@ CgiAddress::GetId(AllocatorPtr alloc) const noexcept
 
 	char child_options_buffer[16384];
 	if (cached_child_id.IsNull()) {
-		hash = BuildChildId(b, child_options_buffer);
+		try {
+			hash = BuildChildId(b, child_options_buffer);
+		} catch (TooLargeError) {
+			return StringWithHash{nullptr};
+		}
 	} else {
 		/* thie first part of the id (the part that is
                    specific to the child process) was already

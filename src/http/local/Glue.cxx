@@ -26,6 +26,8 @@
 #include "AllocatorPtr.hxx"
 #include "stopwatch.hxx"
 
+using std::string_view_literals::operator""sv;
+
 class LhttpLease final : public Lease, PoolLeakDetector {
 	StockItem &stock_item;
 
@@ -153,6 +155,13 @@ LhttpRequest::Start() noexcept
 
 	const TempPoolLease tpool;
 	const auto key = address.GetChildId(*tpool);
+	if (key.IsNull()) [[unlikely]] {
+		auto &_pool = pool;
+		auto &_handler = handler;
+		Destroy();
+		_handler.InvokeResponse(_pool, HttpStatus::INTERNAL_SERVER_ERROR, "Bad address"sv);
+		return;
+	}
 
 	stock.Get(key, *params, *this, cancel_ptr);
 }

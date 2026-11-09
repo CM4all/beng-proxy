@@ -733,9 +733,12 @@ Request::ApplyFilter(HttpStatus status, StringMap &&headers2,
 
 	const StringWithHash source_tag = resource_tag_append_etag(pool, resource_tag, headers2);
 
-	resource_tag = !source_tag.IsNull()
-		? resource_tag_append_filter(alloc, source_tag, filter.GetId(alloc))
-		: StringWithHash{nullptr};
+	resource_tag = StringWithHash{nullptr};
+
+	if (!source_tag.IsNull())
+		if (const auto filter_id = filter.GetId(alloc);
+		    !filter_id.IsNull())
+			resource_tag = resource_tag_append_filter(alloc, source_tag, filter_id);
 
 	forward_reveal_user(pool, headers2, filter.reveal_user ? user : nullptr);
 

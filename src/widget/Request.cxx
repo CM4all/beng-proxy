@@ -440,9 +440,12 @@ WidgetRequest::FilterResponse(HttpStatus status,
 	previous_status = status;
 
 	const StringWithHash source_tag = resource_tag_append_etag(alloc, resource_tag, headers);
-	resource_tag = !source_tag.IsNull()
-		? resource_tag_append_filter(alloc, source_tag, filter.GetId(alloc))
-		: StringWithHash{nullptr};
+
+	resource_tag = StringWithHash{nullptr};
+	if (!source_tag.IsNull())
+		if (const auto filter_id = filter.GetId(alloc);
+		    !filter_id.IsNull())
+			resource_tag = resource_tag_append_filter(alloc, source_tag, filter_id);
 
 	forward_reveal_user(alloc, headers, filter.reveal_user ? ctx->user : nullptr);
 

@@ -28,6 +28,7 @@ cm4all-beng-proxy (22.2) unstable; urgency=low
   * nghttp2/server: add timeouts for receiving request headers
   * nghttp2/server: implement the connection score for dropping connections
   * spawn: make a dropped forbidden-syscall rule fatal
+  * spawn: fix stack buffer overflow with over-long child process options
   * was: fix crash bug
   * widget: resolve trailing ".." URI segments before '?', '#' and ';'
   * widget: don't rewrite URIs for a widget class which may not be embedded

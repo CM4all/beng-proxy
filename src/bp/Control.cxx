@@ -92,7 +92,8 @@ BpInstance::OnExpireTcacheRA(const ResourceAddress &address,
 			const TempPoolLease tpool;
 			const auto key = lhttp.GetChildId(*tpool);
 
-			lhttp_stock->ExpireKey(key, time);
+			if (!key.IsNull())
+				lhttp_stock->ExpireKey(key, time);
 		}
 
 		break;
@@ -103,7 +104,8 @@ BpInstance::OnExpireTcacheRA(const ResourceAddress &address,
 				const TempPoolLease tpool;
 				const auto key = cgi.GetChildId(*tpool);
 
-				fcgi_stock->ExpireKey(key, time);
+				if (!key.IsNull())
+					fcgi_stock->ExpireKey(key, time);
 			}
 		}
 
@@ -116,14 +118,16 @@ BpInstance::OnExpireTcacheRA(const ResourceAddress &address,
 				const TempPoolLease tpool;
 				const auto key = cgi.GetChildId(*tpool);
 
-				was_stock->ExpireKey(key, time);
+				if (!key.IsNull())
+					was_stock->ExpireKey(key, time);
 			}
 		} else if (cgi.address_list.empty()) {
 			if (multi_was_stock) {
 				const TempPoolLease tpool;
 				const auto key = cgi.GetChildId(*tpool);
 
-				multi_was_stock->ExpireKey(key, time);
+				if (!key.IsNull())
+					multi_was_stock->ExpireKey(key, time);
 			}
 		}
 #endif // HAVE_LIBWAS

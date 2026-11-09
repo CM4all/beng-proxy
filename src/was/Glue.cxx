@@ -14,6 +14,8 @@
 
 #include <cassert>
 
+using std::string_view_literals::operator""sv;
+
 class WasRequest final : WasStockRequest {
 	WasStock &was_stock;
 	const CgiAddress &address;
@@ -61,6 +63,10 @@ protected:
 
 		const TempPoolLease tpool;
 		const auto key = address.GetChildId(*tpool);
+		if (key.IsNull()) [[unlikely]] {
+			DestroyInternalServerError("Bad address"sv);
+			return;
+		}
 
 		was_stock.Get(key, *r,
 			      *this, cancel_ptr);

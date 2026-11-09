@@ -13,6 +13,7 @@
 #include "util/djb_hash.hxx"
 #include "util/SpanCast.hxx"
 #include "util/StringAPI.hxx"
+#include "util/StringBuilder.hxx"
 #include "pexpand.hxx"
 #include "spawn/Prepared.hxx"
 #include "stock/Key.hxx"
@@ -56,7 +57,7 @@ LhttpAddress::PostCacheStore(AllocatorPtr alloc) noexcept
 
 inline std::size_t
 LhttpAddress::BuildChildId(PoolStringBuilder<256> &b,
-			   std::span<char, 16384> options_buffer) const noexcept
+			   std::span<char, 16384> options_buffer) const
 {
 	std::size_t hash = options.GetHash();
 
@@ -70,15 +71,16 @@ LhttpAddress::BuildChildId(PoolStringBuilder<256> &b,
 		hash = djb_hash(AsBytes(i), hash);
 	}
 
-	b.emplace_back(options_buffer.data(),
-		       options.MakeId(options_buffer.data()));
+	StringBuilder builder{options_buffer};
+	options.MakeId(builder);
+	b.emplace_back(builder.ToStringView(options_buffer));
 
 	return hash;
 }
 
 StockKey
 LhttpAddress::GetChildId(AllocatorPtr alloc) const noexcept
-{
+try {
 	if (!cached_child_id.IsNull())
 		return cached_child_id;
 
@@ -86,6 +88,8 @@ LhttpAddress::GetChildId(AllocatorPtr alloc) const noexcept
 	char child_options_buffer[16384];
 	std::size_t hash = BuildChildId(b, child_options_buffer);
 	return StringWithHash{b.MakeView(alloc), hash};
+} catch (TooLargeError) {
+	return StringWithHash{nullptr};
 }
 
 StringWithHash
@@ -96,7 +100,11 @@ LhttpAddress::GetId(AllocatorPtr alloc) const noexcept
 
 	char child_options_buffer[16384];
 	if (cached_child_id.IsNull()) {
-		hash = BuildChildId(b, child_options_buffer);
+		try {
+			hash = BuildChildId(b, child_options_buffer);
+		} catch (TooLargeError) {
+			return StringWithHash{nullptr};
+		}
 	} else {
 		/* thie first part of the id (the part that is
                    specific to the child process) was already

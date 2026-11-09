@@ -11,6 +11,15 @@
 #include "stock/Stock.hxx"
 
 void
+WasStockRequest::DestroyInternalServerError(std::string_view msg) noexcept
+{
+	auto &_pool = pool;
+	auto &_handler = handler;
+	Destroy();
+	_handler.InvokeResponse(_pool, HttpStatus::INTERNAL_SERVER_ERROR, msg);
+}
+
+void
 WasStockRequest::OnStockItemReady(StockItem &item) noexcept
 {
 	auto &connection = static_cast<WasStockConnection &>(item);

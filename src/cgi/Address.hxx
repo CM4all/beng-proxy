@@ -156,6 +156,9 @@ struct CgiAddress {
 	 * Generates a string identifying the child process.  This can
 	 * be used as a key in a hash table.  The string will be
 	 * allocated by the specified pool.
+	 *
+	 * Returns #nullptr if if the address is too complex to build
+	 * an id.
 	 */
 	[[gnu::pure]]
 	StringWithHash GetChildId(AllocatorPtr alloc) const noexcept;
@@ -164,6 +167,9 @@ struct CgiAddress {
 	 * Generates a string identifying the address.  This can be used as a
 	 * key in a hash table.  The string will be allocated by the specified
 	 * pool.
+	 *
+	 * Returns #nullptr if if the address is too complex to build
+	 * an id.
 	 */
 	[[gnu::pure]]
 	StringWithHash GetId(AllocatorPtr alloc) const noexcept;
@@ -254,6 +260,9 @@ struct CgiAddress {
 	void Expand(AllocatorPtr alloc, const MatchData &match_data);
 
 private:
+	/**
+	 * Throws #TooLargeError if #options_buffer was too small.
+	 */
 	std::size_t BuildChildId(PoolStringBuilder<256> &b,
-				 std::span<char, 16384> options_buffer) const noexcept;
+				 std::span<char, 16384> options_buffer) const;
 };

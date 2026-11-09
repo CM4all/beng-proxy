@@ -205,6 +205,9 @@ public:
 	/**
 	 * Generates a string identifying the address.  This can be used as a
 	 * key in a hash table.
+	 *
+	 * Returns #nullptr if if the address is too complex to build
+	 * an id.
 	 */
 	[[gnu::pure]]
 	StringWithHash GetId(AllocatorPtr alloc) const noexcept;

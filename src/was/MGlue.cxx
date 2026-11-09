@@ -18,6 +18,8 @@
 
 #include <cassert>
 
+using std::string_view_literals::operator""sv;
+
 class MultiWasRequest final : WasStockRequest
 {
 	MultiWasStock &stock;
@@ -64,6 +66,10 @@ protected:
 
 		const TempPoolLease tpool;
 		const auto key = address.GetChildId(*tpool);
+		if (key.IsNull()) [[unlikely]] {
+			DestroyInternalServerError("Bad address"sv);
+			return;
+		}
 
 		stock.Get(key, *r,
 			  *this, cancel_ptr);

@@ -28,6 +28,8 @@
 
 #include <sys/socket.h>
 
+using std::string_view_literals::operator""sv;
+
 /**
  * If the child process has had the complete request for this long
  * without sending response headers, it is considered stuck.
@@ -124,6 +126,13 @@ public:
 
 		const TempPoolLease tpool;
 		const auto key = address.GetChildId(*tpool);
+		if (key.IsNull()) [[unlikely]] {
+			auto &_pool = pool;
+			auto &_handler = handler;
+			Destroy();
+			_handler.InvokeResponse(_pool, HttpStatus::INTERNAL_SERVER_ERROR, "Bad address"sv);
+			return;
+		}
 
 		fcgi_stock.Get(key, *params, *this, cancel_ptr);
 	}

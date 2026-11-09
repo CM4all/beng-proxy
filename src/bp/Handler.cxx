@@ -451,6 +451,10 @@ Request::HandleTranslatedRequest(UniquePoolPtr<TranslateResponse> _response) noe
 			address.GetCgi().uri = ForwardURI();
 
 		resource_tag = translate.address_id = address.GetId(pool);
+		if (resource_tag.IsNull()) {
+			DispatchError(HttpStatus::INTERNAL_SERVER_ERROR, "Bad address");
+			return;
+		}
 	}
 
 	translate.transformations.clear();

@@ -11,6 +11,8 @@
 #include "util/Cancellable.hxx"
 #include "stopwatch.hxx"
 
+#include <string_view>
+
 class WasMetricsHandler;
 
 class WasStockRequest
@@ -82,6 +84,12 @@ protected:
 	void Destroy() noexcept {
 		this->~WasStockRequest();
 	}
+
+	/**
+	 * Send a "500 Internal Server Error" response to the
+	 * #HttpResponseHandler and destroy this object.
+	 */
+	void DestroyInternalServerError(std::string_view msg) noexcept;
 
 	virtual void GetStockItem() noexcept = 0;
 
