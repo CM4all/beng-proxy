@@ -31,6 +31,8 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 
+using std::string_view_literals::operator""sv;
+
 #ifdef HAVE_URING
 
 class UringStaticFileGet final : Uring::OpenStatHandler, Cancellable {
@@ -112,7 +114,7 @@ UringStaticFileGet::OnOpenStat(UniqueFileDescriptor fd,
 
 	if (!S_ISREG(stx.stx_mode)) {
 		_handler.InvokeResponse(pool, HttpStatus::NOT_FOUND,
-					"Not a regular file");
+					"Not a regular file"sv);
 		return;
 	}
 
@@ -150,7 +152,7 @@ static_file_get(EventLoop &event_loop,
 		const char *relative = StringAfterPrefix(path, _beneath);
 		if (relative == nullptr || *relative != '/') {
 			handler.InvokeResponse(pool, HttpStatus::NOT_FOUND,
-					       "Not found");
+					       "Not found"sv);
 			return;
 		}
 
@@ -203,7 +205,7 @@ static_file_get(EventLoop &event_loop,
 
 	if (!S_ISREG(st.stx_mode)) {
 		handler.InvokeResponse(pool, HttpStatus::NOT_FOUND,
-				       "Not a regular file");
+				       "Not a regular file"sv);
 		return;
 	}
 

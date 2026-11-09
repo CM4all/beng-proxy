@@ -6,10 +6,10 @@
 
 #include "http/Status.hxx"
 
-#include <utility>
+#include <cassert>
 #include <exception>
-
-#include <assert.h>
+#include <utility>
+#include <string_view>
 
 struct pool;
 class StringMap;
@@ -39,7 +39,7 @@ public:
 	 * Sends a plain-text message.
 	 */
 	void InvokeResponse(struct pool &pool,
-			    HttpStatus status, const char *msg) noexcept;
+			    HttpStatus status, std::string_view msg) noexcept;
 
 	void InvokeError(std::exception_ptr ep) noexcept {
 		assert(ep);

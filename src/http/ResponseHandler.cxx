@@ -12,10 +12,9 @@
 void
 HttpResponseHandler::InvokeResponse(struct pool &pool,
 				    HttpStatus status,
-				    const char *msg) noexcept
+				    std::string_view msg) noexcept
 {
 	assert(http_status_is_valid(status));
-	assert(msg != nullptr);
 
 	StringMap headers;
 	headers.Add(pool, content_type_header, "text/plain; charset=utf-8");

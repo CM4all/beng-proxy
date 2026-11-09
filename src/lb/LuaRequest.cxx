@@ -86,7 +86,6 @@ SendMessage(lua_State *L)
 	auto &data = CastLuaRequestData(L, 1);
 
 	HttpStatus status = HttpStatus::OK;
-	const char *msg;
 
 	unsigned i = 2;
 
@@ -104,7 +103,7 @@ SendMessage(lua_State *L)
 	if (lua_type(L, i) != LUA_TSTRING)
 		return luaL_argerror(L, i, "Message expected");
 
-	msg = lua_tostring(L, i);
+	const auto msg = Lua::ToStringView(L, i);
 
 	data.stale = true;
 
