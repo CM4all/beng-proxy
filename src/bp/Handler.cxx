@@ -570,10 +570,10 @@ Request::RepeatTranslation(UniquePoolPtr<TranslateResponse> _response) noexcept
 			return;
 		}
 
-		const char *uri = translate.request.uri;
+		std::string_view uri = translate.request.uri;
 		if (response.regex_tail && response.base != nullptr) {
 			uri = StringAfterPrefix(uri, response.base);
-			if (uri == nullptr) {
+			if (uri.data() == nullptr) {
 				_response.reset();
 				LogDispatchError(HttpStatus::BAD_GATEWAY,
 						 "Base mismatch", 1);
@@ -586,9 +586,8 @@ Request::RepeatTranslation(UniquePoolPtr<TranslateResponse> _response) noexcept
 		   eventually applied to
 		   (TranslateResponse::CacheLoad()); a "//" or "/./"
 		   must not move a request into a different (more
-		   permissive) cache itembucket; both
-		   NormalizeUriPath() results are null-terminated. */
-		uri = NormalizeUriPath(alloc, std::string_view{uri}).data();
+		   permissive) cache itembucket */
+		uri = NormalizeUriPath(alloc, uri);
 
 		translate.request.layout = response.layout;
 		translate.layout_items = response.layout_items;
