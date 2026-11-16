@@ -387,13 +387,11 @@ else
   net_rh_dep = avahi_dep
 endif
 
-if get_option('certdb') or not get_option('test').disabled()
-  if not get_option('certdb')
-    libcommon_require_curl = get_option('test')
-  endif
-
-  subdir('libcommon/src/lib/curl')
+if not get_option('certdb')
+  libcommon_require_curl = get_option('test')
 endif
+
+subdir('libcommon/src/lib/curl')
 
 if libcommon_enable_libsystemd or avahi_dep.found()
   subdir('libcommon/src/lib/dbus')
