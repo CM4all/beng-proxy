@@ -387,7 +387,11 @@ else
   net_rh_dep = avahi_dep
 endif
 
-if get_option('certdb')
+if get_option('certdb') or not get_option('test').disabled()
+  if not get_option('certdb')
+    libcommon_require_curl = get_option('test')
+  endif
+
   subdir('libcommon/src/lib/curl')
 endif
 
@@ -504,6 +508,7 @@ raddress_dep = declare_dependency(
 subdir('src/was')
 
 subdir('libcommon/src/translation')
+subdir('libcommon/src/translation/server')
 subdir('src/translation')
 
 http_common = static_library('http_common',
@@ -584,7 +589,7 @@ if libcommon_enable_libsystemd
   ]
 endif
 
-executable(
+beng_proxy = executable(
   'cm4all-beng-proxy',
   sources,
   'src/io/FdCache.cxx',
