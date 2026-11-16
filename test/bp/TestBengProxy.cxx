@@ -71,6 +71,12 @@ TestTranslationHandler::HandleRootLayoutBase(const std::string_view base,
 		response.Base(base)
 			.Layout("enotdir"sv)
 			.Regex(PL_REGEX);
+	} else if (base == "/huge/"sv) {
+		/* a child process option which does not fit into the
+		   fixed-size buffer used by CgiAddress::GetId() */
+		response.CGI(document_root, "/dump.pl"sv)
+			.DocumentRoot(document_root)
+			.SetEnv(std::string(32768, 'A'), "1"sv);
 	} else
 		std::terminate();
 }
@@ -106,6 +112,7 @@ TestTranslationHandler::OnTranslationRequest(const Translation::Server::Request 
 	if (const auto layout = ToStringView(request.layout);
 	    layout.data() == nullptr) {
 		response.Layout("root"sv)
+			.Base("/huge/"sv)
 			.Base("/simple/"sv)
 			.Base("/index/"sv)
 			.Base("/enotdir/"sv);
@@ -179,7 +186,14 @@ TEST_F(BengProxyTest, All)
 	// can't escape from the LAYOUT constraints
 	EXPECT_EQ(StringRequest("http://dummy/../simple/"), "400 Malformed URI"sv);
 	EXPECT_EQ(StringRequest("http://dummy/./simple/"), "400 Ambiguous URI"sv);
+	EXPECT_EQ(StringRequest("http://dummy//simple/"), "400 Ambiguous URI"sv);
 	// TODO EXPECT_EQ(StringRequest("http://dummy/simpl%65/"), "400 Ambiguous URI"sv);
+
+	/* ... but normalizing is not ambiguous as long as it selects
+	   the same LAYOUT item */
+	EXPECT_EQ(StringRequest("http://dummy/simple//index.txt"), "200 hello"sv);
+	EXPECT_EQ(StringRequest("http://dummy/simple/./index.txt"), "200 hello"sv);
+	EXPECT_EQ(StringRequest("http://dummy/index//index.txt"), "200 hello"sv);
 
 	// static files with static index file
 	EXPECT_EQ(StringRequest("http://dummy/index/index.txt"), "200 hello"sv);
@@ -199,4 +213,17 @@ TEST_F(BengProxyTest, All)
 
 	// not mapped
 	EXPECT_EQ(StringRequest("http://dummy/unknown"), "418"sv);
+}
+
+/**
+ * The child process options are too long for the fixed-size buffer
+ * used by CgiAddress::GetId(); this must fail cleanly instead of
+ * overflowing that buffer.
+ */
+TEST_F(BengProxyTest, HugeChildOptions)
+{
+	EXPECT_EQ(StringRequest("http://dummy/huge/dump.pl"), "500 Bad address"sv);
+
+	// the server is still alive and dispatched only one response
+	EXPECT_EQ(StringRequest("http://dummy/simple/index.txt"), "200 hello"sv);
 }
