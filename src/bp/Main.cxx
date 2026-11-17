@@ -588,7 +588,11 @@ try {
 		for (const auto &i : instance.config.listen)
 			instance.AddListener(i, &cmdline.logger_user);
 	} else {
-		BpListenerConfig config;
+		/* this trick abuses the "_config" variable to hold
+		   our BpListenerConfig */
+		_config.listen.emplace_front();
+		auto &config = _config.listen.front();
+
 		if (!StringIsEmpty(cmdline.debug_listener_tag))
 			config.tag = cmdline.debug_listener_tag;
 
