@@ -206,7 +206,7 @@ try {
 	   to PostgreSQL eventually */
 	// TODO: bind-mount the PostgreSQL socket into the new rootfs
 	if (!config.HasCertDatabase() && getenv("SSLKEYLOGFILE") == nullptr)
-		isolate_from_filesystem(config.HasZeroconf(),
+		isolate_from_filesystem(config.UsesDBus(),
 					config.HasPrometheusExporter());
 
 

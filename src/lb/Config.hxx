@@ -218,6 +218,10 @@ struct LbConfig {
 		return false;
 	}
 
+	bool UsesDBus() const noexcept {
+		return HasZeroconf();
+	}
+
 	[[gnu::pure]]
 	bool HasTransparentSource() const noexcept {
 		for (const auto &i : clusters)
