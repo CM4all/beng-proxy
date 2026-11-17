@@ -493,7 +493,7 @@ CertCache::Apply(SSL &ssl, const char *host,
 	}
 
 	if (name_cache.Lookup(host) ||
-	    (!wildcard.empty() && name_cache.Lookup(wildcard.c_str()))) {
+	    (!wildcard.empty() && name_cache.Lookup(wildcard))) {
 		state_idx.Set(ssl, State::IN_PROGRESS);
 		ScheduleQuery(ssl, host, special);
 		return LookupCertResult::IN_PROGRESS;

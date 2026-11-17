@@ -19,14 +19,12 @@ CertNameCache::CertNameCache(EventLoop &event_loop,
 }
 
 bool
-CertNameCache::Lookup(const char *_host) const noexcept
+CertNameCache::Lookup(std::string_view host) const noexcept
 {
 	if (!complete)
 		/* we can't give reliable results until the cache is
 		   complete */
 		return true;
-
-	const std::string_view host{_host};
 
 	const std::scoped_lock lock{mutex};
 	return names.find(host) != names.end() ||

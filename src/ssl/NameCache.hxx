@@ -91,7 +91,8 @@ public:
 	/**
 	 * Check if the given name exists in the database.
 	 */
-	bool Lookup(const char *host) const noexcept;
+	[[gnu::pure]]
+	bool Lookup(std::string_view host) const noexcept;
 
 private:
 	void OnUpdateTimer() noexcept;
