@@ -78,8 +78,8 @@ struct LbListenerConfig : SocketConfig {
 	}
 
 	[[gnu::pure]]
-	bool HasZeroConf() const noexcept {
-		return destination.HasZeroConf();
+	bool HasZeroconf() const noexcept {
+		return destination.HasZeroconf();
 	}
 #endif
 

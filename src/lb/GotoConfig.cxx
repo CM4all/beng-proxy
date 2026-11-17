@@ -12,13 +12,13 @@
 #include "PrometheusDiscoveryConfig.hxx"
 
 bool
-LbBranchConfig::HasZeroConf() const noexcept
+LbBranchConfig::HasZeroconf() const noexcept
 {
-	if (fallback.HasZeroConf())
+	if (fallback.HasZeroconf())
 		return true;
 
 	for (const auto &i : conditions)
-		if (i.HasZeroConf())
+		if (i.HasZeroconf())
 			return true;
 
 	return false;
@@ -117,19 +117,19 @@ LbGotoConfig::GetName() const noexcept
 #ifdef HAVE_AVAHI
 
 bool
-LbGotoConfig::HasZeroConf() const noexcept
+LbGotoConfig::HasZeroconf() const noexcept
 {
-	struct HasZeroConfHelper {
+	struct HasZeroconfHelper {
 		bool operator()(std::monostate) const noexcept {
 			return false;
 		}
 
 		bool operator()(const LbClusterConfig *cluster) const noexcept {
-			return cluster->HasZeroConf();
+			return cluster->HasZeroconf();
 		}
 
 		bool operator()(const LbBranchConfig *branch) const noexcept {
-			return branch->HasZeroConf();
+			return branch->HasZeroconf();
 		}
 
 		bool operator()(const LbLuaHandlerConfig *) const noexcept {
@@ -155,7 +155,7 @@ LbGotoConfig::HasZeroConf() const noexcept
 		}
 	};
 
-	return std::visit(HasZeroConfHelper{}, destination);
+	return std::visit(HasZeroconfHelper{}, destination);
 }
 
 #endif

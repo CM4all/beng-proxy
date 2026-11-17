@@ -720,7 +720,7 @@ LbConfigParser::Cluster::Finish()
 	config.zeroconf.Check();
 #endif
 
-	if (config.members.empty() && !config.HasZeroConf())
+	if (config.members.empty() && !config.HasZeroconf())
 		throw LineParser::Error("Pool has no members");
 
 	if (NeedsPort(config.protocol) && config.GetDefaultPort() == 0) {
@@ -739,7 +739,7 @@ LbConfigParser::Cluster::Finish()
 		throw LineParser::Error{"SSL/TLS only available with HTTP"};
 
 #ifdef HAVE_AVAHI
-	if (config.HasZeroConf() &&
+	if (config.HasZeroconf() &&
 	    !ValidateZeroconfSticky(config.sticky_mode))
 		throw LineParser::Error("The selected sticky mode not compatible with Zeroconf");
 #endif

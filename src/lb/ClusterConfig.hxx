@@ -166,7 +166,7 @@ struct LbClusterConfig {
 		return 0;
 	}
 
-	bool HasZeroConf() const noexcept {
+	bool HasZeroconf() const noexcept {
 #ifdef HAVE_AVAHI
 		return zeroconf.IsEnabled();
 #else

@@ -77,7 +77,7 @@ struct LbGotoConfig {
 
 #ifdef HAVE_AVAHI
 	[[gnu::pure]]
-	bool HasZeroConf() const noexcept;
+	bool HasZeroconf() const noexcept;
 #endif
 };
 
@@ -90,8 +90,8 @@ struct LbGotoIfConfig {
 		:condition(std::move(c)), destination(d) {}
 
 #ifdef HAVE_AVAHI
-	bool HasZeroConf() const {
-		return destination.HasZeroConf();
+	bool HasZeroconf() const {
+		return destination.HasZeroconf();
 	}
 #endif
 };
@@ -124,7 +124,7 @@ struct LbBranchConfig {
 	}
 
 #ifdef HAVE_AVAHI
-	bool HasZeroConf() const noexcept;
+	bool HasZeroconf() const noexcept;
 #endif
 };
 

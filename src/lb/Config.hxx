@@ -208,10 +208,10 @@ struct LbConfig {
 	}
 
 	[[gnu::pure]]
-	bool HasZeroConf() const noexcept {
+	bool HasZeroconf() const noexcept {
 #ifdef HAVE_AVAHI
 		for (const auto &i : listeners)
-			if (i.HasZeroConf())
+			if (i.HasZeroconf())
 				return true;
 #endif
 

@@ -133,7 +133,7 @@ LbCluster::LbCluster(const LbClusterConfig &_config,
 			 nullptr);
 
 #ifdef HAVE_AVAHI
-	if (config.HasZeroConf())
+	if (config.HasZeroconf())
 		explorer = config.zeroconf.Create(context.GetAvahiClient(),
 						  *this, context.avahi_error_handler);
 #endif
@@ -175,7 +175,7 @@ LbCluster::ConnectHttp(AllocatorPtr alloc,
 		       CancellablePointer &cancel_ptr) noexcept
 {
 #ifdef HAVE_AVAHI
-	if (config.HasZeroConf()) {
+	if (config.HasZeroconf()) {
 		ConnectZeroconfHttp(alloc, parent_stopwatch,
 				    fairness_hash,
 				    bind_address, arch,
@@ -205,7 +205,7 @@ LbCluster::ConnectTcp(AllocatorPtr alloc,
 		      CancellablePointer &cancel_ptr) noexcept
 {
 #ifdef HAVE_AVAHI
-	if (config.HasZeroConf()) {
+	if (config.HasZeroconf()) {
 		ConnectZeroconfTcp(alloc, bind_address, sticky_source,
 				   timeout, handler, cancel_ptr);
 		return;
@@ -533,7 +533,7 @@ LbCluster::ConnectZeroconfHttp(AllocatorPtr alloc,
 			       FilteredSocketBalancerHandler &handler,
 			       CancellablePointer &cancel_ptr) noexcept
 {
-	assert(config.HasZeroConf());
+	assert(config.HasZeroconf());
 
 	auto *c = alloc.New<ZeroconfHttpConnect>(*this, alloc,
 						 fairness_hash,
@@ -554,7 +554,7 @@ LbCluster::ConnectZeroconfTcp(AllocatorPtr alloc,
 			      ConnectSocketHandler &handler,
 			      CancellablePointer &cancel_ptr) noexcept
 {
-	assert(config.HasZeroConf());
+	assert(config.HasZeroconf());
 	assert(config.protocol == LbProtocol::TCP);
 
 	auto &event_loop = fs_balancer.GetEventLoop();
