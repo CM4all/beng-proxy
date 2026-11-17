@@ -139,7 +139,7 @@ public:
 	 * #IN_PROGRESS; using its #CancellablePointer field, the
 	 * caller may cancel the operation
 	 */
-	LookupCertResult Apply(SSL &ssl, const char *host,
+	LookupCertResult Apply(SSL &ssl, std::string_view host,
 			       const char *special) noexcept;
 
 private:
@@ -155,7 +155,7 @@ private:
 	 * Caller must lock #mutex.
 	 */
 	[[gnu::pure]]
-	std::optional<UniqueCertKey> GetNoWildCardCached(const char *host,
+	std::optional<UniqueCertKey> GetNoWildCardCached(std::string_view host,
 							 const char *special) noexcept;
 
 	void StartQuery() noexcept;
@@ -163,7 +163,7 @@ private:
 	/**
 	 * Caller must lock #mutex.
 	 */
-	void ScheduleQuery(SSL &ssl, const char *host,
+	void ScheduleQuery(SSL &ssl, std::string_view host,
 			   const char *special) noexcept;
 
 	void Apply(SSL &ssl, X509 &cert, EVP_PKEY &key);

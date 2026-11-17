@@ -337,7 +337,7 @@ CertCache::Add(UniqueCertKey &&ck, const char *special)
 }
 
 inline std::optional<UniqueCertKey>
-CertCache::GetNoWildCardCached(const char *host, const char *_special) noexcept
+CertCache::GetNoWildCardCached(std::string_view host, const char *_special) noexcept
 {
 	const std::string_view special{
 		_special != nullptr
@@ -384,7 +384,7 @@ CertCache::StartQuery() noexcept
 }
 
 void
-CertCache::ScheduleQuery(SSL &ssl, const char *host,
+CertCache::ScheduleQuery(SSL &ssl, std::string_view host,
 			 const char *special) noexcept
 {
 	std::string key(host);
@@ -406,7 +406,7 @@ CertCache::ScheduleQuery(SSL &ssl, const char *host,
 
 	const bool was_empty = queries.empty();
 
-	const char *_special = special != nullptr ? special : "";
+	const std::string_view _special = special != nullptr ? std::string_view{special} : ""sv;
 	auto &query = queries.try_emplace(std::move(key),
 					  *this, host, _special).first->second;
 
@@ -453,7 +453,7 @@ CertCache::ApplyAndSetState(SSL &ssl, const UniqueCertKey &cert_key) noexcept
 }
 
 LookupCertResult
-CertCache::Apply(SSL &ssl, const char *host,
+CertCache::Apply(SSL &ssl, std::string_view host,
 		 const char *special) noexcept
 {
 	switch (state_idx.Get(ssl)) {
@@ -488,7 +488,7 @@ CertCache::Apply(SSL &ssl, const char *host,
 
 	const auto wildcard = MakeCommonNameWildcard(host);
 	if (!wildcard.empty()) {
-		if (auto item = GetNoWildCardCached(wildcard.c_str(), special))
+		if (auto item = GetNoWildCardCached(wildcard, special))
 			return ApplyAndSetState(ssl, *item);
 	}
 
