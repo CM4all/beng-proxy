@@ -19,6 +19,7 @@ ssl2 = static_library(
     memory_dep,
     thread_pool_dep,
     socket_dep,
+    uri_dep,
     libcertdb_dep,
   ],
 )

@@ -13,6 +13,7 @@
 #include "lib/openssl/Key.hxx"
 #include "lib/openssl/UniqueEVP.hxx"
 #include "lib/openssl/UniqueX509.hxx"
+#include "uri/Verify.hxx"
 #include "util/AllocatedString.hxx"
 
 #include <openssl/ssl.h>
@@ -159,7 +160,11 @@ inline int
 SslFactory::CertCallback(SSL &ssl) noexcept
 {
 	const char *_host_name = SSL_get_servername(&ssl, TLSEXT_NAMETYPE_host_name);
-	if (_host_name == nullptr) {
+	if (_host_name == nullptr || !VerifyDomainName(_host_name)) {
+		/* no SNI, or SNI is ignored because the
+		   client-specified host name is malformed (OpenSSL
+		   only checks the length and and null bytes); use the
+		   first configured certificate as a fallback */
 		if (!cert_key.empty())
 			cert_key.front().Apply(ssl);
 
