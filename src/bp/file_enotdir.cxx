@@ -48,11 +48,6 @@ Request::SubmitEnotdir(const TranslateResponse &response) noexcept
 			p_strdup(&pool, translate.request.uri);
 		translate.enotdir_path_info = translate.enotdir_uri +
 			strlen(translate.enotdir_uri);
-
-		/* since the request URI was modified, we need to
-		   restart the LAYOUT translation */
-		translate.request.layout = {};
-		translate.request.layout_item = nullptr;
 	}
 
 	const char *const uri = translate.enotdir_uri;
@@ -73,6 +68,14 @@ Request::SubmitEnotdir(const TranslateResponse &response) noexcept
 
 	translate.request.uri = alloc.DupZ({uri, slash});
 	translate.enotdir_path_info = slash;
+
+	/* since the request URI was modified, we need to restart the
+	   LAYOUT translation */
+	translate.request.layout = {};
+	translate.request.layout_item = nullptr;
+	/* also clear the n_layout counter because we're about to
+	   start a new LAYOUT lookup */
+	translate.n_layout = 0;
 
 	SubmitTranslateRequest();
 	return false;
