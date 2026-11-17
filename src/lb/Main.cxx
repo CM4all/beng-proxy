@@ -184,8 +184,9 @@ try {
 
 #if defined(HAVE_LIBSYSTEMD) || defined(HAVE_AVAHI)
 	const ODBus::ScopeInit dbus_init;
-	dbus_connection_set_exit_on_disconnect(ODBus::Connection::GetSystem(),
-					       false);
+	if (config.UsesDBus())
+		dbus_connection_set_exit_on_disconnect(ODBus::Connection::GetSystem(),
+						       false);
 #endif
 
 #ifdef ENABLE_CERTDB

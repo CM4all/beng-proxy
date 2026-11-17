@@ -139,6 +139,20 @@ struct BpConfig {
 #endif
 	}
 
+	[[gnu::pure]]
+	bool HasZeroconf() const noexcept {
+		for (const auto &i : listen)
+			if (i.HasZeroconf())
+				return true;
+
+		return false;
+	}
+
+	[[gnu::pure]]
+	bool UsesDBus() const noexcept {
+		return spawn.UsesDBus() || HasZeroconf();
+	}
+
 	void HandleSet(std::string_view name, const char *value);
 
 	void Finish(unsigned default_port);

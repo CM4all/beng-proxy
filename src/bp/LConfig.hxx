@@ -68,4 +68,12 @@ struct BpListenerConfig : SocketConfig {
 		}
 	{
 	}
+
+	bool HasZeroconf() const noexcept {
+#ifdef HAVE_AVAHI
+		return zeroconf.IsEnabled();
+#else
+		return false;
+#endif
+	}
 };
