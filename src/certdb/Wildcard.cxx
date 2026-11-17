@@ -4,24 +4,19 @@
 
 #include "Wildcard.hxx"
 
-#include <string.h>
-
 std::string
-MakeCommonNameWildcard(const char *s)
+MakeCommonNameWildcard(std::string_view s) noexcept
 {
-	const char *p = s;
-	while (*p == '.' || *p == '*')
-		++p;
+	const auto dot = s.find('.');
+	if (dot == 0 || dot == s.npos)
+		/* there is no label which could be replaced */
+		return {};
 
-	if (p > s && p[-1] != '.')
-		return std::string();
+	if (s.front() == '*')
+		/* already a wildcard */
+		return {};
 
-	const char *dot = strchr(p, '.');
-	if (dot == nullptr)
-		return std::string();
-
-	std::string result(s, p);
-	result.push_back('*');
-	result.append(dot);
+	std::string result{'*'};
+	result.append(s.substr(dot));
 	return result;
 }

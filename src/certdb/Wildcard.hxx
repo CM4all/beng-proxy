@@ -5,11 +5,16 @@
 #pragma once
 
 #include <string>
+#include <string_view>
 
 /**
  * Attempt to convert the given "common name" (i.e. host name) to a
  * wild card by replacing the first segment with an asterisk.  Returns
  * an empty string if this is not possible.
+ *
+ * This does not validate the given name; it is assumed to be a
+ * syntactically valid host name (see VerifyDomainName()).
  */
+[[gnu::pure]]
 std::string
-MakeCommonNameWildcard(const char *s);
+MakeCommonNameWildcard(std::string_view s) noexcept;
