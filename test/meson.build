@@ -608,6 +608,19 @@ endif
 
 if get_option('certdb')
   test(
+    'TestWildcard',
+    executable(
+      'TestWildcard',
+      'TestWildcard.cxx',
+      include_directories: inc,
+      dependencies: [
+        libcertdb_dep,
+        gtest,
+      ],
+    ),
+  )
+
+test(
     'TestWrapKey',
     executable(
       'TestWrapKey',
