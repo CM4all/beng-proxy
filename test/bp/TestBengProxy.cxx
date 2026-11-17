@@ -39,7 +39,8 @@ private:
 				  const Translation::Server::Request &request,
 				  Translation::Server::Response &response) const noexcept;
 
-	void HandleEnotdirLayout(const Translation::Server::Request &request,
+	void HandleEnotdirLayout(std::string_view base,
+				 const Translation::Server::Request &request,
 				 Translation::Server::Response &response) const noexcept;
 
 	void OnTranslationRequest(const Translation::Server::Request &request,
@@ -67,6 +68,10 @@ TestTranslationHandler::HandleRootLayoutBase(const std::string_view base,
 		}
 
 		response.Base(base).EasyBase().Path(document_root, "/"sv).DocumentRoot(document_root).DirectoryIndex("dummy"sv).DirectoryIndexSlash();
+	} else if (base == "/wfu/"sv) {
+		response.Base(base)
+			.Layout("wfu"sv)
+			.Regex(PL_REGEX);
 	} else if (base == "/enotdir/"sv) {
 		response.Base(base)
 			.Layout("enotdir"sv)
@@ -82,11 +87,10 @@ TestTranslationHandler::HandleRootLayoutBase(const std::string_view base,
 }
 
 inline void
-TestTranslationHandler::HandleEnotdirLayout(const Translation::Server::Request &request,
+TestTranslationHandler::HandleEnotdirLayout(std::string_view base,
+					    const Translation::Server::Request &request,
 					    Translation::Server::Response &response) const noexcept
 {
-	constexpr std::string_view base = "/enotdir/"sv;
-
 	if (request.regex != nullptr && PL_REGEX == request.regex) {
 		response.Base(base).EasyBase().Regex(PL_REGEX).RegexTail()
 			.CGI("/:"sv).ExpandPath(document_root, "/\\0"sv)
@@ -115,6 +119,7 @@ TestTranslationHandler::OnTranslationRequest(const Translation::Server::Request 
 			.Base("/huge/"sv)
 			.Base("/simple/"sv)
 			.Base("/index/"sv)
+			.Base("/wfu/"sv)
 			.Base("/enotdir/"sv);
 		return;
 	} else if (layout == "root"sv) {
@@ -123,7 +128,15 @@ TestTranslationHandler::OnTranslationRequest(const Translation::Server::Request 
 			return;
 		}
 	} else if (layout == "enotdir"sv) {
-		HandleEnotdirLayout(request, response);
+		HandleEnotdirLayout("/enotdir/"sv, request, response);
+		return;
+	} else if (layout == "wfu"sv) {
+		if (request.want_full_uri.data() == nullptr) {
+			response.WantFullUri("dummy"sv);
+			return;
+		}
+
+		HandleEnotdirLayout("/wfu/"sv, request, response);
 		return;
 	}
 
@@ -211,6 +224,14 @@ TEST_F(BengProxyTest, All)
 	// not allowed without UNSAFE_BASE
 	EXPECT_EQ(StringRequest("http://dummy/enotdir/dump.pl/./foo?q"), "400 Malformed URI"sv);
 	EXPECT_EQ(StringRequest("http://dummy/enotdir/dump.pl/../foo?q"), "400 Malformed URI"sv);
+
+	// WANT_FULL_URI
+	EXPECT_EQ(StringRequest("http://dummy/wfu/index.txt"), "200 hello"sv);
+	EXPECT_EQ(StringRequest("http://dummy/wfu/semi;colon.txt"), "200 semicolon"sv);
+	EXPECT_EQ(StringRequest("http://dummy/wfu/dump.pl/foo?q"), "200 REQUEST_URI=/wfu/dump.pl/foo?q SCRIPT_NAME=/wfu/dump.pl PATH_INFO=/foo QUERY_STRING=q"sv);
+	EXPECT_EQ(StringRequest("http://dummy/wfu/dump.pl/foo;bar?q"), "200 REQUEST_URI=/wfu/dump.pl/foo;bar?q SCRIPT_NAME=/wfu/dump.pl PATH_INFO=/foo;bar QUERY_STRING=q"sv);
+	EXPECT_EQ(StringRequest("http://dummy/wfu/dump.pl/x;y/z?q"), "200 REQUEST_URI=/wfu/dump.pl/x;y/z?q SCRIPT_NAME=/wfu/dump.pl PATH_INFO=/x;y/z QUERY_STRING=q"sv);
+	EXPECT_EQ(StringRequest("http://dummy/wfu/dump.pl?q"), "200 REQUEST_URI=/wfu/dump.pl?q SCRIPT_NAME=/wfu/dump.pl PATH_INFO= QUERY_STRING=q"sv);
 
 	// not mapped
 	EXPECT_EQ(StringRequest("http://dummy/unknown"), "418"sv);
