@@ -205,6 +205,7 @@ TEST_F(BengProxyTest, All)
 	// CGI with PATH_INFO
 	EXPECT_EQ(StringRequest("http://dummy/enotdir/index.txt"), "200 hello"sv);
 	EXPECT_EQ(StringRequest("http://dummy/enotdir/dump.pl/foo?q"), "200 REQUEST_URI=/enotdir/dump.pl/foo?q SCRIPT_NAME=/enotdir/dump.pl PATH_INFO=/foo QUERY_STRING=q"sv);
+	EXPECT_EQ(StringRequest("http://dummy/enotdir/dump.pl/x/y/z?q"), "200 REQUEST_URI=/enotdir/dump.pl/x/y/z?q SCRIPT_NAME=/enotdir/dump.pl PATH_INFO=/x/y/z QUERY_STRING=q"sv);
 	EXPECT_EQ(StringRequest("http://dummy/enotdir/dump.pl?q"), "200 REQUEST_URI=/enotdir/dump.pl?q SCRIPT_NAME=/enotdir/dump.pl PATH_INFO= QUERY_STRING=q"sv);
 
 	// not allowed without UNSAFE_BASE
