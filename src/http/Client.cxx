@@ -835,6 +835,26 @@ HttpClient::HeadersFinished()
 		throw HttpClientError(HttpClientErrorCode::UNSPECIFIED,
 				      "unexpected interim response");
 
+	/* these checks are here and not in FeedHeaders() because this
+	   method is about to switch #state away from HEADERS and
+	   create the response body, and only AbortResponseHeaders()
+	   can deal with an error */
+
+	if (response.status == HttpStatus::CONTINUE) {
+		if (!request.pending_body || !HasInput())
+			throw HttpClientError(HttpClientErrorCode::UNSPECIFIED,
+					      "unexpected status 100");
+
+		if (!IsConnected())
+			throw HttpClientError(HttpClientErrorCode::UNSPECIFIED,
+					      "Peer closed the socket prematurely after status 100");
+	} else if (request.pending_body && http_is_upgrade(response.status) &&
+		   !IsConnected())
+		/* a SocketFilter may deliver these headers after the
+		   peer has closed */
+		throw HttpClientError(HttpClientErrorCode::UNSPECIFIED,
+				      "Peer closed the socket prematurely after status 101");
+
 	auto &response_headers = response.headers;
 
 	if (const char *header_connection = response_headers.Remove(connection_header);
@@ -1064,24 +1084,9 @@ HttpClient::FeedHeaders(std::span<const std::byte> b)
 
 	if (response.status == HttpStatus::CONTINUE) {
 		assert(response.state == Response::State::END);
-
-		if (!request.pending_body || !HasInput()) {
-#ifndef NDEBUG
-			/* assertion workaround */
-			response.state = Response::State::STATUS;
-#endif
-			throw HttpClientError(HttpClientErrorCode::UNSPECIFIED,
-					      "unexpected status 100");
-		}
-
-		if (!IsConnected()) {
-#ifndef NDEBUG
-			/* assertion workaround */
-			response.state = HttpClient::Response::State::STATUS;
-#endif
-			throw HttpClientError(HttpClientErrorCode::UNSPECIFIED,
-					      "Peer closed the socket prematurely after status 100");
-		}
+		assert(request.pending_body);
+		assert(HasInput());
+		assert(IsConnected());
 
 		/* reset state, we're now expecting the real response */
 		response.state = Response::State::STATUS;
@@ -1095,11 +1100,7 @@ HttpClient::FeedHeaders(std::span<const std::byte> b)
 		return BufferedResult::AGAIN;
 	} else if (request.pending_body) {
 		if (http_is_upgrade(response.status)) {
-			if (!IsConnected())
-				/* a SocketFilter may deliver these
-				   headers after the peer has closed */
-				throw HttpClientError(HttpClientErrorCode::UNSPECIFIED,
-						      "Peer closed the socket prematurely after status 101");
+			assert(IsConnected());
 
 			/* the server switches protocols; only now may
 			   the client's bytes be forwarded */
