@@ -327,7 +327,7 @@ CertCache::GetNoWildCardCached(std::string_view host, const char *_special) noex
 	for (auto [i, end] = map.equal_range(host); i != end; ++i) {
 		if (i->second.special == special) {
 			/* not using EventLoop::SteadyNow() because
-			   this method runs in a worker thread and */
+			   this method runs in a worker thread */
 			i->second.expires = std::chrono::steady_clock::now() + std::chrono::hours{24};
 			return UpRef(i->second);
 		}
