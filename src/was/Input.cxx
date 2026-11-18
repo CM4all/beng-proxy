@@ -366,6 +366,11 @@ WasInput::TryDirect() noexcept
 		return false;
 
 	case IstreamDirectResult::END:
+		/* the pipe is at end of file, but we are still
+		   expecting data; fail just like TryBuffered() does */
+		AbortError(std::make_exception_ptr(SocketClosedPrematurelyError{"server closed the data connection"}));
+		return false;
+
 	case IstreamDirectResult::CLOSED:
 		return false;
 
