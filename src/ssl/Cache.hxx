@@ -14,6 +14,7 @@
 #include "thread/Notify.hxx"
 #include "io/Logger.hxx"
 #include "util/Cancellable.hxx"
+#include "util/IntrusiveHashSet.hxx"
 #include "util/IntrusiveList.hxx"
 #include "util/TransparentHash.hxx"
 
@@ -70,7 +71,7 @@ class CertCache final : Pg::AsyncConnectionHandler, CertNameCacheHandler {
 	CAMap ca_certs;
 
 	/**
-	 * Protects #map, #queries.
+	 * Protects #map, #queries, #pending_queries.
 	 */
 	std::mutex mutex;
 
@@ -101,8 +102,24 @@ class CertCache final : Pg::AsyncConnectionHandler, CertNameCacheHandler {
 	struct Request;
 	class Query;
 
-	using QueryMap = std::map<std::string, Query, std::less<>>;
-	QueryMap queries;
+	struct QueryGetKey {
+		[[gnu::pure]]
+		std::string_view operator()(const Query &query) const noexcept;
+	};
+
+	/**
+	 * All #Query instances (owned by this container), including
+	 * #pending_queries and #current_query.
+	 */
+	IntrusiveHashSet<Query, 256,
+			 IntrusiveHashSetOperators<Query, QueryGetKey, TransparentHash,
+						   std::equal_to<std::string_view>>> queries;
+
+	/**
+	 * The #queries which have not been started yet, in the order
+	 * they were scheduled.
+	 */
+	IntrusiveList<Query> pending_queries;
 
 	/**
 	 * The query that is currently being executed.
@@ -110,7 +127,7 @@ class CertCache final : Pg::AsyncConnectionHandler, CertNameCacheHandler {
 	 * This field is not protected by #mutex because it is
 	 * accessed only from the main thread.
 	 */
-	QueryMap::iterator current_query = queries.end();
+	Query *current_query = nullptr;
 
 public:
 	CertCache(EventLoop &event_loop,

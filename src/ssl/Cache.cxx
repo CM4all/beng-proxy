@@ -13,6 +13,7 @@
 #include "co/Task.hxx"
 #include "event/Loop.hxx"
 #include "util/AllocatedString.hxx"
+#include "util/DeleteDisposer.hxx"
 
 #include <openssl/err.h>
 #include <openssl/ssl.h>
@@ -48,8 +49,15 @@ struct CertCache::Request final : IntrusiveListHook<>, Cancellable {
 	}
 };
 
-class CertCache::Query {
+class CertCache::Query final
+	: public IntrusiveHashSetHook<>, public IntrusiveListHook<>
+{
 	CertCache &cache;
+
+	/**
+	 * The #CertCache::queries key.
+	 */
+	const std::string key;
 
 	std::string host, special;
 
@@ -58,9 +66,10 @@ class CertCache::Query {
 	Co::InvokeTask invoke_task;
 
 public:
-	template<typename H, typename S>
-	Query(CertCache &_cache, H &&_host, S &&_special) noexcept
+	template<typename K, typename H, typename S>
+	Query(CertCache &_cache, K &&_key, H &&_host, S &&_special) noexcept
 		:cache(_cache),
+		 key(std::forward<K>(_key)),
 		 host(std::forward<H>(_host)),
 		 special(std::forward<S>(_special))
 	{
@@ -68,6 +77,10 @@ public:
 
 	~Query() noexcept {
 		assert(requests.empty());
+	}
+
+	std::string_view GetKey() const noexcept {
+		return key;
 	}
 
 	void AddRequest(Request &request) noexcept {
@@ -83,7 +96,7 @@ public:
 	}
 
 	void Start() noexcept {
-		assert(&cache.current_query->second == this);
+		assert(cache.current_query == this);
 		assert(!IsRunning());
 
 		invoke_task = Run();
@@ -96,7 +109,7 @@ public:
 	 * requests will be canceled.
 	 */
 	void Stop() noexcept {
-		assert(&cache.current_query->second == this);
+		assert(cache.current_query == this);
 		assert(IsRunning());
 
 		invoke_task = {};
@@ -116,6 +129,12 @@ private:
 
 	void OnCompletion(std::exception_ptr &&error) noexcept;
 };
+
+inline std::string_view
+CertCache::QueryGetKey::operator()(const Query &query) const noexcept
+{
+	return query.GetKey();
+}
 
 static Co::Task<UniqueCertKey>
 CoGetServerCertificateKeyMaybeWildcard(Pg::AsyncConnection &connection,
@@ -166,7 +185,7 @@ LockClearAndDispose(std::mutex &mutex, IntrusiveList<T> &list,
 Co::InvokeTask
 CertCache::Query::Run()
 {
-	assert(&cache.current_query->second == this);
+	assert(cache.current_query == this);
 
 	const char *_special = special.empty() ? nullptr : special.c_str();
 
@@ -200,7 +219,7 @@ CertCache::Query::Run()
 inline CertCache::Request *
 CertCache::Query::LockPopRequest() noexcept
 {
-	assert(&cache.current_query->second == this);
+	assert(cache.current_query == this);
 
 	const std::scoped_lock lock{cache.mutex};
 
@@ -209,7 +228,8 @@ CertCache::Query::LockPopRequest() noexcept
 		   lock; else a worker thread could add
 		   another Request to this (already drained)
 		   query just before it gets destructed */
-		cache.queries.erase(cache.current_query);
+		cache.queries.erase(cache.queries.iterator_to(*this));
+		delete this;
 		return nullptr;
 	}
 
@@ -221,7 +241,7 @@ CertCache::Query::LockPopRequest() noexcept
 inline void
 CertCache::Query::OnCompletion(std::exception_ptr &&error) noexcept
 {
-	assert(&cache.current_query->second == this);
+	assert(cache.current_query == this);
 
 	const State new_state = error ? State::ERROR : State::NOT_FOUND;
 
@@ -243,7 +263,7 @@ CertCache::Query::OnCompletion(std::exception_ptr &&error) noexcept
 
 	/* this Query instance is now deleted */
 
-	_cache.current_query = _cache.queries.end();
+	_cache.current_query = nullptr;
 
 	/* start the next query */
 	_cache.StartQuery();
@@ -258,7 +278,11 @@ CertCache::CertCache(EventLoop &event_loop,
 {
 }
 
-CertCache::~CertCache() noexcept = default;
+CertCache::~CertCache() noexcept
+{
+	pending_queries.clear();
+	queries.clear_and_dispose(DeleteDisposer{});
+}
 
 void
 CertCache::Expire() noexcept
@@ -293,10 +317,15 @@ CertCache::Disconnect() noexcept
 {
 	name_cache.Disconnect();
 
-	if (current_query != queries.end()) {
+	if (current_query != nullptr) {
 		const std::scoped_lock lock{mutex};
-		current_query->second.Stop();
-		current_query = queries.end();
+		current_query->Stop();
+
+		/* it is not in #pending_queries anymore, and
+		   nothing else would ever start it again */
+		pending_queries.push_front(*current_query);
+
+		current_query = nullptr;
 	}
 
 	db.Disconnect();
@@ -358,7 +387,7 @@ CertCache::GetNoWildCardCached(std::string_view host, const char *_special) noex
 void
 CertCache::StartQuery() noexcept
 {
-	if (current_query != queries.end())
+	if (current_query != nullptr)
 		/* already busy */
 		return;
 
@@ -366,20 +395,23 @@ CertCache::StartQuery() noexcept
 		/* database is (re)connecting */
 		return;
 
-	/* pick an arbitrary request and start the database query */
+	/* start the query which was scheduled first */
 	const std::scoped_lock lock{mutex};
-	while (!queries.empty()) {
-		auto i = queries.begin();
-		if (!i->second.IsCancelled()) {
+	while (!pending_queries.empty()) {
+		auto &query = pending_queries.front();
+		pending_queries.pop_front();
+
+		if (!query.IsCancelled()) {
 			/* found a candidate - start it */
-			current_query = i;
-			current_query->second.Start();
+			current_query = &query;
+			current_query->Start();
 			break;
 		}
 
 		/* this query was scheduled, but meanwhile all
 		   requests were cancelled, so don't bother */
-		queries.erase(i);
+		queries.erase_and_dispose(queries.iterator_to(query),
+					  DeleteDisposer{});
 	}
 }
 
@@ -404,13 +436,17 @@ CertCache::ScheduleQuery(SSL &ssl, std::string_view host,
 		return;
 	}
 
-	const bool was_empty = queries.empty();
+	const bool was_empty = pending_queries.empty();
 
-	const std::string_view _special = special != nullptr ? std::string_view{special} : ""sv;
-	auto &query = queries.try_emplace(std::move(key),
-					  *this, host, _special).first->second;
+	auto [i, inserted] = queries.insert_check(std::string_view{key});
+	if (inserted) {
+		const std::string_view _special = special != nullptr ? std::string_view{special} : ""sv;
+		auto *query = new Query(*this, std::move(key), host, _special);
+		i = queries.insert_commit(i, *query);
+		pending_queries.push_back(*query);
+	}
 
-	query.AddRequest(*request);
+	i->AddRequest(*request);
 
 	if (was_empty)
 		query_added_notify.Signal();
