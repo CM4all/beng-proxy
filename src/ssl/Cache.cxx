@@ -139,25 +139,6 @@ CertCache::QueryGetKey::operator()(const Query &query) const noexcept
 	return query.GetKey();
 }
 
-static Co::Task<UniqueCertKey>
-CoGetServerCertificateKeyMaybeWildcard(Pg::AsyncConnection &connection,
-				       const CertDatabaseConfig &config,
-				       const char *name, const char *special)
-{
-	auto cert_key = co_await CoGetServerCertificateKey(connection, config,
-							   name, special);
-	if (!cert_key) {
-		const auto wildcard = MakeCommonNameWildcard(name);
-		if (!wildcard.empty())
-			cert_key = co_await
-				CoGetServerCertificateKey(connection, config,
-							  wildcard.c_str(),
-							  special);
-	}
-
-	co_return cert_key;
-}
-
 inline Co::InvokeTask
 CertCache::Query::Run()
 {
@@ -165,15 +146,36 @@ CertCache::Query::Run()
 
 	const char *_special = special.empty() ? nullptr : special.c_str();
 
-	auto _cert_key = co_await CoGetServerCertificateKeyMaybeWildcard(cache.db,
-									 cache.config,
-									 host.c_str(),
-									 _special);
-	if (_cert_key)
-		cert_key = cache.Add(std::move(_cert_key), std::move(special));
-
 	/* the #requests are finished by OnCompletion() which runs
 	   right after this coroutine has returned */
+
+	auto _cert_key = co_await CoGetServerCertificateKey(cache.db, cache.config,
+							    host.c_str(), _special);
+
+	if (!_cert_key) {
+		/* there is no certificate for this host name; fall
+		   back to the wildcard */
+
+		const auto wildcard = MakeCommonNameWildcard(host);
+		if (wildcard.empty())
+			co_return;
+
+		/* another query may have added this wildcard
+		   certificate to the cache while this one was waiting
+		   for the database */
+		if (auto item = cache.GetNoWildCardCached(wildcard, _special)) {
+			cert_key = std::move(*item);
+			co_return;
+		}
+
+		_cert_key = co_await CoGetServerCertificateKey(cache.db, cache.config,
+							       wildcard.c_str(),
+							       _special);
+		if (!_cert_key)
+			co_return;
+	}
+
+	cert_key = cache.Add(std::move(_cert_key), std::move(special));
 }
 
 inline void
