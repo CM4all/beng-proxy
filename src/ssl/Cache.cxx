@@ -65,6 +65,12 @@ class CertCache::Query final
 
 	Co::InvokeTask invoke_task;
 
+	/**
+	 * The result of the database query, set by Run().  It is
+	 * applied to all #requests by OnCompletion().
+	 */
+	UniqueCertKey cert_key;
+
 public:
 	template<typename K, typename H, typename S>
 	Query(CertCache &_cache, K &&_key, H &&_host, S &&_special) noexcept
@@ -119,14 +125,11 @@ private:
 	Co::InvokeTask Run();
 
 	/**
-	 * Pop a #Request from the #requests list and return a
-	 * pointer; or the #requests list is empty, destroy this
-	 * #Query object and return nullptr.  After nullptr was
-	 * returned, this object is gone and CertCache::current_query
-	 * is invalid; the caller must reset it.
+	 * The coroutine has finished; unregister this #Query (from
+	 * CertCache::queries and CertCache::current_query), finish
+	 * all #requests with #cert_key (or with the failure indicated
+	 * by the given error) and destroy this object.
 	 */
-	Request *LockPopRequest() noexcept;
-
 	void OnCompletion(std::exception_ptr &&error) noexcept;
 };
 
@@ -155,33 +158,6 @@ CoGetServerCertificateKeyMaybeWildcard(Pg::AsyncConnection &connection,
 	co_return cert_key;
 }
 
-template<typename T>
-static T *
-LockPopFront(std::mutex &mutex, IntrusiveList<T> &list)
-{
-	const std::scoped_lock lock{mutex};
-
-	if (list.empty())
-		return nullptr;
-
-	auto *item = &list.front();
-	list.pop_front();
-	return item;
-}
-
-/**
- * Like IntrusiveList::clear_and_dispose(), but lock the given mutex
- * for all list accesses.
- */
-template<typename T>
-static void
-LockClearAndDispose(std::mutex &mutex, IntrusiveList<T> &list,
-		    Disposer<T> auto disposer)
-{
-	while (auto *item = LockPopFront(mutex, list))
-		disposer(item);
-}
-
 Co::InvokeTask
 CertCache::Query::Run()
 {
@@ -189,53 +165,15 @@ CertCache::Query::Run()
 
 	const char *_special = special.empty() ? nullptr : special.c_str();
 
-	auto cert_key = co_await CoGetServerCertificateKeyMaybeWildcard(cache.db,
-									cache.config,
-									host.c_str(),
-									_special);
-	if (!cert_key)
-		/* certificate was not found; the
-		   SslCompletionHandlers will be invoked by
-		   OnCompletion() */
-		co_return;
+	auto _cert_key = co_await CoGetServerCertificateKeyMaybeWildcard(cache.db,
+									 cache.config,
+									 host.c_str(),
+									 _special);
+	if (_cert_key)
+		cert_key = cache.Add(std::move(_cert_key), _special);
 
-	cert_key = cache.Add(std::move(cert_key),
-			     _special);
-
-	LockClearAndDispose(cache.mutex, requests, [this, &cert_key](Request *request){
-		try {
-			cache.Apply(request->ssl, cert_key);
-			cache.state_idx.Set(request->ssl, State::COMPLETE);
-		} catch (...) {
-			cache.logger(1, std::current_exception());
-			cache.state_idx.Set(request->ssl, State::ERROR);
-		}
-
-		InvokeSslCompletionHandler(request->ssl);
-		delete request;
-	});
-}
-
-inline CertCache::Request *
-CertCache::Query::LockPopRequest() noexcept
-{
-	assert(cache.current_query == this);
-
-	const std::scoped_lock lock{cache.mutex};
-
-	if (requests.empty()) {
-		/* erase the query while still holding the
-		   lock; else a worker thread could add
-		   another Request to this (already drained)
-		   query just before it gets destructed */
-		cache.queries.erase(cache.queries.iterator_to(*this));
-		delete this;
-		return nullptr;
-	}
-
-	auto *request = &requests.front();
-	requests.pop_front();
-	return request;
+	/* the #requests are finished by OnCompletion() which runs
+	   right after this coroutine has returned */
 }
 
 inline void
@@ -243,30 +181,42 @@ CertCache::Query::OnCompletion(std::exception_ptr &&error) noexcept
 {
 	assert(cache.current_query == this);
 
-	const State new_state = error ? State::ERROR : State::NOT_FOUND;
+	const State failure_state = error ? State::ERROR : State::NOT_FOUND;
 
 	if (error)
 		cache.logger(1, std::move(error));
 
-	/* copy the "cache" reference to the stack because the
-	   last LockPopRequest() will delete this object */
-	auto &_cache = cache;
+	/* unregister this query before finishing the requests; from
+	   then on, no new requests can be added and we don't need to
+	   lock the mutex, and Disconnect() cannot move this (already
+	   finished) query back to #pending_queries */
+	cache.current_query = nullptr;
 
-	/* invoke all remaining SslCompletionHandlers; this is
-	   only relevant if Run() has not finished
-	   sucessfully */
-	while (auto *request = LockPopRequest()) {
-		_cache.state_idx.Set(request->ssl, new_state);
-		InvokeSslCompletionHandler(request->ssl);
-		delete request;
+	{
+		const std::lock_guard lock{cache.mutex};
+		cache.queries.erase(cache.queries.iterator_to(*this));
 	}
 
-	/* this Query instance is now deleted */
-
-	_cache.current_query = nullptr;
-
 	/* start the next query */
-	_cache.DeferStartQuery();
+	cache.DeferStartQuery();
+
+	requests.clear_and_dispose([this, failure_state](Request *request){
+		if (cert_key) {
+			try {
+				cache.Apply(request->ssl, cert_key);
+				cache.state_idx.Set(request->ssl, State::COMPLETE);
+			} catch (...) {
+				cache.logger(1, std::current_exception());
+				cache.state_idx.Set(request->ssl, State::ERROR);
+			}
+		} else
+			cache.state_idx.Set(request->ssl, failure_state);
+
+		InvokeSslCompletionHandler(request->ssl);
+		delete request;
+	});
+
+	delete this;
 }
 
 CertCache::CertCache(EventLoop &event_loop,
