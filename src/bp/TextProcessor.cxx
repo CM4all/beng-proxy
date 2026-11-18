@@ -56,8 +56,11 @@ MustEscape(char ch) noexcept
 	   value has already been escaped, and this isn't about
 	   protecting URIs, but about protecting HTML and
 	   JavaScript from injection attacks */
-	return ch == '\'' || ch == '"' || ch == '&' ||
-		ch == '<' || ch == '>' ||
+	/* the backslash is the escape character of JavaScript and CSS
+	   string literals, and the backtick delimits template
+	   literals */
+	return ch == '\'' || ch == '"' || ch == '`' || ch == '\\' ||
+		ch == '&' || ch == '<' || ch == '>' ||
 		!IsPrintableASCII(ch);
 }
 

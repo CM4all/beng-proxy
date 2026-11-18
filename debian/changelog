@@ -11,6 +11,7 @@ cm4all-beng-proxy (22.2) unstable; urgency=low
   * bp: do not leak query string into PATH_INFO with ENOTDIR
   * bp: allow multiple PATH_INFO segments with ENOTDIR and LAYOUT
   * bp: don't apply transformations to the error document
+  * bp: escape backslash and backtick in substituted entity values
   * certdb: look up specific SNI certificate even if wildcard is cached
   * certdb: send database queries in the order they arrived
   * certdb: fix deadlock after a failed database query
