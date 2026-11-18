@@ -47,7 +47,7 @@ WidgetContainerParser::OnStartElementInWidget(XmlParserTagType type,
 
 	if (name == "widget"sv) {
 		if (type == XmlParserTagType::CLOSE)
-			tag = Tag::WIDGET;
+			tag = Tag::WIDGET_CLOSE;
 	} else if (name == "path-info"sv) {
 		tag = Tag::WIDGET_PATH_INFO;
 	} else if (name == "param"sv ||
@@ -167,6 +167,7 @@ WidgetContainerParser::OnXmlAttributeFinished(const XmlParserAttribute &attr) no
 	case Tag::NONE:
 	case Tag::IGNORE:
 	case Tag::OTHER:
+	case Tag::WIDGET_CLOSE:
 		break;
 
 	case Tag::WIDGET:
@@ -299,7 +300,7 @@ expansible_buffer_append_uri_escaped(ExpansibleBuffer &buffer,
 bool
 WidgetContainerParser::OnXmlTagFinished(const XmlParserTag &xml_tag) noexcept
 {
-	if (tag == Tag::WIDGET) {
+	if (tag == Tag::WIDGET || tag == Tag::WIDGET_CLOSE) {
 		if (xml_tag.type == XmlParserTagType::OPEN || xml_tag.type == XmlParserTagType::SHORT) {
 			if (!WantWidget(*widget.widget)) {
 				CancelWidget();

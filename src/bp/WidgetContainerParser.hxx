@@ -18,6 +18,14 @@ protected:
 		IGNORE,
 		OTHER,
 		WIDGET,
+
+		/**
+		 * The closing "c:widget" tag.  Its attributes are
+		 * ignored because the widget has already been
+		 * matched.
+		 */
+		WIDGET_CLOSE,
+
 		WIDGET_PATH_INFO,
 		WIDGET_PARAM,
 		WIDGET_HEADER,

@@ -882,6 +882,7 @@ XmlProcessor::OnXmlAttributeFinished(const XmlParserAttribute &attr) noexcept
 	case Tag::IGNORE:
 	case Tag::OTHER:
 	case Tag::WIDGET:
+	case Tag::WIDGET_CLOSE:
 	case Tag::WIDGET_PARAM:
 	case Tag::WIDGET_HEADER:
 	case Tag::WIDGET_PATH_INFO:
