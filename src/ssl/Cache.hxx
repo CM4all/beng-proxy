@@ -12,6 +12,7 @@
 #include "certdb/Config.hxx"
 #include "pg/AsyncConnection.hxx"
 #include "thread/Notify.hxx"
+#include "event/DeferEvent.hxx"
 #include "io/Logger.hxx"
 #include "util/Cancellable.hxx"
 #include "util/IntrusiveHashSet.hxx"
@@ -47,6 +48,11 @@ class CertCache final : Pg::AsyncConnectionHandler, CertNameCacheHandler {
 	};
 
 	const OpenSSL::IntegralExDataIndex<State> state_idx;
+
+	/**
+	 * Move the StartQuery() call out of the current stack frame.
+	 */
+	DeferEvent defer_start_query;
 
 	/**
 	 * Used to move the Apply() call from a worker thread to the
@@ -182,6 +188,10 @@ private:
 	Query *LockPopPendingQuery() noexcept;
 
 	void StartQuery() noexcept;
+
+	void DeferStartQuery() noexcept {
+		defer_start_query.Schedule();
+	}
 
 	/**
 	 * Caller must lock #mutex.

@@ -266,12 +266,13 @@ CertCache::Query::OnCompletion(std::exception_ptr &&error) noexcept
 	_cache.current_query = nullptr;
 
 	/* start the next query */
-	_cache.StartQuery();
+	_cache.DeferStartQuery();
 }
 
 CertCache::CertCache(EventLoop &event_loop,
 		     const CertDatabaseConfig &_config) noexcept
 	:logger("CertCache"), config(_config),
+	 defer_start_query(event_loop, BIND_THIS_METHOD(StartQuery)),
 	 query_added_notify(event_loop, BIND_THIS_METHOD(StartQuery)),
 	 db(event_loop, Pg::Config{config}, *this),
 	 name_cache(event_loop, _config, *this)
@@ -329,6 +330,7 @@ CertCache::Disconnect() noexcept
 	}
 
 	db.Disconnect();
+	defer_start_query.Cancel();
 	query_added_notify.Disable();
 }
 
@@ -602,7 +604,7 @@ CertCache::OnConnect()
 {
 	logger(5, "connected to certificate database");
 
-	StartQuery();
+	DeferStartQuery();
 }
 
 void
