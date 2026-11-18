@@ -207,15 +207,6 @@ private:
 
 	void OnAgain() noexcept;
 
-	void SendHTTP1(Request &r) noexcept {
-		r.SendHTTP1(GetEventLoop(), parent.fs_balancer);
-	}
-
-	void SendHTTP2(Request &r, CancellablePointer &cancel_ptr) noexcept {
-		r.SendHTTP2(GetEventLoop(), parent.nghttp2_stock,
-			    this,  cancel_ptr);
-	}
-
 	/* virtual methods from class NgHttp2::AlpnHandler */
 	void OnAlpnError() noexcept override;
 	void OnAlpnNoMismatch() noexcept override;
