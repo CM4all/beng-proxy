@@ -612,12 +612,10 @@ if get_option('certdb')
     executable(
       'TestWrapKey',
       'TestWrapKey.cxx',
-      '../src/certdb/WrapKey.cxx',
       include_directories: inc,
       dependencies: [
-        crypto_dep,
+        libcertdb_dep,
         system_dep,
-        sodium_dep,
         gtest,
       ],
     ),

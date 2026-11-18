@@ -347,13 +347,9 @@ ssl2_sources = []
 
 if get_option('certdb')
   subdir('libcommon/src/pg')
+  subdir('src/certdb')
 
   ssl2_sources += [
-    '../certdb/CertDatabase.cxx',
-    '../certdb/CoCertDatabase.cxx',
-    '../certdb/FromResult.cxx',
-    '../certdb/WrapKey.cxx',
-    '../certdb/Wildcard.cxx',
     'CAMap.cxx',
     'Cache.cxx',
     'NameCache.cxx',
@@ -361,6 +357,7 @@ if get_option('certdb')
   ]
 else
   pg_dep = dependency('', required: false)
+  libcertdb_dep = dependency('', required: false)
 endif
 
 if get_option('certdb') or lua_dep.found()
@@ -772,7 +769,6 @@ executable(
   'src/http/Address.cxx',
   'src/http/ResponseHandler.cxx',
   'src/PInstance.cxx',
-  'src/certdb/Config.cxx',
   'src/lb/Context.cxx',
   'src/lb/Listener.cxx',
   'src/lb/SimpleHttpResponse.cxx',
@@ -838,6 +834,7 @@ executable(
     net_dep,
     net_log_dep,
     ssl_dep,
+    libcertdb_dep,
     pg_dep,
     nghttp2_server_dep,
     nghttp2_client_dep,
@@ -869,13 +866,8 @@ executable(
 if get_option('certdb')
   executable(
     'cm4all-certdb',
-    'src/certdb/Config.cxx',
     'src/certdb/Progress.cxx',
-    'src/certdb/WrapKey.cxx',
-    'src/certdb/CertDatabase.cxx',
     'src/certdb/Migrate.cxx',
-    'src/certdb/FromResult.cxx',
-    'src/certdb/Wildcard.cxx',
     'src/certdb/GlueHttpClient.cxx',
     'src/certdb/AcmeError.cxx',
     'src/certdb/AcmeHttp.cxx',
@@ -909,6 +901,7 @@ if get_option('certdb')
       http_dep,
       io_dep,
       jwt_dep,
+      libcertdb_dep,
     ],
     install: true,
   )
