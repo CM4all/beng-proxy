@@ -82,4 +82,27 @@ CertDatabase::Migrate()
 	/* new index for faster "ON DELETE CASCADE" added in version 17.0.85 */
 
 	conn.Execute("CREATE INDEX IF NOT EXISTS server_certificate_alt_name_owner ON server_certificate_alt_name(server_certificate_id)");
+
+	/* time zones added in version 22.3 */
+
+	if (Pg::GetColumnType(conn, schema, "server_certificate",
+			      "not_after") == "timestamp without time zone")
+		/* not_before and not_after were inserted as
+		   ASN1_TIME_print() strings ("... GMT"), and the
+		   column type dropped the zone, so they hold UTC;
+		   "modified" is read in this session's time zone */
+		conn.Execute("ALTER TABLE server_certificate"
+			     " ALTER COLUMN not_before TYPE timestamp with time zone"
+			     "  USING not_before AT TIME ZONE 'UTC',"
+			     " ALTER COLUMN not_after TYPE timestamp with time zone"
+			     "  USING not_after AT TIME ZONE 'UTC',"
+			     " ALTER COLUMN modified TYPE timestamp with time zone");
+
+	if (Pg::TableExists(conn, schema, "acme_account") &&
+	    Pg::GetColumnType(conn, schema, "acme_account",
+			      "time_created") == "timestamp without time zone")
+		conn.Execute("ALTER TABLE acme_account"
+			     " ALTER COLUMN time_created TYPE timestamp with time zone,"
+			     " ALTER COLUMN time_used TYPE timestamp with time zone,"
+			     " ALTER COLUMN time_rejected TYPE timestamp with time zone");
 }

@@ -5,6 +5,7 @@ cm4all-beng-proxy (22.3) unstable; urgency=low
   * bp: ignore unparsable and multi-range "Range" headers instead of 416
   * bp: fix "Range" suffix covering the whole file
   * http_client: fix crash bug with late "101" response
+  * certdb: store time stamps with time zone
 
  --   
 

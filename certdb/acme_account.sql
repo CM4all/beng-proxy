@@ -39,13 +39,13 @@ CREATE TABLE IF NOT EXISTS acme_account (
     enabled boolean NOT NULL DEFAULT TRUE,
 
     -- when was this account was created?
-    time_created timestamp NOT NULL DEFAULT now(),
+    time_created timestamp with time zone NOT NULL DEFAULT now(),
 
     -- when was this account most recently used?
-    time_used timestamp NULL,
+    time_used timestamp with time zone NULL,
 
     -- when was this account most recently rejected?
-    time_rejected timestamp NULL
+    time_rejected timestamp with time zone NULL
 );
 
 -- for obtaining the least recently used account

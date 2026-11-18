@@ -15,7 +15,7 @@ CREATE TABLE IF NOT EXISTS server_certificate (
     deleted boolean NOT NULL DEFAULT FALSE,
 
     -- this column must be updated whenever the record is modified
-    modified timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    modified timestamp with time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     --------------------------------
     -- Additional (external) data
@@ -36,8 +36,8 @@ CREATE TABLE IF NOT EXISTS server_certificate (
     common_name varchar(256) NOT NULL,
     issuer_common_name varchar(256) NULL,
 
-    not_before timestamp NOT NULL,
-    not_after timestamp NOT NULL,
+    not_before timestamp with time zone NOT NULL,
+    not_after timestamp with time zone NOT NULL,
 
     --------------------------------
     -- The actual X.509 certificate
