@@ -104,6 +104,9 @@ class CertCache final : Pg::AsyncConnectionHandler, CertNameCacheHandler {
 	/**
 	 * Map host names to SSL_CTX instances.  The key may be a
 	 * wildcard.
+	 *
+	 * Protected by #mutex.  Modified only by the #EventLoop
+	 * thread, may thus be read withing holding the lock.
 	 */
 	std::unordered_multimap<std::string, Item, TransparentHash, std::equal_to<>> map;
 
@@ -177,7 +180,7 @@ private:
 			  std::string &&special);
 
 	/**
-	 * Caller must lock #mutex.
+	 * Caller must lock #mutex if not on the #EventLoop thread.
 	 */
 	[[gnu::pure]]
 	std::optional<UniqueCertKey> GetNoWildCardCached(std::string_view host,
