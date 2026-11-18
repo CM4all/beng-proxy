@@ -83,8 +83,9 @@ TcpBalancerRequest::OnStockItemReady(StockItem &item) noexcept
 	auto &base = BR::Cast(*this);
 	base.ConnectSuccess();
 
-	handler.OnStockItemReady(item);
+	auto &_handler = handler;
 	base.Destroy();
+	_handler.OnStockItemReady(item);
 }
 
 void
@@ -92,8 +93,9 @@ TcpBalancerRequest::OnStockItemError(std::exception_ptr ep) noexcept
 {
 	auto &base = BR::Cast(*this);
 	if (!base.ConnectFailure(GetEventLoop().SteadyNow())) {
-		handler.OnStockItemError(ep);
+		auto &_handler = handler;
 		base.Destroy();
+		_handler.OnStockItemError(std::move(ep));
 	}
 }
 
