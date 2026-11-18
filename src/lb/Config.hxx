@@ -12,7 +12,12 @@
 #include "access_log/Config.hxx"
 #include "ssl/Config.hxx"
 #include "net/SocketConfig.hxx"
+#include "config.h" // for HAVE_AVAHI
+#include "lb_features.h" // for ENABLE_CERTDB
+
+#ifdef ENABLE_CERTDB
 #include "certdb/Config.hxx"
+#endif
 
 #ifdef HAVE_AVAHI
 #include "PrometheusDiscoveryConfig.hxx"
@@ -31,8 +36,10 @@ struct LbControlConfig : SocketConfig {
 	}
 };
 
+#ifdef ENABLE_CERTDB
 struct LbCertDatabaseConfig : CertDatabaseConfig {
 };
+#endif
 
 struct LbConfig {
 	MultiAccessLogConfig access_log;
@@ -42,7 +49,9 @@ struct LbConfig {
 	// TODO there is no ConfigParser for this yet
 	SslClientConfig ssl_client;
 
+#ifdef ENABLE_CERTDB
 	std::map<std::string, LbCertDatabaseConfig> cert_dbs;
+#endif
 
 	std::map<std::string, LbMonitorConfig> monitors;
 
@@ -81,6 +90,7 @@ struct LbConfig {
 			: nullptr;
 	}
 
+#ifdef ENABLE_CERTDB
 	template<typename T>
 	[[gnu::pure]]
 	const LbCertDatabaseConfig *FindCertDb(T &&t) const noexcept {
@@ -89,6 +99,7 @@ struct LbConfig {
 			? &i->second
 			: nullptr;
 	}
+#endif
 
 	template<typename T>
 	[[gnu::pure]]

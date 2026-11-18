@@ -20,19 +20,18 @@
 
 using std::string_view_literals::operator""sv;
 
+#ifdef ENABLE_CERTDB
+
 static void
 lb_check(EventLoop &event_loop, const LbCertDatabaseConfig &config)
 {
-#ifdef ENABLE_CERTDB
 	CertCache cache(event_loop, config);
 
 	for (const auto &ca_path : config.ca_certs)
 		cache.LoadCaCertificate(ca_path.c_str());
-#else
-	(void)event_loop;
-	(void)config;
-#endif
 }
+
+#endif
 
 static void
 lb_check(const LbListenerConfig &config)
@@ -43,8 +42,9 @@ lb_check(const LbListenerConfig &config)
 }
 
 void
-lb_check(EventLoop &event_loop, const LbConfig &config)
+lb_check([[maybe_unused]] EventLoop &event_loop, const LbConfig &config)
 {
+#ifdef ENABLE_CERTDB
 	for (const auto &cdb : config.cert_dbs) {
 		try {
 			lb_check(event_loop, cdb.second);
@@ -52,6 +52,7 @@ lb_check(EventLoop &event_loop, const LbConfig &config)
 			std::throw_with_nested(FmtRuntimeError("cert_db {:?}"sv, cdb.first));
 		}
 	}
+#endif
 
 	for (const auto &listener : config.listeners) {
 		try {

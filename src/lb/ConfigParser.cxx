@@ -49,6 +49,7 @@ class LbConfigParser final : public NestedConfigParser {
 		void Finish() override;
 	};
 
+#ifdef ENABLE_CERTDB
 	class CertDatabase final : public ConfigParser {
 		LbConfigParser &parent;
 		std::string name;
@@ -63,6 +64,7 @@ class LbConfigParser final : public NestedConfigParser {
 		void ParseLine(FileLineParser &line) override;
 		void Finish() override;
 	};
+#endif
 
 	class Monitor final : public ConfigParser {
 		LbConfigParser &parent;
@@ -291,6 +293,8 @@ LbConfigParser::CreateGlobalHttpCheck(FileLineParser &line)
 	SetChild(std::make_unique<GlobalHttpCheck>(*this));
 }
 
+#ifdef ENABLE_CERTDB
+
 void
 LbConfigParser::CertDatabase::ParseLine(FileLineParser &line)
 {
@@ -322,6 +326,8 @@ LbConfigParser::CreateCertDatabase(FileLineParser &line)
 
 	SetChild(std::make_unique<CertDatabase>(*this, name));
 }
+
+#endif // ENABLE_CERTDB
 
 void
 LbConfigParser::Monitor::ParseLine(FileLineParser &line)
@@ -1277,6 +1283,7 @@ LbConfigParser::Listener::ParseLine(FileLineParser &line)
 		line.ExpectEnd();
 
 		config.ssl = value;
+#ifdef ENABLE_CERTDB
 	} else if (StringIsEqual(word, "ssl_cert_db")) {
 		if (!config.ssl)
 			throw LineParser::Error("SSL is not enabled");
@@ -1288,6 +1295,7 @@ LbConfigParser::Listener::ParseLine(FileLineParser &line)
 		config.cert_db = parent.config.FindCertDb(name);
 		if (config.cert_db == nullptr)
 			throw LineParser::Error(std::string("No such cert_db: ") + name);
+#endif
 	} else if (StringIsEqual(word, "ssl_cert")) {
 		if (!config.ssl)
 			throw LineParser::Error("SSL is not enabled");
@@ -1508,8 +1516,10 @@ LbConfigParser::ParseLine2(FileLineParser &line)
 		CreateListener(line);
 	else if (StringIsEqual(word, "monitor"))
 		CreateMonitor(line);
+#ifdef ENABLE_CERTDB
 	else if (StringIsEqual(word, "cert_db"))
 		CreateCertDatabase(line);
+#endif
 	else if (StringIsEqual(word, "control"))
 		CreateControl(line);
 	else if (StringIsEqual(word, "global_http_check"))
