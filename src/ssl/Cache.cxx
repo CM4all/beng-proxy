@@ -384,6 +384,28 @@ CertCache::GetNoWildCardCached(std::string_view host, const char *_special) noex
 	return std::nullopt;
 }
 
+inline CertCache::Query *
+CertCache::LockPopPendingQuery() noexcept
+{
+	const std::scoped_lock lock{mutex};
+
+	/* start the query which was scheduled first */
+	while (!pending_queries.empty()) {
+		auto &query = pending_queries.front();
+		pending_queries.pop_front();
+
+		if (!query.IsCancelled())
+			return &query;
+
+		/* this query was scheduled, but meanwhile all
+		   requests were cancelled, so don't bother */
+		queries.erase_and_dispose(queries.iterator_to(query),
+					  DeleteDisposer{});
+	}
+
+	return nullptr;
+}
+
 void
 CertCache::StartQuery() noexcept
 {
@@ -395,24 +417,12 @@ CertCache::StartQuery() noexcept
 		/* database is (re)connecting */
 		return;
 
-	/* start the query which was scheduled first */
-	const std::scoped_lock lock{mutex};
-	while (!pending_queries.empty()) {
-		auto &query = pending_queries.front();
-		pending_queries.pop_front();
+	/* pick the query which was scheduled first */
+	current_query = LockPopPendingQuery();
+	if (current_query == nullptr)
+		return;
 
-		if (!query.IsCancelled()) {
-			/* found a candidate - start it */
-			current_query = &query;
-			current_query->Start();
-			break;
-		}
-
-		/* this query was scheduled, but meanwhile all
-		   requests were cancelled, so don't bother */
-		queries.erase_and_dispose(queries.iterator_to(query),
-					  DeleteDisposer{});
-	}
+	current_query->Start();
 }
 
 void

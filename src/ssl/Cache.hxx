@@ -175,6 +175,12 @@ private:
 	std::optional<UniqueCertKey> GetNoWildCardCached(std::string_view host,
 							 const char *special) noexcept;
 
+	/**
+	 * Pop the first uncancelled #Query from #pending_queries
+	 * (while holding #mutex).
+	 */
+	Query *LockPopPendingQuery() noexcept;
+
 	void StartQuery() noexcept;
 
 	/**

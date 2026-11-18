@@ -13,6 +13,7 @@ cm4all-beng-proxy (22.2) unstable; urgency=low
   * bp: don't apply transformations to the error document
   * certdb: look up specific SNI certificate even if wildcard is cached
   * certdb: send database queries in the order they arrived
+  * certdb: fix deadlock after a failed database query
   * dbus: dispatch libdbus timeouts
   * fcgi: use non-blocking write for STDERR pipes
   * http_cache: make Cache-Control case-insensitive
