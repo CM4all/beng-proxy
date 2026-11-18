@@ -31,7 +31,7 @@ Equals(std::span<const unsigned char> a,
 }
 
 LookupCertResult
-DbSslCertCallback::OnCertCallback(SSL &ssl, const char *name) noexcept
+DbSslCertCallback::OnCertCallback(SSL &ssl, std::string_view name) noexcept
 {
 	const char *special = nullptr;
 

@@ -16,5 +16,5 @@ public:
 		:cache(_cache) {}
 
 	LookupCertResult OnCertCallback(SSL &ssl,
-					const char *name) noexcept override;
+					std::string_view name) noexcept override;
 };

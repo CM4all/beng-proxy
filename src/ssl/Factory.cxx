@@ -184,7 +184,7 @@ SslFactory::CertCallback(SSL &ssl) noexcept
 	/* check the certificate database */
 
 	if (cert_callback) {
-		switch (cert_callback->OnCertCallback(ssl, host_name.data())) {
+		switch (cert_callback->OnCertCallback(ssl, host_name)) {
 		case LookupCertResult::NOT_FOUND:
 			break;
 

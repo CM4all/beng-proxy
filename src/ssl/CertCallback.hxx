@@ -8,6 +8,8 @@
 
 #include <openssl/ossl_typ.h>
 
+#include <string_view>
+
 class SslCompletionHandler;
 class CancellablePointer;
 
@@ -29,5 +31,5 @@ public:
 	 * #IN_PROGRESS; using its #CancellablePointer field, the
 	 * caller may cancel the operation
 	 */
-	virtual LookupCertResult OnCertCallback(SSL &ssl, const char *name) noexcept = 0;
+	virtual LookupCertResult OnCertCallback(SSL &ssl, std::string_view name) noexcept = 0;
 };
