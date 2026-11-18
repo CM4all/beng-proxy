@@ -98,6 +98,12 @@ CatchIstream::SendSpace() noexcept
 			return;
 
 		available -= nbytes;
+
+		if (nbytes < chunk)
+			chunk -= nbytes;
+		else
+			chunk = 0;
+
 		if (nbytes < length)
 			return;
 	} while (available > 0);
