@@ -486,17 +486,22 @@ CertCache::Apply(SSL &ssl, std::string_view host,
 	if (auto item = GetNoWildCardCached(host, special))
 		return ApplyAndSetState(ssl, *item);
 
-	const auto wildcard = MakeCommonNameWildcard(host);
-	if (!wildcard.empty()) {
-		if (auto item = GetNoWildCardCached(wildcard, special))
-			return ApplyAndSetState(ssl, *item);
-	}
-
-	if (name_cache.Lookup(host) ||
-	    (!wildcard.empty() && name_cache.Lookup(wildcard))) {
+	if (name_cache.Lookup(host)) {
 		state_idx.Set(ssl, State::IN_PROGRESS);
 		ScheduleQuery(ssl, host, special);
 		return LookupCertResult::IN_PROGRESS;
+	}
+
+	if (const auto wildcard = MakeCommonNameWildcard(host);
+	    !wildcard.empty()) {
+		if (auto item = GetNoWildCardCached(wildcard, special))
+			return ApplyAndSetState(ssl, *item);
+
+		if (name_cache.Lookup(wildcard)) {
+			state_idx.Set(ssl, State::IN_PROGRESS);
+			ScheduleQuery(ssl, host, special);
+			return LookupCertResult::IN_PROGRESS;
+		}
 	}
 
 	state_idx.Set(ssl, State::NOT_FOUND);
