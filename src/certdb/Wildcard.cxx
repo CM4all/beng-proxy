@@ -4,6 +4,10 @@
 
 #include "Wildcard.hxx"
 
+#include <fmt/format.h>
+
+using std::string_view_literals::operator""sv;
+
 std::string
 MakeCommonNameWildcard(std::string_view s) noexcept
 {
@@ -16,7 +20,5 @@ MakeCommonNameWildcard(std::string_view s) noexcept
 		/* already a wildcard */
 		return {};
 
-	std::string result{'*'};
-	result.append(s.substr(dot));
-	return result;
+	return fmt::format("*{}"sv, s.substr(dot));
 }
