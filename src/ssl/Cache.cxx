@@ -158,7 +158,7 @@ CoGetServerCertificateKeyMaybeWildcard(Pg::AsyncConnection &connection,
 	co_return cert_key;
 }
 
-Co::InvokeTask
+inline Co::InvokeTask
 CertCache::Query::Run()
 {
 	assert(cache.current_query == this);
