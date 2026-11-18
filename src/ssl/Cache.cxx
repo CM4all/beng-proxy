@@ -170,7 +170,7 @@ CertCache::Query::Run()
 									 host.c_str(),
 									 _special);
 	if (_cert_key)
-		cert_key = cache.Add(std::move(_cert_key), _special);
+		cert_key = cache.Add(std::move(_cert_key), std::move(special));
 
 	/* the #requests are finished by OnCompletion() which runs
 	   right after this coroutine has returned */
@@ -285,7 +285,7 @@ CertCache::Disconnect() noexcept
 }
 
 inline UniqueCertKey
-CertCache::Add(UniqueCertKey &&ck, const char *special)
+CertCache::Add(UniqueCertKey &&ck, std::string &&special)
 {
 	assert(ck);
 
@@ -299,10 +299,8 @@ CertCache::Add(UniqueCertKey &&ck, const char *special)
 	auto i = map.emplace(std::piecewise_construct,
 			     std::forward_as_tuple(name.c_str()),
 			     std::forward_as_tuple(std::move(ck),
+						   std::move(special),
 						   GetEventLoop().SteadyNow()));
-
-	if (special != nullptr)
-		i->second.special = special;
 
 	/* create shadow items for all altNames */
 	std::set<std::string, std::less<>> alt_names;

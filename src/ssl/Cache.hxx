@@ -82,13 +82,15 @@ class CertCache final : Pg::AsyncConnectionHandler, CertNameCacheHandler {
 	std::mutex mutex;
 
 	struct Item : UniqueCertKey {
-		std::string special;
+		const std::string special;
 
 		std::chrono::steady_clock::time_point expires;
 
 		Item(UniqueCertKey &&_ck,
+		     std::string &&_special,
 		     std::chrono::steady_clock::time_point now) noexcept
 			:UniqueCertKey(std::move(_ck)),
+			 special(std::move(_special)),
 			 /* the initial expiration is 6 hours; it will be raised
 			    to 24 hours if the certificate is used again */
 			 expires(now + std::chrono::hours(6)) {}
@@ -172,7 +174,7 @@ private:
 	 * This method locks the mutex when necessary.
 	 */
 	UniqueCertKey Add(UniqueCertKey &&ck,
-			  const char *special);
+			  std::string &&special);
 
 	/**
 	 * Caller must lock #mutex.
