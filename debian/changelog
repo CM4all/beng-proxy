@@ -1,6 +1,7 @@
 cm4all-beng-proxy (22.3) unstable; urgency=low
 
   * bp: fix crash after generating a new session id on login
+  * bp: fix 416 response for a "Range" whose end is past the end of the file
   * http_client: fix crash bug with late "101" response
 
  --   
