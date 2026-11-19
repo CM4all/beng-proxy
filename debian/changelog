@@ -7,7 +7,7 @@ cm4all-beng-proxy (22.3) unstable; urgency=low
   * http_client: fix crash bug with late "101" response
   * certdb: store time stamps with time zone
 
- --   
+ -- Max Kellermann <max.kellermann@ionos.com>  Thu, 19 Nov 2026 15:34:30 +0100
 
 cm4all-beng-proxy (22.2) unstable; urgency=low
 
