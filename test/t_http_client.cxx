@@ -6,7 +6,9 @@
 #include "DemoHttpServerConnection.hxx"
 #include "NopThreadSocketFilterFactory.hxx"
 #include "NopSocketFilterFactory.hxx"
+#include "LateInputSocketFilter.hxx"
 #include "http/Client.hxx"
+#include "http/CommonHeaders.hxx"
 #include "http/Headers.hxx"
 #include "system/SetupProcess.hxx"
 #include "io/FileDescriptor.hxx"
@@ -197,6 +199,18 @@ struct HttpClientFactory {
 		return NewForkWrite(event_loop,
 				    "HTTP/1.1 101 Switching Protocols\r\n"
 				    "content-length: 0\r\n"
+				    "\r\n"sv);
+	}
+
+	/**
+	 * Accept the protocol upgrade, but close the socket right
+	 * away.
+	 */
+	auto *NewUpgrade101Close(struct pool &, EventLoop &event_loop) {
+		return NewForkWrite(event_loop,
+				    "HTTP/1.1 101 Switching Protocols\r\n"
+				    "connection: upgrade\r\n"
+				    "upgrade: foo\r\n"
 				    "\r\n"sv);
 	}
 
@@ -627,3 +641,49 @@ public:
 
 INSTANTIATE_TYPED_TEST_SUITE_P(HttpClientNopThread, ClientTest, NopThreadHttpClientFactory);
 INSTANTIATE_TYPED_TEST_SUITE_P(HttpClientNopThread, HttpClientTest, NopThreadHttpClientFactory);
+
+class LateInputHttpClientFactory final : public HttpClientFactory {
+public:
+	explicit LateInputHttpClientFactory(EventLoop &event_loop) noexcept
+		:HttpClientFactory(std::make_unique<LateInputSocketFilterFactory>(event_loop)) {}
+};
+
+/**
+ * The server accepts the protocol upgrade and closes the socket, and
+ * the #SocketFilter submits those response headers to the HTTP client
+ * only after the socket has been closed - just like a TLS filter with
+ * buffered data would.
+ *
+ * The resulting error used to be thrown after the response body had
+ * already been created, which AbortResponseHeaders() cannot handle.
+ */
+TEST(HttpClientLateInput, Upgrade101AfterClose)
+{
+	Instance instance;
+	LateInputHttpClientFactory factory{instance.event_loop};
+	Context c{instance};
+
+	StringMap request_headers;
+	request_headers.Add(*c.pool, upgrade_header, "foo");
+
+	auto request_body = istream_delayed_new(*c.pool, c.event_loop);
+	request_body.second.cancel_ptr = nullptr;
+
+	c.connection = factory.NewUpgrade101Close(*c.pool, c.event_loop);
+	c.connection->Request(c.pool, c,
+			      HttpMethod::GET, "/foo",
+			      std::move(request_headers),
+			      std::move(request_body.first), false,
+			      c, c.cancel_ptr);
+	pool_commit();
+
+	c.event_loop.Run();
+
+	EXPECT_TRUE(c.released);
+	EXPECT_TRUE(c.aborted);
+	EXPECT_NE(c.request_error, nullptr);
+	EXPECT_NE(strstr(GetFullMessage(c.request_error).c_str(),
+			 "Peer closed the socket prematurely after status 101"),
+		  nullptr);
+	EXPECT_EQ(c.body_error, nullptr);
+}
