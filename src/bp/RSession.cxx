@@ -378,6 +378,10 @@ Request::ApplyTranslateSession(const TranslateResponse &response) noexcept
 					instance.session_manager->ReplaceSessionId(session->parent);
 					session_id = session->parent.id;
 					send_session_cookie = true;
+
+					/* this field needs to be initialized if
+					   send_session_cookie is set */
+					recover_session_to_cookie = nullptr;
 				}
 
 				session->SetUser(response.user, response.user_max_age);
