@@ -111,32 +111,7 @@ BpConfigParser::Listener::ParseLine(FileLineParser &line)
 {
 	const char *word = line.ExpectWord();
 
-	if (StringIsEqual(word, "bind")) {
-		if (!config.bind_address.IsNull())
-			throw LineParser::Error("Bind address already specified");
-
-		config.bind_address = ParseSocketAddress(line.ExpectValueAndEnd(),
-							 80, true);
-	} else if (StringIsEqual(word, "interface")) {
-		config.interface = line.ExpectValueAndEnd();
-	} else if (StringIsEqual(word, "mode")) {
-		if (config.bind_address.IsNull() ||
-		    config.bind_address.GetFamily() != AF_LOCAL)
-			throw LineParser::Error("'mode' works only with local sockets");
-
-		const char *s = line.ExpectValueAndEnd();
-		char *endptr;
-		const unsigned long value = strtoul(s, &endptr, 8);
-		if (endptr == s || *endptr != 0)
-			throw LineParser::Error("Not a valid octal value");
-
-		if (value & ~0777ULL)
-			throw LineParser::Error("Not a valid mode");
-
-		config.mode = value;
-	} else if (StringIsEqual(word, "mptcp")) {
-		config.mptcp = line.NextBool();
-		line.ExpectEnd();
+	if (config.ParseLine(word, line, 80)) {
 	} else if (StringIsEqual(word, "tag")) {
 		config.tag = line.ExpectValueAndEnd();
 #ifdef HAVE_AVAHI
@@ -145,21 +120,6 @@ BpConfigParser::Listener::ParseLine(FileLineParser &line)
 	} else if (StringStartsWith(word, "zeroconf_"sv)) {
 		throw LineParser::Error("Zeroconf support is disabled at compile time");
 #endif
-	} else if (StringIsEqual(word, "ack_timeout")) {
-		config.tcp_user_timeout = line.NextPositiveInteger() * 1000;
-		line.ExpectEnd();
-	} else if (StringIsEqual(word, "keepalive")) {
-		config.keepalive = line.NextBool();
-		line.ExpectEnd();
-	} else if (StringIsEqual(word, "v6only")) {
-		config.v6only = line.NextBool();
-		line.ExpectEnd();
-	} else if (StringIsEqual(word, "reuse_port")) {
-		config.reuse_port = line.NextBool();
-		line.ExpectEnd();
-	} else if (StringIsEqual(word, "free_bind")) {
-		config.free_bind = line.NextBool();
-		line.ExpectEnd();
 	} else if (StringIsEqual(word, "auth_alt_host")) {
 		config.auth_alt_host = line.NextBool();
 		line.ExpectEnd();
