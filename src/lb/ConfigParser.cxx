@@ -250,15 +250,7 @@ LbConfigParser::Control::ParseLine(FileLineParser &line)
 {
 	const char *word = line.ExpectWord();
 
-	if (StringIsEqual(word, "bind")) {
-		config.bind_address = ParseSocketAddress(line.ExpectValueAndEnd(),
-							 BengControl::DEFAULT_PORT, true);
-	} else if (StringIsEqual(word, "multicast_group")) {
-		config.multicast_group = ParseSocketAddress(line.ExpectValueAndEnd(),
-							    0, false);
-	} else if (StringIsEqual(word, "interface")) {
-		config.interface = line.ExpectValueAndEnd();
-	} else
+	if (!config.ParseLine(word, line, SOCK_DGRAM, BengControl::DEFAULT_PORT))
 		throw LineParser::Error("Unknown option");
 }
 
