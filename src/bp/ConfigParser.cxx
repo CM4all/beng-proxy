@@ -111,7 +111,7 @@ BpConfigParser::Listener::ParseLine(FileLineParser &line)
 {
 	const char *word = line.ExpectWord();
 
-	if (config.ParseLine(word, line, 80)) {
+	if (config.ParseLine(word, line, SOCK_STREAM, 80)) {
 	} else if (StringIsEqual(word, "tag")) {
 		config.tag = line.ExpectValueAndEnd();
 #ifdef HAVE_AVAHI
