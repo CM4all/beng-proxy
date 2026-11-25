@@ -9,6 +9,7 @@
 #include "fs/FilteredSocket.hxx"
 #include "http/Method.hxx"
 #include "istream/UnusedPtr.hxx"
+#include "istream/istream_string.hxx"
 #include "event/SocketEvent.hxx"
 #include "event/FineTimerEvent.hxx"
 #include "net/SocketPair.hxx"
@@ -62,6 +63,11 @@ private:
 	SocketEvent event;
 
 public:
+	/**
+	 * The number of request HEADERS frames received.
+	 */
+	unsigned n_requests = 0;
+
 	FakeServer(EventLoop &event_loop, UniqueSocketDescriptor &&_socket,
 		   Mode _mode) noexcept
 		:socket(std::move(_socket)), mode(_mode),
@@ -135,6 +141,10 @@ private:
 	}
 
 	int OnFrameRecv(const nghttp2_frame &frame) noexcept {
+		if (frame.hd.type == NGHTTP2_HEADERS &&
+		    frame.headers.cat == NGHTTP2_HCAT_REQUEST)
+			++n_requests;
+
 		if (frame.hd.type == NGHTTP2_HEADERS &&
 		    frame.headers.cat == NGHTTP2_HCAT_REQUEST &&
 		    (frame.hd.flags & NGHTTP2_FLAG_END_STREAM) != 0)
@@ -332,4 +342,67 @@ TEST(NgHttp2Client, InformationalResponse)
 	EXPECT_EQ(handler.status, HttpStatus::OK);
 	EXPECT_EQ(handler.headers.count("x-final"), 1u);
 	EXPECT_FALSE(handler.error);
+}
+
+/**
+ * A request URI which the HTTP/1.1 client would reject must fail
+ * without opening a stream.
+ */
+TEST(NgHttp2Client, MalformedUri)
+{
+	Instance instance;
+
+	auto [client_fd, server_fd] = CreateStreamSocketPairNonBlock();
+
+	FakeServer server{instance.event_loop, std::move(server_fd),
+			  FakeServer::Mode::TRAILER};
+
+	MyConnectionHandler connection_handler;
+	NgHttp2::ClientConnection connection{
+		std::make_unique<FilteredSocket>(instance.event_loop,
+						 std::move(client_fd),
+						 FdType::FD_SOCKET),
+		connection_handler,
+	};
+
+	for (const char *uri : {"/foo bar", "/foo\r\nx-foo: bar", "/\xc3\xa4", "foo"}) {
+		CountingHttpResponseHandler handler{instance.root_pool,
+						    instance.event_loop};
+		const AllocatorPtr alloc{handler.pool};
+
+		StringMap request_headers;
+		request_headers.Add(alloc, "host", "localhost");
+
+		CancellablePointer cancel_ptr;
+		connection.SendRequest(alloc, nullptr,
+				       HttpMethod::POST, uri,
+				       std::move(request_headers),
+				       istream_string_new(*handler.pool, "body"),
+				       handler, cancel_ptr);
+
+		EXPECT_EQ(handler.state, RecordingHttpResponseHandler::State::ERROR);
+		EXPECT_TRUE(handler.error);
+		EXPECT_EQ(handler.n_responses, 0u);
+	}
+
+	/* the connection is still usable */
+
+	CountingHttpResponseHandler handler{instance.root_pool,
+					    instance.event_loop};
+	const AllocatorPtr alloc{handler.pool};
+
+	StringMap request_headers;
+	request_headers.Add(alloc, "host", "localhost");
+
+	CancellablePointer cancel_ptr;
+	connection.SendRequest(alloc, nullptr,
+			       HttpMethod::GET, "/",
+			       std::move(request_headers), {},
+			       handler, cancel_ptr);
+
+	instance.event_loop.Run();
+
+	EXPECT_EQ(handler.n_responses, 1u);
+	EXPECT_EQ(handler.status, HttpStatus::OK);
+	EXPECT_EQ(server.n_requests, 1u);
 }
