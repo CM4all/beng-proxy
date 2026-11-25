@@ -81,11 +81,9 @@ css_rewrite_block_uris(struct pool &pool,
 		/* no URLs found, no rewriting necessary */
 		return nullptr;
 
-	const AllocatorPtr alloc{pool};
-	auto replace = NewIstream<ReplaceIstream>(pool, ctx->event_loop,
-						  istream_string_new(pool, alloc.Dup(block)));
+	ReplaceIstream *replace = nullptr;
+	UnusedIstreamPtr result;
 
-	bool modified = false;
 	for (unsigned i = 0; i < rewrite.n_urls; ++i) {
 		const struct css_url *url = &rewrite.urls[i];
 
@@ -98,13 +96,18 @@ css_rewrite_block_uris(struct pool &pool,
 		if (!value)
 			continue;
 
+		if (replace == nullptr) {
+			const AllocatorPtr alloc{pool};
+			replace = NewIstream<ReplaceIstream>(pool, ctx->event_loop,
+							     istream_string_new(pool, alloc.Dup(block)));
+			result = UnusedIstreamPtr{replace};
+		}
+
 		replace->Add(url->start, url->end, std::move(value));
-		modified = true;
 	}
 
-	if (!modified)
-		return nullptr;
+	if (replace != nullptr)
+		replace->Finish();
 
-	replace->Finish();
-	return UnusedIstreamPtr(replace);
+	return result;
 }
