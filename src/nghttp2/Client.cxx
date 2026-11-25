@@ -13,11 +13,14 @@
 #include "istream/MultiFifoBufferIstream.hxx"
 #include "istream/New.hxx"
 #include "fs/FilteredSocket.hxx"
+#include "lib/fmt/ToBuffer.hxx"
 #include "lib/fmt/Unsafe.hxx"
 #include "net/SocketProtocolError.hxx"
+#include "uri/Verify.hxx"
 #include "util/Cancellable.hxx"
 #include "util/NumberParser.hxx"
 #include "util/StaticVector.hxx"
+#include "http/Client.hxx" // for class HttpClientError
 #include "http/CommonHeaders.hxx"
 #include "http/HeaderLimits.hxx"
 #include "http/Method.hxx"
@@ -589,6 +592,13 @@ ClientConnection::SendRequest(AllocatorPtr alloc,
 			      HttpResponseHandler &_handler,
 			      CancellablePointer &cancel_ptr) noexcept
 {
+	if (!uri_path_verify_quick(uri)) [[unlikely]] {
+		body.Clear();
+		_handler.InvokeError(std::make_exception_ptr(HttpClientError(HttpClientErrorCode::UNSPECIFIED,
+									     FmtBuffer<256>("malformed request URI {:?}"sv, uri))));
+		return;
+	}
+
 	auto *request = alloc.New<Request>(alloc,
 					   std::move(stopwatch), *this,
 					   _handler, cancel_ptr);

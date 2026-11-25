@@ -2,6 +2,7 @@ cm4all-beng-proxy (22.4) unstable; urgency=low
 
   * bp: fix memory leak in CSS "style" attribute rewriting
   * http_server: fix assertion failure after request header timeout
+  * nghttp2/client: verify the request URI
   * stock: fix two crash bugs
 
  --   

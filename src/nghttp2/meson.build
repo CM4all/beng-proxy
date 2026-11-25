@@ -67,6 +67,7 @@ nghttp2_client = static_library(
     http_util_dep,
     socket_dep,
     stopwatch_dep,
+    uri_dep,
   ],
 )
 
