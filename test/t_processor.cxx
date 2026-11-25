@@ -20,6 +20,7 @@
 #include "istream/BlockIstream.hxx"
 #include "istream/StringSink.hxx"
 #include "istream/istream_string.hxx"
+#include "uri/Extract.hxx"
 #include "pool/pool.hxx"
 #include "pool/SharedPtr.hxx"
 #include "util/Cancellable.hxx"
@@ -65,16 +66,24 @@ parse_uri_mode(std::string_view) noexcept
 
 static constexpr auto rewritten_uri = "REWRITTEN"sv;
 
+static unsigned n_rewrite_widget_uri;
+
 UnusedIstreamPtr
 rewrite_widget_uri(struct pool &pool,
 		   SharedPoolPtr<WidgetContext> , const StopwatchPtr &,
 		   [[maybe_unused]] Widget &widget,
-		   [[maybe_unused]] std::string_view value,
+		   std::string_view value,
 		   [[maybe_unused]] RewriteUriMode mode,
 		   [[maybe_unused]] bool stateful,
 		   [[maybe_unused]] const char *view,
 		   [[maybe_unused]] const struct escape_class *escape) noexcept
 {
+	++n_rewrite_widget_uri;
+
+	if (UriHasAuthority(value))
+		/* like the real implementation */
+		return nullptr;
+
 	return istream_string_new(pool, rewritten_uri);
 }
 
@@ -146,12 +155,12 @@ TEST(Processor, Abort)
 /**
  * Run the XML processor on the given template and return its output.
  *
- * The container widget is a child of the root widget, because
- * rewriting URIs and prefixing XML ids both require a widget which is
- * not the root.
+ * The container widget is a child of the root widget (unless #root is
+ * true), because rewriting URIs and prefixing XML ids both require a
+ * widget which is not the root.
  */
 static std::string
-Process(std::string_view html, unsigned options)
+Process(std::string_view html, unsigned options, bool root=false)
 {
 	TestInstance instance;
 
@@ -194,7 +203,7 @@ Process(std::string_view html, unsigned options)
 		NewStringSink(*pool,
 			      processor_process(*pool, nullptr,
 						istream_string_new(*pool, html),
-						root_widget.children.front(),
+						root ? root_widget : root_widget.children.front(),
 						std::move(ctx), options),
 			      handler, handler.cancel_ptr);
 	ReadStringSink(sink);
@@ -232,4 +241,44 @@ TEST(Processor, AnchorNameAfterHref)
 	EXPECT_EQ(Process(R"(<a href="/x" name="___y">z</a>)"sv,
 			  rewrite_and_prefix_options),
 		  R"(<a href="REWRITTEN" name="___y">z</a>)"sv);
+}
+
+static constexpr unsigned style_options =
+	PROCESSOR_REWRITE_URL|PROCESSOR_STYLE|
+	PROCESSOR_PREFIX_CSS_CLASS|PROCESSOR_PREFIX_XML_ID;
+
+/**
+ * A "style" attribute with a URI which cannot be rewritten (absolute
+ * URI) must be left alone, and must not leak anything.
+ */
+TEST(Processor, StyleNotRewritten)
+{
+	static constexpr auto html =
+		R"html(<p style="background: url('http://example.com/a.png')">x</p>)html"sv;
+
+	EXPECT_EQ(Process(html, style_options), html);
+}
+
+/**
+ * URIs in "style" attributes of the root widget are never rewritten;
+ * rewrite_widget_uri() must not even be called.
+ */
+TEST(Processor, StyleRoot)
+{
+	static constexpr auto html =
+		R"html(<p style="background: url('a.png')">x</p>)html"sv;
+
+	n_rewrite_widget_uri = 0;
+	EXPECT_EQ(Process(html, style_options, true), html);
+	EXPECT_EQ(n_rewrite_widget_uri, 0U);
+}
+
+/**
+ * Control group: a relative URI in a "style" attribute is rewritten.
+ */
+TEST(Processor, StyleRewritten)
+{
+	EXPECT_EQ(Process(R"html(<p style="background: url('a.png')">x</p>)html"sv,
+			  style_options),
+		  R"html(<p style="background: url('REWRITTEN')">x</p>)html"sv);
 }
