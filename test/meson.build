@@ -368,6 +368,23 @@ test(
   ),
 )
 
+test(
+  'TestFilteredSocketStock',
+  executable(
+    'TestFilteredSocketStock',
+    'TestFilteredSocketStock.cxx',
+    include_directories: inc,
+    dependencies: [
+      gtest,
+      socket_dep,
+      stock_dep,
+      pool_dep,
+      net_dep,
+      stopwatch_dep,
+    ],
+  ),
+)
+
 test('t_cgi', executable('t_cgi',
   't_cgi.cxx',
   '../src/http/ResponseHandler.cxx',
