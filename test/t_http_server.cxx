@@ -1236,6 +1236,45 @@ TYPED_TEST(HttpServerTest, Raw)
 }
 
 /**
+ * Requests with duplicate framing headers must be rejected, and the
+ * rest of the input must not be parsed as another request.
+ */
+TYPED_TEST(HttpServerTest, DuplicateFramingHeaders)
+{
+	static constexpr std::string_view requests[] = {
+		"POST / HTTP/1.1\r\ncontent-length: 1\r\ncontent-length: 27\r\n\r\n"
+		"AGET /smuggled HTTP/1.1\r\n\r\n"sv,
+		"POST / HTTP/1.1\r\ncontent-length: 27\r\ncontent-length: 1\r\n\r\n"
+		"AGET /smuggled HTTP/1.1\r\n\r\n"sv,
+		"POST / HTTP/1.1\r\ncontent-length: 1\r\ncontent-length: 1\r\n\r\n"
+		"AGET /smuggled HTTP/1.1\r\n\r\n"sv,
+		"POST / HTTP/1.1\r\ntransfer-encoding: chunked\r\ntransfer-encoding: identity\r\n\r\n"
+		"1\r\nA\r\n0\r\n\r\nGET /smuggled HTTP/1.1\r\n\r\n"sv,
+		"POST / HTTP/1.1\r\ntransfer-encoding: identity\r\ntransfer-encoding: chunked\r\n\r\n"
+		"1\r\nA\r\n0\r\n\r\nGET /smuggled HTTP/1.1\r\n\r\n"sv,
+		"POST / HTTP/1.1\r\ntransfer-encoding: chunked\r\ntransfer-encoding: chunked\r\n\r\n"
+		"1\r\nA\r\n0\r\n\r\nGET /smuggled HTTP/1.1\r\n\r\n"sv,
+	};
+
+	for (const auto request : requests) {
+		auto server = this->MakeServer();
+
+		bool handled = false;
+		server.SetRequestHandler([&handled](IncomingHttpRequest &r, CancellablePointer &) noexcept {
+			handled = true;
+			r.body.Clear();
+			r.SendResponse(HttpStatus::OK, {}, nullptr);
+		});
+
+		auto client = server.MakeRawClient();
+		client->Write(AsBytes(request));
+		server.WaitClosed();
+
+		EXPECT_FALSE(handled);
+	}
+}
+
+/**
  * Test with raw client; the server holds back the request body and we
  * approve it byte by byte.
  */
