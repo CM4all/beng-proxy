@@ -265,6 +265,12 @@ HttpServerConnection::HeadersFinished(bool has_more) noexcept
 	const char *const transfer_encoding = r.headers.Remove(transfer_encoding_header);
 	const char *const content_length_string = r.headers.Remove(content_length_header);
 
+	if (r.headers.Contains(transfer_encoding_header) ||
+	    r.headers.Contains(content_length_header)) [[unlikely]] {
+		ProtocolError("duplicate Transfer-Encoding or Content-Length request header");
+		return false;
+	}
+
 	off_t content_length = -1;
 	const bool chunked = transfer_encoding != nullptr && StringIsEqualIgnoreCase(transfer_encoding, "chunked");
 	if (transfer_encoding != nullptr && !chunked) [[unlikely]] {
