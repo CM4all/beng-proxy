@@ -793,6 +793,9 @@ XmlProcessor::HandleIdAttribute(const XmlParserAttribute &attr) noexcept
 void
 XmlProcessor::HandleStyleAttribute(const XmlParserAttribute &attr) noexcept
 {
+	if (container.IsRoot())
+		return;
+
 	auto result =
 		css_rewrite_block_uris(GetPool(), ctx, stopwatch,
 				       container,
