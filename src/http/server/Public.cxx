@@ -384,6 +384,7 @@ HttpServerConnection::OnReadTimeout() noexcept
 		break;
 
 	case Request::HEADERS:
+		idle_timer.Cancel();
 		CancelSend100Continue();
 		request.read_state = Request::END;
 		keep_alive = false;
