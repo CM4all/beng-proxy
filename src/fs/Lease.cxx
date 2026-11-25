@@ -69,13 +69,12 @@ FilteredSocketLease::Release(bool preserve, PutAction action) noexcept
 	if (preserve)
 		MoveSocketInput();
 
-	action = lease_ref.Release(action);
-	if (handler_info != nullptr) {
+	lease_ref.Release(action);
+
 #ifndef NDEBUG
+	if (handler_info != nullptr)
 		handler_info->released = true;
 #endif
-		handler_info->action = action;
-	}
 
 	socket = nullptr;
 }
@@ -207,9 +206,24 @@ FilteredSocketLease::MoveInput() noexcept
 	}
 }
 
+/**
+ * Has the (released) socket been destroyed?  Even with
+ * PutAction::REUSE, the stock may destroy it before our handler
+ * returns.
+ */
+static bool
+IsDestroyed(const FilteredSocket &socket,
+	    const DestructObserver &destructed) noexcept
+{
+	return destructed || !socket.IsValid();
+}
+
 BufferedResult
 FilteredSocketLease::OnBufferedData()
 {
+	const FilteredSocket &s = *socket;
+	const DestructObserver socket_destructed{*socket};
+
 	HandlerInfo info;
 
 	while (true) {
@@ -226,7 +240,7 @@ FilteredSocketLease::OnBufferedData()
 		if (result == BufferedResult::DESTROYED) {
 			assert(info.released);
 
-			return info.action == PutAction::DESTROY
+			return IsDestroyed(s, socket_destructed)
 				? BufferedResult::DESTROYED
 				/* the FilteredSocketLease was
 				   destroyed, but the BufferedSocket
@@ -249,7 +263,7 @@ FilteredSocketLease::OnBufferedData()
 			   BufferedSocket instance, even if our
 			   handler still wants to consume the
 			   remaining buffer */
-			return info.action == PutAction::DESTROY
+			return IsDestroyed(s, socket_destructed)
 				? BufferedResult::DESTROYED
 				: BufferedResult::OK;
 		}
@@ -260,6 +274,10 @@ DirectResult
 FilteredSocketLease::OnBufferedDirect(SocketDescriptor fd, FdType fd_type)
 {
 	assert(handler_info == nullptr);
+
+	const FilteredSocket &s = *socket;
+	const DestructObserver socket_destructed{*socket};
+
 	HandlerInfo info;
 	handler_info = &info;
 
@@ -273,7 +291,7 @@ FilteredSocketLease::OnBufferedDirect(SocketDescriptor fd, FdType fd_type)
 	if (result == DirectResult::CLOSED) {
 		assert(info.released);
 
-		if (info.action != PutAction::DESTROY)
+		if (!IsDestroyed(s, socket_destructed))
 			/* the FilteredSocketLease was destroyed, but
 			   the BufferedSocket is still alive (in the
 			   FilteredSocketStock) */

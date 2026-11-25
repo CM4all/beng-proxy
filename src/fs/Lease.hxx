@@ -36,7 +36,6 @@ class FilteredSocketLease final : BufferedSocketHandler {
 #ifndef NDEBUG
 		bool released = false;
 #endif
-		PutAction action;
 	};
 
 	HandlerInfo *handler_info = nullptr;

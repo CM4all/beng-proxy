@@ -8,6 +8,7 @@
 #include "Ptr.hxx"
 #include "event/net/BufferedSocket.hxx"
 #include "util/BindMethod.hxx"
+#include "util/DestructObserver.hxx"
 
 #include <cstddef>
 #include <span>
@@ -26,7 +27,7 @@ class UniqueSocketDescriptor;
  * Unlike #BufferedSocket, this class "owns" the socket and closes it
  * automatically in its destructor.
  */
-class FilteredSocket final : BufferedSocketHandler {
+class FilteredSocket final : BufferedSocketHandler, public DestructAnchor {
 	BufferedSocket base;
 
 #ifndef NDEBUG
