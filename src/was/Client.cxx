@@ -78,6 +78,12 @@ class WasClient final
 	DeferEvent defer_update_input;
 
 	/**
+	 * Invokes the #HttpResponseHandler after NO_DATA, out of
+	 * OnWasControlPacket().
+	 */
+	DeferEvent defer_no_data_response;
+
+	/**
 	 * When we don't known the response length yet, this timer is
 	 * used to delay submitting the response to
 	 * #HttpResponseHandler a bit.  Chances are that we'll receive
@@ -373,6 +379,7 @@ private:
 
 	void OnSubmitResponseTimer() noexcept;
 	void OnDeferredInputUpdate() noexcept;
+	void OnDeferredNoDataResponse() noexcept;
 
 	/* virtual methods from class Cancellable */
 	void Cancel() noexcept override {
@@ -502,6 +509,15 @@ WasClient::OnDeferredInputUpdate() noexcept
 		was_input_premature(response.body, response.pending_size);
 		break;
 	}
+}
+
+inline void
+WasClient::OnDeferredNoDataResponse() noexcept
+{
+	assert(IsControlReleased());
+
+	DestroyInvokeResponse(response.status, std::move(response.headers),
+			      UnusedIstreamPtr());
 }
 
 /*
@@ -650,12 +666,8 @@ WasClient::OnWasControlPacket(enum was_command cmd,
 		if (!CancelRequestBody())
 			return false;
 
-		response.receiving_metadata = false;
-
 		put_action = ReleaseControl();
-
-		DestroyInvokeResponse(response.status, std::move(response.headers),
-				      UnusedIstreamPtr());
+		defer_no_data_response.Schedule();
 		return put_action == PutAction::REUSE;
 
 	case WAS_COMMAND_DATA:
@@ -932,6 +944,8 @@ WasClient::WasClient(struct pool &_pool, struct pool &_caller_pool,
 	 handler(_handler),
 	 defer_update_input(control.GetEventLoop(),
 			    BIND_THIS_METHOD(OnDeferredInputUpdate)),
+	 defer_no_data_response(control.GetEventLoop(),
+				BIND_THIS_METHOD(OnDeferredNoDataResponse)),
 	 submit_response_timer(control.GetEventLoop(),
 			       BIND_THIS_METHOD(OnSubmitResponseTimer)),
 	 request(body
