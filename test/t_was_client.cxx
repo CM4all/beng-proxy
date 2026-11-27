@@ -704,3 +704,153 @@ TEST(WasClient, PrematureAfterPipeRelease)
 	EXPECT_TRUE(c.released);
 	EXPECT_EQ(c.lease_action, PutAction::REUSE);
 }
+
+/**
+ * Emulates a WAS stock item which is reused (and destroyed) by a
+ * second request from within the NO_DATA response handler of the
+ * first one.
+ */
+class NoDataReuse final : WasLease, Was::ControlHandler, HttpResponseHandler {
+	EventLoop &event_loop;
+	struct pool &pool;
+
+	WasSocket socket, server_socket;
+
+	std::optional<Was::Control> control;
+
+	CancellablePointer cancel_ptr;
+
+public:
+	HttpStatus status{};
+
+	unsigned n_requests = 0, idle_packets = 0;
+
+	bool destroyed = false;
+
+	NoDataReuse(EventLoop &_event_loop, struct pool &_pool)
+		:event_loop(_event_loop), pool(_pool)
+	{
+		auto s = WasSocket::CreatePair();
+		socket = std::move(s.first);
+		server_socket = std::move(s.second);
+		socket.input.SetNonBlocking();
+		socket.output.SetNonBlocking();
+
+		control.emplace(event_loop, std::move(socket.control),
+				static_cast<Was::ControlHandler &>(*this));
+	}
+
+	void SendRequest() noexcept {
+		++n_requests;
+		was_client_request(pool, nullptr,
+				   *control, socket.input, socket.output,
+				   *this,
+				   nullptr, false, nullptr,
+				   HttpMethod::GET, "/", "/", nullptr, nullptr,
+				   {}, nullptr, {},
+				   nullptr,
+				   *this, cancel_ptr);
+	}
+
+	/**
+	 * Send STATUS, NO_DATA and a trailing NOP at once.
+	 */
+	void SendResponse() {
+		static constexpr struct was_header status_packet{
+			.length = sizeof(uint32_t),
+			.command = WAS_COMMAND_STATUS,
+		};
+		static constexpr uint32_t status_value = 204;
+		static constexpr struct was_header no_data{
+			.length = 0,
+			.command = WAS_COMMAND_NO_DATA,
+		};
+		static constexpr struct was_header nop{
+			.length = 0,
+			.command = WAS_COMMAND_NOP,
+		};
+
+		std::byte buffer[sizeof(status_packet) + sizeof(status_value) +
+				 sizeof(no_data) + sizeof(nop)];
+		std::byte *p = buffer;
+		memcpy(p, &status_packet, sizeof(status_packet));
+		p += sizeof(status_packet);
+		memcpy(p, &status_value, sizeof(status_value));
+		p += sizeof(status_value);
+		memcpy(p, &no_data, sizeof(no_data));
+		p += sizeof(no_data);
+		memcpy(p, &nop, sizeof(nop));
+
+		ASSERT_EQ(server_socket.control.Send(buffer),
+			  (ssize_t)sizeof(buffer));
+	}
+
+private:
+	/* virtual methods from class WasLease */
+	PutAction ReleaseWas(PutAction action) noexcept override {
+		if (action == PutAction::DESTROY) {
+			control.reset();
+			destroyed = true;
+			return PutAction::DESTROY;
+		}
+
+		/* idle, like WasStock does it */
+		control->SetHandler(*this);
+		return PutAction::REUSE;
+	}
+
+	PutAction ReleaseWasStop(uint_least64_t) noexcept override {
+		return ReleaseWas(PutAction::DESTROY);
+	}
+
+	/* virtual methods from class HttpResponseHandler */
+	void OnHttpResponse(HttpStatus _status, StringMap &&,
+			    UnusedIstreamPtr) noexcept override {
+		status = _status;
+
+		/* the second request on the same connection fails */
+		SendRequest();
+		cancel_ptr.Cancel();
+
+		event_loop.Break();
+	}
+
+	void OnHttpError(std::exception_ptr) noexcept override {
+		ADD_FAILURE();
+		event_loop.Break();
+	}
+
+	/* virtual methods from class Was::ControlHandler (idle) */
+	bool OnWasControlPacket(enum was_command,
+				std::span<const std::byte>) noexcept override {
+		++idle_packets;
+		return true;
+	}
+
+	void OnWasControlDone() noexcept override {}
+	void OnWasControlHangup() noexcept override {}
+	void OnWasControlError(std::exception_ptr) noexcept override {}
+};
+
+/**
+ * The NO_DATA response handler reuses the connection for another
+ * request which fails and destroys it; the packet loop must not touch
+ * the connection afterwards, and the remaining packets of the first
+ * response must not reach the second request.
+ */
+TEST(WasClient, NoDataReuseInHandler)
+{
+	Instance instance;
+	PoolPtr pool = pool_new_libc(instance.root_pool, "test");
+
+	NoDataReuse r{instance.event_loop, *pool};
+	r.SendRequest();
+	r.SendResponse();
+
+	instance.event_loop.Run();
+
+	EXPECT_EQ(r.status, HttpStatus::NO_CONTENT);
+	EXPECT_EQ(r.n_requests, 2U);
+	EXPECT_EQ(r.idle_packets, 1U);
+	EXPECT_TRUE(r.destroyed);
+}
